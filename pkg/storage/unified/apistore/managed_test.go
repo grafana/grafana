@@ -228,7 +228,7 @@ func TestManagedAuthorizer(t *testing.T) {
 	}
 }
 
-func TestCheckFolderManagerConsistency(t *testing.T) {
+func TestCheckFolderManager(t *testing.T) {
 	tests := []struct {
 		name            string
 		folderManager   *utils.ManagerProperties
@@ -236,13 +236,13 @@ func TestCheckFolderManagerConsistency(t *testing.T) {
 		expectError     bool
 	}{
 		{
-			name:            "folder unmanaged, resource unmanaged",
+			name:            "nil folder, resource unmanaged",
 			folderManager:   nil,
 			resourceManager: nil,
 			expectError:     false,
 		},
 		{
-			name:          "folder unmanaged, resource managed by repo",
+			name:          "nil folder, resource managed by repo",
 			folderManager: nil,
 			resourceManager: &utils.ManagerProperties{
 				Kind:     utils.ManagerKindRepo,
@@ -318,30 +318,26 @@ func TestCheckFolderManagerConsistency(t *testing.T) {
 		},
 	}
 
+	makeAccessor := func(t *testing.T, mgr *utils.ManagerProperties) utils.GrafanaMetaAccessor {
+		t.Helper()
+		obj := &dashboard.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test", Namespace: "default"}}
+		accessor, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		if mgr != nil {
+			accessor.SetManagerProperties(*mgr)
+		}
+		return accessor
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resource := &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "test-resource",
-					Namespace: "default",
-				},
+			var folder utils.GrafanaMetaAccessor
+			if tt.folderManager != nil {
+				folder = makeAccessor(t, tt.folderManager)
 			}
-			if tt.resourceManager != nil {
-				accessor, err := utils.MetaAccessor(resource)
-				require.NoError(t, err)
-				accessor.SetManagerProperties(*tt.resourceManager)
-			}
+			resource := makeAccessor(t, tt.resourceManager)
 
-			accessor, err := utils.MetaAccessor(resource)
-			require.NoError(t, err)
-
-			folderManaged := tt.folderManager != nil
-			folderProps := utils.ManagerProperties{}
-			if folderManaged {
-				folderProps = *tt.folderManager
-			}
-
-			err = checkFolderManagerConsistency(folderProps, folderManaged, accessor)
+			err := checkFolderManager(folder, resource)
 			if tt.expectError {
 				require.Error(t, err)
 			} else {

@@ -118,7 +118,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
 		return v, err
 	}
-	if err := s.checkFolderManager(ctx, obj); err != nil {
+	if folder, err := s.getFolder(ctx, obj); err != nil {
+		return v, err
+	} else if err := checkFolderManager(folder, obj); err != nil {
 		return v, err
 	}
 
@@ -219,7 +221,10 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		if !s.opts.EnableFolderSupport {
 			return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 		}
-		if err := s.checkFolderManager(ctx, obj); err != nil {
+		// TODO: check that we can move the folder?
+		if folder, err := s.getFolder(ctx, obj); err != nil {
+			return v, err
+		} else if err := checkFolderManager(folder, obj); err != nil {
 			return v, err
 		}
 		v.hasChanged = true
@@ -260,48 +265,33 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	return v, err
 }
 
-func (s *Storage) getFolderManagerProperties(ctx context.Context, namespace, folderUID string) (utils.ManagerProperties, bool, error) {
+func (s *Storage) getFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
+	folderUID := obj.GetFolder()
+	if folderUID == "" || s.store == nil {
+		return nil, nil
+	}
+
 	rsp, err := s.store.Read(ctx, &resourcepb.ReadRequest{
 		Key: &resourcepb.ResourceKey{
 			Group:     "folder.grafana.app",
 			Resource:  "folders",
-			Namespace: namespace,
+			Namespace: obj.GetNamespace(),
 			Name:      folderUID,
 		},
 	})
 	if err != nil {
-		return utils.ManagerProperties{}, false, fmt.Errorf("failed to read folder %s: %w", folderUID, err)
+		return nil, fmt.Errorf("failed to read folder %s: %w", folderUID, err)
 	}
 	if rsp.Error != nil {
-		return utils.ManagerProperties{}, false, fmt.Errorf("failed to read folder %s: %s", folderUID, rsp.Error.Message)
+		return nil, fmt.Errorf("failed to read folder %s: %s", folderUID, rsp.Error.Message)
 	}
 
-	obj := &unstructured.Unstructured{}
-	if err := json.Unmarshal(rsp.Value, &obj.Object); err != nil {
-		return utils.ManagerProperties{}, false, fmt.Errorf("failed to unmarshal folder %s: %w", folderUID, err)
+	raw := &unstructured.Unstructured{}
+	if err := json.Unmarshal(rsp.Value, &raw.Object); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal folder %s: %w", folderUID, err)
 	}
 
-	accessor, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return utils.ManagerProperties{}, false, fmt.Errorf("failed to get meta accessor for folder %s: %w", folderUID, err)
-	}
-
-	props, ok := accessor.GetManagerProperties()
-	return props, ok, nil
-}
-
-func (s *Storage) checkFolderManager(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
-	folderUID := obj.GetFolder()
-	if folderUID == "" || s.store == nil {
-		return nil
-	}
-
-	folderManager, folderManaged, err := s.getFolderManagerProperties(ctx, obj.GetNamespace(), folderUID)
-	if err != nil {
-		return err
-	}
-
-	return checkFolderManagerConsistency(folderManager, folderManaged, obj)
+	return utils.MetaAccessor(raw)
 }
 
 // The bytes buffer will be reset with the proper value
