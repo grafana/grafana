@@ -8,6 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { CollabProvider } from 'app/features/dashboard-collab/CollabProvider';
 import { CollabCursorOverlay } from 'app/features/dashboard-collab/CollabCursorOverlay';
+import { CursorOnlyProvider } from 'app/features/dashboard-collab/CursorOnlyProvider';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
@@ -17,19 +18,21 @@ import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from './SoloPanelContext';
 
-function useCollabEnabled(model: DashboardScene): boolean {
+type CollabMode = 'full' | 'cursor-only' | 'off';
+
+function useCollabMode(model: DashboardScene): CollabMode {
   const { uid, meta } = model.useState();
   return useMemo(() => {
-    if (!config.featureToggles.dashboardCollaboration) {
-      return false;
+    if (!uid || meta?.provisioned) {
+      return 'off';
     }
-    if (!uid) {
-      return false;
+    if (config.featureToggles.dashboardCollaboration) {
+      return 'full';
     }
-    if (meta?.provisioned) {
-      return false;
+    if (config.featureToggles.dashboardCursorSync) {
+      return 'cursor-only';
     }
-    return true;
+    return 'off';
   }, [uid, meta]);
 }
 
@@ -48,7 +51,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     layoutOrchestrator,
   } = model.useState();
 
-  const collabEnabled = useCollabEnabled(model);
+  const collabMode = useCollabMode(model);
 
   const scopesServices = useScopesServices();
 
@@ -133,12 +136,21 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     </>
   );
 
-  if (collabEnabled && uid) {
+  if (collabMode === 'full' && uid) {
     return (
       <CollabProvider scene={model} dashboardUID={uid} namespace="default">
         <CollabCursorOverlay />
         {content}
       </CollabProvider>
+    );
+  }
+
+  if (collabMode === 'cursor-only' && uid) {
+    return (
+      <CursorOnlyProvider dashboardUID={uid} namespace="default">
+        <CollabCursorOverlay />
+        {content}
+      </CursorOnlyProvider>
     );
   }
 
