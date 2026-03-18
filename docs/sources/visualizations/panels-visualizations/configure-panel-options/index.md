@@ -54,13 +54,13 @@ Grafana renders the **Description** field as [GitHub Flavored Markdown](https://
 - **Links and media:** `[link text](https://example.com)` and images `![alt](https://example.com/image.png)`
 - **Tables:** GFM-style pipe tables
 
-To break text into separate paragraphs, use a blank line between them, or use a list.
-
-Grafana sanitizes the rendered HTML to reduce security risk, strips out or restricts arbitrary HTML, scripts, and many embedded elements, similar to Markdown in the [Text](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/) visualization.
-The description appears in a compact tooltip, so short copy and simple formatting work best.
+The description appears in a tooltip, so short copy and basic formatting work best.
+To break text into separate paragraphs, use an empty line between them, or use a list.
 
 You can use generative AI to populate the **Description** field with the [Grafana LLM plugin](https://grafana.com/docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/), which is currently in public preview.
 To enable this, refer to [Set up generative AI features for dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/manage-dashboards/#set-up-generative-ai-features-for-dashboards).
+
+Grafana sanitizes the rendered HTML to reduce security risk and strips out or restricts arbitrary HTML, scripts, and many embedded elements, similar to Markdown in the [Text](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/) visualization.
 
 ## Configure repeating panels
 
