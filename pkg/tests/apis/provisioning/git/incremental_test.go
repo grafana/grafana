@@ -127,6 +127,37 @@ func TestIntegrationProvisioning_IncrementalGitSync_Noop(t *testing.T) {
 	requireDashboardCount(t, helper, ctx, 1)
 }
 
+// TestIntegrationProvisioning_IncrementalGitSync_Rename verifies that
+// incremental sync handles a file rename (git mv) without losing the dashboard.
+// The dashboard UID and title should be preserved after the rename.
+func TestIntegrationProvisioning_IncrementalGitSync_Rename(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafanaWithGitServer(t)
+	ctx := context.Background()
+
+	const repoName = "git-incremental-rename"
+
+	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		"dashboard1.json": dashboardJSON("incr-dash-001", "Dashboard One", 1),
+	}, "write", "branch")
+
+	helper.syncAndWait(t, repoName)
+	requireDashboardCount(t, helper, ctx, 1)
+	requireDashboardTitle(t, helper, ctx, "incr-dash-001", "Dashboard One")
+
+	_, err := local.Git("mv", "dashboard1.json", "renamed-dashboard1.json")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "rename dashboard1")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	helper.syncAndWaitIncremental(t, repoName)
+	requireDashboardCount(t, helper, ctx, 1)
+	requireDashboardTitle(t, helper, ctx, "incr-dash-001", "Dashboard One")
+}
+
 // requireDashboardCount asserts the total number of dashboards in the instance.
 func requireDashboardCount(t *testing.T, h *gitTestHelper, ctx context.Context, expected int) {
 	t.Helper()
