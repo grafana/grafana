@@ -31,6 +31,7 @@ import { CollabContext, type CollabContextValue, type CollabLock, type CollabUse
 import { applyRemoteOp } from './opApplicator';
 import { extractMutationRequest } from './opExtractor';
 import type {
+  CheckpointOperation,
   ClientMessage,
   CollabOperation,
   CursorUpdate,
@@ -51,7 +52,7 @@ interface SessionInfo {
   seq: number;
 }
 
-function isCollabEnabled(scene: DashboardScene): boolean {
+export function isCollabEnabled(scene: DashboardScene): boolean {
   // Feature toggle
   if (!config.featureToggles.dashboardCollaboration) {
     return false;
@@ -310,6 +311,21 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     [publishOp]
   );
 
+  // Send checkpoint (manual save) request
+  const sendCheckpoint = useCallback(
+    (message?: string) => {
+      const msg: ClientMessage = {
+        kind: 'checkpoint',
+        op: {
+          type: 'checkpoint',
+          message,
+        } satisfies CheckpointOperation,
+      };
+      publishOp(msg);
+    },
+    [publishOp]
+  );
+
   // Send cursor update
   const sendCursor = useCallback(
     (update: Omit<CursorUpdate, 'type'>) => {
@@ -333,8 +349,9 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
       acquireLock,
       releaseLock,
       sendCursor,
+      sendCheckpoint,
     }),
-    [connected, users, locks, cursors, acquireLock, releaseLock, sendCursor]
+    [connected, users, locks, cursors, acquireLock, releaseLock, sendCursor, sendCheckpoint]
   );
 
   return <CollabContext.Provider value={value}>{children}</CollabContext.Provider>;

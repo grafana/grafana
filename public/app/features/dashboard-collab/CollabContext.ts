@@ -42,6 +42,9 @@ export interface CollabContextValue {
 
   /** Send a cursor position update. */
   sendCursor: (update: Omit<CursorUpdate, 'type'>) => void;
+
+  /** Send a checkpoint (manual save) request with an optional version name. */
+  sendCheckpoint: (message?: string) => void;
 }
 
 const noop = () => {};
@@ -54,4 +57,5 @@ export const CollabContext = createContext<CollabContextValue>({
   acquireLock: noop,
   releaseLock: noop,
   sendCursor: noop,
+  sendCheckpoint: noop,
 });

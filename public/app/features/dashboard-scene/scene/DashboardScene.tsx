@@ -67,6 +67,8 @@ import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
+import { CollabCheckpointDrawer } from 'app/features/dashboard-collab/CollabCheckpointDrawer';
+import { isCollabEnabled } from 'app/features/dashboard-collab/CollabProvider';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../saving/shared';
 import {
@@ -523,6 +525,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public openSaveDrawer({ saveAsCopy, onSaveSuccess }: { saveAsCopy?: boolean; onSaveSuccess?: () => void }) {
     if (!this.state.isEditing) {
+      return;
+    }
+
+    // In collab mode, Cmd+S opens a simplified checkpoint dialog instead of the full save drawer.
+    // Save-as-copy bypasses this since it's a different operation.
+    if (!saveAsCopy && isCollabEnabled(this)) {
+      this.setState({
+        overlay: new CollabCheckpointDrawer({
+          dashboardRef: this.getRef(),
+        }),
+      });
       return;
     }
 
