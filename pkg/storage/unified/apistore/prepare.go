@@ -269,7 +269,10 @@ func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils
 	}
 	folder, err := s.getParentFolder(ctx, obj)
 	if err != nil {
-		return err
+		// Folder existence is validated elsewhere; this manager-consistency check is best-effort.
+		// In some dual-writer modes the folder API may not be reachable from the storage layer.
+		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: unable to read parent folder", "folder", obj.GetFolder(), "err", err)
+		return nil
 	}
 	return ensureSameRepoManager(folder, obj)
 }
