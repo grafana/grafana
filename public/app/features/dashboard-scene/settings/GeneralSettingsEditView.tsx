@@ -84,15 +84,15 @@ export class GeneralSettingsEditView
   }
 
   public onTitleChange = (value: string) => {
-    this._dashboard.setState({ title: value });
+    this._dashboard.getMutationClient()?.execute({ type: 'UPDATE_DASHBOARD_INFO', payload: { title: value } });
   };
 
   public onDescriptionChange = (value: string) => {
-    this._dashboard.setState({ description: value });
+    this._dashboard.getMutationClient()?.execute({ type: 'UPDATE_DASHBOARD_INFO', payload: { description: value } });
   };
 
   public onTagsChange = (value: string[]) => {
-    this._dashboard.setState({ tags: value });
+    this._dashboard.getMutationClient()?.execute({ type: 'UPDATE_DASHBOARD_INFO', payload: { tags: value } });
   };
 
   public onFolderChange = async (newUID: string | undefined, newTitle: string | undefined) => {
