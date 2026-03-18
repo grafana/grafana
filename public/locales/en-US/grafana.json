@@ -10491,6 +10491,7 @@
       "toggle-panel-edit": "Toggle panel edit view",
       "toggle-panel-fullscreen": "Toggle panel fullscreen view",
       "toggle-panel-legend": "Toggle panel legend",
+      "toggle-query-latency": "Toggle query latency display on panel headers",
       "zoom-in-time-range": "Zoom in time range",
       "zoom-out-time-range": "Zoom out time range"
     },
@@ -12309,6 +12310,10 @@
     "loading": "Loading options",
     "no-options": "No options found",
     "search-placeholder": "Search"
+  },
+  "panel-query-latency": {
+    "tooltip": "Query time: {{ms}}ms",
+    "tooltip-running": "Query running: {{ms}}ms"
   },
   "panel-type-filter": {
     "clear-button": "Clear types",
