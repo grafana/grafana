@@ -245,53 +245,62 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
   // Track which lock targets we've acquired and release when panel editor closes
   const acquiredLocksRef = useRef<Set<string>>(new Set());
 
-  // Watch for editPanel/isEditing changes — release all locks when panel editor closes or edit mode exits
-  const prevEditPanelRef = useRef<unknown>(undefined);
+  // Watch for panel selection changes via DashboardEditPane — release locks when panel deselected
+  const prevSelectionRef = useRef<boolean>(false);
   useEffect(() => {
     if (!enabled || !opsAddress) {
       return;
     }
 
-    const sub = scene.subscribeToState((state) => {
-      const hadEditPanel = prevEditPanelRef.current;
-      const hasEditPanel = state.editPanel;
-
-      if (hadEditPanel !== hasEditPanel) {
-        debugLog('editPanel state changed', {
-          had: !!hadEditPanel,
-          has: !!hasEditPanel,
-          isEditing: state.isEditing,
-          acquiredLocks: Array.from(acquiredLocksRef.current),
+    // Find the DashboardEditPane in the scene's state
+    const releaseLocks = () => {
+      if (acquiredLocksRef.current.size > 0) {
+        debugLog('Releasing all locks', {
+          targets: Array.from(acquiredLocksRef.current),
         });
-      }
-
-      prevEditPanelRef.current = hasEditPanel;
-
-      // Release locks when editPanel clears (panel deselected / editor closed)
-      // or when leaving edit mode entirely
-      if ((hadEditPanel && !hasEditPanel) || (!state.isEditing && acquiredLocksRef.current.size > 0)) {
-        if (acquiredLocksRef.current.size > 0) {
-          debugLog('Releasing all locks', {
-            reason: !hasEditPanel ? 'panel deselected' : 'edit mode exited',
-            targets: Array.from(acquiredLocksRef.current),
-          });
-          for (const target of acquiredLocksRef.current) {
-            const unlockMsg: ClientMessage = {
-              kind: 'lock',
-              op: {
-                type: 'unlock',
-                target,
-                userId: localUserIdRef.current,
-              } satisfies LockOperation,
-            };
-            publishOp(unlockMsg);
-          }
-          acquiredLocksRef.current.clear();
+        for (const target of acquiredLocksRef.current) {
+          const unlockMsg: ClientMessage = {
+            kind: 'lock',
+            op: {
+              type: 'unlock',
+              target,
+              userId: localUserIdRef.current,
+            } satisfies LockOperation,
+          };
+          publishOp(unlockMsg);
         }
+        acquiredLocksRef.current.clear();
+      }
+    };
+
+    // Subscribe to scene state for editPanel and isEditing changes
+    const sceneSub = scene.subscribeToState((state) => {
+      if (!state.isEditing && acquiredLocksRef.current.size > 0) {
+        debugLog('Edit mode exited — releasing locks');
+        releaseLocks();
       }
     });
 
-    return () => sub.unsubscribe();
+    // Subscribe to DashboardEditPane selection changes
+    const editPane = (scene.state as any).editPane;
+    let editPaneSub: { unsubscribe: () => void } | undefined;
+    if (editPane && typeof editPane.subscribeToState === 'function') {
+      editPaneSub = editPane.subscribeToState((state: any) => {
+        const hasSelection = !!state.selection;
+        const hadSelection = prevSelectionRef.current;
+        prevSelectionRef.current = hasSelection;
+
+        if (hadSelection && !hasSelection) {
+          debugLog('Panel deselected — releasing locks');
+          releaseLocks();
+        }
+      });
+    }
+
+    return () => {
+      sceneSub.unsubscribe();
+      editPaneSub?.unsubscribe();
+    };
   }, [enabled, opsAddress, scene, publishOp]);
 
   // Subscribe to ops channel
