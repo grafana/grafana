@@ -209,6 +209,18 @@ func doResourcePermissionCRUDTests(t *testing.T, helper *apis.K8sTestHelper, cli
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
 	})
+
+	t.Run("should reject delete for unknown group/resource type", func(t *testing.T) {
+		ctx := context.Background()
+
+		// Try to delete a resource permission with an unknown/unregistered group/resource
+		// This should be rejected by the admission validation
+		err := clients.rpAdmin.Resource.Delete(ctx, "unknown.group.app-resources-test", metav1.DeleteOptions{})
+		require.Error(t, err)
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(400), statusErr.ErrStatus.Code, "delete of unknown group/resource should return 400 Bad Request")
+	})
 }
 
 func doResourcePermissionAuthzTests(t *testing.T, helper *apis.K8sTestHelper, clients *k8sTestClients, parentUID string) {
