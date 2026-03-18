@@ -56,10 +56,10 @@ func (s *DashboardScanner) FindStaleDashboards(ctx context.Context, namespace st
 	log.Info("Step 1: found dashboards", "count", len(dashboards.Items), "namespace", namespace)
 	log.Info("Step 1: found dashboards", "count", len(dashboards.Items), "namespace", namespace)
 
-	// uid → title
-	titles := make(map[string]string, len(dashboards.Items))
-	for _, d := range dashboards.Items {
-		titles[d.GetName()] = d.Spec.Title
+	// uid → dashboard pointer
+	dashboardsByUID := make(map[string]*dashboardv2beta1.Dashboard, len(dashboards.Items))
+	for i := range dashboards.Items {
+		dashboardsByUID[dashboards.Items[i].GetName()] = &dashboards.Items[i]
 	}
 
 	// Step 2: list DashboardStats via typed client
@@ -80,17 +80,38 @@ func (s *DashboardScanner) FindStaleDashboards(ctx context.Context, namespace st
 		views[item.GetName()] = item.DashboardStatsStatus.ViewsLast30Days
 	}
 
-	// Step 3: filter dashboards not viewed in the last 30 days
-	var stale []string
-	for uid := range titles {
-		if views[uid] == 0 {
-			stale = append(stale, uid)
+	// Step 3: tag stale dashboards
+	var staleCount int
+	for uid, d := range dashboardsByUID {
+		if views[uid] > 0 {
+			continue
+		}
+		staleCount++
+
+		// Add "stale" tag if not already present
+		hasTag := false
+		for _, t := range d.Spec.Tags {
+			if t == "stale" {
+				hasTag = true
+				break
+			}
+		}
+		if !hasTag {
+			d.Spec.Tags = append(d.Spec.Tags, "stale")
+		}
+
+		// Add annotation
+		if d.Annotations == nil {
+			d.Annotations = make(map[string]string)
+		}
+		d.Annotations["grafana.com/stale"] = "true"
+
+		if _, err := dashboardClient.Update(ctx, d, resource.UpdateOptions{}); err != nil {
+			log.Error("failed to mark dashboard as stale", "uid", uid, "title", d.Spec.Title, "error", err)
+		} else {
+			log.Info("marked dashboard as stale", "uid", uid, "title", d.Spec.Title)
 		}
 	}
-	log.Info("Step 3: filtered by views_last_30_days == 0", "total", len(titles), "with_views", len(titles)-len(stale), "stale", len(stale))
-
-	for _, uid := range stale {
-		fmt.Printf("name=%s uid=%s\n", titles[uid], uid)
-	}
+	log.Info("Step 3: tagged stale dashboards", "total", len(dashboardsByUID), "stale", staleCount)
 	return nil
 }
