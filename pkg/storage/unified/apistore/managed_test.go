@@ -118,6 +118,75 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
+			name: "changing manager identity is blocked",
+			auth: provisioner,
+			err:  "Cannot change resource manager",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "xyz",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
+			name: "changing manager kind is blocked",
+			auth: provisioner,
+			err:  "Cannot change resource manager",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
+			name: "changing manager kind and identity is blocked",
+			auth: provisioner,
+			err:  "Cannot change resource manager",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "def",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
 			name: "audience includes provisioning group",
 			auth: &serviceauthn.Identity{
 				Type: authtypes.TypeAccessPolicy,

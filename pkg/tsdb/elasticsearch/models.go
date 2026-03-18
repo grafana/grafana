@@ -126,3 +126,11 @@ func describeMetric(metricType, field string) string {
 	}
 	return text + " " + field
 }
+
+func (q *Query) IsEsqlQuery() bool {
+	return q.QueryType != nil && *q.QueryType == "esql"
+}
+
+func (q *Query) IsDSLQuery() bool {
+	return q.QueryType != nil && *q.QueryType == "dsl"
+}

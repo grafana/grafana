@@ -2335,6 +2335,7 @@
       },
       "filterBy": "",
       "firing-alerts": "",
+      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -6708,6 +6709,9 @@
       "tooltip-move-link-up": "Pindahkan tautan ke atas",
       "type": "Jenis"
     },
+    "dashboard-links-list": {
+      "add-link": ""
+    },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Kesalahan saat memuat dasbor"
     },
@@ -6986,6 +6990,11 @@
       "type-dashboards": "",
       "type-link": "",
       "with-tags": ""
+    },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": ""
     },
     "managed-badge": {
       "kubectl": "Dikelola oleh: Kubectl",
@@ -7342,6 +7351,13 @@
       "page-nav": {
         "text": {
           "settings": "Pengaturan"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -12720,6 +12736,7 @@
       "empty": "Kosong",
       "error-field-required": "Bidang ini wajib diisi.",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "Terjadi masalah saat menghubungkan ke repositori. Harap periksa pengaturan repositori dan coba lagi.",
       "error-repository-status-unhealthy-title": "Status repositori tidak sehat",
@@ -12729,6 +12746,7 @@
       "retry-action": "",
       "text-loading-resource-information": "Memuat informasi sumber daya...",
       "unmanaged-resources-label": "Sumber daya yang tidak dikelola",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_other": "{{count}} dasbor",
       "files-count_other": "{{count}} file",
@@ -12778,7 +12796,8 @@
     "connect-repository-button": {
       "configure": "Konfigurasikan",
       "instance-fully-managed-tooltip": "Konfigurasi dinonaktifkan karena instans ini dikelola sepenuhnya",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12979,7 +12998,7 @@
       "token-label": "Token Akses",
       "token-required": "Token Git diperlukan",
       "token-user-description": "Nama pengguna yang akan digunakan untuk mengakses repositori dengan token akses",
-      "url-description": "URL repositori Git",
+      "url-description": "",
       "url-pattern": "Harus URL repositori Git yang valid",
       "url-required": "URL repositori wajib diisi"
     },
@@ -13105,15 +13124,17 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_other": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_other": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_other": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_other": "",
+      "message-resource_other": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "Sumber daya ini hanya-baca dan disediakan melalui penyediaan file. Untuk membuat perubahan, perbarui repositori yang terhubung. Untuk mengubah pengaturan, buka Administrasi > Penyediaan > Repositori.",
     "read-only-remote-tooltip": "Sumber daya ini hanya-baca dan disediakan melalui Git. Untuk membuat perubahan, perbarui repositori yang terhubung. Untuk mengubah pengaturan, buka Administrasi > Penyediaan > Repositori.",

@@ -62,6 +62,16 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 				Message: "Can not remove resource manager from resource",
 			}}
 		}
+		return nil
+	}
+
+	if okNew && okOld && managerNew != managerOld {
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    http.StatusForbidden,
+			Reason:  metav1.StatusReasonForbidden,
+			Message: "Cannot change resource manager; remove the existing manager first, then add the new one",
+		}}
 	}
 	return nil
 }

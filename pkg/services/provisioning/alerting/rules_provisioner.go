@@ -168,6 +168,10 @@ var provisionerUser = func(orgID int64) identity.Requester {
 			{Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll},
 			{Action: accesscontrol.ActionAlertingProvisioningReadSecrets, Scope: dashboards.ScopeFoldersAll},
 			{Action: accesscontrol.ActionAlertingProvisioningWrite, Scope: dashboards.ScopeFoldersAll},
+			// Required for updating protected fields in contact points
+			{Action: accesscontrol.ActionAlertingReceiversRead, Scope: alert_models.ScopeReceiversAll},
+			{Action: accesscontrol.ActionAlertingReceiversUpdate, Scope: alert_models.ScopeReceiversAll},
+			{Action: accesscontrol.ActionAlertingReceiversUpdateProtected, Scope: alert_models.ScopeReceiversAll},
 		},
 	)
 }

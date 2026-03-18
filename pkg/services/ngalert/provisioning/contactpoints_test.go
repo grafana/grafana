@@ -54,6 +54,16 @@ func TestIntegrationContactPointService(t *testing.T) {
 			accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
 		},
 	}}
+	// adminUser has all permissions including updating protected fields
+	adminUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead:         nil,
+			accesscontrol.ActionAlertingProvisioningReadSecrets:  nil,
+			accesscontrol.ActionAlertingNotificationsWrite:       nil,
+			accesscontrol.ActionAlertingReceiversUpdate:          nil,
+			accesscontrol.ActionAlertingReceiversUpdateProtected: nil,
+		},
+	}}
 
 	t.Run("service gets contact points from AM config", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
@@ -225,7 +235,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 					Provenance:            newCp.Provenance,
 				}
 				tc.cp(&cp)
-				err = sut.UpdateContactPoint(context.Background(), 1, cp, models.ProvenanceAPI)
+				err = sut.UpdateContactPoint(context.Background(), 1, adminUser, cp, models.ProvenanceAPI)
 				require.ErrorIs(t, err, ErrValidation)
 			})
 		}
@@ -238,7 +248,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		require.NoError(t, err)
 		newCp.Type = "Slack"
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		got, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, newCp.Name), redactedUser)
@@ -269,7 +279,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 			return nil
 		}
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		parsed, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(store.LastSaveCommand.AlertmanagerConfiguration))
@@ -352,7 +362,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 				require.Equal(t, newCp.UID, cps[0].UID)
 				require.Equal(t, test.from, models.Provenance(cps[0].Provenance))
 
-				err = sut.UpdateContactPoint(context.Background(), 1, newCp, test.to)
+				err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, test.to)
 				if test.errNil {
 					require.NoError(t, err)
 
@@ -490,6 +500,147 @@ func TestIntegrationContactPointServiceDecryptRedact(t *testing.T) {
 	})
 }
 
+func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
+
+	// User with basic read/write permissions but without protected field update permission
+	basicUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead:   nil,
+			accesscontrol.ActionAlertingNotificationsWrite: nil,
+			accesscontrol.ActionAlertingReceiversRead:      {models.ScopeReceiversAll},
+			accesscontrol.ActionAlertingReceiversUpdate:    {models.ScopeReceiversAll},
+		},
+	}}
+
+	// User with all permissions including protected field update
+	adminUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead:         nil,
+			accesscontrol.ActionAlertingNotificationsWrite:       nil,
+			accesscontrol.ActionAlertingReceiversRead:            {models.ScopeReceiversAll},
+			accesscontrol.ActionAlertingReceiversUpdate:          {models.ScopeReceiversAll},
+			accesscontrol.ActionAlertingReceiversUpdateProtected: {models.ScopeReceiversAll},
+		},
+	}}
+
+	t.Run("user without protected permission cannot modify protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a webhook contact point (webhook has 'url' as a protected field)
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, basicUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Try to update the protected field 'url'
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://malicious.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, basicUser, created, models.ProvenanceAPI)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "user is not authorized")
+	})
+
+	t.Run("user with protected permission can modify protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a webhook contact point
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook-admin",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Update the protected field 'url' with admin user
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://newurl.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, created, models.ProvenanceAPI)
+		require.NoError(t, err)
+	})
+
+	t.Run("user without protected permission can modify non-protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a slack contact point
+		settings, _ := simplejson.NewJson([]byte(`{"recipient":"#channel","token":"secret-token"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-slack",
+			Type:     "slack",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, basicUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Update non-protected field 'recipient' - keep token as redacted
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"recipient":"#new-channel","token":"[REDACTED]"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, basicUser, created, models.ProvenanceAPI)
+		require.NoError(t, err)
+	})
+
+	t.Run("update with nil user returns error", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a webhook contact point
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook-nil-user",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Try to update with nil user (should fail for any protected field change)
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://new-url.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, nil, created, models.ProvenanceAPI)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "user is required")
+	})
+
+	t.Run("user without protected permission cannot rename and modify protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Create a webhook contact point
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook-rename",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
+		require.NoError(t, err)
+
+		// Try to rename AND change protected field
+		created.Name = "renamed-webhook"
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://malicious.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, basicUser, created, models.ProvenanceAPI)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "user is not authorized")
+	})
+}
+
 func TestRemoveSecretsForContactPoint(t *testing.T) {
 	overrides := map[schema.IntegrationType]func(settings map[string]any){
 		"webhook": func(settings map[string]any) { // add additional field to the settings because valid config does not allow it to be specified along with password
@@ -560,8 +711,9 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 	xact := newNopTransactionManager()
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
+	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true)
 	receiverService := notifier.NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true),
+		receiverAuthz,
 		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService), featuremgmt.WithFeatures()),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},
@@ -575,6 +727,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 	)
 
 	return NewContactPointService(
+		receiverAuthz,
 		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService), featuremgmt.WithFeatures()),
 		secretService,
 		provisioningStore,

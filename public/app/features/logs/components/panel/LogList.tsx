@@ -185,6 +185,7 @@ export const LogList = ({
       filterLevels={filterLevels}
       fontSize={fontSize}
       getRowContextQuery={getRowContextQuery}
+      isCustomGrammar={grammar !== undefined}
       isLabelFilterActive={isLabelFilterActive}
       logs={logs}
       logsMeta={logsMeta}

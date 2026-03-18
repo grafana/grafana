@@ -2335,6 +2335,7 @@
       },
       "filterBy": "",
       "firing-alerts": "",
+      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -6708,6 +6709,9 @@
       "tooltip-move-link-up": "링크를 위로 이동",
       "type": "유형"
     },
+    "dashboard-links-list": {
+      "add-link": ""
+    },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "대시보드 로딩 중 오류 발생"
     },
@@ -6986,6 +6990,11 @@
       "type-dashboards": "",
       "type-link": "",
       "with-tags": ""
+    },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": ""
     },
     "managed-badge": {
       "kubectl": "관리자: Kubectl",
@@ -7342,6 +7351,13 @@
       "page-nav": {
         "text": {
           "settings": "설정"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -12720,6 +12736,7 @@
       "empty": "비어 있음",
       "error-field-required": "이 필드는 필수 입력 항목입니다.",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "리포지토리에 연결하는 동안 문제가 발생했습니다. 리포지토리 설정을 확인한 후 다시 시도하세요.",
       "error-repository-status-unhealthy-title": "리포지토리 상태가 좋지 않음",
@@ -12729,6 +12746,7 @@
       "retry-action": "",
       "text-loading-resource-information": "리소스 정보 로딩 중...",
       "unmanaged-resources-label": "관리되지 않는 리소스",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_other": "대시보드 {{count}}개",
       "files-count_other": "파일 {{count}}개",
@@ -12778,7 +12796,8 @@
     "connect-repository-button": {
       "configure": "구성",
       "instance-fully-managed-tooltip": "해당 인스턴스는 완전 관리형이므로 설정이 비활성화되어 있습니다.",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12979,7 +12998,7 @@
       "token-label": "액세스 토큰",
       "token-required": "Git 토큰은 필수 항목입니다",
       "token-user-description": "액세스 토큰을 사용하여 리포지토리에 액세스하는 데 사용할 사용자 이름",
-      "url-description": "Git 리포지토리 URL",
+      "url-description": "",
       "url-pattern": "유효한 Git 리포지토리 URL이어야 합니다",
       "url-required": "리포지토리 URL은 필수 항목입니다"
     },
@@ -13105,15 +13124,17 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_other": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_other": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_other": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_other": "",
+      "message-resource_other": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "이 리소스는 읽기 전용이며 파일 프로비저닝을 통해 프로비저닝됩니다. 변경하려면 연결된 리포지토리를 업데이트하세요. 설정을 수정하려면 관리 > 프로비저닝 > 리포지토리로 이동하세요.",
     "read-only-remote-tooltip": "이 리소스는 읽기 전용이며 Git을 통해 프로비저닝됩니다. 변경하려면 연결된 리포지토리를 업데이트하세요. 설정을 수정하려면 관리 > 프로비저닝 > 리포지토리로 이동하세요.",

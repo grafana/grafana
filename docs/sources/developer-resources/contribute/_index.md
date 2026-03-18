@@ -9,7 +9,7 @@ labels:
     - enterprise
     - oss
 title: Contribute to Grafana
-weight: 300
+weight: 100
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/contribute/
 aliases:
   - ../developers/contribute/ # /docs/grafana/next/developers/contribute/
