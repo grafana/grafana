@@ -175,4 +175,128 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		require.NoError(t, err, "should allow unmanaged dashboard in unmanaged folder")
 		require.NotNil(t, created)
 	})
+
+	// --- Folder-in-folder (nested folder) cases ---
+
+	t.Run("reject unmanaged sub-folder in managed folder", func(t *testing.T) {
+		folder := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"generateName": "unmanaged-subfolder-",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder": managedFolderName,
+					},
+				},
+				"spec": map[string]interface{}{
+					"title": "Unmanaged Sub-Folder in Managed Folder",
+				},
+			},
+		}
+
+		_, err := helper.Folders.Resource.Create(ctx, folder, metav1.CreateOptions{})
+		require.Error(t, err, "should reject unmanaged sub-folder in a managed folder")
+		require.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
+	})
+
+	t.Run("reject sub-folder managed by different manager in managed folder", func(t *testing.T) {
+		folder := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"generateName": "wrong-mgr-subfolder-",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder":         managedFolderName,
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+						utils.AnnoKeyManagerIdentity: "some-other-manager",
+					},
+				},
+				"spec": map[string]interface{}{
+					"title": "Sub-Folder Managed by Different Manager",
+				},
+			},
+		}
+
+		_, err := helper.Folders.Resource.Create(ctx, folder, metav1.CreateOptions{})
+		require.Error(t, err, "should reject sub-folder managed by a different manager")
+		require.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
+	})
+
+	t.Run("allow managed sub-folder in unmanaged folder", func(t *testing.T) {
+		parent := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"generateName": "unmanaged-parent-",
+				},
+				"spec": map[string]interface{}{
+					"title": "Unmanaged Parent Folder",
+				},
+			},
+		}
+		createdParent, err := helper.Folders.Resource.Create(ctx, parent, metav1.CreateOptions{})
+		require.NoError(t, err, "should create unmanaged parent folder")
+
+		child := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"generateName": "managed-child-",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder":         createdParent.GetName(),
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+						utils.AnnoKeyManagerIdentity: "my-kubectl",
+					},
+				},
+				"spec": map[string]interface{}{
+					"title": "Managed Child Folder in Unmanaged Parent",
+				},
+			},
+		}
+
+		created, err := helper.Folders.Resource.Create(ctx, child, metav1.CreateOptions{})
+		require.NoError(t, err, "should allow managed sub-folder in unmanaged folder")
+		require.NotNil(t, created)
+	})
+
+	t.Run("allow unmanaged sub-folder in unmanaged folder", func(t *testing.T) {
+		parent := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"generateName": "plain-parent-",
+				},
+				"spec": map[string]interface{}{
+					"title": "Plain Parent Folder",
+				},
+			},
+		}
+		createdParent, err := helper.Folders.Resource.Create(ctx, parent, metav1.CreateOptions{})
+		require.NoError(t, err, "should create plain parent folder")
+
+		child := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"generateName": "plain-child-",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder": createdParent.GetName(),
+					},
+				},
+				"spec": map[string]interface{}{
+					"title": "Plain Child Folder",
+				},
+			},
+		}
+
+		created, err := helper.Folders.Resource.Create(ctx, child, metav1.CreateOptions{})
+		require.NoError(t, err, "should allow unmanaged sub-folder in unmanaged folder")
+		require.NotNil(t, created)
+	})
 }
