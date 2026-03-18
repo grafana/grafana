@@ -5,6 +5,7 @@ import {
   FieldColorModeId,
   FieldConfig,
   fieldReducers,
+  isReducerID,
   PanelModel,
   ReduceDataOptions,
   ReducerID,
@@ -431,23 +432,25 @@ function getReducersFromLegend(obj: Record<string, unknown>): string[] {
 }
 
 // same as public/app/plugins/panel/barchart/migrations.ts
-function getReducerForMigration(reducers: string[] | undefined) {
-  const transformReducers: string[] = [];
+function getReducerForMigration(reducers: string[] | undefined): ReducerID[] {
+  const transformReducers: ReducerID[] = [];
+  if (!reducers) {
+    return [ReducerID.sum];
+  }
 
-  reducers?.forEach((reducer) => {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    if (!Object.values(ReducerID).includes(reducer as ReducerID)) {
-      if (reducer === 'current') {
-        transformReducers.push(ReducerID.lastNotNull);
-      } else if (reducer === 'total') {
-        transformReducers.push(ReducerID.sum);
-      } else if (reducer === 'avg') {
-        transformReducers.push(ReducerID.mean);
-      }
-    } else {
+  for (const reducer of reducers) {
+    if (isReducerID(reducer)) {
       transformReducers.push(reducer);
+    } else if (reducer === 'current') {
+      transformReducers.push(ReducerID.lastNotNull);
+    } else if (reducer === 'total') {
+      transformReducers.push(ReducerID.sum);
+    } else if (reducer === 'avg') {
+      transformReducers.push(ReducerID.mean);
+    } else {
+      console.warn(`Unknown reducer ${reducer} found during migration, ignoring`);
     }
-  });
+  }
 
-  return reducers ? transformReducers : [ReducerID.sum];
+  return transformReducers;
 }

@@ -68,13 +68,14 @@ export function getStackingBands(group: StackingGroup) {
 
   let rSeries = series.slice().reverse();
 
-  for (const [i, si] of rSeries.entries()) {
+  for (let i = 0; i < rSeries.length; i++) {
+    const si = rSeries[i];
     if (i !== lastIdx) {
       let nextIdx = rSeries[i + 1];
       bands.push({
         series: [si, nextIdx],
         // fill direction is inverted from stack direction
-        dir: (-1 * dir) as 1 | -1,
+        dir: dir === 1 ? -1 : 1,
       });
     }
   }
@@ -87,12 +88,9 @@ export function getStackingBands(group: StackingGroup) {
 export function getStackingGroups(frame: DataFrame) {
   let groups: Map<string, StackingGroup> = new Map();
 
-  for (const [i, { config, values, type }] of frame.fields.entries()) {
-    // skip x or time field
-    if (i === 0) {
-      continue;
-    }
-
+  // skip x or time field, start with 1
+  for (let i = 1; i < frame.fields.length; i++) {
+    const { config, values, type } = frame.fields[i];
     let { custom } = config;
 
     if (custom == null) {

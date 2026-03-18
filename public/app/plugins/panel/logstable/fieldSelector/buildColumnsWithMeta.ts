@@ -61,7 +61,7 @@ export const buildColumnsWithMeta = (
     pendingLabelState = Object.fromEntries(labelCardinality);
 
     // Convert count to percent of log lines
-    for (const key of Object.keys(pendingLabelState)) {
+    for (const key in pendingLabelState) {
       pendingLabelState[key].percentOfLinesWithLabel = normalize(
         pendingLabelState[key].percentOfLinesWithLabel,
         numberOfLogLines

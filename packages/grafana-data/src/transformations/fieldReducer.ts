@@ -143,8 +143,12 @@ export function getFieldTypeForReducer(id: ReducerID, fallback: FieldType): Fiel
       : fallback;
 }
 
+let _allReducerIds: ReducerID[];
 export function isReducerID(id: string): id is ReducerID {
-  return Object.keys(ReducerID).includes(id);
+  if (!_allReducerIds) {
+    _allReducerIds = Object.values(ReducerID);
+  }
+  return _allReducerIds.some((reducerId) => reducerId === id);
 }
 
 // Internal function

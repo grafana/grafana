@@ -13,12 +13,14 @@ interface BarGaugeLegendProps extends VizLegendOptions, Omit<VizLayoutLegendProp
 export const BarGaugeLegend = memo(
   ({ data, placement, calcs, displayMode, ...vizLayoutLegendProps }: BarGaugeLegendProps) => {
     const theme = useTheme2();
-    let legendItems: VizLegendItem[] = [];
 
     cacheFieldDisplayNames(data);
 
-    for (const [frameIndex, series] of data.entries()) {
-      for (const [i, field] of series.fields.entries()) {
+    let legendItems: VizLegendItem[] = [];
+    for (let frameIndex = 0; frameIndex < data.length; frameIndex++) {
+      const series = data[frameIndex];
+      for (let i = 0; i < series.fields.length; i++) {
+        const field = series.fields[i];
         const fieldIndex = i + 1;
 
         if (field.type === FieldType.time || field.config.custom?.hideFrom?.legend) {

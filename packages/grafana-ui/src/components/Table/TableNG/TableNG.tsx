@@ -80,6 +80,7 @@ import {
   CellRootRenderer,
   FromFieldsResult,
   InspectCellProps,
+  isTableColumn,
   TableCellStyleOptions,
   TableColumn,
   TableNGProps,
@@ -218,7 +219,12 @@ export function TableNG(props: TableNGProps) {
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
   const onCellClick: OnCellClick = useCallback(
     ({ column, row }, ev) => {
-      const field = (column as unknown as TableColumn).field;
+      if (!isTableColumn(column)) {
+        console.warn(`${column.key} was not correctly configured within the Table panel.`);
+        return;
+      }
+
+      const field = column.field;
 
       // let the click event through for the expander column, since it has its own click handler for expanding/collapsing rows.
       if (column.key === EXPANDED_COLUMN_KEY) {
@@ -653,8 +659,8 @@ export function TableNG(props: TableNGProps) {
               {...props}
               className={clsx(
                 props.className ?? '',
-                cellParentStyles ?? '',
-                cellSpecificStyles != null && maxRowHeight == null ? `${cellSpecificStyles ?? ''}` : ''
+                cellParentStyles,
+                cellSpecificStyles != null && maxRowHeight == null ? cellSpecificStyles : ''
               )}
               style={style}
             />
@@ -750,10 +756,10 @@ export function TableNG(props: TableNGProps) {
               cellOptions: tooltipCellOptions,
               classes: tooltipClasses,
               className: clsx(
-                tooltipClasses.tooltipContent ?? '',
-                tooltipDefaultStyles ?? '',
+                tooltipClasses.tooltipContent,
+                tooltipDefaultStyles,
                 tooltipSpecificStyles ?? '',
-                tooltipLinkStyles ?? ''
+                tooltipLinkStyles
               ),
               data: frame,
               disableSanitizeHtml,

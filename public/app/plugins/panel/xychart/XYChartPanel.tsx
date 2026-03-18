@@ -66,7 +66,8 @@ export const XYChartPanel2 = (props: Props2) => {
 
     const items: VizLegendItem[] = [];
 
-    for (const [idx, s] of series.entries()) {
+    for (let idx = 0; idx < series.length; idx++) {
+      const s = series[idx];
       let yField = s.y.field;
       let config = yField.config;
       let custom = config.custom;

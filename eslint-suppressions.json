@@ -746,7 +746,7 @@
   },
   "packages/grafana-ui/src/components/Table/TableNG/TableNG.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
+      "count": 2
     },
     "react/display-name": {
       "count": 1
@@ -911,9 +911,6 @@
     }
   },
   "packages/grafana-ui/src/components/uPlot/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
@@ -3825,11 +3822,6 @@
       "count": 1
     },
     "unicorn/no-array-for-each": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/barchart/migrations.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
   },

@@ -342,3 +342,7 @@ export interface FromFieldsResult {
 export interface FooterFieldState extends FieldState {
   lastProcessedRowCount: number;
 }
+
+export function isTableColumn(col: Column<TableRow, TableSummaryRow>): col is TableColumn {
+  return Object.prototype.hasOwnProperty.call(col, 'field');
+}

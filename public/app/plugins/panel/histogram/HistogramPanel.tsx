@@ -7,6 +7,7 @@ import {
   PanelProps,
   buildHistogram,
   cacheFieldDisplayNames,
+  cacheFrameAndFieldIndices,
   getHistogramFields,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -27,19 +28,7 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
       return undefined;
     }
 
-    // stamp origins for legend's calcs (from raw values)
-    for (const [frameIndex, frame] of data.series.entries()) {
-      for (const [fieldIndex, field] of frame.fields.entries()) {
-        field.state = {
-          ...field.state,
-          origin: {
-            frameIndex,
-            fieldIndex,
-          },
-        };
-      }
-    }
-
+    cacheFrameAndFieldIndices(data.series);
     cacheFieldDisplayNames(data.series);
 
     if (

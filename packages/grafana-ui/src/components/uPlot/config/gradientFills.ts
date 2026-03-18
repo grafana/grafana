@@ -182,7 +182,8 @@ export function getDataRange(plot: uPlot, scaleKey: string) {
   let min = Infinity;
   let max = -Infinity;
 
-  for (const [seriesIdx, ser] of plot.series.entries()) {
+  for (let seriesIdx = 0; seriesIdx < plot.series.length; seriesIdx++) {
+    const ser = plot.series[seriesIdx];
     if (ser.show && ser.scale === scaleKey) {
       // uPlot skips finding data min/max when a scale has a pre-defined range
       if (ser.min == null) {

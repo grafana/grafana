@@ -1,7 +1,12 @@
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { DataFrame, TIME_SERIES_TIME_FIELD_NAME, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
 
-import { decoupleHideFromState, getFieldDisplayName, getFrameDisplayName } from './fieldState';
+import {
+  cacheFrameAndFieldIndices,
+  decoupleHideFromState,
+  getFieldDisplayName,
+  getFrameDisplayName,
+} from './fieldState';
 
 interface TitleScenario {
   frames: DataFrame[];
@@ -308,5 +313,40 @@ describe('decoupleHideFromState', () => {
     });
 
     expect(frame.fields[0].state?.hideFrom).not.toBeUndefined();
+  });
+});
+
+describe('cacheFrameAndFieldIndices', () => {
+  it('should add origin with frame and field index to field state', () => {
+    const frame1 = toDataFrame({
+      fields: [{ name: 'Field 1' }, { name: 'Field 2' }],
+    });
+    const frame2 = toDataFrame({
+      fields: [{ name: 'Field 3' }, { name: 'Field 4' }],
+    });
+
+    expect(frame1.fields[0].state?.origin).toBeUndefined();
+    expect(frame1.fields[1].state?.origin).toBeUndefined();
+    expect(frame2.fields[0].state?.origin).toBeUndefined();
+    expect(frame2.fields[1].state?.origin).toBeUndefined();
+
+    cacheFrameAndFieldIndices([frame1, frame2]);
+
+    expect(frame1.fields[0].state?.origin).toEqual({ frameIndex: 0, fieldIndex: 0 });
+    expect(frame1.fields[1].state?.origin).toEqual({ frameIndex: 0, fieldIndex: 1 });
+    expect(frame2.fields[0].state?.origin).toEqual({ frameIndex: 1, fieldIndex: 0 });
+    expect(frame2.fields[1].state?.origin).toEqual({ frameIndex: 1, fieldIndex: 1 });
+  });
+
+  it('should override existing origin', () => {
+    const frame = toDataFrame({
+      fields: [{ name: 'Field 1', state: { origin: { frameIndex: 10, fieldIndex: 10 } } }],
+    });
+
+    frame.fields[0].state = { origin: { frameIndex: 10, fieldIndex: 10 } };
+
+    cacheFrameAndFieldIndices([frame]);
+
+    expect(frame.fields[0].state?.origin).toEqual({ frameIndex: 0, fieldIndex: 0 });
   });
 });
