@@ -217,6 +217,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
 
           // Auto-acquire lock for the target before sending the op
           if (collabOp.lockTarget) {
+            acquiredLocksRef.current.add(collabOp.lockTarget);
             const lockMsg: ClientMessage = {
               kind: 'lock',
               op: {
@@ -233,6 +234,48 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
             op: collabOp,
           };
           publishOp(msg);
+        }
+      }
+    );
+
+    return () => sub.unsubscribe();
+  }, [enabled, opsAddress, scene, publishOp]);
+
+  // Track which lock targets we've acquired and release when panel editor closes
+  const acquiredLocksRef = useRef<Set<string>>(new Set());
+
+  // Watch for editPanel changes — release all locks when panel editor closes
+  useEffect(() => {
+    if (!enabled || !opsAddress) {
+      return;
+    }
+
+    const sub = scene.subscribeToEvent(
+      SceneObjectStateChangedEvent,
+      (event: SceneObjectStateChangedEvent) => {
+        // Detect editPanel being cleared (panel editor closed)
+        if (
+          event.payload.changedObject === scene &&
+          'editPanel' in (event.payload.partialUpdate ?? {})
+        ) {
+          const newEditPanel = (event.payload.newState as any)?.editPanel;
+          if (!newEditPanel && acquiredLocksRef.current.size > 0) {
+            debugLog('Panel editor closed — releasing all locks', {
+              targets: Array.from(acquiredLocksRef.current),
+            });
+            for (const target of acquiredLocksRef.current) {
+              const unlockMsg: ClientMessage = {
+                kind: 'lock',
+                op: {
+                  type: 'unlock',
+                  target,
+                  userId: localUserIdRef.current,
+                } satisfies LockOperation,
+              };
+              publishOp(unlockMsg);
+            }
+            acquiredLocksRef.current.clear();
+          }
         }
       }
     );
