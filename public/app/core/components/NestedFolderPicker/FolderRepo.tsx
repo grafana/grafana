@@ -3,7 +3,7 @@ import { memo } from 'react';
 import { t } from '@grafana/i18n';
 import { Badge, Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { RepoViewStatus, useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { getManagedByRepositoryTooltip, getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import { DashboardViewItem } from 'app/features/search/types';
@@ -21,7 +21,7 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance({ skip: canSkipEarly });
   const skipRender = canSkipEarly || isProvisionedInstance;
 
-  const { isReadOnlyRepo, repoType, repository } = useGetResourceRepositoryView({
+  const { isReadOnlyRepo, repoType, repository, status } = useGetResourceRepositoryView({
     folderName: skipRender ? undefined : folder?.uid,
     skipQuery: skipRender,
   });
@@ -31,6 +31,11 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   }
 
   const repoTooltipText = getManagedByRepositoryTooltip(repository?.title || repository?.name);
+  const isOrphaned = status === RepoViewStatus.Orphaned;
+
+  if (isOrphaned) {
+    return <Badge color="orange" icon="exclamation-triangle" tooltip="Repository not found" />
+  }
 
   return (
     // badge with text and icon only has different height, we will need to adjust the layout using stretch

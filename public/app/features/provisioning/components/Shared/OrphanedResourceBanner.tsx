@@ -28,8 +28,7 @@ export function OrphanedResourceBanner({ uid, resourceType, variant = 'banner' }
   });
 
   const handleConfirm = async () => {
-    await disconnect();
-    window.location.reload();
+    // do something
   };
 
   const resourceLabel = resourceType === 'dashboards' ? 'dashboard' : 'folder';
@@ -44,6 +43,8 @@ export function OrphanedResourceBanner({ uid, resourceType, variant = 'banner' }
           { resourceLabel }
         )}
         style={variant === 'banner' ? { flex: 0 } : undefined}
+        onRemove={isAdmin ? () => setShowConfirm(true) : undefined}
+        buttonContent={isAdmin ? t('provisioning.orphaned-resource-banner.disconnect-button', 'Disconnect from repository') : undefined}
       >
         <Stack direction="column" gap={1}>
           {variant === 'banner' ? (
@@ -56,19 +57,6 @@ export function OrphanedResourceBanner({ uid, resourceType, variant = 'banner' }
               The provisioning repository that managed this resource has been removed. This resource cannot be saved or
               deleted through the normal provisioning workflow until it is disconnected.
             </Trans>
-          )}
-          {isAdmin && (
-            <div>
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={isDisconnecting ? 'spinner' : undefined}
-                disabled={isDisconnecting}
-                onClick={() => setShowConfirm(true)}
-              >
-                {t('provisioning.orphaned-resource-banner.disconnect-button', 'Disconnect from repository')}
-              </Button>
-            </div>
           )}
         </Stack>
       </Alert>
