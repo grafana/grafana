@@ -61,20 +61,17 @@ jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
 
 jest.mock('uplot', () => {
   const mockPathsBars = jest.fn(() => () => '');
-  const mock = jest.fn().mockImplementation((config: { width?: number; height?: number }) => {
+
+  return jest.fn().mockImplementation((config: { width?: number; height?: number }) => {
     lastUPlotConfig = { width: config?.width ?? 0, height: config?.height ?? 0 };
     return {
       setData: jest.fn(),
       setSize: jest.fn(),
       destroy: jest.fn(),
+      paths: { bars: mockPathsBars },
+      rangeLog: jest.fn((min: number, max: number) => [min, max]),
     };
-  }) as jest.Mock & {
-    paths: { bars: jest.Mock };
-    rangeLog: (min: number, max: number) => [number, number];
-  };
-  mock.paths = { bars: mockPathsBars };
-  mock.rangeLog = jest.fn((min: number, max: number) => [min, max]);
-  return mock;
+  });
 });
 
 jest.mock('@grafana/ui', () => {
