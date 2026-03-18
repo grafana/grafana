@@ -554,12 +554,12 @@ func TestGetFolderID(t *testing.T) {
 			name:                  "metadata enabled and exists - returns stable UID",
 			folderMetadataEnabled: true,
 			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
 				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", "").
 					Return(&repository.FileInfo{
 						Data: metadataBytes,
 						Path: "team-a/project-x/_folder.json",
 					}, nil)
-				// Config() should not be called when metadata is found
 			},
 			expectedID:  "stable-uid-123",
 			expectedErr: false,
@@ -581,6 +581,7 @@ func TestGetFolderID(t *testing.T) {
 			name:                  "metadata enabled but read fails - returns error",
 			folderMetadataEnabled: true,
 			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
 				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", "").
 					Return(nil, fmt.Errorf("permission denied"))
 			},

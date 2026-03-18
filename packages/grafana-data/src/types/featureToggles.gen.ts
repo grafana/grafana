@@ -384,6 +384,11 @@ export interface FeatureToggles {
   */
   alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
+  * Enables creating alert rules from a panel using a drawer UI
+  * @default false
+  */
+  createAlertRuleFromPanel?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   * @default false
   */
@@ -1191,6 +1196,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRolesAndRoleBindingsRedirect?: boolean;
   /**
+  * Enables datasource resource permissions via the K8s IAM resource permission APIs
+  * @default false
+  */
+  kubernetesAuthzDatasourceResourcePermissions?: boolean;
+  /**
   * Enables restore deleted dashboards feature
   * @default false
   */
@@ -1465,6 +1475,11 @@ export interface FeatureToggles {
   * @default false
   */
   elasticsearchRawDSLQuery?: boolean;
+  /**
+  * Enables the ES|QL query editor in the Elasticsearch data source
+  * @default false
+  */
+  elasticsearchESQLQuery?: boolean;
   /**
   * Enables http proxy settings for aws datasources
   * @default false

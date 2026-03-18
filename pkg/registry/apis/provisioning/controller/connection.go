@@ -225,6 +225,12 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return nil
 	}
 
+	// Skip reconciliation for resources whose namespace is being soft-deleted.
+	if IsPendingDelete(conn.Labels) {
+		logger.Info("skipping reconciliation: namespace is pending deletion")
+		return nil
+	}
+
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
 	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
 

@@ -658,6 +658,10 @@ const (
 	// Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints
 	FlagKubernetesAuthzRolesAndRoleBindingsRedirect = "kubernetesAuthzRolesAndRoleBindingsRedirect"
 
+	// FlagKubernetesAuthzDatasourceResourcePermissions
+	// Enables datasource resource permissions via the K8s IAM resource permission APIs
+	FlagKubernetesAuthzDatasourceResourcePermissions = "kubernetesAuthzDatasourceResourcePermissions"
+
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"
@@ -773,6 +777,10 @@ const (
 	// FlagElasticsearchRawDSLQuery
 	// Enables the raw DSL query editor in the Elasticsearch data source
 	FlagElasticsearchRawDSLQuery = "elasticsearchRawDSLQuery"
+
+	// FlagElasticsearchESQLQuery
+	// Enables the ES|QL query editor in the Elasticsearch data source
+	FlagElasticsearchESQLQuery = "elasticsearchESQLQuery"
 
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources

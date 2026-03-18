@@ -3,7 +3,7 @@ title: Grafana Cloud API
 labels:
   products:
     - cloud
-weight: 125
+weight: 200
 canonical: https://grafana.com/docs/grafana/latest/developer-resources/api-reference/cloud-api/
 ---
 

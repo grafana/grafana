@@ -1312,6 +1312,20 @@
     },
     {
       "metadata": {
+        "name": "createAlertRuleFromPanel",
+        "resourceVersion": "1773673451775",
+        "creationTimestamp": "2026-03-16T15:04:11Z"
+      },
+      "spec": {
+        "description": "Enables creating alert rules from a panel using a drawer UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "createdByMeSearchFilter",
         "resourceVersion": "1771965456951",
         "creationTimestamp": "2026-02-24T20:37:36Z"
@@ -1776,6 +1790,19 @@
       "spec": {
         "description": "Enables cross cluster search in the Elasticsearch data source",
         "stage": "GA",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "elasticsearchESQLQuery",
+        "resourceVersion": "1769025600000",
+        "creationTimestamp": "2026-01-21T12:00:00Z"
+      },
+      "spec": {
+        "description": "Enables the ES|QL query editor in the Elasticsearch data source",
+        "stage": "experimental",
         "codeowner": "@grafana/partner-datasources",
         "expression": "false"
       }
@@ -2608,6 +2635,20 @@
       },
       "spec": {
         "description": "Registers AuthZ Core Roles /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzDatasourceResourcePermissions",
+        "resourceVersion": "1773784985598",
+        "creationTimestamp": "2026-03-17T22:03:05Z"
+      },
+      "spec": {
+        "description": "Enables datasource resource permissions via the K8s IAM resource permission APIs",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
