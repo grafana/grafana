@@ -13,10 +13,11 @@ import (
 	"github.com/google/uuid"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/klog/v2"
 
 	authlib "github.com/grafana/authlib/types"
@@ -263,7 +264,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
-	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" || s.store == nil {
+	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" || s.configProvider == nil {
 		return nil
 	}
 	folder, err := s.getParentFolder(ctx, obj)
@@ -274,26 +275,21 @@ func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils
 }
 
 func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
-	name := obj.GetFolder()
-	gr := folders.FolderResourceInfo.GroupResource()
-	rsp, err := s.store.Read(ctx, &resourcepb.ReadRequest{
-		Key: &resourcepb.ResourceKey{
-			Group:     gr.Group,
-			Resource:  gr.Resource,
-			Namespace: obj.GetNamespace(),
-			Name:      name,
-		},
-	})
+	cfg, err := s.configProvider.GetRestConfig(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read folder %s: %w", name, err)
-	}
-	if rsp.Error != nil {
-		return nil, fmt.Errorf("failed to read folder %s: %s", name, rsp.Error.Message)
+		return nil, fmt.Errorf("failed to get REST config: %w", err)
 	}
 
-	raw := &unstructured.Unstructured{}
-	if err := json.Unmarshal(rsp.Value, &raw.Object); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal folder %s: %w", name, err)
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+	}
+
+	name := obj.GetFolder()
+	gvr := folders.FolderResourceInfo.GroupVersionResource()
+	raw, err := dynClient.Resource(gvr).Namespace(obj.GetNamespace()).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to read folder %s: %w", name, err)
 	}
 
 	return utils.MetaAccessor(raw)
