@@ -88,8 +88,8 @@ require (
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20260312173859-6fc4227d9c4c // @grafana/alerting-backend
-	github.com/grafana/authlib v0.0.0-20260304162428-e279d73bef22 // @grafana/identity-access-team
-	github.com/grafana/authlib/types v0.0.0-20260304162428-e279d73bef22 // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039 // @grafana/identity-access-team
+	github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
 	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // @grafana/grafana-backend-group
@@ -107,12 +107,12 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.290.1 // @grafana/plugins-platform-backend
 	github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 // @grafana/alerting-backend
 	github.com/grafana/loki/v3 v3.5.11 // @grafana/observability-logs
-	github.com/grafana/nanogit v0.7.0 // indirect; @grafana/grafana-git-ui-sync-team
-	github.com/grafana/nanogit/gittest v0.6.0 // @grafana/grafana-git-ui-sync-team
+	github.com/grafana/nanogit v0.12.0 // indirect; @grafana/grafana-git-ui-sync-team
+	github.com/grafana/nanogit/gittest v0.10.2 // @grafana/grafana-git-ui-sync-team
 	github.com/grafana/otel-profiling-go v0.5.1 // @grafana/grafana-backend-group
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // @grafana/observability-traces-and-profiling
 	github.com/grafana/pyroscope/api v1.2.1-0.20251202111406-6c67b876b686 // @grafana/observability-traces-and-profiling
-	github.com/grafana/schemads v0.0.1 // @grafana/data-sources
+	github.com/grafana/schemads v0.0.3 // @grafana/data-sources
 	github.com/grafana/tempo v1.5.1-0.20250529124718-87c2dc380cec // @grafana/observability-traces-and-profiling
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/grafana-search-and-storage
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // @grafana/plugins-platform-backend
@@ -213,7 +213,7 @@ require (
 	golang.org/x/mod v0.33.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/net v0.51.0 // @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/oauth2 v0.35.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.19.0 // @grafana/alerting-backend
+	golang.org/x/sync v0.20.0 // @grafana/alerting-backend
 	golang.org/x/text v0.34.0 // @grafana/grafana-backend-group
 	golang.org/x/time v0.14.0 // @grafana/grafana-backend-group
 	golang.org/x/tools v0.42.0 // indirect; @grafana/grafana-as-code

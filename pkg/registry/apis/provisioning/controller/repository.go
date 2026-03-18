@@ -591,6 +591,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 		return rc.handleDelete(ctx, obj)
 	}
 
+	// Skip reconciliation for resources whose namespace is being soft-deleted.
+	if IsPendingDelete(obj.Labels) {
+		logger.Info("skipping reconciliation: namespace is pending deletion")
+		return nil
+	}
+
 	// Check quota state early - before trigger evaluation
 	// This allows blocked repos to check if they can unblock even without other triggers
 	newQuota, err := rc.quotaGetter.GetQuotaStatus(ctx, namespace)

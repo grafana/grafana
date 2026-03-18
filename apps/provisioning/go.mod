@@ -8,12 +8,12 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/go-github/v82 v82.0.0
 	github.com/google/uuid v1.6.0
-	github.com/grafana/authlib/types v0.0.0-20260304162428-e279d73bef22
+	github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039
 	github.com/grafana/grafana-app-sdk v0.51.4
 	github.com/grafana/grafana-app-sdk/logging v0.51.4
 	github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
-	github.com/grafana/nanogit v0.7.0
+	github.com/grafana/nanogit v0.12.0
 	github.com/migueleliasweb/go-github-mock v1.5.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1
@@ -55,7 +55,7 @@ require (
 	github.com/google/go-github/v73 v73.0.0 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/authlib v0.0.0-20260304162428-e279d73bef22 // indirect
+	github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039 // indirect
 	github.com/grafana/dskit v0.0.0-20260108123158-1a1acfb6ef2e // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -89,7 +89,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/net v0.51.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/term v0.40.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
