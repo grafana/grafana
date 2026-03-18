@@ -1,6 +1,5 @@
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { CollabContext, type CollabContextValue } from './CollabContext';
 import { CollabCheckpointDrawer } from './CollabCheckpointDrawer';
@@ -26,6 +25,7 @@ function makeCollabValue(overrides: Partial<CollabContextValue> = {}): CollabCon
     connected: true,
     users: [],
     locks: [],
+    staleLocks: new Set<string>(),
     cursors: new Map(),
     acquireLock: jest.fn(),
     releaseLock: jest.fn(),
@@ -102,7 +102,6 @@ describe('CollabCheckpointDrawer', () => {
   });
 
   it('shows warning when not connected', async () => {
-    const user = userEvent.setup();
     renderDrawer(makeCollabValue({ connected: false }));
 
     const saveButton = screen.getByTestId('collab-checkpoint-save');

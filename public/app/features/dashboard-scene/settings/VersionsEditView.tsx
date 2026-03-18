@@ -136,7 +136,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
           new Date().toISOString(),
         createdBy: item.metadata.annotations?.[AnnoKeyUpdatedBy] ?? item.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
         message: item.metadata.annotations?.[AnnoKeyMessage] ?? '',
-        versionType: item.metadata.annotations?.[AnnoKeyVersionType] ?? 'manual',
+        versionType: (item.metadata.annotations as Record<string, string>)?.[AnnoKeyVersionType] ?? 'manual',
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         data: item.spec as object,
       })

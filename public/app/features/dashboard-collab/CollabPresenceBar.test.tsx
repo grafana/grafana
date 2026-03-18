@@ -1,10 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { CollabContext, type CollabContextValue, type CollabUser } from './CollabContext';
 import { CollabPresenceBar, type SaveStatus } from './CollabPresenceBar';
-import type { CursorUpdate } from './protocol/messages';
 
 function makeUser(id: string, name: string, color: string, avatarUrl = ''): CollabUser {
   return { userId: id, displayName: name, avatarUrl, color };
@@ -15,10 +13,12 @@ function makeCollabValue(overrides: Partial<CollabContextValue> = {}): CollabCon
     connected: true,
     users: [],
     locks: [],
+    staleLocks: new Set<string>(),
     cursors: new Map(),
     acquireLock: jest.fn(),
     releaseLock: jest.fn(),
     sendCursor: jest.fn(),
+    sendCheckpoint: jest.fn(),
     ...overrides,
   };
 }

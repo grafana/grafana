@@ -1,9 +1,7 @@
 import { render, screen, act } from '@testing-library/react';
-import React from 'react';
 
-import { CollabContext, type CollabContextValue, type CollabUser } from './CollabContext';
+import { CollabContext, type CollabContextValue } from './CollabContext';
 import { CollabCursorOverlay } from './CollabCursorOverlay';
-import { STALE_CURSOR_MS, LABEL_FADE_MS } from './cursor-utils';
 import type { CursorUpdate } from './protocol/messages';
 
 jest.mock('@grafana/runtime', () => ({
@@ -18,10 +16,12 @@ function makeCollabValue(overrides: Partial<CollabContextValue> = {}): CollabCon
     connected: true,
     users: [],
     locks: [],
+    staleLocks: new Set<string>(),
     cursors: new Map(),
     acquireLock: jest.fn(),
     releaseLock: jest.fn(),
     sendCursor: jest.fn(),
+    sendCheckpoint: jest.fn(),
     ...overrides,
   };
 }

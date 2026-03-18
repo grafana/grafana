@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 
 import { CollabContext, type CollabContextValue } from 'app/features/dashboard-collab/CollabContext';
 
@@ -11,6 +10,7 @@ function makeCollabValue(overrides: Partial<CollabContextValue> = {}): CollabCon
     connected: true,
     users: [],
     locks: [],
+    staleLocks: new Set<string>(),
     cursors: new Map(),
     acquireLock: jest.fn(),
     releaseLock: jest.fn(),

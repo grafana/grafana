@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { Subject, type Observable } from 'rxjs';
-import React, { type PropsWithChildren } from 'react';
+import { type PropsWithChildren } from 'react';
 
 import {
   LiveChannelConnectionState,

@@ -42,7 +42,6 @@ import { extractMutationRequest, setLargeDashboardMode } from './opExtractor';
 import type {
   CheckpointOperation,
   ClientMessage,
-  CollabOperation,
   CursorUpdate,
   LockOperation,
   ServerMessage,

@@ -1,8 +1,5 @@
-import { render, screen, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-
-import { config } from '@grafana/runtime';
 
 import { CollabContext, type CollabContextValue, type CollabLock, type CollabUser } from './CollabContext';
 import { CollabPanelBorder, useCollabEditGuard } from './CollabPanelBorder';
@@ -39,10 +36,12 @@ function makeCollabValue(overrides: Partial<CollabContextValue> = {}): CollabCon
     connected: true,
     users: [],
     locks: [],
+    staleLocks: new Set<string>(),
     cursors: new Map(),
     acquireLock: mockAcquireLock,
     releaseLock: mockReleaseLock,
     sendCursor: jest.fn(),
+    sendCheckpoint: jest.fn(),
     ...overrides,
   };
 }
