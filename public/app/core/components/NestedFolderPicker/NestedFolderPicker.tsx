@@ -273,7 +273,6 @@ export function NestedFolderPicker({
   if (value === '') {
     label = t('browse-dashboards.folder-picker.root-title', 'Dashboards');
   } else if (getSelectedFolderResult.data?.parents?.length && getSelectedFolderResult.data?.title) {
-    // Include parent hierarchy when available (e.g. "Development Environment / accounts")
     label = [
       ...getSelectedFolderResult.data.parents.map((p) => p.title),
       getSelectedFolderResult.data.title,
