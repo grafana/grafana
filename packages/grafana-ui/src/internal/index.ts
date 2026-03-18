@@ -41,7 +41,7 @@ export {
   frameHasName,
   getFrameFieldsDisplayNames,
   useFieldDisplayNames,
-  useSelectOptions,
+  useMatcherSelectOptions,
 } from '../components/MatchersUI/utils';
 export type { FieldMatcherUIRegistryItem } from '../components/MatchersUI/types';
 export { RefIDMultiPicker, RefIDPicker, stringsToRegexp } from '../components/MatchersUI/FieldsByFrameRefIdMatcher';

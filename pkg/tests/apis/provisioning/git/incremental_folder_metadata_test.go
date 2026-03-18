@@ -185,7 +185,7 @@ func requireRepoFolderTitle(t *testing.T, h *gitTestHelper, ctx context.Context,
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle verifies that
-// incremental sync uses spec.title from _folder.json when creating/updating folders.
+// incremental sync uses spec.title from _folder.json when creating folders.
 func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
