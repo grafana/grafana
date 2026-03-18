@@ -279,47 +279,18 @@ function NotificationStatusGroup({
       ? receivers[0]
       : t('alerting.instance-details.timeline-n-receivers', '{{count}} receivers', { count: receivers.length });
 
-  const uniqueIntegrations = new Map<string, Set<number>>();
-  for (const n of notifications) {
-    const key = n.integration;
-    const indices = uniqueIntegrations.get(key) ?? new Set();
-    indices.add(n.integrationIndex);
-    uniqueIntegrations.set(key, indices);
-  }
-
-  const integrationParts: string[] = [];
-  for (const [integration, indices] of uniqueIntegrations) {
-    const name = receiverTypeNames[integration] ?? integration;
-    if (indices.size === 1) {
-      const index = [...indices][0];
-      integrationParts.push(`${name} #${index + 1}`);
-    } else {
-      integrationParts.push(`${name} ×${indices.size}`);
-    }
-  }
-  const integrationSummary = integrationParts.join(', ');
-
-  const integrations = [...uniqueIntegrations.keys()];
-
-  const failedNotifications = notifications.filter((n) => n.outcome !== 'success');
-
-  let outcomeLabel: string | undefined;
+  let deliveryLabel: string | undefined;
   if (failedCount > 0 && successCount === 0) {
-    outcomeLabel =
+    deliveryLabel =
       failedCount === 1
         ? t('alerting.instance-details.timeline-all-failed', 'failed')
         : t('alerting.instance-details.timeline-all-failed-plural', 'all failed');
   } else if (failedCount > 0) {
-    const uniqueFailedNames = [
-      ...new Set(
-        failedNotifications.map(
-          (n) => `${receiverTypeNames[n.integration] ?? n.integration} #${n.integrationIndex + 1}`
-        )
-      ),
-    ].join(', ');
-    outcomeLabel = t('alerting.instance-details.timeline-mixed-outcome-named', '{{failedNames}} failed', {
-      failedNames: uniqueFailedNames,
-    });
+    deliveryLabel = t(
+      'alerting.instance-details.timeline-partial-failure',
+      '{{successCount}} delivered, {{failedCount}} failed',
+      { successCount, failedCount }
+    );
   }
 
   const isFiring = status === 'firing';
@@ -343,37 +314,20 @@ function NotificationStatusGroup({
           <StateTag state={isFiring ? 'bad' : 'good'} size="sm">
             {statusLabel}
           </StateTag>
-          {outcomeLabel && (
+          {deliveryLabel && (
             <>
               <Text variant="bodySmall" color="secondary">
                 ·
               </Text>
               <Icon name="exclamation-circle" size="sm" className={styles.errorIcon} />
               <Text variant="bodySmall" color="error" weight="medium">
-                {outcomeLabel}
-              </Text>
-            </>
-          )}
-          {failedCount > 0 && (
-            <>
-              <Text variant="bodySmall" color="secondary">
-                ·
-              </Text>
-              <Text variant="bodySmall">
-                {notifications.length === 1
-                  ? t('alerting.instance-details.timeline-one-notification', '1 notification')
-                  : t('alerting.instance-details.timeline-n-notifications', '{{count}} notifications', {
-                      count: notifications.length,
-                    })}
+                {deliveryLabel}
               </Text>
             </>
           )}
           <Text variant="bodySmall" color="secondary">
             →
           </Text>
-          {integrations.map((integration) => (
-            <IntegrationIcon key={integration} integration={integration} />
-          ))}
           {receivers.length === 1 ? (
             <a
               href={createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(receivers[0])}`)}
@@ -389,9 +343,6 @@ function NotificationStatusGroup({
               {receiverLabel}
             </Text>
           )}
-          <Text variant="bodySmall" color="secondary">
-            · {integrationSummary}
-          </Text>
         </Stack>
         <Icon name={expanded ? 'angle-up' : 'angle-down'} size="sm" />
       </button>
