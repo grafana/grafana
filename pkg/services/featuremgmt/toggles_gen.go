@@ -921,4 +921,8 @@ const (
 	// FlagDashboardCollaboration
 	// Enable real-time collaborative editing for dashboards
 	FlagDashboardCollaboration = "dashboardCollaboration"
+
+	// FlagDashboardCursorSync
+	// Enable real-time cursor sharing on dashboards without full collaboration
+	FlagDashboardCursorSync = "dashboardCursorSync"
 )
