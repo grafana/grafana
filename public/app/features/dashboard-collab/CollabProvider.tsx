@@ -218,7 +218,10 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
 
           const msg: ClientMessage = {
             kind: 'op',
-            op: collabOp,
+            op: {
+              ...collabOp,
+              userId: localUserIdRef.current,
+            },
           };
           publishOp(msg);
         }
@@ -280,25 +283,30 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
             debugLog('Raw message received', JSON.parse(JSON.stringify(msg)));
 
             if (msg.kind === 'op' && clientRef.current) {
-              debugLog('Op received', { userId: msg.userId, seq: msg.seq });
-              lastOpByUserRef.current.set(msg.userId, Date.now());
+              // Read userId from the op payload (server wrapping doesn't reach us via Centrifuge)
+              const opPayload = msg.op as { lockTarget?: string; userId?: string; mutation?: unknown } | undefined;
+              const opUserId = opPayload?.userId ?? msg.userId;
+              const lockTarget = opPayload?.lockTarget;
+
+              debugLog('Op received', { userId: opUserId, seq: msg.seq, lockTarget });
+
+              if (opUserId) {
+                lastOpByUserRef.current.set(opUserId, Date.now());
+              }
 
               // Activity-based lock: show border for panel being edited by remote user
-              // Extract lockTarget from the op payload
-              const opPayload = msg.op as { lockTarget?: string } | undefined;
-              const lockTarget = opPayload?.lockTarget;
-              if (lockTarget && msg.userId && msg.userId !== localUserIdRef.current) {
-                debugLog('Remote activity on panel', { target: lockTarget, userId: msg.userId });
+              if (lockTarget && opUserId && opUserId !== localUserIdRef.current) {
+                debugLog('Remote activity on panel', { target: lockTarget, userId: opUserId });
                 setLocks((prev) => {
                   const filtered = prev.filter((l) => l.target !== lockTarget);
-                  return [...filtered, { target: lockTarget, userId: msg.userId }];
+                  return [...filtered, { target: lockTarget, userId: opUserId }];
                 });
                 // Auto-clear after 5 seconds of no activity on this target
                 const clearTimer = setTimeout(() => {
-                  setLocks((prev) => prev.filter((l) => !(l.target === lockTarget && l.userId === msg.userId)));
+                  setLocks((prev) => prev.filter((l) => !(l.target === lockTarget && l.userId === opUserId)));
                 }, 5000);
                 // Clear previous timer for same target
-                const timerKey = `${lockTarget}:${msg.userId}`;
+                const timerKey = `${lockTarget}:${opUserId}`;
                 const prevTimer = lockTimestampsRef.current.get(timerKey);
                 if (prevTimer) {
                   clearTimeout(prevTimer as unknown as number);
@@ -306,7 +314,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
                 lockTimestampsRef.current.set(timerKey, clearTimer as unknown as number);
               }
 
-              applyRemoteOp(msg, clientRef.current, localUserIdRef.current).catch((err) => {
+              applyRemoteOp(msg, clientRef.current, localUserIdRef.current, opUserId).catch((err) => {
                 console.error('[collab] Failed to apply remote op:', err);
               });
             }

@@ -30,7 +30,8 @@ export interface ApplyResult {
 export async function applyRemoteOp(
   msg: ServerMessage,
   client: DashboardMutationClient,
-  localUserId: string
+  localUserId: string,
+  resolvedUserId?: string
 ): Promise<ApplyResult> {
   // Only handle op messages — lock/checkpoint/presence handled by other subsystems
   if (msg.kind !== 'op') {
@@ -38,8 +39,9 @@ export async function applyRemoteOp(
   }
 
   // Skip our own ops — they were already applied locally when the user made the edit
-  if (msg.userId === localUserId) {
-    debugLog('Skipping own op', { userId: msg.userId, seq: msg.seq });
+  const userId = resolvedUserId ?? msg.userId;
+  if (userId === localUserId) {
+    debugLog('Skipping own op', { userId, seq: msg.seq });
     return { applied: false };
   }
 
