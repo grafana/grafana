@@ -3,9 +3,9 @@ import { MutationRequest } from './protocol/messages';
 
 describe('getLockTarget', () => {
   it.each([
-    ['UPDATE_PANEL', { panelId: 'panel-1' }, 'panel-1'],
-    ['REMOVE_PANEL', { panelId: 'panel-2' }, 'panel-2'],
-    ['MOVE_PANEL', { panelId: 'panel-3' }, 'panel-3'],
+    ['UPDATE_PANEL', { element: { name: 'panel-1' } }, 'panel-1'],
+    ['REMOVE_PANEL', { element: { name: 'panel-2' } }, 'panel-2'],
+    ['MOVE_PANEL', { element: { name: 'panel-3' } }, 'panel-3'],
   ])('%s → panel lock target', (type, payload, expected) => {
     const mutation: MutationRequest = { type, payload };
     expect(getLockTarget(mutation)).toBe(expected);
@@ -49,7 +49,7 @@ describe('getLockTarget', () => {
     expect(getLockTarget(mutation)).toBe('');
   });
 
-  it('missing panelId returns empty string', () => {
+  it('missing element returns empty string', () => {
     const mutation: MutationRequest = { type: 'UPDATE_PANEL', payload: {} };
     expect(getLockTarget(mutation)).toBe('');
   });

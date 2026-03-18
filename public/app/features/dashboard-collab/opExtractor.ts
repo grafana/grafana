@@ -118,8 +118,8 @@ function extractPanelChange(
   panel: VizPanel,
   partialUpdate: Partial<Record<string, unknown>>
 ): CollabOperation | null {
-  const panelId = panel.state.key;
-  if (!panelId) {
+  const elementName = panel.state.key;
+  if (!elementName) {
     return null;
   }
 
@@ -129,11 +129,52 @@ function extractPanelChange(
     return null;
   }
 
+  // Build the partial panel spec from the scene state changes.
+  // The UPDATE_PANEL Zod schema expects:
+  //   { element: { name }, panel: { kind: 'Panel', spec: { title?, description?, ... } } }
+  const spec: Record<string, unknown> = {};
+
+  if ('title' in partialUpdate) {
+    spec.title = partialUpdate.title;
+  }
+  if ('description' in partialUpdate) {
+    spec.description = partialUpdate.description;
+  }
+  if ('displayMode' in partialUpdate) {
+    spec.transparent = partialUpdate.displayMode === 'transparent';
+  }
+  if ('options' in partialUpdate) {
+    spec.vizConfig = {
+      spec: { options: partialUpdate.options },
+    };
+  }
+  if ('fieldConfig' in partialUpdate) {
+    spec.vizConfig = {
+      ...(spec.vizConfig as Record<string, unknown> | undefined),
+      spec: {
+        ...((spec.vizConfig as Record<string, unknown> | undefined)?.spec as Record<string, unknown> | undefined),
+        fieldConfig: partialUpdate.fieldConfig,
+      },
+    };
+  }
+  if ('pluginId' in partialUpdate) {
+    spec.vizConfig = {
+      ...(spec.vizConfig as Record<string, unknown> | undefined),
+      group: partialUpdate.pluginId,
+    };
+  }
+
+  // If no recognized spec fields were extracted, skip
+  if (Object.keys(spec).length === 0) {
+    debugLog('VizPanel change has no mappable spec fields', { elementName, changedKeys: keys });
+    return null;
+  }
+
   const mutation: MutationRequest = {
     type: 'UPDATE_PANEL',
     payload: {
-      panelId,
-      ...partialUpdate,
+      element: { kind: 'ElementReference', name: elementName },
+      panel: { kind: 'Panel', spec },
     },
   };
 
@@ -155,19 +196,35 @@ function extractGridItemChange(
     return null;
   }
 
-  // Find the panel key from the grid item's body
+  // Find the panel element name from the grid item's body
   const body = gridItem.state.body;
-  const panelId = body instanceof VizPanel ? body.state.key : gridItem.state.key;
+  const elementName = body instanceof VizPanel ? body.state.key : gridItem.state.key;
 
-  if (!panelId) {
+  if (!elementName) {
     return null;
+  }
+
+  // Build the MOVE_PANEL payload matching the Zod schema:
+  //   { element: { name }, layoutItem?: { spec: { x?, y?, width?, height? } } }
+  const positionSpec: Record<string, unknown> = {};
+  if ('x' in partialUpdate) {
+    positionSpec.x = partialUpdate.x;
+  }
+  if ('y' in partialUpdate) {
+    positionSpec.y = partialUpdate.y;
+  }
+  if ('width' in partialUpdate) {
+    positionSpec.width = partialUpdate.width;
+  }
+  if ('height' in partialUpdate) {
+    positionSpec.height = partialUpdate.height;
   }
 
   const mutation: MutationRequest = {
     type: 'MOVE_PANEL',
     payload: {
-      panelId,
-      ...partialUpdate,
+      element: { kind: 'ElementReference', name: elementName },
+      layoutItem: { spec: positionSpec },
     },
   };
 

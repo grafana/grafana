@@ -32,7 +32,7 @@ describe('opExtractor', () => {
   });
 
   describe('VizPanel → UPDATE_PANEL', () => {
-    it('extracts title change as UPDATE_PANEL', () => {
+    it('extracts title change as UPDATE_PANEL with correct Zod schema shape', () => {
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'New Title' });
       const event = makeEvent(panel, { title: 'New Title' });
 
@@ -40,12 +40,13 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('UPDATE_PANEL');
-      expect((result!.mutation.payload as any).panelId).toBe('panel-1');
-      expect((result!.mutation.payload as any).title).toBe('New Title');
+      const payload = result!.mutation.payload as any;
+      expect(payload.element).toEqual({ kind: 'ElementReference', name: 'panel-1' });
+      expect(payload.panel.spec.title).toBe('New Title');
       expect(result!.lockTarget).toBe('panel-1');
     });
 
-    it('extracts description change as UPDATE_PANEL', () => {
+    it('extracts description change as UPDATE_PANEL with correct Zod schema shape', () => {
       const panel = new VizPanel({ key: 'panel-2', pluginId: 'timeseries', title: 'Test' });
       const event = makeEvent(panel, { description: 'Updated description' });
 
@@ -53,8 +54,9 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('UPDATE_PANEL');
-      expect((result!.mutation.payload as any).panelId).toBe('panel-2');
-      expect((result!.mutation.payload as any).description).toBe('Updated description');
+      const payload = result!.mutation.payload as any;
+      expect(payload.element).toEqual({ kind: 'ElementReference', name: 'panel-2' });
+      expect(payload.panel.spec.description).toBe('Updated description');
     });
 
     it('skips _renderCounter changes', () => {
@@ -68,7 +70,7 @@ describe('opExtractor', () => {
   });
 
   describe('DashboardGridItem → MOVE_PANEL', () => {
-    it('extracts position change as MOVE_PANEL', () => {
+    it('extracts position change as MOVE_PANEL with correct Zod schema shape', () => {
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test' });
       const gridItem = new DashboardGridItem({ body: panel, x: 10, y: 5, width: 12, height: 8 });
 
@@ -78,9 +80,10 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('MOVE_PANEL');
-      expect((result!.mutation.payload as any).panelId).toBe('panel-1');
-      expect((result!.mutation.payload as any).x).toBe(10);
-      expect((result!.mutation.payload as any).y).toBe(5);
+      const payload = result!.mutation.payload as any;
+      expect(payload.element).toEqual({ kind: 'ElementReference', name: 'panel-1' });
+      expect(payload.layoutItem.spec.x).toBe(10);
+      expect(payload.layoutItem.spec.y).toBe(5);
       expect(result!.lockTarget).toBe('panel-1');
     });
 

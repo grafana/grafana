@@ -8,11 +8,13 @@ export function getLockTarget(mutation: MutationRequest): string {
   const payload = mutation.payload as Record<string, unknown>;
 
   switch (mutation.type) {
-    // Panel-scoped operations lock the specific panel
+    // Panel-scoped operations lock the specific panel by element name
     case 'UPDATE_PANEL':
     case 'REMOVE_PANEL':
-    case 'MOVE_PANEL':
-      return (payload?.panelId as string) ?? '';
+    case 'MOVE_PANEL': {
+      const element = payload?.element as Record<string, unknown> | undefined;
+      return (element?.name as string) ?? '';
+    }
 
     // ADD_PANEL does not require a lock
     case 'ADD_PANEL':
