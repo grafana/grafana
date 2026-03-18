@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
 
-func ValidateCreateAndUpdateInput(ctx context.Context, v0ResourcePerm *v0alpha1.ResourcePermission) error {
+func ValidateCreateAndUpdateInput(ctx context.Context, v0ResourcePerm *v0alpha1.ResourcePermission, mappers *MappersRegistry) error {
 	if v0ResourcePerm == nil {
 		return fmt.Errorf("resource permission cannot be nil")
 	}
@@ -26,6 +28,11 @@ func ValidateCreateAndUpdateInput(ctx context.Context, v0ResourcePerm *v0alpha1.
 		grn.Resource != v0ResourcePerm.Spec.Resource.Resource ||
 		grn.Name != v0ResourcePerm.Spec.Resource.Name {
 		return fmt.Errorf("resource permission name does not match spec: %w", errInvalidSpec)
+	}
+
+	// Check that the group/resource is registered and enabled
+	if !mappers.IsEnabled(schema.GroupResource{Group: grn.Group, Resource: grn.Resource}) {
+		return fmt.Errorf("unknown or disabled group/resource %s/%s: %w", grn.Group, grn.Resource, errUnknownGroupResource)
 	}
 
 	// Check for duplicate entities (same kind and name should appear only once)

@@ -156,9 +156,10 @@ func TestValidateOnCreate(t *testing.T) {
 		},
 	}
 
+	mappers := NewMappersRegistry()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := ValidateCreateAndUpdateInput(context.Background(), test.obj)
+			err := ValidateCreateAndUpdateInput(context.Background(), test.obj, mappers)
 			if test.want == nil {
 				assert.NoError(t, err)
 			} else {
