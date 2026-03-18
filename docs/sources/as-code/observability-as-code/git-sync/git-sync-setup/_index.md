@@ -121,7 +121,9 @@ If you want to configure Git Sync for GitLab, you need a GitLab Personal Access 
 - **User**: Read only permission
 - **API**: Read and write permission
 
-Return to Grafana and fill in the following fields:
+If you're using a token from a **service account**, you need to add the service account to the GitLab project as a member to avoid authentication issues.
+
+After creating the token, return to Grafana and fill in the following fields:
 
 1. Paste the token into the **Project Access Token** text box.
 1. Paste the **Repository URL** for your GitLab repository into the text box.

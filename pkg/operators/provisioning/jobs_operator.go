@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -21,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	jobsync "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/server"
@@ -152,14 +153,21 @@ func RunJobController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create concurrent job driver: %w", err)
 	}
 
+	var wg sync.WaitGroup
+
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		logger.Info("jobs controller started")
 		if err := driver.Run(ctx); err != nil {
 			logger.Error("job driver failed", "error", err)
 		}
+		logger.Info("job driver stopped")
 	}()
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		jobCleanupController := jobs.NewJobCleanupController(
 			jobStore,
 			jobHistoryWriter,
@@ -168,6 +176,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 		if err := jobCleanupController.Run(ctx); err != nil {
 			logger.Error("job cleanup controller failed", "error", err)
 		}
+		logger.Info("job cleanup controller stopped")
 	}()
 
 	// Start informers
@@ -183,6 +192,23 @@ func RunJobController(deps server.OperatorDependencies) error {
 	deps.HealthNotifier.SetReady()
 
 	<-ctx.Done()
+	deps.HealthNotifier.SetNotReady()
+	logger.Info("shutdown signal received, waiting for goroutines to finish")
+
+	shutdownTimeout := controllerCfg.maxJobTimeout + 30*time.Second
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		logger.Info("jobs operator shutdown complete")
+	case <-time.After(shutdownTimeout):
+		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", shutdownTimeout)
+	}
+
 	return nil
 }
 
@@ -252,8 +278,8 @@ func setupWorkers(
 	metrics := jobs.RegisterJobMetrics(registry)
 
 	// Sync
-	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics, folderMetadataEnabled)
-	syncWorker := sync.NewSyncWorker(
+	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics, folderMetadataEnabled)
+	syncWorker := jobsync.NewSyncWorker(
 		clients,
 		repositoryResources,
 		statusPatcher.Patch,

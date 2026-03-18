@@ -55,7 +55,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
 
   return (
     <>
-      {editableElement && (
+      {editableElement && isEditing && (
         <Sidebar.OpenPane>
           <ElementEditPane
             key={selectedObject?.state.key}
@@ -68,6 +68,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
       {openPane === 'add' && (
         <Sidebar.OpenPane>
           <AddNewEditPane
+            selectedElement={lastSelectedElement}
             onAddPanel={() => editPane.addNewPanel(lastSelectedElement)}
             onPastePanel={() => editPane.pastePanel(lastSelectedElement, 'sidebar')}
             dashboard={dashboard}
