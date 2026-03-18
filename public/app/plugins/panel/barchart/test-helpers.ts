@@ -18,6 +18,7 @@ import {
   AxisPlacement,
   defaultTimeZone,
   FieldColorModeId,
+  GraphGradientMode,
   LegendDisplayMode,
   MappingType,
   SortOrder,
@@ -316,7 +317,7 @@ export function prepBarChartSeries(
 }
 
 /** Overrides for createPrepConfigOpts. */
-export interface CreatePrepConfigOptsOverrides extends Partial<PrepConfigOpts> {
+export interface CreatePrepConfigOptsOverrides extends Omit<Partial<PrepConfigOpts>, 'options'> {
   options?: Partial<Options>;
 }
 
@@ -349,17 +350,16 @@ export function createPrepConfigOpts(overrides?: CreatePrepConfigOptsOverrides):
   };
 
   const baseSeries = createPreparedBarChartSeries();
+  const { series: overridesSeries, options: overridesOptions, ...restOverrides } = overrides ?? {};
 
   return {
-    series: [baseSeries],
     totalSeries: 2,
     timeZone: defaultTimeZone,
     theme,
     orientation: VizOrientation.Auto,
-    options: defaultOptions,
-    ...overrides,
-    series: overrides?.series ?? [baseSeries],
-    options: { ...defaultOptions, ...overrides?.options },
+    ...restOverrides,
+    series: overridesSeries ?? [baseSeries],
+    options: { ...defaultOptions, ...overridesOptions },
   };
 }
 
@@ -371,11 +371,16 @@ export interface CreatePreparedBarChartSeriesOverrides {
 
 /**
  * Creates a prepared bar chart series for config tests. Replaces mockDataFrame().
+ * Uses unit 'm/s', lineWidth 2, and gradientMode Opacity to match snapshot expectations.
  */
 export function createPreparedBarChartSeries(overrides?: CreatePreparedBarChartSeriesOverrides): DataFrame {
   const frame = createStringXFrame({
     xValues: overrides?.xValues ?? ['a', 'b', 'c'],
     values: overrides?.values ?? [10, 20, 30],
+    valueConfig: {
+      unit: 'm/s',
+      custom: { lineWidth: 2, gradientMode: GraphGradientMode.Opacity },
+    },
   });
   const info = prepBarChartSeries([frame]);
   if (info.series.length === 0) {
