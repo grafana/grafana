@@ -409,6 +409,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		DisableLogin:                  hs.Cfg.DisableLogin,
 		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
 		DisableSignoutMenu:            hs.Cfg.DisableSignoutMenu,
+		DisableForgotPassword:         hs.Cfg.DisableForgotPassword,
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
