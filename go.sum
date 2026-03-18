@@ -1658,6 +1658,8 @@ github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86 h1:aTwfQuroOm
 github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86/go.mod h1:h60o12SZn/ua/j0B6iKAZezA4eDaGsIuPO70eOaJ6WE=
 github.com/grafana/nanogit v0.7.0 h1:7+j3jJAz/K5kq1Wf6xYKbbPmRVtZ5FITmqe447ksBZQ=
 github.com/grafana/nanogit v0.7.0/go.mod h1:HeWNMiPczWOezPY/cg2ICdvA3W6ndfvtwqGxVbJrOlY=
+github.com/grafana/nanogit v0.12.0 h1:ckBI+uPwrq4iMMQgjgKxx66jC4Q7q9mMcBKDHzesXnI=
+github.com/grafana/nanogit v0.12.0/go.mod h1:s8TBdDiUZ9ZWEF/nsAP9HYwJXtLUYpgoQwF2uTTz9ZE=
 github.com/grafana/nanogit/gittest v0.6.0 h1:LR+7lZDwbln+RuEVsCfQOYHDfvypkbShyqq7uEYAGR0=
 github.com/grafana/nanogit/gittest v0.6.0/go.mod h1:r8jmBhTJ2P0DgO9ta1C8xVHJzjMrALVVThveA7PInQ8=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
