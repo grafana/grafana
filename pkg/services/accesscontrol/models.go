@@ -449,6 +449,9 @@ const (
 	// Alerting Notification actions (legacy)
 	ActionAlertingNotificationsRead  = "alert.notifications:read"
 	ActionAlertingNotificationsWrite = "alert.notifications:write"
+	// ActionAlertingNotificationsLegacyConfigRead is a legacy action for reading the raw Alertmanager config blob.
+	// Restricted to admin-only in v13; endpoint will be removed in v14.
+	ActionAlertingNotificationsLegacyConfigRead = "alert.notifications.legacy-config:read"
 
 	// Alerting notifications template actions
 	ActionAlertingNotificationsTemplatesRead   = "alert.notifications.templates:read"
