@@ -229,6 +229,10 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
         if (collabOp) {
           debugLog('Op sent', { mutationType: collabOp.mutation.type, lockTarget: collabOp.lockTarget });
 
+          if (collabOp.lockTarget) {
+            activePanelsRef.current.add(collabOp.lockTarget);
+          }
+
           const msg: ClientMessage = {
             kind: 'op',
             op: {
@@ -245,6 +249,39 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
       clearTimeout(warmupTimer);
       sub.unsubscribe();
     };
+  }, [enabled, opsAddress, scene, publishOp]);
+
+  // Track which panels we've sent ops for — send unlock on deselect
+  const activePanelsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!enabled || !opsAddress) {
+      return;
+    }
+    const editPane = (scene.state as any).editPane;
+    if (!editPane || typeof editPane.subscribeToState !== 'function') {
+      return;
+    }
+    let prevHasSelection = false;
+    const sub = editPane.subscribeToState((state: any) => {
+      const hasSelection = !!state.selection;
+      if (prevHasSelection && !hasSelection && activePanelsRef.current.size > 0) {
+        // User deselected — send unlock for all active panels
+        debugLog('Panel deselected — sending unlock', { targets: Array.from(activePanelsRef.current) });
+        for (const target of activePanelsRef.current) {
+          const unlockMsg: ClientMessage = {
+            kind: 'unlock',
+            op: {
+              target,
+              userId: localUserIdRef.current,
+            },
+          };
+          publishOp(unlockMsg);
+        }
+        activePanelsRef.current.clear();
+      }
+      prevHasSelection = hasSelection;
+    });
+    return () => sub.unsubscribe();
   }, [enabled, opsAddress, scene, publishOp]);
 
   // Track remote activity per panel — used by CollabPanelBorder to show who's editing
@@ -333,6 +370,24 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
               applyRemoteOp(msg, clientRef.current, localUserIdRef.current, opUserId).catch((err) => {
                 console.error('[collab] Failed to apply remote op:', err);
               });
+            }
+
+            // Handle unlock messages — immediately clear border for that panel
+            if (msg.kind === 'unlock') {
+              const unlockPayload = msg.op as { target?: string; userId?: string } | undefined;
+              const unlockTarget = unlockPayload?.target;
+              const unlockUserId = unlockPayload?.userId;
+              if (unlockTarget && unlockUserId && unlockUserId !== localUserIdRef.current) {
+                debugLog('Unlock received — clearing border', { target: unlockTarget, userId: unlockUserId });
+                setLocks((prev) => prev.filter((l) => l.target !== unlockTarget));
+                // Also clear any pending auto-clear timer
+                const timerKey = `${unlockTarget}:${unlockUserId}`;
+                const prevTimer = lockTimestampsRef.current.get(timerKey);
+                if (prevTimer) {
+                  clearTimeout(prevTimer as unknown as number);
+                  lockTimestampsRef.current.delete(timerKey);
+                }
+              }
             }
 
             // Ignore lock protocol messages with noop service — using activity-based locks instead
