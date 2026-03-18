@@ -12,12 +12,12 @@ const (
 	MessageKindPresence   MessageKind = "presence" // server-only
 )
 
-// LockType identifies a lock or unlock request.
+// LockType identifies whether a lock operation is an acquire or release.
 type LockType string
 
 const (
-	LockTypeLock   LockType = "lock"
-	LockTypeUnlock LockType = "unlock"
+	LockTypeAcquire LockType = "lock"
+	LockTypeRelease LockType = "unlock"
 )
 
 // ClientMessage is what clients send to the ops channel.

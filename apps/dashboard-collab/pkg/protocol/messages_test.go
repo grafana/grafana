@@ -43,7 +43,7 @@ func TestCollabOperationRoundTrip(t *testing.T) {
 
 func TestLockOperationRoundTrip(t *testing.T) {
 	original := LockOperation{
-		Type:   LockTypeLock,
+		Type:   LockTypeAcquire,
 		Target: "panel-1",
 		UserID: "user-123",
 	}
