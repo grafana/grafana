@@ -112,7 +112,7 @@ describe('codemirrorUtils', () => {
     it('applies theme with variable highlighting', () => {
       const theme = createTheme({ colors: { mode: 'light' } });
       const view = createEditor('${variable}', [createDataLinkTheme(theme), createDataLinkHighlighter()]);
-      expect(view.dom.textContent).toBe('${variable}');
+      expect(view.dom).toHaveTextContent('${variable}');
       view.destroy();
     });
   });
@@ -124,19 +124,19 @@ describe('codemirrorUtils', () => {
 
     it('highlights single variable', () => {
       const view = createEditor('${variable}', [createDataLinkHighlighter()]);
-      expect(view.dom.textContent).toBe('${variable}');
+      expect(view.dom).toHaveTextContent('${variable}');
       view.destroy();
     });
 
     it('highlights multiple variables', () => {
       const view = createEditor('${var1} and ${var2}', [createDataLinkHighlighter()]);
-      expect(view.dom.textContent).toBe('${var1} and ${var2}');
+      expect(view.dom).toHaveTextContent('${var1} and ${var2}');
       view.destroy();
     });
 
     it('highlights variables in URLs', () => {
       const view = createEditor('https://example.com?id=${id}&name=${name}', [createDataLinkHighlighter()]);
-      expect(view.dom.textContent).toBe('https://example.com?id=${id}&name=${name}');
+      expect(view.dom).toHaveTextContent('https://example.com?id=${id}&name=${name}');
       view.destroy();
     });
 
@@ -149,7 +149,7 @@ describe('codemirrorUtils', () => {
     it('updates highlights when document changes', () => {
       const view = createEditor('initial', [createDataLinkHighlighter()]);
       view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: '${newVar}' } });
-      expect(view.dom.textContent).toBe('${newVar}');
+      expect(view.dom).toHaveTextContent('${newVar}');
       view.destroy();
     });
   });
@@ -271,7 +271,7 @@ describe('codemirrorUtils', () => {
         createDataLinkHighlighter(),
         createDataLinkAutocompletion(mockSuggestions),
       ]);
-      expect(view.dom.textContent).toBe('${test}');
+      expect(view.dom).toHaveTextContent('${test}');
       view.destroy();
     });
   });
