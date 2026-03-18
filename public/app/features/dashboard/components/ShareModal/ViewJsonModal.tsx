@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { Trans, t } from '@grafana/i18n';
 import { ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
@@ -19,9 +18,7 @@ export function ViewJsonModal({ json, onDismiss }: ViewJsonModalProps): JSX.Elem
       onClickBackdrop={onDismiss}
       isOpen
     >
-      <AutoSizer disableHeight>
-        {({ width }) => <CodeEditor value={json} language="json" showMiniMap={false} height="500px" width={width} />}
-      </AutoSizer>
+      <CodeEditor value={json} language="json" showMiniMap={false} height="500px" width="100%" />
       <Modal.ButtonRow>
         <ClipboardButton
           icon="copy"
