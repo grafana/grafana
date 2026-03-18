@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import { isCollabEnabled } from 'app/features/dashboard-collab/CollabProvider';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
@@ -10,6 +12,7 @@ import { isLibraryPanel } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
+import { CollabSaveStatus } from './actions/CollabSaveStatus';
 import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';
 import { DiscardPanelButton } from './actions/DiscardPanelButton';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
@@ -25,6 +28,7 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const { editPanel, editable, editview, isEditing, meta, viewPanel } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const styles = useStyles2(getStyles);
+  const collabEnabled = useMemo(() => isCollabEnabled(dashboard), [dashboard]);
 
   const isEditable = Boolean(editable);
   const canSave = Boolean(meta.canSave);
@@ -96,10 +100,16 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             condition: showPanelButtons && isEditingLibraryPanel,
           },
           {
+            key: 'collab-save-status',
+            component: CollabSaveStatus,
+            group: 'panel',
+            condition: collabEnabled && isEditingDashboard && !isEditingLibraryPanel,
+          },
+          {
             key: 'save-dashboard',
             component: SaveDashboard,
             group: 'panel',
-            condition: isEditingDashboard && !isEditingLibraryPanel && (canSave || canSaveInFolder),
+            condition: !collabEnabled && isEditingDashboard && !isEditingLibraryPanel && (canSave || canSaveInFolder),
           },
           {
             key: 'make-dashboard-editable-button',
