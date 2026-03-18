@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "Error fetching notifications",
+      "integration-tooltip": "{{integration}} #{{index}}",
       "no-error-details": "No error details available",
       "notification-error": "Notification Error",
       "outcome-failed": "Failed",
@@ -2349,7 +2350,6 @@
       },
       "filterBy": "Filter by:",
       "firing-alerts": "Firing Alerts",
-      "group-labels": "Group Labels:",
       "header": {
         "contact-point": "Contact point",
         "group-labels": "Group Labels",
@@ -2359,8 +2359,9 @@
       "labels": "Labels:",
       "labels-filter-variable": {
         "label": {
-          "labels": "Labels"
-        }
+          "group-labels": "Group Labels"
+        },
+        "placeholder": "Filter by group label values"
       },
       "no-notifications": "No notifications found for the selected time range and filters",
       "outcome-filter-variable": {
@@ -2419,9 +2420,6 @@
       "label-payload": "Payload",
       "label-use-existing-alert-instances": "Use existing alert instances",
       "reference": "Reference"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Speed up your alerts creation now by using one of our tailored apps"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "This rule is managed by the {{pluginName}} plugin"
@@ -2938,6 +2936,9 @@
       "error-button": "Error",
       "export-all-grafana-rules": "Export all Grafana rules",
       "export-group": "Export rules group",
+      "filter-sidebar": {
+        "rule-name-placeholder": "Filter by name..."
+      },
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -3087,8 +3088,6 @@
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
       "filter-options": {
-        "aria-label": "Filter options",
-        "aria-label-show-filters": "Filter",
         "placeholder-namespace": "Select namespace",
         "placeholder-search-input": "Search by name or enter filter query..."
       },
@@ -3120,6 +3119,9 @@
       "state": "State",
       "title-search-help": "Search help",
       "view-as": "View as"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": "Clear filters"
     },
     "rules-group": {
       "deleting": "Deleting",
@@ -4813,7 +4815,6 @@
     "all": "All",
     "apply": "Apply",
     "cancel": "Cancel",
-    "clear": "Clear",
     "collapse": "Collapse",
     "disabled": "Disabled",
     "discard": "Discard",
@@ -5913,6 +5914,12 @@
         "title": "Panel time settings"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "Ask Assistant about this panel...",
+        "placeholder-multi": "Ask Assistant about these panels..."
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
@@ -6545,6 +6552,17 @@
       "inline-instance-name": "New link",
       "label-link": "Link",
       "tooltip": "Add link to another dashboard or external site"
+    },
+    "add-new-edit-pane": {
+      "group-layouts": "Group layouts"
+    },
+    "add-row": {
+      "add-label": "Add row",
+      "group-label": "Group into rows"
+    },
+    "add-tab": {
+      "add-label": "Add tab",
+      "group-label": "Group into tabs"
     },
     "add-to-dashboard": {
       "message": {
@@ -7285,6 +7303,8 @@
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
       "file-path": "<strong>File path:</strong> {{filePath}}",
+      "form-loading-error": "Error loading form",
+      "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "label-description": "Description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
@@ -7970,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fixed value"
       },
+      "label": "Scalar",
       "label-limit": "Limit",
       "label-value": "Value",
       "noOptionsMessage-no-fields-found": "No fields found",
@@ -10001,7 +10022,9 @@
       "external-links-heading": "External links"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Enter regular expression"
+      "input-placeholder": "Enter regular expression",
+      "scope": "Target fields",
+      "scope-tooltip": "To avoid issues when applying overrides, overrides cannot be applied across multiple target scopes. The default \"dataframe\" scope is applied if no scope is selected."
     },
     "field-value-matcher": {
       "operator-label": "Comparison operator",
@@ -10028,6 +10051,18 @@
       "expand-row-tooltip": "Toggle row expanded",
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "Annotations",
+        "exemplar": "Exemplars",
+        "nested": "Nested",
+        "series": "Dataframe"
+      },
+      "labels": {
+        "base-field-name": "{{name}} (base field name)",
+        "not-found": "{{name}} (not found)"
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Set properties for fields with names matching a regex",
@@ -12776,9 +12811,6 @@
     "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {
-    "banner": {
-      "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
-    },
     "bitbucket": {
       "branch-required": "Branch is required",
       "permissions": {
@@ -13475,6 +13507,7 @@
       "github-app-select-connection": "Select a GitHub App connection",
       "github-enterprise-alert-body": "GitHub Enterprise Server is currently only supported through the Pure Git repository type. Native GitHub Enterprise integration is planned and will be available in the upcoming months.",
       "github-enterprise-alert-title": "GitHub Enterprise Server",
+      "give-feedback-link": "Give feedback",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
       "step-connect": "Connect",

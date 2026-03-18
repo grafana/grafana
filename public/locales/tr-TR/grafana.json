@@ -2349,6 +2349,7 @@
       },
       "filterBy": "",
       "firing-alerts": "",
+      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -6745,6 +6746,9 @@
       "tooltip-move-link-up": "Bağlantıyı yukarı taşı",
       "type": "Tür"
     },
+    "dashboard-links-list": {
+      "add-link": ""
+    },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Pano yüklenirken hata oluştu"
     },
@@ -7024,6 +7028,13 @@
       "type-dashboards": "",
       "type-link": "",
       "with-tags": ""
+    },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": ""
     },
     "managed-badge": {
       "kubectl": "Yöneten: Kubectl",
@@ -7381,6 +7392,13 @@
       "page-nav": {
         "text": {
           "settings": "Ayarlar"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -12786,6 +12804,7 @@
       "empty": "Boş",
       "error-field-required": "Bu alan gereklidir.",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "Depoya bağlanırken bir sorun oluştu. Lütfen depo ayarlarını kontrol edin ve tekrar deneyin.",
       "error-repository-status-unhealthy-title": "Depo durumu sorunlu",
@@ -12795,6 +12814,7 @@
       "retry-action": "",
       "text-loading-resource-information": "Kaynak bilgileri yükleniyor...",
       "unmanaged-resources-label": "Yönetilmeyen kaynaklar",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} pano",
       "dashboards-count_other": "{{count}} pano",
@@ -12847,7 +12867,8 @@
     "connect-repository-button": {
       "configure": "Yapılandır",
       "instance-fully-managed-tooltip": "Bu örnek tamamen yönetildiği için yapılandırma devre dışı bırakılmıştır",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -13051,7 +13072,7 @@
       "token-label": "Erişim Belirteci",
       "token-required": "Git belirteci gereklidir",
       "token-user-description": "Erişim belirteciyle depoya erişmek için kullanılacak kullanıcı adı",
-      "url-description": "Git deposu URL'si",
+      "url-description": "",
       "url-pattern": "Geçerli bir Git depo URL'si olmalıdır",
       "url-required": "Depo URL'si gereklidir"
     },
@@ -13177,23 +13198,25 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_one": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_one": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_one": "",
       "message-both-resources_other": "",
-      "message-repositories-info_one": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_one": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_one": "",
       "message-repository_other": "",
-      "note-message-both-repositories_one": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_one": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_one": "",
-      "note-message-repository_other": "",
-      "note-message-resource_one": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_one": "",
+      "message-repository-onprem_other": "",
+      "message-resource_one": "",
+      "message-resource_other": "",
+      "message-resource-onprem_one": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "Bu kaynak salt okunurdur ve dosya sağlama yoluyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
     "read-only-remote-tooltip": "Bu kaynak salt okunurdur ve Git aracılığıyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",

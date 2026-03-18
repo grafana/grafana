@@ -3,6 +3,7 @@ aliases:
   - ../project/cla/ # /docs/grafana/next/project/cla/
   - /docs/contributing/cla.html/
   - ../developers/cla/ # /docs/grafana/next/developers/cla/
+  - ../developer-resources/cla/ # /docs/grafana/next/developers/cla/
 description: Contributor License Agreement (CLA)
 labels:
   products:

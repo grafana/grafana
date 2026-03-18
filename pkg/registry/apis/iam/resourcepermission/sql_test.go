@@ -111,7 +111,7 @@ func setupBackend(t *testing.T) *ResourcePermSqlBackend {
 		return sqlHelper, nil
 	}
 
-	return ProvideStorageBackend(dbProvider)
+	return ProvideStorageBackend(dbProvider, NewMappersRegistry())
 }
 
 func setupTestRoles(t *testing.T, store db.DB) {
@@ -679,6 +679,86 @@ func (f *fakeIdentityStore) GetUserInternalID(ctx context.Context, ns types.Name
 	return &legacy.GetUserInternalIDResult{ID: id}, nil
 }
 
+func TestIntegration_ResourcePermSqlBackend_ListDirectPermissionsForSubject(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	backend := setupBackend(t)
+	sql, err := backend.dbProvider(context.Background())
+	require.NoError(t, err)
+	setupTestRoles(t, sql.DB)
+
+	tests := []struct {
+		name      string
+		namespace string
+		subject   string
+		wantPerms []v0alpha1.PermissionSpec // action → scope
+		wantNil   bool
+	}{
+		{
+			name:    "empty subject UID returns nil",
+			subject: "",
+			wantNil: true,
+		},
+		{
+			name:      "returns permissions for a user UID",
+			namespace: "default",
+			subject:   "user-1",
+			wantPerms: []v0alpha1.PermissionSpec{
+				{Action: "folders:view", Scope: "folders:uid:fold1"},
+				{Action: "dashboards:edit", Scope: "dashboards:uid:dash1"},
+			},
+		},
+		{
+			name:      "returns permissions for a team UID",
+			namespace: "default",
+			subject:   "team-1",
+			wantPerms: []v0alpha1.PermissionSpec{
+				{Action: "dashboards:admin", Scope: "dashboards:uid:dash1"},
+			},
+		},
+		{
+			name:      "returns permissions for a basic role",
+			namespace: "default",
+			subject:   "Editor",
+			wantPerms: []v0alpha1.PermissionSpec{
+				{Action: "dashboards:edit", Scope: "dashboards:uid:dash1"},
+			},
+		},
+		{
+			name:      "returns empty for unknown subject",
+			namespace: "default",
+			subject:   "unknown-uid",
+			wantPerms: []v0alpha1.PermissionSpec{},
+		},
+		{
+			name:      "does not return permissions from a different org",
+			namespace: "org-2",
+			subject:   "user-1", // user-1's role is in org-1 only
+			wantPerms: []v0alpha1.PermissionSpec{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := backend.ListDirectPermissionsForSubject(context.Background(), tt.namespace, tt.subject)
+			require.NoError(t, err)
+			if tt.wantNil {
+				require.Nil(t, result)
+				return
+			}
+			// build a map for order-independent comparison
+			got := make(map[string]string, len(result))
+			for _, p := range result {
+				got[p.Action] = p.Scope
+			}
+			want := make(map[string]string, len(tt.wantPerms))
+			for _, p := range tt.wantPerms {
+				want[p.Action] = p.Scope
+			}
+			require.Equal(t, want, got)
+		})
+	}
+}
+
 func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -689,7 +769,7 @@ func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
 
-	mapper := backend.mappers[schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}]
+	mapper, _ := backend.mappers.Get(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"})
 	grn := &groupResourceName{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test-dash"}
 
 	t.Run("should allow changing verb for same entity", func(t *testing.T) {

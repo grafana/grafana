@@ -41,7 +41,7 @@ var MigratedUnifiedResources = map[string]bool{
 //
 // Storage configs in the ini file look like:
 //
-//	[unified_storage.<group>.<resource>]
+//	[unified_storage.{resource}.{group}]
 //	<field> = <value>
 //
 // For example:
