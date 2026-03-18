@@ -47,3 +47,21 @@ func ValidateCreateAndUpdateInput(ctx context.Context, v0ResourcePerm *v0alpha1.
 
 	return nil
 }
+
+// ValidateDeleteInput validates a resource permission delete operation.
+// It ensures the resource being deleted has a known/registered group/resource type.
+// This prevents deletes of resource permissions for resource types that aren't
+// enabled or registered in the system.
+func ValidateDeleteInput(ctx context.Context, name string, mappers *MappersRegistry) error {
+	grn, err := splitResourceName(name)
+	if err != nil {
+		return fmt.Errorf("invalid resource permission name: %w", err)
+	}
+
+	// Check that the group/resource is registered and enabled
+	if !mappers.IsEnabled(schema.GroupResource{Group: grn.Group, Resource: grn.Resource}) {
+		return fmt.Errorf("unknown or disabled group/resource %s/%s: %w", grn.Group, grn.Resource, errUnknownGroupResource)
+	}
+
+	return nil
+}

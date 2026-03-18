@@ -931,6 +931,8 @@ func (b *IdentityAccessManagementAPIBuilder) validateDelete(ctx context.Context,
 			return b.teamLBACApiInstaller.ValidateOnDelete(ctx, oldObj)
 		}
 		return nil
+	case *iamv0.ResourcePermission:
+		return resourcepermission.ValidateDeleteInput(ctx, oldObj.Name, b.mappers)
 	}
 	return nil
 }
