@@ -1872,9 +1872,10 @@
       "timeline-loading": "Loading timeline...",
       "timeline-n-receivers_one": "{{count}} receivers",
       "timeline-n-receivers_other": "{{count}} receivers",
+      "timeline-notification-label": "notification",
       "timeline-partial-failure": "{{successCount}} delivered, {{failedCount}} failed",
-      "timeline-status-firing": "Firing notification",
-      "timeline-status-resolved": "Resolved notification",
+      "timeline-status-firing": "Firing",
+      "timeline-status-resolved": "Resolved",
       "timeline-toggle-notifications": "Toggle notification details",
       "view-notification-detail": "Details",
       "view-notification-tooltip": "View full notification details"

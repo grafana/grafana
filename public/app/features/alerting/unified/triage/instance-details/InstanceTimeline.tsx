@@ -317,8 +317,8 @@ function NotificationStatusGroup({
   const isFiring = status === 'firing';
 
   const statusLabel = isFiring
-    ? t('alerting.instance-details.timeline-status-firing', 'Firing notification')
-    : t('alerting.instance-details.timeline-status-resolved', 'Resolved notification');
+    ? t('alerting.instance-details.timeline-status-firing', 'Firing')
+    : t('alerting.instance-details.timeline-status-resolved', 'Resolved');
 
   const variantStyle = isFiring ? styles.summaryRowFiring : styles.summaryRowResolved;
 
@@ -333,7 +333,10 @@ function NotificationStatusGroup({
       >
         <Stack direction="row" alignItems="center" gap={0.5} wrap="wrap">
           <StateTag state={isFiring ? 'bad' : 'good'} size="sm">
-            {statusLabel}
+            {statusLabel}{' '}
+            <span className={styles.lowercaseText}>
+              {t('alerting.instance-details.timeline-notification-label', 'notification')}
+            </span>
           </StateTag>
           {deliveryLabel && (
             <>
@@ -591,5 +594,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       textDecoration: 'underline',
     },
+  }),
+
+  lowercaseText: css({
+    textTransform: 'none',
   }),
 });
