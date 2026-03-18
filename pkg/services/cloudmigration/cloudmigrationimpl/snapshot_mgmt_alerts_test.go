@@ -142,7 +142,15 @@ func TestGetNotificationPolicies(t *testing.T) {
 
 		s := setUpServiceTest(t).(*Service)
 
-		user := &user.SignedInUser{OrgID: 1}
+		user := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: {
+				accesscontrol.ActionAlertingReceiversRead:         {models.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversCreate:       nil,
+				accesscontrol.ActionAlertingReceiversUpdate:       {models.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversDelete:       {models.ScopeReceiversAll},
+				accesscontrol.ActionAlertingProvisioningSetStatus: nil,
+			},
+		}}
 
 		muteTiming := createMuteTiming(t, ctx, s, user)
 		require.NotEmpty(t, muteTiming.Name)
