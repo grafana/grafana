@@ -399,7 +399,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	return nil
 }
 
-func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, uid string, user identity.Requester) error {
+func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, user identity.Requester, uid string) error {
 	revision, err := ecp.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err

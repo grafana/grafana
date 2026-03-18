@@ -849,9 +849,9 @@ func TestIntegrationAuthorization(t *testing.T) {
 				assert.Equal(t, models.NameToUid(receiverB), uid)
 				return nil
 			}
-			err := sut.DeleteContactPoint(context.Background(), user.OrgID, integration3.UID, user)
+			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration3.UID)
 			require.NoError(t, err)
-			err = sut.DeleteContactPoint(context.Background(), user.OrgID, integration2.UID, user)
+			err = sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration2.UID)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, []string{"AuthorizeUpdateByUID", "AuthorizeUpdateByUID"}, authz.Calls.Methods())
 		})
@@ -862,7 +862,7 @@ func TestIntegrationAuthorization(t *testing.T) {
 				assert.Equal(t, models.NameToUid(receiverB), uid)
 				return nil
 			}
-			err := sut.DeleteContactPoint(context.Background(), user.OrgID, integration1.UID, user)
+			err := sut.DeleteContactPoint(context.Background(), user.OrgID, user, integration1.UID)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, []string{"AuthorizeDeleteByUID"}, authz.Calls.Methods())
 		})
