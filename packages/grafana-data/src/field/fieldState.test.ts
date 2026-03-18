@@ -1,12 +1,7 @@
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { DataFrame, TIME_SERIES_TIME_FIELD_NAME, FieldType, TIME_SERIES_VALUE_FIELD_NAME } from '../types/dataFrame';
 
-import {
-  cacheFrameAndFieldIndices,
-  decoupleHideFromState,
-  getFieldDisplayName,
-  getFrameDisplayName,
-} from './fieldState';
+import { cacheFieldOrigins, decoupleHideFromState, getFieldDisplayName, getFrameDisplayName } from './fieldState';
 
 interface TitleScenario {
   frames: DataFrame[];
@@ -316,7 +311,7 @@ describe('decoupleHideFromState', () => {
   });
 });
 
-describe('cacheFrameAndFieldIndices', () => {
+describe('cacheFieldOrigins', () => {
   it('should add origin with frame and field index to field state', () => {
     const frame1 = toDataFrame({
       fields: [{ name: 'Field 1' }, { name: 'Field 2' }],
@@ -330,7 +325,7 @@ describe('cacheFrameAndFieldIndices', () => {
     expect(frame2.fields[0].state?.origin).toBeUndefined();
     expect(frame2.fields[1].state?.origin).toBeUndefined();
 
-    cacheFrameAndFieldIndices([frame1, frame2]);
+    cacheFieldOrigins([frame1, frame2]);
 
     expect(frame1.fields[0].state?.origin).toEqual({ frameIndex: 0, fieldIndex: 0 });
     expect(frame1.fields[1].state?.origin).toEqual({ frameIndex: 0, fieldIndex: 1 });
@@ -345,7 +340,7 @@ describe('cacheFrameAndFieldIndices', () => {
 
     frame.fields[0].state = { origin: { frameIndex: 10, fieldIndex: 10 } };
 
-    cacheFrameAndFieldIndices([frame]);
+    cacheFieldOrigins([frame]);
 
     expect(frame.fields[0].state?.origin).toEqual({ frameIndex: 0, fieldIndex: 0 });
   });

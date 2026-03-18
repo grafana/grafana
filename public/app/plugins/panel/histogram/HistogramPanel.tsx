@@ -7,7 +7,7 @@ import {
   PanelProps,
   buildHistogram,
   cacheFieldDisplayNames,
-  cacheFrameAndFieldIndices,
+  cacheFieldOrigins,
   getHistogramFields,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -28,7 +28,7 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
       return undefined;
     }
 
-    cacheFrameAndFieldIndices(data.series);
+    cacheFieldOrigins(data.series);
     cacheFieldDisplayNames(data.series);
 
     if (

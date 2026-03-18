@@ -11,7 +11,7 @@ import {
   FieldNamePickerBaseNameMode,
   FieldType,
   GrafanaTheme2,
-  cacheFrameAndFieldIndices,
+  cacheFieldOrigins,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, IconButton, Select, useStyles2 } from '@grafana/ui';
@@ -66,7 +66,7 @@ export const SeriesEditor = ({
         ? FieldNamePickerBaseNameMode.IncludeAll
         : FieldNamePickerBaseNameMode.OnlyBaseNames;
 
-  cacheFrameAndFieldIndices(context.data);
+  cacheFieldOrigins(context.data);
 
   const frameInputId = useId();
   const xFieldInputId = useId();

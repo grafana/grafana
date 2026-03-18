@@ -284,7 +284,7 @@ function getSingleLabelName(frames: DataFrame[]): string | null {
   return singleName;
 }
 
-export function cacheFrameAndFieldIndices(frames: DataFrame[]) {
+export function cacheFieldOrigins(frames: DataFrame[]) {
   for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
     const frame = frames[frameIndex];
     for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
