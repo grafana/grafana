@@ -92,6 +92,7 @@ func TestDashboardVersionService(t *testing.T) {
 			CreatedBy:     1,
 			Created:       updatedTimestamp,
 			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(10), "hello": "world"}),
+			VersionType:   "manual",
 		})
 
 		mockCli.On("GetUsersFromMeta", mock.Anything, []string{"user:1", "user:2"}).Return(map[string]*user.User{"user:1": {ID: 1}, "user:2": {ID: 2}}, nil)
@@ -126,6 +127,7 @@ func TestDashboardVersionService(t *testing.T) {
 			DashboardUID:  "uid",
 			CreatedBy:     2,
 			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(11)}),
+			VersionType:   "manual",
 		})
 	})
 
@@ -179,6 +181,7 @@ func TestDashboardVersionService(t *testing.T) {
 			CreatedBy:     -1,
 			Created:       updatedTimestamp,
 			Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(10), "hello": "world"}),
+			VersionType:   "manual",
 		})
 	})
 
@@ -266,6 +269,7 @@ func TestListDashboardVersions(t *testing.T) {
 				Version:       5, // should take from spec
 				DashboardUID:  "uid",
 				Data:          simplejson.NewFromAny(map[string]any{"uid": "uid", "version": int64(5)}),
+				VersionType:   "manual",
 			}}}, res)
 	})
 

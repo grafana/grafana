@@ -660,6 +660,7 @@ func unstructuredToLegacyDashboardVersionWithUsers(
 		Version:       int(vspec.Version),
 		ParentVersion: int(vspec.ParentVersion),
 		Data:          simplejson.NewFromAny(vspec.Spec),
+		VersionType:   "manual",
 	}, nil
 }
 
