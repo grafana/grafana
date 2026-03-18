@@ -3920,13 +3920,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:7.1.0--canary.1345.22579240520.0":
-  version: 7.1.0--canary.1345.22579240520.0
-  resolution: "@grafana/scenes-react@npm:7.1.0--canary.1345.22579240520.0"
+"@grafana/scenes-react@npm:7.2.0--canary.1345.23243766350.0":
+  version: 7.2.0--canary.1345.23243766350.0
+  resolution: "@grafana/scenes-react@npm:7.2.0--canary.1345.23243766350.0"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
-    "@grafana/scenes": "npm:7.1.0--canary.1345.22579240520.0"
+    "@grafana/scenes": "npm:7.2.0--canary.1345.23243766350.0"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3940,38 +3940,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/9187c75e466e2a11c8005553037799dad2dc12f35fac2fc2bafd853a026544f341bd8e6860b218697e086cd8b6a3e9f1c343bdcb839ccfe4df5abc39f83bc14b
-  languageName: node
-  linkType: hard
-
-"@grafana/scenes@npm:7.1.0--canary.1345.22579240520.0":
-  version: 7.1.0--canary.1345.22579240520.0
-  resolution: "@grafana/scenes@npm:7.1.0--canary.1345.22579240520.0"
-  dependencies:
-    "@emotion/css": "npm:11.10.5"
-    "@emotion/react": "npm:11.10.5"
-    "@floating-ui/react": "npm:^0.26.16"
-    "@leeoniya/ufuzzy": "npm:^1.0.16"
-    "@tanstack/react-virtual": "npm:^3.9.0"
-    history: "npm:^4.9.0"
-    lodash: "npm:^4.17.21"
-    react-grid-layout: "npm:^1.3.4"
-    react-select: "npm:^5.10.2"
-    react-use: "npm:^17.5.0"
-    react-virtualized-auto-sizer: "npm:^1.0.24"
-    uuid: "npm:^9.0.0"
-  peerDependencies:
-    "@grafana/data": ">=11.6"
-    "@grafana/e2e-selectors": ">=11.6"
-    "@grafana/i18n": "*"
-    "@grafana/runtime": ">=11.6"
-    "@grafana/schema": ">=11.6"
-    "@grafana/ui": ">=11.6"
-    react: ^18.0.0
-    react-dom: ^18.0.0
-    react-router-dom: ^6.28.0
-    rxjs: ^7.8.1
-  checksum: 10/534fa744727ac7bae7dffafd34b6bd17b08bc63f9e584f6431aad1706148050bf745727b12dc7ba330c524b0ecc5c47d113491b0e19398ea8bb44c62dddf6388
+  checksum: 10/8d3c85f95514d11492c297b766a74caf1061581bfdec5c93d2926afd06f2a351f3bfe4fb1f973526b0b4669e889a160caff2848c4f04647db577cea20950086a
   languageName: node
   linkType: hard
 
@@ -4003,6 +3972,37 @@ __metadata:
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
   checksum: 10/38369e1f2f5eddbc0a96fc99e4d1cb669e7e4e997002421df6a0d33b8be9b78e63706809607618a872abecd6b87641693d29423ddfd0c4acb77ba4fd4a105635
+  languageName: node
+  linkType: hard
+
+"@grafana/scenes@npm:7.2.0--canary.1345.23243766350.0":
+  version: 7.2.0--canary.1345.23243766350.0
+  resolution: "@grafana/scenes@npm:7.2.0--canary.1345.23243766350.0"
+  dependencies:
+    "@emotion/css": "npm:11.10.5"
+    "@emotion/react": "npm:11.10.5"
+    "@floating-ui/react": "npm:^0.26.16"
+    "@leeoniya/ufuzzy": "npm:^1.0.16"
+    "@tanstack/react-virtual": "npm:^3.9.0"
+    history: "npm:^4.9.0"
+    lodash: "npm:^4.17.21"
+    react-grid-layout: "npm:^1.3.4"
+    react-select: "npm:^5.10.2"
+    react-use: "npm:^17.5.0"
+    react-virtualized-auto-sizer: "npm:^1.0.24"
+    uuid: "npm:^9.0.0"
+  peerDependencies:
+    "@grafana/data": ">=11.6"
+    "@grafana/e2e-selectors": ">=11.6"
+    "@grafana/i18n": "*"
+    "@grafana/runtime": ">=11.6"
+    "@grafana/schema": ">=11.6"
+    "@grafana/ui": ">=11.6"
+    react: ^18.0.0
+    react-dom: ^18.0.0
+    react-router-dom: ^6.28.0
+    rxjs: ^7.8.1
+  checksum: 10/69493722973e351032ecb86fd313a7b71787b44fe562c05a446f2263a38de310f7a1c927e76fc6b3b35c617fb2f0421b56e4a9b9b8637427b402a28b8001224a
   languageName: node
   linkType: hard
 
@@ -20306,8 +20306,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:7.1.0--canary.1345.22579240520.0"
-    "@grafana/scenes-react": "npm:7.1.0--canary.1345.22579240520.0"
+    "@grafana/scenes": "npm:7.2.0--canary.1345.23243766350.0"
+    "@grafana/scenes-react": "npm:7.2.0--canary.1345.23243766350.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"

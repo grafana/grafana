@@ -4391,6 +4391,19 @@
     },
     {
       "metadata": {
+        "name": "sceneCsvExport",
+        "resourceVersion": "1770806976610",
+        "creationTimestamp": "2026-02-11T10:49:36Z"
+      },
+      "spec": {
+        "description": "Enables CSV export using scenes dashboard architecture",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "scenesNoFlickering",
         "resourceVersion": "1772550452248",
         "creationTimestamp": "2026-03-03T15:07:32Z"
@@ -4400,19 +4413,6 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "sceneCsvExport",
-        "resourceVersion": "1770806976610",
-        "creationTimestamp": "2026-02-11T10:49:36Z"
-      },
-      "spec": {
-        "description": "Enables CSV export using scenes dashboard architecture",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
     },
