@@ -6,6 +6,7 @@ import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisi
 
 import { CONNECT_URL, DEFAULT_REPOSITORY_TYPES } from '../constants';
 import { checkSyncSettings } from '../utils/checkSyncSettings';
+import { isOnPrem } from '../utils/isOnPrem';
 import { getOrderedRepositoryConfigs } from '../utils/repositoryTypes';
 
 interface Props {
@@ -76,10 +77,15 @@ export function getConfigureRepoTooltip({
   }
 
   if (maxReposReached) {
-    return t(
-      'provisioning.connect-repository-button.max-repos-reached-tooltip',
-      'Your account has reached the maximum number of connected repositories'
-    );
+    return isOnPrem()
+      ? t(
+          'provisioning.connect-repository-button.max-repos-reached-tooltip-onprem',
+          'Your instance has reached the maximum number of connected repositories. You can increase the limit in your Grafana configuration.'
+        )
+      : t(
+          'provisioning.connect-repository-button.max-repos-reached-tooltip',
+          'Your account has reached the maximum number of connected repositories'
+        );
   }
 
   return '';
