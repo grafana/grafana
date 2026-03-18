@@ -155,8 +155,8 @@ func TestRemoteAlertmanagerUID_PostAndGet(t *testing.T) {
 		ctx.OrgRole = org.RoleAdmin
 
 		resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
-			RemoteAlertmanagerUID:   ptrTo("mimir-ds-uid"),
+			AlertmanagersChoice:   ptrTo(definitions.InternalAlertmanager),
+			RemoteAlertmanagerUID: ptrTo("mimir-ds-uid"),
 		})
 		require.Equal(t, http.StatusCreated, resp.Status())
 
@@ -176,13 +176,13 @@ func TestRemoteAlertmanagerUID_PostAndGet(t *testing.T) {
 
 		// First set it.
 		sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
-			RemoteAlertmanagerUID:   ptrTo("mimir-ds-uid"),
+			AlertmanagersChoice:   ptrTo(definitions.InternalAlertmanager),
+			RemoteAlertmanagerUID: ptrTo("mimir-ds-uid"),
 		})
 		// Then clear it.
 		resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
-			RemoteAlertmanagerUID:   ptrTo(""),
+			AlertmanagersChoice:   ptrTo(definitions.InternalAlertmanager),
+			RemoteAlertmanagerUID: ptrTo(""),
 		})
 		require.Equal(t, http.StatusCreated, resp.Status())
 
@@ -199,8 +199,8 @@ func TestRemoteAlertmanagerUID_PostAndGet(t *testing.T) {
 		ctx.OrgRole = org.RoleAdmin
 
 		resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
-			RemoteAlertmanagerUID:   ptrTo("nonexistent-uid"),
+			AlertmanagersChoice:   ptrTo(definitions.InternalAlertmanager),
+			RemoteAlertmanagerUID: ptrTo("nonexistent-uid"),
 		})
 		require.Equal(t, http.StatusBadRequest, resp.Status())
 	})
@@ -219,8 +219,8 @@ func TestRemoteAlertmanagerUID_PostAndGet(t *testing.T) {
 		ctx.OrgRole = org.RoleAdmin
 
 		resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
-			RemoteAlertmanagerUID:   ptrTo("prom-uid"),
+			AlertmanagersChoice:   ptrTo(definitions.InternalAlertmanager),
+			RemoteAlertmanagerUID: ptrTo("prom-uid"),
 		})
 		require.Equal(t, http.StatusBadRequest, resp.Status())
 	})
@@ -241,8 +241,8 @@ func TestRemoteAlertmanagerUID_PostAndGet(t *testing.T) {
 		ctx.OrgRole = org.RoleAdmin
 
 		resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
-			RemoteAlertmanagerUID:   ptrTo("vanilla-am"),
+			AlertmanagersChoice:   ptrTo(definitions.InternalAlertmanager),
+			RemoteAlertmanagerUID: ptrTo("vanilla-am"),
 		})
 		require.Equal(t, http.StatusBadRequest, resp.Status())
 	})
@@ -256,8 +256,8 @@ func TestRemoteAlertmanagerUID_PostAndGet(t *testing.T) {
 		ctx.OrgRole = org.RoleAdmin
 
 		resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-			AlertmanagersChoice: ptrTo(definitions.InternalAlertmanager),
-			RemoteAlertmanagerUID:   ptrTo("any-uid"),
+			AlertmanagersChoice:   ptrTo(definitions.InternalAlertmanager),
+			RemoteAlertmanagerUID: ptrTo("any-uid"),
 		})
 		require.Equal(t, http.StatusCreated, resp.Status())
 	})
@@ -265,7 +265,7 @@ func TestRemoteAlertmanagerUID_PostAndGet(t *testing.T) {
 	t.Run("GET returns remote_alertmanager_uid from stored config", func(t *testing.T) {
 		adminStore := store.NewFakeAdminConfigStore(t)
 		adminStore.Configs[1] = &ngmodels.AdminConfiguration{
-			OrgID:             1,
+			OrgID:                 1,
 			RemoteAlertmanagerUID: ptrTo("stored-uid"),
 		}
 		sut := ConfigSrv{
