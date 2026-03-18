@@ -106,7 +106,7 @@ export const CodeMirrorEditor = memo((props: CodeMirrorEditorProps) => {
         },
       }),
       themeCompartment.current.of(getThemeExtensions()),
-      EditorView.editorAttributes.of({ 'aria-label': ariaLabel || placeholder }),
+      EditorView.contentAttributes.of({ 'aria-label': ariaLabel || placeholder || 'Code editor' }),
     ];
 
     if (enableCloseBrackets) {

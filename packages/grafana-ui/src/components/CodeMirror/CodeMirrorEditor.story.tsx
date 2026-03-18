@@ -191,6 +191,7 @@ export const ReadOnly: StoryFn<typeof CodeMirrorEditor> = () => {
       onChange={() => {}}
       extensions={extensions}
       useInputStyles={true}
+      ariaLabel="Read-only code editor"
     />
   );
 };
