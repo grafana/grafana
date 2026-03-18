@@ -10,9 +10,7 @@
 - Use package imports from other @grafana packages instead of relative imports
 - No direct imports from other directories in /public/app/plugins/panel/\*
 - Avoid regression at all costs
-- New features are behind feature toggles
 - TSDoc style comments with all relevant context. Verbosity over brevity.
-- Always attribute LLM generated code
 
 ## 🎯 PROJECT CONTEXT
 
@@ -52,11 +50,9 @@
 
 - Write tests for all business logic
 - Test user interactions, not implementation
-- Aim for >90% code coverage
+- Aim for >95% code coverage for new changes
 - Tests are clear and concise
-- Use/add test selectors from @grafana/e2e-selectors
 - Test utility methods are well documented and flexible
-- Collect code coverage and add test coverage if any lines changed in the current branch are uncovered
 
 ## Monorepo Conventions
 
@@ -76,3 +72,5 @@ https://grafana.com/docs/grafana/next/visualizations/panels-visualizations/visua
 ## Scripts
 
 - Code coverage: `yarn jest --coverage --collectCoverageFrom="public/app/plugins/panel/heatmap/**/*.{ts,tsx}" public/app/plugins/panel/heatmap/`
+- ESLint: `yarn eslint public/app/plugins/panel/heatmap/ --fix`
+- Prettier: `yarn prettier public/app/plugins/panel/heatmap/ --write`
