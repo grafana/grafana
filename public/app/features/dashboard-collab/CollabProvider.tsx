@@ -254,6 +254,16 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     const sub = scene.subscribeToState((state) => {
       const hadEditPanel = prevEditPanelRef.current;
       const hasEditPanel = state.editPanel;
+
+      if (hadEditPanel !== hasEditPanel) {
+        debugLog('editPanel state changed', {
+          had: !!hadEditPanel,
+          has: !!hasEditPanel,
+          isEditing: state.isEditing,
+          acquiredLocks: Array.from(acquiredLocksRef.current),
+        });
+      }
+
       prevEditPanelRef.current = hasEditPanel;
 
       // Release locks when editPanel clears (panel deselected / editor closed)
