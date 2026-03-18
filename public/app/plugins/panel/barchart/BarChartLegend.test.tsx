@@ -72,18 +72,10 @@ function createBarChartLegendFrame(overrides?: {
     })),
   ];
 
-  const frame = createDataFrame({
-    fields: fields.map((f) => ({
-      ...f,
-      name: f.name,
-      type: f.type,
-      values: f.values,
-      config: f.config,
-    })),
-  });
+  const frame = createDataFrame({ fields });
 
   frame.fields.forEach((field, i) => {
-    const f = fields[i] as { state?: object };
+    const f = fields[i];
     if (f?.state) {
       field.state = { ...field.state, ...f.state };
     }
@@ -95,6 +87,7 @@ function createBarChartLegendFrame(overrides?: {
   return frame;
 }
 
+/** Creates a dummy UPlotConfigBuilder for hasVisibleLegendSeries (it only uses data, not config). */
 function createDummyConfig(): UPlotConfigBuilder {
   return new UPlotConfigBuilder();
 }
@@ -146,17 +139,27 @@ describe('hasVisibleLegendSeries', () => {
 });
 
 describe('BarChartLegend', () => {
-  function renderBarChartLegend(data: DataFrame[], legendOverrides?: Partial<ComponentProps<typeof BarChartLegend>>) {
-    const defaultLegendProps: ComponentProps<typeof BarChartLegend> = {
-      showLegend: false, // unused in the BarChartLegend component
-      displayMode: LegendDisplayMode.List,
-      placement: 'bottom',
-      calcs: [],
-      data,
-    };
+  const defaultLegendProps: ComponentProps<typeof BarChartLegend> = {
+    data: [],
+    showLegend: false, // unused in the BarChartLegend component
+    displayMode: LegendDisplayMode.List,
+    placement: 'bottom',
+    calcs: [],
+  };
 
+  /**
+   * Renders BarChartLegend with the given data and legend options.
+   */
+  function renderBarChartLegend(
+    data: DataFrame[],
+    legendOverrides?: {
+      placement: 'bottom' | 'right';
+      displayMode: LegendDisplayMode;
+      calcs: string[];
+    }
+  ) {
     const mergedProps = { ...defaultLegendProps, ...legendOverrides };
-    return render(<BarChartLegend {...mergedProps} />);
+    return render(<BarChartLegend {...mergedProps} data={data} />);
   }
 
   describe('Rendering', () => {
@@ -215,7 +218,7 @@ describe('BarChartLegend', () => {
       const frame = createBarChartLegendFrame({
         valueFields: [{ name: 'Metric', hideFromLegend: false }],
       });
-      renderBarChartLegend([frame], { placement: 'right', displayMode: LegendDisplayMode.Table });
+      renderBarChartLegend([frame], { placement: 'right', displayMode: LegendDisplayMode.Table, calcs: [] });
 
       expect(screen.getByText('Metric')).toBeVisible();
     });
