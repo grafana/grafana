@@ -29,7 +29,6 @@ const disableProvenanceHeaderName = "X-Disable-Provenance"
 type ProvisioningSrv struct {
 	log                 log.Logger
 	policies            NotificationPolicyService
-	routeService        routeService
 	contactPointService ContactPointService
 	templates           TemplateService
 	muteTimings         MuteTimingService
@@ -58,9 +57,6 @@ type NotificationPolicyService interface {
 	GetPolicyTree(ctx context.Context, orgID int64) (definitions.Route, string, error)
 	UpdatePolicyTree(ctx context.Context, orgID int64, tree definitions.Route, p alerting_models.Provenance, version string) (definitions.Route, string, error)
 	ResetPolicyTree(ctx context.Context, orgID int64, provenance alerting_models.Provenance) (definitions.Route, error)
-}
-
-type routeService interface {
 	GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error)
 }
 
@@ -118,7 +114,7 @@ func (srv *ProvisioningSrv) RouteGetPolicyTreeExport(c *contextmodel.ReqContext)
 		return exportResponse(c, e)
 	}
 
-	managedRoute, err := srv.routeService.GetManagedRoute(c.Req.Context(), c.GetOrgID(), routeName, c.SignedInUser)
+	managedRoute, err := srv.policies.GetManagedRoute(c.Req.Context(), c.GetOrgID(), routeName, c.SignedInUser)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to export notification policy tree", err)
 	}

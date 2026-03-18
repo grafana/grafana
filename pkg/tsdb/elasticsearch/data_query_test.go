@@ -1940,7 +1940,12 @@ func TestExecuteElasticsearchDataQuery_ReplacesEsqlIndexPlaceholder(t *testing.T
 		},
 	}
 
-	query := newElasticsearchDataQuery(context.Background(), c, &dataRequest, log.New(), "logs-*")
+	cfg := backend.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: "elasticsearchESQLQuery",
+	})
+	ctx := backend.WithGrafanaConfig(context.Background(), cfg)
+
+	query := newElasticsearchDataQuery(ctx, c, &dataRequest, log.New(), "logs-*")
 	_, err := query.execute()
 	require.NoError(t, err)
 

@@ -97,7 +97,7 @@ func RegisterAPIService(
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, externalGroupMappingApiInstaller)
 	registerMetrics(reg)
 
-	rpStorage := resourcepermission.ProvideStorageBackend(dbProvider)
+	rpStorage := resourcepermission.ProvideStorageBackend(dbProvider, resourcepermission.NewMappersRegistry())
 
 	// When resourcepermissions are in Mode5 (unistore only), search must error; pass nil backend so the handler returns that error.
 	resourcePermsSearchBackend := resource.StorageBackend(rpStorage)
@@ -179,7 +179,7 @@ func NewAPIService(
 	tracingService tracing.Tracer,
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
-	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
+	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider, resourcepermission.NewMappersRegistry())
 	registerMetrics(reg)
 
 	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()

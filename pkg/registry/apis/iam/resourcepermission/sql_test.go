@@ -111,7 +111,7 @@ func setupBackend(t *testing.T) *ResourcePermSqlBackend {
 		return sqlHelper, nil
 	}
 
-	return ProvideStorageBackend(dbProvider)
+	return ProvideStorageBackend(dbProvider, NewMappersRegistry())
 }
 
 func setupTestRoles(t *testing.T, store db.DB) {
@@ -689,7 +689,7 @@ func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {
 	require.NoError(t, err)
 	setupTestRoles(t, sql.DB)
 
-	mapper := backend.mappers[schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}]
+	mapper, _ := backend.mappers.Get(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"})
 	grn := &groupResourceName{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test-dash"}
 
 	t.Run("should allow changing verb for same entity", func(t *testing.T) {

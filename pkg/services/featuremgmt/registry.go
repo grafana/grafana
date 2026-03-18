@@ -1881,6 +1881,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesAuthzDatasourceResourcePermissions",
+			Description:  "Enables datasource resource permissions via the K8s IAM resource permission APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
 			Stage:       FeatureStageExperimental,

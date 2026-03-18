@@ -1,9 +1,11 @@
-package provisioning
+package foldermetadata
 
 import (
-	"encoding/json"
+	//nolint:gosec // Test SHA-1 hash (generated for testing purposes only, never used in production)
+	"crypto/sha1"
+	"encoding/hex"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -19,6 +21,13 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+// sha1Hex computes the SHA-1 hash of data and returns the lowercase hex string.
+// This matches the hash algorithm used by the local filesystem repository.
+func sha1Hex(data []byte) string {
+	h := sha1.Sum(data)
+	return hex.EncodeToString(h[:])
+}
+
 // TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled verifies that when the
 // provisioningFolderMetadata feature flag is enabled, a full sync on a repository that has folders
 // without _folder.json produces a warning job state and a MissingFolderMetadata condition reason.
@@ -33,7 +42,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 			Target: "folder",
 			Copies: map[string]string{
 				// Dashboard inside a folder that intentionally has no _folder.json
-				"testdata/all-panels.json": "myfolder/dashboard.json",
+				"../testdata/all-panels.json": "myfolder/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -73,8 +82,8 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 			Target: "folder",
 			Copies: map[string]string{
 				// Two dashboards in separate folders, neither has a _folder.json
-				"testdata/all-panels.json":    "folderA/dashboard1.json",
-				"testdata/timeline-demo.json": "folderB/dashboard2.json",
+				"../testdata/all-panels.json":    "folderA/dashboard1.json",
+				"../testdata/timeline-demo.json": "folderB/dashboard2.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -119,9 +128,9 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 			Target: "folder",
 			Copies: map[string]string{
 				// Dashboard in folder without _folder.json → MissingFolderMetadata
-				"testdata/all-panels.json": "myfolder/dashboard.json",
+				"../testdata/all-panels.json": "myfolder/dashboard.json",
 				// Invalid dashboard at root → ResourceInvalid
-				"testdata/dashboard-missing-name.json": "bad-dashboard.json",
+				"../testdata/dashboard-missing-name.json": "bad-dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -171,7 +180,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagDisabled(t *
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
-			"testdata/all-panels.json": "myfolder/dashboard.json",
+			"../testdata/all-panels.json": "myfolder/dashboard.json",
 		},
 		SkipSync:               true,
 		SkipResourceAssertions: true,
@@ -195,30 +204,6 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagDisabled(t *
 	}
 
 	helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonSuccess)
-}
-
-// folderMetadataJSON generates a valid _folder.json payload with a stable UID and title.
-func folderMetadataJSON(uid, title string) []byte {
-	folder := map[string]any{
-		"apiVersion": "folder.grafana.app/v1beta1",
-		"kind":       "Folder",
-		"metadata": map[string]any{
-			"name": uid,
-		},
-		"spec": map[string]any{
-			"title": title,
-		},
-	}
-	data, _ := json.MarshalIndent(folder, "", "\t")
-	return data
-}
-
-// writeToProvisioningPath writes raw content to a relative path under the provisioning directory.
-func writeToProvisioningPath(t *testing.T, helper *common.ProvisioningTestHelper, relativePath string, data []byte) {
-	t.Helper()
-	fullPath := path.Join(helper.ProvisioningPath, relativePath)
-	require.NoError(t, os.MkdirAll(path.Dir(fullPath), 0o750))
-	require.NoError(t, os.WriteFile(fullPath, data, 0o600))
 }
 
 // requireRepoFolderTitle lists all folders managed by repoName and asserts that
@@ -265,7 +250,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "my-team/dashboard.json",
+				"../testdata/all-panels.json": "my-team/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -287,7 +272,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "reports/dashboard.json",
+				"../testdata/all-panels.json": "reports/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -306,7 +291,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "analytics/dashboard.json",
+				"../testdata/all-panels.json": "analytics/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -328,7 +313,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "parent/child/dashboard.json",
+				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -350,7 +335,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "old-dir/dashboard.json",
+				"../testdata/all-panels.json": "old-dir/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -361,12 +346,198 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		requireRepoFolderTitle(t, helper, repo, "old-dir", "My Team")
 
 		// Rename directory: old-dir → new-dir (keep _folder.json with same UID and title).
-		oldPath := path.Join(helper.ProvisioningPath, "old-dir")
-		newPath := path.Join(helper.ProvisioningPath, "new-dir")
+		oldPath := filepath.Join(helper.ProvisioningPath, "old-dir")
+		newPath := filepath.Join(helper.ProvisioningPath, "new-dir")
 		require.NoError(t, os.Rename(oldPath, newPath))
 
 		// Second sync — title must remain "My Team" (from _folder.json), not "new-dir".
 		helper.SyncAndWait(t, repo, nil)
 		requireRepoFolderTitle(t, helper, repo, "new-dir", "My Team")
+	})
+}
+
+// requireRepoFolderChecksum lists all folders managed by repoName and asserts that
+// one with the given sourcePath has the expected sourceChecksum annotation value.
+func requireRepoFolderChecksum(t *testing.T, helper *common.ProvisioningTestHelper, repoName, expectedSourcePath, expectedChecksum string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		for _, f := range list.Items {
+			mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+			if mgr != repoName {
+				continue
+			}
+			srcPath, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			if srcPath != expectedSourcePath {
+				continue
+			}
+			checksum, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourceChecksum")
+			assert.Equal(c, expectedChecksum, checksum, "sourceChecksum mismatch for folder at path %q", expectedSourcePath)
+			return
+		}
+		c.Errorf("no folder managed by %q at path %q found", repoName, expectedSourcePath)
+	}, 30*time.Second, 100*time.Millisecond,
+		"expected folder at path %q for repo %q to have sourceChecksum %q", expectedSourcePath, repoName, expectedChecksum)
+}
+
+// TestIntegrationProvisioning_FullSync_FolderMetadataChecksum verifies that
+// full sync persists the _folder.json hash as sourceChecksum on the Grafana folder.
+func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("folder has sourceChecksum after sync with _folder.json", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-checksum"
+
+		metadataContent := folderMetadataJSON("checksum-uid-1", "Checksum Folder")
+		writeToProvisioningPath(t, helper, "my-folder/_folder.json", metadataContent)
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "my-folder/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+
+		requireRepoFolderTitle(t, helper, repo, "my-folder", "Checksum Folder")
+		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(metadataContent))
+	})
+
+	t.Run("folder without _folder.json has no sourceChecksum", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-no-meta-checksum"
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "plain-folder/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+
+		// Folder should exist but without sourceChecksum
+		requireRepoFolderTitle(t, helper, repo, "plain-folder", "plain-folder")
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			list, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+			if !assert.NoError(c, err) {
+				return
+			}
+			for _, f := range list.Items {
+				mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+				if mgr != repo {
+					continue
+				}
+				srcPath, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
+				if srcPath != "plain-folder" {
+					continue
+				}
+				checksum, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourceChecksum")
+				assert.Empty(c, checksum, "folder without _folder.json should not have sourceChecksum")
+				return
+			}
+			c.Errorf("folder not found")
+		}, 30*time.Second, 100*time.Millisecond)
+	})
+
+	t.Run("nested folders both have sourceChecksum", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-checksum-nested"
+
+		parentContent := folderMetadataJSON("parent-ck-uid", "Parent")
+		childContent := folderMetadataJSON("child-ck-uid", "Child")
+		writeToProvisioningPath(t, helper, "parent/_folder.json", parentContent)
+		writeToProvisioningPath(t, helper, "parent/child/_folder.json", childContent)
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "parent/child/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+
+		requireRepoFolderChecksum(t, helper, repo, "parent", sha1Hex(parentContent))
+		requireRepoFolderChecksum(t, helper, repo, "parent/child", sha1Hex(childContent))
+	})
+}
+
+// TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation verifies that
+// full sync detects _folder.json changes via hash comparison and reconciles folder metadata.
+func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("title update via _folder.json only", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-title-update"
+
+		// First sync: folder with original title.
+		originalContent := folderMetadataJSON("title-update-uid", "Old Title")
+		writeToProvisioningPath(t, helper, "my-folder/_folder.json", originalContent)
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "my-folder/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+		requireRepoFolderTitle(t, helper, repo, "my-folder", "Old Title")
+		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(originalContent))
+
+		// Modify only _folder.json — change the title, keep the same UID.
+		updatedContent := folderMetadataJSON("title-update-uid", "New Title")
+		writeToProvisioningPath(t, helper, "my-folder/_folder.json", updatedContent)
+
+		// Second sync: title should be reconciled, checksum updated.
+		helper.SyncAndWait(t, repo, nil)
+		requireRepoFolderTitle(t, helper, repo, "my-folder", "New Title")
+		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(updatedContent))
+	})
+
+	t.Run("no update when _folder.json unchanged between syncs", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-no-change"
+
+		metadataContent := folderMetadataJSON("no-change-uid", "Stable Title")
+		writeToProvisioningPath(t, helper, "my-folder/_folder.json", metadataContent)
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "my-folder/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+		requireRepoFolderTitle(t, helper, repo, "my-folder", "Stable Title")
+		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(metadataContent))
+
+		// Second sync — nothing changed. Title and checksum should be identical.
+		helper.SyncAndWait(t, repo, nil)
+		requireRepoFolderTitle(t, helper, repo, "my-folder", "Stable Title")
+		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(metadataContent))
 	})
 }

@@ -28,11 +28,11 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
     error,
   } = useProvisionedDashboardData(dashboard);
 
-  if (repoDataStatus === RepoViewStatus.Loading || !defaultValues) {
+  if (repoDataStatus === RepoViewStatus.Loading) {
     return <Spinner />;
   }
 
-  if (repoDataStatus === RepoViewStatus.Error) {
+  if (repoDataStatus === RepoViewStatus.Error || !defaultValues) {
     return <FormLoadingErrorAlert error={error} />;
   }
 
