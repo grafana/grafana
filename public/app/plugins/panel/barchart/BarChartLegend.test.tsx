@@ -3,13 +3,11 @@ import { ComponentProps } from 'react';
 
 import {
   createDataFrame,
-  createTheme,
   DataFrame,
   Field,
   FieldColorModeId,
   FieldConfig,
   FieldType,
-  getDisplayProcessor,
   ThresholdsConfig,
   ThresholdsMode,
   ValueMapping,
@@ -19,8 +17,7 @@ import { AxisPlacement, LegendDisplayMode, MappingType } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
-
-const theme = createTheme();
+import { applyBarChartFieldDefaults } from './test-helpers';
 
 /**
  * Creates a minimal DataFrame for BarChartLegend tests.
@@ -79,10 +76,8 @@ function createBarChartLegendFrame(overrides?: {
     if (f?.state) {
       field.state = { ...field.state, ...f.state };
     }
-    if (!field.display) {
-      field.display = getDisplayProcessor({ field, theme });
-    }
   });
+  applyBarChartFieldDefaults(frame);
 
   return frame;
 }
@@ -173,7 +168,7 @@ describe('BarChartLegend', () => {
         expect(screen.getByTestId(selectors.components.VizLegend.seriesName('Metric A'))).toBeVisible();
       });
 
-      it('does not render VizLegend when data has visible value fields with hideFromLegend', () => {
+      it('does not render VizLegend when value field has hideFromLegend true', () => {
         const frame = createBarChartLegendFrame({
           valueFields: [{ name: 'Metric A', hideFromLegend: true }],
         });
@@ -346,7 +341,7 @@ describe('BarChartLegend', () => {
           },
         ],
       });
-      frame.fields[0].display = getDisplayProcessor({ field: frame.fields[0], theme });
+      applyBarChartFieldDefaults(frame);
 
       expect(() => renderBarChartLegend([frame])).not.toThrow();
     });
