@@ -67,13 +67,14 @@ func (m *memoryStore) ForEach(fn func(key string, s *Session)) {
 
 // Session represents an active collaboration session for a single dashboard.
 type Session struct {
-	DashboardUID string
-	Namespace    string
-	Users        map[string]*UserState // userId → state
-	LockTable    *LockTable            // panel-level soft locks
-	Seq          int64                 // monotonic counter
-	LastOpTime   time.Time             // for autosave quiescence
-	mu           sync.RWMutex
+	DashboardUID    string
+	Namespace       string
+	Users           map[string]*UserState // userId → state
+	LockTable       *LockTable            // panel-level soft locks
+	Seq             int64                 // monotonic counter
+	LastOpTime      time.Time             // for autosave quiescence
+	ResourceVersion string                // k8s resourceVersion for optimistic concurrency
+	mu              sync.RWMutex
 }
 
 // UserState represents a user's presence in a collaboration session.
@@ -204,6 +205,20 @@ func (s *Session) GetLastOpTime() time.Time {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.LastOpTime
+}
+
+// GetResourceVersion returns the current k8s resourceVersion for optimistic concurrency.
+func (s *Session) GetResourceVersion() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.ResourceVersion
+}
+
+// SetResourceVersion updates the k8s resourceVersion after a successful save.
+func (s *Session) SetResourceVersion(rv string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ResourceVersion = rv
 }
 
 // ForEachSession calls fn for each active session.
