@@ -24,8 +24,8 @@ func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *
 	var (
 		scope string
 
-		actionSets    = s.mappers.EnabledActionSets()
-		scopePatterns = s.mappers.EnabledScopePatterns()
+		actionSets    = s.mappers.EnabledActionSets(ctx)
+		scopePatterns = s.mappers.EnabledScopePatterns(ctx)
 
 		assignments = make([]rbacAssignment, 0, 8)
 		scopes      = make([]string, 0, 8)
@@ -94,7 +94,7 @@ func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *
 }
 
 func (s *ResourcePermSqlBackend) latestUpdate(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo) int64 {
-	scopePatterns := s.mappers.EnabledScopePatterns()
+	scopePatterns := s.mappers.EnabledScopePatterns(ctx)
 	query, args, err := buildLatestUpdateQueryFromTemplate(dbHelper, ns.OrgID, scopePatterns)
 	if err != nil {
 		s.logger.FromContext(ctx).Warn("Failed to build latest update query", "error", err)
@@ -537,7 +537,7 @@ func (s *ResourcePermSqlBackend) ListDirectPermissionsForSubject(ctx context.Con
 		s.logger.FromContext(ctx).Error("Failed to get database helper", "error", err)
 		return nil, errDatabaseHelper
 	}
-	actionSets := s.mappers.EnabledActionSets()
+	actionSets := s.mappers.EnabledActionSets(ctx)
 	var assignments []rbacAssignment
 	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
 		assignments, err = s.getRbacAssignmentsWithTx(ctx, dbHelper, tx, &ListResourcePermissionsQuery{

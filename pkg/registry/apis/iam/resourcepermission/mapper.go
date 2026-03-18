@@ -1,6 +1,7 @@
 package resourcepermission
 
 import (
+	"context"
 	"fmt"
 	"slices"
 	"strings"
@@ -70,7 +71,7 @@ func (m mapper) ScopePattern() string {
 
 type mapperEntry struct {
 	mapper  Mapper
-	enabled func() bool // nil = always enabled
+	enabled func(ctx context.Context) bool // nil = always enabled
 }
 
 // MappersRegistry is a registry of resource permission mappers.
@@ -106,7 +107,7 @@ func ProvideMappersRegistry() *MappersRegistry {
 // RegisterMapper registers a mapper for the given GroupResource.
 // The scope prefix is derived from mapper.ScopePattern() — no separate parameter is needed.
 // enabled may be nil, which means the mapper is always enabled.
-func (m *MappersRegistry) RegisterMapper(gr schema.GroupResource, mapper Mapper, enabled func() bool) {
+func (m *MappersRegistry) RegisterMapper(gr schema.GroupResource, mapper Mapper, enabled func(ctx context.Context) bool) {
 	prefix := strings.SplitN(mapper.ScopePattern(), ":", 2)[0]
 	m.entries[gr] = mapperEntry{mapper: mapper, enabled: enabled}
 	m.reverse[prefix] = gr
@@ -158,13 +159,13 @@ func (m *MappersRegistry) Get(gr schema.GroupResource) (Mapper, bool) {
 // Use this for admission control (create/update validation) to gate whether new permissions
 // can be created for this resource type based on feature flags or licensing.
 // Wildcard group keys (e.g. "*.datasource.grafana.app") are resolved transparently.
-func (m *MappersRegistry) IsEnabled(gr schema.GroupResource) bool {
+func (m *MappersRegistry) IsEnabled(ctx context.Context, gr schema.GroupResource) bool {
 	key, ok := m.findGroupKey(gr)
 	if !ok {
 		return false
 	}
 	e := m.entries[key]
-	return e.enabled == nil || e.enabled()
+	return e.enabled == nil || e.enabled(ctx)
 }
 
 // ParseScope parses an RBAC scope string (e.g., "folders:uid:abc") into a groupResourceName.
@@ -195,10 +196,10 @@ func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
 // EnabledActionSets returns the action sets for all currently-enabled mappers.
 // Used by list operations to query the database for permissions across all enabled resource types.
 // Only includes mappers whose enabled closure returns true (or nil).
-func (m *MappersRegistry) EnabledActionSets() []string {
+func (m *MappersRegistry) EnabledActionSets(ctx context.Context) []string {
 	out := make([]string, 0, 3*len(m.entries))
 	for _, e := range m.entries {
-		if e.enabled != nil && !e.enabled() {
+		if e.enabled != nil && !e.enabled(ctx) {
 			continue
 		}
 		out = append(out, e.mapper.ActionSets()...)
@@ -209,10 +210,10 @@ func (m *MappersRegistry) EnabledActionSets() []string {
 // EnabledScopePatterns returns the scope patterns for all currently-enabled mappers.
 // Used by list operations to find all resource permissions across all enabled resource types.
 // Only includes mappers whose enabled closure returns true (or nil).
-func (m *MappersRegistry) EnabledScopePatterns() []string {
+func (m *MappersRegistry) EnabledScopePatterns(ctx context.Context) []string {
 	out := make([]string, 0, len(m.entries))
 	for _, e := range m.entries {
-		if e.enabled != nil && !e.enabled() {
+		if e.enabled != nil && !e.enabled(ctx) {
 			continue
 		}
 		out = append(out, e.mapper.ScopePattern())

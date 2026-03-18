@@ -32,7 +32,7 @@ func ValidateCreateAndUpdateInput(ctx context.Context, v0ResourcePerm *v0alpha1.
 	}
 
 	// Check that the group/resource is registered and enabled
-	if !mappers.IsEnabled(schema.GroupResource{Group: grn.Group, Resource: grn.Resource}) {
+	if !mappers.IsEnabled(ctx, schema.GroupResource{Group: grn.Group, Resource: grn.Resource}) {
 		return apierrors.NewBadRequest(fmt.Sprintf("unknown or disabled group/resource %s/%s", grn.Group, grn.Resource))
 	}
 
@@ -60,7 +60,7 @@ func ValidateDeleteInput(ctx context.Context, name string, mappers *MappersRegis
 	}
 
 	// Check that the group/resource is registered and enabled
-	if !mappers.IsEnabled(schema.GroupResource{Group: grn.Group, Resource: grn.Resource}) {
+	if !mappers.IsEnabled(ctx, schema.GroupResource{Group: grn.Group, Resource: grn.Resource}) {
 		return apierrors.NewBadRequest(fmt.Sprintf("unknown or disabled group/resource %s/%s", grn.Group, grn.Resource))
 	}
 

@@ -1,6 +1,7 @@
 package resourcepermission
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,19 +20,19 @@ func TestNewMappersRegistry_Defaults(t *testing.T) {
 	t.Run("folders mapper is registered and enabled", func(t *testing.T) {
 		_, ok := m.Get(folderGR)
 		assert.True(t, ok)
-		assert.True(t, m.IsEnabled(folderGR))
+		assert.True(t, m.IsEnabled(context.Background(), folderGR))
 	})
 
 	t.Run("dashboards mapper is registered and enabled", func(t *testing.T) {
 		_, ok := m.Get(dashGR)
 		assert.True(t, ok)
-		assert.True(t, m.IsEnabled(dashGR))
+		assert.True(t, m.IsEnabled(context.Background(), dashGR))
 	})
 
 	t.Run("unknown group/resource returns not found", func(t *testing.T) {
 		_, ok := m.Get(schema.GroupResource{Group: "other.grafana.app", Resource: "other"})
 		assert.False(t, ok)
-		assert.False(t, m.IsEnabled(schema.GroupResource{Group: "other.grafana.app", Resource: "other"}))
+		assert.False(t, m.IsEnabled(context.Background(), schema.GroupResource{Group: "other.grafana.app", Resource: "other"}))
 	})
 }
 
@@ -45,28 +46,28 @@ func TestMappersRegistry_RegisterMapper(t *testing.T) {
 
 		_, ok := m.Get(gr)
 		assert.True(t, ok)
-		assert.True(t, m.IsEnabled(gr))
+		assert.True(t, m.IsEnabled(context.Background(), gr))
 	})
 
 	t.Run("disabled mapper is Get-able but not IsEnabled", func(t *testing.T) {
 		m := NewMappersRegistry()
 		gr := schema.GroupResource{Group: "loki.datasource.grafana.app", Resource: "datasources"}
-		m.RegisterMapper(gr, NewMapper("datasources", []string{"query"}), func() bool { return false })
+		m.RegisterMapper(gr, NewMapper("datasources", []string{"query"}), func(ctx context.Context) bool { return false })
 
 		_, ok := m.Get(gr)
 		assert.True(t, ok, "Get should succeed regardless of enabled state")
-		assert.False(t, m.IsEnabled(gr))
+		assert.False(t, m.IsEnabled(context.Background(), gr))
 	})
 
 	t.Run("disabled mapper is excluded from EnabledScopePatterns and EnabledActionSets", func(t *testing.T) {
 		m := NewMappersRegistry()
 		gr := schema.GroupResource{Group: "loki.datasource.grafana.app", Resource: "datasources"}
-		m.RegisterMapper(gr, NewMapper("datasources", []string{"query"}), func() bool { return false })
+		m.RegisterMapper(gr, NewMapper("datasources", []string{"query"}), func(ctx context.Context) bool { return false })
 
-		for _, p := range m.EnabledScopePatterns() {
+		for _, p := range m.EnabledScopePatterns(context.Background()) {
 			assert.NotEqual(t, "datasources:uid:%", p)
 		}
-		for _, a := range m.EnabledActionSets() {
+		for _, a := range m.EnabledActionSets(context.Background()) {
 			assert.NotEqual(t, "datasources:query", a)
 		}
 	})
@@ -130,25 +131,25 @@ func TestMappersRegistry_EnabledFiltered(t *testing.T) {
 		m := NewMappersRegistry()
 		m.RegisterMapper(gr, NewMapper("datasources", []string{"query", "edit"}), nil)
 
-		assert.Contains(t, m.EnabledScopePatterns(), "datasources:uid:%")
-		assert.Contains(t, m.EnabledActionSets(), "datasources:query")
-		assert.Contains(t, m.EnabledActionSets(), "datasources:edit")
+		assert.Contains(t, m.EnabledScopePatterns(context.Background()), "datasources:uid:%")
+		assert.Contains(t, m.EnabledActionSets(context.Background()), "datasources:query")
+		assert.Contains(t, m.EnabledActionSets(context.Background()), "datasources:edit")
 	})
 
 	t.Run("disabled mapper is excluded from both slices", func(t *testing.T) {
 		m := NewMappersRegistry()
-		m.RegisterMapper(gr, NewMapper("datasources", []string{"query"}), func() bool { return false })
+		m.RegisterMapper(gr, NewMapper("datasources", []string{"query"}), func(ctx context.Context) bool { return false })
 
-		assert.NotContains(t, m.EnabledScopePatterns(), "datasources:uid:%")
-		assert.NotContains(t, m.EnabledActionSets(), "datasources:query")
+		assert.NotContains(t, m.EnabledScopePatterns(context.Background()), "datasources:uid:%")
+		assert.NotContains(t, m.EnabledActionSets(context.Background()), "datasources:query")
 	})
 
 	t.Run("defaults always appear in both slices", func(t *testing.T) {
 		m := NewMappersRegistry()
-		patterns := m.EnabledScopePatterns()
+		patterns := m.EnabledScopePatterns(context.Background())
 		assert.Contains(t, patterns, "folders:uid:%")
 		assert.Contains(t, patterns, "dashboards:uid:%")
-		actions := m.EnabledActionSets()
+		actions := m.EnabledActionSets(context.Background())
 		assert.Contains(t, actions, "folders:view")
 		assert.Contains(t, actions, "dashboards:edit")
 	})
@@ -197,14 +198,14 @@ func TestMappersRegistry_WildcardResolution(t *testing.T) {
 			t.Run(tc.group, func(t *testing.T) {
 				gr := schema.GroupResource{Group: tc.group, Resource: "datasources"}
 				mapper, ok := m.Get(gr)
-				if tc.shouldMatch {
-					require.True(t, ok, "expected wildcard match for %s", tc.group)
-					assert.NotNil(t, mapper)
-					assert.Equal(t, "datasources:uid:%", mapper.ScopePattern())
-					assert.True(t, m.IsEnabled(gr))
-				} else {
-					assert.False(t, ok, "expected no match for %s", tc.group)
-				}
+			if tc.shouldMatch {
+				require.True(t, ok, "expected wildcard match for %s", tc.group)
+				assert.NotNil(t, mapper)
+				assert.Equal(t, "datasources:uid:%", mapper.ScopePattern())
+				assert.True(t, m.IsEnabled(context.Background(), gr))
+			} else {
+				assert.False(t, ok, "expected no match for %s", tc.group)
+			}
 			})
 		}
 	})
@@ -221,7 +222,7 @@ func TestMappersRegistry_WildcardResolution(t *testing.T) {
 		gr := schema.GroupResource{Group: "foo.loki.datasource.grafana.app", Resource: "datasources"}
 		_, ok := m.Get(gr)
 		assert.False(t, ok, "multi-segment prefix should not match wildcard")
-		assert.False(t, m.IsEnabled(gr))
+		assert.False(t, m.IsEnabled(context.Background(), gr))
 	})
 
 	t.Run("wildcard as input is rejected", func(t *testing.T) {
@@ -236,7 +237,7 @@ func TestMappersRegistry_WildcardResolution(t *testing.T) {
 		gr := schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"}
 		_, ok := m.Get(gr)
 		assert.False(t, ok, "wildcard as input should be rejected")
-		assert.False(t, m.IsEnabled(gr))
+		assert.False(t, m.IsEnabled(context.Background(), gr))
 	})
 
 	t.Run("wildcard with disabled mapper", func(t *testing.T) {
@@ -245,7 +246,7 @@ func TestMappersRegistry_WildcardResolution(t *testing.T) {
 		m.RegisterMapper(
 			schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"},
 			NewMapper("datasources", []string{"query", "edit", "admin"}),
-			func() bool { return enabled },
+			func(ctx context.Context) bool { return enabled },
 		)
 
 		// Get should work (returns mapper regardless of enabled state)
@@ -255,17 +256,17 @@ func TestMappersRegistry_WildcardResolution(t *testing.T) {
 		assert.NotNil(t, mapper)
 
 		// But IsEnabled should return false
-		assert.False(t, m.IsEnabled(gr))
+		assert.False(t, m.IsEnabled(context.Background(), gr))
 
 		// Should not appear in enabled lists
-		assert.NotContains(t, m.EnabledScopePatterns(), "datasources:uid:%")
-		assert.NotContains(t, m.EnabledActionSets(), "datasources:query")
+		assert.NotContains(t, m.EnabledScopePatterns(context.Background()), "datasources:uid:%")
+		assert.NotContains(t, m.EnabledActionSets(context.Background()), "datasources:query")
 
 		// Enable it
 		enabled = true
-		assert.True(t, m.IsEnabled(gr))
-		assert.Contains(t, m.EnabledScopePatterns(), "datasources:uid:%")
-		assert.Contains(t, m.EnabledActionSets(), "datasources:query")
+		assert.True(t, m.IsEnabled(context.Background(), gr))
+		assert.Contains(t, m.EnabledScopePatterns(context.Background()), "datasources:uid:%")
+		assert.Contains(t, m.EnabledActionSets(context.Background()), "datasources:query")
 	})
 }
 
@@ -280,7 +281,7 @@ func TestMappersRegistry_Wildcard_EnabledPatterns(t *testing.T) {
 	)
 
 	t.Run("EnabledScopePatterns emits wildcard scope pattern once", func(t *testing.T) {
-		patterns := m.EnabledScopePatterns()
+		patterns := m.EnabledScopePatterns(context.Background())
 
 		// Count occurrences of datasources:uid:%
 		count := 0
@@ -297,7 +298,7 @@ func TestMappersRegistry_Wildcard_EnabledPatterns(t *testing.T) {
 	})
 
 	t.Run("EnabledActionSets includes datasource action sets", func(t *testing.T) {
-		actionSets := m.EnabledActionSets()
+		actionSets := m.EnabledActionSets(context.Background())
 
 		// Datasource action sets should appear
 		assert.Contains(t, actionSets, "datasources:query")
