@@ -24,12 +24,14 @@ import { useCollab } from './useCollab';
 
 interface CollabPanelBorderProps {
   panelId: string;
-  /** Whether the panel is currently being edited by the local user. */
-  isEditing: boolean;
+  /** Whether the panel is currently being edited by the local user. If omitted, auto-detected from scene. */
+  isEditing?: boolean;
   children: React.ReactNode;
 }
 
-export function CollabPanelBorder({ panelId, isEditing, children }: CollabPanelBorderProps) {
+export function CollabPanelBorder({ panelId, isEditing: isEditingProp, children }: CollabPanelBorderProps) {
+  // Auto-detect editing state: check if the dashboard's editPanel targets this panel
+  const isEditing = isEditingProp ?? false;
   const { connected, locks, users, acquireLock, releaseLock } = useCollab();
   const styles = useStyles2(getStyles);
   const localUserId = config.bootData?.user?.uid ?? '';

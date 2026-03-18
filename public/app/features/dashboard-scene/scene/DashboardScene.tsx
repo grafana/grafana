@@ -67,8 +67,9 @@ import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
-import { CollabCheckpointDrawer } from 'app/features/dashboard-collab/CollabCheckpointDrawer';
-import { isCollabEnabled } from 'app/features/dashboard-collab/CollabProvider';
+// TODO(collab): Restore when real CollabService is wired:
+// import { CollabCheckpointDrawer } from 'app/features/dashboard-collab/CollabCheckpointDrawer';
+// import { isCollabEnabled } from 'app/features/dashboard-collab/CollabProvider';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../saving/shared';
 import {

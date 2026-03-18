@@ -214,6 +214,20 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
         const collabOp = extractMutationRequest(event);
         if (collabOp) {
           debugLog('Op sent', { mutationType: collabOp.mutation.type, lockTarget: collabOp.lockTarget });
+
+          // Auto-acquire lock for the target before sending the op
+          if (collabOp.lockTarget) {
+            const lockMsg: ClientMessage = {
+              kind: 'lock',
+              op: {
+                type: 'lock',
+                target: collabOp.lockTarget,
+                userId: localUserIdRef.current,
+              } satisfies LockOperation,
+            };
+            publishOp(lockMsg);
+          }
+
           const msg: ClientMessage = {
             kind: 'op',
             op: collabOp,

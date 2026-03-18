@@ -13,7 +13,8 @@ import { DashboardScene } from '../DashboardScene';
 
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
 import { CollabPresence } from './actions/CollabPresence';
-import { CollabSaveStatus } from './actions/CollabSaveStatus';
+// TODO(collab): Restore when real CollabService handles saves:
+// import { CollabSaveStatus } from './actions/CollabSaveStatus';
 import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';
 import { DiscardPanelButton } from './actions/DiscardPanelButton';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
@@ -106,12 +107,13 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             group: 'panel',
             condition: collabEnabled && isEditingDashboard && !isEditingLibraryPanel,
           },
-          {
-            key: 'collab-save-status',
-            component: CollabSaveStatus,
-            group: 'panel',
-            condition: collabEnabled && isEditingDashboard && !isEditingLibraryPanel,
-          },
+          // TODO(collab): Restore when real CollabService handles saves:
+          // {
+          //   key: 'collab-save-status',
+          //   component: CollabSaveStatus,
+          //   group: 'panel',
+          //   condition: collabEnabled && isEditingDashboard && !isEditingLibraryPanel,
+          // },
           {
             key: 'save-dashboard',
             component: SaveDashboard,
