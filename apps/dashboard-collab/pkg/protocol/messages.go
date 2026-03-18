@@ -2,9 +2,27 @@ package protocol
 
 import "encoding/json"
 
+// MessageKind identifies the type of message on the ops channel.
+type MessageKind string
+
+const (
+	MessageKindOp         MessageKind = "op"
+	MessageKindLock       MessageKind = "lock"
+	MessageKindCheckpoint MessageKind = "checkpoint"
+	MessageKindPresence   MessageKind = "presence" // server-only
+)
+
+// LockType identifies a lock or unlock request.
+type LockType string
+
+const (
+	LockTypeLock   LockType = "lock"
+	LockTypeUnlock LockType = "unlock"
+)
+
 // ClientMessage is what clients send to the ops channel.
 type ClientMessage struct {
-	Kind string          `json:"kind"` // "op", "lock", "checkpoint"
+	Kind MessageKind     `json:"kind"`
 	Op   json.RawMessage `json:"op"`
 }
 
@@ -24,9 +42,9 @@ type MutationRequest struct {
 
 // LockOperation requests or releases a panel-level soft lock.
 type LockOperation struct {
-	Type   string `json:"type"`   // "lock" or "unlock"
-	Target string `json:"target"` // panelId or "__dashboard__", "__variables__", "__layout__"
-	UserID string `json:"userId"`
+	Type   LockType `json:"type"`
+	Target string   `json:"target"` // panelId or "__dashboard__", "__variables__", "__layout__"
+	UserID string   `json:"userId"`
 }
 
 // CheckpointOperation requests a named version snapshot.
@@ -38,7 +56,7 @@ type CheckpointOperation struct {
 // ServerMessage is what the server broadcasts to all clients.
 type ServerMessage struct {
 	Seq       int64           `json:"seq"`
-	Kind      string          `json:"kind"` // "op", "lock", "checkpoint", "presence"
+	Kind      MessageKind     `json:"kind"`
 	Op        json.RawMessage `json:"op"`
 	UserID    string          `json:"userId"`
 	Timestamp int64           `json:"timestamp"`

@@ -9,7 +9,7 @@ import (
 
 func TestClientMessageRoundTrip(t *testing.T) {
 	original := ClientMessage{
-		Kind: "op",
+		Kind: MessageKindOp,
 		Op:   json.RawMessage(`{"mutation":{"type":"UPDATE_PANEL","payload":{"id":"panel-1"}},"lockTarget":"panel-1"}`),
 	}
 	data, err := json.Marshal(original)
@@ -43,7 +43,7 @@ func TestCollabOperationRoundTrip(t *testing.T) {
 
 func TestLockOperationRoundTrip(t *testing.T) {
 	original := LockOperation{
-		Type:   "lock",
+		Type:   LockTypeLock,
 		Target: "panel-1",
 		UserID: "user-123",
 	}
@@ -82,7 +82,7 @@ func TestCheckpointOperationOmitsEmptyMessage(t *testing.T) {
 func TestServerMessageRoundTrip(t *testing.T) {
 	original := ServerMessage{
 		Seq:       42,
-		Kind:      "op",
+		Kind:      MessageKindOp,
 		Op:        json.RawMessage(`{"mutation":{"type":"UPDATE_PANEL","payload":{}},"lockTarget":"panel-1"}`),
 		UserID:    "user-123",
 		Timestamp: 1710700000000,
