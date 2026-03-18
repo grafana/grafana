@@ -209,9 +209,22 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     // Edge case #5: enable throttle for large dashboards
     setLargeDashboardMode(scene as any);
 
+    // Suppress op sending for 3 seconds after mount to let the scene settle.
+    // Scene state changes during page load (data queries, transforms) produce
+    // false UPDATE_PANEL ops that would lock panels on other browsers.
+    let warmupComplete = false;
+    const warmupTimer = setTimeout(() => {
+      warmupComplete = true;
+      debugLog('Op extraction warmup complete — now sending ops');
+    }, 3000);
+
     const sub = scene.subscribeToEvent(
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
+        if (!warmupComplete) {
+          return;
+        }
+
         const collabOp = extractMutationRequest(event);
         if (collabOp) {
           debugLog('Op sent', { mutationType: collabOp.mutation.type, lockTarget: collabOp.lockTarget });
@@ -228,7 +241,10 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
       }
     );
 
-    return () => sub.unsubscribe();
+    return () => {
+      clearTimeout(warmupTimer);
+      sub.unsubscribe();
+    };
   }, [enabled, opsAddress, scene, publishOp]);
 
   // Track remote activity per panel — used by CollabPanelBorder to show who's editing
