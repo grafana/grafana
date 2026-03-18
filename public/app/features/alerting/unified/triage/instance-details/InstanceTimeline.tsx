@@ -470,6 +470,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     textAlign: 'right',
     paddingRight: theme.spacing(1.5),
     whiteSpace: 'nowrap',
+    fontVariantNumeric: 'tabular-nums',
   }),
 
   connectorCol: css({
@@ -478,6 +479,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     width: theme.spacing(2),
     flexShrink: 0,
+    paddingTop: theme.spacing(0.5),
   }),
 
   dot: css({
@@ -486,7 +488,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.text.secondary,
     flexShrink: 0,
-    marginTop: theme.spacing(0.75),
   }),
 
   dotFiring: css({
@@ -495,7 +496,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.error.main,
     flexShrink: 0,
-    marginTop: theme.spacing(0.75),
   }),
 
   dotResolved: css({
@@ -504,13 +504,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.success.main,
     flexShrink: 0,
-    marginTop: theme.spacing(0.75),
   }),
 
   dotIconError: css({
     color: theme.colors.error.main,
     flexShrink: 0,
-    marginTop: theme.spacing(0.5),
   }),
 
   connectorLine: css({
