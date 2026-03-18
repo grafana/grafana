@@ -785,6 +785,10 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 				Ref:    ref,
 				Action: repository.FileActionUpdated,
 			})
+		case protocol.FileStatusRenamed:
+			// Rename handling will be implemented in follow-up PR
+			// For now, let renames fall through to default (logged as unhandled)
+			fallthrough
 		default:
 			logger.Error("ignore unhandled file", "file", f.Path, "status", string(f.Status))
 		}

@@ -3908,6 +3908,7 @@ func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *te
 		{"FileStatusModified outside path", protocol.FileStatusModified},
 		{"FileStatusDeleted outside path", protocol.FileStatusDeleted},
 		{"FileStatusTypeChanged outside path", protocol.FileStatusTypeChanged},
+		{"FileStatusRenamed outside path", protocol.FileStatusRenamed},
 	}
 
 	for _, tt := range tests {
@@ -3965,6 +3966,9 @@ func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *te
 				require.Equal(t, "main", changes[0].PreviousRef)
 				require.Equal(t, "included.yaml", changes[0].PreviousPath)
 			case protocol.FileStatusTypeChanged:
+				require.Equal(t, repository.FileActionUpdated, changes[0].Action)
+			case protocol.FileStatusRenamed:
+				// For now, renames are treated as updates (proper handling in follow-up)
 				require.Equal(t, repository.FileActionUpdated, changes[0].Action)
 			}
 		})
