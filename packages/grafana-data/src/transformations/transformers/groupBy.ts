@@ -134,6 +134,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 
           processed.push({
             refId: frame.refId,
+            name: frame.name,
             fields,
             length: valuesByGroupKey.size,
           });
