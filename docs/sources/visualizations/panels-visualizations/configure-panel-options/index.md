@@ -20,7 +20,7 @@ labels:
     - oss
 menuTitle: Configure panel options
 title: Configure panel options
-description: Add titles, descriptions, repeating rows and panel links
+description: Add titles, Markdown descriptions, repeating rows, and panel links
 weight: 50
 refs:
   global-variables:
@@ -53,6 +53,11 @@ refs:
       destination: /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/machine-learning/configure/llm-plugin/
+  text-visualization:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/text/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/text/
 ---
 
 # Configure panel options
@@ -66,10 +71,24 @@ Set the following options to provide basic information about a panel and define 
 | Option                 | Description                                                                                                                                                                                                                                                                                                                                               |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Title                  | Text entered in this field appears at the top of your panel in the panel editor and in the dashboard. You can use [variables you have defined](ref:variables-you-have-defined) in the **Title** field, but not [global variables](ref:global-variables).                                                                                                  |
-| Description            | Text entered in this field appears in a tooltip in the upper-left corner of the panel. Add a description to a panel to share with users any important information about it, such as its purpose. You can use [variables you have defined](ref:variables-you-have-defined) in the **Description** field, but not [global variables](ref:global-variables). |
+| Description            | Markdown text in this field appears in a tooltip in the upper-left corner of the panel when users open the panel info control. Add a description to share important information about the panel, such as its purpose. For supported syntax, refer to [Panel description formatting](#panel-description-formatting). You can use [variables you have defined](ref:variables-you-have-defined) in the **Description** field, but not [global variables](ref:global-variables). |
 | Transparent background | Toggle this switch on and off to control whether or not the panel has the same background color as the dashboard.                                                                                                                                                                                                                                         |
 | Panel links            | Add [links to the panel](ref:links-to-the-panel) to create shortcuts to other dashboards, panels, and external websites. Access panel links by clicking the icon next to the panel title.                                                                                                                                                                 |
 | Repeat options         | Set whether to repeat the panel for each value in the selected variable. For more information, refer to [Configure repeating panels](#configure-repeating-panels).                                                                                                                                                                                        |
+
+### Panel description formatting
+
+Grafana renders the **Description** field as [GitHub Flavored Markdown](https://github.github.com/gfm/) (GFM). You can use common Markdown and GFM features, including:
+
+- **Emphasis:** `**bold**`, `_italic_`, and `~~strikethrough~~`
+- **Structure:** headings, paragraphs, blockquotes, horizontal rules, bulleted and numbered lists
+- **Code:** `` `inline code` `` and fenced code blocks
+- **Links and media:** `[link text](https://example.com)` and images `![alt](https://example.com/image.png)`
+- **Tables:** GFM-style pipe tables
+
+A single newline inside a paragraph does not start a new line in the preview. To break text into separate paragraphs, use a blank line between them, or use a list.
+
+Grafana sanitizes the rendered HTML to reduce security risk. Arbitrary HTML, scripts, and many embedded elements are stripped or restricted, similar to Markdown in the [Text](ref:text-visualization) visualization. The description appears in a compact tooltip, so short copy and simple formatting work best.
 
 You can use generative AI to populate the **Title** and **Description** fields with the [Grafana LLM plugin](ref:grafana-llm-plugin), which is currently in public preview. To enable this, refer to [Set up generative AI features for dashboards](ref:set-up-generative-ai-features-for-dashboards).
 
