@@ -341,29 +341,8 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 	oldReceiverName := *oldReceiverNameRef
 
-	if mergedReceiver.Name != oldReceiverName && oldReceiverName != "" {
-		if newReceiverCreated {
-			if err := ecp.authz.AuthorizeCreate(ctx, user); err != nil {
-				return err
-			}
-		} else {
-			if err := ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(mergedReceiver.Name)); err != nil {
-				return err
-			}
-		}
-		if fullRemoval {
-			if err := ecp.authz.AuthorizeDeleteByUID(ctx, user, models.NameToUid(oldReceiverName)); err != nil {
-				return err
-			}
-		} else {
-			if err := ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(oldReceiverName)); err != nil {
-				return err
-			}
-		}
-	} else {
-		if err := ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(mergedReceiver.Name)); err != nil {
-			return err
-		}
+	if err := ecp.authorizeUpdate(ctx, user, mergedReceiver.Name, oldReceiverName, fullRemoval, newReceiverCreated); err != nil {
+		return err
 	}
 
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
@@ -397,6 +376,30 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 	return nil
+}
+
+// authorizeUpdate checks authorization for a contact point update, handling the
+// different cases: simple update, rename into existing receiver, and rename creating a new receiver.
+func (ecp *ContactPointService) authorizeUpdate(ctx context.Context, user identity.Requester, newName, oldName string, fullRemoval, newReceiverCreated bool) error {
+	renamed := newName != oldName && oldName != ""
+	if !renamed {
+		return ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(newName))
+	}
+
+	// Authorize the target: create if it's a new receiver group, update otherwise.
+	if newReceiverCreated {
+		if err := ecp.authz.AuthorizeCreate(ctx, user); err != nil {
+			return err
+		}
+	} else if err := ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(newName)); err != nil {
+		return err
+	}
+
+	// Authorize the source: delete if fully removed, update otherwise.
+	if fullRemoval {
+		return ecp.authz.AuthorizeDeleteByUID(ctx, user, models.NameToUid(oldName))
+	}
+	return ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(oldName))
 }
 
 func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, user identity.Requester, uid string) error {
