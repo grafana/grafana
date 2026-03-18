@@ -292,7 +292,7 @@ describe('Plugins/Helpers', () => {
         config.pluginAdminExternalManageEnabled = true;
 
         expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({
-          managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned }
+          managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
         });
 
         config.pluginCatalogManagedPlugins = oldPluginCatalogManagedPlugins;
@@ -301,7 +301,7 @@ describe('Plugins/Helpers', () => {
 
       test('should set managed.enabled to false if plugin is not in pluginCatalogManagedPlugins', () => {
         expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({
-          managed: { enabled: false, strategy: undefined }
+          managed: { enabled: false, strategy: undefined },
         });
       });
 
@@ -885,7 +885,7 @@ describe('Plugins/Helpers', () => {
         config.pluginCatalogManagedPlugins = [localPlugin.id];
 
         expect(mapToCatalogPlugin(localPlugin)).toMatchObject({
-          managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned }
+          managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
         });
 
         config.pluginCatalogManagedPlugins = oldPluginCatalogManagedPlugins;
@@ -894,13 +894,13 @@ describe('Plugins/Helpers', () => {
 
       test('should set managed.enabled to false if plugin is not in pluginCatalogManagedPlugins', () => {
         expect(mapToCatalogPlugin(localPlugin)).toMatchObject({
-          managed: { enabled: false, strategy: undefined }
+          managed: { enabled: false, strategy: undefined },
         });
       });
 
       test('should set managed.enabled to false when plugin is not managed', () => {
         expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, managed: { enabled: true } })).toMatchObject({
-          managed: { enabled: false, strategy: undefined }
+          managed: { enabled: false, strategy: undefined },
         });
       });
     });

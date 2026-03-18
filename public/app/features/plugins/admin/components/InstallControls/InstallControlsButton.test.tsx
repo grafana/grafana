@@ -248,7 +248,10 @@ describe('InstallControlsButton', () => {
     it('should be hidden when plugin is managed', () => {
       render(
         <TestProvider>
-          <InstallControlsButton plugin={{ ...plugin, managed: { enabled: true } }} pluginStatus={PluginStatus.UPDATE} />
+          <InstallControlsButton
+            plugin={{ ...plugin, managed: { enabled: true } }}
+            pluginStatus={PluginStatus.UPDATE}
+          />
         </TestProvider>
       );
       expect(screen.queryByText('Update')).not.toBeInTheDocument();
