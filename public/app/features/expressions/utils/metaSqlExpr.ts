@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 import { getDefaultTimeRange, DataFrameView } from '@grafana/data';
-import { QueryFormat, SQLQuery, SQLSelectableValue } from '@grafana/plugin-ui';
+import { QueryFormat, type SQLQuery, type SQLSelectableValue } from '@grafana/sql';
 import { DataQuery } from '@grafana/schema';
 import { mapFieldsToTypes } from 'app/plugins/datasource/mysql/fields';
 import { quoteIdentifierIfNecessary } from 'app/plugins/datasource/mysql/sqlUtil';

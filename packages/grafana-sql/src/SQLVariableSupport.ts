@@ -2,13 +2,11 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { CustomVariableSupport, DataQueryRequest, DataQueryResponse, DataFrame } from '@grafana/data';
-import { EditorMode } from '@grafana/plugin-ui';
-
 import { SQLVariablesQueryEditor } from './SQLVariableEditor';
 import { migrateVariableQuery, updateFrame, refId } from './SQLVariableUtils';
 import { SqlDatasource } from './datasource/SqlDatasource';
 import { applyQueryDefaults } from './defaults';
-import { QueryFormat, type SQLQuery } from './types';
+import { EditorMode, QueryFormat, type SQLQuery } from './types';
 
 export class SQLVariableSupport extends CustomVariableSupport<SqlDatasource, SQLQuery> {
   constructor(readonly datasource: SqlDatasource) {

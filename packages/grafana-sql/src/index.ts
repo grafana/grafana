@@ -10,7 +10,7 @@ export type {
   Func,
   FuncParameter,
 } from './types';
-export { QueryFormat } from './types'; // this is an enum, we cannot export-type it
+export { EditorMode, QueryFormat } from './types'; // these are enums, we cannot export-type them
 export { COMMON_FNS, MACRO_FUNCTIONS } from './constants';
 export { SqlDatasource } from './datasource/SqlDatasource';
 export { formatSQL } from './utils/formatSQL';

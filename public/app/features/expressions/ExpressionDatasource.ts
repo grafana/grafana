@@ -10,7 +10,7 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { SQLQuery } from '@grafana/plugin-ui';
+import type { SQLQuery } from '@grafana/sql';
 import {
   BackendDataSourceResponse,
   DataSourceWithBackend,

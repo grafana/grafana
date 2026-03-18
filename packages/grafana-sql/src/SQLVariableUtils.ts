@@ -1,10 +1,8 @@
 import { uniq } from 'lodash';
 
 import { DataFrame, Field, FieldType } from '@grafana/data';
-import { EditorMode } from '@grafana/plugin-ui';
-
 import { applyQueryDefaults } from './defaults';
-import { type SQLQuery, type SQLVariableQuery, type SQLQueryMeta } from './types';
+import { EditorMode, type SQLQuery, type SQLVariableQuery, type SQLQueryMeta } from './types';
 
 export const refId = 'SQLVariableQueryEditor-VariableQuery';
 

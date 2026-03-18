@@ -1,4 +1,4 @@
-import { JsonTree } from '@react-awesome-query-builder/ui';
+import type { JsonTree } from '@react-awesome-query-builder/ui';
 
 import {
   DataFrame,
@@ -9,7 +9,14 @@ import {
   TimeRange,
   toOption as toOptionFromData,
 } from '@grafana/data';
-import { CompletionItemKind, EditorMode, LanguageDefinition } from '@grafana/plugin-ui';
+import type { CompletionItemKind, LanguageDefinition } from '@grafana/plugin-ui';
+
+// EditorMode defined locally to avoid pulling @react-awesome-query-builder into
+// the initial bundle via @grafana/plugin-ui/QueryEditor/types.js
+export enum EditorMode {
+  Builder = 'builder',
+  Code = 'code',
+}
 
 import { QueryWithDefaults } from './defaults';
 import {

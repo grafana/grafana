@@ -6,7 +6,7 @@ import { EditorRows, EditorRow, EditorField } from '@grafana/plugin-ui';
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
 import { migrateVariableQuery } from './SQLVariableUtils';
-import { SqlQueryEditorProps } from './components/QueryEditor';
+import type { SqlQueryEditorProps } from './components/QueryEditor';
 import { SqlQueryEditorLazy } from './components/QueryEditorLazy';
 import { type SQLQuery, type SQLQueryMeta, SQLDialect } from './types';
 
