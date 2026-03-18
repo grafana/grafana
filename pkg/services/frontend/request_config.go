@@ -130,7 +130,6 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger) 
 	applyString(settings, "analytics", "rudderstack_v3_sdk_url", &c.RudderstackV3SdkUrl, logger)
 	applyString(settings, "analytics", "rudderstack_config_url", &c.RudderstackConfigUrl, logger)
 	applyString(settings, "analytics", "rudderstack_integrations_url", &c.RudderstackIntegrationsUrl, logger)
-
 }
 
 func getValue(settings *ini.File, section, key string) *ini.Key {

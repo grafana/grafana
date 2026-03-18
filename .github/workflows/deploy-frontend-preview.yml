@@ -25,11 +25,6 @@ jobs:
       BUCKET_NAME: grafana-frontend-previews
 
     steps:
-      - name: Debug OIDC Claims
-        uses: steve-todorov/oidc-debugger-action@v1
-        with:
-          audience: '${{ github.server_url }}/${{ github.repository }}'
-
       - name: Checkout code
         uses: actions/checkout@v5
         with:
