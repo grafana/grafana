@@ -1,4 +1,5 @@
 import { makeTimeRange, toUtc } from '@grafana/data';
+
 import { splitTimeRange, splitTimeRangeAligned } from './metricTimeSplitting';
 
 describe('metric splitTimeRange', () => {

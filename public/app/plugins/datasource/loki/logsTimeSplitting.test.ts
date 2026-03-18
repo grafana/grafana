@@ -1,4 +1,4 @@
-import { dateTime, makeTimeRange, toUtc } from '@grafana/data';
+import { makeTimeRange, toUtc } from '@grafana/data';
 
 import { splitTimeRange, splitTimeRangeAligned } from './logsTimeSplitting';
 
