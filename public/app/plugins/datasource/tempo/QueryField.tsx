@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
+import { QueryWithAssistantButton } from '@grafana/assistant';
 import { CoreApp, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
@@ -15,7 +16,6 @@ import {
   withTheme2,
 } from '@grafana/ui';
 
-import { QueryWithAssistantButton } from '@grafana/assistant';
 
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
