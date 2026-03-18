@@ -63,6 +63,28 @@ jest.mock('../../utils', () => ({
   enablePopoverMenu: jest.fn(),
 }));
 
+// Keep field selector sidebar visible in tests (otherwise flex layout collapses it to max-width: 0)
+jest.mock('re-resizable', () => {
+  const React = require('react');
+  return {
+    Resizable: ({ children, size }: { children: React.ReactNode; size?: { width?: number; height?: number } }) =>
+      React.createElement(
+        'div',
+        {
+          'data-testid': 'resizable-mock',
+          style: {
+            width: size?.width ?? 220,
+            minWidth: 220,
+            flexShrink: 0,
+            height: size?.height ?? 400,
+            position: 'relative',
+          },
+        },
+        children
+      ),
+  };
+});
+
 const originalFlagValue = config.featureToggles.newLogsPanel;
 beforeAll(() => {
   config.featureToggles.newLogsPanel = true;
@@ -517,6 +539,63 @@ describe('LogList', () => {
       expect(screen.getByText('scope_name')).toBeInTheDocument();
 
       config.featureToggles.otelLogsFormatting = originalState;
+    });
+
+    test('Toggles show log level by clicking the Log Level checkbox in the field selector', async () => {
+      const logsWithLevel = [
+        createLogRow({
+          uid: '1',
+          logLevel: LogLevel.info,
+          entry: 'log 1',
+          labels: { service: 'frontend' },
+        }),
+        createLogRow({
+          uid: '2',
+          logLevel: LogLevel.debug,
+          entry: 'log 2',
+          labels: { service: 'backend' },
+        }),
+      ];
+
+      render(
+        <LogList
+          {...defaultProps}
+          {...extraProps}
+          logs={logsWithLevel}
+          displayedFields={['service']}
+          showFieldSelector
+          showControls={false}
+          showLevel={true}
+        />
+      );
+
+      await screen.findByText('frontend');
+      expect(screen.getByText('backend')).toBeInTheDocument();
+
+      // Log level is shown in the list (real LogListContext)
+      expect(screen.getByText('info')).toBeInTheDocument();
+      expect(screen.getByText('debug')).toBeInTheDocument();
+
+      // Click the "Log Level" checkbox in the field selector to hide log level
+      const logLevelCheckbox = screen.getByRole('checkbox', { name: 'Log Level' });
+      expect(logLevelCheckbox).toBeChecked();
+      await userEvent.click(logLevelCheckbox);
+
+      // Level column is hidden
+      expect(screen.queryByText('info')).not.toBeInTheDocument();
+      expect(screen.queryByText('debug')).not.toBeInTheDocument();
+      expect(logLevelCheckbox).not.toBeChecked();
+      expect(screen.getByText('frontend')).toBeInTheDocument();
+      expect(screen.getByText('backend')).toBeInTheDocument();
+
+      // Click again to show log level (checkbox is now in Suggested section)
+      const logLevelCheckboxAfter = screen.getByRole('checkbox', { name: 'Log Level' });
+      await userEvent.click(logLevelCheckboxAfter);
+
+      // Level is shown again (wait for list to re-render)
+      expect(await screen.findByText('info')).toBeInTheDocument();
+      expect(screen.getByText('debug')).toBeInTheDocument();
+      expect(screen.getByRole('checkbox', { name: 'Log Level' })).toBeChecked();
     });
   });
 
