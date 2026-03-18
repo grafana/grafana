@@ -126,11 +126,10 @@ function EntryDot({ entry }: { entry: TimelineEntry }) {
   const styles = useStyles2(getStyles);
 
   if (entry.type === 'state-change') {
-    const isFiringTransition =
-      entry.current === 'Alerting' ||
-      entry.current === 'Pending' ||
-      entry.current === 'NoData' ||
-      entry.current === 'Error';
+    if (entry.current === 'Pending') {
+      return <div className={styles.dotPending} />;
+    }
+    const isFiringTransition = entry.current === 'Alerting' || entry.current === 'NoData' || entry.current === 'Error';
     return <div className={isFiringTransition ? styles.dotFiring : styles.dotResolved} />;
   }
 
@@ -503,6 +502,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '10px',
     borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.success.main,
+    flexShrink: 0,
+  }),
+
+  dotPending: css({
+    width: '10px',
+    height: '10px',
+    borderRadius: theme.shape.radius.circle,
+    backgroundColor: theme.colors.warning.main,
     flexShrink: 0,
   }),
 
