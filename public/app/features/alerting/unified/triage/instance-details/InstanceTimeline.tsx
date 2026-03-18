@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import {
   CreateNotificationqueryNotificationEntry,
@@ -197,36 +197,41 @@ export function InstanceTimeline({ records, notifications, filter }: InstanceTim
           {t('alerting.instance-details.timeline-filter-empty', 'No matching events for this filter')}
         </Text>
       ) : (
-        <Stack direction="column">
+        <div className={styles.timelineGrid}>
           {entries.map((entry, index) => (
-            <Stack key={`${entry.type}-${entry.timestamp}-${index}`} direction="row">
-              <div className={styles.timestampCol}>
+            <React.Fragment key={`${entry.type}-${entry.timestamp}-${index}`}>
+              <div className={styles.timestampCell}>
                 <Text variant="bodySmall" color="secondary">
                   {dateFormatter.format(new Date(entry.timestamp))}
                 </Text>
               </div>
-
-              <div className={styles.connectorCol}>
+              <div className={styles.dotCell}>
                 <EntryDot entry={entry} />
-                {index < entries.length - 1 && <div className={styles.connectorLine} />}
               </div>
-
-              <div className={styles.contentCol}>
+              <div className={styles.contentCell}>
                 {entry.type === 'notifications' && entry.notifications && (
                   <NotificationSummary notifications={entry.notifications} />
                 )}
-
                 {entry.type === 'state-change' && entry.previous && entry.current && (
-                  <Stack direction="row" alignItems="center" gap={1}>
+                  <div className={styles.stateChangeRow}>
                     <EventState state={entry.previous} showLabel addFilter={noop} type="from" />
                     <Icon name="arrow-right" size="sm" />
                     <EventState state={entry.current} showLabel addFilter={noop} type="to" />
-                  </Stack>
+                  </div>
                 )}
               </div>
-            </Stack>
+              {index < entries.length - 1 && (
+                <>
+                  <div />
+                  <div className={styles.connectorCell}>
+                    <div className={styles.connectorLine} />
+                  </div>
+                  <div />
+                </>
+              )}
+            </React.Fragment>
           ))}
-        </Stack>
+        </div>
       )}
     </Stack>
   );
@@ -462,23 +467,32 @@ function IntegrationIcon({ integration }: { integration: string }) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  timestampCol: css({
-    width: 'auto',
-    flexShrink: 0,
-    paddingTop: theme.spacing(0.5),
-    textAlign: 'right',
+  timelineGrid: css({
+    display: 'grid',
+    gridTemplateColumns: `auto ${theme.spacing(2)} 1fr`,
+  }),
+
+  timestampCell: css({
+    display: 'flex',
+    alignItems: 'center',
+    alignSelf: 'start',
+    minHeight: theme.spacing(4),
     paddingRight: theme.spacing(1.5),
     whiteSpace: 'nowrap',
     fontVariantNumeric: 'tabular-nums',
   }),
 
-  connectorCol: css({
+  dotCell: css({
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'center',
-    width: theme.spacing(2),
-    flexShrink: 0,
-    paddingTop: theme.spacing(0.5),
+    justifyContent: 'center',
+    alignSelf: 'start',
+    minHeight: theme.spacing(4),
+  }),
+
+  contentCell: css({
+    paddingLeft: theme.spacing(1.5),
+    minWidth: 0,
   }),
 
   dot: css({
@@ -486,7 +500,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '10px',
     borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.text.secondary,
-    flexShrink: 0,
   }),
 
   dotFiring: css({
@@ -494,7 +507,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '10px',
     borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.error.main,
-    flexShrink: 0,
   }),
 
   dotResolved: css({
@@ -502,7 +514,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '10px',
     borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.success.main,
-    flexShrink: 0,
   }),
 
   dotPending: css({
@@ -510,26 +521,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '10px',
     borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.warning.main,
-    flexShrink: 0,
   }),
 
   dotIconError: css({
     color: theme.colors.error.main,
-    flexShrink: 0,
+  }),
+
+  stateChangeRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    minHeight: theme.spacing(4),
+    gap: theme.spacing(1),
+  }),
+
+  connectorCell: css({
+    display: 'flex',
+    justifyContent: 'center',
   }),
 
   connectorLine: css({
     width: '2px',
-    flex: 1,
+    minHeight: theme.spacing(1.5),
     backgroundColor: theme.colors.border.medium,
-    marginTop: theme.spacing(0.5),
-  }),
-
-  contentCol: css({
-    flex: 1,
-    paddingLeft: theme.spacing(1.5),
-    paddingBottom: theme.spacing(2),
-    minWidth: 0,
   }),
 
   summaryRowBase: css({
@@ -538,6 +551,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
+    minHeight: theme.spacing(4),
     padding: theme.spacing(0.75, 1.5),
     borderRadius: theme.shape.radius.default,
     border: 'none',
