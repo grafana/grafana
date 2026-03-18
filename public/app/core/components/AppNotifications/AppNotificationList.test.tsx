@@ -38,6 +38,12 @@ const sendTestNotification = async (type: (typeof AppEvents)[keyof typeof AppEve
 };
 
 describe('AppNotificationList', () => {
+  it('should have aria-live attribute for screen reader announcements', () => {
+    const { container } = renderWithContext();
+    const liveRegion = container.querySelector('[aria-live="polite"]');
+    expect(liveRegion).toBeInTheDocument();
+  });
+
   describe('Error notifications', () => {
     it('should show error notifications when not in kiosk mode', async () => {
       renderWithContext(undefined, '/d/test-dashboard');

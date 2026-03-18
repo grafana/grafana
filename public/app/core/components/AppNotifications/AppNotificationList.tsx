@@ -85,7 +85,7 @@ export function AppNotificationList() {
   };
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} aria-live="polite">
       <Stack direction="column">
         {appNotifications.map((appNotification, index) => {
           return (
