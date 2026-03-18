@@ -2733,6 +2733,19 @@ For example:
 allowed_origins = "https://*.example.com"
 ```
 
+#### `csrf_additional_headers`
+
+The `csrf_additional_headers` option is a comma-separated list of additional HTTP headers that Grafana Live accepts for CSRF protection during WebSocket connection establishment.
+
+If not set (default), then only the `Host` header is used for CSRF protection, which should be sufficient for most scenarios.
+
+For example:
+
+```ini
+[live]
+csrf_additional_headers = "X-Forwarded-Host,X-Original-Host"
+```
+
 #### `ha_engine`
 
 **Experimental**
