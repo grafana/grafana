@@ -25,15 +25,12 @@ interface CollabPanelBorderProps {
   panelId: string;
   /** Whether the panel is currently being edited by the local user. */
   isEditing: boolean;
-  /** Callback to block or allow edit entry. Return false to block. */
-  onEditAttempt?: () => boolean;
   children: React.ReactNode;
 }
 
-export function CollabPanelBorder({ panelId, isEditing, onEditAttempt, children }: CollabPanelBorderProps) {
+export function CollabPanelBorder({ panelId, isEditing, children }: CollabPanelBorderProps) {
   const { connected, locks, users, acquireLock, releaseLock } = useCollab();
   const styles = useStyles2(getStyles);
-  const notifyApp = useAppNotification();
   const localUserId = config.bootData?.user?.uid ?? '';
 
   const lock = useMemo(
@@ -62,19 +59,6 @@ export function CollabPanelBorder({ panelId, isEditing, onEditAttempt, children 
     }
     return undefined;
   }, [connected, isEditing, panelId, acquireLock, releaseLock]);
-
-  const handleEditAttempt = useCallback(() => {
-    if (isLockedByOther && lockHolder) {
-      notifyApp.warning(
-        t('dashboard-collab.panel-locked.title', 'Panel locked'),
-        t('dashboard-collab.panel-locked.message', 'Being edited by {{name}}', {
-          name: lockHolder.displayName,
-        })
-      );
-      return false;
-    }
-    return onEditAttempt ? onEditAttempt() : true;
-  }, [isLockedByOther, lockHolder, notifyApp, onEditAttempt]);
 
   if (!connected) {
     return <>{children}</>;
