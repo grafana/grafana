@@ -39,14 +39,14 @@ type githubWebhookRepository struct {
 	secret                common.RawSecureValue
 	gh                    Client
 	webhookURL            string
-	folderMetadataEnabled bool
+	canUseIncrementalSync func([]string) bool
 }
 
 func NewGithubWebhookRepository(
 	basic GithubRepository,
 	webhookURL string,
 	secret common.RawSecureValue,
-	folderMetadataEnabled bool,
+	canUseIncrementalSync func([]string) bool,
 ) GithubWebhookRepository {
 	return &githubWebhookRepository{
 		GithubRepository:      basic,
@@ -56,7 +56,7 @@ func NewGithubWebhookRepository(
 		gh:                    basic.Client(),
 		webhookURL:            webhookURL,
 		secret:                secret,
-		folderMetadataEnabled: folderMetadataEnabled,
+		canUseIncrementalSync: canUseIncrementalSync,
 	}
 }
 
@@ -131,7 +131,7 @@ func (r *githubWebhookRepository) parsePushEvent(event *github.PushEvent) (*prov
 		deletedPaths = append(deletedPaths, change.Removed...)
 	}
 
-	incremental := repository.CanUseIncrementalSync(deletedPaths, r.folderMetadataEnabled)
+	incremental := r.canUseIncrementalSync(deletedPaths)
 
 	return &provisioning.WebhookResponse{
 		Code: http.StatusAccepted,

@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -379,6 +380,14 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 }
 
 func TestShouldUseIncrementalSync(t *testing.T) {
+	canUseIncrementalSync := func(deletedPaths []string) bool {
+		for _, p := range deletedPaths {
+			if strings.HasSuffix(p, ".keep") {
+				return false
+			}
+		}
+		return true
+	}
 	versioned := repository.NewMockVersioned(t)
 	obj := &provisioning.Repository{
 		Status: provisioning.RepositoryStatus{
@@ -395,7 +404,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 				Path:   "test.json",
 			},
 		}, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, canUseIncrementalSync)
 		assert.NoError(t, err)
 		assert.True(t, got)
 	})
@@ -407,7 +416,7 @@ func TestShouldUseIncrementalSync(t *testing.T) {
 				Path:   "test/.keep",
 			},
 		}, nil).Once()
-		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, false)
+		got, err := shouldUseIncrementalSync(context.Background(), versioned, obj, latestRef, canUseIncrementalSync)
 		assert.NoError(t, err)
 		assert.False(t, got)
 	})

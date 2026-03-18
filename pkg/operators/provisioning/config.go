@@ -32,6 +32,7 @@ import (
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -554,7 +555,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			if provisioningAppURL != "" {
 				webhook = webhooks.ProvideWebhooks(provisioningAppURL, c.Registry())
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, resources.IsFolderMetadataEnabled(c.Settings)))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, sync.NewCanUseIncrementalSyncFn(resources.IsFolderMetadataEnabled(c.Settings))))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {
