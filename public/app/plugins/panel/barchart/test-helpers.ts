@@ -1,6 +1,6 @@
 /**
  * Shared test helpers for barchart panel tests.
- * Used by utils.test.ts and BarChartLegend.test.tsx.
+ * Used by utils.test.ts, BarChartLegend.test.tsx, BarChartPanel.test.tsx
  */
 
 import { createTheme, DataFrame, getDisplayProcessor, GrafanaTheme2 } from '@grafana/data';
