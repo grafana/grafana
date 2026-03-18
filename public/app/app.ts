@@ -1,3 +1,4 @@
+console.log('hello world');
 import 'symbol-observable';
 import 'regenerator-runtime/runtime';
 
