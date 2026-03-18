@@ -16,7 +16,6 @@ import {
   withTheme2,
 } from '@grafana/ui';
 
-
 import TraceQLSearch from './SearchTraceQLEditor/TraceQLSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
 import { TempoQueryType } from './dataquery.gen';
