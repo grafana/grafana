@@ -39,7 +39,7 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
       }
     };
 
-    const isManagedPlugin = plugin.isManaged || plugin.managed.enabled;
+    const isManagedPlugin = plugin.managed.enabled;
     if (plugin.isInstalled) {
       const installedVersionValue = isManagedPlugin ? managedVersionText : installedVersion;
       addInfo('installedVersion', installedVersionValue);

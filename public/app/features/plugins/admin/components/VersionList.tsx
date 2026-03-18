@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useState, useMemo } from 'react';
 import { major, compare, lte } from 'semver';
 
@@ -23,7 +22,6 @@ export const VersionList = ({ plugin }: Props) => {
   const versions = useMemo(() => plugin.details?.versions ?? [], [plugin.details?.versions]);
   const installedVersion = plugin.installedVersion;
   const disableInstallation = useMemo(() => shouldDisablePluginInstall(plugin), [plugin]);
-  const managedPluginsV2 = useBooleanFlagValue('managedPluginsV2', false);
 
   const latestCompatibleVersion = getLatestCompatibleVersion(versions);
   const latestMajorVersions = getLatestMajorVersions(versions);
@@ -131,7 +129,6 @@ export const VersionList = ({ plugin }: Props) => {
                         latestMajorVersions,
                         installedVersion,
                         updateStrategy: plugin.managed.strategy,
-                        managedPluginsV2,
                       })
                     }
                     tooltip={tooltip}
@@ -209,7 +206,6 @@ interface ShouldDisableVersionInstallationArgs {
   latestMajorVersions: Set<string>;
   installedVersion: string | undefined;
   updateStrategy?: PluginUpdateStrategy;
-  managedPluginsV2: boolean;
 }
 
 function shouldDisableVersionInstallation({
@@ -217,9 +213,8 @@ function shouldDisableVersionInstallation({
   latestMajorVersions,
   installedVersion,
   updateStrategy,
-  managedPluginsV2,
 }: ShouldDisableVersionInstallationArgs) {
-  if (!managedPluginsV2 || !config.pluginAdminExternalManageEnabled) {
+  if (!config.pluginAdminExternalManageEnabled) {
     return false;
   }
 

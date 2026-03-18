@@ -34,7 +34,6 @@ const mockPlugin: CatalogPlugin = {
   isDeprecated: false,
   isEnterprise: false,
   isFullyInstalled: true,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   hasUpdate: false,
   info: {

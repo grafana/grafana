@@ -221,7 +221,6 @@ describe('Plugins/Helpers', () => {
         isDeprecated: false,
         isPublished: true,
         latestVersion: '4.1.5',
-        isManaged: false,
         isPreinstalled: { found: false, withVersion: false },
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
@@ -285,35 +284,38 @@ describe('Plugins/Helpers', () => {
       expect(mapRemoteToCatalog(notCorePlugin).isCore).toBe(false);
     });
 
-    describe('.isManaged', () => {
-      test('should return true if plugin is in pluginCatalogManagedPlugins', () => {
+    describe('.managed', () => {
+      test('should map V1 config to managed object when plugin is in pluginCatalogManagedPlugins', () => {
         const oldPluginCatalogManagedPlugins = config.pluginCatalogManagedPlugins;
         config.pluginCatalogManagedPlugins = [remotePlugin.slug];
         const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
         config.pluginAdminExternalManageEnabled = true;
 
-        expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({ isManaged: true });
+        expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({
+          managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned }
+        });
 
         config.pluginCatalogManagedPlugins = oldPluginCatalogManagedPlugins;
         config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
       });
 
-      test('should return false if plugin is not in pluginCatalogManagedPlugins', () => {
-        expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({ isManaged: false });
+      test('should set managed.enabled to false if plugin is not in pluginCatalogManagedPlugins', () => {
+        expect(mapRemoteToCatalog(remotePlugin)).toMatchObject({
+          managed: { enabled: false, strategy: undefined }
+        });
       });
 
-      test('should return false if plugin is set as managed major-aligned from grafana-com and grafana is not in cloud', () => {
-        const managedPluginsV2Original = config.featureToggles.managedPluginsV2;
-        config.featureToggles.managedPluginsV2 = true;
+      test('should use grafana-com managed data when managedPluginsV2 is enabled', () => {
+        setTestFlags({ managedPluginsV2: true });
 
         expect(
           mapRemoteToCatalog({
             ...remotePlugin,
             managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned },
           })
-        ).toMatchObject({ isManaged: false, managed: { enabled: false, strategy: PluginUpdateStrategy.MajorAligned } });
+        ).toMatchObject({ managed: { enabled: true, strategy: PluginUpdateStrategy.MajorAligned } });
 
-        config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
+        setTestFlags({});
       });
     });
 
@@ -351,18 +353,17 @@ describe('Plugins/Helpers', () => {
         setTestFlags({});
       });
 
-      test('should return false if plugin is set as managed from grafana-com and grafana is not in cloud', () => {
-        const managedPluginsV2Original = config.featureToggles.managedPluginsV2;
-        config.featureToggles.managedPluginsV2 = true;
+      test('should use grafana-com data directly when managedPluginsV2 is enabled', () => {
+        setTestFlags({ managedPluginsV2: true });
 
         expect(
           mapRemoteToCatalog({
             ...remotePlugin,
             managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned },
           })
-        ).toMatchObject({ managed: { enabled: false, strategy: PluginUpdateStrategy.Assigned } });
+        ).toMatchObject({ managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned } });
 
-        config.featureToggles.managedPluginsV2 = managedPluginsV2Original;
+        setTestFlags({});
       });
     });
   });
@@ -388,7 +389,6 @@ describe('Plugins/Helpers', () => {
         isInstalled: true,
         isPublished: false,
         isDeprecated: false,
-        isManaged: false,
         isPreinstalled: { found: false, withVersion: false },
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
@@ -447,7 +447,6 @@ describe('Plugins/Helpers', () => {
         isPublished: true,
         latestVersion: '4.1.5',
         isDeprecated: false,
-        isManaged: false,
         isPreinstalled: { found: false, withVersion: false },
         name: 'Zabbix',
         orgName: 'Alexander Zobnin',
@@ -878,26 +877,30 @@ describe('Plugins/Helpers', () => {
       expect(mapToCatalogPlugin()).toMatchObject({ angularDetected: undefined });
     });
 
-    describe('.isManaged', () => {
-      test('should return true if plugin is in pluginCatalogManagedPlugins', () => {
+    describe('.managed', () => {
+      test('should map V1 config to managed object when plugin is in pluginCatalogManagedPlugins', () => {
         const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
         config.pluginAdminExternalManageEnabled = true;
         const oldPluginCatalogManagedPlugins = config.pluginCatalogManagedPlugins;
         config.pluginCatalogManagedPlugins = [localPlugin.id];
 
-        expect(mapToCatalogPlugin(localPlugin)).toMatchObject({ isManaged: true });
+        expect(mapToCatalogPlugin(localPlugin)).toMatchObject({
+          managed: { enabled: true, strategy: PluginUpdateStrategy.Assigned }
+        });
 
         config.pluginCatalogManagedPlugins = oldPluginCatalogManagedPlugins;
         config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
       });
 
-      test('should return false if plugin is not in pluginCatalogManagedPlugins', () => {
-        expect(mapToCatalogPlugin(localPlugin)).toMatchObject({ isManaged: false });
+      test('should set managed.enabled to false if plugin is not in pluginCatalogManagedPlugins', () => {
+        expect(mapToCatalogPlugin(localPlugin)).toMatchObject({
+          managed: { enabled: false, strategy: undefined }
+        });
       });
 
-      test('should return false if plugin is set as managed from grafana-com and grafana is not in cloud', () => {
+      test('should set managed.enabled to false when plugin is not managed', () => {
         expect(mapToCatalogPlugin(localPlugin, { ...remotePlugin, managed: { enabled: true } })).toMatchObject({
-          isManaged: false,
+          managed: { enabled: false, strategy: undefined }
         });
       });
     });

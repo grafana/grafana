@@ -189,7 +189,7 @@ export function InstallControlsButton({
 
   if (pluginStatus === PluginStatus.UPDATE) {
     const disableUpdate = config.pluginAdminExternalManageEnabled ? plugin.isUpdatingFromInstance : isInstalling;
-    const isManagedPlugin = plugin.isManaged || plugin.managed.enabled;
+    const isManagedPlugin = plugin.managed.enabled;
 
     return (
       <Stack alignItems="flex-start" width="auto" height="auto">

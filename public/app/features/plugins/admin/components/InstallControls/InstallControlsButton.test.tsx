@@ -32,7 +32,6 @@ const plugin: CatalogPlugin = {
   isDisabled: false,
   isDeprecated: false,
   isPublished: true,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   managed: {
     enabled: false,
@@ -249,7 +248,7 @@ describe('InstallControlsButton', () => {
     it('should be hidden when plugin is managed', () => {
       render(
         <TestProvider>
-          <InstallControlsButton plugin={{ ...plugin, isManaged: true }} pluginStatus={PluginStatus.UPDATE} />
+          <InstallControlsButton plugin={{ ...plugin, managed: { enabled: true } }} pluginStatus={PluginStatus.UPDATE} />
         </TestProvider>
       );
       expect(screen.queryByText('Update')).not.toBeInTheDocument();
