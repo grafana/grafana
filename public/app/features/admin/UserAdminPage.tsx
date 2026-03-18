@@ -4,8 +4,8 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { featureEnabled } from '@grafana/runtime';
-import { Stack } from '@grafana/ui';
+import { featureEnabled, getBackendSrv, isFetchError } from '@grafana/runtime';
+import { Alert, Button, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -117,6 +117,20 @@ export const UserAdminPage = ({
   };
 
   const isLDAPUser = user?.isExternal && user?.authLabels?.includes('LDAP');
+  const userInCurrentOrg = Boolean(orgs?.some((o) => o.orgId === contextSrv.user.orgId));
+  const onViewAsUser = async () => {
+    if (!user) {
+      return;
+    }
+    try {
+      await getBackendSrv().post('/api/admin/user-simulation', { userId: user.id });
+      window.location.reload();
+    } catch (e: unknown) {
+      const fallback = t('admin.user-admin-page.view-as-error', 'Could not start simulation');
+      const msg = isFetchError(e) && typeof e.data?.message === 'string' ? e.data.message : fallback;
+      alert(msg);
+    }
+  };
   const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
   const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
   let authSource = user?.authLabels?.[0];
@@ -147,6 +161,29 @@ export const UserAdminPage = ({
                 onUserEnable={enableUser}
                 onPasswordChange={onPasswordChange}
               />
+              {contextSrv.isGrafanaAdmin && (
+                <Stack direction="column" gap={1}>
+                  {!userInCurrentOrg && (
+                    <Alert
+                      title={t(
+                        'admin.user-admin-page.view-as-org-hint',
+                        'Switch to an organization this user belongs to (org switcher) before simulating.'
+                      )}
+                      severity="info"
+                    />
+                  )}
+                  <div>
+                    <Button
+                      variant="secondary"
+                      icon="eye"
+                      disabled={!userInCurrentOrg || user.isDisabled}
+                      onClick={onViewAsUser}
+                    >
+                      {t('admin.user-admin-page.view-as-user', 'View as this user')}
+                    </Button>
+                  </div>
+                </Stack>
+              )}
               {isLDAPUser &&
                 user?.isExternallySynced &&
                 featureEnabled('ldapsync') &&

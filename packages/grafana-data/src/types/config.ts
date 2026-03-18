@@ -187,6 +187,13 @@ export interface CurrentUserDTO {
 
   /** @deprecated Use theme instead */
   lightTheme: boolean;
+
+  /** Grafana admin viewing as another user */
+  userSimulation?: {
+    actorLogin: string;
+    targetUserId: number;
+    targetLogin: string;
+  };
 }
 
 /**

@@ -81,6 +81,8 @@ func CopyWithReqContext(ctx context.Context) context.Context {
 		RequestNonce:               origReqCtx.RequestNonce,
 		PublicDashboardAccessToken: origReqCtx.PublicDashboardAccessToken,
 		LookupTokenErr:             origReqCtx.LookupTokenErr,
+		UseSessionStorageRedirect:  origReqCtx.UseSessionStorageRedirect,
+		UserSimulation:             origReqCtx.UserSimulation,
 	}
 	return context.WithValue(ctx, reqContextKey{}, reqCtx)
 }

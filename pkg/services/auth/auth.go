@@ -93,6 +93,10 @@ type UserTokenService interface {
 	GetUserTokens(ctx context.Context, userID int64) ([]*UserToken, error)
 	ActiveTokenCount(ctx context.Context, userID *int64) (int64, error)
 	GetUserRevokedTokens(ctx context.Context, userID int64) ([]*UserToken, error)
+
+	// SetTokenSimulation stores which user this session should impersonate (browser session only).
+	SetTokenSimulation(ctx context.Context, tokenID, ownerUserID, simulatedUserID int64, actorLogin string) error
+	ClearTokenSimulation(ctx context.Context, tokenID, ownerUserID int64) error
 }
 
 type UserTokenBackgroundService interface {

@@ -7,6 +7,7 @@ import { GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
+import { UserSimulationBanner } from 'app/core/components/UserSimulationBanner/UserSimulationBanner';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
@@ -99,6 +100,7 @@ export function AppChrome({ children }: Props) {
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
           <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
+            <UserSimulationBanner />
             <SingleTopBar
               sectionNav={state.sectionNav.node}
               pageNav={state.pageNav}

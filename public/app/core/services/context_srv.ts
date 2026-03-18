@@ -46,6 +46,11 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   analytics: AnalyticsSettings;
   fiscalYearStartMonth: number;
   authenticatedBy: string;
+  userSimulation?: {
+    actorLogin: string;
+    targetUserId: number;
+    targetLogin: string;
+  };
 
   constructor() {
     this.id = 0;

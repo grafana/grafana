@@ -575,6 +575,10 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/provisioning/plugins/reload", authorize(ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersPlugins)), routing.Wrap(hs.AdminProvisioningReloadPlugins))
 		adminRoute.Post("/provisioning/datasources/reload", authorize(ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDatasources)), routing.Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/alerting/reload", authorize(ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersAlertRules)), routing.Wrap(hs.AdminProvisioningReloadAlerting))
+
+		adminRoute.Post("/user-simulation", reqGrafanaAdmin, routing.Wrap(hs.StartUserSimulation))
+		adminRoute.Delete("/user-simulation", reqGrafanaAdmin, routing.Wrap(hs.StopUserSimulation))
+		adminRoute.Get("/user-simulation", reqGrafanaAdmin, routing.Wrap(hs.GetUserSimulationStatus))
 	}, reqSignedIn)
 
 	// Administering users

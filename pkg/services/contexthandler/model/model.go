@@ -17,6 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// UserSimulationInfo is set when a Grafana admin session is viewing as another user.
+type UserSimulationInfo struct {
+	ActorLogin   string
+	TargetUserID int64
+	TargetLogin  string
+}
+
 type ReqContext struct {
 	*web.Context
 	*user.SignedInUser
@@ -40,6 +47,9 @@ type ReqContext struct {
 	// Tracking issue for cleaning up this flag: https://github.com/grafana/identity-access-team/issues/908
 	// UseSessionStorageRedirect is introduced to simplify the rollout of the new redirect logic
 	UseSessionStorageRedirect bool
+
+	// UserSimulation is non-nil when this request runs as a simulated user (admin feature).
+	UserSimulation *UserSimulationInfo
 }
 
 // Handle handles and logs error by given status.

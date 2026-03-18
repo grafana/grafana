@@ -36,6 +36,10 @@ type UserToken struct {
 	UpdatedAt         int64
 	RevokedAt         int64
 	UnhashedToken     string
+	// SimulateUserID when >0: session is viewing as this user (Grafana admin feature).
+	SimulateUserID int64
+	// SimulationActorLogin is the admin login that started simulation (for UI banner).
+	SimulationActorLogin string
 }
 
 const UrgentRotateTime = 1 * time.Minute

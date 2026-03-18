@@ -7,20 +7,22 @@ import (
 )
 
 type userAuthToken struct {
-	Id                int64
-	UserId            int64
-	AuthToken         string
-	PrevAuthToken     string
-	UserAgent         string
-	ClientIp          string
-	AuthTokenSeen     bool
-	SeenAt            int64
-	RotatedAt         int64
-	CreatedAt         int64
-	UpdatedAt         int64
-	RevokedAt         int64
-	UnhashedToken     string `xorm:"-"`
-	ExternalSessionId int64
+	Id                   int64
+	UserId               int64
+	AuthToken            string
+	PrevAuthToken        string
+	UserAgent            string
+	ClientIp             string
+	AuthTokenSeen        bool
+	SeenAt               int64
+	RotatedAt            int64
+	CreatedAt            int64
+	UpdatedAt            int64
+	RevokedAt            int64
+	UnhashedToken        string `xorm:"-"`
+	ExternalSessionId    int64
+	SimulateUserID       int64  `xorm:"simulate_user_id"`
+	SimulationActorLogin string `xorm:"simulation_actor_login"`
 }
 
 func userAuthTokenFromUserToken(ut *auth.UserToken) (*userAuthToken, error) {
@@ -48,6 +50,8 @@ func (uat *userAuthToken) fromUserToken(ut *auth.UserToken) error {
 	uat.RevokedAt = ut.RevokedAt
 	uat.UnhashedToken = ut.UnhashedToken
 	uat.ExternalSessionId = ut.ExternalSessionId
+	uat.SimulateUserID = ut.SimulateUserID
+	uat.SimulationActorLogin = ut.SimulationActorLogin
 
 	return nil
 }
@@ -71,5 +75,7 @@ func (uat *userAuthToken) toUserToken(ut *auth.UserToken) error {
 	ut.RevokedAt = uat.RevokedAt
 	ut.UnhashedToken = uat.UnhashedToken
 	ut.ExternalSessionId = uat.ExternalSessionId
+	ut.SimulateUserID = uat.SimulateUserID
+	ut.SimulationActorLogin = uat.SimulationActorLogin
 	return nil
 }

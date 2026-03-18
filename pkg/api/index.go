@@ -196,6 +196,14 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		RenderBindingSupported:              renderBindingSupported,
 	}
 
+	if c.UserSimulation != nil {
+		data.User.UserSimulation = &dtos.UserSimulationInfo{
+			ActorLogin:   c.UserSimulation.ActorLogin,
+			TargetUserID: c.UserSimulation.TargetUserID,
+			TargetLogin:  c.UserSimulation.TargetLogin,
+		}
+	}
+
 	if hs.Cfg.CSPEnabled {
 		data.CSPEnabled = true
 		data.CSPContent = middleware.ReplacePolicyVariables(hs.Cfg.CSPTemplate, appURL, c.RequestNonce)

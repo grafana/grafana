@@ -52,4 +52,11 @@ func addUserAuthTokenMigrations(mg *Migrator) {
 	mg.AddMigration("add external_session_id to user_auth_token", NewAddColumnMigration(userAuthTokenV1, &Column{
 		Name: "external_session_id", Type: DB_BigInt, Nullable: true,
 	}))
+
+	mg.AddMigration("add simulate_user_id to user_auth_token", NewAddColumnMigration(userAuthTokenV1, &Column{
+		Name: "simulate_user_id", Type: DB_BigInt, Nullable: true,
+	}))
+	mg.AddMigration("add simulation_actor_login to user_auth_token", NewAddColumnMigration(userAuthTokenV1, &Column{
+		Name: "simulation_actor_login", Type: DB_NVarchar, Length: 255, Nullable: true,
+	}))
 }

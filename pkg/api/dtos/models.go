@@ -52,6 +52,14 @@ type CurrentUser struct {
 	AuthenticatedBy            string             `json:"authenticatedBy"`
 	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
 	Analytics                  AnalyticsSettings  `json:"analytics"`
+	// UserSimulation is set when a Grafana admin is viewing as another user.
+	UserSimulation *UserSimulationInfo `json:"userSimulation,omitempty"`
+}
+
+type UserSimulationInfo struct {
+	ActorLogin   string `json:"actorLogin"`
+	TargetUserID int64  `json:"targetUserId"`
+	TargetLogin  string `json:"targetLogin"`
 }
 
 type AnalyticsSettings struct {

@@ -137,6 +137,14 @@ func (s *FakeUserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context,
 	return s.BatchRevokedTokenProvider(ctx, userIds)
 }
 
+func (s *FakeUserAuthTokenService) SetTokenSimulation(_ context.Context, _, _, _ int64, _ string) error {
+	return nil
+}
+
+func (s *FakeUserAuthTokenService) ClearTokenSimulation(_ context.Context, _, _ int64) error {
+	return nil
+}
+
 type FakeOAuthTokenService struct {
 	passThruEnabled  bool
 	ExpectedAuthUser *login.UserAuth

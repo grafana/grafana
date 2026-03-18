@@ -669,6 +669,26 @@ func (s *UserAuthTokenService) reportActiveTokenCount(ctx context.Context, _ *qu
 	return u, err
 }
 
+func (s *UserAuthTokenService) SetTokenSimulation(ctx context.Context, tokenID, ownerUserID, simulatedUserID int64, actorLogin string) error {
+	now := getTime().Unix()
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec(
+			`UPDATE user_auth_token SET simulate_user_id = ?, simulation_actor_login = ?, updated_at = ? WHERE id = ? AND user_id = ? AND revoked_at = 0`,
+			simulatedUserID, actorLogin, now, tokenID, ownerUserID)
+		return err
+	})
+}
+
+func (s *UserAuthTokenService) ClearTokenSimulation(ctx context.Context, tokenID, ownerUserID int64) error {
+	now := getTime().Unix()
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec(
+			`UPDATE user_auth_token SET simulate_user_id = NULL, simulation_actor_login = NULL, updated_at = ? WHERE id = ? AND user_id = ?`,
+			now, tokenID, ownerUserID)
+		return err
+	})
+}
+
 func (s *UserAuthTokenService) createdAfterParam() int64 {
 	return getTime().Add(-s.cfg.LoginMaxLifetime).Unix()
 }

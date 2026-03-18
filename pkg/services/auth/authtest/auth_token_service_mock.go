@@ -369,6 +369,36 @@ func (_m *MockUserAuthTokenService) UpdateExternalSession(ctx context.Context, e
 	return r0
 }
 
+// SetTokenSimulation provides a mock function for UserTokenService.SetTokenSimulation
+func (_m *MockUserAuthTokenService) SetTokenSimulation(ctx context.Context, tokenID int64, ownerUserID int64, simulatedUserID int64, actorLogin string) error {
+	ret := _m.Called(ctx, tokenID, ownerUserID, simulatedUserID, actorLogin)
+	if len(ret) == 0 {
+		panic("no return value specified for SetTokenSimulation")
+	}
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64, int64, string) error); ok {
+		r0 = rf(ctx, tokenID, ownerUserID, simulatedUserID, actorLogin)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// ClearTokenSimulation provides a mock function for UserTokenService.ClearTokenSimulation
+func (_m *MockUserAuthTokenService) ClearTokenSimulation(ctx context.Context, tokenID int64, ownerUserID int64) error {
+	ret := _m.Called(ctx, tokenID, ownerUserID)
+	if len(ret) == 0 {
+		panic("no return value specified for ClearTokenSimulation")
+	}
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) error); ok {
+		r0 = rf(ctx, tokenID, ownerUserID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
 // NewMockUserAuthTokenService creates a new instance of MockUserAuthTokenService. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockUserAuthTokenService(t interface {
