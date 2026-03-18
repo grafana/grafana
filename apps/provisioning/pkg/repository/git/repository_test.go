@@ -3956,6 +3956,7 @@ func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *te
 			require.Equal(t, "feature", changes[0].Ref)
 
 			// Verify the action based on status
+			//nolint:exhaustive // FileStatusRenamed not tested - will be added when rename handling is implemented
 			switch tt.status {
 			case protocol.FileStatusAdded:
 				require.Equal(t, repository.FileActionCreated, changes[0].Action)
