@@ -2,9 +2,7 @@ import { Page } from 'playwright-core';
 
 import { test, expect, E2ESelectorGroups, DashboardPage } from '@grafana/plugin-e2e';
 
-import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
-
-import { switchToAutoGrid } from './utils';
+import { switchToAutoGrid, importTestDashboard as importTestDashboardWithMetadataStripped } from './utils';
 
 test.use({
   featureToggles: {
@@ -380,18 +378,7 @@ test.describe(
 
 // Helper functions
 async function importTestDashboard(page: Page, selectors: E2ESelectorGroups, title: string) {
-  await page.goto(selectors.pages.ImportDashboard.url);
-  await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(JSON.stringify(testV2Dashboard));
-  await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
-  await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
-  await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-  await page.locator('div[data-testid="data-source-card"]').first().click();
-  await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
-  const undockMenuButton = page.locator('[aria-label="Undock menu"]');
-  const undockMenuVisible = await undockMenuButton.isVisible();
-  if (undockMenuVisible) {
-    undockMenuButton.click();
-  }
+  await importTestDashboardWithMetadataStripped(page, selectors, title);
 }
 
 async function saveDashboard(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
