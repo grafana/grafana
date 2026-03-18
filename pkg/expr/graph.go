@@ -489,13 +489,13 @@ func buildAllEdges(graph *simple.DirectedGraph, registry map[string]Node) []edge
 				errs = append(errs, edgeError{
 					RefID: cmdNode.RefID(), NeededVar: neededVar,
 					IsMissingDep: true,
-					Err:          fmt.Errorf("unable to find dependent node '%v'", neededVar),
+					Err:          makeGraphBuildError(fmt.Errorf("unable to find dependent node '%v'", neededVar)),
 				})
 				continue
 			}
 
 			if err := validateEdgeConstraints(cmdNode, neededNode, neededVar); err != nil {
-				errs = append(errs, edgeError{RefID: cmdNode.RefID(), NeededVar: neededVar, Err: err})
+				errs = append(errs, edgeError{RefID: cmdNode.RefID(), NeededVar: neededVar, Err: makeGraphBuildError(err)})
 				continue
 			}
 

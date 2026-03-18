@@ -2,10 +2,12 @@ package expr
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -246,6 +248,79 @@ func TestServicebuildPipeLine(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tt.expectedOrder, getRefIDOrder(nodes))
 			}
+		})
+	}
+}
+
+func TestEdgeErrorsAreGraphBuildErrors(t *testing.T) {
+	s := Service{
+		cfg:    setting.NewCfg(),
+		tracer: &testTracer{},
+	}
+
+	tests := []struct {
+		name string
+		req  *Request
+	}{
+		{
+			name: "missing dependency",
+			req: &Request{
+				Queries: []Query{
+					{
+						RefID:      "A",
+						DataSource: dataSourceModel(),
+						JSON:       json.RawMessage(`{"expression": "$B", "type": "math"}`),
+					},
+				},
+			},
+		},
+		{
+			name: "self reference",
+			req: &Request{
+				Queries: []Query{
+					{
+						RefID:      "A",
+						DataSource: dataSourceModel(),
+						JSON:       json.RawMessage(`{"expression": "$A", "type": "math"}`),
+					},
+				},
+			},
+		},
+		{
+			name: "classic condition with expression input",
+			req: &Request{
+				Queries: []Query{
+					{
+						RefID:      "A",
+						DataSource: dataSourceModel(),
+						JSON: json.RawMessage(`{
+							"type": "classic_conditions",
+							"conditions": [{"evaluator": {"params": [2, 3], "type": "within_range"}, "operator": {"type": "or"}, "query": {"params": ["B"]}, "reducer": {"params": [], "type": "diff"}, "type": "query"}]
+						}`),
+					},
+					{
+						RefID:      "B",
+						DataSource: dataSourceModel(),
+						JSON:       json.RawMessage(`{"expression": "C", "reducer": "mean", "type": "reduce"}`),
+					},
+					{
+						RefID:      "C",
+						DataSource: &datasources.DataSource{UID: "Fake"},
+						TimeRange:  AbsoluteTimeRange{},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := s.buildPipeline(t.Context(), tt.req)
+			require.Error(t, err)
+
+			var utilErr errutil.Error
+			require.True(t, errors.As(err, &utilErr), "edge error should be an errutil.Error for proper HTTP status codes, got: %T", err)
+			require.Equal(t, 400, utilErr.Reason.Status().HTTPStatus(), "edge error should be a 400 BadRequest")
 		})
 	}
 }
