@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -93,6 +94,31 @@ var (
 			},
 		},
 	}
+	ds1ResourcePermission = v0alpha1.ResourcePermission{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "unknown.datasource.grafana.app-datasources-ds1",
+			CreationTimestamp: metav1.Time{Time: created},
+			ResourceVersion:   fmt.Sprint(created.UnixMilli()),
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ResourcePermission",
+			APIVersion: "iam.grafana.app/v0alpha1",
+		},
+		Spec: v0alpha1.ResourcePermissionSpec{
+			Resource: v0alpha1.ResourcePermissionspecResource{
+				ApiGroup: "unknown.datasource.grafana.app",
+				Resource: "datasources",
+				Name:     "ds1",
+			},
+			Permissions: []v0alpha1.ResourcePermissionspecPermission{
+				{
+					Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+					Name: "user-1",
+					Verb: "query",
+				},
+			},
+		},
+	}
 )
 
 func TestMain(m *testing.M) {
@@ -112,6 +138,29 @@ func setupBackend(t *testing.T) *ResourcePermSqlBackend {
 	}
 
 	return ProvideStorageBackend(dbProvider, NewMappersRegistry())
+}
+
+func setupBackendWithDatasource(t *testing.T) *ResourcePermSqlBackend {
+	store := db.InitTestDB(t)
+
+	sqlHelper := &legacysql.LegacyDatabaseHelper{
+		DB:    store,
+		Table: func(name string) string { return name },
+	}
+
+	dbProvider := func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return sqlHelper, nil
+	}
+
+	mappers := NewMappersRegistry()
+	// Register datasource mapper under wildcard key (like enterprise does)
+	mappers.RegisterMapper(
+		schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"},
+		NewMapper("datasources", []string{"query", "edit", "admin"}),
+		func() bool { return true }, // Always enabled for tests
+	)
+
+	return ProvideStorageBackend(dbProvider, mappers)
 }
 
 func setupTestRoles(t *testing.T, store db.DB) {
@@ -837,4 +886,522 @@ func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {
 		})
 		require.NoError(t, err)
 	})
+}
+
+func setupDatasourceTestRoles(t *testing.T, store db.DB) {
+	sess := store.GetSqlxSession()
+
+	// Managed role for datasource permissions
+	_, err := sess.Exec(context.Background(),
+		`INSERT INTO role (id, version, org_id, uid, name, display_name, description, group_name, hidden, created, updated)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		10, 0, 1, "managed_users_10_permissions_org1", "managed:users:10:permissions", "", "", "", false, "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+
+	// Datasource permissions using datasources:query scope
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO permission (role_id, action, scope, created, updated)
+		VALUES (?, ?, ?, ?, ?)`,
+		10, "datasources:query", "datasources:uid:ds1", "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+
+	// User role binding
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO user_role (org_id, user_id, role_id, created)
+		VALUES (?, ?, ?, ?)`,
+		1, 10, 10, "2025-09-02 00:00:00",
+	)
+	require.NoError(t, err)
+}
+
+func TestIntegration_ResourcePermSqlBackend_Datasource_GetResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	backend := setupBackendWithDatasource(t)
+	sql, err := backend.dbProvider(context.Background())
+	require.NoError(t, err)
+
+	// Create test role with datasource permission
+	sess := sql.DB.GetSqlxSession()
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO role (id, version, org_id, uid, name, display_name, description, group_name, hidden, created, updated)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		20, 0, 1, "managed_users_20_permissions_org1", "managed:users:20:permissions", "", "", "", false, "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+
+	// Insert datasource permission
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO permission (role_id, action, scope, created, updated)
+		VALUES (?, ?, ?, ?, ?)`,
+		20, "datasources:query", "datasources:uid:ds1", "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+
+	// Insert user
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO `+sql.DB.GetDialect().Quote("user")+` (id, org_id, uid, login, email, is_admin, is_service_account, created, updated, version)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		20, 1, "user-ds", "user-ds", "user-ds@example.com", false, false, "2025-09-02 00:00:00", "2025-09-02 00:00:00", 0,
+	)
+	require.NoError(t, err)
+
+	// User role binding
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO user_role (org_id, user_id, role_id, created)
+		VALUES (?, ?, ?, ?)`,
+		1, 20, 20, "2025-09-02 00:00:00",
+	)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name     string
+		resource string
+		orgID    int64
+		want     v0alpha1.ResourcePermission
+		wantErr  error
+	}{
+		{
+			name:     "should return datasource permissions for ds1",
+			resource: "loki.datasource.grafana.app-datasources-ds1",
+			orgID:    1,
+			want: v0alpha1.ResourcePermission{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "unknown.datasource.grafana.app-datasources-ds1",
+					CreationTimestamp: metav1.Time{Time: created},
+					ResourceVersion:   fmt.Sprint(created.UnixMilli()),
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "ResourcePermission",
+					APIVersion: "iam.grafana.app/v0alpha1",
+				},
+				Spec: v0alpha1.ResourcePermissionSpec{
+					Resource: v0alpha1.ResourcePermissionspecResource{
+						ApiGroup: "unknown.datasource.grafana.app",
+						Resource: "datasources",
+						Name:     "ds1",
+					},
+					Permissions: []v0alpha1.ResourcePermissionspecPermission{
+						{
+							Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+							Name: "user-ds",
+							Verb: "query",
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			// All concrete datasource groups resolve to the same wildcard entry,
+			// so querying for tempo.datasource.grafana.app will also find the ds1 permission.
+			name:     "different concrete group still resolves to same wildcard",
+			resource: "tempo.datasource.grafana.app-datasources-ds1",
+			orgID:    1,
+			want: v0alpha1.ResourcePermission{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "unknown.datasource.grafana.app-datasources-ds1",
+					CreationTimestamp: metav1.Time{Time: created},
+					ResourceVersion:   fmt.Sprint(created.UnixMilli()),
+				},
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "ResourcePermission",
+					APIVersion: "iam.grafana.app/v0alpha1",
+				},
+				Spec: v0alpha1.ResourcePermissionSpec{
+					Resource: v0alpha1.ResourcePermissionspecResource{
+						ApiGroup: "unknown.datasource.grafana.app",
+						Resource: "datasources",
+						Name:     "ds1",
+					},
+					Permissions: []v0alpha1.ResourcePermissionspecPermission{
+						{
+							Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+							Name: "user-ds",
+							Verb: "query",
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name:     "should return error for unknown resource type",
+			orgID:    1,
+			resource: "unknown.grafana.app-unknown-u1",
+			wantErr:  errUnknownGroupResource,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ns := types.NamespaceInfo{
+				OrgID: tt.orgID,
+			}
+			var got *v0alpha1.ResourcePermission
+			err = sql.DB.GetSqlxSession().WithTransaction(context.Background(), func(tx *session.SessionTx) error {
+				got, err = backend.getResourcePermission(context.Background(), sql, tx, ns, tt.resource)
+				return err
+			})
+
+			if tt.wantErr != nil {
+				require.Error(t, err)
+				require.ErrorAs(t, err, &tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+
+			require.Equal(t, tt.want.Name, got.Name)
+			require.Equal(t, tt.want.CreationTimestamp, got.CreationTimestamp)
+			require.Equal(t, tt.want.ResourceVersion, got.ResourceVersion)
+			require.NotZero(t, got.GetUpdateTimestamp())
+			require.Equal(t, tt.want.TypeMeta, got.TypeMeta)
+			require.Equal(t, tt.want.Spec, got.Spec)
+		})
+	}
+}
+
+func TestIntegration_ResourcePermSqlBackend_Datasource_CreateResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	store := db.InitTestDB(t)
+
+	sqlHelper := &legacysql.LegacyDatabaseHelper{
+		DB:    store,
+		Table: func(name string) string { return name },
+	}
+
+	dbProvider := func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return sqlHelper, nil
+	}
+
+	mappers := NewMappersRegistry()
+	mappers.RegisterMapper(
+		schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"},
+		NewMapper("datasources", []string{"query", "edit", "admin"}),
+		func() bool { return true },
+	)
+
+	backend := ProvideStorageBackend(dbProvider, mappers)
+	backend.identityStore = NewFakeIdentityStore(t)
+
+	timeNow = func() time.Time {
+		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)
+	}
+
+	t.Run("should create datasource resource permission", func(t *testing.T) {
+		resourcePerm := &v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "loki.datasource.grafana.app-datasources-ds1",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "loki.datasource.grafana.app",
+					Resource: "datasources",
+					Name:     "ds1",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Viewer",
+						Verb: "admin",
+					},
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindUser,
+						Name: "captain",
+						Verb: "edit",
+					},
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindServiceAccount,
+						Name: "robot",
+						Verb: "query",
+					},
+				},
+			},
+		}
+
+		ctx := context.Background()
+		sqlHelper, _ := backend.dbProvider(ctx)
+
+		grn, err := splitResourceName(resourcePerm.Name)
+		require.NoError(t, err)
+
+		mapper, err := backend.getResourceMapper(grn.Group, grn.Resource)
+		require.NoError(t, err)
+
+		rv, err := backend.createResourcePermission(ctx, sqlHelper, types.NamespaceInfo{Value: "default", OrgID: 1}, mapper, grn, resourcePerm)
+		require.NoError(t, err)
+		require.Equal(t, timeNow().UnixMilli(), rv)
+
+		var (
+			assigned   int
+			roleID     int64
+			permission accesscontrol.Permission
+			sess       = store.GetSqlxSession()
+		)
+
+		// Check that the roles were created and assigned
+		err = sess.Get(ctx, &roleID, "SELECT id FROM role WHERE org_id = ? AND name = ?", 1, "managed:users:101:permissions")
+		require.NoError(t, err)
+		require.NotZero(t, roleID)
+		err = sess.Get(ctx, &assigned, "SELECT 1 FROM user_role WHERE org_id = ? AND role_id = ? AND user_id = ?", 1, roleID, "101")
+		require.NoError(t, err)
+		require.Equal(t, 1, assigned)
+		err = sess.Get(ctx, &permission, "SELECT action, scope FROM permission WHERE role_id = ?", roleID)
+		require.NoError(t, err)
+		require.Equal(t, "datasources:uid:ds1", permission.Scope)
+		require.Equal(t, "datasources:edit", permission.Action)
+
+		err = sess.Get(ctx, &roleID, "SELECT id FROM role WHERE org_id = ? AND name = ?", 1, "managed:builtins:viewer:permissions")
+		require.NoError(t, err)
+		require.NotZero(t, roleID)
+		err = sess.Get(ctx, &assigned, "SELECT 1 FROM builtin_role WHERE org_id = ? AND role = ?", 1, "Viewer")
+		require.NoError(t, err)
+		require.Equal(t, 1, assigned)
+		err = sess.Get(ctx, &permission, "SELECT action, scope FROM permission WHERE role_id = ?", roleID)
+		require.NoError(t, err)
+		require.Equal(t, "datasources:uid:ds1", permission.Scope)
+		require.Equal(t, "datasources:admin", permission.Action)
+	})
+}
+
+func TestIntegration_ResourcePermSqlBackend_Datasource_DeleteResourcePermission(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	backend := setupBackendWithDatasource(t)
+	sql, err := backend.dbProvider(context.Background())
+	require.NoError(t, err)
+
+	// Create test role with datasource permission
+	sess := sql.DB.GetSqlxSession()
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO role (id, version, org_id, uid, name, display_name, description, group_name, hidden, created, updated)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		30, 0, 1, "managed_users_30_permissions_org1", "managed:users:30:permissions", "", "", "", false, "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+
+	// Insert datasource permission
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO permission (role_id, action, scope, created, updated)
+		VALUES (?, ?, ?, ?, ?)`,
+		30, "datasources:query", "datasources:uid:ds1", "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+
+	// Insert user
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO `+sql.DB.GetDialect().Quote("user")+` (id, org_id, uid, login, email, is_admin, is_service_account, created, updated, version)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		30, 1, "user-ds-del", "user-ds-del", "user-ds-del@example.com", false, false, "2025-09-02 00:00:00", "2025-09-02 00:00:00", 0,
+	)
+	require.NoError(t, err)
+
+	// User role binding
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO user_role (org_id, user_id, role_id, created)
+		VALUES (?, ?, ?, ?)`,
+		1, 30, 30, "2025-09-02 00:00:00",
+	)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name     string
+		resource string
+		orgID    int64
+		wantErr  error
+	}{
+		{
+			name:     "should return an error for unknown resource type",
+			orgID:    1,
+			resource: "unknown.grafana.app-unknown-u1",
+			wantErr:  errUnknownGroupResource,
+		},
+		{
+			name:     "should return an error for invalid resource name",
+			orgID:    1,
+			resource: "invalid.grafana.app-invalid",
+			wantErr:  errInvalidName,
+		},
+		{
+			name:     "should delete permissions in org1 for ds1",
+			resource: "loki.datasource.grafana.app-datasources-ds1",
+			orgID:    1,
+			wantErr:  nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ns := types.NamespaceInfo{
+				OrgID: tt.orgID,
+			}
+			err := backend.deleteResourcePermission(context.Background(), sql, ns, tt.resource)
+			if tt.wantErr != nil {
+				require.Error(t, err)
+				require.ErrorIs(t, err, tt.wantErr)
+				return
+			}
+			require.NoError(t, err)
+
+			// check that the resource has been deleted
+			err = sql.DB.GetSqlxSession().WithTransaction(context.Background(), func(tx *session.SessionTx) error {
+				_, err = backend.getResourcePermission(context.Background(), sql, tx, ns, tt.resource)
+				return err
+			})
+			require.Error(t, err)
+		})
+	}
+}
+
+func TestIntegration_ResourcePermSqlBackend_Datasource_newRoleIterator(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	backend := setupBackendWithDatasource(t)
+	sql, err := backend.dbProvider(context.Background())
+	require.NoError(t, err)
+
+	// Create test roles with datasource permission
+	sess := sql.DB.GetSqlxSession()
+
+	// User
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO `+sql.DB.GetDialect().Quote("user")+` (id, org_id, uid, login, email, is_admin, is_service_account, created, updated, version)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		40, 1, "user-ds-iter", "user-ds-iter", "user-ds-iter@example.com", false, false, "2025-09-02 00:00:00", "2025-09-02 00:00:00", 0,
+	)
+	require.NoError(t, err)
+
+	// Role
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO role (id, version, org_id, uid, name, display_name, description, group_name, hidden, created, updated)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		40, 0, 1, "managed_users_40_permissions_org1", "managed:users:40:permissions", "", "", "", false, "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+
+	// Datasource permission
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO permission (role_id, action, scope, created, updated)
+		VALUES (?, ?, ?, ?, ?)`,
+		40, "datasources:edit", "datasources:uid:ds2", "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+
+	// User role binding
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO user_role (org_id, user_id, role_id, created)
+		VALUES (?, ?, ?, ?)`,
+		1, 40, 40, "2025-09-02 00:00:00",
+	)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name       string
+		orgID      int64
+		pagination common.Pagination
+		wantNames  []string
+		wantErr    error
+	}{
+		{
+			name:  "should return datasource permissions for org-1",
+			orgID: 1,
+			pagination: common.Pagination{
+				Limit: 100,
+			},
+			wantNames: []string{"loki.datasource.grafana.app-datasources-ds2"},
+			wantErr:   nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ns := types.NamespaceInfo{OrgID: tt.orgID}
+			it, err := backend.newRoleIterator(context.Background(), sql, ns, &tt.pagination)
+			require.NoError(t, err)
+
+			var result []string
+			for it.Next() {
+				result = append(result, it.cur().Name)
+			}
+			require.NoError(t, it.Error())
+
+			// Verify we got the expected datasource permission
+			assert.Contains(t, result, "loki.datasource.grafana.app-datasources-ds2")
+		})
+	}
+}
+
+func TestIntegration_ResourcePermSqlBackend_Datasource_WildcardResolution(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	backend := setupBackendWithDatasource(t)
+	sql, err := backend.dbProvider(context.Background())
+	require.NoError(t, err)
+
+	sess := sql.DB.GetSqlxSession()
+
+	// Test wildcard resolution: both loki and tempo should resolve to the same wildcard entry
+	testGroups := []string{
+		"loki.datasource.grafana.app",
+		"tempo.datasource.grafana.app",
+		"prometheus.datasource.grafana.app",
+	}
+
+	for i, group := range testGroups {
+		userID := int64(50 + i)
+		roleID := int64(50 + i)
+		dsName := "ds" + string(rune('a'+i))
+
+		// Insert user
+		_, err = sess.Exec(context.Background(),
+			`INSERT INTO `+sql.DB.GetDialect().Quote("user")+` (id, org_id, uid, login, email, is_admin, is_service_account, created, updated, version)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			userID, 1, "user-"+dsName, "user-"+dsName, "user-"+dsName+"@example.com", false, false, "2025-09-02 00:00:00", "2025-09-02 00:00:00", 0,
+		)
+		require.NoError(t, err)
+
+		// Insert role
+		_, err = sess.Exec(context.Background(),
+			`INSERT INTO role (id, version, org_id, uid, name, display_name, description, group_name, hidden, created, updated)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			roleID, 0, 1, "managed_users_"+dsName+"_permissions", "managed:users:"+dsName+":permissions", "", "", "", false, "2025-09-02", "2025-09-02",
+		)
+		require.NoError(t, err)
+
+		// Insert permission with datasources scope
+		_, err = sess.Exec(context.Background(),
+			`INSERT INTO permission (role_id, action, scope, created, updated)
+			VALUES (?, ?, ?, ?, ?)`,
+			roleID, "datasources:query", "datasources:uid:"+dsName, "2025-09-02", "2025-09-02",
+		)
+		require.NoError(t, err)
+
+		// User role binding
+		_, err = sess.Exec(context.Background(),
+			`INSERT INTO user_role (org_id, user_id, role_id, created)
+			VALUES (?, ?, ?, ?)`,
+			1, userID, roleID, "2025-09-02 00:00:00",
+		)
+		require.NoError(t, err)
+
+		// Test that we can get the resource permission for this concrete group
+		resourceName := group + "-datasources-" + dsName
+		ns := types.NamespaceInfo{OrgID: 1}
+
+		var rp *v0alpha1.ResourcePermission
+		err = sql.DB.GetSqlxSession().WithTransaction(context.Background(), func(tx *session.SessionTx) error {
+			rp, err = backend.getResourcePermission(context.Background(), sql, tx, ns, resourceName)
+			return err
+		})
+		require.NoError(t, err, "should resolve wildcard for %s", group)
+		require.NotNil(t, rp)
+		assert.Equal(t, resourceName, rp.Name)
+		assert.Equal(t, group, rp.Spec.Resource.ApiGroup)
+		assert.Equal(t, "datasources", rp.Spec.Resource.Resource)
+		assert.Equal(t, dsName, rp.Spec.Resource.Name)
+	}
 }
