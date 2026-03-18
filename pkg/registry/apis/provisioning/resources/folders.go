@@ -107,7 +107,9 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return "", err
 	}
 	if fm.tree.In(f.ID) {
-		return f.ID, nil
+		if existing, ok := fm.tree.Get(f.ID); ok && existing.MetadataHash == f.MetadataHash {
+			return f.ID, nil
+		}
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
@@ -116,8 +118,10 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 			return err
 		}
 		if fm.tree.In(f.ID) {
-			parent = f.ID
-			return nil
+			if existing, ok := fm.tree.Get(f.ID); ok && existing.MetadataHash == f.MetadataHash {
+				parent = f.ID
+				return nil
+			}
 		}
 
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
