@@ -1,0 +1,209 @@
+import { SceneObjectStateChangedEvent, VizPanel, SceneVariableSet } from '@grafana/scenes';
+
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
+
+import {
+  extractMutationRequest,
+  suppressExtraction,
+  unsuppressExtraction,
+  isExtractionSuppressed,
+} from './opExtractor';
+
+function makeEvent(
+  changedObject: unknown,
+  partialUpdate: Record<string, unknown>,
+  prevState: Record<string, unknown> = {},
+  newState: Record<string, unknown> = {}
+): SceneObjectStateChangedEvent {
+  return new SceneObjectStateChangedEvent({
+    changedObject: changedObject as any,
+    partialUpdate,
+    prevState: prevState as any,
+    newState: newState as any,
+  });
+}
+
+describe('opExtractor', () => {
+  afterEach(() => {
+    unsuppressExtraction();
+  });
+
+  describe('VizPanel → UPDATE_PANEL', () => {
+    it('extracts title change as UPDATE_PANEL', () => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'New Title' });
+      const event = makeEvent(panel, { title: 'New Title' });
+
+      const result = extractMutationRequest(event);
+
+      expect(result).not.toBeNull();
+      expect(result!.mutation.type).toBe('UPDATE_PANEL');
+      expect((result!.mutation.payload as any).panelId).toBe('panel-1');
+      expect((result!.mutation.payload as any).title).toBe('New Title');
+      expect(result!.lockTarget).toBe('panel-1');
+    });
+
+    it('extracts description change as UPDATE_PANEL', () => {
+      const panel = new VizPanel({ key: 'panel-2', pluginId: 'timeseries', title: 'Test' });
+      const event = makeEvent(panel, { description: 'Updated description' });
+
+      const result = extractMutationRequest(event);
+
+      expect(result).not.toBeNull();
+      expect(result!.mutation.type).toBe('UPDATE_PANEL');
+      expect((result!.mutation.payload as any).panelId).toBe('panel-2');
+      expect((result!.mutation.payload as any).description).toBe('Updated description');
+    });
+
+    it('skips _renderCounter changes', () => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test' });
+      const event = makeEvent(panel, { _renderCounter: 5 });
+
+      const result = extractMutationRequest(event);
+      expect(result).toBeNull();
+    });
+
+  });
+
+  describe('DashboardGridItem → MOVE_PANEL', () => {
+    it('extracts position change as MOVE_PANEL', () => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test' });
+      const gridItem = new DashboardGridItem({ body: panel, x: 10, y: 5, width: 12, height: 8 });
+
+      const event = makeEvent(gridItem, { x: 10, y: 5 });
+
+      const result = extractMutationRequest(event);
+
+      expect(result).not.toBeNull();
+      expect(result!.mutation.type).toBe('MOVE_PANEL');
+      expect((result!.mutation.payload as any).panelId).toBe('panel-1');
+      expect((result!.mutation.payload as any).x).toBe(10);
+      expect((result!.mutation.payload as any).y).toBe(5);
+      expect(result!.lockTarget).toBe('panel-1');
+    });
+
+    it('extracts size change as MOVE_PANEL', () => {
+      const panel = new VizPanel({ key: 'panel-2', pluginId: 'timeseries', title: 'Test' });
+      const gridItem = new DashboardGridItem({ body: panel, width: 24, height: 16 });
+
+      const event = makeEvent(gridItem, { width: 24, height: 16 });
+
+      const result = extractMutationRequest(event);
+
+      expect(result).not.toBeNull();
+      expect(result!.mutation.type).toBe('MOVE_PANEL');
+    });
+
+    it('ignores non-position changes', () => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test' });
+      const gridItem = new DashboardGridItem({ body: panel });
+
+      const event = makeEvent(gridItem, { variableName: 'foo' });
+
+      const result = extractMutationRequest(event);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('DashboardScene → UPDATE_DASHBOARD_INFO', () => {
+    it('extracts title change', () => {
+      const scene = new DashboardScene({ title: 'New Dashboard Title' });
+      const event = makeEvent(scene, { title: 'New Dashboard Title' });
+
+      const result = extractMutationRequest(event);
+
+      expect(result).not.toBeNull();
+      expect(result!.mutation.type).toBe('UPDATE_DASHBOARD_INFO');
+      expect((result!.mutation.payload as any).title).toBe('New Dashboard Title');
+      expect(result!.lockTarget).toBe('__dashboard__');
+    });
+
+    it('extracts tags change', () => {
+      const scene = new DashboardScene({ tags: ['prod', 'monitoring'] });
+      const event = makeEvent(scene, { tags: ['prod', 'monitoring'] });
+
+      const result = extractMutationRequest(event);
+
+      expect(result).not.toBeNull();
+      expect(result!.mutation.type).toBe('UPDATE_DASHBOARD_INFO');
+      expect((result!.mutation.payload as any).tags).toEqual(['prod', 'monitoring']);
+    });
+
+    it('extracts description change', () => {
+      const scene = new DashboardScene({ description: 'Updated' });
+      const event = makeEvent(scene, { description: 'Updated' });
+
+      const result = extractMutationRequest(event);
+
+      expect(result).not.toBeNull();
+      expect(result!.mutation.type).toBe('UPDATE_DASHBOARD_INFO');
+      expect((result!.mutation.payload as any).description).toBe('Updated');
+    });
+
+    it('ignores non-dashboard-info changes', () => {
+      const scene = new DashboardScene({});
+      const event = makeEvent(scene, { isDirty: true });
+
+      const result = extractMutationRequest(event);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('SceneVariableSet → UPDATE_VARIABLE', () => {
+    it('extracts variable set changes', () => {
+      const varSet = new SceneVariableSet({ variables: [] });
+      const event = makeEvent(varSet, { variables: [] });
+
+      const result = extractMutationRequest(event);
+
+      expect(result).not.toBeNull();
+      expect(result!.mutation.type).toBe('UPDATE_VARIABLE');
+      expect(result!.lockTarget).toBe('__variables__');
+    });
+
+    it('ignores non-variables changes on SceneVariableSet', () => {
+      const varSet = new SceneVariableSet({ variables: [] });
+      const event = makeEvent(varSet, { key: 'something' });
+
+      const result = extractMutationRequest(event);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('suppression', () => {
+    it('returns null when extraction is suppressed', () => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test' });
+      const event = makeEvent(panel, { title: 'New Title' });
+
+      suppressExtraction();
+      expect(isExtractionSuppressed()).toBe(true);
+
+      const result = extractMutationRequest(event);
+      expect(result).toBeNull();
+    });
+
+    it('extracts again after unsuppression', () => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test' });
+      const event = makeEvent(panel, { title: 'New Title' });
+
+      suppressExtraction();
+      expect(extractMutationRequest(event)).toBeNull();
+
+      unsuppressExtraction();
+      expect(isExtractionSuppressed()).toBe(false);
+
+      const result = extractMutationRequest(event);
+      expect(result).not.toBeNull();
+    });
+  });
+
+  describe('unrecognized objects', () => {
+    it('returns null for unknown scene object types', () => {
+      const unknownObject = { state: { key: 'test' } };
+      const event = makeEvent(unknownObject, { something: 'changed' });
+
+      const result = extractMutationRequest(event);
+      expect(result).toBeNull();
+    });
+  });
+});
