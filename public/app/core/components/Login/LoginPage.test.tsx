@@ -57,6 +57,16 @@ describe('Login Page', () => {
     expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup');
   });
 
+  it('hides forgot password link when disableForgotPassword is set', () => {
+    runtimeMock.config.auth.disableForgotPassword = true;
+    render(<LoginPage />);
+
+    expect(screen.queryByRole('link', { name: 'Forgot your password?' })).not.toBeInTheDocument();
+
+    // cleanup
+    runtimeMock.config.auth.disableForgotPassword = false;
+  });
+
   it('should pass validation checks for username field', async () => {
     render(<LoginPage />);
 
