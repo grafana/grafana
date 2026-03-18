@@ -32,7 +32,6 @@ const plugin: CatalogPlugin = {
   isDisabled: false,
   isDeprecated: false,
   isPublished: true,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   managed: {
     enabled: false,

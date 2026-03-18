@@ -262,7 +262,6 @@ function createPluginStub(overrides?: Partial<CatalogPlugin>): CatalogPlugin {
     isDev: false,
     isEnterprise: false,
     isDeprecated: false,
-    isManaged: false,
     isPreinstalled: { found: false, withVersion: false },
     ...overrides,
   };

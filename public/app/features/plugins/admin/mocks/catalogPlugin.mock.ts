@@ -20,7 +20,6 @@ export default {
   isDisabled: false,
   isDeprecated: false,
   isPublished: true,
-  isManaged: false,
   isPreinstalled: { found: false, withVersion: false },
   latestVersion: '4.2.2',
   name: 'Zabbix',
@@ -373,7 +372,6 @@ export const datasourcePlugin = {
   isDeprecated: false,
   isDev: false,
   isEnterprise: false,
-  isManaged: false,
   isPreinstalled: {
     found: false,
     withVersion: false,
