@@ -98,14 +98,34 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 	return provider.New(coreRegistry.BackendFactoryProvider(), provider.DefaultProvider)
 }
 
-func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
-	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service, lk *loki.Service, otsdb *opentsdb.Service,
-	pr *prometheus.Service, t *tempo.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, zipkin *zipkin.Service, jaeger *jaeger.Service) *Registry {
-	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
-	sdktracing.InitDefaultTracer(tracer)
+// PluginFactoryMap is a named map type that Wire can inject as a single unit.
+// Custom Grafana distributions can provide their own PluginFactoryMap to include
+// only the core datasource backends they require, enabling dead-code elimination
+// of omitted backends at link time.
+type PluginFactoryMap map[string]backendplugin.PluginFactoryFunc
 
-	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
+// AsBackendPlugin converts a datasource service to a PluginFactoryFunc.
+// The service must implement one or more of the backend handler interfaces
+// (QueryDataHandler, CallResourceHandler, StreamHandler, CheckHealthHandler, etc.).
+// Returns nil if svc implements none of the recognized interfaces.
+func AsBackendPlugin(svc any) backendplugin.PluginFactoryFunc {
+	return asBackendPlugin(svc)
+}
+
+// ProvideDefaultPluginFactoryMap returns a PluginFactoryMap containing all standard
+// OSS core datasource backends. Include this in your Wire set to get the default
+// behaviour. Omit it and provide your own PluginFactoryMap to build a lean
+// distribution with a subset of backends.
+func ProvideDefaultPluginFactoryMap(
+	am *azuremonitor.Service, cw *cloudwatch.Service, cm *cloudmonitoring.Service,
+	es *elasticsearch.Service, grap *graphite.Service, idb *influxdb.Service,
+	lk *loki.Service, otsdb *opentsdb.Service, pr *prometheus.Service,
+	t *tempo.Service, td *testdatasource.Service, pg *postgres.Service,
+	my *mysql.Service, ms *mssql.Service, graf *grafanads.Service,
+	pyroscope *pyroscope.Service, parca *parca.Service,
+	zipkin *zipkin.Service, jaeger *jaeger.Service,
+) PluginFactoryMap {
+	return PluginFactoryMap{
 		CloudWatch:      asBackendPlugin(cw),
 		CloudMonitoring: asBackendPlugin(cm),
 		AzureMonitor:    asBackendPlugin(am),
@@ -125,7 +145,15 @@ func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *clou
 		Parca:           asBackendPlugin(parca),
 		Zipkin:          asBackendPlugin(zipkin),
 		Jaeger:          asBackendPlugin(jaeger),
-	})
+	}
+}
+
+// ProvideCoreRegistry initializes the core plugin registry from a PluginFactoryMap.
+// The tracer is applied globally for all core plugin SDK calls.
+func ProvideCoreRegistry(tracer trace.Tracer, factories PluginFactoryMap) *Registry {
+	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
+	sdktracing.InitDefaultTracer(tracer)
+	return NewRegistry(map[string]backendplugin.PluginFactoryFunc(factories))
 }
 
 func (cr *Registry) Get(pluginID string) backendplugin.PluginFactoryFunc {
