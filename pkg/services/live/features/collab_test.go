@@ -243,3 +243,89 @@ func TestCollabCursorsPassThrough(t *testing.T) {
 	// Cursor data is passed through unchanged.
 	require.JSONEq(t, string(cursorData), string(reply.Data))
 }
+
+// newTestCollabHandlerWithFlags creates a CollabHandler with arbitrary feature flags.
+func newTestCollabHandlerWithFlags(
+	service CollabService,
+	flags []string,
+	hasAccess bool,
+) *CollabHandler {
+	spec := make([]any, len(flags))
+	for i, f := range flags {
+		spec[i] = f
+	}
+	toggles := featuremgmt.WithFeatures(spec...)
+	return NewCollabHandler(
+		service,
+		toggles,
+		&mockAccessControl{hasAccess: hasAccess},
+		func(_ string, _ string, _ []byte) error { return nil },
+	)
+}
+
+func TestCollabCursorsSubscribeWithCursorSyncFlagOnly(t *testing.T) {
+	h := newTestCollabHandlerWithFlags(&mockCollabService{}, []string{featuremgmt.FlagDashboardCursorSync}, true)
+
+	handler, err := h.GetHandlerForPath("default/dash-1/cursors")
+	require.NoError(t, err)
+
+	user := &identity.StaticRequester{
+		OrgID: 1,
+		Login: "alice",
+	}
+	reply, status, err := handler.OnSubscribe(context.Background(), user, model.SubscribeEvent{})
+	require.NoError(t, err)
+	require.Equal(t, backend.SubscribeStreamStatusOK, status)
+	require.True(t, reply.Presence)
+}
+
+func TestCollabOpsSubscribeRejectsWithCursorSyncFlagOnly(t *testing.T) {
+	svc := &mockCollabService{}
+	h := newTestCollabHandlerWithFlags(svc, []string{featuremgmt.FlagDashboardCursorSync}, true)
+
+	handler, err := h.GetHandlerForPath("default/dash-1/ops")
+	require.NoError(t, err)
+
+	user := &identity.StaticRequester{
+		OrgID: 1,
+		Login: "alice",
+	}
+	_, status, err := handler.OnSubscribe(context.Background(), user, model.SubscribeEvent{})
+	require.Error(t, err)
+	require.Equal(t, backend.SubscribeStreamStatusPermissionDenied, status)
+	require.False(t, svc.joinCalled)
+}
+
+func TestCollabCursorsSubscribeRejectsWithoutPermissionCursorSyncOnly(t *testing.T) {
+	h := newTestCollabHandlerWithFlags(&mockCollabService{}, []string{featuremgmt.FlagDashboardCursorSync}, false)
+
+	handler, err := h.GetHandlerForPath("default/dash-1/cursors")
+	require.NoError(t, err)
+
+	user := &identity.StaticRequester{
+		OrgID: 1,
+		Login: "alice",
+	}
+	_, status, err := handler.OnSubscribe(context.Background(), user, model.SubscribeEvent{})
+	require.Error(t, err)
+	require.Equal(t, backend.SubscribeStreamStatusPermissionDenied, status)
+}
+
+func TestCollabCursorsSubscribeWithBothFlags(t *testing.T) {
+	h := newTestCollabHandlerWithFlags(&mockCollabService{}, []string{
+		featuremgmt.FlagDashboardCollaboration,
+		featuremgmt.FlagDashboardCursorSync,
+	}, true)
+
+	handler, err := h.GetHandlerForPath("default/dash-1/cursors")
+	require.NoError(t, err)
+
+	user := &identity.StaticRequester{
+		OrgID: 1,
+		Login: "alice",
+	}
+	reply, status, err := handler.OnSubscribe(context.Background(), user, model.SubscribeEvent{})
+	require.NoError(t, err)
+	require.Equal(t, backend.SubscribeStreamStatusOK, status)
+	require.True(t, reply.Presence)
+}

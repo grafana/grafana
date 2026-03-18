@@ -143,10 +143,10 @@ type collabCursorsHandler struct {
 }
 
 func (h *collabCursorsHandler) OnSubscribe(ctx context.Context, user identity.Requester, e model.SubscribeEvent) (model.SubscribeReply, backend.SubscribeStreamStatus, error) {
-	// Same auth checks as ops channel.
-	if !h.handler.features.IsEnabled(ctx, featuremgmt.FlagDashboardCollaboration) {
+	// Cursors channel is allowed when either dashboardCollaboration or dashboardCursorSync is enabled.
+	if !h.handler.features.IsEnabled(ctx, featuremgmt.FlagDashboardCollaboration) && !h.handler.features.IsEnabled(ctx, featuremgmt.FlagDashboardCursorSync) {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied,
-			fmt.Errorf("dashboardCollaboration feature flag is not enabled")
+			fmt.Errorf("neither dashboardCollaboration nor dashboardCursorSync feature flag is enabled")
 	}
 
 	ok, err := h.handler.accessControl.HasDashboardAccess(ctx, user, utils.VerbUpdate, h.namespace, h.uid)

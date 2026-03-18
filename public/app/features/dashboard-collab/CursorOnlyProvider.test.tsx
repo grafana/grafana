@@ -1,10 +1,12 @@
-import { renderHook, act } from '@testing-library/react';
+import { render, screen, renderHook, act } from '@testing-library/react';
 import { Subject, type Observable } from 'rxjs';
 import { type PropsWithChildren } from 'react';
 
 import {
   LiveChannelConnectionState,
   LiveChannelEventType,
+  LiveChannelScope,
+  type LiveChannelAddress,
   type LiveChannelEvent,
 } from '@grafana/data';
 
@@ -15,6 +17,7 @@ import type { CursorUpdate } from './protocol/messages';
 // --- Mocks ---
 
 const mockPublish = jest.fn().mockResolvedValue(undefined);
+const mockGetStream = jest.fn();
 let cursorsSubject: Subject<LiveChannelEvent<CursorUpdate>>;
 
 jest.mock('@grafana/runtime', () => {
@@ -22,7 +25,8 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...actual,
     getGrafanaLiveSrv: () => ({
-      getStream: <T,>(): Observable<LiveChannelEvent<T>> => {
+      getStream: <T,>(address: LiveChannelAddress): Observable<LiveChannelEvent<T>> => {
+        mockGetStream(address);
         return cursorsSubject.asObservable() as unknown as Observable<LiveChannelEvent<T>>;
       },
       publish: mockPublish,
@@ -47,6 +51,30 @@ describe('CursorOnlyProvider', () => {
   beforeEach(() => {
     cursorsSubject = new Subject();
     mockPublish.mockClear();
+    mockGetStream.mockClear();
+  });
+
+  it('renders children when mounted', () => {
+    render(
+      <CursorOnlyProvider dashboardUID="test-uid" namespace="default">
+        <div data-testid="child-content">Hello</div>
+      </CursorOnlyProvider>
+    );
+
+    expect(screen.getByTestId('child-content')).toBeInTheDocument();
+    expect(screen.getByText('Hello')).toBeInTheDocument();
+  });
+
+  it('subscribes to the correct cursors channel address', () => {
+    renderHook(() => useCollab(), { wrapper: makeWrapper() });
+
+    expect(mockGetStream).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scope: LiveChannelScope.Grafana,
+        stream: 'collab',
+        path: 'default/test-uid/cursors',
+      })
+    );
   });
 
   it('provides default disconnected state with empty collab values', () => {
@@ -260,5 +288,76 @@ describe('CursorOnlyProvider', () => {
     expect(result.current.cursors.size).toBe(1);
     expect(result.current.cursors.get('user-a')?.x).toBe(999);
     expect(result.current.cursors.get('user-a')?.y).toBe(888);
+  });
+
+  it('pauses cursor sending when tab is hidden', () => {
+    const { result } = renderHook(() => useCollab(), { wrapper: makeWrapper() });
+
+    // Simulate tab becoming hidden
+    act(() => {
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', writable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    // Attempt to send cursor while hidden
+    act(() => {
+      result.current.sendCursor({
+        userId: 'local-user-1',
+        displayName: 'Me',
+        avatarUrl: '',
+        color: '#fff',
+        x: 50,
+        y: 75,
+      });
+    });
+
+    expect(mockPublish).not.toHaveBeenCalled();
+
+    // Restore tab visibility
+    act(() => {
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', writable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+
+    // Now sending should work
+    act(() => {
+      result.current.sendCursor({
+        userId: 'local-user-1',
+        displayName: 'Me',
+        avatarUrl: '',
+        color: '#fff',
+        x: 60,
+        y: 80,
+      });
+    });
+
+    expect(mockPublish).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'default/test-uid/cursors' }),
+      expect.objectContaining({ type: 'cursor', x: 60, y: 80 })
+    );
+  });
+
+  it('sets connected to false on Shutdown status', () => {
+    const { result } = renderHook(() => useCollab(), { wrapper: makeWrapper() });
+
+    act(() => {
+      cursorsSubject.next({
+        type: LiveChannelEventType.Status,
+        id: 'test',
+        timestamp: Date.now(),
+        state: LiveChannelConnectionState.Connected,
+      });
+    });
+    expect(result.current.connected).toBe(true);
+
+    act(() => {
+      cursorsSubject.next({
+        type: LiveChannelEventType.Status,
+        id: 'test',
+        timestamp: Date.now(),
+        state: LiveChannelConnectionState.Shutdown,
+      });
+    });
+    expect(result.current.connected).toBe(false);
   });
 });
