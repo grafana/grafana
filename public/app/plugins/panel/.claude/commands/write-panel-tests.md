@@ -347,6 +347,7 @@ Target >90% coverage on business logic. Focus new tests on uncovered lines in th
 - [ ] Content assertions, not just container-existence checks
 - [ ] Counter-example tests for filtering / conditional behavior
 - [ ] Coverage run confirms no regression on changed lines
+- [ ] Address and fix all type errors
 
 ### Clean up high impact debt
 
