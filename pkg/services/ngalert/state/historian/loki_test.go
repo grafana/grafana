@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -207,6 +208,34 @@ func TestRemoteLokiBackend(t *testing.T) {
 			require.Equal(t, exp, entry.Fingerprint)
 		})
 
+		t.Run("state history fingerprint matches webhook _gc_fingerprint annotation", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			originalLabels := data.Labels{
+				"alertname":                    rule.Title,
+				"severity":                     "critical",
+				"instance":                     "localhost:9090",
+				"__alert_rule_uid__":           "abc123",
+				"__alert_rule_namespace_uid__": "ns-uid",
+			}
+			states := singleFromNormal(&state.State{
+				State:  eval.Alerting,
+				Labels: originalLabels.Copy(),
+			})
+
+			res := StatesToStream(rule, states, nil, l, false, nil)
+			stateFingerprint := requireSingleEntry(t, res).Fingerprint
+
+			webhookLabels := make(map[string]string, len(originalLabels))
+			for k, v := range originalLabels {
+				webhookLabels[k] = v
+			}
+			gcFingerprint := remote.ComputeGCFingerprint(webhookLabels)
+
+			require.Equal(t, gcFingerprint, stateFingerprint,
+				"_gc_fingerprint sent via webhook must match the state history fingerprint")
+		})
+
 		t.Run("sets is_muted field when muteChecker is provided", func(t *testing.T) {
 			rule := createTestRule()
 			l := log.NewNopLogger()
@@ -282,7 +311,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 // mockMuteChecker is a test implementation of MuteChecker
 type mockMuteChecker struct {
 	silenceIds []string
-	err   error
+	err        error
 }
 
 func (m *mockMuteChecker) GetSilenceIds(orgID int64, labels data.Labels) ([]string, error) {
