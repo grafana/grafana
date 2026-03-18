@@ -249,8 +249,10 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
 			return v, err
 		}
-		if err := s.checkFolderManager(ctx, obj); err != nil {
-			return v, err
+		if obj.GetFolder() != previous.GetFolder() {
+			if err := s.checkFolderManager(ctx, obj); err != nil {
+				return v, err
+			}
 		}
 	} else {
 		obj.SetGeneration(previous.GetGeneration())
