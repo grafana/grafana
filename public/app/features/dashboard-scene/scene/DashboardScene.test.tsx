@@ -205,6 +205,29 @@ describe('DashboardScene', () => {
         expect(scene.state.meta.version).toEqual(2);
       });
 
+      it('refreshInitialState should update _initialState so discarding later changes preserves the saved state', () => {
+        const originalTimeRange = scene.state.$timeRange!.state;
+        expect(originalTimeRange.from).toBe('now-6h');
+
+        scene.saveCompleted({} as Dashboard, {
+          slug: 'slug',
+          uid: 'dash-1',
+          url: 'sss',
+          version: 2,
+          status: 'aaa',
+        });
+
+        const newTimeRange = new SceneTimeRange({ from: 'now-7d', to: 'now', timeZone: 'browser' });
+        scene.setState({ $timeRange: newTimeRange });
+
+        scene.refreshInitialState();
+
+        scene.setState({ title: 'Another change' });
+        scene.discardChangesAndKeepEditing();
+
+        expect(scene.state.$timeRange!.state.from).toBe('now-7d');
+      });
+
       it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', () => {
         const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
         config.featureToggles.dashboardNewLayouts = true;

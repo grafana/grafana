@@ -93,6 +93,8 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
       dashboard.setState(newState);
     }
 
+    dashboard.refreshInitialState();
+
     this.setState({ jsonText: this.getJsonText() });
 
     // We also need to resume tracking changes since the change handler won't see any later edit

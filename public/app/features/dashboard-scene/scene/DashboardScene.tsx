@@ -599,6 +599,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this._initialState;
   }
 
+  public refreshInitialState() {
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state);
+  }
+
   public addPanel(vizPanel: VizPanel): void {
     if (!this.state.isEditing) {
       this.onEnterEditMode();
