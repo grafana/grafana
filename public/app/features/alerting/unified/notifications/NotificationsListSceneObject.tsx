@@ -387,7 +387,7 @@ function NotificationDetails({ record }: NotificationDetailsProps) {
             <Stack direction="row" gap={1} alignItems="center">
               <Text variant="bodySmall" color="secondary">
                 <strong>
-                  <Trans i18nKey="alerting.notifications-scene.group-labels">Group Labels:</Trans>
+                  <Trans i18nKey="alerting.notifications-scene.labels">Labels:</Trans>
                 </strong>
               </Text>
               <AlertLabels labels={filteredLabels} size="sm" />
