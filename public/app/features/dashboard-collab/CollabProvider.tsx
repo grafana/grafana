@@ -178,10 +178,11 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     [enabled, namespace, dashboardUID]
   );
 
-  // Cursors channel address
+  // Cursors channel address — only when dashboardCursorSync is explicitly enabled
+  const cursorSyncEnabled = Boolean(config.featureToggles.dashboardCursorSync);
   const cursorsAddress = useMemo(
-    () => (enabled ? makeCursorsAddress(namespace, dashboardUID) : null),
-    [enabled, namespace, dashboardUID]
+    () => (enabled && cursorSyncEnabled ? makeCursorsAddress(namespace, dashboardUID) : null),
+    [enabled, cursorSyncEnabled, namespace, dashboardUID]
   );
 
   // Publish to ops channel
