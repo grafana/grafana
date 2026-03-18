@@ -93,8 +93,12 @@ func TestGetContactPoints(t *testing.T) {
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
 				1: {
-					accesscontrol.ActionAlertingNotificationsRead:    nil,
-					accesscontrol.ActionAlertingReceiversReadSecrets: {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversRead:         {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversReadSecrets:  {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversCreate:       nil,
+					accesscontrol.ActionAlertingReceiversUpdate:       {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingReceiversDelete:       {models.ScopeReceiversAll},
+					accesscontrol.ActionAlertingProvisioningSetStatus: nil,
 				},
 			},
 		}
