@@ -12811,9 +12811,6 @@
     "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {
-    "banner": {
-      "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
-    },
     "bitbucket": {
       "branch-required": "Branch is required",
       "permissions": {
