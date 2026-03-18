@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -28,9 +28,10 @@ export function UserSimulationBanner() {
     <div className={styles.wrap} data-testid="user-simulation-banner">
       <Stack justifyContent="center" alignItems="center" gap={2}>
         <Text variant="bodySmall" weight="bold">
-          <Trans i18nKey="user-simulation.banner" values={{ actor: sim.actorLogin, target: sim.targetLogin }}>
-            Viewing as {{ target }} (signed in as Grafana admin: {{ actor }})
-          </Trans>
+          {t('user-simulation.banner', 'Viewing as {{target}} (signed in as Grafana admin: {{actor}})', {
+            target: sim.targetLogin,
+            actor: sim.actorLogin,
+          })}
         </Text>
         <Button size="sm" variant="secondary" onClick={onExit}>
           <Trans i18nKey="user-simulation.exit">Exit simulation</Trans>
