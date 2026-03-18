@@ -238,13 +238,31 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return oldObj, created, err
 	}
-	f, ok := obj.(*foldersv1beta1.Folder)
-	if !ok {
-		return nil, created, fmt.Errorf("expected folder after update")
+
+	var f *foldersv1beta1.Folder
+	switch v := obj.(type) {
+	case *foldersv1beta1.Folder:
+		f = v
+	case *foldersv1.Folder:
+		f = &foldersv1beta1.Folder{}
+		if err := s.convertor.Convert(v, f, nil); err != nil {
+			return nil, created, fmt.Errorf("convert folder for update: %w", err)
+		}
+	default:
+		return nil, created, fmt.Errorf("expected folder after update, got %T", obj)
 	}
-	old, ok := oldObj.(*foldersv1beta1.Folder)
-	if !ok {
-		return nil, created, fmt.Errorf("expected old object to be a folder also")
+
+	var old *foldersv1beta1.Folder
+	switch v := oldObj.(type) {
+	case *foldersv1beta1.Folder:
+		old = v
+	case *foldersv1.Folder:
+		old = &foldersv1beta1.Folder{}
+		if err := s.convertor.Convert(v, old, nil); err != nil {
+			return nil, created, fmt.Errorf("convert old folder: %w", err)
+		}
+	default:
+		return nil, created, fmt.Errorf("expected old object to be a folder, got %T", oldObj)
 	}
 
 	changed := false
