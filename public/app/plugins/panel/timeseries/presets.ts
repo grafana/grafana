@@ -17,7 +17,22 @@ import {
 } from '@grafana/schema';
 import { SUGGESTIONS_LEGEND_OPTIONS } from 'app/features/panel/suggestions/utils';
 
+import { defaultGraphConfig } from './config';
 import { Options } from './panelcfg.gen';
+
+/**
+ * Default values
+ */
+const PRESET_STYLE_DEFAULTS: Partial<GraphFieldConfig> = {
+  drawStyle: defaultGraphConfig.drawStyle,
+  lineInterpolation: defaultGraphConfig.lineInterpolation,
+  lineWidth: defaultGraphConfig.lineWidth,
+  fillOpacity: defaultGraphConfig.fillOpacity,
+  gradientMode: defaultGraphConfig.gradientMode,
+  stacking: defaultGraphConfig.stacking,
+  barWidthFactor: defaultGraphConfig.barWidthFactor,
+  lineStyle: { fill: 'solid' },
+};
 
 const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) => {
   s.options!.disableKeyboardEvents = true;
@@ -28,15 +43,21 @@ const previewModifier = (s: VisualizationSuggestion<Options, GraphFieldConfig>) 
   s.fieldConfig!.defaults.custom!.axisPlacement = AxisPlacement.Hidden;
 };
 
-const STACKING_OFF: GraphFieldConfig = {
-  stacking: { mode: StackingMode.None, group: 'A' },
-};
-
 function makePreset(
   name: string,
   fieldConfig: FieldConfigSource<Partial<GraphFieldConfig>>
 ): VisualizationSuggestion<Options, GraphFieldConfig> {
-  return { name, fieldConfig, cardOptions: { previewModifier } };
+  return {
+    name,
+    fieldConfig: {
+      defaults: {
+        ...fieldConfig.defaults,
+        custom: { ...PRESET_STYLE_DEFAULTS, ...fieldConfig.defaults.custom },
+      },
+      overrides: fieldConfig.overrides,
+    },
+    cardOptions: { previewModifier },
+  };
 }
 
 // --- Single series ---
@@ -45,10 +66,6 @@ function makePreset(
 const makeSingleLineFillConfig = (pointSize: number): FieldConfigSource<Partial<GraphFieldConfig>> => ({
   defaults: {
     custom: {
-      ...STACKING_OFF,
-      drawStyle: GraphDrawStyle.Line,
-      lineInterpolation: LineInterpolation.Linear,
-      lineWidth: 1,
       fillOpacity: 27,
       gradientMode: GraphGradientMode.Opacity,
       showPoints: VisibilityMode.Auto,
@@ -62,8 +79,6 @@ const makeSingleLineFillConfig = (pointSize: number): FieldConfigSource<Partial<
 const FC_SINGLE_SMOOTH_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> = {
   defaults: {
     custom: {
-      ...STACKING_OFF,
-      drawStyle: GraphDrawStyle.Line,
       lineInterpolation: LineInterpolation.Smooth,
       lineWidth: 2,
       fillOpacity: 19,
@@ -79,10 +94,6 @@ const FC_SINGLE_SMOOTH_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> = {
 const FC_SINGLE_DASHED_THRESHOLD: FieldConfigSource<Partial<GraphFieldConfig>> = {
   defaults: {
     custom: {
-      ...STACKING_OFF,
-      drawStyle: GraphDrawStyle.Line,
-      lineInterpolation: LineInterpolation.Linear,
-      lineWidth: 1,
       fillOpacity: 39,
       gradientMode: GraphGradientMode.Scheme,
       showPoints: VisibilityMode.Never,
@@ -97,8 +108,6 @@ const FC_SINGLE_DASHED_THRESHOLD: FieldConfigSource<Partial<GraphFieldConfig>> =
 const FC_SINGLE_STEP_FILL: FieldConfigSource<Partial<GraphFieldConfig>> = {
   defaults: {
     custom: {
-      ...STACKING_OFF,
-      drawStyle: GraphDrawStyle.Line,
       lineInterpolation: LineInterpolation.StepBefore,
       lineWidth: 2,
       fillOpacity: 25,
@@ -114,9 +123,7 @@ const FC_SINGLE_STEP_FILL: FieldConfigSource<Partial<GraphFieldConfig>> = {
 const FC_SINGLE_BARS_HUE: FieldConfigSource<Partial<GraphFieldConfig>> = {
   defaults: {
     custom: {
-      ...STACKING_OFF,
       drawStyle: GraphDrawStyle.Bars,
-      lineWidth: 1,
       fillOpacity: 70,
       gradientMode: GraphGradientMode.Hue,
       showPoints: VisibilityMode.Auto,
@@ -130,9 +137,7 @@ const FC_SINGLE_BARS_HUE: FieldConfigSource<Partial<GraphFieldConfig>> = {
 const FC_SINGLE_BARS_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> = {
   defaults: {
     custom: {
-      ...STACKING_OFF,
       drawStyle: GraphDrawStyle.Bars,
-      lineWidth: 1,
       fillOpacity: 70,
       gradientMode: GraphGradientMode.Scheme,
       showPoints: VisibilityMode.Auto,
@@ -146,10 +151,6 @@ const FC_SINGLE_BARS_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> = {
 const FC_SINGLE_LINE_HUE: FieldConfigSource<Partial<GraphFieldConfig>> = {
   defaults: {
     custom: {
-      ...STACKING_OFF,
-      drawStyle: GraphDrawStyle.Line,
-      lineInterpolation: LineInterpolation.Linear,
-      lineWidth: 1,
       fillOpacity: 57,
       gradientMode: GraphGradientMode.Hue,
       showPoints: VisibilityMode.Auto,
@@ -163,9 +164,6 @@ const FC_SINGLE_LINE_HUE: FieldConfigSource<Partial<GraphFieldConfig>> = {
 const FC_SINGLE_LINE_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> = {
   defaults: {
     custom: {
-      ...STACKING_OFF,
-      drawStyle: GraphDrawStyle.Line,
-      lineInterpolation: LineInterpolation.Linear,
       lineWidth: 2,
       fillOpacity: 17,
       gradientMode: GraphGradientMode.Scheme,
@@ -180,10 +178,6 @@ const FC_SINGLE_LINE_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> = {
 const FC_SINGLE_THRESHOLD_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> = {
   defaults: {
     custom: {
-      ...STACKING_OFF,
-      drawStyle: GraphDrawStyle.Line,
-      lineInterpolation: LineInterpolation.Linear,
-      lineWidth: 1,
       fillOpacity: 27,
       gradientMode: GraphGradientMode.Scheme,
       showPoints: VisibilityMode.Auto,
@@ -209,12 +203,6 @@ const FC_SINGLE_THRESHOLD_SCHEME: FieldConfigSource<Partial<GraphFieldConfig>> =
 const FC_MULTI_POINTS: FieldConfigSource<Partial<GraphFieldConfig>> = {
   defaults: {
     custom: {
-      ...STACKING_OFF,
-      drawStyle: GraphDrawStyle.Line,
-      lineInterpolation: LineInterpolation.Linear,
-      lineWidth: 1,
-      fillOpacity: 0,
-      gradientMode: GraphGradientMode.None,
       showPoints: VisibilityMode.Always,
       pointSize: 1,
       barWidthFactor: 0.9,
@@ -229,11 +217,8 @@ const makeMultiStackedConfig = (stackingMode: StackingMode): FieldConfigSource<P
   defaults: {
     custom: {
       stacking: { mode: stackingMode, group: 'A' },
-      drawStyle: GraphDrawStyle.Line,
-      lineInterpolation: LineInterpolation.Linear,
       lineWidth: 2,
       fillOpacity: 50,
-      gradientMode: GraphGradientMode.None,
       showPoints: VisibilityMode.Always,
       pointSize: 1,
       barWidthFactor: 0.9,
@@ -248,9 +233,7 @@ const FC_MULTI_STACKED_BARS: FieldConfigSource<Partial<GraphFieldConfig>> = {
     custom: {
       stacking: { mode: StackingMode.Normal, group: 'A' },
       drawStyle: GraphDrawStyle.Bars,
-      lineWidth: 1,
       fillOpacity: 68,
-      gradientMode: GraphGradientMode.None,
       showPoints: VisibilityMode.Always,
       pointSize: 1,
       barWidthFactor: 0.9,

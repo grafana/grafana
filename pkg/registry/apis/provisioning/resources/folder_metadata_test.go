@@ -428,6 +428,56 @@ func TestParseFolderResource(t *testing.T) {
 			description:          "Root-level folder has empty parent folder ID",
 		},
 		{
+			name:                  "metadata enabled with custom title - preserves metadata title instead of path",
+			path:                  testPath,
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
+				customFolder := NewFolderManifest("stable-uid-123", "My Custom Project Title")
+				customBytes, _ := json.Marshal(customFolder)
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", testRef).
+					Return(&repository.FileInfo{
+						Data: customBytes,
+						Path: "team-a/project-x/_folder.json",
+					}, nil)
+				parentFolder := NewFolderManifest("parent-uid-456", "team-a")
+				parentBytes, _ := json.Marshal(parentFolder)
+				reader.On("Read", mock.Anything, "team-a/_folder.json", testRef).
+					Return(&repository.FileInfo{Data: parentBytes}, nil)
+			},
+			expectedFolderID:     "stable-uid-123",
+			expectedAction:       "update",
+			expectedTitle:        "My Custom Project Title",
+			expectedParentFolder: "parent-uid-456",
+			expectedErr:          false,
+			description:          "When metadata exists with custom title, preserve it instead of using path-based title",
+		},
+		{
+			name:                  "metadata enabled with empty title - falls back to path-based title",
+			path:                  testPath,
+			folderMetadataEnabled: true,
+			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
+				emptyTitleFolder := NewFolderManifest("stable-uid-123", "")
+				emptyBytes, _ := json.Marshal(emptyTitleFolder)
+				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", testRef).
+					Return(&repository.FileInfo{
+						Data: emptyBytes,
+						Path: "team-a/project-x/_folder.json",
+					}, nil)
+				parentFolder := NewFolderManifest("parent-uid-456", "team-a")
+				parentBytes, _ := json.Marshal(parentFolder)
+				reader.On("Read", mock.Anything, "team-a/_folder.json", testRef).
+					Return(&repository.FileInfo{Data: parentBytes}, nil)
+			},
+			expectedFolderID:     "stable-uid-123",
+			expectedAction:       "update",
+			expectedTitle:        "project-x",
+			expectedParentFolder: "parent-uid-456",
+			expectedErr:          false,
+			description:          "When metadata exists but title is empty, fall back to path-based title",
+		},
+		{
 			name:                  "parent folder ID error propagates",
 			path:                  testPath,
 			folderMetadataEnabled: true,
@@ -504,12 +554,12 @@ func TestGetFolderID(t *testing.T) {
 			name:                  "metadata enabled and exists - returns stable UID",
 			folderMetadataEnabled: true,
 			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
 				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", "").
 					Return(&repository.FileInfo{
 						Data: metadataBytes,
 						Path: "team-a/project-x/_folder.json",
 					}, nil)
-				// Config() should not be called when metadata is found
 			},
 			expectedID:  "stable-uid-123",
 			expectedErr: false,
@@ -531,6 +581,7 @@ func TestGetFolderID(t *testing.T) {
 			name:                  "metadata enabled but read fails - returns error",
 			folderMetadataEnabled: true,
 			setupMock: func(reader *repository.MockReader) {
+				reader.On("Config").Return(testRepoConfig)
 				reader.On("Read", mock.Anything, "team-a/project-x/_folder.json", "").
 					Return(nil, fmt.Errorf("permission denied"))
 			},

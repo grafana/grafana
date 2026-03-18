@@ -250,6 +250,39 @@ func (_c *MockFolderTree_In_Call) RunAndReturn(run func(string) bool) *MockFolde
 	return _c
 }
 
+// Remove provides a mock function with given fields: folderID
+func (_m *MockFolderTree) Remove(folderID string) {
+	_m.Called(folderID)
+}
+
+// MockFolderTree_Remove_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Remove'
+type MockFolderTree_Remove_Call struct {
+	*mock.Call
+}
+
+// Remove is a helper method to define mock.On call
+//   - folderID string
+func (_e *MockFolderTree_Expecter) Remove(folderID interface{}) *MockFolderTree_Remove_Call {
+	return &MockFolderTree_Remove_Call{Call: _e.mock.On("Remove", folderID)}
+}
+
+func (_c *MockFolderTree_Remove_Call) Run(run func(folderID string)) *MockFolderTree_Remove_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockFolderTree_Remove_Call) Return() *MockFolderTree_Remove_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockFolderTree_Remove_Call) RunAndReturn(run func(string)) *MockFolderTree_Remove_Call {
+	_c.Run(run)
+	return _c
+}
+
 // Walk provides a mock function with given fields: ctx, fn
 func (_m *MockFolderTree) Walk(ctx context.Context, fn WalkFunc) error {
 	ret := _m.Called(ctx, fn)

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultSettleDelay = 1 * time.Second
+	defaultSettleDelay = 3 * time.Second
 	defaultMinBackoff  = 100 * time.Millisecond
 	defaultMaxBackoff  = 5 * time.Second
 	defaultBufferSize  = 10000
@@ -114,7 +114,7 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 		defer close(out)
 		var buffer []Event
 
-		ticker := time.NewTicker(opts.SettleDelay)
+		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
 
 		for {
@@ -129,21 +129,6 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 			case <-ticker.C:
 			case <-ctx.Done():
 				return
-			}
-
-			// Drain all pending events from the raw channel before sorting,
-			// so that we don't emit a partial batch that misses events with
-			// lower RVs still waiting in the channel.
-			for drained := false; !drained; {
-				select {
-				case evt, ok := <-raw:
-					if !ok {
-						return
-					}
-					buffer = append(buffer, evt)
-				default:
-					drained = true
-				}
 			}
 
 			// Sort buffer by RV

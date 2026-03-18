@@ -339,6 +339,7 @@ func AddResourcePermissionKnownTypes(scheme *runtime.Scheme, version schema.Grou
 	scheme.AddKnownTypes(version,
 		&ResourcePermission{},
 		&ResourcePermissionList{},
+		&PermissionsSearchResult{},
 
 		// What is this about?
 		&metav1.PartialObjectMetadata{},

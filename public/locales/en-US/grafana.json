@@ -2196,10 +2196,10 @@
       "title-no-alertmanager-found": "No Alertmanager found"
     },
     "notification-detail": {
-      "action-silence": "Silence this group",
-      "action-view-contact-point": "View contact point",
       "alert-count-inline_one": "{{count}} alert(s)",
       "alert-count-inline_other": "{{count}} alert(s)",
+      "alert-status-firing": "Firing",
+      "alert-status-resolved": "Resolved",
       "alerts-empty": "No alerts found for this notification.",
       "alerts-loading": "Loading alerts...",
       "batch-all-ok": "all succeeded",
@@ -2208,10 +2208,10 @@
       "batch-count-one": "1 delivery",
       "batch-failed_one": "{{count}} failed",
       "batch-failed_other": "{{count}} failed",
+      "common-annotations": "Annotations",
+      "common-labels": "Labels",
       "current": "Current",
       "debug-details-heading": "Debug details",
-      "delivery-failed": "Delivery failed",
-      "delivery-success": "Delivered successfully",
       "error-title": "Error loading notification",
       "error-title-banner": "Delivery error",
       "error-unknown": "Unknown error",
@@ -2221,22 +2221,34 @@
       "field-retry": "Retry",
       "field-timestamp": "Timestamp",
       "field-uuid": "UUID",
-      "firing-alerts": "Firing Alerts",
-      "group-labels-heading": "Group Labels",
+      "info-group-labels": "Group labels",
       "loading": "Loading notification...",
+      "menu-analyze": "Analyze alert notification",
+      "menu-copy-link": "Copy link",
+      "menu-silence": "Silence notifications",
+      "menu-view-contact-point": "View contact point",
+      "menu-view-rule": "View alert rule",
+      "menu-view-rule-n": "View alert rule ({{n}})",
+      "more-details-heading": "More details",
       "no": "No",
+      "no-common-data": "No common labels or annotations across alerts.",
       "not-found-body": "No UUID was provided. Please navigate from the notifications list.",
       "not-found-title": "Notification not found",
       "page-title": "View",
-      "related-count_one": "{{count}} related notifications",
-      "related-count_other": "{{count}} related notifications",
-      "related-count-with-failures_one": "{{count}} related ({{failed}} failed)",
-      "related-count-with-failures_other": "{{count}} related ({{failed}} failed)",
       "related-loading": "Loading related notifications...",
-      "related-sidebar-subtitle": "Notification attempts for the same alert group and route",
-      "related-sidebar-title": "Related Notifications",
-      "resolved-alerts": "Resolved Alerts",
       "retry-tooltip": "This attempt was a retry of a previous attempt",
+      "sidebar-contact-point": "Contact point",
+      "sidebar-delivery-failed": "Delivery failed",
+      "sidebar-delivery-outcome": "Delivery outcome",
+      "sidebar-delivery-success": "Delivered successfully",
+      "sidebar-duration": "Duration",
+      "sidebar-integration": "Integration",
+      "sidebar-retry": "Retry",
+      "sidebar-retry-value": "This was a retry of a previous attempt",
+      "sidebar-timestamp": "Timestamp",
+      "tab-alerts": "Alerts",
+      "tab-overview": "Overview",
+      "tab-related": "Related",
       "uuid-not-found-body": "No notification found with UUID: {{uuid}}",
       "uuid-not-found-title": "Notification not found",
       "yes": "Yes"
@@ -2313,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "Error fetching notifications",
+      "integration-tooltip": "{{integration}} #{{index}}",
       "no-error-details": "No error details available",
       "notification-error": "Notification Error",
       "outcome-failed": "Failed",
@@ -2346,8 +2359,9 @@
       "labels": "Labels:",
       "labels-filter-variable": {
         "label": {
-          "labels": "Labels"
-        }
+          "group-labels": "Group Labels"
+        },
+        "placeholder": "Filter by group label values"
       },
       "no-notifications": "No notifications found for the selected time range and filters",
       "outcome-filter-variable": {
@@ -2406,9 +2420,6 @@
       "label-payload": "Payload",
       "label-use-existing-alert-instances": "Use existing alert instances",
       "reference": "Reference"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Speed up your alerts creation now by using one of our tailored apps"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "This rule is managed by the {{pluginName}} plugin"
@@ -2925,6 +2936,9 @@
       "error-button": "Error",
       "export-all-grafana-rules": "Export all Grafana rules",
       "export-group": "Export rules group",
+      "filter-sidebar": {
+        "rule-name-placeholder": "Filter by name..."
+      },
       "filter-view": {
         "cancel-search": "Cancel search",
         "no-more-results": "No more results – found {{numberOfRules}} rules",
@@ -3074,8 +3088,6 @@
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Search by data sources help",
       "filter-options": {
-        "aria-label": "Filter options",
-        "aria-label-show-filters": "Filter",
         "placeholder-namespace": "Select namespace",
         "placeholder-search-input": "Search by name or enter filter query..."
       },
@@ -3107,6 +3119,9 @@
       "state": "State",
       "title-search-help": "Search help",
       "view-as": "View as"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": "Clear filters"
     },
     "rules-group": {
       "deleting": "Deleting",
@@ -4040,6 +4055,12 @@
         "label-negative-y": "Negative Y"
       }
     },
+    "presets": {
+      "fixed-purple-hue": "Fixed purple hue",
+      "palette-classic": "Palette classic",
+      "palette-classic-stacked": "Palette classic stacked",
+      "viridis-hue": "Viridis hue"
+    },
     "suggestions": {
       "horizontal": "Horizontal bar chart",
       "hz-stacked": "Horizontal bar chart - stacked",
@@ -4794,7 +4815,6 @@
     "all": "All",
     "apply": "Apply",
     "cancel": "Cancel",
-    "clear": "Clear",
     "collapse": "Collapse",
     "disabled": "Disabled",
     "discard": "Discard",
@@ -5894,6 +5914,12 @@
         "title": "Panel time settings"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "Ask Assistant about this panel...",
+        "placeholder-multi": "Ask Assistant about these panels..."
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard must be saved before alerts can be added.",
@@ -6527,6 +6553,17 @@
       "label-link": "Link",
       "tooltip": "Add link to another dashboard or external site"
     },
+    "add-new-edit-pane": {
+      "group-layouts": "Group layouts"
+    },
+    "add-row": {
+      "add-label": "Add row",
+      "group-label": "Group into rows"
+    },
+    "add-tab": {
+      "add-label": "Add tab",
+      "group-label": "Group into tabs"
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Could not navigate to the selected dashboard. Please try again.",
@@ -6557,6 +6594,13 @@
     },
     "add-variable": {
       "label-variable": "Variable"
+    },
+    "adhoc-origin-filters-controller": {
+      "input-placeholder": "Add a default filter..."
+    },
+    "adhoc-origin-filters-editor": {
+      "description": "Filters that are pre-selected by default.",
+      "label": "Default filters"
     },
     "annotation-control": {
       "description-add-event-data-to-graphs": "Add event data to graphs",
@@ -6719,6 +6763,9 @@
       "tooltip-move-link-down": "Move link down",
       "tooltip-move-link-up": "Move link up",
       "type": "Type"
+    },
+    "dashboard-links-list": {
+      "add-link": "Add link"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Error loading dashboard"
@@ -7000,6 +7047,13 @@
       "type-link": "Link",
       "with-tags": "With tags"
     },
+    "links-list": {
+      "drag-end-description": "Reorder links list",
+      "title-above-dashboard_one": "Above dashboard ({{count}})",
+      "title-above-dashboard_other": "Above dashboard ({{count}})",
+      "title-controls-menu_one": "Controls menu ({{count}})",
+      "title-controls-menu_other": "Controls menu ({{count}})"
+    },
     "managed-badge": {
       "kubectl": "Managed by: Kubectl",
       "plugin": "Managed by: Plugin {{id}}",
@@ -7249,6 +7303,8 @@
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
       "file-path": "<strong>File path:</strong> {{filePath}}",
+      "form-loading-error": "Error loading form",
+      "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "label-description": "Description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
@@ -7356,6 +7412,13 @@
       "page-nav": {
         "text": {
           "settings": "Settings"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": "Links"
         }
       }
     },
@@ -7927,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fixed value"
       },
+      "label": "Scalar",
       "label-limit": "Limit",
       "label-value": "Value",
       "noOptionsMessage-no-fields-found": "No fields found",
@@ -8831,6 +8895,7 @@
       "threshold-labels-description": "Display threshold and neutral values",
       "threshold-markers": "Show thresholds"
     },
+    "data-links-actions-menu": "Open data links and actions menu",
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
     "description-neutral": "Leave empty to use Min as neutral point",
@@ -9957,7 +10022,9 @@
       "external-links-heading": "External links"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Enter regular expression"
+      "input-placeholder": "Enter regular expression",
+      "scope": "Target fields",
+      "scope-tooltip": "To avoid issues when applying overrides, overrides cannot be applied across multiple target scopes. The default \"dataframe\" scope is applied if no scope is selected."
     },
     "field-value-matcher": {
       "operator-label": "Comparison operator",
@@ -9984,6 +10051,18 @@
       "expand-row-tooltip": "Toggle row expanded",
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "Annotations",
+        "exemplar": "Exemplars",
+        "nested": "Nested",
+        "series": "Dataframe"
+      },
+      "labels": {
+        "base-field-name": "{{name}} (base field name)",
+        "not-found": "{{name}} (not found)"
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Set properties for fields with names matching a regex",
@@ -12762,6 +12841,7 @@
       "empty": "Empty",
       "error-field-required": "This field is required.",
       "error-quota-exceeded-message": "This repository contains {{resourceCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.",
+      "error-quota-exceeded-message-onprem": "This repository contains {{resourceCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.",
       "error-quota-exceeded-title": "Resource quota exceeded",
       "error-repository-status-unhealthy-message": "There was an issue connecting to the repository. Please check the repository settings and try again.",
       "error-repository-status-unhealthy-title": "Repository status unhealthy",
@@ -12775,6 +12855,7 @@
       "retry-action": "Retry",
       "text-loading-resource-information": "Loading resource information...",
       "unmanaged-resources-label": "Unmanaged resources",
+      "update-configuration-action": "View configuration docs",
       "upgrade-action": "Upgrade account"
     },
     "code-block": {
@@ -12821,7 +12902,8 @@
     "connect-repository-button": {
       "configure": "Configure",
       "instance-fully-managed-tooltip": "Configuration is disabled because this instance is fully managed",
-      "max-repos-reached-tooltip": "Your account has reached the maximum number of connected repositories"
+      "max-repos-reached-tooltip": "Your account has reached the maximum number of connected repositories",
+      "max-repos-reached-tooltip-onprem": "Your instance has reached the maximum number of connected repositories. You can increase the limit in your Grafana configuration."
     },
     "connect-step": {
       "text-folders-not-available": "Folder suggestions will be available after the repository is connected.",
@@ -13025,7 +13107,7 @@
       "token-label": "Access Token",
       "token-required": "Git token is required",
       "token-user-description": "The username that will be used to access the repository with the access token",
-      "url-description": "The Git repository URL",
+      "url-description": "The Git repository URL. Most servers require the URL to end with .git (e.g. https://host/owner/repo.git).",
       "url-pattern": "Must be a valid Git repository URL",
       "url-required": "Repository URL is required"
     },
@@ -13152,21 +13234,23 @@
     "quota-limit": {
       "message-both-repositories_one": "Your account is limited to {{count}} connected repository",
       "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
+      "message-both-repositories-onprem_one": "Your instance is limited to {{count}} connected repository",
+      "message-both-repositories-onprem_other": "Your instance is limited to {{count}} connected repositories",
       "message-both-resources_one": "and {{count}} synced resource per repository.",
       "message-both-resources_other": "and {{count}} synced resources per repository.",
-      "message-repositories-info_one": "Your account is limited to {{count}} connected repository",
-      "message-repositories-info_other": "Your account is limited to {{count}} connected repositories",
-      "message-repository_one": "Your account is limited to {{count}} connected repository. To add more repositories,",
-      "message-repository_other": "Your account is limited to {{count}} connected repositories. To add more repositories,",
+      "message-both-resources-onprem_one": "and {{count}} synced resource per repository.",
+      "message-both-resources-onprem_other": "and {{count}} synced resources per repository.",
+      "message-repository_one": "Your account is limited to {{count}} connected repository.",
+      "message-repository_other": "Your account is limited to {{count}} connected repositories.",
+      "message-repository-onprem_one": "Your instance is limited to {{count}} connected repository.",
+      "message-repository-onprem_other": "Your instance is limited to {{count}} connected repositories.",
+      "message-resource_one": "Your account is limited to {{count}} synced resource per repository.",
+      "message-resource_other": "Your account is limited to {{count}} synced resources per repository.",
+      "message-resource-onprem_one": "Your instance is limited to {{count}} synced resource per repository.",
+      "message-resource-onprem_other": "Your instance is limited to {{count}} synced resources per repository.",
       "note": "Note:",
-      "note-message-both-repositories_one": "Your account is limited to {{count}} connected repository",
-      "note-message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
-      "note-message-both-resources_one": "and {{count}} synced resource per repository. To increase limits,",
-      "note-message-both-resources_other": "and {{count}} synced resources per repository. To increase limits,",
-      "note-message-repository_one": "Your account is limited to {{count}} connected repository. To add more repositories,",
-      "note-message-repository_other": "Your account is limited to {{count}} connected repositories. To add more repositories,",
-      "note-message-resource_one": "Your account is limited to {{count}} synced resource per repository. To add more resources,",
-      "note-message-resource_other": "Your account is limited to {{count}} synced resources per repository. To add more resources,",
+      "to-increase-limits": "To add more {{type}},",
+      "update-configuration-link": "update your Grafana configuration",
       "upgrade-link": "upgrade your account"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
@@ -13257,14 +13341,19 @@
     "repository-types": {
       "bitbucket": "Bitbucket",
       "bitbucket-description": "Connect to Bitbucket repositories",
+      "bitbucket-tooltip": "Enhanced Bitbucket integration with deep links to source files. Features like webhook-driven sync, PR comments, and repository settings validations are coming soon.",
       "github": "GitHub",
       "github-description": "Connect to GitHub repositories",
+      "github-tooltip": "Enhanced GitHub integration with webhook-driven sync, PR comments, deep links to source files, and repository settings validations.",
       "gitlab": "GitLab",
       "gitlab-description": "Connect to GitLab repositories",
+      "gitlab-tooltip": "Enhanced GitLab integration with deep links to source files. Features like webhook-driven sync, PR comments, and repository settings validations are coming soon.",
       "local": "Local",
       "local-description": "Configure file provisioning",
+      "local-tooltip": "Provision dashboards from local file system without Git.",
       "pure-git": "Pure Git",
-      "pure-git-description": "Connect to any Git repository"
+      "pure-git-description": "Connect to any Git repository",
+      "pure-git-tooltip": "Connects to any Git repository using Smart HTTP protocol v2. Core sync workflow without provider-specific features (webhooks, PR comments, deep links)."
     },
     "resource-tree": {
       "header-hash": "Hash",
@@ -13404,6 +13493,8 @@
         "dismiss": "Keep working",
         "title": "Discard repository setup?"
       },
+      "git-protocol-alert-body": "The Pure Git repository type communicates with your Git server using the <2>Git v2 Smart HTTP protocol</2>. SSH and the legacy v1 protocol are not supported. Make sure your Git server supports Smart HTTP before proceeding. For more details, see the <5>usage limits documentation</5>.",
+      "git-protocol-alert-title": "Only Git v2 Smart HTTP protocol is supported",
       "github-app-connection-status": "Connection status:",
       "github-app-creation-default-error": "Failed to create connection",
       "github-app-creation-failed": "Failed to create GitHub App connection",
@@ -13417,6 +13508,9 @@
       "github-app-no-connections": "No GitHub connections found",
       "github-app-no-connections-message": "You don't have any existing GitHub app connections. Please select \"Connect to a new app\" to create one.",
       "github-app-select-connection": "Select a GitHub App connection",
+      "github-enterprise-alert-body": "GitHub Enterprise Server is currently only supported through the Pure Git repository type. Native GitHub Enterprise integration is planned and will be available in the upcoming months.",
+      "github-enterprise-alert-title": "GitHub Enterprise Server",
+      "give-feedback-link": "Give feedback",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
       "step-connect": "Connect",
@@ -14930,6 +15024,7 @@
       "annotation-region-label": "Annotation region"
     },
     "annotation-tooltip2": {
+      "cluster-header": "annotations",
       "tooltip-delete": "Delete",
       "tooltip-edit": "Edit"
     },
