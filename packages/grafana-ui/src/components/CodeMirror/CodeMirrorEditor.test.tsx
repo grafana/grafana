@@ -46,10 +46,10 @@ describe('CodeMirrorEditor', () => {
     });
   });
 
-  it('ariaLabel prop sets aria-label on .cm-editor', async () => {
+  it('ariaLabel prop sets aria-label on .cm-content (the textbox)', async () => {
     render(<CodeMirrorEditor value="" onChange={jest.fn()} ariaLabel="Code editor" />);
     await waitFor(() => {
-      expect(document.querySelector('.cm-editor')).toHaveAttribute('aria-label', 'Code editor');
+      expect(screen.getByRole('textbox')).toHaveAttribute('aria-label', 'Code editor');
     });
   });
 
