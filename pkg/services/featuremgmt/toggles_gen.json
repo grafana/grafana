@@ -1368,6 +1368,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardCollaboration",
+        "resourceVersion": "1773847067253",
+        "creationTimestamp": "2026-03-18T15:17:47Z"
+      },
+      "spec": {
+        "description": "Enable real-time collaborative editing for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-11T16:52:46Z"

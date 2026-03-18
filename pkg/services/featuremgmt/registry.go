@@ -2729,6 +2729,14 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 		},
+		{
+			Name:            "dashboardCollaboration",
+			Description:     "Enable real-time collaborative editing for dashboards",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
 	}
 )
 

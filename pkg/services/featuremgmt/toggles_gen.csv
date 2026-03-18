@@ -72,7 +72,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-23,alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
 2025-11-13,alertingUIUseBackendFilters,preview,@grafana/alerting-squad,false,false,false
 2025-11-24,alertingUIUseFullyCompatBackendFilters,preview,@grafana/alerting-squad,false,false,false
-2025-10-29,createAlertRuleFromPanel,experimental,@grafana/alerting-squad,false,false,true
+2026-03-16,createAlertRuleFromPanel,experimental,@grafana/alerting-squad,false,false,true
 2023-10-30,alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 2023-10-31,annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 2026-03-12,annotationsClustering,experimental,@grafana/dataviz-squad,false,false,true
@@ -290,6 +290,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-12-16,pluginInsights,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-29,panelTimeSettings,experimental,@grafana/dashboards-squad,false,false,false
 2025-12-15,elasticsearchRawDSLQuery,experimental,@grafana/partner-datasources,false,false,false
+2026-01-21,elasticsearchESQLQuery,experimental,@grafana/partner-datasources,false,false,false
 2025-11-12,awsDatasourcesHttpProxy,experimental,@grafana/aws-datasources,false,false,false
 2025-11-17,transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
 2025-12-04,opentsdbBackendMigration,GA,@grafana/oss-big-tent,false,true,false
@@ -338,3 +339,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-11,advisorDatasourceIntegration,experimental,@grafana/plugins-platform-backend,false,false,false
 2026-03-04,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,false
 2026-02-06,colorblindThemes,GA,@grafana/grafana-frontend-platform,false,true,false
+2026-03-18,dashboardCollaboration,experimental,@grafana/dashboards-squad,false,true,false

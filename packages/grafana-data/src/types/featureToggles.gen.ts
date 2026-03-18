@@ -1720,4 +1720,9 @@ export interface FeatureToggles {
   * @default false
   */
   colorblindThemes?: boolean;
+  /**
+  * Enable real-time collaborative editing for dashboards
+  * @default false
+  */
+  dashboardCollaboration?: boolean;
 }

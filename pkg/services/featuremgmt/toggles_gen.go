@@ -917,4 +917,8 @@ const (
 	// FlagColorblindThemes
 	// Enables the new colorblind-friendly themes
 	FlagColorblindThemes = "colorblindThemes"
+
+	// FlagDashboardCollaboration
+	// Enable real-time collaborative editing for dashboards
+	FlagDashboardCollaboration = "dashboardCollaboration"
 )
