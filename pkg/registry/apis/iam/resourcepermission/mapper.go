@@ -56,17 +56,17 @@ type mapperEntry struct {
 	enabled func() bool // nil = always enabled
 }
 
-// Mappers is a registry of resource permission mappers.
+// MappersRegistry is a registry of resource permission mappers.
 // RegisterMapper must only be called during Wire init (before the server starts serving requests).
 // No mutex is needed because all registrations happen sequentially during startup.
-type Mappers struct {
+type MappersRegistry struct {
 	entries map[schema.GroupResource]mapperEntry
 	reverse map[string]schema.GroupResource // scope prefix -> GroupResource
 }
 
-// NewMappers initialises the registry with folders and dashboards (always enabled).
-func NewMappers() *Mappers {
-	m := &Mappers{
+// NewMappersRegistry initialises the registry with folders and dashboards (always enabled).
+func NewMappersRegistry() *MappersRegistry {
+	m := &MappersRegistry{
 		entries: make(map[schema.GroupResource]mapperEntry),
 		reverse: make(map[string]schema.GroupResource),
 	}
@@ -81,15 +81,15 @@ func NewMappers() *Mappers {
 	return m
 }
 
-// ProvideMappers is a Wire provider that returns a new Mappers registry.
-func ProvideMappers() *Mappers {
-	return NewMappers()
+// ProvideMappersRegistry is a Wire provider that returns a new MappersRegistry.
+func ProvideMappersRegistry() *MappersRegistry {
+	return NewMappersRegistry()
 }
 
 // RegisterMapper registers a mapper for the given GroupResource.
 // The scope prefix is derived from mapper.ScopePattern() — no separate parameter is needed.
 // enabled may be nil, which means the mapper is always enabled.
-func (m *Mappers) RegisterMapper(gr schema.GroupResource, mapper Mapper, enabled func() bool) {
+func (m *MappersRegistry) RegisterMapper(gr schema.GroupResource, mapper Mapper, enabled func() bool) {
 	prefix := strings.SplitN(mapper.ScopePattern(), ":", 2)[0]
 	m.entries[gr] = mapperEntry{mapper: mapper, enabled: enabled}
 	m.reverse[prefix] = gr
@@ -97,7 +97,7 @@ func (m *Mappers) RegisterMapper(gr schema.GroupResource, mapper Mapper, enabled
 
 // Get returns the mapper for the given GroupResource regardless of enabled state.
 // Use this for reads of existing data.
-func (m *Mappers) Get(gr schema.GroupResource) (Mapper, bool) {
+func (m *MappersRegistry) Get(gr schema.GroupResource) (Mapper, bool) {
 	e, ok := m.entries[gr]
 	if !ok {
 		return nil, false
@@ -106,13 +106,13 @@ func (m *Mappers) Get(gr schema.GroupResource) (Mapper, bool) {
 }
 
 // IsEnabled reports whether the mapper for the given GroupResource is registered and enabled.
-func (m *Mappers) IsEnabled(gr schema.GroupResource) bool {
+func (m *MappersRegistry) IsEnabled(gr schema.GroupResource) bool {
 	e, ok := m.entries[gr]
 	return ok && (e.enabled == nil || e.enabled())
 }
 
 // ParseScope parses a scope string (e.g. "folders:uid:abc") into a groupResourceName.
-func (m *Mappers) ParseScope(scope string) (*groupResourceName, error) {
+func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
 	parts := strings.SplitN(scope, ":", 3)
 	if len(parts) != 3 {
 		return nil, fmt.Errorf("%w: %s", errInvalidScope, scope)
@@ -125,7 +125,7 @@ func (m *Mappers) ParseScope(scope string) (*groupResourceName, error) {
 }
 
 // EnabledActionSets returns the action sets for all currently-enabled mappers.
-func (m *Mappers) EnabledActionSets() []string {
+func (m *MappersRegistry) EnabledActionSets() []string {
 	out := make([]string, 0, 3*len(m.entries))
 	for _, e := range m.entries {
 		if e.enabled != nil && !e.enabled() {
@@ -137,7 +137,7 @@ func (m *Mappers) EnabledActionSets() []string {
 }
 
 // EnabledScopePatterns returns the scope patterns for all currently-enabled mappers.
-func (m *Mappers) EnabledScopePatterns() []string {
+func (m *MappersRegistry) EnabledScopePatterns() []string {
 	out := make([]string, 0, len(m.entries))
 	for _, e := range m.entries {
 		if e.enabled != nil && !e.enabled() {

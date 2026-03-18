@@ -8,10 +8,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// --- NewMappers defaults ---
+// --- NewMappersRegistry defaults ---
 
-func TestNewMappers_Defaults(t *testing.T) {
-	m := NewMappers()
+func TestNewMappersRegistry_Defaults(t *testing.T) {
+	m := NewMappersRegistry()
 
 	folderGR := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 	dashGR := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
@@ -37,9 +37,9 @@ func TestNewMappers_Defaults(t *testing.T) {
 
 // --- RegisterMapper ---
 
-func TestMappers_RegisterMapper(t *testing.T) {
+func TestMappersRegistry_RegisterMapper(t *testing.T) {
 	t.Run("nil enabled func is always enabled", func(t *testing.T) {
-		m := NewMappers()
+		m := NewMappersRegistry()
 		gr := schema.GroupResource{Group: "datasource.grafana.app", Resource: "datasources"}
 		m.RegisterMapper(gr, NewMapper("datasources", []string{"query"}), nil)
 
@@ -49,7 +49,7 @@ func TestMappers_RegisterMapper(t *testing.T) {
 	})
 
 	t.Run("disabled mapper is Get-able but not IsEnabled", func(t *testing.T) {
-		m := NewMappers()
+		m := NewMappersRegistry()
 		gr := schema.GroupResource{Group: "loki.datasource.grafana.app", Resource: "datasources"}
 		m.RegisterMapper(gr, NewMapper("datasources", []string{"query"}), func() bool { return false })
 
@@ -59,7 +59,7 @@ func TestMappers_RegisterMapper(t *testing.T) {
 	})
 
 	t.Run("disabled mapper is excluded from EnabledScopePatterns and EnabledActionSets", func(t *testing.T) {
-		m := NewMappers()
+		m := NewMappersRegistry()
 		gr := schema.GroupResource{Group: "loki.datasource.grafana.app", Resource: "datasources"}
 		m.RegisterMapper(gr, NewMapper("datasources", []string{"query"}), func() bool { return false })
 
@@ -74,8 +74,8 @@ func TestMappers_RegisterMapper(t *testing.T) {
 
 // --- ParseScope ---
 
-func TestMappers_ParseScope(t *testing.T) {
-	m := NewMappers()
+func TestMappersRegistry_ParseScope(t *testing.T) {
+	m := NewMappersRegistry()
 
 	t.Run("parses folder scope", func(t *testing.T) {
 		grn, err := m.ParseScope("folders:uid:fold1")
@@ -94,7 +94,7 @@ func TestMappers_ParseScope(t *testing.T) {
 	})
 
 	t.Run("parses dynamically registered datasource scope", func(t *testing.T) {
-		m2 := NewMappers()
+		m2 := NewMappersRegistry()
 		gr := schema.GroupResource{Group: "datasource.grafana.app", Resource: "datasources"}
 		m2.RegisterMapper(gr, NewMapper("datasources", []string{"query", "edit", "admin"}), nil)
 
@@ -123,11 +123,11 @@ func TestMappers_ParseScope(t *testing.T) {
 
 // --- EnabledActionSets / EnabledScopePatterns ---
 
-func TestMappers_EnabledFiltered(t *testing.T) {
+func TestMappersRegistry_EnabledFiltered(t *testing.T) {
 	gr := schema.GroupResource{Group: "datasource.grafana.app", Resource: "datasources"}
 
 	t.Run("enabled mapper contributes to both slices", func(t *testing.T) {
-		m := NewMappers()
+		m := NewMappersRegistry()
 		m.RegisterMapper(gr, NewMapper("datasources", []string{"query", "edit"}), nil)
 
 		assert.Contains(t, m.EnabledScopePatterns(), "datasources:uid:%")
@@ -136,7 +136,7 @@ func TestMappers_EnabledFiltered(t *testing.T) {
 	})
 
 	t.Run("disabled mapper is excluded from both slices", func(t *testing.T) {
-		m := NewMappers()
+		m := NewMappersRegistry()
 		m.RegisterMapper(gr, NewMapper("datasources", []string{"query"}), func() bool { return false })
 
 		assert.NotContains(t, m.EnabledScopePatterns(), "datasources:uid:%")
@@ -144,7 +144,7 @@ func TestMappers_EnabledFiltered(t *testing.T) {
 	})
 
 	t.Run("defaults always appear in both slices", func(t *testing.T) {
-		m := NewMappers()
+		m := NewMappersRegistry()
 		patterns := m.EnabledScopePatterns()
 		assert.Contains(t, patterns, "folders:uid:%")
 		assert.Contains(t, patterns, "dashboards:uid:%")

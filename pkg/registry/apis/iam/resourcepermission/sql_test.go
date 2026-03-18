@@ -111,7 +111,7 @@ func setupBackend(t *testing.T) *ResourcePermSqlBackend {
 		return sqlHelper, nil
 	}
 
-	return ProvideStorageBackend(dbProvider, NewMappers())
+	return ProvideStorageBackend(dbProvider, NewMappersRegistry())
 }
 
 func setupTestRoles(t *testing.T, store db.DB) {

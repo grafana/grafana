@@ -32,13 +32,13 @@ type ResourcePermSqlBackend struct {
 	dbProvider    legacysql.LegacyDatabaseProvider
 	identityStore IdentityStore
 	logger        log.Logger
-	mappers       *Mappers
+	mappers       *MappersRegistry
 
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
 }
 
-func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider, mappers *Mappers) *ResourcePermSqlBackend {
+func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider, mappers *MappersRegistry) *ResourcePermSqlBackend {
 	return &ResourcePermSqlBackend{
 		dbProvider:    dbProvider,
 		identityStore: idStore.NewLegacySQLStores(dbProvider),
