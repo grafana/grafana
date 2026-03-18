@@ -497,6 +497,10 @@ type Cfg struct {
 	// LiveAllowedOrigins is a set of origins accepted by Live. If not provided
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
+	// csrf_additional_headers is a comma-separated list of additional headers to check when validating
+	// Origin header for CSRF protection. The first non-empty header value will be used as the origin.
+	// This is useful when Grafana is behind a proxy that sets a custom header with the original request origin.
+	LiveCSRFAdditionalHeaders []string
 	// LiveMessageSizeLimit is the maximum size in bytes of Websocket messages
 	// from clients. Defaults to 64KB.
 	LiveMessageSizeLimit int
@@ -2298,6 +2302,18 @@ func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
 	}
 
 	cfg.LiveAllowedOrigins = originPatterns
+
+	csrfAdditionalHeaders := section.Key("csrf_additional_headers").MustString("")
+	headers := strings.Split(csrfAdditionalHeaders, ",")
+	headerList := make([]string, 0, len(headers))
+	for _, header := range headers {
+		header = strings.TrimSpace(header)
+		if header != "" {
+			headerList = append(headerList, header)
+		}
+	}
+	cfg.LiveCSRFAdditionalHeaders = headerList
+
 	return nil
 }
 

@@ -332,7 +332,7 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 
 	originPatterns := g.Cfg.LiveAllowedOrigins
 	originGlobs, _ := setting.GetAllowedOriginGlobs(originPatterns) // error already checked on config load.
-	checkOrigin := getCheckOriginFunc(appURL, originPatterns, originGlobs)
+	checkOrigin := getCheckOriginFunc(appURL, originPatterns, originGlobs, cfg.LiveCSRFAdditionalHeaders)
 
 	wsCfg := centrifuge.WebsocketConfig{
 		ReadBufferSize:   1024,
@@ -532,7 +532,7 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 	return eGroup.Wait()
 }
 
-func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []glob.Glob) func(r *http.Request) bool {
+func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []glob.Glob, csrfAdditionalHeaders []string) func(r *http.Request) bool {
 	return func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")
 		if origin == "" {
@@ -550,7 +550,15 @@ func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []
 		if strings.EqualFold(originURL.Host, r.Host) {
 			return true
 		}
-		ok, err := checkAllowedOrigin(origin, originURL, appURL, originGlobs)
+		ok, err := checkAllowedAdditionalCSRFHeaders(r, originURL, csrfAdditionalHeaders)
+		if err != nil {
+			logger.Warn("Error checking additional CSRF headers", "error", err, "origin", origin)
+			return false
+		}
+		if ok {
+			return true
+		}
+		ok, err = checkAllowedOrigin(origin, originURL, appURL, originGlobs)
 		if err != nil {
 			logger.Warn("Error parsing request origin", "error", err, "origin", origin)
 			return false
@@ -561,6 +569,24 @@ func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []
 		}
 		return true
 	}
+}
+
+func checkAllowedAdditionalCSRFHeaders(r *http.Request, originURL *url.URL, csrfAdditionalHeaders []string) (bool, error) {
+	origin := originURL.Hostname()
+	for _, header := range csrfAdditionalHeaders {
+		customHost := r.Header.Get(header)
+		if customHost == "" {
+			continue
+		}
+		addr, err := util.SplitHostPortDefault(customHost, "", "0") // we ignore the port
+		if err != nil {
+			return false, fmt.Errorf("error parsing additional CSRF header %s: %w", header, err)
+		}
+		if addr.Host == origin {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func checkAllowedOrigin(origin string, originURL *url.URL, appURL *url.URL, originGlobs []glob.Glob) (bool, error) {
