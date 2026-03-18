@@ -1,13 +1,40 @@
-import { SceneGridLayout } from '@grafana/scenes';
+import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
+import { ConditionalRenderingVariable } from '../../conditional-rendering/conditions/ConditionalRenderingVariable';
+import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 
-import { deserializeRowsLayout, serializeRowsLayout } from './RowsLayoutSerializer';
+import { deserializeRowsLayout, serializeRow, serializeRowsLayout } from './RowsLayoutSerializer';
+
+jest.mock('../../utils/dashboardSceneGraph', () => {
+  const original = jest.requireActual('../../utils/dashboardSceneGraph');
+  return {
+    ...original,
+    dashboardSceneGraph: {
+      ...original.dashboardSceneGraph,
+      getElementIdentifierForVizPanel: jest.fn().mockImplementation((panel: VizPanel) => {
+        return panel?.state?.key || 'panel-1';
+      }),
+    },
+  };
+});
+
+function buildRowItem(overrides: Partial<RowItem['state']> = {}): RowItem {
+  return new RowItem({
+    title: 'Row 1',
+    collapse: false,
+    layout: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({ children: [] }),
+    }),
+    ...overrides,
+  });
+}
 
 describe('deserialization', () => {
   it('should deserialize rows layout with default grid child', () => {
@@ -169,6 +196,132 @@ describe('deserialization', () => {
 
     const row = deserialized.state.rows[0];
     expect(row.state.repeatByVariable).toBe('foo');
+  });
+
+  it('throws for non-RowsLayout kind', () => {
+    const layout = {
+      kind: 'TabsLayout',
+      spec: { tabs: [] },
+    } as unknown as DashboardV2Spec['layout'];
+
+    expect(() => deserializeRowsLayout(layout, {}, false)).toThrow('Invalid layout kind');
+  });
+
+  it('should deserialize row with conditional rendering', () => {
+    const layout: DashboardV2Spec['layout'] = {
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Conditional',
+              collapse: false,
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+              conditionalRendering: {
+                kind: 'ConditionalRenderingGroup',
+                spec: {
+                  visibility: 'show',
+                  condition: 'and',
+                  items: [
+                    {
+                      kind: 'ConditionalRenderingVariable',
+                      spec: { variable: 'env', operator: 'equals', value: 'prod' },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      },
+    };
+
+    const deserialized = deserializeRowsLayout(layout, {}, false);
+
+    const condRendering = deserialized.state.rows[0].state.conditionalRendering;
+    expect(condRendering).toBeInstanceOf(ConditionalRenderingGroup);
+    expect(condRendering?.state.conditions).toHaveLength(1);
+  });
+});
+
+describe('serializeRowsLayout', () => {
+  it('filters out rows with repeatSourceKey', () => {
+    const source = buildRowItem({ title: 'Source' });
+    const clone = buildRowItem({ title: 'Clone', repeatSourceKey: 'source-key' });
+    const manager = new RowsLayoutManager({ rows: [source, clone] });
+
+    const serialized = serializeRowsLayout(manager);
+
+    expect(serialized.kind).toBe('RowsLayout');
+    if (serialized.kind !== 'RowsLayout') {
+      throw new Error('unexpected');
+    }
+    expect(serialized.spec.rows).toHaveLength(1);
+    expect(serialized.spec.rows[0].spec.title).toBe('Source');
+  });
+});
+
+describe('serializeRow', () => {
+  it('normalizes Y coordinates to be relative within the row', () => {
+    const row = buildRowItem({
+      layout: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [
+            new DashboardGridItem({
+              key: 'grid-item-1',
+              x: 0,
+              y: 10,
+              width: 12,
+              height: 8,
+              body: new VizPanel({ key: 'panel-A', title: 'A', pluginId: 'timeseries' }),
+            }),
+            new DashboardGridItem({
+              key: 'grid-item-2',
+              x: 12,
+              y: 14,
+              width: 12,
+              height: 4,
+              body: new VizPanel({ key: 'panel-B', title: 'B', pluginId: 'timeseries' }),
+            }),
+          ],
+        }),
+      }),
+    });
+
+    const result = serializeRow(row);
+
+    expect(result.spec.layout.kind).toBe('GridLayout');
+    if (result.spec.layout.kind !== 'GridLayout') {
+      throw new Error('unexpected');
+    }
+    const items = result.spec.layout.spec.items;
+    expect(items[0].spec.y).toBe(0);
+    expect(items[1].spec.y).toBe(4);
+  });
+
+  it('includes conditional rendering when it has items', () => {
+    const condRendering = new ConditionalRenderingGroup({
+      condition: 'and',
+      visibility: 'show',
+      renderHidden: false,
+      conditions: [ConditionalRenderingVariable.createEmpty('myVar')],
+      result: true,
+    });
+    const row = buildRowItem({ conditionalRendering: condRendering });
+
+    const result = serializeRow(row);
+
+    expect(result.spec.conditionalRendering).toBeDefined();
+    expect(result.spec.conditionalRendering?.spec.items).toHaveLength(1);
+  });
+
+  it('omits conditional rendering when it has no items', () => {
+    const row = buildRowItem();
+
+    const result = serializeRow(row);
+
+    expect(result.spec.conditionalRendering).toBeUndefined();
   });
 });
 
