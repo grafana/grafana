@@ -570,3 +570,63 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testin
 		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(metadataContent))
 	})
 }
+
+// TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange verifies that
+// full sync handles UID changes in _folder.json by replacing the folder and re-parenting children.
+func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("UID change replaces folder and re-parents dashboard", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-uid-change"
+
+		// First sync: folder with original UID.
+		originalContent := folderMetadataJSON("original-uid", "My Folder")
+		writeToProvisioningPath(t, helper, "my-folder/_folder.json", originalContent)
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "my-folder/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+		requireRepoFolderTitle(t, helper, repo, "my-folder", "My Folder")
+
+		// Change UID in _folder.json, keep title the same.
+		updatedContent := folderMetadataJSON("new-uid", "My Folder")
+		writeToProvisioningPath(t, helper, "my-folder/_folder.json", updatedContent)
+
+		// Second sync: should replace folder (new UID) and re-parent the dashboard.
+		helper.SyncAndWait(t, repo, nil)
+
+		// New folder should exist with correct title and checksum.
+		requireRepoFolderTitle(t, helper, repo, "my-folder", "My Folder")
+		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(updatedContent))
+
+		// Verify the folder UID is the new one by checking the folder name.
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			list, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
+			if !assert.NoError(c, err) {
+				return
+			}
+			for _, f := range list.Items {
+				mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+				if mgr != repo {
+					continue
+				}
+				srcPath, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
+				if srcPath != "my-folder" {
+					continue
+				}
+				assert.Equal(c, "new-uid", f.GetName(), "folder should have new UID")
+				return
+			}
+			c.Errorf("folder not found")
+		}, 30*time.Second, 100*time.Millisecond)
+	})
+}

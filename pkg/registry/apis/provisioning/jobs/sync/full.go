@@ -9,11 +9,13 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -214,6 +216,12 @@ func applyChange(
 		ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
 		resultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
 
+		// For updated folders, remove the old UID from the tree so EnsureFolderPathExist
+		// doesn't skip it. This handles both title changes (hash mismatch) and UID changes.
+		if change.Action == repository.FileActionUpdated && change.Existing != nil {
+			repositoryResources.RemoveFolderFromTree(change.Existing.Name)
+		}
+
 		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path)
 		if err != nil {
 			resultBuilder.WithError(fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err))
@@ -222,6 +230,19 @@ func applyChange(
 			progress.Record(ctx, resultBuilder.Build())
 
 			return
+		}
+
+		// If the UID changed (_folder.json metadata.name was modified),
+		// re-parent children from the old folder to the new one and delete the old folder.
+		if change.Action == repository.FileActionUpdated && change.Existing != nil && change.Existing.Name != folder {
+			if err := reparentAndDeleteOldFolder(ensureFolderCtx, clients, repositoryResources, change.Existing.Name, folder); err != nil {
+				resultBuilder.WithError(fmt.Errorf("replace folder %s → %s: %w", change.Existing.Name, folder, err))
+				ensureFolderSpan.RecordError(err)
+				ensureFolderSpan.End()
+				progress.Record(ctx, resultBuilder.Build())
+
+				return
+			}
 		}
 
 		resultBuilder.WithName(folder)
@@ -446,6 +467,48 @@ func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context
 	defer cancel()
 
 	fn(timeoutCtx)
+}
+
+// reparentAndDeleteOldFolder re-parents children from the old folder to the new one,
+// then deletes the old folder. Used when _folder.json UID changes.
+func reparentAndDeleteOldFolder(
+	ctx context.Context,
+	clients resources.ResourceClients,
+	repositoryResources resources.RepositoryResources,
+	oldUID, newUID string,
+) error {
+	// Re-parent children: iterate all resource types that support the folder annotation.
+	for _, gvr := range resources.SupportedProvisioningResources {
+		client, _, err := clients.ForResource(ctx, gvr)
+		if err != nil {
+			return fmt.Errorf("get client for %s: %w", gvr.Resource, err)
+		}
+
+		if err := resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
+			meta, err := utils.MetaAccessor(item)
+			if err != nil {
+				return fmt.Errorf("get meta for %s/%s: %w", item.GetKind(), item.GetName(), err)
+			}
+			if meta.GetFolder() != oldUID {
+				return nil
+			}
+
+			meta.SetFolder(newUID)
+			if _, err := client.Update(ctx, item, metav1.UpdateOptions{}); err != nil {
+				return fmt.Errorf("re-parent %s/%s: %w", item.GetKind(), item.GetName(), err)
+			}
+			return nil
+		}); err != nil {
+			return fmt.Errorf("re-parent children: %w", err)
+		}
+	}
+
+	// Delete the old folder.
+	if err := repositoryResources.RemoveFolder(ctx, oldUID); err != nil {
+		return fmt.Errorf("delete old folder %s: %w", oldUID, err)
+	}
+
+	return nil
 }
 
 // checkQuotaBeforeSync checks if the repository is over quota and if the sync would exceed the quota limit.
