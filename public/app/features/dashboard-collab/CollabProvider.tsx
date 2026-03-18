@@ -24,6 +24,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getGrafanaLiveSrv, locationService } from '@grafana/runtime';
+import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
@@ -208,9 +209,8 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     setLargeDashboardMode(scene as any);
 
     const sub = scene.subscribeToEvent(
-      // SceneObjectStateChangedEvent is published by scenes on any state change
-      { type: 'state-changed' } as any,
-      (event: any) => {
+      SceneObjectStateChangedEvent,
+      (event: SceneObjectStateChangedEvent) => {
         const collabOp = extractMutationRequest(event);
         if (collabOp) {
           debugLog('Op sent', { mutationType: collabOp.mutation.type, lockTarget: collabOp.lockTarget });
