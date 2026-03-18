@@ -155,14 +155,18 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     lockedByOther: css({
       borderRadius: theme.shape.radius.default,
-      boxShadow: `inset 0 0 0 2px var(--collab-border-color)`,
-      transition: 'box-shadow 200ms ease-in-out',
+      outline: `2px solid var(--collab-border-color)`,
+      outlineOffset: '-2px',
+      zIndex: 1,
+      transition: 'outline-color 200ms ease-in-out',
     }),
     lockedBySelf: css({
       borderRadius: theme.shape.radius.default,
-      boxShadow: `inset 0 0 0 1px var(--collab-border-color)`,
-      opacity: 0.7,
-      transition: 'box-shadow 200ms ease-in-out',
+      outline: `1px solid var(--collab-border-color)`,
+      outlineOffset: '-1px',
+      zIndex: 1,
+      opacity: 0.8,
+      transition: 'outline-color 200ms ease-in-out',
     }),
     badge: css({
       position: 'absolute',
