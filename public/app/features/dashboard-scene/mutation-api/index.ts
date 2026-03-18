@@ -25,3 +25,5 @@ export type {
 export { ALL_COMMANDS, MUTATION_TYPES, validatePayload } from './commands/registry';
 
 export type { MutationCommand } from './commands/types';
+
+export { useDashboardMutationClient } from './useDashboardMutationClient';

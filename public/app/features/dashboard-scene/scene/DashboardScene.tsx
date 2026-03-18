@@ -216,6 +216,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
+  /**
+   * Mutation client for programmatic dashboard edits.
+   * Created on activation, cleared on deactivation.
+   */
+  private _mutationClient?: DashboardMutationClient;
+
   protected _renderBeforeActivation = true;
 
   public serializer: DashboardSceneSerializerLike<
@@ -277,10 +283,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
-    let mutationClient: DashboardMutationClient | undefined;
     try {
-      mutationClient = new DashboardMutationClient(this);
-      setDashboardMutationClient(mutationClient);
+      this._mutationClient = new DashboardMutationClient(this);
+      setDashboardMutationClient(this._mutationClient);
     } catch (error) {
       console.error('Failed to register Dashboard Mutation API:', error);
     }
@@ -288,7 +293,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Deactivation logic
     return () => {
       setDashboardMutationClient(null);
-      mutationClient = undefined;
+      this._mutationClient = undefined;
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
@@ -606,6 +611,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public getInitialState(): DashboardSceneState | undefined {
     return this._initialState;
+  }
+
+  public getMutationClient(): DashboardMutationClient | undefined {
+    return this._mutationClient;
   }
 
   public addPanel(vizPanel: VizPanel): void {
