@@ -130,7 +130,7 @@ func (m *MappersRegistry) findGroupKey(gr schema.GroupResource) (schema.GroupRes
 		if k.Resource != gr.Resource {
 			continue
 		}
-		if len(k.Group) < 3 || !strings.HasPrefix(k.Group, "*.") {
+		if !strings.HasPrefix(k.Group, "*.") {
 			continue
 		}
 		prefix, ok := strings.CutSuffix(gr.Group, k.Group[1:]) // e.g. "loki.datasource.grafana.app" -> "loki"

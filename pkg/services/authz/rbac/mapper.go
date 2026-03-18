@@ -381,7 +381,7 @@ func (m mapper) findGroupKey(group string) (string, bool) {
 	}
 	for key := range m {
 		// is this a wildcard key?
-		if len(key) < 3 || !strings.HasPrefix(key, "*.") {
+		if len(key) < 2 || key[0] != '*' || key[1] != '.' {
 			continue
 		}
 		suffix := key[1:]                              // remove the leading "*"
