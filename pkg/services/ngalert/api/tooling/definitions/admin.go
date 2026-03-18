@@ -76,12 +76,18 @@ const (
 
 // swagger:model
 type PostableNGalertConfig struct {
-	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
+	AlertmanagersChoice *AlertmanagersChoice `json:"alertmanagersChoice,omitempty"`
+	// RemoteAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource to sync
+	// configuration from. Empty string disables sync for this org.
+	RemoteAlertmanagerUID *string `json:"remote_alertmanager_uid,omitempty"`
 }
 
 // swagger:model
 type GettableNGalertConfig struct {
 	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
+	// RemoteAlertmanagerUID is the UID of the Mimir/Cortex Alertmanager datasource being
+	// synced, or empty if sync is not configured for this org.
+	RemoteAlertmanagerUID string `json:"remote_alertmanager_uid,omitempty"`
 }
 
 // swagger:model
