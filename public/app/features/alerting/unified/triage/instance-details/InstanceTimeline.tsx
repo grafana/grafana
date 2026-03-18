@@ -5,7 +5,7 @@ import {
   CreateNotificationqueryNotificationEntry,
   CreateNotificationqueryNotificationStatus,
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Icon, LinkButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
@@ -357,7 +357,9 @@ function NotificationStatusGroup({
           <Icon name="at" size="sm" />
           {uniqueReceivers.length === 1 ? (
             <a
-              href={createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(uniqueReceivers[0])}`)}
+              href={textUtil.sanitizeUrl(
+                createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(uniqueReceivers[0])}`)
+              )}
               className={styles.receiverLink}
               target="_blank"
               rel="noreferrer"

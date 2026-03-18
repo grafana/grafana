@@ -41,7 +41,14 @@ export function InstanceDetailsDrawerTitle({ instanceLabels, rule }: InstanceDet
       </Text>
       <Stack direction="row" gap={1}>
         {silenceLink && (
-          <LinkButton href={silenceLink} icon="bell-slash" variant="secondary" size="sm" target="_blank">
+          <LinkButton
+            href={silenceLink}
+            icon="bell-slash"
+            variant="secondary"
+            size="sm"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <Trans i18nKey="alerting.triage.instance-details-drawer.silence-button">Silence</Trans>
           </LinkButton>
         )}
