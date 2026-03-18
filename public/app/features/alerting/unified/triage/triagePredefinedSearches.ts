@@ -24,7 +24,7 @@ const PREDEFINED_IDS = [
 ] as const;
 
 /** Predefined search used as default when the user has not set a default (grouped by folder). */
-export const TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID = PREDEFINED_IDS[2];
+export const TRIAGE_DEFAULT_PREDEFINED_SEARCH_ID = PREDEFINED_IDS[0];
 
 /**
  * Pre-defined triage saved searches for common scenarios.
