@@ -416,27 +416,27 @@ func TestServiceMetrics_StatusReaderError(t *testing.T) {
 		},
 	}
 
-	t.Run("service increments statusReaderErrors and falls back to config", func(t *testing.T) {
+	t.Run("service increments statusReaderErrors and uses reader-returned mode", func(t *testing.T) {
 		metrics := newTestDualWriterMetrics()
 		svc := &service{
-			statusReader: &failingStatusReader{err: errors.New("db down")},
+			statusReader: &failingStatusReader{mode: unifiedmigrations.StorageModeDualWrite, err: errors.New("db down")},
 			metrics:      metrics,
 		}
 		mode := svc.getStorageMode(context.Background(), gr)
-		require.Equal(t, unifiedmigrations.StorageModeUnified, mode, "should fall back to config (Mode4 → Unified)")
+		require.Equal(t, unifiedmigrations.StorageModeDualWrite, mode, "should use mode returned by reader alongside error")
 		require.Equal(t, float64(0), testutil.ToFloat64(metrics.statusReaderNull.WithLabelValues(gr.String())))
 		require.Equal(t, float64(1), testutil.ToFloat64(metrics.statusReaderErrors.WithLabelValues(gr.String())))
 	})
 
-	t.Run("staticService increments statusReaderErrors and falls back to config", func(t *testing.T) {
+	t.Run("staticService increments statusReaderErrors and uses reader-returned mode", func(t *testing.T) {
 		metrics := newTestDualWriterMetrics()
 		svc := &staticService{
 			cfg:          cfg,
-			statusReader: &failingStatusReader{err: errors.New("db down")},
+			statusReader: &failingStatusReader{mode: unifiedmigrations.StorageModeDualWrite, err: errors.New("db down")},
 			metrics:      metrics,
 		}
 		mode := svc.getStorageMode(context.Background(), gr)
-		require.Equal(t, unifiedmigrations.StorageModeUnified, mode, "should fall back to config (Mode4 → Unified)")
+		require.Equal(t, unifiedmigrations.StorageModeDualWrite, mode, "should use mode returned by reader alongside error")
 		require.Equal(t, float64(0), testutil.ToFloat64(metrics.statusReaderNull.WithLabelValues(gr.String())))
 		require.Equal(t, float64(1), testutil.ToFloat64(metrics.statusReaderErrors.WithLabelValues(gr.String())))
 	})
@@ -473,11 +473,12 @@ func newTestDualWriterMetrics() *dualWriterMetrics {
 	}
 }
 
-// failingStatusReader always returns an error.
+// failingStatusReader always returns an error alongside the configured mode.
 type failingStatusReader struct {
-	err error
+	mode unifiedmigrations.StorageMode
+	err  error
 }
 
 func (f *failingStatusReader) GetStorageMode(_ context.Context, _ schema.GroupResource) (unifiedmigrations.StorageMode, error) {
-	return unifiedmigrations.StorageModeLegacy, f.err
+	return f.mode, f.err
 }
