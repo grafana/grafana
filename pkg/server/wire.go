@@ -425,6 +425,7 @@ var wireBasicSet = wire.NewSet(
 	permreg.ProvidePermissionRegistry,
 	acimpl.ProvideAccessControl,
 	accesscontrol.ProvideFixedRolesLoader,
+	accesscontrol.ProvideNoopIAMRolesSyncer,
 	dualwrite.ProvideZanzanaReconciler,
 	navtreeimpl.ProvideService,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
