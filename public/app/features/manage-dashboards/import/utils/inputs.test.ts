@@ -676,6 +676,46 @@ describe('applyV1Inputs', () => {
     expect(panel.targets?.[0].datasource?.uid).toBe('ds-uid');
     expect(panel.targets?.[1].datasource?.uid).toBe('ds-uid');
   });
+
+  it('replaces datasource UIDs in panels inside collapsed rows', () => {
+    const dashboard = {
+      title: 'old',
+      uid: 'old',
+      panels: [
+        {
+          type: 'row',
+          collapsed: true,
+          title: 'My Row',
+          panels: [
+            {
+              datasource: { uid: '${DS}' },
+              targets: [{ datasource: { uid: '${DS}' } }],
+            },
+          ],
+        },
+      ],
+    } as unknown as Dashboard;
+
+    const form: ImportDashboardDTO = {
+      title: 'new-title',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'My DS' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, sampleV1Inputs, form);
+
+    // The row panel itself should be preserved
+    const rowPanel = result.panels?.[0] as unknown as { type: string; panels: PanelWithTargets[] };
+    expect(rowPanel.type).toBe('row');
+
+    // The child panel inside the collapsed row should have its datasource replaced
+    expect(rowPanel.panels[0].datasource?.uid).toBe('ds-uid');
+    expect(rowPanel.panels[0].targets?.[0].datasource?.uid).toBe('ds-uid');
+  });
 });
 
 describe('applyV2Inputs', () => {

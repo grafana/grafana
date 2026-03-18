@@ -9,7 +9,7 @@ require (
 	github.com/gobwas/glob v0.2.3
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib/types v0.0.0-20260304162428-e279d73bef22
-	github.com/grafana/grafana-plugin-sdk-go v0.290.0
+	github.com/grafana/grafana-plugin-sdk-go v0.290.1
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/grafana/grafana/pkg/semconv v0.0.0
 	github.com/hashicorp/go-hclog v1.6.3
@@ -109,7 +109,7 @@ require (
 	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // indirect
 	golang.org/x/mod v0.33.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260209163413-e7419c687ee4 // indirect
 	golang.org/x/text v0.34.0 // indirect

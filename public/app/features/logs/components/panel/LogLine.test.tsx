@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { Grammar } from 'prismjs';
 
 import { CoreApp, createTheme, getDefaultTimeRange, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -393,6 +394,76 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
       expect(screen.queryByText(`place="luna" 1ms 3 KB`)).not.toBeInTheDocument();
 
       config.featureToggles.otelLogsFormatting = originalState;
+    });
+  });
+
+  describe('Custom syntax highlighting', () => {
+    const entry = `{"place":"luna","count":3,"true":false}`;
+    const grammar: Grammar = {
+      property: {
+        pattern: /(^|[^\\])"(?:\\.|[^\\"\r\n])*"(?=\s*:)/,
+        lookbehind: true,
+        greedy: true,
+      },
+      string: {
+        pattern: /(^|[^\\])"(?:\\.|[^\\"\r\n])*"(?!\s*:)/,
+        lookbehind: true,
+        greedy: true,
+      },
+      number: /-?\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b/i,
+      punctuation: /[{}[\],]/,
+      operator: /:/,
+      boolean: /\b(?:false|true)\b/,
+    };
+    beforeEach(() => {
+      log = createLogLine({ labels: { place: 'luna' }, entry }, undefined, grammar);
+    });
+
+    test('Highlights relevant tokens in the log line', () => {
+      render(
+        <LogListContextProvider {...contextProps} isCustomGrammar>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByText('"place"')).toBeInTheDocument();
+      expect(screen.getByText('"luna"')).toBeInTheDocument();
+      expect(screen.getByText('"count"')).toBeInTheDocument();
+      expect(screen.getByText('3')).toBeInTheDocument();
+      expect(screen.getByText('"true"')).toBeInTheDocument();
+      expect(screen.getByText('false')).toBeInTheDocument();
+      expect(screen.queryByText(entry)).not.toBeInTheDocument();
+    });
+
+    test('Can be disabled', () => {
+      render(
+        <LogListContextProvider {...contextProps} syntaxHighlighting={false} isCustomGrammar>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByText(entry)).toBeInTheDocument();
+      expect(screen.queryByText('"place"')).not.toBeInTheDocument();
+      expect(screen.queryByText('"luna"')).not.toBeInTheDocument();
+      expect(screen.queryByText('"count"')).not.toBeInTheDocument();
+      expect(screen.queryByText('3')).not.toBeInTheDocument();
+      expect(screen.queryByText('"true"')).not.toBeInTheDocument();
+      expect(screen.queryByText('false')).not.toBeInTheDocument();
+    });
+
+    test('Does not alter ANSI log lines', () => {
+      log = createLogLine(
+        { labels: { place: 'luna' }, entry: 'Lorem \u001B[31mipsum\u001B[0m et dolor' },
+        undefined,
+        grammar
+      );
+      log.hasAnsi = true;
+
+      render(
+        <LogListContextProvider {...contextProps} syntaxHighlighting={false} isCustomGrammar>
+          <LogLine {...defaultProps} log={log} />
+        </LogListContextProvider>
+      );
+      expect(screen.getByTestId('ansiLogLine')).toBeInTheDocument();
+      expect(screen.queryByText(log.entry)).not.toBeInTheDocument();
     });
   });
 

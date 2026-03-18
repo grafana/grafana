@@ -26,6 +26,9 @@ const withDefaults = (
         if (s.options?.reduceOptions) {
           s.options.reduceOptions.limit = 4;
         }
+        if (s.fieldConfig) {
+          s.fieldConfig.defaults.unit = 'short';
+        }
       },
     },
   } satisfies VisualizationSuggestion<Options, GraphFieldConfig>);
