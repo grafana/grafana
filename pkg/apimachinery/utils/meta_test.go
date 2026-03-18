@@ -707,6 +707,76 @@ func TestMetaAccessor(t *testing.T) {
 	})
 }
 
+func TestCollaborationAnnotation(t *testing.T) {
+	t.Run("collaboration enabled", func(t *testing.T) {
+		res := &TestResource{
+			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					utils.AnnoKeyCollaboration: utils.CollaborationEnabled,
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(res)
+		require.NoError(t, err)
+		require.Equal(t, utils.CollaborationEnabled, meta.GetAnnotation(utils.AnnoKeyCollaboration))
+	})
+
+	t.Run("collaboration absent", func(t *testing.T) {
+		res := &TestResource{}
+		meta, err := utils.MetaAccessor(res)
+		require.NoError(t, err)
+		require.Equal(t, "", meta.GetAnnotation(utils.AnnoKeyCollaboration))
+	})
+
+	t.Run("collaboration disabled (any other value)", func(t *testing.T) {
+		res := &TestResource{
+			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					utils.AnnoKeyCollaboration: "disabled",
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(res)
+		require.NoError(t, err)
+		val := meta.GetAnnotation(utils.AnnoKeyCollaboration)
+		require.NotEqual(t, utils.CollaborationEnabled, val)
+	})
+
+	t.Run("collaboration ignored when managedBy is set", func(t *testing.T) {
+		res := &TestResource{
+			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					utils.AnnoKeyCollaboration: utils.CollaborationEnabled,
+					utils.AnnoKeyManagerKind:   "repo",
+					utils.AnnoKeyManagerIdentity: "my-repo",
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(res)
+		require.NoError(t, err)
+
+		// Annotation is present but should be ignored for provisioned dashboards
+		require.Equal(t, utils.CollaborationEnabled, meta.GetAnnotation(utils.AnnoKeyCollaboration))
+		mp, ok := meta.GetManagerProperties()
+		require.True(t, ok)
+		require.Equal(t, "my-repo", mp.Identity)
+	})
+
+	t.Run("set and clear collaboration annotation", func(t *testing.T) {
+		res := &TestResource{}
+		meta, err := utils.MetaAccessor(res)
+		require.NoError(t, err)
+
+		// Set
+		meta.SetAnnotation(utils.AnnoKeyCollaboration, utils.CollaborationEnabled)
+		require.Equal(t, utils.CollaborationEnabled, meta.GetAnnotation(utils.AnnoKeyCollaboration))
+
+		// Clear
+		meta.SetAnnotation(utils.AnnoKeyCollaboration, "")
+		require.Equal(t, "", meta.GetAnnotation(utils.AnnoKeyCollaboration))
+	})
+}
+
 func asJSON(v any, pretty bool) string {
 	if v == nil {
 		return ""
