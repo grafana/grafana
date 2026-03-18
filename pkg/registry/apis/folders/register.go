@@ -289,14 +289,24 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	return nil
 }
 
+// typeMetaFor sets TypeMeta to the destination version so converted objects
+// have the correct apiVersion/kind (e.g. v1 endpoints emit folder.grafana.app/v1, not v1beta1).
+func typeMetaFor(gv schema.GroupVersion, kind string) metav1.TypeMeta {
+	return metav1.TypeMeta{APIVersion: gv.Identifier(), Kind: kind}
+}
+
 // registerFolderConversions registers conversion between folder.grafana.app v1 and v1beta1.
 // The schemas are identical, so this is effectively "conversion strategy: None" — no semantic conversion.
+// Destination TypeMeta is set from the target version so v1 responses never carry apiVersion v1beta1.
 func registerFolderConversions(scheme *runtime.Scheme) {
+	gv1 := foldersv1.FolderResourceInfo.GroupVersion()
+	gv1beta1 := foldersv1beta1.FolderResourceInfo.GroupVersion()
+
 	// Folder
 	_ = scheme.AddConversionFunc((*foldersv1beta1.Folder)(nil), (*foldersv1.Folder)(nil), func(a, b interface{}, _ conversion.Scope) error {
 		in := a.(*foldersv1beta1.Folder)
 		out := b.(*foldersv1.Folder)
-		out.TypeMeta = in.TypeMeta
+		out.TypeMeta = typeMetaFor(gv1, "Folder")
 		out.ObjectMeta = in.ObjectMeta
 		out.Spec.Title = in.Spec.Title
 		out.Spec.Description = in.Spec.Description
@@ -305,7 +315,7 @@ func registerFolderConversions(scheme *runtime.Scheme) {
 	_ = scheme.AddConversionFunc((*foldersv1.Folder)(nil), (*foldersv1beta1.Folder)(nil), func(a, b interface{}, _ conversion.Scope) error {
 		in := a.(*foldersv1.Folder)
 		out := b.(*foldersv1beta1.Folder)
-		out.TypeMeta = in.TypeMeta
+		out.TypeMeta = typeMetaFor(gv1beta1, "Folder")
 		out.ObjectMeta = in.ObjectMeta
 		out.Spec.Title = in.Spec.Title
 		out.Spec.Description = in.Spec.Description
@@ -315,7 +325,7 @@ func registerFolderConversions(scheme *runtime.Scheme) {
 	_ = scheme.AddConversionFunc((*foldersv1beta1.FolderList)(nil), (*foldersv1.FolderList)(nil), func(a, b interface{}, s conversion.Scope) error {
 		in := a.(*foldersv1beta1.FolderList)
 		out := b.(*foldersv1.FolderList)
-		out.TypeMeta = in.TypeMeta
+		out.TypeMeta = typeMetaFor(gv1, "FolderList")
 		out.ListMeta = in.ListMeta
 		out.Items = make([]foldersv1.Folder, len(in.Items))
 		for i := range in.Items {
@@ -328,7 +338,7 @@ func registerFolderConversions(scheme *runtime.Scheme) {
 	_ = scheme.AddConversionFunc((*foldersv1.FolderList)(nil), (*foldersv1beta1.FolderList)(nil), func(a, b interface{}, s conversion.Scope) error {
 		in := a.(*foldersv1.FolderList)
 		out := b.(*foldersv1beta1.FolderList)
-		out.TypeMeta = in.TypeMeta
+		out.TypeMeta = typeMetaFor(gv1beta1, "FolderList")
 		out.ListMeta = in.ListMeta
 		out.Items = make([]foldersv1beta1.Folder, len(in.Items))
 		for i := range in.Items {
@@ -342,7 +352,7 @@ func registerFolderConversions(scheme *runtime.Scheme) {
 	_ = scheme.AddConversionFunc((*foldersv1beta1.FolderInfoList)(nil), (*foldersv1.FolderInfoList)(nil), func(a, b interface{}, _ conversion.Scope) error {
 		in := a.(*foldersv1beta1.FolderInfoList)
 		out := b.(*foldersv1.FolderInfoList)
-		out.TypeMeta = in.TypeMeta
+		out.TypeMeta = typeMetaFor(gv1, "FolderInfoList")
 		out.ListMeta = in.ListMeta
 		out.Items = make([]foldersv1.FolderInfo, len(in.Items))
 		for i := range in.Items {
@@ -356,7 +366,7 @@ func registerFolderConversions(scheme *runtime.Scheme) {
 	_ = scheme.AddConversionFunc((*foldersv1.FolderInfoList)(nil), (*foldersv1beta1.FolderInfoList)(nil), func(a, b interface{}, _ conversion.Scope) error {
 		in := a.(*foldersv1.FolderInfoList)
 		out := b.(*foldersv1beta1.FolderInfoList)
-		out.TypeMeta = in.TypeMeta
+		out.TypeMeta = typeMetaFor(gv1beta1, "FolderInfoList")
 		out.ListMeta = in.ListMeta
 		out.Items = make([]foldersv1beta1.FolderInfo, len(in.Items))
 		for i := range in.Items {
@@ -371,7 +381,7 @@ func registerFolderConversions(scheme *runtime.Scheme) {
 	_ = scheme.AddConversionFunc((*foldersv1beta1.DescendantCounts)(nil), (*foldersv1.DescendantCounts)(nil), func(a, b interface{}, _ conversion.Scope) error {
 		in := a.(*foldersv1beta1.DescendantCounts)
 		out := b.(*foldersv1.DescendantCounts)
-		out.TypeMeta = in.TypeMeta
+		out.TypeMeta = typeMetaFor(gv1, "DescendantCounts")
 		out.Counts = make([]foldersv1.ResourceStats, len(in.Counts))
 		for i := range in.Counts {
 			out.Counts[i] = foldersv1.ResourceStats{Group: in.Counts[i].Group, Resource: in.Counts[i].Resource, Count: in.Counts[i].Count}
@@ -381,7 +391,7 @@ func registerFolderConversions(scheme *runtime.Scheme) {
 	_ = scheme.AddConversionFunc((*foldersv1.DescendantCounts)(nil), (*foldersv1beta1.DescendantCounts)(nil), func(a, b interface{}, _ conversion.Scope) error {
 		in := a.(*foldersv1.DescendantCounts)
 		out := b.(*foldersv1beta1.DescendantCounts)
-		out.TypeMeta = in.TypeMeta
+		out.TypeMeta = typeMetaFor(gv1beta1, "DescendantCounts")
 		out.Counts = make([]foldersv1beta1.ResourceStats, len(in.Counts))
 		for i := range in.Counts {
 			out.Counts[i] = foldersv1beta1.ResourceStats{Group: in.Counts[i].Group, Resource: in.Counts[i].Resource, Count: in.Counts[i].Count}
@@ -392,14 +402,14 @@ func registerFolderConversions(scheme *runtime.Scheme) {
 	_ = scheme.AddConversionFunc((*foldersv1beta1.FolderAccessInfo)(nil), (*foldersv1.FolderAccessInfo)(nil), func(a, b interface{}, _ conversion.Scope) error {
 		in := a.(*foldersv1beta1.FolderAccessInfo)
 		out := b.(*foldersv1.FolderAccessInfo)
-		out.TypeMeta = in.TypeMeta
+		out.TypeMeta = typeMetaFor(gv1, "FolderAccessInfo")
 		out.CanSave, out.CanEdit, out.CanAdmin, out.CanDelete = in.CanSave, in.CanEdit, in.CanAdmin, in.CanDelete
 		return nil
 	})
 	_ = scheme.AddConversionFunc((*foldersv1.FolderAccessInfo)(nil), (*foldersv1beta1.FolderAccessInfo)(nil), func(a, b interface{}, _ conversion.Scope) error {
 		in := a.(*foldersv1.FolderAccessInfo)
 		out := b.(*foldersv1beta1.FolderAccessInfo)
-		out.TypeMeta = in.TypeMeta
+		out.TypeMeta = typeMetaFor(gv1beta1, "FolderAccessInfo")
 		out.CanSave, out.CanEdit, out.CanAdmin, out.CanDelete = in.CanSave, in.CanEdit, in.CanAdmin, in.CanDelete
 		return nil
 	})
