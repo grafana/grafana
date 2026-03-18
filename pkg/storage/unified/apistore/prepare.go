@@ -118,11 +118,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
 		return v, err
 	}
-	folder, err := s.getParentFolder(ctx, obj)
-	if err != nil {
-		return v, err
-	}
-	if err := checkFolderManager(folder, obj); err != nil {
+	if err := s.ensureManagedByParentFolder(ctx, obj); err != nil {
 		return v, err
 	}
 
@@ -224,11 +220,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 			return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 		}
 		// TODO: check that we can move the folder?
-		folder, err := s.getParentFolder(ctx, obj)
-		if err != nil {
-			return v, err
-		}
-		if err := checkFolderManager(folder, obj); err != nil {
+		if err := s.ensureManagedByParentFolder(ctx, obj); err != nil {
 			return v, err
 		}
 		v.hasChanged = true
@@ -267,6 +259,17 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		err = s.handleLargeResources(ctx, obj, &v.raw)
 	}
 	return v, err
+}
+
+func (s *Storage) ensureManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
+	if !s.opts.EnableFolderSupport {
+		return nil
+	}
+	folder, err := s.getParentFolder(ctx, obj)
+	if err != nil {
+		return err
+	}
+	return ensureSameManager(folder, obj)
 }
 
 func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
