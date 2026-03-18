@@ -158,3 +158,129 @@ func TestManagedAuthorizer(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckFolderManagerConsistency(t *testing.T) {
+	tests := []struct {
+		name            string
+		folderManager   *utils.ManagerProperties
+		resourceManager *utils.ManagerProperties
+		expectError     bool
+	}{
+		{
+			name:            "folder unmanaged, resource unmanaged",
+			folderManager:   nil,
+			resourceManager: nil,
+			expectError:     false,
+		},
+		{
+			name:          "folder unmanaged, resource managed by repo",
+			folderManager: nil,
+			resourceManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectError: false,
+		},
+		{
+			name: "folder and resource managed by same repo",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			resourceManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectError: false,
+		},
+		{
+			name: "folder managed by repo, resource unmanaged",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			resourceManager: nil,
+			expectError:     true,
+		},
+		{
+			name: "folder and resource managed by different repos",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			resourceManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-2",
+			},
+			expectError: true,
+		},
+		{
+			name: "folder managed by repo, resource managed by plugin",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			resourceManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindPlugin,
+				Identity: "plugin-1",
+			},
+			expectError: true,
+		},
+		{
+			name: "folder and resource managed by same terraform",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindTerraform,
+				Identity: "tf-1",
+			},
+			resourceManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindTerraform,
+				Identity: "tf-1",
+			},
+			expectError: false,
+		},
+		{
+			name: "folder and resource managed by different terraform",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindTerraform,
+				Identity: "tf-1",
+			},
+			resourceManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindTerraform,
+				Identity: "tf-2",
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resource := &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "test-resource",
+					Namespace: "default",
+				},
+			}
+			if tt.resourceManager != nil {
+				accessor, err := utils.MetaAccessor(resource)
+				require.NoError(t, err)
+				accessor.SetManagerProperties(*tt.resourceManager)
+			}
+
+			accessor, err := utils.MetaAccessor(resource)
+			require.NoError(t, err)
+
+			folderManaged := tt.folderManager != nil
+			folderProps := utils.ManagerProperties{}
+			if folderManaged {
+				folderProps = *tt.folderManager
+			}
+
+			err = checkFolderManagerConsistency(folderProps, folderManaged, accessor)
+			if tt.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

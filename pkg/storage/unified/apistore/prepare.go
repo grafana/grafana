@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/storage"
@@ -115,6 +116,9 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation
 	}
 	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
+		return v, err
+	}
+	if err := s.checkFolderManager(ctx, obj); err != nil {
 		return v, err
 	}
 
@@ -243,6 +247,9 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
 			return v, err
 		}
+		if err := s.checkFolderManager(ctx, obj); err != nil {
+			return v, err
+		}
 	} else {
 		obj.SetGeneration(previous.GetGeneration())
 		obj.SetAnnotation(utils.AnnoKeyUpdatedBy, previous.GetAnnotation(utils.AnnoKeyUpdatedBy))
@@ -253,6 +260,50 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		err = s.handleLargeResources(ctx, obj, &v.raw)
 	}
 	return v, err
+}
+
+func (s *Storage) getFolderManagerProperties(ctx context.Context, namespace, folderUID string) (utils.ManagerProperties, bool, error) {
+	resp, err := s.store.Read(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Group:     "folder.grafana.app",
+			Resource:  "folders",
+			Namespace: namespace,
+			Name:      folderUID,
+		},
+	})
+	if err != nil {
+		return utils.ManagerProperties{}, false, fmt.Errorf("failed to read folder %s: %w", folderUID, err)
+	}
+	if resp.Error != nil {
+		return utils.ManagerProperties{}, false, fmt.Errorf("folder %s not found: %s", folderUID, resp.Error.GetMessage())
+	}
+
+	folder := &unstructured.Unstructured{}
+	if err := json.Unmarshal(resp.Value, folder); err != nil {
+		return utils.ManagerProperties{}, false, fmt.Errorf("failed to unmarshal folder %s: %w", folderUID, err)
+	}
+
+	accessor, err := utils.MetaAccessor(folder)
+	if err != nil {
+		return utils.ManagerProperties{}, false, fmt.Errorf("failed to get meta accessor for folder %s: %w", folderUID, err)
+	}
+
+	props, ok := accessor.GetManagerProperties()
+	return props, ok, nil
+}
+
+func (s *Storage) checkFolderManager(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
+	folderUID := obj.GetFolder()
+	if folderUID == "" {
+		return nil
+	}
+
+	folderManager, folderManaged, err := s.getFolderManagerProperties(ctx, obj.GetNamespace(), folderUID)
+	if err != nil {
+		return err
+	}
+
+	return checkFolderManagerConsistency(folderManager, folderManaged, obj)
 }
 
 // The bytes buffer will be reset with the proper value

@@ -66,6 +66,35 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	return nil
 }
 
+func checkFolderManagerConsistency(folderManager utils.ManagerProperties, folderManaged bool, resource utils.GrafanaMetaAccessor) error {
+	if !folderManaged {
+		return nil
+	}
+
+	resourceManager, resourceManaged := resource.GetManagerProperties()
+	if !resourceManaged {
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    http.StatusForbidden,
+			Reason:  metav1.StatusReasonForbidden,
+			Message: fmt.Sprintf("folder is managed by %s:%s, but the resource is not managed", folderManager.Kind, folderManager.Identity),
+		}}
+	}
+
+	if resourceManager.Kind != folderManager.Kind || resourceManager.Identity != folderManager.Identity {
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    http.StatusForbidden,
+			Reason:  metav1.StatusReasonForbidden,
+			Message: fmt.Sprintf("resource manager (%s:%s) does not match folder manager (%s:%s); resources must be managed by the same manager as their containing folder",
+				resourceManager.Kind, resourceManager.Identity,
+				folderManager.Kind, folderManager.Identity),
+		}}
+	}
+
+	return nil
+}
+
 func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
 	if kind == "" {
