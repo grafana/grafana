@@ -66,10 +66,10 @@ func TestIntegrationProvisioning_JobPendingDeleteLabel_SkipsExecution(t *testing
 	})
 
 	// The job must still complete (not hang or error), but it was skipped so
-	// state should be success with no actual work done.
+	// state should be a warning with no actual work done.
 	jobState := common.MustNestedString(job.Object, "status", "state")
-	require.Equal(t, string(provisioning.JobStateSuccess), jobState,
-		"skipped job should complete as success")
+	require.Equal(t, string(provisioning.JobStateWarning), jobState,
+		"skipped job should complete with a warning")
 
 	// The dashboard must still exist because the pull was skipped.
 	dashboards, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})

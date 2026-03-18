@@ -390,6 +390,7 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 
 		if appcontroller.IsPendingDelete(r.Labels) {
 			logger.Info("repository namespace is pending deletion - skip job")
+			recorder.Record(ctx, NewPathOnlyResult(repoName).WithWarning(errors.New("repository namespace is pending deletion - job skipped")).Build())
 			return nil
 		}
 
