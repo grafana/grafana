@@ -216,7 +216,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 			// When folder metadata is enabled and the parent folder has a _folder.json,
 			// use the stable UID from that file instead of the hash-derived one.
 			if r.folderMetadataEnabled && r.reader != nil {
-				if meta, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
+				if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, ""); err == nil && meta.Name != "" {
 					folderID = meta.Name
 				}
 			}
