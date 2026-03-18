@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
-	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -145,7 +144,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 	t.Run("should serve index with override assets when cookie is set", func(t *testing.T) {
 		// Start a mock CDN server that serves the override manifest
-		cdnServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cdnServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/pr_grafana_123_mybranch/public/build/assets-manifest.json" {
 				w.Header().Set("Content-Type", "application/json")
 				_, _ = w.Write([]byte(previewAssetsManifest))
@@ -154,11 +153,6 @@ func TestFrontendService_WebAssets(t *testing.T) {
 			http.NotFound(w, r)
 		}))
 		defer cdnServer.Close()
-
-		// Use the test server's client which trusts its self-signed certificate
-		originalClient := webassets.HTTPClient
-		webassets.HTTPClient = cdnServer.Client()
-		defer func() { webassets.HTTPClient = originalClient }()
 
 		publicDir := setupTestWebAssets(t)
 		raw := ini.Empty()

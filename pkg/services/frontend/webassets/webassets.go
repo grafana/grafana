@@ -64,9 +64,8 @@ func getCDNRoot(cfg *setting.Cfg, license licensing.Licensing) string {
 //
 // When assetsBaseOverrideURL is non-empty and the feature is enabled,
 // it is used as both the source for the assets manifest and the CDN base URL for all
-// asset references. The override URL must match the configured base URL
-// and must use HTTPS. If validation fails, the override is ignored and default assets
-// are returned.
+// asset references. The override URL must match the configured base URL.
+// If validation fails, the override is ignored and default assets are returned.
 func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing, overrideEnabled bool, overrideBaseURL string, assetsBaseOverrideURL string) (dtos.EntryPointAssets, error) {
 	if assetsBaseOverrideURL != "" {
 		if err := validateOverrideURL(overrideEnabled, overrideBaseURL, assetsBaseOverrideURL); err != nil {
@@ -79,15 +78,12 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	return getDefaultAssets(ctx, cfg, license)
 }
 
-// validateOverrideURL checks that the assets override feature is enabled, the URL uses
-// HTTPS, and the URL starts with the configured base URL.
+// validateOverrideURL checks that the assets override feature is enabled and
+// the URL starts with the configured base URL. HTTPS is enforced at config
+// parse time (see ReadPreviewAssetsConfig).
 func validateOverrideURL(enabled bool, baseURL string, overrideURL string) error {
 	if !enabled {
 		return fmt.Errorf("assets base override is not enabled")
-	}
-
-	if !strings.HasPrefix(overrideURL, "https://") {
-		return fmt.Errorf("override URL must use HTTPS")
 	}
 
 	if baseURL == "" {

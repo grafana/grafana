@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/api/webassets"
 	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -103,7 +102,7 @@ func TestGetWebAssets_AssetsBaseOverrideURL(t *testing.T) {
 		}
 	}`
 
-	cdnServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	cdnServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/pr_grafana_42_featbar/public/build/assets-manifest.json" {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(manifest))
@@ -112,11 +111,6 @@ func TestGetWebAssets_AssetsBaseOverrideURL(t *testing.T) {
 		http.NotFound(w, r)
 	}))
 	defer cdnServer.Close()
-
-	// Use the test server's client which trusts its self-signed certificate
-	originalClient := webassets.HTTPClient
-	webassets.HTTPClient = cdnServer.Client()
-	defer func() { webassets.HTTPClient = originalClient }()
 
 	overrideBaseURL := cdnServer.URL + "/"
 	overrideURL := cdnServer.URL + "/pr_grafana_42_featbar/"
@@ -164,20 +158,6 @@ func TestGetWebAssets_AssetsBaseOverrideURL_RejectedWhenDisabled(t *testing.T) {
 
 	// Should fall back to default assets when the feature is disabled
 	assets, err := fswebassets.GetWebAssets(ctx, cfg, license, false, "", "https://evil.example.com/assets/")
-	require.NoError(t, err)
-	assert.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
-}
-
-func TestGetWebAssets_AssetsBaseOverrideURL_RejectedWhenNotHTTPS(t *testing.T) {
-	cfg := &setting.Cfg{
-		StaticRootPath: "../../../api/webassets/testdata",
-	}
-	license := licensingtest.NewFakeLicensing()
-	license.On("ContentDeliveryPrefix").Return("grafana")
-	ctx := context.Background()
-
-	// Should fall back to default assets when URL is not HTTPS
-	assets, err := fswebassets.GetWebAssets(ctx, cfg, license, true, "http://allowed.example.com/", "http://allowed.example.com/assets/")
 	require.NoError(t, err)
 	assert.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
 }

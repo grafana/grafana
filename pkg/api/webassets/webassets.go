@@ -39,10 +39,7 @@ type EntryPointInfo struct {
 var (
 	entryPointAssetsCacheMu sync.RWMutex           // guard entryPointAssetsCache
 	entryPointAssetsCache   *dtos.EntryPointAssets // TODO: get rid of global state
-
-	// HTTPClient is the HTTP client used for fetching remote asset manifests.
-	// Exported to allow tests to override with a client that trusts test TLS certificates.
-	HTTPClient *http.Client = httpclient.New()
+	httpClient              = httpclient.New()
 )
 
 func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
@@ -113,7 +110,7 @@ func ReadWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPoint
 	if err != nil {
 		return nil, err
 	}
-	response, err := HTTPClient.Do(req)
+	response, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
