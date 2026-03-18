@@ -219,7 +219,9 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		if !s.opts.EnableFolderSupport {
 			return v, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
 		}
-		// TODO: check that we can move the folder?
+		if err := s.checkFolderManager(ctx, obj); err != nil {
+			return v, err
+		}
 		v.hasChanged = true
 	} else if obj.GetDeletionTimestamp() != nil && previous.GetDeletionTimestamp() == nil {
 		v.hasChanged = true // bump generation when deleted
@@ -246,12 +248,6 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 		obj.SetUpdatedBy(updatedBy)
 		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
-
-		if obj.GetFolder() != previous.GetFolder() {
-			if err := s.checkFolderManager(ctx, obj); err != nil {
-				return v, err
-			}
-		}
 	} else {
 		obj.SetGeneration(previous.GetGeneration())
 		obj.SetAnnotation(utils.AnnoKeyUpdatedBy, previous.GetAnnotation(utils.AnnoKeyUpdatedBy))
