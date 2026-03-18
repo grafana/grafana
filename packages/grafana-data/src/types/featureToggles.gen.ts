@@ -1196,6 +1196,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRolesAndRoleBindingsRedirect?: boolean;
   /**
+  * Enables datasource resource permissions via the K8s IAM resource permission APIs
+  * @default false
+  */
+  kubernetesAuthzDatasourceResourcePermissions?: boolean;
+  /**
   * Enables restore deleted dashboards feature
   * @default false
   */
@@ -1470,6 +1475,11 @@ export interface FeatureToggles {
   * @default false
   */
   elasticsearchRawDSLQuery?: boolean;
+  /**
+  * Enables the ES|QL query editor in the Elasticsearch data source
+  * @default false
+  */
+  elasticsearchESQLQuery?: boolean;
   /**
   * Enables http proxy settings for aws datasources
   * @default false

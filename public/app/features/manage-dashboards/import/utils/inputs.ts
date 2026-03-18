@@ -1,8 +1,8 @@
 import { DataSourceInstanceSettings, VariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { Panel, RowPanel } from '@grafana/schema';
 import { AnnotationQueryKind, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Panel } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
 import { AnnotationQuery, Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { isRecord } from 'app/core/utils/isRecord';
 import { ExportFormat } from 'app/features/dashboard/api/types';
@@ -66,6 +66,10 @@ function isLibraryElementExport(value: unknown): value is LibraryElementExport {
 
 function hasUid(query: Record<string, unknown> | {}): query is { uid: string } {
   return 'uid' in query && typeof query['uid'] === 'string';
+}
+
+function isRowPanel(panel: Panel | RowPanel): panel is RowPanel {
+  return panel.type === 'row';
 }
 
 function getExportLabel(labels?: { [ExportLabel]?: string }): string | undefined {
@@ -309,7 +313,12 @@ export function applyV1Inputs(
     return processAnnotation(annotation, inputs, form);
   });
 
-  const panels = (dashboard.panels ?? []).map((panel: Panel) => {
+  // Row panels with collapsed=true store their child panels in panel.panels[] rather than
+  // dashboard.panels[]. We recurse one level deep — v1 dashboards do not nest rows further.
+  const panels = (dashboard.panels ?? []).map((panel: Panel | RowPanel) => {
+    if (isRowPanel(panel)) {
+      return { ...panel, panels: panel.panels.map((p: Panel) => processPanel(p, inputs, form)) };
+    }
     return processPanel(panel, inputs, form);
   });
 

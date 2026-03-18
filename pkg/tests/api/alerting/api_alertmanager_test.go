@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -74,8 +73,8 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 		`
 	err := json.Unmarshal([]byte(amConfig), &cfg)
 	require.NoError(t, err)
-	err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.SaveAndApplyAlertmanagerConfiguration(context.Background(), 1, cfg)
-	require.NoError(t, err)
+
+	saveAndApplyAlertmanagerConfiguration(t, env, 1, amConfig)
 
 	t.Run("when retrieve alertmanager configuration", func(t *testing.T) {
 		cfgTemplate := `

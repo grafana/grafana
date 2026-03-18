@@ -1881,6 +1881,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesAuthzDatasourceResourcePermissions",
+			Description:  "Enables datasource resource permissions via the K8s IAM resource permission APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
 			Stage:       FeatureStageExperimental,
@@ -2322,6 +2330,13 @@ var (
 		{
 			Name:        "elasticsearchRawDSLQuery",
 			Description: "Enables the raw DSL query editor in the Elasticsearch data source",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "elasticsearchESQLQuery",
+			Description: "Enables the ES|QL query editor in the Elasticsearch data source",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaPartnerPluginsSquad,
 			Expression:  "false",

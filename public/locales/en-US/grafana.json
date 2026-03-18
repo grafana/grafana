@@ -7990,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fixed value"
       },
+      "label": "Scalar",
       "label-limit": "Limit",
       "label-value": "Value",
       "noOptionsMessage-no-fields-found": "No fields found",
@@ -10021,7 +10022,9 @@
       "external-links-heading": "External links"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Enter regular expression"
+      "input-placeholder": "Enter regular expression",
+      "scope": "Target fields",
+      "scope-tooltip": "To avoid issues when applying overrides, overrides cannot be applied across multiple target scopes. The default \"dataframe\" scope is applied if no scope is selected."
     },
     "field-value-matcher": {
       "operator-label": "Comparison operator",
@@ -10048,6 +10051,18 @@
       "expand-row-tooltip": "Toggle row expanded",
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "Annotations",
+        "exemplar": "Exemplars",
+        "nested": "Nested",
+        "series": "Dataframe"
+      },
+      "labels": {
+        "base-field-name": "{{name}} (base field name)",
+        "not-found": "{{name}} (not found)"
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Set properties for fields with names matching a regex",
@@ -13495,6 +13510,7 @@
       "github-app-select-connection": "Select a GitHub App connection",
       "github-enterprise-alert-body": "GitHub Enterprise Server is currently only supported through the Pure Git repository type. Native GitHub Enterprise integration is planned and will be available in the upcoming months.",
       "github-enterprise-alert-title": "GitHub Enterprise Server",
+      "give-feedback-link": "Give feedback",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
       "step-connect": "Connect",
