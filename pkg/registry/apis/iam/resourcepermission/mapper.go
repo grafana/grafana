@@ -8,10 +8,28 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+// Mapper translates between K8s GroupResource and legacy RBAC scopes/action sets.
+// It knows how to produce RBAC scopes (e.g., "folders:uid:abc") and action sets
+// (e.g., "folders:view") for a specific resource type (folders, dashboards, datasources, etc.).
 type Mapper interface {
+	// ActionSets returns all available RBAC action sets for this resource type.
+	// These are used to query the database for permissions (e.g., ["folders:view", "folders:edit", "folders:admin"]).
 	ActionSets() []string
+
+	// Scope returns the full RBAC scope for a given resource name.
+	// Used when creating/updating permissions to store the scope in the permission table.
+	// Example: Scope("abc") returns "folders:uid:abc".
 	Scope(name string) string
+
+	// ActionSet returns the RBAC action set for a given permission level.
+	// Used when creating managed roles to determine which action set to grant.
+	// Example: ActionSet("view") returns "folders:view".
 	ActionSet(level string) (string, error)
+
+	// ScopePattern returns the SQL LIKE pattern for querying scopes of this resource type.
+	// Used in list queries with SQL LIKE to match all permissions for this resource type
+	// regardless of the specific resource identifier (UID). The % wildcard matches any UID.
+	// Example: "folders:uid:%" matches "folders:uid:abc", "folders:uid:xyz", etc.
 	ScopePattern() string
 }
 
@@ -96,7 +114,8 @@ func (m *MappersRegistry) RegisterMapper(gr schema.GroupResource, mapper Mapper,
 }
 
 // Get returns the mapper for the given GroupResource regardless of enabled state.
-// Use this for reads of existing data.
+// Use this when reading or writing existing data - the mapper provides the RBAC translation
+// even if the feature is currently disabled (to preserve existing permissions).
 func (m *MappersRegistry) Get(gr schema.GroupResource) (Mapper, bool) {
 	e, ok := m.entries[gr]
 	if !ok {
@@ -106,12 +125,17 @@ func (m *MappersRegistry) Get(gr schema.GroupResource) (Mapper, bool) {
 }
 
 // IsEnabled reports whether the mapper for the given GroupResource is registered and enabled.
+// Use this for admission control (create/update validation) to gate whether new permissions
+// can be created for this resource type based on feature flags or licensing.
 func (m *MappersRegistry) IsEnabled(gr schema.GroupResource) bool {
 	e, ok := m.entries[gr]
 	return ok && (e.enabled == nil || e.enabled())
 }
 
-// ParseScope parses a scope string (e.g. "folders:uid:abc") into a groupResourceName.
+// ParseScope parses an RBAC scope string (e.g., "folders:uid:abc") into a groupResourceName.
+// Used when reading permissions from the database for two purposes:
+//   1. Populating the ResourcePermission Spec (Group, Resource, Name fields)
+//   2. Making AccessClient Check requests to authorize viewing the resource
 func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
 	parts := strings.SplitN(scope, ":", 3)
 	if len(parts) != 3 {
@@ -125,6 +149,8 @@ func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
 }
 
 // EnabledActionSets returns the action sets for all currently-enabled mappers.
+// Used by list operations to query the database for permissions across all enabled resource types.
+// Only includes mappers whose enabled closure returns true (or nil).
 func (m *MappersRegistry) EnabledActionSets() []string {
 	out := make([]string, 0, 3*len(m.entries))
 	for _, e := range m.entries {
@@ -137,6 +163,8 @@ func (m *MappersRegistry) EnabledActionSets() []string {
 }
 
 // EnabledScopePatterns returns the scope patterns for all currently-enabled mappers.
+// Used by list operations to find all resource permissions across all enabled resource types.
+// Only includes mappers whose enabled closure returns true (or nil).
 func (m *MappersRegistry) EnabledScopePatterns() []string {
 	out := make([]string, 0, len(m.entries))
 	for _, e := range m.entries {
