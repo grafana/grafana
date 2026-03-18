@@ -163,10 +163,10 @@ export type TimelineFilter = 'all' | 'states' | 'notifications';
 interface InstanceTimelineProps {
   records: LogRecord[];
   notifications: NotificationEntry[];
-  filter: TimelineFilter;
+  filter?: TimelineFilter;
 }
 
-export function InstanceTimeline({ records, notifications, filter }: InstanceTimelineProps) {
+export function InstanceTimeline({ records, notifications, filter = 'all' }: InstanceTimelineProps) {
   const styles = useStyles2(getStyles);
 
   const groups = useMemo(() => buildTimelineGroups(records, notifications), [records, notifications]);
