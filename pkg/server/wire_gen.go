@@ -593,7 +593,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
-	migrationStatusReader := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry)
+	migrationStatusReader, err := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry, registerer)
+	if err != nil {
+		return nil, err
+	}
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService, migrationStatusReader, registerer)
 	if err != nil {
 		return nil, err
@@ -1291,7 +1294,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
-	migrationStatusReader := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry)
+	migrationStatusReader, err := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry, registerer)
+	if err != nil {
+		return nil, err
+	}
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService, migrationStatusReader, registerer)
 	if err != nil {
 		return nil, err

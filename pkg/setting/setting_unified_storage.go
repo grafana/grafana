@@ -196,7 +196,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
 
 	// TTL for caching statusReader results in the dynamic dualwrite service. 0 = no expiration.
-	cfg.StorageModeCacheTTL = section.Key("storage_mode_cache_ttl").MustDuration(0)
+	cfg.StorageModeCacheTTL = section.Key("storage_mode_cache_ttl").MustDuration(5 * time.Second)
 
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)

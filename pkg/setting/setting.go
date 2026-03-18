@@ -668,7 +668,7 @@ type Cfg struct {
 	GarbageCollectionMaxAge                    time.Duration
 	DashboardsGarbageCollectionMaxAge          time.Duration
 	// StorageModeCacheTTL is the TTL for caching statusReader results in the dynamic dualwrite service.
-	// Default: 0 (no expiration).
+	// Default: 5 seconds, 0 or negative means no expiration.
 	StorageModeCacheTTL time.Duration
 
 	EventRetentionPeriod time.Duration
