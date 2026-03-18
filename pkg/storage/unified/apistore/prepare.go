@@ -20,6 +20,7 @@ import (
 	"k8s.io/klog/v2"
 
 	authlib "github.com/grafana/authlib/types"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana-app-sdk/logging"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -274,10 +275,11 @@ func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils
 
 func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
 	name := obj.GetFolder()
+	gr := folders.FolderResourceInfo.GroupResource()
 	rsp, err := s.store.Read(ctx, &resourcepb.ReadRequest{
 		Key: &resourcepb.ResourceKey{
-			Group:     "folder.grafana.app",
-			Resource:  "folders",
+			Group:     gr.Group,
+			Resource:  gr.Resource,
 			Namespace: obj.GetNamespace(),
 			Name:      name,
 		},
