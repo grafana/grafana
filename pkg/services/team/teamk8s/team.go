@@ -31,15 +31,17 @@ type TeamK8sService struct {
 	logger          log.Logger
 	namespaceMapper request.NamespaceMapper
 	configProvider  apiserver.DirectRestConfigProvider
+	legacyService   team.Service
 }
 
 var _ team.Service = (*TeamK8sService)(nil)
 
-func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider) *TeamK8sService {
+func NewTeamK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, legacyService team.Service) *TeamK8sService {
 	return &TeamK8sService{
 		logger:          logger,
 		namespaceMapper: request.GetNamespaceMapper(cfg),
 		configProvider:  configProvider,
+		legacyService:   legacyService,
 	}
 }
 
@@ -116,7 +118,36 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 }
 
 func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
-	return errors.New("not implemented")
+	teamDTO, err := s.legacyService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+		ID:    cmd.ID,
+		OrgID: cmd.OrgID,
+	})
+	if err != nil {
+		return err
+	}
+
+	namespace := s.namespaceMapper(cmd.OrgID)
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		return err
+	}
+
+	existing, err := client.Get(ctx, teamDTO.UID, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	spec, ok := existing.Object["spec"].(map[string]any)
+	if !ok {
+		spec = make(map[string]any)
+	}
+	spec["title"] = cmd.Name
+	spec["email"] = cmd.Email
+	spec["externalUID"] = cmd.ExternalUID
+	existing.Object["spec"] = spec
+
+	_, err = client.Update(ctx, existing, metav1.UpdateOptions{})
+	return err
 }
 
 func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
