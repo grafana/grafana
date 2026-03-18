@@ -419,7 +419,6 @@ func TestServiceMetrics_StatusReaderError(t *testing.T) {
 	t.Run("service increments statusReaderErrors and falls back to config", func(t *testing.T) {
 		metrics := newTestDualWriterMetrics()
 		svc := &service{
-			cfg:          cfg,
 			statusReader: &failingStatusReader{err: errors.New("db down")},
 			metrics:      metrics,
 		}
@@ -448,7 +447,6 @@ func TestServiceMetrics_HappyPath(t *testing.T) {
 	metrics := newTestDualWriterMetrics()
 
 	svc := &service{
-		cfg:          NewFakeConfig(),
 		statusReader: NewFakeMigrationStatusReader(gr.String(), unifiedmigrations.StorageModeUnified),
 		metrics:      metrics,
 	}
