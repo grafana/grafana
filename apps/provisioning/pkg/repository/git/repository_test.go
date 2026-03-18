@@ -3477,7 +3477,7 @@ func TestGitRepository_CompareFiles_EmptyBase(t *testing.T) {
 
 	// Verify CompareCommits was called with empty base hash and feature hash
 	require.Equal(t, 1, mockClient.CompareCommitsCallCount())
-	_, baseHash, refHash := mockClient.CompareCommitsArgsForCall(0)
+	_, baseHash, refHash, _ := mockClient.CompareCommitsArgsForCall(0)
 	require.Equal(t, hash.Zero, baseHash) // Empty base should be zero hash
 	require.Equal(t, hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"), refHash)
 }

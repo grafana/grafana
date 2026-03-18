@@ -725,7 +725,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 	}
 
 	// Get commit hashes for base and ref
-	// Compare commits using nanogit
+	// Compare commits using nanogit (without rename detection for now)
 	files, err := r.client.CompareCommits(ctx, baseHash, refHash)
 	if err != nil {
 		return nil, fmt.Errorf("compare commits: %w", err)
