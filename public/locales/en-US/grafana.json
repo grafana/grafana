@@ -4245,9 +4245,6 @@
     "delete-folder": {
       "read-only-message": "To delete this folder, please remove the folder from your repository."
     },
-    "delete-provisioned-dashboard-form": {
-      "api-error": "Failed to delete dashboard"
-    },
     "delete-provisioned-folder-form": {
       "api-error": "Failed to delete folder",
       "button-cancel": "Cancel",
@@ -6832,6 +6829,7 @@
     "delete-provisioned-dashboard-form": {
       "cancel-action": "Cancel",
       "delete-action": "Delete dashboard",
+      "delete-error": "Failed to delete dashboard",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
       "success-message": "Dashboard deleted successfully"

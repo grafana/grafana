@@ -66,14 +66,16 @@ export function DeleteProvisionedDashboardForm({
       getProvisionedRequestError(
         error,
         'dashboard',
-        t('browse-dashboards.delete-provisioned-dashboard-form.api-error', 'Failed to delete dashboard')
+        t('dashboard-scene.delete-provisioned-dashboard-form.delete-error', 'Failed to delete dashboard')
       )
     );
   };
 
   const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
+    setSubmitError(undefined);
     if (!repo || !repository) {
       console.error('Missing required repository for deletion:', { repo });
+      showError('Missing required repository for deletion');
       return;
     }
 
