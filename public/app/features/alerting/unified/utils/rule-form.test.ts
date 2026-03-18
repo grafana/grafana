@@ -1,4 +1,5 @@
 import { PromQuery } from '@grafana/prometheus';
+import { config } from '@grafana/runtime';
 import { ExpressionDatasourceUID, ExpressionQueryType } from 'app/features/expressions/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -198,6 +199,23 @@ describe('rulerRuleToFormValues', () => {
 });
 
 describe('getContactPointsFromDTO', () => {
+  it('should return undefined when notification_settings has only policy (no receiver)', () => {
+    const ga: GrafanaRuleDefinition = {
+      uid: '123',
+      version: 1,
+      title: 'myalert',
+      namespace_uid: '123',
+      rule_group: 'my-group',
+      condition: 'A',
+      no_data_state: GrafanaAlertStateDecision.Alerting,
+      exec_err_state: GrafanaAlertStateDecision.Alerting,
+      data: [],
+      notification_settings: { receiver: '', policy: 'TestPolicy' },
+    };
+    const result = getContactPointsFromDTO(ga);
+    expect(result).toBeUndefined();
+  });
+
   it('should return undefined if notification_settings is not defined', () => {
     const ga: GrafanaRuleDefinition = {
       uid: '123',
@@ -323,6 +341,70 @@ describe('getNotificationSettingsForDTO', () => {
       group_interval: 'group_interval',
       repeat_interval: 'repeat_interval',
     });
+  });
+});
+
+describe('getNotificationSettingsForDTO with selectedPolicy', () => {
+  it('should return policy DTO when alertingPolicyRoutingSettings is ON and selectedPolicy is set', () => {
+    jest.replaceProperty(config, 'featureToggles', {
+      ...config.featureToggles,
+      alertingPolicyRoutingSettings: true,
+    });
+    const result = getNotificationSettingsForDTO(false, undefined, 'TestPolicy');
+    expect(result).toEqual({ receiver: '', policy: 'TestPolicy' });
+    jest.restoreAllMocks();
+  });
+
+  it('should NOT return policy DTO when alertingPolicyRoutingSettings is OFF', () => {
+    jest.replaceProperty(config, 'featureToggles', {
+      ...config.featureToggles,
+      alertingPolicyRoutingSettings: false,
+    });
+    const result = getNotificationSettingsForDTO(false, undefined, 'TestPolicy');
+    expect(result).toBeUndefined();
+    jest.restoreAllMocks();
+  });
+
+  it('should NOT return policy DTO when manualRouting is true even if selectedPolicy is set', () => {
+    jest.replaceProperty(config, 'featureToggles', {
+      ...config.featureToggles,
+      alertingPolicyRoutingSettings: true,
+    });
+    const result = getNotificationSettingsForDTO(true, undefined, 'TestPolicy');
+    expect(result).toBeUndefined();
+    jest.restoreAllMocks();
+  });
+});
+
+describe('rulerRuleToFormValues with policy routing', () => {
+  it('should set selectedPolicy and manualRouting=false when notification_settings.policy is defined', () => {
+    const rule: RulerGrafanaRuleDTO = {
+      for: '1m',
+      grafana_alert: {
+        uid: 'abc',
+        version: 1,
+        title: 'Policy rule',
+        namespace_uid: 'ns1',
+        rule_group: 'group1',
+        condition: 'A',
+        no_data_state: GrafanaAlertStateDecision.Alerting,
+        exec_err_state: GrafanaAlertStateDecision.Alerting,
+        data: [],
+        notification_settings: { receiver: '', policy: 'TestPolicy' },
+      },
+      annotations: {},
+      labels: {},
+    };
+    const ruleWithLocation: RuleWithLocation = {
+      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+      namespace: 'my-folder',
+      group: { name: 'group1', interval: '1m', rules: [rule] },
+      rule,
+    };
+    const result = rulerRuleToFormValues(ruleWithLocation);
+    expect(result.selectedPolicy).toBe('TestPolicy');
+    expect(result.manualRouting).toBe(false);
+    expect(result.contactPoints).toBeUndefined();
   });
 });
 

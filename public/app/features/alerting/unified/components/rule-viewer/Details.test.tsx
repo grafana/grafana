@@ -1,5 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { setupBackendSrv } from '../../mockApi';
@@ -69,5 +70,100 @@ describe('Details', () => {
     expect(screen.getByText(/6m/i)).toBeInTheDocument();
     expect(screen.getByText(/15m/i)).toBeInTheDocument();
     expect(screen.getByText(/6h/i)).toBeInTheDocument();
+  });
+
+  describe('alertingPolicyRoutingSettings flag ON', () => {
+    beforeEach(() => {
+      jest.replaceProperty(config, 'featureToggles', {
+        ...config.featureToggles,
+        alertingPolicyRoutingSettings: true,
+      });
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should display notification policy name (not contact point) when notification_settings.policy is set', () => {
+      const POLICY_NAME = 'TestPolicy';
+      const rule = mockCombinedRule({
+        rulerRule: alertingFactory.ruler.grafana.alertingRule.build({
+          grafana_alert: {
+            notification_settings: {
+              receiver: '',
+              policy: POLICY_NAME,
+            },
+          },
+        }),
+      });
+
+      render(<Details rule={rule} />);
+
+      expect(screen.getByText('Notification policy')).toBeInTheDocument();
+      expect(screen.getByText(POLICY_NAME)).toBeInTheDocument();
+      expect(screen.queryByText('Contact point')).not.toBeInTheDocument();
+    });
+
+    it('should display "Default policy" when notification_settings is absent (rule uses default routing)', () => {
+      const rule = mockCombinedRule({
+        rulerRule: alertingFactory.ruler.grafana.alertingRule.build({
+          grafana_alert: {
+            notification_settings: undefined,
+          },
+        }),
+      });
+
+      render(<Details rule={rule} />);
+
+      expect(screen.getByText('Notification policy')).toBeInTheDocument();
+      expect(screen.getByText('Default policy')).toBeInTheDocument();
+    });
+  });
+
+  describe('alertingPolicyRoutingSettings flag OFF', () => {
+    beforeEach(() => {
+      jest.replaceProperty(config, 'featureToggles', {
+        ...config.featureToggles,
+        alertingPolicyRoutingSettings: false,
+      });
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should not show Notification configuration section when notification_settings is absent', () => {
+      const rule = mockCombinedRule({
+        rulerRule: alertingFactory.ruler.grafana.alertingRule.build({
+          grafana_alert: {
+            notification_settings: undefined,
+          },
+        }),
+      });
+
+      render(<Details rule={rule} />);
+
+      expect(screen.queryByText('Notification configuration')).not.toBeInTheDocument();
+    });
+
+    it('should not show policy name even if notification_settings.policy is set (flag off = show contact point path)', () => {
+      const POLICY_NAME = 'TestPolicy';
+      const rule = mockCombinedRule({
+        rulerRule: alertingFactory.ruler.grafana.alertingRule.build({
+          grafana_alert: {
+            notification_settings: {
+              receiver: '',
+              policy: POLICY_NAME,
+            },
+          },
+        }),
+      });
+
+      render(<Details rule={rule} />);
+
+      // With the flag OFF, the policy name should NOT be displayed
+      expect(screen.queryByText('Notification policy')).not.toBeInTheDocument();
+      expect(screen.queryByText(POLICY_NAME)).not.toBeInTheDocument();
+    });
   });
 });

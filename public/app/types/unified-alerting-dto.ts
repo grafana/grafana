@@ -244,6 +244,7 @@ export interface AlertQuery<T = AlertDataQuery | ExpressionQuery> {
 
 export interface GrafanaNotificationSettings {
   receiver: string;
+  policy?: string; // name of named policy tree
   group_by?: string[];
   group_wait?: string;
   group_interval?: string;

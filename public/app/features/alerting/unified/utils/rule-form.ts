@@ -109,8 +109,12 @@ export function listifyLabelsOrAnnotations(item: Labels | Annotations | undefine
 
 export function getNotificationSettingsForDTO(
   manualRouting: boolean,
-  contactPoints?: AlertManagerManualRouting
+  contactPoints?: AlertManagerManualRouting,
+  selectedPolicy?: string
 ): GrafanaNotificationSettings | undefined {
+  if (config.featureToggles.alertingPolicyRoutingSettings && selectedPolicy && !manualRouting) {
+    return { receiver: '', policy: selectedPolicy };
+  }
   if (contactPoints?.grafana?.selectedContactPoint && manualRouting) {
     return {
       receiver: contactPoints?.grafana?.selectedContactPoint,
@@ -153,6 +157,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     isPaused,
     contactPoints,
     manualRouting,
+    selectedPolicy,
     type,
     metric,
     targetDatasourceUid,
@@ -162,7 +167,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     throw new Error('You cannot create an alert rule without specifying the alert condition');
   }
 
-  const notificationSettings = getNotificationSettingsForDTO(manualRouting, contactPoints);
+  const notificationSettings = getNotificationSettingsForDTO(manualRouting, contactPoints, selectedPolicy);
   const metadata = values.editorSettings
     ? { editor_settings: getEditorSettingsForDTO(values.editorSettings) }
     : undefined;
@@ -233,7 +238,7 @@ const trimKeyAndValue = ({ key, value }: KVObject): KVObject => ({
 });
 
 export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {
-  const contactPoint: ContactPoint | undefined = ga.notification_settings
+  const contactPoint: ContactPoint | undefined = ga.notification_settings?.receiver
     ? {
         selectedContactPoint: ga.notification_settings.receiver,
         muteTimeIntervals: ga.notification_settings.mute_time_intervals ?? [],
@@ -309,6 +314,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       // grafana alerting rule
       const ga = normalizedRule.grafana_alert;
       const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
+      const selectedPolicy = ga.notification_settings?.policy;
       if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
         return {
           ...defaultFormValues,
@@ -329,6 +335,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 
           contactPoints: routingSettings,
           manualRouting: Boolean(routingSettings),
+          selectedPolicy,
 
           editorSettings: getEditorSettingsFromDTO(ga),
 
@@ -453,6 +460,7 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
 
   // grafana alerting rule
   const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
+  const cloneSelectedPolicy = ga.notification_settings?.policy;
   if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
     return {
       ...commonProperties,
@@ -465,6 +473,7 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
 
       contactPoints: routingSettings,
       manualRouting: Boolean(routingSettings),
+      selectedPolicy: cloneSelectedPolicy,
 
       editorSettings: getEditorSettingsFromDTO(ga),
     };

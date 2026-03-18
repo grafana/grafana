@@ -5,6 +5,7 @@ import { Fragment } from 'react/jsx-runtime';
 
 import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Icon, Link, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { useDatasource } from 'app/features/datasources/hooks';
 import { CombinedRule } from 'app/types/unified-alerting';
@@ -197,9 +198,8 @@ export const Details = ({ rule }: DetailsProps) => {
 
       {/* show simplified routing information for Grafana managed alert rules */}
       {rulerRuleType.grafana.alertingRule(rule.rulerRule) &&
-        !isEmpty(rule.rulerRule.grafana_alert.notification_settings) && (
-          <NotificationSettings rulerRule={rule.rulerRule} />
-        )}
+        (!isEmpty(rule.rulerRule.grafana_alert.notification_settings) ||
+          config.featureToggles.alertingPolicyRoutingSettings) && <NotificationSettings rulerRule={rule.rulerRule} />}
 
       {rulerRuleType.grafana.rule(rule.rulerRule) &&
         // grafana recording rules don't have these fields
@@ -267,18 +267,52 @@ interface NotificationSettingsProps {
 }
 
 const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
+  const usePolicyRoutingSettings = config.featureToggles.alertingPolicyRoutingSettings;
   const notificationSettings = rulerRule.grafana_alert.notification_settings;
+
+  // Issue 1 fix (Option A): when flag is ON and no notification_settings, the rule uses the
+  // default policy tree — make that explicit rather than hiding the section entirely.
   if (!notificationSettings) {
-    return null;
+    if (!usePolicyRoutingSettings) {
+      return null;
+    }
+    return (
+      <DetailGroup title={t('alerting.alert.notification-configuration.group-title', 'Notification configuration')}>
+        <DetailText
+          id="notification-policy"
+          label={t('alerting.alert.notification-configuration.notification-policy', 'Notification policy')}
+          value={t('alerting.policy-tree-selector.default-policy', 'Default policy')}
+        />
+      </DetailGroup>
+    );
   }
+
+  // Only show the policy name when the flag is ON; otherwise fall back to the contact-point
+  const routingRow = (() => {
+    if (notificationSettings.policy && usePolicyRoutingSettings) {
+      return (
+        <DetailText
+          id="notification-policy"
+          label={t('alerting.alert.notification-configuration.notification-policy', 'Notification policy')}
+          value={notificationSettings.policy}
+        />
+      );
+    }
+    if (notificationSettings.receiver) {
+      return (
+        <DetailText
+          id="receiver"
+          label={t('alerting.alert.notification-configuration.contact-point', 'Contact point')}
+          value={<ContactPointLink name={notificationSettings.receiver} />}
+        />
+      );
+    }
+    return null;
+  })();
 
   return (
     <DetailGroup title={t('alerting.alert.notification-configuration.group-title', 'Notification configuration')}>
-      <DetailText
-        id="receiver"
-        label={t('alerting.alert.notification-configuration.contact-point', 'Contact point')}
-        value={<ContactPointLink name={notificationSettings.receiver} />}
-      />
+      {routingRow}
 
       {notificationSettings.mute_time_intervals && (
         <DetailText
