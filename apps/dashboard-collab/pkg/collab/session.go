@@ -59,7 +59,7 @@ type Session struct {
 	DashboardUID string
 	Namespace    string
 	Users        map[string]*UserState // userId → state
-	Locks        map[string]string     // panelId → userId
+	LockTable    *LockTable            // panel-level soft locks
 	Seq          int64                 // monotonic counter
 	LastOpTime   time.Time             // for autosave quiescence
 	mu           sync.RWMutex
@@ -123,7 +123,7 @@ func (m *SessionManager) GetOrCreate(namespace, uid string) *Session {
 		DashboardUID: uid,
 		Namespace:    namespace,
 		Users:        make(map[string]*UserState),
-		Locks:        make(map[string]string),
+		LockTable:    NewLockTable(),
 	}
 	m.store.Set(key, s)
 	return s
