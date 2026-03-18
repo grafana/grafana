@@ -1,8 +1,6 @@
-import { Page } from 'playwright-core';
-
 import { test, expect, E2ESelectorGroups, DashboardPage } from '@grafana/plugin-e2e';
 
-import { switchToAutoGrid, importTestDashboard as importTestDashboardWithMetadataStripped } from './utils';
+import { switchToAutoGrid, importTestDashboard } from './utils';
 
 test.use({
   featureToggles: {
@@ -377,10 +375,6 @@ test.describe(
 );
 
 // Helper functions
-async function importTestDashboard(page: Page, selectors: E2ESelectorGroups, title: string) {
-  await importTestDashboardWithMetadataStripped(page, selectors, title);
-}
-
 async function saveDashboard(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
   await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
   await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
