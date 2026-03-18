@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Set Preview Assets</title>
+	<style>
+		body {
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			min-height: 100dvh;
+			margin: 0;
+			background: #111217;
+			color: #ccccd4;
+		}
+		.container {
+			max-width: 600px;
+			padding: 2rem;
+			border: 1px solid rgba(204, 204, 220, 0.15);
+			border-radius: 8px;
+			background: #181b1f;
+		}
+		h1 { font-size: 1.25rem; margin-top: 0; }
+		.url { word-break: break-all; background: rgba(204, 204, 220, 0.07); padding: 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.875rem; }
+		.actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; }
+		button, .cancel {
+			padding: 0.5rem 1rem;
+			border-radius: 4px;
+			border: none;
+			cursor: pointer;
+			font-size: 0.875rem;
+			text-decoration: none;
+		}
+		button {
+			background: #F55F3E;
+			color: #fff;
+		}
+		button:hover { background: #d94e30; }
+		.cancel {
+			background: rgba(204, 204, 220, 0.1);
+			color: #ccccd4;
+		}
+		.cancel:hover { background: rgba(204, 204, 220, 0.15); }
+		.warning {
+			margin-top: 1rem;
+			padding: 0.75rem;
+			background: rgba(245, 95, 62, 0.1);
+			border-radius: 4px;
+			font-size: 0.8125rem;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>Load Preview Assets</h1>
+		<p>You are about to load frontend assets for <strong>{{.AssetsID}}</strong>:</p>
+		<div class="url">{{.AssetsURL}}</div>
+		<div class="warning">
+			This will override the default Grafana frontend for this browser session (24 hours).
+			Only proceed if you trust the source of these assets.
+		</div>
+		<form method="POST" action="/-/set-preview-assets">
+			<input type="hidden" name="assets" value="{{.AssetsID}}" />
+			<input type="hidden" name="csrf_token" value="{{.CSRFToken}}" />
+			<div class="actions">
+				<button type="submit">Confirm</button>
+				<a class="cancel" href="/">Cancel</a>
+			</div>
+		</form>
+	</div>
+</body>
+</html>

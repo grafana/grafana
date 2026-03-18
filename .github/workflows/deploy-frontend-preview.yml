@@ -1,0 +1,79 @@
+name: Deploy frontend preview
+
+on:
+  pull_request:
+    types: [synchronize, opened, reopened, labeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  deploy-frontend-preview:
+    name: Deploy frontend preview
+    runs-on: ubuntu-latest-8-cores
+    if: >-
+      github.event.pull_request.head.repo.fork == false &&
+      contains(github.event.pull_request.labels.*.name, 'deploy-frontend-preview')
+    permissions:
+      contents: read
+      id-token: write
+
+    env:
+      BUCKET_NAME: grafana-frontend-previews
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        uses: ./.github/actions/yarn-install
+
+      - name: Build frontend
+        run: yarn run build
+
+      # The deploy name is used as both the GCS bucket path and the asset ID
+      # stored in the preview assets cookie. It must match the backend's
+      # validAssetsID regex: ^[a-zA-Z0-9_]+$
+      # Format: pr_{REPO_NAME}_{PR_NUMBER}_{SANITIZED_BRANCH}
+      # SANITIZED_BRANCH keeps only alphanumeric chars and underscores, truncated to 30 chars.
+      - name: Create deploy name
+        id: create-deploy-name
+        env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          SANITIZED_BRANCH=$(echo "$BRANCH_NAME" | tr -cs '[:alnum:]_' '_' | sed 's/^_//;s/_$//' | cut -c1-30)
+
+          if [ -z "$SANITIZED_BRANCH" ]; then
+            echo "Error: Branch name resulted in empty string after sanitization"
+            exit 1
+          fi
+
+          echo "deploy-name=pr_${REPO_NAME}_${PR_NUMBER}_${SANITIZED_BRANCH}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload frontend build
+        uses: grafana/shared-workflows/actions/push-to-gcs@main
+        with:
+          environment: prod
+          bucket: ${{ env.BUCKET_NAME }}
+          bucket_path: ${{ steps.create-deploy-name.outputs.deploy-name }}
+          path: public/build
+          service_account: github-gf-storybook-preview@grafanalabs-workload-identity.iam.gserviceaccount.com
+          parent: false
+
+      - name: Write summary
+        env:
+          DEPLOY_NAME: ${{ steps.create-deploy-name.outputs.deploy-name }}
+        run: |
+          echo "## Frontend preview deployed!" >> $GITHUB_STEP_SUMMARY
+          echo "Deploy name: \`${DEPLOY_NAME}\`" >> $GITHUB_STEP_SUMMARY
+          echo "GCS path: \`gs://${BUCKET_NAME}/${DEPLOY_NAME}/\`" >> $GITHUB_STEP_SUMMARY

@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -71,6 +73,45 @@ func setupTestWebAssets(tb testing.TB) string {
 	return publicDir
 }
 
+// previewAssetsManifest is a test manifest served by the mock CDN server for preview assets tests
+const previewAssetsManifest = `{
+	"entrypoints": {
+		"app": {
+			"assets": {
+				"js": [
+					"public/build/runtime.preview123.js",
+					"public/build/app.preview456.js"
+				],
+				"css": ["public/build/grafana.app.preview.css"]
+			}
+		},
+		"swagger": {
+			"assets": {
+				"js": ["public/build/runtime.preview123.js", "public/build/swagger.preview.js"],
+				"css": ["public/build/grafana.swagger.preview.css"]
+			}
+		},
+		"dark": {
+			"assets": {
+				"css": ["public/build/grafana.dark.preview.css"]
+			}
+		},
+		"light": {
+			"assets": {
+				"css": ["public/build/grafana.light.preview.css"]
+			}
+		}
+	},
+	"runtime.preview123.js": {
+		"src": "public/build/runtime.preview123.js",
+		"integrity": "sha256-preview-runtime"
+	},
+	"app.preview456.js": {
+		"src": "public/build/app.preview456.js",
+		"integrity": "sha256-preview-app"
+	}
+}`
+
 func TestFrontendService_WebAssets(t *testing.T) {
 	t.Run("should serve index with proper assets", func(t *testing.T) {
 		publicDir := setupTestWebAssets(t)
@@ -100,5 +141,61 @@ func TestFrontendService_WebAssets(t *testing.T) {
 		body := recorder.Body.String()
 		assert.Contains(t, body, "src=\"public/build/runtime.js\" type=\"text/javascript\"")
 		assert.Contains(t, body, "src=\"public/build/app.js\" type=\"text/javascript\"")
+	})
+
+	t.Run("should serve index with override assets when cookie is set", func(t *testing.T) {
+		// Start a mock CDN server that serves the override manifest
+		cdnServer := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/pr_grafana_123_mybranch/public/build/assets-manifest.json" {
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(previewAssetsManifest))
+				return
+			}
+			http.NotFound(w, r)
+		}))
+		defer cdnServer.Close()
+
+		// Use the test server's client which trusts its self-signed certificate
+		originalClient := webassets.HTTPClient
+		webassets.HTTPClient = cdnServer.Client()
+		defer func() { webassets.HTTPClient = originalClient }()
+
+		publicDir := setupTestWebAssets(t)
+		raw := ini.Empty()
+		raw.Section("server").Key("assets_base_override_enabled").SetValue("true")
+		raw.Section("server").Key("assets_base_override_base_url").SetValue(cdnServer.URL + "/")
+		cfg := &setting.Cfg{
+			Raw:            raw,
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			Env:            setting.Dev,
+		}
+		service := createTestService(t, cfg)
+
+		overrideURL := cdnServer.URL + "/pr_grafana_123_mybranch/"
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		// Cookie stores just the asset ID, not the full URL
+		req.AddCookie(&http.Cookie{
+			Name:  assetsOverrideCookieName,
+			Value: "pr_grafana_123_mybranch",
+		})
+		recorder := httptest.NewRecorder()
+
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+
+		body := recorder.Body.String()
+		// Should contain the override asset URLs prefixed with the CDN URL
+		assert.Contains(t, body, overrideURL+"public/build/runtime.preview123.js")
+		assert.Contains(t, body, overrideURL+"public/build/app.preview456.js")
+		// Should NOT contain the default assets
+		assert.NotContains(t, body, "src=\"public/build/runtime.js\"")
+		assert.NotContains(t, body, "src=\"public/build/app.js\"")
 	})
 }

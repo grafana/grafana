@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"strings"
 	"syscall"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -21,11 +22,12 @@ import (
 )
 
 type IndexProvider struct {
-	log          logging.Logger
-	index        *template.Template
-	hooksService *hooks.HooksService
-	config       *setting.Cfg
-	license      licensing.Licensing
+	log              logging.Logger
+	index            *template.Template
+	hooksService     *hooks.HooksService
+	config           *setting.Cfg
+	license          licensing.Licensing
+	previewAssetsCfg PreviewAssetsConfig
 }
 
 type IndexViewData struct {
@@ -38,8 +40,9 @@ type IndexViewData struct {
 
 	Settings FSFrontendSettings
 
-	Assets      dtos.EntryPointAssets // Includes CDN info
-	DefaultUser dtos.CurrentUser
+	Assets           dtos.EntryPointAssets // Includes CDN info
+	AssetsOverridden bool
+	DefaultUser      dtos.CurrentUser
 
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
@@ -52,14 +55,14 @@ type IndexViewData struct {
 
 // Templates setup.
 var (
-	//go:embed *.html
+	//go:embed index.html
 	templatesFS embed.FS
 
 	// templates
-	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `*.html`))
+	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `index.html`))
 )
 
-func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService) (*IndexProvider, error) {
+func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService, previewAssetsCfg PreviewAssetsConfig) (*IndexProvider, error) {
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
@@ -71,11 +74,12 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 	// TODO what about enterprise settings here?
 
 	return &IndexProvider{
-		log:          logger,
-		index:        t,
-		hooksService: hooksService,
-		config:       cfg,
-		license:      license,
+		log:              logger,
+		index:            t,
+		hooksService:     hooksService,
+		config:           cfg,
+		license:          license,
+		previewAssetsCfg: previewAssetsCfg,
 	}, nil
 }
 
@@ -95,7 +99,13 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	assetsManifest, err := fswebassets.GetWebAssets(ctx, p.config, p.license)
+	// Check for assets base override cookie (stores an asset ID, not a full URL)
+	var assetsBaseOverrideURL string
+	if cookie, err := request.Cookie(assetsOverrideCookieName); err == nil && cookie.Value != "" {
+		assetsBaseOverrideURL = resolveAssetsOverrideURL(p.previewAssetsCfg, cookie.Value)
+	}
+
+	assetsManifest, err := fswebassets.GetWebAssets(ctx, p.config, p.license, p.previewAssetsCfg.Enabled, p.previewAssetsCfg.BaseURL, assetsBaseOverrideURL)
 	if err != nil {
 		p.log.Error("unable to get web assets", "err", err)
 		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
@@ -115,6 +125,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		AppSubUrl:                  p.config.AppSubURL,
 		IsDevelopmentEnv:           p.config.Env == setting.Dev,
 		Assets:                     assetsManifest,
+		AssetsOverridden:           assetsBaseOverrideURL != "",
 		DefaultUser:                dtos.CurrentUser{},
 		Nonce:                      reqCtx.RequestNonce,
 		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
@@ -170,4 +181,16 @@ func (p *IndexProvider) runIndexDataHooks(reqCtx *contextmodel.ReqContext, data 
 	p.hooksService.RunIndexDataHooks(&legacyIndexViewData, reqCtx)
 
 	data.Settings.BuildInfo = legacyIndexViewData.Settings.BuildInfo
+}
+
+// resolveAssetsOverrideURL constructs the full assets override URL from the preview config and an asset ID.
+func resolveAssetsOverrideURL(previewCfg PreviewAssetsConfig, assetsID string) string {
+	base := previewCfg.BaseURL
+	if base == "" {
+		return ""
+	}
+	if !strings.HasSuffix(base, "/") {
+		base += "/"
+	}
+	return base + assetsID + "/"
 }

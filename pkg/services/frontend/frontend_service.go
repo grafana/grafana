@@ -56,14 +56,18 @@ type frontendService struct {
 	tracer       trace.Tracer
 	license      licensing.Licensing
 
-	index           *IndexProvider
-	settingsService settingservice.Service // nil if not configured
+	index                *IndexProvider
+	previewAssetsCfg     PreviewAssetsConfig
+	previewAssetsHandler *previewAssetsHandler
+	settingsService      settingservice.Service // nil if not configured
 }
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, hooksService *hooks.HooksService) (*frontendService, error) {
 	logger := log.New("frontend-service")
 
-	index, err := NewIndexProvider(cfg, license, hooksService)
+	previewAssetsCfg := ReadPreviewAssetsConfig(cfg)
+
+	index, err := NewIndexProvider(cfg, license, hooksService, previewAssetsCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -78,15 +82,17 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 	}
 
 	s := &frontendService{
-		cfg:             cfg,
-		features:        features,
-		log:             logger,
-		promGatherer:    promGatherer,
-		promRegister:    promRegister,
-		tracer:          tracer,
-		license:         license,
-		index:           index,
-		settingsService: settingsService,
+		cfg:                  cfg,
+		features:             features,
+		log:                  logger,
+		promGatherer:         promGatherer,
+		promRegister:         promRegister,
+		tracer:               tracer,
+		license:              license,
+		index:                index,
+		previewAssetsCfg:     previewAssetsCfg,
+		previewAssetsHandler: newPreviewAssetsHandler(cfg, previewAssetsCfg),
+		settingsService:      settingsService,
 	}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
@@ -184,6 +190,12 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 	// GET because all POST requests are passed to the backend, even though POST is more correct. The frontend
 	// uses cache busting to ensure requests aren't cached.
 	s.routeGet(m, "/-/fe-boot-error", s.handleBootError)
+
+	// Preview assets: GET shows confirmation page, POST sets the cookie
+	if s.previewAssetsCfg.Enabled {
+		s.routeGet(m, "/-/set-preview-assets", s.previewAssetsHandler.handleGet)
+		m.Post("/-/set-preview-assets", middleware.ProvideRouteOperationName("/-/set-preview-assets"), s.previewAssetsHandler.handlePost)
+	}
 
 	s.routeGet(m, "/public-dashboards/:accessToken",
 		publicdashboardsapi.SetPublicDashboardAccessToken,

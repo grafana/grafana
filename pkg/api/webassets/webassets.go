@@ -39,7 +39,10 @@ type EntryPointInfo struct {
 var (
 	entryPointAssetsCacheMu sync.RWMutex           // guard entryPointAssetsCache
 	entryPointAssetsCache   *dtos.EntryPointAssets // TODO: get rid of global state
-	httpClient              = httpclient.New()
+
+	// HTTPClient is the HTTP client used for fetching remote asset manifests.
+	// Exported to allow tests to override with a client that trusts test TLS certificates.
+	HTTPClient *http.Client = httpclient.New()
 )
 
 func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
@@ -58,7 +61,7 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 
 	cdn := "" // "https://grafana-assets.grafana.net/grafana/10.3.0-64123/"
 	if cdn != "" {
-		result, err = readWebAssetsFromCDN(ctx, cdn)
+		result, err = ReadWebAssetsFromCDN(ctx, cdn)
 	}
 
 	// Get an OpenFeature client instance for feature flag evaluation
@@ -105,19 +108,21 @@ func ReadWebAssetsFromFile(manifestpath string) (*dtos.EntryPointAssets, error) 
 	return readWebAssets(f)
 }
 
-func readWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPointAssets, error) {
+func ReadWebAssetsFromCDN(ctx context.Context, baseURL string) (*dtos.EntryPointAssets, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"public/build/assets-manifest.json", nil)
 	if err != nil {
 		return nil, err
 	}
-	response, err := httpClient.Do(req)
+	response, err := HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
 		_ = response.Body.Close()
 	}()
-	dto, err := readWebAssets(response.Body)
+	// Limit response body to 10MB to prevent OOM from malicious/oversized responses
+	const maxManifestSize = 10 * 1024 * 1024
+	dto, err := readWebAssets(io.LimitReader(response.Body, maxManifestSize))
 	if err == nil {
 		dto.SetContentDeliveryURL(baseURL)
 	}

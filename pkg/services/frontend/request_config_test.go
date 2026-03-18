@@ -110,4 +110,5 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		assert.False(t, config.DisableLoginForm)
 		assert.False(t, config.AnonymousEnabled)
 	})
+
 }
