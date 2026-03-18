@@ -262,7 +262,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
-	if !s.opts.EnableFolderSupport {
+	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" || s.store == nil {
 		return nil
 	}
 	folder, err := s.getParentFolder(ctx, obj)
@@ -273,29 +273,25 @@ func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils
 }
 
 func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
-	folderUID := obj.GetFolder()
-	if folderUID == "" || s.store == nil {
-		return nil, nil
-	}
-
+	name := obj.GetFolder()
 	rsp, err := s.store.Read(ctx, &resourcepb.ReadRequest{
 		Key: &resourcepb.ResourceKey{
 			Group:     "folder.grafana.app",
 			Resource:  "folders",
 			Namespace: obj.GetNamespace(),
-			Name:      folderUID,
+			Name:      name,
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to read folder %s: %w", folderUID, err)
+		return nil, fmt.Errorf("failed to read folder %s: %w", name, err)
 	}
 	if rsp.Error != nil {
-		return nil, fmt.Errorf("failed to read folder %s: %s", folderUID, rsp.Error.Message)
+		return nil, fmt.Errorf("failed to read folder %s: %s", name, rsp.Error.Message)
 	}
 
 	raw := &unstructured.Unstructured{}
 	if err := json.Unmarshal(rsp.Value, &raw.Object); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal folder %s: %w", folderUID, err)
+		return nil, fmt.Errorf("failed to unmarshal folder %s: %w", name, err)
 	}
 
 	return utils.MetaAccessor(raw)

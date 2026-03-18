@@ -236,13 +236,13 @@ func TestEnsureSameRepoManager(t *testing.T) {
 		expectError     bool
 	}{
 		{
-			name:            "nil folder, resource unmanaged",
+			name:            "unmanaged folder, unmanaged resource",
 			folderManager:   nil,
 			resourceManager: nil,
 			expectError:     false,
 		},
 		{
-			name:          "nil folder, resource managed by repo",
+			name:          "unmanaged folder, resource managed by repo",
 			folderManager: nil,
 			resourceManager: &utils.ManagerProperties{
 				Kind:     utils.ManagerKindRepo,
@@ -296,7 +296,7 @@ func TestEnsureSameRepoManager(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name: "folder managed by terraform, resource unmanaged — skipped (non-repo)",
+			name: "folder managed by terraform — skipped (non-repo)",
 			folderManager: &utils.ManagerProperties{
 				Kind:     utils.ManagerKindTerraform,
 				Identity: "tf-1",
@@ -305,7 +305,7 @@ func TestEnsureSameRepoManager(t *testing.T) {
 			expectError:     false,
 		},
 		{
-			name: "folder managed by kubectl, resource managed by different kubectl — skipped (non-repo)",
+			name: "folder managed by kubectl — skipped (non-repo)",
 			folderManager: &utils.ManagerProperties{
 				Kind:     utils.ManagerKindKubectl,
 				Identity: "k-1",
@@ -331,10 +331,7 @@ func TestEnsureSameRepoManager(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var folder utils.GrafanaMetaAccessor
-			if tt.folderManager != nil {
-				folder = makeAccessor(t, tt.folderManager)
-			}
+			folder := makeAccessor(t, tt.folderManager)
 			resource := makeAccessor(t, tt.resourceManager)
 
 			err := ensureSameRepoManager(folder, resource)
