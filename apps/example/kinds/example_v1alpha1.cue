@@ -19,10 +19,10 @@ examplev1alpha1: exampleKind & {
     // [https://github.com/grafana/grafana-app-sdk/blob/main/codegen/cuekind/def.cue]
     // additional metadata fields cannot conflict with the common metadata field names
     schema: {
-        // #DefinedType is a re-usable definition for us to use in our schema. 
+        // #DefinedType is a re-usable definition for us to use in our schema.
         // Fields leading with # are definitions in CUE and won't be included in the generated types.
         #DefinedType: {
-            // Info is information about this entry. This comment, like all comments 
+            // Info is information about this entry. This comment, like all comments
             // on fields or definitions, will be copied into the generated types as well.
             info: string
             // Next is an optional next element in the DefinedType, allowing for a self-referential
@@ -42,7 +42,7 @@ examplev1alpha1: exampleKind & {
         status: {
         	lastObservedGeneration: int64
         }
-        // Custom is a subresource that will be stored the same way status is stored, 
+        // Custom is a subresource that will be stored the same way status is stored,
         // and requires using the /custom route to update.
         // Its content is returned as part of a GET to the resource itself, just like with status.
         // To route a subresource to an arbitrary handler, use the 'routes' field instead (see below).
@@ -58,14 +58,15 @@ examplev1alpha1: exampleKind & {
     }
 
     // routes contains subresource routes for the kind, which are exposed as HTTP handlers on 'examples/<resource name>/<subresource>'.
-    // This allows you to add additional non-storage-based handlers to your kind. 
+    // This allows you to add additional non-storage-based handlers to your kind.
     // These should only be used if the behavior cannot be accomplished by reconciliation on storage events.
     routes: {
         // This will add a handler for /foo on the resource
         "foo": {
-            // GET request handler. A subresource route can have multiple methods attached to it. 
+            // GET request handler. A subresource route can have multiple methods attached to it.
             // Allowed values are GET, POST, PUT, DELETE, PATCH, HEAD, and OPTIONS
             "GET": {
+                name: "getFoo"
                 // The response type for the GET /foo method. This will generate a go type, and will also be used for the OpenAPI definition for the route.
                 response: {
                     message: string

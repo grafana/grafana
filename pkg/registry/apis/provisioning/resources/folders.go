@@ -49,12 +49,11 @@ type FolderManager struct {
 	folderMetadataEnabled bool
 }
 
-func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderMetadataEnabled bool, opts ...FolderManagerOption) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, opts ...FolderManagerOption) *FolderManager {
 	fm := &FolderManager{
-		repo:                  repo,
-		tree:                  lookup,
-		client:                client,
-		folderMetadataEnabled: folderMetadataEnabled,
+		repo:   repo,
+		tree:   lookup,
+		client: client,
 		beforeCreate: func(context.Context, Folder) error {
 			return nil
 		},
@@ -68,6 +67,12 @@ func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInter
 func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOption {
 	return func(fm *FolderManager) {
 		fm.beforeCreate = beforeCreate
+	}
+}
+
+func WithFolderMetadataEnabled(folderMetadataEnabled bool) FolderManagerOption {
+	return func(fm *FolderManager) {
+		fm.folderMetadataEnabled = folderMetadataEnabled
 	}
 }
 
@@ -97,27 +102,18 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return parent, nil
 	}
 
-	f := ParseFolder(dir, cfg.Name)
-	// Use stable UID from _folder.json if available
-	if meta, err := ReadFolderMetadata(ctx, fm.repo, f.Path, ""); err == nil {
-		if meta.Name != "" {
-			f.ID = meta.Name
-		}
-	} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
-		return "", fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
+	f, err := ParseFolderWithMetadata(ctx, fm.repo, dir, "", fm.folderMetadataEnabled)
+	if err != nil {
+		return "", err
 	}
 	if fm.tree.In(f.ID) {
 		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
-		f := ParseFolder(traverse, cfg.GetName())
-		if meta, err := ReadFolderMetadata(ctx, fm.repo, traverse, ""); err == nil {
-			if meta.Name != "" {
-				f.ID = meta.Name
-			}
-		} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
-			return fmt.Errorf("read folder metadata for %s: %w", traverse, err)
+		f, err := ParseFolderWithMetadata(ctx, fm.repo, traverse, "", fm.folderMetadataEnabled)
+		if err != nil {
+			return err
 		}
 		if fm.tree.In(f.ID) {
 			parent = f.ID
@@ -146,7 +142,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 // EnsureFolderExists creates the folder if it doesn't exist.
 // If the folder already exists:
 // - it will error if the folder is not owned by this repository
-// - it will update the title if it has changed
+// - it will update metadata-backed properties if they have changed
 func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, parent string) error {
 	cfg := fm.repo.Config()
 	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
@@ -278,11 +274,16 @@ func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, st
 	return fm.EnsureFolderExists(ctx, leaf, parentFolderID)
 }
 
+// RemoveFolderFromTree removes the folder and all its descendants from the in-memory tree.
+func (fm *FolderManager) RemoveFolderFromTree(folderID string) {
+	fm.tree.Remove(folderID)
+}
+
 func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
 }
 
-// ReplicateTree replicates the folder tree to the repository.
+// EnsureFolderTreeExists replicates the folder tree to the repository.
 // The function fn is called for each folder.
 // If the folder already exists, the function is called with created set to false.
 // If the folder is created, the function is called with created set to true.
@@ -305,9 +306,17 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path s
 			return fn(folder, false, nil)
 		}
 
-		msg := fmt.Sprintf("Add folder %s", p)
-		if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
-			return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
+		if fm.folderMetadataEnabled {
+			msg := fmt.Sprintf("Add folder and folder metadata %s", p)
+			manifest := NewFolderManifest(folder.ID, folder.Title)
+			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, ref, msg); err != nil {
+				return fn(folder, true, err)
+			}
+		} else {
+			msg := fmt.Sprintf("Add folder %s", p)
+			if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
+				return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
+			}
 		}
 		// Add it to the existing tree
 		fm.tree.Add(folder, parent)

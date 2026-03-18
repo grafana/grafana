@@ -250,6 +250,11 @@ export { ToolbarButton } from './components/ToolbarButton/ToolbarButton';
 export { ToolbarButtonRow } from './components/ToolbarButton/ToolbarButtonRow';
 export { ValuePicker } from './components/ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './components/MatchersUI/fieldMatchersUI';
+export {
+  MatcherScopeSelector,
+  getUniqueMatcherScopes,
+  buildScopeOptions,
+} from './components/MatchersUI/MatcherScopeSelector';
 export { Link } from './components/Link/Link';
 export { TextLink } from './components/Link/TextLink';
 export { Text } from './components/Text/Text';

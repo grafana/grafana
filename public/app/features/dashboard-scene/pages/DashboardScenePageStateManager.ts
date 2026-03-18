@@ -381,7 +381,10 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
 
-      const isRenderTarget = options.route === DashboardRoutes.Report || options.route === DashboardRoutes.Embedded;
+      const isRenderTarget =
+        options.route === DashboardRoutes.Report ||
+        options.route === DashboardRoutes.Embedded ||
+        (options.route === DashboardRoutes.Normal && contextSrv.user?.authenticatedBy === 'render');
       const enableProfiling =
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === options.uid) !== -1 ||
         isRenderTarget;
@@ -1125,6 +1128,15 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
   }
 
+  private syncUnifiedStateToManager(manager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2) {
+    manager.setState({
+      dashboard: this.state.dashboard,
+      panelEditor: this.state.panelEditor,
+      isLoading: this.state.isLoading,
+      loadError: this.state.loadError,
+    });
+  }
+
   private async withVersionHandling<T>(
     operation: (manager: DashboardScenePageStateManager | DashboardScenePageStateManagerV2) => Promise<T>
   ): Promise<T> {
@@ -1153,9 +1165,14 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   public async reloadDashboard(queryParams: UrlQueryMap) {
     return this.withVersionHandling((manager) => {
-      // sync active manager state first to trigger reload properly
-      manager.setState(this.state);
-      return manager.reloadDashboard(queryParams);
+      if (manager instanceof DashboardScenePageStateManagerV2) {
+        // V2 reload needs state synced into the active manager before reloading.
+        this.syncUnifiedStateToManager(manager);
+        return manager.reloadDashboard(queryParams);
+      }
+
+      // preserve existing v1 reload behavior
+      return manager.reloadDashboard.call(this, queryParams);
     });
   }
 
@@ -1190,7 +1207,16 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async loadSnapshot(slug: string) {
-    return this.withVersionHandling((manager) => manager.loadSnapshot.call(this, slug));
+    return this.withVersionHandling((manager) => {
+      if (manager instanceof DashboardScenePageStateManagerV2) {
+        // we need to post-sync here before withVersionHandling will sync the state back to the unified manager
+        return manager.loadSnapshot.call(this, slug).then(() => {
+          this.syncUnifiedStateToManager(manager);
+        });
+      }
+
+      return manager.loadSnapshot.call(this, slug);
+    });
   }
 
   public clearDashboardCache() {
@@ -1240,7 +1266,16 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       this.setActiveManager('v1');
     }
 
-    return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
+    return this.withVersionHandling((manager) => {
+      if (manager instanceof DashboardScenePageStateManagerV2) {
+        // we need to post-sync here before withVersionHandling will sync the state back to the unified manager
+        return manager.loadDashboard.call(this, options).then(() => {
+          this.syncUnifiedStateToManager(manager);
+        });
+      }
+
+      return manager.loadDashboard.call(this, options);
+    });
   }
 
   public setActiveManager(manager: 'v1' | 'v2') {

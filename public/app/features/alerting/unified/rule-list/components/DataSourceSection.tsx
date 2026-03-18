@@ -114,5 +114,6 @@ const getStyles = (theme: GrafanaTheme2, isCollapsed = false) => ({
   dataSourceSectionTitle: css({
     background: theme.colors.background.secondary,
     padding: theme.spacing(1, 1.5),
+    borderRadius: theme.shape.radius.default,
   }),
 });

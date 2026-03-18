@@ -84,7 +84,6 @@ COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
 COPY pkg/build pkg/build
 COPY pkg/build/wire pkg/build/wire
-COPY pkg/promlib pkg/promlib
 COPY pkg/storage/unified/resource pkg/storage/unified/resource
 COPY pkg/storage/unified/resource/kv/go.* pkg/storage/unified/resource/kv
 COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
