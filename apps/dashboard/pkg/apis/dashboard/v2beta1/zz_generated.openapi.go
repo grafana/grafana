@@ -655,7 +655,6 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref common.Ref
 					"enableGroupBy": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Whether the group-by operator is enabled in the ad hoc filter combobox.",
-							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -666,7 +665,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref common.Ref
 						},
 					},
 				},
-				Required: []string{"name", "baseFilters", "filters", "defaultKeys", "hide", "skipUrlSync", "allowCustomValue", "enableGroupBy"},
+				Required: []string{"name", "baseFilters", "filters", "defaultKeys", "hide", "skipUrlSync", "allowCustomValue"},
 			},
 		},
 		Dependencies: []string{

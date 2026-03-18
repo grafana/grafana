@@ -1042,7 +1042,7 @@ AdhocVariableSpec: {
 	description?: string
 	allowCustomValue: bool | *true
 	// Whether the group-by operator is enabled in the ad hoc filter combobox.
-	enableGroupBy: bool | *false
+	enableGroupBy?: bool | *false
 	origin?: ControlSourceRef
 }
 

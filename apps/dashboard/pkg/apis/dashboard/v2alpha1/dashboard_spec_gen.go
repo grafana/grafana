@@ -2345,7 +2345,7 @@ type DashboardAdhocVariableSpec struct {
 	Description      *string                          `json:"description,omitempty"`
 	AllowCustomValue bool                             `json:"allowCustomValue"`
 	// Whether the group-by operator is enabled in the ad hoc filter combobox.
-	EnableGroupBy bool `json:"enableGroupBy"`
+	EnableGroupBy *bool `json:"enableGroupBy,omitempty"`
 }
 
 // NewDashboardAdhocVariableSpec creates a new DashboardAdhocVariableSpec object.
@@ -2358,7 +2358,7 @@ func NewDashboardAdhocVariableSpec() *DashboardAdhocVariableSpec {
 		Hide:             DashboardVariableHideDontHide,
 		SkipUrlSync:      false,
 		AllowCustomValue: true,
-		EnableGroupBy:    false,
+		EnableGroupBy:    (func(input bool) *bool { return &input })(false),
 	}
 }
 

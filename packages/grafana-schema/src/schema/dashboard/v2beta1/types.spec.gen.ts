@@ -1372,7 +1372,7 @@ export interface AdhocVariableSpec {
 	description?: string;
 	allowCustomValue: boolean;
 	// Whether the group-by operator is enabled in the ad hoc filter combobox.
-	enableGroupBy: boolean;
+	enableGroupBy?: boolean;
 	origin?: ControlSourceRef;
 }
 
