@@ -95,6 +95,12 @@ func (td *TenantDeleter) Stop() {
 // runDeletionPass iterates all pending-delete records and deletes data for
 // tenants whose deletion time has passed.
 func (td *TenantDeleter) runDeletionPass(ctx context.Context) {
+	groupResources, err := td.dataStore.getGroupResources(ctx)
+	if err != nil {
+		td.log.Error("failed to list group resources", "error", err)
+		return
+	}
+
 	for key, err := range td.pendingDeleteStore.kv.Keys(ctx, pendingDeleteSection, ListOptions{}) {
 		if err != nil {
 			td.log.Error("failed to list pending delete records", "error", err)
@@ -120,7 +126,7 @@ func (td *TenantDeleter) runDeletionPass(ctx context.Context) {
 			continue
 		}
 
-		if err := td.deleteTenant(ctx, tenantName); err != nil {
+		if err := td.deleteTenant(ctx, tenantName, groupResources); err != nil {
 			td.log.Error("failed to delete tenant data", "tenant", tenantName, "error", err)
 		}
 	}
@@ -128,13 +134,8 @@ func (td *TenantDeleter) runDeletionPass(ctx context.Context) {
 
 // deleteTenant removes all resource data for the given tenant from the data
 // store, then removes its pending-delete record.
-func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string) error {
+func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, groupResources []GroupResource) error {
 	td.log.Info("tenant data deletion", "tenant", tenantName, "dry_run", td.cfg.DryRun)
-
-	groupResources, err := td.dataStore.getGroupResources(ctx)
-	if err != nil {
-		return err
-	}
 
 	for _, gr := range groupResources {
 		listKey := ListRequestKey{
