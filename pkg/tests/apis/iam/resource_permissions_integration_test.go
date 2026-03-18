@@ -17,6 +17,7 @@ import (
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -684,7 +685,7 @@ func TestIntegrationResourcePermissionSearch(t *testing.T) {
 		// Admin has get_permissions on the folder -> should see Editor's direct permission for this folder.
 		rawAdmin, err := restClientAdmin.Get().
 			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
-			Param("userUID", editorUID).
+			Param(resourcepermission.SearchParamUserUID, editorUID).
 			Do(ctx).
 			Raw()
 		require.NoError(t, err)
@@ -702,7 +703,7 @@ func TestIntegrationResourcePermissionSearch(t *testing.T) {
 		// Viewer does not have get_permissions on this folder -> should NOT see Editor's direct permission for it.
 		rawViewer, err := restClientViewer.Get().
 			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
-			Param("userUID", editorUID).
+			Param(resourcepermission.SearchParamUserUID, editorUID).
 			Do(ctx).
 			Raw()
 		require.NoError(t, err)
@@ -729,7 +730,7 @@ func TestIntegrationResourcePermissionSearch(t *testing.T) {
 
 		raw, err := restClientAdmin.Get().
 			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
-			Param("userUID", editorUID).
+			Param(resourcepermission.SearchParamUserUID, editorUID).
 			Do(ctx).
 			Raw()
 		require.NoError(t, err)

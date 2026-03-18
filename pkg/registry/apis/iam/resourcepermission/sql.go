@@ -529,10 +529,10 @@ func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, s
 	return nil
 }
 
-// ListDirectPermissionsForUser returns all direct resource permissions (dashboard/folder level) for the given user UID in the namespace (org).
+// ListDirectPermissionsForSubject returns all direct resource permissions (dashboard/folder level) for the given subject UID (team or user) in the namespace (org).
 // Used by the ResourcePermissions search subresource
-func (s *ResourcePermSqlBackend) ListDirectPermissionsForUser(ctx context.Context, namespace, userUID string) ([]v0alpha1.PermissionSpec, error) {
-	if userUID == "" {
+func (s *ResourcePermSqlBackend) ListDirectPermissionsForSubject(ctx context.Context, namespace, subjectUID string) ([]v0alpha1.PermissionSpec, error) {
+	if subjectUID == "" {
 		return nil, nil
 	}
 	ns, err := types.ParseNamespace(namespace)
@@ -556,7 +556,7 @@ func (s *ResourcePermSqlBackend) ListDirectPermissionsForUser(ctx context.Contex
 		assignments, err = s.getRbacAssignmentsWithTx(ctx, dbHelper, tx, &ListResourcePermissionsQuery{
 			OrgID:      ns.OrgID,
 			ActionSets: actionSets,
-			SubjectUID: userUID,
+			SubjectUID: subjectUID,
 		})
 		return err
 	})
