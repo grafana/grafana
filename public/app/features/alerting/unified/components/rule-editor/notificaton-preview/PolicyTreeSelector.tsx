@@ -8,6 +8,7 @@ import { Route } from 'app/plugins/datasource/alertmanager/types';
 
 import { RuleFormValues } from '../../../types/rule-form';
 import { ALERTING_PATHS } from '../../../utils/navigation';
+import { trackNotificationPolicySelectorChanged } from '../../notification-policies/notificationPolicyAnalytics';
 import {
   NAMED_ROOT_LABEL_NAME,
   useListNotificationPolicyRoutes,
@@ -150,15 +151,21 @@ export function PolicyTreeSelector() {
 
   const handlePolicyChange = (option: SelectableValue<string>) => {
     const newValue = option.value ?? '';
+
+    trackNotificationPolicySelectorChanged({
+      fromDefault: isUsingDefaultPolicy,
+      toDefault: newValue === '',
+    });
+
     updatePolicyLabel(newValue);
 
-    // If user selects default, collapse back
     if (newValue === '') {
       setIsExpanded(false);
     }
   };
 
   const handleResetToDefault = () => {
+    trackNotificationPolicySelectorChanged({ fromDefault: false, toDefault: true });
     updatePolicyLabel('');
     setIsExpanded(false);
   };
