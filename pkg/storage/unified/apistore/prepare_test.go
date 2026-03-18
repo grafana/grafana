@@ -3,6 +3,7 @@ package apistore
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"math/rand/v2"
 	"strings"
 	"testing"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
@@ -401,6 +403,149 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 	meta, err := utils.MetaAccessor(out)
 	require.NoError(t, err)
 	return meta
+}
+
+type failingConfigProvider struct {
+	err error
+}
+
+func (f *failingConfigProvider) GetRestConfig(context.Context) (*clientrest.Config, error) {
+	return nil, f.err
+}
+
+func TestEnsureRepoManagedByParentFolder(t *testing.T) {
+	makeDashboard := func(t *testing.T, folder string, mgr *utils.ManagerProperties) utils.GrafanaMetaAccessor {
+		t.Helper()
+		obj := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-dash", Namespace: "default"}}
+		acc, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		if folder != "" {
+			acc.SetFolder(folder)
+		}
+		if mgr != nil {
+			acc.SetManagerProperties(*mgr)
+		}
+		return acc
+	}
+
+	t.Run("skips when folder support is disabled", func(t *testing.T) {
+		s := &Storage{opts: StorageOptions{EnableFolderSupport: false}}
+		obj := makeDashboard(t, "some-folder", nil)
+		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
+	})
+
+	t.Run("skips when folder annotation is empty", func(t *testing.T) {
+		s := &Storage{opts: StorageOptions{EnableFolderSupport: true}}
+		obj := makeDashboard(t, "", nil)
+		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
+	})
+
+	t.Run("skips when configProvider is nil", func(t *testing.T) {
+		s := &Storage{opts: StorageOptions{EnableFolderSupport: true}, configProvider: nil}
+		obj := makeDashboard(t, "some-folder", nil)
+		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
+	})
+
+	t.Run("non-fatal when folder read fails", func(t *testing.T) {
+		s := &Storage{
+			opts:           StorageOptions{EnableFolderSupport: true},
+			configProvider: &failingConfigProvider{err: errors.New("rest config unavailable")},
+		}
+		obj := makeDashboard(t, "some-folder", nil)
+		err := s.ensureRepoManagedByParentFolder(context.Background(), obj)
+		require.NoError(t, err, "folder read errors should be non-fatal")
+	})
+
+	t.Run("create: dashboard in folder works when configProvider is nil", func(t *testing.T) {
+		_ = dashv1.AddToScheme(rtscheme)
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:        dashv1.DashboardResourceInfo.GroupResource(),
+			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake: node,
+			opts: StorageOptions{
+				Scheme:              rtscheme,
+				EnableFolderSupport: true,
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash-in-folder"}}
+		meta, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		meta.SetFolder("my-folder")
+
+		_, err = s.prepareObjectForStorage(ctx, dash)
+		require.NoError(t, err, "create should succeed when configProvider is nil")
+	})
+
+	t.Run("create: dashboard in folder is non-fatal when folder read fails", func(t *testing.T) {
+		_ = dashv1.AddToScheme(rtscheme)
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:             dashv1.DashboardResourceInfo.GroupResource(),
+			codec:          apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake:      node,
+			configProvider: &failingConfigProvider{err: errors.New("no config")},
+			opts: StorageOptions{
+				Scheme:              rtscheme,
+				EnableFolderSupport: true,
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash-in-folder"}}
+		meta, err := utils.MetaAccessor(dash)
+		require.NoError(t, err)
+		meta.SetFolder("my-folder")
+
+		_, err = s.prepareObjectForStorage(ctx, dash)
+		require.NoError(t, err, "create should succeed even when folder read fails")
+	})
+
+	t.Run("update: folder change is non-fatal when folder read fails", func(t *testing.T) {
+		_ = dashv1.AddToScheme(rtscheme)
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:             dashv1.DashboardResourceInfo.GroupResource(),
+			codec:          apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake:      node,
+			configProvider: &failingConfigProvider{err: errors.New("no config")},
+			opts: StorageOptions{
+				Scheme:              rtscheme,
+				EnableFolderSupport: true,
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}}
+		oldMeta, err := utils.MetaAccessor(oldDash)
+		require.NoError(t, err)
+		oldMeta.SetFolder("folder-a")
+
+		newDash := oldDash.DeepCopy()
+		newMeta, err := utils.MetaAccessor(newDash)
+		require.NoError(t, err)
+		newMeta.SetFolder("folder-b")
+
+		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
+		require.NoError(t, err, "update with folder change should succeed even when folder read fails")
+	})
 }
 
 func TestPrepareLargeObjectForStorage(t *testing.T) {
