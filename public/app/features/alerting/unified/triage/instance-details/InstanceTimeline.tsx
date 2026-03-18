@@ -325,8 +325,8 @@ function NotificationStatusGroup({
   const isFiring = status === 'firing';
 
   const statusLabel = isFiring
-    ? t('alerting.instance-details.timeline-status-firing', 'Firing')
-    : t('alerting.instance-details.timeline-status-resolved', 'Resolved');
+    ? t('alerting.instance-details.timeline-status-firing', 'Firing notification')
+    : t('alerting.instance-details.timeline-status-resolved', 'Resolved notification');
 
   const variantStyle = isFiring ? styles.summaryRowFiring : styles.summaryRowResolved;
 
