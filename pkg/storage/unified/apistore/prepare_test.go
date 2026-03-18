@@ -446,14 +446,15 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
 	})
 
-	t.Run("non-fatal when folder read fails", func(t *testing.T) {
+	t.Run("returns error when folder read fails", func(t *testing.T) {
 		s := &Storage{
 			opts:           StorageOptions{EnableFolderSupport: true},
 			configProvider: &failingConfigProvider{err: errors.New("rest config unavailable")},
 		}
 		obj := makeDashboard(t, "some-folder", nil)
 		err := s.ensureRepoManagedByParentFolder(context.Background(), obj)
-		require.NoError(t, err, "folder read errors should be non-fatal")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "rest config unavailable")
 	})
 
 	t.Run("create: dashboard in folder works when configProvider is nil", func(t *testing.T) {
@@ -484,7 +485,7 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		require.NoError(t, err, "create should succeed when configProvider is nil")
 	})
 
-	t.Run("create: dashboard in folder is non-fatal when folder read fails", func(t *testing.T) {
+	t.Run("create: fails when folder read fails", func(t *testing.T) {
 		_ = dashv1.AddToScheme(rtscheme)
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		require.NoError(t, err)
@@ -510,10 +511,11 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		meta.SetFolder("my-folder")
 
 		_, err = s.prepareObjectForStorage(ctx, dash)
-		require.NoError(t, err, "create should succeed even when folder read fails")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "no config")
 	})
 
-	t.Run("update: folder change is non-fatal when folder read fails", func(t *testing.T) {
+	t.Run("update: folder change fails when folder read fails", func(t *testing.T) {
 		_ = dashv1.AddToScheme(rtscheme)
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		require.NoError(t, err)
@@ -544,7 +546,8 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		newMeta.SetFolder("folder-b")
 
 		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
-		require.NoError(t, err, "update with folder change should succeed even when folder read fails")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "no config")
 	})
 }
 
