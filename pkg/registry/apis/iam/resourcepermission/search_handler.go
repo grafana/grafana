@@ -129,7 +129,7 @@ func (h *ResourcePermissionsSearchHandler) GetAPIRoutes(defs map[string]common.O
 }
 
 // DoSearch handles GET .../namespaces/{namespace}/resourcepermissions/search
-// Accepted query params (at least one required):
+// Accepted query params (exactly one required):
 //   - userUID: user UID to search direct permissions for
 //   - teamUID: team UID
 //   - basicRole: basic org role name (e.g. Viewer, Editor, Admin)
