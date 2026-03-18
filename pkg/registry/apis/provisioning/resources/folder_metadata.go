@@ -128,18 +128,18 @@ func marshalFolderManifest(folder *folders.Folder) ([]byte, error) {
 	return data, nil
 }
 
-// ReadFolderMetadata reads _folder.json from folderPath and returns the Folder resource.
-func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath, ref string) (*folders.Folder, error) {
+// ReadFolderMetadata reads _folder.json from folderPath and returns the Folder resource and its file hash.
+func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath, ref string) (*folders.Folder, string, error) {
 	metadataPath := safepath.Join(folderPath, folderMetadataFileName)
 	info, err := repo.Read(ctx, metadataPath, ref)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	var f folders.Folder
 	if err := json.Unmarshal(info.Data, &f); err != nil {
-		return nil, fmt.Errorf("parse folder manifest: %w", err)
+		return nil, "", fmt.Errorf("parse folder manifest: %w", err)
 	}
-	return &f, nil
+	return &f, info.Hash, nil
 }
 
 // WriteFolderMetadata creates _folder.json into folderPath and returns the stable UID.
@@ -175,7 +175,7 @@ func ParseFolderWithMetadata(ctx context.Context, reader repository.Reader, path
 		return f, nil
 	}
 
-	meta, err := ReadFolderMetadata(ctx, reader, path, ref)
+	meta, hash, err := ReadFolderMetadata(ctx, reader, path, ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
 			return f, nil
@@ -189,6 +189,7 @@ func ParseFolderWithMetadata(ctx context.Context, reader repository.Reader, path
 	if meta.Spec.Title != "" {
 		f.Title = meta.Spec.Title
 	}
+	f.MetadataHash = hash
 	return f, nil
 }
 
@@ -207,7 +208,7 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 	)
 
 	if folderMetadataEnabled {
-		folderObj, err = ReadFolderMetadata(ctx, reader, path, ref)
+		folderObj, _, err = ReadFolderMetadata(ctx, reader, path, ref)
 		if err != nil && !errors.Is(err, repository.ErrFileNotFound) {
 			return nil, fmt.Errorf("read folder metadata: %w", err)
 		}

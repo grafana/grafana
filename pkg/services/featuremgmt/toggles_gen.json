@@ -2643,6 +2643,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthzDatasourceResourcePermissions",
+        "resourceVersion": "1773784985598",
+        "creationTimestamp": "2026-03-17T22:03:05Z"
+      },
+      "spec": {
+        "description": "Enables datasource resource permissions via the K8s IAM resource permission APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthzGlobalRolesApi",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-01-15T08:13:46Z"

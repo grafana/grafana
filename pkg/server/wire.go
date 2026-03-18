@@ -398,6 +398,7 @@ var wireBasicSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	starApi.ProvideApi,
 	userimpl.ProvideService,
+	wire.Bind(new(user.Service), new(*userimpl.Service)),
 	orgimpl.ProvideService,
 	orgimpl.ProvideDeletionService,
 	statsimpl.ProvideService,

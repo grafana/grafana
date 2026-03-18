@@ -8,10 +8,12 @@ import (
 	"testing"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIsFolderMetadataFile(t *testing.T) {
@@ -29,16 +31,17 @@ func TestReadFolderMetadata(t *testing.T) {
 	validData, err := json.Marshal(manifest)
 	require.NoError(t, err)
 
-	t.Run("valid _folder.json returns Folder with correct UID", func(t *testing.T) {
+	t.Run("valid _folder.json returns Folder with correct UID and hash", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
-			Return(&repository.FileInfo{Data: validData}, nil)
+			Return(&repository.FileInfo{Data: validData, Hash: "abc123"}, nil)
 
-		result, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
+		result, hash, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
 
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		assert.Equal(t, stableUID, result.Name)
+		assert.Equal(t, "abc123", hash)
 	})
 
 	t.Run("read error returns error", func(t *testing.T) {
@@ -46,7 +49,7 @@ func TestReadFolderMetadata(t *testing.T) {
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 			Return(nil, errors.New("file not found"))
 
-		_, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
+		_, _, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
 
 		require.Error(t, err)
 	})
@@ -56,9 +59,54 @@ func TestReadFolderMetadata(t *testing.T) {
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
 			Return(&repository.FileInfo{Data: []byte("not-json")}, nil)
 
-		_, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
+		_, _, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
 
 		require.Error(t, err)
+	})
+}
+
+func TestParseFolderWithMetadata_MetadataHash(t *testing.T) {
+	const stableUID = "stable-uid"
+	manifest := NewFolderManifest(stableUID, "My Folder")
+	validData, err := json.Marshal(manifest)
+	require.NoError(t, err)
+
+	cfg := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "repo-a", Namespace: "default"},
+		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+	}
+
+	t.Run("populates MetadataHash when metadata exists", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(cfg)
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+			Return(&repository.FileInfo{Data: validData, Hash: "metadata-hash-123"}, nil)
+
+		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "", true)
+		require.NoError(t, err)
+		assert.Equal(t, stableUID, f.ID)
+		assert.Equal(t, "My Folder", f.Title)
+		assert.Equal(t, "metadata-hash-123", f.MetadataHash)
+	})
+
+	t.Run("MetadataHash is empty when metadata disabled", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(cfg)
+
+		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "", false)
+		require.NoError(t, err)
+		assert.Empty(t, f.MetadataHash)
+	})
+
+	t.Run("MetadataHash is empty when _folder.json missing", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(cfg)
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound)
+
+		f, err := ParseFolderWithMetadata(context.Background(), rw, "my-folder/", "", true)
+		require.NoError(t, err)
+		assert.Empty(t, f.MetadataHash)
 	})
 }
 
