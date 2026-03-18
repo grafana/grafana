@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 	"time"
@@ -27,6 +28,45 @@ var (
 	ErrShortURLAbsolutePath = fmt.Errorf("path should be relative")
 	ErrShortURLInvalidPath  = fmt.Errorf("invalid short URL path")
 )
+
+// validateRelativePath checks that a short URL path is a safe relative path
+// that will not redirect to an external domain.
+func validateRelativePath(rawPath string) error {
+	p := strings.TrimSpace(rawPath)
+
+	// Reject path traversal
+	if strings.Contains(p, "../") {
+		return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, p)
+	}
+
+	// Reject protocol-relative URLs (//evil.com) before the general absolute path check
+	if strings.HasPrefix(p, "//") {
+		return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, p)
+	}
+
+	// Reject backslash-based paths that browsers may interpret as URLs
+	if strings.HasPrefix(p, `\`) {
+		return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, p)
+	}
+
+	// Reject URLs containing a scheme (e.g. http://evil.com)
+	if strings.Contains(p, "://") {
+		return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, p)
+	}
+
+	// Parse as URL and reject if it has a scheme (catches scheme:... patterns like javascript:alert(1))
+	parsed, err := url.Parse(p)
+	if err == nil && parsed.Scheme != "" {
+		return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, p)
+	}
+
+	// Reject absolute filesystem paths (starts with /)
+	if path.IsAbs(p) {
+		return fmt.Errorf("%w: %s", ErrShortURLAbsolutePath, p)
+	}
+
+	return nil
+}
 
 func New(cfg app.Config) (app.App, error) {
 	cfg.KubeConfig.APIPath = "apis"
@@ -58,14 +98,7 @@ func New(cfg app.Config) (app.App, error) {
 							return fmt.Errorf("expected ShortURL object, got %T", req.Object)
 						}
 
-						relPath := strings.TrimSpace(shortURL.Spec.Path)
-						if path.IsAbs(relPath) {
-							return fmt.Errorf("%w: %s", ErrShortURLAbsolutePath, relPath)
-						}
-						if strings.Contains(relPath, "../") {
-							return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, relPath)
-						}
-						return nil
+						return validateRelativePath(shortURL.Spec.Path)
 					},
 				},
 				CustomRoutes: simple.AppCustomRouteHandlers{
@@ -73,7 +106,7 @@ func New(cfg app.Config) (app.App, error) {
 						Method: "GET",
 						Path:   "goto",
 					}: func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
-						url, _, found := strings.Cut(req.URL.Path, "/apis/") // This will be settings.AppURL
+						appURL, _, found := strings.Cut(req.URL.Path, "/apis/") // This will be settings.AppURL
 						if !found {
 							return fmt.Errorf("unable to parse request URL")
 						}
@@ -85,6 +118,11 @@ func New(cfg app.Config) (app.App, error) {
 						info, err := client.Get(ctx, id)
 						if err != nil {
 							return err
+						}
+
+						// Safety net: validate the stored path before redirecting
+						if err := validateRelativePath(info.Spec.Path); err != nil {
+							return fmt.Errorf("stored short URL has invalid path: %w", err)
 						}
 
 						// Update lastSeenAt in the background
@@ -103,13 +141,13 @@ func New(cfg app.Config) (app.App, error) {
 							}
 						}()
 
-						url = url + "/" + info.Spec.Path
+						redirectURL := appURL + "/" + info.Spec.Path
 						if req.URL.Query().Get("redirect") == "false" { // helpful for testing
 							return json.NewEncoder(w).Encode(shorturlv1beta1.GetGotoResponse{
-								Url: url,
+								Url: redirectURL,
 							})
 						}
-						w.Header().Add("Location", url)
+						w.Header().Add("Location", redirectURL)
 						w.WriteHeader(http.StatusFound)
 						return nil
 					},
