@@ -4,8 +4,8 @@
  * This module manages the single active MutationClient instance and provides
  * the API object that is exposed to plugins via RestrictedGrafanaApis.
  *
- * The mutation client is registered/cleared automatically when a DashboardScene
- * activates/deactivates, via the DashboardMutationClientSetter callback.
+ * The mutation client is created/destroyed automatically when a DashboardScene
+ * activates/deactivates, via the DashboardMutationClientSetter bridge.
  * Plugins access it through RestrictedGrafanaApis context -- they cannot
  * import this module directly because it lives inside the core bundle.
  */
@@ -33,6 +33,11 @@ provideMutationClientFactory((sceneObject) => {
     _client = null;
   };
 });
+
+/** @internal — exposed only for unit tests that need to inject a mock client. */
+export function setDashboardMutationClientForTests(client: MutationClient | null): void {
+  _client = client;
+}
 
 export const dashboardMutationApi: DashboardMutationAPI = {
   execute: (mutation: MutationRequest) => {
