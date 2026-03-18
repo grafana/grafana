@@ -57,3 +57,18 @@ The graph in this next image shows bars instead of lines and has the **No value*
 {{< figure src="/static/img/docs/troubleshooting/grafana_null_zero.png" max-width="1200px" alt="Graph with null values not connected" >}}
 
 As you can see, there's a significant difference in the visualizations.
+
+## Debug dashboard performance with metrics
+
+Grafana can display live query timing information directly on each panel header, letting you quickly identify which panels are slow without opening the panel inspector.
+
+To toggle the query latency display, press **D** followed by **P** while viewing a dashboard. Each panel header shows a speedometer icon and the time the last query took — for example, `234ms` or `1.2s`. While a query is running, the timer counts up in real time so you can see how long it's been waiting. When the query finishes, the display settles on the final elapsed time.
+
+To identify slow panels:
+
+- Press **D** then **P** to reveal query times across all panels.
+- Look for panels with noticeably higher times. These are candidates for optimization — consider reducing the queried time range, applying data source-side aggregation, or splitting a heavy panel into smaller ones.
+- Hover over the timing badge on any panel for a tooltip showing the exact query duration in milliseconds.
+- Press **D** then **P** again to hide the metrics when you're done.
+
+The query latency display is off by default and isn't persisted — it resets each time you load the dashboard.
