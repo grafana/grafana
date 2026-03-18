@@ -294,7 +294,7 @@ func (s *Storage) getFolderManagerProperties(ctx context.Context, namespace, fol
 
 func (s *Storage) checkFolderManager(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
 	folderUID := obj.GetFolder()
-	if folderUID == "" {
+	if folderUID == "" || s.store == nil {
 		return nil
 	}
 
