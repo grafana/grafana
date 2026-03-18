@@ -11949,10 +11949,6 @@
       "aria-label": "Breadcrumbs"
     },
     "extension-sidebar": {
-      "button-label": {
-        "closed": "{{title}} closed",
-        "open": "{{title}} open"
-      },
       "button-tooltip": {
         "close": "Close {{title}}",
         "open": "Open {{title}}",
