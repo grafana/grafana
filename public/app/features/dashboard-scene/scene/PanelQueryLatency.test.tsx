@@ -108,7 +108,8 @@ describe('PanelQueryLatency', () => {
       queryRunner.setState({ data: makePanelData({ state: LoadingState.Loading, startTime }) });
     });
 
-    // Initially elapsed is 0 (Date.now() - startTime = 0)
+    // Immediately after loading starts, elapsed is computed as Date.now() - startTime.
+    // Since system time equals startTime here, elapsed = 0ms.
     expect(screen.getByText('0ms')).toBeInTheDocument();
 
     act(() => {
@@ -149,6 +150,48 @@ describe('PanelQueryLatency', () => {
     expect(screen.getByText('457ms')).toBeInTheDocument();
 
     jest.useRealTimers();
+  });
+
+  it('shows timing when query ends in an error state', async () => {
+    const { latencyItem, scene, queryRunner } = buildScene();
+    scene.setState({ showQueryLatency: true });
+
+    await act(async () => {
+      render(<PanelQueryLatency.Component model={latencyItem} />);
+    });
+
+    act(() => {
+      queryRunner.setState({ data: makePanelData({ state: LoadingState.Error, startTime: 1000, endTime: 1350 }) });
+    });
+
+    expect(screen.getByText('350ms')).toBeInTheDocument();
+  });
+
+  it('clamps negative durations to 0ms', async () => {
+    const { latencyItem, scene, queryRunner } = buildScene();
+    scene.setState({ showQueryLatency: true });
+
+    await act(async () => {
+      render(<PanelQueryLatency.Component model={latencyItem} />);
+    });
+
+    // endTime before startTime (clock skew / buggy plugin)
+    act(() => {
+      queryRunner.setState({ data: makePanelData({ state: LoadingState.Done, startTime: 1000, endTime: 900 }) });
+    });
+
+    expect(screen.getByText('0ms')).toBeInTheDocument();
+  });
+
+  it('renders nothing when not attached to a DashboardScene', async () => {
+    // Render the component with an unattached model (no parent scene).
+    const detachedItem = new PanelQueryLatency({});
+
+    await act(async () => {
+      render(<PanelQueryLatency.Component model={detachedItem} />);
+    });
+
+    expect(screen.queryByText(/\d+ms|\d+\.\d+s/)).not.toBeInTheDocument();
   });
 
   it('renders the speedometer icon', async () => {

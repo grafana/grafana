@@ -6,14 +6,19 @@ import { t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import { Icon, PanelChrome, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { getDashboardSceneFor } from '../utils/utils';
+import { DashboardScene } from './DashboardScene';
 
 export class PanelQueryLatency extends SceneObjectBase<SceneObjectState> {
   public static Component = PanelQueryLatencyRenderer;
 }
 
 function PanelQueryLatencyRenderer({ model }: SceneComponentProps<PanelQueryLatency>) {
-  const { showQueryLatency } = getDashboardSceneFor(model).useState();
+  // Guard: component may render before it's attached to a DashboardScene (e.g. during
+  // library panel reloads). All hooks must be called before this check.
+  const root = model.getRoot();
+  const isDashboard = root instanceof DashboardScene;
+
+  const { showQueryLatency } = isDashboard ? root.useState() : { showQueryLatency: false };
   const dataObject = sceneGraph.getData(model);
   const { data } = dataObject.useState();
   const styles = useStyles2(getStyles);
@@ -21,28 +26,29 @@ function PanelQueryLatencyRenderer({ model }: SceneComponentProps<PanelQueryLate
   const isLoading = data?.state === LoadingState.Loading;
   const startTime = data?.request?.startTime;
 
-  const [elapsed, setElapsed] = useState<number>(0);
+  const [elapsed, setElapsed] = useState<number>(() => (isLoading && startTime ? Date.now() - startTime : 0));
 
   useEffect(() => {
     if (!isLoading || !startTime) {
       return;
     }
+    setElapsed(Date.now() - startTime);
     const interval = setInterval(() => setElapsed(Date.now() - startTime), 100);
     return () => clearInterval(interval);
   }, [isLoading, startTime]);
 
-  if (!showQueryLatency || !data?.request?.startTime) {
+  if (!isDashboard || !showQueryLatency || !data?.request?.startTime) {
     return null;
   }
 
   let ms: number;
   let running: boolean;
 
-  if (data.state === LoadingState.Done && data.request.endTime) {
-    ms = data.request.endTime - data.request.startTime;
+  if ((data.state === LoadingState.Done || data.state === LoadingState.Error) && data.request.endTime) {
+    ms = Math.max(0, data.request.endTime - data.request.startTime);
     running = false;
   } else if (isLoading) {
-    ms = elapsed;
+    ms = Math.max(0, elapsed);
     running = true;
   } else {
     return null;
