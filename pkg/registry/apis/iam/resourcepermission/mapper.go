@@ -181,10 +181,12 @@ func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
 		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
 	}
 	group := gr.Group
-	// For wildcard entries, we have no way of knowing the exact concrete group
-	// from just the RBAC scope prefix (e.g., "datasources" -> could be loki, tempo, etc.).
+
+	// FIXME: This is a hack to support wildcard entries, since we have no way to know
+	// the exact concrete group from just the RBAC scope prefix
+	// (e.g., "datasources" -> could be loki, tempo, etc.).
 	// Return "unknown.<suffix>" as a placeholder.
-	if len(group) >= 3 && strings.HasPrefix(group, "*.") {
+	if strings.HasPrefix(group, "*.") {
 		group = "unknown" + group[1:] // e.g., "unknown.datasource.grafana.app"
 	}
 	return &groupResourceName{Group: group, Resource: gr.Resource, Name: parts[2]}, nil
