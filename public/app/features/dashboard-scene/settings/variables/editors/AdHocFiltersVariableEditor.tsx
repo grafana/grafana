@@ -1,12 +1,13 @@
 import { noop } from 'lodash';
-import { FormEvent } from 'react';
+import { FormEvent, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, SceneVariable } from '@grafana/scenes';
+import { config, getDataSourceSrv } from '@grafana/runtime';
+import { AdHocFiltersVariable, AdHocFilterWithLabels, SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { AdHocOriginFiltersController } from '../components/AdHocOriginFiltersController';
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
 
 interface AdHocFiltersVariableEditorProps {
@@ -18,6 +19,41 @@ interface AdHocFiltersVariableEditorProps {
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
   const { datasource: datasourceRef, defaultKeys, allowCustomValue } = variable.useState();
+
+  const [wip, setWip] = useState<AdHocFilterWithLabels | undefined>(undefined);
+  const [originalFilters, setOriginalFilters] = useState(() => variable.getOriginalFilters());
+
+  const { dashboardOriginalFilters, nonDashboardOriginalFilters } = useMemo(() => {
+    const dashboardOriginalFilters: AdHocFilterWithLabels[] = [];
+    const nonDashboardOriginalFilters: AdHocFilterWithLabels[] = [];
+
+    for (const f of originalFilters) {
+      (f.origin === 'dashboard' ? dashboardOriginalFilters : nonDashboardOriginalFilters).push(f);
+    }
+    return { dashboardOriginalFilters, nonDashboardOriginalFilters };
+  }, [originalFilters]);
+
+  const originFiltersController = useMemo(() => {
+    if (!config.featureToggles.adHocFilterDefaultValues) {
+      return undefined;
+    }
+
+    return new AdHocOriginFiltersController(
+      dashboardOriginalFilters,
+      (filters) => {
+        const allFilters = [...nonDashboardOriginalFilters, ...filters];
+        variable.setOriginalFilters(allFilters);
+        variable.setState({ originFilters: allFilters });
+        setOriginalFilters(allFilters);
+      },
+      wip,
+      setWip,
+      allowCustomValue,
+      (currentKey) => variable._getKeys(currentKey),
+      (filter) => variable._getValuesFor(filter),
+      () => variable._getOperators()
+    );
+  }, [variable, dashboardOriginalFilters, nonDashboardOriginalFilters, wip, allowCustomValue]);
 
   const { value: datasourceSettings } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
@@ -55,6 +91,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       defaultKeys={defaultKeys}
       onDefaultKeysChange={onDefaultKeysChange}
       onAllowCustomValueChange={onAllowCustomValueChange}
+      originFiltersController={originFiltersController}
       inline={props.inline}
       datasourceSupported={datasourceSettings?.getTagKeys ? true : false}
     />

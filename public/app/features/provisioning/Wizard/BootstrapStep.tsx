@@ -9,7 +9,8 @@ import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { generateRepositoryTitle } from 'app/features/provisioning/utils/data';
 
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
-import { UPGRADE_URL } from '../constants';
+import { CONFIGURE_GRAFANA_DOCS_URL, UPGRADE_URL } from '../constants';
+import { isOnPrem } from '../utils/isOnPrem';
 
 import { BootstrapStepCardIcons } from './BootstrapStepCardIcons';
 import { BootstrapStepResourceCounting } from './BootstrapStepResourceCounting';
@@ -95,21 +96,34 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
         },
       });
     } else if (isQuotaExceeded) {
+      const onPrem = isOnPrem();
       setStepStatusInfo({
         status: 'error',
         error: {
           title: t('provisioning.bootstrap-step.error-quota-exceeded-title', 'Resource quota exceeded'),
-          message: t(
-            'provisioning.bootstrap-step.error-quota-exceeded-message',
-            'This repository contains {{resourceCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.',
-            { resourceCount, limit: maxResourcesPerRepository }
-          ),
+          message: onPrem
+            ? t(
+                'provisioning.bootstrap-step.error-quota-exceeded-message-onprem',
+                'This repository contains {{resourceCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.',
+                { resourceCount, limit: maxResourcesPerRepository }
+              )
+            : t(
+                'provisioning.bootstrap-step.error-quota-exceeded-message',
+                'This repository contains {{resourceCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.',
+                { resourceCount, limit: maxResourcesPerRepository }
+              ),
         },
-        action: {
-          label: t('provisioning.bootstrap-step.upgrade-action', 'Upgrade account'),
-          href: UPGRADE_URL,
-          external: true,
-        },
+        action: onPrem
+          ? {
+              label: t('provisioning.bootstrap-step.update-configuration-action', 'View configuration docs'),
+              href: CONFIGURE_GRAFANA_DOCS_URL,
+              external: true,
+            }
+          : {
+              label: t('provisioning.bootstrap-step.upgrade-action', 'Upgrade account'),
+              href: UPGRADE_URL,
+              external: true,
+            },
       });
     } else {
       setStepStatusInfo({ status: isLoading ? 'running' : 'idle' });

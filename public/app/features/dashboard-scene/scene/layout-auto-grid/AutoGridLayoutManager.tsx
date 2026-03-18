@@ -1,5 +1,6 @@
+import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getAppEvents } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneObject,
@@ -135,7 +136,18 @@ export class AutoGridLayoutManager
   }
 
   public pastePanel() {
-    const panel = getAutoGridItemFromClipboard(getDashboardSceneFor(this));
+    let panel;
+
+    try {
+      panel = getAutoGridItemFromClipboard(getDashboardSceneFor(this));
+    } catch (error) {
+      getAppEvents().publish({
+        type: AppEvents.alertError.name,
+        payload: error instanceof Error ? [error.message, String(error.cause)] : [String(error)],
+      });
+      return;
+    }
+
     if (config.featureToggles.dashboardNewLayouts) {
       dashboardEditActions.edit({
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),

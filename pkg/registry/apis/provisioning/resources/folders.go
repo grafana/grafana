@@ -102,27 +102,18 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return parent, nil
 	}
 
-	f := ParseFolder(dir, cfg.Name)
-	// Use stable UID from _folder.json if available
-	if meta, err := ReadFolderMetadata(ctx, fm.repo, f.Path, ""); err == nil {
-		if meta.Name != "" {
-			f.ID = meta.Name
-		}
-	} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
-		return "", fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
+	f, err := ParseFolderWithMetadata(ctx, fm.repo, dir, "", fm.folderMetadataEnabled)
+	if err != nil {
+		return "", err
 	}
 	if fm.tree.In(f.ID) {
 		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
-		f := ParseFolder(traverse, cfg.GetName())
-		if meta, err := ReadFolderMetadata(ctx, fm.repo, traverse, ""); err == nil {
-			if meta.Name != "" {
-				f.ID = meta.Name
-			}
-		} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
-			return fmt.Errorf("read folder metadata for %s: %w", traverse, err)
+		f, err := ParseFolderWithMetadata(ctx, fm.repo, traverse, "", fm.folderMetadataEnabled)
+		if err != nil {
+			return err
 		}
 		if fm.tree.In(f.ID) {
 			parent = f.ID
@@ -151,7 +142,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 // EnsureFolderExists creates the folder if it doesn't exist.
 // If the folder already exists:
 // - it will error if the folder is not owned by this repository
-// - it will update the title if it has changed
+// - it will update metadata-backed properties if they have changed
 func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, parent string) error {
 	cfg := fm.repo.Config()
 	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
@@ -164,17 +155,34 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
 		}
 
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return fmt.Errorf("create meta accessor: %w", err)
+		}
+
+		needsUpdate := false
 		currentTitle, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
 		if currentTitle != folder.Title {
+			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
+				return fmt.Errorf("set folder title: %w", err)
+			}
+			needsUpdate = true
+		}
+
+		source, _ := meta.GetSourceProperties()
+		if source.Checksum != folder.MetadataHash {
+			source.Checksum = folder.MetadataHash
+			meta.SetSourceProperties(source)
+			needsUpdate = true
+		}
+
+		if needsUpdate {
 			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
 			if err != nil {
 				return fmt.Errorf("unable to use provisioning identity %w", err)
 			}
-			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
-				return fmt.Errorf("set folder title: %w", err)
-			}
 			if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
-				return fmt.Errorf("update folder title: %w", err)
+				return fmt.Errorf("update folder: %w", err)
 			}
 		}
 
@@ -221,7 +229,8 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		Identity: cfg.GetName(),
 	})
 	meta.SetSourceProperties(utils.SourceProperties{
-		Path: folder.Path,
+		Path:     folder.Path,
+		Checksum: folder.MetadataHash,
 	})
 
 	if _, err := fm.client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
@@ -281,6 +290,11 @@ func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, st
 	leaf.ID = stableUID
 
 	return fm.EnsureFolderExists(ctx, leaf, parentFolderID)
+}
+
+// RemoveFolderFromTree removes the folder and all its descendants from the in-memory tree.
+func (fm *FolderManager) RemoveFolderFromTree(folderID string) {
+	fm.tree.Remove(folderID)
 }
 
 func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
