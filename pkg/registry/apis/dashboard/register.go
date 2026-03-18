@@ -171,6 +171,7 @@ func RegisterAPIService(
 		ExternalSnapshotURL:  cfg.ExternalSnapshotUrl,
 		ExternalSnapshotName: cfg.ExternalSnapshotName,
 		ExternalEnabled:      cfg.ExternalEnabled,
+		SnapshotPublicMode:   cfg.SnapshotPublicMode,
 	}
 
 	builder := &DashboardsAPIBuilder{
@@ -1074,7 +1075,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 // Snapshots use RBAC-based authorization; other resources fall back to ServiceAuthorizer.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
-	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
+	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl, b.snapshotOptions)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {

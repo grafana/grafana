@@ -16,6 +16,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -38,7 +39,7 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 	getSettingsRsp := defs["github.com/grafana/grafana/apps/dashboard/pkg/apissnapshot/v0alpha1.SnapshotSharingOptions"].Schema
 	getSettingsRspExample := `{"snapshotsEnabled":true,"externalSnapshotURL":"https://externalurl.com","externalSnapshotName":"external","externalEnabled":true}`
 
-	return &builder.APIRoutes{
+	routes := &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
 				Path: prefix + "/create",
@@ -369,4 +370,209 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 				},
 			},
 		}}
+
+	// Add public mode routes when enabled
+	if options.SnapshotPublicMode {
+		routes.Namespace = append(routes.Namespace, getPublicRoutes(service, options, storageGetter, prefix, tags, createCmd, createRsp)...)
+	}
+
+	return routes
+}
+
+// getPublicRoutes returns route handlers for public snapshot mode.
+// These endpoints do not require authentication or RBAC checks.
+func getPublicRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, storageGetter func() rest.Storage, prefix string, tags []string, createCmd spec.Schema, createRsp spec.Schema) []builder.APIRouteHandler {
+	return []builder.APIRouteHandler{
+		{
+			Path: prefix + "/public-create",
+			Spec: &spec3.PathProps{
+				Post: &spec3.Operation{
+					VendorExtensible: spec.VendorExtensible{
+						Extensions: map[string]any{
+							"x-grafana-action": "create",
+							"x-kubernetes-group-version-kind": metav1.GroupVersionKind{
+								Group:   dashv0.GROUP,
+								Version: dashv0.VERSION,
+								Kind:    "DashboardCreateResponse",
+							},
+						},
+					},
+					OperationProps: spec3.OperationProps{
+						Tags:        tags,
+						OperationId: "publicCreateSnapshot",
+						Description: "Creates a new Snapshot in public mode (no authentication required)",
+						Parameters: []*spec3.Parameter{
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "namespace",
+									In:          "path",
+									Required:    true,
+									Example:     "default",
+									Description: "workspace",
+									Schema:      spec.StringProperty(),
+								},
+							},
+						},
+						RequestBody: &spec3.RequestBody{
+							RequestBodyProps: spec3.RequestBodyProps{
+								Content: map[string]*spec3.MediaType{
+									"application/json": {
+										MediaTypeProps: spec3.MediaTypeProps{
+											Schema: &createCmd,
+										},
+									},
+								},
+							},
+						},
+						Responses: &spec3.Responses{
+							ResponsesProps: spec3.ResponsesProps{
+								StatusCodeResponses: map[int]*spec3.Response{
+									200: {
+										ResponseProps: spec3.ResponseProps{
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &createRsp,
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Handler: func(w http.ResponseWriter, r *http.Request) {
+				ctx := r.Context()
+				wrap := &contextmodel.ReqContext{
+					Context: &web.Context{
+						Req:  r,
+						Resp: web.NewResponseWriter(r.Method, w),
+					},
+					Logger: log.New("publicSnapshot"),
+				}
+
+				if !options.SnapshotsEnabled {
+					wrap.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
+					return
+				}
+
+				vars := mux.Vars(r)
+				namespace := vars["namespace"]
+				info, err := authlib.ParseNamespace(namespace)
+				if err != nil {
+					wrap.JsonApiErr(http.StatusBadRequest, "expected namespace", nil)
+					return
+				}
+
+				cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{}
+				if err := web.Bind(r, &cmd); err != nil {
+					wrap.JsonApiErr(http.StatusBadRequest, "bad request data", err)
+					return
+				}
+
+				// Public mode only supports local snapshots
+				if cmd.External {
+					wrap.JsonApiErr(http.StatusForbidden, "External snapshots are not supported in public mode", nil)
+					return
+				}
+
+				if cmd.Dashboard == nil {
+					wrap.JsonApiErr(http.StatusBadRequest, "dashboard data is required", nil)
+					return
+				}
+
+				// No dashboard existence validation in public mode
+				// No user identity required — set UserID=0, OrgID from namespace
+				cmd.OrgID = info.OrgID
+				cmd.UserID = 0
+
+				originalDashboardURL, err := dashboardsnapshots.CreateOriginalDashboardURL(&cmd)
+				if err != nil {
+					errhttp.Write(ctx, fmt.Errorf("invalid app url: %w", err), w)
+					return
+				}
+
+				snapshotURL, err := dashboardsnapshots.PrepareLocalSnapshot(&cmd, originalDashboardURL)
+				if err != nil {
+					errhttp.Write(ctx, fmt.Errorf("could not generate random string: %w", err), w)
+					return
+				}
+
+				storage := storageGetter()
+				if storage == nil {
+					errhttp.Write(ctx, fmt.Errorf("snapshot storage not available"), w)
+					return
+				}
+
+				creater, ok := storage.(rest.Creater)
+				if !ok {
+					errhttp.Write(ctx, fmt.Errorf("snapshot storage does not support create"), w)
+					return
+				}
+
+				snapshot := convertCreateCmdToK8sSnapshot(&cmd, namespace)
+				snapshot.SetGenerateName("snapshot-")
+
+				ctx = k8srequest.WithNamespace(ctx, namespace)
+
+				_, err = creater.Create(ctx, snapshot, nil, &metav1.CreateOptions{})
+				if err != nil {
+					errhttp.Write(ctx, err, w)
+					return
+				}
+
+				metrics.MApiDashboardSnapshotCreate.Inc()
+
+				response := dashv0.DashboardCreateResponse{
+					Key:       snapshot.Name,
+					DeleteKey: cmd.DeleteKey,
+					URL:       snapshotURL,
+					DeleteURL: setting.ToAbsUrl("api/snapshots-delete/" + cmd.DeleteKey),
+				}
+
+				wrap.JSON(http.StatusOK, response)
+			},
+		},
+		{
+			Path: prefix + "/public-delete/{deleteKey}",
+			Spec: &spec3.PathProps{
+				Description: "Delete snapshot by delete key in public mode (no authentication required)",
+				Delete: &spec3.Operation{
+					OperationProps: spec3.OperationProps{
+						Tags:        tags,
+						OperationId: "publicDeleteWithKey",
+						Parameters: []*spec3.Parameter{
+							{
+								ParameterProps: spec3.ParameterProps{
+									Name:        "deleteKey",
+									In:          "path",
+									Required:    true,
+									Description: "unique key returned in create",
+									Schema:      spec.StringProperty(),
+								},
+							},
+						},
+					},
+				},
+			},
+			Handler: func(w http.ResponseWriter, r *http.Request) {
+				ctx := r.Context()
+
+				vars := mux.Vars(r)
+				key := vars["deleteKey"]
+
+				err := dashboardsnapshots.DeleteWithKey(ctx, key, service)
+				if err != nil {
+					errhttp.Write(ctx, fmt.Errorf("failed to delete dashboard snapshot (%w)", err), w)
+					return
+				}
+				_ = json.NewEncoder(w).Encode(&util.DynMap{
+					"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
+				})
+			},
+		},
+	}
 }

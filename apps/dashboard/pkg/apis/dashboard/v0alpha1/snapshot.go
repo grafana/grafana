@@ -40,6 +40,7 @@ type SnapshotSharingOptions struct {
 	ExternalSnapshotURL  string `json:"externalSnapshotURL,omitempty"`
 	ExternalSnapshotName string `json:"externalSnapshotName,omitempty"`
 	ExternalEnabled      bool   `json:"externalEnabled,omitempty"`
+	SnapshotPublicMode   bool   `json:"snapshotPublicMode,omitempty"`
 }
 
 func (SnapshotSharingOptions) OpenAPIModelName() string {
