@@ -1,4 +1,4 @@
-package provisioning
+package connection
 
 import (
 	"context"
@@ -228,7 +228,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 		obj, err := result.Get()
 		require.NoError(t, err)
 
-		testResults := parseTestResults(t, obj)
+		testResults := common.ParseTestResults(t, obj)
 		require.True(t, testResults.Success, "test should succeed when branch is not protected")
 		require.Equal(t, 200, testResults.Code)
 	})
@@ -265,7 +265,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 		obj, err := result.Get()
 		require.NoError(t, err)
 
-		testResults := parseTestResults(t, obj)
+		testResults := common.ParseTestResults(t, obj)
 		require.True(t, testResults.Success, "test should succeed with branch workflow even if branch is protected")
 		require.Equal(t, 200, testResults.Code)
 	})
@@ -307,7 +307,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 		obj, err := result.Get()
 		require.NoError(t, err)
 
-		testResults := parseTestResults(t, obj)
+		testResults := common.ParseTestResults(t, obj)
 		require.True(t, testResults.Success, "test should succeed when branch protection check returns 403 (lacks admin permissions)")
 		require.Equal(t, 200, testResults.Code)
 	})
@@ -507,7 +507,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 		obj, err := result.Get()
 		require.NoError(t, err)
 
-		testResults := parseTestResults(t, obj)
+		testResults := common.ParseTestResults(t, obj)
 		require.True(t, testResults.Success, "test should succeed when ruleset is disabled")
 		require.Equal(t, 200, testResults.Code)
 	})
@@ -551,7 +551,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 		obj, err := result.Get()
 		require.NoError(t, err)
 
-		testResults := parseTestResults(t, obj)
+		testResults := common.ParseTestResults(t, obj)
 		require.True(t, testResults.Success, "test should succeed when ruleset doesn't match the branch")
 		require.Equal(t, 200, testResults.Code)
 	})
@@ -595,7 +595,7 @@ func TestIntegrationGitHubBranchProtection(t *testing.T) {
 		obj, err := result.Get()
 		require.NoError(t, err)
 
-		testResults := parseTestResults(t, obj)
+		testResults := common.ParseTestResults(t, obj)
 		require.True(t, testResults.Success, "test should succeed when rulesets check returns 403 (gracefully skip)")
 		require.Equal(t, 200, testResults.Code)
 	})
