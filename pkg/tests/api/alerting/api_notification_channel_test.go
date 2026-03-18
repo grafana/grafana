@@ -1023,7 +1023,6 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func createAlertmanagerConfig(config string, channelAddr string) string {
