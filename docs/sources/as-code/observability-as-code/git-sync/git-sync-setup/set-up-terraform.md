@@ -27,7 +27,58 @@ Git Sync is available in [public preview](https://grafana.com/docs/release-life-
 
 {{< /admonition >}}
 
-You can also configure Git Sync using Terraform. 
+You can also configure Git Sync via the Grafana provisioning app platform (`provisioning.grafana.app/v0alpha1`) using Terraform.
 
-## Set up Git Sync for GitHub with Terraform 
+## Before you begin
 
+Before you begin, make sure to have the following:
+
+- A Grafana Cloud account or an on-prem Grafana instance.
+- Administrator permissions in your Grafana stack/instance.
+- Terraform installed on your machine. Refer to the [Terraform install documentation](https://developer.hashicorp.com/terraform/install) to learn how.
+
+{{< admonition type="note" >}}
+Save all of the following Terraform configuration files in the same directory.
+{{< /admonition >}}
+
+## Configure the Grafana provider
+
+Use this Terraform configuration to set up the [Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to provide the authentication required to configure Git Sync.
+
+1. Create a service account and token in Grafana. For more information refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens) or [Creating and managing a Grafana Cloud stack using Terraform](https://grafana.com/docs/grafana-cloud/as-code/infrastructure-as-code/terraform/terraform-cloud-stack/).
+
+1. Make sure that the token has the following permissions:
+
+TBC
+
+1. Create a file named `main.tf` and add the following:
+
+   ```terraform
+      terraform {
+        required_providers {
+          grafana = {
+            source  = "grafana/grafana"
+            version = ">= 4.5.3"
+          }
+        }
+      }
+
+      provider "grafana" {
+        cloud_api_url      = "<STACK_URL>"
+        cloud_access_policy_token     = "<SERVICE_ACCOUNT_TOKEN>"
+      }
+   ```
+
+Replace the following field values:
+
+- `STACK_URL` with the URL of your Grafana stack, for example `https://my-stack.grafana.net/`
+- `SERVICE_ACCOUNT_TOKEN` with the service account token that you created
+
+## Create the resources to use Git Sync
+
+You need two resources for configure and manage Git Sync:
+
+- The [repository resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_repository_v0alpha1) to configure the Git repository to sync Grafana resources with.
+- The [connection resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_provisioning_connection_v0alpha1) to configure your Git provider credentials.
+
+For more information about the resources, refer to [Git Sync key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts).
