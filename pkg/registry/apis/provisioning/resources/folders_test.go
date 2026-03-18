@@ -962,7 +962,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
 		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
 		require.Error(t, err)
-		require.ErrorContains(t, err, "update folder title")
+		require.ErrorContains(t, err, "update folder")
 		require.ErrorContains(t, err, "conflict")
 	})
 
@@ -996,8 +996,182 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		var pathErr *PathCreationError
 		require.ErrorAs(t, err, &pathErr)
 		require.Equal(t, "parent", pathErr.Path)
-		require.ErrorContains(t, err, "update folder title")
+		require.ErrorContains(t, err, "update folder")
 		require.ErrorContains(t, err, "conflict")
+	})
+}
+
+func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
+	ctx := context.Background()
+
+	newTestRepoConfig := func(name string) *provisioning.Repository {
+		return &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		}
+	}
+
+	managedFolderWithChecksum := func(name, title, managerIdentity, sourcePath, checksum string) *unstructured.Unstructured {
+		annotations := map[string]interface{}{
+			"grafana.app/managerId": managerIdentity,
+		}
+		if sourcePath != "" {
+			annotations["grafana.app/sourcePath"] = sourcePath
+		}
+		if checksum != "" {
+			annotations["grafana.app/sourceChecksum"] = checksum
+		}
+		return &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "folder.grafana.app/v1beta1",
+				"kind":       "Folder",
+				"metadata": map[string]interface{}{
+					"name":        name,
+					"namespace":   "default",
+					"annotations": annotations,
+				},
+				"spec": map[string]interface{}{
+					"title": title,
+				},
+			},
+		}
+	}
+
+	t.Run("updates checksum when hash changed but title unchanged", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		tree := NewEmptyFolderTree()
+
+		var updatedObj *unstructured.Unstructured
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolderWithChecksum(name, "Same Title", config.Name, "my-folder", "old-hash"), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:           "folder-uid",
+			Title:        "Same Title",
+			Path:         "my-folder",
+			MetadataHash: "new-hash",
+		}, "")
+
+		require.NoError(t, err)
+		require.Equal(t, []string{"folder-uid"}, client.updateCalls, "should update even though title is unchanged")
+		require.NotNil(t, updatedObj)
+
+		// Verify checksum was updated
+		checksum, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/sourceChecksum")
+		require.Equal(t, "new-hash", checksum)
+
+		// Verify title was NOT changed
+		title, _, _ := unstructured.NestedString(updatedObj.Object, "spec", "title")
+		require.Equal(t, "Same Title", title)
+	})
+
+	t.Run("preserves existing source path when updating checksum", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		tree := NewEmptyFolderTree()
+
+		var updatedObj *unstructured.Unstructured
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolderWithChecksum(name, "Title", config.Name, "original/path", "old-hash"), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:           "folder-uid",
+			Title:        "Title",
+			Path:         "my-folder",
+			MetadataHash: "new-hash",
+		}, "")
+
+		require.NoError(t, err)
+		require.NotNil(t, updatedObj)
+
+		// Verify existing sourcePath is preserved, not overwritten with folder.Path
+		sourcePath, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "original/path", sourcePath, "existing sourcePath should be preserved")
+
+		checksum, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/sourceChecksum")
+		require.Equal(t, "new-hash", checksum)
+	})
+
+	t.Run("no update when both title and hash match", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolderWithChecksum(name, "Same Title", config.Name, "my-folder", "same-hash"), nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:           "folder-uid",
+			Title:        "Same Title",
+			Path:         "my-folder",
+			MetadataHash: "same-hash",
+		}, "")
+
+		require.NoError(t, err)
+		require.Empty(t, client.updateCalls, "should not update when title and hash both match")
+	})
+
+	t.Run("clears checksum when MetadataHash is empty and stored hash exists", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		tree := NewEmptyFolderTree()
+
+		var updatedObj *unstructured.Unstructured
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolderWithChecksum(name, "Same Title", config.Name, "my-folder", "stored-hash"), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:           "folder-uid",
+			Title:        "Same Title",
+			Path:         "my-folder",
+			MetadataHash: "", // empty — e.g. metadata deleted
+		}, "")
+
+		require.NoError(t, err)
+		require.Equal(t, []string{"folder-uid"}, client.updateCalls, "should update to clear the stored checksum")
+		require.NotNil(t, updatedObj)
+
+		checksum, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/sourceChecksum")
+		require.Empty(t, checksum, "checksum should be cleared")
 	})
 }
 
