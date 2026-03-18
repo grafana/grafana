@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import clsx from 'clsx';
+import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import { memo, useRef, useState } from 'react';
 
