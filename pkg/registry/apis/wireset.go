@@ -28,7 +28,6 @@ import (
 
 // WireSetExts is a set of providers that can be overridden by enterprise implementations.
 var WireSetExts = wire.NewSet(
-	resourcepermission.ProvideMappersRegistry,
 	noopstorage.ProvideStorageBackend,
 	iam.ProvideNoopRoleApiInstaller,
 	iam.ProvideNoopGlobalRoleApiInstaller,
@@ -69,6 +68,9 @@ var WireSet = wire.NewSet(
 	// Provisioning
 	provisioning.RegisterDependencies,
 	provisioningExtras,
+
+	// Resource Permission
+	resourcepermission.ProvideMappersRegistry,
 
 	// Each must be added here *and* in the ServiceSink above
 	dashboardinternal.RegisterAPIService,
