@@ -130,7 +130,7 @@ func (m *MappersRegistry) findGroupKey(gr schema.GroupResource) (schema.GroupRes
 		if k.Resource != gr.Resource {
 			continue
 		}
-		if len(k.Group) < 2 || !strings.HasPrefix(k.Group, "*.") {
+		if len(k.Group) < 3 || !strings.HasPrefix(k.Group, "*.") {
 			continue
 		}
 		prefix, ok := strings.CutSuffix(gr.Group, k.Group[1:]) // e.g. "loki.datasource.grafana.app" -> "loki"
@@ -184,7 +184,7 @@ func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
 	// For wildcard entries, we have no way of knowing the exact concrete group
 	// from just the RBAC scope prefix (e.g., "datasources" -> could be loki, tempo, etc.).
 	// Return "unknown.<suffix>" as a placeholder.
-	if len(group) >= 2 && strings.HasPrefix(group, "*.") {
+	if len(group) >= 3 && strings.HasPrefix(group, "*.") {
 		group = "unknown" + group[1:] // e.g., "unknown.datasource.grafana.app"
 	}
 	return &groupResourceName{Group: group, Resource: gr.Resource, Name: parts[2]}, nil
