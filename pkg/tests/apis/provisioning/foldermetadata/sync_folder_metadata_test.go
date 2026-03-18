@@ -1,6 +1,7 @@
 package foldermetadata
 
 import (
+	//nolint:gosec // Test SHA-1 hash (generated for testing purposes only, never used in production)
 	"crypto/sha1"
 	"encoding/hex"
 	"os"
@@ -41,7 +42,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 			Target: "folder",
 			Copies: map[string]string{
 				// Dashboard inside a folder that intentionally has no _folder.json
-				"testdata/all-panels.json": "myfolder/dashboard.json",
+				"../testdata/all-panels.json": "myfolder/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -81,8 +82,8 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 			Target: "folder",
 			Copies: map[string]string{
 				// Two dashboards in separate folders, neither has a _folder.json
-				"testdata/all-panels.json":    "folderA/dashboard1.json",
-				"testdata/timeline-demo.json": "folderB/dashboard2.json",
+				"../testdata/all-panels.json":    "folderA/dashboard1.json",
+				"../testdata/timeline-demo.json": "folderB/dashboard2.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -127,9 +128,9 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagEnabled(t *t
 			Target: "folder",
 			Copies: map[string]string{
 				// Dashboard in folder without _folder.json → MissingFolderMetadata
-				"testdata/all-panels.json": "myfolder/dashboard.json",
+				"../testdata/all-panels.json": "myfolder/dashboard.json",
 				// Invalid dashboard at root → ResourceInvalid
-				"testdata/dashboard-missing-name.json": "bad-dashboard.json",
+				"../testdata/dashboard-missing-name.json": "bad-dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -179,7 +180,7 @@ func TestIntegrationProvisioning_FullSync_MissingFolderMetadata_FlagDisabled(t *
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
-			"testdata/all-panels.json": "myfolder/dashboard.json",
+			"../testdata/all-panels.json": "myfolder/dashboard.json",
 		},
 		SkipSync:               true,
 		SkipResourceAssertions: true,
@@ -249,7 +250,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "my-team/dashboard.json",
+				"../testdata/all-panels.json": "my-team/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -271,7 +272,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "reports/dashboard.json",
+				"../testdata/all-panels.json": "reports/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -290,7 +291,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "analytics/dashboard.json",
+				"../testdata/all-panels.json": "analytics/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -312,7 +313,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "parent/child/dashboard.json",
+				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -334,7 +335,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "old-dir/dashboard.json",
+				"../testdata/all-panels.json": "old-dir/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -398,7 +399,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "my-folder/dashboard.json",
+				"../testdata/all-panels.json": "my-folder/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -418,7 +419,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "plain-folder/dashboard.json",
+				"../testdata/all-panels.json": "plain-folder/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
@@ -463,7 +464,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 			Name:   repo,
 			Target: "folder",
 			Copies: map[string]string{
-				"testdata/all-panels.json": "parent/child/dashboard.json",
+				"../testdata/all-panels.json": "parent/child/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
