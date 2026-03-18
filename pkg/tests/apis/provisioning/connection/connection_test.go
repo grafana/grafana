@@ -1,4 +1,4 @@
-package provisioning
+package connection
 
 import (
 	"context"
@@ -29,41 +29,12 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-//nolint:gosec // Test RSA private key (generated for testing purposes only)
-const testPrivateKeyPEM = "-----BEGIN RSA PRIVATE KEY-----\n" + // trufflehog:ignore
-	`MIIEoQIBAAKCAQBn1MuM5hIfH6d3TNStI1ofWv/gcjQ4joi9cFijEwVLuPYkF1nD
-KkSbaMGFUWiOTaB/H9fxmd/V2u04NlBY3av6m5T/sHfVSiEWAEUblh3cA34HVCmD
-cqyyVty5HLGJJlSs2C7W2x7yUc9ImzyDBsyjpKOXuojJ9wN9a17D2cYU5WkXjoDC
-4BHid61jn9WBTtPZXSgOdirwahNzxZQSIP7DA9T8yiZwIWPp5YesgsAPyQLCFPgM
-s77xz/CEUnEYQ35zI/k/mQrwKdQ/ZP8xLwQohUID0BIxE7G5quL069RuuCZWZkoF
-oPiZbp7HSryz1+19jD3rFT7eHGUYvAyCnXmXAgMBAAECggEADSs4Bc7ITZo+Kytb
-bfol3AQ2n8jcRrANN7mgBE7NRSVYUouDnvUlbnCC2t3QXPwLdxQa11GkygLSQ2bg
-GeVDgq1o4GUJTcvxFlFCcpU/hEANI/DQsxNAQ/4wUGoLOlHaO3HPvwBblHA70gGe
-Ux/xpG+lMAFAiB0EHEwZ4M0mClBEOQv3NzaFTWuBHtIMS8eid7M1q5qz9+rCgZSL
-KBBHo0OvUbajG4CWl8SM6LUYapASGg+U17E+4xA3npwpIdsk+CbtX+vvX324n4kn
-0EkrJqCjv8M1KiCKAP+UxwP00ywxOg4PN+x+dHI/I7xBvEKe/x6BltVSdGA+PlUK
-02wagQKBgQDF7gdQLFIagPH7X7dBP6qEGxj/Ck9Qdz3S1gotPkVeq+1/UtQijYZ1
-j44up/0yB2B9P4kW091n+iWcyfoU5UwBua9dHvCZP3QH05LR1ZscUHxLGjDPBASt
-l2xSq0hqqNWBspb1M0eCY0Yxi65iDkj3xsI2iN35BEb1FlWdR5KGvwKBgQCGS0ce
-wASWbZIPU2UoKGOQkIJU6QmLy0KZbfYkpyfE8IxGttYVEQ8puNvDDNZWHNf+LP85
-c8iV6SfnWiLmu1XkG2YmJFBCCAWgJ8Mq2XQD8E+a/xcaW3NqlcC5+I2czX367j3r
-69wZSxRbzR+DCfOiIkrekJImwN183ZYy2cBbKQKBgFj86IrSMmO6H5Ft+j06u5ZD
-fJyF7Rz3T3NwSgkHWzbyQ4ggHEIgsRg/36P4YSzSBj6phyAdRwkNfUWdxXMJmH+a
-FU7frzqnPaqbJAJ1cBRt10QI1XLtkpDdaJVObvONTtjOC3LYiEkGCzQRYeiyFXpZ
-AU51gJ8JnkFotjtNR4KPAoGAehVREDlLcl0lnN0ZZspgyPk2Im6/iOA9KTH3xBZZ
-ZwWu4FIyiHA7spgk4Ep5R0ttZ9oMI3SIcw/EgONGOy8uw/HMiPwWIhEc3B2JpRiO
-CU6bb7JalFFyuQBudiHoyxVcY5PVovWF31CLr3DoJr4TR9+Y5H/U/XnzYCIo+w1N
-exECgYBFAGKYTIeGAvhIvD5TphLpbCyeVLBIq5hRyrdRY+6Iwqdr5PGvLPKwin5+
-+4CDhWPW4spq8MYPCRiMrvRSctKt/7FhVGL2vE/0VY3TcLk14qLC+2+0lnPVgnYn
-u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
------END RSA PRIVATE KEY-----`
-
 func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := common.RunGrafana(t)
 	ctx := context.Background()
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("should perform CRUDL requests on connection", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
@@ -221,7 +192,7 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 
 	helper := common.RunGrafana(t)
 	ctx := context.Background()
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("should update connection name with type prefix", func(t *testing.T) {
 		connectionType := provisioning.GithubConnectionType
@@ -562,7 +533,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 	helper := common.RunGrafana(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("should fail when type is empty", func(t *testing.T) {
 		connection := &unstructured.Unstructured{Object: map[string]any{
@@ -1096,7 +1067,7 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
 	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	decryptService := helper.GetEnv().DecryptService
 	require.NotNil(t, decryptService, "decrypt service not wired properly")
@@ -1305,7 +1276,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
 	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("health check gets updated after initial creation", func(t *testing.T) {
 		// Create a connection using unstructured (like other connection tests)
@@ -1476,7 +1447,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
 	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("connection with invalid installation ID becomes unhealthy with fieldErrors", func(t *testing.T) {
 		// Create a connection first with valid credentials
@@ -1716,7 +1687,7 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
 	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("connection fieldErrors are cleared when connection becomes healthy", func(t *testing.T) {
 		// Create a connection with invalid installation ID that will cause fieldErrors
@@ -1873,7 +1844,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 	helper := common.RunGrafana(t)
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	// Create a connection first
 	connection := &unstructured.Unstructured{Object: map[string]any{
@@ -2050,7 +2021,7 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{}
 	deleteOptions := metav1.DeleteOptions{}
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	// Create a connection
 	connection := &unstructured.Unstructured{Object: map[string]any{
@@ -2149,7 +2120,7 @@ func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) 
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{}
 	deleteOptions := metav1.DeleteOptions{}
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	// Create a connection with no repository references
 	connection := &unstructured.Unstructured{Object: map[string]any{
@@ -2201,7 +2172,7 @@ func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) 
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
 	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("ServiceUnavailable reason when GitHub API returns 503", func(t *testing.T) {
 		// Create a connection
@@ -2501,7 +2472,7 @@ func verifyToken(t *testing.T, appID, token string) (bool, error) {
 	t.Helper()
 
 	// Parse the private key
-	key, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(testPrivateKeyPEM))
+	key, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(common.TestGithubPrivateKeyPEM))
 	if err != nil {
 		return false, err
 	}
@@ -2596,7 +2567,7 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 	ctx := context.Background()
 
 	// Base64 encoded test private key
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	testCases := []struct {
 		name                string
@@ -2811,7 +2782,7 @@ func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *te
 	ctx := context.Background()
 
 	// Base64 encoded test private key
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	testCases := []struct {
 		name                string
