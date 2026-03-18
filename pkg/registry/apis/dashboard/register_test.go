@@ -257,4 +257,3 @@ func (m *mockFeatureToggles) GetEnabled(ctx context.Context) map[string]bool {
 
 	return res
 }
-

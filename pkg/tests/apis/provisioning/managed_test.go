@@ -80,7 +80,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 				"metadata": map[string]interface{}{
 					"generateName": "wrong-manager-",
 					"annotations": map[string]interface{}{
-						"grafana.app/folder":    managedFolderName,
+						"grafana.app/folder":         managedFolderName,
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
 						utils.AnnoKeyManagerIdentity: "some-other-manager",
 					},

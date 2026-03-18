@@ -83,9 +83,9 @@ func checkFolderManagerConsistency(folderManager utils.ManagerProperties, folder
 
 	if resourceManager.Kind != folderManager.Kind || resourceManager.Identity != folderManager.Identity {
 		return &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusForbidden,
-			Reason:  metav1.StatusReasonForbidden,
+			Status: metav1.StatusFailure,
+			Code:   http.StatusForbidden,
+			Reason: metav1.StatusReasonForbidden,
 			Message: fmt.Sprintf("resource manager (%s:%s) does not match folder manager (%s:%s); resources must be managed by the same manager as their containing folder",
 				resourceManager.Kind, resourceManager.Identity,
 				folderManager.Kind, folderManager.Identity),
