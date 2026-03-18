@@ -37,48 +37,52 @@ jest.mock('@grafana/ui', () => ({
   measureText: jest.fn(() => defaultTextMetrics),
 }));
 
+/** Config shape accepted by the uPlot paths.bars mock (mirrors the real `each` callback signature). */
+interface MockBarsConfig {
+  each?: (u: unknown, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
+}
+
+/** Minimal uPlot-like data passed into the paths.bars path builder. */
+interface MockUPlotData {
+  data: unknown[][];
+  bbox: { left: number; top: number; width: number; height: number };
+}
+
+/**
+ * Iterates over data points for a single series and invokes config.each with
+ * deterministic bar geometry so tests can assert hit-testing and label placement.
+ */
+function mockBarsPathBuilder(config: MockBarsConfig, u: MockUPlotData, seriesIdx: number): string {
+  const each = config?.each;
+  if (each && u.data && u.data[0]) {
+    const xLen = u.data[0].length;
+    const bbox = u.bbox ?? { left: 0, top: 0, width: 100, height: 100 };
+    for (let dataIdx = 0; dataIdx < xLen; dataIdx++) {
+      const seriesData = u.data[seriesIdx];
+      if (seriesData && seriesData[dataIdx] != null) {
+        const val = seriesData[dataIdx];
+        const numVal = typeof val === 'number' ? val : 0;
+        const lft = bbox.left + 10 + dataIdx * 30;
+        const top = numVal >= 0 ? bbox.top + 60 : bbox.top + 40;
+        const wid = 25;
+        const hgt = Math.abs(numVal) * 2;
+        each(u, seriesIdx, dataIdx, lft, top, wid, hgt);
+      }
+    }
+  }
+  return '';
+}
+
+/** Factory matching the uPlot.paths.bars signature: accepts config, returns a path builder. */
+function mockBarsFactory(config: MockBarsConfig) {
+  return (u: MockUPlotData, seriesIdx: number) => mockBarsPathBuilder(config, u, seriesIdx);
+}
+
 jest.mock('uplot', () => {
-  const pxRatio = 1;
   const mock = Object.assign(jest.fn(), {
-    pxRatio,
+    pxRatio: 1,
     paths: {
-      bars: jest.fn(
-        (config: {
-          each?: (
-            u: unknown,
-            seriesIdx: number,
-            dataIdx: number,
-            lft: number,
-            top: number,
-            wid: number,
-            hgt: number
-          ) => void;
-        }) => {
-          return (
-            u: { data: unknown[][]; bbox: { left: number; top: number; width: number; height: number } },
-            seriesIdx: number
-          ) => {
-            const each = config?.each;
-            if (each && u.data && u.data[0]) {
-              const xLen = u.data[0].length;
-              const bbox = u.bbox ?? { left: 0, top: 0, width: 100, height: 100 };
-              for (let dataIdx = 0; dataIdx < xLen; dataIdx++) {
-                const seriesData = u.data[seriesIdx];
-                if (seriesData && seriesData[dataIdx] != null) {
-                  const val = seriesData[dataIdx];
-                  const numVal = typeof val === 'number' ? val : 0;
-                  const lft = bbox.left + 10 + dataIdx * 30;
-                  const top = numVal >= 0 ? bbox.top + 60 : bbox.top + 40;
-                  const wid = 25;
-                  const hgt = Math.abs(numVal) * 2;
-                  each(u, seriesIdx, dataIdx, lft, top, wid, hgt);
-                }
-              }
-            }
-            return '';
-          };
-        }
-      ),
+      bars: jest.fn(mockBarsFactory),
     },
   });
   return mock;

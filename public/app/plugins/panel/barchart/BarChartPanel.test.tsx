@@ -120,14 +120,6 @@ const baseLegend = defaultPanelOptions.legend ?? {
   calcs: [],
 };
 
-const baseTooltip = defaultPanelOptions.tooltip ?? {
-  mode: TooltipDisplayMode.Single,
-  sort: SortOrder.None,
-  maxWidth: 300,
-  maxHeight: 300,
-  hideZeros: false,
-};
-
 describe('BarChartPanel', () => {
   beforeEach(() => {
     canExecuteActionsForTest = false;
