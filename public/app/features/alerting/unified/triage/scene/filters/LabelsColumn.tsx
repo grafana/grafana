@@ -7,11 +7,12 @@ import { Trans, t } from '@grafana/i18n';
 import { useQueryRunner, useSceneContext } from '@grafana/scenes-react';
 import { Icon, Input, ScrollContainer, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { AllLabelsContent } from './AllLabelsDrawer';
-import { countInstances } from './SummaryStats';
-import { summaryInstanceCountQuery } from './queries';
-import { useLabelsBreakdown } from './useLabelsBreakdown';
-import { addOrReplaceFilter, removeFilter, useFilterValue, useQueryFilter } from './utils';
+import { countInstances } from '../SummaryStats';
+import { summaryInstanceCountQuery } from '../queries';
+import { useLabelsBreakdown } from '../useLabelsBreakdown';
+import { addOrReplaceFilter, removeFilter, useFilterValue, useQueryFilter } from '../utils';
+
+import { AllLabelsContent } from './LabelsContent';
 
 export const LABELS_COLUMN_WIDTH = 250;
 const COLLAPSED_WIDTH = 36;
@@ -234,7 +235,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   stateButtonActive: css({
     background: theme.colors.action.selected,
-    borderColor: theme.colors.border.medium,
   }),
   stateLabel: css({
     color: theme.colors.text.secondary,

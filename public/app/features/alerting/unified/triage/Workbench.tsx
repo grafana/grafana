@@ -17,9 +17,9 @@ import { FolderGroupRow } from './rows/FolderGroupRow';
 import { GroupRow } from './rows/GroupRow';
 import { generateRowKey } from './rows/utils';
 import { GenericRowSkeleton } from './scene/AlertRuleInstances';
-import { LabelsColumn } from './scene/LabelsColumn';
 import { SummaryChartReact } from './scene/SummaryChart';
 import { SummaryStatsReact } from './scene/SummaryStats';
+import { LabelsColumn } from './scene/filters/LabelsColumn';
 import { Domain, Filter, WorkbenchRow } from './types';
 
 type WorkbenchProps = {

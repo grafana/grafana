@@ -6,9 +6,9 @@ import { Trans, t } from '@grafana/i18n';
 import { useSceneContext } from '@grafana/scenes-react';
 import { Button, Drawer, IconButton, Stack, useStyles2 } from '@grafana/ui';
 
-import { FiringCount, PendingCount } from './BadgeCounts';
-import { type LabelStats, type LabelValueCount } from './useLabelsBreakdown';
-import { addOrReplaceFilter, useExactFilterKeys, useFilterValue, useIsAnyFilter } from './utils';
+import { FiringCount, PendingCount } from '../BadgeCounts';
+import { type LabelStats, type LabelValueCount } from '../useLabelsBreakdown';
+import { addOrReplaceFilter, removeFilter, useExactFilterKeys, useFilterValue, useIsAnyFilter } from '../utils';
 
 // --- Public API ---
 
@@ -55,20 +55,28 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
   const visibleLabels = showAll ? filteredLabels : filteredLabels.slice(0, DEFAULT_VISIBLE_LABELS);
   const hasMore = filteredLabels.length > DEFAULT_VISIBLE_LABELS;
 
-  const handleValueClick = (key: string, value: string) => {
-    addOrReplaceFilter(sceneContext, key, '=', value);
-    // Clear any forced-closed override so the filter-driven open state takes effect.
-    setForcedClosed((prev) => {
-      const next = new Set(prev);
-      next.delete(key);
-      return next;
-    });
-    onFilterAdded?.();
+  const handleValueClick = (key: string, value: string, isActive: boolean) => {
+    if (isActive) {
+      removeFilter(sceneContext, key);
+    } else {
+      addOrReplaceFilter(sceneContext, key, '=', value);
+      // Clear any forced-closed override so the filter-driven open state takes effect.
+      setForcedClosed((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+      onFilterAdded?.();
+    }
   };
 
-  const handleKeyClick = (key: string) => {
-    addOrReplaceFilter(sceneContext, key, '=~', '.+');
-    onFilterAdded?.();
+  const handleKeyClick = (key: string, isActive: boolean) => {
+    if (isActive) {
+      removeFilter(sceneContext, key);
+    } else {
+      addOrReplaceFilter(sceneContext, key, '=~', '.+');
+      onFilterAdded?.();
+    }
   };
 
   const toggleKey = (key: string, currentlyOpen: boolean) => {
@@ -102,7 +110,6 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
         }
         return (
           <Fragment key={label.key}>
-            {index > 0 && <div className={styles.sectionSeparator} />}
             <div className={styles.labelRow}>
               <Stack alignItems="center" gap={0} minWidth={0} grow={1}>
                 <IconButton
@@ -115,7 +122,7 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
                   onClick={() => toggleKey(label.key, isOpen)}
                 />
                 <Stack direction="row" gap={0.5} alignItems="center" minWidth={0}>
-                  <LabelKeyButton labelKey={label.key} onClick={() => handleKeyClick(label.key)} />
+                  <LabelKeyButton labelKey={label.key} onClick={(isActive) => handleKeyClick(label.key, isActive)} />
                   <span className={styles.valueCount}>{label.values.length}</span>
                 </Stack>
               </Stack>
@@ -128,7 +135,7 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
               <LabelValuesList
                 labelKey={label.key}
                 values={label.values}
-                onValueClick={(value) => handleValueClick(label.key, value)}
+                onValueClick={(value, isActive) => handleValueClick(label.key, value, isActive)}
               />
             )}
           </Fragment>
@@ -151,7 +158,7 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
 
 interface LabelKeyButtonProps {
   labelKey: string;
-  onClick: () => void;
+  onClick: (isActive: boolean) => void;
 }
 
 function LabelKeyButton({ labelKey, onClick }: LabelKeyButtonProps) {
@@ -165,7 +172,7 @@ function LabelKeyButton({ labelKey, onClick }: LabelKeyButtonProps) {
         fill="text"
         size="sm"
         className={cx(styles.labelKeyButton, isActive && styles.activeButton)}
-        onClick={onClick}
+        onClick={() => onClick(isActive)}
       >
         {labelKey}
       </Button>
@@ -176,7 +183,7 @@ function LabelKeyButton({ labelKey, onClick }: LabelKeyButtonProps) {
 interface LabelValuesListProps {
   labelKey: string;
   values: LabelValueCount[];
-  onValueClick: (value: string) => void;
+  onValueClick: (value: string, isActive: boolean) => void;
 }
 
 function LabelValuesList({ labelKey, values, onValueClick }: LabelValuesListProps) {
@@ -196,7 +203,7 @@ function LabelValuesList({ labelKey, values, onValueClick }: LabelValuesListProp
             fill="text"
             size="sm"
             className={cx(styles.valueButton, activeValue === value && styles.activeButton)}
-            onClick={() => onValueClick(value)}
+            onClick={() => onValueClick(value, activeValue === value)}
           >
             {value}
           </Button>
@@ -231,6 +238,7 @@ const getContentStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     paddingLeft: theme.spacing(1),
+    gap: theme.spacing(0.5),
   }),
   sectionSeparator: css({
     borderTop: `1px solid ${theme.colors.border.weak}`,
@@ -250,6 +258,9 @@ const getContentStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
     minWidth: 0,
+    paddingLeft: theme.spacing(1),
+    marginLeft: theme.spacing(1),
+    borderLeft: `1px solid ${theme.colors.border.weak}`,
   }),
   collapseToggle: css({
     margin: 0,
@@ -276,7 +287,6 @@ const getContentStyles = (theme: GrafanaTheme2) => ({
   activeButton: css({
     background: theme.colors.action.selected,
     borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.medium}`,
   }),
   valueCount: css({
     flexShrink: 0,
