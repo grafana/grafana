@@ -46,6 +46,9 @@ func (a *API) StartUserSimulation(c *contextmodel.ReqContext) response.Response 
 	if cmd.UserID < 1 {
 		return response.Error(http.StatusBadRequest, "userId is required", nil)
 	}
+	if cmd.UserID == c.UserID {
+		return response.Error(http.StatusBadRequest, "Cannot simulate yourself", nil)
+	}
 
 	target, err := a.UserService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{ID: cmd.UserID})
 	if err != nil || target == nil {

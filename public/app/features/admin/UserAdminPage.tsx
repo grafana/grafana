@@ -118,6 +118,7 @@ export const UserAdminPage = ({
 
   const isLDAPUser = user?.isExternal && user?.authLabels?.includes('LDAP');
   const userInCurrentOrg = Boolean(orgs?.some((o) => o.orgId === contextSrv.user.orgId));
+  const isViewingOwnUser = Boolean(user && user.id === contextSrv.user.id);
   const [showSimulateConfirm, setShowSimulateConfirm] = useState(false);
 
   const onViewAsUser = async () => {
@@ -176,7 +177,7 @@ export const UserAdminPage = ({
                 lockMessage={lockMessage}
                 onGrafanaAdminChange={onGrafanaAdminChange}
               />
-              {contextSrv.isGrafanaAdmin && (
+              {contextSrv.isGrafanaAdmin && !isViewingOwnUser && (
                 <Stack direction="column" gap={1}>
                   {!userInCurrentOrg && (
                     <Alert

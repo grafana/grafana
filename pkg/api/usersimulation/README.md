@@ -85,7 +85,7 @@ Reload or continue with the same cookie jar; next API calls use the admin again.
 
 | Issue | Likely cause |
 |-------|----------------|
-| `400` on POST | Target user not in current org, service account, or disabled. |
+| `400` on POST | Target user not in current org, service account, disabled, or same as signed-in admin (cannot simulate yourself). |
 | `403` on POST | Not Grafana server admin. |
 | `400` “browser session” | No session token; login via `/login` first. |
 | CSRF on login | Match `root_url`/origin or adjust CSRF settings for your environment. |
