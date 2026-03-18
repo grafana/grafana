@@ -15,7 +15,7 @@ func setupBackendNoDB(t *testing.T) *ResourcePermSqlBackend {
 	noProvider := func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		return nil, nil
 	}
-	return ProvideStorageBackend(noProvider)
+	return ProvideStorageBackend(noProvider, NewMappersRegistry())
 }
 
 func TestToV0ResourcePermissions(t *testing.T) {
