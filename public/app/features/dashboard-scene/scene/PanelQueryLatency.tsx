@@ -13,8 +13,7 @@ export class PanelQueryLatency extends SceneObjectBase<SceneObjectState> {
 }
 
 function PanelQueryLatencyRenderer({ model }: SceneComponentProps<PanelQueryLatency>) {
-  const dashboard = getDashboardSceneFor(model);
-  const { showQueryLatency } = dashboard.useState();
+  const { showQueryLatency } = getDashboardSceneFor(model).useState();
   const dataObject = sceneGraph.getData(model);
   const { data } = dataObject.useState();
   const styles = useStyles2(getStyles);
