@@ -852,7 +852,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public updatePanelTitle(panel: VizPanel, title: string) {
+    const elementName = this.getElementNameForVizPanel(panel);
+    if (elementName && this._mutationClient) {
+      this._mutationClient.execute({
+        type: 'UPDATE_PANEL',
+        payload: { element: { kind: 'ElementReference', name: elementName }, panel: { spec: { title } } },
+      });
+      return;
+    }
+    // Fallback for when mutation client is not yet available
     panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+  }
+
+  /**
+   * Resolves the v2 element name for a given VizPanel.
+   */
+  public getElementNameForVizPanel(panel: VizPanel): string | undefined {
+    const panelId = getPanelIdForVizPanel(panel);
+    return this.serializer.getElementIdForPanel(panelId);
   }
 
   public async changePanelPlugin(

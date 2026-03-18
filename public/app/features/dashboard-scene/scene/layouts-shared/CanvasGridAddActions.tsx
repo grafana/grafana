@@ -8,7 +8,7 @@ import { config } from '@grafana/runtime';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 
 import { DashboardInteractions } from '../../utils/interactions';
-import { getDefaultVizPanel } from '../../utils/utils';
+import { getDashboardSceneFor, getDefaultPanelSpec, getDefaultVizPanel } from '../../utils/utils';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 
@@ -44,6 +44,17 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
         size="sm"
         data-testid={selectors.components.CanvasGridAddActions.addPanel}
         onClick={() => {
+          try {
+            const dashboard = getDashboardSceneFor(layoutManager);
+            const mutationClient = dashboard.getMutationClient();
+            if (mutationClient) {
+              mutationClient.execute({ type: 'ADD_PANEL', payload: { panel: getDefaultPanelSpec() } });
+              DashboardInteractions.trackAddPanelClick();
+              return;
+            }
+          } catch {
+            // DashboardScene not found — fall through to direct layout call
+          }
           layoutManager.addPanel(getDefaultVizPanel());
           DashboardInteractions.trackAddPanelClick();
         }}

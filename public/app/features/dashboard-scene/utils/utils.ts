@@ -305,6 +305,54 @@ export function getDefaultVizPanel(): VizPanel {
   });
 }
 
+/**
+ * Returns a default panel spec (PanelKind-compatible) for use with the ADD_PANEL mutation command.
+ */
+export function getDefaultPanelSpec() {
+  const defaultPluginId = getDefaultPluginId();
+  const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
+  const datasourceSettings = getDataSourceSrv().getInstanceSettings(null);
+
+  return {
+    kind: 'Panel' as const,
+    spec: {
+      title: newPanelTitle,
+      description: '',
+      data: {
+        kind: 'QueryGroup' as const,
+        spec: {
+          queries: datasourceSettings
+            ? [
+                {
+                  kind: 'PanelQuery' as const,
+                  spec: {
+                    refId: 'A',
+                    hidden: false,
+                    query: {
+                      kind: 'DataQuery' as const,
+                      group: datasourceSettings.type,
+                      spec: {},
+                    },
+                  },
+                },
+              ]
+            : [],
+          transformations: [],
+          queryOptions: {},
+        },
+      },
+      vizConfig: {
+        kind: 'VizConfig' as const,
+        group: defaultPluginId,
+        spec: {
+          options: {},
+          fieldConfig: { defaults: {}, overrides: [] },
+        },
+      },
+    },
+  };
+}
+
 export function isLibraryPanel(vizPanel: VizPanel): boolean {
   return getLibraryPanelBehavior(vizPanel) !== undefined;
 }
