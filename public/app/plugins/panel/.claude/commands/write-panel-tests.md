@@ -68,7 +68,6 @@ jest.mock('uplot', () => {
     };
   });
 });
-
 ```
 
 **@grafana/ui** — mock only the parts you need. Prefer `jest.requireActual` spread:
@@ -238,12 +237,12 @@ expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible
 // Prefer — stable, debuggable
 expect(result).toEqual([1, 8]);
 // For large objects like DataFrame
-expect(result).toMatchSnapshot()
+expect(result).toMatchSnapshot();
 
 // Avoid — fragile, hard to debug
 expect(result[0]).toBeLessThan(2);
 expect(result[1]).toBeGreaterThan(7);
-expect(result).toMatchObject(objectContaining(expect.any))
+expect(result).toMatchObject(objectContaining(expect.any));
 ```
 
 When the expected value is unknown, use a temporary failing assertion to capture the actual value, then replace with `toEqual`.
@@ -316,6 +315,7 @@ function getYScaleRangeInfo(builder: UPlotConfigBuilder) {
 ## Step 9: Property audit
 
 After writing tests, audit object literals and remove properties that:
+
 - Don't cause type errors when removed
 - Don't affect existing test assertions
 - Duplicate defaults that `getPanelProps` or `defaultOptions` already provide
@@ -342,17 +342,20 @@ Target >90% coverage on business logic. Focus new tests on uncovered lines in th
 ## Quick checklist
 
 ### Critical
+
 - [ ] `toEqual` preferred over `toBeLessThan` / `toBeGreaterThan`
 - [ ] Content assertions, not just container-existence checks
 - [ ] Counter-example tests for filtering / conditional behavior
 - [ ] Coverage run confirms no regression on changed lines
 
 ### Clean up high impact debt
+
 - [ ] Run ESLint fix: `yarn eslint path/to/test-file.test.tsx --fix`
 - [ ] Run typecheck and fix type errors: `yarn typecheck` (or `yarn exec tsc --noEmit`)
 - [ ] No `!` or `as Type` assertions — use runtime guards and typed factories
 
 ### Refactor
+
 - [ ] `getPanelProps` used for all panel renders
 - [ ] Test utility methods have JSDoc
 - [ ] Module-level state flags reset in `beforeEach`
@@ -362,12 +365,13 @@ Target >90% coverage on business logic. Focus new tests on uncovered lines in th
 - [ ] `@grafana/e2e-selectors` used for test IDs where available
 
 ## Additional checklist if plugin uses uPlot
+
 - [ ] `MockVizLayout` used if tests depend on canvas dimensions or legend height
 
 ## Common pitfalls (from past sessions)
 
 | Mistake                               | Fix                                                                  |
-|---------------------------------------|----------------------------------------------------------------------|
+| ------------------------------------- | -------------------------------------------------------------------- |
 | `FieldType.time` for numeric data     | Use `FieldType.number` — `buildHistogram` ignores non-numeric fields |
 | `state: 'Done'` in PanelData          | Use `LoadingState.Done` from `@grafana/data`                         |
 | `timeRange: { from: 0, to: 0 }`       | Use `getDefaultTimeRange()` from `@grafana/data`                     |
