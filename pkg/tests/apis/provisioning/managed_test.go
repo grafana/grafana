@@ -24,9 +24,6 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		Name:            repoName,
 		Target:          "folder",
 		ExpectedFolders: 1,
-		Copies: map[string]string{
-			"testdata/all-panels.json": "managed-folder/dashboard.json",
-		},
 	})
 
 	ctx := t.Context()
