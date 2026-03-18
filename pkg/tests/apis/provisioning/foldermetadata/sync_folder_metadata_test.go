@@ -375,8 +375,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		requireRepoFolderTitle(t, helper, repo, "old-name", "old-name")
 
 		// Rename directory: old-name → new-name (no _folder.json is added).
-		oldPath := path.Join(helper.ProvisioningPath, "old-name")
-		newPath := path.Join(helper.ProvisioningPath, "new-name")
+		oldPath := filepath.Join(helper.ProvisioningPath, "old-name")
+		newPath := filepath.Join(helper.ProvisioningPath, "new-name")
 		require.NoError(t, os.Rename(oldPath, newPath))
 
 		// Second sync — title must update to "new-name" since there is no metadata to override it.
