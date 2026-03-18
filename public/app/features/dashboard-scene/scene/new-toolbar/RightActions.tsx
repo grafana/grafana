@@ -116,7 +116,7 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             key: 'save-dashboard',
             component: SaveDashboard,
             group: 'panel',
-            condition: !collabEnabled && isEditingDashboard && !isEditingLibraryPanel && (canSave || canSaveInFolder),
+            condition: isEditingDashboard && !isEditingLibraryPanel && (canSave || canSaveInFolder),
           },
           {
             key: 'make-dashboard-editable-button',

@@ -528,16 +528,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    // In collab mode, Cmd+S opens a simplified checkpoint dialog instead of the full save drawer.
-    // Save-as-copy bypasses this since it's a different operation.
-    if (!saveAsCopy && isCollabEnabled(this)) {
-      this.setState({
-        overlay: new CollabCheckpointDrawer({
-          dashboardRef: this.getRef(),
-        }),
-      });
-      return;
-    }
+    // TODO(collab): When real CollabService is wired (not noop), restore checkpoint drawer:
+    // if (!saveAsCopy && isCollabEnabled(this)) {
+    //   this.setState({ overlay: new CollabCheckpointDrawer({ dashboardRef: this.getRef() }) });
+    //   return;
+    // }
 
     this.setState({
       overlay: new SaveDashboardDrawer({
