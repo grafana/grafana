@@ -806,10 +806,10 @@ github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5T
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
 github.com/grafana/alerting v0.0.0-20260312173859-6fc4227d9c4c h1:1/UaVaO0ysv+OlqoLnmWsl5KIP7rQzNqqYLIZBXT1iY=
 github.com/grafana/alerting v0.0.0-20260312173859-6fc4227d9c4c/go.mod h1:06F4s5KJ6LpL7od+rcusjKnsst+vRhdFqev9GdVNz4c=
-github.com/grafana/authlib v0.0.0-20260304162428-e279d73bef22 h1:73MsCpj8uoFfHOHaH1aZPxQL2uMuINarW+QwOg+hkak=
-github.com/grafana/authlib v0.0.0-20260304162428-e279d73bef22/go.mod h1:83u3gnUElNU3PZeBRWdsKC711MzBlqAcAMeHuiskx1g=
-github.com/grafana/authlib/types v0.0.0-20260304162428-e279d73bef22 h1:a+R8bVZBfqgSvkYmIjKNqq5rfL49CeSybMCnQ1K4cmM=
-github.com/grafana/authlib/types v0.0.0-20260304162428-e279d73bef22/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
+github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039 h1:btygKpNOzbaiG4NchGWSsLlHH/G3ubNQzbAgp2i8Bb8=
+github.com/grafana/authlib v0.0.0-20260316143530-e1d123886039/go.mod h1:83u3gnUElNU3PZeBRWdsKC711MzBlqAcAMeHuiskx1g=
+github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039 h1:n7JMVXux64qBMIr2Xl2ee3lmGC1Mt2DauorPJxu8fLQ=
+github.com/grafana/authlib/types v0.0.0-20260316143530-e1d123886039/go.mod h1:j+YTXmAcD4zCNyl4QSNqYSEe/q9KgrH1btodnhK29hI=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
 github.com/grafana/dataplane/examples v0.0.1/go.mod h1:h5YwY8s407/17XF5/dS8XrUtsTVV2RnuW8+m1Mp46mg=
 github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6kE/MWfg7s=
@@ -844,8 +844,8 @@ github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLm
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000/go.mod h1:/ZklAgE1i4f3Z8uriXwESmCr1VLF8lBGaJspuaGuf78=
 github.com/grafana/loki/v3 v3.5.11 h1:cIO1FYgg0o2aj8zIpXz6kFOUxW0AWU3Yk/AZqtwbzoI=
 github.com/grafana/loki/v3 v3.5.11/go.mod h1:vT/ZnjX2++rBwKSdsjzNELU+66PWkop5KetzeALZH5Y=
-github.com/grafana/nanogit v0.7.0 h1:7+j3jJAz/K5kq1Wf6xYKbbPmRVtZ5FITmqe447ksBZQ=
-github.com/grafana/nanogit v0.7.0/go.mod h1:HeWNMiPczWOezPY/cg2ICdvA3W6ndfvtwqGxVbJrOlY=
+github.com/grafana/nanogit v0.12.0 h1:ckBI+uPwrq4iMMQgjgKxx66jC4Q7q9mMcBKDHzesXnI=
+github.com/grafana/nanogit v0.12.0/go.mod h1:s8TBdDiUZ9ZWEF/nsAP9HYwJXtLUYpgoQwF2uTTz9ZE=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20250911094103-5456b6e45604 h1:aXfUhVN/Ewfpbko2CCtL65cIiGgwStOo4lWH2b6gw2U=
