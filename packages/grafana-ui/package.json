@@ -164,6 +164,7 @@
     "@types/hoist-non-react-statics": "3.3.7",
     "@types/is-hotkey": "0.1.10",
     "@types/jest": "29.5.14",
+    "@types/mdx": "^2.0.4",
     "@types/mock-raf": "1.0.6",
     "@types/node": "24.10.1",
     "@types/prismjs": "1.26.5",
