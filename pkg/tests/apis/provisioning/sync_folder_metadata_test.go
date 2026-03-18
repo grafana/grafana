@@ -369,4 +369,33 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 		helper.SyncAndWait(t, repo, nil)
 		requireRepoFolderTitle(t, helper, repo, "new-dir", "My Team")
 	})
+
+	t.Run("directory rename without metadata updates title to new directory name", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-no-meta-rename"
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				// Folder has no _folder.json — title defaults to directory name.
+				"testdata/all-panels.json": "old-name/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		// First sync: folder title should equal the directory name "old-name".
+		helper.SyncAndWait(t, repo, nil)
+		requireRepoFolderTitle(t, helper, repo, "old-name", "old-name")
+
+		// Rename directory: old-name → new-name (no _folder.json is added).
+		oldPath := path.Join(helper.ProvisioningPath, "old-name")
+		newPath := path.Join(helper.ProvisioningPath, "new-name")
+		require.NoError(t, os.Rename(oldPath, newPath))
+
+		// Second sync — title must update to "new-name" since there is no metadata to override it.
+		helper.SyncAndWait(t, repo, nil)
+		requireRepoFolderTitle(t, helper, repo, "new-name", "new-name")
+	})
 }
