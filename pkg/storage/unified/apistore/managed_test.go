@@ -228,7 +228,7 @@ func TestManagedAuthorizer(t *testing.T) {
 	}
 }
 
-func TestEnsureSameManager(t *testing.T) {
+func TestEnsureSameRepoManager(t *testing.T) {
 	tests := []struct {
 		name            string
 		folderManager   *utils.ManagerProperties
@@ -337,7 +337,7 @@ func TestEnsureSameManager(t *testing.T) {
 			}
 			resource := makeAccessor(t, tt.resourceManager)
 
-			err := ensureSameManager(folder, resource)
+			err := ensureSameRepoManager(folder, resource)
 			if tt.expectError {
 				require.Error(t, err)
 			} else {
