@@ -51,6 +51,7 @@ export const StatPanel = memo(
         let sparkline = value.sparkline;
         if (sparkline) {
           sparkline.timeRange = timeRange;
+          sparkline.color = value.display.color;
         }
 
         return (
