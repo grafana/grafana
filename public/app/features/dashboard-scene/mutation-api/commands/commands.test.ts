@@ -39,7 +39,8 @@ describe('Command consistency', () => {
         cmd.name === 'ENTER_EDIT_MODE' ||
         cmd.name === 'GET_LAYOUT' ||
         cmd.name === 'LIST_PANELS' ||
-        cmd.name === 'GET_DASHBOARD_INFO'
+        cmd.name === 'GET_DASHBOARD_INFO' ||
+        cmd.name === 'UPDATE_DASHBOARD_INFO'
       ) {
         const result = cmd.payloadSchema.safeParse({});
         expect(result.success).toBe(true);
