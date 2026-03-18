@@ -59,6 +59,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   };
 
   const handleSubmitForm = async ({ repo, path, comment }: BaseProvisionedFormData) => {
+    setError(undefined);
     if (!repo || !repository) {
       showError();
       return;

@@ -9,7 +9,7 @@ export function getProvisionedRequestError(
   resourceType: ResourceType,
   fallbackMessage: string
 ): string {
-  if (isFetchError(error) && error?.status === 404) {
+  if (isFetchError(error) && error.status === 404) {
     return resourceType === 'dashboard'
       ? t(
           'provisioning.error.branch-not-found-dashboard',

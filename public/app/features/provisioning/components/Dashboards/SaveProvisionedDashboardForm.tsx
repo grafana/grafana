@@ -181,9 +181,10 @@ export function SaveProvisionedDashboardForm({
     ref,
     copyTags,
   }: ProvisionedDashboardFormData) => {
+    setError(undefined);
     // Validate required fields
     if (!repo || !path) {
-      console.error('Missing required fields for saving:', { repo, path });
+      onRequestError(new Error(`Missing required fields for saving: ${repo}, ${path}`));
       return;
     }
 
