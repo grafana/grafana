@@ -816,6 +816,21 @@
     ]
   },
   {
+    "name": "fixed:alerting.legacy.config:reader",
+    "displayName": "Alerting legacy config read permission (deprecated, admin only)",
+    "description": "",
+    "group": "Alerting",
+    "hidden": true,
+    "permissions": [
+      {
+        "action": "alert.notifications.legacy-config:read"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
+  },
+  {
     "name": "fixed:alerting.receivers:reader",
     "displayName": "Contact Point Reader",
     "description": "Read all contact points in Grafana",

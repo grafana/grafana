@@ -320,7 +320,7 @@
             }
           }
         }
-      },
+      }
     },
     "/alertmanager/grafana/config/api/v1/receivers": {
       "get": {

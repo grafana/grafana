@@ -2,6 +2,7 @@
   {
     "grant": "Admin",
     "roles": [
+      "fixed:alerting.legacy.config:reader",
       "fixed:alerting.provisioning.provenance:writer",
       "fixed:alerting.provisioning.secrets:reader",
       "fixed:alerting.provisioning:writer",
@@ -44,6 +45,9 @@
       {
         "action": "alert.notifications.inhibition-rules:write",
         "scope": "inhibition-rules:*"
+      },
+      {
+        "action": "alert.notifications.legacy-config:read"
       },
       {
         "action": "alert.notifications.provisioning:read"

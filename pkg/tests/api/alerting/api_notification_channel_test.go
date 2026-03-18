@@ -899,7 +899,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 
 	{
 		// There are no notification channel config initially - so it returns the default configuration.
-		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+		alertsURL := fmt.Sprintf("http://admin:admin@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
@@ -914,7 +914,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 		saveAndApplyAlertmanagerConfiguration(t, env, 1, amConfig)
 
 		// Verifying that all the receivers and routes have been registered.
-		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
+		alertsURL := fmt.Sprintf("http://admin:admin@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
 		resp := getRequest(t, alertsURL, http.StatusOK) // nolint
 		b := getBody(t, resp.Body)
 		re := regexp.MustCompile(`"uid":"([\w|-]*)"`)
@@ -1024,29 +1024,6 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 		})
 	}
 
-	{
-		// Delete the configuration; so it returns the default configuration.
-		u := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
-		req, err := http.NewRequest(http.MethodDelete, u, nil)
-		require.NoError(t, err)
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := resp.Body.Close()
-			require.NoError(t, err)
-		})
-		b, err := io.ReadAll(resp.Body)
-		require.NoError(t, err)
-		require.Equal(t, 202, resp.StatusCode)
-		require.JSONEq(t, `{"message":"configuration deleted; the default is applied"}`, string(b))
-
-		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
-		resp = getRequest(t, alertsURL, http.StatusOK) // nolint
-		b, err = io.ReadAll(resp.Body)
-		require.NoError(t, err)
-		require.JSONEq(t, defaultAlertmanagerConfigJSON, string(b))
-	}
 }
 
 func createAlertmanagerConfig(config string, channelAddr string) string {
