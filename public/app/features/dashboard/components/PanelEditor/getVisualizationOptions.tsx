@@ -2,6 +2,7 @@ import { get as lodashGet } from 'lodash';
 
 import {
   EventBus,
+  FieldConfigSource,
   InterpolateFunction,
   PanelData,
   PanelPlugin,
