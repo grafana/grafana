@@ -69,45 +69,40 @@ describe('Heatmap data', () => {
   };
 
   it('omit empty series array', () => {
-    const info = prepareHeatmapData({
-      ...tpl,
-      frames: [],
-    });
-
-    expect(info).toEqual({});
+    expect(prepareHeatmapData({ ...tpl, frames: [] })).toEqual({});
   });
 
   it('omit frame.length: 0', () => {
-    const info = prepareHeatmapData({
-      ...tpl,
-      frames: [
-        {
-          fields: [{ name: '', config: {}, type: FieldType.time, values: [] }],
-          length: 0,
-        },
-      ],
-    });
-
-    expect(info).toEqual({});
+    expect(
+      prepareHeatmapData({
+        ...tpl,
+        frames: [
+          {
+            fields: [{ name: '', config: {}, type: FieldType.time, values: [] }],
+            length: 0,
+          },
+        ],
+      })
+    ).toEqual({});
   });
 
   // Regression: frames where any field has an empty values array were previously
   // passed through to prepareHeatmapData and caused downstream errors.
   it('omits frame where a field has empty values array', () => {
-    const info = prepareHeatmapData({
-      ...tpl,
-      frames: [
-        {
-          length: 2,
-          fields: [
-            { name: 'time', config: {}, type: FieldType.time, values: [1000, 2000] },
-            { name: 'value', config: {}, type: FieldType.number, values: [] }, // empty values
-          ],
-        },
-      ],
-    });
-
-    expect(info).toEqual({});
+    expect(
+      prepareHeatmapData({
+        ...tpl,
+        frames: [
+          {
+            length: 2,
+            fields: [
+              { name: 'time', config: {}, type: FieldType.time, values: [1000, 2000] },
+              { name: 'value', config: {}, type: FieldType.number, values: [] }, // empty values
+            ],
+          },
+        ],
+      })
+    ).toEqual({});
   });
 
   // Regression: a heatmap rows frame where all cell values are null should not
@@ -121,15 +116,7 @@ describe('Heatmap data', () => {
       ],
     });
 
-    expect(() =>
-      prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-      })
-    ).not.toThrow();
-
-    const info = prepareHeatmapData({ ...tpl, frames: [frame] });
-    expect(info.heatmap).toBeDefined();
+    expect(prepareHeatmapData({ ...tpl, frames: [frame] })).toMatchSnapshot();
   });
 
   // Regression: negative bucket values caused boundedMinMax to compute an
@@ -143,16 +130,13 @@ describe('Heatmap data', () => {
       ],
     });
 
-    const info = prepareHeatmapData({
-      ...tpl,
-      palette: ['#000000', '#ffffff'],
-      frames: [frame],
-    });
-
-    expect(info.heatmapColors).toBeDefined();
-    // minValue should be negative and less than maxValue
-    expect(info.heatmapColors!.minValue).toBeLessThan(0);
-    expect(info.heatmapColors!.minValue).toBeLessThan(info.heatmapColors!.maxValue);
+    expect(
+      prepareHeatmapData({
+        ...tpl,
+        palette: ['#000000', '#ffffff'],
+        frames: [frame],
+      })
+    ).toMatchSnapshot();
   });
 
   // Regression: exemplars attached to an annotation frame named 'exemplar' should
@@ -184,14 +168,13 @@ describe('Heatmap data', () => {
       ],
     });
 
-    const info = prepareHeatmapData({
-      ...tpl,
-      frames: [dataFrame],
-      annotations: [regularAnnotation, exemplarFrame],
-    });
-
-    expect(info.exemplars).toBeDefined();
-    expect(info.exemplars!.name).toBe('exemplar');
+    expect(
+      prepareHeatmapData({
+        ...tpl,
+        frames: [dataFrame],
+        annotations: [regularAnnotation, exemplarFrame],
+      })
+    ).toMatchSnapshot();
   });
 
   // Regression: when a HeatmapRows frame has only the time field and no numeric
@@ -202,12 +185,7 @@ describe('Heatmap data', () => {
       fields: [{ name: 'time', type: FieldType.time, values: [1000, 2000] }],
     });
 
-    expect(() =>
-      prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-      })
-    ).toThrow('No numeric fields found for heatmap');
+    expect(() => prepareHeatmapData({ ...tpl, frames: [frame] })).toThrow('No numeric fields found for heatmap');
   });
 
   it('filters out empty frames and keeps valid ones', () => {
@@ -219,14 +197,12 @@ describe('Heatmap data', () => {
       ],
     });
 
-    const infoWithEmpty = prepareHeatmapData({
-      ...tpl,
-      frames: [emptyFrame, validFrame],
-    });
-
-    expect(infoWithEmpty.heatmap!.fields[0]).toMatchObject({ name: 'xMax', values: [1000, 2000, 3000] });
-    expect(infoWithEmpty.heatmap!.fields[1]).toMatchObject({ name: 'y', values: [0, 0, 0] });
-    expect(infoWithEmpty.heatmap!.fields[2]).toMatchObject({ name: 'Value', values: [5, 10, 15] });
+    expect(
+      prepareHeatmapData({
+        ...tpl,
+        frames: [emptyFrame, validFrame],
+      })
+    ).toMatchSnapshot();
   });
 
   describe('calculate mode', () => {
@@ -238,45 +214,26 @@ describe('Heatmap data', () => {
         ],
       });
 
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-        timeRange: { from: dateTime(0), to: dateTime(50), raw: { from: '0', to: '50' } },
-        options: {
-          ...options,
-          calculate: true,
-          calculation: {
-            xBuckets: { mode: HeatmapCalculationMode.Size, value: '10' },
-            yBuckets: {
-              mode: HeatmapCalculationMode.Size,
-              value: '5',
-              scale: { type: ScaleDistribution.Linear },
+      expect(
+        prepareHeatmapData({
+          ...tpl,
+          frames: [frame],
+          timeRange: { from: dateTime(0), to: dateTime(50), raw: { from: '0', to: '50' } },
+          options: {
+            ...options,
+            calculate: true,
+            calculation: {
+              xBuckets: { mode: HeatmapCalculationMode.Size, value: '10' },
+              yBuckets: {
+                mode: HeatmapCalculationMode.Size,
+                value: '5',
+                scale: { type: ScaleDistribution.Linear },
+              },
             },
           },
-        },
-        palette: ['#000', '#fff'],
-      });
-
-      expect(info.heatmap).toBeDefined();
-      expect(info.heatmapColors).toBeDefined();
-      expect(info.heatmap!.fields[0]).toMatchObject({
-        name: 'xMin',
-        values: [
-          0, 0, 0, 0, 0, 10, 10, 10, 10, 10, 20, 20, 20, 20, 20, 30, 30, 30, 30, 30, 40, 40, 40, 40, 40, 50, 50, 50, 50,
-          50,
-        ],
-      });
-      expect(info.heatmap!.fields[1]).toMatchObject({
-        name: 'yMin',
-        values: [
-          10, 15, 20, 25, 30, 10, 15, 20, 25, 30, 10, 15, 20, 25, 30, 10, 15, 20, 25, 30, 10, 15, 20, 25, 30, 10, 15,
-          20, 25, 30,
-        ],
-      });
-      expect(info.heatmap!.fields[2]).toMatchObject({
-        name: 'Count',
-        values: [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      });
+          palette: ['#000', '#fff'],
+        })
+      ).toMatchSnapshot();
     });
 
     it('applies replaceVariables to calculation bucket values', () => {
@@ -312,40 +269,23 @@ describe('Heatmap data', () => {
 
   describe('HeatmapCells format', () => {
     it('returns getDenseHeatmapData for dense HeatmapCells frame', () => {
-      const frame = createDenseHeatmapCellsFrame();
-
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-        palette: ['#000', '#888', '#fff'],
-      });
-
-      expect(info.heatmap!.fields[0]).toMatchObject({ name: 'x', values: [1000, 1000, 2000, 2000] });
-      expect(info.heatmap!.fields[1]).toMatchObject({ name: 'y', values: [1, 2, 1, 2] });
-      expect(info.heatmap!.fields[2]).toMatchObject({ name: 'count', values: [5, 10, 15, 20] });
-      expect(info.heatmapColors).toBeDefined();
-      expect(info.xBucketSize).toBeDefined();
-      expect(info.yBucketSize).toBeDefined();
-      expect(info.display).toBeDefined();
-      expect(info.warning).toBeUndefined();
+      expect(
+        prepareHeatmapData({
+          ...tpl,
+          frames: [createDenseHeatmapCellsFrame()],
+          palette: ['#000', '#888', '#fff'],
+        })
+      ).toMatchSnapshot();
     });
 
     it('returns getSparseHeatmapData for sparse HeatmapCells frame', () => {
-      const frame = createSparseHeatmapCellsFrame();
-
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-        palette: ['#000', '#888', '#fff'],
-      });
-
-      expect(info.heatmap!.fields[0]).toMatchObject({ name: 'xMax', values: [1000, 1000, 2000, 2000] });
-      expect(info.heatmap!.fields[1]).toMatchObject({ name: 'yMin', values: [1, 4, 1, 4] });
-      expect(info.heatmap!.fields[2]).toMatchObject({ name: 'yMax', values: [4, 16, 4, 16] });
-      expect(info.heatmap!.fields[3]).toMatchObject({ name: 'count', values: [5, 10, 15, 20] });
-      expect(info.heatmapColors).toBeDefined();
-      expect(info.display).toBeDefined();
-      expect(info.warning).toBeUndefined();
+      expect(
+        prepareHeatmapData({
+          ...tpl,
+          frames: [createSparseHeatmapCellsFrame()],
+          palette: ['#000', '#888', '#fff'],
+        })
+      ).toMatchSnapshot();
     });
   });
 
@@ -364,15 +304,7 @@ describe('Heatmap data', () => {
         ],
       });
 
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame1, frame2],
-      });
-
-      expect(info.heatmap!.fields[0]).toMatchObject({ name: 'xMax', values: [1000, 1000, 2000, 2000] });
-      expect(info.heatmap!.fields[1]).toMatchObject({ name: 'y', values: [0, 1, 0, 1] });
-      expect(info.heatmap!.fields[2]).toMatchObject({ name: 'Value', values: [10, 30, 20, 40] });
-      expect(info.series).toBeDefined();
+      expect(prepareHeatmapData({ ...tpl, frames: [frame1, frame2] })).toMatchSnapshot();
     });
 
     it('outerJoins multiple frames without sorting when displayNames are non-numeric', () => {
@@ -389,14 +321,7 @@ describe('Heatmap data', () => {
         ],
       });
 
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame1, frame2],
-      });
-
-      expect(info.heatmap!.fields[0]).toMatchObject({ name: 'xMax', values: [1000, 1000, 2000, 2000] });
-      expect(info.heatmap!.fields[1]).toMatchObject({ name: 'y', values: [0, 1, 0, 1] });
-      expect(info.heatmap!.fields[2]).toMatchObject({ name: 'Value', values: [10, 30, 20, 40] });
+      expect(prepareHeatmapData({ ...tpl, frames: [frame1, frame2] })).toMatchSnapshot();
     });
 
     it('sorts frames by label when all numeric', () => {
@@ -413,16 +338,7 @@ describe('Heatmap data', () => {
         ],
       });
 
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame1, frame2],
-      });
-
-      expect(info.heatmap!.fields[0]).toMatchObject({ name: 'xMax', values: [1000, 1000, 2000, 2000] });
-      expect(info.heatmap!.fields[1]).toMatchObject({ name: 'y', values: [0, 1, 0, 1] });
-      expect(info.heatmap!.fields[2]).toMatchObject({ name: 'Value', values: [10, 30, 20, 40] });
-      expect(info.series?.fields[1]).toMatchObject({ values: [10, 20] });
-      expect(info.series?.fields[2]).toMatchObject({ values: [30, 40] });
+      expect(prepareHeatmapData({ ...tpl, frames: [frame1, frame2] })).toMatchSnapshot();
     });
 
     it('uses single frame as-is when number fields have non-numeric displayNames', () => {
@@ -434,16 +350,7 @@ describe('Heatmap data', () => {
         ],
       });
 
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-      });
-
-      expect(info.heatmap!.fields[0]).toMatchObject({ name: 'xMax', values: [1000, 1000, 2000, 2000, 3000, 3000] });
-      expect(info.heatmap!.fields[1]).toMatchObject({ name: 'y', values: [0, 1, 0, 1, 0, 1] });
-      expect(info.heatmap!.fields[2]).toMatchObject({ name: 'Value', values: [5, 20, 10, 25, 15, 30] });
-      expect(info.series?.fields[1]).toMatchObject({ name: 'bucket_a', values: [5, 10, 15] });
-      expect(info.series?.fields[2]).toMatchObject({ name: 'bucket_b', values: [20, 25, 30] });
+      expect(prepareHeatmapData({ ...tpl, frames: [frame] })).toMatchSnapshot();
     });
 
     it('sorts and reorders number fields when displayNames are numeric', () => {
@@ -455,16 +362,7 @@ describe('Heatmap data', () => {
         ],
       });
 
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-      });
-
-      expect(info.heatmap!.fields[0]).toMatchObject({ name: 'xMax', values: [1000, 1000, 2000, 2000] });
-      expect(info.heatmap!.fields[1]).toMatchObject({ name: 'y', values: [0, 1, 0, 1] });
-      expect(info.heatmap!.fields[2]).toMatchObject({ name: 'Value', values: [15, 5, 20, 10] });
-      expect(info.series?.fields[1]).toMatchObject({ name: '2', values: [15, 20] });
-      expect(info.series?.fields[2]).toMatchObject({ name: '10', values: [5, 10] });
+      expect(prepareHeatmapData({ ...tpl, frames: [frame] })).toMatchSnapshot();
     });
   });
 
@@ -476,36 +374,23 @@ describe('Heatmap data', () => {
         links: [{ url: 'http://example.com', title: 'Link' }],
       };
 
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-      });
-
-      expect(info.heatmap!.fields[0]).toMatchObject({ name: 'xMax', values: [1000, 2000, 3000] });
-      expect(info.heatmap!.fields[1]).toMatchObject({ name: 'y', values: [0, 0, 0] });
-      expect(info.heatmap!.fields[2]).toMatchObject({ name: 'Value', values: [5, 10, 15] });
-      expect(info.series?.fields[1].getLinks).toBeDefined();
+      expect(prepareHeatmapData({ ...tpl, frames: [frame] })).toMatchSnapshot();
     });
   });
 
   describe('display options', () => {
     it('applies cellValues unit and decimals to display', () => {
-      const frame = createDenseHeatmapCellsFrame();
-
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-        options: {
-          ...options,
-          cellValues: { unit: 'short', decimals: 2 },
-        },
-        palette: ['#000', '#fff'],
-      });
-
-      expect(info.heatmap!.fields[2]).toMatchObject({ name: 'count', values: [5, 10, 15, 20] });
-      expect(info.display).toBeDefined();
-      const formatted = info.display!(15.5);
-      expect(formatted).toMatch(/\d/);
+      expect(
+        prepareHeatmapData({
+          ...tpl,
+          frames: [createDenseHeatmapCellsFrame()],
+          options: {
+            ...options,
+            cellValues: { unit: 'short', decimals: 2 },
+          },
+          palette: ['#000', '#fff'],
+        })
+      ).toMatchSnapshot();
     });
 
     it('applies yAxis unit and decimals for dense heatmap', () => {
@@ -518,19 +403,17 @@ describe('Heatmap data', () => {
         ],
       });
 
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-        options: {
-          ...options,
-          yAxis: { unit: 'short', decimals: 1 },
-        },
-        palette: ['#000', '#fff'],
-      });
-
-      expect(info.heatmap!.fields[0]).toMatchObject({ name: 'xMin', values: [1000, 1000, 2000, 2000] });
-      expect(info.heatmap!.fields[1]).toMatchObject({ name: 'yMin', values: [1, 2, 1, 2] });
-      expect(info.heatmap!.fields[2]).toMatchObject({ name: 'count', values: [5, 10, 15, 20] });
+      expect(
+        prepareHeatmapData({
+          ...tpl,
+          frames: [frame],
+          options: {
+            ...options,
+            yAxis: { unit: 'short', decimals: 1 },
+          },
+          palette: ['#000', '#fff'],
+        })
+      ).toMatchSnapshot();
     });
   });
 
@@ -544,16 +427,16 @@ describe('Heatmap data', () => {
         ],
       });
 
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-        palette: ['#000', '#fff'],
-      });
-
-      expect(info.warning).toBe('Missing value field');
+      expect(
+        prepareHeatmapData({
+          ...tpl,
+          frames: [frame],
+          palette: ['#000', '#fff'],
+        })
+      ).toMatchSnapshot();
     });
 
-    it('returns minimal heatmap when frame has fewer than 2 fields or length', () => {
+    it('returns non-broken heatmap when frame is too small', () => {
       const frame = toDataFrame({
         meta: { type: DataFrameType.HeatmapCells },
         fields: [
@@ -562,34 +445,29 @@ describe('Heatmap data', () => {
         ],
       });
 
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-        palette: ['#000', '#fff'],
-      });
-
-      expect(info.heatmap!.fields[0]).toMatchObject({ name: 'x', values: [1000] });
-      expect(info.heatmap!.fields[1]).toMatchObject({ name: 'y', values: [1] });
-      expect(info.heatmapColors).toBeUndefined();
+      expect(
+        prepareHeatmapData({
+          ...tpl,
+          frames: [frame],
+          palette: ['#000', '#fff'],
+        })
+      ).toMatchSnapshot();
     });
   });
 
   describe('filter values', () => {
     it('respects filterValues le and ge', () => {
-      const frame = createDenseHeatmapCellsFrame();
-
-      const info = prepareHeatmapData({
-        ...tpl,
-        frames: [frame],
-        options: {
-          ...options,
-          filterValues: { le: 12, ge: 8 },
-        },
-        palette: ['#000', '#fff'],
-      });
-
-      expect(info.heatmapColors).toBeDefined();
-      expect(info.heatmap!.fields[2]).toMatchObject({ name: 'count', values: [5, 10, 15, 20] });
+      expect(
+        prepareHeatmapData({
+          ...tpl,
+          frames: [createDenseHeatmapCellsFrame()],
+          options: {
+            ...options,
+            filterValues: { le: 12, ge: 8 },
+          },
+          palette: ['#000', '#fff'],
+        })
+      ).toMatchSnapshot();
     });
   });
 });
