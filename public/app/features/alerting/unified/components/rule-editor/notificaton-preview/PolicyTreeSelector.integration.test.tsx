@@ -596,4 +596,52 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
       expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
     });
   });
+
+  describe('edit existing rule with legacy __grafana_managed_route__ label', () => {
+    const CUSTOM_POLICY_NAME = 'Managed Policy - Empty Provisioned';
+
+    beforeEach(() => {
+      setFolderResponse(
+        mockFolder({
+          uid: grafanaRulerNamespace.uid,
+          title: grafanaRulerNamespace.name,
+          accessControl: {
+            [AccessControlAction.AlertingRuleUpdate]: true,
+          },
+        })
+      );
+
+      // Rule has no notification_settings.policy — uses legacy label routing
+      const ruleWithLabel: RulerGrafanaRuleDTO = {
+        ...grafanaRulerRule,
+        labels: { [NAMED_ROOT_LABEL_NAME]: CUSTOM_POLICY_NAME },
+        grafana_alert: {
+          ...grafanaRulerRule.grafana_alert,
+          notification_settings: undefined,
+        },
+      };
+      const group: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
+        ...grafanaRulerGroup,
+        rules: [ruleWithLabel],
+      };
+      server.use(
+        http.get(`/api/ruler/grafana/api/v1/rules/${grafanaRulerNamespace.uid}/${grafanaRulerGroup.name}`, () =>
+          HttpResponse.json(group)
+        )
+      );
+    });
+
+    it('shows expanded dropdown with legacy label policy pre-selected', async () => {
+      renderRuleEditor(grafanaRulerRule.grafana_alert.uid);
+
+      await waitFor(() => {
+        expect(policyTreeUi.policySelector.get()).toBeEnabled();
+      });
+
+      // The selector should show the migrated policy, not "Default policy"
+      expect(screen.getByText(CUSTOM_POLICY_NAME)).toBeInTheDocument();
+      expect(policyTreeUi.resetButton.get()).toBeInTheDocument();
+      expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
+    });
+  });
 });

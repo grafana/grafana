@@ -408,6 +408,88 @@ describe('rulerRuleToFormValues with policy routing', () => {
   });
 });
 
+describe('rulerRuleToFormValues with legacy label migration', () => {
+  const makeLegacyLabelRule = (policyName: string): RuleWithLocation => {
+    const rule: RulerGrafanaRuleDTO = {
+      for: '1m',
+      grafana_alert: {
+        uid: 'abc',
+        version: 1,
+        title: 'Legacy rule',
+        namespace_uid: 'ns1',
+        rule_group: 'group1',
+        condition: 'A',
+        no_data_state: GrafanaAlertStateDecision.Alerting,
+        exec_err_state: GrafanaAlertStateDecision.Alerting,
+        data: [],
+      },
+      annotations: {},
+      labels: { __grafana_managed_route__: policyName },
+    };
+    return {
+      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+      namespace: 'my-folder',
+      group: { name: 'group1', interval: '1m', rules: [rule] },
+      rule,
+    };
+  };
+
+  it('should migrate legacy label to selectedPolicy when FF is ON', () => {
+    jest.replaceProperty(config, 'featureToggles', {
+      ...config.featureToggles,
+      alertingPolicyRoutingSettings: true,
+    });
+    const result = rulerRuleToFormValues(makeLegacyLabelRule('TestPolicy'));
+    expect(result.selectedPolicy).toBe('TestPolicy');
+    expect(result.manualRouting).toBe(false);
+    jest.restoreAllMocks();
+  });
+
+  it('should NOT migrate legacy label when FF is OFF', () => {
+    jest.replaceProperty(config, 'featureToggles', {
+      ...config.featureToggles,
+      alertingPolicyRoutingSettings: false,
+    });
+    const result = rulerRuleToFormValues(makeLegacyLabelRule('TestPolicy'));
+    expect(result.selectedPolicy).toBeUndefined();
+    jest.restoreAllMocks();
+  });
+});
+
+describe('formValuesToRulerGrafanaRuleDTO label stripping', () => {
+  const baseValues = (): RuleFormValues => ({
+    ...getDefaultFormValues(),
+    condition: 'A',
+    type: RuleFormType.grafana,
+    labels: [
+      { key: '__grafana_managed_route__', value: 'TestPolicy' },
+      { key: 'env', value: 'prod' },
+    ],
+  });
+
+  it('should strip __grafana_managed_route__ label from payload when FF is ON', () => {
+    jest.replaceProperty(config, 'featureToggles', {
+      ...config.featureToggles,
+      alertingPolicyRoutingSettings: true,
+    });
+    const result = formValuesToRulerGrafanaRuleDTO(baseValues());
+    expect(result.labels).not.toHaveProperty('__grafana_managed_route__');
+    expect(result.labels).toHaveProperty('env', 'prod');
+    jest.restoreAllMocks();
+  });
+
+  it('should preserve __grafana_managed_route__ label in payload when FF is OFF', () => {
+    jest.replaceProperty(config, 'featureToggles', {
+      ...config.featureToggles,
+      alertingPolicyRoutingSettings: false,
+    });
+    const result = formValuesToRulerGrafanaRuleDTO(baseValues());
+    expect(result.labels).toHaveProperty('__grafana_managed_route__', 'TestPolicy');
+    expect(result.labels).toHaveProperty('env', 'prod');
+    jest.restoreAllMocks();
+  });
+});
+
 describe('cleanAnnotations', () => {
   it('should remove falsy KVs', () => {
     const output = cleanAnnotations([{ key: '', value: '' }]);

@@ -118,6 +118,24 @@ describe('Details', () => {
       expect(screen.getByText('Notification policy')).toBeInTheDocument();
       expect(screen.getByText('Default policy')).toBeInTheDocument();
     });
+
+    it('should display legacy __grafana_managed_route__ label value (not "Default policy") when notification_settings is absent but label is set', () => {
+      const POLICY_NAME = 'LegacyPolicy';
+      const rule = mockCombinedRule({
+        rulerRule: alertingFactory.ruler.grafana.alertingRule.build({
+          grafana_alert: {
+            notification_settings: undefined,
+          },
+          labels: { __grafana_managed_route__: POLICY_NAME },
+        }),
+      });
+
+      render(<Details rule={rule} />);
+
+      expect(screen.getByText('Notification policy')).toBeInTheDocument();
+      expect(screen.getByText(POLICY_NAME)).toBeInTheDocument();
+      expect(screen.queryByText('Default policy')).not.toBeInTheDocument();
+    });
   });
 
   describe('alertingPolicyRoutingSettings flag OFF', () => {

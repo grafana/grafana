@@ -19,6 +19,7 @@ import { isNullDate } from '../../utils/time';
 import { Tokenize } from '../Tokenize';
 import { DetailText } from '../common/DetailText';
 import { TimingOptionsMeta } from '../notification-policies/Policy';
+import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
 
 import { ContactPointLink } from './ContactPointLink';
 import { UpdatedByUser } from './tabs/version-history/UpdatedBy';
@@ -270,18 +271,19 @@ const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
   const usePolicyRoutingSettings = config.featureToggles.alertingPolicyRoutingSettings;
   const notificationSettings = rulerRule.grafana_alert.notification_settings;
 
-  // Issue 1 fix (Option A): when flag is ON and no notification_settings, the rule uses the
-  // default policy tree — make that explicit rather than hiding the section entirely.
+  // When flag is ON and no notification_settings: legacy label-routed rules show the label
+  // value; rules with no routing at all show "Default policy".
   if (!notificationSettings) {
     if (!usePolicyRoutingSettings) {
       return null;
     }
+    const legacyPolicyName = rulerRule.labels?.[NAMED_ROOT_LABEL_NAME];
     return (
       <DetailGroup title={t('alerting.alert.notification-configuration.group-title', 'Notification configuration')}>
         <DetailText
           id="notification-policy"
           label={t('alerting.alert.notification-configuration.notification-policy', 'Notification policy')}
-          value={t('alerting.policy-tree-selector.default-policy', 'Default policy')}
+          value={legacyPolicyName ?? t('alerting.policy-tree-selector.default-policy', 'Default policy')}
         />
       </DetailGroup>
     );

@@ -41,6 +41,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
+import { NAMED_ROOT_LABEL_NAME } from '../components/notification-policies/useNotificationPolicyRoute';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { normalizeDefaultAnnotations } from '../rule-editor/formProcessing';
 import {
@@ -174,6 +175,11 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 
   const annotations = arrayToRecord(cleanAnnotations(values.annotations));
   const labels = arrayToRecord(cleanLabels(values.labels));
+  // When the new policy routing is active, the legacy label must not be sent so that both
+  // routing mechanisms never coexist in the same payload.
+  if (config.featureToggles.alertingPolicyRoutingSettings) {
+    delete labels[NAMED_ROOT_LABEL_NAME];
+  }
 
   const wantsAlertingRule = isGrafanaAlertingRuleByType(type);
   const wantsRecordingRule = isGrafanaRecordingRuleByType(type!);
@@ -314,7 +320,11 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       // grafana alerting rule
       const ga = normalizedRule.grafana_alert;
       const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
-      const selectedPolicy = ga.notification_settings?.policy;
+      const selectedPolicy =
+        ga.notification_settings?.policy ??
+        (config.featureToggles.alertingPolicyRoutingSettings
+          ? normalizedRule.labels?.[NAMED_ROOT_LABEL_NAME]
+          : undefined);
       if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
         return {
           ...defaultFormValues,
@@ -460,7 +470,9 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
 
   // grafana alerting rule
   const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
-  const cloneSelectedPolicy = ga.notification_settings?.policy;
+  const cloneSelectedPolicy =
+    ga.notification_settings?.policy ??
+    (config.featureToggles.alertingPolicyRoutingSettings ? rule.labels?.[NAMED_ROOT_LABEL_NAME] : undefined);
   if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
     return {
       ...commonProperties,
