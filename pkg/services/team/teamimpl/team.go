@@ -73,10 +73,9 @@ func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery)
 }
 
 func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	// TODO enable Kubernetes team service for GetTeamByID once the implementation is complete.
-	// if s.isKubernetesTeamServiceEnabled(ctx) {
-	// 	return s.k8sService.GetTeamByID(ctx, query)
-	// }
+	if s.isKubernetesTeamServiceEnabled(ctx) {
+		return s.k8sService.GetTeamByID(ctx, query)
+	}
 
 	return s.legacyService.GetTeamByID(ctx, query)
 }

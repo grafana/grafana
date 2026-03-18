@@ -6,6 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -118,7 +119,7 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 }
 
 func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
-	teamDTO, err := s.legacyService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+	teamDTO, err := s.GetTeamByID(ctx, &team.GetTeamByIDQuery{
 		ID:    cmd.ID,
 		OrgID: cmd.OrgID,
 	})
@@ -132,21 +133,26 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 		return err
 	}
 
-	existing, err := client.Get(ctx, teamDTO.UID, metav1.GetOptions{})
+	result, err := client.Get(ctx, teamDTO.UID, metav1.GetOptions{})
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return team.ErrTeamNotFound
+		}
 		return err
 	}
 
-	spec, ok := existing.Object["spec"].(map[string]any)
-	if !ok {
-		spec = make(map[string]any)
+	updated := result.DeepCopy()
+	if err := unstructured.SetNestedField(updated.Object, cmd.Name, "spec", "title"); err != nil {
+		return err
 	}
-	spec["title"] = cmd.Name
-	spec["email"] = cmd.Email
-	spec["externalUID"] = cmd.ExternalUID
-	existing.Object["spec"] = spec
+	if err := unstructured.SetNestedField(updated.Object, cmd.Email, "spec", "email"); err != nil {
+		return err
+	}
+	if err := unstructured.SetNestedField(updated.Object, cmd.ExternalUID, "spec", "externalUID"); err != nil {
+		return err
+	}
 
-	_, err = client.Update(ctx, existing, metav1.UpdateOptions{})
+	_, err = client.Update(ctx, updated, metav1.UpdateOptions{})
 	return err
 }
 
@@ -159,7 +165,47 @@ func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeam
 }
 
 func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
-	return nil, errors.New("not implemented")
+	if query.ID == 0 && query.UID == "" {
+		return nil, team.ErrTeamNotFound
+	}
+
+	uid := query.UID
+	if query.ID != 0 {
+		teamDTO, err := s.legacyService.GetTeamByID(ctx, query)
+		if err != nil {
+			return nil, err
+		}
+		uid = teamDTO.UID
+	}
+
+	namespace := s.namespaceMapper(query.OrgID)
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	result, err := client.Get(ctx, uid, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, team.ErrTeamNotFound
+		}
+		return nil, err
+	}
+
+	var fetched iamv0alpha1.Team
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &fetched); err != nil {
+		return nil, err
+	}
+
+	return &team.TeamDTO{
+		ID:            getTeamID(&fetched),
+		UID:           fetched.Name,
+		OrgID:         query.OrgID,
+		Name:          fetched.Spec.Title,
+		Email:         fetched.Spec.Email,
+		ExternalUID:   fetched.Spec.ExternalUID,
+		IsProvisioned: fetched.Spec.Provisioned,
+	}, nil
 }
 
 func (s *TeamK8sService) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
