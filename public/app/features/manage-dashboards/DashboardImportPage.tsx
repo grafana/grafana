@@ -263,10 +263,7 @@ class UnthemedDashboardImport extends PureComponent<Props> {
 
   pageNav: NavModelItem = {
     text: t('manage-dashboards.unthemed-dashboard-import.text.import-dashboard', 'Import dashboard'),
-    subTitle: t(
-      'manage-dashboards.unthemed-dashboard-import.subTitle.import-dashboard-from-file-or-grafanacom',
-      'Import dashboard from file or Grafana.com'
-    ),
+    subTitle: 'Import dashboard from file'
   };
 
   getDashboardOverview() {
