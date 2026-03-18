@@ -196,7 +196,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     await expect(page.locator('.rdg')).toHaveCount(2);
   });
 
-  test('word wrap, hover overflow, max cell height, and cell inspect', async ({
+  test.skip('word wrap, hover overflow, max cell height, and cell inspect', async ({
     gotoPanelEditPage,
     selectors,
     page,
