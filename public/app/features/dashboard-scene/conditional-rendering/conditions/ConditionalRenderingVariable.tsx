@@ -92,7 +92,12 @@ export class ConditionalRenderingVariable extends SceneObjectBase<ConditionalRen
       return undefined;
     }
 
-    const variable = sceneGraph.getVariables(object).getByName(this.state.variable);
+    // sceneGraph.lookupVariable walks up the scene graph parent chain,
+    // respecting section-level $variables on rows/tabs before reaching
+    // the dashboard root. This correctly handles repeated panel clones
+    // whose local $variables only contains the repeat variable and would
+    // otherwise shadow dashboard-level variables. See: GitHub issue #120327
+    const variable = sceneGraph.lookupVariable(this.state.variable, object);
 
     if (!variable) {
       return undefined;
