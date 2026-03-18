@@ -371,7 +371,7 @@ function NotificationStatusGroup({
 
       {expanded && (
         <div className={styles.notificationDetails}>
-          {notifications.map((notification) => (
+          {[...notifications].reverse().map((notification) => (
             <NotificationRow key={notification.uuid} notification={notification} />
           ))}
         </div>
