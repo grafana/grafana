@@ -244,41 +244,41 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
   // Track which lock targets we've acquired and release when panel editor closes
   const acquiredLocksRef = useRef<Set<string>>(new Set());
 
-  // Watch for editPanel changes — release all locks when panel editor closes
+  // Watch for editPanel/isEditing changes — release all locks when panel editor closes or edit mode exits
+  const prevEditPanelRef = useRef<unknown>(undefined);
   useEffect(() => {
     if (!enabled || !opsAddress) {
       return;
     }
 
-    const sub = scene.subscribeToEvent(
-      SceneObjectStateChangedEvent,
-      (event: SceneObjectStateChangedEvent) => {
-        // Detect editPanel being cleared (panel editor closed)
-        if (
-          event.payload.changedObject === scene &&
-          'editPanel' in (event.payload.partialUpdate ?? {})
-        ) {
-          const newEditPanel = (event.payload.newState as any)?.editPanel;
-          if (!newEditPanel && acquiredLocksRef.current.size > 0) {
-            debugLog('Panel editor closed — releasing all locks', {
-              targets: Array.from(acquiredLocksRef.current),
-            });
-            for (const target of acquiredLocksRef.current) {
-              const unlockMsg: ClientMessage = {
-                kind: 'lock',
-                op: {
-                  type: 'unlock',
-                  target,
-                  userId: localUserIdRef.current,
-                } satisfies LockOperation,
-              };
-              publishOp(unlockMsg);
-            }
-            acquiredLocksRef.current.clear();
+    const sub = scene.subscribeToState((state) => {
+      const hadEditPanel = prevEditPanelRef.current;
+      const hasEditPanel = state.editPanel;
+      prevEditPanelRef.current = hasEditPanel;
+
+      // Release locks when editPanel clears (panel deselected / editor closed)
+      // or when leaving edit mode entirely
+      if ((hadEditPanel && !hasEditPanel) || (!state.isEditing && acquiredLocksRef.current.size > 0)) {
+        if (acquiredLocksRef.current.size > 0) {
+          debugLog('Releasing all locks', {
+            reason: !hasEditPanel ? 'panel deselected' : 'edit mode exited',
+            targets: Array.from(acquiredLocksRef.current),
+          });
+          for (const target of acquiredLocksRef.current) {
+            const unlockMsg: ClientMessage = {
+              kind: 'lock',
+              op: {
+                type: 'unlock',
+                target,
+                userId: localUserIdRef.current,
+              } satisfies LockOperation,
+            };
+            publishOp(unlockMsg);
           }
+          acquiredLocksRef.current.clear();
         }
       }
-    );
+    });
 
     return () => sub.unsubscribe();
   }, [enabled, opsAddress, scene, publishOp]);

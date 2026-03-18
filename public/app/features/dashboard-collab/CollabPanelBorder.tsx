@@ -181,11 +181,7 @@ function getStyles(theme: GrafanaTheme2) {
       transition: 'outline-color 200ms ease-in-out',
     }),
     lockedBySelf: css({
-      borderRadius: theme.shape.radius.default,
-      outline: `2px solid var(--collab-border-color)`,
-      outlineOffset: '0px',
-      zIndex: 10,
-      transition: 'outline-color 200ms ease-in-out',
+      // No visible border for own locks — the user already knows they're editing
     }),
     blockOverlay: css({
       position: 'absolute',
