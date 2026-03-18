@@ -278,8 +278,8 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       component: () => <Navigate replace to="/alerting/history?tab=notifications" />,
     },
     {
-      path: '/alerting/notifications-history/view/:uuid/:timestamp?',
-      component: cfg.featureToggles.alertingNotificationHistoryGlobal
+      path: '/alerting/notifications-history/view/:uuid',
+      component: cfg.featureToggles.alertingNotificationHistoryDetail
         ? importAlertingComponent(
             () =>
               import(

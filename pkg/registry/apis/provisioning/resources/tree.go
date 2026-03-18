@@ -20,8 +20,12 @@ import (
 //go:generate mockery --name FolderTree --structname MockFolderTree --inpackage --filename tree_mock.go --with-expecter
 type FolderTree interface {
 	In(folder string) bool
+	// Get returns the folder entry for the given ID, or false if not found.
+	Get(folderID string) (Folder, bool)
 	DirPath(folder, baseFolder string) (Folder, bool)
 	Add(folder Folder, parent string)
+	// Remove deletes folderID and all its descendants from the tree.
+	Remove(folderID string)
 	AddUnstructured(item *unstructured.Unstructured) error
 	Count() int
 	Walk(ctx context.Context, fn WalkFunc) error
@@ -45,6 +49,13 @@ func (t *folderTree) In(folder string) bool {
 func (t *folderTree) in(folder string) bool {
 	_, ok := t.tree[folder]
 	return ok || folder == ""
+}
+
+func (t *folderTree) Get(folderID string) (Folder, bool) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	f, ok := t.folders[folderID]
+	return f, ok
 }
 
 // DirPath creates the path to the directory with slashes, up to but not including the baseFolder.
@@ -98,9 +109,41 @@ func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
 func (t *folderTree) Add(folder Folder, parent string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+	_, exists := t.tree[folder.ID]
 	t.tree[folder.ID] = parent
 	t.folders[folder.ID] = folder
-	t.count++
+	if !exists {
+		t.count++
+	}
+}
+
+// Remove deletes folderID and all its descendants from the tree.
+func (t *folderTree) Remove(folderID string) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if _, exists := t.tree[folderID]; !exists {
+		return
+	}
+
+	// Collect the folder and all descendants.
+	toDelete := []string{folderID}
+	for i := 0; i < len(toDelete); i++ {
+		current := toDelete[i]
+		for id, parent := range t.tree {
+			if parent == current {
+				toDelete = append(toDelete, id)
+			}
+		}
+	}
+
+	// Delete collected nodes and adjust count.
+	for _, id := range toDelete {
+		if _, exists := t.tree[id]; exists {
+			delete(t.tree, id)
+			delete(t.folders, id)
+			t.count--
+		}
+	}
 }
 
 func (t *folderTree) Count() int {
@@ -167,9 +210,10 @@ func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) FolderT
 
 		tree[rf.Name] = rf.Folder
 		folderIDs[rf.Name] = Folder{
-			Title: rf.Title,
-			ID:    rf.Name,
-			Path:  rf.Path,
+			Title:        rf.Title,
+			ID:           rf.Name,
+			Path:         rf.Path,
+			MetadataHash: rf.Hash,
 		}
 	}
 

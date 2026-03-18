@@ -37,6 +37,8 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 	kvOpts := resource.KVBackendOptions{
 		KvStore:        kv,
 		SearchLookback: time.Second,
+		// keep it low in tests as most of them don't exercise concurrent writes
+		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
 	}
 
 	if dbConn.DriverName() == "sqlite3" {
@@ -80,6 +82,7 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend NewBacken
 		{"concurrent operations stress", runTestConcurrentOperationsStress},
 		{"optimistic locking database integrity", runTestOptimisticLockingDatabaseIntegrity},
 		{"bulk import compatibility", runTestBulkImportCompatibility},
+		{"last import time cross backend", runTestLastImportTimeCrossBackend},
 	}
 
 	for _, tc := range cases {
@@ -953,6 +956,65 @@ func runTestBulkImportCompatibility(t *testing.T, sqlBackend, kvBackend resource
 		require.GreaterOrEqual(t, len(records), 1, "Expected at least 1 resource_version record")
 		require.Greater(t, records[0].ResourceVersion, int64(0), "resource_version should be positive")
 	})
+}
+
+// runTestLastImportTimeCrossBackend verifies that last import times written by one backend
+// can be read by the other backend (SQL → KV and KV → SQL).
+func runTestLastImportTimeCrossBackend(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	ctx := newIntegrationTestContext(t)
+
+	group := "playlist.grafana.app"
+	resourceType := "playlists"
+
+	buildSingleBulkRequest := func(ns string) []*resourcepb.BulkRequest {
+		return []*resourcepb.BulkRequest{
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: "lit-playlist-1"},
+				Action: resourcepb.BulkRequest_ADDED,
+				Value:  createPlaylistJSON(PlaylistResourceOptions{Name: "lit-playlist-1", Namespace: ns, UID: "lit-uid-1", Generation: 1, Title: "LIT Playlist"}),
+			},
+		}
+	}
+
+	// Phase 1: Write via SQL backend, read from both
+	sqlNS := nsPrefix + "-lit-sql"
+	sqlBulk, ok := sqlBackend.(resource.BulkProcessingBackend)
+	require.True(t, ok, "SQL backend must support BulkProcessingBackend")
+	sqlResp := sqlBulk.ProcessBulk(ctx, resource.BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{Namespace: sqlNS, Group: group, Resource: resourceType}},
+	}, toBulkIterator(buildSingleBulkRequest(sqlNS)))
+	require.Nil(t, sqlResp.Error)
+
+	// SQL backend should be able to read its own last import time
+	sqlTimes := collectLastImportedTimes(t, sqlBackend, ctx)
+	sqlNSR := resource.NamespacedResource{Namespace: sqlNS, Group: group, Resource: resourceType}
+	require.Contains(t, sqlTimes, sqlNSR, "SQL backend should return last import time for SQL-written namespace")
+	require.False(t, sqlTimes[sqlNSR].IsZero(), "SQL backend last import time should not be zero")
+
+	// KV backend should also be able to read the SQL-written last import time
+	kvTimes := collectLastImportedTimes(t, kvBackend, ctx)
+	require.Contains(t, kvTimes, sqlNSR, "KV backend should return last import time written by SQL backend")
+	require.False(t, kvTimes[sqlNSR].IsZero(), "KV backend last import time for SQL-written namespace should not be zero")
+
+	// Phase 2: Write via KV backend, read from both
+	kvNS := nsPrefix + "-lit-kv"
+	kvBulk, ok := kvBackend.(resource.BulkProcessingBackend)
+	require.True(t, ok, "KV backend must support BulkProcessingBackend")
+	kvResp := kvBulk.ProcessBulk(ctx, resource.BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{Namespace: kvNS, Group: group, Resource: resourceType}},
+	}, toBulkIterator(buildSingleBulkRequest(kvNS)))
+	require.Nil(t, kvResp.Error)
+
+	// KV backend should be able to read its own last import time
+	kvNSR := resource.NamespacedResource{Namespace: kvNS, Group: group, Resource: resourceType}
+	kvTimes2 := collectLastImportedTimes(t, kvBackend, ctx)
+	require.Contains(t, kvTimes2, kvNSR, "KV backend should return last import time for KV-written namespace")
+	require.False(t, kvTimes2[kvNSR].IsZero(), "KV backend last import time should not be zero")
+
+	// SQL backend should also be able to read the KV-written last import time
+	sqlTimes2 := collectLastImportedTimes(t, sqlBackend, ctx)
+	require.Contains(t, sqlTimes2, kvNSR, "SQL backend should return last import time written by KV backend")
+	require.False(t, sqlTimes2[kvNSR].IsZero(), "SQL backend last import time for KV-written namespace should not be zero")
 }
 
 type optimisticResourceState struct {

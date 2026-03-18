@@ -452,7 +452,7 @@ func TestChanges(t *testing.T) {
 		}, changes[2])
 	})
 
-	t.Run("_folder.json is not treated as a resource change", func(t *testing.T) {
+	t.Run("_folder.json is not treated as a resource change for new folders", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "my-folder/", Hash: "abc", Blob: false},
 			{Path: "my-folder/_folder.json", Hash: "def", Blob: true},
@@ -472,6 +472,66 @@ func TestChanges(t *testing.T) {
 		require.Contains(t, paths, "my-folder/dashboard.json")
 		require.Contains(t, paths, "my-folder/")
 		require.NotContains(t, paths, "my-folder/_folder.json")
+	})
+
+	t.Run("_folder.json hash differs from stored emits folder update", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Hash: "abc", Blob: false},
+			{Path: "my-folder/_folder.json", Hash: "new-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "folder-uid"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target)
+		require.NoError(t, err)
+
+		var folderUpdates []ResourceFileChange
+		for _, c := range changes {
+			if c.Path == "my-folder/" && c.Action == repository.FileActionUpdated {
+				folderUpdates = append(folderUpdates, c)
+			}
+		}
+		require.Len(t, folderUpdates, 1, "expected folder update from _folder.json hash change")
+		require.Equal(t, "folder-uid", folderUpdates[0].Existing.Name)
+	})
+
+	t.Run("_folder.json hash matches stored emits no update", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Hash: "abc", Blob: false},
+			{Path: "my-folder/_folder.json", Hash: "same-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "same-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "folder-uid"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target)
+		require.NoError(t, err)
+
+		for _, c := range changes {
+			if c.Path == "my-folder/" {
+				require.NotEqual(t, repository.FileActionUpdated, c.Action, "no update expected when hash matches")
+			}
+		}
+	})
+
+	t.Run("_folder.json exists but folder not in target emits no extra change", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/_folder.json", Hash: "def", Blob: true},
+			{Path: "my-folder/dashboard.json", Hash: "ghi", Blob: true},
+		}
+		target := &provisioning.ResourceList{}
+
+		changes, err := Changes(context.Background(), source, target)
+		require.NoError(t, err)
+
+		for _, c := range changes {
+			require.NotEqual(t, repository.FileActionUpdated, c.Action, "no update expected for new folder")
+		}
 	})
 
 	t.Run("report correct changes with .keep files", func(t *testing.T) {
