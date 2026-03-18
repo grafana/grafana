@@ -43,26 +43,32 @@ describe('createGenericHighlighter', () => {
   }
 
   it('highlights text matching the pattern', () => {
-    const view = createEditorWithHighlighter({ pattern: /\$\{[^}]+\}/g, className: 'test-highlight' }, 'Hello ${world}!');
-    expect(view.dom.textContent).toBe('Hello ${world}!');
+    const view = createEditorWithHighlighter(
+      { pattern: /\$\{[^}]+\}/g, className: 'test-highlight' },
+      'Hello ${world}!'
+    );
+    expect(view.dom).toHaveTextContent('Hello ${world}!');
     view.destroy();
   });
 
   it('highlights multiple matches', () => {
-    const view = createEditorWithHighlighter({ pattern: /\$\{[^}]+\}/g, className: 'variable' }, '${first} and ${second}');
-    expect(view.dom.textContent).toBe('${first} and ${second}');
+    const view = createEditorWithHighlighter(
+      { pattern: /\$\{[^}]+\}/g, className: 'variable' },
+      '${first} and ${second}'
+    );
+    expect(view.dom).toHaveTextContent('${first} and ${second}');
     view.destroy();
   });
 
   it('handles text with no matches', () => {
     const view = createEditorWithHighlighter({ pattern: /\$\{[^}]+\}/g, className: 'variable' }, 'No variables here');
-    expect(view.dom.textContent).toBe('No variables here');
+    expect(view.dom).toHaveTextContent('No variables here');
     view.destroy();
   });
 
   it('handles empty text', () => {
     const view = createEditorWithHighlighter({ pattern: /\$\{[^}]+\}/g, className: 'variable' }, '');
-    expect(view.dom.textContent).toBe('');
+    expect(view.dom).toHaveTextContent('');
     view.destroy();
   });
 
@@ -76,25 +82,28 @@ describe('createGenericHighlighter', () => {
   it('resets lastIndex correctly on second call with same instance', () => {
     const config: SyntaxHighlightConfig = { pattern: /\$\{[^}]+\}/g, className: 'variable' };
     const view1 = createEditorWithHighlighter(config, '${var1}');
-    expect(view1.dom.textContent).toBe('${var1}');
+    expect(view1.dom).toHaveTextContent('${var1}');
     view1.destroy();
 
     // Same config instance — lastIndex must be reset each build
     const view2 = createEditorWithHighlighter(config, '${var2}');
-    expect(view2.dom.textContent).toBe('${var2}');
+    expect(view2.dom).toHaveTextContent('${var2}');
     view2.destroy();
   });
 
   it('updates decorations when document changes', () => {
     const view = createEditorWithHighlighter({ pattern: /\$\{[^}]+\}/g, className: 'variable' }, 'Initial text');
     view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: 'New ${variable} text' } });
-    expect(view.dom.textContent).toBe('New ${variable} text');
+    expect(view.dom).toHaveTextContent('New ${variable} text');
     view.destroy();
   });
 
   it('highlights variables in URLs', () => {
-    const view = createEditorWithHighlighter({ pattern: /\$\{[^}]+\}/g, className: 'variable' }, 'https://example.com?id=${id}&name=${name}');
-    expect(view.dom.textContent).toBe('https://example.com?id=${id}&name=${name}');
+    const view = createEditorWithHighlighter(
+      { pattern: /\$\{[^}]+\}/g, className: 'variable' },
+      'https://example.com?id=${id}&name=${name}'
+    );
+    expect(view.dom).toHaveTextContent('https://example.com?id=${id}&name=${name}');
     view.destroy();
   });
 });

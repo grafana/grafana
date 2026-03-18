@@ -14,13 +14,7 @@ import { CodeMirrorEditor } from '@grafana/ui';
 function MyComponent() {
   const [value, setValue] = useState('');
 
-  return (
-    <CodeMirrorEditor
-      value={value}
-      onChange={setValue}
-      placeholder="Enter text here"
-    />
-  );
+  return <CodeMirrorEditor value={value} onChange={setValue} placeholder="Enter text here" />;
 }
 ```
 
@@ -32,11 +26,11 @@ Pass a `highlightConfig` with a global regex and a CSS class name. The generic h
 
 ```tsx
 const highlightConfig: SyntaxHighlightConfig = {
-  pattern: /\$\{[^}]+\}/g,   // MUST have /g flag
+  pattern: /\$\{[^}]+\}/g, // MUST have /g flag
   className: 'cm-variable',
 };
 
-<CodeMirrorEditor value={value} onChange={onChange} highlightConfig={highlightConfig} />
+<CodeMirrorEditor value={value} onChange={onChange} highlightConfig={highlightConfig} />;
 ```
 
 For more control, supply a `highlighterFactory` function instead — it receives the `SyntaxHighlightConfig` and returns a CodeMirror `Extension`.
@@ -59,7 +53,7 @@ const myTheme: ThemeFactory = (theme) => [
   }),
 ];
 
-<CodeMirrorEditor value={value} onChange={onChange} themeFactory={myTheme} />
+<CodeMirrorEditor value={value} onChange={onChange} themeFactory={myTheme} />;
 ```
 
 ### Custom autocompletion
@@ -69,18 +63,24 @@ Build a CodeMirror `autocompletion` extension and pass it via the `autocompletio
 ```tsx
 import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
 
-const myCompletion = useMemo(() =>
-  autocompletion({
-    override: [(ctx: CompletionContext) => {
-      const word = ctx.matchBefore(/\w+/);
-      if (!word) { return null; }
-      return { from: word.from, options: [{ label: 'hello' }, { label: 'world' }] };
-    }],
-    activateOnTyping: true,
-  }),
-[]);
+const myCompletion = useMemo(
+  () =>
+    autocompletion({
+      override: [
+        (ctx: CompletionContext) => {
+          const word = ctx.matchBefore(/\w+/);
+          if (!word) {
+            return null;
+          }
+          return { from: word.from, options: [{ label: 'hello' }, { label: 'world' }] };
+        },
+      ],
+      activateOnTyping: true,
+    }),
+  []
+);
 
-<CodeMirrorEditor value={value} onChange={onChange} autocompletion={myCompletion} />
+<CodeMirrorEditor value={value} onChange={onChange} autocompletion={myCompletion} />;
 ```
 
 ### Arbitrary CodeMirror extensions
@@ -92,25 +92,25 @@ import { EditorView } from '@codemirror/view';
 
 const extensions = useMemo(() => [EditorView.editable.of(false)], []);
 
-<CodeMirrorEditor value={value} onChange={onChange} extensions={extensions} />
+<CodeMirrorEditor value={value} onChange={onChange} extensions={extensions} />;
 ```
 
 ## Props
 
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `value` | `string` | required | Current editor content |
-| `onChange` | `(value: string) => void` | required | Fired on every document change |
-| `onBlur` | `(value: string) => void` | — | Fired when the editor loses focus |
-| `placeholder` | `string` | `''` | Shown when the editor is empty |
-| `themeFactory` | `ThemeFactory` | `createGenericTheme` | Returns a CodeMirror theme Extension |
-| `highlighterFactory` | `HighlighterFactory` | `createGenericHighlighter` | Returns a highlight Extension |
-| `highlightConfig` | `SyntaxHighlightConfig` | — | Regex + class name for the default highlighter |
-| `autocompletion` | `Extension` | — | Full CodeMirror autocompletion extension |
-| `extensions` | `Extension[]` | `[]` | Extra CodeMirror extensions |
-| `showLineNumbers` | `boolean` | `false` | Show the line-number gutter |
-| `lineWrapping` | `boolean` | `true` | Wrap long lines |
-| `ariaLabel` | `string` | `placeholder` | Accessible label on the editor element |
-| `className` | `string` | — | Extra CSS class on the outer container |
-| `useInputStyles` | `boolean` | `true` | Apply Grafana input-box styles to the container |
-| `closeBrackets` | `boolean` | `true` | Auto-close brackets and quotes |
+| Prop                 | Type                      | Default                    | Description                                     |
+| -------------------- | ------------------------- | -------------------------- | ----------------------------------------------- |
+| `value`              | `string`                  | required                   | Current editor content                          |
+| `onChange`           | `(value: string) => void` | required                   | Fired on every document change                  |
+| `onBlur`             | `(value: string) => void` | —                          | Fired when the editor loses focus               |
+| `placeholder`        | `string`                  | `''`                       | Shown when the editor is empty                  |
+| `themeFactory`       | `ThemeFactory`            | `createGenericTheme`       | Returns a CodeMirror theme Extension            |
+| `highlighterFactory` | `HighlighterFactory`      | `createGenericHighlighter` | Returns a highlight Extension                   |
+| `highlightConfig`    | `SyntaxHighlightConfig`   | —                          | Regex + class name for the default highlighter  |
+| `autocompletion`     | `Extension`               | —                          | Full CodeMirror autocompletion extension        |
+| `extensions`         | `Extension[]`             | `[]`                       | Extra CodeMirror extensions                     |
+| `showLineNumbers`    | `boolean`                 | `false`                    | Show the line-number gutter                     |
+| `lineWrapping`       | `boolean`                 | `true`                     | Wrap long lines                                 |
+| `ariaLabel`          | `string`                  | `placeholder`              | Accessible label on the editor element          |
+| `className`          | `string`                  | —                          | Extra CSS class on the outer container          |
+| `useInputStyles`     | `boolean`                 | `true`                     | Apply Grafana input-box styles to the container |
+| `closeBrackets`      | `boolean`                 | `true`                     | Auto-close brackets and quotes                  |
