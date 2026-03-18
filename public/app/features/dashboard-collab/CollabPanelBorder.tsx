@@ -155,7 +155,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     lockedByOther: css({
       borderRadius: theme.shape.radius.default,
-      outline: `4px solid #FFD700`,
+      outline: `4px solid #FF0000`,
       outlineOffset: '0px',
       zIndex: 10,
       transition: 'outline-color 200ms ease-in-out',
