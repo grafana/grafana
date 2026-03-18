@@ -270,8 +270,29 @@ function NotificationStatusGroup({
   const styles = useStyles2(getStyles);
   const [expanded, setExpanded] = useState(false);
 
-  const successCount = notifications.filter((n) => n.outcome === 'success').length;
-  const failedCount = notifications.length - successCount;
+  const integrationOutcomes = useMemo(() => {
+    const best = new Map<string, boolean>();
+    for (const n of notifications) {
+      const key = `${n.integration}:${n.integrationIndex}`;
+      if (n.outcome === 'success') {
+        best.set(key, true);
+      } else if (!best.has(key)) {
+        best.set(key, false);
+      }
+    }
+    let delivered = 0;
+    let failed = 0;
+    for (const success of best.values()) {
+      if (success) {
+        delivered++;
+      } else {
+        failed++;
+      }
+    }
+    return { delivered, failed };
+  }, [notifications]);
+
+  const { delivered: successCount, failed: failedCount } = integrationOutcomes;
 
   const receivers = [...new Set(notifications.map((n) => n.receiver))];
   const receiverLabel =
@@ -328,6 +349,7 @@ function NotificationStatusGroup({
           <Text variant="bodySmall" color="secondary">
             →
           </Text>
+          <Icon name="at" size="sm" />
           {receivers.length === 1 ? (
             <a
               href={createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(receivers[0])}`)}
