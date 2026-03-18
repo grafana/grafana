@@ -476,3 +476,68 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataChecksum(t *testing.T) {
 		requireRepoFolderChecksum(t, helper, repo, "parent/child", sha1Hex(childContent))
 	})
 }
+
+// TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation verifies that
+// full sync detects _folder.json changes via hash comparison and reconciles folder metadata.
+func TestIntegrationProvisioning_FullSync_FolderMetadataReconciliation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("title update via _folder.json only", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-title-update"
+
+		// First sync: folder with original title.
+		originalContent := folderMetadataJSON("title-update-uid", "Old Title")
+		writeToProvisioningPath(t, helper, "my-folder/_folder.json", originalContent)
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "my-folder/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+		requireRepoFolderTitle(t, helper, repo, "my-folder", "Old Title")
+		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(originalContent))
+
+		// Modify only _folder.json — change the title, keep the same UID.
+		updatedContent := folderMetadataJSON("title-update-uid", "New Title")
+		writeToProvisioningPath(t, helper, "my-folder/_folder.json", updatedContent)
+
+		// Second sync: title should be reconciled, checksum updated.
+		helper.SyncAndWait(t, repo, nil)
+		requireRepoFolderTitle(t, helper, repo, "my-folder", "New Title")
+		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(updatedContent))
+	})
+
+	t.Run("no update when _folder.json unchanged between syncs", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-no-change"
+
+		metadataContent := folderMetadataJSON("no-change-uid", "Stable Title")
+		writeToProvisioningPath(t, helper, "my-folder/_folder.json", metadataContent)
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "my-folder/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+		requireRepoFolderTitle(t, helper, repo, "my-folder", "Stable Title")
+		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(metadataContent))
+
+		// Second sync — nothing changed. Title and checksum should be identical.
+		helper.SyncAndWait(t, repo, nil)
+		requireRepoFolderTitle(t, helper, repo, "my-folder", "Stable Title")
+		requireRepoFolderChecksum(t, helper, repo, "my-folder", sha1Hex(metadataContent))
+	})
+}
