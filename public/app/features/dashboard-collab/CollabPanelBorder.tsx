@@ -34,6 +34,7 @@ export function CollabPanelBorder({ panelId, isEditing: isEditingProp, children 
   const isEditing = isEditingProp ?? false;
   const { connected, locks, users, acquireLock, releaseLock } = useCollab();
   const styles = useStyles2(getStyles);
+  const notifyApp = useAppNotification();
   const localUserId = config.bootData?.user?.uid ?? '';
 
   const lock = useMemo(
@@ -81,6 +82,17 @@ export function CollabPanelBorder({ panelId, isEditing: isEditingProp, children 
       ? lockHolder?.color ?? config.theme2.colors.primary.main
       : undefined;
 
+  const holderName = lockHolder?.displayName || 'another user';
+
+  const handleBlockedClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    notifyApp.warning(
+      t('dashboard-collab.panel-locked.title', 'Panel locked'),
+      t('dashboard-collab.panel-locked.message', 'This panel is being edited by {{name}}', { name: holderName })
+    );
+  }, [holderName, notifyApp]);
+
   return (
     <div
       className={cx(
@@ -91,9 +103,17 @@ export function CollabPanelBorder({ panelId, isEditing: isEditingProp, children 
       style={borderColor ? { '--collab-border-color': borderColor } as React.CSSProperties : undefined}
       data-testid="collab-panel-border"
     >
+      {isLockedByOther && (
+        <div
+          className={styles.blockOverlay}
+          onClick={handleBlockedClick}
+          onDoubleClick={handleBlockedClick}
+          title={`Being edited by ${holderName}`}
+        />
+      )}
       {isLockedByOther && lockHolder && (
         <Tooltip content={`Being edited by ${lockHolder.displayName}`} placement="top">
-          <div className={styles.badge} style={{ backgroundColor: lockHolder.color || '#e74c3c' }}>
+          <div className={styles.badge} style={{ backgroundColor: lockHolder.color || '#FF0000' }}>
             {lockHolder.avatarUrl ? (
               <img src={lockHolder.avatarUrl} alt={lockHolder.displayName} className={styles.avatar} />
             ) : (
@@ -166,6 +186,12 @@ function getStyles(theme: GrafanaTheme2) {
       outlineOffset: '0px',
       zIndex: 10,
       transition: 'outline-color 200ms ease-in-out',
+    }),
+    blockOverlay: css({
+      position: 'absolute',
+      inset: 0,
+      zIndex: 9,
+      cursor: 'not-allowed',
     }),
     badge: css({
       position: 'absolute',
