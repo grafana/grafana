@@ -163,10 +163,10 @@ export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVa
   }));
 
   return results.filter((option) => {
-    if (option.value === 'groupby' && !config.featureToggles.groupByVariable) {
+    if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
       return false;
     }
-    if (option.value === 'adhoc' && config.featureToggles.dashboardUnifiedDrilldownControls) {
+    if (config.featureToggles.dashboardUnifiedDrilldownControls && option.value === 'adhoc') {
       return false;
     }
 
