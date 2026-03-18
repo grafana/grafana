@@ -120,7 +120,7 @@ function createFooFrame(overrides?: { timeValues?: number[]; values?: number[] }
 }
 ```
 
-** DataFrame Field type correctness:** Numeric values must use `FieldType.number`. Using the wrong or undefined `FieldType` in mocked DataFrame will cause bugs and unexpected behavior.
+**DataFrame Field type correctness:** Numeric values must use `FieldType.number`. Using the wrong or undefined `FieldType` in mocked DataFrame will cause bugs and unexpected behavior.
 
 **`stampFrameWithDisplay`** — adds display processors so formatted values work in tooltip tests:
 

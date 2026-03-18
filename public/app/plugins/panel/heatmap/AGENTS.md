@@ -9,7 +9,7 @@
 
 ### State Management
 
-- HeatmapPanelProps changes requires team sign-off
+- [HeatmapPanelProps](./panelcfg.gen.ts) changes requires team sign-off
 
 ## User documentation
 
