@@ -1,3 +1,9 @@
+import { Meta, ArgTypes, Canvas } from '@storybook/blocks';
+import { CodeMirrorEditor } from './CodeMirrorEditor';
+import * as CodeMirrorEditorStories from './CodeMirrorEditor.story';
+
+<Meta title="MDX|CodeMirrorEditor" component={CodeMirrorEditor} />
+
 # CodeMirrorEditor
 
 > ⚠️ **WORK IN PROGRESS**
@@ -7,6 +13,8 @@
 A reusable [CodeMirror 6](https://codemirror.net/) editor component for `@grafana/ui`. The long-term goal is to replace all ad-hoc editor usages in Grafana (Slate, inline Monaco) with a single, consistent, theme-aware editing primitive.
 
 ## Basic usage
+
+<Canvas of={CodeMirrorEditorStories.Basic} />
 
 ```tsx
 import { CodeMirrorEditor } from '@grafana/ui';
@@ -24,10 +32,12 @@ function MyComponent() {
 
 Pass a `highlightConfig` with a global regex and a CSS class name. The generic highlighter applies `Decoration.mark` for every match:
 
+<Canvas of={CodeMirrorEditorStories.WithSyntaxHighlighting} />
+
 ```tsx
 const highlightConfig: SyntaxHighlightConfig = {
   pattern: /\$\{[^}]+\}/g, // MUST have /g flag
-  className: 'cm-variable',
+  className: 'cm-highlight',
 };
 
 <CodeMirrorEditor value={value} onChange={onChange} highlightConfig={highlightConfig} />;
@@ -38,6 +48,8 @@ For more control, supply a `highlighterFactory` function instead — it receives
 ### Custom theme
 
 Extend the base Grafana theme by providing a `themeFactory`:
+
+<Canvas of={CodeMirrorEditorStories.WithCustomTheme} />
 
 ```tsx
 import { EditorView } from '@codemirror/view';
@@ -59,6 +71,8 @@ const myTheme: ThemeFactory = (theme) => [
 ### Custom autocompletion
 
 Build a CodeMirror `autocompletion` extension and pass it via the `autocompletion` prop. Wrap in `useMemo` so the extension reference is stable:
+
+<Canvas of={CodeMirrorEditorStories.WithAutocompletion} />
 
 ```tsx
 import { autocompletion, CompletionContext } from '@codemirror/autocomplete';
@@ -87,6 +101,8 @@ const myCompletion = useMemo(
 
 Anything not covered by the named props can be added via the `extensions` array:
 
+<Canvas of={CodeMirrorEditorStories.ReadOnly} />
+
 ```tsx
 import { EditorView } from '@codemirror/view';
 
@@ -97,20 +113,4 @@ const extensions = useMemo(() => [EditorView.editable.of(false)], []);
 
 ## Props
 
-| Prop                 | Type                      | Default                    | Description                                     |
-| -------------------- | ------------------------- | -------------------------- | ----------------------------------------------- |
-| `value`              | `string`                  | required                   | Current editor content                          |
-| `onChange`           | `(value: string) => void` | required                   | Fired on every document change                  |
-| `onBlur`             | `(value: string) => void` | —                          | Fired when the editor loses focus               |
-| `placeholder`        | `string`                  | `''`                       | Shown when the editor is empty                  |
-| `themeFactory`       | `ThemeFactory`            | `createGenericTheme`       | Returns a CodeMirror theme Extension            |
-| `highlighterFactory` | `HighlighterFactory`      | `createGenericHighlighter` | Returns a highlight Extension                   |
-| `highlightConfig`    | `SyntaxHighlightConfig`   | —                          | Regex + class name for the default highlighter  |
-| `autocompletion`     | `Extension`               | —                          | Full CodeMirror autocompletion extension        |
-| `extensions`         | `Extension[]`             | `[]`                       | Extra CodeMirror extensions                     |
-| `showLineNumbers`    | `boolean`                 | `false`                    | Show the line-number gutter                     |
-| `lineWrapping`       | `boolean`                 | `true`                     | Wrap long lines                                 |
-| `ariaLabel`          | `string`                  | `placeholder`              | Accessible label on the editor element          |
-| `className`          | `string`                  | —                          | Extra CSS class on the outer container          |
-| `useInputStyles`     | `boolean`                 | `true`                     | Apply Grafana input-box styles to the container |
-| `closeBrackets`      | `boolean`                 | `true`                     | Auto-close brackets and quotes                  |
+<ArgTypes of={CodeMirrorEditor} />
