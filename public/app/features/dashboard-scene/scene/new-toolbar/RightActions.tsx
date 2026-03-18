@@ -12,6 +12,7 @@ import { isLibraryPanel } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
+import { CollabPresence } from './actions/CollabPresence';
 import { CollabSaveStatus } from './actions/CollabSaveStatus';
 import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';
 import { DiscardPanelButton } from './actions/DiscardPanelButton';
@@ -98,6 +99,12 @@ export const RightActions = ({ dashboard }: { dashboard: DashboardScene }) => {
             component: SaveLibraryPanelButton,
             group: 'panel',
             condition: showPanelButtons && isEditingLibraryPanel,
+          },
+          {
+            key: 'collab-presence-bar',
+            component: CollabPresence,
+            group: 'panel',
+            condition: collabEnabled && isEditingDashboard && !isEditingLibraryPanel,
           },
           {
             key: 'collab-save-status',

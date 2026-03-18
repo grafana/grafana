@@ -7,6 +7,7 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { CollabProvider } from 'app/features/dashboard-collab/CollabProvider';
+import { CollabCursorOverlay } from 'app/features/dashboard-collab/CollabCursorOverlay';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
@@ -135,6 +136,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   if (collabEnabled && uid) {
     return (
       <CollabProvider scene={model} dashboardUID={uid} namespace="default">
+        <CollabCursorOverlay />
         {content}
       </CollabProvider>
     );

@@ -4,6 +4,7 @@ import { RefObject, useMemo } from 'react';
 import { config } from '@grafana/runtime';
 import { LazyLoader, SceneComponentProps, VizPanel } from '@grafana/scenes';
 import { useElementSelection } from '@grafana/ui';
+import { CollabPanelBorder } from 'app/features/dashboard-collab/CollabPanelBorder';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { useDashboardState } from '../../utils/utils';
@@ -21,6 +22,15 @@ interface PanelWrapperProps {
 }
 
 function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperProps) {
+  const collabEnabled = Boolean(config.featureToggles.dashboardCollaboration);
+  const panelContent = collabEnabled ? (
+    <CollabPanelBorder panelId={panel.state.key!} isEditing={false}>
+      <panel.Component model={panel} />
+    </CollabPanelBorder>
+  ) : (
+    <panel.Component model={panel} />
+  );
+
   if (isLazy) {
     return (
       <LazyLoader
@@ -28,13 +38,13 @@ function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperP
         ref={containerRef}
         className={cx(panelWrapper, isSelected && 'dashboard-selected-element')}
       >
-        <panel.Component model={panel} />
+        {panelContent}
       </LazyLoader>
     );
   }
   return (
     <div className={cx(panelWrapper, isSelected && 'dashboard-selected-element')} ref={containerRef}>
-      <panel.Component model={panel} />
+      {panelContent}
     </div>
   );
 }

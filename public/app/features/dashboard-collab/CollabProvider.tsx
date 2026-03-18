@@ -251,15 +251,13 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
               // Parse initial session info from subscribe data
               if (event.message) {
                 const info = event.message as SessionInfo;
-                debugLog('Session info received', { users: info.users?.length, locks: Object.keys(info.locks ?? {}).length, seq: info.seq });
-                if (info.users) {
-                  setUsers(info.users);
-                }
-                if (info.locks) {
-                  setLocks(
-                    Object.entries(info.locks).map(([target, userId]) => ({ target, userId }))
-                  );
-                }
+                const sessionUsers = info.users ?? [];
+                const sessionLocks = info.locks ?? {};
+                debugLog('Session info received', { users: sessionUsers.length, locks: Object.keys(sessionLocks).length, seq: info.seq });
+                setUsers(sessionUsers);
+                setLocks(
+                  Object.entries(sessionLocks).map(([target, userId]) => ({ target, userId }))
+                );
               }
             } else if (
               event.state === LiveChannelConnectionState.Disconnected ||

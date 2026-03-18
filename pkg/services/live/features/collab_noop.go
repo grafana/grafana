@@ -14,7 +14,10 @@ func ProvideNoopCollabService() CollabService {
 }
 
 func (s *NoopCollabService) UserJoin(_ context.Context, _, _, _, _, _ string) (*CollabSessionInfo, error) {
-	return &CollabSessionInfo{}, nil
+	return &CollabSessionInfo{
+		Users: []CollabUserInfo{},
+		Locks: make(map[string]string),
+	}, nil
 }
 
 func (s *NoopCollabService) UserLeave(_ context.Context, _, _, _ string) error {
