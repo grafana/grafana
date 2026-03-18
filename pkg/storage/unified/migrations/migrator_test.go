@@ -7,10 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/grpc"
-
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
@@ -52,6 +51,11 @@ func TestIntegrationMigrations(t *testing.T) {
 		testcases.NewFoldersAndDashboardsTestCase(),
 		testcases.NewPlaylistsTestCase(),
 		testcases.NewShortURLsTestCase(),
+	}
+	// TODO: fix datasource migration tests on sqlite, see:
+	// https://github.com/grafana/grafana-enterprise/issues/11313
+	if !db.IsTestDbSQLite() {
+		migrationTestCases = append(migrationTestCases, testcases.NewDataSourceTestCase())
 	}
 
 	runMigrationTestSuite(t, migrationTestCases)
@@ -287,7 +291,6 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				//EnableLog:              true,
 				AppModeProduction:      true,
 				DisableAnonymous:       true,
 				DisableDataMigrations:  false,
@@ -326,12 +329,14 @@ const (
 	playlistsID            = "playlists migration"
 	foldersAndDashboardsID = "folders and dashboards migration"
 	shorturlsID            = "shorturls migration"
+	datasourceID           = "datasources migration"
 )
 
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
 	shorturlsID:            false,
+	datasourceID:           false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {
@@ -343,6 +348,9 @@ func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDe
 			continue
 		}
 		if optOut {
+			continue
+		}
+		if db.IsTestDbSQLite() && id == datasourceID {
 			continue
 		}
 		expectedMigrationIDs = append(expectedMigrationIDs, id)

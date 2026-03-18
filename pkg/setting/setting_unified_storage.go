@@ -19,18 +19,20 @@ var knownUnifiedStorageKeys = map[string]string{
 }
 
 const (
-	PlaylistResource  = "playlists.playlist.grafana.app"
-	FolderResource    = "folders.folder.grafana.app"
-	DashboardResource = "dashboards.dashboard.grafana.app"
-	ShortURLResource  = "shorturls.shorturl.grafana.app"
+	PlaylistResource    = "playlists.playlist.grafana.app"
+	FolderResource      = "folders.folder.grafana.app"
+	DashboardResource   = "dashboards.dashboard.grafana.app"
+	ShortURLResource    = "shorturls.shorturl.grafana.app"
+	DataSourceResources = "datasources.*.datasource.grafana.app" // All datasources
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
-	PlaylistResource:  true,  // Only Mode5!
-	FolderResource:    true,  // enabled by default
-	DashboardResource: true,  // enabled by default
-	ShortURLResource:  false, // Requires kubernetesShortURLs to be enabled by default
+	PlaylistResource:    true,  // Only Mode5!
+	FolderResource:      true,  // enabled by default
+	DashboardResource:   true,  // enabled by default
+	ShortURLResource:    false, // Requires kubernetesShortURLs to be enabled by default
+	DataSourceResources: false,
 }
 
 // applyUnifiedStorageEnvOverrides scans environment variables matching
@@ -95,6 +97,12 @@ func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 	}
 }
 
+// read storage configs from ini file. They look like:
+// [unified_storage.<group>.<resource>]
+// <field> = <value>
+// e.g.
+// [unified_storage.playlists.playlist.grafana.app]
+// dualWriterMode = 2
 func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Pre-create sections from GF_UNIFIED_STORAGE_* env vars so that
 	// resource sections can be configured purely via environment variables.
