@@ -19,6 +19,10 @@ type ResourceFileChange struct {
 
 	// The current value in the database -- only required for delete
 	Existing *provisioning.ResourceListItem
+
+	// OldFolderUID is set when a folder's _folder.json UID changed.
+	// The old folder needs cleanup after all children have been re-parented.
+	OldFolderUID string
 }
 
 // Compare reads the repository tree at ref, lists the current Grafana resources,
@@ -38,6 +42,11 @@ func Compare(ctx context.Context, repo repository.Reader, repositoryResources re
 	changes, err := Changes(ctx, source, target)
 	if err != nil {
 		return nil, nil, fmt.Errorf("calculate changes: %w", err)
+	}
+
+	changes, err = augmentChangesForUIDChanges(ctx, repo, ref, source, target, changes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("augment changes for UID changes: %w", err)
 	}
 
 	if len(changes) > 0 {
@@ -184,5 +193,96 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 	// Deepest first (stable sort order)
 	safepath.SortByDepth(changes, func(c ResourceFileChange) string { return c.Path }, false)
 
+	return changes, nil
+}
+
+// augmentChangesForUIDChanges detects folder UID changes (new _folder.json metadata.name
+// differs from the existing Grafana folder name) and emits FileActionUpdated for direct
+// children of affected folders. This ensures children are re-parented during the normal
+// apply flow without scanning all resources.
+func augmentChangesForUIDChanges(
+	ctx context.Context,
+	repo repository.Reader,
+	ref string,
+	source []repository.FileTreeEntry,
+	target *provisioning.ResourceList,
+	changes []ResourceFileChange,
+) ([]ResourceFileChange, error) {
+	// 1. Find affected folders: folder updates where UID actually changed.
+	// Also annotate the folder change with OldFolderUID for deferred cleanup.
+	affectedFolders := make(map[string]bool)
+	for i := range changes {
+		change := &changes[i]
+		if change.Action != repository.FileActionUpdated ||
+			!safepath.IsDir(change.Path) ||
+			change.Existing == nil {
+			continue
+		}
+		meta, _, err := resources.ReadFolderMetadata(ctx, repo, change.Path, ref)
+		if err != nil {
+			continue // not metadata-backed or read error — skip
+		}
+		if meta.Name != change.Existing.Name {
+			affectedFolders[change.Path] = true
+			change.OldFolderUID = change.Existing.Name
+		}
+	}
+	if len(affectedFolders) == 0 {
+		return changes, nil
+	}
+
+	// 2. Build lookups
+	existingPaths := make(map[string]bool, len(changes))
+	for _, c := range changes {
+		existingPaths[c.Path] = true
+	}
+
+	targetLookup := make(map[string]*provisioning.ResourceListItem, len(target.Items))
+	for i := range target.Items {
+		item := &target.Items[i]
+		path := item.Path
+		if item.Group == resources.FolderResource.Group && !strings.HasSuffix(path, "/") {
+			path += "/"
+		}
+		targetLookup[path] = item
+	}
+
+	// 3. Emit FileActionUpdated for direct children of affected folders
+	for _, file := range source {
+		path := file.Path
+		if !file.Blob && !strings.HasSuffix(path, "/") {
+			path += "/"
+		}
+		if resources.IsFolderMetadataFile(path) {
+			continue
+		}
+
+		// Direct parent check
+		parentDir := safepath.Dir(path)
+		if !strings.HasSuffix(parentDir, "/") {
+			parentDir += "/"
+		}
+		if !affectedFolders[parentDir] {
+			continue
+		}
+		if existingPaths[path] {
+			continue // already in changes
+		}
+
+		existing, ok := targetLookup[path]
+		if !ok {
+			continue // new resource, not a re-parenting case
+		}
+
+		changes = append(changes, ResourceFileChange{
+			Action:   repository.FileActionUpdated,
+			Path:     path,
+			Existing: existing,
+		})
+		existingPaths[path] = true
+	}
+
+	// 4. Re-sort by depth (deepest first) since we appended new entries
+	safepath.SortByDepth(changes, func(c ResourceFileChange) string { return c.Path }, false)
 	return changes, nil
 }

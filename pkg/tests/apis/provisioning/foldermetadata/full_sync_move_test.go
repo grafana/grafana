@@ -327,3 +327,12 @@ func assertNoFolderAtPath(t *testing.T, helper *common.ProvisioningTestHelper, r
 	}, 30*time.Second, 100*time.Millisecond,
 		"folder at path %q should be absent for repo %q", sourcePath, repoName)
 }
+
+func assertNoFolderByUID(t *testing.T, helper *common.ProvisioningTestHelper, folderUID string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		_, err := helper.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
+		assert.Error(c, err, "folder %q should no longer exist", folderUID)
+	}, 30*time.Second, 100*time.Millisecond,
+		"folder %q should be deleted", folderUID)
+}

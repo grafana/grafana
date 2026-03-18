@@ -124,6 +124,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 			}
 		}
 
+		f.ParentID = parent
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
 			return &PathCreationError{
 				Path: f.Path,
@@ -178,6 +179,14 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			source.Checksum = folder.MetadataHash
 			meta.SetSourceProperties(source)
 			needsUpdate = true
+		}
+
+		if folder.ParentID != "" {
+			currentParent := meta.GetFolder()
+			if currentParent != folder.ParentID {
+				meta.SetFolder(folder.ParentID)
+				needsUpdate = true
+			}
 		}
 
 		if needsUpdate {
@@ -292,6 +301,7 @@ func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, st
 	// Build the leaf folder struct but replace the hash-derived ID with the stable UID.
 	leaf := ParseFolder(folderPath, cfg.GetName())
 	leaf.ID = stableUID
+	leaf.ParentID = parentFolderID
 
 	return fm.EnsureFolderExists(ctx, leaf, parentFolderID)
 }

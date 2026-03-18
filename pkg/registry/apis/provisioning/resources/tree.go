@@ -111,6 +111,8 @@ func (t *folderTree) Add(folder Folder, parent string) {
 	defer t.mu.Unlock()
 	_, exists := t.tree[folder.ID]
 	t.tree[folder.ID] = parent
+	// Ensure the parent folder is set
+	folder.ParentID = parent
 	t.folders[folder.ID] = folder
 	if !exists {
 		t.count++
@@ -191,6 +193,7 @@ func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 	folder := Folder{
 		Title: meta.FindTitle(item.GetName()),
 		ID:    item.GetName(),
+		ParentID: meta.GetFolder(),
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -214,6 +217,7 @@ func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) FolderT
 			ID:           rf.Name,
 			Path:         rf.Path,
 			MetadataHash: rf.Hash,
+			ParentID:     rf.Folder,
 		}
 	}
 

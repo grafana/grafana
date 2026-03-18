@@ -567,6 +567,196 @@ func TestChanges(t *testing.T) {
 	})
 }
 
+func TestAugmentChangesForUIDChanges(t *testing.T) {
+	t.Run("emits children for UID change", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		// ReadFolderMetadata reads "my-folder/_folder.json" and returns a new UID
+		repo.On("Read", mock.Anything, "my-folder/_folder.json", "main").
+			Return(&repository.FileInfo{
+				Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"new-uid"},"spec":{"title":"My Folder"}}`),
+			}, nil)
+
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Hash: "abc", Blob: false},
+			{Path: "my-folder/_folder.json", Hash: "new-hash", Blob: true},
+			{Path: "my-folder/dashboard.json", Hash: "xyz", Blob: true},
+			{Path: "my-folder/child-folder", Hash: "def", Blob: false},
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "old-uid"},
+				{Path: "my-folder/dashboard.json", Hash: "xyz", Resource: "dashboards", Group: "dashboard.grafana.app", Name: "dash-1"},
+				{Path: "my-folder/child-folder", Hash: "def", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "child-folder-uid"},
+			},
+		}
+
+		changes := []ResourceFileChange{
+			{
+				Action:   repository.FileActionUpdated,
+				Path:     "my-folder/",
+				Existing: &provisioning.ResourceListItem{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "old-uid"},
+			},
+		}
+
+		result, err := augmentChangesForUIDChanges(context.Background(), repo, "main", source, target, changes)
+		require.NoError(t, err)
+
+		// Should contain: the original folder update + dashboard + child folder
+		paths := make(map[string]bool)
+		for _, c := range result {
+			paths[c.Path] = true
+		}
+		require.True(t, paths["my-folder/"], "folder update should be present")
+		require.True(t, paths["my-folder/dashboard.json"], "direct child dashboard should be emitted")
+		require.True(t, paths["my-folder/child-folder/"], "direct child folder should be emitted")
+	})
+
+	t.Run("skips children for title-only change (UID same)", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		// ReadFolderMetadata returns the same UID as existing
+		repo.On("Read", mock.Anything, "my-folder/_folder.json", "main").
+			Return(&repository.FileInfo{
+				Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"same-uid"},"spec":{"title":"New Title"}}`),
+			}, nil)
+
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Hash: "abc", Blob: false},
+			{Path: "my-folder/_folder.json", Hash: "new-hash", Blob: true},
+			{Path: "my-folder/dashboard.json", Hash: "xyz", Blob: true},
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "same-uid"},
+				{Path: "my-folder/dashboard.json", Hash: "xyz", Resource: "dashboards", Group: "dashboard.grafana.app", Name: "dash-1"},
+			},
+		}
+
+		changes := []ResourceFileChange{
+			{
+				Action:   repository.FileActionUpdated,
+				Path:     "my-folder/",
+				Existing: &provisioning.ResourceListItem{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "same-uid"},
+			},
+		}
+
+		result, err := augmentChangesForUIDChanges(context.Background(), repo, "main", source, target, changes)
+		require.NoError(t, err)
+		require.Len(t, result, 1, "only the original folder update — no children emitted")
+		require.Equal(t, "my-folder/", result[0].Path)
+	})
+
+	t.Run("only emits direct children, not grandchildren", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repo.On("Read", mock.Anything, "parent/_folder.json", "main").
+			Return(&repository.FileInfo{
+				Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"new-parent-uid"},"spec":{"title":"Parent"}}`),
+			}, nil)
+
+		source := []repository.FileTreeEntry{
+			{Path: "parent/", Hash: "abc", Blob: false},
+			{Path: "parent/_folder.json", Hash: "new-hash", Blob: true},
+			{Path: "parent/child/", Hash: "def", Blob: false},
+			{Path: "parent/child/grandchild.json", Hash: "ghi", Blob: true},
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "parent/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "old-parent-uid"},
+				{Path: "parent/child/", Hash: "def", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "child-uid"},
+				{Path: "parent/child/grandchild.json", Hash: "ghi", Resource: "dashboards", Group: "dashboard.grafana.app", Name: "gc-1"},
+			},
+		}
+
+		changes := []ResourceFileChange{
+			{
+				Action:   repository.FileActionUpdated,
+				Path:     "parent/",
+				Existing: &provisioning.ResourceListItem{Path: "parent/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "old-parent-uid"},
+			},
+		}
+
+		result, err := augmentChangesForUIDChanges(context.Background(), repo, "main", source, target, changes)
+		require.NoError(t, err)
+
+		paths := make(map[string]bool)
+		for _, c := range result {
+			paths[c.Path] = true
+		}
+		require.True(t, paths["parent/"], "folder update present")
+		require.True(t, paths["parent/child/"], "direct child folder emitted")
+		require.False(t, paths["parent/child/grandchild.json"], "grandchild should NOT be emitted")
+	})
+
+	t.Run("does not duplicate already-existing changes", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repo.On("Read", mock.Anything, "my-folder/_folder.json", "main").
+			Return(&repository.FileInfo{
+				Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"new-uid"},"spec":{"title":"My Folder"}}`),
+			}, nil)
+
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Hash: "abc", Blob: false},
+			{Path: "my-folder/_folder.json", Hash: "new-hash", Blob: true},
+			{Path: "my-folder/dashboard.json", Hash: "changed", Blob: true},
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "old-uid"},
+				{Path: "my-folder/dashboard.json", Hash: "original", Resource: "dashboards", Group: "dashboard.grafana.app", Name: "dash-1"},
+			},
+		}
+
+		// dashboard.json is already in changes (hash changed independently)
+		changes := []ResourceFileChange{
+			{
+				Action:   repository.FileActionUpdated,
+				Path:     "my-folder/",
+				Existing: &provisioning.ResourceListItem{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "old-uid"},
+			},
+			{
+				Action:   repository.FileActionUpdated,
+				Path:     "my-folder/dashboard.json",
+				Existing: &provisioning.ResourceListItem{Path: "my-folder/dashboard.json", Hash: "original", Resource: "dashboards", Group: "dashboard.grafana.app", Name: "dash-1"},
+			},
+		}
+
+		result, err := augmentChangesForUIDChanges(context.Background(), repo, "main", source, target, changes)
+		require.NoError(t, err)
+
+		// Count dashboard entries — should be exactly 1 (no duplicate)
+		count := 0
+		for _, c := range result {
+			if c.Path == "my-folder/dashboard.json" {
+				count++
+			}
+		}
+		require.Equal(t, 1, count, "dashboard should appear only once, not duplicated")
+	})
+
+	t.Run("no-op when no folder updates", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Hash: "abc", Blob: false},
+			{Path: "my-folder/dashboard.json", Hash: "xyz", Blob: true},
+		}
+
+		target := &provisioning.ResourceList{}
+
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionCreated, Path: "my-folder/"},
+			{Action: repository.FileActionCreated, Path: "my-folder/dashboard.json"},
+		}
+
+		result, err := augmentChangesForUIDChanges(context.Background(), repo, "main", source, target, changes)
+		require.NoError(t, err)
+		require.Equal(t, changes, result, "should return changes unchanged")
+	})
+}
+
 func TestCompare(t *testing.T) {
 	tests := []struct {
 		name            string

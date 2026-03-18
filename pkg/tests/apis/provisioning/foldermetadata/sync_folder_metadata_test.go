@@ -629,4 +629,91 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 			c.Errorf("folder not found")
 		}, 30*time.Second, 100*time.Millisecond)
 	})
+
+	t.Run("UID change deletes old folder and re-parents child folder", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "uid-change-child-folder"
+
+		// First sync: parent with original UID, child folder + dashboard inside.
+		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-old-uid", "Parent"))
+		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "parent/child/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+		requireFolderState(t, helper, "parent-old-uid", "Parent", "parent", repo)
+		requireFolderState(t, helper, "child-uid", "Child", "parent/child", "parent-old-uid")
+		requireDashboardParents(t, helper, repo, map[string]string{
+			"parent/child/dashboard.json": "child-uid",
+		})
+
+		// Change parent UID only.
+		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-new-uid", "Parent"))
+
+		helper.SyncAndWait(t, repo, nil)
+
+		// Old folder should be gone.
+		assertNoFolderByUID(t, helper, "parent-old-uid")
+
+		// New parent folder should exist with correct state.
+		requireFolderState(t, helper, "parent-new-uid", "Parent", "parent", repo)
+
+		// Child folder should be re-parented to new parent UID.
+		requireFolderState(t, helper, "child-uid", "Child", "parent/child", "parent-new-uid")
+
+		// Dashboard should still be parented to child (unchanged).
+		requireDashboardParents(t, helper, repo, map[string]string{
+			"parent/child/dashboard.json": "child-uid",
+		})
+	})
+
+	t.Run("nested UID changes — both parent and child UIDs change", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "uid-change-nested"
+
+		// First sync: parent + child each with original UIDs.
+		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("p-old", "Parent"))
+		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("c-old", "Child"))
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "parent/child/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+		requireFolderState(t, helper, "p-old", "Parent", "parent", repo)
+		requireFolderState(t, helper, "c-old", "Child", "parent/child", "p-old")
+
+		// Change both UIDs.
+		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("p-new", "Parent"))
+		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("c-new", "Child"))
+
+		helper.SyncAndWait(t, repo, nil)
+
+		// Both old UIDs should be gone.
+		assertNoFolderByUID(t, helper, "p-old")
+		assertNoFolderByUID(t, helper, "c-old")
+
+		// New parent under repo root, new child under new parent.
+		requireFolderState(t, helper, "p-new", "Parent", "parent", repo)
+		requireFolderState(t, helper, "c-new", "Child", "parent/child", "p-new")
+
+		// Dashboard re-parented to new child.
+		requireDashboardParents(t, helper, repo, map[string]string{
+			"parent/child/dashboard.json": "c-new",
+		})
+	})
 }
