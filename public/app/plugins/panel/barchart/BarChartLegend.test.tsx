@@ -173,7 +173,7 @@ describe('BarChartLegend', () => {
         expect(screen.getByTestId(selectors.components.VizLegend.seriesName('Metric A'))).toBeVisible();
       });
 
-      it('does not render VizLegend when data has visible value fields', () => {
+      it('does not render VizLegend when data has visible value fields with hideFromLegend', () => {
         const frame = createBarChartLegendFrame({
           valueFields: [{ name: 'Metric A', hideFromLegend: true }],
         });
