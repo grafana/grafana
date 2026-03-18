@@ -1,11 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled, getBackendSrv, isFetchError } from '@grafana/runtime';
-import { Alert, Button, Stack } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -118,6 +118,8 @@ export const UserAdminPage = ({
 
   const isLDAPUser = user?.isExternal && user?.authLabels?.includes('LDAP');
   const userInCurrentOrg = Boolean(orgs?.some((o) => o.orgId === contextSrv.user.orgId));
+  const [showSimulateConfirm, setShowSimulateConfirm] = useState(false);
+
   const onViewAsUser = async () => {
     if (!user) {
       return;
@@ -161,6 +163,19 @@ export const UserAdminPage = ({
                 onUserEnable={enableUser}
                 onPasswordChange={onPasswordChange}
               />
+              {isLDAPUser &&
+                user?.isExternallySynced &&
+                featureEnabled('ldapsync') &&
+                ldapSyncInfo &&
+                canReadLDAPStatus && (
+                  <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} user={user} onUserSync={onUserSync} />
+                )}
+              <UserPermissions
+                isGrafanaAdmin={user.isGrafanaAdmin}
+                isExternalUser={user?.isGrafanaAdminExternallySynced}
+                lockMessage={lockMessage}
+                onGrafanaAdminChange={onGrafanaAdminChange}
+              />
               {contextSrv.isGrafanaAdmin && (
                 <Stack direction="column" gap={1}>
                   {!userInCurrentOrg && (
@@ -177,26 +192,41 @@ export const UserAdminPage = ({
                       variant="secondary"
                       icon="eye"
                       disabled={!userInCurrentOrg || user.isDisabled}
-                      onClick={onViewAsUser}
+                      onClick={() => setShowSimulateConfirm(true)}
                     >
                       {t('admin.user-admin-page.view-as-user', 'View as this user')}
                     </Button>
                   </div>
+                  <Text variant="bodySmall" color="secondary">
+                    {t(
+                      'admin.user-admin-page.view-as-explainer',
+                      'Experience the UI as this user would see it, based on their permissions in the current organization.'
+                    )}
+                  </Text>
+                  <ConfirmModal
+                    isOpen={showSimulateConfirm}
+                    title={t(
+                      'admin.user-admin-page.view-as-confirm-title',
+                      'Start viewing as user "{{displayName}}"{{loginSuffix}}?',
+                      {
+                        displayName: (user.name?.trim() || user.login).replace(/"/g, '\u2019'),
+                        loginSuffix: user.name?.trim() && user.name.trim() !== user.login ? ` (${user.login})` : '',
+                      }
+                    )}
+                    body={
+                      <Text variant="body">
+                        {t(
+                          'admin.user-admin-page.view-as-confirm-body',
+                          'Your session will act as this user for permission testing purposes. You will see only what they can see. To stop simulating, click "Exit simulation" in the warning banner.'
+                        )}
+                      </Text>
+                    }
+                    confirmText={t('admin.user-admin-page.view-as-confirm-button', 'Start simulating')}
+                    onConfirm={onViewAsUser}
+                    onDismiss={() => setShowSimulateConfirm(false)}
+                  />
                 </Stack>
               )}
-              {isLDAPUser &&
-                user?.isExternallySynced &&
-                featureEnabled('ldapsync') &&
-                ldapSyncInfo &&
-                canReadLDAPStatus && (
-                  <UserLdapSyncInfo ldapSyncInfo={ldapSyncInfo} user={user} onUserSync={onUserSync} />
-                )}
-              <UserPermissions
-                isGrafanaAdmin={user.isGrafanaAdmin}
-                isExternalUser={user?.isGrafanaAdminExternallySynced}
-                lockMessage={lockMessage}
-                onGrafanaAdminChange={onGrafanaAdminChange}
-              />
             </>
           )}
           {orgs && (

@@ -1,21 +1,37 @@
-package api
+package usersimulation
 
 import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
+// API handles Grafana admin user-simulation session endpoints.
+type API struct {
+	UserService user.Service
+	OrgService  org.Service
+	AuthTokens  auth.UserTokenService
+}
+
+func New(userSvc user.Service, orgSvc org.Service, tokens auth.UserTokenService) *API {
+	return &API{
+		UserService: userSvc,
+		OrgService:  orgSvc,
+		AuthTokens:  tokens,
+	}
+}
+
 type startUserSimulationCommand struct {
 	UserID int64 `json:"userId"`
 }
 
-// POST /api/admin/user-simulation
-func (hs *HTTPServer) StartUserSimulation(c *contextmodel.ReqContext) response.Response {
+// StartUserSimulation POST /api/admin/user-simulation
+func (a *API) StartUserSimulation(c *contextmodel.ReqContext) response.Response {
 	if !c.IsGrafanaAdmin {
 		return response.Error(http.StatusForbidden, "Forbidden", nil)
 	}
@@ -31,7 +47,7 @@ func (hs *HTTPServer) StartUserSimulation(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "userId is required", nil)
 	}
 
-	target, err := hs.userService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{ID: cmd.UserID})
+	target, err := a.UserService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{ID: cmd.UserID})
 	if err != nil || target == nil {
 		return response.Error(http.StatusNotFound, "User not found", err)
 	}
@@ -42,7 +58,7 @@ func (hs *HTTPServer) StartUserSimulation(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "Cannot simulate a disabled user", nil)
 	}
 
-	orgs, err := hs.orgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: cmd.UserID})
+	orgs, err := a.OrgService.GetUserOrgList(c.Req.Context(), &org.GetUserOrgListQuery{UserID: cmd.UserID})
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to resolve user organizations", err)
 	}
@@ -57,33 +73,33 @@ func (hs *HTTPServer) StartUserSimulation(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "User is not a member of the current organization", nil)
 	}
 
-	if err := hs.AuthTokenService.SetTokenSimulation(c.Req.Context(), c.UserToken.Id, c.UserToken.UserId, cmd.UserID, c.Login); err != nil {
+	if err := a.AuthTokens.SetTokenSimulation(c.Req.Context(), c.UserToken.Id, c.UserToken.UserId, cmd.UserID, c.Login); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to start simulation", err)
 	}
 
 	return response.JSON(http.StatusOK, map[string]any{
-		"message":   "Simulation started; reload the page to apply.",
+		"message":   "Simulation started, reload the page to apply.",
 		"userId":    cmd.UserID,
 		"userLogin": target.Login,
 	})
 }
 
-// DELETE /api/admin/user-simulation
-func (hs *HTTPServer) StopUserSimulation(c *contextmodel.ReqContext) response.Response {
+// StopUserSimulation DELETE /api/admin/user-simulation
+func (a *API) StopUserSimulation(c *contextmodel.ReqContext) response.Response {
 	if !c.IsGrafanaAdmin {
 		return response.Error(http.StatusForbidden, "Forbidden", nil)
 	}
 	if c.UserToken == nil || c.UserToken.Id < 1 {
 		return response.JSON(http.StatusOK, map[string]any{"active": false})
 	}
-	if err := hs.AuthTokenService.ClearTokenSimulation(c.Req.Context(), c.UserToken.Id, c.UserToken.UserId); err != nil {
+	if err := a.AuthTokens.ClearTokenSimulation(c.Req.Context(), c.UserToken.Id, c.UserToken.UserId); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to stop simulation", err)
 	}
-	return response.JSON(http.StatusOK, map[string]any{"message": "Simulation stopped; reload the page."})
+	return response.JSON(http.StatusOK, map[string]any{"message": "Simulation stopped, reload the page."})
 }
 
-// GET /api/admin/user-simulation
-func (hs *HTTPServer) GetUserSimulationStatus(c *contextmodel.ReqContext) response.Response {
+// GetUserSimulationStatus GET /api/admin/user-simulation
+func (a *API) GetUserSimulationStatus(c *contextmodel.ReqContext) response.Response {
 	if !c.IsGrafanaAdmin {
 		return response.Error(http.StatusForbidden, "Forbidden", nil)
 	}
@@ -91,7 +107,7 @@ func (hs *HTTPServer) GetUserSimulationStatus(c *contextmodel.ReqContext) respon
 		return response.JSON(http.StatusOK, map[string]any{"active": false})
 	}
 	simLogin := ""
-	if u, err := hs.userService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{ID: c.UserToken.SimulateUserID}); err == nil && u != nil {
+	if u, err := a.UserService.GetByID(c.Req.Context(), &user.GetUserByIDQuery{ID: c.UserToken.SimulateUserID}); err == nil && u != nil {
 		simLogin = u.Login
 	}
 	return response.JSON(http.StatusOK, map[string]any{

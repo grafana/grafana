@@ -36,6 +36,7 @@ import (
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/api/usersimulation"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
@@ -576,9 +577,10 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/provisioning/datasources/reload", authorize(ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersDatasources)), routing.Wrap(hs.AdminProvisioningReloadDatasources))
 		adminRoute.Post("/provisioning/alerting/reload", authorize(ac.EvalPermission(ActionProvisioningReload, ScopeProvisionersAlertRules)), routing.Wrap(hs.AdminProvisioningReloadAlerting))
 
-		adminRoute.Post("/user-simulation", reqGrafanaAdmin, routing.Wrap(hs.StartUserSimulation))
-		adminRoute.Delete("/user-simulation", reqGrafanaAdmin, routing.Wrap(hs.StopUserSimulation))
-		adminRoute.Get("/user-simulation", reqGrafanaAdmin, routing.Wrap(hs.GetUserSimulationStatus))
+		userSim := usersimulation.New(hs.userService, hs.orgService, hs.AuthTokenService)
+		adminRoute.Post("/user-simulation", reqGrafanaAdmin, routing.Wrap(userSim.StartUserSimulation))
+		adminRoute.Delete("/user-simulation", reqGrafanaAdmin, routing.Wrap(userSim.StopUserSimulation))
+		adminRoute.Get("/user-simulation", reqGrafanaAdmin, routing.Wrap(userSim.GetUserSimulationStatus))
 	}, reqSignedIn)
 
 	// Administering users
