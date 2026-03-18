@@ -137,8 +137,8 @@ function EntryDot({ entry }: { entry: TimelineEntry }) {
     return <div className={styles.dot} />;
   }
 
-  const allFailed = entry.notifications.every((n) => n.outcome !== 'success');
-  const someFailed = entry.notifications.some((n) => n.outcome !== 'success');
+  const allFailed = entry.notifications.every((n) => n.outcome === 'error');
+  const someFailed = entry.notifications.some((n) => n.outcome === 'error');
 
   if (allFailed) {
     return (
