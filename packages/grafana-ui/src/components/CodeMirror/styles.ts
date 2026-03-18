@@ -47,7 +47,17 @@ export function createGenericTheme(theme: GrafanaTheme2): Extension {
         backgroundColor: 'transparent',
       },
       '.cm-gutters': {
-        display: 'none',
+        backgroundColor: theme.colors.background.secondary,
+        borderRight: `1px solid ${theme.colors.border.weak}`,
+        color: theme.colors.text.secondary,
+      },
+      '.cm-lineNumbers .cm-gutterElement': {
+        padding: '0 8px',
+        minWidth: '24px',
+        textAlign: 'right',
+      },
+      '.cm-highlight': {
+        color: theme.colors.info.text,
       },
       '.cm-tooltip.cm-tooltip-autocomplete': {
         backgroundColor: theme.colors.background.primary,

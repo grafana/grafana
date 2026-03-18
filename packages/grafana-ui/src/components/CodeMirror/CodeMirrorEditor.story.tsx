@@ -50,9 +50,10 @@ Basic.storyName = 'Basic';
 // With syntax highlighting
 // ---------------------------------------------------------------------------
 
+// Uses the generic 'cm-highlight' class so createGenericTheme automatically colours it.
 const variableHighlightConfig: SyntaxHighlightConfig = {
   pattern: /\$\{[^}]+\}/g,
-  className: 'cm-variable',
+  className: 'cm-highlight',
 };
 
 export const WithSyntaxHighlighting: StoryFn<typeof CodeMirrorEditor> = () => {
@@ -73,6 +74,12 @@ WithSyntaxHighlighting.storyName = 'With syntax highlighting';
 // With custom theme
 // ---------------------------------------------------------------------------
 
+// Uses a custom class name styled explicitly via a themeFactory.
+const customThemeHighlightConfig: SyntaxHighlightConfig = {
+  pattern: /\$\{[^}]+\}/g,
+  className: 'cm-variable',
+};
+
 const successTheme: ThemeFactory = (theme) => [
   createGenericTheme(theme),
   EditorView.theme({
@@ -90,7 +97,7 @@ export const WithCustomTheme: StoryFn<typeof CodeMirrorEditor> = () => {
       value={value}
       onChange={setValue}
       themeFactory={successTheme}
-      highlightConfig={variableHighlightConfig}
+      highlightConfig={customThemeHighlightConfig}
       placeholder="Custom theme applied to ${variables}"
     />
   );
