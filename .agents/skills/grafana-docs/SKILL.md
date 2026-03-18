@@ -14,9 +14,9 @@ When authoring or editing documentation under the Grafana repository's `docs/` d
 ## Steps
 
 1. **Read** `docs/AGENTS.md` at the repository root. That file defines role, structure, copy, tense, voice, wordlist, formatting, and shortcode usage for Grafana docs.
-2. **Review the content** you create or edit under `docs/`. Use use the content of `docs/AGENTS.md`.and find the whole guide in https://grafana.com/docs/writers-toolkit/write/style-guide/.
+2. **Review the content** you create or edit under `docs/`. Use use the content of `docs/AGENTS.md` and find the whole guide in https://grafana.com/docs/writers-toolkit/write/style-guide/.
 3. When branch is pushed and PR is created, prompt for reviews from stakeholders:
-   - Copilot
-   - Irene Rodriguez
-   - Anna Urbiztondo
+   - Copilot @copilot
+   - Irene Rodriguez @irene
+   - Anna Urbiztondo @urbiz-grafana
 
