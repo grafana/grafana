@@ -25,6 +25,11 @@ jobs:
       BUCKET_NAME: grafana-frontend-previews
 
     steps:
+      - name: Debug OIDC Claims
+        uses: steve-todorov/oidc-debugger-action@v1
+        with:
+          audience: '${{ github.server_url }}/${{ github.repository }}'
+
       - name: Checkout code
         uses: actions/checkout@v5
         with:
@@ -74,6 +79,8 @@ jobs:
         env:
           DEPLOY_NAME: ${{ steps.create-deploy-name.outputs.deploy-name }}
         run: |
-          echo "## Frontend preview deployed!" >> $GITHUB_STEP_SUMMARY
-          echo "Deploy name: \`${DEPLOY_NAME}\`" >> $GITHUB_STEP_SUMMARY
-          echo "GCS path: \`gs://${BUCKET_NAME}/${DEPLOY_NAME}/\`" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Frontend preview deployed!"
+            echo "Deploy name: \`${DEPLOY_NAME}\`"
+            echo "GCS path: \`gs://${BUCKET_NAME}/${DEPLOY_NAME}/\`"
+          } >> "$GITHUB_STEP_SUMMARY"
