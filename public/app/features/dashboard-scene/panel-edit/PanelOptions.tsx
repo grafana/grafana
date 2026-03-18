@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 
-import { PanelData } from '@grafana/data';
+import { FieldConfigSource, PanelData } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
@@ -11,7 +11,7 @@ import {
 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
-import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 
 import { getPanelFrameOptions, getPanelStylesOptions } from './getPanelFrameOptions';
 
@@ -24,6 +24,8 @@ interface Props {
 
 export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, data }) => {
   const { options, fieldConfig, _pluginInstanceState } = panel.useState();
+
+  const mutationHandlers = useMutationHandlers(panel);
 
   const panelFrameOptions = useMemo(() => getPanelFrameOptions(panel), [panel]);
   const panelStylesOptions = useMemo(() => getPanelStylesOptions(panel), [panel]);
@@ -40,9 +42,10 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
       plugin: plugin,
       eventBus: panel.getPanelContext().eventBus,
       instanceState: _pluginInstanceState,
+      ...mutationHandlers,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, panel, options, fieldConfig, _pluginInstanceState]);
+  }, [data, panel, options, fieldConfig, _pluginInstanceState, mutationHandlers]);
 
   const libraryPanelOptions = useMemo(() => {
     if (panel instanceof VizPanel && isLibraryPanel(panel)) {
@@ -64,12 +67,12 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
         panel.getPlugin()?.fieldConfigRegistry!,
         data?.series ?? [],
         searchQuery,
-        (newConfig) => {
+        mutationHandlers?.onFieldConfigChange ?? ((newConfig) => {
           panel.onFieldConfigChange(newConfig, true);
-        }
+        })
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data, searchQuery, panel, fieldConfig]
+    [data, searchQuery, panel, fieldConfig, mutationHandlers]
   );
 
   const isSearching = searchQuery.length > 0;
@@ -121,3 +124,65 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
 });
 
 PanelOptions.displayName = 'PanelOptions';
+
+/**
+ * Returns mutation-client-based handlers for options and field config changes.
+ * Returns undefined handlers if the mutation client is not available,
+ * in which case the callers fall back to direct VizPanel methods.
+ */
+function useMutationHandlers(panel: VizPanel) {
+  const dashboard = useMemo(() => {
+    try {
+      return getDashboardSceneFor(panel);
+    } catch {
+      return undefined;
+    }
+  }, [panel]);
+
+  const elementName = useMemo(
+    () => dashboard?.getElementNameForVizPanel(panel),
+    [dashboard, panel]
+  );
+
+  const client = dashboard?.getMutationClient();
+
+  const onOptionsChange = useCallback(
+    (options: Record<string, unknown>) => {
+      if (client && elementName) {
+        client.execute({
+          type: 'UPDATE_PANEL',
+          payload: {
+            element: { kind: 'ElementReference', name: elementName },
+            panel: { spec: { vizConfig: { spec: { options } } } },
+          },
+        });
+      } else {
+        panel.onOptionsChange(options);
+      }
+    },
+    [client, elementName, panel]
+  );
+
+  const onFieldConfigChange = useCallback(
+    (fieldConfig: FieldConfigSource) => {
+      if (client && elementName) {
+        client.execute({
+          type: 'UPDATE_PANEL',
+          payload: {
+            element: { kind: 'ElementReference', name: elementName },
+            panel: { spec: { vizConfig: { spec: { fieldConfig } } } },
+          },
+        });
+      } else {
+        panel.onFieldConfigChange(fieldConfig, true);
+      }
+    },
+    [client, elementName, panel]
+  );
+
+  if (!client || !elementName) {
+    return {};
+  }
+
+  return { onOptionsChange, onFieldConfigChange };
+}

@@ -33,28 +33,25 @@ export function createPresetApplyHandler(panel: VizPanel) {
         if (preset.fieldConfig) {
           const { defaults, overrides } = panel.state.fieldConfig;
           const presetDefaults = preset.fieldConfig.defaults;
-          panel.onFieldConfigChange(
-            {
-              defaults: {
-                ...defaults,
-                ...presetDefaults,
-                custom: { ...defaults.custom, ...presetDefaults?.custom },
-                ...(presetDefaults?.color && { color: presetDefaults.color }),
-                ...(presetDefaults?.thresholds && { thresholds: presetDefaults.thresholds }),
-              },
-              overrides,
+          updatePanelFieldConfigState(panel, {
+            defaults: {
+              ...defaults,
+              ...presetDefaults,
+              custom: { ...defaults.custom, ...presetDefaults?.custom },
+              ...(presetDefaults?.color && { color: presetDefaults.color }),
+              ...(presetDefaults?.thresholds && { thresholds: presetDefaults.thresholds }),
             },
-            true
-          );
+            overrides,
+          });
         }
         if (preset.options) {
-          panel.onOptionsChange({ ...panel.state.options, ...preset.options }, true);
+          updatePanelOptionsState(panel, { ...panel.state.options, ...preset.options });
         }
       },
       undo: () => {
-        panel.onFieldConfigChange(prevFieldConfig, true);
+        updatePanelFieldConfigState(panel, prevFieldConfig);
         if (preset.options) {
-          panel.onOptionsChange(prevOptions, true);
+          updatePanelOptionsState(panel, prevOptions);
         }
       },
     });
@@ -258,6 +255,40 @@ function updatePanelDescriptionState(panel: VizPanel, description: string) {
     return;
   }
   panel.setState({ description });
+}
+
+function updatePanelOptionsState(panel: VizPanel, options: Record<string, unknown>) {
+  const dashboard = getDashboardSceneFor(panel);
+  const elementName = dashboard.getElementNameForVizPanel(panel);
+  const client = dashboard.getMutationClient();
+  if (elementName && client) {
+    client.execute({
+      type: 'UPDATE_PANEL',
+      payload: {
+        element: { kind: 'ElementReference', name: elementName },
+        panel: { spec: { vizConfig: { spec: { options } } } },
+      },
+    });
+    return;
+  }
+  panel.onOptionsChange(options, true);
+}
+
+function updatePanelFieldConfigState(panel: VizPanel, fieldConfig: FieldConfigSource) {
+  const dashboard = getDashboardSceneFor(panel);
+  const elementName = dashboard.getElementNameForVizPanel(panel);
+  const client = dashboard.getMutationClient();
+  if (elementName && client) {
+    client.execute({
+      type: 'UPDATE_PANEL',
+      payload: {
+        element: { kind: 'ElementReference', name: elementName },
+        panel: { spec: { vizConfig: { spec: { fieldConfig } } } },
+      },
+    });
+    return;
+  }
+  panel.onFieldConfigChange(fieldConfig, true);
 }
 
 export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: string = panel.state.title) {

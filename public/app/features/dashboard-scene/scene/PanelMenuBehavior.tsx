@@ -555,11 +555,31 @@ const onCreateAlert = async (panel: VizPanel) => {
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {
   const options = vizPanel.state.options;
   if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
-    vizPanel.onOptionsChange({
+    const newOptions = {
       legend: {
-        showLegend: options.legend.showLegend ? false : true,
+        showLegend: !options.legend.showLegend,
       },
-    });
+    };
+
+    try {
+      const dashboard = getDashboardSceneFor(vizPanel);
+      const elementName = dashboard.getElementNameForVizPanel(vizPanel);
+      const client = dashboard.getMutationClient();
+      if (elementName && client) {
+        client.execute({
+          type: 'UPDATE_PANEL',
+          payload: {
+            element: { kind: 'ElementReference', name: elementName },
+            panel: { spec: { vizConfig: { spec: { options: newOptions } } } },
+          },
+        });
+        return;
+      }
+    } catch {
+      // Fall through to direct setState
+    }
+
+    vizPanel.onOptionsChange(newOptions);
   }
 }
 
