@@ -1791,8 +1791,9 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	})
 
 	// Allow cluster-scoped resources to be enqueued with an empty tenantID.
+	// This is only used as a QOS queue key, not as a storage namespace.
 	if tenantID == "" {
-		tenantID = "__cluster__"
+		tenantID = "cluster-scoped"
 	}
 
 	for {

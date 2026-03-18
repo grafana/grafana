@@ -61,10 +61,6 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 	return kvBackend
 }
 
-func setupTestStorageBackendWithClusterScope(t *testing.T, configs ...func(*KVBackendOptions)) *kvStorageBackend {
-	return setupTestStorageBackend(t, configs...)
-}
-
 func TestNewKvStorageBackend(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 
@@ -2123,13 +2119,13 @@ func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstruc
 // - WatchWriteEvents return empty namespace
 func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	t.Run("badger", func(t *testing.T) {
-		backend := setupTestStorageBackendWithClusterScope(t)
+		backend := setupTestStorageBackend(t)
 		testClusterScopedResources(t, backend)
 	})
 
 	t.Run("sqlkv", func(t *testing.T) {
 		sqlKV := setupSqlKV(t)
-		backend := setupTestStorageBackendWithClusterScope(t, func(opts *KVBackendOptions) {
+		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
 			opts.KvStore = sqlKV
 		})
 		testClusterScopedResources(t, backend)

@@ -1803,39 +1803,6 @@ func runTestIntegrationBackendClusterScopedResources(t *testing.T, backend resou
 		require.Greater(t, resp.ResourceVersion, int64(0))
 	})
 
-	t.Run("List cluster-scoped resources", func(t *testing.T) {
-		// TODO this is currently not possible in SQL backend, so maybe we don't want to support it. If we do, fix it
-		// and enable this test
-		t.Skip()
-		// Create namespaced resources in the same group/resource to verify they are excluded
-		_, err := WriteEvent(ctx, backend, "ns-item1", resourcepb.WatchEvent_ADDED,
-			WithNamespace(nsPrefix+"-ns1"), WithGroup(group), WithResource(res))
-		require.NoError(t, err)
-		_, err = WriteEvent(ctx, backend, "ns-item2", resourcepb.WatchEvent_ADDED,
-			WithNamespace(nsPrefix+"-ns2"), WithGroup(group), WithResource(res))
-		require.NoError(t, err)
-
-		var items []string
-		_, err = backend.ListIterator(ctx, &resourcepb.ListRequest{
-			Options: &resourcepb.ListOptions{
-				Key: &resourcepb.ResourceKey{
-					Namespace: "__cluster__",
-					Group:     group,
-					Resource:  res,
-				},
-			},
-		}, func(iter resource.ListIterator) error {
-			for iter.Next() {
-				items = append(items, iter.Name())
-			}
-			return iter.Error()
-		})
-		require.NoError(t, err)
-		require.Len(t, items, 2, "should only return cluster-scoped resources, not namespaced ones")
-		require.Contains(t, items, "cluster-item1")
-		require.Contains(t, items, "cluster-item2")
-	})
-
 	t.Run("Update cluster-scoped resource", func(t *testing.T) {
 		resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{
