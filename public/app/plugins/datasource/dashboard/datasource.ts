@@ -353,18 +353,16 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
    */
   async getDrilldownsApplicability(
     options?: DataSourceGetDrilldownsApplicabilityOptions<DashboardQuery>
-  ): Promise<DrilldownsApplicability[]> {
-    // Check if any query has adhoc filters enabled
+  ): Promise<Map<string, DrilldownsApplicability[]>> {
     const hasAdHocFiltersEnabled = options?.queries?.some((query) => query.adHocFiltersEnabled);
 
     if (!hasAdHocFiltersEnabled) {
-      return [];
+      return new Map([['_default_', []]]);
     }
 
     const filters = options?.filters || [];
 
-    return filters.map((filter): DrilldownsApplicability => {
-      // Check operator support
+    const results = filters.map((filter): DrilldownsApplicability => {
       if (filter.operator !== '=' && filter.operator !== '!=') {
         return {
           key: filter.key,
@@ -373,14 +371,13 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         };
       }
 
-      // For dashboard datasource, we can't determine field existence/type
-      // without the actual DataFrame context, so we assume applicable here
-      // and let the actual filtering logic handle field-specific checks
       return {
         key: filter.key,
         applicable: true,
       };
     });
+
+    return new Map([['_default_', results]]);
   }
 
   getTagKeys(): Promise<MetricFindValue[]> {

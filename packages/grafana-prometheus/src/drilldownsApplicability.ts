@@ -19,6 +19,7 @@ type NormalizedDrilldownOptions = {
   timeRange: TimeRange;
   hasScopes: boolean;
   scopes: DataSourceGetDrilldownsApplicabilityOptions<PromQuery>['scopes'];
+  panelQueries?: Map<string, PromQuery[]>;
 };
 
 type FilterPrecedence = {
@@ -38,6 +39,7 @@ function normalizeOptions(
     timeRange: options?.timeRange ?? getDefaultTimeRange(),
     hasScopes: (options?.scopes?.length ?? 0) > 0,
     scopes: options?.scopes,
+    panelQueries: options?.panelQueries,
   };
 }
 
@@ -58,11 +60,12 @@ async function fetchAvailableLabelKeys(
   return languageProvider.queryLabelKeys(options.timeRange, match);
 }
 
-function getFallbackResults(options: NormalizedDrilldownOptions): DrilldownsApplicability[] {
-  return [
+function getFallbackResults(options: NormalizedDrilldownOptions): Map<string, DrilldownsApplicability[]> {
+  const results: DrilldownsApplicability[] = [
     ...options.filters.map((filter) => ({ key: filter.key, applicable: true, origin: filter.origin })),
     ...options.groupByKeys.map((key) => ({ key, applicable: true })),
   ];
+  return new Map([['_default_', results]]);
 }
 
 function buildFilterPrecedence(filters: AdHocVariableFilter[]): FilterPrecedence {
@@ -246,21 +249,14 @@ function buildGroupByResults(groupByKeys: string[], availableLabelKeys: Set<stri
   });
 }
 
-export async function calculateApplicability(
+async function calculateApplicabilityForOptions(
   languageProvider: PrometheusLanguageProviderInterface,
   extractResourceMatcher: ResourceMatcherExtractor,
-  rawOptions?: DataSourceGetDrilldownsApplicabilityOptions<PromQuery>
+  options: NormalizedDrilldownOptions
 ): Promise<DrilldownsApplicability[]> {
-  const options = normalizeOptions(rawOptions);
   const precedence = buildFilterPrecedence(options.filters);
 
-  let availableLabelKeys: string[];
-  try {
-    availableLabelKeys = await fetchAvailableLabelKeys(languageProvider, options, extractResourceMatcher);
-  } catch {
-    return getFallbackResults(options);
-  }
-
+  const availableLabelKeys = await fetchAvailableLabelKeys(languageProvider, options, extractResourceMatcher);
   const availableLabelKeysSet = new Set(availableLabelKeys);
   const keysNeedingValueCheck = getKeysNeedingValueCheck(options, availableLabelKeysSet, precedence);
   const valuesByKey = await fetchValuesByKey(languageProvider, options, keysNeedingValueCheck, extractResourceMatcher);
@@ -269,4 +265,38 @@ export async function calculateApplicability(
     ...buildFilterResults(options, precedence, availableLabelKeysSet, valuesByKey),
     ...buildGroupByResults(options.groupByKeys, availableLabelKeysSet),
   ];
+}
+
+export async function calculateApplicability(
+  languageProvider: PrometheusLanguageProviderInterface,
+  extractResourceMatcher: ResourceMatcherExtractor,
+  rawOptions?: DataSourceGetDrilldownsApplicabilityOptions<PromQuery>
+): Promise<Map<string, DrilldownsApplicability[]>> {
+  const options = normalizeOptions(rawOptions);
+
+  if (rawOptions?.panelQueries) {
+    const resultMap = new Map<string, DrilldownsApplicability[]>();
+    for (const [panelKey, queries] of rawOptions.panelQueries) {
+      const panelOptions: NormalizedDrilldownOptions = { ...options, queries };
+      try {
+        const applicability = await calculateApplicabilityForOptions(
+          languageProvider,
+          extractResourceMatcher,
+          panelOptions
+        );
+        resultMap.set(panelKey, applicability);
+      } catch {
+        const fallback = getFallbackResults(panelOptions);
+        resultMap.set(panelKey, fallback.get('_default_')!);
+      }
+    }
+    return resultMap;
+  }
+
+  try {
+    const results = await calculateApplicabilityForOptions(languageProvider, extractResourceMatcher, options);
+    return new Map([['_default_', results]]);
+  } catch {
+    return getFallbackResults(options);
+  }
 }

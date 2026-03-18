@@ -5,7 +5,6 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
-  GroupByVariable,
   SceneDataTransformer,
   SceneQueryRunner,
   SceneVariableSet,
@@ -55,8 +54,8 @@ describe('VizPanelSubHeader', () => {
     expect(subHeader.state.supportsApplicability).toBe(true);
   });
 
-  it('renders only one drilldown var is set', async () => {
-    const { subHeader } = await buildScene({ noGroupBy: true });
+  it('renders when only adhoc drilldown var is set', async () => {
+    const { subHeader } = await buildScene();
 
     expect(subHeader.state.supportsApplicability).toBe(true);
   });
@@ -76,9 +75,7 @@ describe('VizPanelSubHeader', () => {
   });
 
   it('no longer renders if variable ds changes to a different type', async () => {
-    const { subHeader, adhocFiltersVariable } = await buildScene({
-      noGroupBy: true,
-    });
+    const { subHeader, adhocFiltersVariable } = await buildScene();
 
     expect(subHeader.state.supportsApplicability).toBe(true);
 
@@ -88,9 +85,7 @@ describe('VizPanelSubHeader', () => {
   });
 
   it('no longers renders if variable applicability becomes disabled', async () => {
-    const { subHeader, adhocFiltersVariable } = await buildScene({
-      noGroupBy: true,
-    });
+    const { subHeader, adhocFiltersVariable } = await buildScene();
 
     expect(subHeader.state.supportsApplicability).toBe(true);
 
@@ -99,14 +94,14 @@ describe('VizPanelSubHeader', () => {
     expect(subHeader.state.supportsApplicability).toBe(false);
   });
 
-  it('continues to render if one adhoc is disabled, but groupby remains active', async () => {
+  it('does not render when adhoc applicability is disabled', async () => {
     const { subHeader, adhocFiltersVariable } = await buildScene();
 
     expect(subHeader.state.supportsApplicability).toBe(true);
 
     adhocFiltersVariable.setState({ applicabilityEnabled: false });
 
-    expect(subHeader.state.supportsApplicability).toBe(true);
+    expect(subHeader.state.supportsApplicability).toBe(false);
   });
 
   it('stops rendering if queryRunner changes datasource to different one than vars', async () => {
@@ -123,7 +118,6 @@ describe('VizPanelSubHeader', () => {
 interface BuildSceneOptions {
   applicabilityEnabled?: boolean;
   variableDatasourceUid?: string;
-  noGroupBy?: boolean;
 }
 
 async function buildScene(options?: BuildSceneOptions) {
@@ -140,16 +134,6 @@ async function buildScene(options?: BuildSceneOptions) {
     filters: [{ key: 'filter-1', operator: '=', value: 'value-1' }],
     datasource: { uid: options?.variableDatasourceUid ?? 'ds-1' },
     applicabilityEnabled: options?.applicabilityEnabled ?? true,
-  });
-
-  const groupByVariable = new GroupByVariable({
-    name: 'group',
-    label: 'group',
-    value: ['groupBy'],
-    text: ['groupBy'],
-    options: [],
-    applicabilityEnabled: options?.applicabilityEnabled ?? true,
-    datasource: { uid: options?.variableDatasourceUid ?? 'ds-1' },
   });
 
   const dataProvider = new SceneDataTransformer({
@@ -171,7 +155,7 @@ async function buildScene(options?: BuildSceneOptions) {
 
   const scene = new DashboardScene({
     $variables: new SceneVariableSet({
-      variables: options?.noGroupBy ? [adhocFiltersVariable] : [groupByVariable, adhocFiltersVariable],
+      variables: [adhocFiltersVariable],
     }),
     body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
@@ -180,5 +164,5 @@ async function buildScene(options?: BuildSceneOptions) {
 
   await new Promise((r) => setTimeout(r, 1));
 
-  return { subHeader, groupByVariable, adhocFiltersVariable, queryRunner };
+  return { subHeader, adhocFiltersVariable, queryRunner };
 }

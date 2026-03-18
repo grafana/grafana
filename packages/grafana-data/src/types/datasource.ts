@@ -323,7 +323,7 @@ abstract class DataSourceApi<
    */
   getDrilldownsApplicability?(
     options?: DataSourceGetDrilldownsApplicabilityOptions<TQuery>
-  ): Promise<DrilldownsApplicability[]>;
+  ): Promise<Map<string, DrilldownsApplicability[]>>;
 
   /**
    * Get recommended drilldowns for a dashboard
@@ -688,6 +688,7 @@ export interface DataSourceGetDrilldownsApplicabilityOptions<TQuery extends Data
   extends DataSourceFilteringRequestOptions<TQuery> {
   filters?: AdHocVariableFilter[];
   groupByKeys?: string[];
+  panelQueries?: Map<string, TQuery[]>;
 }
 
 export interface DataSourceGetRecommendedDrilldownsOptions<TQuery extends DataQuery = DataQuery>

@@ -2,10 +2,10 @@ import { css, cx } from '@emotion/css';
 import { useLayoutEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { DrilldownsApplicability, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { AdHocFiltersVariable, buildApplicabilityMatcher, GroupByVariable, SceneQueryRunner } from '@grafana/scenes';
+import { AdHocFiltersVariable, buildApplicabilityMatcher } from '@grafana/scenes';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
 const GAP_SIZE = 8;
@@ -13,28 +13,19 @@ const FONT_SIZE = 12;
 
 interface Props {
   filtersVar?: AdHocFiltersVariable;
-  groupByVar?: GroupByVariable;
-  queryRunner: SceneQueryRunner;
+  applicability?: DrilldownsApplicability[];
 }
 
-export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, queryRunner }: Props) {
+export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, applicability }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
 
   const filtersState = filtersVar?.useState();
-  const groupByState = groupByVar?.useState();
-  const queryRunnerState = queryRunner.useState();
-
   const [visibleCount, setVisibleCount] = useState<number>(0);
 
   const nonApplicable = useMemo(() => {
-    if (!queryRunnerState.data) {
-      return [];
-    }
-
-    const applicability = queryRunner.getNonApplicableFilters();
-    if (!applicability) {
+    if (!applicability?.length) {
       return [];
     }
 
@@ -43,8 +34,8 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
     const originFilters = filtersState?.originFilters ?? [];
     const filterValues = [...originFilters, ...filters];
 
-    if (filterValues.length && applicability.filters.length) {
-      const matchFilter = buildApplicabilityMatcher(applicability.filters);
+    if (filterValues.length) {
+      const matchFilter = buildApplicabilityMatcher(applicability);
 
       for (let i = 0; i < filterValues.length; i++) {
         const filter = filterValues[i];
@@ -59,28 +50,8 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
       }
     }
 
-    const value = groupByState?.value ?? [];
-    const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
-
-    if (groupByValues.length) {
-      const matchGroupBy = applicability.groupBy.length ? buildApplicabilityMatcher(applicability.groupBy) : undefined;
-      const groupByApplicability = groupByState?.keysApplicability;
-
-      for (const groupByKey of groupByValues) {
-        const apiResult = matchGroupBy?.(String(groupByKey));
-        if (apiResult && !apiResult.applicable) {
-          items.push({ label: String(groupByKey), reason: apiResult.reason });
-          continue;
-        }
-        const stateResult = groupByApplicability?.find((entry) => entry.key === groupByKey);
-        if (stateResult && !stateResult.applicable) {
-          items.push({ label: String(groupByKey), reason: stateResult.reason });
-        }
-      }
-    }
-
     return items;
-  }, [filtersState, groupByState, queryRunner, queryRunnerState.data]);
+  }, [filtersState, applicability]);
 
   useLayoutEffect(() => {
     if (!nonApplicable.length) {

@@ -576,7 +576,7 @@ export class PrometheusDatasource
 
   async getDrilldownsApplicability(
     options?: DataSourceGetDrilldownsApplicabilityOptions<PromQuery>
-  ): Promise<DrilldownsApplicability[]> {
+  ): Promise<Map<string, DrilldownsApplicability[]>> {
     return calculateApplicability(this.languageProvider, extractResourceMatcher, options);
   }
 

@@ -1465,7 +1465,7 @@ describe('getDrilldownsApplicability', () => {
   it('should mark filters with existing keys as applicable', async () => {
     mockLanguageProvider({ labelKeys: ['env', 'cluster'], labelValues: { env: ['prod'], cluster: ['us'] } });
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [
         { key: 'env', value: 'prod', operator: '=' },
         { key: 'cluster', value: 'us', operator: '=' },
@@ -1475,6 +1475,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
+    const results = resultMap.get('_default_')!;
     expect(results).toEqual([
       { key: 'env', applicable: true, origin: undefined },
       { key: 'cluster', applicable: true, origin: undefined },
@@ -1484,7 +1485,7 @@ describe('getDrilldownsApplicability', () => {
   it('should mark filters with non-existent keys as non-applicable', async () => {
     mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['prod'] } });
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [
         { key: 'env', value: 'prod', operator: '=' },
         { key: 'nonexistent', value: 'val', operator: '=' },
@@ -1494,6 +1495,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
+    const results = resultMap.get('_default_')!;
     expect(results).toHaveLength(2);
     expect(results[0]).toEqual({ key: 'env', applicable: true, origin: undefined });
     expect(results[1]).toMatchObject({ key: 'nonexistent', applicable: false });
@@ -1503,13 +1505,14 @@ describe('getDrilldownsApplicability', () => {
   it('should mark filters with non-existent values as non-applicable', async () => {
     mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['prod', 'staging'] } });
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [{ key: 'env', value: 'missing-value', operator: '=' }],
       groupByKeys: [],
       queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
       timeRange: mockTimeRange,
     });
 
+    const results = resultMap.get('_default_')!;
     expect(results).toHaveLength(1);
     expect(results[0]).toMatchObject({ key: 'env', applicable: false });
     expect(results[0].reason).toContain('missing-value');
@@ -1518,13 +1521,14 @@ describe('getDrilldownsApplicability', () => {
   it('should handle multi-value operator "=|" and mark non-applicable when no values match', async () => {
     mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['prod', 'staging'] } });
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [{ key: 'env', value: '', operator: '=|', values: ['nope', 'also-nope'] }],
       groupByKeys: [],
       queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
       timeRange: mockTimeRange,
     });
 
+    const results = resultMap.get('_default_')!;
     expect(results).toHaveLength(1);
     expect(results[0]).toMatchObject({ key: 'env', applicable: false });
   });
@@ -1532,33 +1536,35 @@ describe('getDrilldownsApplicability', () => {
   it('should mark "=|" as applicable when at least one value matches', async () => {
     mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['prod', 'staging'] } });
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [{ key: 'env', value: '', operator: '=|', values: ['nope', 'prod'] }],
       groupByKeys: [],
       queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
       timeRange: mockTimeRange,
     });
 
+    const results = resultMap.get('_default_')!;
     expect(results).toEqual([{ key: 'env', applicable: true, origin: undefined }]);
   });
 
   it('should skip value validation for negation operators', async () => {
     mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['prod'] } });
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [{ key: 'env', value: 'nonexistent', operator: '!=' }],
       groupByKeys: [],
       queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
       timeRange: mockTimeRange,
     });
 
+    const results = resultMap.get('_default_')!;
     expect(results).toEqual([{ key: 'env', applicable: true, origin: undefined }]);
   });
 
   it('should mark origin filters overridden by user filters as non-applicable', async () => {
     mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['prod'] } });
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [
         { key: 'env', value: 'staging', operator: '=', origin: 'dashboard' },
         { key: 'env', value: 'prod', operator: '=' },
@@ -1568,6 +1574,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
+    const results = resultMap.get('_default_')!;
     expect(results).toHaveLength(2);
     expect(results[0]).toMatchObject({ key: 'env', applicable: false, origin: 'dashboard' });
     expect(results[0].reason).toContain('Overridden');
@@ -1577,7 +1584,7 @@ describe('getDrilldownsApplicability', () => {
   it('should mark duplicate filters with same composite key as non-applicable except the last', async () => {
     mockLanguageProvider({ labelKeys: ['env'], labelValues: { env: ['staging'] } });
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [
         { key: 'env', value: 'prod', operator: '=' },
         { key: 'env', value: 'staging', operator: '=' },
@@ -1587,6 +1594,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
+    const results = resultMap.get('_default_')!;
     expect(results).toHaveLength(2);
     expect(results[0]).toMatchObject({ key: 'env', applicable: false });
     expect(results[0].reason).toContain('Overridden');
@@ -1596,13 +1604,14 @@ describe('getDrilldownsApplicability', () => {
   it('should check groupBy key existence', async () => {
     mockLanguageProvider({ labelKeys: ['namespace', 'container'] });
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [],
       groupByKeys: ['namespace', 'nonexistent', 'container'],
       queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
       timeRange: mockTimeRange,
     });
 
+    const results = resultMap.get('_default_')!;
     expect(results).toHaveLength(3);
     expect(results[0]).toEqual({ key: 'namespace', applicable: true });
     expect(results[1]).toMatchObject({ key: 'nonexistent', applicable: false });
@@ -1615,13 +1624,14 @@ describe('getDrilldownsApplicability', () => {
       labelValues: { env: ['prod'] },
     });
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [{ key: 'env', value: 'prod', operator: '=' }],
       groupByKeys: ['namespace', 'missing_label'],
       queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
       timeRange: mockTimeRange,
     });
 
+    const results = resultMap.get('_default_')!;
     expect(results).toHaveLength(3);
     expect(results[0]).toEqual({ key: 'env', applicable: true, origin: undefined });
     expect(results[1]).toEqual({ key: 'namespace', applicable: true });
@@ -1635,13 +1645,14 @@ describe('getDrilldownsApplicability', () => {
       fetchSuggestions: jest.fn().mockRejectedValue(new Error('network error')),
     } as unknown as PrometheusLanguageProviderInterface;
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [{ key: 'env', value: 'prod', operator: '=' }],
       groupByKeys: ['ns'],
       queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
       timeRange: mockTimeRange,
     });
 
+    const results = resultMap.get('_default_')!;
     expect(results).toEqual([
       { key: 'env', applicable: true, origin: undefined },
       { key: 'ns', applicable: true },
@@ -1655,13 +1666,14 @@ describe('getDrilldownsApplicability', () => {
       fetchSuggestions: jest.fn().mockResolvedValue(['env']),
     } as unknown as PrometheusLanguageProviderInterface;
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [{ key: 'env', value: 'nonexistent', operator: '=' }],
       groupByKeys: [],
       queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
       timeRange: mockTimeRange,
     });
 
+    const results = resultMap.get('_default_')!;
     expect(results).toEqual([{ key: 'env', applicable: true, origin: undefined }]);
   });
 
@@ -1680,7 +1692,7 @@ describe('getDrilldownsApplicability', () => {
 
     const scopes = [{ metadata: { name: 'scope1' }, spec: { filters: [] } }] as unknown as Scope[];
 
-    const results = await ds.getDrilldownsApplicability({
+    const resultMap = await ds.getDrilldownsApplicability({
       filters: [{ key: 'env', value: 'prod', operator: '=' }],
       groupByKeys: [],
       queries: [{ refId: 'A', expr: 'up' }] as PromQuery[],
@@ -1689,7 +1701,40 @@ describe('getDrilldownsApplicability', () => {
     });
 
     expect(fetchSuggestionsSpy).toHaveBeenCalledWith(mockTimeRange, expect.any(Array), scopes);
+    const results = resultMap.get('_default_')!;
     expect(results).toHaveLength(1);
     expect(results[0]).toMatchObject({ key: 'env', applicable: true });
+  });
+
+  it('should return Map keyed by panel when panelQueries is provided', async () => {
+    mockLanguageProvider({
+      labelKeys: ['env', 'cluster'],
+      labelValues: { env: ['prod', 'staging'], cluster: ['us', 'eu'] },
+    });
+
+    const resultMap = await ds.getDrilldownsApplicability({
+      filters: [{ key: 'env', value: 'prod', operator: '=' }],
+      groupByKeys: ['cluster'],
+      queries: [],
+      timeRange: mockTimeRange,
+      panelQueries: new Map([
+        ['panel-1', [{ refId: 'A', expr: 'up' }] as PromQuery[]],
+        ['panel-2', [{ refId: 'B', expr: 'metric' }] as PromQuery[]],
+      ]),
+    });
+
+    expect(resultMap.size).toBe(2);
+    expect(resultMap.has('panel-1')).toBe(true);
+    expect(resultMap.has('panel-2')).toBe(true);
+
+    const panel1Results = resultMap.get('panel-1')!;
+    expect(panel1Results).toHaveLength(2);
+    expect(panel1Results[0]).toEqual({ key: 'env', applicable: true, origin: undefined });
+    expect(panel1Results[1]).toEqual({ key: 'cluster', applicable: true });
+
+    const panel2Results = resultMap.get('panel-2')!;
+    expect(panel2Results).toHaveLength(2);
+    expect(panel2Results[0]).toEqual({ key: 'env', applicable: true, origin: undefined });
+    expect(panel2Results[1]).toEqual({ key: 'cluster', applicable: true });
   });
 });

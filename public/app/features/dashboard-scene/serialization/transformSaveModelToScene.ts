@@ -33,6 +33,7 @@ import { DashboardDTO, DashboardDataDTO } from 'app/types/dashboard';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsInitializerBehavior';
+import { ApplicabilityManager } from '../scene/ApplicabilityManager';
 import { LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -391,6 +392,10 @@ export function createDashboardSceneFromDashboardModel(
   if (enableProfiling) {
     // Analytics aggregator lifecycle management (initialization, observer registration, cleanup)
     behaviorList.push(dashboardAnalyticsInitializer);
+  }
+
+  if (config.featureToggles.perPanelNonApplicableDrilldowns) {
+    behaviorList.push(new ApplicabilityManager());
   }
   // Will be enabled in the dashboard creation below
 

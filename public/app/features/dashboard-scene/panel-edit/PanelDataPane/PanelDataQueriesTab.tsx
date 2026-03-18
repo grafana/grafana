@@ -17,6 +17,7 @@ import {
 import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { Button, Stack, Tab } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ApplicabilityManager } from '../../scene/ApplicabilityManager';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
@@ -258,7 +259,26 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   public onQueriesChange = (queries: SceneDataQuery[]) => {
     const runner = this.queryRunner;
     runner.setState({ queries });
+    this.notifyApplicabilityManager(queries);
   };
+
+  private notifyApplicabilityManager(queries: SceneDataQuery[]) {
+    const panel = this.state.panelRef.resolve();
+    const panelKey = panel.state.key;
+    if (!panelKey) {
+      return;
+    }
+
+    try {
+      const dashboard = getDashboardSceneFor(panel);
+      const am = dashboard.state.$behaviors?.find(
+        (b): b is ApplicabilityManager => b instanceof ApplicabilityManager
+      );
+      am?.refreshForPanel(panelKey, queries);
+    } catch {
+      // Not inside a dashboard scene
+    }
+  }
 
   public onRunQueries = () => {
     this.queryRunner.runQueries();

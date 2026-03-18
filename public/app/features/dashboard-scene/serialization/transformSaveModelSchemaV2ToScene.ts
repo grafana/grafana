@@ -73,6 +73,7 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
+import { ApplicabilityManager } from '../scene/ApplicabilityManager';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
@@ -241,6 +242,7 @@ export function transformSaveModelSchemaV2ToScene(
           uid: metadata.name,
         }),
         ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
+        ...(config.featureToggles.perPanelNonApplicableDrilldowns ? [new ApplicabilityManager()] : []),
       ],
       $data: new DashboardDataLayerSet({
         annotationLayers,
