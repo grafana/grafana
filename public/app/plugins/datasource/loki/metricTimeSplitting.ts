@@ -2,7 +2,7 @@
 // like returned by `new Date().getTime()`. this is needed because the "math"
 // has to be done on integer numbers.
 
-import { TimeRange, toUtc } from "@grafana/data";
+import { TimeRange, toUtc } from '@grafana/data';
 
 // we are trying to be compatible with
 // https://github.com/grafana/loki/blob/089ec1b05f5ec15a8851d0e8230153e0eeb4dcec/pkg/querier/queryrange/split_by_interval.go#L327-L336
@@ -38,10 +38,7 @@ export function splitTimeRange(
   return result;
 }
 
-export function splitTimeRangeAligned(
-  timeRange: TimeRange,
-  step: number,
-): Array<[number, number]> {
+export function splitTimeRangeAligned(timeRange: TimeRange, step: number): Array<[number, number]> {
   const oneDayMs = 24 * 60 * 60 * 1000;
   const startTime = timeRange.from.valueOf();
   const endTime = timeRange.to.valueOf();
@@ -55,14 +52,12 @@ export function splitTimeRangeAligned(
   const alignedDuration = Math.trunc(oneDayMs / step) * step;
 
   const alignedStartTime = startTime - (startTime % step);
-  const startOfFirstDay = toUtc(alignedStartTime).add(1, 'day').startOf('day').valueOf();
+  const startOfFirstDay = toUtc(alignedStartTime).add(1, 'day').startOf('day').valueOf() - step;
 
-  const result: Array<[number, number]> = [
-    [alignedStartTime, startOfFirstDay]
-  ];
+  const result: Array<[number, number]> = [[alignedStartTime, startOfFirstDay]];
 
-  for (let chunkStartTime = startOfFirstDay; chunkStartTime < endTime; chunkStartTime += alignedDuration) {
-    const chunkEndTime = Math.min(chunkStartTime + alignedDuration, endTime);
+  for (let chunkStartTime = startOfFirstDay + step; chunkStartTime < endTime; chunkStartTime += alignedDuration) {
+    const chunkEndTime = Math.min(chunkStartTime + alignedDuration - step, endTime);
     result.push([chunkStartTime, chunkEndTime]);
   }
 
