@@ -24,19 +24,12 @@ func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *
 	var (
 		scope string
 
-		actionSets    = make([]string, 0, 3*len(s.mappers))
-		scopePatterns = make([]string, 0, len(s.mappers))
+		actionSets    = s.mappers.EnabledActionSets()
+		scopePatterns = s.mappers.EnabledScopePatterns()
 
 		assignments = make([]rbacAssignment, 0, 8)
 		scopes      = make([]string, 0, 8)
 	)
-
-	for _, mapper := range s.mappers {
-		actionSets = append(actionSets, mapper.ActionSets()...)
-	}
-	for _, mapper := range s.mappers {
-		scopePatterns = append(scopePatterns, mapper.ScopePattern())
-	}
 
 	// Run in a transaction to ensure a consistent view of the data
 	err := dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
@@ -101,10 +94,7 @@ func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *
 }
 
 func (s *ResourcePermSqlBackend) latestUpdate(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo) int64 {
-	scopePatterns := make([]string, 0, len(s.mappers)*3)
-	for _, mapper := range s.mappers {
-		scopePatterns = append(scopePatterns, mapper.ScopePattern())
-	}
+	scopePatterns := s.mappers.EnabledScopePatterns()
 	query, args, err := buildLatestUpdateQueryFromTemplate(dbHelper, ns.OrgID, scopePatterns)
 	if err != nil {
 		s.logger.FromContext(ctx).Warn("Failed to build latest update query", "error", err)
@@ -547,10 +537,7 @@ func (s *ResourcePermSqlBackend) ListDirectPermissionsForUser(ctx context.Contex
 		s.logger.FromContext(ctx).Error("Failed to get database helper", "error", err)
 		return nil, errDatabaseHelper
 	}
-	actionSets := make([]string, 0, 3*len(s.mappers))
-	for _, mapper := range s.mappers {
-		actionSets = append(actionSets, mapper.ActionSets()...)
-	}
+	actionSets := s.mappers.EnabledActionSets()
 	var assignments []rbacAssignment
 	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
 		assignments, err = s.getRbacAssignmentsWithTx(ctx, dbHelper, tx, &ListResourcePermissionsQuery{
