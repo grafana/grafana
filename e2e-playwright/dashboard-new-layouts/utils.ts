@@ -194,7 +194,7 @@ interface ImportTestDashboardOptions {
   requiresDataSourceSelection?: boolean;
 }
 
-function stripMetadataNameFromImportJson(input: string): string {
+export function stripMetadataNameFromImportJson(input: string): string {
   // Keep fixture JSON intact, but remove a fixed resource name at import time so
   // each test creates an isolated dashboard via generateName in parallel runs.
   try {

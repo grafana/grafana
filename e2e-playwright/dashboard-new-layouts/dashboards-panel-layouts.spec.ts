@@ -2,9 +2,7 @@ import { Page } from 'playwright-core';
 
 import { test, expect, E2ESelectorGroups, DashboardPage } from '@grafana/plugin-e2e';
 
-import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
-
-import { switchToAutoGrid } from './utils';
+import { switchToAutoGrid, importTestDashboard as importDashboardWithDefaults, saveDashboard as saveDashboardWithToast } from './utils';
 
 test.use({
   featureToggles: {
@@ -43,7 +41,7 @@ test.describe(
 
       await checkAutoGridLayoutInputs(dashboardPage, selectors);
 
-      await saveDashboard(dashboardPage, selectors);
+      await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
       await expect(
@@ -96,7 +94,7 @@ test.describe(
         expect(lastPanelTopNarrow).toBe(firstPanelTopNarrow);
       }).toPass();
 
-      await saveDashboard(dashboardPage, selectors);
+      await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
@@ -145,7 +143,7 @@ test.describe(
       // Changing to 900 custom width should have each panel span the whole row (stacked vertically)
       await verifyPanelsStackedVertically(dashboardPage, selectors);
 
-      await saveDashboard(dashboardPage, selectors);
+      await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
       await verifyPanelsStackedVertically(dashboardPage, selectors);
@@ -196,7 +194,7 @@ test.describe(
       // Changing to 1 max column should have each panel span the whole row (stacked vertically)
       await verifyPanelsStackedVertically(dashboardPage, selectors);
 
-      await saveDashboard(dashboardPage, selectors);
+      await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
       await verifyPanelsStackedVertically(dashboardPage, selectors);
@@ -246,7 +244,7 @@ test.describe(
         expect(tallHeight).toBeGreaterThan(regularRowHeight);
       }).toPass();
 
-      await saveDashboard(dashboardPage, selectors);
+      await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
       await expect(async () => {
@@ -300,7 +298,7 @@ test.describe(
         expect(customHeight).toBeGreaterThan(regularRowHeight);
       }).toPass();
 
-      await saveDashboard(dashboardPage, selectors);
+      await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
       await expect(async () => {
@@ -355,7 +353,7 @@ test.describe(
         expect(fillScreenHeight).toBeGreaterThan(initialHeight);
       }).toPass();
 
-      await saveDashboard(dashboardPage, selectors);
+      await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
       await expect(async () => {
@@ -380,23 +378,11 @@ test.describe(
 
 // Helper functions
 async function importTestDashboard(page: Page, selectors: E2ESelectorGroups, title: string) {
-  await page.goto(selectors.pages.ImportDashboard.url);
-  await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(JSON.stringify(testV2Dashboard));
-  await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
-  await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
-  await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-  await page.locator('div[data-testid="data-source-card"]').first().click();
-  await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
-  const undockMenuButton = page.locator('[aria-label="Undock menu"]');
-  const undockMenuVisible = await undockMenuButton.isVisible();
-  if (undockMenuVisible) {
-    undockMenuButton.click();
-  }
+  await importDashboardWithDefaults(page, selectors, title);
 }
 
-async function saveDashboard(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
+async function saveDashboard(dashboardPage: DashboardPage, page: Page, selectors: E2ESelectorGroups) {
+  await saveDashboardWithToast(dashboardPage, page, selectors);
 }
 
 async function checkAutoGridLayoutInputs(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
