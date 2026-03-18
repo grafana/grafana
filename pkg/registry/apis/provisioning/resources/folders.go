@@ -169,13 +169,11 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			needsUpdate = true
 		}
 
-		if folder.MetadataHash != "" {
-			source, _ := meta.GetSourceProperties()
-			if source.Checksum != folder.MetadataHash {
-				source.Checksum = folder.MetadataHash
-				meta.SetSourceProperties(source)
-				needsUpdate = true
-			}
+		source, _ := meta.GetSourceProperties()
+		if source.Checksum != folder.MetadataHash {
+			source.Checksum = folder.MetadataHash
+			meta.SetSourceProperties(source)
+			needsUpdate = true
 		}
 
 		if needsUpdate {

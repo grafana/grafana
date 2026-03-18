@@ -1140,16 +1140,21 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 		require.Empty(t, client.updateCalls, "should not update when title and hash both match")
 	})
 
-	t.Run("skips hash comparison when MetadataHash is empty", func(t *testing.T) {
+	t.Run("clears checksum when MetadataHash is empty and stored hash exists", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		tree := NewEmptyFolderTree()
 
+		var updatedObj *unstructured.Unstructured
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
 				return managedFolderWithChecksum(name, "Same Title", config.Name, "my-folder", "stored-hash"), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj
+				return obj, nil
 			},
 		}
 
@@ -1158,11 +1163,15 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 			ID:           "folder-uid",
 			Title:        "Same Title",
 			Path:         "my-folder",
-			MetadataHash: "", // empty — e.g. metadata disabled
+			MetadataHash: "", // empty — e.g. metadata deleted
 		}, "")
 
 		require.NoError(t, err)
-		require.Empty(t, client.updateCalls, "should not update when MetadataHash is empty")
+		require.Equal(t, []string{"folder-uid"}, client.updateCalls, "should update to clear the stored checksum")
+		require.NotNil(t, updatedObj)
+
+		checksum, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/sourceChecksum")
+		require.Empty(t, checksum, "checksum should be cleared")
 	})
 }
 
