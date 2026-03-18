@@ -196,7 +196,7 @@ func TestMigrationStatusReader_GetStorageMode_ConfigFallbackWhenLogMissing(t *te
 	require.Equal(t, contract.StorageModeUnified, mode)
 }
 
-func TestMigrationStatusReader_OnlyCfgSkipsMigrationLogLookup(t *testing.T) {
+func TestMigrationStatusReader_OnlyCfgRecoveryWhenTableAppears(t *testing.T) {
 	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
 	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
 
@@ -204,25 +204,48 @@ func TestMigrationStatusReader_OnlyCfgSkipsMigrationLogLookup(t *testing.T) {
 		"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode1},
 	}
 
-	bootstrapCounter := newTestCounter("test_bootstrap_only_cfg")
 	reader, err := ProvideMigrationStatusReader(sqlStore, cfg, newPlaylistRegistry(), prometheus.NewRegistry())
 	require.NoError(t, err)
 
 	typed := reader.(*migrationStatusReader)
-	typed.metrics = &statusReaderMetrics{bootstrapFailures: bootstrapCounter}
 
-	// Simulate bootstrap failure by setting onlyCfg.
+	// Simulate bootstrap failure.
 	typed.onlyCfg = true
 
-	// Insert a successful migration log row — it should be ignored because onlyCfg is set.
+	// Insert a successful migration log row. Since the table exists, the retry in
+	// resolveStorageMode should detect it, clear onlyCfg, and read the log.
 	require.NoError(t, insertMigrationLogRow(sqlStore, "playlists migration", true, ""))
 
 	mode, err := reader.GetStorageMode(context.Background(), playlistGR)
 	require.NoError(t, err)
-	require.Equal(t, contract.StorageModeDualWrite, mode, "should use config, not migration log")
+	require.Equal(t, contract.StorageModeUnified, mode, "should recover and use migration log")
+	require.False(t, typed.onlyCfg, "onlyCfg should be cleared after table is found")
+}
 
-	// No bootstrap failures during GetStorageMode.
-	require.Equal(t, float64(0), testutil.ToFloat64(bootstrapCounter))
+func TestMigrationStatusReader_OnlyCfgPersistsWhenTableMissing(t *testing.T) {
+	sqlStore, cfg := infraDB.InitTestDBWithCfg(t)
+	playlistGR := schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}
+
+	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+		"playlists.playlist.grafana.app": {DualWriterMode: rest.Mode1},
+	}
+
+	reader, err := ProvideMigrationStatusReader(sqlStore, cfg, newPlaylistRegistry(), prometheus.NewRegistry())
+	require.NoError(t, err)
+
+	typed := reader.(*migrationStatusReader)
+
+	// Drop the table and set onlyCfg to simulate a real bootstrap failure.
+	require.NoError(t, sqlStore.WithDbSession(context.Background(), func(sess *infraDB.Session) error {
+		_, err := sess.Exec("DROP TABLE IF EXISTS " + migrationLogTableName)
+		return err
+	}))
+	typed.onlyCfg = true
+
+	mode, err := reader.GetStorageMode(context.Background(), playlistGR)
+	require.NoError(t, err)
+	require.Equal(t, contract.StorageModeDualWrite, mode, "should use config when table is missing")
+	require.True(t, typed.onlyCfg, "onlyCfg should remain set when table is still missing")
 }
 
 func TestMigrationStatusReader_GetStorageMode_DBErrorFallsBackToConfig(t *testing.T) {

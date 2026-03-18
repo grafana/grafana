@@ -125,8 +125,12 @@ func (r *migrationStatusReader) resolveStorageMode(ctx context.Context, gr schem
 	}
 
 	if r.onlyCfg {
-		logger.Info("Resolved storage mode from config (migration log unavailable)", "resource", gr.String(), "mode", mode)
-		return mode, nil
+		if !r.migrationLogTableAvailable() {
+			logger.Debug("Migration log table not available, using config for storage mode resolution", "resource", gr.String(), "config_mode", configKey, "resolved_mode", mode)
+			return mode, nil
+		}
+		logger.Info("Migration log table now available, using log-based resolution")
+		r.onlyCfg = false
 	}
 
 	// The migration log is the source of truth for "data has been synced".
@@ -146,6 +150,22 @@ func (r *migrationStatusReader) resolveStorageMode(ctx context.Context, gr schem
 		r.cache.SetDefault(gr.String(), mode)
 	}
 	return mode, nil
+}
+
+const tableExistsCacheKey = "__migration_log_table_exists"
+
+// migrationLogTableAvailable checks whether the migration log table exists with cache TTL
+func (r *migrationStatusReader) migrationLogTableAvailable() bool {
+	if _, ok := r.cache.Get(tableExistsCacheKey); ok {
+		return false
+	}
+
+	exists, err := r.sqlStore.GetEngine().IsTableExist(migrationLogTableName)
+	if err != nil || !exists {
+		r.cache.SetDefault(tableExistsCacheKey, false)
+		return false
+	}
+	return true
 }
 
 // findDefinition locates the MigrationDefinition that contains the given GroupResource.
