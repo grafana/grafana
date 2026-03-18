@@ -1382,6 +1382,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardCursorSync",
+        "resourceVersion": "1773868549197",
+        "creationTimestamp": "2026-03-18T21:15:49Z"
+      },
+      "spec": {
+        "description": "Enable real-time cursor sharing on dashboards without full collaboration",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-11T16:52:46Z"

@@ -2737,6 +2737,14 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 		},
+		{
+			Name:         "dashboardCursorSync",
+			Description:  "Enable real-time cursor sharing on dashboards without full collaboration",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
 	}
 )
 

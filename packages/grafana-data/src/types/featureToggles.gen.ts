@@ -1725,4 +1725,9 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardCollaboration?: boolean;
+  /**
+  * Enable real-time cursor sharing on dashboards without full collaboration
+  * @default false
+  */
+  dashboardCursorSync?: boolean;
 }
