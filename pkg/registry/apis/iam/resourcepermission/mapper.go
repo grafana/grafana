@@ -27,8 +27,7 @@ type Mapper interface {
 	ActionSet(level string) (string, error)
 
 	// ScopePattern returns the SQL LIKE pattern for querying scopes of this resource type.
-	// Used in list queries with SQL LIKE to match all permissions for this resource type
-	// regardless of the specific resource identifier (UID). The % wildcard matches any UID.
+	// Used in list queries with SQL LIKE to match all permissions for this resource type.
 	// Example: "folders:uid:%" matches "folders:uid:abc", "folders:uid:xyz", etc.
 	ScopePattern() string
 }
@@ -134,8 +133,8 @@ func (m *MappersRegistry) IsEnabled(gr schema.GroupResource) bool {
 
 // ParseScope parses an RBAC scope string (e.g., "folders:uid:abc") into a groupResourceName.
 // Used when reading permissions from the database for two purposes:
-//   1. Populating the ResourcePermission Spec (Group, Resource, Name fields)
-//   2. Making AccessClient Check requests to authorize viewing the resource
+//  1. Populating the ResourcePermission Spec (Group, Resource, Name fields)
+//  2. Making AccessClient Check requests to authorize viewing the resource
 func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
 	parts := strings.SplitN(scope, ":", 3)
 	if len(parts) != 3 {
