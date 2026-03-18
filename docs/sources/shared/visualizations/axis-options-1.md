@@ -23,6 +23,8 @@ Options under the **Axis** section control how the x- and y-axes are rendered. S
 | Centered zero                      | Set the y-axis so it's centered on zero.                                                                           |
 | [Soft min](#soft-min-and-soft-max) | Set a soft min to better control the y-axis limits.                                                                |
 | [Soft max](#soft-min-and-soft-max) | Set a soft max to better control the y-axis limits.                                                                |
+| [Tick positions](#tick-positions)   | Set explicit y-axis tick positions as a comma-separated list of values.                                            |
+| [Tick interval](#tick-interval)     | Set one or more candidate intervals between y-axis ticks.                                                          |
 
 <!-- prettier-ignore-end -->
 
@@ -52,3 +54,23 @@ Set a **Soft min** or **soft max** option for better control of y-axis limits. B
 To define hard limits of the y-axis, set standard min/max options. For more information, refer to [Configure standard options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#max).
 
 ![Label example](/media/docs/grafana/panels-visualizations/screenshot-soft-min-max-v12.0.png)
+
+#### Tick positions
+
+Set explicit y-axis tick positions by entering a comma-separated list of values. When set, ticks, grid lines, and labels appear at exactly the specified values. For example, entering `0, 90, 180, 270, 360` places ticks at those specific positions—useful for wind direction in degrees or other domain-specific reference points.
+
+Values outside the visible scale range are automatically hidden. If both **Tick positions** and **Tick interval** are set, **Tick positions** takes precedence.
+
+This option is hidden when the axis placement is **Hidden** or when the scale is set to **Logarithmic**.
+
+#### Tick interval
+
+Set one or more candidate intervals between y-axis ticks. Grafana automatically selects the best candidate based on the available panel space, making tick density responsive to panel size.
+
+Enter a single value or a comma-separated list of values, sorted from smallest to largest. For example:
+
+- `90` — ticks every 90 units (e.g., 0, 90, 180, 270, 360 for wind direction).
+- `22.5, 45, 90` — on a tall panel, Grafana picks `22.5` for fine-grained ticks (0, 22.5, 45, 67.5, 90, ...); on a smaller panel, it picks `90` for coarser ticks (0, 90, 180, 270, 360). Combined with value mappings, this lets you show compass labels like N, NNE, NE that adapt to the panel size.
+- `1` — ensures only integer tick values, useful for data that represents discrete counts.
+
+When left empty, Grafana automatically calculates tick spacing. This option is hidden when **Tick positions** is set, when the axis placement is **Hidden**, or when the scale is set to **Logarithmic**.

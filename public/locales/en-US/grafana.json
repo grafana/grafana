@@ -9753,10 +9753,14 @@
         "name-show-border": "Show border",
         "name-soft-max": "Soft max",
         "name-soft-min": "Soft min",
+        "name-tick-interval": "Tick interval",
+        "name-tick-positions": "Tick positions",
         "name-width": "Width",
         "placeholder-label": "Optional text",
         "placeholder-soft-max": "See: Standard options > Max",
         "placeholder-soft-min": "See: Standard options > Min",
+        "placeholder-tick-interval": "e.g. 22.5, 45, 90",
+        "placeholder-tick-positions": "e.g. 0, 90, 180, 270, 360",
         "placeholder-width": "Auto",
         "scale-distribution-editor": {
           "distribution-options": {

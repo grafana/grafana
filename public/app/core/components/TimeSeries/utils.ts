@@ -356,7 +356,26 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
       let values: uPlot.Axis.Values | undefined;
       let splits: uPlot.Axis.Splits | undefined;
 
-      if (IEC_UNITS.has(config.unit!)) {
+      if (customConfig.axisTickPositions != null && customConfig.axisTickPositions.trim().length > 0) {
+        const parsed = customConfig.axisTickPositions
+          .split(/[\s,]+/)
+          .map(Number)
+          .filter((n) => !isNaN(n));
+        if (parsed.length > 0) {
+          splits = parsed;
+        }
+      }
+      else if (customConfig.axisTickInterval != null && customConfig.axisTickInterval.trim().length > 0) {
+        const parsed = customConfig.axisTickInterval
+          .split(/[\s,]+/)
+          .map(Number)
+          .filter((n) => !isNaN(n) && n > 0)
+          .sort((a, b) => a - b);
+        if (parsed.length > 0) {
+          incrs = parsed;
+        }
+      }
+      else if (IEC_UNITS.has(config.unit!)) {
         incrs = BIN_INCRS;
       } else if (field.type === FieldType.enum) {
         let text = field.config.type!.enum!.text!;

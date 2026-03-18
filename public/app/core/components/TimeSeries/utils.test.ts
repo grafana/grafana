@@ -398,3 +398,158 @@ describe('calculateAnnotationLaneSizes', () => {
     });
   });
 });
+
+describe('custom Y-axis tick configuration', () => {
+  let eventBus: EventBus;
+
+  beforeEach(() => {
+    eventBus = {
+      publish: jest.fn(),
+      getStream: jest.fn(),
+      subscribe: jest.fn(),
+      removeAllListeners: jest.fn(),
+      newScopedBus: jest.fn(),
+    };
+  });
+
+  function buildConfig(fieldConfig: Record<string, unknown>) {
+    const frame = createDataFrame({
+      fields: [
+        {
+          config: {},
+          values: [1667406900000, 1667407170000, 1667407185000],
+          name: 'Time',
+          type: FieldType.time,
+        },
+        {
+          config: { custom: fieldConfig },
+          values: [10, 200, 350],
+          name: 'Value',
+          type: FieldType.number,
+        },
+      ],
+    });
+
+    const builder = preparePlotConfigBuilder({
+      frame,
+      // @ts-ignore
+      theme: getTheme(),
+      timeZones: ['browser'],
+      getTimeRange: jest.fn(),
+      eventBus,
+      sync: jest.fn(),
+      allFrames: [frame],
+      renderers: [],
+    });
+
+    return builder.getConfig();
+  }
+
+  it('should set axis splits when axisTickPositions is provided', () => {
+    const config = buildConfig({ axisTickPositions: '0, 90, 180, 270, 360' });
+    // axes[0] is the time x-axis, axes[1] is the y-axis
+    expect(config.axes![1]!.splits).toEqual([0, 90, 180, 270, 360]);
+    expect(config.axes![1]!.incrs).toBeUndefined();
+  });
+
+  it('should set axis incrs when axisTickInterval is provided', () => {
+    const config = buildConfig({ axisTickInterval: '90' });
+    expect(config.axes![1]!.incrs).toEqual([90]);
+    expect(config.axes![1]!.splits).toBeUndefined();
+  });
+
+  it('should prefer axisTickPositions over axisTickInterval when both are set', () => {
+    const config = buildConfig({ axisTickPositions: '0, 100, 200', axisTickInterval: '50' });
+    expect(config.axes![1]!.splits).toEqual([0, 100, 200]);
+    expect(config.axes![1]!.incrs).toBeUndefined();
+  });
+
+  it('should not set splits or incrs when neither is provided', () => {
+    const config = buildConfig({});
+    expect(config.axes![1]!.splits).toBeUndefined();
+    expect(config.axes![1]!.incrs).toBeUndefined();
+  });
+
+  it('should ignore invalid values in axisTickPositions', () => {
+    const config = buildConfig({ axisTickPositions: 'abc, , 90, xyz, 180' });
+    expect(config.axes![1]!.splits).toEqual([90, 180]);
+  });
+
+  it('should fall through to auto when axisTickPositions is empty string', () => {
+    const config = buildConfig({ axisTickPositions: '' });
+    expect(config.axes![1]!.splits).toBeUndefined();
+    expect(config.axes![1]!.incrs).toBeUndefined();
+  });
+
+  it('should fall through to auto when axisTickPositions is whitespace only', () => {
+    const config = buildConfig({ axisTickPositions: '   ' });
+    expect(config.axes![1]!.splits).toBeUndefined();
+    expect(config.axes![1]!.incrs).toBeUndefined();
+  });
+
+  it('should ignore axisTickInterval of zero', () => {
+    const config = buildConfig({ axisTickInterval: '0' });
+    expect(config.axes![1]!.incrs).toBeUndefined();
+  });
+
+  it('should ignore negative axisTickInterval', () => {
+    const config = buildConfig({ axisTickInterval: '-10' });
+    expect(config.axes![1]!.incrs).toBeUndefined();
+  });
+
+  it('should fall through to auto when axisTickInterval is empty string', () => {
+    const config = buildConfig({ axisTickInterval: '' });
+    expect(config.axes![1]!.incrs).toBeUndefined();
+  });
+
+  it('should fall through to auto when axisTickInterval is whitespace only', () => {
+    const config = buildConfig({ axisTickInterval: '   ' });
+    expect(config.axes![1]!.incrs).toBeUndefined();
+  });
+
+  it('should fall through to auto when all axisTickInterval values are invalid', () => {
+    const config = buildConfig({ axisTickInterval: 'abc, xyz' });
+    expect(config.axes![1]!.incrs).toBeUndefined();
+  });
+
+  it('should handle axisTickPositions with various separators', () => {
+    const config = buildConfig({ axisTickPositions: '0,90 180, 270  360' });
+    expect(config.axes![1]!.splits).toEqual([0, 90, 180, 270, 360]);
+  });
+
+  it('should fall through to auto when all axisTickPositions values are invalid', () => {
+    const config = buildConfig({ axisTickPositions: 'abc, xyz' });
+    expect(config.axes![1]!.splits).toBeUndefined();
+    expect(config.axes![1]!.incrs).toBeUndefined();
+  });
+
+  it('should handle decimal values in axisTickPositions', () => {
+    const config = buildConfig({ axisTickPositions: '0.5, 1.5, 2.5' });
+    expect(config.axes![1]!.splits).toEqual([0.5, 1.5, 2.5]);
+  });
+
+  it('should handle decimal axisTickInterval', () => {
+    const config = buildConfig({ axisTickInterval: '0.5' });
+    expect(config.axes![1]!.incrs).toEqual([0.5]);
+  });
+
+  it('should accept multiple comma-separated tick interval candidates', () => {
+    const config = buildConfig({ axisTickInterval: '22.5, 45, 90' });
+    expect(config.axes![1]!.incrs).toEqual([22.5, 45, 90]);
+  });
+
+  it('should sort tick interval candidates ascending', () => {
+    const config = buildConfig({ axisTickInterval: '90, 22.5, 45' });
+    expect(config.axes![1]!.incrs).toEqual([22.5, 45, 90]);
+  });
+
+  it('should filter out zero and negative values from tick interval candidates', () => {
+    const config = buildConfig({ axisTickInterval: '-10, 0, 45, 90' });
+    expect(config.axes![1]!.incrs).toEqual([45, 90]);
+  });
+
+  it('should handle negative values in axisTickPositions', () => {
+    const config = buildConfig({ axisTickPositions: '-100, -50, 0, 50, 100' });
+    expect(config.axes![1]!.splits).toEqual([-100, -50, 0, 50, 100]);
+  });
+});

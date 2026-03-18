@@ -114,6 +114,31 @@ export function addAxisConfig(builder: FieldConfigEditorBuilder<AxisConfig>, def
       settings: {
         placeholder: t('grafana-ui.builder.axis.placeholder-soft-max', 'See: Standard options > Max'),
       },
+    })
+    .addTextInput({
+      path: 'axisTickPositions',
+      name: t('grafana-ui.builder.axis.name-tick-positions', 'Tick positions'),
+      category,
+      defaultValue: '',
+      settings: {
+        placeholder: t('grafana-ui.builder.axis.placeholder-tick-positions', 'e.g. 0, 90, 180, 270, 360'),
+      },
+      showIf: (c) =>
+        c.axisPlacement !== AxisPlacement.Hidden &&
+        c.scaleDistribution?.type !== ScaleDistribution.Log,
+    })
+    .addTextInput({
+      path: 'axisTickInterval',
+      name: t('grafana-ui.builder.axis.name-tick-interval', 'Tick interval'),
+      category,
+      defaultValue: '',
+      settings: {
+        placeholder: t('grafana-ui.builder.axis.placeholder-tick-interval', 'e.g. 22.5, 45, 90'),
+      },
+      showIf: (c) =>
+        c.axisPlacement !== AxisPlacement.Hidden &&
+        c.scaleDistribution?.type !== ScaleDistribution.Log &&
+        (c.axisTickPositions == null || c.axisTickPositions.length === 0),
     });
 }
 

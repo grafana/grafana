@@ -96,6 +96,8 @@ AxisConfig: {
 	scaleDistribution?: ScaleDistributionConfig
 	axisCenteredZero?:  bool
 	axisBorderShow?:    bool
+	axisTickInterval?:  string
+	axisTickPositions?: string
 } @cuetsy(kind="interface")
 
 // TODO docs
