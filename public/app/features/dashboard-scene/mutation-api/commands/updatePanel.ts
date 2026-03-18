@@ -98,11 +98,14 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
       const previousElement = getElements(scene.state.body, scene)[elementName];
 
       if (spec.title !== undefined) {
-        scene.updatePanelTitle(vizPanel, spec.title);
+        vizPanel.setState({
+          title: spec.title,
+          hoverHeader: getUpdatedHoverHeader(spec.title, vizPanel.state.$timeRange),
+        });
       }
 
       if (spec.description !== undefined) {
-        vizPanel.onDescriptionChange(spec.description);
+        vizPanel.setState({ description: spec.description });
       }
 
       if (spec.transparent !== undefined) {

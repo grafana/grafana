@@ -102,7 +102,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
         },
         addon: config.featureToggles.dashgpt && (
           <GenAIPanelDescriptionButton
-            onGenerate={(description) => panel.setState({ description })}
+            onGenerate={(description) => updatePanelDescriptionState(panel, description)}
             panel={vizPanelToPanel(panel)}
           />
         ),
@@ -211,14 +211,14 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
     <TextArea
       id={id}
       value={description}
-      onChange={(evt) => panel.setState({ description: evt.currentTarget.value })}
+      onChange={(evt) => updatePanelDescriptionState(panel, evt.currentTarget.value)}
       onFocus={() => setPrevDescription(panel.state.description)}
       onBlur={() => {
         dashboardEditActions.edit({
           description: t('dashboard.edit-actions.panel-description', 'Change panel description'),
           source: panel,
-          perform: () => panel.setState({ description: description }),
-          undo: () => panel.setState({ description: prevDescription }),
+          perform: () => updatePanelDescriptionState(panel, description ?? ''),
+          undo: () => updatePanelDescriptionState(panel, prevDescription ?? ''),
         });
       }}
     />
@@ -244,6 +244,20 @@ export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: str
 
 function updatePanelTitleState(panel: VizPanel, title: string) {
   getDashboardSceneFor(panel).updatePanelTitle(panel, title);
+}
+
+function updatePanelDescriptionState(panel: VizPanel, description: string) {
+  const dashboard = getDashboardSceneFor(panel);
+  const elementName = dashboard.getElementNameForVizPanel(panel);
+  const client = dashboard.getMutationClient();
+  if (elementName && client) {
+    client.execute({
+      type: 'UPDATE_PANEL',
+      payload: { element: { kind: 'ElementReference', name: elementName }, panel: { spec: { description } } },
+    });
+    return;
+  }
+  panel.setState({ description });
 }
 
 export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: string = panel.state.title) {
