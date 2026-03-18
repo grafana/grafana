@@ -5,7 +5,9 @@ export interface ClientMessage {
 }
 
 /** MutationRequest is the protocol's own representation of a dashboard mutation.
- *  The backend treats the payload as opaque. */
+ *  Mirrors the MutationRequest in dashboard-scene/mutation-api/types.ts but defined
+ *  locally to keep the wire protocol self-contained. The backend treats the payload
+ *  as opaque. */
 export interface MutationRequest {
   type: string;
   payload: unknown;

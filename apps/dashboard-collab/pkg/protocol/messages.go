@@ -33,8 +33,10 @@ type CollabOperation struct {
 }
 
 // MutationRequest is the protocol's own representation of a dashboard mutation.
-// The backend treats the payload as opaque — it does not import or depend on
-// DashboardMutationAPI command definitions.
+// It mirrors the MutationRequest interface in dashboard-scene/mutation-api/types.ts
+// but is defined locally to keep the wire protocol self-contained and avoid coupling
+// to dashboard-scene internals. The backend treats the payload as opaque — it does
+// not import or depend on DashboardMutationAPI command definitions.
 type MutationRequest struct {
 	Type    string          `json:"type"`    // e.g., "UPDATE_PANEL"
 	Payload json.RawMessage `json:"payload"` // Zod-validated on frontend
