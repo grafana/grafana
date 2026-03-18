@@ -3,6 +3,7 @@ package collab
 import (
 	"hash/fnv"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -22,6 +23,8 @@ type SessionStore interface {
 	Set(key string, session *Session)
 	// Delete removes a session by key.
 	Delete(key string)
+	// ForEach calls fn for each active session. The callback must not modify the store.
+	ForEach(fn func(key string, s *Session))
 }
 
 // memoryStore is the default in-memory SessionStore.
@@ -52,6 +55,14 @@ func (m *memoryStore) Delete(key string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.sessions, key)
+}
+
+func (m *memoryStore) ForEach(fn func(key string, s *Session)) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	for k, s := range m.sessions {
+		fn(k, s)
+	}
 }
 
 // Session represents an active collaboration session for a single dashboard.
@@ -181,6 +192,27 @@ func (m *SessionManager) UserLeave(namespace, uid, userId string) (remaining int
 	}
 
 	return remaining
+}
+
+// GetSeq returns the current sequence number atomically.
+func (s *Session) GetSeq() int64 {
+	return atomic.LoadInt64(&s.Seq)
+}
+
+// GetLastOpTime returns the time of the last operation, safely under the read lock.
+func (s *Session) GetLastOpTime() time.Time {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.LastOpTime
+}
+
+// ForEachSession calls fn for each active session.
+func (m *SessionManager) ForEachSession(fn func(s *Session)) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	m.store.ForEach(func(_ string, s *Session) {
+		fn(s)
+	})
 }
 
 // assignColor deterministically maps a userId to one of 12 palette colors.
