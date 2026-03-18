@@ -68,6 +68,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 		require.Error(t, err, "should reject unmanaged dashboard in a managed folder")
 		require.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
+		require.Contains(t, err.Error(), "folder is managed by repo:"+repoName)
+		require.Contains(t, err.Error(), "resource is not managed")
 	})
 
 	t.Run("reject dashboard managed by different repo in managed folder", func(t *testing.T) {
@@ -93,6 +95,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
 		require.Error(t, err, "should reject dashboard managed by a different manager")
 		require.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
+		require.Contains(t, err.Error(), "resource manager (kubectl:some-other-manager) does not match folder manager (repo:"+repoName+")")
 	})
 
 	t.Run("allow managed dashboard in unmanaged folder", func(t *testing.T) {
@@ -196,6 +199,8 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		_, err := helper.Folders.Resource.Create(ctx, folder, metav1.CreateOptions{})
 		require.Error(t, err, "should reject unmanaged sub-folder in a managed folder")
 		require.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
+		require.Contains(t, err.Error(), "folder is managed by repo:"+repoName)
+		require.Contains(t, err.Error(), "resource is not managed")
 	})
 
 	t.Run("reject sub-folder managed by different manager in managed folder", func(t *testing.T) {
@@ -220,6 +225,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		_, err := helper.Folders.Resource.Create(ctx, folder, metav1.CreateOptions{})
 		require.Error(t, err, "should reject sub-folder managed by a different manager")
 		require.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
+		require.Contains(t, err.Error(), "resource manager (kubectl:some-other-manager) does not match folder manager (repo:"+repoName+")")
 	})
 
 	t.Run("allow managed sub-folder in unmanaged folder", func(t *testing.T) {
