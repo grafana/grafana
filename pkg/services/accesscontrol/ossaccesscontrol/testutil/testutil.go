@@ -76,6 +76,7 @@ func ProvideFolderPermissions(
 		tracing.InitializeTracerForTest(),
 		quotaService,
 		bundleregistry.ProvideService(),
+		nil,
 	)
 	if err != nil {
 		return nil, err
