@@ -34,7 +34,7 @@ Set the following options to provide basic information about a panel and define 
 
 <!-- prettier-ignore-start -->
 
-| Option                 |Description                                                                                                     |
+| Option                 | Description                                                                                                     |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------- |
 | Title                  | Text entered in this field appears at the top of your panel in the panel editor and in the dashboard. You can use [variables you have defined](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/) in the **Title** field, but not [global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#global-variables).                                                                                                  |
 | [Description](#description-field-formatting)            | Markdown text in this field appears in a tooltip in the upper-left corner of the panel. Add a description to share important information about the panel, such as its purpose. For supported syntax, refer to [Description](#description-field-formatting). You can use [variables you have defined](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/) in the **Description** field, but not [global variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#global-variables). |
