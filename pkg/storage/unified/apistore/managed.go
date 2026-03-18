@@ -77,7 +77,7 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 }
 
 func checkFolderManagerConsistency(folderManager utils.ManagerProperties, folderManaged bool, resource utils.GrafanaMetaAccessor) error {
-	if !folderManaged {
+	if !folderManaged || folderManager.Kind != utils.ManagerKindRepo {
 		return nil
 	}
 

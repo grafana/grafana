@@ -296,28 +296,25 @@ func TestCheckFolderManagerConsistency(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name: "folder and resource managed by same terraform",
+			name: "folder managed by terraform, resource unmanaged — skipped (non-repo)",
 			folderManager: &utils.ManagerProperties{
 				Kind:     utils.ManagerKindTerraform,
 				Identity: "tf-1",
 			},
-			resourceManager: &utils.ManagerProperties{
-				Kind:     utils.ManagerKindTerraform,
-				Identity: "tf-1",
-			},
-			expectError: false,
+			resourceManager: nil,
+			expectError:     false,
 		},
 		{
-			name: "folder and resource managed by different terraform",
+			name: "folder managed by kubectl, resource managed by different kubectl — skipped (non-repo)",
 			folderManager: &utils.ManagerProperties{
-				Kind:     utils.ManagerKindTerraform,
-				Identity: "tf-1",
+				Kind:     utils.ManagerKindKubectl,
+				Identity: "k-1",
 			},
 			resourceManager: &utils.ManagerProperties{
-				Kind:     utils.ManagerKindTerraform,
-				Identity: "tf-2",
+				Kind:     utils.ManagerKindKubectl,
+				Identity: "k-2",
 			},
-			expectError: true,
+			expectError: false,
 		},
 	}
 
