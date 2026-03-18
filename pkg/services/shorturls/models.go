@@ -31,11 +31,12 @@ type ShortUrl struct {
 // ValidateRelativePath checks that a short URL path is a safe relative path
 // that will not redirect to an external domain. It returns an appropriate error
 // if the path is invalid, or nil if the path is safe.
+// IMPORTANT: This logic is duplicated in apps/shorturl/pkg/app/app.go — keep both in sync.
 func ValidateRelativePath(rawPath string) error {
 	p := strings.TrimSpace(rawPath)
 
-	// Reject path traversal
-	if strings.Contains(p, "../") {
+	// Reject path traversal (forward and backslash variants)
+	if strings.Contains(p, "../") || strings.Contains(p, `..\`) {
 		return ErrShortURLInvalidPath.Errorf("path cannot contain '../': %s", p)
 	}
 

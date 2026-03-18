@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -212,8 +213,12 @@ func (sk8s *shortURLK8sHandler) getKubernetesRedirectFromShortURL(c *contextmode
 	// Ensure the redirect URL is relative to this server by checking it has no scheme
 	// or its host matches what we expect. Since the goto handler constructs the URL
 	// as appURL + "/" + path, we just need to verify it's not pointing externally.
-	appParsed, _ := url.Parse(sk8s.cfg.AppURL)
-	if parsedURL.Host != "" && appParsed != nil && parsedURL.Host != appParsed.Host {
+	appParsed, appParseErr := url.Parse(sk8s.cfg.AppURL)
+	if appParseErr != nil || appParsed.Host == "" {
+		c.JsonApiErr(500, "invalid app URL configuration", appParseErr)
+		return
+	}
+	if parsedURL.Host != "" && !strings.EqualFold(parsedURL.Host, appParsed.Host) {
 		c.Logger.Error("Short URL redirect points to external host, refusing", "url", value.Url)
 		c.Redirect(sk8s.cfg.AppURL, http.StatusFound)
 		return

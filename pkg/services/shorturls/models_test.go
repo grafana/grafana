@@ -95,4 +95,15 @@ func TestValidateRelativePath(t *testing.T) {
 		require.Error(t, err)
 		require.True(t, ErrShortURLAbsolutePath.Is(err))
 	})
+
+	t.Run("accepts empty string", func(t *testing.T) {
+		err := ValidateRelativePath("")
+		assert.NoError(t, err)
+	})
+
+	t.Run("rejects backslash path traversal", func(t *testing.T) {
+		err := ValidateRelativePath(`path..\etc\passwd`)
+		require.Error(t, err)
+		require.True(t, ErrShortURLInvalidPath.Is(err))
+	})
 }

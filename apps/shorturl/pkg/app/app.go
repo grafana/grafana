@@ -34,8 +34,9 @@ var (
 func validateRelativePath(rawPath string) error {
 	p := strings.TrimSpace(rawPath)
 
-	// Reject path traversal
-	if strings.Contains(p, "../") {
+	// IMPORTANT: This logic is duplicated in pkg/services/shorturls/models.go — keep both in sync.
+	// Reject path traversal (forward and backslash variants)
+	if strings.Contains(p, "../") || strings.Contains(p, `..\`) {
 		return fmt.Errorf("%w: %s", ErrShortURLInvalidPath, p)
 	}
 
