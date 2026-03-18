@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -119,7 +119,7 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 }
 
 func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
-	teamDTO, err := s.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+	legacyTeam, err := s.legacyService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
 		ID:    cmd.ID,
 		OrgID: cmd.OrgID,
 	})
@@ -133,7 +133,7 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 		return err
 	}
 
-	result, err := client.Get(ctx, teamDTO.UID, metav1.GetOptions{})
+	result, err := client.Get(ctx, legacyTeam.UID, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return team.ErrTeamNotFound
