@@ -187,6 +187,10 @@ export default defineConfig<PluginOptions>({
       name: 'dashboard-new-layouts',
       testDir: path.join(testDirRoot, '/dashboard-new-layouts'),
     }),
+    withAuth({
+      name: 'dashboard-collab',
+      testDir: path.join(testDirRoot, '/dashboard-collab'),
+    }),
     // Setup project for dashboard CUJS tests
     withAuth({
       name: 'dashboard-cujs-setup',
