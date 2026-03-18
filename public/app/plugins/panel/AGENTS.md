@@ -56,6 +56,12 @@
 - Tests are clear and concise
 - Test utility methods are well documented and flexible
 
+## Performance
+
+- Follow performance best practices for React and Typescript
+- Avoid unnecessary re-rendering
+- Use for loops instead of forEach
+
 ## Monorepo Conventions
 
 - Import shared modules using workspace names: `@grafana/example`
