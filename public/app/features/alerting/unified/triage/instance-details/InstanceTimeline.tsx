@@ -294,11 +294,13 @@ function NotificationStatusGroup({
 
   const { delivered: successCount, failed: failedCount } = integrationOutcomes;
 
-  const receivers = [...new Set(notifications.map((n) => n.receiver))];
+  const uniqueReceivers = [...new Set(notifications.map((n) => n.receiver))];
   const receiverLabel =
-    receivers.length === 1
-      ? receivers[0]
-      : t('alerting.instance-details.timeline-n-receivers', '{{count}} receivers', { count: receivers.length });
+    uniqueReceivers.length === 1
+      ? uniqueReceivers[0]
+      : t('alerting.instance-details.timeline-n-uniqueReceivers', '{{count}} uniqueReceivers', {
+          count: uniqueReceivers.length,
+        });
 
   let deliveryLabel: string | undefined;
   if (failedCount > 0 && successCount === 0) {
@@ -353,9 +355,9 @@ function NotificationStatusGroup({
             →
           </Text>
           <Icon name="at" size="sm" />
-          {receivers.length === 1 ? (
+          {uniqueReceivers.length === 1 ? (
             <a
-              href={createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(receivers[0])}`)}
+              href={createRelativeUrl(`/alerting/notifications?search=${encodeURIComponent(uniqueReceivers[0])}`)}
               className={styles.receiverLink}
               target="_blank"
               rel="noreferrer"
