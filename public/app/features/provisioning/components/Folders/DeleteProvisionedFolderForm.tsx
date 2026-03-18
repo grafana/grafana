@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Box, Button, Stack } from '@grafana/ui';
 import { Job, RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
@@ -12,6 +11,7 @@ import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 import { FolderDTO } from 'app/types/folders';
 
+import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { BaseProvisionedFormData } from '../../types/form';
@@ -19,6 +19,7 @@ import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { getProvisionedRequestError } from '../utils/errors';
 
 interface FormProps extends DeleteProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;
@@ -33,24 +34,28 @@ interface DeleteProvisionedFolderFormProps {
 
 function FormContent({ initialValues, parentFolder, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
   const resourceId = parentFolder?.uid || '';
+
+  // state
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [error, setError] = useState<string | undefined>(undefined);
+  const [job, setJob] = useState<Job>();
+
+  // hooks
   const { createBulkJob, isLoading } = useBulkActionJob();
   const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
   const navigate = useNavigate();
-  const [job, setJob] = useState<Job>();
-  const [hasSubmitted, setHasSubmitted] = useState(false);
-
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
   const [ref, workflow] = watch(['ref', 'workflow']);
 
-  // Helper function to show error messages
   const showError = (error?: unknown) => {
-    const payload = [t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder'), error];
-
-    getAppEvents().publish({
-      type: AppEvents.alertError.name,
-      payload,
-    });
+    setError(
+      getProvisionedRequestError(
+        error,
+        'folder',
+        t('browse-dashboards.delete-provisioned-folder-form.api-error', 'Failed to delete folder')
+      )
+    );
   };
 
   const handleSubmitForm = async ({ repo, path, comment }: BaseProvisionedFormData) => {
@@ -183,6 +188,8 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
               />
+
+              {error && <ProvisioningAlert error={error} />}
 
               <Stack gap={2}>
                 <Button variant="secondary" fill="outline" onClick={onDismiss}>

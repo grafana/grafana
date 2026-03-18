@@ -4245,6 +4245,9 @@
     "delete-folder": {
       "read-only-message": "To delete this folder, please remove the folder from your repository."
     },
+    "delete-provisioned-dashboard-form": {
+      "api-error": "Failed to delete dashboard"
+    },
     "delete-provisioned-folder-form": {
       "api-error": "Failed to delete folder",
       "button-cancel": "Cancel",
@@ -6827,7 +6830,6 @@
       "placeholder": "Choose default values"
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Failed to delete dashboard",
       "cancel-action": "Cancel",
       "delete-action": "Delete dashboard",
       "deleting": "Deleting...",
@@ -7298,10 +7300,10 @@
       "update-all": "Update all"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "Error saving dashboard",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
+      "error-saving": "An error occurred while saving.",
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
@@ -13009,6 +13011,10 @@
       "set-up-public-webhooks": "Set up public webhooks",
       "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks.",
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
+    },
+    "error": {
+      "branch-not-found-dashboard": "You have selected a branch that does not contain this dashboard. Select another branch.",
+      "branch-not-found-folder": "You have selected a branch that does not contain this folder. Select another branch."
     },
     "error-title-default": "Error",
     "expanded-row": {
