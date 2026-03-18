@@ -1,6 +1,6 @@
 import { LogRowModel } from '@grafana/data';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { LogListModel, NEWLINES_REGEX } from '../panel/processing';
 
 /**

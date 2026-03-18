@@ -21,7 +21,6 @@ import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasour
 import { createTempoDatasource } from 'app/plugins/datasource/tempo/test/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 import { createLogLine } from '../mocks/logRow';
 
@@ -29,6 +28,7 @@ import { emptyContextData, LogDetailsContext, LogDetailsContextData } from './Lo
 import { LogLineDetails, Props } from './LogLineDetails';
 import { LogListContext, LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
+import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 
 jest.mock('@openfeature/react-sdk', () => ({
   useBooleanFlagValue: jest.fn().mockReturnValue(false),
