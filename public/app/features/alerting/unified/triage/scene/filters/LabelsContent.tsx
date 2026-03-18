@@ -10,6 +10,9 @@ import { FiringCount, PendingCount } from '../BadgeCounts';
 import { type LabelStats, type LabelValueCount } from '../useLabelsBreakdown';
 import { addOrReplaceFilter, removeFilter, useExactFilterKeys, useFilterValue, useIsAnyFilter } from '../utils';
 
+import { useLabelSectionOpen } from './labelFilter.hooks';
+import { filterLabels } from './labelFilter.utils';
+
 // --- Public API ---
 
 interface AllLabelsDrawerProps {
@@ -43,34 +46,25 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
   const sceneContext = useSceneContext();
   const [showAll, setShowAll] = useState(false);
 
-  // Explicit overrides set by the chevron toggle — take precedence over filter-driven state.
-  const [forcedOpen, setForcedOpen] = useState<Set<string>>(new Set());
-  const [forcedClosed, setForcedClosed] = useState<Set<string>>(new Set());
   const exactFilterKeys = useExactFilterKeys();
+  const { filteredLabels, valueMatchKeys, valueHitMap } = filterLabels(allLabels, labelFilter);
+  const sectionOpen = useLabelSectionOpen(exactFilterKeys, valueMatchKeys);
 
-  const filteredLabels =
-    labelFilter.trim() === ''
-      ? allLabels
-      : allLabels.filter((label) => label.key.toLowerCase().includes(labelFilter.toLowerCase()));
   const visibleLabels = showAll ? filteredLabels : filteredLabels.slice(0, DEFAULT_VISIBLE_LABELS);
   const hasMore = filteredLabels.length > DEFAULT_VISIBLE_LABELS;
 
-  const handleValueClick = (key: string, value: string, isActive: boolean) => {
+  const handleLabelValueClick = (key: string, value: string, isActive: boolean) => {
     if (isActive) {
       removeFilter(sceneContext, key);
     } else {
       addOrReplaceFilter(sceneContext, key, '=', value);
       // Clear any forced-closed override so the filter-driven open state takes effect.
-      setForcedClosed((prev) => {
-        const next = new Set(prev);
-        next.delete(key);
-        return next;
-      });
+      sectionOpen.clearForcedClosed(key);
       onFilterAdded?.();
     }
   };
 
-  const handleKeyClick = (key: string, isActive: boolean) => {
+  const handleLabelKeyClick = (key: string, isActive: boolean) => {
     if (isActive) {
       removeFilter(sceneContext, key);
     } else {
@@ -79,35 +73,10 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
     }
   };
 
-  const toggleKey = (key: string, currentlyOpen: boolean) => {
-    if (currentlyOpen) {
-      setForcedOpen((prev) => {
-        const next = new Set(prev);
-        next.delete(key);
-        return next;
-      });
-      setForcedClosed((prev) => new Set(prev).add(key));
-    } else {
-      setForcedClosed((prev) => {
-        const next = new Set(prev);
-        next.delete(key);
-        return next;
-      });
-      setForcedOpen((prev) => new Set(prev).add(key));
-    }
-  };
-
   return (
     <div className={styles.content}>
       {visibleLabels.map((label, index) => {
-        const hasExactFilter = exactFilterKeys.has(label.key);
-        // Forced overrides win; otherwise open when an exact-value filter is active.
-        let isOpen = hasExactFilter;
-        if (forcedClosed.has(label.key)) {
-          isOpen = false;
-        } else if (forcedOpen.has(label.key)) {
-          isOpen = true;
-        }
+        const isOpen = sectionOpen.isOpen(label.key);
         return (
           <Fragment key={label.key}>
             <div className={styles.labelRow}>
@@ -119,10 +88,13 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
                   aria-label={
                     isOpen ? t('alerting.triage.collapse', 'Collapse') : t('alerting.triage.expand', 'Expand')
                   }
-                  onClick={() => toggleKey(label.key, isOpen)}
+                  onClick={() => sectionOpen.toggle(label.key)}
                 />
                 <Stack direction="row" gap={0.5} alignItems="center" minWidth={0}>
-                  <LabelKeyButton labelKey={label.key} onClick={(isActive) => handleKeyClick(label.key, isActive)} />
+                  <LabelKeyButton
+                    labelKey={label.key}
+                    onClick={(isActive) => handleLabelKeyClick(label.key, isActive)}
+                  />
                   <span className={styles.valueCount}>{label.values.length}</span>
                 </Stack>
               </Stack>
@@ -135,7 +107,8 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
               <LabelValuesList
                 labelKey={label.key}
                 values={label.values}
-                onValueClick={(value, isActive) => handleValueClick(label.key, value, isActive)}
+                valueHits={valueHitMap.get(label.key)}
+                onValueClick={(value, isActive) => handleLabelValueClick(label.key, value, isActive)}
               />
             )}
           </Fragment>
@@ -153,8 +126,6 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
     </div>
   );
 }
-
-// --- Internal components ---
 
 interface LabelKeyButtonProps {
   labelKey: string;
@@ -184,18 +155,21 @@ interface LabelValuesListProps {
   labelKey: string;
   values: LabelValueCount[];
   onValueClick: (value: string, isActive: boolean) => void;
+  /** When provided, only values at these indices are shown (value-level filter match). */
+  valueHits?: Set<number>;
 }
 
-function LabelValuesList({ labelKey, values, onValueClick }: LabelValuesListProps) {
+function LabelValuesList({ labelKey, values, onValueClick, valueHits }: LabelValuesListProps) {
   const styles = useStyles2(getContentStyles);
   const [expanded, setExpanded] = useState(false);
   const activeValue = useFilterValue(labelKey);
 
-  const visibleValues = expanded ? values : values.slice(0, DEFAULT_VISIBLE_VALUES);
-  const hasMore = values.length > DEFAULT_VISIBLE_VALUES;
+  const matchedValues = valueHits ? values.filter((_, i) => valueHits.has(i)) : values;
+  const visibleValues = expanded ? matchedValues : matchedValues.slice(0, DEFAULT_VISIBLE_VALUES);
+  const hasMore = matchedValues.length > DEFAULT_VISIBLE_VALUES;
 
   return (
-    <>
+    <Stack direction="column" alignItems="stretch" gap={0}>
       {visibleValues.map(({ value, firing, pending }) => (
         <div key={value} className={styles.valueRow}>
           <Button
@@ -217,7 +191,7 @@ function LabelValuesList({ labelKey, values, onValueClick }: LabelValuesListProp
         <Button variant="secondary" fill="text" size="sm" onClick={() => setExpanded(true)}>
           <Trans
             i18nKey="alerting.triage.show-all-values"
-            values={{ count: values.length }}
+            values={{ count: matchedValues.length }}
             defaults={'Show all ({{ count }})'}
           />
         </Button>
@@ -227,7 +201,7 @@ function LabelValuesList({ labelKey, values, onValueClick }: LabelValuesListProp
           <Trans i18nKey="alerting.triage.show-fewer-values" defaults="Show fewer" />
         </Button>
       )}
-    </>
+    </Stack>
   );
 }
 

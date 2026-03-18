@@ -5,7 +5,7 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useQueryRunner, useSceneContext } from '@grafana/scenes-react';
-import { Icon, Input, ScrollContainer, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { FilterInput, Icon, ScrollContainer, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { countInstances } from '../SummaryStats';
 import { summaryInstanceCountQuery } from '../queries';
@@ -65,11 +65,10 @@ export function LabelsColumn() {
               <Text weight="medium" variant="bodySmall" color="secondary">
                 <Trans i18nKey="alerting.triage.labels-column-title">Labels</Trans>
               </Text>
-              <Input
-                prefix={<Icon name="search" size="sm" />}
+              <FilterInput
                 placeholder={t('alerting.triage.filter-labels-placeholder', 'Filter')}
                 value={labelFilter}
-                onChange={(e) => setLabelFilter(e.currentTarget.value)}
+                onChange={setLabelFilter}
                 aria-label={t('alerting.triage.filter-labels', 'Filter labels')}
                 className={styles.labelFilterInput}
               />
