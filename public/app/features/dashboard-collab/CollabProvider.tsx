@@ -22,14 +22,23 @@ import {
   LiveChannelScope,
   type LiveChannelAddress,
 } from '@grafana/data';
-import { config, getGrafanaLiveSrv } from '@grafana/runtime';
+import { t } from '@grafana/i18n';
+import { config, getGrafanaLiveSrv, locationService } from '@grafana/runtime';
+import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { CollabContext, type CollabContextValue, type CollabLock, type CollabUser } from './CollabContext';
+import {
+  classifyChannelError,
+  CHANNEL_ERROR_DASHBOARD_DELETED,
+  CHANNEL_ERROR_PERMISSION_DENIED,
+  STALE_LOCK_THRESHOLD_MS,
+  onVisibilityChange,
+} from './collabEdgeCases';
 import { applyRemoteOp } from './opApplicator';
-import { extractMutationRequest } from './opExtractor';
+import { extractMutationRequest, setLargeDashboardMode } from './opExtractor';
 import type {
   CheckpointOperation,
   ClientMessage,
@@ -96,9 +105,15 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
   const [users, setUsers] = useState<CollabUser[]>([]);
   const [locks, setLocks] = useState<CollabLock[]>([]);
   const [cursors, setCursors] = useState<Map<string, CursorUpdate>>(new Map());
+  const [staleLocks, setStaleLocks] = useState<Set<string>>(new Set());
+  const [tabHidden, setTabHidden] = useState(false);
 
   const clientRef = useRef<DashboardMutationClient | null>(null);
   const localUserIdRef = useRef(config.bootData?.user?.uid ?? '');
+  // Track when each lock was acquired and last op time per user for stale lock detection
+  const lockTimestampsRef = useRef<Map<string, number>>(new Map());
+  const lastOpByUserRef = useRef<Map<string, number>>(new Map());
+  const notifyApp = useAppNotification();
 
   // Memoize the mutation client per scene
   useEffect(() => {
@@ -109,6 +124,47 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
   }, [scene]);
 
   const enabled = useMemo(() => isCollabEnabled(scene), [scene]);
+
+  // Edge case #4: Pause cursor sending when tab is hidden
+  useEffect(() => {
+    return onVisibilityChange((hidden) => setTabHidden(hidden));
+  }, []);
+
+  // Edge case #6: Detect stale locks (held >5min with no ops from holder)
+  useEffect(() => {
+    if (!connected || locks.length === 0) {
+      setStaleLocks(new Set());
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const stale = new Set<string>();
+
+      for (const lock of locks) {
+        // Don't flag own locks as stale
+        if (lock.userId === localUserIdRef.current) {
+          continue;
+        }
+        const acquiredAt = lockTimestampsRef.current.get(lock.target) ?? now;
+        const lastOp = lastOpByUserRef.current.get(lock.userId);
+        const referenceTime = lastOp ?? acquiredAt;
+        if (now - referenceTime > STALE_LOCK_THRESHOLD_MS) {
+          stale.add(lock.target);
+        }
+      }
+
+      setStaleLocks((prev) => {
+        // Only update if changed
+        if (stale.size === prev.size && [...stale].every((t) => prev.has(t))) {
+          return prev;
+        }
+        return stale;
+      });
+    }, 30_000); // Check every 30s
+
+    return () => clearInterval(interval);
+  }, [connected, locks]);
 
   // Ops channel address
   const opsAddress = useMemo(
@@ -141,6 +197,9 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     if (!enabled || !opsAddress) {
       return;
     }
+
+    // Edge case #5: enable throttle for large dashboards
+    setLargeDashboardMode(scene as any);
 
     const sub = scene.subscribeToEvent(
       // SceneObjectStateChangedEvent is published by scenes on any state change
@@ -206,6 +265,8 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
             const msg = event.message;
 
             if (msg.kind === 'op' && clientRef.current) {
+              // Track last op time per user for stale lock detection
+              lastOpByUserRef.current.set(msg.userId, Date.now());
               applyRemoteOp(msg, clientRef.current, localUserIdRef.current).catch((err) => {
                 console.error('[collab] Failed to apply remote op:', err);
               });
@@ -214,12 +275,14 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
             if (msg.kind === 'lock') {
               const lockOp = msg.op as LockOperation;
               if (lockOp.type === 'lock') {
+                lockTimestampsRef.current.set(lockOp.target, Date.now());
                 setLocks((prev) => {
                   // Replace existing lock on same target, or add new
                   const filtered = prev.filter((l) => l.target !== lockOp.target);
                   return [...filtered, { target: lockOp.target, userId: lockOp.userId }];
                 });
               } else if (lockOp.type === 'unlock') {
+                lockTimestampsRef.current.delete(lockOp.target);
                 setLocks((prev) => prev.filter((l) => l.target !== lockOp.target));
               }
             }
@@ -234,8 +297,29 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
           }
         },
         error: (err) => {
-          console.error('[collab] Ops channel error:', err);
           setConnected(false);
+
+          // Edge case #2: Dashboard deleted while editing
+          const errorType = classifyChannelError(err);
+          if (errorType === CHANNEL_ERROR_DASHBOARD_DELETED) {
+            notifyApp.warning(
+              t('dashboard-collab.error.dashboard-deleted-title', 'Dashboard deleted'),
+              t('dashboard-collab.error.dashboard-deleted-message', 'This dashboard has been deleted. Redirecting to home.')
+            );
+            locationService.push('/');
+            return;
+          }
+
+          // Edge case #3: Permission revoked mid-session
+          if (errorType === CHANNEL_ERROR_PERMISSION_DENIED) {
+            notifyApp.warning(
+              t('dashboard-collab.error.permission-revoked-title', 'Access revoked'),
+              t('dashboard-collab.error.permission-revoked-message', 'You no longer have access to this dashboard.')
+            );
+            return;
+          }
+
+          console.warn('[collab] Ops channel error:', err);
         },
       })
     );
@@ -326,10 +410,10 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     [publishOp]
   );
 
-  // Send cursor update
+  // Send cursor update — paused when tab is hidden (edge case #4)
   const sendCursor = useCallback(
     (update: Omit<CursorUpdate, 'type'>) => {
-      if (!cursorsAddress) {
+      if (!cursorsAddress || tabHidden) {
         return;
       }
       const live = getGrafanaLiveSrv();
@@ -337,7 +421,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
         live.publish(cursorsAddress, { ...update, type: 'cursor' } satisfies CursorUpdate);
       }
     },
-    [cursorsAddress]
+    [cursorsAddress, tabHidden]
   );
 
   const value = useMemo<CollabContextValue>(
@@ -345,13 +429,14 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
       connected,
       users,
       locks,
+      staleLocks,
       cursors,
       acquireLock,
       releaseLock,
       sendCursor,
       sendCheckpoint,
     }),
-    [connected, users, locks, cursors, acquireLock, releaseLock, sendCursor, sendCheckpoint]
+    [connected, users, locks, staleLocks, cursors, acquireLock, releaseLock, sendCursor, sendCheckpoint]
   );
 
   return <CollabContext.Provider value={value}>{children}</CollabContext.Provider>;

@@ -164,16 +164,18 @@ func (m *SessionManager) UserJoin(namespace, uid, userId string, info UserState)
 	return s
 }
 
-// UserLeave removes a user from a session and returns the number of remaining
-// users. If no users remain, the session is automatically removed.
-func (m *SessionManager) UserLeave(namespace, uid, userId string) (remaining int) {
+// UserLeave removes a user from a session and returns the session plus the
+// number of remaining users. When remaining == 0, the caller should trigger a
+// final autosave using the returned session (which still holds ResourceVersion
+// and LastOpTime) and then call CleanupSession to remove it from the store.
+func (m *SessionManager) UserLeave(namespace, uid, userId string) (session *Session, remaining int) {
 	key := sessionKey(namespace, uid)
 
 	m.mu.RLock()
 	s := m.store.Get(key)
 	m.mu.RUnlock()
 	if s == nil {
-		return 0
+		return nil, 0
 	}
 
 	s.mu.Lock()
@@ -181,18 +183,29 @@ func (m *SessionManager) UserLeave(namespace, uid, userId string) (remaining int
 	remaining = len(s.Users)
 	s.mu.Unlock()
 
-	if remaining == 0 {
-		m.mu.Lock()
-		// Re-check under write lock — another goroutine may have joined.
-		s.mu.RLock()
-		if len(s.Users) == 0 {
-			m.store.Delete(key)
-		}
-		s.mu.RUnlock()
-		m.mu.Unlock()
+	return s, remaining
+}
+
+// CleanupSession removes a session from the store if it still has no users.
+// Call this after performing the final autosave when UserLeave returns remaining == 0.
+func (m *SessionManager) CleanupSession(namespace, uid string) {
+	key := sessionKey(namespace, uid)
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	s := m.store.Get(key)
+	if s == nil {
+		return
 	}
 
-	return remaining
+	s.mu.RLock()
+	empty := len(s.Users) == 0
+	s.mu.RUnlock()
+
+	if empty {
+		m.store.Delete(key)
+	}
 }
 
 // GetSeq returns the current sequence number atomically.

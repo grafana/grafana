@@ -75,8 +75,9 @@ func TestUserLeave(t *testing.T) {
 	m.UserJoin("default", "dash-1", "user-1", UserState{DisplayName: "Alice"})
 	m.UserJoin("default", "dash-1", "user-2", UserState{DisplayName: "Bob"})
 
-	remaining := m.UserLeave("default", "dash-1", "user-1")
+	session, remaining := m.UserLeave("default", "dash-1", "user-1")
 	require.Equal(t, 1, remaining)
+	require.NotNil(t, session)
 
 	// Session still exists with one user.
 	s := m.GetOrCreate("default", "dash-1")
@@ -84,23 +85,32 @@ func TestUserLeave(t *testing.T) {
 	require.NotNil(t, s.Users["user-2"])
 }
 
-func TestUserLeaveDestroysEmptySession(t *testing.T) {
+func TestUserLeaveLastUserReturnsSession(t *testing.T) {
 	m := NewSessionManager()
 
 	m.UserJoin("default", "dash-1", "user-1", UserState{DisplayName: "Alice"})
-	remaining := m.UserLeave("default", "dash-1", "user-1")
+	session, remaining := m.UserLeave("default", "dash-1", "user-1")
 	require.Equal(t, 0, remaining)
+	// Session is returned so caller can perform final autosave.
+	require.NotNil(t, session)
+	require.Equal(t, "dash-1", session.DashboardUID)
 
-	// Session was destroyed — GetOrCreate returns a fresh one.
-	s := m.GetOrCreate("default", "dash-1")
-	require.Empty(t, s.Users)
+	// Session is NOT auto-deleted — caller must call CleanupSession.
+	s := m.store.Get("default/dash-1")
+	require.NotNil(t, s)
+
+	// After cleanup, session is removed.
+	m.CleanupSession("default", "dash-1")
+	s = m.store.Get("default/dash-1")
+	require.Nil(t, s)
 }
 
 func TestUserLeaveNonExistentSession(t *testing.T) {
 	m := NewSessionManager()
 
-	remaining := m.UserLeave("default", "no-such-dash", "user-1")
+	session, remaining := m.UserLeave("default", "no-such-dash", "user-1")
 	require.Equal(t, 0, remaining)
+	require.Nil(t, session)
 }
 
 func TestColorAssignmentDeterministic(t *testing.T) {
@@ -147,10 +157,13 @@ func TestConcurrentAccess(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			userId := fmt.Sprintf("user-%d", i)
-			m.UserLeave("default", "dash-1", userId)
+			_, _ = m.UserLeave("default", "dash-1", userId)
 		}()
 	}
 	wg.Wait()
+
+	// Cleanup session after all users left.
+	m.CleanupSession("default", "dash-1")
 
 	// Session should be destroyed.
 	s = m.GetOrCreate("default", "dash-1")
@@ -176,7 +189,7 @@ func TestConcurrentJoinLeaveInterleaved(t *testing.T) {
 			defer wg.Done()
 			userId := fmt.Sprintf("user-%d", i)
 			dashUID := fmt.Sprintf("dash-%d", i%3)
-			m.UserLeave("default", dashUID, userId)
+			_, _ = m.UserLeave("default", dashUID, userId)
 		}()
 	}
 	wg.Wait()

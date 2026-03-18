@@ -15,6 +15,7 @@ import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScen
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
 import { isSceneVariableInstance } from 'app/features/dashboard-scene/settings/variables/utils';
 
+import { countPanels, LARGE_DASHBOARD_PANEL_THRESHOLD, LARGE_DASHBOARD_THROTTLE_MS } from './collabEdgeCases';
 import { getLockTarget } from './lockTargetMapping';
 import { CollabOperation, MutationRequest } from './protocol/messages';
 
@@ -36,6 +37,19 @@ export function isExtractionSuppressed(): boolean {
   return suppressed;
 }
 
+/** Throttle state for large dashboards (edge case #5). */
+let lastExtractionTime = 0;
+let largeDashboardMode = false;
+
+/**
+ * Enable or disable large-dashboard throttle mode.
+ * When enabled, extractMutationRequest drops events that arrive
+ * faster than LARGE_DASHBOARD_THROTTLE_MS apart.
+ */
+export function setLargeDashboardMode(scene: { state: { body?: { state?: { children?: unknown[] } } } }): void {
+  largeDashboardMode = countPanels(scene) > LARGE_DASHBOARD_PANEL_THRESHOLD;
+}
+
 /**
  * Extracts a CollabOperation from a SceneObjectStateChangedEvent.
  * Returns null if the event doesn't map to a supported mutation or extraction is suppressed.
@@ -43,6 +57,15 @@ export function isExtractionSuppressed(): boolean {
 export function extractMutationRequest(event: SceneObjectStateChangedEvent): CollabOperation | null {
   if (suppressed) {
     return null;
+  }
+
+  // Edge case #5: throttle extraction for large dashboards
+  if (largeDashboardMode) {
+    const now = Date.now();
+    if (now - lastExtractionTime < LARGE_DASHBOARD_THROTTLE_MS) {
+      return null;
+    }
+    lastExtractionTime = now;
   }
 
   const { changedObject, partialUpdate } = event.payload;

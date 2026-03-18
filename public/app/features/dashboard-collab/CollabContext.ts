@@ -31,6 +31,9 @@ export interface CollabContextValue {
   /** Current panel-level locks. */
   locks: CollabLock[];
 
+  /** Lock targets that are stale (held >5min with no ops from holder). */
+  staleLocks: Set<string>;
+
   /** Latest cursor positions from other users. */
   cursors: Map<string, CursorUpdate>;
 
@@ -53,6 +56,7 @@ export const CollabContext = createContext<CollabContextValue>({
   connected: false,
   users: [],
   locks: [],
+  staleLocks: new Set(),
   cursors: new Map(),
   acquireLock: noop,
   releaseLock: noop,

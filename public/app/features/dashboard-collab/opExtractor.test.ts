@@ -3,8 +3,10 @@ import { SceneObjectStateChangedEvent, VizPanel, SceneVariableSet } from '@grafa
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
 
+import { LARGE_DASHBOARD_PANEL_THRESHOLD } from './collabEdgeCases';
 import {
   extractMutationRequest,
+  setLargeDashboardMode,
   suppressExtraction,
   unsuppressExtraction,
   isExtractionSuppressed,
@@ -194,6 +196,41 @@ describe('opExtractor', () => {
 
       const result = extractMutationRequest(event);
       expect(result).not.toBeNull();
+    });
+  });
+
+  describe('large dashboard throttle (edge case #5)', () => {
+    afterEach(() => {
+      // Reset to non-throttled mode
+      setLargeDashboardMode({ state: { body: { state: { children: [] } } } });
+    });
+
+    it('throttles extraction when panel count exceeds threshold', () => {
+      const children = Array.from({ length: LARGE_DASHBOARD_PANEL_THRESHOLD + 1 }, (_, i) => i);
+      setLargeDashboardMode({ state: { body: { state: { children } } } });
+
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test' });
+      const event = makeEvent(panel, { title: 'A' });
+
+      // First extraction succeeds
+      const result1 = extractMutationRequest(event);
+      expect(result1).not.toBeNull();
+
+      // Immediate second extraction is throttled
+      const result2 = extractMutationRequest(makeEvent(panel, { title: 'B' }));
+      expect(result2).toBeNull();
+    });
+
+    it('does not throttle when panel count is below threshold', () => {
+      setLargeDashboardMode({ state: { body: { state: { children: [1, 2, 3] } } } });
+
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test' });
+
+      const result1 = extractMutationRequest(makeEvent(panel, { title: 'A' }));
+      expect(result1).not.toBeNull();
+
+      const result2 = extractMutationRequest(makeEvent(panel, { title: 'B' }));
+      expect(result2).not.toBeNull();
     });
   });
 

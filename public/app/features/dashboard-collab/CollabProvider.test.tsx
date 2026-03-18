@@ -51,6 +51,15 @@ jest.mock('./opApplicator', () => ({
 
 jest.mock('./opExtractor', () => ({
   extractMutationRequest: jest.fn().mockReturnValue(null),
+  setLargeDashboardMode: jest.fn(),
+}));
+
+jest.mock('app/core/copy/appNotification', () => ({
+  useAppNotification: () => ({
+    warning: jest.fn(),
+    success: jest.fn(),
+    error: jest.fn(),
+  }),
 }));
 
 function makeMockScene(): any {
