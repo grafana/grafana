@@ -19,6 +19,7 @@ export enum RepoViewStatus {
   Loading = 'loading',
   Ready = 'ready',
   Error = 'error',
+  Orphaned = 'orphaned',
 }
 
 interface RepositoryViewData {
@@ -85,25 +86,46 @@ export const useGetResourceRepositoryView = ({
 
   const items = settingsData?.items ?? [];
 
+  // DEBUG: remove before merging
+  console.log(
+    '[useGetResourceRepositoryView] name:',
+    name,
+    'folderName:',
+    folderName,
+    'items:',
+    items.map((r) => r.name),
+    'items.length:',
+    items.length
+  );
+
+  // Check for orphaned resource first: name specified but no matching repo
+  if (name) {
+    const repository = items.find((repo) => repo.name === name);
+    if (repository) {
+      console.log('[useGetResourceRepositoryView] Found matching repo for name:', name);
+      const instanceRepo = items.find((repo) => repo.target === 'instance');
+      return {
+        repository,
+        folder,
+        isInstanceManaged: Boolean(instanceRepo),
+        isReadOnlyRepo: getIsReadOnlyRepo(repository),
+        status: RepoViewStatus.Ready,
+      };
+    }
+
+    // name specified but no matching repository found = orphaned resource
+    console.log('[useGetResourceRepositoryView] ORPHANED: name', name, 'not found in items');
+    const instanceRepo = items.find((repo) => repo.target === 'instance');
+    return { folder, isInstanceManaged: Boolean(instanceRepo), isReadOnlyRepo: false, status: RepoViewStatus.Orphaned };
+  }
+
   if (!items.length) {
+    console.log('[useGetResourceRepositoryView] No items and no name, returning Ready');
     return { folder, isInstanceManaged: false, isReadOnlyRepo: false, status: RepoViewStatus.Ready };
   }
 
   const instanceRepo = items.find((repo) => repo.target === 'instance');
   const isInstanceManaged = Boolean(instanceRepo);
-
-  if (name) {
-    const repository = items.find((repo) => repo.name === name);
-    if (repository) {
-      return {
-        repository,
-        folder,
-        isInstanceManaged,
-        isReadOnlyRepo: getIsReadOnlyRepo(repository),
-        status: RepoViewStatus.Ready,
-      };
-    }
-  }
 
   // Find the matching folder repository
   if (folderName) {
@@ -132,6 +154,9 @@ export const useGetResourceRepositoryView = ({
           status: RepoViewStatus.Ready,
         };
       }
+
+      // Folder has a manager identity annotation but the repo no longer exists = orphaned
+      return { folder, isInstanceManaged, isReadOnlyRepo: false, status: RepoViewStatus.Orphaned };
     }
   }
 

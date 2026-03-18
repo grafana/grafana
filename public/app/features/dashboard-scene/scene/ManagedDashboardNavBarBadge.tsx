@@ -14,10 +14,39 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
   const id = dashboard.getManagerIdentity();
 
   const shouldSkipQuery = !config.featureToggles.provisioning || kind !== ManagerKind.Repo || !id;
-  const { data: repoData } = useGetRepositoryQuery(shouldSkipQuery ? skipToken : { name: id });
+  const { data: repoData, isError } = useGetRepositoryQuery(shouldSkipQuery ? skipToken : { name: id });
+
+  // DEBUG: remove before merging
+  console.log(
+    '[ManagedDashboardNavBarBadge] kind:',
+    kind,
+    'id:',
+    id,
+    'shouldSkipQuery:',
+    shouldSkipQuery,
+    'isError:',
+    isError,
+    'repoData:',
+    repoData
+  );
 
   if (!kind) {
     return null;
+  }
+
+  // Repository-managed dashboard where the repo no longer exists
+  if (kind === ManagerKind.Repo && !shouldSkipQuery && (isError || (!repoData && id))) {
+    const orphanedText = t('dashboard-scene.managed-badge.repository-not-found', 'Repository not found: {{id}}', {
+      id,
+    });
+    return (
+      <Badge
+        color="orange"
+        icon="exclamation-triangle"
+        tooltip={orphanedText}
+        key="provisioned-dashboard-button-badge"
+      />
+    );
   }
 
   let text;
