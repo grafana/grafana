@@ -1443,6 +1443,8 @@ export interface AdhocVariableSpec {
 	skipUrlSync: boolean;
 	description?: string;
 	allowCustomValue: boolean;
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	enableGroupBy: boolean;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
@@ -1453,6 +1455,7 @@ export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({
 	hide: "dontHide",
 	skipUrlSync: false,
 	allowCustomValue: true,
+	enableGroupBy: false,
 });
 
 // Define the AdHocFilterWithLabels type

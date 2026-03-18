@@ -992,6 +992,8 @@ AdhocVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	enableGroupBy: bool | *false
 }
 
 // Define the MetricFindValue type
