@@ -216,20 +216,6 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
         if (collabOp) {
           debugLog('Op sent', { mutationType: collabOp.mutation.type, lockTarget: collabOp.lockTarget });
 
-          // Auto-acquire lock for the target before sending the op
-          if (collabOp.lockTarget) {
-            acquiredLocksRef.current.add(collabOp.lockTarget);
-            const lockMsg: ClientMessage = {
-              kind: 'lock',
-              op: {
-                type: 'lock',
-                target: collabOp.lockTarget,
-                userId: localUserIdRef.current,
-              } satisfies LockOperation,
-            };
-            publishOp(lockMsg);
-          }
-
           const msg: ClientMessage = {
             kind: 'op',
             op: collabOp,
@@ -242,66 +228,9 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     return () => sub.unsubscribe();
   }, [enabled, opsAddress, scene, publishOp]);
 
-  // Track which lock targets we've acquired and release when panel editor closes
-  const acquiredLocksRef = useRef<Set<string>>(new Set());
-
-  // Watch for panel selection changes via DashboardEditPane — release locks when panel deselected
-  const prevSelectionRef = useRef<boolean>(false);
-  useEffect(() => {
-    if (!enabled || !opsAddress) {
-      return;
-    }
-
-    // Find the DashboardEditPane in the scene's state
-    const releaseLocks = () => {
-      if (acquiredLocksRef.current.size > 0) {
-        debugLog('Releasing all locks', {
-          targets: Array.from(acquiredLocksRef.current),
-        });
-        for (const target of acquiredLocksRef.current) {
-          const unlockMsg: ClientMessage = {
-            kind: 'lock',
-            op: {
-              type: 'unlock',
-              target,
-              userId: localUserIdRef.current,
-            } satisfies LockOperation,
-          };
-          publishOp(unlockMsg);
-        }
-        acquiredLocksRef.current.clear();
-      }
-    };
-
-    // Subscribe to scene state for editPanel and isEditing changes
-    const sceneSub = scene.subscribeToState((state) => {
-      if (!state.isEditing && acquiredLocksRef.current.size > 0) {
-        debugLog('Edit mode exited — releasing locks');
-        releaseLocks();
-      }
-    });
-
-    // Subscribe to DashboardEditPane selection changes
-    const editPane = (scene.state as any).editPane;
-    let editPaneSub: { unsubscribe: () => void } | undefined;
-    if (editPane && typeof editPane.subscribeToState === 'function') {
-      editPaneSub = editPane.subscribeToState((state: any) => {
-        const hasSelection = !!state.selection;
-        const hadSelection = prevSelectionRef.current;
-        prevSelectionRef.current = hasSelection;
-
-        if (hadSelection && !hasSelection) {
-          debugLog('Panel deselected — releasing locks');
-          releaseLocks();
-        }
-      });
-    }
-
-    return () => {
-      sceneSub.unsubscribe();
-      editPaneSub?.unsubscribe();
-    };
-  }, [enabled, opsAddress, scene, publishOp]);
+  // Track remote activity per panel — used by CollabPanelBorder to show who's editing
+  // When we receive a remote op with a lockTarget, record it with a TTL.
+  // This replaces the lock/unlock protocol which doesn't work with the noop service.
 
   // Subscribe to ops channel
   useEffect(() => {
@@ -351,27 +280,39 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
 
             if (msg.kind === 'op' && clientRef.current) {
               debugLog('Op received', { userId: msg.userId, seq: msg.seq });
-              // Track last op time per user for stale lock detection
               lastOpByUserRef.current.set(msg.userId, Date.now());
+
+              // Activity-based lock: show border for panel being edited by remote user
+              // Extract lockTarget from the op payload
+              const opPayload = msg.op as { lockTarget?: string } | undefined;
+              const lockTarget = opPayload?.lockTarget;
+              if (lockTarget && msg.userId && msg.userId !== localUserIdRef.current) {
+                debugLog('Remote activity on panel', { target: lockTarget, userId: msg.userId });
+                setLocks((prev) => {
+                  const filtered = prev.filter((l) => l.target !== lockTarget);
+                  return [...filtered, { target: lockTarget, userId: msg.userId }];
+                });
+                // Auto-clear after 5 seconds of no activity on this target
+                const clearTimer = setTimeout(() => {
+                  setLocks((prev) => prev.filter((l) => !(l.target === lockTarget && l.userId === msg.userId)));
+                }, 5000);
+                // Clear previous timer for same target
+                const timerKey = `${lockTarget}:${msg.userId}`;
+                const prevTimer = lockTimestampsRef.current.get(timerKey);
+                if (prevTimer) {
+                  clearTimeout(prevTimer as unknown as number);
+                }
+                lockTimestampsRef.current.set(timerKey, clearTimer as unknown as number);
+              }
+
               applyRemoteOp(msg, clientRef.current, localUserIdRef.current).catch((err) => {
                 console.error('[collab] Failed to apply remote op:', err);
               });
             }
 
+            // Ignore lock protocol messages with noop service — using activity-based locks instead
             if (msg.kind === 'lock') {
-              const lockOp = msg.op as LockOperation;
-              debugLog('Lock event received', { type: lockOp.type, target: lockOp.target, userId: lockOp.userId });
-              if (lockOp.type === 'lock') {
-                lockTimestampsRef.current.set(lockOp.target, Date.now());
-                setLocks((prev) => {
-                  // Replace existing lock on same target, or add new
-                  const filtered = prev.filter((l) => l.target !== lockOp.target);
-                  return [...filtered, { target: lockOp.target, userId: lockOp.userId }];
-                });
-              } else if (lockOp.type === 'unlock') {
-                lockTimestampsRef.current.delete(lockOp.target);
-                setLocks((prev) => prev.filter((l) => l.target !== lockOp.target));
-              }
+              debugLog('Lock protocol message ignored (using activity-based locks)', { op: msg.op });
             }
 
             if (msg.kind === 'presence') {
