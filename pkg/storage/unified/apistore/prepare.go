@@ -13,10 +13,12 @@ import (
 	"github.com/google/uuid"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/klog/v2"
 
 	authlib "github.com/grafana/authlib/types"
@@ -262,25 +264,26 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	return v, err
 }
 
+var folderGVR = schema.GroupVersionResource{
+	Group:    "folder.grafana.app",
+	Version:  "v1beta1",
+	Resource: "folders",
+}
+
 func (s *Storage) getFolderManagerProperties(ctx context.Context, namespace, folderUID string) (utils.ManagerProperties, bool, error) {
-	resp, err := s.store.Read(ctx, &resourcepb.ReadRequest{
-		Key: &resourcepb.ResourceKey{
-			Group:     "folder.grafana.app",
-			Resource:  "folders",
-			Namespace: namespace,
-			Name:      folderUID,
-		},
-	})
+	cfg, err := s.configProvider.GetRestConfig(ctx)
 	if err != nil {
-		return utils.ManagerProperties{}, false, fmt.Errorf("failed to read folder %s: %w", folderUID, err)
-	}
-	if resp.Error != nil {
-		return utils.ManagerProperties{}, false, fmt.Errorf("folder %s not found: %s", folderUID, resp.Error.GetMessage())
+		return utils.ManagerProperties{}, false, fmt.Errorf("failed to get REST config for folder lookup: %w", err)
 	}
 
-	folder := &unstructured.Unstructured{}
-	if err := json.Unmarshal(resp.Value, folder); err != nil {
-		return utils.ManagerProperties{}, false, fmt.Errorf("failed to unmarshal folder %s: %w", folderUID, err)
+	dynClient, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return utils.ManagerProperties{}, false, fmt.Errorf("failed to create dynamic client: %w", err)
+	}
+
+	folder, err := dynClient.Resource(folderGVR).Namespace(namespace).Get(ctx, folderUID, metav1.GetOptions{})
+	if err != nil {
+		return utils.ManagerProperties{}, false, fmt.Errorf("failed to read folder %s: %w", folderUID, err)
 	}
 
 	accessor, err := utils.MetaAccessor(folder)
@@ -294,7 +297,7 @@ func (s *Storage) getFolderManagerProperties(ctx context.Context, namespace, fol
 
 func (s *Storage) checkFolderManager(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
 	folderUID := obj.GetFolder()
-	if folderUID == "" || s.store == nil {
+	if folderUID == "" || s.configProvider == nil {
 		return nil
 	}
 
