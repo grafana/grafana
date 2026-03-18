@@ -277,6 +277,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
           // Message events are ServerMessages (ops, locks, etc.)
           if (isLiveChannelMessageEvent(event)) {
             const msg = event.message;
+            debugLog('Raw message received', JSON.parse(JSON.stringify(msg)));
 
             if (msg.kind === 'op' && clientRef.current) {
               debugLog('Op received', { userId: msg.userId, seq: msg.seq });
