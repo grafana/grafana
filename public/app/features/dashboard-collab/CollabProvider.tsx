@@ -30,6 +30,7 @@ import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-a
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { CollabContext, type CollabContextValue, type CollabLock, type CollabUser } from './CollabContext';
+import { debugLog } from './debugLog';
 import {
   classifyChannelError,
   CHANNEL_ERROR_DASHBOARD_DELETED,
@@ -63,11 +64,13 @@ interface SessionInfo {
 export function isCollabEnabled(scene: DashboardScene): boolean {
   // Feature toggle
   if (!config.featureToggles.dashboardCollaboration) {
+    debugLog('isCollabEnabled: disabled — feature toggle dashboardCollaboration is off');
     return false;
   }
 
   // Not provisioned
   if (scene.state.meta?.provisioned) {
+    debugLog('isCollabEnabled: disabled — dashboard is provisioned');
     return false;
   }
 
@@ -80,6 +83,7 @@ export function isCollabEnabled(scene: DashboardScene): boolean {
   // For POC, we enable for all non-provisioned dashboards when the feature flag is on.
   void annotations; // suppress unused — will be checked in production
 
+  debugLog('isCollabEnabled: enabled for dashboard', scene.state.uid);
   return true;
 }
 
@@ -116,11 +120,13 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
 
   // Memoize the mutation client per scene
   useEffect(() => {
+    debugLog('CollabProvider mounted', { dashboardUID, namespace });
     clientRef.current = new DashboardMutationClient(scene);
     return () => {
+      debugLog('CollabProvider unmounting', { dashboardUID });
       clientRef.current = null;
     };
-  }, [scene]);
+  }, [scene, dashboardUID, namespace]);
 
   const enabled = useMemo(() => isCollabEnabled(scene), [scene]);
 
@@ -185,6 +191,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
       }
       const live = getGrafanaLiveSrv();
       if (live) {
+        debugLog('Publishing op', { kind: msg.kind });
         live.publish(opsAddress, msg);
       }
     },
@@ -206,6 +213,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
       (event: any) => {
         const collabOp = extractMutationRequest(event);
         if (collabOp) {
+          debugLog('Op sent', { mutationType: collabOp.mutation.type, lockTarget: collabOp.lockTarget });
           const msg: ClientMessage = {
             kind: 'op',
             op: collabOp,
@@ -238,10 +246,12 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
           // Status events carry initial session state
           if (isLiveChannelStatusEvent(event)) {
             if (event.state === LiveChannelConnectionState.Connected) {
+              debugLog('Channel connected', { dashboardUID });
               setConnected(true);
               // Parse initial session info from subscribe data
               if (event.message) {
                 const info = event.message as SessionInfo;
+                debugLog('Session info received', { users: info.users?.length, locks: Object.keys(info.locks ?? {}).length, seq: info.seq });
                 if (info.users) {
                   setUsers(info.users);
                 }
@@ -255,6 +265,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
               event.state === LiveChannelConnectionState.Disconnected ||
               event.state === LiveChannelConnectionState.Shutdown
             ) {
+              debugLog('Channel disconnected', { state: event.state, dashboardUID });
               setConnected(false);
             }
           }
@@ -264,6 +275,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
             const msg = event.message;
 
             if (msg.kind === 'op' && clientRef.current) {
+              debugLog('Op received', { userId: msg.userId, seq: msg.seq });
               // Track last op time per user for stale lock detection
               lastOpByUserRef.current.set(msg.userId, Date.now());
               applyRemoteOp(msg, clientRef.current, localUserIdRef.current).catch((err) => {
@@ -273,6 +285,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
 
             if (msg.kind === 'lock') {
               const lockOp = msg.op as LockOperation;
+              debugLog('Lock event received', { type: lockOp.type, target: lockOp.target, userId: lockOp.userId });
               if (lockOp.type === 'lock') {
                 lockTimestampsRef.current.set(lockOp.target, Date.now());
                 setLocks((prev) => {
@@ -290,12 +303,14 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
               // Presence events update user list — server sends full user list on presence changes
               const presenceUsers = msg.op as CollabUser[] | null;
               if (Array.isArray(presenceUsers)) {
+                debugLog('Presence update', { userCount: presenceUsers.length, users: presenceUsers.map((u) => u.displayName) });
                 setUsers(presenceUsers);
               }
             }
           }
         },
         error: (err) => {
+          debugLog('Channel error', err);
           setConnected(false);
 
           // Edge case #2: Dashboard deleted while editing
@@ -365,6 +380,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
   // Lock acquisition
   const acquireLock = useCallback(
     (target: string) => {
+      debugLog('Acquiring lock', { target, userId: localUserIdRef.current });
       const msg: ClientMessage = {
         kind: 'lock',
         op: {
@@ -381,6 +397,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
   // Lock release
   const releaseLock = useCallback(
     (target: string) => {
+      debugLog('Releasing lock', { target, userId: localUserIdRef.current });
       const msg: ClientMessage = {
         kind: 'lock',
         op: {

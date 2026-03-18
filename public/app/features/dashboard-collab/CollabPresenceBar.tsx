@@ -8,12 +8,13 @@
  */
 
 import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import type { CollabUser } from './CollabContext';
+import { debugLog } from './debugLog';
 import { useCollab } from './useCollab';
 
 export type SaveStatus = 'saved' | 'saving' | 'edited' | 'failed';
@@ -31,6 +32,12 @@ export function CollabPresenceBar({ saveStatus = 'saved', onRetrySave }: CollabP
 
   const visibleUsers = useMemo(() => users.slice(0, MAX_VISIBLE_AVATARS), [users]);
   const overflowCount = Math.max(0, users.length - MAX_VISIBLE_AVATARS);
+
+  useEffect(() => {
+    if (connected) {
+      debugLog('CollabPresenceBar: presence changed', { userCount: users.length, users: users.map((u) => u.displayName) });
+    }
+  }, [connected, users]);
 
   if (!connected) {
     return null;

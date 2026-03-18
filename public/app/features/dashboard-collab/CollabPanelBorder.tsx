@@ -19,6 +19,7 @@ import { Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import type { CollabLock, CollabUser } from './CollabContext';
+import { debugLog } from './debugLog';
 import { useCollab } from './useCollab';
 
 interface CollabPanelBorderProps {
@@ -46,14 +47,22 @@ export function CollabPanelBorder({ panelId, isEditing, children }: CollabPanelB
   const isLockedByOther = lock !== undefined && lock.userId !== localUserId;
   const isLockedBySelf = lock !== undefined && lock.userId === localUserId;
 
+  useEffect(() => {
+    if (lock) {
+      debugLog('CollabPanelBorder: lock state changed', { panelId, lockedBy: lock.userId, isLockedByOther, isLockedBySelf });
+    }
+  }, [lock, panelId, isLockedByOther, isLockedBySelf]);
+
   // Acquire lock when entering edit mode
   useEffect(() => {
     if (!connected) {
       return;
     }
     if (isEditing) {
+      debugLog('CollabPanelBorder: acquiring lock on edit enter', { panelId });
       acquireLock(panelId);
       return () => {
+        debugLog('CollabPanelBorder: releasing lock on edit exit', { panelId });
         releaseLock(panelId);
       };
     }

@@ -16,6 +16,7 @@ import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-def
 import { isSceneVariableInstance } from 'app/features/dashboard-scene/settings/variables/utils';
 
 import { countPanels, LARGE_DASHBOARD_PANEL_THRESHOLD, LARGE_DASHBOARD_THROTTLE_MS } from './collabEdgeCases';
+import { debugLog } from './debugLog';
 import { getLockTarget } from './lockTargetMapping';
 import { CollabOperation, MutationRequest } from './protocol/messages';
 
@@ -47,7 +48,11 @@ let largeDashboardMode = false;
  * faster than LARGE_DASHBOARD_THROTTLE_MS apart.
  */
 export function setLargeDashboardMode(scene: { state: { body?: { state?: { children?: unknown[] } } } }): void {
-  largeDashboardMode = countPanels(scene) > LARGE_DASHBOARD_PANEL_THRESHOLD;
+  const panelCount = countPanels(scene);
+  largeDashboardMode = panelCount > LARGE_DASHBOARD_PANEL_THRESHOLD;
+  if (largeDashboardMode) {
+    debugLog('Large dashboard throttle activated', { panelCount, threshold: LARGE_DASHBOARD_PANEL_THRESHOLD });
+  }
 }
 
 /**
@@ -56,6 +61,7 @@ export function setLargeDashboardMode(scene: { state: { body?: { state?: { child
  */
 export function extractMutationRequest(event: SceneObjectStateChangedEvent): CollabOperation | null {
   if (suppressed) {
+    debugLog('Extraction skipped — suppression flag is set');
     return null;
   }
 
@@ -63,6 +69,7 @@ export function extractMutationRequest(event: SceneObjectStateChangedEvent): Col
   if (largeDashboardMode) {
     const now = Date.now();
     if (now - lastExtractionTime < LARGE_DASHBOARD_THROTTLE_MS) {
+      debugLog('Extraction skipped — large dashboard throttle');
       return null;
     }
     lastExtractionTime = now;
@@ -70,32 +77,41 @@ export function extractMutationRequest(event: SceneObjectStateChangedEvent): Col
 
   const { changedObject, partialUpdate } = event.payload;
 
+  let result: CollabOperation | null = null;
+
   // VizPanel changes → UPDATE_PANEL
   if (changedObject instanceof VizPanel) {
-    return extractPanelChange(changedObject, partialUpdate);
+    result = extractPanelChange(changedObject, partialUpdate);
   }
 
   // DashboardGridItem position/size → MOVE_PANEL
-  if (changedObject instanceof DashboardGridItem) {
-    return extractGridItemChange(changedObject, partialUpdate);
+  else if (changedObject instanceof DashboardGridItem) {
+    result = extractGridItemChange(changedObject, partialUpdate);
   }
 
   // DashboardScene persisted props → UPDATE_DASHBOARD_INFO
-  if (changedObject instanceof DashboardScene) {
-    return extractDashboardChange(partialUpdate);
+  else if (changedObject instanceof DashboardScene) {
+    result = extractDashboardChange(partialUpdate);
   }
 
   // SceneVariableSet changes → UPDATE_VARIABLE
-  if (changedObject instanceof SceneVariableSet) {
-    return extractVariableSetChange(partialUpdate);
+  else if (changedObject instanceof SceneVariableSet) {
+    result = extractVariableSetChange(partialUpdate);
   }
 
   // Individual variable instance changes → UPDATE_VARIABLE
-  if (isSceneVariableInstance(changedObject)) {
-    return extractVariableChange(changedObject);
+  else if (isSceneVariableInstance(changedObject)) {
+    result = extractVariableChange(changedObject);
   }
 
-  return null;
+  if (result) {
+    debugLog('MutationRequest produced', { type: result.mutation.type, lockTarget: result.lockTarget });
+  } else {
+    const objectType = changedObject?.constructor?.name ?? 'unknown';
+    debugLog('Scene change detected but no mutation produced', { objectType, changedKeys: Object.keys(partialUpdate) });
+  }
+
+  return result;
 }
 
 function extractPanelChange(

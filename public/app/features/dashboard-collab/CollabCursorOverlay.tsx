@@ -16,6 +16,7 @@ import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { throttle, toViewportPercent, CURSOR_THROTTLE_MS, LABEL_FADE_MS, STALE_CURSOR_MS } from './cursor-utils';
+import { debugLog } from './debugLog';
 import type { CursorUpdate } from './protocol/messages';
 import { useCollab } from './useCollab';
 
@@ -39,6 +40,7 @@ export function CollabCursorOverlay() {
       const now = Date.now();
 
       cursors.forEach((cursor, userId) => {
+        debugLog('Cursor update received', { userId, x: cursor.x, y: cursor.y });
         next.set(userId, {
           cursor,
           lastSeen: now,
@@ -107,8 +109,12 @@ export function CollabCursorOverlay() {
     if (!connected) {
       return;
     }
+    debugLog('CollabCursorOverlay mounted — tracking active');
     document.addEventListener('mousemove', handleMouseMove);
-    return () => document.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      debugLog('CollabCursorOverlay unmounting — tracking stopped');
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
   }, [connected, handleMouseMove]);
 
   if (!connected) {

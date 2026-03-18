@@ -7,6 +7,8 @@
  * 4. Channel error classification: detect deleted dashboard, permission revoked
  */
 
+import { debugLog } from './debugLog';
+
 /** Stale lock threshold: 5 minutes in milliseconds. */
 export const STALE_LOCK_THRESHOLD_MS = 5 * 60 * 1000;
 
@@ -31,7 +33,11 @@ export function onVisibilityChange(callback: (hidden: boolean) => void): () => v
   if (typeof document === 'undefined') {
     return () => {};
   }
-  const handler = () => callback(document.visibilityState === 'hidden');
+  const handler = () => {
+    const hidden = document.visibilityState === 'hidden';
+    debugLog('Tab visibility changed', { hidden });
+    callback(hidden);
+  };
   document.addEventListener('visibilitychange', handler);
   return () => document.removeEventListener('visibilitychange', handler);
 }
@@ -42,7 +48,11 @@ export function onVisibilityChange(callback: (hidden: boolean) => void): () => v
  */
 export function isLockStale(lockAcquiredAt: number, lastOpByHolder: number | undefined, now: number): boolean {
   const referenceTime = lastOpByHolder ?? lockAcquiredAt;
-  return now - referenceTime > STALE_LOCK_THRESHOLD_MS;
+  const stale = now - referenceTime > STALE_LOCK_THRESHOLD_MS;
+  if (stale) {
+    debugLog('Stale lock detected', { lockAcquiredAt, lastOpByHolder, ageMs: now - referenceTime });
+  }
+  return stale;
 }
 
 /** Error codes that indicate specific channel failures. */
@@ -55,6 +65,7 @@ export const CHANNEL_ERROR_PERMISSION_DENIED = 'permission_denied';
  */
 export function classifyChannelError(error: unknown): string | null {
   if (!error || typeof error !== 'object') {
+    debugLog('Channel error classification: not an object', { error });
     return null;
   }
 
@@ -62,6 +73,7 @@ export function classifyChannelError(error: unknown): string | null {
 
   // 404 or "not found" → dashboard was deleted
   if (err.status === 404 || err.message?.toLowerCase().includes('not found')) {
+    debugLog('Channel error classified as dashboard_deleted', { status: err.status, message: err.message });
     return CHANNEL_ERROR_DASHBOARD_DELETED;
   }
 
@@ -72,9 +84,11 @@ export function classifyChannelError(error: unknown): string | null {
     err.message?.toLowerCase().includes('forbidden') ||
     err.message?.toLowerCase().includes('unauthorized')
   ) {
+    debugLog('Channel error classified as permission_denied', { status: err.status, message: err.message });
     return CHANNEL_ERROR_PERMISSION_DENIED;
   }
 
+  debugLog('Channel error unclassified', { status: err.status, message: err.message });
   return null;
 }
 
@@ -88,7 +102,9 @@ export function countPanels(scene: { state: { body?: { state?: { children?: unkn
     if (!body || !body.state || !Array.isArray(body.state.children)) {
       return 0;
     }
-    return body.state.children.length;
+    const count = body.state.children.length;
+    debugLog('Large dashboard detection: panel count', { count, threshold: LARGE_DASHBOARD_PANEL_THRESHOLD, isLarge: count > LARGE_DASHBOARD_PANEL_THRESHOLD });
+    return count;
   } catch {
     return 0;
   }

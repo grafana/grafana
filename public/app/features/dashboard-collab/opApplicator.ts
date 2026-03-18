@@ -12,6 +12,7 @@
 
 import type { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 
+import { debugLog } from './debugLog';
 import { suppressExtraction, unsuppressExtraction } from './opExtractor';
 import type { CollabOperation, ServerMessage } from './protocol/messages';
 
@@ -38,32 +39,40 @@ export async function applyRemoteOp(
 
   // Skip our own ops — they were already applied locally when the user made the edit
   if (msg.userId === localUserId) {
+    debugLog('Skipping own op', { userId: msg.userId, seq: msg.seq });
     return { applied: false };
   }
 
   const collabOp = msg.op as CollabOperation | null;
   if (!collabOp?.mutation) {
+    debugLog('Op missing mutation field', { userId: msg.userId, seq: msg.seq });
     return { applied: false, error: 'ServerMessage op payload missing mutation field' };
   }
 
   const { type, payload } = collabOp.mutation;
+  debugLog('Remote op received', { type, seq: msg.seq, userId: msg.userId });
 
   // Forward compatibility: unknown types are logged but not treated as errors
   const available = client.getAvailableCommands();
   if (!available.includes(type.toUpperCase())) {
+    debugLog('Ignoring unknown mutation type', { type });
     console.warn(`[collab] Ignoring unknown mutation type from remote: "${type}"`);
     return { applied: false };
   }
 
   // Suppress extraction so the opExtractor doesn't re-broadcast this as a local edit
+  debugLog('Suppression flag toggled on');
   suppressExtraction();
   try {
     const result = await client.execute({ type, payload });
     if (!result.success) {
+      debugLog('Op application failed', { type, error: result.error });
       return { applied: false, error: result.error };
     }
+    debugLog('Op applied successfully', { type, seq: msg.seq });
     return { applied: true };
   } finally {
+    debugLog('Suppression flag toggled off');
     unsuppressExtraction();
   }
 }
