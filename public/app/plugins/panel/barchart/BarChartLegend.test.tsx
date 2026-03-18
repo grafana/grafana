@@ -24,7 +24,7 @@ import { applyBarChartFieldDefaults } from './test-helpers';
  * Structure: fields[0] = x field, fields[1..] = value fields.
  */
 function createBarChartLegendFrame(overrides?: {
-  xFieldConfig?: { color?: { mode?: string } };
+  xFieldConfig?: FieldConfig;
   valueFields?: Array<{
     name: string;
     hideFromLegend?: boolean;
@@ -37,7 +37,7 @@ function createBarChartLegendFrame(overrides?: {
 }): DataFrame {
   const valueFields = overrides?.valueFields ?? [{ name: 'value', hideFromLegend: false }];
 
-  const xFieldConfig = (overrides?.xFieldConfig ?? {}) as FieldConfig;
+  const xFieldConfig: FieldConfig = overrides?.xFieldConfig ?? {};
 
   const fields: Array<Partial<Field>> = [
     {
@@ -71,12 +71,12 @@ function createBarChartLegendFrame(overrides?: {
 
   const frame = createDataFrame({ fields });
 
-  frame.fields.forEach((field, i) => {
+  for (let i = 0; i < frame.fields.length; i++) {
     const f = fields[i];
     if (f?.state) {
-      field.state = { ...field.state, ...f.state };
+      frame.fields[i].state = { ...frame.fields[i].state, ...f.state };
     }
-  });
+  }
   applyBarChartFieldDefaults(frame);
 
   return frame;

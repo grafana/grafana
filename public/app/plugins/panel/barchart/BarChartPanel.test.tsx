@@ -32,16 +32,18 @@ let canExecuteActionsForTest = false;
 let onAddAdHocFilterMock: jest.Mock;
 
 jest.mock('uplot', () => {
-  const mock = jest.fn().mockImplementation(() => ({
-    setData: jest.fn(),
-    setSize: jest.fn(),
-    destroy: jest.fn(),
-  }));
-  (mock as jest.Mock & { paths: { bars: jest.Mock }; rangeLog: jest.Mock }).paths = {
-    bars: jest.fn(() => () => ''),
-  };
-  (mock as jest.Mock & { paths: { bars: jest.Mock }; rangeLog: jest.Mock }).rangeLog = jest.fn(
-    (min: number, max: number) => [min, max]
+  const mock = Object.assign(
+    jest.fn().mockImplementation(() => ({
+      setData: jest.fn(),
+      setSize: jest.fn(),
+      destroy: jest.fn(),
+    })),
+    {
+      paths: {
+        bars: jest.fn(() => () => ''),
+      },
+      rangeLog: jest.fn((min: number, max: number) => [min, max]),
+    }
   );
   return mock;
 });
@@ -109,6 +111,21 @@ const defaultPanelOptions: Options = {
   text: {
     valueSize: 80,
   },
+};
+
+const baseLegend = defaultPanelOptions.legend ?? {
+  showLegend: true,
+  displayMode: LegendDisplayMode.List,
+  placement: 'bottom',
+  calcs: [],
+};
+
+const baseTooltip = defaultPanelOptions.tooltip ?? {
+  mode: TooltipDisplayMode.Single,
+  sort: SortOrder.None,
+  maxWidth: 300,
+  maxHeight: 300,
+  hideZeros: false,
 };
 
 describe('BarChartPanel', () => {
@@ -211,7 +228,7 @@ describe('BarChartPanel', () => {
   describe('Tooltip', () => {
     it('renders TooltipPlugin2 when tooltip mode is not None', () => {
       renderBarChartPanel(undefined, {
-        legend: { ...defaultPanelOptions.legend!, showLegend: false },
+        legend: { ...baseLegend, showLegend: false },
         tooltip: {
           mode: TooltipDisplayMode.Single,
           sort: SortOrder.None,
@@ -226,7 +243,7 @@ describe('BarChartPanel', () => {
 
     it('does not render TooltipPlugin2 when tooltip mode is None', () => {
       renderBarChartPanel(undefined, {
-        legend: { ...defaultPanelOptions.legend!, showLegend: false },
+        legend: { ...baseLegend, showLegend: false },
         tooltip: {
           mode: TooltipDisplayMode.None,
           sort: SortOrder.None,
@@ -241,7 +258,7 @@ describe('BarChartPanel', () => {
 
     it('renders TimeSeriesTooltip content with x label and value', () => {
       renderBarChartPanel(undefined, {
-        legend: { ...defaultPanelOptions.legend!, showLegend: false },
+        legend: { ...baseLegend, showLegend: false },
       });
 
       expect(screen.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper)).toBeVisible();
@@ -281,10 +298,7 @@ describe('BarChartPanel', () => {
         title: linkTitle,
       });
 
-      renderBarChartPanel(
-        { series: [frameWithLinks] },
-        { legend: { ...defaultPanelOptions.legend!, showLegend: false } }
-      );
+      renderBarChartPanel({ series: [frameWithLinks] }, { legend: { ...baseLegend, showLegend: false } });
 
       expect(screen.getByText(linkTitle)).toBeVisible();
       expect(screen.getByRole('link', { name: linkTitle })).toHaveAttribute('href', linkUrl);
@@ -295,10 +309,7 @@ describe('BarChartPanel', () => {
     it('shows ad-hoc filter UI when xField is filterable and onAddAdHocFilter is provided', () => {
       const frameWithFilterableX = createBarChartPanelFrameWithFilterableX();
 
-      renderBarChartPanel(
-        { series: [frameWithFilterableX] },
-        { legend: { ...defaultPanelOptions.legend!, showLegend: false } }
-      );
+      renderBarChartPanel({ series: [frameWithFilterableX] }, { legend: { ...baseLegend, showLegend: false } });
 
       expect(screen.getByText(/Filter for/i)).toBeVisible();
     });
@@ -316,43 +327,11 @@ describe('BarChartPanel', () => {
       canExecuteActionsForTest = true;
       renderBarChartPanel(
         { series: [frameWithActions] },
-        { legend: { ...defaultPanelOptions.legend!, showLegend: false } },
+        { legend: { ...baseLegend, showLegend: false } },
         { replaceVariables: (v) => v }
       );
 
       expect(screen.getByRole('button', { name: actionTitle })).toBeVisible();
-    });
-  });
-
-  describe('Options', () => {
-    it('displays legend when legend.showLegend is true', () => {
-      renderBarChartPanel(undefined, { legend: { ...defaultPanelOptions.legend, showLegend: true } });
-
-      expect(screen.getByTestId(selectors.components.VizLayout.legend)).toBeVisible();
-    });
-
-    it('hides legend when legend.showLegend is false', () => {
-      renderBarChartPanel(undefined, { legend: { ...defaultPanelOptions.legend, showLegend: false } });
-
-      expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
-    });
-
-    it('renders TooltipPlugin2 when tooltip mode is not None', () => {
-      renderBarChartPanel(undefined, {
-        legend: { ...defaultPanelOptions.legend, showLegend: false },
-        tooltip: { ...defaultPanelOptions.tooltip!, mode: TooltipDisplayMode.Single },
-      });
-
-      expect(screen.getByTestId('barchart-tooltip-plugin')).toBeVisible();
-    });
-
-    it('does not render TooltipPlugin2 when tooltip mode is None', () => {
-      renderBarChartPanel(undefined, {
-        legend: { ...defaultPanelOptions.legend, showLegend: false },
-        tooltip: { ...defaultPanelOptions.tooltip!, mode: TooltipDisplayMode.None },
-      });
-
-      expect(screen.queryByTestId('barchart-tooltip-plugin')).not.toBeInTheDocument();
     });
   });
 });
@@ -364,7 +343,7 @@ describe('BarChartPanel', () => {
  * @param overrides - Optional overrides for x values and value array
  * @returns DataFrame ready for BarChartPanel data.series
  */
-export function createBarChartPanelFrame(overrides?: { xValues?: string[]; values?: number[] }): DataFrame {
+function createBarChartPanelFrame(overrides?: { xValues?: string[]; values?: number[] }): DataFrame {
   const xValues = overrides?.xValues ?? ['a', 'b', 'c'];
   const values = overrides?.values ?? [10, 20, 30];
 

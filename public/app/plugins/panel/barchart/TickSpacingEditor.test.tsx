@@ -31,7 +31,7 @@ describe('TickSpacingEditor', () => {
 
     it('renders with None selected when value is undefined', () => {
       const onChange = jest.fn();
-      //@ts-expect-error asserting behavior with invalid runtime value
+      // @ts-expect-error asserting behavior with invalid runtime value
       renderTickSpacingEditor(undefined, onChange);
 
       const noneButton = screen.getByLabelText(/none/i);

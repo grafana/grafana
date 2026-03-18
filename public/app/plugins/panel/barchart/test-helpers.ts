@@ -10,8 +10,8 @@ import { createTheme, DataFrame, getDisplayProcessor, GrafanaTheme2 } from '@gra
  */
 export function applyBarChartFieldDefaults(frame: DataFrame, themeOverride?: GrafanaTheme2): void {
   const t = themeOverride ?? createTheme();
-  frame.fields.forEach((f) => {
+  for (const f of frame.fields) {
     f.config.custom = f.config.custom ?? {};
     f.display = getDisplayProcessor({ field: f, theme: t });
-  });
+  }
 }

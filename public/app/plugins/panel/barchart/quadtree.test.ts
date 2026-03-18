@@ -167,8 +167,10 @@ describe('Quadtree', () => {
     it('creates 4 children in order: top-right, top-left, bottom-left, bottom-right', () => {
       const qt = new Quadtree(0, 0, 100, 100);
       qt.split();
-      expect(qt.q).not.toBeNull();
-      const q = qt.q!;
+      if (!qt.q) {
+        throw new Error('Expected qt.q after split');
+      }
+      const q = qt.q;
       expect(q).toHaveLength(4);
       expect(q[0]).toMatchObject({ x: 50, y: 0, w: 50, h: 50 });
       expect(q[1]).toMatchObject({ x: 0, y: 0, w: 50, h: 50 });
@@ -179,7 +181,10 @@ describe('Quadtree', () => {
     it('child dimensions are half of parent', () => {
       const qt = new Quadtree(10, 20, 80, 60);
       qt.split();
-      const q = qt.q!;
+      if (!qt.q) {
+        throw new Error('Expected qt.q after split');
+      }
+      const q = qt.q;
       expect(q[0].w).toBe(40);
       expect(q[0].h).toBe(30);
     });
@@ -187,7 +192,10 @@ describe('Quadtree', () => {
     it('child level is l + 1', () => {
       const qt = new Quadtree(0, 0, 100, 100, 1);
       qt.split();
-      const q = qt.q!;
+      if (!qt.q) {
+        throw new Error('Expected qt.q after split');
+      }
+      const q = qt.q;
       expect(q[0].l).toBe(2);
     });
   });
@@ -243,7 +251,10 @@ describe('Quadtree', () => {
       qt.split();
       const r = rect(10, 10, 5, 5);
       qt.add(r);
-      const q = qt.q!;
+      if (!qt.q) {
+        throw new Error('Expected qt.q after split');
+      }
+      const q = qt.q;
       const topLeft = q[1];
       expect(topLeft.o).toContain(r);
     });

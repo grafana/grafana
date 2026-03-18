@@ -16,9 +16,14 @@ interface MockUPlot {
   pxRatio: number;
 }
 
-/** Casts MockUPlot to uPlot for config hook calls. Confines type assertion to one place. */
+/**
+ * Casts MockUPlot to uPlot for config hook calls.
+ * Mock does not implement full uPlot interface; cast is required for getConfig hooks.
+ * Confines type assertion to one place.
+ */
 function asUPlot(u: MockUPlot): uPlot {
-  return u as unknown as uPlot;
+  // @ts-expect-error MockUPlot is an incomplete mock that satisfies test needs but not the full uPlot interface
+  return u;
 }
 
 const defaultTextMetrics = {
@@ -34,47 +39,48 @@ jest.mock('@grafana/ui', () => ({
 
 jest.mock('uplot', () => {
   const pxRatio = 1;
-  const mock = jest.fn();
-  (mock as jest.Mock & { pxRatio: number }).pxRatio = pxRatio;
-  (mock as jest.Mock & { paths: { bars: jest.Mock }; pxRatio: number }).paths = {
-    bars: jest.fn(
-      (config: {
-        each?: (
-          u: unknown,
-          seriesIdx: number,
-          dataIdx: number,
-          lft: number,
-          top: number,
-          wid: number,
-          hgt: number
-        ) => void;
-      }) => {
-        return (
-          u: { data: unknown[][]; bbox: { left: number; top: number; width: number; height: number } },
-          seriesIdx: number
-        ) => {
-          const each = config?.each;
-          if (each && u.data && u.data[0]) {
-            const xLen = u.data[0].length;
-            const bbox = u.bbox ?? { left: 0, top: 0, width: 100, height: 100 };
-            for (let dataIdx = 0; dataIdx < xLen; dataIdx++) {
-              const seriesData = u.data[seriesIdx];
-              if (seriesData && seriesData[dataIdx] != null) {
-                const val = seriesData[dataIdx];
-                const numVal = typeof val === 'number' ? val : 0;
-                const lft = bbox.left + 10 + dataIdx * 30;
-                const top = numVal >= 0 ? bbox.top + 60 : bbox.top + 40;
-                const wid = 25;
-                const hgt = Math.abs(numVal) * 2;
-                each(u, seriesIdx, dataIdx, lft, top, wid, hgt);
+  const mock = Object.assign(jest.fn(), {
+    pxRatio,
+    paths: {
+      bars: jest.fn(
+        (config: {
+          each?: (
+            u: unknown,
+            seriesIdx: number,
+            dataIdx: number,
+            lft: number,
+            top: number,
+            wid: number,
+            hgt: number
+          ) => void;
+        }) => {
+          return (
+            u: { data: unknown[][]; bbox: { left: number; top: number; width: number; height: number } },
+            seriesIdx: number
+          ) => {
+            const each = config?.each;
+            if (each && u.data && u.data[0]) {
+              const xLen = u.data[0].length;
+              const bbox = u.bbox ?? { left: 0, top: 0, width: 100, height: 100 };
+              for (let dataIdx = 0; dataIdx < xLen; dataIdx++) {
+                const seriesData = u.data[seriesIdx];
+                if (seriesData && seriesData[dataIdx] != null) {
+                  const val = seriesData[dataIdx];
+                  const numVal = typeof val === 'number' ? val : 0;
+                  const lft = bbox.left + 10 + dataIdx * 30;
+                  const top = numVal >= 0 ? bbox.top + 60 : bbox.top + 40;
+                  const wid = 25;
+                  const hgt = Math.abs(numVal) * 2;
+                  each(u, seriesIdx, dataIdx, lft, top, wid, hgt);
+                }
               }
             }
-          }
-          return '';
-        };
-      }
-    ),
-  };
+            return '';
+          };
+        }
+      ),
+    },
+  });
   return mock;
 });
 

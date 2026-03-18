@@ -83,13 +83,14 @@ describe('BarChart utils', () => {
       ).builder.getConfig();
 
       const xAxis = result.axes?.find((a) => a.scale === 'x');
-      if (!xAxis || typeof xAxis.values !== 'function') {
+      const xAxisValues = xAxis?.values;
+      if (!xAxis || !isAxisValuesCallback(xAxisValues)) {
         throw new Error('Expected x axis with values function');
       }
 
       const splits = ['verylonglabel1', 'verylonglabel2', 'verylonglabel3'];
       // Invoke uPlot Axis.Values to verify formatShortValue shortens labels
-      const labels = (xAxis.values as (u: unknown, s: unknown[], axisIdx: number) => string[])(null, splits, 0);
+      const labels = xAxisValues(null, splits, 0);
 
       expect(labels).toEqual(['veryl...', 'veryl...', 'veryl...']);
     });
@@ -773,15 +774,15 @@ function createFrameWithMultipleStringFields(overrides?: {
   const fields = [
     ...stringFields.map((f) => ({
       name: f.name,
-      type: FieldType.string as const,
+      type: FieldType.string,
       values: f.values,
-      config: { custom: {} as object },
+      config: { custom: {} },
     })),
     {
       name: valueField.name,
-      type: FieldType.number as const,
+      type: FieldType.number,
       values: valueField.values,
-      config: { custom: {} as object },
+      config: { custom: {} },
     },
   ];
   const frame = createDataFrame({ fields });
@@ -812,14 +813,14 @@ function createEmptyFrame(): DataFrame {
  * @returns DataFrame with the given fields (no bar chart defaults applied)
  */
 function createMutableFrame(
-  fields: Array<{ name: string; type?: FieldType; values: unknown[]; config?: object }>
+  fields: Array<{ name: string; type?: FieldType; values: unknown[]; config?: Record<string, unknown> }>
 ): DataFrame {
   return createDataFrame({
     fields: fields.map((f) => ({
       name: f.name,
       type: f.type,
       values: f.values,
-      config: { ...(f.config || {}), custom: (f.config as Record<string, unknown>)?.custom ?? {} },
+      config: { ...(f.config || {}), custom: f.config?.custom ?? {} },
     })),
   });
 }
@@ -932,6 +933,14 @@ function getConfigFromAxisFrame(
       ...prepConfigOverrides,
     })
   ).builder.getConfig();
+}
+
+/**
+ * Type guard: narrows unknown to a callable axis values function.
+ * Used to safely invoke uPlot Axis.Values without type assertions.
+ */
+function isAxisValuesCallback(v: unknown): v is (u: unknown, splits: string[], axisIdx: number) => string[] {
+  return typeof v === 'function';
 }
 
 /**
