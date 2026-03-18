@@ -201,6 +201,9 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     selectors,
     page,
   }) => {
+    // This test performs many UI interactions on a nested table (which renders slower than a flat one).
+    // The default timeout is not enough for CI.
+    test.slow();
     const panelEditPage = await gotoPanelEditPage({
       dashboard: {
         uid: NESTED_COMPLEX_DASHBOARD_UID,
@@ -254,6 +257,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     // click cell inspect, check that cell inspection pops open in the side as we'd expect.
     const loremIpsumText = await loremIpsumCell.textContent();
     expect(loremIpsumText).toBeDefined();
+    await loremIpsumCell.hover(); // ensure the cell actions are visible before clicking
     await loremIpsumCell.getByLabel('Inspect value').click();
     await expect(page.getByRole('dialog').getByText(loremIpsumText!)).toBeVisible();
   });

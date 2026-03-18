@@ -57,6 +57,7 @@ When you assign a user a basic organization role (Viewer, Editor, or Admin), the
 | **Cloud Provider**               | Read access                             | Read access                                                 | Provider-specific write access                |
 | **Cost Attributions**            | Read attributions                       | Read attributions                                           | Read attributions                             |
 | **Cost Management and Billing**  | —                                       | —                                                           | Full access                                   |
+| **Database Observability**       | Read access                             | Read access                                                 | Admin access                                  |
 | **Fleet Management (Collector)** | Read access                             | Read access                                                 | Full access                                   |
 | **Frontend Observability**       | Read apps, source maps                  | + Write apps, source maps                                   | + Delete apps                                 |
 | **Grafana Auth**                 | —                                       | —                                                           | Write access policies                         |
@@ -154,6 +155,14 @@ Plugin ID: `grafana-cmab-app`
 | `plugins:grafana-cmab-app:cost-attribution-reader`  | Read-only access to cost attributions            |
 | `plugins:grafana-cmab-app:usage-alerts-admin`       | Full access to usage alerts                      |
 | `plugins:grafana-cmab-app:usage-alerts-reader`      | Read-only access to usage alerts                 |
+
+## Database Observability plugin
+
+Plugin ID: `grafana-dbo11y-app`
+
+| Plugin role                        | Description                                                      |
+| ---------------------------------- | ---------------------------------------------------------------- |
+| `plugins:grafana-dbo11y-app:admin` | Read/write access to everything in Database Observability plugin |
 
 ## Easystart / Integrations plugin
 

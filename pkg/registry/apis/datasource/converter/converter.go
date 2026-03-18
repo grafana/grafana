@@ -1,4 +1,4 @@
-package datasource
+package converter
 
 import (
 	"crypto/sha256"

@@ -3477,7 +3477,7 @@ func TestGitRepository_CompareFiles_EmptyBase(t *testing.T) {
 
 	// Verify CompareCommits was called with empty base hash and feature hash
 	require.Equal(t, 1, mockClient.CompareCommitsCallCount())
-	_, baseHash, refHash := mockClient.CompareCommitsArgsForCall(0)
+	_, baseHash, refHash, _ := mockClient.CompareCommitsArgsForCall(0)
 	require.Equal(t, hash.Zero, baseHash) // Empty base should be zero hash
 	require.Equal(t, hash.MustFromHex("0102030405060708090a0b0c0d0e0f1011121314"), refHash)
 }
@@ -3908,6 +3908,7 @@ func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *te
 		{"FileStatusModified outside path", protocol.FileStatusModified},
 		{"FileStatusDeleted outside path", protocol.FileStatusDeleted},
 		{"FileStatusTypeChanged outside path", protocol.FileStatusTypeChanged},
+		// FileStatusRenamed not tested - will be implemented in follow-up PR
 	}
 
 	for _, tt := range tests {
@@ -3955,6 +3956,7 @@ func TestGitRepository_CompareFiles_FilesOutsideConfiguredPath_AllStatuses(t *te
 			require.Equal(t, "feature", changes[0].Ref)
 
 			// Verify the action based on status
+			//nolint:exhaustive // FileStatusRenamed not tested - will be added when rename handling is implemented
 			switch tt.status {
 			case protocol.FileStatusAdded:
 				require.Equal(t, repository.FileActionCreated, changes[0].Action)
