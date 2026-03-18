@@ -1792,7 +1792,7 @@ export type GitRepositoryConfig = {
   path?: string;
   /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
   tokenUser?: string;
-  /** The repository URL (e.g. `https://github.com/example/test.git`). */
+  /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
 };
 export type GitHubRepositoryConfig = {
@@ -1832,6 +1832,10 @@ export type SyncOptions = {
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'instance';
 };
+export type WebhookConfig = {
+  /** Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL. */
+  baseUrl?: string;
+};
 export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
   bitbucket?: BitbucketRepositoryConfig;
@@ -1860,6 +1864,8 @@ export type RepositorySpec = {
      - `"gitlab"`
      - `"local"` */
   type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  /** Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider. */
+  webhook?: WebhookConfig;
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };

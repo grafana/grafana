@@ -4688,7 +4688,7 @@
             "type": "string"
           },
           "url": {
-            "description": "The repository URL (e.g. `https://github.com/example/test.git`).",
+            "description": "The repository URL (e.g. `https://github.com/example/test`).",
             "type": "string"
           }
         }
@@ -5541,6 +5541,14 @@
               "local"
             ]
           },
+          "webhook": {
+            "description": "Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.WebhookConfig"
+              }
+            ]
+          },
           "workflows": {
             "description": "UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly)",
             "type": "array",
@@ -6384,6 +6392,15 @@
           "lastUpdated": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.WebhookConfig": {
+        "type": "object",
+        "properties": {
+          "baseUrl": {
+            "description": "Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL.",
+            "type": "string"
           }
         }
       },

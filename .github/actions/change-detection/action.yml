@@ -24,7 +24,7 @@ outputs:
     description: Whether the e2e tests or self have changed in any way
     value: ${{ steps.changed-files.outputs.e2e_any_changed == 'true' ||
       steps.changed-files.outputs.backend_any_changed == 'true' ||
-      steps.changed-files.outputs.frontend_any_changed == 'true' || 'true' }}
+      steps.changed-files.outputs.frontend_any_changed == 'true' }}
   e2e-cloud-plugins:
     description: Whether the cloud plugins code or tests have changed in any way
     value: ${{ steps.changed-files.outputs.e2e_cloud_plugins_any_changed || 'true' }}
@@ -62,6 +62,8 @@ runs:
             - '!docs/**'
             - '!.github/**'
             - '.github/actions/setup-enterprise/**'
+            - '.github/actions/setup-go/**'
+            - '.github/actions/report-go-cache-sizes/**'
             - '.github/actions/checkout/**'
             - '**/go.mod'
             - '**/go.sum'

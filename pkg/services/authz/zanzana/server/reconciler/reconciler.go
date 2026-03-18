@@ -28,6 +28,7 @@ type Reconciler struct {
 	logger        log.Logger
 	tracer        tracing.Tracer
 	metrics       *reconcilerMetrics
+	leaderElector LeaderElector
 
 	workQueue chan string
 
@@ -38,10 +39,11 @@ type Reconciler struct {
 
 // Config holds the reconciler configuration.
 type Config struct {
-	Workers        int
-	Interval       time.Duration
-	WriteBatchSize int // Number of tuples to write in a single batch (0 = no batching)
-	QueueSize      int // Size of the buffered work queue for namespaces (default 1000)
+	Workers             int
+	Interval            time.Duration
+	WriteBatchSize      int // Number of tuples to write in a single batch (0 = no batching)
+	QueueSize           int // Size of the buffered work queue for namespaces (default 1000)
+	ZanzanaReadPageSize int // Page size when reading tuples from Zanzana (default 1000)
 }
 
 func (c Config) queueSize() int {
@@ -49,6 +51,13 @@ func (c Config) queueSize() int {
 		return 1000
 	}
 	return c.QueueSize
+}
+
+func (c Config) zanzanaReadPageSize() int32 {
+	if c.ZanzanaReadPageSize <= 0 {
+		return 1000
+	}
+	return int32(c.ZanzanaReadPageSize)
 }
 
 // GVRs that need to be reconciled from Unistore to Zanzana (namespaced).
@@ -69,6 +78,7 @@ func NewReconciler(
 	logger log.Logger,
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
+	leaderElector LeaderElector,
 ) *Reconciler {
 	return &Reconciler{
 		server:        srv,
@@ -77,6 +87,7 @@ func NewReconciler(
 		logger:        logger,
 		tracer:        tracer,
 		metrics:       newReconcilerMetrics(reg),
+		leaderElector: leaderElector,
 		workQueue:     make(chan string, cfg.queueSize()),
 	}
 }
@@ -93,8 +104,15 @@ func (r *Reconciler) getGlobalRolePerms() map[string][]*authzextv1.RolePermissio
 	return r.globalRolePerms
 }
 
-// Run starts the reconciler's main loop and worker goroutines.
+// Run starts leader election and delegates to runLoop when leadership is acquired.
 func (r *Reconciler) Run(ctx context.Context) error {
+	r.logger.Info("Starting MT reconciler")
+	return r.leaderElector.Run(ctx, r.runLoop)
+}
+
+// runLoop contains the main reconciliation loop, started when this instance
+// acquires leadership (or immediately for NoopLeaderElector).
+func (r *Reconciler) runLoop(ctx context.Context) {
 	r.logger.Info("Starting Unistore to Zanzana reconciler",
 		"workers", r.cfg.Workers,
 		"interval", r.cfg.Interval,
@@ -121,9 +139,8 @@ func (r *Reconciler) Run(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			r.logger.Info("Reconciler shutting down")
-			close(r.workQueue) // Signal workers to stop
-			wg.Wait()          // Wait for all workers to finish
-			return ctx.Err()
+			wg.Wait() // Workers exit via ctx.Done(); do not close the shared channel (it may be reused on re-election)
+			return
 		case <-ticker.C:
 			r.queueAllNamespaces(ctx)
 		}
@@ -187,12 +204,19 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 			status := "success"
 			if err != nil {
 				status = "error"
-				r.logger.Error("Failed to reconcile namespace",
-					"namespace", namespace,
-					"workerID", workerID,
-					"error", err,
-					"duration", elapsed,
-				)
+				if ctx.Err() != nil {
+					r.logger.Warn("Reconciler shutdown during namespace reconciliation",
+						"namespace", namespace,
+						"workerID", workerID,
+					)
+				} else {
+					r.logger.Error("Failed to reconcile namespace",
+						"namespace", namespace,
+						"workerID", workerID,
+						"error", err,
+						"duration", elapsed,
+					)
+				}
 			} else {
 				r.logger.Info("Successfully reconciled namespace",
 					"namespace", namespace,
@@ -206,35 +230,28 @@ func (r *Reconciler) runWorker(ctx context.Context, workerID int) {
 }
 
 // reconcileNamespace performs reconciliation for a single namespace.
-// This is implemented in namespace.go.
+// It builds the expected tuple map from CRDs, then streams current tuples from Zanzana
+// page-by-page to compute the diff
 func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) error {
 	ctx, span := r.tracer.Start(ctx, "reconciler.reconcileNamespace")
 	defer span.End()
 
-	// 1. First, read all current tuples from Zanzana
-	currentTuples, err := r.readAllTuplesFromZanzana(ctx, namespace)
-	if err != nil {
-		return fmt.Errorf("failed to read current tuples: %w", err)
-	}
-
-	r.logger.Debug("Read current tuples from Zanzana",
-		"namespace", namespace,
-		"currentTuples", len(currentTuples),
-	)
-
-	// 2. Then, fetch CRDs from Unistore and translate to tuples
-	expectedTuples, err := r.fetchAndTranslateTuples(ctx, namespace)
+	// 1. Build expected tuple map from CRDs
+	expectedMap, err := r.fetchAndTranslateTuples(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("failed to fetch and translate CRDs: %w", err)
 	}
 
 	r.logger.Debug("Fetched and translated CRDs to tuples",
 		"namespace", namespace,
-		"expectedTuples", len(expectedTuples),
+		"expectedTuples", len(expectedMap),
 	)
 
-	// 3. Compute diff
-	toAdd, toDelete := ComputeDiff(expectedTuples, currentTuples)
+	// 2. Stream current tuples from Zanzana and compute diff
+	toAdd, toDelete, err := r.computeDiffStreaming(ctx, namespace, expectedMap)
+	if err != nil {
+		return fmt.Errorf("failed to compute diff: %w", err)
+	}
 
 	r.logger.Info("Computed reconciliation diff",
 		"namespace", namespace,
@@ -242,7 +259,7 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) e
 		"toDelete", len(toDelete),
 	)
 
-	// 4. Apply changes if needed
+	// 3. Apply changes if needed
 	if len(toAdd) == 0 && len(toDelete) == 0 {
 		r.logger.Info("Namespace is in sync, no changes needed", "namespace", namespace)
 		return nil
@@ -261,6 +278,11 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) e
 	return nil
 }
 
+// EnsureNamespace is not gated by leader election: it is called inline from
+// the authorization request path and must complete before the caller can
+// proceed. It only creates stores for new namespaces. Any overlap with the
+// leader's background reconciliation loop is safe because reconcileNamespace
+// is idempotent.
 func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) error {
 	ctx, span := r.tracer.Start(ctx, "reconciler.EnsureNamespace")
 	defer span.End()

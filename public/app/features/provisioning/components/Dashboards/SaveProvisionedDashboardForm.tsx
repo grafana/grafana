@@ -14,7 +14,7 @@ import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/sav
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { PROVISIONING_URL } from 'app/features/provisioning/constants';
+import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 import {
   ProvisionedOperationInfo,
@@ -100,7 +100,7 @@ export function SaveProvisionedDashboardForm({
   const navigateToPreview = useCallback(
     (ref: string, path: string, repoType?: string) => {
       const url = buildResourceBranchRedirectUrl({
-        baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+        baseUrl: `${PROVISIONING_PREVIEW_URL}/${defaultValues.repo}/preview/${path}`,
         paramName: 'ref',
         paramValue: ref,
         repoType,

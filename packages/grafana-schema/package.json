@@ -77,12 +77,6 @@
       "import": "./dist/esm/raw/composable/dashboardlist/panelcfg/x/types.gen.mjs",
       "require": "./dist/cjs/raw/composable/dashboardlist/panelcfg/x/types.gen.cjs"
     },
-    "./dist/esm/raw/composable/datagrid/panelcfg/x/DatagridPanelCfg_types.gen": {
-      "@grafana-app/source": "./src/raw/composable/datagrid/panelcfg/x/types.gen.ts",
-      "types": "./dist/types/raw/composable/datagrid/panelcfg/x/types.gen.d.ts",
-      "import": "./dist/esm/raw/composable/datagrid/panelcfg/x/types.gen.mjs",
-      "require": "./dist/cjs/raw/composable/datagrid/panelcfg/x/types.gen.cjs"
-    },
     "./dist/esm/raw/composable/debug/panelcfg/x/DebugPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/debug/panelcfg/x/types.gen.ts",
       "types": "./dist/types/raw/composable/debug/panelcfg/x/types.gen.d.ts",

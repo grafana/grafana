@@ -1,14 +1,28 @@
 import * as H from 'history';
 
-import { CoreApp, DataQueryRequest, FieldConfig, locationUtil, NavIndex, NavModelItem, store } from '@grafana/data';
+import {
+  CoreApp,
+  DataQueryRequest,
+  FieldConfig,
+  FieldConfigSource,
+  filterFieldConfigOverrides,
+  isStandardFieldProp,
+  locationUtil,
+  NavIndex,
+  NavModelItem,
+  store,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
+  SceneDataTransformer,
   sceneGraph,
   SceneObject,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneQueryRunner,
   SceneTimeRange,
   sceneUtils,
   SceneVariable,
@@ -33,15 +47,11 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
-import {
-  PanelSuggestionInfo,
-  VizSuggestionsInteractions,
-} from 'app/features/panel/components/VizTypePicker/interactions';
 import { setDashboardMutationClient } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
 import { VariablesChanged } from 'app/features/variables/types';
 import { defaultGraphStyleConfig } from 'app/plugins/panel/timeseries/config';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
-import { ShowConfirmModalEvent } from 'app/types/events';
+import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
 
 import {
   AnnoKeyManagerAllowsEdits,
@@ -55,6 +65,7 @@ import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
 import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
 import { PanelEditor } from '../panel-edit/PanelEditor';
+import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../saving/shared';
@@ -168,7 +179,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** options pane */
   editPane: DashboardEditPane;
   /** Manages dragging/dropping of layout items */
-  layoutOrchestrator?: DashboardLayoutOrchestrator;
+  layoutOrchestrator: DashboardLayoutOrchestrator;
 }
 
 //if (config.featureToggles.scenesNoFlickering) {
@@ -205,11 +216,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    */
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
-
-  /**
-   * Panels with an accepted suggestion
-   */
-  private _panelSuggestionsReceipts = new Map<string, PanelSuggestionInfo>();
 
   public serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
@@ -317,14 +323,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._changeTracker.startTrackingChanges();
   };
 
-  public recordPanelSuggestion(panelKey: string, info: PanelSuggestionInfo | undefined) {
-    if (info) {
-      this._panelSuggestionsReceipts.set(panelKey, info);
-    } else {
-      this._panelSuggestionsReceipts.delete(panelKey);
-    }
-  }
-
   public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
     this.serializer.onSaveComplete(saveModel, result);
 
@@ -344,11 +342,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       },
       overlay: undefined,
     });
-
-    for (const info of this._panelSuggestionsReceipts.values()) {
-      VizSuggestionsInteractions.panelSaved(info);
-    }
-    this._panelSuggestionsReceipts.clear();
 
     this.state.editPanel?.dashboardSaved();
 
@@ -435,6 +428,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (restoreInitialState) {
       //  Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
+      appEvents.publish(new DashboardDiscardedEvent());
     } else {
       // Do not restore
       this.setState({ isEditing: false });
@@ -839,6 +833,57 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public removePanel(panel: VizPanel) {
     getLayoutManagerFor(panel).removePanel?.(panel);
+  }
+
+  public updatePanelTitle(panel: VizPanel, title: string) {
+    panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+  }
+
+  public async changePanelPlugin(
+    panel: VizPanel,
+    newPluginId: string,
+    newOptions?: Record<string, unknown>,
+    newFieldConfig?: FieldConfigSource
+  ) {
+    const { fieldConfig: prevFieldConfig } = panel.state;
+
+    let cleanFieldConfig: FieldConfigSource = {
+      defaults: { ...prevFieldConfig.defaults, custom: {} },
+      overrides: filterFieldConfigOverrides(prevFieldConfig.overrides, isStandardFieldProp),
+    };
+
+    if (newFieldConfig) {
+      cleanFieldConfig = { ...newFieldConfig, overrides: cleanFieldConfig.overrides };
+    }
+
+    await panel.changePluginType(newPluginId, newOptions, cleanFieldConfig);
+
+    if (newOptions) {
+      panel.onOptionsChange(newOptions, true);
+    }
+
+    if (newFieldConfig) {
+      panel.onFieldConfigChange({ ...newFieldConfig, overrides: cleanFieldConfig.overrides }, true);
+    }
+
+    const pluginMeta = await getPanelPluginMeta(newPluginId);
+    const skipDataQuery = pluginMeta?.skipDataQuery ?? false;
+
+    if (skipDataQuery && panel.state.$data) {
+      panel.setState({ $data: undefined });
+    }
+
+    if (!skipDataQuery && !panel.state.$data) {
+      panel.setState({
+        $data: new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            datasource: { uid: config.defaultDatasource },
+            queries: [{ refId: 'A' }],
+          }),
+          transformations: [],
+        }),
+      });
+    }
   }
 
   public unlinkLibraryPanel(panel: VizPanel) {

@@ -43,9 +43,9 @@ jobs:
       with:
         persist-credentials: false
     - name: Setup Go
-      uses: actions/setup-go@v6.0.0
+      uses: ./.github/actions/setup-go
       with:
-        go-version-file: go.mod
+        cache-build: 'false'
     - name: Generate golden files
       run: make generate-golden-files
       working-directory: apps/dashboard

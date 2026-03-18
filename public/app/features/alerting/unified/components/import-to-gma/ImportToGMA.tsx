@@ -221,14 +221,18 @@ function ImportWizardContent() {
   // Note: WizardStep and NextButton handle stepper state (completed, skipped, visited, navigation)
   // These handlers only need to update form values and control whether to proceed
   const handleStep1Next = useCallback((): boolean => {
-    // Block navigation if dry-run validation failed
     if (dryRunState === 'error') {
       return false;
     }
     setValue('step1Completed', true);
     setValue('step1Skipped', false);
+    const currentPolicyTreeName = getValues('policyTreeName');
+    const currentRoutingTree = getValues('selectedRoutingTree');
+    if (currentPolicyTreeName && !currentRoutingTree) {
+      setValue('selectedRoutingTree', currentPolicyTreeName);
+    }
     return true;
-  }, [dryRunState, setValue]);
+  }, [dryRunState, setValue, getValues]);
 
   const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
@@ -328,7 +332,9 @@ function ImportWizardContent() {
 
       setTimeout(() => {
         setShowConfirmModal(false);
-        notifyApp.success(t('alerting.import-to-gma.success', 'Successfully imported resources to Grafana Alerting.'));
+        notifyApp.success(
+          t('alerting.wizard-import-to-gma.success', 'Successfully imported resources to Grafana Alerting.')
+        );
         locationService.push(ruleListUrl);
       }, 1500);
     } catch (err) {
@@ -337,7 +343,7 @@ function ImportWizardContent() {
         notificationsSource: willImportNotifications ? values.notificationsSource : undefined,
         rulesSource: willImportRules ? values.rulesSource : undefined,
       });
-      notifyApp.error(t('alerting.import-to-gma.error', 'Failed to import resources'), stringifyErrorLike(err));
+      notifyApp.error(t('alerting.wizard-import-to-gma.error', 'Failed to import resources'), stringifyErrorLike(err));
     }
   }, [getValues, importNotifications, importRules, rulesFromDatasource, notifyApp]);
 

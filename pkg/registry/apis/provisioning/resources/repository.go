@@ -28,6 +28,7 @@ type RepositoryResources interface {
 	EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error)
 	EnsureFolderExists(ctx context.Context, folder Folder, parentID string) error
 	EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error
+	RemoveFolderFromTree(folderID string)
 	RemoveFolder(ctx context.Context, folderName string) error
 	// File from Resource
 	WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error)
@@ -42,9 +43,10 @@ type RepositoryResources interface {
 }
 
 type repositoryResourcesFactory struct {
-	parsers ParserFactory
-	clients ClientFactory
-	lister  ResourceLister
+	parsers               ParserFactory
+	clients               ClientFactory
+	lister                ResourceLister
+	folderMetadataEnabled bool
 }
 
 type RepositoryResourcesOption func(*repositoryResourcesOptions)
@@ -111,8 +113,13 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 	return sourcePath, nil
 }
 
-func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister) RepositoryResourcesFactory {
-	return &repositoryResourcesFactory{parsers, clients, lister}
+func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool) RepositoryResourcesFactory {
+	return &repositoryResourcesFactory{
+		parsers:               parsers,
+		clients:               clients,
+		lister:                lister,
+		folderMetadataEnabled: folderMetadataEnabled,
+	}
 }
 
 func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository.ReaderWriter, opts ...RepositoryResourcesOption) (RepositoryResources, error) {
@@ -135,7 +142,8 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		opt(cfg)
 	}
 
-	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), cfg.folderManagerOptions...)
+	folderManagerOpts := append(cfg.folderManagerOptions, WithFolderMetadataEnabled(r.folderMetadataEnabled))
+	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderManagerOpts...)
 	resources := NewResourcesManager(repo, folders, parser, clients)
 
 	return &repositoryResources{

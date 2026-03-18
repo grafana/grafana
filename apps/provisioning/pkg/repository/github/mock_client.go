@@ -409,6 +409,67 @@ func (_c *MockClient_GetRepository_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
+// GetRulesets provides a mock function with given fields: ctx, owner, repository, branch
+func (_m *MockClient) GetRulesets(ctx context.Context, owner string, repository string, branch string) (*Rulesets, error) {
+	ret := _m.Called(ctx, owner, repository, branch)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRulesets")
+	}
+
+	var r0 *Rulesets
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*Rulesets, error)); ok {
+		return rf(ctx, owner, repository, branch)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *Rulesets); ok {
+		r0 = rf(ctx, owner, repository, branch)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*Rulesets)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, owner, repository, branch)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockClient_GetRulesets_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRulesets'
+type MockClient_GetRulesets_Call struct {
+	*mock.Call
+}
+
+// GetRulesets is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner string
+//   - repository string
+//   - branch string
+func (_e *MockClient_Expecter) GetRulesets(ctx interface{}, owner interface{}, repository interface{}, branch interface{}) *MockClient_GetRulesets_Call {
+	return &MockClient_GetRulesets_Call{Call: _e.mock.On("GetRulesets", ctx, owner, repository, branch)}
+}
+
+func (_c *MockClient_GetRulesets_Call) Run(run func(ctx context.Context, owner string, repository string, branch string)) *MockClient_GetRulesets_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockClient_GetRulesets_Call) Return(_a0 *Rulesets, _a1 error) *MockClient_GetRulesets_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockClient_GetRulesets_Call) RunAndReturn(run func(context.Context, string, string, string) (*Rulesets, error)) *MockClient_GetRulesets_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetWebhook provides a mock function with given fields: ctx, owner, repository, webhookID
 func (_m *MockClient) GetWebhook(ctx context.Context, owner string, repository string, webhookID int64) (WebhookConfig, error) {
 	ret := _m.Called(ctx, owner, repository, webhookID)

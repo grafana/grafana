@@ -49,6 +49,11 @@ func NewCatalogProviderWithTTL(logger logging.Logger, grafanaComAPIURL, grafanaC
 	}
 }
 
+// Name returns the name of the provider.
+func (p *CatalogProvider) Name() string {
+	return "catalog"
+}
+
 // GetMeta fetches plugin metadata from grafana.com API endpoint:
 // GET /api/plugins/{pluginId}/versions/{version}
 // If ParentID is set in the query, it fetches the parent plugin's version and
