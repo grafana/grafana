@@ -1,7 +1,6 @@
 import { debounce } from 'lodash';
 import { Unsubscribable } from 'rxjs';
 
-import { config } from '@grafana/runtime';
 import {
   SceneDataLayerSet,
   SceneDataTransformer,
@@ -202,12 +201,6 @@ export class DashboardSceneChangeTracker {
   }
 
   public startTrackingChanges() {
-    // In collab mode, changes are auto-saved by the collab system.
-    // Skip dirty-state tracking to avoid the "discard changes?" prompt on exit.
-    if (config.featureToggles.dashboardCollaboration && !this._dashboard.state.meta?.provisioned) {
-      return;
-    }
-
     if (!this._changesWorker) {
       this.init();
     }
