@@ -198,14 +198,14 @@ func TestMappersRegistry_WildcardResolution(t *testing.T) {
 			t.Run(tc.group, func(t *testing.T) {
 				gr := schema.GroupResource{Group: tc.group, Resource: "datasources"}
 				mapper, ok := m.Get(gr)
-			if tc.shouldMatch {
-				require.True(t, ok, "expected wildcard match for %s", tc.group)
-				assert.NotNil(t, mapper)
-				assert.Equal(t, "datasources:uid:%", mapper.ScopePattern())
-				assert.True(t, m.IsEnabled(context.Background(), gr))
-			} else {
-				assert.False(t, ok, "expected no match for %s", tc.group)
-			}
+				if tc.shouldMatch {
+					require.True(t, ok, "expected wildcard match for %s", tc.group)
+					assert.NotNil(t, mapper)
+					assert.Equal(t, "datasources:uid:%", mapper.ScopePattern())
+					assert.True(t, m.IsEnabled(context.Background(), gr))
+				} else {
+					assert.False(t, ok, "expected no match for %s", tc.group)
+				}
 			})
 		}
 	})
