@@ -6,13 +6,12 @@
  *   localStorage.setItem('grafana.debug.dashboardCollab', 'false')
  */
 
-import store from 'app/core/store';
-
 export function createDebugLog(key: string, prefix: string) {
   const storageKey = `grafana.debug.${key}`;
 
   return function debugLog(message: string, ...args: unknown[]) {
-    if (store.get(storageKey) === 'true') {
+    // eslint-disable-next-line no-restricted-syntax -- debug utility needs direct localStorage access
+    if (localStorage.getItem(storageKey) === 'true') {
       console.log(`[${prefix}] ${message}`, ...args);
     }
   };
