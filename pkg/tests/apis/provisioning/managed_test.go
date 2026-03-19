@@ -13,6 +13,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
 func TestIntegrationFolderManagerConsistency(t *testing.T) {
@@ -624,5 +627,77 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, string(utils.ManagerKindRepo), unchanged.GetAnnotations()[utils.AnnoKeyManagerKind])
 		require.Equal(t, repo, unchanged.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+	})
+}
+
+func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := common.RunGrafana(t)
+	ctx := context.Background()
+
+	const repo = "admin-release-test"
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repo,
+		Target: "folder",
+		Copies: map[string]string{
+			"testdata/all-panels.json": "all-panels.json",
+		},
+		ExpectedDashboards: 1,
+		ExpectedFolders:    1,
+	})
+
+	const dashboardUID = "n1jR8vnnz"
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		dashboard, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		if err != nil {
+			collect.Errorf("dashboard not found yet: %s", err.Error())
+			return
+		}
+		annotations := dashboard.GetAnnotations()
+		assert.Equal(collect, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind])
+		assert.Equal(collect, repo, annotations[utils.AnnoKeyManagerIdentity])
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be provisioned with repo manager")
+
+	t.Run("editor cannot release repo-managed dashboard", func(t *testing.T) {
+		editorDashboards := helper.GetResourceClient(apis.ResourceClientArgs{
+			User:      helper.Org1.Editor,
+			Namespace: "default",
+			GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+		})
+
+		fresh, err := editorDashboards.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		delete(annotations, utils.AnnoKeyManagerKind)
+		delete(annotations, utils.AnnoKeyManagerIdentity)
+		delete(annotations, utils.AnnoKeySourcePath)
+		delete(annotations, utils.AnnoKeySourceChecksum)
+		fresh.SetAnnotations(annotations)
+
+		_, err = editorDashboards.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.Error(t, err, "editor should not be able to release managed dashboard")
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
+	})
+
+	t.Run("admin can release repo-managed dashboard", func(t *testing.T) {
+		fresh, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		delete(annotations, utils.AnnoKeyManagerKind)
+		delete(annotations, utils.AnnoKeyManagerIdentity)
+		delete(annotations, utils.AnnoKeySourcePath)
+		delete(annotations, utils.AnnoKeySourceChecksum)
+		fresh.SetAnnotations(annotations)
+
+		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.NoError(t, err, "admin should be able to release managed dashboard")
+
+		releasedAnnotations := updated.GetAnnotations()
+		require.Empty(t, releasedAnnotations[utils.AnnoKeyManagerKind], "managedBy should be removed")
+		require.Empty(t, releasedAnnotations[utils.AnnoKeyManagerIdentity], "managerId should be removed")
 	})
 }

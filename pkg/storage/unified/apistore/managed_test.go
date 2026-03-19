@@ -22,15 +22,18 @@ import (
 
 func TestManagedAuthorizer(t *testing.T) {
 	user := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"}
+	serverAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "server-admin-uuu", IsGrafanaAdmin: true}
+	orgAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "org-admin-uuu", OrgRole: identity.RoleAdmin}
 	_, provisioner, err := identity.WithProvisioningIdentity(context.Background(), "default")
 	require.NoError(t, err)
 
 	tests := []struct {
-		name string
-		auth authtypes.AuthInfo
-		obj  runtime.Object
-		old  runtime.Object
-		err  string
+		name   string
+		auth   authtypes.AuthInfo
+		obj    runtime.Object
+		old    runtime.Object
+		delete bool
+		err    string
 	}{
 		{
 			name: "user can create",
@@ -205,6 +208,109 @@ func TestManagedAuthorizer(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "server admin can release repo-managed dashboard",
+			auth: serverAdmin,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
+					},
+				},
+			},
+		},
+		{
+			name: "server admin can release repo-managed folder",
+			auth: serverAdmin,
+			obj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"generation": int64(1),
+					},
+				},
+			},
+			old: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"generation": int64(2),
+						"annotations": map[string]interface{}{
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "my-repo",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:   "server admin can delete repo-managed resource",
+			auth:   serverAdmin,
+			delete: true,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
+					},
+				},
+			},
+		},
+		{
+			name: "org admin can release repo-managed dashboard",
+			auth: orgAdmin,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
+					},
+				},
+			},
+		},
+		{
+			name:   "org admin can delete repo-managed resource",
+			auth:   orgAdmin,
+			delete: true,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
+					},
+				},
+			},
+		},
+		{
+			name: "non-admin user cannot release repo-managed resource",
+			auth: user,
+			err:  "Can not remove resource manager from resource",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -212,9 +318,12 @@ func TestManagedAuthorizer(t *testing.T) {
 			obj, err := utils.MetaAccessor(tt.obj)
 			require.NoError(t, err)
 
-			if tt.old == nil {
+			switch {
+			case tt.delete:
+				err = checkManagerPropertiesOnDelete(tt.auth, obj)
+			case tt.old == nil:
 				err = checkManagerPropertiesOnCreate(tt.auth, obj)
-			} else {
+			default:
 				old, _ := utils.MetaAccessor(tt.old)
 				err = checkManagerPropertiesOnUpdateSpec(tt.auth, obj, old)
 			}

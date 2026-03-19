@@ -19,6 +19,7 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -113,7 +114,10 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		if auth.GetUID() == "access-policy:provisioning" || slices.Contains(auth.GetAudience(), provisioning.GROUP) {
 			return nil // OK!
 		}
-		// This can fallback to writing the value with a provisioning client
+		if requester, ok := auth.(identity.Requester); ok &&
+			(requester.GetIsGrafanaAdmin() || requester.HasRole(identity.RoleAdmin)) {
+			return nil
+		}
 		return errResourceIsManagedInRepository
 
 	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP: // nolint:staticcheck
