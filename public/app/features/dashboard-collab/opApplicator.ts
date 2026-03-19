@@ -10,7 +10,7 @@
  * compatibility — a newer server may emit types this client doesn't support yet.
  */
 
-import type { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
+import type { MutationClient } from 'app/features/dashboard-scene/mutation-api/types';
 
 import { debugLog } from './debugLog';
 import { suppressExtraction, unsuppressExtraction } from './opExtractor';
@@ -29,7 +29,7 @@ export interface ApplyResult {
  */
 export async function applyRemoteOp(
   msg: ServerMessage,
-  client: DashboardMutationClient,
+  client: MutationClient,
   localUserId: string,
   resolvedUserId?: string
 ): Promise<ApplyResult> {

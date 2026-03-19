@@ -62,6 +62,13 @@ jest.mock('app/core/copy/appNotification', () => ({
   }),
 }));
 
+function makeMockMutationClient(): any {
+  return {
+    execute: jest.fn().mockResolvedValue({ success: true, changes: [] }),
+    getAvailableCommands: jest.fn().mockReturnValue([]),
+  };
+}
+
 function makeMockScene(): any {
   return {
     state: {
@@ -72,6 +79,7 @@ function makeMockScene(): any {
     onEnterEditMode: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn(),
+    getMutationClient: jest.fn().mockReturnValue(makeMockMutationClient()),
   };
 }
 

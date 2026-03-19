@@ -28,7 +28,10 @@ import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
+import { setDashboardMutationClient } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+
+import { CollabMutationClient } from './CollabMutationClient';
 
 import { CollabContext, type CollabContextValue, type CollabLock, type CollabUser } from './CollabContext';
 import { debugLog } from './debugLog';
@@ -112,22 +115,16 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
   const [staleLocks, setStaleLocks] = useState<Set<string>>(new Set());
   const [tabHidden, setTabHidden] = useState(false);
 
-  const clientRef = useRef<DashboardMutationClient | null>(null);
+  const clientRef = useRef<CollabMutationClient | null>(null);
   const localUserIdRef = useRef(config.bootData?.user?.uid ?? '');
   // Track when each lock was acquired and last op time per user for stale lock detection
   const lockTimestampsRef = useRef<Map<string, number>>(new Map());
   const lastOpByUserRef = useRef<Map<string, number>>(new Map());
   const notifyApp = useAppNotification();
 
-  // Memoize the mutation client per scene
-  useEffect(() => {
-    debugLog('CollabProvider mounted', { dashboardUID, namespace });
-    clientRef.current = new DashboardMutationClient(scene);
-    return () => {
-      debugLog('CollabProvider unmounting', { dashboardUID });
-      clientRef.current = null;
-    };
-  }, [scene, dashboardUID, namespace]);
+  // Ref-based publishOp forwarder so the wrapper doesn't depend on the
+  // useCallback identity (which is defined later in the hook chain).
+  const publishOpRef = useRef<(msg: ClientMessage) => void>(() => {});
 
   const enabled = useMemo(() => isCollabEnabled(scene), [scene]);
 
@@ -199,6 +196,38 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     },
     [opsAddress]
   );
+
+  // Keep the ref in sync so the wrapper always uses the latest publishOp.
+  publishOpRef.current = publishOp;
+
+  // Wrap the scene's mutation client with CollabMutationClient on mount.
+  // This makes all callers (GeneralSettingsEditView, PanelEditor, etc.)
+  // automatically broadcast edits without any changes at call sites.
+  useEffect(() => {
+    debugLog('CollabProvider mounted', { dashboardUID, namespace });
+
+    const originalClient = scene.getMutationClient();
+    if (!originalClient) {
+      debugLog('CollabProvider: no mutation client on scene — skipping wrapper');
+      return;
+    }
+
+    const wrapper = new CollabMutationClient(
+      originalClient,
+      (msg) => publishOpRef.current(msg),
+      localUserIdRef.current
+    );
+    clientRef.current = wrapper;
+    setDashboardMutationClient(wrapper);
+    debugLog('CollabMutationClient wrapper installed');
+
+    return () => {
+      debugLog('CollabProvider unmounting — restoring original mutation client', { dashboardUID });
+      clientRef.current = null;
+      // Restore the original unwrapped client
+      setDashboardMutationClient(originalClient);
+    };
+  }, [scene, dashboardUID, namespace]);
 
   // Wire opExtractor: scene state changes → server
   useEffect(() => {
