@@ -187,30 +187,12 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, "deny", sc.resp.Header().Get("X-Frame-Options"))
 	})
 
-	middlewareScenario(t, "middleware should not add X-Frame-Options header when allow_embedding_hosts is wildcard", func(
+	middlewareScenario(t, "middleware should not add X-Frame-Options header for request when allowing embedding", func(
 		t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/search").exec()
 		assert.Empty(t, sc.resp.Header().Get("X-Frame-Options"))
 	}, func(cfg *setting.Cfg) {
-		cfg.AllowEmbeddingHosts = []string{"*"}
-	})
-
-	middlewareScenario(t, "middleware should not add X-Frame-Options header when specific hosts configured and CSP enabled", func(
-		t *testing.T, sc *scenarioContext) {
-		sc.fakeReq("GET", "/api/search").exec()
-		assert.Empty(t, sc.resp.Header().Get("X-Frame-Options"))
-	}, func(cfg *setting.Cfg) {
-		cfg.AllowEmbeddingHosts = []string{"wiki.example.com", "foo.example.com"}
-		cfg.CSPEnabled = true
-		cfg.CSPTemplate = "default-src 'self'; frame-ancestors $ALLOW_EMBEDDING_HOSTS"
-	})
-
-	middlewareScenario(t, "middleware should add X-Frame-Options deny when specific hosts configured but CSP not enabled", func(
-		t *testing.T, sc *scenarioContext) {
-		sc.fakeReq("GET", "/api/search").exec()
-		assert.Equal(t, "deny", sc.resp.Header().Get("X-Frame-Options"))
-	}, func(cfg *setting.Cfg) {
-		cfg.AllowEmbeddingHosts = []string{"wiki.example.com"}
+		cfg.AllowEmbedding = true
 	})
 
 	middlewareScenario(t, "middleware should add custom response headers", func(t *testing.T, sc *scenarioContext) {

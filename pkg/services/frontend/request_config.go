@@ -63,6 +63,9 @@ func NewFSRequestConfig(cfg *setting.Cfg, license licensing.Licensing) FSRequest
 		BuildInfo:                            getBuildInfo(license, cfg),
 	}
 
+	securitySection := cfg.SectionWithEnvOverrides("security")
+	allowEmbeddingHosts := securitySection.Key("allow_embedding_hosts").Strings(",")
+
 	return FSRequestConfig{
 		FSFrontendSettings:    frontendSettings,
 		CSPEnabled:            cfg.CSPEnabled,
@@ -70,7 +73,7 @@ func NewFSRequestConfig(cfg *setting.Cfg, license licensing.Licensing) FSRequest
 		CSPReportOnlyEnabled:  cfg.CSPReportOnlyEnabled,
 		CSPReportOnlyTemplate: cfg.CSPReportOnlyTemplate,
 		AppURL:                cfg.AppURL,
-		AllowEmbeddingHosts:   cfg.AllowEmbeddingHosts,
+		AllowEmbeddingHosts:   allowEmbeddingHosts,
 	}
 }
 

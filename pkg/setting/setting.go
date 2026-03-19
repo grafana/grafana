@@ -189,16 +189,13 @@ type Cfg struct {
 	CookieSecure                         bool
 	CookieSameSiteDisabled               bool
 	CookieSameSiteMode                   http.SameSite
-	// AllowEmbeddingHosts is the list of hostnames allowed to embed Grafana in an iframe via CSP frame-ancestors.
-	// Use ["*"] to allow all hosts. Empty means embedding is not allowed.
-	// Populated from allow_embedding_hosts; also set to ["*"] if the deprecated allow_embedding=true is configured.
-	AllowEmbeddingHosts               []string
-	XSSProtectionHeader               bool
-	ContentTypeProtectionHeader       bool
-	StrictTransportSecurity           bool
-	StrictTransportSecurityMaxAge     int
-	StrictTransportSecurityPreload    bool
-	StrictTransportSecuritySubDomains bool
+	AllowEmbedding                       bool
+	XSSProtectionHeader                  bool
+	ContentTypeProtectionHeader          bool
+	StrictTransportSecurity              bool
+	StrictTransportSecurityMaxAge        int
+	StrictTransportSecurityPreload       bool
+	StrictTransportSecuritySubDomains    bool
 	// CSPEnabled toggles Content Security Policy support.
 	CSPEnabled bool
 	// CSPTemplate contains the Content Security Policy template.
@@ -1841,6 +1838,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 			cfg.CookieSameSiteMode = CookieSameSiteMode
 		}
 	}
+	cfg.AllowEmbedding = security.Key("allow_embedding").MustBool(false)
 
 	cfg.ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
 	cfg.XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
@@ -1853,31 +1851,6 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
 	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
-
-	cfg.AllowEmbeddingHosts = strings.Fields(security.Key("allow_embedding_hosts").MustString(""))
-	// Deprecated: allow_embedding=true is treated as allow_embedding_hosts=* for backwards compatibility.
-	if security.Key("allow_embedding").MustBool(false) && len(cfg.AllowEmbeddingHosts) == 0 {
-		cfg.AllowEmbeddingHosts = []string{"*"}
-	}
-
-	// If AllowEmbeddingHosts is set to anything other than [*], we use CSP to enforce iframe protections instead
-	// Therefore we require that the CSP has been configured with a $ALLOW_EMBEDDING_HOSTS placeholder
-	embeddingAllowedForSpecificHosts := false
-	for _, host := range cfg.AllowEmbeddingHosts {
-		if host != "*" {
-			embeddingAllowedForSpecificHosts = true
-			break
-		}
-	}
-	if len(cfg.AllowEmbeddingHosts) > 0 && embeddingAllowedForSpecificHosts {
-		if !cfg.CSPEnabled || cfg.CSPTemplate == "" {
-			return fmt.Errorf("enabling allow_embedding_hosts requires setting content_security_policy and content_security_policy_template when set to a value other than '*'")
-		}
-
-		if !strings.Contains(cfg.CSPTemplate, "$ALLOW_EMBEDDING_HOSTS") {
-			return fmt.Errorf("enabling allow_embedding_hosts requires a content_security_policy_template with a $ALLOW_EMBEDDING_HOSTS placeholder")
-		}
-	}
 
 	enableFrontendSandboxForPlugins := security.Key("enable_frontend_sandbox_for_plugins").MustString("")
 	for _, plug := range strings.Split(enableFrontendSandboxForPlugins, ",") {
