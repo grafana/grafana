@@ -1735,4 +1735,9 @@ export interface FeatureToggles {
   * @default false
   */
   rbacIAMClient?: boolean;
+  /**
+  * Show a clickable documentation link icon next to variable descriptions
+  * @default false
+  */
+  variableDocsInfoLink?: boolean;
 }

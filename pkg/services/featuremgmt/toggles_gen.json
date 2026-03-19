@@ -4997,6 +4997,20 @@
     },
     {
       "metadata": {
+        "name": "variableDocsInfoLink",
+        "resourceVersion": "1773917012798",
+        "creationTimestamp": "2026-03-19T10:43:32Z"
+      },
+      "spec": {
+        "description": "Show a clickable documentation link icon next to variable descriptions",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "vizActionsAuth",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-07-31T22:56:50Z",
