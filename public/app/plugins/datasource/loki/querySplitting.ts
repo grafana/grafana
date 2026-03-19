@@ -12,7 +12,6 @@ import {
   rangeUtil,
   store,
   TimeRange,
-  toUtc,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
