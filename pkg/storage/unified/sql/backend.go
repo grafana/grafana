@@ -237,7 +237,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
 	garbageCollection := opts.GarbageCollection
-	if garbageCollection.BatchWait == 0 {
+	if garbageCollection.BatchWait < 0 {
 		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
 	}
 	backend := &backend{
