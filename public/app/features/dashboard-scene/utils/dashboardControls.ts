@@ -168,10 +168,18 @@ async function emitDefaultVariables(ds: DataSourceApi, traceId: string, subscrib
     });
 
     if (variables?.length) {
-      for (const v of variables) {
-        v.spec.origin = { type: 'datasource', group: ds.type };
-      }
-      subscriber.next({ type: 'variables', data: variables });
+      const sanitizedType = ds.type.replace(/\W/g, '_');
+      const data: VariableKind[] = variables.map((v) => {
+        const copy = { ...v };
+        copy.spec = {
+          ...v.spec,
+          name: `${sanitizedType}_${v.spec.name}`,
+          label: v.spec.label || v.spec.name,
+          origin: { type: 'datasource' as const, group: ds.type },
+        };
+        return copy;
+      });
+      subscriber.next({ type: 'variables', data });
     }
   } catch (e) {
     console.warn('Failed to load default variables from datasource', ds.type, e);
