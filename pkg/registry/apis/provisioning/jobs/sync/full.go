@@ -381,8 +381,15 @@ func applyChanges(
 				}
 				// Skip if the replacement folder failed to be created.
 				if progress.HasDirPathFailedCreation(old.Path) {
+					skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_renamed_folder_deletion")
+					progress.Record(skipCtx, jobs.NewPathOnlyResult(old.Path).
+						WithError(fmt.Errorf("old folder was not deleted because the replacement folder could not be created")).
+						AsSkipped().
+						Build())
+					skipSpan.End()
 					continue
 				}
+				
 				resultBuilder := jobs.NewFolderResult(old.Path).
 					WithAction(repository.FileActionDeleted).
 					WithName(old.UID)
