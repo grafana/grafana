@@ -233,6 +233,10 @@ describe('PluginActions', () => {
 
 function createPluginStub(overrides?: Partial<CatalogPlugin>): CatalogPlugin {
   return {
+    managed: {
+      enabled: false,
+      strategy: undefined,
+    },
     name: 'Test Plugin',
     id: 'test-plugin',
     description: 'Test plugin',
@@ -258,7 +262,6 @@ function createPluginStub(overrides?: Partial<CatalogPlugin>): CatalogPlugin {
     isDev: false,
     isEnterprise: false,
     isDeprecated: false,
-    isManaged: false,
     isPreinstalled: { found: false, withVersion: false },
     ...overrides,
   };

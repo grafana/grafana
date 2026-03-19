@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	gocache "github.com/patrickmn/go-cache"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -37,12 +37,12 @@ type fakeMigrationStatusReader struct {
 
 var _ unifiedmigrations.MigrationStatusReader = (*fakeMigrationStatusReader)(nil)
 
-func (f *fakeMigrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) unifiedmigrations.StorageMode {
+func (f *fakeMigrationStatusReader) GetStorageMode(ctx context.Context, gr schema.GroupResource) (unifiedmigrations.StorageMode, error) {
 	mode, ok := f.modes[gr.String()]
 	if !ok {
-		return unifiedmigrations.StorageModeLegacy
+		return unifiedmigrations.StorageModeLegacy, nil
 	}
-	return mode
+	return mode, nil
 }
 
 // NewFakeMigrationStatusReader creates a MigrationStatusReader for tests.
@@ -122,45 +122,33 @@ func ProvideService(
 		}
 	}
 
-	cacheTTL := gocache.NoExpiration
-	cacheCleanup := time.Duration(0)
-	if cfg != nil && cfg.StorageModeCacheTTL > 0 {
-		cacheTTL = cfg.StorageModeCacheTTL
-		cacheCleanup = cacheTTL * 2
-	}
-
 	return &service{
 		db: &keyvalueDB{
 			db:     kv,
 			logger: logging.DefaultLogger.With("logger", "dualwrite.kv"),
 		},
-		enabled:            enabled,
-		statusReader:       statusReader,
-		resourceModesCache: gocache.New(cacheTTL, cacheCleanup),
-		metrics:            metrics,
+		enabled:      enabled,
+		statusReader: statusReader,
+		metrics:      metrics,
 	}, nil
 }
 
 type service struct {
-	db                 *keyvalueDB
-	enabled            bool
-	statusReader       unifiedmigrations.MigrationStatusReader
-	resourceModesCache *gocache.Cache
-	metrics            *dualWriterMetrics
+	db           *keyvalueDB
+	enabled      bool
+	statusReader unifiedmigrations.MigrationStatusReader
+	metrics      *dualWriterMetrics
 }
 
-// getStorageMode returns the cached StorageMode for a non-managed resource.
-// Results are cached with the TTL configured via StorageModeCacheTTL.
+// getStorageMode returns the StorageMode for a non-managed resource.
+// On error, the config-mode is used directly.
 func (m *service) getStorageMode(ctx context.Context, gr schema.GroupResource) unifiedmigrations.StorageMode {
-	key := gr.String()
-	if val, ok := m.resourceModesCache.Get(key); ok {
-		return val.(unifiedmigrations.StorageMode)
+	resource := gr.String()
+	mode, err := m.statusReader.GetStorageMode(ctx, gr)
+	if err != nil {
+		m.metrics.statusReaderErrors.WithLabelValues(resource).Inc()
+		return mode
 	}
-
-	mode := m.statusReader.GetStorageMode(ctx, gr)
-	m.resourceModesCache.SetDefault(key, mode)
-
-	logging.DefaultLogger.With("resource", key, "mode", mode).Info("resolved dynamic storage mode")
 	return mode
 }
 
