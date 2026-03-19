@@ -543,14 +543,15 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			wantErrContains: "Changing sync target after running sync is not supported",
 		},
 		{
-			name: "blocks UPDATE when old object already has the pending-delete label",
+			name: "blocks UPDATE when both old and new objects have the pending-delete label",
 			obj: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:       "test",
 					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
 				},
 				Spec: provisioning.RepositorySpec{
-					Title: "Test Repo",
+					Title: "Test Repo (modified)",
 					Type:  provisioning.GitHubRepositoryType,
 				},
 			},
@@ -559,10 +560,42 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 					Name:   "test",
 					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
 				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+				},
 			},
 			operation:       admission.Update,
 			wantErr:         true,
 			wantErrContains: "namespace is pending deletion",
+		},
+		{
+			name: "allows UPDATE that removes the pending-delete label (explicit unlock)",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			old: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "test",
+					Finalizers: []string{CleanFinalizer},
+					Labels:     map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.RepositorySpec{
+					Title: "Test Repo",
+					Type:  provisioning.GitHubRepositoryType,
+					Sync:  provisioning.SyncOptions{IntervalSeconds: 60},
+				},
+			},
+			operation: admission.Update,
+			wantErr:   false,
 		},
 		{
 			name: "allows the UPDATE that sets the pending-delete label (old without label → new with label)",

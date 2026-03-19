@@ -2,7 +2,6 @@ package connection
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -10,8 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
+	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -52,21 +51,10 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return nil
 	}
 
-	// Block mutations on resources whose namespace is pending deletion.
-	// For UPDATE, check the stored (old) object so the write that initially sets
-	// the label is still permitted through.
-	// For CREATE, check the incoming object directly.
-	switch a.GetOperation() {
-	case admission.Update:
-		if old := a.GetOldObject(); old != nil {
-			if oldMeta, err := utils.MetaAccessor(old); err == nil && appcontroller.IsPendingDelete(oldMeta.GetLabels()) {
-				return apierrors.NewForbidden(a.GetResource().GroupResource(), a.GetName(), errors.New("namespace is pending deletion"))
-			}
-		}
-	case admission.Create:
-		if appcontroller.IsPendingDelete(meta.GetLabels()) {
-			return apierrors.NewForbidden(a.GetResource().GroupResource(), a.GetName(), errors.New("namespace is pending deletion"))
-		}
+	// Block creations of pending-deleted resources and mutations on resources whose namespace is pending deletion.
+	// Allows for updates that remove the pending-delete label (explicit unlock).
+	if err := provisioningadmission.ValidatePendingDeletion(a, meta); err != nil {
+		return err
 	}
 
 	c, ok := obj.(*provisioning.Connection)

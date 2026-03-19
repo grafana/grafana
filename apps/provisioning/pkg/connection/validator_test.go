@@ -183,7 +183,33 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			wantErr:       false,
 		},
 		{
-			name: "blocks UPDATE when old object already has the pending-delete label",
+			name: "blocks UPDATE when both old and new objects have the pending-delete label",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection (modified)",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			old: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:   "test",
+					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
+				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
+			},
+			operation:       admission.Update,
+			wantErr:         true,
+			wantErrContains: "namespace is pending deletion",
+		},
+		{
+			name: "allows UPDATE that removes the pending-delete label (explicit unlock)",
 			obj: &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: provisioning.ConnectionSpec{
@@ -196,10 +222,14 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 					Name:   "test",
 					Labels: map[string]string{appcontroller.LabelPendingDelete: "true"},
 				},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GithubConnectionType,
+				},
 			},
-			operation:       admission.Update,
-			wantErr:         true,
-			wantErrContains: "namespace is pending deletion",
+			operation:     admission.Update,
+			factoryErrors: field.ErrorList{},
+			wantErr:       false,
 		},
 		{
 			name: "allows the UPDATE that sets the pending-delete label (old without label → new with label)",
