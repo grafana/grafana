@@ -41,6 +41,8 @@ import { getDataframeFields } from './components/logParser';
 import { GetRowContextQueryFn } from './components/panel/LogLineMenu';
 import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME } from './logsFrame';
 
+import { LOG_LINE_BODY_FIELD_NAME  } from 'app/features/logs/components/LogDetailsBody';
+
 /**
  * Returns the log level of a log line.
  * Parse the line for level words. If no level is found, it returns `LogLevel.unknown`.
@@ -471,7 +473,14 @@ export const downloadLogs = async (
 ) => {
   switch (format) {
     case DownloadFormat.Text:
-      downloadLogsModelAsTxt({ meta, rows: logRows }, '', fields);
+      const preparedlogRows = logRows.map((row) => ({
+        ...row,
+        labels: {
+          ...row.labels,
+          [LOG_LINE_BODY_FIELD_NAME]: row.entry,
+        },
+      }));
+      downloadLogsModelAsTxt({ meta, rows: preparedlogRows }, '', fields);
       break;
     case DownloadFormat.Json:
       const jsonLogs = logRowsToReadableJson(logRows, fields);
