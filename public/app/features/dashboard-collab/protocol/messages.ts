@@ -1,6 +1,6 @@
 /** ClientMessage is what clients send to the ops channel. */
 export interface ClientMessage {
-  kind: 'op' | 'lock' | 'checkpoint';
+  kind: 'op' | 'lock' | 'unlock' | 'checkpoint';
   op: unknown;
 }
 
@@ -35,7 +35,7 @@ export interface CheckpointOperation {
 /** ServerMessage is what the server broadcasts to all clients. */
 export interface ServerMessage {
   seq: number;
-  kind: 'op' | 'lock' | 'checkpoint' | 'presence';
+  kind: 'op' | 'lock' | 'unlock' | 'checkpoint' | 'presence';
   op: unknown;
   userId: string;
   timestamp: number;
