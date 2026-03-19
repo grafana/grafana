@@ -992,6 +992,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "playlistsRBAC",
+			Description:  "Enables RBAC for playlists",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
 			Name:         "savedQueriesRBAC",
 			Description:  "Enables Saved queries (query library) RBAC permissions",
 			Stage:        FeatureStagePublicPreview,

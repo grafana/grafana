@@ -45,7 +45,8 @@ export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source
         title: form.dashboard.title,
       };
 
-      const result = await getDashboardAPI('v2').saveDashboard({
+      const api = await getDashboardAPI('v2');
+      const result = await api.saveDashboard({
         ...form,
         dashboard: dashboardWithDataSources,
       });
