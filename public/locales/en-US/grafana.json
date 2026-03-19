@@ -13247,9 +13247,12 @@
         "subtitle": "Use this option if you want to sync and manage your entire Grafana instance through external storage."
       }
     },
+    "orphaned-drawer-notice": {
+      "body": "Save, move, and delete through the Git workflow are not available. Use the warning at the top of the dashboard to release or delete this dashboard if you are an administrator, or contact your Grafana administrator.",
+      "close": "Close",
+      "title": "Provisioning repository no longer exists"
+    },
     "orphaned-resource-banner": {
-      "action-error-title": "Something went wrong",
-      "admin-actions-hint": "As an administrator, use Release to convert this {{resourceLabel}} into a regular {{resourceLabel}} you can edit and save, or Delete to remove it permanently.",
       "confirm-delete-body": "This will permanently delete this {{resourceLabel}}. This action cannot be undone.",
       "confirm-delete-button": "Delete",
       "confirm-delete-title": "Delete this {{resourceLabel}}?",
@@ -13258,8 +13261,7 @@
       "confirm-release-title": "Release from provisioning?",
       "contact-admin": "Contact your Grafana administrator to release or delete this resource.",
       "delete-button": "Delete",
-      "message-alert": "The provisioning repository that managed this resource has been removed. This resource cannot be saved or deleted through the normal provisioning workflow until it is released or removed.",
-      "message-banner": "The provisioning repository that managed this resource has been removed. You can view this resource but cannot save or delete it until it is released from the missing repository or removed.",
+      "message": "The provisioning repository that managed this resource has been removed. You can view this resource but cannot save or delete it until it is released from the missing repository or removed.",
       "release-button": "Release",
       "title": "This {{resourceLabel}} is linked to a repository that no longer exists"
     },

@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { ButtonVariant, ConfirmModal } from '@grafana/ui';
+import { ConfirmModal } from '@grafana/ui';
 
 export type OrphanedResourceModalAction = 'release' | 'delete';
 
@@ -10,7 +10,6 @@ interface Props {
   onDismiss: () => void;
   submitRelease: () => Promise<unknown>;
   submitDelete: () => Promise<unknown>;
-  /** Called after a successful submit so the parent can clear `action`. */
   onSuccess: () => void;
 }
 
@@ -24,23 +23,19 @@ function getModalConfig(action: OrphanedResourceModalAction, resourceLabel: stri
         { resourceLabel }
       ),
       confirmText: t('provisioning.orphaned-resource-banner.confirm-release-button', 'Release'),
-      confirmButtonVariant: 'primary' as ButtonVariant,
     };
   }
 
   return {
-    title: t(
-      'provisioning.orphaned-resource-banner.confirm-delete-title',
-      'Delete this {{resourceLabel}}?',
-      { resourceLabel }
-    ),
+    title: t('provisioning.orphaned-resource-banner.confirm-delete-title', 'Delete this {{resourceLabel}}?', {
+      resourceLabel,
+    }),
     body: t(
       'provisioning.orphaned-resource-banner.confirm-delete-body',
       'This will permanently delete this {{resourceLabel}}. This action cannot be undone.',
       { resourceLabel }
     ),
     confirmText: t('provisioning.orphaned-resource-banner.confirm-delete-button', 'Delete'),
-    confirmButtonVariant: 'destructive' as ButtonVariant,
   };
 }
 
@@ -57,7 +52,7 @@ export function OrphanedResourceActionConfirmModal({
     return null;
   }
 
-  const { title, body, confirmText, confirmButtonVariant } = getModalConfig(action, resourceLabel);
+  const { title, body, confirmText } = getModalConfig(action, resourceLabel);
 
   const handleConfirm = async () => {
     try {
@@ -78,7 +73,6 @@ export function OrphanedResourceActionConfirmModal({
       title={title}
       body={body}
       confirmText={confirmText}
-      confirmButtonVariant={confirmButtonVariant}
       onConfirm={handleConfirm}
       onDismiss={onDismiss}
       disabled={isSubmitting}

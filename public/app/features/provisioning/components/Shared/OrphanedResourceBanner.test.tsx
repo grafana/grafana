@@ -1,8 +1,8 @@
 import { within } from '@testing-library/react';
+import { render, screen } from 'test/test-utils';
 
 import { Job } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
-import { render, screen } from 'test/test-utils';
 
 import { useOrphanedResourceActions } from '../../hooks/useOrphanedResourceActions';
 
@@ -45,11 +45,6 @@ describe('OrphanedResourceBanner', () => {
 
     expect(screen.getByRole('button', { name: 'Release' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /As an administrator, use Release to convert this dashboard into a regular dashboard you can edit and save, or Delete to remove it permanently./
-      )
-    ).toBeInTheDocument();
   });
 
   it('does not show action buttons for non-admins and shows contact-admin copy', () => {
