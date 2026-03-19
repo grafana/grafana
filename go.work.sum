@@ -790,6 +790,7 @@ github.com/grafana/grafana-plugin-sdk-go v0.286.1-0.20260206110612-f4c45260a42a/
 github.com/grafana/grafana-plugin-sdk-go v0.289.0/go.mod h1:1jspyz8OfKcRQMplKxcn0jt4aeXcK6GRz1PdRqLWNnk=
 github.com/grafana/nanogit v0.3.0/go.mod h1:6s6CCTpyMOHPpcUZaLGI+rgBEKdmxVbhqSGgCK13j7Y=
 github.com/grafana/nanogit v0.3.5/go.mod h1:KP5MS9C2G3osIb3tgeJVIz+lFUaashbW1t13CcDClo4=
+github.com/grafana/nanogit v0.7.0/go.mod h1:HeWNMiPczWOezPY/cg2ICdvA3W6ndfvtwqGxVbJrOlY=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260112162805-d29cc9cf7f0f h1:9tRhudagkQO2s61SLFLSziIdCm7XlkfypVKDxpcHokg=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260112162805-d29cc9cf7f0f/go.mod h1:AsVdCBeDFN9QbgpJg+8voDAcgsW0RmNvBd70ecMMdC0=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260224102839-50afbe56d9b4 h1:YTNTeDrHrNwAUZzx1ajKjf/R/wbYIoXvmb8jLdAwKMI=
