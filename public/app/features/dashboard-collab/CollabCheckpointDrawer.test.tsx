@@ -42,12 +42,14 @@ function makeMockDashboard() {
     getRef: jest.fn().mockReturnValue({
       resolve: jest.fn(),
     }),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any;
 }
 
 function renderDrawer(collabValue: CollabContextValue) {
   const dashboard = makeMockDashboard();
   const drawer = new CollabCheckpointDrawer({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     dashboardRef: { resolve: () => dashboard } as any,
   });
 
@@ -123,6 +125,7 @@ describe('CollabCheckpointDrawer', () => {
     const user = userEvent.setup();
     const dashboard = makeMockDashboard();
     const drawer = new CollabCheckpointDrawer({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       dashboardRef: { resolve: () => dashboard } as any,
     });
 

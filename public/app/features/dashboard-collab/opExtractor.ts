@@ -151,8 +151,10 @@ function extractPanelChange(
   }
   if ('fieldConfig' in partialUpdate) {
     spec.vizConfig = {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       ...(spec.vizConfig as Record<string, unknown> | undefined),
       spec: {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         ...((spec.vizConfig as Record<string, unknown> | undefined)?.spec as Record<string, unknown> | undefined),
         fieldConfig: partialUpdate.fieldConfig,
       },
@@ -160,6 +162,7 @@ function extractPanelChange(
   }
   if ('pluginId' in partialUpdate) {
     spec.vizConfig = {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       ...(spec.vizConfig as Record<string, unknown> | undefined),
       group: partialUpdate.pluginId,
     };

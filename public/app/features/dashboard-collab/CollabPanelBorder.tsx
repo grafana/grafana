@@ -74,7 +74,7 @@ export function CollabPanelBorder({ panelId, isEditing: isEditingProp, children 
 
   const holderName = lockHolder?.displayName || 'another user';
 
-  const handleBlockedClick = useCallback((e: React.MouseEvent) => {
+  const handleBlockedClick = useCallback((e: React.MouseEvent | React.KeyboardEvent) => {
     e.stopPropagation();
     e.preventDefault();
     notifyApp.warning(
@@ -100,19 +100,23 @@ export function CollabPanelBorder({ panelId, isEditing: isEditingProp, children 
         isLockedByOther && styles.lockedByOther,
         isLockedBySelf && styles.lockedBySelf
       )}
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       style={borderColor ? { '--collab-border-color': borderColor } as React.CSSProperties : undefined}
       data-testid="collab-panel-border"
     >
       {isLockedByOther && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
         <div
           className={styles.blockOverlay}
           onClick={handleBlockedClick}
+          onKeyDown={handleBlockedClick}
           onDoubleClick={handleBlockedClick}
-          title={`Being edited by ${holderName}`}
+          role="presentation"
+          title={t('dashboard-collab.panel-border.being-edited-by', 'Being edited by {{name}}', { name: holderName })}
         />
       )}
       {isLockedByOther && lockHolder && (
-        <Tooltip content={`Being edited by ${lockHolder.displayName}`} placement="top">
+        <Tooltip content={t('dashboard-collab.panel-border.tooltip-being-edited-by', 'Being edited by {{name}}', { name: lockHolder.displayName })} placement="top">
           <div className={styles.badge} style={{ backgroundColor: lockHolder.color || '#FF0000' }}>
             {lockHolder.avatarUrl ? (
               <img src={lockHolder.avatarUrl} alt={lockHolder.displayName} className={styles.avatar} />
@@ -178,6 +182,7 @@ function getStyles(theme: GrafanaTheme2) {
       outline: `4px solid #FF0000`,
       outlineOffset: '0px',
       zIndex: 10,
+      // eslint-disable-next-line @grafana/no-unreduced-motion
       transition: 'outline-color 200ms ease-in-out',
     }),
     lockedBySelf: css({
@@ -195,7 +200,7 @@ function getStyles(theme: GrafanaTheme2) {
       right: -8,
       width: 24,
       height: 24,
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -207,7 +212,7 @@ function getStyles(theme: GrafanaTheme2) {
     avatar: css({
       width: '100%',
       height: '100%',
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
       objectFit: 'cover',
     }),
     avatarInitial: css({

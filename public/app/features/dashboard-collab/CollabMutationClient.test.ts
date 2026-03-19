@@ -108,6 +108,7 @@ describe('CollabMutationClient', () => {
     });
 
     const msg = publishOp.mock.calls[0][0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((msg.op as any).mutation.type).toBe('UPDATE_PANEL');
   });
 
@@ -118,6 +119,7 @@ describe('CollabMutationClient', () => {
     });
 
     const msg = publishOp.mock.calls[0][0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((msg.op as any).lockTarget).toBe('__dashboard__');
   });
 
@@ -128,6 +130,7 @@ describe('CollabMutationClient', () => {
     });
 
     const msg = publishOp.mock.calls[0][0];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((msg.op as any).lockTarget).toBe('');
   });
 

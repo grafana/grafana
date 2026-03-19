@@ -87,6 +87,7 @@ export function CollabCursorOverlay() {
   const sendCursorRef = useRef(sendCursor);
   sendCursorRef.current = sendCursor;
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- throttle returns a stable wrapper; inner fn uses refs
   const handleMouseMove = useCallback(
     throttle((e: MouseEvent) => {
       if (!containerRef.current) {
@@ -181,6 +182,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     cursor: css({
       position: 'absolute',
+      // eslint-disable-next-line @grafana/no-unreduced-motion
       transition: 'left 100ms linear, top 100ms linear',
       willChange: 'left, top',
       pointerEvents: 'none',
@@ -199,6 +201,7 @@ function getStyles(theme: GrafanaTheme2) {
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
       whiteSpace: 'nowrap',
+      // eslint-disable-next-line @grafana/no-unreduced-motion
       transition: 'opacity 300ms ease-out',
       pointerEvents: 'none',
     }),

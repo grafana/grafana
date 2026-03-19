@@ -5,6 +5,7 @@ import { MutationRequest } from './protocol/messages';
  * Returns empty string if no lock is required (e.g., ADD_PANEL).
  */
 export function getLockTarget(mutation: MutationRequest): string {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const payload = mutation.payload as Record<string, unknown>;
 
   switch (mutation.type) {
@@ -12,7 +13,9 @@ export function getLockTarget(mutation: MutationRequest): string {
     case 'UPDATE_PANEL':
     case 'REMOVE_PANEL':
     case 'MOVE_PANEL': {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       const element = payload?.element as Record<string, unknown> | undefined;
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return (element?.name as string) ?? '';
     }
 

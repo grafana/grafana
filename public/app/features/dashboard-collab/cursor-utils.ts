@@ -3,6 +3,7 @@
  */
 
 /** Throttle a function to fire at most once per `ms` milliseconds. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function throttle<T extends (...args: any[]) => void>(fn: T, ms: number): T {
   let lastCall = 0;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -27,6 +28,7 @@ export function throttle<T extends (...args: any[]) => void>(fn: T, ms: number):
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return throttled as unknown as T;
 }
 

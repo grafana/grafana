@@ -69,6 +69,7 @@ function CollabCheckpointDrawerComponent({ model }: SceneComponentProps<CollabCh
     >
       <Stack gap={2} direction="column">
         <Field
+          noMargin
           label={t('dashboard-collab.checkpoint.version-name-label', 'Version name')}
           description={t(
             'dashboard-collab.checkpoint.version-name-description',

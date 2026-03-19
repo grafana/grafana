@@ -11,6 +11,7 @@ import { css, cx } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import type { CollabUser } from './CollabContext';
@@ -50,7 +51,7 @@ export function CollabPresenceBar({ saveStatus = 'saved', onRetrySave }: CollabP
           <UserAvatar key={user.userId} user={user} />
         ))}
         {overflowCount > 0 && (
-          <Tooltip content={`${overflowCount} more user${overflowCount > 1 ? 's' : ''}`}>
+          <Tooltip content={t('dashboard-collab.presence-bar.overflow', '{{count}} more user(s)', { count: overflowCount })}>
             <div className={styles.overflow}>+{overflowCount}</div>
           </Tooltip>
         )}
@@ -100,10 +101,10 @@ function SaveStatusIndicator({ status, onRetry }: SaveStatusIndicatorProps) {
   const styles = useStyles2(getStyles);
 
   const statusConfig: Record<SaveStatus, { label: string; className: string }> = {
-    saved: { label: 'Saved', className: styles.statusSaved },
-    saving: { label: 'Saving...', className: styles.statusSaving },
-    edited: { label: 'Edited', className: styles.statusEdited },
-    failed: { label: 'Save failed', className: styles.statusFailed },
+    saved: { label: t('dashboard-collab.save-status.saved', 'Saved'), className: styles.statusSaved },
+    saving: { label: t('dashboard-collab.save-status.saving', 'Saving...'), className: styles.statusSaving },
+    edited: { label: t('dashboard-collab.save-status.edited', 'Edited'), className: styles.statusEdited },
+    failed: { label: t('dashboard-collab.save-status.failed', 'Save failed'), className: styles.statusFailed },
   };
 
   const { label, className } = statusConfig[status];
@@ -114,7 +115,7 @@ function SaveStatusIndicator({ status, onRetry }: SaveStatusIndicatorProps) {
       <span>{label}</span>
       {status === 'failed' && onRetry && (
         <button className={styles.retryButton} onClick={onRetry} type="button">
-          Retry
+          <Trans i18nKey="dashboard-collab.save-status.retry">Retry</Trans>
         </button>
       )}
     </div>
@@ -148,7 +149,7 @@ function getStyles(theme: GrafanaTheme2) {
     avatar: css({
       width: 28,
       height: 28,
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
       border: '2px solid',
       overflow: 'hidden',
       display: 'flex',
@@ -162,7 +163,7 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       height: '100%',
       objectFit: 'cover',
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
     }),
     initials: css({
       width: '100%',
@@ -173,12 +174,12 @@ function getStyles(theme: GrafanaTheme2) {
       color: theme.colors.text.maxContrast,
       fontSize: theme.typography.size.xs,
       fontWeight: theme.typography.fontWeightBold,
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
     }),
     overflow: css({
       width: 28,
       height: 28,
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
       border: `2px solid ${theme.colors.border.medium}`,
       display: 'flex',
       alignItems: 'center',
@@ -200,7 +201,7 @@ function getStyles(theme: GrafanaTheme2) {
     statusDot: css({
       width: 8,
       height: 8,
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
       flexShrink: 0,
     }),
     statusSaved: css({

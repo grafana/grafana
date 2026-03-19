@@ -251,6 +251,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     }
 
     // Edge case #5: enable throttle for large dashboards
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
     setLargeDashboardMode(scene as any);
 
     // Suppress op sending for 3 seconds after mount to let the scene settle.
@@ -301,11 +302,13 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     if (!enabled || !opsAddress) {
       return;
     }
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
     const editPane = (scene.state as any).editPane;
     if (!editPane || typeof editPane.subscribeToState !== 'function') {
       return;
     }
     let prevHasSelection = false;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sub = editPane.subscribeToState((state: any) => {
       const hasSelection = !!state.selection;
       if (prevHasSelection && !hasSelection && activePanelsRef.current.size > 0) {
@@ -356,6 +359,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
               setConnected(true);
               // Parse initial session info from subscribe data
               if (event.message) {
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 const info = event.message as SessionInfo;
                 const sessionUsers = info.users ?? [];
                 const sessionLocks = info.locks ?? {};
@@ -381,6 +385,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
 
             if (msg.kind === 'op' && clientRef.current) {
               // Read userId from the op payload (server wrapping doesn't reach us via Centrifuge)
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
               const opPayload = msg.op as { lockTarget?: string; userId?: string; mutation?: unknown } | undefined;
               const opUserId = opPayload?.userId ?? msg.userId;
               const lockTarget = opPayload?.lockTarget;
@@ -406,8 +411,10 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
                 const timerKey = `${lockTarget}:${opUserId}`;
                 const prevTimer = lockTimestampsRef.current.get(timerKey);
                 if (prevTimer) {
+                  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                   clearTimeout(prevTimer as unknown as number);
                 }
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 lockTimestampsRef.current.set(timerKey, clearTimer as unknown as number);
               }
 
@@ -418,6 +425,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
 
             // Handle unlock messages — immediately clear border for that panel
             if (msg.kind === 'unlock') {
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
               const unlockPayload = msg.op as { target?: string; userId?: string } | undefined;
               const unlockTarget = unlockPayload?.target;
               const unlockUserId = unlockPayload?.userId;
@@ -428,6 +436,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
                 const timerKey = `${unlockTarget}:${unlockUserId}`;
                 const prevTimer = lockTimestampsRef.current.get(timerKey);
                 if (prevTimer) {
+                  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                   clearTimeout(prevTimer as unknown as number);
                   lockTimestampsRef.current.delete(timerKey);
                 }
@@ -441,6 +450,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
 
             if (msg.kind === 'presence') {
               // Presence events update user list — server sends full user list on presence changes
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
               const presenceUsers = msg.op as CollabUser[] | null;
               if (Array.isArray(presenceUsers)) {
                 debugLog('Presence update', { userCount: presenceUsers.length, users: presenceUsers.map((u) => u.displayName) });
@@ -479,6 +489,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     );
 
     return () => sub.unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- dashboardUID and notifyApp are stable refs; adding them causes reconnect loops
   }, [opsAddress]);
 
   // Subscribe to cursors channel

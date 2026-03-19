@@ -18,9 +18,12 @@ function makeEvent(
   newState: Record<string, unknown> = {}
 ): SceneObjectStateChangedEvent {
   return new SceneObjectStateChangedEvent({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     changedObject: changedObject as any,
     partialUpdate,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     prevState: prevState as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     newState: newState as any,
   });
 }
@@ -39,6 +42,7 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('UPDATE_PANEL');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload = result!.mutation.payload as any;
       expect(payload.element).toEqual({ kind: 'ElementReference', name: 'panel-1' });
       expect(payload.panel.spec.title).toBe('New Title');
@@ -53,6 +57,7 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('UPDATE_PANEL');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload = result!.mutation.payload as any;
       expect(payload.element).toEqual({ kind: 'ElementReference', name: 'panel-2' });
       expect(payload.panel.spec.description).toBe('Updated description');
@@ -79,6 +84,7 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('MOVE_PANEL');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const payload = result!.mutation.payload as any;
       expect(payload.element).toEqual({ kind: 'ElementReference', name: 'panel-1' });
       expect(payload.layoutItem.spec.x).toBe(10);
@@ -118,6 +124,7 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('UPDATE_DASHBOARD_INFO');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result!.mutation.payload as any).title).toBe('New Dashboard Title');
       expect(result!.lockTarget).toBe('__dashboard__');
     });
@@ -130,6 +137,7 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('UPDATE_DASHBOARD_INFO');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result!.mutation.payload as any).tags).toEqual(['prod', 'monitoring']);
     });
 
@@ -141,6 +149,7 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('UPDATE_DASHBOARD_INFO');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((result!.mutation.payload as any).description).toBe('Updated');
     });
 

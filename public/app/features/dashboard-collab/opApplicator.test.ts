@@ -48,6 +48,7 @@ describe('opApplicator', () => {
     const client = makeMutationClient();
     const msg = makeServerMessage();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await applyRemoteOp(msg, client as any, 'local-user');
 
     expect(result.applied).toBe(true);
@@ -69,6 +70,7 @@ describe('opApplicator', () => {
     const msg = makeServerMessage();
 
     expect(isExtractionSuppressed()).toBe(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await applyRemoteOp(msg, client as any, 'local-user');
     expect(isExtractionSuppressed()).toBe(false);
   });
@@ -80,6 +82,7 @@ describe('opApplicator', () => {
 
     const msg = makeServerMessage();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await expect(applyRemoteOp(msg, client as any, 'local-user')).rejects.toThrow('boom');
     expect(isExtractionSuppressed()).toBe(false);
   });
@@ -88,6 +91,7 @@ describe('opApplicator', () => {
     const client = makeMutationClient();
     const msg = makeServerMessage({ userId: 'local-user' });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await applyRemoteOp(msg, client as any, 'local-user');
 
     expect(result.applied).toBe(false);
@@ -99,7 +103,8 @@ describe('opApplicator', () => {
 
     for (const kind of ['lock', 'checkpoint', 'presence'] as const) {
       const msg = makeServerMessage({ kind });
-      const result = await applyRemoteOp(msg, client as any, 'local-user');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result = await applyRemoteOp(msg, client as any, 'local-user');
       expect(result.applied).toBe(false);
     }
 
@@ -110,6 +115,7 @@ describe('opApplicator', () => {
     const client = makeMutationClient();
     const msg = makeServerMessage({ op: {} });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await applyRemoteOp(msg, client as any, 'local-user');
 
     expect(result.applied).toBe(false);
@@ -119,8 +125,10 @@ describe('opApplicator', () => {
 
   it('returns error when op is null', async () => {
     const client = makeMutationClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const msg = makeServerMessage({ op: null as any });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await applyRemoteOp(msg, client as any, 'local-user');
 
     expect(result.applied).toBe(false);
@@ -136,6 +144,7 @@ describe('opApplicator', () => {
     };
     const msg = makeServerMessage({ op: collabOp });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await applyRemoteOp(msg, client as any, 'local-user');
 
     expect(result.applied).toBe(false);
@@ -156,6 +165,7 @@ describe('opApplicator', () => {
     });
 
     const msg = makeServerMessage();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await applyRemoteOp(msg, client as any, 'local-user');
 
     expect(result.applied).toBe(false);
@@ -173,6 +183,7 @@ describe('opApplicator', () => {
     };
     const msg = makeServerMessage({ op: collabOp });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await applyRemoteOp(msg, client as any, 'local-user');
 
     expect(result.applied).toBe(true);

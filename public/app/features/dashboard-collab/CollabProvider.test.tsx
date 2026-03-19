@@ -62,6 +62,7 @@ jest.mock('app/core/copy/appNotification', () => ({
   }),
 }));
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeMockMutationClient(): any {
   return {
     execute: jest.fn().mockResolvedValue({ success: true, changes: [] }),
@@ -69,6 +70,7 @@ function makeMockMutationClient(): any {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeMockScene(): any {
   return {
     state: {
@@ -84,6 +86,7 @@ function makeMockScene(): any {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeWrapper(scene: any) {
   return ({ children }: PropsWithChildren) => (
     <CollabProvider scene={scene} dashboardUID="test-uid" namespace="default">
