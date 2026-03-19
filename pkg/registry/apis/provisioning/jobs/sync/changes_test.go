@@ -24,7 +24,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Empty(t, changes)
 	})
@@ -35,7 +35,7 @@ func TestChanges(t *testing.T) {
 		}
 		target := &provisioning.ResourceList{}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, ResourceFileChange{
@@ -50,7 +50,7 @@ func TestChanges(t *testing.T) {
 				{Path: "", Resource: "dashboard", Group: "dashboard.grafana.app"},
 			},
 		}
-		_, err := Changes(context.Background(), source, target)
+		_, err := Changes(context.Background(), source, target, true)
 		require.EqualError(t, err, "empty path on a non folder")
 	})
 
@@ -62,7 +62,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Empty(t, changes)
 	})
@@ -74,7 +74,7 @@ func TestChanges(t *testing.T) {
 		}
 
 		target := &provisioning.ResourceList{}
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Len(t, changes, 2)
 
@@ -100,7 +100,7 @@ func TestChanges(t *testing.T) {
 				{Path: "other/", Resource: "folders"},
 			},
 		}
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Empty(t, changes)
 	})
@@ -117,7 +117,7 @@ func TestChanges(t *testing.T) {
 				{Path: "alsocommon/", Resource: "folders"},
 			},
 		}
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, ResourceFileChange{
@@ -140,7 +140,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, ResourceFileChange{
@@ -171,7 +171,7 @@ func TestChanges(t *testing.T) {
 				{Path: "short/file.yml"},
 			},
 		}
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 
 		order := make([]string, len(changes))
@@ -203,7 +203,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Len(t, changes, 1)
 		require.Equal(t, ResourceFileChange{
@@ -228,7 +228,7 @@ func TestChanges(t *testing.T) {
 				{Path: "folder/", Resource: "folders"},
 			},
 		}
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Empty(t, changes, "folder should be kept when it contains hidden files")
 	})
@@ -242,7 +242,7 @@ func TestChanges(t *testing.T) {
 				{Path: "folder/", Resource: "folders"},
 			},
 		}
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Empty(t, changes, "folder should be kept when it contains invalid hidden paths")
 	})
@@ -256,7 +256,7 @@ func TestChanges(t *testing.T) {
 				{Path: "folder/", Resource: "folders"},
 			},
 		}
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Empty(t, changes, "folder should be kept when it contains hidden folders")
 	})
@@ -270,7 +270,7 @@ func TestChanges(t *testing.T) {
 				{Path: "folder/", Resource: "folders"},
 			},
 		}
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Empty(t, changes, "hidden file should not be unhidden")
 	})
@@ -285,7 +285,7 @@ func TestChanges(t *testing.T) {
 				Path:   "one/two/",
 			},
 		}
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Equal(t, expected, changes)
 	})
@@ -300,7 +300,7 @@ func TestChanges(t *testing.T) {
 				Path:   "one/two/",
 			},
 		}
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Equal(t, expected, changes)
 	})
@@ -310,7 +310,7 @@ func TestChanges(t *testing.T) {
 		}
 
 		target := &provisioning.ResourceList{}
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Empty(t, changes)
 	})
@@ -334,7 +334,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Equal(t, expected, changes, "Expected diff to correctly include nested folder contents")
 	})
@@ -349,7 +349,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "empty path on a non folder")
 		require.Nil(t, changes)
@@ -372,7 +372,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Len(t, changes, 2)
 		require.Equal(t, "root/folder1/subfolder/", changes[0].Path)
@@ -395,7 +395,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Empty(t, changes, "Should handle folder paths with and without trailing slash")
 	})
@@ -410,7 +410,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Len(t, changes, 3)
 
@@ -432,7 +432,7 @@ func TestChanges(t *testing.T) {
 		}
 		target := &provisioning.ResourceList{}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		require.Len(t, changes, 3) // Only non-blob entries should create changes
 
@@ -460,7 +460,7 @@ func TestChanges(t *testing.T) {
 		}
 		target := &provisioning.ResourceList{}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		// Only the folder and the dashboard — _folder.json must not appear
 		require.Len(t, changes, 2)
@@ -485,7 +485,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 
 		var folderUpdates []ResourceFileChange
@@ -509,7 +509,7 @@ func TestChanges(t *testing.T) {
 			},
 		}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 
 		for _, c := range changes {
@@ -526,7 +526,7 @@ func TestChanges(t *testing.T) {
 		}
 		target := &provisioning.ResourceList{}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 
 		for _, c := range changes {
@@ -545,7 +545,7 @@ func TestChanges(t *testing.T) {
 		}
 		target := &provisioning.ResourceList{}
 
-		changes, err := Changes(context.Background(), source, target)
+		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 		// 2 folders and 1 file, so 3 changes in total
 		require.Len(t, changes, 3)
@@ -564,6 +564,171 @@ func TestChanges(t *testing.T) {
 			Action: repository.FileActionCreated,
 			Path:   "folder2/",
 		}, changes[2])
+	})
+}
+
+func TestChanges_FolderMetadataFlagDisabled(t *testing.T) {
+	t.Run("_folder.json treated as normal resource when flag off", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Hash: "abc", Blob: false},
+			{Path: "my-folder/_folder.json", Hash: "def", Blob: true},
+			{Path: "my-folder/dashboard.json", Hash: "ghi", Blob: true},
+		}
+		target := &provisioning.ResourceList{}
+
+		changes, err := Changes(context.Background(), source, target, false)
+		require.NoError(t, err)
+
+		// With flag off, _folder.json is NOT intercepted as metadata —
+		// it passes through as a normal created resource.
+		paths := make([]string, len(changes))
+		for i, c := range changes {
+			paths[i] = c.Path
+		}
+		require.Contains(t, paths, "my-folder/_folder.json",
+			"_folder.json should be treated as a normal resource when flag is off")
+	})
+
+	t.Run("_folder.json hash change does not emit folder update when flag off", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Hash: "abc", Blob: false},
+			{Path: "my-folder/_folder.json", Hash: "new-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "folder-uid"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, false)
+		require.NoError(t, err)
+
+		// With flag off, no folder update should be emitted from metadata hash comparison.
+		for _, c := range changes {
+			if c.Path == "my-folder/" && c.Action == repository.FileActionUpdated {
+				t.Fatal("folder update should not be emitted when flag is off")
+			}
+		}
+	})
+}
+
+func TestCompare(t *testing.T) {
+	tests := []struct {
+		name            string
+		setupMocks      func(*repository.MockRepository, *resources.MockRepositoryResources)
+		expectedError   string
+		expectedChanges []ResourceFileChange
+		expectedMissing []string
+		description     string
+	}{
+		{
+			name:        "error listing current resources",
+			description: "Should return error when listing current resources fails",
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
+				repoResources.On("List", mock.Anything).Return(nil, fmt.Errorf("listing failed"))
+			},
+			expectedError: "error listing current: listing failed",
+		},
+		{
+			name:        "error reading tree",
+			description: "Should return error when reading tree fails",
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
+				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
+				repo.On("ReadTree", mock.Anything, "current-ref").Return(nil, fmt.Errorf("read tree failed"))
+			},
+			expectedError: "error reading tree: read tree failed",
+		},
+		{
+			name:        "no changes between source and target",
+			description: "Should return empty changes when source and target are identical",
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
+				target := &provisioning.ResourceList{
+					Items: []provisioning.ResourceListItem{
+						{Path: "dashboard.json", Hash: "xyz"},
+					},
+				}
+				source := []repository.FileTreeEntry{
+					{Path: "dashboard.json", Hash: "xyz", Blob: true},
+				}
+
+				repoResources.On("List", mock.Anything).Return(target, nil)
+				repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
+			},
+			expectedChanges: []ResourceFileChange{},
+		},
+		{
+			name:        "compare function error",
+			description: "Should return error when comparing fails",
+			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
+				target := &provisioning.ResourceList{
+					Items: []provisioning.ResourceListItem{
+						// Empty path to trigger error
+						{Path: "", Hash: "xyz", Resource: "dashboard", Group: "dashboard.grafana.app"},
+					},
+				}
+				source := []repository.FileTreeEntry{
+					{Path: "dashboard.json", Hash: "xyz", Blob: true},
+				}
+				repoResources.On("List", mock.Anything).Return(target, nil)
+				repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
+			},
+			expectedError: "calculate changes: empty path on a non folder",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockRepository(t)
+			repoResources := resources.NewMockRepositoryResources(t)
+
+			tt.setupMocks(repo, repoResources)
+
+			changes, missing, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
+
+			if tt.expectedError != "" {
+				require.EqualError(t, err, tt.expectedError, tt.description)
+				require.Nil(t, changes)
+				require.Nil(t, missing)
+			} else {
+				require.NoError(t, err, tt.description)
+				require.Equal(t, tt.expectedChanges, changes, tt.description)
+				require.Equal(t, tt.expectedMissing, missing, tt.description)
+			}
+		})
+	}
+}
+
+func TestCompare_FolderMetadataFlagDisabled(t *testing.T) {
+	t.Run("augmentChangesForUIDChanges skipped when flag off", func(t *testing.T) {
+		repo := repository.NewMockRepository(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Hash: "abc", Blob: false},
+			{Path: "my-folder/_folder.json", Hash: "new-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "old-uid"},
+			},
+		}
+
+		repoResources.On("List", mock.Anything).Return(target, nil)
+		repoResources.On("SetTree", mock.Anything).Return()
+		repo.On("ReadTree", mock.Anything, "ref").Return(source, nil)
+		// NOT mocking repo.Read — if augmentChangesForUIDChanges ran,
+		// it would call ReadFolderMetadata which calls repo.Read, and
+		// the mock would panic on unexpected call.
+
+		changes, _, err := Compare(context.Background(), repo, repoResources, "ref", false)
+		require.NoError(t, err)
+
+		// No folder update should be emitted — the metadata processing is skipped.
+		for _, c := range changes {
+			if c.Path == "my-folder/" && c.Action == repository.FileActionUpdated {
+				t.Fatal("folder update should not be emitted when flag is off")
+			}
+		}
 	})
 }
 
@@ -755,90 +920,4 @@ func TestAugmentChangesForUIDChanges(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, changes, result, "should return changes unchanged")
 	})
-}
-
-func TestCompare(t *testing.T) {
-	tests := []struct {
-		name            string
-		setupMocks      func(*repository.MockRepository, *resources.MockRepositoryResources)
-		expectedError   string
-		expectedChanges []ResourceFileChange
-		expectedMissing []string
-		description     string
-	}{
-		{
-			name:        "error listing current resources",
-			description: "Should return error when listing current resources fails",
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
-				repoResources.On("List", mock.Anything).Return(nil, fmt.Errorf("listing failed"))
-			},
-			expectedError: "error listing current: listing failed",
-		},
-		{
-			name:        "error reading tree",
-			description: "Should return error when reading tree fails",
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
-				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
-				repo.On("ReadTree", mock.Anything, "current-ref").Return(nil, fmt.Errorf("read tree failed"))
-			},
-			expectedError: "error reading tree: read tree failed",
-		},
-		{
-			name:        "no changes between source and target",
-			description: "Should return empty changes when source and target are identical",
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
-				target := &provisioning.ResourceList{
-					Items: []provisioning.ResourceListItem{
-						{Path: "dashboard.json", Hash: "xyz"},
-					},
-				}
-				source := []repository.FileTreeEntry{
-					{Path: "dashboard.json", Hash: "xyz", Blob: true},
-				}
-
-				repoResources.On("List", mock.Anything).Return(target, nil)
-				repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
-			},
-			expectedChanges: []ResourceFileChange{},
-		},
-		{
-			name:        "compare function error",
-			description: "Should return error when comparing fails",
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources) {
-				target := &provisioning.ResourceList{
-					Items: []provisioning.ResourceListItem{
-						// Empty path to trigger error
-						{Path: "", Hash: "xyz", Resource: "dashboard", Group: "dashboard.grafana.app"},
-					},
-				}
-				source := []repository.FileTreeEntry{
-					{Path: "dashboard.json", Hash: "xyz", Blob: true},
-				}
-				repoResources.On("List", mock.Anything).Return(target, nil)
-				repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
-			},
-			expectedError: "calculate changes: empty path on a non folder",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			repo := repository.NewMockRepository(t)
-			repoResources := resources.NewMockRepositoryResources(t)
-
-			tt.setupMocks(repo, repoResources)
-
-			changes, missing, err := Compare(context.Background(), repo, repoResources, "current-ref")
-
-			if tt.expectedError != "" {
-				require.EqualError(t, err, tt.expectedError, tt.description)
-				require.Nil(t, changes)
-				require.Nil(t, missing)
-			} else {
-				require.NoError(t, err, tt.description)
-				require.Equal(t, tt.expectedChanges, changes, tt.description)
-				require.Equal(t, tt.expectedMissing, missing, tt.description)
-			}
-		})
-	}
 }

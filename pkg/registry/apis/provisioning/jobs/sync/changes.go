@@ -37,7 +37,13 @@ func (c *ResourceFileChange) IsUpdatedFolder() bool {
 // Compare reads the repository tree at ref, lists the current Grafana resources,
 // and delegates to Changes to produce the diff. It also returns the list of
 // folder paths that are missing a _folder.json metadata file.
-func Compare(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, []string, error) {
+func Compare(
+	ctx context.Context,
+	repo repository.Reader,
+	repositoryResources resources.RepositoryResources,
+	ref string,
+	folderMetadataEnabled bool,
+) ([]ResourceFileChange, []string, error) {
 	target, err := repositoryResources.List(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error listing current: %w", err)
@@ -48,14 +54,16 @@ func Compare(ctx context.Context, repo repository.Reader, repositoryResources re
 		return nil, nil, fmt.Errorf("error reading tree: %w", err)
 	}
 
-	changes, err := Changes(ctx, source, target)
+	changes, err := Changes(ctx, source, target, folderMetadataEnabled)
 	if err != nil {
 		return nil, nil, fmt.Errorf("calculate changes: %w", err)
 	}
 
-	changes, err = augmentChangesForUIDChanges(ctx, repo, ref, source, target, changes)
-	if err != nil {
-		return nil, nil, fmt.Errorf("augment changes for UID changes: %w", err)
+	if folderMetadataEnabled {
+		changes, err = augmentChangesForUIDChanges(ctx, repo, ref, source, target, changes)
+		if err != nil {
+			return nil, nil, fmt.Errorf("augment changes for UID changes: %w", err)
+		}
 	}
 
 	if len(changes) > 0 {
@@ -72,7 +80,12 @@ func Compare(ctx context.Context, repo repository.Reader, repositoryResources re
 // Changes computes the diff between a repository source tree and the current Grafana state (target).
 //
 //nolint:gocyclo
-func Changes(ctx context.Context, source []repository.FileTreeEntry, target *provisioning.ResourceList) ([]ResourceFileChange, error) {
+func Changes(
+	ctx context.Context,
+	source []repository.FileTreeEntry,
+	target *provisioning.ResourceList,
+	folderMetadataEnabled bool,
+) ([]ResourceFileChange, error) {
 	logger := logging.FromContext(ctx)
 	lookup := make(map[string]*provisioning.ResourceListItem, len(target.Items))
 	for _, item := range target.Items {
@@ -125,7 +138,7 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 			// The folder metadata file is not a resource itself.
 			// For new folders the parent directory creation handles it;
 			// for existing folders we compare hashes to detect metadata changes.
-			if resources.IsFolderMetadataFile(file.Path) {
+			if folderMetadataEnabled && resources.IsFolderMetadataFile(file.Path) {
 				logger.Debug("processing folder metadata file", "path", file.Path)
 				if err := keep.Add(file.Path); err != nil {
 					return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
@@ -217,18 +230,6 @@ func augmentChangesForUIDChanges(
 	target *provisioning.ResourceList,
 	changes []ResourceFileChange,
 ) ([]ResourceFileChange, error) {
-	// Early return if no folder has metadata — nothing to augment.
-	hasMetadata := false
-	for _, item := range target.Items {
-		if item.Group == resources.FolderResource.Group && item.Hash != "" {
-			hasMetadata = true
-			break
-		}
-	}
-	if !hasMetadata {
-		return changes, nil
-	}
-
 	// 1. Find affected folders: folder updates where UID actually changed.
 	// Also annotate the folder change with OldFolderUID for deferred cleanup.
 	affectedFolders := make(map[string]bool)

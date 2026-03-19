@@ -64,7 +64,7 @@ func FullSync(
 	var changes []ResourceFileChange
 	var missingFolderMetadata []string
 	err := instrumentedFullSyncPhase(jobs.FullSyncPhaseCompare, func() (err error) {
-		changes, missingFolderMetadata, err = compare(compareCtx, repo, repositoryResources, currentRef)
+		changes, missingFolderMetadata, err = compare(compareCtx, repo, repositoryResources, currentRef, folderMetadataEnabled)
 		return
 	}, metrics)
 	compareSpan.End()
