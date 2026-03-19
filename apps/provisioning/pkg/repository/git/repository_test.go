@@ -3564,11 +3564,77 @@ func TestGitRepository_CompareFiles_Renamed(t *testing.T) {
 			wantChanges: []repository.VersionedFileChange{},
 		},
 		{
-			name: "tree entry rename is skipped",
+			name: "tree entry rename decomposes into delete + create",
 			files: []nanogit.CommitFile{
 				{
 					Path:    "configs/new-dir",
 					OldPath: "configs/old-dir",
+					Status:  protocol.FileStatusRenamed,
+					Mode:    0o40000,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:       repository.FileActionDeleted,
+					Path:         "old-dir",
+					PreviousPath: "old-dir",
+					Ref:          "feature",
+					PreviousRef:  "main",
+				},
+				{
+					Action: repository.FileActionCreated,
+					Path:   "new-dir",
+					Ref:    "feature",
+				},
+			},
+		},
+		{
+			name: "tree entry rename from outside to inside emits only create",
+			files: []nanogit.CommitFile{
+				{
+					Path:    "configs/new-dir",
+					OldPath: "other/old-dir",
+					Status:  protocol.FileStatusRenamed,
+					Mode:    0o40000,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "new-dir",
+					Ref:    "feature",
+				},
+			},
+		},
+		{
+			name: "tree entry rename from inside to outside emits only delete",
+			files: []nanogit.CommitFile{
+				{
+					Path:    "other/new-dir",
+					OldPath: "configs/old-dir",
+					Status:  protocol.FileStatusRenamed,
+					Mode:    0o40000,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:       repository.FileActionDeleted,
+					Path:         "old-dir",
+					PreviousPath: "old-dir",
+					Ref:          "feature",
+					PreviousRef:  "main",
+				},
+			},
+		},
+		{
+			name: "tree entry rename both outside is skipped",
+			files: []nanogit.CommitFile{
+				{
+					Path:    "other/new-dir",
+					OldPath: "other/old-dir",
 					Status:  protocol.FileStatusRenamed,
 					Mode:    0o40000,
 				},
