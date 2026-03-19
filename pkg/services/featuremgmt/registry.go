@@ -2418,10 +2418,10 @@ var (
 		{
 			Name:         "multiPropsVariables",
 			Description:  "Enables support for variables whose values can have multiple properties",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardSectionVariables",
