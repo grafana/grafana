@@ -45,6 +45,10 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	// Removing a manager: the caller must be authorized for the *old* manager.
 	if !hasNew && hasOld {
 		if err := enforceManagerProperties(auth, old); err != nil {
+			if requester, ok := auth.(identity.Requester); ok &&
+				(requester.GetIsGrafanaAdmin() || requester.HasRole(identity.RoleAdmin)) {
+				return nil
+			}
 			return &apierrors.StatusError{ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    http.StatusForbidden,
@@ -114,10 +118,7 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		if auth.GetUID() == "access-policy:provisioning" || slices.Contains(auth.GetAudience(), provisioning.GROUP) {
 			return nil // OK!
 		}
-		if requester, ok := auth.(identity.Requester); ok &&
-			(requester.GetIsGrafanaAdmin() || requester.HasRole(identity.RoleAdmin)) {
-			return nil
-		}
+		// This can fallback to writing the value with a provisioning client
 		return errResourceIsManagedInRepository
 
 	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP: // nolint:staticcheck

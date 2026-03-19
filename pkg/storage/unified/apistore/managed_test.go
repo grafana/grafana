@@ -28,12 +28,11 @@ func TestManagedAuthorizer(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		name   string
-		auth   authtypes.AuthInfo
-		obj    runtime.Object
-		old    runtime.Object
-		delete bool
-		err    string
+		name string
+		auth authtypes.AuthInfo
+		obj  runtime.Object
+		old  runtime.Object
+		err  string
 	}{
 		{
 			name: "user can create",
@@ -249,19 +248,6 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
-			name:   "server admin can delete repo-managed resource",
-			auth:   serverAdmin,
-			delete: true,
-			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "my-repo",
-					},
-				},
-			},
-		},
-		{
 			name: "org admin can release repo-managed dashboard",
 			auth: orgAdmin,
 			obj: &dashboard.Dashboard{
@@ -272,19 +258,6 @@ func TestManagedAuthorizer(t *testing.T) {
 			old: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "my-repo",
-					},
-				},
-			},
-		},
-		{
-			name:   "org admin can delete repo-managed resource",
-			auth:   orgAdmin,
-			delete: true,
-			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
 						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
 						utils.AnnoKeyManagerIdentity: "my-repo",
@@ -318,12 +291,9 @@ func TestManagedAuthorizer(t *testing.T) {
 			obj, err := utils.MetaAccessor(tt.obj)
 			require.NoError(t, err)
 
-			switch {
-			case tt.delete:
-				err = checkManagerPropertiesOnDelete(tt.auth, obj)
-			case tt.old == nil:
+			if tt.old == nil {
 				err = checkManagerPropertiesOnCreate(tt.auth, obj)
-			default:
+			} else {
 				old, _ := utils.MetaAccessor(tt.old)
 				err = checkManagerPropertiesOnUpdateSpec(tt.auth, obj, old)
 			}
