@@ -364,7 +364,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataTitle(t *testing.T) {
 			Target: "folder",
 			Copies: map[string]string{
 				// Folder has no _folder.json — title defaults to directory name.
-				"testdata/all-panels.json": "old-name/dashboard.json",
+				"../testdata/all-panels.json": "old-name/dashboard.json",
 			},
 			SkipSync:               true,
 			SkipResourceAssertions: true,
