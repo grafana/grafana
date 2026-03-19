@@ -2311,6 +2311,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2335,7 +2336,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2345,8 +2345,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2405,9 +2406,6 @@
       "label-payload": "페이로드",
       "label-use-existing-alert-instances": "기존 경고 인스턴스 사용",
       "reference": "변수 참고 목록"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "지금 Grafana의 맞춤형 앱 중 하나를 사용하여 더 빠르게 경고를 생성하세요"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "이 규칙은 {{pluginName}} 플러그인에서 관리합니다"
@@ -2921,6 +2919,9 @@
       "error-button": "오류",
       "export-all-grafana-rules": "모든 Grafana 규칙 내보내기",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "검색 취소",
         "no-more-results": "더 이상 결과 없음 – {{numberOfRules}}개의 규칙 찾음",
@@ -3067,8 +3068,6 @@
       "dashboard": "대시보드",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "데이터 소스로 검색 도움말",
       "filter-options": {
-        "aria-label": "필터 옵션",
-        "aria-label-show-filters": "필터",
         "placeholder-namespace": "네임스페이스 선택",
         "placeholder-search-input": "이름으로 검색하거나 필터 쿼리를 입력하세요..."
       },
@@ -3100,6 +3099,9 @@
       "state": "상태",
       "title-search-help": "도움말 검색",
       "view-as": "보기 방식"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "삭제 중",
@@ -4781,7 +4783,6 @@
     "all": "전체",
     "apply": "적용",
     "cancel": "취소",
-    "clear": "초기화",
     "collapse": "접기",
     "disabled": "비활성화됨",
     "discard": "무시",
@@ -5880,6 +5881,12 @@
         "title": "패널 시간 설정"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "경고를 추가하기 전에 먼저 대시보드를 저장해야 합니다.",
@@ -6511,6 +6518,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7244,6 +7262,8 @@
       "cannot-be-saved": "이 대시보드는 다른 소스에서 프로비저닝되었으므로 Grafana UI에서 저장할 수 없습니다. JSON을 복사하거나 아래 파일에 저장하면 프로비저닝 소스에서 대시보드를 업데이트할 수 있습니다.",
       "copy-json-to-clipboard": "JSON을 클립보드로 복사",
       "file-path": "<strong>파일 경로:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "설명",
       "label-target-folder": "대상 폴더",
       "label-title": "제목",
@@ -7925,6 +7945,7 @@
       "fixed-value-options": {
         "label-fixed-values": "고정값"
       },
+      "label": "",
       "label-limit": "제한",
       "label-value": "값",
       "noOptionsMessage-no-fields-found": "필드를 찾을 수 없습니다",
@@ -9944,7 +9965,9 @@
       "external-links-heading": "외부 링크"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "정규 표현식 입력"
+      "input-placeholder": "정규 표현식 입력",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "비교 연산자",
@@ -9971,6 +9994,18 @@
       "expand-row-tooltip": "토글하여 펼쳐진 행으로 전환",
       "tooltip-collapse-all": "모든 행 접기",
       "tooltip-expand-all": "모든 행 펼치기"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "정규식과 일치하는 이름을 가진 필드에 대한 속성 설정",
@@ -11190,7 +11225,7 @@
       "cancel": "취소",
       "change-uid": "UID 변경",
       "description-library-panels-imported": "가져올 새 라이브러리 패널 목록입니다.",
-      "description-unique-identifier-uid": "대시보드의 고유 식별자(UID)는 여러 Grafana 설치 인스턴스 간에 대시보드를 고유하게 식별하는 데 사용할 수 있습니다. UID를 사용하면 대시보드 액세스용으로 일관된 URL을 확보할 수 있으므로 대시보드의 제목을 변경하더라도 해당 대시보드에 대해 북마크된 링크가 손상되지 않습니다.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "기존 라이브러리 패널",
       "label-folder": "폴더",
       "label-name": "이름",
@@ -12708,9 +12743,6 @@
     "title-loaded-pull-request-in-repo": "이 리소스는 방금 {{repoType}}에 생성한 브랜치에서 로드되며 본인만 볼 수 있습니다"
   },
   "provisioning": {
-    "banner": {
-      "message": "이 기능은 현재 적극적으로 개발 중입니다. 최상의 경험과 최신 개선 사항 적용을 위해 Grafana의 <2>야간 빌드</2>를 사용하는 것이 좋습니다."
-    },
     "bitbucket": {
       "branch-required": "브랜치는 필수 항목입니다",
       "permissions": {
@@ -13393,6 +13425,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "동기화할 항목 선택",
       "step-configure-repo": "리포지토리 구성",
       "step-connect": "연결",
