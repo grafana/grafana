@@ -55,8 +55,7 @@ export const DashboardLibrarySection = ({
   }, [isDashboardsLoading, dashboards, datasourceType]);
 
   // Calculate pagination
-  const totalDashboards = dashboards?.length || 0;
-  const totalPages = Math.ceil(totalDashboards / PAGE_SIZE);
+  const totalPages = Math.ceil(dashboards.length / PAGE_SIZE);
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const endIndex = startIndex + PAGE_SIZE;
   const dashboardsToShow = dashboards?.slice(startIndex, endIndex) ?? [];

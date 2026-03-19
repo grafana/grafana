@@ -106,8 +106,7 @@ const setup = async (
   successScenario = true,
   datasourceUid = 'test-datasource-uid'
 ) => {
-  // Provide a default single dashboard unless caller explicitly overrides dashboards
-  const defaultDashboards = 'dashboards' in props ? props.dashboards : [createMockGnetDashboard()];
+  const defaultDashboards = props.dashboards ?? [createMockGnetDashboard()];
   const { dashboards: _dashboards, ...restProps } = props;
 
   const renderResult = render(
