@@ -32,12 +32,13 @@ import (
 )
 
 const (
-	defaultListBufferSize       = 100
-	defaultEventRetentionPeriod = 1 * time.Hour
-	defaultEventPruningLimit    = 20
-	defaultEventPruningInterval = 5 * time.Minute
-	defaultSearchLookback       = 1 * time.Second
-	clusterScopeNamespace       = "__cluster__"
+	defaultListBufferSize                 = 100
+	defaultEventRetentionPeriod           = 1 * time.Hour
+	defaultEventPruningLimit              = 20
+	defaultEventPruningInterval           = 5 * time.Minute
+	defaultSearchLookback                 = 1 * time.Second
+	defaultGarbageCollectionBatchWait     = 1 * time.Second
+	clusterScopeNamespace                 = "__cluster__"
 )
 
 // customPrunerHistoryLimits defines resource-specific history limits.
@@ -191,6 +192,11 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		searchLookback = defaultSearchLookback
 	}
 
+	garbageCollection := opts.GarbageCollection
+	if garbageCollection.BatchWait == 0 {
+		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
+	}
+
 	backend := &kvStorageBackend{
 		kv:                           kv,
 		bulkLock:                     NewBulkLock(),
@@ -207,7 +213,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		dbKeepAlive:                  opts.DBKeepAlive,
 		lastImportStore:              newLastImportStore(kv),
 		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
-		garbageCollection:            opts.GarbageCollection,
+		garbageCollection:            garbageCollection,
 		searchLookback:               opts.SearchLookback,
 		disablePruner:                opts.DisablePruner,
 	}
@@ -563,14 +569,10 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 		totalDeleted += keysDeleted
 
-		batchWait := time.Second
-		if b.garbageCollection.BatchWait > 0 {
-			batchWait = b.garbageCollection.BatchWait
-		}
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-time.After(batchWait):
+		case <-time.After(b.garbageCollection.BatchWait):
 		}
 	}
 

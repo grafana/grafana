@@ -49,6 +49,7 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultPrunerHistoryLimit = 20
+const defaultGarbageCollectionBatchWait = 1 * time.Second
 
 // customPrunerHistoryLimits defines resource-specific history limits.
 // The key format is "group/resource".
@@ -235,6 +236,10 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	if opts.WatchBufferSize == 0 {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
+	garbageCollection := opts.GarbageCollection
+	if garbageCollection.BatchWait == 0 {
+		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
+	}
 	backend := &backend{
 		isHA:                    opts.IsHA,
 		disableStorageServices:  opts.DisableStorageServices,
@@ -251,7 +256,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		migrationParquetBuffer:  opts.MigrationParquetBuffer,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
-		garbageCollection:       opts.GarbageCollection,
+		garbageCollection:       garbageCollection,
 	}
 	if err := backend.Init(ctx); err != nil {
 		return nil, err
@@ -508,14 +513,10 @@ func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int6
 				if deleted < int64(b.garbageCollection.BatchSize) {
 					break
 				}
-				batchWait := time.Second
-				if b.garbageCollection.BatchWait > 0 {
-					batchWait = b.garbageCollection.BatchWait
-				}
 				select {
 				case <-b.done:
 					return deletedByKey
-				case <-time.After(batchWait):
+				case <-time.After(b.garbageCollection.BatchWait):
 				}
 			}
 			if totalDeleted > 0 {
