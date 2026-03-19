@@ -1,6 +1,6 @@
 # Contributing to @grafana/o11y-ds-frontend
 
-This package contains shared UI components and utilities used by observability datasource plugins (Tempo, Zipkin, Jaeger and Grafana Explore) 
+This package contains shared UI components and utilities used by observability datasource plugins (Tempo, Zipkin, Jaeger and Grafana Explore)
 inside the Grafana monorepo.
 
 For general contribution guidelines, see the [root CONTRIBUTING.md](../../CONTRIBUTING.md) and the [developer guide](../../contribute/developer-guide.md).
