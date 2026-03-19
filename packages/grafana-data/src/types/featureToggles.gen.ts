@@ -414,6 +414,11 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enables default layout selector in dashboard settings
+  * @default false
+  */
+  dashboardDefaultLayoutSelector?: boolean;
+  /**
   * Enables the assistant prompt popover on panel click in dashboard view mode
   * @default false
   */

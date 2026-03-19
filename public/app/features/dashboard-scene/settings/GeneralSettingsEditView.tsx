@@ -340,16 +340,18 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
           </Field>
         </Box>
 
-        <Field
-          noMargin
-          label={t('dashboard-settings.general.default-grid-label', 'Default grid')}
-          description={t(
-            'dashboard-settings.general.default-grid-description',
-            'Select layout type to be used for new rows and tabs'
-          )}
-        >
-          <RadioButtonGroup value={defaultGrid} options={DEFAULT_GRID_OPTIONS} onChange={model.onDefaultGridChange} />
-        </Field>
+        {config.featureToggles.dashboardDefaultLayoutSelector && (
+          <Field
+            noMargin
+            label={t('dashboard-settings.general.default-grid-label', 'Default grid')}
+            description={t(
+              'dashboard-settings.general.default-grid-description',
+              'Select layout type to be used for new rows and tabs'
+            )}
+          >
+            <RadioButtonGroup value={defaultGrid} options={DEFAULT_GRID_OPTIONS} onChange={model.onDefaultGridChange} />
+          </Field>
+        )}
 
         <TimePickerSettings
           onTimeZoneChange={model.onTimeZoneChange}

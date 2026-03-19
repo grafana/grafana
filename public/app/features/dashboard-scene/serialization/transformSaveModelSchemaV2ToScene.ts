@@ -183,7 +183,7 @@ export function transformSaveModelSchemaV2ToScene(
     .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
 
   let templateLayoutManager: DashboardLayoutManager | undefined = undefined;
-  if (dashboard.preferences?.defaultLayoutTemplate) {
+  if (config.featureToggles.dashboardDefaultLayoutSelector && dashboard.preferences?.defaultLayoutTemplate) {
     templateLayoutManager = layoutDeserializerRegistry
       .get(dashboard.preferences.defaultLayoutTemplate.kind)
       .deserialize(dashboard.preferences.defaultLayoutTemplate, {}, false);

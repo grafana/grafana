@@ -114,12 +114,16 @@ const NewLayoutEmpty = ({ dashboard, styles, dashboardLibraryDatasourceUid }: Ne
 
   const onSelectAutoGrid = () => {
     dashboard.switchLayout(AutoGridLayoutManager.createEmpty());
-    dashboard.updateDefaultLayoutTemplate(AutoGridLayoutManager.createEmpty());
+    if (config.featureToggles.dashboardDefaultLayoutSelector) {
+      dashboard.updateDefaultLayoutTemplate(AutoGridLayoutManager.createEmpty());
+    }
   };
 
   const onSelectCustomGrid = () => {
     dashboard.switchLayout(DefaultGridLayoutManager.createEmpty());
-    dashboard.updateDefaultLayoutTemplate(DefaultGridLayoutManager.createEmpty());
+    if (config.featureToggles.dashboardDefaultLayoutSelector) {
+      dashboard.updateDefaultLayoutTemplate(DefaultGridLayoutManager.createEmpty());
+    }
   };
 
   return (
@@ -136,42 +140,46 @@ const NewLayoutEmpty = ({ dashboard, styles, dashboardLibraryDatasourceUid }: Ne
             <Trans i18nKey="dashboard.empty.description">Add a panel to visualize your data</Trans>
           </Text>
         </Box>
-        <Box marginTop={3} paddingX={4} display="flex" justifyContent="center" alignItems="center" gap={1}>
-          <Text element="p" textAlignment="center" color="secondary">
-            <Trans i18nKey="dashboard.empty.select-layout-header">Select layout</Trans>
-          </Text>
-          <Tooltip
-            content={
-              <Trans i18nKey="dashboard.empty.layout-default-hint">
-                The selected layout will also be used as the default for all new tabs and rows. You can change this
-                later in Dashboard Settings &gt; General.
-              </Trans>
-            }
-          >
-            <Icon name="info-circle" size="sm" />
-          </Tooltip>
-        </Box>
-        <Box marginTop={1} display="flex" justifyContent="center">
-          <Stack gap={1}>
-            <FilterPill
-              label={t('dashboard.empty.auto-grid', 'Auto grid')}
-              selected={isAutoGrid}
-              onClick={onSelectAutoGrid}
-            />
-            <FilterPill
-              label={t('dashboard.empty.custom-grid', 'Custom grid')}
-              selected={!isAutoGrid}
-              onClick={onSelectCustomGrid}
-            />
-          </Stack>
-        </Box>
-        <Box marginTop={1} paddingX={4}>
-          <Text element="p" textAlignment="center" color="secondary">
-            {isAutoGrid
-              ? t('dashboard.empty.auto-grid-description', 'Panels resize to fit and form uniform grids')
-              : t('dashboard.empty.custom-grid-description', 'Position and size each panel individually')}
-          </Text>
-        </Box>
+        {config.featureToggles.dashboardDefaultLayoutSelector && (
+          <>
+            <Box marginTop={3} paddingX={4} display="flex" justifyContent="center" alignItems="center" gap={1}>
+              <Text element="p" textAlignment="center" color="secondary">
+                <Trans i18nKey="dashboard.empty.select-layout-header">Select layout</Trans>
+              </Text>
+              <Tooltip
+                content={
+                  <Trans i18nKey="dashboard.empty.layout-default-hint">
+                    The selected layout will also be used as the default for all new tabs and rows. You can change this
+                    later in Dashboard Settings &gt; General.
+                  </Trans>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Box>
+            <Box marginTop={1} display="flex" justifyContent="center">
+              <Stack gap={1}>
+                <FilterPill
+                  label={t('dashboard.empty.auto-grid', 'Auto grid')}
+                  selected={isAutoGrid}
+                  onClick={onSelectAutoGrid}
+                />
+                <FilterPill
+                  label={t('dashboard.empty.custom-grid', 'Custom grid')}
+                  selected={!isAutoGrid}
+                  onClick={onSelectCustomGrid}
+                />
+              </Stack>
+            </Box>
+            <Box marginTop={1} paddingX={4}>
+              <Text element="p" textAlignment="center" color="secondary">
+                {isAutoGrid
+                  ? t('dashboard.empty.auto-grid-description', 'Panels resize to fit and form uniform grids')
+                  : t('dashboard.empty.custom-grid-description', 'Position and size each panel individually')}
+              </Text>
+            </Box>
+          </>
+        )}
       </Box>
       <DashboardExtensionsComponents dashboardLibraryDatasourceUid={dashboardLibraryDatasourceUid} />
     </Stack>
