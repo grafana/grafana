@@ -784,6 +784,10 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 				Action: repository.FileActionUpdated,
 			})
 		case protocol.FileStatusRenamed:
+			if f.Mode == 0o40000 {
+				continue
+			}
+
 			newPath, newErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
 			oldPath, oldErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
 

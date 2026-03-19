@@ -3564,7 +3564,7 @@ func TestGitRepository_CompareFiles_Renamed(t *testing.T) {
 			wantChanges: []repository.VersionedFileChange{},
 		},
 		{
-			name: "tree entry rename is passed through",
+			name: "tree entry rename is skipped",
 			files: []nanogit.CommitFile{
 				{
 					Path:    "configs/new-dir",
@@ -3573,16 +3573,8 @@ func TestGitRepository_CompareFiles_Renamed(t *testing.T) {
 					Mode:    0o40000,
 				},
 			},
-			gitPath: "configs",
-			wantChanges: []repository.VersionedFileChange{
-				{
-					Action:       repository.FileActionRenamed,
-					Path:         "new-dir",
-					PreviousPath: "old-dir",
-					Ref:          "feature",
-					PreviousRef:  "main",
-				},
-			},
+			gitPath:     "configs",
+			wantChanges: []repository.VersionedFileChange{},
 		},
 		{
 			name: "rename with no configured path",
