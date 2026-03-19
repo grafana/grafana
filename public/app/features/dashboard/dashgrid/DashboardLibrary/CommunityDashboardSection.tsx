@@ -46,6 +46,8 @@ export const CommunityDashboardSection = ({
   datasourceUid,
   isDashboardsLoading,
 }: Props) => {
+  const resolvedDatasourceType =
+    (datasourceUid ? getDataSourceSrv().getInstanceSettings(datasourceUid)?.type : undefined) ?? datasourceType;
   const [searchQuery, setSearchQuery] = useState('');
   const hasTrackedLoaded = useRef(false);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
@@ -299,7 +301,12 @@ export const CommunityDashboardSection = ({
             }}
           >
             {Array.from({ length: COMMUNITY_RESULT_SIZE }).map((_, i) => (
-              <DashboardCard.Skeleton key={`skeleton-${i}`} />
+              <DashboardCard.Skeleton
+                key={`skeleton-${i}`}
+                showCompatibilityBadge={
+                  isCompatibilityAppEnabled && !!datasourceUid && resolvedDatasourceType === 'prometheus'
+                }
+              />
             ))}
           </Grid>
         ) : showError ? (
@@ -365,7 +372,7 @@ export const CommunityDashboardSection = ({
                 const details = buildDashboardDetails(dashboard);
 
                 const showBadge =
-                  isCompatibilityAppEnabled && !!datasourceUid && response?.datasourceType === 'prometheus';
+                  isCompatibilityAppEnabled && !!datasourceUid && resolvedDatasourceType === 'prometheus';
 
                 return (
                   <DashboardCard

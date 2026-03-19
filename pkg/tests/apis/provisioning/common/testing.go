@@ -26,6 +26,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 
@@ -48,6 +49,35 @@ const (
 	WaitTimeoutDefault  = 30 * time.Second
 	WaitIntervalDefault = 100 * time.Millisecond
 )
+
+//nolint:gosec // Test RSA private key (generated for testing purposes only, never used in production)
+const TestGithubPrivateKeyPEM = "-----BEGIN RSA PRIVATE KEY-----\n" + // trufflehog:ignore
+	`MIIEoQIBAAKCAQBn1MuM5hIfH6d3TNStI1ofWv/gcjQ4joi9cFijEwVLuPYkF1nD
+KkSbaMGFUWiOTaB/H9fxmd/V2u04NlBY3av6m5T/sHfVSiEWAEUblh3cA34HVCmD
+cqyyVty5HLGJJlSs2C7W2x7yUc9ImzyDBsyjpKOXuojJ9wN9a17D2cYU5WkXjoDC
+4BHid61jn9WBTtPZXSgOdirwahNzxZQSIP7DA9T8yiZwIWPp5YesgsAPyQLCFPgM
+s77xz/CEUnEYQ35zI/k/mQrwKdQ/ZP8xLwQohUID0BIxE7G5quL069RuuCZWZkoF
+oPiZbp7HSryz1+19jD3rFT7eHGUYvAyCnXmXAgMBAAECggEADSs4Bc7ITZo+Kytb
+bfol3AQ2n8jcRrANN7mgBE7NRSVYUouDnvUlbnCC2t3QXPwLdxQa11GkygLSQ2bg
+GeVDgq1o4GUJTcvxFlFCcpU/hEANI/DQsxNAQ/4wUGoLOlHaO3HPvwBblHA70gGe
+Ux/xpG+lMAFAiB0EHEwZ4M0mClBEOQv3NzaFTWuBHtIMS8eid7M1q5qz9+rCgZSL
+KBBHo0OvUbajG4CWl8SM6LUYapASGg+U17E+4xA3npwpIdsk+CbtX+vvX324n4kn
+0EkrJqCjv8M1KiCKAP+UxwP00ywxOg4PN+x+dHI/I7xBvEKe/x6BltVSdGA+PlUK
+02wagQKBgQDF7gdQLFIagPH7X7dBP6qEGxj/Ck9Qdz3S1gotPkVeq+1/UtQijYZ1
+j44up/0yB2B9P4kW091n+iWcyfoU5UwBua9dHvCZP3QH05LR1ZscUHxLGjDPBASt
+l2xSq0hqqNWBspb1M0eCY0Yxi65iDkj3xsI2iN35BEb1FlWdR5KGvwKBgQCGS0ce
+wASWbZIPU2UoKGOQkIJU6QmLy0KZbfYkpyfE8IxGttYVEQ8puNvDDNZWHNf+LP85
+c8iV6SfnWiLmu1XkG2YmJFBCCAWgJ8Mq2XQD8E+a/xcaW3NqlcC5+I2czX367j3r
+69wZSxRbzR+DCfOiIkrekJImwN183ZYy2cBbKQKBgFj86IrSMmO6H5Ft+j06u5ZD
+fJyF7Rz3T3NwSgkHWzbyQ4ggHEIgsRg/36P4YSzSBj6phyAdRwkNfUWdxXMJmH+a
+FU7frzqnPaqbJAJ1cBRt10QI1XLtkpDdaJVObvONTtjOC3LYiEkGCzQRYeiyFXpZ
+AU51gJ8JnkFotjtNR4KPAoGAehVREDlLcl0lnN0ZZspgyPk2Im6/iOA9KTH3xBZZ
+ZwWu4FIyiHA7spgk4Ep5R0ttZ9oMI3SIcw/EgONGOy8uw/HMiPwWIhEc3B2JpRiO
+CU6bb7JalFFyuQBudiHoyxVcY5PVovWF31CLr3DoJr4TR9+Y5H/U/XnzYCIo+w1N
+exECgYBFAGKYTIeGAvhIvD5TphLpbCyeVLBIq5hRyrdRY+6Iwqdr5PGvLPKwin5+
++4CDhWPW4spq8MYPCRiMrvRSctKt/7FhVGL2vE/0VY3TcLk14qLC+2+0lnPVgnYn
+u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
+-----END RSA PRIVATE KEY-----`
 
 type ProvisioningTestHelper struct {
 	*apis.K8sTestHelper
@@ -735,6 +765,34 @@ func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoNam
 	require.Equal(t, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
 }
 
+// TriggerConnectionReconciliation forces the controller to re-process a connection
+// by touching its status (aging the health timestamp by 1ms).
+// Retries on conflict errors caused by optimistic locking.
+func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, name string) {
+	t.Helper()
+	ctx := t.Context()
+
+	const maxRetries = 5
+	for attempt := range maxRetries {
+		conn, err := h.Connections.Resource.Get(ctx, name, metav1.GetOptions{})
+		require.NoError(t, err, "failed to get connection %s", name)
+
+		health, ok := conn.Object["status"].(map[string]any)["health"].(map[string]any)
+		require.True(t, ok, "missing status.health on connection %s", name)
+
+		health["checked"] = time.Now().UnixMilli() - 1
+
+		_, err = h.Connections.Resource.UpdateStatus(ctx, conn, metav1.UpdateOptions{})
+		if err == nil {
+			return
+		}
+		if apierrors.IsConflict(err) && attempt < maxRetries-1 {
+			continue
+		}
+		require.NoError(t, err, "failed to update status for connection %s", name)
+	}
+}
+
 // TriggerRepositoryReconciliation forces the controller to re-process a repo
 // by touching its status (aging the health timestamp by 1ms).
 // Updating it by incrementing its generation by +1 is not triggering a reconciliation.
@@ -1016,6 +1074,23 @@ func UnstructuredToConnection(t *testing.T, obj *unstructured.Unstructured) *pro
 	require.NoError(t, err)
 
 	return c
+}
+
+// ParseTestResults extracts TestResults from an API response k8sruntime.Object.
+func ParseTestResults(t *testing.T, obj k8sruntime.Object) *provisioning.TestResults {
+	t.Helper()
+
+	unstructuredObj, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok, "expected unstructured object")
+
+	data, err := json.Marshal(unstructuredObj.Object)
+	require.NoError(t, err)
+
+	var testResults provisioning.TestResults
+	err = json.Unmarshal(data, &testResults)
+	require.NoError(t, err)
+
+	return &testResults
 }
 
 // FilesPostOptions holds parameters for a direct HTTP POST to the files API.
@@ -1395,6 +1470,94 @@ func (h *GitExportHelper) GitReadFile(t *testing.T, ctx context.Context, repoNam
 	data, err := os.ReadFile(filepath.Join(cloneDir, filePath)) //nolint:gosec
 	require.NoError(t, err, "file %s not found in git repo %s", filePath, repoName)
 	return data
+}
+
+// ExpectedDashboard describes the expected state of a single dashboard.
+type ExpectedDashboard struct {
+	Title      string
+	SourcePath string
+}
+
+// RequireDashboardCount asserts the total number of dashboards in the instance.
+func RequireDashboardCount(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, expected int) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		assert.Len(c, list.Items, expected, "unexpected dashboard count")
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %d dashboard(s)", expected)
+}
+
+// RequireDashboardTitle asserts that the dashboard with the given uid (K8s name)
+// has the expected title.
+func RequireDashboardTitle(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, uid, expectedTitle string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		for _, d := range list.Items {
+			if d.GetName() != uid {
+				continue
+			}
+			title, _, _ := unstructured.NestedString(d.Object, "spec", "title")
+			assert.Equal(c, expectedTitle, title, "dashboard %q title mismatch", uid)
+			return
+		}
+		c.Errorf("dashboard with uid %q not found", uid)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboard %q should have title %q", uid, expectedTitle)
+}
+
+// RequireDashboards lists dashboards once and asserts that exactly the expected
+// set exists with matching count, title, and grafana.app/sourcePath for each UID.
+func RequireDashboards(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, expected map[string]ExpectedDashboard) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		if !assert.Len(c, list.Items, len(expected), "unexpected dashboard count") {
+			return
+		}
+		for _, d := range list.Items {
+			uid := d.GetName()
+			exp, ok := expected[uid]
+			if !assert.True(c, ok, "unexpected dashboard %q", uid) {
+				continue
+			}
+			title, _, _ := unstructured.NestedString(d.Object, "spec", "title")
+			assert.Equal(c, exp.Title, title, "dashboard %q title mismatch", uid)
+			sp, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			assert.Equal(c, exp.SourcePath, sp, "dashboard %q sourcePath mismatch", uid)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboards should match expected state")
+}
+
+// RequireRepoFolders lists folders once and asserts that the set of
+// grafana.app/sourcePath values for folders managed by repoName matches exactly.
+func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx context.Context, repoName string, expectedSourcePaths []string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := folderClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		var gotPaths []string
+		for _, f := range list.Items {
+			mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+			if mgr != repoName {
+				continue
+			}
+			sp, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			gotPaths = append(gotPaths, sp)
+		}
+		assert.ElementsMatch(c, expectedSourcePaths, gotPaths, "folder sourcePaths mismatch for repo %q", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"folders for repo %q should have sourcePaths %v", repoName, expectedSourcePaths)
 }
 
 // FindCondition finds a condition by type in the conditions list

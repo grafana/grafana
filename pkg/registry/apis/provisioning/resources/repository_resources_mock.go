@@ -74,64 +74,6 @@ func (_c *MockRepositoryResources_EnsureFolderExists_Call) RunAndReturn(run func
 	return _c
 }
 
-// EnsureFolderMetadata provides a mock function with given fields: ctx, folder, ref
-func (_m *MockRepositoryResources) EnsureFolderMetadata(ctx context.Context, folder Folder, ref string) (bool, error) {
-	ret := _m.Called(ctx, folder, ref)
-
-	if len(ret) == 0 {
-		panic("no return value specified for EnsureFolderMetadata")
-	}
-
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, Folder, string) (bool, error)); ok {
-		return rf(ctx, folder, ref)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, Folder, string) bool); ok {
-		r0 = rf(ctx, folder, ref)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, Folder, string) error); ok {
-		r1 = rf(ctx, folder, ref)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockRepositoryResources_EnsureFolderMetadata_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnsureFolderMetadata'
-type MockRepositoryResources_EnsureFolderMetadata_Call struct {
-	*mock.Call
-}
-
-// EnsureFolderMetadata is a helper method to define mock.On call
-//   - ctx context.Context
-//   - folder Folder
-//   - ref string
-func (_e *MockRepositoryResources_Expecter) EnsureFolderMetadata(ctx interface{}, folder interface{}, ref interface{}) *MockRepositoryResources_EnsureFolderMetadata_Call {
-	return &MockRepositoryResources_EnsureFolderMetadata_Call{Call: _e.mock.On("EnsureFolderMetadata", ctx, folder, ref)}
-}
-
-func (_c *MockRepositoryResources_EnsureFolderMetadata_Call) Run(run func(ctx context.Context, folder Folder, ref string)) *MockRepositoryResources_EnsureFolderMetadata_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(Folder), args[2].(string))
-	})
-	return _c
-}
-
-func (_c *MockRepositoryResources_EnsureFolderMetadata_Call) Return(_a0 bool, _a1 error) *MockRepositoryResources_EnsureFolderMetadata_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockRepositoryResources_EnsureFolderMetadata_Call) RunAndReturn(run func(context.Context, Folder, string) (bool, error)) *MockRepositoryResources_EnsureFolderMetadata_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // EnsureFolderPathExist provides a mock function with given fields: ctx, filePath
 func (_m *MockRepositoryResources) EnsureFolderPathExist(ctx context.Context, filePath string) (string, error) {
 	ret := _m.Called(ctx, filePath)
@@ -399,6 +341,39 @@ func (_c *MockRepositoryResources_RemoveFolder_Call) Return(_a0 error) *MockRepo
 
 func (_c *MockRepositoryResources_RemoveFolder_Call) RunAndReturn(run func(context.Context, string) error) *MockRepositoryResources_RemoveFolder_Call {
 	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveFolderFromTree provides a mock function with given fields: folderID
+func (_m *MockRepositoryResources) RemoveFolderFromTree(folderID string) {
+	_m.Called(folderID)
+}
+
+// MockRepositoryResources_RemoveFolderFromTree_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveFolderFromTree'
+type MockRepositoryResources_RemoveFolderFromTree_Call struct {
+	*mock.Call
+}
+
+// RemoveFolderFromTree is a helper method to define mock.On call
+//   - folderID string
+func (_e *MockRepositoryResources_Expecter) RemoveFolderFromTree(folderID interface{}) *MockRepositoryResources_RemoveFolderFromTree_Call {
+	return &MockRepositoryResources_RemoveFolderFromTree_Call{Call: _e.mock.On("RemoveFolderFromTree", folderID)}
+}
+
+func (_c *MockRepositoryResources_RemoveFolderFromTree_Call) Run(run func(folderID string)) *MockRepositoryResources_RemoveFolderFromTree_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryResources_RemoveFolderFromTree_Call) Return() *MockRepositoryResources_RemoveFolderFromTree_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockRepositoryResources_RemoveFolderFromTree_Call) RunAndReturn(run func(string)) *MockRepositoryResources_RemoveFolderFromTree_Call {
+	_c.Run(run)
 	return _c
 }
 
