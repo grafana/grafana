@@ -407,7 +407,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     trackEditorVersionToggle(newUseQueryExperienceNext ? 'upgrade' : 'downgrade');
     const dataPane = PanelDataPane.createFor(this.getPanel(), newUseQueryExperienceNext);
 
-    setLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY, newUseQueryExperienceNext);
+    setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, newUseQueryExperienceNext);
 
     this.setState({
       useQueryExperienceNext: newUseQueryExperienceNext,

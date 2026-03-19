@@ -17,12 +17,19 @@ export const setLocalStorageWithTTL = <T>(key: string, value: T) => {
     timestamp: Date.now(),
   };
 
-  store.setObject(key, item);
+  try {
+    store.setObject(key, item);
+  } catch (error) {
+    console.error('Failed to persist value with TTL', error);
+  }
 };
 
 export function getLocalStorageWithTTL<T>(key: string, ttlMs: number = ONE_WEEK_MS): T | null {
   const item = store.getObject<StoredValueWithTTL<T>>(key);
-  if (!item || typeof item.timestamp !== 'number' || isExpired(item, ttlMs)) {
+  if (!item) {
+    return null;
+  }
+  if (typeof item.timestamp !== 'number' || isExpired(item, ttlMs)) {
     store.delete(key);
     return null;
   }
