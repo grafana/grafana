@@ -784,23 +784,25 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 				Action: repository.FileActionUpdated,
 			})
 		case protocol.FileStatusRenamed:
-			newPath, newErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			oldPath, oldErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
+			newPath, newPathErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
+			oldPath, oldPathErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
 
 			// Tree entries (directories) are emitted with trailing slashes so
-			// downstream code can identify them via safepath.IsDir and handle
-			// folder renames in place rather than decomposing into delete+create.
-			if f.Mode == 0o40000 {
-				if newErr == nil {
-					newPath += "/"
+			// downstream code can identify them via safepath.IsDir.
+			if f.Type == protocol.ObjectTypeTree {
+				if newPathErr == nil {
+					newPath = safepath.EnsureTrailingSlash(newPath)
 				}
-				if oldErr == nil {
-					oldPath += "/"
+				if oldPathErr == nil {
+					oldPath = safepath.EnsureTrailingSlash(oldPath)
 				}
 			}
 
+			newInsidePath := newPathErr == nil
+			oldInsidePath := oldPathErr == nil
+
 			switch {
-			case newErr == nil && oldErr == nil:
+			case newInsidePath && oldInsidePath:
 				changes = append(changes, repository.VersionedFileChange{
 					Action:       repository.FileActionRenamed,
 					Path:         newPath,
@@ -808,13 +810,13 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 					Ref:          ref,
 					PreviousRef:  base,
 				})
-			case newErr == nil:
+			case newInsidePath:
 				changes = append(changes, repository.VersionedFileChange{
 					Action: repository.FileActionCreated,
 					Path:   newPath,
 					Ref:    ref,
 				})
-			case oldErr == nil:
+			case oldInsidePath:
 				changes = append(changes, repository.VersionedFileChange{
 					Action:       repository.FileActionDeleted,
 					Path:         oldPath,
