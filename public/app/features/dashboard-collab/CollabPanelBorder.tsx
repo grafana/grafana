@@ -74,14 +74,26 @@ export function CollabPanelBorder({ panelId, isEditing: isEditingProp, children 
 
   const holderName = lockHolder?.displayName || 'another user';
 
-  const handleBlockedClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const showLockedWarning = useCallback(() => {
     notifyApp.warning(
       t('dashboard-collab.panel-locked.title', 'Panel locked'),
       t('dashboard-collab.panel-locked.message', 'This panel is being edited by {{name}}', { name: holderName })
     );
   }, [holderName, notifyApp]);
+
+  const handleBlockedClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    showLockedWarning();
+  }, [showLockedWarning]);
+
+  const handleBlockedKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.stopPropagation();
+      e.preventDefault();
+      showLockedWarning();
+    }
+  }, [showLockedWarning]);
 
   if (!connected) {
     return <>{children}</>;
@@ -100,19 +112,22 @@ export function CollabPanelBorder({ panelId, isEditing: isEditingProp, children 
         isLockedByOther && styles.lockedByOther,
         isLockedBySelf && styles.lockedBySelf
       )}
-      style={borderColor ? { '--collab-border-color': borderColor } as React.CSSProperties : undefined}
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- CSS custom properties require CSSProperties assertion
+      style={borderColor ? ({ '--collab-border-color': borderColor } as React.CSSProperties) : undefined}
       data-testid="collab-panel-border"
     >
       {isLockedByOther && (
         <div
+          role="presentation"
           className={styles.blockOverlay}
           onClick={handleBlockedClick}
+          onKeyDown={handleBlockedKeyDown}
           onDoubleClick={handleBlockedClick}
-          title={`Being edited by ${holderName}`}
+          title={t('dashboard-collab.panel-border.being-edited', 'Being edited by {{name}}', { name: holderName })}
         />
       )}
       {isLockedByOther && lockHolder && (
-        <Tooltip content={`Being edited by ${lockHolder.displayName}`} placement="top">
+        <Tooltip content={t('dashboard-collab.panel-border.tooltip', 'Being edited by {{name}}', { name: lockHolder.displayName })} placement="top">
           <div className={styles.badge} style={{ backgroundColor: lockHolder.color || '#FF0000' }}>
             {lockHolder.avatarUrl ? (
               <img src={lockHolder.avatarUrl} alt={lockHolder.displayName} className={styles.avatar} />
@@ -178,7 +193,9 @@ function getStyles(theme: GrafanaTheme2) {
       outline: `4px solid #FF0000`,
       outlineOffset: '0px',
       zIndex: 10,
-      transition: 'outline-color 200ms ease-in-out',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: 'outline-color 200ms ease-in-out',
+      },
     }),
     lockedBySelf: css({
       // No visible border for own locks — the user already knows they're editing
@@ -195,7 +212,7 @@ function getStyles(theme: GrafanaTheme2) {
       right: -8,
       width: 24,
       height: 24,
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -207,7 +224,7 @@ function getStyles(theme: GrafanaTheme2) {
     avatar: css({
       width: '100%',
       height: '100%',
-      borderRadius: '50%',
+      borderRadius: theme.shape.radius.circle,
       objectFit: 'cover',
     }),
     avatarInitial: css({

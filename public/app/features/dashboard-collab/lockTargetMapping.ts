@@ -5,15 +5,17 @@ import { MutationRequest } from './protocol/messages';
  * Returns empty string if no lock is required (e.g., ADD_PANEL).
  */
 export function getLockTarget(mutation: MutationRequest): string {
-  const payload = mutation.payload as Record<string, unknown>;
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- payload is typed as unknown in the protocol; runtime checks follow
+  const payload = mutation.payload as Record<string, unknown> | undefined;
 
   switch (mutation.type) {
     // Panel-scoped operations lock the specific panel by element name
     case 'UPDATE_PANEL':
     case 'REMOVE_PANEL':
     case 'MOVE_PANEL': {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- structural narrowing of unknown payload
       const element = payload?.element as Record<string, unknown> | undefined;
-      return (element?.name as string) ?? '';
+      return typeof element?.name === 'string' ? element.name : '';
     }
 
     // ADD_PANEL does not require a lock

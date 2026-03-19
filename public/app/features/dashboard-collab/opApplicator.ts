@@ -46,6 +46,7 @@ export async function applyRemoteOp(
     return { applied: false };
   }
 
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- msg.op is typed as unknown in the protocol; narrowing to expected shape
   const collabOp = msg.op as CollabOperation | null;
   if (!collabOp?.mutation) {
     debugLog('Op missing mutation field', { userId: msg.userId, seq: msg.seq });

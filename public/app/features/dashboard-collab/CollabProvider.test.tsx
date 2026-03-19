@@ -9,6 +9,7 @@ import {
   type LiveChannelEvent,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { CollabProvider } from './CollabProvider';
 import type { CursorUpdate, ServerMessage } from './protocol/messages';
@@ -62,14 +63,14 @@ jest.mock('app/core/copy/appNotification', () => ({
   }),
 }));
 
-function makeMockMutationClient(): any {
+function makeMockMutationClient(): unknown {
   return {
     execute: jest.fn().mockResolvedValue({ success: true, changes: [] }),
     getAvailableCommands: jest.fn().mockReturnValue([]),
   };
 }
 
-function makeMockScene(): any {
+function makeMockScene() {
   return {
     state: {
       meta: { provisioned: false },
@@ -81,12 +82,15 @@ function makeMockScene(): any {
     setState: jest.fn(),
     getMutationClient: jest.fn().mockReturnValue(makeMockMutationClient()),
     setMutationClient: jest.fn(),
+    isActive: true,
   };
 }
 
-function makeWrapper(scene: any) {
+type MockScene = ReturnType<typeof makeMockScene>;
+
+function makeWrapper(scene: MockScene) {
   return ({ children }: PropsWithChildren) => (
-    <CollabProvider scene={scene} dashboardUID="test-uid" namespace="default">
+    <CollabProvider scene={scene as unknown as DashboardScene} dashboardUID="test-uid" namespace="default">
       {children}
     </CollabProvider>
   );

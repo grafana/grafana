@@ -42,13 +42,13 @@ function makeMockDashboard() {
     getRef: jest.fn().mockReturnValue({
       resolve: jest.fn(),
     }),
-  } as any;
+  } as unknown as CollabCheckpointDrawer['state']['dashboardRef'] extends { resolve: () => infer R } ? R : never;
 }
 
 function renderDrawer(collabValue: CollabContextValue) {
   const dashboard = makeMockDashboard();
   const drawer = new CollabCheckpointDrawer({
-    dashboardRef: { resolve: () => dashboard } as any,
+    dashboardRef: { resolve: () => dashboard } as unknown as CollabCheckpointDrawer['state']['dashboardRef'],
   });
 
   return render(
@@ -123,7 +123,7 @@ describe('CollabCheckpointDrawer', () => {
     const user = userEvent.setup();
     const dashboard = makeMockDashboard();
     const drawer = new CollabCheckpointDrawer({
-      dashboardRef: { resolve: () => dashboard } as any,
+      dashboardRef: { resolve: () => dashboard } as unknown as CollabCheckpointDrawer['state']['dashboardRef'],
     });
 
     render(

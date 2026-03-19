@@ -48,7 +48,7 @@ describe('opApplicator', () => {
     const client = makeMutationClient();
     const msg = makeServerMessage();
 
-    const result = await applyRemoteOp(msg, client as any, 'local-user');
+    const result = await applyRemoteOp(msg, client as unknown as MutationClient, 'local-user');
 
     expect(result.applied).toBe(true);
     expect(client.execute).toHaveBeenCalledWith({
@@ -69,7 +69,7 @@ describe('opApplicator', () => {
     const msg = makeServerMessage();
 
     expect(isExtractionSuppressed()).toBe(false);
-    await applyRemoteOp(msg, client as any, 'local-user');
+    await applyRemoteOp(msg, client as unknown as MutationClient, 'local-user');
     expect(isExtractionSuppressed()).toBe(false);
   });
 
@@ -80,7 +80,7 @@ describe('opApplicator', () => {
 
     const msg = makeServerMessage();
 
-    await expect(applyRemoteOp(msg, client as any, 'local-user')).rejects.toThrow('boom');
+    await expect(applyRemoteOp(msg, client as unknown as MutationClient, 'local-user')).rejects.toThrow('boom');
     expect(isExtractionSuppressed()).toBe(false);
   });
 
@@ -88,7 +88,7 @@ describe('opApplicator', () => {
     const client = makeMutationClient();
     const msg = makeServerMessage({ userId: 'local-user' });
 
-    const result = await applyRemoteOp(msg, client as any, 'local-user');
+    const result = await applyRemoteOp(msg, client as unknown as MutationClient, 'local-user');
 
     expect(result.applied).toBe(false);
     expect(client.execute).not.toHaveBeenCalled();
@@ -99,7 +99,7 @@ describe('opApplicator', () => {
 
     for (const kind of ['lock', 'checkpoint', 'presence'] as const) {
       const msg = makeServerMessage({ kind });
-      const result = await applyRemoteOp(msg, client as any, 'local-user');
+      const result = await applyRemoteOp(msg, client as unknown as MutationClient, 'local-user');
       expect(result.applied).toBe(false);
     }
 
@@ -110,7 +110,7 @@ describe('opApplicator', () => {
     const client = makeMutationClient();
     const msg = makeServerMessage({ op: {} });
 
-    const result = await applyRemoteOp(msg, client as any, 'local-user');
+    const result = await applyRemoteOp(msg, client as unknown as MutationClient, 'local-user');
 
     expect(result.applied).toBe(false);
     expect(result.error).toContain('missing mutation field');
@@ -119,9 +119,9 @@ describe('opApplicator', () => {
 
   it('returns error when op is null', async () => {
     const client = makeMutationClient();
-    const msg = makeServerMessage({ op: null as any });
+    const msg = makeServerMessage({ op: null });
 
-    const result = await applyRemoteOp(msg, client as any, 'local-user');
+    const result = await applyRemoteOp(msg, client as unknown as MutationClient, 'local-user');
 
     expect(result.applied).toBe(false);
     expect(result.error).toContain('missing mutation field');
@@ -136,7 +136,7 @@ describe('opApplicator', () => {
     };
     const msg = makeServerMessage({ op: collabOp });
 
-    const result = await applyRemoteOp(msg, client as any, 'local-user');
+    const result = await applyRemoteOp(msg, client as unknown as MutationClient, 'local-user');
 
     expect(result.applied).toBe(false);
     expect(result.error).toBeUndefined();
@@ -156,7 +156,7 @@ describe('opApplicator', () => {
     });
 
     const msg = makeServerMessage();
-    const result = await applyRemoteOp(msg, client as any, 'local-user');
+    const result = await applyRemoteOp(msg, client as unknown as MutationClient, 'local-user');
 
     expect(result.applied).toBe(false);
     expect(result.error).toBe('Panel not found');
@@ -173,7 +173,7 @@ describe('opApplicator', () => {
     };
     const msg = makeServerMessage({ op: collabOp });
 
-    const result = await applyRemoteOp(msg, client as any, 'local-user');
+    const result = await applyRemoteOp(msg, client as unknown as MutationClient, 'local-user');
 
     expect(result.applied).toBe(true);
     expect(client.execute).toHaveBeenCalledWith({

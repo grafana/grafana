@@ -108,7 +108,7 @@ describe('CollabMutationClient', () => {
     });
 
     const msg = publishOp.mock.calls[0][0];
-    expect((msg.op as any).mutation.type).toBe('UPDATE_PANEL');
+    expect((msg.op as Record<string, unknown>).mutation).toHaveProperty('type', 'UPDATE_PANEL');
   });
 
   it('includes correct lockTarget for dashboard-level mutations', async () => {
@@ -118,7 +118,7 @@ describe('CollabMutationClient', () => {
     });
 
     const msg = publishOp.mock.calls[0][0];
-    expect((msg.op as any).lockTarget).toBe('__dashboard__');
+    expect((msg.op as Record<string, unknown>).lockTarget).toBe('__dashboard__');
   });
 
   it('includes empty lockTarget for ADD_PANEL', async () => {
@@ -128,7 +128,7 @@ describe('CollabMutationClient', () => {
     });
 
     const msg = publishOp.mock.calls[0][0];
-    expect((msg.op as any).lockTarget).toBe('');
+    expect((msg.op as Record<string, unknown>).lockTarget).toBe('');
   });
 
   describe('opExtractor suppression', () => {
