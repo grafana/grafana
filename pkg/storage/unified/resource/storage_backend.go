@@ -32,12 +32,13 @@ import (
 )
 
 const (
-	defaultListBufferSize       = 100
-	defaultEventRetentionPeriod = 1 * time.Hour
-	defaultEventPruningLimit    = 20
-	defaultEventPruningInterval = 5 * time.Minute
-	defaultSearchLookback       = 1 * time.Second
-	clusterScopeNamespace       = "__cluster__"
+	defaultListBufferSize             = 100
+	defaultEventRetentionPeriod       = 1 * time.Hour
+	defaultEventPruningLimit          = 20
+	defaultEventPruningInterval       = 5 * time.Minute
+	defaultSearchLookback             = 1 * time.Second
+	defaultGarbageCollectionBatchWait = 1 * time.Second
+	clusterScopeNamespace             = "__cluster__"
 )
 
 // customPrunerHistoryLimits defines resource-specific history limits.
@@ -51,6 +52,7 @@ type GarbageCollectionConfig struct {
 	DryRun           bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
+	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
 	MaxAge           time.Duration // retention period
 	DashboardsMaxAge time.Duration // dashboard retention
 }
@@ -190,6 +192,11 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		searchLookback = defaultSearchLookback
 	}
 
+	garbageCollection := opts.GarbageCollection
+	if garbageCollection.BatchWait <= 0 {
+		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
+	}
+
 	backend := &kvStorageBackend{
 		kv:                           kv,
 		bulkLock:                     NewBulkLock(),
@@ -206,7 +213,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		dbKeepAlive:                  opts.DBKeepAlive,
 		lastImportStore:              newLastImportStore(kv),
 		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
-		garbageCollection:            opts.GarbageCollection,
+		garbageCollection:            garbageCollection,
 		searchLookback:               opts.SearchLookback,
 		disablePruner:                opts.DisablePruner,
 	}
@@ -562,8 +569,11 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 		totalDeleted += keysDeleted
 
-		// wait a second between batches to avoid overwhelming the datastore
-		<-time.After(time.Second)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(b.garbageCollection.BatchWait):
+		}
 	}
 
 	if totalDeleted > 0 {
