@@ -145,7 +145,7 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 		}
 
 		prefix := listKey.Prefix()
-		var keys []string
+		var keys []DataKey
 		for k, err := range td.dataStore.kv.Keys(ctx, dataSection, ListOptions{
 			StartKey: prefix,
 			EndKey:   PrefixRangeEnd(prefix),
@@ -153,7 +153,11 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 			if err != nil {
 				return err
 			}
-			keys = append(keys, k)
+			dk, err := ParseKey(k)
+			if err != nil {
+				return err
+			}
+			keys = append(keys, dk)
 		}
 
 		if td.cfg.DryRun {
@@ -166,10 +170,8 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 			continue
 		}
 
-		if len(keys) > 0 {
-			if err := td.dataStore.kv.BatchDelete(ctx, dataSection, keys); err != nil {
-				return err
-			}
+		if err := td.dataStore.batchDelete(ctx, keys); err != nil {
+			return err
 		}
 	}
 
@@ -177,5 +179,6 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 		return nil
 	}
 
+	// we delete the pending-delete record at the end to ensure idempotency
 	return td.pendingDeleteStore.Delete(ctx, tenantName)
 }
