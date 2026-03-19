@@ -229,7 +229,11 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         )}
         {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
         {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
-        <DefaultControlsLoadingSkeleton dashboard={dashboard} />
+        <DefaultControlsLoadingSkeleton
+          dashboard={dashboard}
+          hideVariableControls={hideVariableControls}
+          hideLinksControls={hideLinksControls}
+        />
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
         {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
       </div>
@@ -271,7 +275,11 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
-      <DefaultControlsLoadingSkeleton dashboard={dashboard} />
+      <DefaultControlsLoadingSkeleton
+        dashboard={dashboard}
+        hideVariableControls={hideVariableControls}
+        hideLinksControls={hideLinksControls}
+      />
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
@@ -329,11 +337,22 @@ function renderHiddenVariables(dashboard: DashboardScene) {
   return null;
 }
 
-function DefaultControlsLoadingSkeleton({ dashboard }: { dashboard: DashboardScene }) {
+function DefaultControlsLoadingSkeleton({
+  dashboard,
+  hideVariableControls,
+  hideLinksControls,
+}: {
+  dashboard: DashboardScene;
+  hideVariableControls?: boolean;
+  hideLinksControls?: boolean;
+}) {
   const { defaultVariablesLoading, defaultLinksLoading } = dashboard.useState();
   const styles = useStyles2(getSkeletonStyles);
 
-  if (!defaultVariablesLoading && !defaultLinksLoading) {
+  const showVariablesSkeleton = defaultVariablesLoading && !hideVariableControls;
+  const showLinksSkeleton = defaultLinksLoading && !hideLinksControls;
+
+  if (!showVariablesSkeleton && !showLinksSkeleton) {
     return null;
   }
 
