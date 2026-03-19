@@ -563,11 +563,14 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 		totalDeleted += keysDeleted
 
+		batchWait := time.Second
 		if b.garbageCollection.BatchWait > 0 {
-			<-time.After(b.garbageCollection.BatchWait)
-		} else {
-			// default to 1 second if batch wait is not set
-			<-time.After(time.Second)
+			batchWait = b.garbageCollection.BatchWait
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(batchWait):
 		}
 	}
 
