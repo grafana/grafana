@@ -114,6 +114,9 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
 }
 
 export function CollabProvider({ scene, dashboardUID, namespace, children }: PropsWithChildren<CollabProviderProps>) {
+  // Guard: scene must be active (SceneObjectBase sets _events on activation).
+  // Wrap in a safe check — if scene isn't ready, skip collab features but still render children.
+  const sceneReady = Boolean(scene?.isActive);
   const [connected, setConnected] = useState(false);
   const [users, setUsers] = useState<CollabUser[]>([]);
   const [locks, setLocks] = useState<CollabLock[]>([]);
@@ -134,7 +137,7 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
   // useCallback identity (which is defined later in the hook chain).
   const publishOpRef = useRef<(msg: ClientMessage) => void>(() => {});
 
-  const enabled = useMemo(() => isCollabEnabled(scene), [scene]);
+  const enabled = useMemo(() => sceneReady && isCollabEnabled(scene), [scene, sceneReady]);
 
   // Edge case #4: Pause cursor sending when tab is hidden
   useEffect(() => {
