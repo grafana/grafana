@@ -700,8 +700,8 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 		require.NoError(t, err, "admin should be able to release managed dashboard")
 
 		releasedAnnotations := updated.GetAnnotations()
-		require.Empty(t, releasedAnnotations[utils.AnnoKeyManagerKind], "managedBy should be removed")
-		require.Empty(t, releasedAnnotations[utils.AnnoKeyManagerIdentity], "managerId should be removed")
+		require.NotContains(t, releasedAnnotations, utils.AnnoKeyManagerKind, "managedBy should be removed")
+		require.NotContains(t, releasedAnnotations, utils.AnnoKeyManagerIdentity, "managerId should be removed")
 	})
 }
 
@@ -789,9 +789,9 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testi
 		require.NoError(t, err, "admin should be able to release via merge patch")
 
 		releasedAnnotations := updated.GetAnnotations()
-		require.Empty(t, releasedAnnotations[utils.AnnoKeyManagerKind], "managedBy should be removed")
-		require.Empty(t, releasedAnnotations[utils.AnnoKeyManagerIdentity], "managerId should be removed")
-		require.Empty(t, releasedAnnotations[utils.AnnoKeySourcePath], "sourcePath should be removed")
-		require.Empty(t, releasedAnnotations[utils.AnnoKeySourceChecksum], "sourceChecksum should be removed")
+		require.NotContains(t, releasedAnnotations, utils.AnnoKeyManagerKind, "managedBy should be removed")
+		require.NotContains(t, releasedAnnotations, utils.AnnoKeyManagerIdentity, "managerId should be removed")
+		require.NotContains(t, releasedAnnotations, utils.AnnoKeySourcePath, "sourcePath should be removed")
+		require.NotContains(t, releasedAnnotations, utils.AnnoKeySourceChecksum, "sourceChecksum should be removed")
 	})
 }

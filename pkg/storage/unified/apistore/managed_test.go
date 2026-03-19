@@ -54,7 +54,7 @@ func TestManagedAuthorizer(t *testing.T) {
 		{
 			name: "user can not create provisioned resource",
 			auth: user,
-			err:  "Provisioned resources must be manaaged by the provisioning service account",
+			err:  "this resource is managed by a repository",
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
@@ -67,7 +67,7 @@ func TestManagedAuthorizer(t *testing.T) {
 		{
 			name: "user can not update provisioned resource",
 			auth: user,
-			err:  "Provisioned resources must be manaaged by the provisioning service account",
+			err:  "Can not remove resource manager from resource",
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Generation: 1,
@@ -299,7 +299,7 @@ func TestManagedAuthorizer(t *testing.T) {
 			}
 
 			if tt.err != "" {
-				require.Error(t, err, tt.err)
+				require.ErrorContains(t, err, tt.err)
 			} else {
 				require.NoError(t, err)
 			}
