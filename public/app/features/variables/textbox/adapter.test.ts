@@ -35,6 +35,7 @@ describe('createTextBoxVariableAdapter', () => {
           skipUrlSync: false,
           error: null,
           description: null,
+          docsUrl: null,
         });
       });
     });
@@ -65,6 +66,7 @@ describe('createTextBoxVariableAdapter', () => {
           skipUrlSync: false,
           error: null,
           description: null,
+          docsUrl: null,
         });
       });
     });
