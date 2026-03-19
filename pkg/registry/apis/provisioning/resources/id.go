@@ -101,6 +101,12 @@ type Folder struct {
 	ID string
 	// Path is the full path to the folder, as given to the parse function.
 	Path string
+	// MetadataHash is the hash of the _folder.json file content.
+	// Empty when folder metadata is disabled or no _folder.json exists.
+	MetadataHash string
+	// ParentID is the UID of this folder's parent folder.
+	// Set during EnsureFolderPathExist's walk and used to detect stale parent annotations.
+	ParentID string
 }
 
 func ParseFolder(dirPath, repositoryName string) Folder {

@@ -1,4 +1,4 @@
-package provisioning
+package connection
 
 import (
 	"context"
@@ -19,7 +19,7 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 
 	helper := common.RunGrafana(t)
 	ctx := context.Background()
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	// Create a connection for testing
 	connection := &unstructured.Unstructured{Object: map[string]any{

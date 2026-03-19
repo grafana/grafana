@@ -107,7 +107,9 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return "", err
 	}
 	if fm.tree.In(f.ID) {
-		return f.ID, nil
+		if existing, ok := fm.tree.Get(f.ID); ok && existing.MetadataHash == f.MetadataHash {
+			return f.ID, nil
+		}
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
@@ -116,10 +118,13 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 			return err
 		}
 		if fm.tree.In(f.ID) {
-			parent = f.ID
-			return nil
+			if existing, ok := fm.tree.Get(f.ID); ok && existing.MetadataHash == f.MetadataHash {
+				parent = f.ID
+				return nil
+			}
 		}
 
+		f.ParentID = parent
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
 			return &PathCreationError{
 				Path: f.Path,
@@ -155,17 +160,40 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
 		}
 
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return fmt.Errorf("create meta accessor: %w", err)
+		}
+
+		needsUpdate := false
 		currentTitle, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
 		if currentTitle != folder.Title {
+			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
+				return fmt.Errorf("set folder title: %w", err)
+			}
+			needsUpdate = true
+		}
+
+		source, _ := meta.GetSourceProperties()
+		if source.Checksum != folder.MetadataHash {
+			source.Checksum = folder.MetadataHash
+			meta.SetSourceProperties(source)
+			needsUpdate = true
+		}
+
+		currentParent := meta.GetFolder()
+		if currentParent != folder.ParentID {
+			meta.SetFolder(folder.ParentID)
+			needsUpdate = true
+		}
+
+		if needsUpdate {
 			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
 			if err != nil {
 				return fmt.Errorf("unable to use provisioning identity %w", err)
 			}
-			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
-				return fmt.Errorf("set folder title: %w", err)
-			}
 			if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
-				return fmt.Errorf("update folder title: %w", err)
+				return fmt.Errorf("update folder: %w", err)
 			}
 		}
 
@@ -212,7 +240,8 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		Identity: cfg.GetName(),
 	})
 	meta.SetSourceProperties(utils.SourceProperties{
-		Path: folder.Path,
+		Path:     folder.Path,
+		Checksum: folder.MetadataHash,
 	})
 
 	if _, err := fm.client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
@@ -270,6 +299,7 @@ func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, st
 	// Build the leaf folder struct but replace the hash-derived ID with the stable UID.
 	leaf := ParseFolder(folderPath, cfg.GetName())
 	leaf.ID = stableUID
+	leaf.ParentID = parentFolderID
 
 	return fm.EnsureFolderExists(ctx, leaf, parentFolderID)
 }

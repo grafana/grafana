@@ -60,6 +60,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	teamLBACApiInstaller             TeamLBACApiInstaller
 	externalGroupMappingApiInstaller ExternalGroupMappingApiInstaller
 	resourcePermissionsStorage       resource.StorageBackend
+	mappers                          *resourcepermission.MappersRegistry
 	roleBindingsStorage              RoleBindingStorageBackend
 
 	// Required for resource permissions authorization

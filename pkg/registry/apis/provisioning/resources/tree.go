@@ -20,6 +20,8 @@ import (
 //go:generate mockery --name FolderTree --structname MockFolderTree --inpackage --filename tree_mock.go --with-expecter
 type FolderTree interface {
 	In(folder string) bool
+	// Get returns the folder entry for the given ID, or false if not found.
+	Get(folderID string) (Folder, bool)
 	DirPath(folder, baseFolder string) (Folder, bool)
 	Add(folder Folder, parent string)
 	// Remove deletes folderID and all its descendants from the tree.
@@ -47,6 +49,13 @@ func (t *folderTree) In(folder string) bool {
 func (t *folderTree) in(folder string) bool {
 	_, ok := t.tree[folder]
 	return ok || folder == ""
+}
+
+func (t *folderTree) Get(folderID string) (Folder, bool) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+	f, ok := t.folders[folderID]
+	return f, ok
 }
 
 // DirPath creates the path to the directory with slashes, up to but not including the baseFolder.
@@ -102,6 +111,8 @@ func (t *folderTree) Add(folder Folder, parent string) {
 	defer t.mu.Unlock()
 	_, exists := t.tree[folder.ID]
 	t.tree[folder.ID] = parent
+	// Ensure the parent folder is set
+	folder.ParentID = parent
 	t.folders[folder.ID] = folder
 	if !exists {
 		t.count++
@@ -180,8 +191,9 @@ func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 	}
 
 	folder := Folder{
-		Title: meta.FindTitle(item.GetName()),
-		ID:    item.GetName(),
+		Title:    meta.FindTitle(item.GetName()),
+		ID:       item.GetName(),
+		ParentID: meta.GetFolder(),
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -201,9 +213,11 @@ func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) FolderT
 
 		tree[rf.Name] = rf.Folder
 		folderIDs[rf.Name] = Folder{
-			Title: rf.Title,
-			ID:    rf.Name,
-			Path:  rf.Path,
+			Title:        rf.Title,
+			ID:           rf.Name,
+			Path:         rf.Path,
+			MetadataHash: rf.Hash,
+			ParentID:     rf.Folder,
 		}
 	}
 
