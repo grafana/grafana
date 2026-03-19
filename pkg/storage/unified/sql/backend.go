@@ -60,6 +60,7 @@ type GarbageCollectionConfig struct {
 	Enabled          bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
+	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
 	MaxAge           time.Duration // retention period
 	DashboardsMaxAge time.Duration // dashboard retention
 }
@@ -118,6 +119,7 @@ func NewStorageBackend(
 				Enabled:          cfg.EnableGarbageCollection,
 				Interval:         cfg.GarbageCollectionInterval,
 				BatchSize:        cfg.GarbageCollectionBatchSize,
+				BatchWait:        cfg.GarbageCollectionBatchWait,
 				MaxAge:           cfg.GarbageCollectionMaxAge,
 				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 			},
@@ -506,10 +508,14 @@ func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int6
 				if deleted < int64(b.garbageCollection.BatchSize) {
 					break
 				}
+				batchWait := time.Second
+				if b.garbageCollection.BatchWait > 0 {
+					batchWait = b.garbageCollection.BatchWait
+				}
 				select {
 				case <-b.done:
 					return deletedByKey
-				case <-time.After(time.Second):
+				case <-time.After(batchWait):
 				}
 			}
 			if totalDeleted > 0 {
