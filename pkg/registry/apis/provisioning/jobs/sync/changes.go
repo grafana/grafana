@@ -22,9 +22,9 @@ type ResourceFileChange struct {
 	// The current value in the database -- only required for delete
 	Existing *provisioning.ResourceListItem
 
-	// OldFolderUID is set when a folder's _folder.json UID changed.
+	// FolderRenamed is set when a folder's _folder.json UID changed.
 	// The old folder needs cleanup after all children have been re-parented.
-	OldFolderUID string
+	FolderRenamed bool
 }
 
 // IsUpdatedFolder reports whether this change is an update to an existing folder.
@@ -246,7 +246,7 @@ func augmentChangesForUIDChanges(
 		}
 		if meta.Name != change.Existing.Name {
 			affectedFolders[change.Path] = true
-			change.OldFolderUID = change.Existing.Name
+			change.FolderRenamed = true
 		}
 	}
 	if len(affectedFolders) == 0 {

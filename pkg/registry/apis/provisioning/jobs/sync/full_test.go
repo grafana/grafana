@@ -1280,7 +1280,7 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 			// Folder creation with OldFolderUID — triggers deferred deletion
 			Action:       repository.FileActionUpdated,
 			Path:         "myfolder/",
-			OldFolderUID: "old-uid-123",
+			FolderRenamed: true,
 			Existing:     &provisioning.ResourceListItem{Name: "old-uid-123"},
 		},
 		{
@@ -1359,14 +1359,14 @@ func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 		{
 			Action:       repository.FileActionUpdated,
 			Path:         "parent/",
-			OldFolderUID: "old-parent-uid",
+			FolderRenamed: true,
 			Existing:     &provisioning.ResourceListItem{Name: "old-parent-uid"},
 		},
 		{
-			Action:       repository.FileActionUpdated,
-			Path:         "parent/child/",
-			OldFolderUID: "old-child-uid",
-			Existing:     &provisioning.ResourceListItem{Name: "old-child-uid"},
+			Action:        repository.FileActionUpdated,
+			Path:          "parent/child/",
+			FolderRenamed: true,
+			Existing:      &provisioning.ResourceListItem{Name: "old-child-uid"},
 		},
 	}
 
@@ -1413,10 +1413,10 @@ func TestApplyChanges_OldFolderDeletion_ErrorContinues(t *testing.T) {
 
 	changes := []ResourceFileChange{
 		{
-			Action:       repository.FileActionUpdated,
-			Path:         "broken/",
-			OldFolderUID: "old-broken-uid",
-			Existing:     &provisioning.ResourceListItem{Name: "old-broken-uid"},
+			Action:        repository.FileActionUpdated,
+			Path:          "broken/",
+			FolderRenamed: true,
+			Existing:      &provisioning.ResourceListItem{Name: "old-broken-uid"},
 		},
 	}
 

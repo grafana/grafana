@@ -367,8 +367,8 @@ func applyChanges(
 	}
 	var oldFolders []oldFolder
 	for _, change := range folderCreations {
-		if change.OldFolderUID != "" {
-			oldFolders = append(oldFolders, oldFolder{Path: change.Path, UID: change.OldFolderUID})
+		if change.FolderRenamed {
+			oldFolders = append(oldFolders, oldFolder{Path: change.Path, UID: change.Existing.Name})
 		}
 	}
 
