@@ -22,6 +22,9 @@ type FSRequestConfig struct {
 	CSPReportOnlyEnabled  bool
 	CSPReportOnlyTemplate string
 	AppURL                string
+	// AllowEmbeddingHosts is the list of hostnames allowed to embed Grafana in an iframe via CSP frame-ancestors.
+	// Use ["*"] to allow all hosts. Empty means embedding is not allowed.
+	AllowEmbeddingHosts []string
 }
 
 // NewFSRequestConfig creates a new FSRequestConfig from the global configuration.
@@ -67,6 +70,7 @@ func NewFSRequestConfig(cfg *setting.Cfg, license licensing.Licensing) FSRequest
 		CSPReportOnlyEnabled:  cfg.CSPReportOnlyEnabled,
 		CSPReportOnlyTemplate: cfg.CSPReportOnlyTemplate,
 		AppURL:                cfg.AppURL,
+		AllowEmbeddingHosts:   cfg.AllowEmbeddingHosts,
 	}
 }
 
@@ -123,6 +127,7 @@ func (c *FSRequestConfig) ApplyOverrides(settings *ini.File, logger log.Logger) 
 	applyString(settings, "security", "content_security_policy_template", &c.CSPTemplate, logger)
 	applyBool(settings, "security", "content_security_policy_report_only", &c.CSPReportOnlyEnabled, logger)
 	applyString(settings, "security", "content_security_policy_report_only_template", &c.CSPReportOnlyTemplate, logger)
+	applyStringSlice(settings, "security", "allow_embedding_hosts", &c.AllowEmbeddingHosts, logger)
 
 	applyString(settings, "analytics", "rudderstack_write_key", &c.RudderstackWriteKey, logger)
 	applyString(settings, "analytics", "rudderstack_data_plane_url", &c.RudderstackDataPlaneUrl, logger)
@@ -148,6 +153,18 @@ func getValue(settings *ini.File, section, key string) *ini.Key {
 func applyString(settings *ini.File, sectionName, keyName string, target *string, logger log.Logger) {
 	if key := getValue(settings, sectionName, keyName); key != nil {
 		*target = key.String()
+
+		logger.Debug("applying request config override",
+			"section", sectionName,
+			"key", keyName,
+			"value", *target)
+	}
+}
+
+// applyStringSlice applies a space-separated string value from ini settings to a target []string field if it exists.
+func applyStringSlice(settings *ini.File, sectionName, keyName string, target *[]string, logger log.Logger) {
+	if key := getValue(settings, sectionName, keyName); key != nil {
+		*target = strings.Fields(key.String())
 
 		logger.Debug("applying request config override",
 			"section", sectionName,

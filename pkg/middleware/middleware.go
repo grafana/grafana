@@ -57,12 +57,6 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 				addNoCacheHeaders(c.Resp)
 			}
 
-			// X-Allow-Embedding header is set for specific URLs that need to be embedded in an iframe regardless
-			// of the configured allow_embedding setting.
-			embeddingHeader := w.Header().Get("X-Allow-Embedding")
-			if !cfg.AllowEmbedding && embeddingHeader != "allow" {
-				addXFrameOptionsDenyHeader(w)
-			}
 			addSecurityHeaders(w, cfg)
 		})
 	}
@@ -94,10 +88,6 @@ func addNoCacheHeaders(w web.ResponseWriter) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Del("Pragma")
 	w.Header().Del("Expires")
-}
-
-func addXFrameOptionsDenyHeader(w web.ResponseWriter) {
-	w.Header().Set("X-Frame-Options", "deny")
 }
 
 func AddCustomResponseHeaders(cfg *setting.Cfg) web.Handler {
