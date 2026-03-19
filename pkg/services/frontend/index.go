@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"strings"
 	"syscall"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -22,12 +20,11 @@ import (
 )
 
 type IndexProvider struct {
-	log              logging.Logger
-	index            *template.Template
-	hooksService     *hooks.HooksService
-	config           *setting.Cfg
-	license          licensing.Licensing
-	previewAssetsCfg PreviewAssetsConfig
+	index             *template.Template
+	hooksService      *hooks.HooksService
+	config            *setting.Cfg
+	license           licensing.Licensing
+	assetsOverrideCfg AssetsOverrideConfig
 }
 
 type IndexViewData struct {
@@ -62,30 +59,28 @@ var (
 	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `index.html`))
 )
 
-func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService, previewAssetsCfg PreviewAssetsConfig) (*IndexProvider, error) {
+func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService, previewAssetsCfg AssetsOverrideConfig) (*IndexProvider, error) {
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
 	}
 
-	logger := logging.DefaultLogger.With("logger", "index-provider")
-
 	// subset of frontend settings needed for the login page
 	// TODO what about enterprise settings here?
 
 	return &IndexProvider{
-		log:              logger,
-		index:            t,
-		hooksService:     hooksService,
-		config:           cfg,
-		license:          license,
-		previewAssetsCfg: previewAssetsCfg,
+		index:             t,
+		hooksService:      hooksService,
+		config:            cfg,
+		license:           license,
+		assetsOverrideCfg: previewAssetsCfg,
 	}, nil
 }
 
 func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.Request) {
 	ctx, span := tracer.Start(request.Context(), "frontend.index.HandleRequest")
 	defer span.End()
+	reqCtx := contexthandler.FromContext(ctx)
 
 	if request.Method != "GET" {
 		writer.WriteHeader(http.StatusMethodNotAllowed)
@@ -94,25 +89,25 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 
 	requestConfig, err := FSRequestConfigFromContext(ctx)
 	if err != nil {
-		p.log.Error("unable to get request config", "err", err)
+		reqCtx.Logger.Error("unable to get request config", "err", err)
 		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
 	// Check for assets base override cookie (stores an asset ID, not a full URL)
-	var assetsBaseOverrideURL string
-	if cookie, err := request.Cookie(assetsOverrideCookieName); err == nil && cookie.Value != "" {
-		assetsBaseOverrideURL = resolveAssetsOverrideURL(p.previewAssetsCfg, cookie.Value)
+	var assetsOverrideFolder string
+	if p.assetsOverrideCfg.Enabled && p.assetsOverrideCfg.BaseURL != "" {
+		if cookie, err := request.Cookie(assetsOverrideCookieName); err == nil && cookie.Value != "" {
+			assetsOverrideFolder = cookie.Value
+		}
 	}
 
-	assetsManifest, err := fswebassets.GetWebAssets(ctx, p.config, p.license, p.previewAssetsCfg.Enabled, p.previewAssetsCfg.BaseURL, assetsBaseOverrideURL)
+	assetsManifest, err := fswebassets.GetWebAssets(ctx, p.config, p.license, p.assetsOverrideCfg.Enabled, p.assetsOverrideCfg.BaseURL, assetsOverrideFolder)
 	if err != nil {
-		p.log.Error("unable to get web assets", "err", err)
+		reqCtx.Logger.Error("unable to get web assets", "err", err)
 		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-
-	reqCtx := contexthandler.FromContext(ctx)
 
 	// make a copy of the settings
 	fsSettings := requestConfig.FSFrontendSettings
@@ -125,7 +120,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		AppSubUrl:                  p.config.AppSubURL,
 		IsDevelopmentEnv:           p.config.Env == setting.Dev,
 		Assets:                     assetsManifest,
-		AssetsOverridden:           assetsBaseOverrideURL != "",
+		AssetsOverridden:           assetsOverrideFolder != "",
 		DefaultUser:                dtos.CurrentUser{},
 		Nonce:                      reqCtx.RequestNonce,
 		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
@@ -138,7 +133,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	// The backend sets an encrypted cookie on oauth login failures that we can't read
 	// so we just show a generic error if the cookie is present.
 	if cookie, err := request.Cookie("login_error"); err == nil && cookie.Value != "" {
-		p.log.Info("request has login_error cookie")
+		reqCtx.Logger.Info("request has login_error cookie")
 		// Defaults to a translation key that the frontend will resolve to a localized message
 		data.Settings.LoginError = p.config.OAuthLoginErrorMessage // TODO: get from request config
 
@@ -181,16 +176,4 @@ func (p *IndexProvider) runIndexDataHooks(reqCtx *contextmodel.ReqContext, data 
 	p.hooksService.RunIndexDataHooks(&legacyIndexViewData, reqCtx)
 
 	data.Settings.BuildInfo = legacyIndexViewData.Settings.BuildInfo
-}
-
-// resolveAssetsOverrideURL constructs the full assets override URL from the preview config and an asset ID.
-func resolveAssetsOverrideURL(previewCfg PreviewAssetsConfig, assetsID string) string {
-	base := previewCfg.BaseURL
-	if base == "" {
-		return ""
-	}
-	if !strings.HasSuffix(base, "/") {
-		base += "/"
-	}
-	return base + assetsID + "/"
 }

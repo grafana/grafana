@@ -13,13 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func newTestPreviewHandler(previewCfg PreviewAssetsConfig) *previewAssetsHandler {
-	return newPreviewAssetsHandler(&setting.Cfg{}, previewCfg)
+func newTestPreviewHandler(previewCfg AssetsOverrideConfig) *assetsOverrideHandler {
+	return newAssetsOverrideHandler(&setting.Cfg{}, previewCfg)
 }
 
 func TestPreviewAssetsHandler_GET(t *testing.T) {
 	t.Run("should show confirmation page with CSRF token", func(t *testing.T) {
-		handler := newTestPreviewHandler(PreviewAssetsConfig{
+		handler := newTestPreviewHandler(AssetsOverrideConfig{
 			Enabled: true,
 			BaseURL: "https://storage.example.com/bucket/",
 		})
@@ -50,7 +50,7 @@ func TestPreviewAssetsHandler_GET(t *testing.T) {
 	})
 
 	t.Run("should reject when feature is disabled", func(t *testing.T) {
-		handler := newTestPreviewHandler(PreviewAssetsConfig{
+		handler := newTestPreviewHandler(AssetsOverrideConfig{
 			Enabled: false,
 		})
 
@@ -64,7 +64,7 @@ func TestPreviewAssetsHandler_GET(t *testing.T) {
 	})
 
 	t.Run("should reject when base URL is not configured", func(t *testing.T) {
-		handler := newTestPreviewHandler(PreviewAssetsConfig{
+		handler := newTestPreviewHandler(AssetsOverrideConfig{
 			Enabled: true,
 			BaseURL: "",
 		})
@@ -79,7 +79,7 @@ func TestPreviewAssetsHandler_GET(t *testing.T) {
 	})
 
 	t.Run("should reject invalid asset IDs", func(t *testing.T) {
-		handler := newTestPreviewHandler(PreviewAssetsConfig{
+		handler := newTestPreviewHandler(AssetsOverrideConfig{
 			Enabled: true,
 			BaseURL: "https://storage.example.com/bucket/",
 		})
@@ -95,7 +95,7 @@ func TestPreviewAssetsHandler_GET(t *testing.T) {
 	})
 
 	t.Run("should accept valid asset IDs", func(t *testing.T) {
-		handler := newTestPreviewHandler(PreviewAssetsConfig{
+		handler := newTestPreviewHandler(AssetsOverrideConfig{
 			Enabled: true,
 			BaseURL: "https://storage.example.com/bucket/",
 		})
@@ -111,7 +111,7 @@ func TestPreviewAssetsHandler_GET(t *testing.T) {
 	})
 
 	t.Run("should reject when assets parameter is missing", func(t *testing.T) {
-		handler := newTestPreviewHandler(PreviewAssetsConfig{
+		handler := newTestPreviewHandler(AssetsOverrideConfig{
 			Enabled: true,
 		})
 
@@ -126,7 +126,7 @@ func TestPreviewAssetsHandler_GET(t *testing.T) {
 
 func TestPreviewAssetsHandler_POST(t *testing.T) {
 	t.Run("should set cookie with valid CSRF token", func(t *testing.T) {
-		handler := newTestPreviewHandler(PreviewAssetsConfig{
+		handler := newTestPreviewHandler(AssetsOverrideConfig{
 			Enabled: true,
 			BaseURL: "https://storage.example.com/bucket/",
 		})
@@ -178,7 +178,7 @@ func TestPreviewAssetsHandler_POST(t *testing.T) {
 	})
 
 	t.Run("should reject when CSRF token is missing", func(t *testing.T) {
-		handler := newTestPreviewHandler(PreviewAssetsConfig{
+		handler := newTestPreviewHandler(AssetsOverrideConfig{
 			Enabled: true,
 			BaseURL: "https://storage.example.com/bucket/",
 		})
@@ -198,7 +198,7 @@ func TestPreviewAssetsHandler_POST(t *testing.T) {
 	})
 
 	t.Run("should reject when CSRF token does not match", func(t *testing.T) {
-		handler := newTestPreviewHandler(PreviewAssetsConfig{
+		handler := newTestPreviewHandler(AssetsOverrideConfig{
 			Enabled: true,
 			BaseURL: "https://storage.example.com/bucket/",
 		})
@@ -222,7 +222,7 @@ func TestPreviewAssetsHandler_POST(t *testing.T) {
 	})
 
 	t.Run("should reject invalid asset ID on POST", func(t *testing.T) {
-		handler := newTestPreviewHandler(PreviewAssetsConfig{
+		handler := newTestPreviewHandler(AssetsOverrideConfig{
 			Enabled: true,
 			BaseURL: "https://storage.example.com/bucket/",
 		})

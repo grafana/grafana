@@ -57,15 +57,15 @@ type frontendService struct {
 	license      licensing.Licensing
 
 	index                *IndexProvider
-	previewAssetsCfg     PreviewAssetsConfig
-	previewAssetsHandler *previewAssetsHandler
+	previewAssetsCfg     AssetsOverrideConfig
+	previewAssetsHandler *assetsOverrideHandler
 	settingsService      settingservice.Service // nil if not configured
 }
 
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, hooksService *hooks.HooksService) (*frontendService, error) {
 	logger := log.New("frontend-service")
 
-	previewAssetsCfg := ReadPreviewAssetsConfig(cfg)
+	previewAssetsCfg := ReadAssetsOverrideConfig(cfg)
 
 	index, err := NewIndexProvider(cfg, license, hooksService, previewAssetsCfg)
 	if err != nil {
@@ -91,7 +91,7 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 		license:              license,
 		index:                index,
 		previewAssetsCfg:     previewAssetsCfg,
-		previewAssetsHandler: newPreviewAssetsHandler(cfg, previewAssetsCfg),
+		previewAssetsHandler: newAssetsOverrideHandler(cfg, previewAssetsCfg),
 		settingsService:      settingsService,
 	}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)

@@ -7,11 +7,10 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"regexp"
-	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,9 +21,6 @@ const (
 	cookieMaxAge             = 24 * time.Hour
 )
 
-// validAssetsID matches alphanumeric characters and underscores only.
-var validAssetsID = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
-
 var (
 	//go:embed set_preview_assets_confirm.html
 	previewAssetsTemplatesFS embed.FS
@@ -32,9 +28,9 @@ var (
 	confirmationPageTemplate = template.Must(template.ParseFS(previewAssetsTemplatesFS, "set_preview_assets_confirm.html"))
 )
 
-// PreviewAssetsConfig holds the configuration for the frontend preview assets feature.
+// AssetsOverrideConfig holds the configuration for the frontend preview assets feature.
 // It is loaded directly from the ini config in the frontend service, not from setting.Cfg.
-type PreviewAssetsConfig struct {
+type AssetsOverrideConfig struct {
 	// Enabled controls whether asset base URL overrides are allowed.
 	Enabled bool
 
@@ -45,47 +41,39 @@ type PreviewAssetsConfig struct {
 	BaseURL string
 }
 
-// ReadPreviewAssetsConfig reads the preview assets configuration from the ini config file.
-func ReadPreviewAssetsConfig(cfg *setting.Cfg) PreviewAssetsConfig {
+// ReadAssetsOverrideConfig reads the preview assets configuration from the ini config file.
+func ReadAssetsOverrideConfig(cfg *setting.Cfg) AssetsOverrideConfig {
 	server := cfg.Raw.Section("server")
-	return PreviewAssetsConfig{
+	return AssetsOverrideConfig{
 		Enabled: server.Key("assets_base_override_enabled").MustBool(false),
 		BaseURL: server.Key("assets_base_override_base_url").String(),
 	}
 }
 
-type previewAssetsHandler struct {
-	previewCfg   PreviewAssetsConfig
+type assetsOverrideHandler struct {
+	previewCfg   AssetsOverrideConfig
 	cookieSecure bool
-	log          log.Logger
 }
 
-func newPreviewAssetsHandler(cfg *setting.Cfg, previewCfg PreviewAssetsConfig) *previewAssetsHandler {
-	return &previewAssetsHandler{
+func newAssetsOverrideHandler(cfg *setting.Cfg, previewCfg AssetsOverrideConfig) *assetsOverrideHandler {
+	return &assetsOverrideHandler{
 		previewCfg:   previewCfg,
 		cookieSecure: cfg.CookieSecure,
-		log:          log.New("frontend.preview-assets"),
 	}
 }
 
-// resolveAssetsURL constructs the full override URL from the configured base URL and an asset ID.
-func (h *previewAssetsHandler) resolveAssetsURL(assetsID string) string {
-	base := h.previewCfg.BaseURL
-	if !strings.HasSuffix(base, "/") {
-		base += "/"
-	}
-	return base + assetsID + "/"
-}
-
-func (h *previewAssetsHandler) handleGet(w http.ResponseWriter, r *http.Request) {
-	assetsID := r.URL.Query().Get("assets")
+func (h *assetsOverrideHandler) handleGet(w http.ResponseWriter, request *http.Request) {
+	ctx := request.Context()
+	reqCtx := contexthandler.FromContext(ctx)
+	assetsID := request.URL.Query().Get("assets")
 	if assetsID == "" {
 		http.Error(w, "missing 'assets' query parameter", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.validateAssetsID(assetsID); err != nil {
-		h.log.Warn("rejected preview assets ID", "id", assetsID, "reason", err)
+	assetsURL, err := fswebassets.ResolveAssetsOverrideURL(h.previewCfg.BaseURL, assetsID)
+	if err != nil {
+		reqCtx.Logger.Warn("rejected preview assets ID", "id", assetsID, "reason", err)
 		http.Error(w, fmt.Sprintf("invalid assets ID: %s", err), http.StatusBadRequest)
 		return
 	}
@@ -93,7 +81,7 @@ func (h *previewAssetsHandler) handleGet(w http.ResponseWriter, r *http.Request)
 	// Generate CSRF token and set it as a cookie
 	csrfToken, err := generateCSRFToken()
 	if err != nil {
-		h.log.Error("failed to generate CSRF token", "error", err)
+		reqCtx.Logger.Error("failed to generate CSRF token", "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
@@ -116,47 +104,51 @@ func (h *previewAssetsHandler) handleGet(w http.ResponseWriter, r *http.Request)
 		CSRFToken string
 	}{
 		AssetsID:  assetsID,
-		AssetsURL: h.resolveAssetsURL(assetsID),
+		AssetsURL: assetsURL,
 		CSRFToken: csrfToken,
 	}); err != nil {
-		h.log.Error("failed to render confirmation page", "error", err)
+		reqCtx.Logger.Error("failed to render confirmation page", "error", err)
 	}
 }
 
-func (h *previewAssetsHandler) handlePost(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "invalid form data", http.StatusBadRequest)
+func (h *assetsOverrideHandler) handlePost(writer http.ResponseWriter, request *http.Request) {
+	ctx := request.Context()
+	reqCtx := contexthandler.FromContext(ctx)
+
+	if err := request.ParseForm(); err != nil {
+		http.Error(writer, "invalid form data", http.StatusBadRequest)
 		return
 	}
 
-	assetsID := r.FormValue("assets")
-	formCSRFToken := r.FormValue("csrf_token")
+	assetsID := request.FormValue("assets")
+	formCSRFToken := request.FormValue("csrf_token")
 
 	if assetsID == "" || formCSRFToken == "" {
-		http.Error(w, "missing required fields", http.StatusBadRequest)
+		http.Error(writer, "missing required fields", http.StatusBadRequest)
 		return
 	}
 
 	// Validate CSRF: compare form token against the cookie token
-	csrfCookie, err := r.Cookie(csrfCookieName)
+	csrfCookie, err := request.Cookie(csrfCookieName)
 	if err != nil || csrfCookie.Value == "" {
-		http.Error(w, "missing or expired CSRF token — please try again", http.StatusForbidden)
+		http.Error(writer, "missing or expired CSRF token — please try again", http.StatusForbidden)
 		return
 	}
 
 	if formCSRFToken != csrfCookie.Value {
-		http.Error(w, "CSRF token mismatch", http.StatusForbidden)
+		http.Error(writer, "CSRF token mismatch", http.StatusForbidden)
 		return
 	}
 
-	if err := h.validateAssetsID(assetsID); err != nil {
-		h.log.Warn("rejected preview assets ID on POST", "id", assetsID, "reason", err)
-		http.Error(w, fmt.Sprintf("invalid assets ID: %s", err), http.StatusBadRequest)
+	assetsURL, err := fswebassets.ResolveAssetsOverrideURL(h.previewCfg.BaseURL, assetsID)
+	if err != nil {
+		reqCtx.Logger.Warn("rejected preview assets ID on POST", "id", assetsID, "reason", err)
+		http.Error(writer, fmt.Sprintf("invalid assets ID: %s", err), http.StatusBadRequest)
 		return
 	}
 
 	// Clear the CSRF cookie
-	http.SetCookie(w, &http.Cookie{
+	http.SetCookie(writer, &http.Cookie{
 		Name:     csrfCookieName,
 		Value:    "",
 		Path:     "/-/set-preview-assets",
@@ -167,7 +159,7 @@ func (h *previewAssetsHandler) handlePost(w http.ResponseWriter, r *http.Request
 	})
 
 	// Set the assets override cookie — stores only the ID, not the full URL
-	http.SetCookie(w, &http.Cookie{
+	http.SetCookie(writer, &http.Cookie{
 		Name:     assetsOverrideCookieName,
 		Value:    assetsID,
 		Path:     "/",
@@ -177,34 +169,9 @@ func (h *previewAssetsHandler) handlePost(w http.ResponseWriter, r *http.Request
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	h.log.Info("preview assets cookie set", "id", assetsID, "url", h.resolveAssetsURL(assetsID))
+	reqCtx.Logger.Info("preview assets cookie set", "id", assetsID, "url", assetsURL)
 
-	http.Redirect(w, r, "/", http.StatusSeeOther)
-}
-
-func (h *previewAssetsHandler) validateAssetsID(assetsID string) error {
-	if !h.previewCfg.Enabled {
-		return fmt.Errorf("assets base override is not enabled")
-	}
-
-	if h.previewCfg.BaseURL == "" {
-		return fmt.Errorf("assets base override base URL is not configured")
-	}
-
-	if len(assetsID) > 256 {
-		return fmt.Errorf("assets ID exceeds maximum length")
-	}
-
-	if !validAssetsID.MatchString(assetsID) {
-		return fmt.Errorf("assets ID contains invalid characters")
-	}
-
-	// Reject path traversal
-	if strings.Contains(assetsID, "..") {
-		return fmt.Errorf("assets ID contains path traversal")
-	}
-
-	return nil
+	http.Redirect(writer, request, "/", http.StatusSeeOther)
 }
 
 func generateCSRFToken() (string, error) {

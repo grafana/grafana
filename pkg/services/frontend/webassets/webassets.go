@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -18,6 +19,9 @@ import (
 )
 
 var logger = log.New("webassets")
+
+// validAssetsID matches alphanumeric characters and underscores only.
+var validAssetsID = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 
 const remoteCacheTTL = 30 * time.Second
 
@@ -66,10 +70,15 @@ func getCDNRoot(cfg *setting.Cfg, license licensing.Licensing) string {
 // it is used as both the source for the assets manifest and the CDN base URL for all
 // asset references. The override URL must match the configured base URL.
 // If validation fails, the override is ignored and default assets are returned.
-func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing, overrideEnabled bool, overrideBaseURL string, assetsBaseOverrideURL string) (dtos.EntryPointAssets, error) {
-	if assetsBaseOverrideURL != "" {
-		if err := validateOverrideURL(overrideEnabled, overrideBaseURL, assetsBaseOverrideURL); err != nil {
-			logger.Warn("ignoring assets base override URL", "url", assetsBaseOverrideURL, "reason", err)
+func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing, overrideEnabled bool, overrideBaseURL string, assetsOverrideFolder string) (dtos.EntryPointAssets, error) {
+	if overrideEnabled && assetsOverrideFolder != "" {
+		if overrideBaseURL == "" {
+			return dtos.EntryPointAssets{}, fmt.Errorf("assetsOverrideFolder provided but overrideBaseURL is empty")
+		}
+
+		assetsBaseOverrideURL, err := ResolveAssetsOverrideURL(overrideBaseURL, assetsOverrideFolder)
+		if err != nil {
+			logger.Warn("assets override failed validation, returning default assets", "err", err, "overrideBaseURL", overrideBaseURL, "assetsOverrideFolder", assetsOverrideFolder)
 		} else {
 			return getRemoteAssets(ctx, assetsBaseOverrideURL)
 		}
@@ -78,23 +87,30 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	return getDefaultAssets(ctx, cfg, license)
 }
 
-// validateOverrideURL checks that the assets override feature is enabled and
-// the URL starts with the configured base URL. HTTPS is enforced at config
-// parse time (see ReadPreviewAssetsConfig).
-func validateOverrideURL(enabled bool, baseURL string, overrideURL string) error {
-	if !enabled {
-		return fmt.Errorf("assets base override is not enabled")
+// ResolveAssetsOverrideURL constructs the full assets override URL from the preview config and an asset ID.
+func ResolveAssetsOverrideURL(overrideBaseURL string, assetsID string) (string, error) {
+	if overrideBaseURL == "" {
+		return "", fmt.Errorf("override base URL is empty")
 	}
 
-	if baseURL == "" {
-		return fmt.Errorf("assets base override base URL is not configured")
+	if len(assetsID) > 128 {
+		return "", fmt.Errorf("assets ID exceeds maximum length")
 	}
 
-	if !strings.HasPrefix(overrideURL, baseURL) {
-		return fmt.Errorf("override URL does not match configured base URL")
+	if !validAssetsID.MatchString(assetsID) {
+		return "", fmt.Errorf("assets ID contains invalid characters")
 	}
 
-	return nil
+	// Reject path traversal
+	if strings.Contains(assetsID, "..") {
+		return "", fmt.Errorf("assets ID contains path traversal")
+	}
+
+	base := overrideBaseURL
+	if !strings.HasSuffix(base, "/") {
+		base += "/"
+	}
+	return base + assetsID + "/", nil
 }
 
 func getDefaultAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing) (dtos.EntryPointAssets, error) {
@@ -138,6 +154,15 @@ func getRemoteAssets(ctx context.Context, baseURL string) (dtos.EntryPointAssets
 		return cached.assets, nil
 	}
 	remoteCacheMu.RUnlock()
+
+	// Clean up expired entries
+	remoteCacheMu.Lock()
+	for key, cached := range remoteCache {
+		if time.Since(cached.fetchedAt) >= remoteCacheTTL {
+			delete(remoteCache, key)
+		}
+	}
+	remoteCacheMu.Unlock()
 
 	// Fetch manifest from the remote URL and use it as the CDN base
 	logger.Info("fetching assets manifest from override URL", "url", baseURL)
