@@ -1,7 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
+import { createDebugLog } from 'app/core/utils/debugLog';
 import { K8sAPIGroup } from 'app/features/apiserver/types';
-
-import { createDebugLog } from './debugLog';
 
 const debugLog = createDebugLog('dashboardAPI', 'Dashboard API');
 
