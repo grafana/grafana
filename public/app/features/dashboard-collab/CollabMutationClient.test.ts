@@ -1,6 +1,7 @@
 import { CollabMutationClient, type PublishOp } from './CollabMutationClient';
 
 import type { MutationClient, MutationRequest, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
+import { isExtractionSuppressed, unsuppressExtraction } from './opExtractor';
 import type { ClientMessage } from './protocol/messages';
 
 function makeInnerClient(overrides?: Partial<MutationClient>): MutationClient {
@@ -128,5 +129,63 @@ describe('CollabMutationClient', () => {
 
     const msg = publishOp.mock.calls[0][0];
     expect((msg.op as any).lockTarget).toBe('');
+  });
+
+  describe('opExtractor suppression', () => {
+    afterEach(() => {
+      unsuppressExtraction();
+    });
+
+    it('suppresses opExtractor during write mutation execution', async () => {
+      inner = makeInnerClient({
+        execute: jest.fn<Promise<MutationResult>, [MutationRequest]>().mockImplementation(async () => {
+          expect(isExtractionSuppressed()).toBe(true);
+          return { success: true, changes: [] };
+        }),
+      });
+      client = new CollabMutationClient(inner, publishOp, 'user-1');
+
+      expect(isExtractionSuppressed()).toBe(false);
+      await client.execute({ type: 'UPDATE_PANEL', payload: {} });
+      expect(isExtractionSuppressed()).toBe(false);
+    });
+
+    it('does not suppress opExtractor for read-only commands', async () => {
+      inner = makeInnerClient({
+        execute: jest.fn<Promise<MutationResult>, [MutationRequest]>().mockImplementation(async () => {
+          expect(isExtractionSuppressed()).toBe(false);
+          return { success: true, changes: [] };
+        }),
+      });
+      client = new CollabMutationClient(inner, publishOp, 'user-1');
+
+      await client.execute({ type: 'LIST_PANELS', payload: {} });
+      expect(isExtractionSuppressed()).toBe(false);
+    });
+
+    it('unsuppresses opExtractor even if inner execute throws', async () => {
+      inner = makeInnerClient({
+        execute: jest.fn<Promise<MutationResult>, [MutationRequest]>().mockRejectedValue(new Error('boom')),
+      });
+      client = new CollabMutationClient(inner, publishOp, 'user-1');
+
+      await expect(client.execute({ type: 'UPDATE_PANEL', payload: {} })).rejects.toThrow('boom');
+      expect(isExtractionSuppressed()).toBe(false);
+    });
+
+    it('does not suppress opExtractor when remoteApply is set', async () => {
+      inner = makeInnerClient({
+        execute: jest.fn<Promise<MutationResult>, [MutationRequest]>().mockImplementation(async () => {
+          // When remoteApply is set, opApplicator handles its own suppression
+          expect(isExtractionSuppressed()).toBe(false);
+          return { success: true, changes: [] };
+        }),
+      });
+      client = new CollabMutationClient(inner, publishOp, 'user-1');
+      client.setRemoteApply(true);
+
+      await client.execute({ type: 'UPDATE_PANEL', payload: {} });
+      expect(isExtractionSuppressed()).toBe(false);
+    });
   });
 });

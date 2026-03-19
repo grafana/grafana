@@ -10,6 +10,7 @@ import type { MutationClient, MutationRequest, MutationResult } from 'app/featur
 
 import { debugLog } from './debugLog';
 import { getLockTarget } from './lockTargetMapping';
+import { suppressExtraction, unsuppressExtraction } from './opExtractor';
 import type { ClientMessage, CollabOperation } from './protocol/messages';
 
 /** Commands that only read state — never broadcast. */
@@ -37,12 +38,27 @@ export class CollabMutationClient implements MutationClient {
   }
 
   async execute(mutation: MutationRequest): Promise<MutationResult> {
-    const result = await this.inner.execute(mutation);
-
     const type = mutation.type.toUpperCase();
+    const isWrite = !READ_ONLY_COMMANDS.has(type);
+
+    // Suppress opExtractor for write mutations routed through this client.
+    // The CollabMutationClient broadcasts the op itself after a successful write,
+    // so opExtractor must not also emit from the resulting scene state change.
+    if (isWrite && !this._remoteApply) {
+      suppressExtraction();
+    }
+
+    let result: MutationResult;
+    try {
+      result = await this.inner.execute(mutation);
+    } finally {
+      if (isWrite && !this._remoteApply) {
+        unsuppressExtraction();
+      }
+    }
 
     // Don't broadcast read-only commands, failed mutations, or remote applies
-    if (!result.success || READ_ONLY_COMMANDS.has(type) || this._remoteApply) {
+    if (!result.success || !isWrite || this._remoteApply) {
       return result;
     }
 
