@@ -373,7 +373,7 @@ function NotificationStatusGroup({
               )}
               className={styles.receiverLink}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
             >
               <Text variant="bodySmall">{receiverLabel}</Text>
