@@ -411,7 +411,7 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 
 			tt.setupMocks(repo, repoResources, clients, progress, dynamicClient)
 
-			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil)
+			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil)
 			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
 			progress.On("TooManyErrors").Return(nil).Maybe()
 
