@@ -24,17 +24,20 @@ weight: 505
 
 {{< admonition type="note" >}}
 Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
+
+Refer to [Configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/) for more information about configuring Grafana.
 {{< /admonition >}}
 
-1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#enabled-3) to `true`.
-2. Configure SAML options:
-   - Review all [available configuration options](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-configuration-options/)
-   - For IdP-specific configuration, refer to:
-     - [Configure SAML with Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/)
-     - [Configure SAML with Entra ID](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/)
+To configure SAML authentication in Grafana using the configuration file, follow these steps:
+
+1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#enabled-3) to `true`.
+2. Configure SAML according to your requirements. **Review all the [available configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-configuration-options/)**.
+3. For IdP-specific configuration, refer to:
+   - [Configure SAML with Okta](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-okta/)
+   - [Configure SAML with Entra ID](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/configure-saml-with-azuread/)
 3. Save the configuration file and then restart the Grafana server.
 
-When you are finished, the Grafana configuration might look like this example:
+Here's an example of a Grafana configuration file with SAML:
 
 ```ini
 [server]
@@ -53,30 +56,6 @@ assertion_attribute_email = Email
 assertion_attribute_groups = Group
 ```
 
-## Assertion mapping
-
-During the SAML SSO authentication flow, Grafana receives the ACS callback. The callback contains all the relevant information of the user under authentication embedded in the SAML response. Grafana parses the response to create (or update) the user within its internal database.
-
-For Grafana to map the user information, it looks at the individual attributes within the assertion. You can think of these attributes as Key/Value pairs (although, they contain more information than that).
-
-Grafana provides configuration options that let you modify which keys to look at for these values. The data we need to create the user in Grafana is Name, Login handle, and email.
-
-### The `assertion_attribute_name` option
-
-`assertion_attribute_name` is a special assertion mapping that can either be a simple key, indicating a mapping to a single assertion attribute on the SAML response, or a complex template with variables using the `$__saml{<attribute>}` syntax. If this property is misconfigured, Grafana will log an error message on startup and disallow SAML sign-ins. Grafana will also log errors after a login attempt if a variable in the template is missing from the SAML response.
-
-**Examples**
-
-```ini
-#plain string mapping
-assertion_attribute_name = displayName
-```
-
-```ini
-#template mapping
-assertion_attribute_name = $__saml{firstName} $__saml{lastName}
-```
-
 ## SAML Name ID
 
 The `name_id_format` configuration field specifies the requested format of the NameID element in the SAML assertion.
@@ -92,16 +71,6 @@ The following list includes valid configuration field values:
 | `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`      | Email address                      |
 | `urn:oasis:names:tc:SAML:2.0:nameid-format:persistent`        | Persistent                         |
 | `urn:oasis:names:tc:SAML:2.0:nameid-format:transient`         | Transient                          |
-
-## IdP metadata
-
-You also need to define the public part of the IdP for message verification. The SAML IdP metadata XML defines where and how Grafana exchanges user information.
-
-Grafana supports three ways of specifying the IdP metadata.
-
-- Without a suffix `idp_metadata`, Grafana assumes base64-encoded XML file contents.
-- With the `_path` suffix, Grafana assumes a path and attempts to read the file from the file system.
-- With the `_url` suffix, Grafana assumes a URL and attempts to load the metadata from the given location.
 
 ## Maximum issue delay
 
@@ -158,3 +127,26 @@ By default, Grafana allows only service provider (SP) initiated logins (when the
 
 IdP-initiated SSO has some security risks, so make sure you understand the risks before enabling this feature. When using IdP-initiated login, Grafana receives unsolicited SAML responses and can't verify that login flow was started by the user. This makes it hard to detect whether SAML message has been stolen or replaced. Because of this, IdP-initiated login is vulnerable to login cross-site request forgery (CSRF) and man in the middle (MITM) attacks. We do not recommend using IdP-initiated login and keeping it disabled whenever possible.
 
+## Assertion mapping
+
+During the SAML SSO authentication flow, Grafana receives the ACS callback. The callback contains all the relevant information of the user under authentication embedded in the SAML response. Grafana parses the response to create (or update) the user within its internal database.
+
+For Grafana to map the user information, it looks at the individual attributes within the assertion. You can think of these attributes as Key/Value pairs (although, they contain more information than that).
+
+Grafana provides configuration options that let you modify which keys to look at for these values. The data we need to create the user in Grafana is Name, Login handle, and email.
+
+### The `assertion_attribute_name` option
+
+`assertion_attribute_name` is a special assertion mapping that can either be a simple key, indicating a mapping to a single assertion attribute on the SAML response, or a complex template with variables using the `$__saml{<attribute>}` syntax. If this property is misconfigured, Grafana will log an error message on startup and disallow SAML sign-ins. Grafana will also log errors after a login attempt if a variable in the template is missing from the SAML response.
+
+**Examples**
+
+```ini
+#plain string mapping
+assertion_attribute_name = displayName
+```
+
+```ini
+#template mapping
+assertion_attribute_name = $__saml{firstName} $__saml{lastName}
+```
