@@ -69,7 +69,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.ReleaseOrphanResourcesFinalizer:
 			logger.Info("releasing orphan resources")
-			count, err = f.processExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger), sortResourceListForRelease)
+			count, err = f.releaseExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger))
 			if err != nil {
 				err = fmt.Errorf("release resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -77,7 +77,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.RemoveOrphanResourcesFinalizer:
 			logger.Info("removing orphan resources")
-			count, err = f.processExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger), sortResourceListForDeletion)
+			count, err = f.deleteExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger))
 			if err != nil {
 				err = fmt.Errorf("remove resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -97,40 +97,15 @@ func (f *finalizer) process(ctx context.Context,
 	return nil
 }
 
-// processExistingItems lists all resources managed by the repository, sorts
-// them with the provided strategy, then processes them in that order.
-// Folder items are processed sequentially to respect hierarchy ordering;
-// non-folder items are processed concurrently.
-func (f *finalizer) processExistingItems(
+type itemProcessor func(ctx context.Context, item *provisioning.ResourceListItem) error
+
+func (f *finalizer) newItemProcessor(
 	ctx context.Context,
-	repo *provisioning.Repository,
+	clients resources.ResourceClients,
 	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
-	sortFn func(*provisioning.ResourceList),
-) (int, error) {
+) itemProcessor {
 	logger := logging.FromContext(ctx)
-	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
-	if err != nil {
-		return 0, err
-	}
-
-	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
-	if err != nil {
-		logger.Error("error listing resources", "error", err)
-		return 0, err
-	}
-
-	sortFn(items)
-
-	var resources, folderItems []*provisioning.ResourceListItem
-	for i := range items.Items {
-		if items.Items[i].Group == folders.GroupVersion.Group {
-			folderItems = append(folderItems, &items.Items[i])
-		} else {
-			resources = append(resources, &items.Items[i])
-		}
-	}
-
-	processItem := func(jobCtx context.Context, item *provisioning.ResourceListItem) error {
+	return func(jobCtx context.Context, item *provisioning.ResourceListItem) error {
 		res, _, err := clients.ForResource(jobCtx, schema.GroupVersionResource{
 			Group:    item.Group,
 			Resource: item.Resource,
@@ -151,16 +126,55 @@ func (f *finalizer) processExistingItems(
 		}
 		return nil
 	}
+}
 
-	count := 0
+func (f *finalizer) listAndSort(
+	ctx context.Context,
+	repo *provisioning.Repository,
+	sortFn func(*provisioning.ResourceList),
+) (*provisioning.ResourceList, resources.ResourceClients, error) {
+	logger := logging.FromContext(ctx)
+	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
+	if err != nil {
+		return nil, nil, err
+	}
+	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
+	if err != nil {
+		logger.Error("error listing resources", "error", err)
+		return nil, nil, err
+	}
+	sortFn(items)
+	return items, clients, nil
+}
 
-	for _, item := range folderItems {
-		if err := processItem(ctx, item); err != nil {
-			return count, err
-		}
-		count++
+// deleteExistingItems removes all resources managed by the repository.
+// Non-folder resources are deleted concurrently first, then folders are
+// deleted sequentially deepest-first so they are empty before removal.
+func (f *finalizer) deleteExistingItems(
+	ctx context.Context,
+	repo *provisioning.Repository,
+	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
+) (int, error) {
+	logger := logging.FromContext(ctx)
+
+	items, clients, err := f.listAndSort(ctx, repo, sortResourceListForDeletion)
+	if err != nil {
+		return 0, err
 	}
 
+	processItem := f.newItemProcessor(ctx, clients, cb)
+
+	var resources, folderItems []*provisioning.ResourceListItem
+	for i := range items.Items {
+		if items.Items[i].Group == folders.GroupVersion.Group {
+			folderItems = append(folderItems, &items.Items[i])
+		} else {
+			resources = append(resources, &items.Items[i])
+		}
+	}
+
+	// Delete non-folder resources concurrently first.
+	count := 0
 	var processed int64
 	err = concurrency.ForEachJob(ctx, len(resources), f.maxWorkers, func(ctx context.Context, idx int) error {
 		jobCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
@@ -176,7 +190,77 @@ func (f *finalizer) processExistingItems(
 		return count, err
 	}
 
-	logger.Info("processed items", "items", count)
+	// Then delete folders sequentially (deepest first).
+	for _, item := range folderItems {
+		if err := processItem(ctx, item); err != nil {
+			return count, err
+		}
+		count++
+	}
+
+	logger.Info("deleted items", "items", count)
+	return count, nil
+}
+
+// releaseExistingItems releases all resources managed by the repository
+// top-down by depth. Folders are released sequentially to respect hierarchy;
+// consecutive non-folder resources at the same depth are released concurrently.
+func (f *finalizer) releaseExistingItems(
+	ctx context.Context,
+	repo *provisioning.Repository,
+	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
+) (int, error) {
+	logger := logging.FromContext(ctx)
+
+	items, clients, err := f.listAndSort(ctx, repo, sortResourceListForRelease)
+	if err != nil {
+		return 0, err
+	}
+
+	processItem := f.newItemProcessor(ctx, clients, cb)
+
+	var count int
+	var batch []*provisioning.ResourceListItem
+
+	flushBatch := func() error {
+		if len(batch) == 0 {
+			return nil
+		}
+		group := batch
+		batch = nil
+		var processed int64
+		err := concurrency.ForEachJob(ctx, len(group), f.maxWorkers, func(ctx context.Context, idx int) error {
+			jobCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+			defer cancel()
+			if err := processItem(jobCtx, group[idx]); err != nil {
+				return err
+			}
+			atomic.AddInt64(&processed, 1)
+			return nil
+		})
+		count += int(processed)
+		return err
+	}
+
+	for i := range items.Items {
+		item := &items.Items[i]
+		if item.Group == folders.GroupVersion.Group {
+			if err := flushBatch(); err != nil {
+				return count, err
+			}
+			if err := processItem(ctx, item); err != nil {
+				return count, err
+			}
+			count++
+		} else {
+			batch = append(batch, item)
+		}
+	}
+	if err := flushBatch(); err != nil {
+		return count, err
+	}
+
+	logger.Info("released items", "items", count)
 	return count, nil
 }
 
@@ -255,36 +339,31 @@ func escapePatchString(s string) string {
 	return s
 }
 
-// sortResourceListForRelease orders items so that folders are released
-// top-down (shallowest first) before non-folder resources. This ensures
-// parent folders are unmanaged before their children are released,
-// satisfying the repo-manager consistency invariant.
+// sortResourceListForRelease orders items top-down by depth so that parent
+// resources are unmanaged before their children. At equal depth, folders are
+// ordered before other resources so a folder is released before anything it
+// contains at the same level.
+//
+// Example result for a repo with nested folders and dashboards:
+//
+//	folderA/                          (depth 1, folder)
+//	root-dashboard.json               (depth 1, resource)
+//	folderA/subfolderB/               (depth 2, folder)
+//	folderA/dashboard.json            (depth 2, resource)
+//	folderA/subfolderB/dashboard.json (depth 3, resource)
 func sortResourceListForRelease(list *provisioning.ResourceList) {
-	sort.Slice(list.Items, func(i, j int) bool {
-		isFolderI := list.Items[i].Group == folders.GroupVersion.Group
-		isFolderJ := list.Items[j].Group == folders.GroupVersion.Group
-
-		// folders always go first for release
-		if isFolderI != isFolderJ {
-			return isFolderI
-		}
-
-		if !isFolderI && !isFolderJ {
-			return false
-		}
-
-		// root folders (no parent) go first
-		hasFolderI := list.Items[i].Folder != ""
-		hasFolderJ := list.Items[j].Folder != ""
-		if hasFolderI != hasFolderJ {
-			return !hasFolderI
-		}
-
-		// shallowest folders first (top-down)
+	sort.SliceStable(list.Items, func(i, j int) bool {
 		depthI := len(strings.Split(list.Items[i].Path, "/"))
 		depthJ := len(strings.Split(list.Items[j].Path, "/"))
 		if depthI != depthJ {
 			return depthI < depthJ
+		}
+
+		// at equal depth, folders before non-folders
+		isFolderI := list.Items[i].Group == folders.GroupVersion.Group
+		isFolderJ := list.Items[j].Group == folders.GroupVersion.Group
+		if isFolderI != isFolderJ {
+			return isFolderI
 		}
 
 		return false

@@ -575,13 +575,13 @@ func TestSortResourceListForRelease(t *testing.T) {
 		expected provisioning.ResourceList
 	}{
 		{
-			name: "Folders first (shallowest to deepest), then non-folder items",
+			name: "Top-down by depth, folders before resources at same depth",
 			input: provisioning.ResourceList{
 				Items: []provisioning.ResourceListItem{
 					{Group: "dashboard.grafana.app", Path: "dashboard1.json"},
 					{Group: "folder.grafana.app", Path: "folder1"},
 					{Group: "folder.grafana.app", Path: "folder1/subfolder1/subfolder2", Folder: "subfolder1"},
-					{Group: "dashboard.grafana.app", Path: "dashboard2.json"},
+					{Group: "dashboard.grafana.app", Path: "folder1/dashboard2.json"},
 					{Group: "folder.grafana.app", Path: "folder2"},
 					{Group: "folder.grafana.app", Path: "folder1/subfolder1", Folder: "folder1"},
 				},
@@ -590,10 +590,10 @@ func TestSortResourceListForRelease(t *testing.T) {
 				Items: []provisioning.ResourceListItem{
 					{Group: "folder.grafana.app", Path: "folder1"},
 					{Group: "folder.grafana.app", Path: "folder2"},
-					{Group: "folder.grafana.app", Path: "folder1/subfolder1", Folder: "folder1"},
-					{Group: "folder.grafana.app", Path: "folder1/subfolder1/subfolder2", Folder: "subfolder1"},
 					{Group: "dashboard.grafana.app", Path: "dashboard1.json"},
-					{Group: "dashboard.grafana.app", Path: "dashboard2.json"},
+					{Group: "folder.grafana.app", Path: "folder1/subfolder1", Folder: "folder1"},
+					{Group: "dashboard.grafana.app", Path: "folder1/dashboard2.json"},
+					{Group: "folder.grafana.app", Path: "folder1/subfolder1/subfolder2", Folder: "subfolder1"},
 				},
 			},
 		},
@@ -761,11 +761,10 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 				},
 			}
 
-			count, err := f.processExistingItems(
+			count, err := f.deleteExistingItems(
 				context.Background(),
 				repo,
 				f.removeResources(context.Background(), logging.DefaultLogger),
-				sortResourceListForDeletion,
 			)
 
 			assert.NoError(t, err)
