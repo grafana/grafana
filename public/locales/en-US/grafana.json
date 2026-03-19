@@ -5568,11 +5568,7 @@
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
-      "show-less-dashboards": "Show less",
-      "show-more-dashboards": "Show more",
-      "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",
-      "title": "New dashboard",
-      "use-template-button": "Use this dashboard"
+      "title": "New dashboard"
     },
     "errors": {
       "failed-to-load": "Failed to load dashboard"
@@ -6528,7 +6524,6 @@
     },
     "modal": {
       "description": "Browse and select from data-source provided or community dashboards",
-      "description-datasource-only": "Browse and select from data-source provided dashboards",
       "tab-community": "Community",
       "tab-datasource": "Data-source provided",
       "title": "Suggested dashboards",
@@ -6543,16 +6538,10 @@
     "provisioned-empty-title": "No provisioned dashboards found",
     "provisioned-empty-title-with-datasource": "No {{datasourceType}} provisioned dashboards found",
     "retry": "Retry",
-    "suggested-dashboards-community-error-description": "Failed to load community dashboard.",
-    "suggested-dashboards-community-error-title": "Error loading community dashboard",
-    "suggested-dashboards-subtitle": "Browse and select from data-source provided or community dashboards",
-    "suggested-dashboards-title": "Build a dashboard using suggested options for your selected data source",
-    "suggested-dashboards-title-with-datasource": "Build a dashboard using suggested options for your {{datasourceType}} data source",
     "template-dashboard-modal": {
       "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
       "title": "Start a dashboard from a template"
-    },
-    "view-all": "View all"
+    }
   },
   "dashboard-links": {
     "empty-state": {
