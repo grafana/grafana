@@ -97,7 +97,8 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfigHistory(c *contextmodel.ReqCont
 		return ErrResp(http.StatusInternalServerError, err, err.Error())
 	}
 
-	return response.JSON(http.StatusOK, configs)
+	return response.JSON(http.StatusOK, configs).
+		SetHeader("Warning", `299 - "This endpoint is deprecated and will be removed in Grafana v14. Use the individual resource APIs instead."`)
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) response.Response {
