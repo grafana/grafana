@@ -213,7 +213,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-btwn-001": {Title: "Dashboard Between", SourcePath: "folder-a/dashboard1.json"},
 	})
-	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"folder-a"})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"folder-a", "folder-b"})
 
 	_, err := local.Git("mv", "folder-a/dashboard1.json", "folder-b/dashboard1.json")
 	require.NoError(t, err)
@@ -320,7 +320,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child-a/dashboard1.json"},
 	})
-	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/child-a"})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/child-a", "parent/child-b"})
 
 	_, err := local.Git("mv", "parent/child-a/dashboard1.json", "parent/child-b/dashboard1.json")
 	require.NoError(t, err)
