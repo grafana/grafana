@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1.7-labs
 
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
@@ -79,40 +79,8 @@ COPY .citools .citools
 
 # Copy go.mod/go.sum from each workspace module for dependency caching.
 # Only dependency file changes invalidate the go mod download cache layer.
-COPY apps/advisor/go.mod apps/advisor/go.sum apps/advisor/
-COPY apps/alerting/alertenrichment/go.mod apps/alerting/alertenrichment/go.sum apps/alerting/alertenrichment/
-COPY apps/alerting/historian/go.mod apps/alerting/historian/go.sum apps/alerting/historian/
-COPY apps/alerting/notifications/go.mod apps/alerting/notifications/go.sum apps/alerting/notifications/
-COPY apps/alerting/rules/go.mod apps/alerting/rules/go.sum apps/alerting/rules/
-COPY apps/annotation/go.mod apps/annotation/go.sum apps/annotation/
-COPY apps/collections/go.mod apps/collections/go.sum apps/collections/
-COPY apps/correlations/go.mod apps/correlations/go.sum apps/correlations/
-COPY apps/dashboard/go.mod apps/dashboard/go.sum apps/dashboard/
-COPY apps/dashvalidator/go.mod apps/dashvalidator/go.sum apps/dashvalidator/
-COPY apps/example/go.mod apps/example/go.sum apps/example/
-COPY apps/folder/go.mod apps/folder/go.sum apps/folder/
-COPY apps/iam/go.mod apps/iam/go.sum apps/iam/
-COPY apps/live/go.mod apps/live/go.sum apps/live/
-COPY apps/logsdrilldown/go.mod apps/logsdrilldown/go.sum apps/logsdrilldown/
-COPY apps/playlist/go.mod apps/playlist/go.sum apps/playlist/
-COPY apps/plugins/go.mod apps/plugins/go.sum apps/plugins/
-COPY apps/preferences/go.mod apps/preferences/go.sum apps/preferences/
-COPY apps/provisioning/go.mod apps/provisioning/go.sum apps/provisioning/
-COPY apps/quotas/go.mod apps/quotas/go.sum apps/quotas/
-COPY apps/scope/go.mod apps/scope/go.sum apps/scope/
-COPY apps/secret/go.mod apps/secret/go.sum apps/secret/
-COPY apps/shorturl/go.mod apps/shorturl/go.sum apps/shorturl/
-COPY pkg/aggregator/go.mod pkg/aggregator/go.sum pkg/aggregator/
-COPY pkg/apimachinery/go.mod pkg/apimachinery/go.sum pkg/apimachinery/
-COPY pkg/apiserver/go.mod pkg/apiserver/go.sum pkg/apiserver/
-COPY pkg/build/go.mod pkg/build/go.sum pkg/build/
-COPY pkg/build/wire/go.mod pkg/build/wire/go.sum pkg/build/wire/
-COPY pkg/codegen/go.mod pkg/codegen/go.sum pkg/codegen/
-COPY pkg/infra/features/go.mod pkg/infra/features/go.sum pkg/infra/features/
-COPY pkg/plugins/go.mod pkg/plugins/go.sum pkg/plugins/
-COPY pkg/plugins/codegen/go.mod pkg/plugins/codegen/go.sum pkg/plugins/codegen/
-COPY pkg/semconv/go.mod pkg/semconv/go.sum pkg/semconv/
-COPY pkg/storage/unified/resource/kv/go.mod pkg/storage/unified/resource/kv/go.sum pkg/storage/unified/resource/kv/
+# Uses --parents to preserve directory structure with fewer COPY directives.
+COPY --parents **/go.mod **/go.sum ./
 
 RUN --mount=type=cache,target=/go/pkg/mod \
     go mod download
