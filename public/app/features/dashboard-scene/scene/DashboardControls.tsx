@@ -18,7 +18,7 @@ import {
   CancelActivationHandler,
   sceneUtils,
 } from '@grafana/scenes';
-import { Box, Button, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 
@@ -315,31 +315,34 @@ function DashboardControlActions({
       {!isPlaying && canEditDashboard && !isEditable && !isEditing && (
         <MakeDashboardEditableButton dashboard={dashboard} />
       )}
-      {isPlaying && !hidePlaylistNav && (
-        <ToolbarButton
-          data-testid={selectors.pages.Dashboard.DashNav.playlistControls.prev}
-          tooltip={t('dashboard.toolbar.new.playlist-previous', 'Go to previous dashboard')}
-          icon="backward"
-          onClick={() => playlistSrv.prev()}
-        />
-      )}
       {isPlaying && (
-        <Button
-          variant="secondary"
-          onClick={() => playlistSrv.stop()}
-          data-testid={selectors.pages.Dashboard.DashNav.playlistControls.stop}
-        >
-          <Trans i18nKey="dashboard.toolbar.new.playlist-stop">Stop playlist</Trans>
-        </Button>
-      )}
-      {isPlaying && !hidePlaylistNav && (
-        <ToolbarButton
-          data-testid={selectors.pages.Dashboard.DashNav.playlistControls.next}
-          tooltip={t('dashboard.toolbar.new.playlist-next', 'Go to next dashboard')}
-          icon="forward"
-          onClick={() => playlistSrv.next()}
-          narrow
-        />
+        <ButtonGroup>
+          {!hidePlaylistNav && (
+            <Button
+              variant="secondary"
+              data-testid={selectors.pages.Dashboard.DashNav.playlistControls.prev}
+              tooltip={t('dashboard.toolbar.new.playlist-previous', 'Go to previous dashboard')}
+              icon="backward"
+              onClick={() => playlistSrv.prev()}
+            />
+          )}
+          <Button
+            variant="secondary"
+            onClick={() => playlistSrv.stop()}
+            data-testid={selectors.pages.Dashboard.DashNav.playlistControls.stop}
+          >
+            <Trans i18nKey="dashboard.toolbar.new.playlist-stop">Stop playlist</Trans>
+          </Button>
+          {!hidePlaylistNav && (
+            <Button
+              variant="secondary"
+              data-testid={selectors.pages.Dashboard.DashNav.playlistControls.next}
+              tooltip={t('dashboard.toolbar.new.playlist-next', 'Go to next dashboard')}
+              icon="forward"
+              onClick={() => playlistSrv.next()}
+            />
+          )}
+        </ButtonGroup>
       )}
     </>
   );
