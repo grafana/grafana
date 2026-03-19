@@ -1,6 +1,6 @@
-import { CollabMutationClient } from './CollabMutationClient';
-
 import type { MutationClient, MutationRequest, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
+
+import { CollabMutationClient } from './CollabMutationClient';
 import { isExtractionSuppressed, unsuppressExtraction } from './opExtractor';
 import type { ClientMessage } from './protocol/messages';
 

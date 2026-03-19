@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import React from 'react';
 
 import { CollabContext, type CollabContextValue, type CollabLock, type CollabUser } from './CollabContext';
 import { CollabPanelBorder, useCollabEditGuard } from './CollabPanelBorder';
-import { renderHook } from '@testing-library/react';
 
 // --- Mock appNotification ---
 const mockWarning = jest.fn();

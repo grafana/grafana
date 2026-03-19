@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
-import { Subject, type Observable } from 'rxjs';
 import { type PropsWithChildren } from 'react';
+import { Subject, type Observable } from 'rxjs';
 
 import {
   LiveChannelConnectionState,
@@ -11,8 +11,8 @@ import {
 import { config } from '@grafana/runtime';
 
 import { CollabProvider } from './CollabProvider';
-import { useCollab } from './useCollab';
 import type { CursorUpdate, ServerMessage } from './protocol/messages';
+import { useCollab } from './useCollab';
 
 // --- Mocks ---
 

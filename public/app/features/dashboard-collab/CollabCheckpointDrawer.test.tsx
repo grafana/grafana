@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CollabContext, type CollabContextValue } from './CollabContext';
 import { CollabCheckpointDrawer } from './CollabCheckpointDrawer';
+import { CollabContext, type CollabContextValue } from './CollabContext';
 
 // --- Mocks ---
 const mockSuccess = jest.fn();

@@ -1,5 +1,4 @@
 import { SceneObjectStateChangedEvent, VizPanel, SceneVariableSet } from '@grafana/scenes';
-
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
 

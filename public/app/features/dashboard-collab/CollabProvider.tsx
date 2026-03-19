@@ -26,14 +26,11 @@ import { t } from '@grafana/i18n';
 import { config, getGrafanaLiveSrv, locationService } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { useAppNotification } from 'app/core/copy/appNotification';
-
-import { setDashboardMutationClient } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-
-import { CollabMutationClient } from './CollabMutationClient';
+import { setDashboardMutationClient } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
 
 import { CollabContext, type CollabContextValue, type CollabLock, type CollabUser } from './CollabContext';
-import { debugLog } from './debugLog';
+import { CollabMutationClient } from './CollabMutationClient';
 import {
   classifyChannelError,
   CHANNEL_ERROR_DASHBOARD_DELETED,
@@ -41,6 +38,7 @@ import {
   STALE_LOCK_THRESHOLD_MS,
   onVisibilityChange,
 } from './collabEdgeCases';
+import { debugLog } from './debugLog';
 import { applyRemoteOp } from './opApplicator';
 import { extractMutationRequest, setLargeDashboardMode } from './opExtractor';
 import type {

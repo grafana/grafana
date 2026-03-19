@@ -13,8 +13,8 @@ import { css, cx } from '@emotion/css';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
@@ -72,16 +72,6 @@ export function CollabPanelBorder({ panelId, isEditing: isEditingProp, children 
     return undefined;
   }, [connected, isEditing, panelId, acquireLock, releaseLock]);
 
-  if (!connected) {
-    return <>{children}</>;
-  }
-
-  const borderColor = isLockedByOther
-    ? lockHolder?.color ?? '#e74c3c'
-    : isLockedBySelf
-      ? lockHolder?.color ?? config.theme2.colors.primary.main
-      : undefined;
-
   const holderName = lockHolder?.displayName || 'another user';
 
   const handleBlockedClick = useCallback((e: React.MouseEvent) => {
@@ -92,6 +82,16 @@ export function CollabPanelBorder({ panelId, isEditing: isEditingProp, children 
       t('dashboard-collab.panel-locked.message', 'This panel is being edited by {{name}}', { name: holderName })
     );
   }, [holderName, notifyApp]);
+
+  if (!connected) {
+    return <>{children}</>;
+  }
+
+  const borderColor = isLockedByOther
+    ? lockHolder?.color ?? '#e74c3c'
+    : isLockedBySelf
+      ? lockHolder?.color ?? config.theme2.colors.primary.main
+      : undefined;
 
   return (
     <div

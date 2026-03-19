@@ -13,7 +13,6 @@ import { Trans, t } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, SceneObjectRef } from '@grafana/scenes';
 import { Button, Drawer, Field, Input, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { useCollab } from './useCollab';

@@ -1,7 +1,8 @@
-import { CollabMutationClient } from './CollabMutationClient';
-import { isExtractionSuppressed, unsuppressExtraction } from './opExtractor';
-import { applyRemoteOp } from './opApplicator';
 import type { MutationClient, MutationResult, MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
+
+import { CollabMutationClient } from './CollabMutationClient';
+import { applyRemoteOp } from './opApplicator';
+import { isExtractionSuppressed, unsuppressExtraction } from './opExtractor';
 import type { ServerMessage, CollabOperation } from './protocol/messages';
 
 function makeMutationClient(overrides: Partial<MockClient> = {}): MockClient {

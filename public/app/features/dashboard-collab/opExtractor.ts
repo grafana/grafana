@@ -10,7 +10,6 @@ import {
   VizPanel,
   SceneVariableSet,
 } from '@grafana/scenes';
-
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
 import { isSceneVariableInstance } from 'app/features/dashboard-scene/settings/variables/utils';

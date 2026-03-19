@@ -18,8 +18,8 @@ import {
 import { config, getGrafanaLiveSrv } from '@grafana/runtime';
 
 import { CollabContext, type CollabContextValue } from './CollabContext';
-import { debugLog } from './debugLog';
 import { onVisibilityChange } from './collabEdgeCases';
+import { debugLog } from './debugLog';
 import type { CursorUpdate } from './protocol/messages';
 
 interface CursorOnlyProviderProps {
