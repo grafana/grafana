@@ -1849,7 +1849,7 @@
       },
       "history-error": "Failed to load state history",
       "history-error-desc": "Unable to fetch state transition history for this instance.",
-      "instance-timeline": "Instance Timeline",
+      "instance-history-heading": "History",
       "no-history": "No recent state changes",
       "notifications-error": "Could not load notification history",
       "notifications-error-desc": "The timeline will only show state changes. Check that notification history is enabled and try again.",
@@ -1861,6 +1861,8 @@
       "timeline-all-failed": "failed",
       "timeline-all-failed-plural": "all failed",
       "timeline-delivered": "Delivered",
+      "timeline-dot-all-failed": "All notifications failed",
+      "timeline-dot-some-failed": "Some notifications failed",
       "timeline-empty": "No events found for this time range",
       "timeline-failed": "Failed",
       "timeline-filter-all": "All",
@@ -1868,12 +1870,10 @@
       "timeline-filter-notifications": "Notifications",
       "timeline-filter-states": "State changes",
       "timeline-loading": "Loading timeline...",
-      "timeline-mixed-outcome": "{{successCount}} delivered, {{failedCount}} failed",
-      "timeline-n-notifications_one": "{{count}} notifications",
-      "timeline-n-notifications_other": "{{count}} notifications",
-      "timeline-n-receivers_one": "{{count}} receivers",
-      "timeline-n-receivers_other": "{{count}} receivers",
-      "timeline-one-notification": "1 notification",
+      "timeline-n-uniqueReceivers_one": "{{count}} uniqueReceivers",
+      "timeline-n-uniqueReceivers_other": "{{count}} uniqueReceivers",
+      "timeline-notification-label": "notification",
+      "timeline-partial-failure": "{{successCount}} delivered, {{failedCount}} failed",
       "timeline-status-firing": "Firing",
       "timeline-status-resolved": "Resolved",
       "timeline-toggle-notifications": "Toggle notification details",
@@ -3494,7 +3494,9 @@
       "hidden-label-count_other": "and {{ count }} more",
       "high-activity-labels": "High Activity Labels",
       "instance-details-drawer": {
-        "instance-details": "Instance details"
+        "declare-incident": "Declare incident",
+        "instance-details": "Instance details",
+        "silence-button": "Silence"
       },
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
@@ -5220,6 +5222,12 @@
       "ungroup-rows": "Ungroup rows",
       "ungroup-tabs": "Ungroup tabs"
     },
+    "code-pane": {
+      "collapse": "Collapse editor",
+      "expand": "Expand editor",
+      "header": "Edit as code",
+      "modal-title": "Edit dashboard as code"
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -6102,6 +6110,13 @@
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning."
     },
+    "schema-editor": {
+      "apply-button": "Apply changes",
+      "apply-button-disabled-tooltip": "Fix validation errors before applying changes",
+      "apply-button-disabled-tooltip-yaml": "Document has validation errors. Switch to JSON to see inline error details.",
+      "apply-error-title": "Failed to apply changes",
+      "undo-title": "Schema edit"
+    },
     "search-panel": {
       "no-match": "No panels matching"
     },
@@ -6116,6 +6131,10 @@
       "dashboard-options": {
         "title": "Options",
         "tooltip": "Dashboard options"
+      },
+      "edit-schema": {
+        "title": "Code",
+        "tooltip": "Edit as code"
       },
       "export": {
         "title": "Export"
@@ -6458,12 +6477,15 @@
     "browse-grafana-com": "Browse Grafana.com",
     "browse-plugins": "Browse plugins",
     "card": {
-      "customize-with-assistant-button": "Customize with Assistant",
+      "customize-with-assistant-button": "Customize with assistant",
+      "customize-with-assistant-button-label": "Customize with assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available ",
-      "use-dashboard-button": "Use dashboard",
-      "view-template-button": "View template"
+      "view-dashboard-button": "View dashboard",
+      "view-dashboard-button-label": "View dashboard: {{title}}",
+      "view-template-button": "View template",
+      "view-template-button-label": "View template: {{title}}"
     },
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
@@ -7589,6 +7611,11 @@
   "dashboard-scene-help-wizard": {
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>."
   },
+  "dashboard-schema-editor": {
+    "format-label": "Format:",
+    "json-disabled-tooltip": "Fix YAML syntax errors to switch to JSON",
+    "yaml-disabled-tooltip": "Fix JSON syntax errors to switch to YAML"
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Annotations"
@@ -7619,6 +7646,8 @@
     },
     "json-editor": {
       "save-button": "Save changes",
+      "save-button-disabled-tooltip": "Fix validation errors before saving",
+      "save-button-disabled-tooltip-yaml": "Document has validation errors. Switch to JSON to see inline error details.",
       "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on.",
       "title": "JSON Model"
     },
@@ -11290,7 +11319,7 @@
       "cancel": "Cancel",
       "change-uid": "Change uid",
       "description-library-panels-imported": "List of new library panels that will get imported.",
-      "description-unique-identifier-uid": "The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.",
+      "description-unique-identifier-uid": "The unique identifier (UID) of a dashboard can be used to uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.",
       "label-existing-library-panels": "Existing library panels",
       "label-folder": "Folder",
       "label-name": "Name",
@@ -12811,9 +12840,6 @@
     "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {
-    "banner": {
-      "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
-    },
     "bitbucket": {
       "branch-required": "Branch is required",
       "permissions": {
