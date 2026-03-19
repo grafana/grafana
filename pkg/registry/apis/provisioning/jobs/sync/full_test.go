@@ -1278,10 +1278,10 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 	changes := []ResourceFileChange{
 		{
 			// Folder creation with OldFolderUID — triggers deferred deletion
-			Action:       repository.FileActionUpdated,
-			Path:         "myfolder/",
+			Action:        repository.FileActionUpdated,
+			Path:          "myfolder/",
 			FolderRenamed: true,
-			Existing:     &provisioning.ResourceListItem{Name: "old-uid-123"},
+			Existing:      &provisioning.ResourceListItem{Name: "old-uid-123"},
 		},
 		{
 			// A file creation that needs to happen before old folder cleanup
@@ -1357,10 +1357,10 @@ func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 
 	changes := []ResourceFileChange{
 		{
-			Action:       repository.FileActionUpdated,
-			Path:         "parent/",
+			Action:        repository.FileActionUpdated,
+			Path:          "parent/",
 			FolderRenamed: true,
-			Existing:     &provisioning.ResourceListItem{Name: "old-parent-uid"},
+			Existing:      &provisioning.ResourceListItem{Name: "old-parent-uid"},
 		},
 		{
 			Action:        repository.FileActionUpdated,
