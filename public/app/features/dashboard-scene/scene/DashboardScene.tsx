@@ -64,6 +64,7 @@ import {
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
 import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
+import type { MutationClient } from '../mutation-api/types';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -220,7 +221,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * Mutation client for programmatic dashboard edits.
    * Created on activation, cleared on deactivation.
    */
-  private _mutationClient?: DashboardMutationClient;
+  private _mutationClient?: MutationClient;
 
   protected _renderBeforeActivation = true;
 
@@ -613,8 +614,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this._initialState;
   }
 
-  public getMutationClient(): DashboardMutationClient | undefined {
+  public getMutationClient(): MutationClient | undefined {
     return this._mutationClient;
+  }
+
+  public setMutationClient(client: MutationClient | undefined): void {
+    this._mutationClient = client;
   }
 
   public addPanel(vizPanel: VizPanel): void {
