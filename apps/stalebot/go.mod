@@ -5,6 +5,7 @@ go 1.25.8
 require (
 	github.com/grafana/grafana-app-sdk v0.51.4
 	github.com/grafana/grafana-app-sdk/logging v0.51.4
+	github.com/grafana/grafana v0.0.0
 	github.com/grafana/grafana/apps/dashboard v0.0.0
 	k8s.io/apimachinery v0.35.1
 	k8s.io/client-go v0.35.1
