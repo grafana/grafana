@@ -195,9 +195,7 @@ export class TabsLayoutManager
   }
 
   public addNewTab(tab?: TabItem) {
-    const scene = getDashboardSceneFor(this);
-
-    const newTab = tab ?? new TabItem({ layout: scene.getDefaultLayout() });
+    const newTab = tab ?? new TabItem({ layout: getDashboardSceneFor(this).getDefaultLayout() });
     const existingNames = new Set(
       this.getTabsIncludingRepeats()
         .map((tab) => tab.state.title)
