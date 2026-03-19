@@ -3,7 +3,7 @@ import { sceneUtils } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { DashboardWithAccessInfo } from '../../dashboard/api/types';
-import { K8S_V2_DASHBOARD_API_CONFIG } from '../../dashboard/api/v2';
+import { getK8sV2DashboardApiConfig } from '../../dashboard/api/v2';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
@@ -23,7 +23,7 @@ export function applyJsonToDashboard(
     const { meta } = dashboard.state;
 
     const dto: DashboardWithAccessInfo<DashboardV2Spec> = {
-      apiVersion: K8S_V2_DASHBOARD_API_CONFIG.version,
+      apiVersion: getK8sV2DashboardApiConfig().version,
       kind: 'DashboardWithAccessInfo',
       metadata: {
         name: dashboard.state.uid ?? '',

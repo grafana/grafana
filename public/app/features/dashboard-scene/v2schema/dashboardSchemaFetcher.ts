@@ -1,5 +1,5 @@
 import { getBackendSrv } from '@grafana/runtime';
-import { K8S_V2_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v2';
+import { getK8sV2DashboardApiConfig } from 'app/features/dashboard/api/v2';
 
 interface OpenAPISchema {
   components?: {
@@ -52,7 +52,7 @@ export async function fetchDashboardSchema(): Promise<JSONSchema> {
 }
 
 async function doFetchSchema(): Promise<JSONSchema> {
-  const { group, version } = K8S_V2_DASHBOARD_API_CONFIG;
+  const { group, version } = getK8sV2DashboardApiConfig();
   const endpoint = getOpenAPIEndpoint(group, version);
   const schemaKey = getDashboardSpecSchemaKey(version);
 
