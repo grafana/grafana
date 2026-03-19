@@ -138,7 +138,15 @@ func Changes(
 			// The folder metadata file is not a resource itself.
 			// For new folders the parent directory creation handles it;
 			// for existing folders we compare hashes to detect metadata changes.
-			if folderMetadataEnabled && resources.IsFolderMetadataFile(file.Path) {
+			if resources.IsFolderMetadataFile(file.Path) {
+				if !folderMetadataEnabled {
+					logger.Debug("skipping folder metadata file - will be handled by parent directory change", "path", file.Path)
+					if err := keep.Add(file.Path); err != nil {
+						return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
+					}
+					continue
+				}
+
 				logger.Debug("processing folder metadata file", "path", file.Path)
 				if err := keep.Add(file.Path); err != nil {
 					return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)

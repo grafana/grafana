@@ -568,7 +568,7 @@ func TestChanges(t *testing.T) {
 }
 
 func TestChanges_FolderMetadataFlagDisabled(t *testing.T) {
-	t.Run("_folder.json treated as normal resource when flag off", func(t *testing.T) {
+	t.Run("_folder.json is kept but not treated as resource or metadata when flag off", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "my-folder/", Hash: "abc", Blob: false},
 			{Path: "my-folder/_folder.json", Hash: "def", Blob: true},
@@ -579,14 +579,18 @@ func TestChanges_FolderMetadataFlagDisabled(t *testing.T) {
 		changes, err := Changes(context.Background(), source, target, false)
 		require.NoError(t, err)
 
-		// With flag off, _folder.json is NOT intercepted as metadata —
-		// it passes through as a normal created resource.
+		// With flag off, _folder.json is added to keep trie (prevents parent
+		// folder deletion) but NOT emitted as a resource change or metadata update.
 		paths := make([]string, len(changes))
 		for i, c := range changes {
 			paths[i] = c.Path
 		}
-		require.Contains(t, paths, "my-folder/_folder.json",
-			"_folder.json should be treated as a normal resource when flag is off")
+		require.NotContains(t, paths, "my-folder/_folder.json",
+			"_folder.json should not appear as a change when flag is off")
+		require.Contains(t, paths, "my-folder/dashboard.json",
+			"dashboard should still be created")
+		require.Contains(t, paths, "my-folder/",
+			"folder should still be created")
 	})
 
 	t.Run("_folder.json hash change does not emit folder update when flag off", func(t *testing.T) {
@@ -714,7 +718,7 @@ func TestCompare_FolderMetadataFlagDisabled(t *testing.T) {
 		}
 
 		repoResources.On("List", mock.Anything).Return(target, nil)
-		repoResources.On("SetTree", mock.Anything).Return()
+		repoResources.On("SetTree", mock.Anything).Return().Maybe()
 		repo.On("ReadTree", mock.Anything, "ref").Return(source, nil)
 		// NOT mocking repo.Read — if augmentChangesForUIDChanges ran,
 		// it would call ReadFolderMetadata which calls repo.Read, and
