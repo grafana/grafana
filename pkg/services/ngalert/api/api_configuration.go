@@ -110,7 +110,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		adminConfig.SendAlertsTo = &sendAlertsTo
 	}
 
-	// NOTE: not hooking this up yet as it depends on the feature flag
+	// TODO: hook it up once the new feature flag is added
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	//if body.RemoteAlertmanagerUID != nil && srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRemoteAMConfigSync) {
 	//	if *body.RemoteAlertmanagerUID != "" {
