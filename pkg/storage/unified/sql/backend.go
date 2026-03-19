@@ -49,17 +49,13 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql")
 const defaultPollingInterval = 100 * time.Millisecond
 const defaultWatchBufferSize = 100 // number of events to buffer in the watch stream
 const defaultPrunerHistoryLimit = 20
-
-// customPrunerHistoryLimits defines resource-specific history limits.
-// The key format is "group/resource".
-var customPrunerHistoryLimits = map[string]int64{
-	"plugins.grafana.app/plugins": 3,
-}
+const defaultGarbageCollectionBatchWait = 1 * time.Second
 
 type GarbageCollectionConfig struct {
 	Enabled          bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
+	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
 	MaxAge           time.Duration // retention period
 	DashboardsMaxAge time.Duration // dashboard retention
 }
@@ -118,6 +114,7 @@ func NewStorageBackend(
 				Enabled:          cfg.EnableGarbageCollection,
 				Interval:         cfg.GarbageCollectionInterval,
 				BatchSize:        cfg.GarbageCollectionBatchSize,
+				BatchWait:        cfg.GarbageCollectionBatchWait,
 				MaxAge:           cfg.GarbageCollectionMaxAge,
 				DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 			},
@@ -157,6 +154,7 @@ func NewStorageBackend(
 			DryRun:           cfg.GarbageCollectionDryRun,
 			Interval:         cfg.GarbageCollectionInterval,
 			BatchSize:        cfg.GarbageCollectionBatchSize,
+			BatchWait:        cfg.GarbageCollectionBatchWait,
 			MaxAge:           cfg.GarbageCollectionMaxAge,
 			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
 		},
@@ -232,6 +230,10 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 	if opts.WatchBufferSize == 0 {
 		opts.WatchBufferSize = defaultWatchBufferSize
 	}
+	garbageCollection := opts.GarbageCollection
+	if garbageCollection.BatchWait <= 0 {
+		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
+	}
 	backend := &backend{
 		isHA:                    opts.IsHA,
 		disableStorageServices:  opts.DisableStorageServices,
@@ -248,7 +250,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		simulatedNetworkLatency: opts.SimulatedNetworkLatency,
 		migrationParquetBuffer:  opts.MigrationParquetBuffer,
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
-		garbageCollection:       opts.GarbageCollection,
+		garbageCollection:       garbageCollection,
 	}
 	if err := backend.Init(ctx); err != nil {
 		return nil, err
@@ -508,7 +510,7 @@ func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int6
 				select {
 				case <-b.done:
 					return deletedByKey
-				case <-time.After(time.Second):
+				case <-time.After(b.garbageCollection.BatchWait):
 				}
 			}
 			if totalDeleted > 0 {
@@ -533,10 +535,9 @@ func (b *backend) garbageCollectionCutoffTimestamp(group, resourceName string, d
 	return defaultCutoff
 }
 
-func (b *backend) prunerHistoryLimit(group, resource string) int64 {
-	key := fmt.Sprintf("%s/%s", group, resource)
-	if limit, ok := customPrunerHistoryLimits[key]; ok {
-		return limit
+func (b *backend) prunerHistoryLimit(group, resourceName string) int64 {
+	if limit, ok := resource.LookupCustomPrunerHistoryLimit(group, resourceName); ok {
+		return int64(limit)
 	}
 	return defaultPrunerHistoryLimit
 }

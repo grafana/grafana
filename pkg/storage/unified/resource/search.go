@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"hash/fnv"
 	"math/rand"
 	"slices"
 	"strings"
@@ -591,7 +592,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		}, nil
 	}
 
-	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now())
+	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
 	rebuildCount := len(completeChs)
 	for _, ch := range completeChs {
 		select {
@@ -742,12 +743,28 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
 			}
-			s.findIndexesToRebuild(importTimes, nil, time.Now())
+			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
 		}
 	}
 }
 
-func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time) []chan struct{} {
+// jitterForKey returns a deterministic jitter duration for the given key,
+// bounded to [0, maxAge/5). This spreads index rebuilds across scan intervals
+// to avoid thundering herd CPU spikes when many indexes become stale at once.
+func jitterForKey(key NamespacedResource, maxAge time.Duration) time.Duration {
+	if maxAge <= 0 {
+		return 0
+	}
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(key.String()))
+	jitterRange := uint64(maxAge / 5)
+	if jitterRange == 0 {
+		return 0
+	}
+	return time.Duration(h.Sum64() % jitterRange)
+}
+
+func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool) []chan struct{} {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
@@ -774,6 +791,10 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 		var minBuildTime time.Time
 		if maxAge > 0 {
 			minBuildTime = now.Add(-maxAge)
+		}
+
+		if applyJitter {
+			minBuildTime = minBuildTime.Add(-jitterForKey(key, maxAge))
 		}
 
 		lastImportTime := lastImportTimes[key] // Will be time.Time{} if not found.

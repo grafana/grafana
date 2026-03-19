@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -29,8 +30,8 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboardCount(t, helper, ctx, 1)
-	requireDashboardTitle(t, helper, ctx, "name-change-full-001", "Dashboard One")
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "name-change-full-001", "Dashboard One")
 
 	// Change the metadata.name (uid) in the same file path.
 	require.NoError(t, local.UpdateFile("dashboard1.json", string(dashboardJSON("name-change-full-002", "Dashboard One Renamed", 2))))
@@ -59,7 +60,7 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 		assert.NoError(c, err, "old dashboard should still exist (orphaned)")
 	}, waitTimeoutDefault, waitIntervalDefault, "old dashboard should remain orphaned")
 
-	requireDashboardCount(t, helper, ctx, 2)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange verifies
@@ -79,8 +80,8 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboardCount(t, helper, ctx, 1)
-	requireDashboardTitle(t, helper, ctx, "name-change-incr-001", "Dashboard One")
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "name-change-incr-001", "Dashboard One")
 
 	// Change the metadata.name (uid) in the same file path.
 	require.NoError(t, local.UpdateFile("dashboard1.json", string(dashboardJSON("name-change-incr-002", "Dashboard One Renamed", 2))))
@@ -110,5 +111,5 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 		assert.NoError(c, err, "old dashboard should still exist (orphaned)")
 	}, waitTimeoutDefault, waitIntervalDefault, "old dashboard should remain orphaned")
 
-	requireDashboardCount(t, helper, ctx, 2)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
 }
