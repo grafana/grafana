@@ -317,7 +317,9 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Now, lets re-set external Alertmanagers for the other organisation.
 	// Sending an empty value for AlertmanagersChoice should default to AllAlertmanagers.
 	{
-		ac := apimodels.PostableNGalertConfig{}
+		ac := apimodels.PostableNGalertConfig{
+			AlertmanagersChoice: ptrTo(apimodels.AlertmanagersChoice("")),
+		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
 		err := enc.Encode(&ac)
