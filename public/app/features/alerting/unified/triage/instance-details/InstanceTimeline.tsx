@@ -158,14 +158,14 @@ function EntryDot({ entry }: { entry: TimelineEntry }) {
 
   if (entry.type === 'state-change') {
     if (entry.current === 'Pending') {
-      return <div className={styles.dotPending} />;
+      return <div className={cx(styles.dotBase, styles.dotPending)} />;
     }
     const isFiringTransition = entry.current === 'Alerting' || entry.current === 'NoData' || entry.current === 'Error';
-    return <div className={isFiringTransition ? styles.dotFiring : styles.dotResolved} />;
+    return <div className={cx(styles.dotBase, isFiringTransition ? styles.dotFiring : styles.dotResolved)} />;
   }
 
   if (!entry.notifications) {
-    return <div className={styles.dot} />;
+    return <div className={cx(styles.dotBase, styles.dotDefault)} />;
   }
 
   const allFailed = entry.notifications.every((n) => n.outcome === 'error');
@@ -186,7 +186,7 @@ function EntryDot({ entry }: { entry: TimelineEntry }) {
     );
   }
 
-  return <div className={styles.dot} />;
+  return <div className={cx(styles.dotBase, styles.dotDefault)} />;
 }
 
 export type TimelineFilter = 'all' | 'states' | 'notifications';
@@ -486,31 +486,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
     minWidth: 0,
   }),
 
-  dot: css({
+  dotBase: css({
     width: '10px',
     height: '10px',
     borderRadius: theme.shape.radius.circle,
+  }),
+
+  dotDefault: css({
     backgroundColor: theme.colors.text.secondary,
   }),
 
   dotFiring: css({
-    width: '10px',
-    height: '10px',
-    borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.error.main,
   }),
 
   dotResolved: css({
-    width: '10px',
-    height: '10px',
-    borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.success.main,
   }),
 
   dotPending: css({
-    width: '10px',
-    height: '10px',
-    borderRadius: theme.shape.radius.circle,
     backgroundColor: theme.colors.warning.main,
   }),
 
