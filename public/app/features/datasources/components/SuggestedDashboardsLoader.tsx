@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SuggestedDashboardsModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsModal';
@@ -76,9 +76,11 @@ export const SuggestedDashboardsLoader = ({
     }
   }, [datasourceUid, onFetchComplete]);
 
-  if (fetchOnMount && !hasFetchedRef.current) {
-    triggerFetch();
-  }
+  useEffect(() => {
+    if (fetchOnMount) {
+      triggerFetch();
+    }
+  }, [fetchOnMount, triggerFetch]);
 
   const openModal = useCallback(() => {
     triggerFetch();
