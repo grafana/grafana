@@ -73,7 +73,8 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 
     if (isV2) {
       // FIXME: We could avoid this call by storing the entire dashboard DTO as initial dashboard scene instead of only the spec and metadata
-      const dto = await getDashboardAPI('v2').getDashboardDTO(result.uid);
+      const api = await getDashboardAPI('v2');
+      const dto = await api.getDashboardDTO(result.uid);
       newDashboardScene = transformSaveModelSchemaV2ToScene(dto);
       const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
