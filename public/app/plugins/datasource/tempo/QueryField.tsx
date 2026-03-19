@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
+import { QueryWithAssistantButton } from '@grafana/assistant';
 import { CoreApp, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
@@ -152,6 +153,17 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
             />
           </div>
         </Modal>
+        {!isAlerting && (
+          <InlineFieldRow className={css({ marginBottom: this.props.theme.spacing(1) })}>
+            <QueryWithAssistantButton
+              currentQuery={query}
+              queries={[query]}
+              dataSourceInstanceSettings={datasource.instanceSettings}
+              datasourceApi={null}
+              app={app}
+            />
+          </InlineFieldRow>
+        )}
         {!isAlerting && (
           <InlineFieldRow>
             <InlineField label="Query type" grow={true}>

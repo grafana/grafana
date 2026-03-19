@@ -6458,12 +6458,15 @@
     "browse-grafana-com": "Browse Grafana.com",
     "browse-plugins": "Browse plugins",
     "card": {
-      "customize-with-assistant-button": "Customize with Assistant",
+      "customize-with-assistant-button": "Customize with assistant",
+      "customize-with-assistant-button-label": "Customize with assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available ",
-      "use-dashboard-button": "Use dashboard",
-      "view-template-button": "View template"
+      "view-dashboard-button": "View dashboard",
+      "view-dashboard-button-label": "View dashboard: {{title}}",
+      "view-template-button": "View template",
+      "view-template-button-label": "View template: {{title}}"
     },
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
