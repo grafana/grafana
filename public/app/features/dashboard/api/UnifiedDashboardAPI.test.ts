@@ -157,14 +157,24 @@ describe('UnifiedDashboardAPI', () => {
           {
             kind: 'Dashboard',
             apiVersion: 'dashboard.grafana.app/v2beta1',
-            metadata: { name: 'dash-1', resourceVersion: '2', creationTimestamp: '2023-01-01T00:00:00Z', generation: 2 },
+            metadata: {
+              name: 'dash-1',
+              resourceVersion: '2',
+              creationTimestamp: '2023-01-01T00:00:00Z',
+              generation: 2,
+            },
             spec: { title: 'v2', elements: {} },
             status: {},
           },
           {
             kind: 'Dashboard',
             apiVersion: 'dashboard.grafana.app/v2beta1',
-            metadata: { name: 'dash-1', resourceVersion: '1', creationTimestamp: '2023-01-01T00:00:00Z', generation: 1 },
+            metadata: {
+              name: 'dash-1',
+              resourceVersion: '1',
+              creationTimestamp: '2023-01-01T00:00:00Z',
+              generation: 1,
+            },
             spec: { title: 'v2', elements: {} },
             status: {},
           },
@@ -176,7 +186,9 @@ describe('UnifiedDashboardAPI', () => {
 
       const result = await api.listDashboardHistory('dash-1');
 
-      expect(v2Client.listDashboardHistory).toHaveBeenCalled();
+      expect(v1Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 10, continueToken: undefined });
+      expect(v2Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 10, continueToken: undefined });
+      expect(result).toBe(mockV2Response);
       expect(result.items).toHaveLength(2);
     });
 
@@ -187,7 +199,12 @@ describe('UnifiedDashboardAPI', () => {
           {
             kind: 'Dashboard',
             apiVersion: 'dashboard.grafana.app/v1beta1',
-            metadata: { name: 'dash-1', resourceVersion: '1', creationTimestamp: '2023-01-01T00:00:00Z', generation: 1 },
+            metadata: {
+              name: 'dash-1',
+              resourceVersion: '1',
+              creationTimestamp: '2023-01-01T00:00:00Z',
+              generation: 1,
+            },
             spec: { title: 'v1', schemaVersion: 30 },
             status: {},
           },
@@ -202,14 +219,21 @@ describe('UnifiedDashboardAPI', () => {
       expect(v2Client.listDashboardHistory).not.toHaveBeenCalled();
     });
 
-    it('should produce a deduplicated merged result for mixed v1/v2 history', async () => {
+    it('should merge-sort valid items by generation descending for mixed v1/v2 history', async () => {
       const mockV1Response = {
-        metadata: { resourceVersion: '1' },
+        apiVersion: 'dashboard.grafana.app/v1beta1',
+        kind: 'DashboardList',
+        metadata: { resourceVersion: '1', continue: 'v1-token' },
         items: [
           {
             kind: 'Dashboard',
             apiVersion: 'dashboard.grafana.app/v1beta1',
-            metadata: { name: 'dash-1', resourceVersion: '1', creationTimestamp: '2023-01-01T00:00:00Z', generation: 1 },
+            metadata: {
+              name: 'dash-1',
+              resourceVersion: '1',
+              creationTimestamp: '2023-01-01T00:00:00Z',
+              generation: 1,
+            },
             spec: { title: 'v1-valid', schemaVersion: 30 },
             status: {},
           },
@@ -221,12 +245,19 @@ describe('UnifiedDashboardAPI', () => {
         ],
       };
       const mockV2Response = {
-        metadata: { resourceVersion: '2' },
+        apiVersion: 'dashboard.grafana.app/v2beta1',
+        kind: 'DashboardList',
+        metadata: { resourceVersion: '2', continue: 'v2-token' },
         items: [
           {
             kind: 'Dashboard',
             apiVersion: 'dashboard.grafana.app/v2beta1',
-            metadata: { name: 'dash-1', resourceVersion: '2', creationTimestamp: '2023-01-01T00:00:00Z', generation: 2 },
+            metadata: {
+              name: 'dash-1',
+              resourceVersion: '2',
+              creationTimestamp: '2023-01-01T00:00:00Z',
+              generation: 2,
+            },
             spec: { title: 'v2-valid', elements: {} },
             status: {},
           },
@@ -243,10 +274,101 @@ describe('UnifiedDashboardAPI', () => {
 
       const result = await api.listDashboardHistory('dash-1');
 
-      // Should contain only valid items: 1 from v1 + 1 from v2
       expect(result.items).toHaveLength(2);
-      expect(v1Client.listDashboardHistory).toHaveBeenCalled();
-      expect(v2Client.listDashboardHistory).toHaveBeenCalled();
+      expect(result.items[0].metadata.generation).toBe(2);
+      expect(result.items[1].metadata.generation).toBe(1);
+
+      const continueToken = result.metadata.continue!;
+      const decoded = JSON.parse(atob(continueToken));
+      expect(decoded).toEqual({ v1: 'v1-token', v2: 'v2-token' });
+    });
+
+    it('should decode composite continue token and pass separate tokens to v1/v2 clients', async () => {
+      const compositeToken = btoa(JSON.stringify({ v1: 'v1-page2', v2: 'v2-page2' }));
+
+      const mockV1Response = {
+        apiVersion: 'dashboard.grafana.app/v1beta1',
+        kind: 'DashboardList',
+        metadata: { resourceVersion: '1' },
+        items: [
+          {
+            kind: 'Dashboard',
+            apiVersion: 'dashboard.grafana.app/v1beta1',
+            metadata: {
+              name: 'dash-1',
+              resourceVersion: '3',
+              creationTimestamp: '2023-01-01T00:00:00Z',
+              generation: 3,
+            },
+            spec: { title: 'v1', schemaVersion: 30 },
+            status: {},
+          },
+        ],
+      };
+
+      v1Client.listDashboardHistory.mockResolvedValue(mockV1Response as ResourceList<DashboardDataDTO>);
+
+      await api.listDashboardHistory('dash-1', { limit: 10, continueToken: compositeToken });
+
+      expect(v1Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 10, continueToken: 'v1-page2' });
+    });
+
+    it('should return undefined continue when both streams are exhausted', async () => {
+      const mockV1Response = {
+        apiVersion: 'dashboard.grafana.app/v1beta1',
+        kind: 'DashboardList',
+        metadata: { resourceVersion: '1' },
+        items: [
+          {
+            kind: 'Dashboard',
+            apiVersion: 'dashboard.grafana.app/v1beta1',
+            metadata: {
+              name: 'dash-1',
+              resourceVersion: '1',
+              creationTimestamp: '2023-01-01T00:00:00Z',
+              generation: 1,
+            },
+            spec: { title: 'v1', schemaVersion: 30 },
+            status: {},
+          },
+          {
+            metadata: { name: 'dash-1', resourceVersion: '2', creationTimestamp: '2023-01-01T00:00:00Z' },
+            spec: null,
+            status: { conversion: { failed: true, storedVersion: 'v2beta1', error: 'conversion failed' } },
+          },
+        ],
+      };
+      const mockV2Response = {
+        apiVersion: 'dashboard.grafana.app/v2beta1',
+        kind: 'DashboardList',
+        metadata: { resourceVersion: '2' },
+        items: [
+          {
+            kind: 'Dashboard',
+            apiVersion: 'dashboard.grafana.app/v2beta1',
+            metadata: {
+              name: 'dash-1',
+              resourceVersion: '2',
+              creationTimestamp: '2023-01-01T00:00:00Z',
+              generation: 2,
+            },
+            spec: { title: 'v2', elements: {} },
+            status: {},
+          },
+          {
+            metadata: { name: 'dash-1', resourceVersion: '1', creationTimestamp: '2023-01-01T00:00:00Z' },
+            spec: null,
+            status: { conversion: { failed: true, storedVersion: 'v1beta1', error: 'conversion failed' } },
+          },
+        ],
+      };
+
+      v1Client.listDashboardHistory.mockResolvedValue(mockV1Response as ResourceList<DashboardDataDTO>);
+      v2Client.listDashboardHistory.mockResolvedValue(mockV2Response as ResourceList<DashboardV2Spec>);
+
+      const result = await api.listDashboardHistory('dash-1');
+
+      expect(result.metadata.continue).toBeUndefined();
     });
   });
 
@@ -324,13 +446,8 @@ describe('UnifiedDashboardAPI', () => {
 
       const result = await api.listDeletedDashboards({ limit: 10 });
 
-      expect(result).toEqual({
-        ...mockV2Response,
-        items: [
-          mockV1Response.items[1], // v1 dashboard
-          mockV2Response.items[0], // v2 dashboard
-        ],
-      });
+      expect(result.items).toHaveLength(2);
+      expect(result.items).toEqual([mockV1Response.items[1], mockV2Response.items[0]]);
       expect(v1Client.listDeletedDashboards).toHaveBeenCalledWith({ limit: 10 });
       expect(v2Client.listDeletedDashboards).toHaveBeenCalledWith({ limit: 10 });
     });
