@@ -198,6 +198,7 @@ export interface BaseVariableModel {
   state: LoadingState;
   error: any | null;
   description: string | null;
+  docsUrl?: string;
   usedInRepeat?: boolean;
   origin?: ControlSourceRef;
 }

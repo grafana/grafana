@@ -166,6 +166,7 @@ describe('ResponseTransformers', () => {
               name: 'var1',
               label: 'query var',
               description: 'query var description',
+              docsUrl: 'https://grafana.com/docs',
               skipUrlSync: false,
               hide: 0,
               multi: true,
@@ -1149,6 +1150,7 @@ describe('ResponseTransformers', () => {
       name: v1.name,
       label: v1.label,
       description: v1.description,
+      docsUrl: v1.docsUrl,
       hide: transformVariableHideToEnum(v1.hide),
       skipUrlSync: Boolean(v1.skipUrlSync),
     };
@@ -1157,6 +1159,7 @@ describe('ResponseTransformers', () => {
       name: v2.spec.name,
       label: v2.spec.label,
       description: v2.spec.description,
+      docsUrl: v2.spec.docsUrl,
       hide: v2.spec.hide,
       skipUrlSync: v2.spec.skipUrlSync,
     };

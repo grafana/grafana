@@ -218,6 +218,47 @@ describe('sceneVariablesSetToVariables', () => {
     `);
   });
 
+  it('should include docsUrl in legacy variable output when present on scene state', () => {
+    const docsUrlProps: Record<string, unknown> = { docsUrl: 'https://grafana.com/docs' };
+    const variable = new QueryVariable({
+      name: 'docs-var',
+      query: 'query',
+      value: 'selected',
+      text: 'selected',
+      ...docsUrlProps,
+    });
+
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].docsUrl).toBe('https://grafana.com/docs');
+  });
+
+  it('should include docsUrl in v2 variable output when present on scene state', () => {
+    const docsUrlProps: Record<string, unknown> = { docsUrl: 'https://grafana.com/docs' };
+    const variable = new QueryVariable({
+      name: 'docs-var',
+      query: 'query',
+      value: 'selected',
+      text: 'selected',
+      ...docsUrlProps,
+    });
+
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToSchemaV2Variables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].kind).toBe('QueryVariable');
+    expect(result[0].spec.docsUrl).toBe('https://grafana.com/docs');
+  });
+
   it('should handle Query variable when sceneVariablesSetToVariables should discard options', () => {
     const variable = new QueryVariable({
       name: 'test',

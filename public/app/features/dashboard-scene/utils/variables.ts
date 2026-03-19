@@ -70,6 +70,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             label: v.label,
             readOnly: true,
             description: v.description,
+            ...(v.docsUrl ? { docsUrl: v.docsUrl } : {}),
             skipUrlSync: v.skipUrlSync,
             hide: v.hide,
             datasource: v.datasource,
@@ -121,6 +122,7 @@ export function createSnapshotVariable(variable: TypedVariableModel): SceneVaria
       name: variable.name,
       label: variable.label,
       description: variable.description,
+      ...(variable.docsUrl ? { docsUrl: variable.docsUrl } : {}),
       value: currentInterval,
       text: currentInterval,
       hide: variable.hide,
@@ -144,6 +146,7 @@ export function createSnapshotVariable(variable: TypedVariableModel): SceneVaria
     name: variable.name,
     label: variable.label,
     description: variable.description,
+    ...(variable.docsUrl ? { docsUrl: variable.docsUrl } : {}),
     value: current?.value ?? '',
     text: current?.text ?? '',
     hide: variable.hide,
@@ -156,6 +159,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     name: variable.name,
     label: variable.label,
     description: variable.description,
+    ...(variable.docsUrl ? { docsUrl: variable.docsUrl } : {}),
     origin: variable.origin,
   };
   if (variable.type === 'adhoc') {

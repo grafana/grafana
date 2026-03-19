@@ -14,6 +14,7 @@ import {
 
 export interface SnapshotVariableState extends MultiValueVariableState {
   query?: string;
+  docsUrl?: string;
 }
 
 export class SnapshotVariable extends MultiValueVariable<SnapshotVariableState> {
