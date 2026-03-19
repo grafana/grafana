@@ -69,7 +69,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.ReleaseOrphanResourcesFinalizer:
 			logger.Info("releasing orphan resources")
-			count, err = f.releaseExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger))
+			count, err = f.releaseExistingItems(ctx, repo.Config())
 			if err != nil {
 				err = fmt.Errorf("release resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -77,7 +77,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.RemoveOrphanResourcesFinalizer:
 			logger.Info("removing orphan resources")
-			count, err = f.deleteExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger))
+			count, err = f.deleteExistingItems(ctx, repo.Config())
 			if err != nil {
 				err = fmt.Errorf("remove resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -99,6 +99,8 @@ func (f *finalizer) process(ctx context.Context,
 
 type itemProcessor func(ctx context.Context, item *provisioning.ResourceListItem) error
 
+// newItemProcessor wraps a per-resource callback with client resolution and
+// not-found handling.
 func (f *finalizer) newItemProcessor(
 	ctx context.Context,
 	clients resources.ResourceClients,
@@ -128,23 +130,44 @@ func (f *finalizer) newItemProcessor(
 	}
 }
 
-func (f *finalizer) listAndSort(
-	ctx context.Context,
-	repo *provisioning.Repository,
-	sortFn func(*provisioning.ResourceList),
-) (*provisioning.ResourceList, resources.ResourceClients, error) {
-	logger := logging.FromContext(ctx)
-	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
-	if err != nil {
-		return nil, nil, err
+// processFolderItems processes folder items sequentially to respect hierarchy.
+func (f *finalizer) processFolderItems(ctx context.Context, items []*provisioning.ResourceListItem, process itemProcessor) (int, error) {
+	var count int
+	for _, item := range items {
+		if err := process(ctx, item); err != nil {
+			return count, err
+		}
+		count++
 	}
-	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
-	if err != nil {
-		logger.Error("error listing resources", "error", err)
-		return nil, nil, err
+	return count, nil
+}
+
+// processResourceItems processes non-folder items concurrently.
+func (f *finalizer) processResourceItems(ctx context.Context, items []*provisioning.ResourceListItem, process itemProcessor) (int, error) {
+	var processed int64
+	err := concurrency.ForEachJob(ctx, len(items), f.maxWorkers, func(ctx context.Context, idx int) error {
+		jobCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+		defer cancel()
+		if err := process(jobCtx, items[idx]); err != nil {
+			return err
+		}
+		atomic.AddInt64(&processed, 1)
+		return nil
+	})
+	return int(processed), err
+}
+
+// splitItems separates a sorted list into folder items and non-folder items,
+// preserving the order within each group.
+func splitItems(items *provisioning.ResourceList) (folderItems, resourceItems []*provisioning.ResourceListItem) {
+	for i := range items.Items {
+		if items.Items[i].Group == folders.GroupVersion.Group {
+			folderItems = append(folderItems, &items.Items[i])
+		} else {
+			resourceItems = append(resourceItems, &items.Items[i])
+		}
 	}
-	sortFn(items)
-	return items, clients, nil
+	return folderItems, resourceItems
 }
 
 // deleteExistingItems removes all resources managed by the repository.
@@ -153,49 +176,32 @@ func (f *finalizer) listAndSort(
 func (f *finalizer) deleteExistingItems(
 	ctx context.Context,
 	repo *provisioning.Repository,
-	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
 ) (int, error) {
 	logger := logging.FromContext(ctx)
-
-	items, clients, err := f.listAndSort(ctx, repo, sortResourceListForDeletion)
+	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
 	if err != nil {
 		return 0, err
 	}
 
-	processItem := f.newItemProcessor(ctx, clients, cb)
-
-	var resources, folderItems []*provisioning.ResourceListItem
-	for i := range items.Items {
-		if items.Items[i].Group == folders.GroupVersion.Group {
-			folderItems = append(folderItems, &items.Items[i])
-		} else {
-			resources = append(resources, &items.Items[i])
-		}
+	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
+	if err != nil {
+		logger.Error("error listing resources", "error", err)
+		return 0, err
 	}
 
-	// Delete non-folder resources concurrently first.
-	count := 0
-	var processed int64
-	err = concurrency.ForEachJob(ctx, len(resources), f.maxWorkers, func(ctx context.Context, idx int) error {
-		jobCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-		defer cancel()
-		if err := processItem(jobCtx, resources[idx]); err != nil {
-			return err
-		}
-		atomic.AddInt64(&processed, 1)
-		return nil
-	})
-	count += int(processed)
+	sortResourceListForDeletion(items)
+	folderItems, resourceItems := splitItems(items)
+	process := f.newItemProcessor(ctx, clients, f.removeResources(ctx, logger))
+
+	count, err := f.processResourceItems(ctx, resourceItems, process)
 	if err != nil {
 		return count, err
 	}
 
-	// Then delete folders sequentially (deepest first).
-	for _, item := range folderItems {
-		if err := processItem(ctx, item); err != nil {
-			return count, err
-		}
-		count++
+	n, err := f.processFolderItems(ctx, folderItems, process)
+	count += n
+	if err != nil {
+		return count, err
 	}
 
 	logger.Info("deleted items", "items", count)
@@ -204,59 +210,36 @@ func (f *finalizer) deleteExistingItems(
 
 // releaseExistingItems releases all resources managed by the repository
 // top-down by depth. Folders are released sequentially to respect hierarchy;
-// consecutive non-folder resources at the same depth are released concurrently.
+// non-folder resources between folder groups are released concurrently.
 func (f *finalizer) releaseExistingItems(
 	ctx context.Context,
 	repo *provisioning.Repository,
-	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
 ) (int, error) {
 	logger := logging.FromContext(ctx)
-
-	items, clients, err := f.listAndSort(ctx, repo, sortResourceListForRelease)
+	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
 	if err != nil {
 		return 0, err
 	}
 
-	processItem := f.newItemProcessor(ctx, clients, cb)
-
-	var count int
-	var batch []*provisioning.ResourceListItem
-
-	flushBatch := func() error {
-		if len(batch) == 0 {
-			return nil
-		}
-		group := batch
-		batch = nil
-		var processed int64
-		err := concurrency.ForEachJob(ctx, len(group), f.maxWorkers, func(ctx context.Context, idx int) error {
-			jobCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			defer cancel()
-			if err := processItem(jobCtx, group[idx]); err != nil {
-				return err
-			}
-			atomic.AddInt64(&processed, 1)
-			return nil
-		})
-		count += int(processed)
-		return err
+	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
+	if err != nil {
+		logger.Error("error listing resources", "error", err)
+		return 0, err
 	}
 
-	for i := range items.Items {
-		item := &items.Items[i]
-		if item.Group == folders.GroupVersion.Group {
-			if err := flushBatch(); err != nil {
-				return count, err
-			}
-			if err := processItem(ctx, item); err != nil {
-				return count, err
-			}
-			count++
-		} else {
-			batch = append(batch, item)
-		}
+	sortResourceListForRelease(items)
+	folderItems, resourceItems := splitItems(items)
+	process := f.newItemProcessor(ctx, clients, f.releaseResources(ctx, logger))
+
+	n, err := f.processFolderItems(ctx, folderItems, process)
+	count := n
+	if err != nil {
+		return count, err
 	}
-	if err := flushBatch(); err != nil {
+
+	n, err = f.processResourceItems(ctx, resourceItems, process)
+	count += n
+	if err != nil {
 		return count, err
 	}
 

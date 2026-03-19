@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -646,6 +645,155 @@ func TestSortResourceListForRelease(t *testing.T) {
 	}
 }
 
+func TestDeleteExistingItems_ResourcesBeforeFolders(t *testing.T) {
+	var order []string
+	var mu sync.Mutex
+
+	items := provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{Group: folders.GroupVersion.Group, Resource: "folders", Name: "folder-root", Path: "root"},
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-1", Path: "root/dash.json"},
+			{Group: folders.GroupVersion.Group, Resource: "folders", Name: "folder-nested", Path: "root/nested", Folder: "folder-root"},
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-2", Path: "other.json"},
+		},
+	}
+
+	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+
+	clientFactory := resources.NewMockClientFactory(t)
+	clients := resources.NewMockResourceClients(t)
+	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+
+	client := &mockDynamicClient{
+		deleteFunc: func(ctx context.Context, name string, options metav1.DeleteOptions, subresources ...string) error {
+			mu.Lock()
+			order = append(order, name)
+			mu.Unlock()
+			return nil
+		},
+	}
+	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
+
+	f := &finalizer{
+		lister:        resourceLister,
+		clientFactory: clientFactory,
+		metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers:    1,
+	}
+
+	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	count, err := f.deleteExistingItems(context.Background(), repo)
+	assert.NoError(t, err)
+	assert.Equal(t, 4, count)
+
+	// With maxWorkers=1, resources are processed sequentially but still before
+	// folders. The two dashboards should come first, then folders deepest-first.
+	assert.Equal(t, []string{"dash-1", "dash-2"}, order[:2], "non-folder resources should be deleted first")
+	assert.Equal(t, []string{"folder-nested", "folder-root"}, order[2:], "folders should be deleted deepest first")
+}
+
+func TestReleaseExistingItems_FoldersBeforeResources(t *testing.T) {
+	var order []string
+	var mu sync.Mutex
+
+	items := provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-1", Path: "root/dash.json"},
+			{Group: folders.GroupVersion.Group, Resource: "folders", Name: "folder-root", Path: "root"},
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-2", Path: "other.json"},
+			{Group: folders.GroupVersion.Group, Resource: "folders", Name: "folder-nested", Path: "root/nested", Folder: "folder-root"},
+		},
+	}
+
+	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+
+	clientFactory := resources.NewMockClientFactory(t)
+	clients := resources.NewMockResourceClients(t)
+	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+
+	client := &mockDynamicClient{
+		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+			mu.Lock()
+			order = append(order, name)
+			mu.Unlock()
+			return nil, nil
+		},
+	}
+	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
+
+	f := &finalizer{
+		lister:        resourceLister,
+		clientFactory: clientFactory,
+		metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers:    1,
+	}
+
+	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	count, err := f.releaseExistingItems(context.Background(), repo)
+	assert.NoError(t, err)
+	assert.Equal(t, 4, count)
+
+	// Folders should be released shallowest-first, before any non-folder resources.
+	assert.Equal(t, []string{"folder-root", "folder-nested"}, order[:2], "folders should be released shallowest first")
+	assert.Equal(t, []string{"dash-2", "dash-1"}, order[2:], "non-folder resources should be released after folders")
+}
+
+func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
+	var (
+		concurrentCount int64
+		maxConcurrent   int64
+		mu              sync.Mutex
+	)
+
+	items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{}}
+	for i := 0; i < 10; i++ {
+		items.Items = append(items.Items, provisioning.ResourceListItem{
+			Group:    "dashboard.grafana.app",
+			Resource: "dashboards",
+			Name:     fmt.Sprintf("dashboard-%d", i),
+			Path:     fmt.Sprintf("dash-%d.json", i),
+		})
+	}
+
+	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+
+	clientFactory := resources.NewMockClientFactory(t)
+	clients := resources.NewMockResourceClients(t)
+	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+
+	client := &mockDynamicClient{
+		patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, options metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+			current := atomic.AddInt64(&concurrentCount, 1)
+			defer atomic.AddInt64(&concurrentCount, -1)
+			mu.Lock()
+			if current > maxConcurrent {
+				maxConcurrent = current
+			}
+			mu.Unlock()
+			time.Sleep(1 * time.Second)
+			return nil, nil
+		},
+	}
+	clients.On("ForResource", mock.Anything, mock.Anything).Return(client, schema.GroupVersionKind{}, nil)
+
+	f := &finalizer{
+		lister:        resourceLister,
+		clientFactory: clientFactory,
+		metrics:       func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers:    5,
+	}
+
+	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	count, err := f.releaseExistingItems(context.Background(), repo)
+	assert.NoError(t, err)
+	assert.Equal(t, 10, count)
+	assert.Greater(t, maxConcurrent, int64(1), "resources should be released concurrently")
+	assert.LessOrEqual(t, maxConcurrent, int64(5), "should not exceed maxWorkers")
+}
+
 func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 	testCases := []struct {
 		name                string
@@ -764,7 +912,6 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 			count, err := f.deleteExistingItems(
 				context.Background(),
 				repo,
-				f.removeResources(context.Background(), logging.DefaultLogger),
 			)
 
 			assert.NoError(t, err)
