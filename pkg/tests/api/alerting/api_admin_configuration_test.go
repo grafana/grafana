@@ -27,6 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+func ptrTo[T any](v T) *T { return &v }
+
 func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -91,7 +93,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// An invalid alertmanager choice should return an error.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			AlertmanagersChoice: apimodels.AlertmanagersChoice("invalid"),
+			AlertmanagersChoice: ptrTo(apimodels.AlertmanagersChoice("invalid")),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -112,7 +114,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// but never specify any. This should return an error.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			AlertmanagersChoice: apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String()),
+			AlertmanagersChoice: ptrTo(apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String())),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -187,7 +189,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// and make it so that only the external Alertmanagers handle the alerts.
 	{
 		ac := apimodels.PostableNGalertConfig{
-			AlertmanagersChoice: apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String()),
+			AlertmanagersChoice: ptrTo(apimodels.AlertmanagersChoice(ngmodels.ExternalAlertmanagers.String())),
 		}
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
