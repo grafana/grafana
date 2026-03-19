@@ -179,6 +179,119 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		require.NotNil(t, created)
 	})
 
+	// --- Move (update) cases ---
+
+	t.Run("reject moving unmanaged dashboard to managed folder", func(t *testing.T) {
+		unmanagedFolder := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"generateName": "src-folder-",
+				},
+				"spec": map[string]interface{}{
+					"title": "Source Unmanaged Folder",
+				},
+			},
+		}
+		createdFolder, err := helper.Folders.Resource.Create(ctx, unmanagedFolder, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		dashboard := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"generateName": "move-to-managed-",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder": createdFolder.GetName(),
+					},
+				},
+				"spec": map[string]interface{}{
+					"title":         "Dashboard to Move to Managed Folder",
+					"schemaVersion": 41,
+				},
+			},
+		}
+		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		annotations["grafana.app/folder"] = managedFolderName
+		fresh.SetAnnotations(annotations)
+
+		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.Error(t, err, "should reject moving unmanaged dashboard to managed folder")
+		require.True(t, apierrors.IsForbidden(err), "error should be Forbidden, got: %v", err)
+		require.Contains(t, err.Error(), "folder is managed by repo:"+repoName)
+		require.Contains(t, err.Error(), "resource is not managed")
+	})
+
+	t.Run("allow moving dashboard to unmanaged folder", func(t *testing.T) {
+		folderA := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"generateName": "folder-a-",
+				},
+				"spec": map[string]interface{}{
+					"title": "Folder A",
+				},
+			},
+		}
+		createdA, err := helper.Folders.Resource.Create(ctx, folderA, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		folderB := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"generateName": "folder-b-",
+				},
+				"spec": map[string]interface{}{
+					"title": "Folder B",
+				},
+			},
+		}
+		createdB, err := helper.Folders.Resource.Create(ctx, folderB, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		dashboard := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"generateName": "movable-dash-",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder": createdA.GetName(),
+					},
+				},
+				"spec": map[string]interface{}{
+					"title":         "Dashboard to Move Between Unmanaged Folders",
+					"schemaVersion": 41,
+				},
+			},
+		}
+		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		annotations["grafana.app/folder"] = createdB.GetName()
+		fresh.SetAnnotations(annotations)
+
+		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.NoError(t, err, "should allow moving dashboard to unmanaged folder")
+		require.Equal(t, createdB.GetName(), updated.GetAnnotations()["grafana.app/folder"])
+	})
+
 	// --- Folder-in-folder (nested folder) cases ---
 
 	t.Run("reject unmanaged sub-folder in managed folder", func(t *testing.T) {
