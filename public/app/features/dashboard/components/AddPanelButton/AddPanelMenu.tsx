@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
-import { Menu, Alert } from '@grafana/ui';
+import { Menu } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import {
   getCopiedPanelPlugin,
@@ -27,14 +27,6 @@ const AddPanelMenu = ({ dashboard }: Props) => {
   const copiedPanelPlugin = useMemo(() => getCopiedPanelPlugin(panels), [panels]);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
-
-  if (error) {
-    return (
-      <Alert severity="error" title={t('dashboard.add-menu.load-error', 'Failed to load panel plugins')}>
-        {error.message}
-      </Alert>
-    );
-  }
 
   return (
     <Menu>
@@ -75,7 +67,7 @@ const AddPanelMenu = ({ dashboard }: Props) => {
           DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
           onPasteCopiedPanel(dashboard, copiedPanelPlugin);
         }}
-        disabled={!copiedPanelPlugin}
+        disabled={!copiedPanelPlugin || Boolean(error)}
       />
     </Menu>
   );
