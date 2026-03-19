@@ -17,6 +17,9 @@ import (
 func ValidatePendingDeletion(a admission.Attributes, meta utils.GrafanaMetaAccessor) error {
 	switch a.GetOperation() {
 	case admission.Update:
+		if a.GetSubresource() != "" {
+			return nil // status (and other subresource) patches are allowed
+		}
 		if old := a.GetOldObject(); old != nil {
 			if oldMeta, err := utils.MetaAccessor(old); err == nil && appcontroller.IsPendingDelete(oldMeta.GetLabels()) {
 				if appcontroller.IsPendingDelete(meta.GetLabels()) {

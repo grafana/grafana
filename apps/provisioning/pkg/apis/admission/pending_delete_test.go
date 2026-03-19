@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func newPendingDeleteAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
+func newPendingDeleteAttributes(obj, old runtime.Object, op admission.Operation, subresource string) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,
 		old,
@@ -23,7 +23,7 @@ func newPendingDeleteAttributes(obj, old runtime.Object, op admission.Operation)
 		"default",
 		"test-repo",
 		provisioning.SchemeGroupVersion.WithResource("repositories"),
-		"",
+		subresource,
 		op,
 		nil,
 		false,
@@ -47,6 +47,7 @@ func TestValidatePendingDeletion(t *testing.T) {
 		obj           runtime.Object
 		old           runtime.Object
 		op            admission.Operation
+		subresource   string
 		wantErr       bool
 		wantForbidden bool
 	}{
@@ -93,6 +94,22 @@ func TestValidatePendingDeletion(t *testing.T) {
 			wantForbidden: true,
 		},
 		{
+			name:        "Update status subresource: both have pending-delete label is allowed",
+			obj:         pendingDeleteRepo(true),
+			old:         pendingDeleteRepo(true),
+			op:          admission.Update,
+			subresource: "status",
+			wantErr:     false,
+		},
+		{
+			name:        "Update status subresource: old with label, new with label is allowed",
+			obj:         pendingDeleteRepo(true),
+			old:         pendingDeleteRepo(true),
+			op:          admission.Update,
+			subresource: "status",
+			wantErr:     false,
+		},
+		{
 			name:    "Delete operation is not checked",
 			obj:     pendingDeleteRepo(true),
 			op:      admission.Delete,
@@ -102,7 +119,7 @@ func TestValidatePendingDeletion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			attr := newPendingDeleteAttributes(tt.obj, tt.old, tt.op)
+			attr := newPendingDeleteAttributes(tt.obj, tt.old, tt.op, tt.subresource)
 			meta, err := utils.MetaAccessor(tt.obj)
 			require.NoError(t, err)
 
