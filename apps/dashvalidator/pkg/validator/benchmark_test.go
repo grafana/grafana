@@ -3,8 +3,6 @@ package validator
 import (
 	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 // promQLPool contains realistic PromQL expressions sourced from real Grafana dashboards.
