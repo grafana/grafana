@@ -1720,4 +1720,9 @@ export interface FeatureToggles {
   * @default false
   */
   colorblindThemes?: boolean;
+  /**
+  * Enables the IAM client integration for fetching remote IAM roles
+  * @default false
+  */
+  rbacIAMClient?: boolean;
 }

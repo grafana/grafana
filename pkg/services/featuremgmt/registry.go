@@ -2729,6 +2729,14 @@ var (
 			RequiresRestart: true,
 			Expression:      "false",
 		},
+		{
+			Name:         "rbacIAMClient",
+			Description:  "Enables the IAM client integration for fetching remote IAM roles",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
 	}
 )
 
