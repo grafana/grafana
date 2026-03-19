@@ -321,29 +321,6 @@
           }
         }
       },
-      "delete": {
-        "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-        "tags": [
-          "alertmanager"
-        ],
-        "summary": "deletes the Alerting config for a tenant",
-        "operationId": "RouteDeleteGrafanaAlertingConfig",
-        "deprecated": true,
-        "responses": {
-          "200": {
-            "description": "Ack",
-            "schema": {
-              "$ref": "#/definitions/Ack"
-            }
-          },
-          "400": {
-            "description": "ValidationError",
-            "schema": {
-              "$ref": "#/definitions/ValidationError"
-            }
-          }
-        }
-      }
     },
     "/alertmanager/grafana/config/api/v1/receivers": {
       "get": {
