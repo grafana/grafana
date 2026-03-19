@@ -69,7 +69,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.ReleaseOrphanResourcesFinalizer:
 			logger.Info("releasing orphan resources")
-			count, err = f.processExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger), foldersFirst)
+			count, err = f.processExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger), sortResourceListForRelease)
 			if err != nil {
 				err = fmt.Errorf("release resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -77,7 +77,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.RemoveOrphanResourcesFinalizer:
 			logger.Info("removing orphan resources")
-			count, err = f.processExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger), resourcesFirst)
+			count, err = f.processExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger), sortResourceListForDeletion)
 			if err != nil {
 				err = fmt.Errorf("remove resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -97,24 +97,15 @@ func (f *finalizer) process(ctx context.Context,
 	return nil
 }
 
-type processOrder int
-
-const (
-	// resourcesFirst processes non-folder resources before folders (bottom-up).
-	// Use for deletion — folders must be empty before they can be removed.
-	resourcesFirst processOrder = iota
-	// foldersFirst processes folders before non-folder resources (top-down).
-	// Use for release — un-managing folders first ensures children are released
-	// in unmanaged folders, satisfying the repo-manager consistency invariant.
-	foldersFirst
-)
-
-// internal iterator to walk the existing items
+// processExistingItems lists all resources managed by the repository, sorts
+// them with the provided strategy, then processes them in that order.
+// Folder items are processed sequentially to respect hierarchy ordering;
+// non-folder items are processed concurrently.
 func (f *finalizer) processExistingItems(
 	ctx context.Context,
 	repo *provisioning.Repository,
 	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
-	order processOrder,
+	sortFn func(*provisioning.ResourceList),
 ) (int, error) {
 	logger := logging.FromContext(ctx)
 	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
@@ -128,14 +119,14 @@ func (f *finalizer) processExistingItems(
 		return 0, err
 	}
 
-	sortResourceListForDeletion(items)
+	sortFn(items)
 
 	var resources, folderItems []*provisioning.ResourceListItem
-	for _, item := range items.Items {
-		if item.Group == folders.GroupVersion.Group {
-			folderItems = append(folderItems, &item)
+	for i := range items.Items {
+		if items.Items[i].Group == folders.GroupVersion.Group {
+			folderItems = append(folderItems, &items.Items[i])
 		} else {
-			resources = append(resources, &item)
+			resources = append(resources, &items.Items[i])
 		}
 	}
 
@@ -161,56 +152,28 @@ func (f *finalizer) processExistingItems(
 		return nil
 	}
 
-	processGroup := func(group []*provisioning.ResourceListItem) (int, error) {
-		var processed int64
-		err := concurrency.ForEachJob(ctx, len(group), f.maxWorkers, func(ctx context.Context, idx int) error {
-			jobCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			defer cancel()
-			item := group[idx]
-			if err := processItem(jobCtx, item); err != nil {
-				return err
-			}
-			atomic.AddInt64(&processed, 1)
-			return nil
-		})
-		return int(processed), err
-	}
-
-	processFolders := func() (int, error) {
-		var count int
-		for _, item := range folderItems {
-			if err := processItem(ctx, item); err != nil {
-				return count, err
-			}
-			count++
-		}
-		return count, nil
-	}
-
-	// Order the two groups based on the requested strategy.
-	type step func() (int, error)
-	var first, second step
-
-	switch order {
-	case foldersFirst:
-		// Reverse folder order: sortResourceListForDeletion puts deepest first,
-		// but release needs shallowest first (top-down) so parent folders are
-		// unmanaged before their children are released.
-		slices.Reverse(folderItems)
-		first = processFolders
-		second = func() (int, error) { return processGroup(resources) }
-	default:
-		first = func() (int, error) { return processGroup(resources) }
-		second = processFolders
-	}
-
 	count := 0
-	for _, fn := range []step{first, second} {
-		processed, err := fn()
-		count += processed
-		if err != nil {
+
+	for _, item := range folderItems {
+		if err := processItem(ctx, item); err != nil {
 			return count, err
 		}
+		count++
+	}
+
+	var processed int64
+	err = concurrency.ForEachJob(ctx, len(resources), f.maxWorkers, func(ctx context.Context, idx int) error {
+		jobCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+		defer cancel()
+		if err := processItem(jobCtx, resources[idx]); err != nil {
+			return err
+		}
+		atomic.AddInt64(&processed, 1)
+		return nil
+	})
+	count += int(processed)
+	if err != nil {
+		return count, err
 	}
 
 	logger.Info("processed items", "items", count)
@@ -290,6 +253,42 @@ func escapePatchString(s string) string {
 	s = strings.ReplaceAll(s, "~", "~0")
 	s = strings.ReplaceAll(s, "/", "~1")
 	return s
+}
+
+// sortResourceListForRelease orders items so that folders are released
+// top-down (shallowest first) before non-folder resources. This ensures
+// parent folders are unmanaged before their children are released,
+// satisfying the repo-manager consistency invariant.
+func sortResourceListForRelease(list *provisioning.ResourceList) {
+	sort.Slice(list.Items, func(i, j int) bool {
+		isFolderI := list.Items[i].Group == folders.GroupVersion.Group
+		isFolderJ := list.Items[j].Group == folders.GroupVersion.Group
+
+		// folders always go first for release
+		if isFolderI != isFolderJ {
+			return isFolderI
+		}
+
+		if !isFolderI && !isFolderJ {
+			return false
+		}
+
+		// root folders (no parent) go first
+		hasFolderI := list.Items[i].Folder != ""
+		hasFolderJ := list.Items[j].Folder != ""
+		if hasFolderI != hasFolderJ {
+			return !hasFolderI
+		}
+
+		// shallowest folders first (top-down)
+		depthI := len(strings.Split(list.Items[i].Path, "/"))
+		depthJ := len(strings.Split(list.Items[j].Path, "/"))
+		if depthI != depthJ {
+			return depthI < depthJ
+		}
+
+		return false
+	})
 }
 
 func sortResourceListForDeletion(list *provisioning.ResourceList) {

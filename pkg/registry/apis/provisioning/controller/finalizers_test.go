@@ -687,7 +687,7 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 				context.Background(),
 				repo,
 				f.removeResources(context.Background(), logging.DefaultLogger),
-				resourcesFirst,
+				sortResourceListForDeletion,
 			)
 
 			assert.NoError(t, err)
