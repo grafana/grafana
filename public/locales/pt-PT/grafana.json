@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2358,8 +2359,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2418,9 +2420,6 @@
       "label-payload": "Carga útil",
       "label-use-existing-alert-instances": "Utilizar instâncias de alerta existentes",
       "reference": "Referência"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Acelerar agora a criação de alertas utilizando uma das nossas aplicações personalizadas"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Esta regra é gerida pelo plugin {{pluginName}}"
@@ -2937,6 +2936,9 @@
       "error-button": "Erro",
       "export-all-grafana-rules": "Exportar todas as regras da Grafana",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Cancelar pesquisa",
         "no-more-results": "Não existem mais resultados – {{numberOfRules}} regras encontradas",
@@ -3086,8 +3088,6 @@
       "dashboard": "Painel de controlo",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Ajuda para pesquisar por origens de dados",
       "filter-options": {
-        "aria-label": "Opções de filtro",
-        "aria-label-show-filters": "Filtrar",
         "placeholder-namespace": "Selecionar espaço de nome",
         "placeholder-search-input": "Pesquise por nome ou introduza uma consulta de filtro..."
       },
@@ -3119,6 +3119,9 @@
       "state": "Estado",
       "title-search-help": "Pesquisar ajuda",
       "view-as": "Ver como"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "A eliminar",
@@ -4812,7 +4815,6 @@
     "all": "Tudo",
     "apply": "Aplicar",
     "cancel": "Cancelar",
-    "clear": "Limpar",
     "collapse": "Recolher",
     "disabled": "Desativado",
     "discard": "Descartar",
@@ -5912,6 +5914,12 @@
         "title": "Definições de tempo do painel"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "O painel de controlo deve ser guardado antes de poderem ser adicionados alertas.",
@@ -6545,6 +6553,17 @@
       "label-link": "",
       "tooltip": ""
     },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Não foi possível navegar para o painel de controlo selecionado. Tente novamente.",
@@ -6744,6 +6763,9 @@
       "tooltip-move-link-down": "Mover link para baixo",
       "tooltip-move-link-up": "Mover link para cima",
       "type": "Tipo"
+    },
+    "dashboard-links-list": {
+      "add-link": ""
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Erro ao carregar o painel de controlo"
@@ -7025,6 +7047,13 @@
       "type-link": "",
       "with-tags": ""
     },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": ""
+    },
     "managed-badge": {
       "kubectl": "Gerido por: Kubectl",
       "plugin": "Gerido por: Plugin {{id}}",
@@ -7274,6 +7303,8 @@
       "cannot-be-saved": "Este painel de controlo não pode ser guardado a partir da interface do utilizador da Grafana porque foi aprovisionado a partir de outra fonte. Copie o JSON ou guarde-o num ficheiro abaixo. Posteriormente, poderá atualizar o seu painel de controlo na fonte de aprovisionamento.",
       "copy-json-to-clipboard": "Copiar JSON para a área de transferência",
       "file-path": "<strong>Caminho do ficheiro:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Descrição",
       "label-target-folder": "Pasta de destino",
       "label-title": "Título",
@@ -7381,6 +7412,13 @@
       "page-nav": {
         "text": {
           "settings": "Definições"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7952,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Valor fixo"
       },
+      "label": "",
       "label-limit": "Limite",
       "label-value": "Valor",
       "noOptionsMessage-no-fields-found": "Nenhum campo encontrado",
@@ -9983,7 +10022,9 @@
       "external-links-heading": "Links externos"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Introduza a expressão regular"
+      "input-placeholder": "Introduza a expressão regular",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Operador de comparação",
@@ -10010,6 +10051,18 @@
       "expand-row-tooltip": "Alternar linha expandida",
       "tooltip-collapse-all": "Recolher todas as linhas",
       "tooltip-expand-all": "Expandir todas as linhas"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Definir propriedades para campos com nomes que correspondam a um regex",
@@ -11237,7 +11290,7 @@
       "cancel": "Cancelar",
       "change-uid": "Alterar uid",
       "description-library-panels-imported": "Lista de novos painéis de biblioteca que serão importados.",
-      "description-unique-identifier-uid": "O identificador único (UID) de um painel de controlo pode ser utilizado para identificar exclusivamente um painel entre várias instalações da Grafana. O UID permite ter URLs consistentes para aceder a painéis de controlo, pelo que alterar o título de um painel de controlo não interromperá quaisquer ligações marcadas para esse painel de controlo.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Painéis de biblioteca existentes",
       "label-folder": "Pasta",
       "label-name": "Nome",
@@ -12758,9 +12811,6 @@
     "title-loaded-pull-request-in-repo": "Este recurso é carregado a partir do ramo que acabou de criar em {{repoType}} e só é visível para si"
   },
   "provisioning": {
-    "banner": {
-      "message": "Esta funcionalidade está atualmente em desenvolvimento ativo. Para a melhor experiência e as melhorias mais recentes, recomendamos a utilização da <2>compilação noturna</2> da Grafana."
-    },
     "bitbucket": {
       "branch-required": "O ramo é obrigatório",
       "permissions": {
@@ -12786,6 +12836,7 @@
       "empty": "Esvaziar",
       "error-field-required": "Este campo é obrigatório.",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "Ocorreu um problema ao estabelecer ligação ao repositório. Verifique as definições do repositório e tente novamente.",
       "error-repository-status-unhealthy-title": "Estado do repositório não saudável",
@@ -12795,6 +12846,7 @@
       "retry-action": "",
       "text-loading-resource-information": "A carregar informações de recursos...",
       "unmanaged-resources-label": "Recursos não geridos",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} painéis de controlo",
       "dashboards-count_other": "{{count}} painéis de controlo",
@@ -12847,7 +12899,8 @@
     "connect-repository-button": {
       "configure": "Configurar",
       "instance-fully-managed-tooltip": "A configuração está desativada porque esta instância é totalmente gerida",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -13051,7 +13104,7 @@
       "token-label": "Token de acesso",
       "token-required": "O token do Git é obrigatório",
       "token-user-description": "O nome de utilizador que será utilizado para aceder ao repositório com o token de acesso",
-      "url-description": "O URL do repositório Git",
+      "url-description": "",
       "url-pattern": "Tem de ser um URL de repositório Git válido",
       "url-required": "O URL do repositório é obrigatório"
     },
@@ -13177,23 +13230,25 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_one": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_one": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_one": "",
       "message-both-resources_other": "",
-      "message-repositories-info_one": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_one": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_one": "",
       "message-repository_other": "",
-      "note-message-both-repositories_one": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_one": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_one": "",
-      "note-message-repository_other": "",
-      "note-message-resource_one": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_one": "",
+      "message-repository-onprem_other": "",
+      "message-resource_one": "",
+      "message-resource_other": "",
+      "message-resource-onprem_one": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "Este recurso é só de leitura e aprovisionado através do aprovisionamento de ficheiros. Para fazer quaisquer alterações, atualize o repositório associado. Para modificar as definições, aceda a Administração > Aprovisionamento > Repositórios.",
     "read-only-remote-tooltip": "Este recurso é só de leitura e aprovisionado através do Git. Para fazer quaisquer alterações, atualize o repositório associado. Para modificar as definições, aceda a Administração > Aprovisionamento > Repositórios.",
@@ -13452,6 +13507,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Escolha o que sincronizar",
       "step-configure-repo": "Configurar repositório",
       "step-connect": "Conectar ",

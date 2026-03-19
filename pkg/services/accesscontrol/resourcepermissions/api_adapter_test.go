@@ -3,8 +3,10 @@ package resourcepermissions
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +20,9 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -70,7 +74,12 @@ func TestGetPermissionKind(t *testing.T) {
 
 // TestGetDynamicClient_RestConfigNotAvailable tests error handling when rest config is not available
 func TestGetDynamicClient_RestConfigNotAvailable(t *testing.T) {
-	ctx := context.Background()
+	reqCtx := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req: &http.Request{},
+		},
+		Logger: log.New("test"),
+	}
 
 	api := &api{
 		service: &Service{
@@ -81,7 +90,7 @@ func TestGetDynamicClient_RestConfigNotAvailable(t *testing.T) {
 		restConfigProvider: nil,
 	}
 
-	client, err := api.getDynamicClient(ctx)
+	client, err := api.getDynamicClient(reqCtx)
 
 	assert.Error(t, err)
 	assert.Nil(t, client)
@@ -615,7 +624,15 @@ func TestGetResourcePermissionsFromK8s_AdminRole(t *testing.T) {
 			restConfigProvider: nil, // No rest config provider - will return empty permissions from K8s
 		}
 
-		perms, err := api.getResourcePermissionsFromK8s(context.Background(), "stack-123-org-1", "dashboard-123")
+		reqCtx := &contextmodel.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			Logger:       log.New("test"),
+			SignedInUser: &user.SignedInUser{},
+		}
+
+		perms, err := api.getResourcePermissionsFromK8s(reqCtx, "stack-123-org-1", "dashboard-123")
 
 		// Should fail to get K8s permissions but still add Admin role
 		require.Error(t, err)
@@ -656,7 +673,15 @@ func TestGetResourcePermissionsFromK8s_AdminRole(t *testing.T) {
 			restConfigProvider: nil,
 		}
 
-		perms, err := api.getResourcePermissionsFromK8s(context.Background(), "stack-123-org-1", "dashboard-123")
+		reqCtx := &contextmodel.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			Logger:       log.New("test"),
+			SignedInUser: &user.SignedInUser{},
+		}
+
+		perms, err := api.getResourcePermissionsFromK8s(reqCtx, "stack-123-org-1", "dashboard-123")
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, ErrRestConfigNotAvailable)

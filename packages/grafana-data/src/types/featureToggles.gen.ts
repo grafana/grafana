@@ -384,6 +384,11 @@ export interface FeatureToggles {
   */
   alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
+  * Enables creating alert rules from a panel using a drawer UI
+  * @default false
+  */
+  createAlertRuleFromPanel?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   * @default false
   */
@@ -408,6 +413,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Enables the assistant prompt popover on panel click in dashboard view mode
+  * @default false
+  */
+  dashboardAssistantPopover?: boolean;
   /**
   * Enables undo/redo in dynamic dashboards
   * @default false
@@ -628,6 +638,11 @@ export interface FeatureToggles {
   * @default false
   */
   savedQueriesRBAC?: boolean;
+  /**
+  * Enables the new Saved queries (query library) modal experience
+  * @default false
+  */
+  newSavedQueriesExperience?: boolean;
   /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
@@ -960,6 +975,11 @@ export interface FeatureToggles {
   */
   teamHttpHeadersFromAppPlatform?: boolean;
   /**
+  * Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
+  * @default false
+  */
+  teamLBACApiReadFromAppPlatform?: boolean;
+  /**
   * Enables Advisor app
   * @default false
   */
@@ -1136,32 +1156,10 @@ export interface FeatureToggles {
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
-  * @deprecated
-  * @default false
-  */
-  kubernetesAuthzApis?: boolean;
-  /**
-  * Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
-  * @deprecated
-  * @default false
-  */
-  kubernetesAuthZHandlerRedirect?: boolean;
-  /**
   * Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
   * @default false
   */
   kubernetesAuthZResourcePermissionsRedirect?: boolean;
-  /**
-  * Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
-  * @default false
-  */
-  kubernetesAuthZRolesRedirect?: boolean;
-  /**
-  * Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
-  * @default false
-  */
-  kubernetesAuthZRoleBindingsRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
@@ -1193,10 +1191,15 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRoleBindingsApi?: boolean;
   /**
-  * Enables create, delete, and update mutations for resources owned by IAM identity
+  * Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints
   * @default false
   */
-  kubernetesAuthnMutation?: boolean;
+  kubernetesAuthzRolesAndRoleBindingsRedirect?: boolean;
+  /**
+  * Enables datasource resource permissions via the K8s IAM resource permission APIs
+  * @default false
+  */
+  kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false
@@ -1473,6 +1476,11 @@ export interface FeatureToggles {
   */
   elasticsearchRawDSLQuery?: boolean;
   /**
+  * Enables the ES|QL query editor in the Elasticsearch data source
+  * @default false
+  */
+  elasticsearchESQLQuery?: boolean;
+  /**
   * Enables http proxy settings for aws datasources
   * @default false
   */
@@ -1566,7 +1574,7 @@ export interface FeatureToggles {
   * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
-  kubernetesTeamsHandlerRedirect?: boolean;
+  kubernetesTeamsRedirect?: boolean;
   /**
   * Enables user APIs in the app platform
   * @default false
@@ -1603,15 +1611,20 @@ export interface FeatureToggles {
   */
   kubernetesTeamSync?: boolean;
   /**
-  * Use the new team service that uses the app platform APIs
+  * Redirects the requests of the user service to the app platform APIs
   * @default false
   */
-  kubernetesTeamService?: boolean;
+  kubernetesUsersRedirect?: boolean;
   /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */
   alertingMultiplePolicies?: boolean;
+  /**
+  * Use notification settings policy field instead of labels for named policy routing in alert rules
+  * @default false
+  */
+  alertingPolicyRoutingSettings?: boolean;
   /**
   * Registers an API server for each backend app plugin exposing a settings endpoint
   * @default false
@@ -1637,6 +1650,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryTriage?: boolean;
+  /**
+  * Enables the notification history detail page
+  * @default false
+  */
+  alertingNotificationHistoryDetail?: boolean;
   /**
   * Whether to use the new React 19 runtime
   * @default false
