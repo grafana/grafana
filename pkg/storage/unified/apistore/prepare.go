@@ -264,7 +264,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
-	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" || s.configProvider == nil {
+	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" {
+		return nil
+	}
+	if s.configProvider == nil {
+		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: configProvider is not configured", "resource", s.gr.String())
 		return nil
 	}
 	folder, err := s.getParentFolder(ctx, obj)
@@ -274,15 +278,25 @@ func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils
 	return ensureSameRepoManager(folder, obj)
 }
 
-func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
-	cfg, err := s.configProvider.GetRestConfig(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get REST config: %w", err)
-	}
+func (s *Storage) getDynamicClient(ctx context.Context) (dynamic.Interface, error) {
+	s.dynClientOnce.Do(func() {
+		cfg, err := s.configProvider.GetRestConfig(ctx)
+		if err != nil {
+			s.dynClientErr = fmt.Errorf("failed to get REST config: %w", err)
+			return
+		}
+		s.dynClient, s.dynClientErr = dynamic.NewForConfig(cfg)
+		if s.dynClientErr != nil {
+			s.dynClientErr = fmt.Errorf("failed to create dynamic client: %w", s.dynClientErr)
+		}
+	})
+	return s.dynClient, s.dynClientErr
+}
 
-	dynClient, err := dynamic.NewForConfig(cfg)
+func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
+	dynClient, err := s.getDynamicClient(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+		return nil, err
 	}
 
 	name := obj.GetFolder()

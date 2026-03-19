@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -29,6 +30,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	"k8s.io/client-go/dynamic"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
@@ -94,6 +96,10 @@ type Storage struct {
 	getKey         func(string) (*resourcepb.ResourceKey, error)
 	snowflake      *snowflake.Node    // used to enforce internal ids
 	configProvider RestConfigProvider // used for provisioning
+
+	dynClient     dynamic.Interface // lazily cached K8s dynamic client
+	dynClientOnce sync.Once
+	dynClientErr  error
 
 	versioner storage.Versioner
 
