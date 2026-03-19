@@ -1,6 +1,7 @@
 import { uniq } from 'lodash';
 
 import { DataFrame, Field, FieldType } from '@grafana/data';
+
 import { applyQueryDefaults } from './defaults';
 import { EditorMode, type SQLQuery, type SQLVariableQuery, type SQLQueryMeta } from './types';
 

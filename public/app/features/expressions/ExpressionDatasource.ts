@@ -10,7 +10,6 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import type { SQLQuery } from '@grafana/sql';
 import {
   BackendDataSourceResponse,
   DataSourceWithBackend,
@@ -22,6 +21,7 @@ import {
 } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { DataQuery } from '@grafana/schema';
+import type { SQLQuery } from '@grafana/sql';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';

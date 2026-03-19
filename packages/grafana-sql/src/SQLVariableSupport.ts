@@ -2,6 +2,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { CustomVariableSupport, DataQueryRequest, DataQueryResponse, DataFrame } from '@grafana/data';
+
 import { SQLVariablesQueryEditor } from './SQLVariableEditor';
 import { migrateVariableQuery, updateFrame, refId } from './SQLVariableUtils';
 import { SqlDatasource } from './datasource/SqlDatasource';
