@@ -2,6 +2,7 @@ package connection
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -48,6 +50,23 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 	meta, _ := utils.MetaAccessor(obj)
 	if meta.GetDeletionTimestamp() != nil {
 		return nil
+	}
+
+	// Block mutations on resources whose namespace is pending deletion.
+	// For UPDATE, check the stored (old) object so the write that initially sets
+	// the label is still permitted through.
+	// For CREATE, check the incoming object directly.
+	switch a.GetOperation() {
+	case admission.Update:
+		if old := a.GetOldObject(); old != nil {
+			if oldMeta, err := utils.MetaAccessor(old); err == nil && appcontroller.IsPendingDelete(oldMeta.GetLabels()) {
+				return apierrors.NewForbidden(a.GetResource().GroupResource(), a.GetName(), errors.New("namespace is pending deletion"))
+			}
+		}
+	case admission.Create:
+		if appcontroller.IsPendingDelete(meta.GetLabels()) {
+			return apierrors.NewForbidden(a.GetResource().GroupResource(), a.GetName(), errors.New("namespace is pending deletion"))
+		}
 	}
 
 	c, ok := obj.(*provisioning.Connection)
