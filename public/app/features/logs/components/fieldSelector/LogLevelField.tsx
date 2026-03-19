@@ -12,10 +12,7 @@ interface Props {
   toggle(): void;
 }
 
-export function LogLevelField({
-  active,
-  toggle,
-}: Props): React.JSX.Element | undefined {
+export function LogLevelField({ active, toggle }: Props): React.JSX.Element | undefined {
   const styles = useStyles2(getStyles);
 
   const handleChange = useCallback(() => {
