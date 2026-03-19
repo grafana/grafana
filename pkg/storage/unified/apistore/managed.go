@@ -45,9 +45,11 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	// Removing a manager: the caller must be authorized for the *old* manager.
 	if !hasNew && hasOld {
 		if err := enforceManagerProperties(auth, old); err != nil {
-			if requester, ok := auth.(identity.Requester); ok &&
-				(requester.GetIsGrafanaAdmin() || requester.HasRole(identity.RoleAdmin)) {
-				return nil
+			if errors.Is(err, errResourceIsManagedInRepository) {
+				if requester, ok := auth.(identity.Requester); ok &&
+					(requester.GetIsGrafanaAdmin() || requester.HasRole(identity.RoleAdmin)) {
+					return nil
+				}
 			}
 			return &apierrors.StatusError{ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
