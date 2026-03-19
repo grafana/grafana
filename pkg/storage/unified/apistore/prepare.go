@@ -242,12 +242,14 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	}
 
 	// If staying in the same folder but manager properties changed, re-validate
-	// consistency with the parent folder. Without this, removing or changing
+	// consistency with the parent folder. Without this, adding or changing
 	// manager annotations would bypass the repo-managed folder invariant.
+	// Manager removal (!newOk) is intentionally allowed — the provisioning
+	// system removes manager annotations to release resources during repo deletion.
 	if obj.GetFolder() != "" && obj.GetFolder() == previous.GetFolder() {
 		newMgr, newOk := obj.GetManagerProperties()
 		oldMgr, oldOk := previous.GetManagerProperties()
-		if newOk != oldOk || newMgr != oldMgr {
+		if newOk && (newOk != oldOk || newMgr != oldMgr) {
 			if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
 				return v, err
 			}
@@ -276,7 +278,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
-	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" || s.getDynClient == nil {
+	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" {
+		return nil
+	}
+	if s.getDynClient == nil {
+		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: dynamic client not configured", "resource", s.gr.String())
 		return nil
 	}
 	folder, err := s.getParentFolder(ctx, obj)
@@ -290,6 +296,10 @@ func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAcce
 	dynClient, err := s.getDynClient()
 	if err != nil {
 		return nil, err
+	}
+	if dynClient == nil {
+		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: dynamic client resolved to nil", "resource", s.gr.String())
+		return nil, fmt.Errorf("dynamic client is nil")
 	}
 
 	name := obj.GetFolder()

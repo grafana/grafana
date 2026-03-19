@@ -511,7 +511,7 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		require.ErrorContains(t, err, "no config")
 	})
 
-	t.Run("update: manager change in same folder triggers check", func(t *testing.T) {
+	t.Run("update: manager removal in same folder skips check", func(t *testing.T) {
 		_ = dashv1.AddToScheme(rtscheme)
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		require.NoError(t, err)
@@ -545,12 +545,46 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		newDash := oldDash.DeepCopy()
 		newMeta, err := utils.MetaAccessor(newDash)
 		require.NoError(t, err)
-		// Remove manager annotations (same folder, manager changed)
 		newMeta.SetAnnotation(utils.AnnoKeyManagerKind, "")
 		newMeta.SetAnnotation(utils.AnnoKeyManagerIdentity, "")
 
 		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
-		require.Error(t, err, "manager removal in same folder should trigger folder check")
+		require.NoError(t, err, "manager removal should be allowed (repo deletion release flow)")
+	})
+
+	t.Run("update: manager addition in same folder triggers check", func(t *testing.T) {
+		_ = dashv1.AddToScheme(rtscheme)
+		node, err := snowflake.NewNode(rand.Int64N(1024))
+		require.NoError(t, err)
+
+		s := &Storage{
+			gr:           dashv1.DashboardResourceInfo.GroupResource(),
+			codec:        apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			snowflake:    node,
+			getDynClient: failingDynClient(errors.New("no config")),
+			opts: StorageOptions{
+				Scheme:              rtscheme,
+				EnableFolderSupport: true,
+			},
+		}
+
+		ctx := authlib.WithAuthInfo(context.Background(),
+			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+		)
+
+		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}}
+		oldMeta, err := utils.MetaAccessor(oldDash)
+		require.NoError(t, err)
+		oldMeta.SetFolder("same-folder")
+
+		newDash := oldDash.DeepCopy()
+		newMeta, err := utils.MetaAccessor(newDash)
+		require.NoError(t, err)
+		newMeta.SetAnnotation(utils.AnnoKeyManagerKind, string(utils.ManagerKindKubectl))
+		newMeta.SetAnnotation(utils.AnnoKeyManagerIdentity, "my-kubectl")
+
+		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
+		require.Error(t, err, "manager addition in same folder should trigger folder check")
 		require.ErrorContains(t, err, "no config")
 	})
 
