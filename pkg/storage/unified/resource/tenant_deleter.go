@@ -126,6 +126,8 @@ func (td *TenantDeleter) runDeletionPass(ctx context.Context) {
 			continue
 		}
 
+		// TODO add check to verify with GCOM that tenant is deleted
+
 		if err := td.deleteTenant(ctx, tenantName, groupResources); err != nil {
 			td.log.Error("failed to delete tenant data", "tenant", tenantName, "error", err)
 		}
