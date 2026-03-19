@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FixedSizeList } from 'react-window';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,10 +14,27 @@ export function MetricSelector() {
   const styles = useStyles2(getStylesMetricSelector);
   const [metricSearchTerm, setMetricSearchTerm] = useState('');
   const { metrics, selectedMetric, seriesLimit, setSeriesLimit, onMetricClick } = useMetricsBrowser();
+  const [localSeriesLimit, setLocalSeriesLimit] = useState<string | number>(
+    seriesLimit === undefined || isNaN(seriesLimit) ? '' : seriesLimit
+  );
+
+  useEffect(() => {
+    setLocalSeriesLimit(seriesLimit === undefined || isNaN(seriesLimit) ? '' : seriesLimit);
+  }, [seriesLimit]);
 
   const filteredMetrics = useMemo(() => {
     return metrics.filter((m) => m.name === selectedMetric || m.name.includes(metricSearchTerm));
   }, [metrics, selectedMetric, metricSearchTerm]);
+
+  const handleSeriesLimitChange = (e: React.FormEvent<HTMLInputElement>) => {
+    setLocalSeriesLimit(e.currentTarget.value);
+  };
+
+  const handleSeriesLimitBlur = () => {
+    const value = String(localSeriesLimit).trim();
+    const limit = value === '' ? NaN : parseInt(value, 10);
+    setSeriesLimit(limit);
+  };
 
   return (
     <div>
@@ -51,12 +68,13 @@ export function MetricSelector() {
         </Label>
         <div>
           <Input
-            onChange={(e) => setSeriesLimit(parseInt(e.currentTarget.value.trim(), 10))}
+            onChange={handleSeriesLimitChange}
+            onBlur={handleSeriesLimitBlur}
             aria-label={t(
               'grafana-prometheus.components.metric-selector.aria-label-limit-results-from-series-endpoint',
               'Limit results from series endpoint'
             )}
-            value={seriesLimit}
+            value={localSeriesLimit}
             data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.seriesLimit}
           />
         </div>
