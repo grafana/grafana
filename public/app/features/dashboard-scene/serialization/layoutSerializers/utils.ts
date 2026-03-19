@@ -46,6 +46,7 @@ import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angular
 import { createElements, vizPanelToSchemaV2 } from '../transformSceneToSaveModelSchemaV2';
 import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
+import { normalizeTransformation } from '../transformationCompat';
 
 export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   const titleItems: SceneObject[] = [];
@@ -211,9 +212,11 @@ export function createPanelDataProvider(
   return new SceneDataTransformer({
     $data: dataProvider,
     transformations: panel.data.spec.transformations.map((t) => {
+      const normalized = normalizeTransformation(t);
       return {
-        ...t.spec,
-        topic: transformDataTopic(t.spec.topic),
+        id: normalized.group,
+        ...normalized.spec,
+        topic: transformDataTopic(normalized.spec.topic),
       };
     }),
   });

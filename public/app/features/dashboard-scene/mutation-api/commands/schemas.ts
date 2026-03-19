@@ -631,9 +631,9 @@ export type PanelQueryKind = z.infer<typeof panelQueryKindSchema>;
 
 export const transformationKindSchema = z
   .object({
-    kind: z.string().describe('Transformation ID (e.g., "organize", "sortBy", "filterByValue")'),
+    kind: z.literal('Transformation').describe('Fixed literal "Transformation"'),
+    group: z.string().describe('Transformation ID (e.g., "organize", "sortBy", "filterByValue")'),
     spec: z.object({
-      id: z.string().describe('Transformation ID (same as kind)'),
       disabled: z.boolean().optional().describe('Disabled transformations are skipped'),
       filter: z
         .object({
