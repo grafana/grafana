@@ -5130,7 +5130,6 @@
     },
     "add-menu": {
       "import": "Import from library",
-      "load-error": "Failed to load panel plugins",
       "paste-panel": "Paste panel",
       "row": "Row",
       "visualization": "Visualization"
