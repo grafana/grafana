@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { uniq } from 'lodash';
+import { uniq, sortBy } from 'lodash';
 import { useMemo, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
@@ -156,11 +156,11 @@ const SearchField = ({
     }
 
     if (tagValuesQuery.length === 0) {
-      return currentOptions.slice(0, OPTIONS_LIMIT);
+      return sortBy(currentOptions, (o) => o.label?.toLowerCase() || "").slice(0, OPTIONS_LIMIT);
     }
 
     const queryLowerCase = tagValuesQuery.toLowerCase();
-    return currentOptions
+    return sortBy(currentOptions, (o) => o.label?.toLowerCase() || "")
       .filter((tag) => {
         if (tag.value && tag.value.length > 0) {
           return tag.value.toLowerCase().includes(queryLowerCase);
