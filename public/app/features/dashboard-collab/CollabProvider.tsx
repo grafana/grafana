@@ -226,9 +226,13 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
     return () => {
       debugLog('CollabProvider unmounting — restoring original mutation client', { dashboardUID });
       clientRef.current = null;
-      // Restore the original unwrapped client on both scene and global API
-      scene.setMutationClient(originalClient);
-      setDashboardMutationClient(originalClient);
+      // Only restore if scene is still active (hasn't already cleaned up).
+      // DashboardScene deactivation calls setDashboardMutationClient(null);
+      // re-installing the original after that would be incorrect.
+      if (scene.isActive) {
+        scene.setMutationClient(originalClient);
+        setDashboardMutationClient(originalClient);
+      }
     };
   }, [scene, dashboardUID, namespace]);
 
