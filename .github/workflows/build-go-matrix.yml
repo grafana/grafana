@@ -13,13 +13,35 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
+  detect-changes:
+    name: Detect whether code changed
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/build-go-matrix.yml
+
   build-go:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changed == 'true'
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -67,3 +89,20 @@ jobs:
           GO_BUILD_ARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
         run: make build-go
+
+  # Job required by branch rules: runs even when detect-changes or build-go were skipped,
+  # and fails if any build-go matrix job failed.
+  required-build-go-matrix:
+    needs:
+      - detect-changes
+      - build-go
+    if: always()
+    name: All steps completed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check jobs
+        uses: ./.github/actions/check-jobs
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more build-go matrix jobs failed"
+          success-message: "All steps completed successfully"
