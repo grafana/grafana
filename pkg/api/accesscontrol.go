@@ -591,6 +591,20 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		},
 		Grants: []string{string(org.RoleAdmin)},
 	}
+
+	livePushRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:live:writer",
+			DisplayName: "Writer",
+			Description: "Push metrics and events to Grafana Live streams (via /api/live/push).",
+			Group:       "Live",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionLivePush},
+			},
+		},
+		Grants: []string{string(org.RoleEditor), string(org.RoleAdmin)},
+	}
+
 	roles := []ac.RoleRegistration{provisioningWriterRole, datasourcesReaderRole, builtInDatasourceReader, datasourcesWriterRole,
 		datasourcesIdReaderRole, datasourcesCreatorRole, orgReaderRole, orgWriterRole,
 		orgMaintainerRole, teamsCreatorRole, teamsWriterRole, teamsReaderRole, datasourcesExplorerRole,
@@ -599,7 +613,8 @@ func (hs *HTTPServer) declareFixedRoles() error {
 		foldersCreatorRole, foldersReaderRole, generalFolderReaderRole, foldersWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
-		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole, allAnnotationsReaderRole, allAnnotationsWriterRole}
+		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole, allAnnotationsReaderRole, allAnnotationsWriterRole,
+		livePushRole}
 
 	return hs.accesscontrolService.DeclareFixedRoles(roles...)
 }

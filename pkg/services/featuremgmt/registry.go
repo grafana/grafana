@@ -992,6 +992,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "playlistsRBAC",
+			Description:  "Enables RBAC for playlists",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
 			Name:         "savedQueriesRBAC",
 			Description:  "Enables Saved queries (query library) RBAC permissions",
 			Stage:        FeatureStagePublicPreview,
@@ -1875,6 +1883,14 @@ var (
 		{
 			Name:         "kubernetesAuthzRolesAndRoleBindingsRedirect",
 			Description:  "Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "kubernetesAuthzDatasourceResourcePermissions",
+			Description:  "Enables datasource resource permissions via the K8s IAM resource permission APIs",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

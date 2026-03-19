@@ -634,6 +634,11 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
+  * Enables RBAC for playlists
+  * @default false
+  */
+  playlistsRBAC?: boolean;
+  /**
   * Enables Saved queries (query library) RBAC permissions
   * @default false
   */
@@ -1195,6 +1200,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAuthzRolesAndRoleBindingsRedirect?: boolean;
+  /**
+  * Enables datasource resource permissions via the K8s IAM resource permission APIs
+  * @default false
+  */
+  kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false

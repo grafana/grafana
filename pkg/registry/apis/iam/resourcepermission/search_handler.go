@@ -21,9 +21,16 @@ import (
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
+// Query parameter names for GET .../resourcepermissions/search.
+const (
+	SearchParamUserUID   = "userUID"
+	SearchParamTeamUID   = "teamUID"
+	SearchParamBasicRole = "basicRole"
+)
+
 // ResourcePermissionsSearchHandler serves GET /apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/resourcepermissions/search.
-// It returns direct resource permissions for a user (by userUID query param). Errors when backed by unistore only.
-// Only permissions for resources the caller has get_permissions on are returned.
+// It returns direct resource permissions for a user, team, or basic role. Errors when backed by unistore only.
+// Permissions are only returned if the user has get_permissions on the target resource OR users.permissions:read.
 type ResourcePermissionsSearchHandler struct {
 	backend    *ResourcePermSqlBackend
 	authorizer *iamauthorizer.ResourcePermissionsAuthorizer
@@ -56,7 +63,7 @@ func (h *ResourcePermissionsSearchHandler) GetAPIRoutes(defs map[string]common.O
 						OperationProps: spec3.OperationProps{
 							OperationId: "searchResourcePermissions",
 							Tags:        []string{"ResourcePermission"},
-							Description: "Search direct resource permissions by user UID. Returns permissions for the given user (dashboard/folder level from legacy SQL). Requires legacy SQL backend; errors when backed by unistore only.",
+							Description: "Search direct resource permissions by subject. Returns permissions for the given user, team, or basic role.",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
@@ -69,10 +76,28 @@ func (h *ResourcePermissionsSearchHandler) GetAPIRoutes(defs map[string]common.O
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
-										Name:        "userUID",
+										Name:        SearchParamUserUID,
 										In:          "query",
-										Required:    true,
+										Required:    false,
 										Description: "User UID to list direct resource permissions for",
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        SearchParamTeamUID,
+										In:          "query",
+										Required:    false,
+										Description: "Team UID to list direct resource permissions for",
+										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        SearchParamBasicRole,
+										In:          "query",
+										Required:    false,
+										Description: "Basic org role to list direct resource permissions for (e.g. Viewer, Editor, Admin)",
 										Schema:      spec.StringProperty(),
 									},
 								},
@@ -103,8 +128,13 @@ func (h *ResourcePermissionsSearchHandler) GetAPIRoutes(defs map[string]common.O
 	}
 }
 
-// DoSearch handles GET .../namespaces/{namespace}/resourcepermissions/search?userUID=...
-// Authorization: same as Get/List — only returns permissions for resources the caller has get_permissions on.
+// DoSearch handles GET .../namespaces/{namespace}/resourcepermissions/search
+// Accepted query params (exactly one required):
+//   - userUID: user UID to search direct permissions for
+//   - teamUID: team UID
+//   - basicRole: basic org role name (e.g. Viewer, Editor, Admin)
+//
+// Authorization: same as Get/List — only returns permissions for resources the caller has get_permissions on, unless the user has users.permissions:read.
 func (h *ResourcePermissionsSearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if h.backend == nil {
@@ -127,12 +157,31 @@ func (h *ResourcePermissionsSearchHandler) DoSearch(w http.ResponseWriter, r *ht
 		return
 	}
 	ctx = request.WithNamespace(ctx, namespace)
-	userUID := r.URL.Query().Get("userUID")
-	if userUID == "" {
-		errhttp.Write(ctx, errutil.BadRequest("resourcepermission.search.userUIDRequired").Errorf("userUID query parameter is required"), w)
+
+	q := r.URL.Query()
+	userUID := q.Get(SearchParamUserUID)
+	teamUID := q.Get(SearchParamTeamUID)
+	basicRole := q.Get(SearchParamBasicRole)
+
+	var subjectUID string
+	providedSubjects := 0
+	for _, s := range []string{userUID, teamUID, basicRole} {
+		if s == "" {
+			continue
+		}
+		providedSubjects++
+		subjectUID = s
+	}
+	if providedSubjects == 0 {
+		errhttp.Write(ctx, errutil.BadRequest("resourcepermission.search.subjectRequired").Errorf("exactly one of userUID, teamUID, or basicRole query parameters is required"), w)
 		return
 	}
-	permissions, err := h.backend.ListDirectPermissionsForUser(ctx, namespace, userUID)
+	if providedSubjects > 1 {
+		errhttp.Write(ctx, errutil.BadRequest("resourcepermission.search.multipleSubjects").Errorf("only one of userUID, teamUID, or basicRole query parameters may be provided"), w)
+		return
+	}
+
+	permissions, err := h.backend.ListDirectPermissionsForSubject(ctx, namespace, subjectUID)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return

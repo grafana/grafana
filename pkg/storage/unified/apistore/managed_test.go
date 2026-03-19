@@ -118,6 +118,75 @@ func TestManagedAuthorizer(t *testing.T) {
 			},
 		},
 		{
+			name: "changing manager identity is blocked",
+			auth: provisioner,
+			err:  "Cannot change resource manager",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "xyz",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
+			name: "changing manager kind is blocked",
+			auth: provisioner,
+			err:  "Cannot change resource manager",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
+			name: "changing manager kind and identity is blocked",
+			auth: provisioner,
+			err:  "Cannot change resource manager",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "def",
+					},
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "abc",
+					},
+				},
+			},
+		},
+		{
 			name: "audience includes provisioning group",
 			auth: &serviceauthn.Identity{
 				Type: authtypes.TypeAccessPolicy,
@@ -152,6 +221,122 @@ func TestManagedAuthorizer(t *testing.T) {
 
 			if tt.err != "" {
 				require.Error(t, err, tt.err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestEnsureSameRepoManager(t *testing.T) {
+	tests := []struct {
+		name            string
+		folderManager   *utils.ManagerProperties
+		resourceManager *utils.ManagerProperties
+		expectError     bool
+	}{
+		{
+			name:            "unmanaged folder, unmanaged resource",
+			folderManager:   nil,
+			resourceManager: nil,
+			expectError:     false,
+		},
+		{
+			name:          "unmanaged folder, resource managed by repo",
+			folderManager: nil,
+			resourceManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectError: false,
+		},
+		{
+			name: "folder and resource managed by same repo",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			resourceManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			expectError: false,
+		},
+		{
+			name: "folder managed by repo, resource unmanaged",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			resourceManager: nil,
+			expectError:     true,
+		},
+		{
+			name: "folder and resource managed by different repos",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			resourceManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-2",
+			},
+			expectError: true,
+		},
+		{
+			name: "folder managed by repo, resource managed by plugin",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindRepo,
+				Identity: "repo-1",
+			},
+			resourceManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindPlugin,
+				Identity: "plugin-1",
+			},
+			expectError: true,
+		},
+		{
+			name: "folder managed by terraform — skipped (non-repo)",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindTerraform,
+				Identity: "tf-1",
+			},
+			resourceManager: nil,
+			expectError:     false,
+		},
+		{
+			name: "folder managed by kubectl — skipped (non-repo)",
+			folderManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindKubectl,
+				Identity: "k-1",
+			},
+			resourceManager: &utils.ManagerProperties{
+				Kind:     utils.ManagerKindKubectl,
+				Identity: "k-2",
+			},
+			expectError: false,
+		},
+	}
+
+	makeAccessor := func(t *testing.T, mgr *utils.ManagerProperties) utils.GrafanaMetaAccessor {
+		t.Helper()
+		obj := &dashboard.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test", Namespace: "default"}}
+		accessor, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		if mgr != nil {
+			accessor.SetManagerProperties(*mgr)
+		}
+		return accessor
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			folder := makeAccessor(t, tt.folderManager)
+			resource := makeAccessor(t, tt.resourceManager)
+
+			err := ensureSameRepoManager(folder, resource)
+			if tt.expectError {
+				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 			}
