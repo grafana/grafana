@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type ResourceFileChange struct {
@@ -23,6 +25,13 @@ type ResourceFileChange struct {
 	// OldFolderUID is set when a folder's _folder.json UID changed.
 	// The old folder needs cleanup after all children have been re-parented.
 	OldFolderUID string
+}
+
+// IsUpdatedFolder reports whether this change is an update to an existing folder.
+func (c *ResourceFileChange) IsUpdatedFolder() bool {
+	return c.Action == repository.FileActionUpdated &&
+		safepath.IsDir(c.Path) &&
+		c.Existing != nil
 }
 
 // Compare reads the repository tree at ref, lists the current Grafana resources,
@@ -208,19 +217,32 @@ func augmentChangesForUIDChanges(
 	target *provisioning.ResourceList,
 	changes []ResourceFileChange,
 ) ([]ResourceFileChange, error) {
+	// Early return if no folder has metadata — nothing to augment.
+	hasMetadata := false
+	for _, item := range target.Items {
+		if item.Group == resources.FolderResource.Group && item.Hash != "" {
+			hasMetadata = true
+			break
+		}
+	}
+	if !hasMetadata {
+		return changes, nil
+	}
+
 	// 1. Find affected folders: folder updates where UID actually changed.
 	// Also annotate the folder change with OldFolderUID for deferred cleanup.
 	affectedFolders := make(map[string]bool)
 	for i := range changes {
 		change := &changes[i]
-		if change.Action != repository.FileActionUpdated ||
-			!safepath.IsDir(change.Path) ||
-			change.Existing == nil {
+		if !change.IsUpdatedFolder() {
 			continue
 		}
 		meta, _, err := resources.ReadFolderMetadata(ctx, repo, change.Path, ref)
 		if err != nil {
-			continue // not metadata-backed or read error — skip
+			if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+				continue // no _folder.json — not metadata-backed, skip
+			}
+			return nil, fmt.Errorf("read folder metadata for %s: %w", change.Path, err)
 		}
 		if meta.Name != change.Existing.Name {
 			affectedFolders[change.Path] = true
@@ -241,7 +263,7 @@ func augmentChangesForUIDChanges(
 	for i := range target.Items {
 		item := &target.Items[i]
 		path := item.Path
-		if item.Group == resources.FolderResource.Group && !strings.HasSuffix(path, "/") {
+		if item.Group == resources.FolderResource.Group && !safepath.IsDir(path) {
 			path += "/"
 		}
 		targetLookup[path] = item
@@ -250,7 +272,7 @@ func augmentChangesForUIDChanges(
 	// 3. Emit FileActionUpdated for direct children of affected folders
 	for _, file := range source {
 		path := file.Path
-		if !file.Blob && !strings.HasSuffix(path, "/") {
+		if !file.Blob && !safepath.IsDir(path) {
 			path += "/"
 		}
 		if resources.IsFolderMetadataFile(path) {
@@ -259,9 +281,6 @@ func augmentChangesForUIDChanges(
 
 		// Direct parent check
 		parentDir := safepath.Dir(path)
-		if !strings.HasSuffix(parentDir, "/") {
-			parentDir += "/"
-		}
 		if !affectedFolders[parentDir] {
 			continue
 		}

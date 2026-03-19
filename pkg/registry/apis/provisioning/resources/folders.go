@@ -181,12 +181,10 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			needsUpdate = true
 		}
 
-		if folder.ParentID != "" {
-			currentParent := meta.GetFolder()
-			if currentParent != folder.ParentID {
-				meta.SetFolder(folder.ParentID)
-				needsUpdate = true
-			}
+		currentParent := meta.GetFolder()
+		if currentParent != folder.ParentID {
+			meta.SetFolder(folder.ParentID)
+			needsUpdate = true
 		}
 
 		if needsUpdate {

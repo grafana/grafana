@@ -628,6 +628,11 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 			}
 			c.Errorf("folder not found")
 		}, 30*time.Second, 100*time.Millisecond)
+
+		// Verify the dashboard's parent folder annotation points to the new UID.
+		requireDashboardParents(t, helper, repo, map[string]string{
+			"my-folder/dashboard.json": "new-uid",
+		})
 	})
 
 	t.Run("UID change deletes old folder and re-parents child folder", func(t *testing.T) {
@@ -714,6 +719,47 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		// Dashboard re-parented to new child.
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"parent/child/dashboard.json": "c-new",
+		})
+	})
+
+	t.Run("UID change on root-level folder re-parents dashboard", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "uid-change-root-level"
+
+		// First sync: root-level folder with original UID.
+		// The folder's parent is the repository folder (Target: "folder").
+		writeToProvisioningPath(t, helper, "root-folder/_folder.json", folderMetadataJSON("root-old-uid", "Root Folder"))
+
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "root-folder/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+
+		helper.SyncAndWait(t, repo, nil)
+		requireFolderState(t, helper, "root-old-uid", "Root Folder", "root-folder", repo)
+		requireDashboardParents(t, helper, repo, map[string]string{
+			"root-folder/dashboard.json": "root-old-uid",
+		})
+
+		// Change UID in _folder.json.
+		writeToProvisioningPath(t, helper, "root-folder/_folder.json", folderMetadataJSON("root-new-uid", "Root Folder"))
+
+		helper.SyncAndWait(t, repo, nil)
+
+		// Old folder should be gone.
+		assertNoFolderByUID(t, helper, "root-old-uid")
+
+		// New folder should exist with repo as parent (folder-target repo).
+		requireFolderState(t, helper, "root-new-uid", "Root Folder", "root-folder", repo)
+
+		// Dashboard re-parented to new UID.
+		requireDashboardParents(t, helper, repo, map[string]string{
+			"root-folder/dashboard.json": "root-new-uid",
 		})
 	})
 }

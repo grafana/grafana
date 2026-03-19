@@ -344,21 +344,6 @@ func applyChanges(
 		}
 	}
 
-	// Collect old folder UIDs that need deletion after children have been re-parented.
-	// OldFolderUID is set by augmentChangesForUIDChanges when a _folder.json UID changed.
-	// We track the path to sort by depth (deepest first) so child folders are deleted
-	// before their parents.
-	type oldFolder struct {
-		Path string
-		UID  string
-	}
-	var oldFolders []oldFolder
-	for _, change := range folderCreations {
-		if change.OldFolderUID != "" {
-			oldFolders = append(oldFolders, oldFolder{Path: change.Path, UID: change.OldFolderUID})
-		}
-	}
-
 	if len(folderCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
 			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
@@ -375,19 +360,40 @@ func applyChanges(
 		}
 	}
 
-	// Delete old folders after all children (folders + files) have been re-parented.
-	// Deepest first so child folders are deleted before their parents.
-	safepath.SortByDepth(oldFolders, func(f oldFolder) string { return f.Path }, false)
-	for _, old := range oldFolders {
-		if ctx.Err() != nil {
-			break
+	// Collect and delete old folders after all children have been re-parented.
+	type oldFolder struct {
+		Path string
+		UID  string
+	}
+	var oldFolders []oldFolder
+	for _, change := range folderCreations {
+		if change.OldFolderUID != "" {
+			oldFolders = append(oldFolders, oldFolder{Path: change.Path, UID: change.OldFolderUID})
 		}
-		if err := repositoryResources.RemoveFolder(ctx, old.UID); err != nil {
-			progress.Record(ctx, jobs.NewFolderResult(old.Path).
-				WithAction(repository.FileActionDeleted).
-				WithName(old.UID).
-				WithError(fmt.Errorf("delete old folder %s after UID change: %w", old.UID, err)).
-				Build())
+	}
+
+	if len(oldFolders) > 0 {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseOldFolderCleanup, func() error {
+			safepath.SortByDepth(oldFolders, func(f oldFolder) string { return f.Path }, false)
+			for _, old := range oldFolders {
+				if ctx.Err() != nil {
+					break
+				}
+				// Skip if the replacement folder failed to be created.
+				if progress.HasDirPathFailedCreation(old.Path) {
+					continue
+				}
+				resultBuilder := jobs.NewFolderResult(old.Path).
+					WithAction(repository.FileActionDeleted).
+					WithName(old.UID)
+				if err := repositoryResources.RemoveFolder(ctx, old.UID); err != nil {
+					resultBuilder.WithError(fmt.Errorf("delete old folder %s after UID change: %w", old.UID, err))
+				}
+				progress.Record(ctx, resultBuilder.Build())
+			}
+			return nil
+		}, metrics); err != nil {
+			return err
 		}
 	}
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -332,7 +333,12 @@ func assertNoFolderByUID(t *testing.T, helper *common.ProvisioningTestHelper, fo
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
-		assert.Error(c, err, "folder %q should no longer exist", folderUID)
+		if err == nil {
+			c.Errorf("folder %q still exists, expected NotFound", folderUID)
+			return
+		}
+		assert.True(c, apierrors.IsNotFound(err),
+			"expected NotFound error for folder %q, got: %v", folderUID, err)
 	}, 30*time.Second, 100*time.Millisecond,
 		"folder %q should be deleted", folderUID)
 }

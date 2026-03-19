@@ -1321,6 +1321,14 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 		recordCall("RemoveFolder")
 	}).Return(nil)
 
+	// Successful old folder deletion also records progress
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "myfolder/" &&
+			r.Action() == repository.FileActionDeleted &&
+			r.Name() == "old-uid-123" &&
+			r.Error() == nil
+	})).Return()
+
 	err := applyChanges(
 		context.Background(), changes, clients, repoResources, progress, tracer, 1, metrics,
 		quotas.NewInMemoryQuotaTracker(0, 0), true,
@@ -1379,6 +1387,11 @@ func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 	})).Run(func(args mock.Arguments) {
 		deletionOrder = append(deletionOrder, args.Get(1).(string))
 	}).Return(nil)
+
+	// Successful old folder deletions also record progress
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Action() == repository.FileActionDeleted && r.Error() == nil
+	})).Return()
 
 	err := applyChanges(
 		context.Background(), changes, clients, repoResources, progress, tracer, 1, metrics,

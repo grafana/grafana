@@ -1345,16 +1345,21 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 		require.Empty(t, client.updateCalls, "should not update when parent matches")
 	})
 
-	t.Run("skips parent check when ParentID empty", func(t *testing.T) {
+	t.Run("updates parent when ParentID empty and current parent is non-empty", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 
 		tree := NewEmptyFolderTree()
 
+		var updatedObj *unstructured.Unstructured
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
 				return managedFolderWithParent(name, "Same Title", config.Name, "some-parent"), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj
+				return obj, nil
 			},
 		}
 
@@ -1363,11 +1368,41 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 			ID:    "folder-uid",
 			Title: "Same Title",
 			Path:  "my-folder",
-			// ParentID is empty — root folder, no parent comparison
+			// ParentID is empty — moving to root
 		}, "")
 
 		require.NoError(t, err)
-		require.Empty(t, client.updateCalls, "should not update when ParentID is empty")
+		require.Equal(t, []string{"folder-uid"}, client.updateCalls, "should update to clear parent annotation when moving to root")
+		require.NotNil(t, updatedObj)
+
+		parentAnnotation, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Empty(t, parentAnnotation, "parent annotation should be cleared")
+	})
+
+	t.Run("skips update when both ParentID and current parent are empty", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				// Existing folder also has no parent (root)
+				return managedFolderWithParent(name, "Same Title", config.Name, ""), nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "folder-uid",
+			Title: "Same Title",
+			Path:  "my-folder",
+			// ParentID is empty — root folder, same as existing
+		}, "")
+
+		require.NoError(t, err)
+		require.Empty(t, client.updateCalls, "should not update when both ParentID and current parent are empty")
 	})
 }
 
