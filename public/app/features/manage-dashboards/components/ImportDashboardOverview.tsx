@@ -6,6 +6,8 @@ import { Trans } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Legend, TextLink } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { StoreState } from 'app/types/store';
 
 import { clearLoadedDashboard, importDashboard } from '../state/actions';
@@ -38,12 +40,35 @@ type Props = ConnectedProps<typeof connector>;
 
 interface State {
   uidReset: boolean;
+  defaultFolder: { uid: string } | null;
 }
 
 class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   state: State = {
     uidReset: false,
+    // NI fork: if a folderUid is already in the URL we can use it immediately;
+    // otherwise stay null until componentDidMount resolves it.
+    defaultFolder: this.props.folder.uid !== '' ? this.props.folder : null,
   };
+
+  // NI fork: replicate OldFolderPicker behaviour – when no folder is pre-selected
+  // via URL param, search for the first folder whose title starts with "Default"
+  async componentDidMount() {
+    if (this.props.folder.uid === '') {
+      try {
+        const queryResponse = await getGrafanaSearcher().search({
+          query: 'Default',
+          kind: ['folder'],
+          limit: 100,
+        });
+        const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
+        const match = items.find((item) => item.title.startsWith('Default'));
+        this.setState({ defaultFolder: { uid: match?.uid ?? '' } });
+      } catch {
+        this.setState({ defaultFolder: { uid: '' } });
+      }
+    }
+  }
 
   onSubmit = (form: ImportDashboardDTO) => {
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
@@ -60,8 +85,14 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   };
 
   render() {
-    const { dashboard, inputs, meta, source, folder } = this.props;
-    const { uidReset } = this.state;
+    const { dashboard, inputs, meta, source } = this.props;
+    const { uidReset, defaultFolder } = this.state;
+
+    // NI fork: wait until the default folder has been resolved before mounting
+    // the form (react-hook-form only reads defaultValues on first mount).
+    if (!defaultFolder) {
+      return null;
+    }
 
     return (
       <>
@@ -99,7 +130,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
         )}
         <Form
           onSubmit={this.onSubmit}
-          defaultValues={{ ...dashboard, constants: [], dataSources: [], elements: [], folder: folder }}
+          defaultValues={{ ...dashboard, constants: [], dataSources: [], elements: [], folder: defaultFolder }}
           validateOnMount
           validateFieldsOnMount={['title', 'uid']}
           validateOn="onChange"
