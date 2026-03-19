@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/server"
 
@@ -123,7 +122,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("min_sync_interval").MustDuration(1*time.Minute),
 		controllerCfg.DrainTimeout(),
 		quotaGetter,
-		sync.NewCanUseIncrementalSyncFn(resources.IsFolderMetadataEnabled(controllerCfg.Settings)),
+		resources.IsFolderMetadataEnabled(controllerCfg.Settings),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create repository controller: %w", err)

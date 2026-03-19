@@ -23,15 +23,15 @@ type extra struct {
 	factory               *Factory
 	decrypter             repository.Decrypter
 	webhookBuilder        WebhookURLBuilder
-	canUseIncrementalSync func([]string) bool
+	folderMetadataEnabled bool
 }
 
-func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, canUseIncrementalSync func([]string) bool) repository.Extra {
+func Extra(decrypter repository.Decrypter, factory *Factory, webhookBuilder WebhookURLBuilder, folderMetadataEnabled bool) repository.Extra {
 	return &extra{
 		decrypter:             decrypter,
 		factory:               factory,
 		webhookBuilder:        webhookBuilder,
-		canUseIncrementalSync: canUseIncrementalSync,
+		folderMetadataEnabled: folderMetadataEnabled,
 	}
 }
 
@@ -82,7 +82,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		return nil, fmt.Errorf("decrypt webhookSecret: %w", err)
 	}
 
-	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret, e.canUseIncrementalSync), nil
+	return NewGithubWebhookRepository(ghRepo, webhookURL, webhookSecret, e.folderMetadataEnabled), nil
 }
 
 func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {

@@ -78,11 +78,11 @@ type RepositoryController struct {
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
 
-	registry               prometheus.Registerer
-	tracer                 tracing.Tracer
-	quotaGetter            quotas.QuotaGetter
-	tokenMetrics           *repositoryTokenMetrics
-	canUseIncrementalSync  func([]string) bool
+	registry              prometheus.Registerer
+	tracer                tracing.Tracer
+	quotaGetter           quotas.QuotaGetter
+	tokenMetrics          *repositoryTokenMetrics
+	folderMetadataEnabled bool
 }
 
 // NewRepositoryController creates new RepositoryController.
@@ -106,7 +106,7 @@ func NewRepositoryController(
 	minSyncInterval time.Duration,
 	drainTimeout time.Duration,
 	quotaGetter quotas.QuotaGetter,
-	canUseIncrementalSync func([]string) bool,
+	folderMetadataEnabled bool,
 ) (*RepositoryController, error) {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
@@ -141,7 +141,7 @@ func NewRepositoryController(
 		drainTimeout:    drainTimeout,
 		quotaGetter:           quotaGetter,
 		tokenMetrics:          repoTokenMetrics,
-		canUseIncrementalSync: canUseIncrementalSync,
+		folderMetadataEnabled: folderMetadataEnabled,
 	}
 
 	_, err := repoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -458,7 +458,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 		// Whenever possible, we try to keep it as an incremental sync to keep things performant.
 		// However, if there are any .keep file deletions inside a folder with no other deletions, we need
 		// to do a full sync to see if the folder was deleted as well in git.
-		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.canUseIncrementalSync)
+		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.folderMetadataEnabled)
 		if err != nil {
 			logger.Warn("unable to compare files for incremental sync, doing full sync", "error", err)
 			return &provisioning.SyncJobOptions{}
@@ -471,7 +471,7 @@ func (rc *RepositoryController) determineSyncStrategy(
 	}
 }
 
-func shouldUseIncrementalSync(ctx context.Context, versioned repository.Versioned, obj *provisioning.Repository, latestRef string, canUseIncrementalSync func([]string) bool) (bool, error) {
+func shouldUseIncrementalSync(ctx context.Context, versioned repository.Versioned, obj *provisioning.Repository, latestRef string, folderMetadataEnabled bool) (bool, error) {
 	changes, err := versioned.CompareFiles(ctx, obj.Status.Sync.LastRef, latestRef)
 	if err != nil {
 		return false, err
@@ -483,7 +483,7 @@ func shouldUseIncrementalSync(ctx context.Context, versioned repository.Versione
 		}
 	}
 
-	return canUseIncrementalSync(deletedPaths), nil
+	return repository.CanUseIncrementalSync(deletedPaths, folderMetadataEnabled), nil
 }
 
 func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions) error {

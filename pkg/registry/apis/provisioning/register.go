@@ -918,7 +918,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.minSyncInterval,
 				30*time.Second,
 				b.quotaGetter,
-				sync.NewCanUseIncrementalSyncFn(b.folderMetadataEnabled),
+				b.folderMetadataEnabled,
 			)
 			if err != nil {
 				return err
