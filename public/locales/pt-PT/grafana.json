@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2349,7 +2350,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2359,8 +2359,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2419,9 +2420,6 @@
       "label-payload": "Carga útil",
       "label-use-existing-alert-instances": "Utilizar instâncias de alerta existentes",
       "reference": "Referência"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Acelerar agora a criação de alertas utilizando uma das nossas aplicações personalizadas"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Esta regra é gerida pelo plugin {{pluginName}}"
@@ -2938,6 +2936,9 @@
       "error-button": "Erro",
       "export-all-grafana-rules": "Exportar todas as regras da Grafana",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Cancelar pesquisa",
         "no-more-results": "Não existem mais resultados – {{numberOfRules}} regras encontradas",
@@ -3087,8 +3088,6 @@
       "dashboard": "Painel de controlo",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Ajuda para pesquisar por origens de dados",
       "filter-options": {
-        "aria-label": "Opções de filtro",
-        "aria-label-show-filters": "Filtrar",
         "placeholder-namespace": "Selecionar espaço de nome",
         "placeholder-search-input": "Pesquise por nome ou introduza uma consulta de filtro..."
       },
@@ -3120,6 +3119,9 @@
       "state": "Estado",
       "title-search-help": "Pesquisar ajuda",
       "view-as": "Ver como"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "A eliminar",
@@ -4813,7 +4815,6 @@
     "all": "Tudo",
     "apply": "Aplicar",
     "cancel": "Cancelar",
-    "clear": "Limpar",
     "collapse": "Recolher",
     "disabled": "Desativado",
     "discard": "Descartar",
@@ -5913,6 +5914,12 @@
         "title": "Definições de tempo do painel"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "O painel de controlo deve ser guardado antes de poderem ser adicionados alertas.",
@@ -6545,6 +6552,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7285,6 +7303,8 @@
       "cannot-be-saved": "Este painel de controlo não pode ser guardado a partir da interface do utilizador da Grafana porque foi aprovisionado a partir de outra fonte. Copie o JSON ou guarde-o num ficheiro abaixo. Posteriormente, poderá atualizar o seu painel de controlo na fonte de aprovisionamento.",
       "copy-json-to-clipboard": "Copiar JSON para a área de transferência",
       "file-path": "<strong>Caminho do ficheiro:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Descrição",
       "label-target-folder": "Pasta de destino",
       "label-title": "Título",
@@ -7970,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Valor fixo"
       },
+      "label": "",
       "label-limit": "Limite",
       "label-value": "Valor",
       "noOptionsMessage-no-fields-found": "Nenhum campo encontrado",
@@ -10001,7 +10022,9 @@
       "external-links-heading": "Links externos"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Introduza a expressão regular"
+      "input-placeholder": "Introduza a expressão regular",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Operador de comparação",
@@ -10028,6 +10051,18 @@
       "expand-row-tooltip": "Alternar linha expandida",
       "tooltip-collapse-all": "Recolher todas as linhas",
       "tooltip-expand-all": "Expandir todas as linhas"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Definir propriedades para campos com nomes que correspondam a um regex",
@@ -11255,7 +11290,7 @@
       "cancel": "Cancelar",
       "change-uid": "Alterar uid",
       "description-library-panels-imported": "Lista de novos painéis de biblioteca que serão importados.",
-      "description-unique-identifier-uid": "O identificador único (UID) de um painel de controlo pode ser utilizado para identificar exclusivamente um painel entre várias instalações da Grafana. O UID permite ter URLs consistentes para aceder a painéis de controlo, pelo que alterar o título de um painel de controlo não interromperá quaisquer ligações marcadas para esse painel de controlo.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Painéis de biblioteca existentes",
       "label-folder": "Pasta",
       "label-name": "Nome",
@@ -12776,9 +12811,6 @@
     "title-loaded-pull-request-in-repo": "Este recurso é carregado a partir do ramo que acabou de criar em {{repoType}} e só é visível para si"
   },
   "provisioning": {
-    "banner": {
-      "message": "Esta funcionalidade está atualmente em desenvolvimento ativo. Para a melhor experiência e as melhorias mais recentes, recomendamos a utilização da <2>compilação noturna</2> da Grafana."
-    },
     "bitbucket": {
       "branch-required": "O ramo é obrigatório",
       "permissions": {
@@ -13475,6 +13507,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Escolha o que sincronizar",
       "step-configure-repo": "Configurar repositório",
       "step-connect": "Conectar ",

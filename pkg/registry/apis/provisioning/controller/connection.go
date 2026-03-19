@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
@@ -226,7 +227,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	}
 
 	// Skip reconciliation for resources whose namespace is being soft-deleted.
-	if IsPendingDelete(conn.Labels) {
+	if appcontroller.IsPendingDelete(conn.Labels) {
 		logger.Info("skipping reconciliation: namespace is pending deletion")
 		return nil
 	}
