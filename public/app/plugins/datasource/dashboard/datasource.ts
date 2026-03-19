@@ -18,6 +18,7 @@ import {
   getValueMatcher,
   ValueMatcherID,
   DataSourceGetDrilldownsApplicabilityOptions,
+  DEFAULT_APPLICABILITY_KEY,
   DrilldownsApplicability,
 } from '@grafana/data';
 import { isSceneObject, SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
@@ -357,7 +358,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     const hasAdHocFiltersEnabled = options?.queries?.some((query) => query.adHocFiltersEnabled);
 
     if (!hasAdHocFiltersEnabled) {
-      return new Map([['_default_', []]]);
+      return new Map([[DEFAULT_APPLICABILITY_KEY, []]]);
     }
 
     const filters = options?.filters || [];
@@ -377,7 +378,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       };
     });
 
-    return new Map([['_default_', results]]);
+    return new Map([[DEFAULT_APPLICABILITY_KEY, results]]);
   }
 
   getTagKeys(): Promise<MetricFindValue[]> {

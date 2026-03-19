@@ -1,6 +1,7 @@
 import {
   AdHocVariableFilter,
   DataSourceGetDrilldownsApplicabilityOptions,
+  DEFAULT_APPLICABILITY_KEY,
   DrilldownsApplicability,
   getDefaultTimeRange,
   TimeRange,
@@ -65,7 +66,7 @@ function getFallbackResults(options: NormalizedDrilldownOptions): Map<string, Dr
     ...options.filters.map((filter) => ({ key: filter.key, applicable: true, origin: filter.origin })),
     ...options.groupByKeys.map((key) => ({ key, applicable: true })),
   ];
-  return new Map([['_default_', results]]);
+  return new Map([[DEFAULT_APPLICABILITY_KEY, results]]);
 }
 
 function buildFilterPrecedence(filters: AdHocVariableFilter[]): FilterPrecedence {
@@ -292,7 +293,7 @@ export async function calculateApplicability(
         resultMap.set(panelKey, result.value);
       } else {
         const fallback = getFallbackResults({ ...options, queries });
-        resultMap.set(panelKey, fallback.get('_default_')!);
+        resultMap.set(panelKey, fallback.get(DEFAULT_APPLICABILITY_KEY)!);
       }
     }
 
@@ -301,7 +302,7 @@ export async function calculateApplicability(
 
   try {
     const results = await calculateApplicabilityForOptions(languageProvider, extractResourceMatcher, options);
-    return new Map([['_default_', results]]);
+    return new Map([[DEFAULT_APPLICABILITY_KEY, results]]);
   } catch {
     return getFallbackResults(options);
   }

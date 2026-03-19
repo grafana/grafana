@@ -685,6 +685,7 @@ export {
   type QueryHint,
   type MetricFindValue,
   type DrilldownsApplicability,
+  DEFAULT_APPLICABILITY_KEY,
   type DrilldownRecommendation,
   type DataSourceJsonData,
   type DataSourceSettings,

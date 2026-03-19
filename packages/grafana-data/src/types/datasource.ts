@@ -703,6 +703,8 @@ export interface DrilldownRecommendation {
   groupByKeys?: string[];
 }
 
+export const DEFAULT_APPLICABILITY_KEY = '_default_';
+
 export interface DrilldownsApplicability {
   key: string;
   applicable: boolean;

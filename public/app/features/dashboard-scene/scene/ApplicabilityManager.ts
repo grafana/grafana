@@ -1,6 +1,6 @@
 import { Unsubscribable } from 'rxjs';
 
-import { DataSourceApi, DrilldownsApplicability } from '@grafana/data';
+import { DataSourceApi, DEFAULT_APPLICABILITY_KEY, DrilldownsApplicability } from '@grafana/data';
 import {
   AdHocFiltersVariable,
   findClosestAdHocFilterInHierarchy,
@@ -33,6 +33,7 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
   private _bodySub?: Unsubscribable;
   private _dsCache = new Map<string, DataSourceApi>();
   private _groups = new Map<string, ApplicabilityGroup>();
+  private _lastPanelKeys = new Set<string>();
 
   public constructor() {
     super({ results: new Map() });
@@ -60,6 +61,7 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
       this._debouncedResolveAll.cancel();
       this._dsCache.clear();
       this._groups.clear();
+      this._lastPanelKeys.clear();
     };
   };
 
@@ -116,18 +118,39 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
     return groups;
   }
 
+  private getPanelKeys(): Set<string> {
+    const panels = this.getDashboard().state.body.getVizPanels();
+    return new Set(panels.map((p) => p.state.key!));
+  }
+
+  private hasPanelSetChanged(): boolean {
+    const currentKeys = this.getPanelKeys();
+    if (currentKeys.size !== this._lastPanelKeys.size) {
+      return true;
+    }
+    for (const key of currentKeys) {
+      if (!this._lastPanelKeys.has(key)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private subscribeToDashboardBodyChanges() {
     this._bodySub?.unsubscribe();
 
     const dashboard = this.getDashboard();
     const dashSub = dashboard.subscribeToState((newState, prevState) => {
       if (newState.body !== prevState.body) {
+        this.subscribeToDashboardBodyChanges();
         this._debouncedResolveAll();
       }
     });
 
     const bodySub = dashboard.state.body.subscribeToState(() => {
-      this._debouncedResolveAll();
+      if (this.hasPanelSetChanged()) {
+        this._debouncedResolveAll();
+      }
     });
 
     this._bodySub = {
@@ -204,6 +227,7 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
 
   public async resolveAll() {
     this._groups = this.buildGroups();
+    this._lastPanelKeys = this.getPanelKeys();
     this.subscribeToAdhocChanges();
 
     const results = await this.resolveGroups(Array.from(this._groups.values()));
@@ -273,7 +297,7 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
         scopes,
       });
 
-      const panelResults = resultMap.get('_default_');
+      const panelResults = resultMap.get(DEFAULT_APPLICABILITY_KEY);
       if (panelResults) {
         const newResults = new Map(this.state.results);
         newResults.set(panelKey, panelResults);
