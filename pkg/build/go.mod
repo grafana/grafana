@@ -16,7 +16,7 @@ require (
 	golang.org/x/net v0.49.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
 	golang.org/x/sync v0.19.0 // @grafana/alerting-backend
 	golang.org/x/text v0.33.0 // indirect; @grafana/grafana-backend-group
-	google.golang.org/grpc v1.78.0 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.79.3 // indirect; @grafana/plugins-platform-backend
 	google.golang.org/protobuf v1.36.11 // indirect; @grafana/plugins-platform-backend
 )
 
