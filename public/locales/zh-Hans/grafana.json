@@ -2311,6 +2311,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2335,7 +2336,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2345,8 +2345,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2405,9 +2406,6 @@
       "label-payload": "负载",
       "label-use-existing-alert-instances": "使用现有警报实例",
       "reference": "引用"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "立即使用我们量身定制的应用之一，加快警报创建速度"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "此规则由{{pluginName}}插件管理"
@@ -2921,6 +2919,9 @@
       "error-button": "错误",
       "export-all-grafana-rules": "导出所有 Grafana 规则",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "取消搜索",
         "no-more-results": "没有更多结果 – 找到 {{numberOfRules}} 个规则",
@@ -3067,8 +3068,6 @@
       "dashboard": "仪表板",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "按数据源帮助搜索",
       "filter-options": {
-        "aria-label": "筛选条件选项",
-        "aria-label-show-filters": "筛选条件",
         "placeholder-namespace": "选择命名空间",
         "placeholder-search-input": "按名称搜索或输入筛选条件查询……"
       },
@@ -3100,6 +3099,9 @@
       "state": "状态",
       "title-search-help": "搜索帮助",
       "view-as": "查看方式"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "删除",
@@ -4781,7 +4783,6 @@
     "all": "全部",
     "apply": "应用",
     "cancel": "取消",
-    "clear": "清除",
     "collapse": "收起",
     "disabled": "已禁用",
     "discard": "丢弃",
@@ -5880,6 +5881,12 @@
         "title": "面板时间设置"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "必须先保存数据面板，然后才能添加提醒。",
@@ -6511,6 +6518,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7244,6 +7262,8 @@
       "cannot-be-saved": "此数据面板无法从 Grafana 用户界面保存，因为它已从其他来源预配。复制 JSON 或将其保存到下面的文件中，然后您可以在预配源中更新您的数据面板。",
       "copy-json-to-clipboard": "将 JSON 复制到剪贴板",
       "file-path": "<strong>文件路径：</strong>{{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "描述",
       "label-target-folder": "目标文件夹",
       "label-title": "标题",
@@ -7925,6 +7945,7 @@
       "fixed-value-options": {
         "label-fixed-values": "固定值"
       },
+      "label": "",
       "label-limit": "限制",
       "label-value": "值",
       "noOptionsMessage-no-fields-found": "未找到字段",
@@ -9944,7 +9965,9 @@
       "external-links-heading": "外部链接"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "输入正则表达式"
+      "input-placeholder": "输入正则表达式",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "比较运算符",
@@ -9971,6 +9994,18 @@
       "expand-row-tooltip": "切换行展开",
       "tooltip-collapse-all": "折叠所有行",
       "tooltip-expand-all": "展开所有行"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "为名称与正则表达式匹配的字段设置属性",
@@ -11190,7 +11225,7 @@
       "cancel": "取消",
       "change-uid": "更改 uid",
       "description-library-panels-imported": "将导入的新库面板列表。",
-      "description-unique-identifier-uid": "数据面板的唯一标识符 (UID) 可用于在多个 Grafana 安装之间唯一标识数据面板。UID 允许具有一致的 URL 来访问数据面板，因此更改数据面板的标题不会破坏该数据面板的任何书签链接。",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "现有的库面板",
       "label-folder": "文件夹",
       "label-name": "名称",
@@ -12708,9 +12743,6 @@
     "title-loaded-pull-request-in-repo": "此资源从您刚刚在 {{repoType}} 中创建的分支加载，并且仅对您可见"
   },
   "provisioning": {
-    "banner": {
-      "message": "此功能目前正在积极开发中。为了获得最佳体验和最新改进，我们建议您使用 Grafana 的<2>夜间版本</2>。"
-    },
     "bitbucket": {
       "branch-required": "分支为必填项",
       "permissions": {
@@ -13393,6 +13425,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "选择要同步的内容",
       "step-configure-repo": "配置存储库",
       "step-connect": "连接",

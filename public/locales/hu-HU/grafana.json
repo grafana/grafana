@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2349,7 +2350,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2359,8 +2359,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2419,9 +2420,6 @@
       "label-payload": "Hasznos tartalom",
       "label-use-existing-alert-instances": "Meglévő riasztáspéldányok használata",
       "reference": "Referencia"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Gyorsítsa fel az értesítések létrehozását testreszabott alkalmazásaink egyikével"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Ezt a szabályt a(z) {{pluginName}} bővítmény kezeli"
@@ -2938,6 +2936,9 @@
       "error-button": "Hiba",
       "export-all-grafana-rules": "Az összes Grafana-szabály exportálása",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Keresés visszavonása",
         "no-more-results": "Nincs több találat – {{numberOfRules}} szabályt sikerült találni",
@@ -3087,8 +3088,6 @@
       "dashboard": "Irányítópult",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Adatforrások alapján történő keresés súgója",
       "filter-options": {
-        "aria-label": "Szűrőbeállítások",
-        "aria-label-show-filters": "Szűrő",
         "placeholder-namespace": "Névtér kijelölése",
         "placeholder-search-input": "Keresés név alapján, vagy szűrőlekérdezés megadása..."
       },
@@ -3120,6 +3119,9 @@
       "state": "Állapot",
       "title-search-help": "Súgó kereséshez",
       "view-as": "Nézet mint"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Törlés",
@@ -4813,7 +4815,6 @@
     "all": "Összes",
     "apply": "Alkalmaz",
     "cancel": "Mégse",
-    "clear": "Törlés",
     "collapse": "Összecsukás",
     "disabled": "Letiltva",
     "discard": "Elvetés",
@@ -5913,6 +5914,12 @@
         "title": "Panel időbeállításai"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Riasztások hozzáadása előtt menteni kell az irányítópultot.",
@@ -6545,6 +6552,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7285,6 +7303,8 @@
       "cannot-be-saved": "Ez az irányítópult nem menthető a Grafana kezelőfelületéből, mert egy másik forrásból van kiépítve. Másolja a JSON-t, vagy mentse fájlba az alábbiakban, majd frissítheti az irányítópultot a kiépítési forrásban.",
       "copy-json-to-clipboard": "JSON másolása a vágólapra",
       "file-path": "<strong>Fájl útvonala:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Leírás",
       "label-target-folder": "Célmappa",
       "label-title": "Cím",
@@ -7970,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Rögzített érték"
       },
+      "label": "",
       "label-limit": "Korlát",
       "label-value": "Érték",
       "noOptionsMessage-no-fields-found": "Nem található mező",
@@ -10001,7 +10022,9 @@
       "external-links-heading": "Külső hivatkozások"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Adja meg a reguláris kifejezést"
+      "input-placeholder": "Adja meg a reguláris kifejezést",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Összehasonlítás műveleti jele",
@@ -10028,6 +10051,18 @@
       "expand-row-tooltip": "Sorkibontás váltása",
       "tooltip-collapse-all": "Minden sor összecsukása",
       "tooltip-expand-all": "Minden sor kibontása"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Tulajdonságok beállítása a reguláris kifejezésnek megfelelő nevű mezők számára",
@@ -11255,7 +11290,7 @@
       "cancel": "Mégse",
       "change-uid": "UID módosítása",
       "description-library-panels-imported": "Az importálandó új könyvtárpanelek listája.",
-      "description-unique-identifier-uid": "Az irányítópult egyedi azonosítója (UID) az irányítópult több Grafana-környezet közötti egyedi azonosítására használható. Az UID lehetővé teszi, hogy az irányítópultok eléréséhez egységes URL-címek álljanak rendelkezésre, így az irányítópult címének megváltoztatása nem teszi használhatatlanná az adott irányítópultra mutató könyvjelzős hivatkozásokat.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Meglévő könyvtárpanelek",
       "label-folder": "Mappa",
       "label-name": "Név",
@@ -12776,9 +12811,6 @@
     "title-loaded-pull-request-in-repo": "Ez az erőforrás a(z) {{repoType}} adattárban az imént létrehozott ágból töltődik be, és csak Ön láthatja"
   },
   "provisioning": {
-    "banner": {
-      "message": "Ez a funkció jelenleg aktív fejlesztés alatt áll. A legjobb élmény és a legújabb fejlesztések érdekében javasoljuk a Grafana <2>éjszakai buildjének</2> használatát."
-    },
     "bitbucket": {
       "branch-required": "Az ág megadása kötelező",
       "permissions": {
@@ -13475,6 +13507,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Válassza ki, mit szeretne szinkronizálni",
       "step-configure-repo": "Adattár konfigurálása",
       "step-connect": "Kapcsolódás",

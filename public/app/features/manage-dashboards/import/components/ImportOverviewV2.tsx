@@ -18,6 +18,7 @@ const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
 type Props = {
   dashboard: DashboardV2Spec;
+  dashboardUid?: string;
   inputs: DashboardInputs;
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
@@ -25,7 +26,7 @@ type Props = {
   onCancel: () => void;
 };
 
-export function ImportOverviewV2({ dashboard, inputs, meta, source, folderUid, onCancel }: Props) {
+export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source, folderUid, onCancel }: Props) {
   const { layout: normalizedLayout, modified: hasFloatGridItems } = useMemo(
     () => truncateFloatGridItems(dashboard.layout),
     [dashboard.layout]
@@ -69,7 +70,10 @@ export function ImportOverviewV2({ dashboard, inputs, meta, source, folderUid, o
         defaultValues={{
           dashboard: dashboard,
           folderUid: folderUid,
-          k8s: { annotations: { 'grafana.app/folder': folderUid } },
+          k8s: {
+            ...(dashboardUid !== undefined ? { name: dashboardUid } : {}),
+            annotations: { 'grafana.app/folder': folderUid },
+          },
         }}
         validateOnMount
         validateOn="onChange"

@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2349,7 +2350,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2359,8 +2359,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2419,9 +2420,6 @@
       "label-payload": "Yük",
       "label-use-existing-alert-instances": "Mevcut uyarı örneklerini kullan",
       "reference": "Referans"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Özel uygulamalarımızdan birini kullanarak uyarı oluşturmayı hızlandırın"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Bu kural, {{pluginName}} eklentisi tarafından yönetilir"
@@ -2938,6 +2936,9 @@
       "error-button": "Hata",
       "export-all-grafana-rules": "Tüm Grafana kurallarını dışa aktar",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Aramayı iptal et",
         "no-more-results": "Başka sonuç yok - {{numberOfRules}} kural bulundu",
@@ -3087,8 +3088,6 @@
       "dashboard": "Pano",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Veri kaynaklarına göre arama yardımı",
       "filter-options": {
-        "aria-label": "Filtre seçenekleri",
-        "aria-label-show-filters": "Filtre",
         "placeholder-namespace": "Ad alanı seçin",
         "placeholder-search-input": "Ada göre arayın veya filtre sorgusu girin..."
       },
@@ -3120,6 +3119,9 @@
       "state": "Durum",
       "title-search-help": "Arama yardımı",
       "view-as": "Farklı görüntüleme"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Siliniyor",
@@ -4813,7 +4815,6 @@
     "all": "Tümü",
     "apply": "Uygula",
     "cancel": "İptal",
-    "clear": "Temizle",
     "collapse": "Daralt",
     "disabled": "Devre dışı",
     "discard": "Vazgeç",
@@ -5913,6 +5914,12 @@
         "title": "Panel zaman ayarları"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Uyarılar eklenmeden önce pano kaydedilmelidir.",
@@ -6545,6 +6552,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7285,6 +7303,8 @@
       "cannot-be-saved": "Bu pano başka bir kaynaktan sağlandığı için Grafana kullanıcı arayüzünden kaydedilemez. JSON'u kopyalayın veya aşağıdan bir dosyaya kaydedin, ardından sağlama kaynağındaki panonuzu güncelleyebilirsiniz.",
       "copy-json-to-clipboard": "JSON'u panoya kopyala",
       "file-path": "<strong>Dosya yolu:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Açıklama",
       "label-target-folder": "Hedef klasör",
       "label-title": "Başlık",
@@ -7970,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Sabit değer"
       },
+      "label": "",
       "label-limit": "Sınırlama",
       "label-value": "Değer",
       "noOptionsMessage-no-fields-found": "Hiçbir alan bulunamadı",
@@ -10001,7 +10022,9 @@
       "external-links-heading": "Dış bağlantılar"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Normal ifade girin"
+      "input-placeholder": "Normal ifade girin",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Karşılaştırma işleci",
@@ -10028,6 +10051,18 @@
       "expand-row-tooltip": "Satır genişletmeyi aç/kapat",
       "tooltip-collapse-all": "Tüm satırları daralt",
       "tooltip-expand-all": "Tüm satırları genişlet"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Adı bir düzenli ifadeye uyan alanlar için özellikleri ayarla",
@@ -11255,7 +11290,7 @@
       "cancel": "İptal",
       "change-uid": "UID'yi değiştir",
       "description-library-panels-imported": "İçe aktarılacak yeni kütüphane panellerinin listesi.",
-      "description-unique-identifier-uid": "Bir panonun benzersiz tanımlayıcısı (UID), birden fazla Grafana kurulumunda panoları benzersiz şekilde tanımlamak için kullanılabilir. UID sayesinde panoya erişim için tutarlı URL'ler korunur, böylece pano başlığını değiştirmek yer imlerine zarar vermez.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Mevcut kütüphane panelleri",
       "label-folder": "Klasör",
       "label-name": "Ad",
@@ -12776,9 +12811,6 @@
     "title-loaded-pull-request-in-repo": "Bu kaynak, {{repoType}} içinde yeni oluşturduğunuz daldan yüklendi ve yalnızca siz görebilirsiniz"
   },
   "provisioning": {
-    "banner": {
-      "message": "Bu özellik şu anda aktif geliştirme aşamasındadır. En iyi deneyim ve en yeni geliştirmeler için Grafana'nın <2>gecelik derleme</2> sürümünü kullanmanızı öneririz."
-    },
     "bitbucket": {
       "branch-required": "Dal gereklidir",
       "permissions": {
@@ -13475,6 +13507,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Nelerin senkronize edileceğini seçin",
       "step-configure-repo": "Depoyu yapılandır",
       "step-connect": "Bağlan",
