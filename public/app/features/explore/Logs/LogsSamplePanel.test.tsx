@@ -14,6 +14,13 @@ import { DataQuery } from '@grafana/schema';
 
 import { LogsSamplePanel } from './LogsSamplePanel';
 
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
+
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
@@ -90,6 +97,10 @@ const sampleDataFrame2 = createDataFrame({
 });
 
 describe('LogsSamplePanel', () => {
+  beforeEach(() => {
+    useBooleanFlagValueMock.mockImplementation((_: string, defaultValue: boolean) => defaultValue);
+  });
+
   it('shows empty panel if no data', () => {
     render(<LogsSamplePanel {...createProps()} />);
     expect(screen.getByText('Logs sample')).toBeInTheDocument();
