@@ -8,6 +8,7 @@ import { DataQuery } from '@grafana/schema';
 import { Dropdown, Icon, Menu, useStyles2, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
+import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import {
@@ -16,7 +17,7 @@ import {
   trackAddTransformationInitiated,
   trackOpenSavedQueryPicker,
 } from '../../tracking';
-import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
+import { useActionsContext, useDatasourceContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
 function getButtonAriaLabel(variant: 'query' | 'transformation', afterId?: string) {
   if (variant === 'transformation') {
@@ -40,12 +41,15 @@ interface AddCardButtonProps {
 export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }: AddCardButtonProps) => {
   const styles = useStyles2(getStyles, alwaysVisible);
   const theme = useTheme2();
+  const { dsSettings } = useDatasourceContext();
   const { addQuery } = useActionsContext();
   const { setSelectedQuery, setPendingExpression, setPendingTransformation, setPendingSavedQuery } =
     useQueryEditorUIContext();
   const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const isDashboardDs = isSharedDashboardQuery(dsSettings?.name ?? null);
 
   // When the savedQueriesRBAC feature toggle is enabled, access to the query
   // library is governed by fine-grained RBAC permissions. Otherwise, any
@@ -127,6 +131,10 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
     setPendingTransformation({ insertAfter: afterId });
     onAdd?.();
   }, [afterId, setPendingTransformation, onAdd]);
+
+  if (variant === 'query' && isDashboardDs) {
+    return null;
+  }
 
   const ariaLabel = getButtonAriaLabel(variant, afterId);
 
