@@ -28,7 +28,9 @@ export function InstanceDetailsDrawerTitle({ instanceLabels, rule }: InstanceDet
     if (!rule) {
       return undefined;
     }
-    return makeLabelBasedSilenceLink('grafana', { ...instanceLabels, [MATCHER_ALERT_RULE_UID]: rule.uid });
+    const baseLink = makeLabelBasedSilenceLink('grafana', instanceLabels);
+    const separator = baseLink.includes('?') ? '&' : '?';
+    return `${baseLink}${separator}matcher=${encodeURIComponent(`${MATCHER_ALERT_RULE_UID}=${rule.uid}`)}`;
   }, [instanceLabels, rule]);
 
   const shouldShowDeclareIncident = (!isOpenSourceEdition() || isLocalDevEnv()) && installed && settings;
