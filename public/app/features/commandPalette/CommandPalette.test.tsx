@@ -1,5 +1,5 @@
 import { KBarProvider } from 'kbar';
-import { render, screen } from 'test/test-utils';
+import { render, screen, userEvent } from 'test/test-utils';
 
 import { useAssistant } from '@grafana/assistant';
 import { setPluginLinksHook } from '@grafana/runtime';
@@ -35,11 +35,20 @@ const setup = () => {
   );
 };
 
+const triggerEmptyState = async () => {
+  const user = userEvent.setup();
+  // Type a nonsense query to trigger the empty state naturally, rather than relying on
+  // kbar's useThrottledValue timing with an empty search (which causes flakiness)
+  const input = screen.getByPlaceholderText('Search or jump to...');
+  await user.type(input, 'zzznomatch');
+};
+
 describe('CommandPalette', () => {
   it('should render empty state with AI Assistant button when no results and assistant is available', async () => {
     // Mock assistant being available
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
     setup();
+    await triggerEmptyState();
 
     // Check if empty state message is rendered
     expect(await screen.findByText('No results found')).toBeInTheDocument();
@@ -51,6 +60,7 @@ describe('CommandPalette', () => {
     // Mock assistant being unavailable
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: false });
     setup();
+    await triggerEmptyState();
 
     // Check if empty state message is rendered
     expect(await screen.findByText('No results found')).toBeInTheDocument();
