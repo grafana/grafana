@@ -100,14 +100,6 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
   },
 }));
 
-jest.mock('../utils/dashboardControls', () => ({
-  ...jest.requireActual('../utils/dashboardControls'),
-  loadDefaultControlsFromDatasources: jest.fn().mockResolvedValue({
-    defaultVariables: [],
-    defaultLinks: [],
-  }),
-}));
-
 const mockUserStorageGetItem = jest.fn();
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),

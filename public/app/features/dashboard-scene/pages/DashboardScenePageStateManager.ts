@@ -50,7 +50,7 @@ import {
   SceneCreationOptions,
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
-import { loadDefaultControls$, loadDefaultControlsFromDatasources } from '../utils/dashboardControls';
+import { loadDefaultControls$ } from '../utils/dashboardControls';
 import { getDsRefsFromV1Dashboard, getDsRefsFromV2Dashboard } from '../utils/dashboardDsRefs';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
@@ -155,7 +155,6 @@ abstract class DashboardScenePageStateManagerBase<T>
   abstract reloadDashboard(queryParams: UrlQueryMap): Promise<void>;
   abstract transformResponseToScene(rsp: T | null, options: LoadDashboardOptions): DashboardScene | null;
   abstract loadSnapshotScene(slug: string): Promise<DashboardScene>;
-  abstract getDefaultControls(rsp: T): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }>;
   abstract getDatasourceRefs(rsp: T): DataSourceRef[];
 
   protected cache: Record<string, DashboardScene> = {};
@@ -741,14 +740,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     return this.buildDashboardDTOFromInterpolated(interpolatedDashboard);
   }
 
-  public getDefaultControls(
-    rsp: DashboardDTO
-  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
-    const datasourceRefs = getDsRefsFromV1Dashboard(rsp);
-
-    return loadDefaultControlsFromDatasources(datasourceRefs);
-  }
-
   public getDatasourceRefs(rsp: DashboardDTO): DataSourceRef[] {
     return getDsRefsFromV1Dashboard(rsp);
   }
@@ -982,14 +973,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     }
 
     throw new Error('Dashboard not found');
-  }
-
-  public async getDefaultControls(
-    rsp: DashboardWithAccessInfo<DashboardV2Spec>
-  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
-    const datasourceRefs = getDsRefsFromV2Dashboard(rsp);
-
-    return loadDefaultControlsFromDatasources(datasourceRefs);
   }
 
   public getDatasourceRefs(rsp: DashboardWithAccessInfo<DashboardV2Spec>): DataSourceRef[] {
@@ -1332,15 +1315,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
   public resetActiveManager() {
     this.activeManager = shouldForceV2API() ? this.v2Manager : this.v1Manager;
-  }
-
-  public async getDefaultControls(
-    rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>
-  ): Promise<{ defaultVariables: VariableKind[]; defaultLinks: DashboardLink[] }> {
-    if (isDashboardV2Resource(rsp)) {
-      return this.v2Manager.getDefaultControls(rsp);
-    }
-    return this.v1Manager.getDefaultControls(rsp);
   }
 
   public getDatasourceRefs(rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>): DataSourceRef[] {
