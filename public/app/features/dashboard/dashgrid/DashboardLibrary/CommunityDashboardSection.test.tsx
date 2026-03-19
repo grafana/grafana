@@ -234,6 +234,7 @@ describe('CommunityDashboardSection', () => {
           onShowMapping={jest.fn()}
           datasourceType="prometheus"
           dashboards={[createMockGnetDashboard()]}
+          isDashboardsLoading={false}
         />
       );
 
