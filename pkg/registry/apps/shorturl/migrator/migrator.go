@@ -45,96 +45,121 @@ func ProvideShortURLMigrator(sql legacysql.LegacyDatabaseProvider) ShortURLMigra
 // MigrateShortURLs handles the short URL migration logic
 func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	opts.Progress(-1, "migrating short URLs...")
-	rows, err := m.ListShortURLs(ctx, orgId)
-	if rows != nil {
-		defer func() {
-			_ = rows.Close()
-		}()
-	}
-	if err != nil {
-		return err
-	}
 
-	var id int64
-	var orgID int64
-	var uid, path string
-	var createdBy int64
-	var createdAt int64
-	var lastSeenAt int64
-
+	var lastID int64 = 0
+	limit := int64(1000)
 	count := 0
-	for rows.Next() {
-		err = rows.Scan(&id, &orgID, &uid, &path, &createdBy, &createdAt, &lastSeenAt)
+
+	for {
+		rows, err := m.ListShortURLs(ctx, orgId, lastID, limit)
 		if err != nil {
 			return err
 		}
 
-		shortURL := &shorturlv1beta1.ShortURL{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: shorturlv1beta1.GroupVersion.String(),
-				Kind:       "ShortURL",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              uid,
-				Namespace:         opts.Namespace,
-				CreationTimestamp: metav1.NewTime(time.Unix(createdAt, 0)),
-			},
-			Spec: shorturlv1beta1.ShortURLSpec{
-				Path: path,
-			},
-			Status: shorturlv1beta1.ShortURLStatus{
-				LastSeenAt: lastSeenAt,
-			},
-		}
+		var id int64
+		var orgID int64
+		var uid, path string
+		var createdBy int64
+		var createdAt int64
+		var lastSeenAt int64
 
-		if createdBy > 0 {
-			shortURL.SetCreatedBy(claims.NewTypeID(claims.TypeUser, strconv.FormatInt(createdBy, 10)))
-		}
+		// We buffer them in memory so we can close the DB cursor before sending
+		// to the potentially slow gRPC stream.
+		chunk := make([]*resourcepb.BulkRequest, 0, limit)
 
-		body, err := json.Marshal(shortURL)
-		if err != nil {
-			return err
-		}
-
-		req := &resourcepb.BulkRequest{
-			Key: &resourcepb.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     shorturlv1beta1.APIGroup,
-				Resource:  "shorturls",
-				Name:      uid,
-			},
-			Value:  body,
-			Action: resourcepb.BulkRequest_ADDED,
-		}
-
-		opts.Progress(count, fmt.Sprintf("%s (%d)", uid, len(req.Value)))
-		count++
-
-		err = stream.Send(req)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				err = nil
+		for rows.Next() {
+			err = rows.Scan(&id, &orgID, &uid, &path, &createdBy, &createdAt, &lastSeenAt)
+			if err != nil {
+				_ = rows.Close()
+				return err
 			}
+
+			lastID = id // Keep track of the highest ID in this batch
+
+			shortURL := &shorturlv1beta1.ShortURL{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: shorturlv1beta1.GroupVersion.String(),
+					Kind:       "ShortURL",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              uid,
+					Namespace:         opts.Namespace,
+					CreationTimestamp: metav1.NewTime(time.Unix(createdAt, 0)),
+				},
+				Spec: shorturlv1beta1.ShortURLSpec{
+					Path: path,
+				},
+				Status: shorturlv1beta1.ShortURLStatus{
+					LastSeenAt: lastSeenAt,
+				},
+			}
+
+			if createdBy > 0 {
+				shortURL.SetCreatedBy(claims.NewTypeID(claims.TypeUser, strconv.FormatInt(createdBy, 10)))
+			}
+
+			body, err := json.Marshal(shortURL)
+			if err != nil {
+				_ = rows.Close()
+				return err
+			}
+
+			req := &resourcepb.BulkRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: opts.Namespace,
+					Group:     shorturlv1beta1.APIGroup,
+					Resource:  "shorturls",
+					Name:      uid,
+				},
+				Value:  body,
+				Action: resourcepb.BulkRequest_ADDED,
+			}
+			chunk = append(chunk, req)
+		}
+
+		if err = rows.Err(); err != nil {
+			_ = rows.Close()
 			return err
 		}
-	}
 
-	if err = rows.Err(); err != nil {
-		return err
+		_ = rows.Close() // Close the db connection for this chunk
+
+		if len(chunk) == 0 {
+			break // No more rows found
+		}
+
+		for _, req := range chunk {
+			count++
+
+			err = stream.Send(req)
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					opts.Progress(count, fmt.Sprintf("stream EOF/cancelled. index=%d", count))
+				}
+				return err
+			}
+		}
+
+		if int64(len(chunk)) < limit {
+			// If we read less than the limit, we're at the end of the results.
+			break
+		}
 	}
 
 	opts.Progress(-2, fmt.Sprintf("finished short URLs... (%d)", count))
 	return nil
 }
 
-func (m *shortURLMigrator) ListShortURLs(ctx context.Context, orgID int64) (*sql.Rows, error) {
+func (m *shortURLMigrator) ListShortURLs(ctx context.Context, orgID int64, lastID int64, limit int64) (*sql.Rows, error) {
 	helper, err := m.sql(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	req := newShortURLQueryReq(helper, &ShortURLQuery{
-		OrgID: orgID,
+		OrgID:  orgID,
+		LastID: lastID,
+		Limit:  limit,
 	})
 
 	rawQuery, err := sqltemplate.Execute(sqlQueryShortURLs, req)
@@ -146,7 +171,9 @@ func (m *shortURLMigrator) ListShortURLs(ctx context.Context, orgID int64) (*sql
 }
 
 type ShortURLQuery struct {
-	OrgID int64
+	OrgID  int64
+	LastID int64
+	Limit  int64
 }
 
 type sqlShortURLQuery struct {

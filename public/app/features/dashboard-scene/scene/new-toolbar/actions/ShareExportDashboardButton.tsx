@@ -15,6 +15,7 @@ interface Props extends ToolbarActionProps {
   arrowLabel: string;
   arrowTestId: string;
   variant?: 'primary' | 'canvas';
+  loading?: boolean;
 }
 
 export const ShareExportDashboardButton = ({
@@ -29,6 +30,7 @@ export const ShareExportDashboardButton = ({
   arrowLabel,
   arrowTestId,
   variant = 'canvas',
+  loading,
 }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -38,8 +40,8 @@ export const ShareExportDashboardButton = ({
         data-testid={buttonTestId}
         tooltip={buttonTooltip}
         variant={variant}
-        onClick={onButtonClick}
-        icon="share-alt"
+        onClick={loading ? undefined : onButtonClick}
+        icon={loading ? 'spinner' : 'share-alt'}
       >
         {buttonLabel}
       </ToolbarButton>

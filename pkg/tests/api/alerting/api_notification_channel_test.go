@@ -29,6 +29,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -909,11 +911,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 		apiClient.CreateFolder(t, "default", "default")
 
 		// Post the alertmanager config.
-		cfg := apimodels.PostableUserConfig{}
-		err := json.Unmarshal([]byte(amConfig), &cfg)
-		require.NoError(t, err)
-		err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.SaveAndApplyAlertmanagerConfiguration(context.Background(), 1, cfg)
-		require.NoError(t, err)
+		saveAndApplyAlertmanagerConfiguration(t, env, 1, amConfig)
 
 		// Verifying that all the receivers and routes have been registered.
 		alertsURL := fmt.Sprintf("http://grafana:password@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListedAddr)
@@ -929,7 +927,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 		b = getBody(t, resp.Body)
 
 		var receivers []alertingModels.ReceiverStatus
-		err = json.Unmarshal([]byte(b), &receivers)
+		err := json.Unmarshal([]byte(b), &receivers)
 		require.NoError(t, err)
 		for _, rcv := range receivers {
 			require.NotNil(t, rcv.Name)
@@ -2795,4 +2793,32 @@ var expNotificationErrors = map[string]string{
 // expInactiveReceivers is a set of receivers expected to be unused.
 var expInactiveReceivers = map[string]struct{}{
 	"slack_inactive_recv": {},
+}
+
+// Drop-in replacement for removed api.
+func saveAndApplyAlertmanagerConfiguration(t *testing.T, env *server.TestEnv, org int64, rawConfig string) {
+	t.Helper()
+
+	config := apimodels.PostableUserConfig{}
+	err := json.Unmarshal([]byte(rawConfig), &config)
+	require.NoError(t, err)
+
+	err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.Crypto.ProcessSecureSettings(context.Background(), org, config.AlertmanagerConfig.Receivers, nil)
+	require.NoError(t, err)
+
+	cfgToSave, err := json.Marshal(&config)
+	require.NoError(t, err)
+
+	err = env.Server.HTTPServer.AlertNG.Api.AlertingStore.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(cfgToSave),
+		ConfigurationVersion:      "v1",
+		Default:                   false,
+		OrgID:                     org,
+	})
+	require.NoError(t, err)
+
+	err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.ApplyConfig(context.Background(), org, &models.AlertConfiguration{
+		AlertmanagerConfiguration: string(cfgToSave),
+	})
+	require.NoError(t, err)
 }

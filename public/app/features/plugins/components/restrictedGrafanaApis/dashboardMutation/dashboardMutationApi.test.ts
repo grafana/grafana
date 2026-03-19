@@ -11,6 +11,7 @@ function createMockClient(): MutationClient {
         changes: [],
       })
     ),
+    getAvailableCommands: jest.fn(() => []),
   };
 }
 

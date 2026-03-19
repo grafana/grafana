@@ -151,5 +151,5 @@ func (s *Service) isKubernetesTeamServiceEnabled(ctx context.Context) bool {
 		return false
 	}
 
-	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamService, false, openfeature.TransactionContext(ctx))
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
 }
