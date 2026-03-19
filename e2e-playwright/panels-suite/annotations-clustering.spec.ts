@@ -309,6 +309,10 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         // Delete first anno
         await markersLocator.click();
         await expect(
+          dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Annotations.clusterTooltip),
+          'cluster tooltip is visible'
+        ).toBeVisible();
+        await expect(
           page.getByText('description text goes here'),
           'annotation 1 description is visible in cluster tooltip'
         ).toBeVisible();
