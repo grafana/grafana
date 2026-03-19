@@ -470,6 +470,9 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	startKey := prefix
 	endKey := PrefixRangeEnd(prefix)
 
+	// track keys that have been processed to avoid processing the same key twice
+	seenKeys := map[ListRequestKey]struct{}{}
+
 	for {
 		keysProcessed := int64(0)
 		keysDeleted := int64(0)
@@ -512,6 +515,13 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			// if the action is deleted and the resource version is older than the cutoff, get all previous versions
 			// of the same resource and delete them in batch
 			if dk.Action == DataActionDeleted && dk.ResourceVersion < cutoffTimestamp {
+				// ensure we don't process/count the same resource twice
+				if _, seen := seenKeys[k]; seen {
+					continue
+				}
+				// mark the key as seen
+				seenKeys[k] = struct{}{}
+
 				startKeyToDelete := k.Prefix()
 				// end key is exclusive, so we need to add a suffix to make sure we include all the versions we want to delete
 				endKeyToDelete := PrefixRangeEnd(dk.String())

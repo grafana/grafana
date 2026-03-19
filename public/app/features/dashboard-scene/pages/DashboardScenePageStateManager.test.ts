@@ -142,15 +142,17 @@ const setupDashboardAPI = (
   spy: jest.Mock,
   effect?: () => void
 ) => {
-  (getDashboardAPI as jest.Mock).mockImplementation(() => ({
-    getDashboardDTO: async () => {
-      spy();
-      effect?.();
-      return d;
-    },
-    deleteDashboard: jest.fn(),
-    saveDashboard: jest.fn(),
-  }));
+  (getDashboardAPI as jest.Mock).mockImplementation(() =>
+    Promise.resolve({
+      getDashboardDTO: async () => {
+        spy();
+        effect?.();
+        return d;
+      },
+      deleteDashboard: jest.fn(),
+      saveDashboard: jest.fn(),
+    })
+  );
 };
 
 const setupV1FailureV2Success = (
@@ -1551,11 +1553,13 @@ describe('DashboardScenePageStateManager v2', () => {
           spec: { ...defaultDashboardV2Spec() },
         });
 
-        (getDashboardAPI as jest.Mock).mockImplementation(() => ({
-          getDashboardDTO: getDashboardDTOMock,
-          deleteDashboard: jest.fn(),
-          saveDashboard: jest.fn(),
-        }));
+        (getDashboardAPI as jest.Mock).mockImplementation(() =>
+          Promise.resolve({
+            getDashboardDTO: getDashboardDTOMock,
+            deleteDashboard: jest.fn(),
+            saveDashboard: jest.fn(),
+          })
+        );
 
         return getDashboardDTOMock;
       };
