@@ -69,6 +69,8 @@ func (td *TenantDeleter) Start(ctx context.Context) {
 			return
 		}
 
+		td.runDeletionPass(ctx)
+
 		ticker := time.NewTicker(td.cfg.Interval)
 		defer ticker.Stop()
 
