@@ -42,6 +42,7 @@ const (
 	TestCreateNewResource         = "create new resource"
 	TestGetResourceLastImportTime = "get resource last import time"
 	TestOptimisticLocking         = "optimistic locking on concurrent writes"
+	TestClusterScopedResources    = "cluster scoped resources"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -90,6 +91,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestListModifiedSince, runTestIntegrationBackendListModifiedSince},
 		{TestGetResourceLastImportTime, runTestIntegrationGetResourceLastImportTime},
 		{TestOptimisticLocking, runTestIntegrationBackendOptimisticLocking},
+		{TestClusterScopedResources, runTestIntegrationBackendClusterScopedResources},
 	}
 
 	for _, tc := range cases {
@@ -1767,5 +1769,81 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 		// Note: Due to timing, it's possible that all creates detect each other and all fail.
 		// The important thing is that at most one succeeds (race condition is prevented).
 		require.LessOrEqual(t, successes, 1, "at most one create should succeed (errors: %v)", errorMessages)
+	})
+}
+
+func runTestIntegrationBackendClusterScopedResources(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+	group := "cluster.example.com"
+	res := "clusterresources"
+
+	t.Run("Create cluster-scoped resources", func(t *testing.T) {
+		rv1, err := WriteEvent(ctx, backend, "cluster-item1", resourcepb.WatchEvent_ADDED,
+			WithNamespace(""), WithGroup(group), WithResource(res))
+		require.NoError(t, err)
+		require.Greater(t, rv1, int64(0))
+
+		rv2, err := WriteEvent(ctx, backend, "cluster-item2", resourcepb.WatchEvent_ADDED,
+			WithNamespace(""), WithGroup(group), WithResource(res))
+		require.NoError(t, err)
+		require.Greater(t, rv2, rv1)
+	})
+
+	t.Run("Read cluster-scoped resource", func(t *testing.T) {
+		resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "",
+				Group:     group,
+				Resource:  res,
+				Name:      "cluster-item1",
+			},
+		})
+		require.Nil(t, resp.Error, "Read error: %v", resp.Error)
+		require.Greater(t, resp.ResourceVersion, int64(0))
+	})
+
+	t.Run("Update cluster-scoped resource", func(t *testing.T) {
+		resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "",
+				Group:     group,
+				Resource:  res,
+				Name:      "cluster-item1",
+			},
+		})
+		require.Nil(t, resp.Error)
+
+		_, err := WriteEvent(ctx, backend, "cluster-item1", resourcepb.WatchEvent_MODIFIED,
+			WithNamespaceAndRV("", resp.ResourceVersion), WithGroup(group), WithResource(res))
+		require.NoError(t, err)
+	})
+
+	t.Run("Delete cluster-scoped resource", func(t *testing.T) {
+		resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "",
+				Group:     group,
+				Resource:  res,
+				Name:      "cluster-item2",
+			},
+		})
+		require.Nil(t, resp.Error)
+
+		_, err := WriteEvent(ctx, backend, "cluster-item2", resourcepb.WatchEvent_DELETED,
+			WithNamespaceAndRV("", resp.ResourceVersion), WithGroup(group), WithResource(res))
+		require.NoError(t, err)
+
+		// Verify deleted
+		resp = backend.ReadResource(ctx, &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "",
+				Group:     group,
+				Resource:  res,
+				Name:      "cluster-item2",
+			},
+		})
+		require.NotNil(t, resp.Error)
+		require.Equal(t, int32(404), resp.Error.Code)
 	})
 }
