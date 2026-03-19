@@ -13,7 +13,7 @@ import (
 	"go.yaml.in/yaml/v3"
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -40,7 +40,7 @@ func TestIntegrationImportedInhibitionRules(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	alertingApi := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	client, err := v0alpha1.NewInhibitionRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	client, err := v1beta1.NewInhibitionRuleClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	configYaml, err := testData.ReadFile(path.Join("test-data", "imported.yaml"))

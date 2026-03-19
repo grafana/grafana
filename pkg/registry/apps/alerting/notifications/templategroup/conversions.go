@@ -6,7 +6,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"

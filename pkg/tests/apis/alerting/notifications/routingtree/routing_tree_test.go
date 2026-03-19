@@ -18,14 +18,14 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1/fakes"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -47,7 +47,7 @@ import (
 
 var defaultTreeIdentifier = resource.Identifier{
 	Namespace: apis.DefaultNamespace,
-	Name:      v0alpha1.UserDefinedRoutingTreeName,
+	Name:      v1beta1.UserDefinedRoutingTreeName,
 }
 
 var defaultPolicy = definitions.Route{
@@ -68,14 +68,14 @@ func TestIntegrationNotAllowedMethods(t *testing.T) {
 
 	ctx := context.Background()
 	helper := getTestHelper(t)
-	client, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	client, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
-	route := &v0alpha1.RoutingTree{
+	route := &v1beta1.RoutingTree{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.RoutingTreeSpec{},
+		Spec: v1beta1.RoutingTreeSpec{},
 	}
 	_, err = client.Create(ctx, route, resource.CreateOptions{})
 	var statusErr *errors.StatusError
@@ -168,12 +168,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 	}
 
 	admin := org1.Admin
-	adminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
-			client, err := v0alpha1.NewRoutingTreeClientFromGenerator(tc.user.GetClientRegistry())
+			client, err := v1beta1.NewRoutingTreeClientFromGenerator(tc.user.GetClientRegistry())
 			require.NoError(t, err)
 
 			if tc.canRead {
@@ -181,7 +181,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 					require.NoError(t, err)
 					require.Len(t, list.Items, 1)
-					require.Equal(t, v0alpha1.UserDefinedRoutingTreeName, list.Items[0].Name)
+					require.Equal(t, v1beta1.UserDefinedRoutingTreeName, list.Items[0].Name)
 				})
 
 				t.Run("should be able to read routing trees by resource identifier", func(t *testing.T) {
@@ -215,13 +215,13 @@ func TestIntegrationAccessControl(t *testing.T) {
 
 			current, err := adminClient.Get(ctx, defaultTreeIdentifier)
 			require.NoError(t, err)
-			expected := current.Copy().(*v0alpha1.RoutingTree)
-			expected.Spec.Routes = []v0alpha1.RoutingTreeRoute{
+			expected := current.Copy().(*v1beta1.RoutingTree)
+			expected.Spec.Routes = []v1beta1.RoutingTreeRoute{
 				{
-					Matchers: []v0alpha1.RoutingTreeMatcher{
+					Matchers: []v1beta1.RoutingTreeMatcher{
 						{
 							Label: "test",
-							Type:  v0alpha1.RoutingTreeMatcherTypeEqual,
+							Type:  v1beta1.RoutingTreeMatcherTypeEqual,
 							Value: "test",
 						},
 					},
@@ -239,7 +239,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					expected = updated
 
 					t.Run("should get NotFound if name does not exist", func(t *testing.T) {
-						up := expected.Copy().(*v0alpha1.RoutingTree)
+						up := expected.Copy().(*v1beta1.RoutingTree)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, resource.UpdateOptions{})
 						require.Error(t, err)
@@ -253,7 +253,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 
 					t.Run("should get forbidden even if resource does not exist", func(t *testing.T) {
-						up := expected.Copy().(*v0alpha1.RoutingTree)
+						up := expected.Copy().(*v1beta1.RoutingTree)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, resource.UpdateOptions{
 							ResourceVersion: up.ResourceVersion,
@@ -305,7 +305,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 	org := helper.Org1
 
 	admin := org.Admin
-	adminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	env := helper.GetEnv()
@@ -325,13 +325,13 @@ func TestIntegrationProvisioning(t *testing.T) {
 		require.Equal(t, "API", got.GetProvenanceStatus())
 	})
 	t.Run("should not let update if provisioned", func(t *testing.T) {
-		updated := current.Copy().(*v0alpha1.RoutingTree)
-		updated.Spec.Routes = []v0alpha1.RoutingTreeRoute{
+		updated := current.Copy().(*v1beta1.RoutingTree)
+		updated.Spec.Routes = []v1beta1.RoutingTreeRoute{
 			{
-				Matchers: []v0alpha1.RoutingTreeMatcher{
+				Matchers: []v1beta1.RoutingTreeMatcher{
 					{
 						Label: "test",
-						Type:  v0alpha1.RoutingTreeMatcherTypeNotEqual,
+						Type:  v1beta1.RoutingTreeMatcherTypeNotEqual,
 						Value: "123",
 					},
 				},
@@ -355,7 +355,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	adminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	current, err := adminClient.Get(ctx, defaultTreeIdentifier)
@@ -363,7 +363,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	require.NotEmpty(t, current.ResourceVersion)
 
 	t.Run("should forbid if version does not match", func(t *testing.T) {
-		updated := current.Copy().(*v0alpha1.RoutingTree)
+		updated := current.Copy().(*v1beta1.RoutingTree)
 		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{
 			ResourceVersion: "test",
 		})
@@ -371,7 +371,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		require.Truef(t, errors.IsConflict(err), "should get Forbidden error but got %s", err)
 	})
 	t.Run("should update if version matches", func(t *testing.T) {
-		updated := current.Copy().(*v0alpha1.RoutingTree)
+		updated := current.Copy().(*v1beta1.RoutingTree)
 		updated.Spec.Defaults.GroupBy = append(updated.Spec.Defaults.GroupBy, "data")
 		actualUpdated, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
@@ -381,9 +381,9 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	t.Run("should update if version is empty", func(t *testing.T) {
 		current, err = adminClient.Get(ctx, defaultTreeIdentifier)
 		require.NoError(t, err)
-		updated := current.Copy().(*v0alpha1.RoutingTree)
+		updated := current.Copy().(*v1beta1.RoutingTree)
 		updated.ResourceVersion = ""
-		updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.RoutingTreeRoute{Continue: true})
+		updated.Spec.Routes = append(updated.Spec.Routes, v1beta1.RoutingTreeRoute{Continue: true})
 
 		actualUpdated, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
@@ -401,16 +401,16 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	client, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	client, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	receiver := "empty"
 	timeInterval := "test-time-interval"
 	createRoute := func(t *testing.T, route definitions.Route) {
 		t.Helper()
-		routeClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+		routeClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 		require.NoError(t, err)
-		managedRoute := legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, &route)
+		managedRoute := legacy_storage.NewManagedRoute(v1beta1.UserDefinedRoutingTreeName, &route)
 		managedRoute.Version = "" // Avoid version conflict.
 		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, func(int64) string { return "default" })
 		require.NoError(t, err)
@@ -418,11 +418,11 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	_, err = common.NewTimeIntervalClient(t, helper.Org1.Admin).Create(ctx, &v0alpha1.TimeInterval{
+	_, err = common.NewTimeIntervalClient(t, helper.Org1.Admin).Create(ctx, &v1beta1.TimeInterval{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.TimeIntervalSpec{
+		Spec: v1beta1.TimeIntervalSpec{
 			Name:          timeInterval,
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(1),
 		},
@@ -462,25 +462,25 @@ func TestIntegrationDataConsistency(t *testing.T) {
 			createRoute(t, route)
 			tree, err := client.Get(ctx, defaultTreeIdentifier)
 			require.NoError(t, err)
-			expected := []v0alpha1.RoutingTreeMatcher{
+			expected := []v1beta1.RoutingTreeMatcher{
 				{
 					Label: "label_match",
-					Type:  v0alpha1.RoutingTreeMatcherTypeEqual,
+					Type:  v1beta1.RoutingTreeMatcherTypeEqual,
 					Value: "test-123",
 				},
 				{
 					Label: "label_re",
-					Type:  v0alpha1.RoutingTreeMatcherTypeEqualRegex,
+					Type:  v1beta1.RoutingTreeMatcherTypeEqualRegex,
 					Value: ".*",
 				},
 				{
 					Label: "label_matchers",
-					Type:  v0alpha1.RoutingTreeMatcherTypeEqualRegex,
+					Type:  v1beta1.RoutingTreeMatcherTypeEqualRegex,
 					Value: "test-321",
 				},
 				{
 					Label: "object-label-matchers",
-					Type:  v0alpha1.RoutingTreeMatcherTypeNotEqualRegex,
+					Type:  v1beta1.RoutingTreeMatcherTypeNotEqualRegex,
 					Value: "test-456",
 				},
 			}
@@ -569,7 +569,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	t.Run("correctly reads all fields", func(t *testing.T) {
 		tree, err := client.Get(ctx, defaultTreeIdentifier)
 		require.NoError(t, err)
-		assert.Equal(t, v0alpha1.RoutingTreeRouteDefaults{
+		assert.Equal(t, v1beta1.RoutingTreeRouteDefaults{
 			Receiver:       receiver,
 			GroupBy:        []string{"test-123", "test-456"},
 			GroupWait:      util.Pointer("30s"),
@@ -577,7 +577,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 			RepeatInterval: util.Pointer("1d"),
 		}, tree.Spec.Defaults)
 		assert.Len(t, tree.Spec.Routes, 1)
-		assert.Equal(t, v0alpha1.RoutingTreeRoute{
+		assert.Equal(t, v1beta1.RoutingTreeRoute{
 			Continue:            true,
 			Receiver:            util.Pointer(receiver),
 			GroupBy:             []string{"test-789"},
@@ -586,25 +586,25 @@ func TestIntegrationDataConsistency(t *testing.T) {
 			RepeatInterval:      util.Pointer("1d6h"),
 			MuteTimeIntervals:   []string{timeInterval},
 			ActiveTimeIntervals: []string{timeInterval},
-			Matchers: []v0alpha1.RoutingTreeMatcher{
+			Matchers: []v1beta1.RoutingTreeMatcher{
 				{
 					Label: "m",
-					Type:  v0alpha1.RoutingTreeMatcherTypeNotEqual,
+					Type:  v1beta1.RoutingTreeMatcherTypeNotEqual,
 					Value: "1",
 				},
 				{
 					Label: "n",
-					Type:  v0alpha1.RoutingTreeMatcherTypeEqual,
+					Type:  v1beta1.RoutingTreeMatcherTypeEqual,
 					Value: "1",
 				},
 				{
 					Label: "o",
-					Type:  v0alpha1.RoutingTreeMatcherTypeEqualRegex,
+					Type:  v1beta1.RoutingTreeMatcherTypeEqualRegex,
 					Value: "1",
 				},
 				{
 					Label: "p",
-					Type:  v0alpha1.RoutingTreeMatcherTypeNotEqualRegex,
+					Type:  v1beta1.RoutingTreeMatcherTypeNotEqualRegex,
 					Value: "1",
 				},
 			},
@@ -668,13 +668,13 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		tree, err := client.Get(ctx, defaultTreeIdentifier)
 		require.NoError(t, err)
 		assert.Equal(t, "foo🙂", tree.Spec.Routes[0].GroupBy[0])
-		expected := []v0alpha1.RoutingTreeMatcher{
-			{Label: "foo🙂", Type: v0alpha1.RoutingTreeMatcherTypeEqual, Value: "bar"},
-			{Label: "_bar1", Type: v0alpha1.RoutingTreeMatcherTypeNotEqual, Value: "baz🙂"},
-			{Label: "0baz", Type: v0alpha1.RoutingTreeMatcherTypeEqualRegex, Value: "[a-zA-Z0-9]+,?"},
-			{Label: "corge", Type: v0alpha1.RoutingTreeMatcherTypeNotEqualRegex, Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$"},
-			{Label: "Προμηθέας", Type: v0alpha1.RoutingTreeMatcherTypeEqual, Value: "Prom"},
-			{Label: "犬", Type: v0alpha1.RoutingTreeMatcherTypeNotEqual, Value: "Shiba Inu"},
+		expected := []v1beta1.RoutingTreeMatcher{
+			{Label: "foo🙂", Type: v1beta1.RoutingTreeMatcherTypeEqual, Value: "bar"},
+			{Label: "_bar1", Type: v1beta1.RoutingTreeMatcherTypeNotEqual, Value: "baz🙂"},
+			{Label: "0baz", Type: v1beta1.RoutingTreeMatcherTypeEqualRegex, Value: "[a-zA-Z0-9]+,?"},
+			{Label: "corge", Type: v1beta1.RoutingTreeMatcherTypeNotEqualRegex, Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$"},
+			{Label: "Προμηθέας", Type: v1beta1.RoutingTreeMatcherTypeEqual, Value: "Prom"},
+			{Label: "犬", Type: v1beta1.RoutingTreeMatcherTypeNotEqual, Value: "Shiba Inu"},
 		}
 		assert.ElementsMatch(t, expected, tree.Spec.Routes[0].Matchers)
 	})
@@ -691,7 +691,7 @@ func TestIntegrationExtraConfigsConflicts(t *testing.T) {
 	cliCfg := helper.Org1.Admin.NewRestConfig()
 	legacyCli := alerting.NewAlertingLegacyAPIClient(helper.GetEnv().Server.HTTPServer.Listener.Addr().String(), cliCfg.Username, cliCfg.Password)
 
-	client, err := v0alpha1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	client, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	// Now upload a new extra config
@@ -719,12 +719,12 @@ receivers:
 
 	current, err := client.Get(ctx, defaultTreeIdentifier)
 	require.NoError(t, err)
-	updated := current.Copy().(*v0alpha1.RoutingTree)
-	updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.RoutingTreeRoute{
-		Matchers: []v0alpha1.RoutingTreeMatcher{
+	updated := current.Copy().(*v1beta1.RoutingTree)
+	updated.Spec.Routes = append(updated.Spec.Routes, v1beta1.RoutingTreeRoute{
+		Matchers: []v1beta1.RoutingTreeMatcher{
 			{
 				Label: "imported",
-				Type:  v0alpha1.RoutingTreeMatcherTypeEqual,
+				Type:  v1beta1.RoutingTreeMatcherTypeEqual,
 				Value: "true",
 			},
 		},
@@ -752,7 +752,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 	org1 := helper.Org1
 	admin := org1.Admin
-	adminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	env := helper.GetEnv()
@@ -776,7 +776,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 	list, err := adminClient.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 	require.NoError(t, err)
 	require.Len(t, list.Items, 1)
-	require.Equal(t, v0alpha1.UserDefinedRoutingTreeName, list.Items[0].Name)
+	require.Equal(t, v1beta1.UserDefinedRoutingTreeName, list.Items[0].Name)
 
 	validateGetErr := func(t *testing.T, name string, expectedErrReason v1.StatusReason) {
 		t.Helper()
@@ -785,7 +785,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		require.Equal(t, expectedErrReason, errors.ReasonForError(err))
 	}
 
-	validateGetEqual := func(t *testing.T, name string, expectedRoute *v0alpha1.RoutingTree) {
+	validateGetEqual := func(t *testing.T, name string, expectedRoute *v1beta1.RoutingTree) {
 		t.Helper()
 		gotRoute, err := adminClient.Get(ctx, nameToIdentifier(name))
 		require.NoError(t, err)
@@ -824,27 +824,27 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 		t.Run("Create default policy fails", func(t *testing.T) {
 			// Attempting to create a route with name UserDefinedRoutingTreeName fails.
-			_, err = adminClient.Create(ctx, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy), resource.CreateOptions{})
+			_, err = adminClient.Create(ctx, k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy), resource.CreateOptions{})
 			require.Error(t, err)
 		})
 
 		t.Run("Get Default Policy", func(t *testing.T) {
-			validateGetEqual(t, v0alpha1.UserDefinedRoutingTreeName, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy))
+			validateGetEqual(t, v1beta1.UserDefinedRoutingTreeName, k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy))
 		})
 	})
 
-	resetPolicies := func(t *testing.T) map[string]*v0alpha1.RoutingTree {
+	resetPolicies := func(t *testing.T) map[string]*v1beta1.RoutingTree {
 		t.Helper()
 		// Delete/reset any remaining routes.
 		for name := range cfg.ManagedRoutes {
 			_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "") // Just in case it was provisioned.
 			_ = adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{})
 		}
-		_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(v0alpha1.UserDefinedRoutingTreeName, &definitions.Route{}), org1.OrgID, "")
-		_ = adminClient.Delete(ctx, nameToIdentifier(v0alpha1.UserDefinedRoutingTreeName), resource.DeleteOptions{})
+		_ = db.SetProvenance(ctx, legacy_storage.NewManagedRoute(v1beta1.UserDefinedRoutingTreeName, &definitions.Route{}), org1.OrgID, "")
+		_ = adminClient.Delete(ctx, nameToIdentifier(v1beta1.UserDefinedRoutingTreeName), resource.DeleteOptions{})
 
 		// Recreate them.
-		created := make(map[string]*v0alpha1.RoutingTree, len(cfg.ManagedRoutes))
+		created := make(map[string]*v1beta1.RoutingTree, len(cfg.ManagedRoutes))
 		for name, route := range cfg.ManagedRoutes {
 			c, err := adminClient.Create(ctx, k8sRoute(t, name, route), resource.CreateOptions{})
 			require.NoError(t, err)
@@ -855,7 +855,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 	t.Run("Provisioned Get should include provenance", func(t *testing.T) {
 		allCreatedRoutes := resetPolicies(t)
-		allCreatedRoutes[v0alpha1.UserDefinedRoutingTreeName] = k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy)
+		allCreatedRoutes[v1beta1.UserDefinedRoutingTreeName] = k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy)
 
 		for name, route := range allCreatedRoutes {
 			require.NoError(t, db.SetProvenance(ctx, legacy_storage.NewManagedRoute(name, &definitions.Route{}), org1.OrgID, "API"))
@@ -863,7 +863,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 				got, err := adminClient.Get(ctx, nameToIdentifier(name))
 				require.NoError(t, err)
-				expected := route.Copy().(*v0alpha1.RoutingTree)
+				expected := route.Copy().(*v1beta1.RoutingTree)
 				expected.SetProvenanceStatus("API")
 				assert.Equal(t, expected, got)
 			})
@@ -877,11 +877,11 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		require.NoError(t, err)
 		assert.Len(t, list.Items, len(cfg.ManagedRoutes)+1)
 		t.Run("Includes all managed routes ", func(t *testing.T) {
-			expectedRoutes := make([]v0alpha1.RoutingTree, 0, len(cfg.ManagedRoutes)+1)
+			expectedRoutes := make([]v1beta1.RoutingTree, 0, len(cfg.ManagedRoutes)+1)
 			for _, route := range allCreatedRoutes {
 				expectedRoutes = append(expectedRoutes, *route)
 			}
-			expectedRoutes = append(expectedRoutes, *k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy))
+			expectedRoutes = append(expectedRoutes, *k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy))
 
 			for i := range expectedRoutes {
 				expectedRoutes[i].TypeMeta = v1.TypeMeta{} // List does not include this information.
@@ -889,13 +889,13 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			assert.ElementsMatch(t, expectedRoutes, list.Items)
 		})
 		t.Run("Default policy last", func(t *testing.T) {
-			assert.Equal(t, v0alpha1.UserDefinedRoutingTreeName, list.Items[len(cfg.ManagedRoutes)].Name)
+			assert.Equal(t, v1beta1.UserDefinedRoutingTreeName, list.Items[len(cfg.ManagedRoutes)].Name)
 		})
 	})
 
 	t.Run("Update", func(t *testing.T) {
 		policies := resetPolicies(t)
-		policies[v0alpha1.UserDefinedRoutingTreeName] = k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, policy_exports.Legacy())
+		policies[v1beta1.UserDefinedRoutingTreeName] = k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, policy_exports.Legacy())
 
 		// Update all policies to the same definition.
 		currentVersion := ""
@@ -927,7 +927,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			for name, route := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 					// Actual version.
-					updatedRoute, err := adminClient.Update(ctx, route.Copy().(*v0alpha1.RoutingTree), resource.UpdateOptions{ResourceVersion: currentVersion})
+					updatedRoute, err := adminClient.Update(ctx, route.Copy().(*v1beta1.RoutingTree), resource.UpdateOptions{ResourceVersion: currentVersion})
 					require.NoError(t, err)
 					policies[name] = updatedRoute
 
@@ -951,7 +951,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 
 	t.Run("Delete", func(t *testing.T) {
 		policies := resetPolicies(t)
-		policies[v0alpha1.UserDefinedRoutingTreeName] = k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy)
+		policies[v1beta1.UserDefinedRoutingTreeName] = k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy)
 
 		for name, route := range policies {
 			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
@@ -975,8 +975,8 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 				t.Run("Correct ResourceVersion should succeed", func(t *testing.T) {
 					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: route.ResourceVersion}})
 					require.NoError(t, err)
-					if name == v0alpha1.UserDefinedRoutingTreeName {
-						validateGetEqual(t, name, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy)) // Default policy only resets, it doesn't delete.
+					if name == v1beta1.UserDefinedRoutingTreeName {
+						validateGetEqual(t, name, k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy)) // Default policy only resets, it doesn't delete.
 					} else {
 						validateGetErr(t, name, v1.StatusReasonNotFound)
 					}
@@ -988,8 +988,8 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 				t.Run("Empty ResourceVersion should succeed", func(t *testing.T) {
 					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
 					require.NoError(t, err)
-					if name == v0alpha1.UserDefinedRoutingTreeName {
-						validateGetEqual(t, name, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &defaultPolicy)) // Default policy only resets, it doesn't delete.
+					if name == v1beta1.UserDefinedRoutingTreeName {
+						validateGetEqual(t, name, k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy)) // Default policy only resets, it doesn't delete.
 					} else {
 						validateGetErr(t, name, v1.StatusReasonNotFound)
 					}
@@ -1009,7 +1009,7 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 
 	org1 := helper.Org1
 	admin := org1.Admin
-	adminClient, err := v0alpha1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
+	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
 	require.NoError(t, err)
 
 	// Prep config so that referenced receivers and time intervals exist.
@@ -1032,7 +1032,7 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 		}},
 	}
 	// Default route.
-	_, err = adminClient.Update(ctx, k8sRoute(t, v0alpha1.UserDefinedRoutingTreeName, &routeDef), resource.UpdateOptions{})
+	_, err = adminClient.Update(ctx, k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &routeDef), resource.UpdateOptions{})
 	require.NoError(t, err)
 
 	// Named route.
@@ -1041,7 +1041,7 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 
 	// Update the receivers, then ensure the references are updated.
 	t.Run("Update receivers references", func(t *testing.T) {
-		recvClient, err := v0alpha1.NewReceiverClientFromGenerator(admin.GetClientRegistry())
+		recvClient, err := v1beta1.NewReceiverClientFromGenerator(admin.GetClientRegistry())
 		require.NoError(t, err)
 		updatedName := func(name string) string {
 			return fmt.Sprintf("%s-updatedbytest", name)
@@ -1049,7 +1049,7 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 		for oldName, recv := range receivers {
 			assert.Equal(t, oldName, recv.Spec.Title)
 
-			cp := recv.Copy().(*v0alpha1.Receiver)
+			cp := recv.Copy().(*v1beta1.Receiver)
 			cp.Spec.Title = updatedName(oldName)
 			updatedRecv, err := recvClient.Update(ctx, cp, resource.UpdateOptions{})
 			require.NoError(t, err)
@@ -1073,7 +1073,7 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 
 	// Update the time intervals, then ensure the references are updated.
 	t.Run("Update time interval references", func(t *testing.T) {
-		timeIntervalClient, err := v0alpha1.NewTimeIntervalClientFromGenerator(admin.GetClientRegistry())
+		timeIntervalClient, err := v1beta1.NewTimeIntervalClientFromGenerator(admin.GetClientRegistry())
 		require.NoError(t, err)
 
 		updatedName := func(name string) string {
@@ -1082,7 +1082,7 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 		for oldName, ti := range timeIntervals {
 			assert.Equal(t, oldName, ti.Spec.Name)
 
-			cp := ti.Copy().(*v0alpha1.TimeInterval)
+			cp := ti.Copy().(*v1beta1.TimeInterval)
 			cp.Spec.Name = updatedName(oldName)
 			updatedTi, err := timeIntervalClient.Update(ctx, cp, resource.UpdateOptions{})
 			require.NoError(t, err)
@@ -1105,28 +1105,28 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 	})
 }
 
-func k8sRoute(t *testing.T, name string, r *definitions.Route) *v0alpha1.RoutingTree {
+func k8sRoute(t *testing.T, name string, r *definitions.Route) *v1beta1.RoutingTree {
 	err := r.Validate()
 	require.NoError(t, err)
 	managedRoute := legacy_storage.NewManagedRoute(name, r)
 	v1Route, err := routingtree.ConvertToK8sResource(-1, managedRoute, func(int64) string { return apis.DefaultNamespace })
 	require.NoError(t, err)
 	v1Route.TypeMeta = v1.TypeMeta{
-		Kind:       v0alpha1.RoutingTreeKind().Kind(),
-		APIVersion: v0alpha1.GroupVersion.Identifier(),
+		Kind:       v1beta1.RoutingTreeKind().Kind(),
+		APIVersion: v1beta1.GroupVersion.Identifier(),
 	}
 	return v1Route
 }
 
-func createReceiverStubs(t *testing.T, user apis.User, receivers []*definitions.PostableApiReceiver) map[string]*v0alpha1.Receiver {
-	receiverClient, err := v0alpha1.NewReceiverClientFromGenerator(user.GetClientRegistry())
+func createReceiverStubs(t *testing.T, user apis.User, receivers []*definitions.PostableApiReceiver) map[string]*v1beta1.Receiver {
+	receiverClient, err := v1beta1.NewReceiverClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)
 
-	res := make(map[string]*v0alpha1.Receiver, len(receivers))
+	res := make(map[string]*v1beta1.Receiver, len(receivers))
 	for _, receiver := range receivers {
-		created, err := receiverClient.Create(context.Background(), &v0alpha1.Receiver{
+		created, err := receiverClient.Create(context.Background(), &v1beta1.Receiver{
 			ObjectMeta: v1.ObjectMeta{Namespace: apis.DefaultNamespace},
-			Spec:       v0alpha1.ReceiverSpec{Title: receiver.Name, Integrations: []v0alpha1.ReceiverIntegration{}},
+			Spec:       v1beta1.ReceiverSpec{Title: receiver.Name, Integrations: []v1beta1.ReceiverIntegration{}},
 		}, resource.CreateOptions{})
 		require.NoError(t, err)
 		res[receiver.Name] = created
@@ -1134,15 +1134,15 @@ func createReceiverStubs(t *testing.T, user apis.User, receivers []*definitions.
 	return res
 }
 
-func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []config.TimeInterval) map[string]*v0alpha1.TimeInterval {
-	timeIntervalClient, err := v0alpha1.NewTimeIntervalClientFromGenerator(user.GetClientRegistry())
+func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []config.TimeInterval) map[string]*v1beta1.TimeInterval {
+	timeIntervalClient, err := v1beta1.NewTimeIntervalClientFromGenerator(user.GetClientRegistry())
 	require.NoError(t, err)
 
-	res := make(map[string]*v0alpha1.TimeInterval, len(timeIntervals))
+	res := make(map[string]*v1beta1.TimeInterval, len(timeIntervals))
 	for _, ti := range timeIntervals {
-		created, err := timeIntervalClient.Create(context.Background(), &v0alpha1.TimeInterval{
+		created, err := timeIntervalClient.Create(context.Background(), &v1beta1.TimeInterval{
 			ObjectMeta: v1.ObjectMeta{Namespace: apis.DefaultNamespace},
-			Spec:       v0alpha1.TimeIntervalSpec{Name: ti.Name},
+			Spec:       v1beta1.TimeIntervalSpec{Name: ti.Name},
 		}, resource.CreateOptions{})
 		require.NoError(t, err)
 		res[ti.Name] = created

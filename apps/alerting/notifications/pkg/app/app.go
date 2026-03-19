@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 )
 
 func New(cfg app.Config) (app.App, error) {
@@ -46,9 +47,29 @@ func New(cfg app.Config) (app.App, error) {
 			{Kind: v0alpha1.RoutingTreeKind()},
 			{Kind: v0alpha1.TemplateGroupKind()},
 			{Kind: v0alpha1.TimeIntervalKind()},
+			{Kind: v1beta1.InhibitionRuleKind()},
+			{
+				Kind: v1beta1.ReceiverKind(),
+				CustomRoutes: map[simple.AppCustomRoute]simple.AppCustomRouteHandler{
+					{
+						Method: simple.AppCustomRouteMethodPost,
+						Path:   "test",
+					}: customCfg.ReceiverTestingHandler.HandleReceiverTestingRequest,
+				},
+			},
+			{Kind: v1beta1.RoutingTreeKind()},
+			{Kind: v1beta1.TemplateGroupKind()},
+			{Kind: v1beta1.TimeIntervalKind()},
 		},
 		VersionedCustomRoutes: map[string]simple.AppVersionRouteHandlers{
 			"v0alpha1": {
+				{
+					Namespaced: true,
+					Path:       "/integrationtypeschemas",
+					Method:     "GET",
+				}: customCfg.IntegrationTypeSchemaHandler.HandleGetSchemas,
+			},
+			"v1beta1": {
 				{
 					Namespaced: true,
 					Path:       "/integrationtypeschemas",
