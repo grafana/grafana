@@ -520,7 +520,7 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
 
       // Should use notification_settings.policy, not __grafana_managed_route__ label
       expect(newRule.grafana_alert.notification_settings?.policy).toBe(customPolicyName);
-      expect(newRule.grafana_alert.notification_settings?.receiver).toBe('');
+      expect(newRule.grafana_alert.notification_settings?.receiver).toBeUndefined();
       expect(newRule.labels?.[NAMED_ROOT_LABEL_NAME]).toBeUndefined();
     });
 
