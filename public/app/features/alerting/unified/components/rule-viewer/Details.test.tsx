@@ -84,7 +84,7 @@ describe('Details', () => {
       jest.restoreAllMocks();
     });
 
-    it('should display notification policy name (not contact point) when notification_settings.policy is set', () => {
+    it('should display notification policy name as a link to the policy tree when notification_settings.policy is set', () => {
       const POLICY_NAME = 'TestPolicy';
       const rule = mockCombinedRule({
         rulerRule: alertingFactory.ruler.grafana.alertingRule.build({
@@ -99,11 +99,14 @@ describe('Details', () => {
       render(<Details rule={rule} />);
 
       expect(screen.getByText('Notification policy')).toBeInTheDocument();
-      expect(screen.getByText(POLICY_NAME)).toBeInTheDocument();
+      const policyLink = screen.getByRole('link', { name: POLICY_NAME });
+      expect(policyLink).toBeInTheDocument();
+      expect(policyLink).toHaveAttribute('href', expect.stringContaining(`includeTree=${POLICY_NAME}`));
+      expect(policyLink).toHaveAttribute('href', expect.stringContaining('alertmanager=grafana'));
       expect(screen.queryByText('Contact point')).not.toBeInTheDocument();
     });
 
-    it('should display "Default policy" when notification_settings is absent (rule uses default routing)', () => {
+    it('should display "Default policy" as a link to the default policy tree when notification_settings is absent', () => {
       const rule = mockCombinedRule({
         rulerRule: alertingFactory.ruler.grafana.alertingRule.build({
           grafana_alert: {
@@ -115,10 +118,13 @@ describe('Details', () => {
       render(<Details rule={rule} />);
 
       expect(screen.getByText('Notification policy')).toBeInTheDocument();
-      expect(screen.getByText('Default policy')).toBeInTheDocument();
+      const policyLink = screen.getByRole('link', { name: 'Default policy' });
+      expect(policyLink).toBeInTheDocument();
+      expect(policyLink).toHaveAttribute('href', expect.stringContaining('includeTree=user-defined'));
+      expect(policyLink).toHaveAttribute('href', expect.stringContaining('alertmanager=grafana'));
     });
 
-    it('should display legacy __grafana_managed_route__ label value (not "Default policy") when notification_settings is absent but label is set', () => {
+    it('should display legacy __grafana_managed_route__ label value as a link to the policy tree', () => {
       const POLICY_NAME = 'LegacyPolicy';
       const rule = mockCombinedRule({
         rulerRule: alertingFactory.ruler.grafana.alertingRule.build({
@@ -132,7 +138,10 @@ describe('Details', () => {
       render(<Details rule={rule} />);
 
       expect(screen.getByText('Notification policy')).toBeInTheDocument();
-      expect(screen.getByText(POLICY_NAME)).toBeInTheDocument();
+      const policyLink = screen.getByRole('link', { name: POLICY_NAME });
+      expect(policyLink).toBeInTheDocument();
+      expect(policyLink).toHaveAttribute('href', expect.stringContaining(`includeTree=${POLICY_NAME}`));
+      expect(policyLink).toHaveAttribute('href', expect.stringContaining('alertmanager=grafana'));
       expect(screen.queryByText('Default policy')).not.toBeInTheDocument();
     });
   });

@@ -14,6 +14,7 @@ import { GrafanaAlertingRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/un
 import { Time } from '../../../../explore/Time';
 import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
 import { makeEditTimeIntervalLink } from '../../utils/misc';
+import { notificationPolicies } from '../../utils/navigation';
 import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../../utils/rules';
 import { isNullDate } from '../../utils/time';
 import { Tokenize } from '../Tokenize';
@@ -283,7 +284,11 @@ const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
         <DetailText
           id="notification-policy"
           label={t('alerting.alert.notification-configuration.notification-policy', 'Notification policy')}
-          value={legacyPolicyName ?? t('alerting.policy-tree-selector.default-policy', 'Default policy')}
+          value={
+            <TextLink href={notificationPolicies.policyLink(legacyPolicyName)} inline={false}>
+              {legacyPolicyName ?? t('alerting.policy-tree-selector.default-policy', 'Default policy')}
+            </TextLink>
+          }
         />
       </DetailGroup>
     );
@@ -296,7 +301,11 @@ const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
         <DetailText
           id="notification-policy"
           label={t('alerting.alert.notification-configuration.notification-policy', 'Notification policy')}
-          value={notificationSettings.policy}
+          value={
+            <TextLink href={notificationPolicies.policyLink(notificationSettings.policy)} inline={false}>
+              {notificationSettings.policy}
+            </TextLink>
+          }
         />
       );
     }
