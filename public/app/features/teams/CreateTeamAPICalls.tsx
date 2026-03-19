@@ -36,16 +36,12 @@ interface ResultCardLink {
 /**
  * Alert that just shows the message and optional link. Link should point to some resource that the step successfully
  * created.
- * @param severity
- * @param description
- * @param link
- * @constructor
  */
 export function StepResultAlert({ severity, description, link, help }: CardProps) {
   const styles = useStyles2(getStyles);
 
   return (
-    <Alert severity={severity} title="">
+    <Alert severity={severity} title="" aria-label={description}>
       <Stack direction="row" justifyContent={'space-between'}>
         <Text>{description}</Text>
         {link && (
@@ -138,6 +134,12 @@ function useReportState() {
   return { teamCreationStatus, folderCreationStatus, rolesCreationStatus, reportState };
 }
 
+type CreateTeamResult = {
+  teamCreationStatus: CallState | undefined;
+  rolesCreationStatus: CallState | undefined;
+  folderCreationStatus: CallState | undefined;
+};
+
 /**
  * Hook that creates a trigger that will run all the necessary calls to create a team. It also reports back status,
  * either inline or using global app events depending on the mounted status of the component using it.
@@ -153,11 +155,35 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
 
   // Trigger to create a team and optionally also roles and folder. Each one has its own state to inform user about the
   // progress or an error.
-  const createTeam = async (formModel: TeamDTO) => {
+  const createTeam = async (formModel: TeamDTO): Promise<CreateTeamResult> => {
+    let teamCreationStatus: CallState | undefined = undefined;
+    let rolesCreationStatus: CallState | undefined = undefined;
+    let folderCreationStatus: CallState | undefined = undefined;
+
+    // It looks weird that we update the status also here when we already have the react state variables. The thing is
+    // this function can run even when the original component is unmounted, and even if it wasn't, we cannot close
+    // around those variables if they are recreated outside of the function as the closed around pointer won't change.
+    // So if you want to return the correct state value from this function (for example, for reporting purposes), we
+    // need to also keep track of the state inline.
+    function localUpdateState(state: CallState, call: CallTypes) {
+      reportState(state, call);
+      switch (call) {
+        case 'createTeam':
+          teamCreationStatus = state;
+          break;
+        case 'createRoles':
+          rolesCreationStatus = state;
+          break;
+        case 'createFolder':
+          folderCreationStatus = state;
+          break;
+      }
+    }
+
     //////////////////////
     // Create a team first
     //////////////////////
-    reportState({ state: 'loading' }, 'createTeam');
+    localUpdateState({ state: 'loading' }, 'createTeam');
     const mutationArg: CreateTeamApiArg & { showSuccessAlert?: boolean } = {
       createTeamCommand: { email: formModel.email || '', name: formModel.name },
       // We are handling reporting here so don't need this, and createTeam just alerts all the time on success
@@ -167,17 +193,17 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
 
     // It shouldn't happen that we have success and no data, but the types are set up that way, so we check it here
     if (teamError || !teamData?.uid || !teamData?.teamId) {
-      reportState({ state: 'error', error: teamError }, 'createTeam');
-      return;
+      localUpdateState({ state: 'error', error: teamError }, 'createTeam');
+      return { teamCreationStatus, folderCreationStatus, rolesCreationStatus };
     }
 
-    reportState({ state: 'success', data: teamData.uid }, 'createTeam');
+    localUpdateState({ state: 'success', data: teamData.uid }, 'createTeam');
 
     ////////////////////////////
     // Create roles if requested
     ////////////////////////////
     if (pendingRoles && pendingRoles.length) {
-      reportState({ state: 'loading' }, 'createRoles');
+      localUpdateState({ state: 'loading' }, 'createRoles');
       // TODO: this fetch can fail or user just don't have permissions and this is skipped silently
       //  Maybe we should just do that in the form itself and disable the input if user does not have permissions
       await contextSrv.fetchUserPermissions();
@@ -193,13 +219,13 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
         const { error: roleError } = await setTeamRoles(mutationArg);
 
         if (roleError) {
-          reportState({ state: 'error', error: roleError }, 'createRoles');
+          localUpdateState({ state: 'error', error: roleError }, 'createRoles');
         } else {
-          reportState({ state: 'success' }, 'createRoles');
+          localUpdateState({ state: 'success' }, 'createRoles');
         }
       } else {
         // Probably should not happen as this should be checked before creating a team.
-        reportState(
+        localUpdateState(
           {
             state: 'error',
             error: new Error(
@@ -215,18 +241,20 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
     // Create a folder if requested
     ///////////////////////////////
     if (autocreateTeamFolder) {
-      reportState({ state: 'loading' }, 'createFolder');
+      localUpdateState({ state: 'loading' }, 'createFolder');
       const { data: folderData, error: folderError } = await createFolderTrigger({
         title: formModel.name,
         teamOwnerReferences: [{ uid: teamData.uid, name: formModel.name }],
       });
 
       if (folderError || !folderData?.url) {
-        reportState({ state: 'error', error: folderError }, 'createFolder');
-        return;
+        localUpdateState({ state: 'error', error: folderError }, 'createFolder');
+      } else {
+        localUpdateState({ state: 'success', data: folderData.url }, 'createFolder');
       }
-      reportState({ state: 'success', data: folderData.url }, 'createFolder');
     }
+
+    return { teamCreationStatus, folderCreationStatus, rolesCreationStatus };
   };
 
   return { teamCreationStatus, folderCreationStatus, rolesCreationStatus, trigger: createTeam };

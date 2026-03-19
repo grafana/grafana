@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, locationUtil, NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Checkbox, Field, FieldSet, Input, Stack, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
@@ -38,6 +39,17 @@ const CreateTeam = (): JSX.Element => {
     autocreateTeamFolder
   );
 
+  async function submitFunction(data: TeamDTO) {
+    const status = await trigger(data);
+    // This should only ever report success or error as we won't return while something is loading.
+    // If the user reloads or leaves the page in the middle, we may create a team without the report.
+    reportInteraction('grafana_create_team_submit', {
+      createTeam: status.teamCreationStatus?.state,
+      createRoles: status.rolesCreationStatus?.state,
+      createFolder: status.rolesCreationStatus?.state,
+    });
+  }
+
   // We allow re-submitting the form if a team create step failed. This probably means nothing happened yet and the user
   // can try again. Also, the error can be that the team with a specific name already exists.
   const allowResubmit = !teamCreationStatus || teamCreationStatus?.state === 'error';
@@ -46,7 +58,7 @@ const CreateTeam = (): JSX.Element => {
   return (
     <Page navId="teams" pageNav={pageNav}>
       <Page.Contents>
-        <form onSubmit={handleSubmit(trigger)} style={{ maxWidth: '600px' }}>
+        <form onSubmit={handleSubmit(submitFunction)} style={{ maxWidth: '600px' }}>
           <FieldSet>
             <Stack direction="column" gap={2}>
               <Field
