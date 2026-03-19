@@ -1,6 +1,7 @@
 package v1beta1
 
 import (
+	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 	ptr "k8s.io/utils/ptr"
@@ -8,18 +9,18 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		Keeper{}.OpenAPIModelName():                         schema_pkg_apis_secret_v1beta1_Keeper(ref),
-		KeeperAWSAssumeRole{}.OpenAPIModelName():            schema_pkg_apis_secret_v1beta1_KeeperAWSAssumeRole(ref),
-		KeeperAWSConfig{}.OpenAPIModelName():                schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref),
-		KeeperList{}.OpenAPIModelName():                     schema_pkg_apis_secret_v1beta1_KeeperList(ref),
-		KeeperSpec{}.OpenAPIModelName():                     schema_pkg_apis_secret_v1beta1_KeeperSpec(ref),
-		KeeperStatus{}.OpenAPIModelName():                   schema_pkg_apis_secret_v1beta1_KeeperStatus(ref),
-		KeeperstatusOperatorState{}.OpenAPIModelName():      schema_pkg_apis_secret_v1beta1_KeeperstatusOperatorState(ref),
-		SecureValue{}.OpenAPIModelName():                    schema_pkg_apis_secret_v1beta1_SecureValue(ref),
-		SecureValueList{}.OpenAPIModelName():                schema_pkg_apis_secret_v1beta1_SecureValueList(ref),
-		SecureValueSpec{}.OpenAPIModelName():                schema_pkg_apis_secret_v1beta1_SecureValueSpec(ref),
-		SecureValueStatus{}.OpenAPIModelName():              schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref),
-		SecureValuestatusOperatorState{}.OpenAPIModelName(): schema_pkg_apis_secret_v1beta1_SecureValuestatusOperatorState(ref),
+		secretv1beta1.Keeper{}.OpenAPIModelName():                         schema_pkg_apis_secret_v1beta1_Keeper(ref),
+		secretv1beta1.KeeperAWSAssumeRole{}.OpenAPIModelName():            schema_pkg_apis_secret_v1beta1_KeeperAWSAssumeRole(ref),
+		secretv1beta1.KeeperAWSConfig{}.OpenAPIModelName():                schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref),
+		secretv1beta1.KeeperList{}.OpenAPIModelName():                     schema_pkg_apis_secret_v1beta1_KeeperList(ref),
+		secretv1beta1.KeeperSpec{}.OpenAPIModelName():                     schema_pkg_apis_secret_v1beta1_KeeperSpec(ref),
+		secretv1beta1.KeeperStatus{}.OpenAPIModelName():                   schema_pkg_apis_secret_v1beta1_KeeperStatus(ref),
+		secretv1beta1.KeeperstatusOperatorState{}.OpenAPIModelName():      schema_pkg_apis_secret_v1beta1_KeeperstatusOperatorState(ref),
+		secretv1beta1.SecureValue{}.OpenAPIModelName():                    schema_pkg_apis_secret_v1beta1_SecureValue(ref),
+		secretv1beta1.SecureValueList{}.OpenAPIModelName():                schema_pkg_apis_secret_v1beta1_SecureValueList(ref),
+		secretv1beta1.SecureValueSpec{}.OpenAPIModelName():                schema_pkg_apis_secret_v1beta1_SecureValueSpec(ref),
+		secretv1beta1.SecureValueStatus{}.OpenAPIModelName():              schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref),
+		secretv1beta1.SecureValuestatusOperatorState{}.OpenAPIModelName(): schema_pkg_apis_secret_v1beta1_SecureValuestatusOperatorState(ref),
 	}
 }
 
@@ -46,20 +47,20 @@ func schema_pkg_apis_secret_v1beta1_Keeper(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the Keeper",
 							Default:     map[string]interface{}{},
-							Ref:         ref(KeeperSpec{}.OpenAPIModelName()),
+							Ref:         ref(secretv1beta1.KeeperSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(KeeperStatus{}.OpenAPIModelName()),
+							Ref:     ref(secretv1beta1.KeeperStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -67,7 +68,7 @@ func schema_pkg_apis_secret_v1beta1_Keeper(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			KeeperSpec{}.OpenAPIModelName(), KeeperStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			secretv1beta1.KeeperSpec{}.OpenAPIModelName(), secretv1beta1.KeeperStatus{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -113,7 +114,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback
 					},
 					"assumeRole": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref(KeeperAWSAssumeRole{}.OpenAPIModelName()),
+							Ref: ref(secretv1beta1.KeeperAWSAssumeRole{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -121,7 +122,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperAWSConfig(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			KeeperAWSAssumeRole{}.OpenAPIModelName()},
+			secretv1beta1.KeeperAWSAssumeRole{}.OpenAPIModelName()},
 	}
 }
 
@@ -148,7 +149,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperList(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -158,7 +159,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperList(ref common.ReferenceCallback) com
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(Keeper{}.OpenAPIModelName()),
+										Ref:     ref(secretv1beta1.Keeper{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -169,7 +170,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperList(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			Keeper{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			secretv1beta1.Keeper{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -197,7 +198,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperSpec(ref common.ReferenceCallback) com
 						},
 						SchemaProps: spec.SchemaProps{
 							Description: "AWS Keeper Configuration.",
-							Ref:         ref(KeeperAWSConfig{}.OpenAPIModelName()),
+							Ref:         ref(secretv1beta1.KeeperAWSConfig{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -205,7 +206,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperSpec(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			KeeperAWSConfig{}.OpenAPIModelName()},
+			secretv1beta1.KeeperAWSConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -224,7 +225,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperStatus(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(KeeperstatusOperatorState{}.OpenAPIModelName()),
+										Ref:     ref(secretv1beta1.KeeperstatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -249,7 +250,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperStatus(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			KeeperstatusOperatorState{}.OpenAPIModelName()},
+			secretv1beta1.KeeperstatusOperatorState{}.OpenAPIModelName()},
 	}
 }
 
@@ -327,20 +328,20 @@ func schema_pkg_apis_secret_v1beta1_SecureValue(ref common.ReferenceCallback) co
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the SecureValue",
 							Default:     map[string]interface{}{},
-							Ref:         ref(SecureValueSpec{}.OpenAPIModelName()),
+							Ref:         ref(secretv1beta1.SecureValueSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(SecureValueStatus{}.OpenAPIModelName()),
+							Ref:     ref(secretv1beta1.SecureValueStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -348,7 +349,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValue(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			SecureValueSpec{}.OpenAPIModelName(), SecureValueStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			secretv1beta1.SecureValueSpec{}.OpenAPIModelName(), secretv1beta1.SecureValueStatus{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -375,7 +376,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueList(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -385,7 +386,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueList(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(SecureValue{}.OpenAPIModelName()),
+										Ref:     ref(secretv1beta1.SecureValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -396,7 +397,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueList(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			SecureValue{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			secretv1beta1.SecureValue{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -494,7 +495,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(SecureValuestatusOperatorState{}.OpenAPIModelName()),
+										Ref:     ref(secretv1beta1.SecureValuestatusOperatorState{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -528,7 +529,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueStatus(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			SecureValuestatusOperatorState{}.OpenAPIModelName()},
+			secretv1beta1.SecureValuestatusOperatorState{}.OpenAPIModelName()},
 	}
 }
 

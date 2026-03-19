@@ -1,93 +1,94 @@
 package v0alpha1
 
 import (
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		CoreRole{}.OpenAPIModelName():                                                                     schema_pkg_apis_iam_v0alpha1_CoreRole(ref),
-		CoreRoleList{}.OpenAPIModelName():                                                                 schema_pkg_apis_iam_v0alpha1_CoreRoleList(ref),
-		CoreRoleSpec{}.OpenAPIModelName():                                                                 schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref),
+		iamv0alpha1.CoreRole{}.OpenAPIModelName():                                                         schema_pkg_apis_iam_v0alpha1_CoreRole(ref),
+		iamv0alpha1.CoreRoleList{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_CoreRoleList(ref),
+		iamv0alpha1.CoreRoleSpec{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRoleStatus":                        schema_pkg_apis_iam_v0alpha1_CoreRoleStatus(ref),
-		CoreRolespecPermission{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_CoreRolespecPermission(ref),
+		iamv0alpha1.CoreRolespecPermission{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_CoreRolespecPermission(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.CoreRolestatusOperatorState":           schema_pkg_apis_iam_v0alpha1_CoreRolestatusOperatorState(ref),
-		ExternalGroupMapping{}.OpenAPIModelName():                                                         schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref),
-		ExternalGroupMappingList{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref),
-		ExternalGroupMappingSpec{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingSpec(ref),
-		ExternalGroupMappingTeamRef{}.OpenAPIModelName():                                                  schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingTeamRef(ref),
-		GetGroupsBody{}.OpenAPIModelName():                                                                schema_pkg_apis_iam_v0alpha1_GetGroupsBody(ref),
-		GetGroupsExternalGroupMapping{}.OpenAPIModelName():                                                schema_pkg_apis_iam_v0alpha1_GetGroupsExternalGroupMapping(ref),
-		GetGroupsResponse{}.OpenAPIModelName():                                                            schema_pkg_apis_iam_v0alpha1_GetGroupsResponse(ref),
-		GetMembersBody{}.OpenAPIModelName():                                                               schema_pkg_apis_iam_v0alpha1_GetMembersBody(ref),
-		GetMembersResponse{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_GetMembersResponse(ref),
-		GetMembersTeamUser{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_GetMembersTeamUser(ref),
-		GetSearchTeamsBody{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_GetSearchTeamsBody(ref),
-		GetSearchTeamsResponse{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_GetSearchTeamsResponse(ref),
-		GetSearchTeamsTeamHit{}.OpenAPIModelName():                                                        schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref),
-		GetSearchUsersResponse{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_GetSearchUsersResponse(ref),
-		GetSearchUsersUserHit{}.OpenAPIModelName():                                                        schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref),
-		GetTeamsBody{}.OpenAPIModelName():                                                                 schema_pkg_apis_iam_v0alpha1_GetTeamsBody(ref),
-		GetTeamsResponse{}.OpenAPIModelName():                                                             schema_pkg_apis_iam_v0alpha1_GetTeamsResponse(ref),
-		GetTeamsUserTeam{}.OpenAPIModelName():                                                             schema_pkg_apis_iam_v0alpha1_GetTeamsUserTeam(ref),
-		GlobalRole{}.OpenAPIModelName():                                                                   schema_pkg_apis_iam_v0alpha1_GlobalRole(ref),
-		GlobalRoleBinding{}.OpenAPIModelName():                                                            schema_pkg_apis_iam_v0alpha1_GlobalRoleBinding(ref),
-		GlobalRoleBindingList{}.OpenAPIModelName():                                                        schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingList(ref),
-		GlobalRoleBindingSpec{}.OpenAPIModelName():                                                        schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingSpec(ref),
+		iamv0alpha1.ExternalGroupMapping{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref),
+		iamv0alpha1.ExternalGroupMappingList{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref),
+		iamv0alpha1.ExternalGroupMappingSpec{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingSpec(ref),
+		iamv0alpha1.ExternalGroupMappingTeamRef{}.OpenAPIModelName():                                      schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingTeamRef(ref),
+		iamv0alpha1.GetGroupsBody{}.OpenAPIModelName():                                                    schema_pkg_apis_iam_v0alpha1_GetGroupsBody(ref),
+		iamv0alpha1.GetGroupsExternalGroupMapping{}.OpenAPIModelName():                                    schema_pkg_apis_iam_v0alpha1_GetGroupsExternalGroupMapping(ref),
+		iamv0alpha1.GetGroupsResponse{}.OpenAPIModelName():                                                schema_pkg_apis_iam_v0alpha1_GetGroupsResponse(ref),
+		iamv0alpha1.GetMembersBody{}.OpenAPIModelName():                                                   schema_pkg_apis_iam_v0alpha1_GetMembersBody(ref),
+		iamv0alpha1.GetMembersResponse{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_GetMembersResponse(ref),
+		iamv0alpha1.GetMembersTeamUser{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_GetMembersTeamUser(ref),
+		iamv0alpha1.GetSearchTeamsBody{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_GetSearchTeamsBody(ref),
+		iamv0alpha1.GetSearchTeamsResponse{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_GetSearchTeamsResponse(ref),
+		iamv0alpha1.GetSearchTeamsTeamHit{}.OpenAPIModelName():                                            schema_pkg_apis_iam_v0alpha1_GetSearchTeamsTeamHit(ref),
+		iamv0alpha1.GetSearchUsersResponse{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_GetSearchUsersResponse(ref),
+		iamv0alpha1.GetSearchUsersUserHit{}.OpenAPIModelName():                                            schema_pkg_apis_iam_v0alpha1_GetSearchUsersUserHit(ref),
+		iamv0alpha1.GetTeamsBody{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_GetTeamsBody(ref),
+		iamv0alpha1.GetTeamsResponse{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_GetTeamsResponse(ref),
+		iamv0alpha1.GetTeamsUserTeam{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_GetTeamsUserTeam(ref),
+		iamv0alpha1.GlobalRole{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_GlobalRole(ref),
+		iamv0alpha1.GlobalRoleBinding{}.OpenAPIModelName():                                                schema_pkg_apis_iam_v0alpha1_GlobalRoleBinding(ref),
+		iamv0alpha1.GlobalRoleBindingList{}.OpenAPIModelName():                                            schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingList(ref),
+		iamv0alpha1.GlobalRoleBindingSpec{}.OpenAPIModelName():                                            schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBindingStatus":               schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingStatus(ref),
-		GlobalRoleBindingspecRoleRef{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingspecRoleRef(ref),
-		GlobalRoleBindingspecSubject{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingspecSubject(ref),
+		iamv0alpha1.GlobalRoleBindingspecRoleRef{}.OpenAPIModelName():                                     schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingspecRoleRef(ref),
+		iamv0alpha1.GlobalRoleBindingspecSubject{}.OpenAPIModelName():                                     schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingspecSubject(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleBindingstatusOperatorState":  schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingstatusOperatorState(ref),
-		GlobalRoleList{}.OpenAPIModelName():                                                               schema_pkg_apis_iam_v0alpha1_GlobalRoleList(ref),
-		GlobalRoleSpec{}.OpenAPIModelName():                                                               schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref),
+		iamv0alpha1.GlobalRoleList{}.OpenAPIModelName():                                                   schema_pkg_apis_iam_v0alpha1_GlobalRoleList(ref),
+		iamv0alpha1.GlobalRoleSpec{}.OpenAPIModelName():                                                   schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRoleStatus":                      schema_pkg_apis_iam_v0alpha1_GlobalRoleStatus(ref),
-		GlobalRolespecPermission{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_GlobalRolespecPermission(ref),
+		iamv0alpha1.GlobalRolespecPermission{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_GlobalRolespecPermission(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.GlobalRolestatusOperatorState":         schema_pkg_apis_iam_v0alpha1_GlobalRolestatusOperatorState(ref),
-		ResourcePermission{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref),
-		ResourcePermissionList{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref),
-		ResourcePermissionSpec{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_ResourcePermissionSpec(ref),
+		iamv0alpha1.ResourcePermission{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref),
+		iamv0alpha1.ResourcePermissionList{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref),
+		iamv0alpha1.ResourcePermissionSpec{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_ResourcePermissionSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermissionStatus":              schema_pkg_apis_iam_v0alpha1_ResourcePermissionStatus(ref),
-		ResourcePermissionspecPermission{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_ResourcePermissionspecPermission(ref),
-		ResourcePermissionspecResource{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_ResourcePermissionspecResource(ref),
+		iamv0alpha1.ResourcePermissionspecPermission{}.OpenAPIModelName():                                 schema_pkg_apis_iam_v0alpha1_ResourcePermissionspecPermission(ref),
+		iamv0alpha1.ResourcePermissionspecResource{}.OpenAPIModelName():                                   schema_pkg_apis_iam_v0alpha1_ResourcePermissionspecResource(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ResourcePermissionstatusOperatorState": schema_pkg_apis_iam_v0alpha1_ResourcePermissionstatusOperatorState(ref),
-		Role{}.OpenAPIModelName():                                                                         schema_pkg_apis_iam_v0alpha1_Role(ref),
-		RoleBinding{}.OpenAPIModelName():                                                                  schema_pkg_apis_iam_v0alpha1_RoleBinding(ref),
-		RoleBindingList{}.OpenAPIModelName():                                                              schema_pkg_apis_iam_v0alpha1_RoleBindingList(ref),
-		RoleBindingSpec{}.OpenAPIModelName():                                                              schema_pkg_apis_iam_v0alpha1_RoleBindingSpec(ref),
+		iamv0alpha1.Role{}.OpenAPIModelName():                                                             schema_pkg_apis_iam_v0alpha1_Role(ref),
+		iamv0alpha1.RoleBinding{}.OpenAPIModelName():                                                      schema_pkg_apis_iam_v0alpha1_RoleBinding(ref),
+		iamv0alpha1.RoleBindingList{}.OpenAPIModelName():                                                  schema_pkg_apis_iam_v0alpha1_RoleBindingList(ref),
+		iamv0alpha1.RoleBindingSpec{}.OpenAPIModelName():                                                  schema_pkg_apis_iam_v0alpha1_RoleBindingSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBindingStatus":                     schema_pkg_apis_iam_v0alpha1_RoleBindingStatus(ref),
-		RoleBindingspecRoleRef{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_RoleBindingspecRoleRef(ref),
-		RoleBindingspecSubject{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_RoleBindingspecSubject(ref),
+		iamv0alpha1.RoleBindingspecRoleRef{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_RoleBindingspecRoleRef(ref),
+		iamv0alpha1.RoleBindingspecSubject{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_RoleBindingspecSubject(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleBindingstatusOperatorState":        schema_pkg_apis_iam_v0alpha1_RoleBindingstatusOperatorState(ref),
-		RoleList{}.OpenAPIModelName():                                                                     schema_pkg_apis_iam_v0alpha1_RoleList(ref),
-		RoleSpec{}.OpenAPIModelName():                                                                     schema_pkg_apis_iam_v0alpha1_RoleSpec(ref),
+		iamv0alpha1.RoleList{}.OpenAPIModelName():                                                         schema_pkg_apis_iam_v0alpha1_RoleList(ref),
+		iamv0alpha1.RoleSpec{}.OpenAPIModelName():                                                         schema_pkg_apis_iam_v0alpha1_RoleSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RoleStatus":                            schema_pkg_apis_iam_v0alpha1_RoleStatus(ref),
-		RolespecPermission{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_RolespecPermission(ref),
+		iamv0alpha1.RolespecPermission{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_RolespecPermission(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.RolestatusOperatorState":               schema_pkg_apis_iam_v0alpha1_RolestatusOperatorState(ref),
-		ServiceAccount{}.OpenAPIModelName():                                                               schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref),
-		ServiceAccountList{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref),
-		ServiceAccountSpec{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref),
+		iamv0alpha1.ServiceAccount{}.OpenAPIModelName():                                                   schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref),
+		iamv0alpha1.ServiceAccountList{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref),
+		iamv0alpha1.ServiceAccountSpec{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_ServiceAccountSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountStatus":                  schema_pkg_apis_iam_v0alpha1_ServiceAccountStatus(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.ServiceAccountstatusOperatorState":     schema_pkg_apis_iam_v0alpha1_ServiceAccountstatusOperatorState(ref),
-		Team{}.OpenAPIModelName():                                                                         schema_pkg_apis_iam_v0alpha1_Team(ref),
-		TeamBinding{}.OpenAPIModelName():                                                                  schema_pkg_apis_iam_v0alpha1_TeamBinding(ref),
-		TeamBindingList{}.OpenAPIModelName():                                                              schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref),
-		TeamBindingSpec{}.OpenAPIModelName():                                                              schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref),
+		iamv0alpha1.Team{}.OpenAPIModelName():                                                             schema_pkg_apis_iam_v0alpha1_Team(ref),
+		iamv0alpha1.TeamBinding{}.OpenAPIModelName():                                                      schema_pkg_apis_iam_v0alpha1_TeamBinding(ref),
+		iamv0alpha1.TeamBindingList{}.OpenAPIModelName():                                                  schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref),
+		iamv0alpha1.TeamBindingSpec{}.OpenAPIModelName():                                                  schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingStatus":                     schema_pkg_apis_iam_v0alpha1_TeamBindingStatus(ref),
-		TeamBindingTeamRef{}.OpenAPIModelName():                                                           schema_pkg_apis_iam_v0alpha1_TeamBindingTeamRef(ref),
-		TeamBindingspecSubject{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_TeamBindingspecSubject(ref),
+		iamv0alpha1.TeamBindingTeamRef{}.OpenAPIModelName():                                               schema_pkg_apis_iam_v0alpha1_TeamBindingTeamRef(ref),
+		iamv0alpha1.TeamBindingspecSubject{}.OpenAPIModelName():                                           schema_pkg_apis_iam_v0alpha1_TeamBindingspecSubject(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamBindingstatusOperatorState":        schema_pkg_apis_iam_v0alpha1_TeamBindingstatusOperatorState(ref),
-		TeamLBACRule{}.OpenAPIModelName():                                                                 schema_pkg_apis_iam_v0alpha1_TeamLBACRule(ref),
-		TeamLBACRuleList{}.OpenAPIModelName():                                                             schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref),
-		TeamLBACRuleSpec{}.OpenAPIModelName():                                                             schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref),
-		TeamList{}.OpenAPIModelName():                                                                     schema_pkg_apis_iam_v0alpha1_TeamList(ref),
-		TeamSpec{}.OpenAPIModelName():                                                                     schema_pkg_apis_iam_v0alpha1_TeamSpec(ref),
+		iamv0alpha1.TeamLBACRule{}.OpenAPIModelName():                                                     schema_pkg_apis_iam_v0alpha1_TeamLBACRule(ref),
+		iamv0alpha1.TeamLBACRuleList{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref),
+		iamv0alpha1.TeamLBACRuleSpec{}.OpenAPIModelName():                                                 schema_pkg_apis_iam_v0alpha1_TeamLBACRuleSpec(ref),
+		iamv0alpha1.TeamList{}.OpenAPIModelName():                                                         schema_pkg_apis_iam_v0alpha1_TeamList(ref),
+		iamv0alpha1.TeamSpec{}.OpenAPIModelName():                                                         schema_pkg_apis_iam_v0alpha1_TeamSpec(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamStatus":                            schema_pkg_apis_iam_v0alpha1_TeamStatus(ref),
 		"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.TeamstatusOperatorState":               schema_pkg_apis_iam_v0alpha1_TeamstatusOperatorState(ref),
-		User{}.OpenAPIModelName():                                                                         schema_pkg_apis_iam_v0alpha1_User(ref),
-		UserList{}.OpenAPIModelName():                                                                     schema_pkg_apis_iam_v0alpha1_UserList(ref),
-		UserSpec{}.OpenAPIModelName():                                                                     schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
-		UserStatus{}.OpenAPIModelName():                                                                   schema_pkg_apis_iam_v0alpha1_UserStatus(ref),
+		iamv0alpha1.User{}.OpenAPIModelName():                                                             schema_pkg_apis_iam_v0alpha1_User(ref),
+		iamv0alpha1.UserList{}.OpenAPIModelName():                                                         schema_pkg_apis_iam_v0alpha1_UserList(ref),
+		iamv0alpha1.UserSpec{}.OpenAPIModelName():                                                         schema_pkg_apis_iam_v0alpha1_UserSpec(ref),
+		iamv0alpha1.UserStatus{}.OpenAPIModelName():                                                       schema_pkg_apis_iam_v0alpha1_UserStatus(ref),
 	}
 }
 
@@ -114,14 +115,14 @@ func schema_pkg_apis_iam_v0alpha1_CoreRole(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the CoreRole",
 							Default:     map[string]interface{}{},
-							Ref:         ref(CoreRoleSpec{}.OpenAPIModelName()),
+							Ref:         ref(iamv0alpha1.CoreRoleSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -129,7 +130,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRole(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			CoreRoleSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			iamv0alpha1.CoreRoleSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -156,7 +157,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleList(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -166,7 +167,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleList(ref common.ReferenceCallback) com
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(CoreRole{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.CoreRole{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -177,7 +178,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleList(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			CoreRole{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			iamv0alpha1.CoreRole{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -217,7 +218,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(CoreRolespecPermission{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.CoreRolespecPermission{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -228,7 +229,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleSpec(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			CoreRolespecPermission{}.OpenAPIModelName()},
+			iamv0alpha1.CoreRolespecPermission{}.OpenAPIModelName()},
 	}
 }
 
@@ -379,14 +380,14 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref common.ReferenceCallb
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the ExternalGroupMapping",
 							Default:     map[string]interface{}{},
-							Ref:         ref(ExternalGroupMappingSpec{}.OpenAPIModelName()),
+							Ref:         ref(iamv0alpha1.ExternalGroupMappingSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -394,7 +395,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			ExternalGroupMappingSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			iamv0alpha1.ExternalGroupMappingSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -421,7 +422,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref common.ReferenceC
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -431,7 +432,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref common.ReferenceC
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(ExternalGroupMapping{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.ExternalGroupMapping{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -442,7 +443,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			ExternalGroupMapping{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			iamv0alpha1.ExternalGroupMapping{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -455,7 +456,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingSpec(ref common.ReferenceC
 					"teamRef": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(ExternalGroupMappingTeamRef{}.OpenAPIModelName()),
+							Ref:     ref(iamv0alpha1.ExternalGroupMappingTeamRef{}.OpenAPIModelName()),
 						},
 					},
 					"externalGroupId": {
@@ -470,7 +471,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingSpec(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			ExternalGroupMappingTeamRef{}.OpenAPIModelName()},
+			iamv0alpha1.ExternalGroupMappingTeamRef{}.OpenAPIModelName()},
 	}
 }
 
@@ -508,7 +509,7 @@ func schema_pkg_apis_iam_v0alpha1_GetGroupsBody(ref common.ReferenceCallback) co
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GetGroupsExternalGroupMapping{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GetGroupsExternalGroupMapping{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -519,7 +520,7 @@ func schema_pkg_apis_iam_v0alpha1_GetGroupsBody(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			GetGroupsExternalGroupMapping{}.OpenAPIModelName()},
+			iamv0alpha1.GetGroupsExternalGroupMapping{}.OpenAPIModelName()},
 	}
 }
 
@@ -577,7 +578,7 @@ func schema_pkg_apis_iam_v0alpha1_GetGroupsResponse(ref common.ReferenceCallback
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GetGroupsExternalGroupMapping{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GetGroupsExternalGroupMapping{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -588,7 +589,7 @@ func schema_pkg_apis_iam_v0alpha1_GetGroupsResponse(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			GetGroupsExternalGroupMapping{}.OpenAPIModelName()},
+			iamv0alpha1.GetGroupsExternalGroupMapping{}.OpenAPIModelName()},
 	}
 }
 
@@ -605,7 +606,7 @@ func schema_pkg_apis_iam_v0alpha1_GetMembersBody(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GetMembersTeamUser{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GetMembersTeamUser{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -616,7 +617,7 @@ func schema_pkg_apis_iam_v0alpha1_GetMembersBody(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			GetMembersTeamUser{}.OpenAPIModelName()},
+			iamv0alpha1.GetMembersTeamUser{}.OpenAPIModelName()},
 	}
 }
 
@@ -647,7 +648,7 @@ func schema_pkg_apis_iam_v0alpha1_GetMembersResponse(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GetMembersTeamUser{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GetMembersTeamUser{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -658,7 +659,7 @@ func schema_pkg_apis_iam_v0alpha1_GetMembersResponse(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			GetMembersTeamUser{}.OpenAPIModelName()},
+			iamv0alpha1.GetMembersTeamUser{}.OpenAPIModelName()},
 	}
 }
 
@@ -730,7 +731,7 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchTeamsBody(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GetSearchTeamsTeamHit{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GetSearchTeamsTeamHit{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -755,7 +756,7 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchTeamsBody(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			GetSearchTeamsTeamHit{}.OpenAPIModelName()},
+			iamv0alpha1.GetSearchTeamsTeamHit{}.OpenAPIModelName()},
 	}
 }
 
@@ -800,7 +801,7 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchTeamsResponse(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GetSearchTeamsTeamHit{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GetSearchTeamsTeamHit{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -825,7 +826,7 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchTeamsResponse(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			GetSearchTeamsTeamHit{}.OpenAPIModelName()},
+			iamv0alpha1.GetSearchTeamsTeamHit{}.OpenAPIModelName()},
 	}
 }
 
@@ -904,7 +905,7 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchUsersResponse(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GetSearchUsersUserHit{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GetSearchUsersUserHit{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -929,7 +930,7 @@ func schema_pkg_apis_iam_v0alpha1_GetSearchUsersResponse(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			GetSearchUsersUserHit{}.OpenAPIModelName()},
+			iamv0alpha1.GetSearchUsersUserHit{}.OpenAPIModelName()},
 	}
 }
 
@@ -1022,7 +1023,7 @@ func schema_pkg_apis_iam_v0alpha1_GetTeamsBody(ref common.ReferenceCallback) com
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GetTeamsUserTeam{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GetTeamsUserTeam{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1033,7 +1034,7 @@ func schema_pkg_apis_iam_v0alpha1_GetTeamsBody(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			GetTeamsUserTeam{}.OpenAPIModelName()},
+			iamv0alpha1.GetTeamsUserTeam{}.OpenAPIModelName()},
 	}
 }
 
@@ -1064,7 +1065,7 @@ func schema_pkg_apis_iam_v0alpha1_GetTeamsResponse(ref common.ReferenceCallback)
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GetTeamsUserTeam{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GetTeamsUserTeam{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1075,7 +1076,7 @@ func schema_pkg_apis_iam_v0alpha1_GetTeamsResponse(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			GetTeamsUserTeam{}.OpenAPIModelName()},
+			iamv0alpha1.GetTeamsUserTeam{}.OpenAPIModelName()},
 	}
 }
 
@@ -1143,14 +1144,14 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRole(ref common.ReferenceCallback) commo
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the GlobalRole",
 							Default:     map[string]interface{}{},
-							Ref:         ref(GlobalRoleSpec{}.OpenAPIModelName()),
+							Ref:         ref(iamv0alpha1.GlobalRoleSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1158,7 +1159,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRole(ref common.ReferenceCallback) commo
 			},
 		},
 		Dependencies: []string{
-			GlobalRoleSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			iamv0alpha1.GlobalRoleSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -1185,14 +1186,14 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBinding(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the GlobalRoleBinding",
 							Default:     map[string]interface{}{},
-							Ref:         ref(GlobalRoleBindingSpec{}.OpenAPIModelName()),
+							Ref:         ref(iamv0alpha1.GlobalRoleBindingSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1200,7 +1201,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBinding(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			GlobalRoleBindingSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			iamv0alpha1.GlobalRoleBindingSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -1227,7 +1228,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingList(ref common.ReferenceCall
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1237,7 +1238,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingList(ref common.ReferenceCall
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GlobalRoleBinding{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GlobalRoleBinding{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1248,7 +1249,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingList(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			GlobalRoleBinding{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			iamv0alpha1.GlobalRoleBinding{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -1261,7 +1262,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingSpec(ref common.ReferenceCall
 					"subject": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(GlobalRoleBindingspecSubject{}.OpenAPIModelName()),
+							Ref:     ref(iamv0alpha1.GlobalRoleBindingspecSubject{}.OpenAPIModelName()),
 						},
 					},
 					"roleRefs": {
@@ -1271,7 +1272,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingSpec(ref common.ReferenceCall
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GlobalRoleBindingspecRoleRef{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GlobalRoleBindingspecRoleRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1282,7 +1283,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingSpec(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			GlobalRoleBindingspecRoleRef{}.OpenAPIModelName(), GlobalRoleBindingspecSubject{}.OpenAPIModelName()},
+			iamv0alpha1.GlobalRoleBindingspecRoleRef{}.OpenAPIModelName(), iamv0alpha1.GlobalRoleBindingspecSubject{}.OpenAPIModelName()},
 	}
 }
 
@@ -1462,7 +1463,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleList(ref common.ReferenceCallback) c
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1472,7 +1473,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleList(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GlobalRole{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GlobalRole{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1483,7 +1484,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleList(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			GlobalRole{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			iamv0alpha1.GlobalRole{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -1523,7 +1524,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(GlobalRolespecPermission{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.GlobalRolespecPermission{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1534,7 +1535,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleSpec(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			GlobalRolespecPermission{}.OpenAPIModelName()},
+			iamv0alpha1.GlobalRolespecPermission{}.OpenAPIModelName()},
 	}
 }
 
@@ -1685,14 +1686,14 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref common.ReferenceCallbac
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the ResourcePermission",
 							Default:     map[string]interface{}{},
-							Ref:         ref(ResourcePermissionSpec{}.OpenAPIModelName()),
+							Ref:         ref(iamv0alpha1.ResourcePermissionSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1700,7 +1701,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			ResourcePermissionSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			iamv0alpha1.ResourcePermissionSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -1727,7 +1728,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref common.ReferenceCal
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1737,7 +1738,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(ResourcePermission{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.ResourcePermission{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1748,7 +1749,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			ResourcePermission{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			iamv0alpha1.ResourcePermission{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -1761,7 +1762,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermissionSpec(ref common.ReferenceCal
 					"resource": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(ResourcePermissionspecResource{}.OpenAPIModelName()),
+							Ref:     ref(iamv0alpha1.ResourcePermissionspecResource{}.OpenAPIModelName()),
 						},
 					},
 					"permissions": {
@@ -1771,7 +1772,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermissionSpec(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(ResourcePermissionspecPermission{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.ResourcePermissionspecPermission{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1782,7 +1783,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermissionSpec(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			ResourcePermissionspecPermission{}.OpenAPIModelName(), ResourcePermissionspecResource{}.OpenAPIModelName()},
+			iamv0alpha1.ResourcePermissionspecPermission{}.OpenAPIModelName(), iamv0alpha1.ResourcePermissionspecResource{}.OpenAPIModelName()},
 	}
 }
 
@@ -1978,14 +1979,14 @@ func schema_pkg_apis_iam_v0alpha1_Role(ref common.ReferenceCallback) common.Open
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the Role",
 							Default:     map[string]interface{}{},
-							Ref:         ref(RoleSpec{}.OpenAPIModelName()),
+							Ref:         ref(iamv0alpha1.RoleSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -1993,7 +1994,7 @@ func schema_pkg_apis_iam_v0alpha1_Role(ref common.ReferenceCallback) common.Open
 			},
 		},
 		Dependencies: []string{
-			RoleSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			iamv0alpha1.RoleSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -2020,14 +2021,14 @@ func schema_pkg_apis_iam_v0alpha1_RoleBinding(ref common.ReferenceCallback) comm
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the RoleBinding",
 							Default:     map[string]interface{}{},
-							Ref:         ref(RoleBindingSpec{}.OpenAPIModelName()),
+							Ref:         ref(iamv0alpha1.RoleBindingSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -2035,7 +2036,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBinding(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			RoleBindingSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			iamv0alpha1.RoleBindingSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -2062,7 +2063,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingList(ref common.ReferenceCallback) 
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2072,7 +2073,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingList(ref common.ReferenceCallback) 
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(RoleBinding{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.RoleBinding{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2083,7 +2084,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingList(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			RoleBinding{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			iamv0alpha1.RoleBinding{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -2096,7 +2097,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingSpec(ref common.ReferenceCallback) 
 					"subject": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(RoleBindingspecSubject{}.OpenAPIModelName()),
+							Ref:     ref(iamv0alpha1.RoleBindingspecSubject{}.OpenAPIModelName()),
 						},
 					},
 					"roleRefs": {
@@ -2106,7 +2107,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingSpec(ref common.ReferenceCallback) 
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(RoleBindingspecRoleRef{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.RoleBindingspecRoleRef{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2117,7 +2118,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingSpec(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			RoleBindingspecRoleRef{}.OpenAPIModelName(), RoleBindingspecSubject{}.OpenAPIModelName()},
+			iamv0alpha1.RoleBindingspecRoleRef{}.OpenAPIModelName(), iamv0alpha1.RoleBindingspecSubject{}.OpenAPIModelName()},
 	}
 }
 
@@ -2297,7 +2298,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleList(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2307,7 +2308,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleList(ref common.ReferenceCallback) common.
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(Role{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.Role{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2318,7 +2319,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleList(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			Role{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			iamv0alpha1.Role{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -2358,7 +2359,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(RolespecPermission{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.RolespecPermission{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2369,7 +2370,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleSpec(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			RolespecPermission{}.OpenAPIModelName()},
+			iamv0alpha1.RolespecPermission{}.OpenAPIModelName()},
 	}
 }
 
@@ -2520,14 +2521,14 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref common.ReferenceCallback) c
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the ServiceAccount",
 							Default:     map[string]interface{}{},
-							Ref:         ref(ServiceAccountSpec{}.OpenAPIModelName()),
+							Ref:         ref(iamv0alpha1.ServiceAccountSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -2535,7 +2536,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			ServiceAccountSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			iamv0alpha1.ServiceAccountSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -2562,7 +2563,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref common.ReferenceCallbac
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2572,7 +2573,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref common.ReferenceCallbac
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(ServiceAccount{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.ServiceAccount{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2583,7 +2584,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			ServiceAccount{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			iamv0alpha1.ServiceAccount{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -2746,14 +2747,14 @@ func schema_pkg_apis_iam_v0alpha1_Team(ref common.ReferenceCallback) common.Open
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the Team",
 							Default:     map[string]interface{}{},
-							Ref:         ref(TeamSpec{}.OpenAPIModelName()),
+							Ref:         ref(iamv0alpha1.TeamSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -2761,7 +2762,7 @@ func schema_pkg_apis_iam_v0alpha1_Team(ref common.ReferenceCallback) common.Open
 			},
 		},
 		Dependencies: []string{
-			TeamSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			iamv0alpha1.TeamSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -2788,14 +2789,14 @@ func schema_pkg_apis_iam_v0alpha1_TeamBinding(ref common.ReferenceCallback) comm
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the TeamBinding",
 							Default:     map[string]interface{}{},
-							Ref:         ref(TeamBindingSpec{}.OpenAPIModelName()),
+							Ref:         ref(iamv0alpha1.TeamBindingSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -2803,7 +2804,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBinding(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			TeamBindingSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			iamv0alpha1.TeamBindingSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -2830,7 +2831,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref common.ReferenceCallback) 
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2840,7 +2841,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref common.ReferenceCallback) 
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(TeamBinding{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.TeamBinding{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2851,7 +2852,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			TeamBinding{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			iamv0alpha1.TeamBinding{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -2864,13 +2865,13 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref common.ReferenceCallback) 
 					"subject": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(TeamBindingspecSubject{}.OpenAPIModelName()),
+							Ref:     ref(iamv0alpha1.TeamBindingspecSubject{}.OpenAPIModelName()),
 						},
 					},
 					"teamRef": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(TeamBindingTeamRef{}.OpenAPIModelName()),
+							Ref:     ref(iamv0alpha1.TeamBindingTeamRef{}.OpenAPIModelName()),
 						},
 					},
 					"permission": {
@@ -2893,7 +2894,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingSpec(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			TeamBindingTeamRef{}.OpenAPIModelName(), TeamBindingspecSubject{}.OpenAPIModelName()},
+			iamv0alpha1.TeamBindingTeamRef{}.OpenAPIModelName(), iamv0alpha1.TeamBindingspecSubject{}.OpenAPIModelName()},
 	}
 }
 
@@ -3057,14 +3058,14 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRule(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the TeamLBACRule",
 							Default:     map[string]interface{}{},
-							Ref:         ref(TeamLBACRuleSpec{}.OpenAPIModelName()),
+							Ref:         ref(iamv0alpha1.TeamLBACRuleSpec{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -3072,7 +3073,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRule(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			TeamLBACRuleSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			iamv0alpha1.TeamLBACRuleSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -3099,7 +3100,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref common.ReferenceCallback)
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -3109,7 +3110,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref common.ReferenceCallback)
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(TeamLBACRule{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.TeamLBACRule{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3120,7 +3121,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			TeamLBACRule{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			iamv0alpha1.TeamLBACRule{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -3199,7 +3200,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamList(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -3209,7 +3210,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamList(ref common.ReferenceCallback) common.
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(Team{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.Team{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3220,7 +3221,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamList(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			Team{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			iamv0alpha1.Team{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -3383,20 +3384,20 @@ func schema_pkg_apis_iam_v0alpha1_User(ref common.ReferenceCallback) common.Open
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
 						},
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Spec is the spec of the User",
 							Default:     map[string]interface{}{},
-							Ref:         ref(UserSpec{}.OpenAPIModelName()),
+							Ref:         ref(iamv0alpha1.UserSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(UserStatus{}.OpenAPIModelName()),
+							Ref:     ref(iamv0alpha1.UserStatus{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -3404,7 +3405,7 @@ func schema_pkg_apis_iam_v0alpha1_User(ref common.ReferenceCallback) common.Open
 			},
 		},
 		Dependencies: []string{
-			UserSpec{}.OpenAPIModelName(), UserStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			iamv0alpha1.UserSpec{}.OpenAPIModelName(), iamv0alpha1.UserStatus{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -3431,7 +3432,7 @@ func schema_pkg_apis_iam_v0alpha1_UserList(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -3441,7 +3442,7 @@ func schema_pkg_apis_iam_v0alpha1_UserList(ref common.ReferenceCallback) common.
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref(User{}.OpenAPIModelName()),
+										Ref:     ref(iamv0alpha1.User{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3452,7 +3453,7 @@ func schema_pkg_apis_iam_v0alpha1_UserList(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			User{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+			iamv0alpha1.User{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
