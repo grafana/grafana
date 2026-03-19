@@ -19,7 +19,7 @@ import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { formatPrometheusDuration } from '../../utils/time';
 import { createRelativeUrl } from '../../utils/url';
 
-import { dateFormatter, noop } from './timelineUtils';
+import { formatTimelineDate, noop } from './timelineUtils';
 
 type NotificationEntry = CreateNotificationqueryNotificationEntry;
 
@@ -202,7 +202,7 @@ export function InstanceTimeline({ records, notifications, filter = 'all' }: Ins
             <React.Fragment key={`${entry.type}-${entry.timestamp}-${index}`}>
               <div className={styles.timestampCell}>
                 <Text variant="bodySmall" color="secondary">
-                  {dateFormatter.format(new Date(entry.timestamp))}
+                  {formatTimelineDate(entry.timestamp)}
                 </Text>
               </div>
               <div className={styles.dotCell}>
@@ -395,7 +395,7 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
     <div className={styles.notificationDetailRow}>
       <div className={styles.notificationRowMain}>
         <Text variant="bodySmall" color="secondary">
-          {dateFormatter.format(new Date(notification.timestamp))}
+          {formatTimelineDate(notification.timestamp)}
         </Text>
         <Stack direction="row" gap={0.5} alignItems="center">
           <IntegrationIcon integration={notification.integration} />
