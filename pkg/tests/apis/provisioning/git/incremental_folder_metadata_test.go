@@ -300,3 +300,97 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Display")
 	})
 }
+
+// TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename verifies
+// that renaming a folder backed by _folder.json updates the K8s object in place
+// (preserving its UID and generation) instead of deleting and recreating it.
+func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("metadata-backed folder rename preserves UID and generation", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-graceful-rename"
+		const folderUID = "stable-team-uid"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"old-team/_folder.json":    folderMetadataJSON(folderUID, "My Team"),
+			"old-team/dashboard1.json": dashboardJSON("gr-dash-001", "Team Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+
+		// Verify initial state.
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"old-team"})
+		requireRepoFolderTitle(t, helper, ctx, repoName, "My Team")
+
+		// Capture the folder's K8s generation after initial sync.
+		folderObj, err := helper.FoldersV1.Resource.Get(ctx, folderUID, metav1.GetOptions{})
+		require.NoError(t, err, "folder should exist with stable UID from _folder.json")
+		initialGeneration := folderObj.GetGeneration()
+		require.True(t, initialGeneration >= 1, "initial generation should be at least 1")
+
+		// Rename the folder via git mv.
+		_, err = local.Git("mv", "old-team", "new-team")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename old-team to new-team")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.syncAndWaitIncremental(t, repoName)
+
+		// The folder UID should be preserved (same K8s name).
+		renamedObj, err := helper.FoldersV1.Resource.Get(ctx, folderUID, metav1.GetOptions{})
+		require.NoError(t, err, "folder should still exist with same UID after rename")
+
+		// Generation should NOT have been reset to 1, proving in-place update.
+		newGeneration := renamedObj.GetGeneration()
+		require.GreaterOrEqual(t, newGeneration, initialGeneration,
+			"generation should not decrease — proves folder was updated in place, not deleted+recreated")
+
+		// sourcePath should reflect the new directory.
+		sourcePath, _, _ := unstructured.NestedString(renamedObj.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "new-team", sourcePath, "sourcePath should be updated to new directory")
+
+		// Folder list should show only the new path.
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-team"})
+
+		// Dashboard should still exist with updated sourcePath.
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"gr-dash-001": {Title: "Team Dashboard", SourcePath: "new-team/dashboard1.json"},
+		})
+	})
+
+	t.Run("non-metadata folder rename still works via delete and create", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-graceful-rename-nometa"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"old-team/dashboard1.json": dashboardJSON("gr-nometa-001", "No Meta Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"old-team"})
+
+		_, err := local.Git("mv", "old-team", "new-team")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename folder without metadata")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.syncAndWaitIncremental(t, repoName)
+
+		// Folder should exist at new path (new UID, since no _folder.json).
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-team"})
+
+		// Dashboard should be accessible with updated sourcePath.
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"gr-nometa-001": {Title: "No Meta Dashboard", SourcePath: "new-team/dashboard1.json"},
+		})
+	})
+}

@@ -109,6 +109,24 @@ type Folder struct {
 	ParentID string
 }
 
+// FolderState represents the current state of a folder as stored in K8s.
+type FolderState struct {
+	Title    string
+	Path     string
+	Checksum string
+	Parent   string
+}
+
+// NeedsUpdate reports whether the desired Folder state differs from the
+// current K8s state. This encapsulates the full staleness check: title,
+// source path, metadata checksum, and parent.
+func (f Folder) NeedsUpdate(current FolderState) bool {
+	return f.Title != current.Title ||
+		f.Path != current.Path ||
+		f.MetadataHash != current.Checksum ||
+		f.ParentID != current.Parent
+}
+
 func ParseFolder(dirPath, repositoryName string) Folder {
 	hasher := appendHashSuffix(strings.TrimSuffix(dirPath, "/"), repositoryName)
 	base := safepath.Base(dirPath)

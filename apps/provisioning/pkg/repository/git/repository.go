@@ -787,26 +787,16 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 			newPath, newErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
 			oldPath, oldErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
 
-			// Tree entries (directories) cannot be processed as file renames.
-			// Decompose into delete + create so folder bookkeeping still works.
+			// Tree entries (directories) are emitted with trailing slashes so
+			// downstream code can identify them via safepath.IsDir and handle
+			// folder renames in place rather than decomposing into delete+create.
 			if f.Mode == 0o40000 {
-				if oldErr == nil {
-					changes = append(changes, repository.VersionedFileChange{
-						Action:       repository.FileActionDeleted,
-						Path:         oldPath,
-						PreviousPath: oldPath,
-						Ref:          ref,
-						PreviousRef:  base,
-					})
-				}
 				if newErr == nil {
-					changes = append(changes, repository.VersionedFileChange{
-						Action: repository.FileActionCreated,
-						Path:   newPath,
-						Ref:    ref,
-					})
+					newPath += "/"
 				}
-				continue
+				if oldErr == nil {
+					oldPath += "/"
+				}
 			}
 
 			switch {
