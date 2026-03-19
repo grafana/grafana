@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -384,6 +385,12 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 			logger.Info("repository marked for deletion - skip job",
 				"deletionTimestamp", r.DeletionTimestamp,
 			)
+			return nil
+		}
+
+		if appcontroller.IsPendingDelete(r.Labels) {
+			logger.Info("repository namespace is pending deletion - skip job")
+			recorder.Record(ctx, NewPathOnlyResult(repoName).WithWarning(errors.New("repository namespace is pending deletion - job skipped")).Build())
 			return nil
 		}
 

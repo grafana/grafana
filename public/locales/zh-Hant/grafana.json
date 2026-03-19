@@ -2311,6 +2311,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2335,7 +2336,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2345,8 +2345,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2405,9 +2406,6 @@
       "label-payload": "裝載",
       "label-use-existing-alert-instances": "使用現有的警報執行個體",
       "reference": "參考資料"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "立即使用我們其中一個量身打造的應用程式，加快警報建立速度"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "此規則由「{{pluginName}}」外掛程式管理"
@@ -2921,6 +2919,9 @@
       "error-button": "錯誤",
       "export-all-grafana-rules": "匯出所有 Grafana 規則",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "取消搜尋",
         "no-more-results": "沒有更多結果 – 找到 {{numberOfRules}} 個規則",
@@ -3067,8 +3068,6 @@
       "dashboard": "儀表板",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "按資料來源搜尋說明",
       "filter-options": {
-        "aria-label": "篩選選項",
-        "aria-label-show-filters": "篩選",
         "placeholder-namespace": "選擇命名空間",
         "placeholder-search-input": "按名稱搜尋或輸入篩選條件查詢…"
       },
@@ -3100,6 +3099,9 @@
       "state": "狀態",
       "title-search-help": "搜尋說明",
       "view-as": "檢視形式"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "正在刪除",
@@ -4781,7 +4783,6 @@
     "all": "全部",
     "apply": "套用",
     "cancel": "取消",
-    "clear": "清除",
     "collapse": "收闔",
     "disabled": "已停用",
     "discard": "捨棄",
@@ -5880,6 +5881,12 @@
         "title": "面板時間設定"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "必須先儲存儀表板，然後才能新增警報。",
@@ -6511,6 +6518,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7244,6 +7262,8 @@
       "cannot-be-saved": "此儀表板無法從 Grafana UI 儲存，因為其已從其他來源設定。複製 JSON 或將其儲存到下方的檔案中，然後您可以在佈建來源中更新您的儀表板。",
       "copy-json-to-clipboard": "複製 JSON 到剪貼簿",
       "file-path": "<strong>檔案路徑：</strong>{{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "說明",
       "label-target-folder": "目標資料夾",
       "label-title": "標題",
@@ -7925,6 +7945,7 @@
       "fixed-value-options": {
         "label-fixed-values": "固定值"
       },
+      "label": "",
       "label-limit": "限制",
       "label-value": "數值",
       "noOptionsMessage-no-fields-found": "未找到欄位",
@@ -9944,7 +9965,9 @@
       "external-links-heading": "外部連結"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "輸入規則表達式"
+      "input-placeholder": "輸入規則表達式",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "比較運算子",
@@ -9971,6 +9994,18 @@
       "expand-row-tooltip": "切換列展開",
       "tooltip-collapse-all": "收闔所有列",
       "tooltip-expand-all": "展開所有列"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "為名稱符合正則表達式的欄位設定屬性",
@@ -11190,7 +11225,7 @@
       "cancel": "取消",
       "change-uid": "變更 UID",
       "description-library-panels-imported": "將要匯入的新資料庫面板清單。",
-      "description-unique-identifier-uid": "儀表板的唯一識別碼 (UID)，可用於在多個 Grafana 安裝項目間單獨識別儀表板。UID 允許具有一致的網址存取儀表板，因此變更儀表板的標題不會破壞任何該儀表板的加入書籤連結。",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "現有的資料庫面板",
       "label-folder": "資料夾",
       "label-name": "名稱（名字）",
@@ -12708,9 +12743,6 @@
     "title-loaded-pull-request-in-repo": "此資源是從您剛剛在 {{repoType}} 中建立的分支載入，且只有您可以查看"
   },
   "provisioning": {
-    "banner": {
-      "message": "此功能目前正在積極開發中。為了獲得最佳體驗和最新改進版本，建議使用 Grafana 的<2>夜間版本</2>。"
-    },
     "bitbucket": {
       "branch-required": "分支為必填",
       "permissions": {
@@ -13393,6 +13425,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "選擇要同步的內容",
       "step-configure-repo": "設定資源庫",
       "step-connect": "連接",

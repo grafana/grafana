@@ -354,7 +354,8 @@ const getColumnStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       flexWrap: 'nowrap',
       gap: theme.spacing(1),
-      overflow: 'hidden',
+      // No overflow:hidden here — it would clip the focus ring (box-shadow) from child <a> elements.
+      // The parent cell already clips the container width. Each locationItem handles its own truncation.
     }),
     locationItem: css({
       alignItems: 'center',
