@@ -87,7 +87,6 @@ export function CollabCursorOverlay() {
   const sendCursorRef = useRef(sendCursor);
   sendCursorRef.current = sendCursor;
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- throttle returns a stable function; re-creating it on every render would break the throttle window
   const handleMouseMove = useCallback(
     throttle((e: MouseEvent) => {
       if (!containerRef.current) {
@@ -182,11 +181,9 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     cursor: css({
       position: 'absolute',
+      transition: 'left 100ms linear, top 100ms linear',
       willChange: 'left, top',
       pointerEvents: 'none',
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: 'left 100ms linear, top 100ms linear',
-      },
     }),
     arrow: css({
       display: 'block',
@@ -202,10 +199,8 @@ function getStyles(theme: GrafanaTheme2) {
       fontSize: theme.typography.bodySmall.fontSize,
       lineHeight: theme.typography.bodySmall.lineHeight,
       whiteSpace: 'nowrap',
+      transition: 'opacity 300ms ease-out',
       pointerEvents: 'none',
-      [theme.transitions.handleMotion('no-preference')]: {
-        transition: 'opacity 300ms ease-out',
-      },
     }),
   };
 }

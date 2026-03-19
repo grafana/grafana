@@ -69,7 +69,6 @@ export function classifyChannelError(error: unknown): string | null {
     return null;
   }
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- runtime typeof check above guarantees object shape
   const err = error as { status?: number; message?: string; data?: { message?: string } };
 
   // 404 or "not found" → dashboard was deleted

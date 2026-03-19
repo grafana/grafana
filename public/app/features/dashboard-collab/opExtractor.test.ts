@@ -2,9 +2,6 @@ import { SceneObjectStateChangedEvent, VizPanel, SceneVariableSet } from '@grafa
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardGridItem } from 'app/features/dashboard-scene/scene/layout-default/DashboardGridItem';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- test helper for deeply nested payload assertions
-type AnyRecord = Record<string, any>;
-
 import { LARGE_DASHBOARD_PANEL_THRESHOLD } from './collabEdgeCases';
 import {
   extractMutationRequest,
@@ -21,10 +18,10 @@ function makeEvent(
   newState: Record<string, unknown> = {}
 ): SceneObjectStateChangedEvent {
   return new SceneObjectStateChangedEvent({
-    changedObject: changedObject as unknown as SceneObjectStateChangedEvent['payload']['changedObject'],
+    changedObject: changedObject as any,
     partialUpdate,
-    prevState: prevState as unknown as SceneObjectStateChangedEvent['payload']['prevState'],
-    newState: newState as unknown as SceneObjectStateChangedEvent['payload']['newState'],
+    prevState: prevState as any,
+    newState: newState as any,
   });
 }
 
@@ -42,7 +39,7 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('UPDATE_PANEL');
-      const payload = result!.mutation.payload as AnyRecord;
+      const payload = result!.mutation.payload as any;
       expect(payload.element).toEqual({ kind: 'ElementReference', name: 'panel-1' });
       expect(payload.panel.spec.title).toBe('New Title');
       expect(result!.lockTarget).toBe('panel-1');
@@ -56,7 +53,7 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('UPDATE_PANEL');
-      const payload = result!.mutation.payload as AnyRecord;
+      const payload = result!.mutation.payload as any;
       expect(payload.element).toEqual({ kind: 'ElementReference', name: 'panel-2' });
       expect(payload.panel.spec.description).toBe('Updated description');
     });
@@ -82,7 +79,7 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('MOVE_PANEL');
-      const payload = result!.mutation.payload as AnyRecord;
+      const payload = result!.mutation.payload as any;
       expect(payload.element).toEqual({ kind: 'ElementReference', name: 'panel-1' });
       expect(payload.layoutItem.spec.x).toBe(10);
       expect(payload.layoutItem.spec.y).toBe(5);
@@ -121,7 +118,7 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('UPDATE_DASHBOARD_INFO');
-      expect((result!.mutation.payload as AnyRecord).title).toBe('New Dashboard Title');
+      expect((result!.mutation.payload as any).title).toBe('New Dashboard Title');
       expect(result!.lockTarget).toBe('__dashboard__');
     });
 
@@ -133,7 +130,7 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('UPDATE_DASHBOARD_INFO');
-      expect((result!.mutation.payload as AnyRecord).tags).toEqual(['prod', 'monitoring']);
+      expect((result!.mutation.payload as any).tags).toEqual(['prod', 'monitoring']);
     });
 
     it('extracts description change', () => {
@@ -144,7 +141,7 @@ describe('opExtractor', () => {
 
       expect(result).not.toBeNull();
       expect(result!.mutation.type).toBe('UPDATE_DASHBOARD_INFO');
-      expect((result!.mutation.payload as AnyRecord).description).toBe('Updated');
+      expect((result!.mutation.payload as any).description).toBe('Updated');
     });
 
     it('ignores non-dashboard-info changes', () => {

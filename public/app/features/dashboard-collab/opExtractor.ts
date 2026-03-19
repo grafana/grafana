@@ -150,23 +150,17 @@ function extractPanelChange(
     };
   }
   if ('fieldConfig' in partialUpdate) {
-    /* eslint-disable @typescript-eslint/consistent-type-assertions -- building nested spec object from loosely-typed partialUpdate */
-    const existingVizConfig = spec.vizConfig as Record<string, unknown> | undefined;
-    const existingSpec = existingVizConfig?.spec as Record<string, unknown> | undefined;
-    /* eslint-enable @typescript-eslint/consistent-type-assertions */
     spec.vizConfig = {
-      ...existingVizConfig,
+      ...(spec.vizConfig as Record<string, unknown> | undefined),
       spec: {
-        ...existingSpec,
+        ...((spec.vizConfig as Record<string, unknown> | undefined)?.spec as Record<string, unknown> | undefined),
         fieldConfig: partialUpdate.fieldConfig,
       },
     };
   }
   if ('pluginId' in partialUpdate) {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- building nested spec object from loosely-typed partialUpdate
-    const existingVizConfig = spec.vizConfig as Record<string, unknown> | undefined;
     spec.vizConfig = {
-      ...existingVizConfig,
+      ...(spec.vizConfig as Record<string, unknown> | undefined),
       group: partialUpdate.pluginId,
     };
   }
