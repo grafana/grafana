@@ -90,6 +90,9 @@ type UpdateUserCommand struct {
 	IsDisabled     *bool `json:"-"`
 	EmailVerified  *bool `json:"-"`
 	IsGrafanaAdmin *bool `json:"-"`
+	// If Salt is included it will be used when hashing Password.
+	// Intended for legacy password rehash migrations only.
+	Salt *string `json:"-"`
 	// If password is included it will be validated, hashed and updated for user.
 	Password *Password `json:"-"`
 	// If old password is included it will be validated against users current password.

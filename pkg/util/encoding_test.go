@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/hex"
 	"math"
 	"strings"
 	"testing"
@@ -33,6 +34,56 @@ func TestEncodePassword(t *testing.T) {
 		"e59c568621e57756495a468f47c74e07c911b037084dd464bb2ed72410970dc849cabd71b48c394faf08a5405dae53741ce9",
 		encodedPassword,
 	)
+}
+
+func TestGeneratePasswordSalt_CompliantOutput(t *testing.T) {
+	seen := make(map[string]struct{}, 100)
+	for i := 0; i < 100; i++ {
+		salt, err := GeneratePasswordSalt()
+		require.NoError(t, err)
+		require.Len(t, salt, 32)
+
+		decoded, err := hex.DecodeString(salt)
+		require.NoError(t, err)
+		require.Len(t, decoded, 16)
+
+		_, exists := seen[salt]
+		require.False(t, exists, "salt must be unique")
+		seen[salt] = struct{}{}
+	}
+}
+
+func TestEncodePassword_WithCompliantSalt(t *testing.T) {
+	salt, err := GeneratePasswordSalt()
+	require.NoError(t, err)
+
+	encodedPassword, err := EncodePassword("iamgod", salt)
+	require.NoError(t, err)
+	require.NotEmpty(t, encodedPassword)
+
+	_, err = hex.DecodeString(encodedPassword)
+	require.NoError(t, err)
+}
+
+func TestEncodePasswordLegacy_WorksWithLegacyShortSalt(t *testing.T) {
+	encodedPassword, err := EncodePasswordLegacy("iamgod", "pepper")
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		"e59c568621e57756495a468f47c74e07c911b037084dd464bb2ed72410970dc849cabd71b48c394faf08a5405dae53741ce9",
+		encodedPassword,
+	)
+}
+
+func TestGeneratePasswordSalt_UniqueAcrossMany(t *testing.T) {
+	seen := make(map[string]struct{}, 1000)
+	for i := 0; i < 1000; i++ {
+		salt, err := GeneratePasswordSalt()
+		require.NoError(t, err)
+		_, exists := seen[salt]
+		require.False(t, exists, "salt must be unique")
+		seen[salt] = struct{}{}
+	}
 }
 
 func TestDecodeQuotedPrintable(t *testing.T) {

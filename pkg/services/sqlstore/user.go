@@ -73,7 +73,7 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		LastSeenAt: time.Now().AddDate(-10, 0, 0),
 	}
 
-	salt, err := util.GetRandomString(10)
+	salt, err := util.GeneratePasswordSalt()
 	if err != nil {
 		return usr, err
 	}

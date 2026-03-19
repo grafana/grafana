@@ -7,9 +7,12 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"mime/quotedprintable"
 	"strings"
+
+	legacypbkdf2 "golang.org/x/crypto/pbkdf2"
 )
 
 const alphanum = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -54,6 +57,35 @@ func EncodePassword(password string, salt string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	return hex.EncodeToString(newPasswd), nil
+}
+
+// GeneratePasswordSalt generates a FIPS-compliant 16-byte
+// random salt encoded as a hex string for DB storage.
+// Uses crypto/rand to meet NIST SP 800-132 §5.1 requirements.
+func GeneratePasswordSalt() (string, error) {
+	salt := make([]byte, 16)
+	if _, err := rand.Read(salt); err != nil {
+		return "", fmt.Errorf("failed to generate salt: %w", err)
+	}
+	return hex.EncodeToString(salt), nil
+}
+
+// EncodePasswordLegacy encodes a password using the pure-Go
+// PBKDF2 implementation from golang.org/x/crypto/pbkdf2.
+// This bypasses FIPS enforcement and is used ONLY to verify
+// passwords hashed with legacy short salts (< 16 bytes).
+// After successful verification, the caller must re-hash the
+// password with EncodePassword and a new compliant salt.
+// See: GitHub issue #120561
+func EncodePasswordLegacy(password string, salt string) (string, error) {
+	newPasswd := legacypbkdf2.Key(
+		[]byte(password),
+		[]byte(salt),
+		10000,
+		50,
+		sha256.New,
+	)
 	return hex.EncodeToString(newPasswd), nil
 }
 

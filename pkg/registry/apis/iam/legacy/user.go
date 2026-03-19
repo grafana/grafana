@@ -394,7 +394,7 @@ func newCreateOrgUser(sql *legacysql.LegacyDatabaseHelper, cmd *CreateOrgUserCom
 func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo, cmd CreateUserCommand) (*CreateUserResult, error) {
 	cmd.OrgID = ns.OrgID
 
-	salt, err := util.GetRandomString(10)
+	salt, err := util.GeneratePasswordSalt()
 	if err != nil {
 		return nil, err
 	}

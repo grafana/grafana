@@ -4,12 +4,14 @@ import (
 	"context"
 	"crypto/subtle"
 	"errors"
+	"fmt"
 	"net/mail"
 	"strconv"
 
 	"go.opentelemetry.io/otel/trace"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -22,13 +24,14 @@ var _ authn.ProxyClient = new(Grafana)
 var _ authn.PasswordClient = new(Grafana)
 
 func ProvideGrafana(cfg *setting.Cfg, userService user.Service, tracer trace.Tracer) *Grafana {
-	return &Grafana{cfg, userService, tracer}
+	return &Grafana{cfg: cfg, userService: userService, tracer: tracer, log: log.New("authn.grafana")}
 }
 
 type Grafana struct {
 	cfg         *setting.Cfg
 	userService user.Service
 	tracer      trace.Tracer
+	log         log.Logger
 }
 
 func (c *Grafana) String() string {
@@ -111,8 +114,38 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 	// user was found so set auth module in req metadata
 	r.SetMeta(authn.MetaKeyAuthModule, "grafana")
 
-	if ok := comparePassword(password, usr.Salt, string(usr.Password)); !ok {
+	ok, err := comparePassword(password, usr.Salt, string(usr.Password))
+	if err != nil {
+		return nil, err
+	}
+
+	if !ok {
 		return nil, errInvalidPassword.Errorf("invalid password")
+	}
+
+	// After successful legacy password verification, upgrade to a FIPS-compliant salt
+	// if the stored salt is shorter than 16 bytes (32 hex chars).
+	// See: GitHub issue #120561, comment by xnox
+	if len(usr.Salt) < 32 {
+		newSalt, err := util.GeneratePasswordSalt()
+		if err != nil {
+			c.log.Warn("failed to generate password salt during migration", "userID", usr.ID, "error", err)
+		} else {
+			newSaltCopy := newSalt
+			newPassword := user.Password(password)
+			if err := c.userService.Update(ctx, &user.UpdateUserCommand{
+				UserID:   usr.ID,
+				Salt:     &newSaltCopy,
+				Password: &newPassword,
+			}); err != nil {
+				// Log but don't fail login — migration is best-effort
+				c.log.Warn(
+					"failed to upgrade password salt to FIPS-compliant length",
+					"userID", usr.ID,
+					"error", err,
+				)
+			}
+		}
 	}
 
 	return &authn.Identity{
@@ -124,8 +157,24 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 	}, nil
 }
 
-func comparePassword(password, salt, hash string) bool {
-	// It is ok to ignore the error here because util.EncodePassword can never return a error
-	hashedPassword, _ := util.EncodePassword(password, salt)
-	return subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(hash)) == 1
+func comparePassword(password, salt, hash string) (bool, error) {
+	if salt == "" {
+		return false, nil
+	}
+
+	// Step 1: Try standard PBKDF2 (FIPS-compliant path).
+	// This will fail on FIPS systems if salt < 16 bytes.
+	hashedPassword, err := util.EncodePassword(password, salt)
+	if err != nil {
+		// Step 2: Salt is too short for FIPS module.
+		// Fall back to pure-Go PBKDF2 which bypasses FIPS enforcement.
+		// This is intentional and approved for legacy migration only.
+		// See: GitHub issue #120561, comment by xnox
+		hashedPassword, err = util.EncodePasswordLegacy(password, salt)
+		if err != nil {
+			return false, fmt.Errorf("password comparison failed: %w", err)
+		}
+	}
+
+	return subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(hash)) == 1, nil
 }

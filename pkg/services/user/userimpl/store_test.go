@@ -143,7 +143,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Equal(t, result.Email, "usertest@test.com")
 		require.Equal(t, string(result.Password), "")
 		require.Len(t, result.Rands, 10)
-		require.Len(t, result.Salt, 10)
+		require.Len(t, result.Salt, 32)
 		require.False(t, result.IsDisabled)
 
 		result, err = userStore.GetByID(context.Background(), usr.ID)
@@ -152,7 +152,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Equal(t, result.Email, "usertest@test.com")
 		require.Equal(t, string(result.Password), "")
 		require.Len(t, result.Rands, 10)
-		require.Len(t, result.Salt, 10)
+		require.Len(t, result.Salt, 32)
 		require.False(t, result.IsDisabled)
 
 		t.Run("Get User by email case insensitive", func(t *testing.T) {
@@ -163,7 +163,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Equal(t, result.Email, "usertest@test.com")
 			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
-			require.Len(t, result.Salt, 10)
+			require.Len(t, result.Salt, 32)
 			require.False(t, result.IsDisabled)
 		})
 
@@ -174,7 +174,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Equal(t, result.Email, "usertest@test.com")
 			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
-			require.Len(t, result.Salt, 10)
+			require.Len(t, result.Salt, 32)
 			require.False(t, result.IsDisabled)
 
 			result, err = userStore.GetByID(context.Background(), usr.ID)
@@ -183,7 +183,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Equal(t, result.Email, "usertest@test.com")
 			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
-			require.Len(t, result.Salt, 10)
+			require.Len(t, result.Salt, 32)
 			require.False(t, result.IsDisabled)
 		})
 	})

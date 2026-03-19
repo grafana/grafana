@@ -2,6 +2,7 @@ package clients
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -166,7 +167,8 @@ func TestGrafana_AuthenticatePassword(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			hashed, _ := util.EncodePassword("password", "salt")
+			hashed, err := util.EncodePassword("password", "salt")
+			assert.NoError(t, err)
 			userService := &usertest.FakeUserService{
 				ExpectedUser: &user.User{ID: 1, Password: user.Password(hashed), Salt: "salt"},
 			}
@@ -182,4 +184,110 @@ func TestGrafana_AuthenticatePassword(t *testing.T) {
 			assert.EqualValues(t, tt.expectedIdentity, identity)
 		})
 	}
+}
+
+func TestComparePassword_LegacySalt(t *testing.T) {
+	password := "password"
+	salt := "salt123456" // legacy short salt
+	hash, err := util.EncodePasswordLegacy(password, salt)
+	assert.NoError(t, err)
+
+	ok, err := comparePassword(password, salt, hash)
+	assert.NoError(t, err)
+	assert.True(t, ok)
+
+	ok, err = comparePassword("wrong", salt, hash)
+	assert.NoError(t, err)
+	assert.False(t, ok)
+}
+
+func TestComparePassword_CompliantSalt(t *testing.T) {
+	password := "password"
+	salt, err := util.GeneratePasswordSalt()
+	assert.NoError(t, err)
+
+	hash, err := util.EncodePassword(password, salt)
+	assert.NoError(t, err)
+
+	ok, err := comparePassword(password, salt, hash)
+	assert.NoError(t, err)
+	assert.True(t, ok)
+
+	ok, err = comparePassword("wrong", salt, hash)
+	assert.NoError(t, err)
+	assert.False(t, ok)
+}
+
+func TestAuthenticatePassword_MigrationBoundarySaltLength(t *testing.T) {
+	t.Run("salt length 31 triggers migration update", func(t *testing.T) {
+		password := "password"
+		salt := "1234567890123456789012345678901" // 31 chars
+		hash, err := util.EncodePassword(password, salt)
+		assert.NoError(t, err)
+
+		updateCalled := 0
+		userService := &usertest.FakeUserService{
+			ExpectedUser: &user.User{ID: 1, Password: user.Password(hash), Salt: salt},
+			UpdateFn: func(ctx context.Context, cmd *user.UpdateUserCommand) error {
+				updateCalled++
+				assert.Equal(t, int64(1), cmd.UserID)
+				assert.NotNil(t, cmd.Salt)
+				assert.NotNil(t, cmd.Password)
+				return nil
+			},
+		}
+
+		c := ProvideGrafana(setting.NewCfg(), userService, tracing.InitializeTracerForTest())
+		identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, "user", password)
+		assert.NoError(t, err)
+		assert.NotNil(t, identity)
+		assert.Equal(t, 1, updateCalled)
+	})
+
+	t.Run("salt length 32 does not trigger migration update", func(t *testing.T) {
+		password := "password"
+		salt := "12345678901234567890123456789012" // 32 chars
+		hash, err := util.EncodePassword(password, salt)
+		assert.NoError(t, err)
+
+		updateCalled := 0
+		userService := &usertest.FakeUserService{
+			ExpectedUser: &user.User{ID: 1, Password: user.Password(hash), Salt: salt},
+			UpdateFn: func(ctx context.Context, cmd *user.UpdateUserCommand) error {
+				updateCalled++
+				return nil
+			},
+		}
+
+		c := ProvideGrafana(setting.NewCfg(), userService, tracing.InitializeTracerForTest())
+		identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, "user", password)
+		assert.NoError(t, err)
+		assert.NotNil(t, identity)
+		assert.Equal(t, 0, updateCalled)
+	})
+}
+
+func TestComparePassword_EmptySalt(t *testing.T) {
+	ok, err := comparePassword("password", "", "anything")
+	assert.NoError(t, err)
+	assert.False(t, ok)
+}
+
+func TestAuthenticatePassword_MigrationUpdateErrorDoesNotFailLogin(t *testing.T) {
+	password := "password"
+	salt := "1234567890" // legacy short salt triggers migration
+	hash, err := util.EncodePasswordLegacy(password, salt)
+	assert.NoError(t, err)
+
+	userService := &usertest.FakeUserService{
+		ExpectedUser: &user.User{ID: 1, Password: user.Password(hash), Salt: salt},
+		UpdateFn: func(ctx context.Context, cmd *user.UpdateUserCommand) error {
+			return errors.New("db unavailable")
+		},
+	}
+
+	c := ProvideGrafana(setting.NewCfg(), userService, tracing.InitializeTracerForTest())
+	identity, err := c.AuthenticatePassword(context.Background(), &authn.Request{OrgID: 1}, "user", password)
+	assert.NoError(t, err)
+	assert.NotNil(t, identity)
 }

@@ -152,7 +152,7 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 		IsProvisioned:    cmd.IsProvisioned,
 	}
 
-	salt, err := util.GetRandomString(10)
+	salt, err := util.GeneratePasswordSalt()
 	if err != nil {
 		return nil, err
 	}
@@ -273,6 +273,10 @@ func (s *LegacyService) Update(ctx context.Context, cmd *user.UpdateUserCommand)
 	usr, err := s.store.GetByID(ctx, cmd.UserID)
 	if err != nil {
 		return err
+	}
+
+	if cmd.Salt != nil {
+		usr.Salt = *cmd.Salt
 	}
 
 	if cmd.OldPassword != nil {
@@ -459,7 +463,7 @@ func (s *LegacyService) CreateServiceAccount(ctx context.Context, cmd *user.Crea
 		IsServiceAccount: true,
 	}
 
-	salt, err := util.GetRandomString(10)
+	salt, err := util.GeneratePasswordSalt()
 	if err != nil {
 		return nil, err
 	}
