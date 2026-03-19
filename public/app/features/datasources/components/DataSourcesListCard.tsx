@@ -37,7 +37,7 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
       </Card.Meta>
       <Card.Tags>
         {/* Build Dashboard */}
-        <BuildDashboardButton dataSource={dataSource} size="md" fill="outline" />
+        <BuildDashboardButton dataSource={dataSource} size="md" fill="outline" context="datasource_list" />
 
         {/* Explore */}
         {hasExploreRights && (

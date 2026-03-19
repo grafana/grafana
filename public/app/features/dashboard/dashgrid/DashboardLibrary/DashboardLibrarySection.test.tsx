@@ -64,12 +64,7 @@ const mockDashboardLibraryInteractionsItemClicked = DashboardLibraryInteractions
 
 function setup(overrides?: Partial<ComponentProps<typeof DashboardLibrarySection>>) {
   return render(
-    <DashboardLibrarySection
-      dashboards={[]}
-      datasourceUid="test-uid"
-      isDashboardsLoading={false}
-      {...overrides}
-    />
+    <DashboardLibrarySection dashboards={[]} datasourceUid="test-uid" isDashboardsLoading={false} {...overrides} />
   );
 }
 

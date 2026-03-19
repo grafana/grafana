@@ -29,7 +29,10 @@ function renderBanner(route: string, initialEntry: string) {
 
 describe('SuggestedDashboardsBanner', () => {
   it('should render the banner when route is Template and URL params are present', () => {
-    renderBanner(DashboardRoutes.Template, '/dashboard/templates/my-dash-uid?suggestedDashboardBanner=true&datasource=ds1');
+    renderBanner(
+      DashboardRoutes.Template,
+      '/dashboard/templates/my-dash-uid?suggestedDashboardBanner=true&datasource=ds1'
+    );
 
     expect(screen.getByText(/You are viewing/)).toBeInTheDocument();
     expect(screen.getByText(/other suggested dashboards/)).toBeInTheDocument();

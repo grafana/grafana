@@ -96,11 +96,7 @@ interface OldLayoutEmptyProps {
   onAddLibraryPanel?: () => void;
   onImportDashboard?: () => void;
 }
-const OldLayoutEmpty = ({
-  onAddVisualization,
-  onAddLibraryPanel,
-  onImportDashboard,
-}: OldLayoutEmptyProps) => (
+const OldLayoutEmpty = ({ onAddVisualization, onAddLibraryPanel, onImportDashboard }: OldLayoutEmptyProps) => (
   <Stack alignItems="stretch" justifyContent="center" gap={4} direction="column">
     <Box borderRadius="lg" borderColor="strong" borderStyle="dashed" padding={4}>
       <Stack direction="column" alignItems="center" gap={2}>

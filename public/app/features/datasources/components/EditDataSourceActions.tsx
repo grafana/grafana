@@ -126,7 +126,7 @@ export function EditDataSourceActions({ uid }: Props) {
           )}
         </>
       )}
-      <BuildDashboardButton dataSource={dataSource} size="sm" fill="solid" />
+      <BuildDashboardButton dataSource={dataSource} size="sm" fill="solid" context="datasource_page" />
     </>
   );
 }
