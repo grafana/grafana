@@ -8,16 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-// expectedDashboard describes the expected state of a single dashboard.
-type expectedDashboard struct {
-	Title      string
-	SourcePath string
-}
 
 // TestIntegrationProvisioning_IncrementalGitSync_Add verifies that incremental
 // sync imports a newly committed file without re-processing the full tree.
@@ -34,7 +28,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Add(t *testing.T) {
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboardCount(t, helper, ctx, 1)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 
 	require.NoError(t, local.CreateFile("dashboard2.json", string(dashboardJSON("incr-dash-002", "Dashboard Two", 1))))
 	_, err := local.Git("add", ".")
@@ -45,7 +39,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Add(t *testing.T) {
 	require.NoError(t, err)
 
 	helper.syncAndWaitIncremental(t, repoName)
-	requireDashboardCount(t, helper, ctx, 2)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_Update verifies that
@@ -63,7 +57,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Update(t *testing.T) {
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboardCount(t, helper, ctx, 1)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 
 	require.NoError(t, local.UpdateFile("dashboard1.json", string(dashboardJSON("incr-dash-001", "Dashboard One Updated", 2))))
 	_, err := local.Git("add", ".")
@@ -74,8 +68,8 @@ func TestIntegrationProvisioning_IncrementalGitSync_Update(t *testing.T) {
 	require.NoError(t, err)
 
 	helper.syncAndWaitIncremental(t, repoName)
-	requireDashboardCount(t, helper, ctx, 1)
-	requireDashboardTitle(t, helper, ctx, "incr-dash-001", "Dashboard One Updated")
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "incr-dash-001", "Dashboard One Updated")
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_Delete verifies that
@@ -94,7 +88,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Delete(t *testing.T) {
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboardCount(t, helper, ctx, 2)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
 
 	_, err := local.Git("rm", "dashboard2.json")
 	require.NoError(t, err)
@@ -104,7 +98,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Delete(t *testing.T) {
 	require.NoError(t, err)
 
 	helper.syncAndWaitIncremental(t, repoName)
-	requireDashboardCount(t, helper, ctx, 1)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "incr-dash-002", metav1.GetOptions{})
@@ -127,10 +121,10 @@ func TestIntegrationProvisioning_IncrementalGitSync_Noop(t *testing.T) {
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboardCount(t, helper, ctx, 1)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 
 	helper.syncAndWaitIncremental(t, repoName)
-	requireDashboardCount(t, helper, ctx, 1)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_Rename verifies that
@@ -148,7 +142,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Rename(t *testing.T) {
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"incr-dash-001": {Title: "Dashboard One", SourcePath: "dashboard1.json"},
 	})
 
@@ -160,7 +154,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Rename(t *testing.T) {
 	require.NoError(t, err)
 
 	helper.syncAndWaitIncremental(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"incr-dash-001": {Title: "Dashboard One", SourcePath: "renamed-dashboard1.json"},
 	})
 }
@@ -180,7 +174,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T)
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-in-001": {Title: "Dashboard One", SourcePath: "dashboard1.json"},
 	})
 
@@ -193,10 +187,10 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T)
 	require.NoError(t, err)
 
 	helper.syncAndWaitIncremental(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-in-001": {Title: "Dashboard One", SourcePath: "team-a/dashboard1.json"},
 	})
-	requireRepoFolders(t, helper, ctx, repoName, []string{"team-a"})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"team-a"})
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders verifies
@@ -215,7 +209,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-btwn-001": {Title: "Dashboard Between", SourcePath: "folder-a/dashboard1.json"},
 	})
 
@@ -227,10 +221,10 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 	require.NoError(t, err)
 
 	helper.syncAndWaitIncremental(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-btwn-001": {Title: "Dashboard Between", SourcePath: "folder-b/dashboard1.json"},
 	})
-	requireRepoFolders(t, helper, ctx, repoName, []string{"folder-a", "folder-b"})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"folder-b"})
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot verifies that
@@ -248,7 +242,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-root-001": {Title: "Dashboard Root", SourcePath: "team-x/dashboard1.json"},
 	})
 
@@ -260,7 +254,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 	require.NoError(t, err)
 
 	helper.syncAndWaitIncremental(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-root-001": {Title: "Dashboard Root", SourcePath: "dashboard1.json"},
 	})
 }
@@ -282,11 +276,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"ren-fold-001": {Title: "Folder Dash One", SourcePath: "old-team/dashboard1.json"},
 		"ren-fold-002": {Title: "Folder Dash Two", SourcePath: "old-team/dashboard2.json"},
 	})
-	requireRepoFolders(t, helper, ctx, repoName, []string{"old-team"})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"old-team"})
 
 	_, err := local.Git("mv", "old-team", "new-team")
 	require.NoError(t, err)
@@ -296,11 +290,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 	require.NoError(t, err)
 
 	helper.syncAndWaitIncremental(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"ren-fold-001": {Title: "Folder Dash One", SourcePath: "new-team/dashboard1.json"},
 		"ren-fold-002": {Title: "Folder Dash Two", SourcePath: "new-team/dashboard2.json"},
 	})
-	requireRepoFolders(t, helper, ctx, repoName, []string{"new-team"})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-team"})
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard verifies
@@ -319,7 +313,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child-a/dashboard1.json"},
 	})
 
@@ -331,10 +325,10 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 	require.NoError(t, err)
 
 	helper.syncAndWaitIncremental(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child-b/dashboard1.json"},
 	})
-	requireRepoFolders(t, helper, ctx, repoName, []string{"parent", "parent/child-b"})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/child-b"})
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder verifies
@@ -353,7 +347,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 	}, "write", "branch")
 
 	helper.syncAndWait(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"ren-nest-001": {Title: "Nested Rename Dash", SourcePath: "parent/old-child/dashboard1.json"},
 		"ren-nest-002": {Title: "Sibling Dash", SourcePath: "parent/sibling/dashboard2.json"},
 	})
@@ -366,92 +360,9 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 	require.NoError(t, err)
 
 	helper.syncAndWaitIncremental(t, repoName)
-	requireDashboards(t, helper, ctx, map[string]expectedDashboard{
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"ren-nest-001": {Title: "Nested Rename Dash", SourcePath: "parent/new-child/dashboard1.json"},
 		"ren-nest-002": {Title: "Sibling Dash", SourcePath: "parent/sibling/dashboard2.json"},
 	})
-	requireRepoFolders(t, helper, ctx, repoName, []string{"parent", "parent/new-child", "parent/sibling"})
-}
-
-// requireDashboardCount asserts the total number of dashboards in the instance.
-func requireDashboardCount(t *testing.T, h *gitTestHelper, ctx context.Context, expected int) {
-	t.Helper()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := h.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list dashboards") {
-			return
-		}
-		assert.Len(c, list.Items, expected, "unexpected dashboard count")
-	}, waitTimeoutDefault, waitIntervalDefault, "expected %d dashboard(s)", expected)
-}
-
-// requireDashboardTitle asserts that the dashboard with the given uid (K8s name)
-// has the expected title. Classic dashboards store their full JSON under spec,
-// so the title lives at spec.title.
-func requireDashboardTitle(t *testing.T, h *gitTestHelper, ctx context.Context, uid, expectedTitle string) {
-	t.Helper()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := h.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list dashboards") {
-			return
-		}
-		for _, d := range list.Items {
-			if d.GetName() != uid {
-				continue
-			}
-			title, _, _ := unstructured.NestedString(d.Object, "spec", "title")
-			assert.Equal(c, expectedTitle, title, "dashboard %q title mismatch", uid)
-			return
-		}
-		c.Errorf("dashboard with uid %q not found", uid)
-	}, waitTimeoutDefault, waitIntervalDefault, "dashboard %q should have title %q", uid, expectedTitle)
-}
-
-// requireDashboards lists dashboards once and asserts that exactly the expected
-// set exists with matching title and grafana.app/sourcePath for each UID.
-func requireDashboards(t *testing.T, h *gitTestHelper, ctx context.Context, expected map[string]expectedDashboard) {
-	t.Helper()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := h.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list dashboards") {
-			return
-		}
-		if !assert.Len(c, list.Items, len(expected), "unexpected dashboard count") {
-			return
-		}
-		for _, d := range list.Items {
-			uid := d.GetName()
-			exp, ok := expected[uid]
-			if !assert.True(c, ok, "unexpected dashboard %q", uid) {
-				continue
-			}
-			title, _, _ := unstructured.NestedString(d.Object, "spec", "title")
-			assert.Equal(c, exp.Title, title, "dashboard %q title mismatch", uid)
-			sp, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/sourcePath")
-			assert.Equal(c, exp.SourcePath, sp, "dashboard %q sourcePath mismatch", uid)
-		}
-	}, waitTimeoutDefault, waitIntervalDefault, "dashboards should match expected state")
-}
-
-// requireRepoFolders lists folders once and asserts that the set of
-// grafana.app/sourcePath values for folders managed by repoName matches exactly.
-func requireRepoFolders(t *testing.T, h *gitTestHelper, ctx context.Context, repoName string, expectedSourcePaths []string) {
-	t.Helper()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := h.FoldersV1.Resource.List(ctx, metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list folders") {
-			return
-		}
-		var gotPaths []string
-		for _, f := range list.Items {
-			mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
-			if mgr != repoName {
-				continue
-			}
-			sp, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
-			gotPaths = append(gotPaths, sp)
-		}
-		assert.ElementsMatch(c, expectedSourcePaths, gotPaths, "folder sourcePaths mismatch for repo %q", repoName)
-	}, waitTimeoutDefault, waitIntervalDefault,
-		"folders for repo %q should have sourcePaths %v", repoName, expectedSourcePaths)
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/new-child", "parent/sibling"})
 }
