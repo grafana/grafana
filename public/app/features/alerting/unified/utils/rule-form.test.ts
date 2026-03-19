@@ -210,7 +210,7 @@ describe('getContactPointsFromDTO', () => {
       no_data_state: GrafanaAlertStateDecision.Alerting,
       exec_err_state: GrafanaAlertStateDecision.Alerting,
       data: [],
-      notification_settings: { receiver: '', policy: 'TestPolicy' },
+      notification_settings: { policy: 'TestPolicy' },
     };
     const result = getContactPointsFromDTO(ga);
     expect(result).toBeUndefined();
@@ -351,7 +351,7 @@ describe('getNotificationSettingsForDTO with selectedPolicy', () => {
       alertingPolicyRoutingSettings: true,
     });
     const result = getNotificationSettingsForDTO(false, undefined, 'TestPolicy');
-    expect(result).toEqual({ receiver: '', policy: 'TestPolicy' });
+    expect(result).toEqual({ policy: 'TestPolicy' });
     jest.restoreAllMocks();
   });
 
@@ -390,7 +390,7 @@ describe('rulerRuleToFormValues with policy routing', () => {
         no_data_state: GrafanaAlertStateDecision.Alerting,
         exec_err_state: GrafanaAlertStateDecision.Alerting,
         data: [],
-        notification_settings: { receiver: '', policy: 'TestPolicy' },
+        notification_settings: { policy: 'TestPolicy' },
       },
       annotations: {},
       labels: {},

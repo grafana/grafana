@@ -90,7 +90,6 @@ describe('Details', () => {
         rulerRule: alertingFactory.ruler.grafana.alertingRule.build({
           grafana_alert: {
             notification_settings: {
-              receiver: '',
               policy: POLICY_NAME,
             },
           },
@@ -170,7 +169,6 @@ describe('Details', () => {
         rulerRule: alertingFactory.ruler.grafana.alertingRule.build({
           grafana_alert: {
             notification_settings: {
-              receiver: '',
               policy: POLICY_NAME,
             },
           },

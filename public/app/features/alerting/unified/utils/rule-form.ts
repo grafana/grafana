@@ -114,7 +114,7 @@ export function getNotificationSettingsForDTO(
   selectedPolicy?: string
 ): GrafanaNotificationSettings | undefined {
   if (config.featureToggles.alertingPolicyRoutingSettings && selectedPolicy && !manualRouting) {
-    return { receiver: '', policy: selectedPolicy };
+    return { policy: selectedPolicy };
   }
   if (contactPoints?.grafana?.selectedContactPoint && manualRouting) {
     return {
@@ -243,31 +243,39 @@ const trimKeyAndValue = ({ key, value }: KVObject): KVObject => ({
   value: value.trim(),
 });
 
-export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {
-  const contactPoint: ContactPoint | undefined = ga.notification_settings?.receiver
-    ? {
-        selectedContactPoint: ga.notification_settings.receiver,
-        muteTimeIntervals: ga.notification_settings.mute_time_intervals ?? [],
-        activeTimeIntervals: ga.notification_settings.active_time_intervals ?? [],
-        overrideGrouping:
-          Array.isArray(ga.notification_settings.group_by) && ga.notification_settings.group_by.length > 0,
-        overrideTimings: [
-          ga.notification_settings.group_wait,
-          ga.notification_settings.group_interval,
-          ga.notification_settings.repeat_interval,
-        ].some(Boolean),
-        groupBy: ga.notification_settings.group_by || [],
-        groupWaitValue: ga.notification_settings.group_wait || '',
-        groupIntervalValue: ga.notification_settings.group_interval || '',
-        repeatIntervalValue: ga.notification_settings.repeat_interval || '',
-      }
-    : undefined;
-  const routingSettings: AlertManagerManualRouting | undefined = contactPoint
-    ? {
-        [GRAFANA_RULES_SOURCE_NAME]: contactPoint,
-      }
-    : undefined;
-  return routingSettings;
+export function getContactPointsFromDTO(ruleDefinition: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {
+  const notificationSettings = ruleDefinition.notification_settings;
+
+  // if the rule is configured to send to a policy, return early
+  if (!notificationSettings || 'policy' in notificationSettings) {
+    return undefined;
+  }
+
+  const {
+    receiver,
+    active_time_intervals,
+    mute_time_intervals,
+    group_by,
+    group_interval,
+    group_wait,
+    repeat_interval,
+  } = notificationSettings;
+
+  const contactPoint: ContactPoint = {
+    selectedContactPoint: receiver,
+    muteTimeIntervals: mute_time_intervals ?? [],
+    activeTimeIntervals: active_time_intervals ?? [],
+    overrideGrouping: Array.isArray(group_by) && group_by.length > 0,
+    overrideTimings: [group_wait, group_interval, repeat_interval].some(Boolean),
+    groupBy: group_by || [],
+    groupWaitValue: group_wait || '',
+    groupIntervalValue: group_interval || '',
+    repeatIntervalValue: repeat_interval || '',
+  };
+
+  return {
+    [GRAFANA_RULES_SOURCE_NAME]: contactPoint,
+  };
 }
 
 function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {

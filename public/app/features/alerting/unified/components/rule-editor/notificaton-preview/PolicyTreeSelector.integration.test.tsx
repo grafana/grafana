@@ -569,7 +569,7 @@ describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
         labels: {},
         grafana_alert: {
           ...grafanaRulerRule.grafana_alert,
-          notification_settings: { receiver: '', policy: CUSTOM_POLICY_NAME },
+          notification_settings: { policy: CUSTOM_POLICY_NAME },
         },
       };
       const group: RulerRuleGroupDTO<RulerGrafanaRuleDTO> = {
