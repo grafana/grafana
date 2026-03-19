@@ -359,6 +359,9 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 
 	switch a.GetOperation() {
 	case admission.Create:
+		if err := validateOwnerReferencesOnManagedFolder(f, nil); err != nil {
+			return err
+		}
 		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
 	case admission.Delete:
 		return validateOnDelete(ctx, f, b.searcher)
@@ -366,6 +369,9 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		old, ok := a.GetOldObject().(*folders.Folder)
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
+		}
+		if err := validateOwnerReferencesOnManagedFolder(f, old); err != nil {
+			return err
 		}
 		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, b.maxNestedFolderDepth)
 	default:

@@ -28,6 +28,12 @@ import { GrafanaAlertmanagerWarning } from './components/GrafanaAlertmanagerWarn
 import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
 import { Spacer } from './components/Spacer';
 import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
+import {
+  trackNotificationPoliciesFilterContactPoint,
+  trackNotificationPoliciesFilterMatchers,
+  trackNotificationPoliciesFilterPolicyTree,
+  trackNotificationPoliciesToggledAll,
+} from './components/notification-policies/notificationPolicyAnalytics';
 import { useNotificationPoliciesNav } from './navigation/useNotificationConfigNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { ROOT_ROUTE_NAME } from './utils/k8s/constants';
@@ -175,6 +181,9 @@ function PolicyTreeTab() {
 
   const handleChangeContactPoint = useCallback(
     (value: string | undefined) => {
+      if (value) {
+        trackNotificationPoliciesFilterContactPoint();
+      }
       setContactPointFilter(value);
       resetExpandState();
     },
@@ -183,6 +192,9 @@ function PolicyTreeTab() {
 
   const handleChangeLabelMatchers = useCallback(
     (value: ObjectMatcher[]) => {
+      if (value.length > 0) {
+        trackNotificationPoliciesFilterMatchers();
+      }
       setLabelMatchersFilter(value);
       resetExpandState();
     },
@@ -191,6 +203,9 @@ function PolicyTreeTab() {
 
   // Reset expand state when the policy-tree selector filter changes
   useEffect(() => {
+    if (selectedPolicyTreeNames.length > 0) {
+      trackNotificationPoliciesFilterPolicyTree({ selectedCount: selectedPolicyTreeNames.length });
+    }
     resetExpandState();
   }, [selectedPolicyTreeNames, resetExpandState]);
 
@@ -217,9 +232,13 @@ function PolicyTreeTab() {
     : expandedOverrides.size === visiblePolicies.length;
 
   const toggleAllExpanded = useCallback(() => {
+    trackNotificationPoliciesToggledAll({
+      action: isAllExpanded ? 'collapse' : 'expand',
+      visiblePoliciesCount: visiblePolicies.length,
+    });
     setManualDefaultExpanded(!isAllExpanded);
     clear();
-  }, [isAllExpanded, clear]);
+  }, [isAllExpanded, clear, visiblePolicies.length]);
 
   // Single-tree mode: show filters but no collapse/expand or create button
   if (!useMultiplePolicies) {

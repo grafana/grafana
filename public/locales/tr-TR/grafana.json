@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2358,8 +2359,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2418,9 +2420,6 @@
       "label-payload": "Yük",
       "label-use-existing-alert-instances": "Mevcut uyarı örneklerini kullan",
       "reference": "Referans"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Özel uygulamalarımızdan birini kullanarak uyarı oluşturmayı hızlandırın"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Bu kural, {{pluginName}} eklentisi tarafından yönetilir"
@@ -2937,6 +2936,9 @@
       "error-button": "Hata",
       "export-all-grafana-rules": "Tüm Grafana kurallarını dışa aktar",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Aramayı iptal et",
         "no-more-results": "Başka sonuç yok - {{numberOfRules}} kural bulundu",
@@ -3086,8 +3088,6 @@
       "dashboard": "Pano",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Veri kaynaklarına göre arama yardımı",
       "filter-options": {
-        "aria-label": "Filtre seçenekleri",
-        "aria-label-show-filters": "Filtre",
         "placeholder-namespace": "Ad alanı seçin",
         "placeholder-search-input": "Ada göre arayın veya filtre sorgusu girin..."
       },
@@ -3119,6 +3119,9 @@
       "state": "Durum",
       "title-search-help": "Arama yardımı",
       "view-as": "Farklı görüntüleme"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Siliniyor",
@@ -4812,7 +4815,6 @@
     "all": "Tümü",
     "apply": "Uygula",
     "cancel": "İptal",
-    "clear": "Temizle",
     "collapse": "Daralt",
     "disabled": "Devre dışı",
     "discard": "Vazgeç",
@@ -5912,6 +5914,12 @@
         "title": "Panel zaman ayarları"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Uyarılar eklenmeden önce pano kaydedilmelidir.",
@@ -6545,6 +6553,17 @@
       "label-link": "",
       "tooltip": ""
     },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Seçilen panoya gidilemedi. Lütfen tekrar deneyin.",
@@ -6744,6 +6763,9 @@
       "tooltip-move-link-down": "Bağlantıyı aşağı taşı",
       "tooltip-move-link-up": "Bağlantıyı yukarı taşı",
       "type": "Tür"
+    },
+    "dashboard-links-list": {
+      "add-link": ""
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Pano yüklenirken hata oluştu"
@@ -7025,6 +7047,13 @@
       "type-link": "",
       "with-tags": ""
     },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": ""
+    },
     "managed-badge": {
       "kubectl": "Yöneten: Kubectl",
       "plugin": "Yöneten: {{id}} eklentisi",
@@ -7274,6 +7303,8 @@
       "cannot-be-saved": "Bu pano başka bir kaynaktan sağlandığı için Grafana kullanıcı arayüzünden kaydedilemez. JSON'u kopyalayın veya aşağıdan bir dosyaya kaydedin, ardından sağlama kaynağındaki panonuzu güncelleyebilirsiniz.",
       "copy-json-to-clipboard": "JSON'u panoya kopyala",
       "file-path": "<strong>Dosya yolu:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Açıklama",
       "label-target-folder": "Hedef klasör",
       "label-title": "Başlık",
@@ -7381,6 +7412,13 @@
       "page-nav": {
         "text": {
           "settings": "Ayarlar"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7952,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Sabit değer"
       },
+      "label": "",
       "label-limit": "Sınırlama",
       "label-value": "Değer",
       "noOptionsMessage-no-fields-found": "Hiçbir alan bulunamadı",
@@ -9983,7 +10022,9 @@
       "external-links-heading": "Dış bağlantılar"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Normal ifade girin"
+      "input-placeholder": "Normal ifade girin",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Karşılaştırma işleci",
@@ -10010,6 +10051,18 @@
       "expand-row-tooltip": "Satır genişletmeyi aç/kapat",
       "tooltip-collapse-all": "Tüm satırları daralt",
       "tooltip-expand-all": "Tüm satırları genişlet"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Adı bir düzenli ifadeye uyan alanlar için özellikleri ayarla",
@@ -11237,7 +11290,7 @@
       "cancel": "İptal",
       "change-uid": "UID'yi değiştir",
       "description-library-panels-imported": "İçe aktarılacak yeni kütüphane panellerinin listesi.",
-      "description-unique-identifier-uid": "Bir panonun benzersiz tanımlayıcısı (UID), birden fazla Grafana kurulumunda panoları benzersiz şekilde tanımlamak için kullanılabilir. UID sayesinde panoya erişim için tutarlı URL'ler korunur, böylece pano başlığını değiştirmek yer imlerine zarar vermez.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Mevcut kütüphane panelleri",
       "label-folder": "Klasör",
       "label-name": "Ad",
@@ -12758,9 +12811,6 @@
     "title-loaded-pull-request-in-repo": "Bu kaynak, {{repoType}} içinde yeni oluşturduğunuz daldan yüklendi ve yalnızca siz görebilirsiniz"
   },
   "provisioning": {
-    "banner": {
-      "message": "Bu özellik şu anda aktif geliştirme aşamasındadır. En iyi deneyim ve en yeni geliştirmeler için Grafana'nın <2>gecelik derleme</2> sürümünü kullanmanızı öneririz."
-    },
     "bitbucket": {
       "branch-required": "Dal gereklidir",
       "permissions": {
@@ -12786,6 +12836,7 @@
       "empty": "Boş",
       "error-field-required": "Bu alan gereklidir.",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "Depoya bağlanırken bir sorun oluştu. Lütfen depo ayarlarını kontrol edin ve tekrar deneyin.",
       "error-repository-status-unhealthy-title": "Depo durumu sorunlu",
@@ -12795,6 +12846,7 @@
       "retry-action": "",
       "text-loading-resource-information": "Kaynak bilgileri yükleniyor...",
       "unmanaged-resources-label": "Yönetilmeyen kaynaklar",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} pano",
       "dashboards-count_other": "{{count}} pano",
@@ -12847,7 +12899,8 @@
     "connect-repository-button": {
       "configure": "Yapılandır",
       "instance-fully-managed-tooltip": "Bu örnek tamamen yönetildiği için yapılandırma devre dışı bırakılmıştır",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -13051,7 +13104,7 @@
       "token-label": "Erişim Belirteci",
       "token-required": "Git belirteci gereklidir",
       "token-user-description": "Erişim belirteciyle depoya erişmek için kullanılacak kullanıcı adı",
-      "url-description": "Git deposu URL'si",
+      "url-description": "",
       "url-pattern": "Geçerli bir Git depo URL'si olmalıdır",
       "url-required": "Depo URL'si gereklidir"
     },
@@ -13177,23 +13230,25 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_one": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_one": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_one": "",
       "message-both-resources_other": "",
-      "message-repositories-info_one": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_one": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_one": "",
       "message-repository_other": "",
-      "note-message-both-repositories_one": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_one": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_one": "",
-      "note-message-repository_other": "",
-      "note-message-resource_one": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_one": "",
+      "message-repository-onprem_other": "",
+      "message-resource_one": "",
+      "message-resource_other": "",
+      "message-resource-onprem_one": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "Bu kaynak salt okunurdur ve dosya sağlama yoluyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
     "read-only-remote-tooltip": "Bu kaynak salt okunurdur ve Git aracılığıyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
@@ -13452,6 +13507,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Nelerin senkronize edileceğini seçin",
       "step-configure-repo": "Depoyu yapılandır",
       "step-connect": "Bağlan",

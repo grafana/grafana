@@ -17,11 +17,22 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// ErrUserRequired is returned when a nil user is passed to protected field authorization checks.
+var ErrUserRequired = errors.New("user is required to check protected field authorization")
+
+// ProtectedFieldsAuthz defines the interface for checking protected field authorization.
+// This is implemented by receiver access control services.
+type ProtectedFieldsAuthz interface {
+	HasUpdateProtected(ctx context.Context, user identity.Requester, receiver *models.Receiver) (bool, error)
+	AuthorizeUpdateProtected(ctx context.Context, user identity.Requester, receiver *models.Receiver) error
+}
 
 type AlertRuleNotificationSettingsStore interface {
 	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
@@ -30,6 +41,7 @@ type AlertRuleNotificationSettingsStore interface {
 }
 
 type ContactPointService struct {
+	authz                     ProtectedFieldsAuthz
 	configStore               alertmanagerConfigStore
 	encryptionService         secrets.Service
 	provenanceStore           ProvisioningStore
@@ -47,6 +59,7 @@ type receiverService interface {
 }
 
 func NewContactPointService(
+	authz ProtectedFieldsAuthz,
 	store alertmanagerConfigStore,
 	encryptionService secrets.Service,
 	provenanceStore ProvisioningStore,
@@ -57,6 +70,7 @@ func NewContactPointService(
 	resourcePermissions ac.ReceiverPermissionsService,
 ) *ContactPointService {
 	return &ContactPointService{
+		authz:                     authz,
 		configStore:               store,
 		receiverService:           receiverService,
 		encryptionService:         encryptionService,
@@ -238,7 +252,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	return contactPoint, nil
 }
 
-func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) error {
+func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID int64, user identity.Requester, contactPoint apimodels.EmbeddedContactPoint, provenance models.Provenance) error {
 	// set all redacted values with the latest known value from the store
 	if contactPoint.Settings == nil {
 		return fmt.Errorf("%w: %s", ErrValidation, "settings should not be empty")
@@ -277,6 +291,11 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 		return fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
+	}
+
+	// Check protected fields authorization
+	if err := ecp.checkProtectedFields(ctx, user, typeSchema, rawContactPoint, contactPoint); err != nil {
+		return err
 	}
 	// transform to internal model
 	extractedSecrets, err := RemoveSecretsForContactPoint(&contactPoint)
@@ -439,6 +458,61 @@ func (ecp *ContactPointService) encryptValue(value string) (string, error) {
 		return "", fmt.Errorf("failed to encrypt secure settings: %w", err)
 	}
 	return base64.StdEncoding.EncodeToString(encryptedData), nil
+}
+
+// checkProtectedFields checks if user has permission to modify protected fields in the contact point.
+// It compares the existing contact point with the incoming one and returns an error if protected fields
+// are modified without proper authorization.
+func (ecp *ContactPointService) checkProtectedFields(
+	ctx context.Context,
+	user identity.Requester,
+	typeSchema schema.IntegrationSchemaVersion,
+	existing apimodels.EmbeddedContactPoint,
+	incoming apimodels.EmbeddedContactPoint,
+) error {
+	if user == nil {
+		return ErrUserRequired
+	}
+
+	// Create a receiver wrapper for authorization check.
+	// Use the existing receiver's name for UID derivation since authorization
+	// should be checked against the existing resource, not the potentially renamed one.
+	receiver := &models.Receiver{
+		UID:  legacy_storage.NameToUid(existing.Name),
+		Name: existing.Name,
+	}
+
+	// Check if user has permission to update protected fields first, before doing
+	// expensive conversion and diff calculations.
+	canUpdateProtected, _ := ecp.authz.HasUpdateProtected(ctx, user, receiver)
+	if canUpdateProtected {
+		return nil
+	}
+
+	// User doesn't have blanket permission, so we need to check if they're actually
+	// modifying any protected fields.
+	existingIntegration, err := EmbeddedContactPointToIntegration(existing, typeSchema)
+	if err != nil {
+		return fmt.Errorf("failed to convert existing contact point: %w", err)
+	}
+	incomingIntegration, err := EmbeddedContactPointToIntegration(incoming, typeSchema)
+	if err != nil {
+		return fmt.Errorf("failed to convert incoming contact point: %w", err)
+	}
+
+	protectedFieldChanges := models.HasIntegrationsDifferentProtectedFields(existingIntegration, incomingIntegration)
+	if len(protectedFieldChanges) == 0 {
+		return nil
+	}
+
+	// User is modifying protected fields without permission - return authorization error
+	err = ecp.authz.AuthorizeUpdateProtected(ctx, user, receiver)
+	if err != nil {
+		return notifier.MakeProtectedFieldsAuthzError(err, map[string][]schema.IntegrationFieldPath{
+			incoming.UID: protectedFieldChanges,
+		})
+	}
+	return nil
 }
 
 // stitchReceiver modifies a receiver, target, in an alertmanager configStore. It modifies the given configStore in-place.

@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2358,8 +2359,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2418,9 +2420,6 @@
       "label-payload": "Charge utile",
       "label-use-existing-alert-instances": "Utiliser les instances d’alerte existantes",
       "reference": "Référence"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Accélérez la création de vos alertes dès maintenant en utilisant l’une de nos applications sur mesure"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Cette règle est gérée par le plugin {{pluginName}}"
@@ -2937,6 +2936,9 @@
       "error-button": "Erreur",
       "export-all-grafana-rules": "Exporter toutes les règles Grafana",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Annuler la recherche",
         "no-more-results": "Plus aucun résultat : {{numberOfRules}} règles trouvées",
@@ -3086,8 +3088,6 @@
       "dashboard": "Tableau de bord",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Aide à la recherche par sources de données",
       "filter-options": {
-        "aria-label": "Options de filtrage",
-        "aria-label-show-filters": "Filtrer",
         "placeholder-namespace": "Sélectionner un namespace",
         "placeholder-search-input": "Rechercher par nom ou saisir une requête de filtre..."
       },
@@ -3119,6 +3119,9 @@
       "state": "État",
       "title-search-help": "Rechercher dans l’aide",
       "view-as": "Afficher en tant que"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Suppression",
@@ -4812,7 +4815,6 @@
     "all": "Tous",
     "apply": "Appliquer",
     "cancel": "Annuler",
-    "clear": "Effacer",
     "collapse": "Réduire",
     "disabled": "Désactivé",
     "discard": "Abandonner",
@@ -5912,6 +5914,12 @@
         "title": "Paramètres temporels du panneau"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Le tableau de bord doit être enregistré avant de pouvoir ajouter des alertes.",
@@ -6545,6 +6553,17 @@
       "label-link": "",
       "tooltip": ""
     },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Impossible d’accéder au tableau de bord sélectionné. Veuillez réessayer.",
@@ -6744,6 +6763,9 @@
       "tooltip-move-link-down": "Déplacer le lien vers le bas",
       "tooltip-move-link-up": "Déplacer le lien vers le haut",
       "type": "Type"
+    },
+    "dashboard-links-list": {
+      "add-link": ""
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Erreur lors du chargement du tableau de bord"
@@ -7025,6 +7047,13 @@
       "type-link": "",
       "with-tags": ""
     },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": ""
+    },
     "managed-badge": {
       "kubectl": "Géré par : Kubectl",
       "plugin": "Géré par : Plugin {{id}}",
@@ -7274,6 +7303,8 @@
       "cannot-be-saved": "Ce tableau de bord ne peut pas être enregistré à partir de l’interface utilisateur Grafana, car il a été mis en service à partir d’une autre source. Copiez le JSON ou enregistrez-le dans un fichier ci-dessous, puis vous pourrez mettre à jour votre tableau de bord dans la source de mise en service.",
       "copy-json-to-clipboard": "Copier JSON dans le presse-papiers",
       "file-path": "<strong>Chemin du fichier :</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Description",
       "label-target-folder": "Dossier cible",
       "label-title": "Titre",
@@ -7381,6 +7412,13 @@
       "page-nav": {
         "text": {
           "settings": "Paramètres"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7952,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Valeur fixe"
       },
+      "label": "",
       "label-limit": "Limiter",
       "label-value": "Valeur",
       "noOptionsMessage-no-fields-found": "Aucun champ trouvé",
@@ -9983,7 +10022,9 @@
       "external-links-heading": "Liens externes"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Saisir une expression régulière"
+      "input-placeholder": "Saisir une expression régulière",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Opérateur de comparaison",
@@ -10010,6 +10051,18 @@
       "expand-row-tooltip": "Basculer la ligne développée",
       "tooltip-collapse-all": "Réduire toutes les lignes",
       "tooltip-expand-all": "Développer toutes les lignes"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Définir les propriétés pour les champs dont le nom correspond à une expression régulière",
@@ -11237,7 +11290,7 @@
       "cancel": "Annuler",
       "change-uid": "Changer l’UID",
       "description-library-panels-imported": "Liste des nouveaux panneaux de bibliothèque qui seront importés.",
-      "description-unique-identifier-uid": "L’identifiant unique (UID) d’un tableau de bord peut être utilisé pour identifier de manière unique un tableau de bord entre plusieurs installations Grafana. L’UID permet d’avoir des URL cohérentes pour accéder aux tableaux de bord. Par conséquent, la modification du titre d’un tableau de bord ne cassera aucun lien de signet vers ce tableau de bord.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Panneaux de bibliothèque existants",
       "label-folder": "Dossier",
       "label-name": "Nom",
@@ -12758,9 +12811,6 @@
     "title-loaded-pull-request-in-repo": "Cette ressource est chargée depuis la branche que vous venez de créer dans {{repoType}} et elle est uniquement visible pour vous"
   },
   "provisioning": {
-    "banner": {
-      "message": "Cette fonctionnalité est actuellement en cours de développement. Pour une expérience optimale et les dernières améliorations, nous vous recommandons d’utiliser la <2>compilation nocturne</2> de Grafana."
-    },
     "bitbucket": {
       "branch-required": "La branche est requise",
       "permissions": {
@@ -12786,6 +12836,7 @@
       "empty": "Vide",
       "error-field-required": "Ce champ est obligatoire.",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "Un problème est survenu lors de la connexion au référentiel. Veuillez vérifier les paramètres du référentiel et réessayer.",
       "error-repository-status-unhealthy-title": "État du référentiel : non sain",
@@ -12795,6 +12846,7 @@
       "retry-action": "",
       "text-loading-resource-information": "Chargement des informations sur les ressources...",
       "unmanaged-resources-label": "Ressources non gérées",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} tableau de bord",
       "dashboards-count_other": "{{count}} tableau de bord",
@@ -12847,7 +12899,8 @@
     "connect-repository-button": {
       "configure": "Configurer",
       "instance-fully-managed-tooltip": "La configuration est désactivée car cette instance est entièrement gérée",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -13051,7 +13104,7 @@
       "token-label": "Token d’accès",
       "token-required": "Le token Git est requis",
       "token-user-description": "Le nom d’utilisateur qui sera utilisé pour accéder au dépôt avec le token d’accès",
-      "url-description": "L’URL du dépôt Git",
+      "url-description": "",
       "url-pattern": "Doit être une URL de dépôt Git valide",
       "url-required": "L’URL du dépôt est requise"
     },
@@ -13177,23 +13230,25 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_one": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_one": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_one": "",
       "message-both-resources_other": "",
-      "message-repositories-info_one": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_one": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_one": "",
       "message-repository_other": "",
-      "note-message-both-repositories_one": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_one": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_one": "",
-      "note-message-repository_other": "",
-      "note-message-resource_one": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_one": "",
+      "message-repository-onprem_other": "",
+      "message-resource_one": "",
+      "message-resource_other": "",
+      "message-resource-onprem_one": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "Cette ressource est en lecture seule et provisionnée via le provisionnement par fichiers. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",
     "read-only-remote-tooltip": "Cette ressource est en lecture seule et provisionnée via Git. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",
@@ -13452,6 +13507,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Choisir ce qui doit être synchronisé",
       "step-configure-repo": "Configurer le référentiel",
       "step-connect": "Connecter",

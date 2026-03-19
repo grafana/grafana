@@ -2311,6 +2311,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2344,8 +2345,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2404,9 +2406,6 @@
       "label-payload": "裝載",
       "label-use-existing-alert-instances": "使用現有的警報執行個體",
       "reference": "參考資料"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "立即使用我們其中一個量身打造的應用程式，加快警報建立速度"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "此規則由「{{pluginName}}」外掛程式管理"
@@ -2920,6 +2919,9 @@
       "error-button": "錯誤",
       "export-all-grafana-rules": "匯出所有 Grafana 規則",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "取消搜尋",
         "no-more-results": "沒有更多結果 – 找到 {{numberOfRules}} 個規則",
@@ -3066,8 +3068,6 @@
       "dashboard": "儀表板",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "按資料來源搜尋說明",
       "filter-options": {
-        "aria-label": "篩選選項",
-        "aria-label-show-filters": "篩選",
         "placeholder-namespace": "選擇命名空間",
         "placeholder-search-input": "按名稱搜尋或輸入篩選條件查詢…"
       },
@@ -3099,6 +3099,9 @@
       "state": "狀態",
       "title-search-help": "搜尋說明",
       "view-as": "檢視形式"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "正在刪除",
@@ -4780,7 +4783,6 @@
     "all": "全部",
     "apply": "套用",
     "cancel": "取消",
-    "clear": "清除",
     "collapse": "收闔",
     "disabled": "已停用",
     "discard": "捨棄",
@@ -5879,6 +5881,12 @@
         "title": "面板時間設定"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "必須先儲存儀表板，然後才能新增警報。",
@@ -6511,6 +6519,17 @@
       "label-link": "",
       "tooltip": ""
     },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "無法前往所選儀表板。請再試一次。",
@@ -6707,6 +6726,9 @@
       "tooltip-move-link-down": "向下移動連結",
       "tooltip-move-link-up": "向上移動連結",
       "type": "類型"
+    },
+    "dashboard-links-list": {
+      "add-link": ""
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "載入控制面板發生錯誤"
@@ -6987,6 +7009,11 @@
       "type-link": "",
       "with-tags": ""
     },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": ""
+    },
     "managed-badge": {
       "kubectl": "管理者：Kubectl",
       "plugin": "管理者：外掛程式 {{id}}",
@@ -7235,6 +7262,8 @@
       "cannot-be-saved": "此儀表板無法從 Grafana UI 儲存，因為其已從其他來源設定。複製 JSON 或將其儲存到下方的檔案中，然後您可以在佈建來源中更新您的儀表板。",
       "copy-json-to-clipboard": "複製 JSON 到剪貼簿",
       "file-path": "<strong>檔案路徑：</strong>{{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "說明",
       "label-target-folder": "目標資料夾",
       "label-title": "標題",
@@ -7342,6 +7371,13 @@
       "page-nav": {
         "text": {
           "settings": "設定"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7909,6 +7945,7 @@
       "fixed-value-options": {
         "label-fixed-values": "固定值"
       },
+      "label": "",
       "label-limit": "限制",
       "label-value": "數值",
       "noOptionsMessage-no-fields-found": "未找到欄位",
@@ -9928,7 +9965,9 @@
       "external-links-heading": "外部連結"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "輸入規則表達式"
+      "input-placeholder": "輸入規則表達式",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "比較運算子",
@@ -9955,6 +9994,18 @@
       "expand-row-tooltip": "切換列展開",
       "tooltip-collapse-all": "收闔所有列",
       "tooltip-expand-all": "展開所有列"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "為名稱符合正則表達式的欄位設定屬性",
@@ -11174,7 +11225,7 @@
       "cancel": "取消",
       "change-uid": "變更 UID",
       "description-library-panels-imported": "將要匯入的新資料庫面板清單。",
-      "description-unique-identifier-uid": "儀表板的唯一識別碼 (UID)，可用於在多個 Grafana 安裝項目間單獨識別儀表板。UID 允許具有一致的網址存取儀表板，因此變更儀表板的標題不會破壞任何該儀表板的加入書籤連結。",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "現有的資料庫面板",
       "label-folder": "資料夾",
       "label-name": "名稱（名字）",
@@ -12692,9 +12743,6 @@
     "title-loaded-pull-request-in-repo": "此資源是從您剛剛在 {{repoType}} 中建立的分支載入，且只有您可以查看"
   },
   "provisioning": {
-    "banner": {
-      "message": "此功能目前正在積極開發中。為了獲得最佳體驗和最新改進版本，建議使用 Grafana 的<2>夜間版本</2>。"
-    },
     "bitbucket": {
       "branch-required": "分支為必填",
       "permissions": {
@@ -12720,6 +12768,7 @@
       "empty": "空",
       "error-field-required": "此為必填欄位。",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "連接到儲存庫時發生問題。請檢查儲存庫設定，然後再試一次。",
       "error-repository-status-unhealthy-title": "儲存庫狀態不佳",
@@ -12729,6 +12778,7 @@
       "retry-action": "",
       "text-loading-resource-information": "正在載入資源資訊…",
       "unmanaged-resources-label": "未受管理的資源",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_other": "{{count}} 個儀表板",
       "files-count_other": "{{count}} 個檔案",
@@ -12778,7 +12828,8 @@
     "connect-repository-button": {
       "configure": "設定",
       "instance-fully-managed-tooltip": "設定已停用，因為此執行個體已完全受管理",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12979,7 +13030,7 @@
       "token-label": "存取權杖",
       "token-required": "Git 權杖為必填",
       "token-user-description": "將用於存取具有存取權杖的儲存庫的使用者名稱",
-      "url-description": "Git 儲存庫網址",
+      "url-description": "",
       "url-pattern": "必須為有效的 Git 儲存庫網址",
       "url-required": "儲存庫網址為必填"
     },
@@ -13105,15 +13156,17 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_other": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_other": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_other": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_other": "",
+      "message-resource_other": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "此資源為唯讀，並透過檔案佈建進行佈建。若要進行任何變更，請更新連線的儲存庫。若要修改設定，請依序前往「管理」>「佈建」>「儲存庫」。",
     "read-only-remote-tooltip": "此資源為唯讀，並透過 Git 進行佈建。若要進行任何變更，請更新連線的儲存庫。若要修改設定，請依序前往「管理」>「佈建」>「儲存庫」。",
@@ -13372,6 +13425,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "選擇要同步的內容",
       "step-configure-repo": "設定資源庫",
       "step-connect": "連接",

@@ -801,6 +801,141 @@ describe('AnnotationsPlugin2', () => {
         expect(ctx.fillRect).not.toHaveBeenCalled();
         expect(ctx.setLineDash).not.toHaveBeenCalled();
       });
+
+      describe('options', () => {
+        describe('canvasControls', () => {
+          it('should use lineWidth from canvasControls', () => {
+            setUp(
+              {
+                annotations: [mockAnnotationFrame],
+                options: {
+                  lines: { width: 5 },
+                  regions: { opacity: 0.1 },
+                },
+              },
+              config
+            );
+            const mockU = createMockUPlot();
+            const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+            invokeDrawHook(hooks, mockU);
+            expect(ctx.lineWidth).toBe(5);
+          });
+          it.each([0.1, 0.25, 0.33, 0.5])('should use %s opacity from canvasControls', (opacity) => {
+            setUp(
+              {
+                annotations: [mockIRMAnnotationRegion],
+                canvasRegionRendering: true,
+                options: {
+                  lines: { width: 2 },
+                  regions: { opacity },
+                },
+              },
+              config
+            );
+            const mockU = createMockUPlot();
+            const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+            invokeDrawHook(hooks, mockU);
+            expect(ctx.fillRect).toHaveBeenCalled();
+
+            const fillHex = ctx.fillStyle.toString();
+            // color is converted to hex8 in uplot, alpha channel is last 2 hex digits
+            expect(fillHex.substring(fillHex.length - 2)).toEqual(
+              Math.round(opacity * 255)
+                .toString(16)
+                .padStart(2, '0')
+            );
+          });
+          it('should not draw lines when canvasControls.lines.width is 0', () => {
+            setUp(
+              {
+                annotations: [mockAnnotationFrame],
+                options: {
+                  lines: { width: 0 },
+                  regions: { opacity: 0 },
+                },
+              },
+              config
+            );
+            const mockU = createMockUPlot();
+            const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+            invokeDrawHook(hooks, mockU);
+            expect(ctx.stroke).not.toHaveBeenCalled();
+            expect(ctx.setLineDash).not.toHaveBeenCalled();
+          });
+          it('should not draw region fill when canvasControls.regions.opacity is 0', () => {
+            setUp(
+              {
+                annotations: [mockIRMAnnotationRegion],
+                canvasRegionRendering: true,
+                options: {
+                  lines: { width: 2 },
+                  regions: { opacity: 0 },
+                },
+              },
+              config
+            );
+            const mockU = createMockUPlot();
+            const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+            invokeDrawHook(hooks, mockU);
+            // Lines still drawn (width > 0), but no region fill
+            expect(ctx.setLineDash).toHaveBeenCalledWith([5, 5]);
+            expect(ctx.fillRect).not.toHaveBeenCalled();
+          });
+          it('should not draw indicators when multiLane enabled and canvasControls are not', () => {
+            setUp(
+              {
+                annotations: [mockAnnotationFrame],
+                options: {
+                  multiLane: true,
+                },
+              },
+              config
+            );
+            const mockU = createMockUPlot();
+            const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+            invokeDrawHook(hooks, mockU);
+            // User explicitly enabled canvas controls, so we render even with multiLane
+            expect(ctx.lineWidth).toBe(0);
+            expect(ctx.setLineDash).not.toHaveBeenCalled();
+          });
+          it('should draw indicators when canvasControls enabled', () => {
+            setUp(
+              {
+                annotations: [mockAnnotationFrame],
+                options: {
+                  multiLane: true,
+                  lines: { width: 2 },
+                  regions: { opacity: 0.1 },
+                },
+              },
+              config
+            );
+            const mockU = createMockUPlot();
+            const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+            invokeDrawHook(hooks, mockU);
+            // User explicitly enabled canvas controls, so we render even with multiLane
+            expect(ctx.lineWidth).toBe(2);
+            expect(ctx.setLineDash).toHaveBeenCalledWith([5, 5]);
+          });
+          it('should draw indicators when canvasControls undefined', () => {
+            setUp(
+              {
+                annotations: [mockAnnotationFrame],
+                options: {
+                  multiLane: false,
+                },
+              },
+              config
+            );
+            const mockU = createMockUPlot();
+            const ctx = mockU.ctx as jest.Mocked<CanvasRenderingContext2D>;
+            invokeDrawHook(hooks, mockU);
+            // User explicitly enabled canvas controls, so we render even with multiLane
+            expect(ctx.lineWidth).toBe(2);
+            expect(ctx.setLineDash).toHaveBeenCalledWith([5, 5]);
+          });
+        });
+      });
     });
 
     describe('xyAnnos', () => {

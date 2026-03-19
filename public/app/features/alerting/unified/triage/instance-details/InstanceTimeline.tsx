@@ -7,6 +7,7 @@ import {
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Icon, LinkButton, RadioButtonGroup, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
@@ -379,18 +380,20 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
         <Text variant="bodySmall" color="secondary">
           {formatPrometheusDuration(Math.floor(notification.duration / 1_000_000))}
         </Text>
-        <Tooltip content={t('alerting.instance-details.view-notification-tooltip', 'View full notification details')}>
-          <LinkButton
-            variant="secondary"
-            size="sm"
-            icon="eye"
-            href={createRelativeUrl(
-              `/alerting/notifications-history/view/${notification.uuid}?ts=${new Date(notification.timestamp).getTime()}`
-            )}
-          >
-            {t('alerting.instance-details.view-notification-detail', 'Details')}
-          </LinkButton>
-        </Tooltip>
+        {config.featureToggles.alertingNotificationHistoryDetail && (
+          <Tooltip content={t('alerting.instance-details.view-notification-tooltip', 'View full notification details')}>
+            <LinkButton
+              variant="secondary"
+              size="sm"
+              icon="eye"
+              href={createRelativeUrl(
+                `/alerting/notifications-history/view/${notification.uuid}?ts=${new Date(notification.timestamp).getTime()}`
+              )}
+            >
+              {t('alerting.instance-details.view-notification-detail', 'Details')}
+            </LinkButton>
+          </Tooltip>
+        )}
       </div>
       {!isSuccess && notification.error && (
         <div className={styles.notificationRowError}>

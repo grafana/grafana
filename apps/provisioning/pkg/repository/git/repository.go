@@ -33,11 +33,12 @@ import (
 var ErrNoBranches = errors.New("no branches found in repository")
 
 type RepositoryConfig struct {
-	URL       string
-	Branch    string
-	TokenUser string
-	Token     common.RawSecureValue
-	Path      string
+	URL           string
+	Branch        string
+	TokenUser     string
+	Token         common.RawSecureValue
+	Path          string
+	SkipGitSuffix bool
 }
 
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
@@ -53,6 +54,9 @@ func NewRepository(
 	gitConfig RepositoryConfig,
 ) (GitRepository, error) {
 	var opts []options.Option
+	if gitConfig.SkipGitSuffix {
+		opts = append(opts, options.WithoutGitSuffix())
+	}
 	if !gitConfig.Token.IsZero() {
 		tokenUser := gitConfig.TokenUser
 		if tokenUser == "" {
@@ -721,7 +725,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 	}
 
 	// Get commit hashes for base and ref
-	// Compare commits using nanogit
+	// Compare commits using nanogit (without rename detection for now)
 	files, err := r.client.CompareCommits(ctx, baseHash, refHash)
 	if err != nil {
 		return nil, fmt.Errorf("compare commits: %w", err)
@@ -781,6 +785,10 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 				Ref:    ref,
 				Action: repository.FileActionUpdated,
 			})
+		case protocol.FileStatusRenamed:
+			// Rename handling will be implemented in follow-up PR
+			// For now, let renames fall through to default (logged as unhandled)
+			fallthrough
 		default:
 			logger.Error("ignore unhandled file", "file", f.Path, "status", string(f.Status))
 		}

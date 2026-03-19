@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2358,8 +2359,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2418,9 +2420,6 @@
       "label-payload": "Payload",
       "label-use-existing-alert-instances": "Bestehende Warnungsinstanzen verwenden",
       "reference": "Referenz"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Erstellen Sie Ihre Warnungen jetzt noch schneller, indem Sie eine unserer maßgeschneiderten Apps nutzen"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Diese Regel wird vom Plugin {{pluginName}} verwaltet"
@@ -2937,6 +2936,9 @@
       "error-button": "Fehler",
       "export-all-grafana-rules": "Alle Grafana-Regeln exportieren",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Suche abbrechen",
         "no-more-results": "Keine weiteren Ergebnisse – {{numberOfRules}} Regeln gefunden",
@@ -3086,8 +3088,6 @@
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Hilfe für Suche nach Datenquellen",
       "filter-options": {
-        "aria-label": "Filteroptionen",
-        "aria-label-show-filters": "Filter",
         "placeholder-namespace": "Namensraum auswählen",
         "placeholder-search-input": "Nach Name suchen oder Filterabfrage eingeben …"
       },
@@ -3119,6 +3119,9 @@
       "state": "Status",
       "title-search-help": "Hilfe zur Suche",
       "view-as": "Anzeigen als"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Wird gelöscht",
@@ -4812,7 +4815,6 @@
     "all": "Alles",
     "apply": "Anwenden",
     "cancel": "Abbrechen",
-    "clear": "Löschen",
     "collapse": "Einklappen",
     "disabled": "Deaktiviert",
     "discard": "Verwerfen",
@@ -5912,6 +5914,12 @@
         "title": "Zeiteinstellungen des Panels"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Das Dashboard muss gespeichert werden, bevor Warnungen hinzugefügt werden können.",
@@ -6545,6 +6553,17 @@
       "label-link": "",
       "tooltip": ""
     },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
+    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Es konnte nicht zum ausgewählten Dashboard navigiert werden. Bitte versuchen Sie es erneut.",
@@ -6744,6 +6763,9 @@
       "tooltip-move-link-down": "Link nach unten verschieben",
       "tooltip-move-link-up": "Link nach oben verschieben",
       "type": "Typ"
+    },
+    "dashboard-links-list": {
+      "add-link": ""
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Fehler beim Laden des Dashboards"
@@ -7025,6 +7047,13 @@
       "type-link": "",
       "with-tags": ""
     },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": ""
+    },
     "managed-badge": {
       "kubectl": "Verwaltet von: Kubectl",
       "plugin": "Verwaltet von: Plugin {{id}}",
@@ -7274,6 +7303,8 @@
       "cannot-be-saved": "Dieses Dashboard kann nicht über die Grafana-Benutzeroberfläche gespeichert werden, da es von einer anderen Quelle bereitgestellt wurde. Kopieren Sie JSON oder speichern Sie es unten in einer Datei. Anschließend können Sie Ihr Dashboard in der Bereitstellungsquelle aktualisieren.",
       "copy-json-to-clipboard": "JSON in die Zwischenablage kopieren",
       "file-path": "<strong>Dateipfad:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Beschreibung",
       "label-target-folder": "Zielordner",
       "label-title": "Titel",
@@ -7381,6 +7412,13 @@
       "page-nav": {
         "text": {
           "settings": "Einstellungen"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7952,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fester Wert"
       },
+      "label": "",
       "label-limit": "Limit",
       "label-value": "Wert",
       "noOptionsMessage-no-fields-found": "Keine Felder gefunden",
@@ -9983,7 +10022,9 @@
       "external-links-heading": "Externe Links"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Regulären Ausdruck eingeben"
+      "input-placeholder": "Regulären Ausdruck eingeben",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Vergleichsoperator",
@@ -10010,6 +10051,18 @@
       "expand-row-tooltip": "Zeile umschalten erweitert",
       "tooltip-collapse-all": "Alle Zeilen einklappen",
       "tooltip-expand-all": "Alle Zeilen erweitern"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Eigenschaften für Felder festlegen, deren Namen einem Regex entsprechen",
@@ -11237,7 +11290,7 @@
       "cancel": "Abbrechen",
       "change-uid": "UID ändern",
       "description-library-panels-imported": "Liste der neuen Bibliotheks-Panels, die importiert werden.",
-      "description-unique-identifier-uid": "Mithilfe des eindeutigen Bezeichners (UID) eines Dashboards kann ein Dashboard zwischen mehreren Grafana-Installationen eindeutig identifiziert werden. Der UID ermöglicht konsistente URLs für den Zugriff auf Dashboards, sodass die Änderung des Titels eines Dashboards keine Bookmark-Links zu diesem Dashboard unterbricht.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Vorhandene Bibliotheks-Panels",
       "label-folder": "Ordner",
       "label-name": "Name",
@@ -12758,9 +12811,6 @@
     "title-loaded-pull-request-in-repo": "Diese Ressource wird aus dem Branch geladen, den Sie gerade in {{repoType}} erstellt haben, und ist nur für Sie sichtbar"
   },
   "provisioning": {
-    "banner": {
-      "message": "Diese Funktion befindet sich momentan in der aktiven Entwicklung. Für die bestmögliche Nutzererfahrung und die neuesten Verbesserungen empfehlen wir die Nutzung von <2>Nightly Build</2> von Grafana."
-    },
     "bitbucket": {
       "branch-required": "Branch erforderlich",
       "permissions": {
@@ -12786,6 +12836,7 @@
       "empty": "Leer",
       "error-field-required": "Dieses Feld ist erforderlich.",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "Bei der Verbindung mit dem Repository ist ein Fehler aufgetreten. Bitte überprüfen Sie die Repository-Einstellungen und versuchen Sie es erneut.",
       "error-repository-status-unhealthy-title": "Repository fehlerhaft",
@@ -12795,6 +12846,7 @@
       "retry-action": "",
       "text-loading-resource-information": "Ressourceninformationen werden geladen ...",
       "unmanaged-resources-label": "Nicht verwaltete Ressourcen",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} Dashboard",
       "dashboards-count_other": "{{count}} Dashboard",
@@ -12847,7 +12899,8 @@
     "connect-repository-button": {
       "configure": "Konfigurieren",
       "instance-fully-managed-tooltip": "Die Konfiguration ist deaktiviert, da diese Instanz vollständig verwaltet wird",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -13051,7 +13104,7 @@
       "token-label": "Zugriffstoken",
       "token-required": "Git-Token erforderlich",
       "token-user-description": "Der Benutzername, der für den Zugriff auf das Repository mit dem Zugriffstoken verwendet wird",
-      "url-description": "Die Git-Repository-URL",
+      "url-description": "",
       "url-pattern": "Muss eine gültige Git-Repository-URL sein",
       "url-required": "Repository-URL erforderlich"
     },
@@ -13177,23 +13230,25 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_one": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_one": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_one": "",
       "message-both-resources_other": "",
-      "message-repositories-info_one": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_one": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_one": "",
       "message-repository_other": "",
-      "note-message-both-repositories_one": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_one": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_one": "",
-      "note-message-repository_other": "",
-      "note-message-resource_one": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_one": "",
+      "message-repository-onprem_other": "",
+      "message-resource_one": "",
+      "message-resource_other": "",
+      "message-resource-onprem_one": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "Diese Ressource ist schreibgeschützt und wird über die Dateibereitstellung bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
     "read-only-remote-tooltip": "Diese Ressource ist schreibgeschützt und wird über Git bereitgestellt. Um Änderungen vorzunehmen, aktualisieren Sie bitte das verbundene Repository. Um die Einstellungen zu ändern, gehen Sie zu Administration > Bereitstellung > Repositorys.",
@@ -13452,6 +13507,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Wählen Sie aus, was synchronisiert wird",
       "step-configure-repo": "Repository konfigurieren",
       "step-connect": "Verbinden",
