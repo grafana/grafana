@@ -38,3 +38,7 @@ To get the latest version of each installed plugin and increase the chance that 
 #### Upgrade to Grafana 13
 
 Finally you can continue your upgrade to Grafana 13.
+
+### Deprecated data source APIs disabled
+
+Data source APIs that refer to data sources using a numeric `id` have been deprecated since Grafana 9. In Grafana 13, they are disabled by default. If you require these APIs, you can re-enable them by enabling the `datasourceLegacyIdApi` feature flag.
