@@ -1152,6 +1152,14 @@ export type DashboardDashboardLink = {
   /** Link URL. Only required/valid if the type is link */
   url?: string;
 };
+export type DashboardAutoGridLayoutKindOrGridLayoutKind = {
+  AutoGridLayoutKind?: DashboardAutoGridLayoutKind;
+  GridLayoutKind?: DashboardGridLayoutKind;
+};
+export type DashboardDashboardPreferences = {
+  /** default layout template to be used when new containers are created */
+  defaultLayoutTemplate?: DashboardAutoGridLayoutKindOrGridLayoutKind;
+};
 export type DashboardTimeRangeOption = {
   display: string;
   from: string;
@@ -1195,6 +1203,7 @@ export type DashboardSpec = {
   links: DashboardDashboardLink[];
   /** When set to true, the dashboard will redraw panels at an interval matching the pixel width. This will keep data "moving left" regardless of the query refresh rate. This setting helps avoid dashboards presenting stale live data. */
   liveNow?: boolean;
+  preferences?: DashboardDashboardPreferences;
   /** When set to true, the dashboard will load all panels in the dashboard when it's loaded. */
   preload: boolean;
   /** Plugins only. The version of the dashboard installed together with the plugin. This is used to determine if the dashboard should be updated when the plugin is updated. */

@@ -1289,6 +1289,17 @@
           }
         }
       },
+      "DashboardAutoGridLayoutKindOrGridLayoutKind": {
+        "type": "object",
+        "properties": {
+          "AutoGridLayoutKind": {
+            "$ref": "#/components/schemas/DashboardAutoGridLayoutKind"
+          },
+          "GridLayoutKind": {
+            "$ref": "#/components/schemas/DashboardGridLayoutKind"
+          }
+        }
+      },
       "DashboardAutoGridLayoutSpec": {
         "type": "object",
         "required": ["columnWidthMode", "rowHeightMode", "items"],
@@ -1746,6 +1757,20 @@
           "url": {
             "description": "Link URL. Only required/valid if the type is link",
             "type": "string"
+          }
+        }
+      },
+      "DashboardDashboardPreferences": {
+        "description": "Dashboard specific preferences (applied per dashboard = all users using the dashboard)",
+        "type": "object",
+        "properties": {
+          "defaultLayoutTemplate": {
+            "description": "default layout template to be used when new containers are created",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DashboardAutoGridLayoutKindOrGridLayoutKind"
+              }
+            ]
           }
         }
       },
@@ -3269,6 +3294,9 @@
           "liveNow": {
             "description": "When set to true, the dashboard will redraw panels at an interval matching the pixel width. This will keep data \"moving left\" regardless of the query refresh rate. This setting helps avoid dashboards presenting stale live data.",
             "type": "boolean"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/DashboardDashboardPreferences"
           },
           "preload": {
             "description": "When set to true, the dashboard will load all panels in the dashboard when it's loaded.",
