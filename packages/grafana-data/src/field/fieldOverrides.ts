@@ -2,7 +2,7 @@ import { isNumber, set, unset, get, cloneDeep, defaultsDeep } from 'lodash';
 import { createContext, useContext, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
-import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
+import { ThresholdsMode, VariableFormatID, MatcherScope } from '@grafana/schema';
 
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
 import { createDataFrame, guessFieldTypeForField } from '../dataframe/processDataFrame';
@@ -71,7 +71,8 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
  */
 export function applyFieldOverrides(
   options: ApplyFieldOverrideOptions,
-  data: DataFrame[] | undefined = options.data
+  data: DataFrame[] | undefined = options.data,
+  scope: MatcherScope = 'series'
 ): DataFrame[] {
   if (!data) {
     return [];
@@ -91,6 +92,9 @@ export function applyFieldOverrides(
   const override: OverrideProps[] = [];
   if (source.overrides) {
     for (const rule of source.overrides) {
+      if ((rule.matcher.scope ?? 'series') !== scope) {
+        continue;
+      }
       const info = fieldMatchers.get(rule.matcher.id);
       if (info) {
         override.push({
@@ -243,8 +247,7 @@ export function applyFieldOverrides(
               );
             }
           }
-          // @todo: apply nested field overrides here
-          newValues[idx] = nestedFrames; // applyFieldOverrides(options, nestedFrames);
+          newValues[idx] = applyFieldOverrides(options, nestedFrames, 'nested');
         }
         field.values = newValues;
       } else if (field.type === FieldType.frame) {
@@ -257,6 +260,7 @@ export function applyFieldOverrides(
           }
           newValues[idx] = nestedFrame;
         }
+        // @todo should this be scoped?
         field.values = applyFieldOverrides(options, newValues);
       }
     }

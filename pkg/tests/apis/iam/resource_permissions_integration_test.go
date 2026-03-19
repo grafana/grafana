@@ -18,6 +18,7 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -684,7 +685,7 @@ func TestIntegrationResourcePermissionSearch(t *testing.T) {
 		// Admin has get_permissions on the folder -> should see Editor's direct permission for this folder.
 		rawAdmin, err := restClientAdmin.Get().
 			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
-			Param("userUID", editorUID).
+			Param(resourcepermission.SearchParamUserUID, editorUID).
 			Do(ctx).
 			Raw()
 		require.NoError(t, err)
@@ -702,7 +703,7 @@ func TestIntegrationResourcePermissionSearch(t *testing.T) {
 		// Viewer does not have get_permissions on this folder -> should NOT see Editor's direct permission for it.
 		rawViewer, err := restClientViewer.Get().
 			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
-			Param("userUID", editorUID).
+			Param(resourcepermission.SearchParamUserUID, editorUID).
 			Do(ctx).
 			Raw()
 		require.NoError(t, err)
@@ -729,7 +730,7 @@ func TestIntegrationResourcePermissionSearch(t *testing.T) {
 
 		raw, err := restClientAdmin.Get().
 			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
-			Param("userUID", editorUID).
+			Param(resourcepermission.SearchParamUserUID, editorUID).
 			Do(ctx).
 			Raw()
 		require.NoError(t, err)
@@ -744,5 +745,165 @@ func TestIntegrationResourcePermissionSearch(t *testing.T) {
 			}
 		}
 		require.True(t, found, "search result should contain permission for folder %q (editor with admin), got %+v", folderUID, result.Permissions)
+	})
+
+	t.Run("GET resourcepermissions/search returns direct permission after creating ResourcePermission for team", func(t *testing.T) {
+		folder := createTestFolder(t, helper, helper.Org1.Admin, "search-test-folder-team", parentUID)
+		folderUID := folder.GetName()
+		teamUID := helper.Org1.Staff.UID
+		require.NotEmpty(t, teamUID, "team must have UID for search test")
+
+		// Grant admin permission to the team on this folder
+		perm := newPermission("Team", teamUID, "admin")
+		toCreate := createResourcePermissionObject(folderUID, gvrFolders.Group, gvrFolders.Resource, perm)
+		_, err := clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.NoError(t, err)
+		defer func() {
+			_ = clients.rpAdmin.Resource.Delete(ctx, toCreate.GetName(), metav1.DeleteOptions{})
+		}()
+
+		raw, err := restClientAdmin.Get().
+			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
+			Param(resourcepermission.SearchParamTeamUID, teamUID).
+			Do(ctx).
+			Raw()
+		require.NoError(t, err)
+		var result iamv0.PermissionsSearchResult
+		require.NoError(t, json.Unmarshal(raw, &result))
+		scopePrefix := "folders:uid:" + folderUID
+		var found bool
+		for _, p := range result.Permissions {
+			if p.Scope == scopePrefix || strings.HasPrefix(p.Scope, scopePrefix) {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "search result should contain permission for folder %q (team with admin), got %+v", folderUID, result.Permissions)
+	})
+
+	t.Run("GET resourcepermissions/search returns only permissions for resources caller has get_permissions on (team)", func(t *testing.T) {
+		// Create a folder and grant Staff team direct "view" on it. Viewer has no get_permissions on this folder.
+		folder := createTestFolder(t, helper, helper.Org1.Admin, "search-auth-filter-folder-team", parentUID)
+		folderUID := folder.GetName()
+		teamUID := helper.Org1.Staff.UID
+		require.NotEmpty(t, teamUID, "team must have UID for search test")
+
+		perm := newPermission("Team", teamUID, "view")
+		toCreate := createResourcePermissionObject(folderUID, gvrFolders.Group, gvrFolders.Resource, perm)
+		_, err := clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.NoError(t, err)
+		defer func() { _ = clients.rpAdmin.Resource.Delete(ctx, toCreate.GetName(), metav1.DeleteOptions{}) }()
+
+		scopePrefix := "folders:uid:" + folderUID
+
+		// Admin has get_permissions on the folder -> should see Staff team's direct permission for this folder.
+		rawAdmin, err := restClientAdmin.Get().
+			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
+			Param(resourcepermission.SearchParamTeamUID, teamUID).
+			Do(ctx).
+			Raw()
+		require.NoError(t, err)
+		var resultAdmin iamv0.PermissionsSearchResult
+		require.NoError(t, json.Unmarshal(rawAdmin, &resultAdmin))
+		var adminSees bool
+		for _, p := range resultAdmin.Permissions {
+			if strings.HasPrefix(p.Scope, scopePrefix) || p.Scope == scopePrefix {
+				adminSees = true
+				break
+			}
+		}
+		require.True(t, adminSees, "Admin should see Staff team's direct permission for folder %q (caller has get_permissions)", folderUID)
+
+		// Viewer does not have get_permissions on this folder -> should NOT see Staff team's direct permission for it.
+		rawViewer, err := restClientViewer.Get().
+			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
+			Param(resourcepermission.SearchParamTeamUID, teamUID).
+			Do(ctx).
+			Raw()
+		require.NoError(t, err)
+		var resultViewer iamv0.PermissionsSearchResult
+		require.NoError(t, json.Unmarshal(rawViewer, &resultViewer))
+		for _, p := range resultViewer.Permissions {
+			require.False(t, p.Scope == scopePrefix || strings.HasPrefix(p.Scope, scopePrefix),
+				"Viewer should not see Staff team's permission for folder %q (caller lacks get_permissions on target)", folderUID)
+		}
+	})
+
+	t.Run("GET resourcepermissions/search returns direct permission after creating ResourcePermission for basic role", func(t *testing.T) {
+		folder := createTestFolder(t, helper, helper.Org1.Admin, "search-test-folder-basic-role", parentUID)
+		folderUID := folder.GetName()
+
+		// Grant admin permission to the Editor basic role on this folder
+		perm := newPermission("BasicRole", "Editor", "admin")
+		toCreate := createResourcePermissionObject(folderUID, gvrFolders.Group, gvrFolders.Resource, perm)
+		_, err := clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.NoError(t, err)
+		defer func() {
+			_ = clients.rpAdmin.Resource.Delete(ctx, toCreate.GetName(), metav1.DeleteOptions{})
+		}()
+
+		raw, err := restClientAdmin.Get().
+			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
+			Param(resourcepermission.SearchParamBasicRole, "Editor").
+			Do(ctx).
+			Raw()
+		require.NoError(t, err)
+		var result iamv0.PermissionsSearchResult
+		require.NoError(t, json.Unmarshal(raw, &result))
+		scopePrefix := "folders:uid:" + folderUID
+		var found bool
+		for _, p := range result.Permissions {
+			if p.Scope == scopePrefix || strings.HasPrefix(p.Scope, scopePrefix) {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "search result should contain permission for folder %q (Editor basic role with admin), got %+v", folderUID, result.Permissions)
+	})
+
+	t.Run("GET resourcepermissions/search returns only permissions for resources caller has get_permissions on (basic role)", func(t *testing.T) {
+		// Create a folder and grant Viewer basic role direct "view" on it. Viewer has no get_permissions on this folder (only view).
+		folder := createTestFolder(t, helper, helper.Org1.Admin, "search-auth-filter-folder-basic-role", parentUID)
+		folderUID := folder.GetName()
+
+		perm := newPermission("BasicRole", "Viewer", "view")
+		toCreate := createResourcePermissionObject(folderUID, gvrFolders.Group, gvrFolders.Resource, perm)
+		_, err := clients.rpAdmin.Resource.Create(ctx, toCreate, metav1.CreateOptions{})
+		require.NoError(t, err)
+		defer func() { _ = clients.rpAdmin.Resource.Delete(ctx, toCreate.GetName(), metav1.DeleteOptions{}) }()
+
+		scopePrefix := "folders:uid:" + folderUID
+
+		// Admin has get_permissions on the folder -> should see Viewer basic role's direct permission for this folder.
+		rawAdmin, err := restClientAdmin.Get().
+			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
+			Param(resourcepermission.SearchParamBasicRole, "Viewer").
+			Do(ctx).
+			Raw()
+		require.NoError(t, err)
+		var resultAdmin iamv0.PermissionsSearchResult
+		require.NoError(t, json.Unmarshal(rawAdmin, &resultAdmin))
+		var adminSees bool
+		for _, p := range resultAdmin.Permissions {
+			if strings.HasPrefix(p.Scope, scopePrefix) || p.Scope == scopePrefix {
+				adminSees = true
+				break
+			}
+		}
+		require.True(t, adminSees, "Admin should see Viewer basic role's direct permission for folder %q (caller has get_permissions)", folderUID)
+
+		// Viewer does not have get_permissions on this folder -> should NOT see Viewer basic role's direct permission for it.
+		rawViewer, err := restClientViewer.Get().
+			AbsPath("apis", iamv0.GROUP, iamv0.VERSION, "namespaces", ns, "resourcepermissions", "search").
+			Param(resourcepermission.SearchParamBasicRole, "Viewer").
+			Do(ctx).
+			Raw()
+		require.NoError(t, err)
+		var resultViewer iamv0.PermissionsSearchResult
+		require.NoError(t, json.Unmarshal(rawViewer, &resultViewer))
+		for _, p := range resultViewer.Permissions {
+			require.False(t, p.Scope == scopePrefix || strings.HasPrefix(p.Scope, scopePrefix),
+				"Viewer should not see Viewer basic role's permission for folder %q (caller lacks get_permissions on target)", folderUID)
+		}
 	})
 }

@@ -2350,7 +2350,6 @@
       },
       "filterBy": "Filter by:",
       "firing-alerts": "Firing Alerts",
-      "group-labels": "Group Labels:",
       "header": {
         "contact-point": "Contact point",
         "group-labels": "Group Labels",
@@ -2360,8 +2359,9 @@
       "labels": "Labels:",
       "labels-filter-variable": {
         "label": {
-          "labels": "Labels"
-        }
+          "group-labels": "Group Labels"
+        },
+        "placeholder": "Filter by group label values"
       },
       "no-notifications": "No notifications found for the selected time range and filters",
       "outcome-filter-variable": {
@@ -5222,6 +5222,12 @@
       "ungroup-rows": "Ungroup rows",
       "ungroup-tabs": "Ungroup tabs"
     },
+    "code-pane": {
+      "collapse": "Collapse editor",
+      "expand": "Expand editor",
+      "header": "Edit as code",
+      "modal-title": "Edit dashboard as code"
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -6104,6 +6110,13 @@
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning."
     },
+    "schema-editor": {
+      "apply-button": "Apply changes",
+      "apply-button-disabled-tooltip": "Fix validation errors before applying changes",
+      "apply-button-disabled-tooltip-yaml": "Document has validation errors. Switch to JSON to see inline error details.",
+      "apply-error-title": "Failed to apply changes",
+      "undo-title": "Schema edit"
+    },
     "search-panel": {
       "no-match": "No panels matching"
     },
@@ -6118,6 +6131,10 @@
       "dashboard-options": {
         "title": "Options",
         "tooltip": "Dashboard options"
+      },
+      "edit-schema": {
+        "title": "Code",
+        "tooltip": "Edit as code"
       },
       "export": {
         "title": "Export"
@@ -6460,12 +6477,15 @@
     "browse-grafana-com": "Browse Grafana.com",
     "browse-plugins": "Browse plugins",
     "card": {
-      "customize-with-assistant-button": "Customize with Assistant",
+      "customize-with-assistant-button": "Customize with assistant",
+      "customize-with-assistant-button-label": "Customize with assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available ",
-      "use-dashboard-button": "Use dashboard",
-      "view-template-button": "View template"
+      "view-dashboard-button": "View dashboard",
+      "view-dashboard-button-label": "View dashboard: {{title}}",
+      "view-template-button": "View template",
+      "view-template-button-label": "View template: {{title}}"
     },
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
@@ -7591,6 +7611,11 @@
   "dashboard-scene-help-wizard": {
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>."
   },
+  "dashboard-schema-editor": {
+    "format-label": "Format:",
+    "json-disabled-tooltip": "Fix YAML syntax errors to switch to JSON",
+    "yaml-disabled-tooltip": "Fix JSON syntax errors to switch to YAML"
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Annotations"
@@ -7621,6 +7646,8 @@
     },
     "json-editor": {
       "save-button": "Save changes",
+      "save-button-disabled-tooltip": "Fix validation errors before saving",
+      "save-button-disabled-tooltip-yaml": "Document has validation errors. Switch to JSON to see inline error details.",
       "subtitle": "The JSON model below is the data structure that defines the dashboard. This includes dashboard settings, panel settings, layout, queries, and so on.",
       "title": "JSON Model"
     },
@@ -7992,6 +8019,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fixed value"
       },
+      "label": "Scalar",
       "label-limit": "Limit",
       "label-value": "Value",
       "noOptionsMessage-no-fields-found": "No fields found",
@@ -10023,7 +10051,9 @@
       "external-links-heading": "External links"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Enter regular expression"
+      "input-placeholder": "Enter regular expression",
+      "scope": "Target fields",
+      "scope-tooltip": "To avoid issues when applying overrides, overrides cannot be applied across multiple target scopes. The default \"dataframe\" scope is applied if no scope is selected."
     },
     "field-value-matcher": {
       "operator-label": "Comparison operator",
@@ -10050,6 +10080,18 @@
       "expand-row-tooltip": "Toggle row expanded",
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "Annotations",
+        "exemplar": "Exemplars",
+        "nested": "Nested",
+        "series": "Dataframe"
+      },
+      "labels": {
+        "base-field-name": "{{name}} (base field name)",
+        "not-found": "{{name}} (not found)"
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Set properties for fields with names matching a regex",
@@ -11277,7 +11319,7 @@
       "cancel": "Cancel",
       "change-uid": "Change uid",
       "description-library-panels-imported": "List of new library panels that will get imported.",
-      "description-unique-identifier-uid": "The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.",
+      "description-unique-identifier-uid": "The unique identifier (UID) of a dashboard can be used to uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.",
       "label-existing-library-panels": "Existing library panels",
       "label-folder": "Folder",
       "label-name": "Name",
@@ -12798,9 +12840,6 @@
     "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {
-    "banner": {
-      "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
-    },
     "bitbucket": {
       "branch-required": "Branch is required",
       "permissions": {
@@ -13497,6 +13536,7 @@
       "github-app-select-connection": "Select a GitHub App connection",
       "github-enterprise-alert-body": "GitHub Enterprise Server is currently only supported through the Pure Git repository type. Native GitHub Enterprise integration is planned and will be available in the upcoming months.",
       "github-enterprise-alert-title": "GitHub Enterprise Server",
+      "give-feedback-link": "Give feedback",
       "step-bootstrap": "Choose what to synchronize",
       "step-configure-repo": "Configure repository",
       "step-connect": "Connect",

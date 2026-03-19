@@ -1,4 +1,4 @@
-package provisioning
+package connection
 
 import (
 	"context"
@@ -21,7 +21,7 @@ func TestIntegrationProvisioning_ConnectionRepositories(t *testing.T) {
 
 	helper := common.RunGrafana(t)
 	ctx := context.Background()
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 	connectionName := "connection-repositories-test"
 
 	// Create a connection for testing
@@ -136,7 +136,7 @@ func TestIntegrationProvisioning_ConnectionRepositoriesResponseType(t *testing.T
 
 	helper := common.RunGrafana(t)
 	ctx := context.Background()
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	// Create a connection for testing
 	connection := &unstructured.Unstructured{Object: map[string]any{
