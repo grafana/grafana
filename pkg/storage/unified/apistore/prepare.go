@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/storage"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/klog/v2"
 
 	authlib "github.com/grafana/authlib/types"
@@ -242,6 +241,19 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return v, err
 	}
 
+	// If staying in the same folder but manager properties changed, re-validate
+	// consistency with the parent folder. Without this, removing or changing
+	// manager annotations would bypass the repo-managed folder invariant.
+	if obj.GetFolder() != "" && obj.GetFolder() == previous.GetFolder() {
+		newMgr, newOk := obj.GetManagerProperties()
+		oldMgr, oldOk := previous.GetManagerProperties()
+		if newOk != oldOk || newMgr != oldMgr {
+			if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
+				return v, err
+			}
+		}
+	}
+
 	// Mark the resource as changed
 	if v.hasChanged {
 		obj.SetGeneration(previous.GetGeneration() + 1)
@@ -264,11 +276,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
-	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" {
-		return nil
-	}
-	if s.configProvider == nil {
-		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: configProvider is not configured", "resource", s.gr.String())
+	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" || s.getDynClient == nil {
 		return nil
 	}
 	folder, err := s.getParentFolder(ctx, obj)
@@ -278,23 +286,8 @@ func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils
 	return ensureSameRepoManager(folder, obj)
 }
 
-func (s *Storage) getDynamicClient(ctx context.Context) (dynamic.Interface, error) {
-	s.dynClientOnce.Do(func() {
-		cfg, err := s.configProvider.GetRestConfig(ctx)
-		if err != nil {
-			s.dynClientErr = fmt.Errorf("failed to get REST config: %w", err)
-			return
-		}
-		s.dynClient, s.dynClientErr = dynamic.NewForConfig(cfg)
-		if s.dynClientErr != nil {
-			s.dynClientErr = fmt.Errorf("failed to create dynamic client: %w", s.dynClientErr)
-		}
-	})
-	return s.dynClient, s.dynClientErr
-}
-
 func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
-	dynClient, err := s.getDynamicClient(ctx)
+	dynClient, err := s.getDynClient()
 	if err != nil {
 		return nil, err
 	}

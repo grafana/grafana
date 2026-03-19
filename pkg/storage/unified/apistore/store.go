@@ -97,9 +97,10 @@ type Storage struct {
 	snowflake      *snowflake.Node    // used to enforce internal ids
 	configProvider RestConfigProvider // used for provisioning
 
-	dynClient     dynamic.Interface // lazily cached K8s dynamic client
-	dynClientOnce sync.Once
-	dynClientErr  error
+	// Lazily initialized because GetRestConfig blocks until the API server is
+	// fully started (eventualRestConfigProvider), while NewStorage is called
+	// during API group installation — before the server is ready.
+	getDynClient func() (dynamic.Interface, error)
 
 	versioner storage.Versioner
 
@@ -148,6 +149,23 @@ func NewStorage(
 		versioner: &storage.APIObjectVersioner{},
 
 		opts: opts,
+	}
+
+	if opts.EnableFolderSupport && configProvider != nil {
+		s.getDynClient = sync.OnceValues(func() (dynamic.Interface, error) {
+			cfg, err := configProvider.GetRestConfig(context.Background())
+			if err != nil {
+				return nil, fmt.Errorf("failed to get REST config: %w", err)
+			}
+			dc, err := dynamic.NewForConfig(cfg)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+			}
+			return dc, nil
+		})
+	} else if opts.EnableFolderSupport {
+		logging.DefaultLogger.Warn("configProvider is not configured; repo-manager folder consistency checks will be skipped",
+			"resource", config.GroupResource.String())
 	}
 
 	if opts.RequireDeprecatedInternalID {

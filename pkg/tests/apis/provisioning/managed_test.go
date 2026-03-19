@@ -292,6 +292,123 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 		require.Equal(t, createdB.GetName(), updated.GetAnnotations()["grafana.app/folder"])
 	})
 
+	// --- Manager change in same folder cases ---
+	// These exercise the code path in prepareObjectForUpdate that re-validates
+	// folder-manager consistency when manager annotations change without a folder move.
+
+	t.Run("allow removing manager from dashboard in unmanaged folder", func(t *testing.T) {
+		unmanagedFolder := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"generateName": "mgr-change-folder-",
+				},
+				"spec": map[string]interface{}{
+					"title": "Folder for Manager Change Test",
+				},
+			},
+		}
+		createdFolder, err := helper.Folders.Resource.Create(ctx, unmanagedFolder, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		dashboard := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"generateName": "kubectl-dash-",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder":         createdFolder.GetName(),
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+						utils.AnnoKeyManagerIdentity: "my-kubectl",
+					},
+				},
+				"spec": map[string]interface{}{
+					"title":         "Kubectl Dashboard for Manager Removal",
+					"schemaVersion": 41,
+				},
+			},
+		}
+		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		delete(annotations, utils.AnnoKeyManagerKind)
+		delete(annotations, utils.AnnoKeyManagerIdentity)
+		fresh.SetAnnotations(annotations)
+
+		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.NoError(t, err, "removing manager in unmanaged folder should be allowed")
+		require.Empty(t, updated.GetAnnotations()[utils.AnnoKeyManagerKind])
+	})
+
+	t.Run("allow changing manager identity on dashboard in unmanaged folder", func(t *testing.T) {
+		unmanagedFolder := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
+				"kind":       foldersV1.FolderResourceInfo.GroupVersionKind().Kind,
+				"metadata": map[string]interface{}{
+					"generateName": "mgr-id-change-folder-",
+				},
+				"spec": map[string]interface{}{
+					"title": "Folder for Manager Identity Change Test",
+				},
+			},
+		}
+		createdFolder, err := helper.Folders.Resource.Create(ctx, unmanagedFolder, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		dashboard := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"kind":       "Dashboard",
+				"metadata": map[string]interface{}{
+					"generateName": "tf-dash-",
+					"annotations": map[string]interface{}{
+						"grafana.app/folder":         createdFolder.GetName(),
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+						utils.AnnoKeyManagerIdentity: "tf-workspace-1",
+					},
+				},
+				"spec": map[string]interface{}{
+					"title":         "Terraform Dashboard for Identity Change",
+					"schemaVersion": 41,
+				},
+			},
+		}
+		created, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		fresh, err := helper.DashboardsV1.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		// Remove manager first (required — cannot change manager directly)
+		annotations := fresh.GetAnnotations()
+		delete(annotations, utils.AnnoKeyManagerKind)
+		delete(annotations, utils.AnnoKeyManagerIdentity)
+		fresh.SetAnnotations(annotations)
+
+		updated, err := helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.NoError(t, err, "removing terraform manager in unmanaged folder should be allowed")
+
+		// Now re-add with different identity
+		fresh2, err := helper.DashboardsV1.Resource.Get(ctx, updated.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations2 := fresh2.GetAnnotations()
+		annotations2[utils.AnnoKeyManagerKind] = string(utils.ManagerKindTerraform)
+		annotations2[utils.AnnoKeyManagerIdentity] = "tf-workspace-2"
+		fresh2.SetAnnotations(annotations2)
+
+		updated2, err := helper.DashboardsV1.Resource.Update(ctx, fresh2, metav1.UpdateOptions{})
+		require.NoError(t, err, "adding new terraform manager in unmanaged folder should be allowed")
+		require.Equal(t, "tf-workspace-2", updated2.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+	})
+
 	// --- Folder-in-folder (nested folder) cases ---
 
 	t.Run("reject unmanaged sub-folder in managed folder", func(t *testing.T) {
@@ -482,6 +599,25 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 
 		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
 		require.Error(t, err, "should not be able to change manager from repo to terraform")
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
+
+		unchanged, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, string(utils.ManagerKindRepo), unchanged.GetAnnotations()[utils.AnnoKeyManagerKind])
+		require.Equal(t, repo, unchanged.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+	})
+
+	t.Run("removing manager from repo-managed dashboard is blocked", func(t *testing.T) {
+		fresh, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		annotations := fresh.GetAnnotations()
+		delete(annotations, utils.AnnoKeyManagerKind)
+		delete(annotations, utils.AnnoKeyManagerIdentity)
+		fresh.SetAnnotations(annotations)
+
+		_, err = helper.DashboardsV1.Resource.Update(ctx, fresh, metav1.UpdateOptions{})
+		require.Error(t, err, "should not be able to remove manager from repo-managed dashboard")
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
 
 		unchanged, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
