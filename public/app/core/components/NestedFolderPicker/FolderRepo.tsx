@@ -34,7 +34,13 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
   const isOrphaned = status === RepoViewStatus.Orphaned;
 
   if (isOrphaned) {
-    return <Badge color="orange" icon="exclamation-triangle" tooltip="Repository not found" />
+    return (
+      <Badge
+        color="orange"
+        icon="exclamation-triangle"
+        tooltip={t('folder-repo.repository-not-found-tooltip', 'Repository not found')}
+      />
+    );
   }
 
   return (

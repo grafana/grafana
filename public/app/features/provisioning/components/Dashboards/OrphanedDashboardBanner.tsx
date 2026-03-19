@@ -1,9 +1,8 @@
-import { skipToken } from '@reduxjs/toolkit/query/react';
-
 import { config } from '@grafana/runtime';
-import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+
+import { RepoViewStatus, useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 
 import { OrphanedResourceBanner } from '../Shared/OrphanedResourceBanner';
 
@@ -17,16 +16,13 @@ export function OrphanedDashboardBanner({ dashboard }: Props) {
   const uid = dashboard.state.uid ?? '';
 
   const shouldSkip = !config.featureToggles.provisioning || kind !== ManagerKind.Repo || !id;
-  const { data: settingsData, isLoading } = useGetFrontendSettingsQuery(shouldSkip ? skipToken : undefined);
 
-  if (shouldSkip || isLoading) {
-    return null;
-  }
+  const { status } = useGetResourceRepositoryView({
+    name: shouldSkip ? undefined : id,
+    skipQuery: shouldSkip,
+  });
 
-  const items = settingsData?.items ?? [];
-  const repoExists = items.some((repo) => repo.name === id);
-
-  if (repoExists) {
+  if (status !== RepoViewStatus.Orphaned) {
     return null;
   }
 

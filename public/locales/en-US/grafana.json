@@ -8844,7 +8844,8 @@
     "select-placeholder": "Filter by folder"
   },
   "folder-repo": {
-    "read-only-badge": "Read only"
+    "read-only-badge": "Read only",
+    "repository-not-found-tooltip": "Repository not found"
   },
   "folders": {
     "api": {
