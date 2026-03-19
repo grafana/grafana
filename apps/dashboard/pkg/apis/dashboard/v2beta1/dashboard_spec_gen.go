@@ -7,7 +7,7 @@ import (
 	errors "errors"
 )
 
-// Dashboard specific preferences (applied per dashboard = all users using the dashbaord)
+// Dashboard specific preferences (applied per dashboard = all users using the dashboard)
 // +k8s:openapi-gen=true
 type DashboardDashboardPreferences struct {
 	// default layout template to be used when new containers are created
