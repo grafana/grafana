@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -1676,4 +1677,36 @@ func (h *GitExportHelper) CreateGitRepo(t *testing.T, repoName string) {
 	require.NoError(t, result.Error(), "failed to register git repository %q with Grafana", repoName)
 
 	h.WaitForHealthyRepository(t, repoName)
+}
+
+// LabelPendingDelete is the label key written by the tenant watcher to mark
+// resources whose namespace is pending deletion.
+const LabelPendingDelete = "cloud.grafana.com/pending-delete"
+
+// SetPendingDeleteLabel adds the pending-delete label to the named resource.
+func SetPendingDeleteLabel(t *testing.T, resource dynamic.ResourceInterface, name string) {
+	t.Helper()
+	obj, err := resource.Get(t.Context(), name, metav1.GetOptions{})
+	require.NoError(t, err)
+	labels := obj.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	labels[LabelPendingDelete] = "true"
+	obj.SetLabels(labels)
+	_, err = resource.Update(t.Context(), obj, metav1.UpdateOptions{})
+	require.NoError(t, err, "setting the pending-delete label on %q should be allowed", name)
+}
+
+// RetryOnConflict retries fn on 409 Conflict up to 5 times, returning the last
+// error (or nil on success).
+func RetryOnConflict(fn func() error) error {
+	var err error
+	for range 5 {
+		err = fn()
+		if !apierrors.IsConflict(err) {
+			return err
+		}
+	}
+	return err
 }
