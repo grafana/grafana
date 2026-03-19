@@ -58,6 +58,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/externalgroupmapping"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/ofrep"
 	"github.com/grafana/grafana/pkg/registry/apis/preferences"
 	provisioning2 "github.com/grafana/grafana/pkg/registry/apis/provisioning"
@@ -592,7 +593,10 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
-	migrationStatusReader := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry)
+	migrationStatusReader, err := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry, registerer)
+	if err != nil {
+		return nil, err
+	}
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService, migrationStatusReader, registerer)
 	if err != nil {
 		return nil, err
@@ -914,7 +918,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
 	noopTeamGroupsREST := externalgroupmapping.ProvideNoopTeamGroupsREST()
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, configProvider, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, externalGroupMappingApiInstaller, tracingService, storageBackendImpl, noopTeamGroupsREST, noopSearchREST, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider)
+	mappersRegistry := resourcepermission.ProvideMappersRegistry()
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, configProvider, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, externalGroupMappingApiInstaller, tracingService, storageBackendImpl, noopTeamGroupsREST, noopSearchREST, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry)
 	if err != nil {
 		return nil, err
 	}
@@ -1289,7 +1294,10 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	migrationRegistry := provideMigrationRegistry(foldersDashboardsMigrator, playlistMigrator, shortURLMigrator)
 	unifiedMigrator := migrations2.ProvideUnifiedMigrator(resourceClient, migrationRegistry)
 	unifiedStorageMigrationService := migrations2.ProvideUnifiedStorageMigrationService(unifiedMigrator, legacyDatabaseProvider, cfg, sqlStore, kvStore, resourceClient, migrationRegistry)
-	migrationStatusReader := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry)
+	migrationStatusReader, err := migrations2.ProvideMigrationStatusReader(sqlStore, cfg, migrationRegistry, registerer)
+	if err != nil {
+		return nil, err
+	}
 	dualwriteService, err := dualwrite.ProvideService(featureToggles, kvStore, cfg, unifiedStorageMigrationService, migrationStatusReader, registerer)
 	if err != nil {
 		return nil, err
@@ -1613,7 +1621,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	storageBackendImpl := noopstorage.ProvideStorageBackend()
 	noopTeamGroupsREST := externalgroupmapping.ProvideNoopTeamGroupsREST()
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, configProvider, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, externalGroupMappingApiInstaller, tracingService, storageBackendImpl, noopTeamGroupsREST, noopSearchREST, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider)
+	mappersRegistry := resourcepermission.ProvideMappersRegistry()
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, configProvider, featureToggles, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, externalGroupMappingApiInstaller, tracingService, storageBackendImpl, noopTeamGroupsREST, noopSearchREST, dualwriteService, resourceClient, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry)
 	if err != nil {
 		return nil, err
 	}
