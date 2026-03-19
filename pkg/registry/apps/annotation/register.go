@@ -80,12 +80,16 @@ func NewAppInstaller(
 		if err != nil {
 			return nil, fmt.Errorf("failed to create gRPC store: %w", err)
 		}
-	case "sql":
-		// sql is the default, but we allow explicitly specifying it for clarity
-		fallthrough
-	default:
+	case "postgres":
+		store, err = newPostgresStore(context.Background(), cfg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create Postgres store: %w", err)
+		}
+	case "legacy-sql":
 		// Layer 1→2: Wrap old annotations.Repository with sqlAdapter (implements Store interface)
 		store = NewSQLAdapter(service, cleaner, cfg.CleanupSettings)
+	default:
+		return nil, fmt.Errorf("unknown store backend: %s (valid options: memory, grpc, postgres, legacy-sql)", cfg.StoreBackend)
 	}
 
 	installer.k8sAdapter = &k8sRESTAdapter{
@@ -166,6 +170,24 @@ func loadTLSConfig(cfg Config) (*tls.Config, error) {
 	}
 
 	return tlsConfig, nil
+}
+
+func newPostgresStore(ctx context.Context, cfg Config) (Store, error) {
+	if cfg.PostgresConnectionString == "" {
+		return nil, fmt.Errorf("postgres connection string is required")
+	}
+
+	pgCfg := PostgreSQLStoreConfig{
+		ConnectionString: cfg.PostgresConnectionString,
+		MaxConnections:   cfg.PostgresMaxConnections,
+		MaxIdleConns:     cfg.PostgresMaxIdleConns,
+		ConnMaxLifetime:  cfg.PostgresConnMaxLifetime,
+		RetentionTTL:     cfg.PostgresRetentionTTL,
+		TagCacheTTL:      cfg.PostgresTagCacheTTL,
+		TagCacheSize:     cfg.PostgresTagCacheSize,
+	}
+
+	return NewPostgreSQLStore(ctx, pgCfg)
 }
 
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
