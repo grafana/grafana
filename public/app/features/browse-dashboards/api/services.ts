@@ -29,17 +29,20 @@ export async function listFolders(
     });
   }
 
-  return folders.map((item) => ({
-    kind: 'folder',
-    uid: item.uid,
-    title: item.title,
-    parentTitle,
-    parentUID,
-    managedBy: item.managedBy,
+  // NI fork: hide "Shared with me" section
+  return folders
+    .filter((item) => !isSharedWithMe(item.uid))
+    .map((item) => ({
+      kind: 'folder',
+      uid: item.uid,
+      title: item.title,
+      parentTitle,
+      parentUID,
+      managedBy: item.managedBy,
 
-    // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
-    url: isSharedWithMe(item.uid) ? undefined : getFolderURL(item.uid),
-  }));
+      // URLs from the backend come with subUrlPrefix already included, so match that behaviour here
+      url: getFolderURL(item.uid),
+    }));
 }
 
 export async function listDashboards(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<DashboardViewItem[]> {
