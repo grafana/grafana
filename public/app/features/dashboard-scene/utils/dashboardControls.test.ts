@@ -106,19 +106,6 @@ const mockLink1: DashboardLink = {
   keepTime: false,
 };
 
-const mockLink2: DashboardLink = {
-  title: 'Link 2',
-  url: 'https://example2.com',
-  type: 'link',
-  icon: 'external',
-  tooltip: 'Tooltip 2',
-  asDropdown: false,
-  tags: [],
-  targetBlank: false,
-  includeVars: false,
-  keepTime: false,
-};
-
 describe('dashboardControls', () => {
   beforeEach(() => {
     jest.clearAllMocks();
