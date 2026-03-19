@@ -22,7 +22,7 @@ jobs:
       id-token: write
 
     env:
-      BUCKET_NAME: grafana-frontend-previews
+      BUCKET_NAME: grafana-frontend-preview
 
     steps:
       - name: Checkout code
