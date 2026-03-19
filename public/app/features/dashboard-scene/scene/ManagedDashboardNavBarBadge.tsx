@@ -16,20 +16,6 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
   const shouldSkipQuery = !config.featureToggles.provisioning || kind !== ManagerKind.Repo || !id;
   const { data: repoData, isError } = useGetRepositoryQuery(shouldSkipQuery ? skipToken : { name: id });
 
-  // DEBUG: remove before merging
-  console.log(
-    '[ManagedDashboardNavBarBadge] kind:',
-    kind,
-    'id:',
-    id,
-    'shouldSkipQuery:',
-    shouldSkipQuery,
-    'isError:',
-    isError,
-    'repoData:',
-    repoData
-  );
-
   if (!kind) {
     return null;
   }
