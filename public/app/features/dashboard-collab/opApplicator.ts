@@ -12,6 +12,7 @@
 
 import type { MutationClient } from 'app/features/dashboard-scene/mutation-api/types';
 
+import { CollabMutationClient } from './CollabMutationClient';
 import { debugLog } from './debugLog';
 import { suppressExtraction, unsuppressExtraction } from './opExtractor';
 import type { CollabOperation, ServerMessage } from './protocol/messages';
@@ -65,6 +66,14 @@ export async function applyRemoteOp(
   // Suppress extraction so the opExtractor doesn't re-broadcast this as a local edit
   debugLog('Suppression flag toggled on');
   suppressExtraction();
+
+  // If the client is a CollabMutationClient wrapper, set remoteApply to prevent
+  // the wrapper from re-broadcasting this remote op (echo loop prevention).
+  const isCollabClient = client instanceof CollabMutationClient;
+  if (isCollabClient) {
+    client.setRemoteApply(true);
+  }
+
   try {
     const result = await client.execute({ type, payload });
     if (!result.success) {
@@ -74,6 +83,9 @@ export async function applyRemoteOp(
     debugLog('Op applied successfully', { type, seq: msg.seq });
     return { applied: true };
   } finally {
+    if (isCollabClient) {
+      client.setRemoteApply(false);
+    }
     debugLog('Suppression flag toggled off');
     unsuppressExtraction();
   }

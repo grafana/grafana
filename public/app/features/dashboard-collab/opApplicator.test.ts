@@ -1,5 +1,7 @@
+import { CollabMutationClient } from './CollabMutationClient';
 import { isExtractionSuppressed, unsuppressExtraction } from './opExtractor';
 import { applyRemoteOp } from './opApplicator';
+import type { MutationClient, MutationResult, MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
 import type { ServerMessage, CollabOperation } from './protocol/messages';
 
 function makeMutationClient(overrides: Partial<MockClient> = {}): MockClient {
@@ -176,6 +178,70 @@ describe('opApplicator', () => {
     expect(client.execute).toHaveBeenCalledWith({
       type: 'UPDATE_DASHBOARD_INFO',
       payload: { title: 'Remote Title', tags: ['collab'] },
+    });
+  });
+
+  describe('echo loop prevention with CollabMutationClient', () => {
+    function makeInnerClient(): MutationClient {
+      return {
+        execute: jest.fn<Promise<MutationResult>, [MutationRequest]>().mockResolvedValue({
+          success: true,
+          changes: [],
+        }),
+        getAvailableCommands: jest.fn().mockReturnValue([
+          'UPDATE_PANEL',
+          'UPDATE_DASHBOARD_INFO',
+          'MOVE_PANEL',
+          'ADD_PANEL',
+          'REMOVE_PANEL',
+        ]),
+      };
+    }
+
+    it('sets remoteApply on CollabMutationClient to prevent re-broadcast', async () => {
+      const innerClient = makeInnerClient();
+      const publishOp = jest.fn();
+      const collabClient = new CollabMutationClient(innerClient, publishOp, 'local-user');
+
+      const msg = makeServerMessage();
+      await applyRemoteOp(msg, collabClient, 'local-user');
+
+      // The inner client should have been called (remote op applied)
+      expect(innerClient.execute).toHaveBeenCalled();
+      // But publishOp should NOT have been called (no re-broadcast)
+      expect(publishOp).not.toHaveBeenCalled();
+    });
+
+    it('clears remoteApply after application so local edits still broadcast', async () => {
+      const innerClient = makeInnerClient();
+      const publishOp = jest.fn();
+      const collabClient = new CollabMutationClient(innerClient, publishOp, 'local-user');
+
+      // Apply remote op
+      const msg = makeServerMessage();
+      await applyRemoteOp(msg, collabClient, 'local-user');
+      expect(publishOp).not.toHaveBeenCalled();
+
+      // Now a local edit should broadcast
+      await collabClient.execute({ type: 'UPDATE_PANEL', payload: {} });
+      expect(publishOp).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears remoteApply even if inner execute throws', async () => {
+      const innerClient: MutationClient = {
+        execute: jest.fn().mockRejectedValue(new Error('boom')),
+        getAvailableCommands: jest.fn().mockReturnValue(['UPDATE_PANEL']),
+      };
+      const publishOp = jest.fn();
+      const collabClient = new CollabMutationClient(innerClient, publishOp, 'local-user');
+
+      const msg = makeServerMessage();
+      await expect(applyRemoteOp(msg, collabClient, 'local-user')).rejects.toThrow('boom');
+
+      // After error, local edits should still broadcast (remoteApply cleared)
+      (innerClient.execute as jest.Mock).mockResolvedValue({ success: true, changes: [] });
+      await collabClient.execute({ type: 'UPDATE_PANEL', payload: {} });
+      expect(publishOp).toHaveBeenCalledTimes(1);
     });
   });
 });
