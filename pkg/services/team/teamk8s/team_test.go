@@ -369,7 +369,8 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 			legacyResult: &team.TeamDTO{ID: 1, UID: "team-uid-1", OrgID: 1},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				if r.Method == http.MethodGet {
+				switch r.Method {
+				case http.MethodGet:
 					resp := iamv0alpha1.Team{
 						TypeMeta: metav1.TypeMeta{
 							APIVersion: iamv0alpha1.GroupVersion.Identifier(),
@@ -385,13 +386,53 @@ func TestTeamK8sService_UpdateTeam(t *testing.T) {
 						},
 					}
 					_ = json.NewEncoder(w).Encode(resp)
-				} else if r.Method == http.MethodPut {
+				case http.MethodPut:
 					var body map[string]any
 					_ = json.NewDecoder(r.Body).Decode(&body)
 					spec := body["spec"].(map[string]any)
 					assert.Equal(t, "Updated Team", spec["title"])
 					assert.Equal(t, "updated@example.com", spec["email"])
 					assert.Equal(t, "ext-uid-1", spec["externalUID"])
+					_ = json.NewEncoder(w).Encode(body)
+				}
+			},
+		},
+		{
+			name: "preserves provisioned field during update",
+			cmd: &team.UpdateTeamCommand{
+				ID:    2,
+				OrgID: 1,
+				Name:  "Updated Provisioned Team",
+				Email: "updated@example.com",
+			},
+			legacyResult: &team.TeamDTO{ID: 2, UID: "team-uid-2", OrgID: 1},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				switch r.Method {
+				case http.MethodGet:
+					resp := iamv0alpha1.Team{
+						TypeMeta: metav1.TypeMeta{
+							APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+							Kind:       "Team",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "team-uid-2",
+							Namespace: "org-1",
+						},
+						Spec: iamv0alpha1.TeamSpec{
+							Title:       "Provisioned Team",
+							Email:       "old@example.com",
+							Provisioned: true,
+						},
+					}
+					_ = json.NewEncoder(w).Encode(resp)
+				case http.MethodPut:
+					var body map[string]any
+					_ = json.NewDecoder(r.Body).Decode(&body)
+					spec := body["spec"].(map[string]any)
+					assert.Equal(t, "Updated Provisioned Team", spec["title"])
+					assert.Equal(t, "updated@example.com", spec["email"])
+					assert.Equal(t, true, spec["provisioned"])
 					_ = json.NewEncoder(w).Encode(body)
 				}
 			},

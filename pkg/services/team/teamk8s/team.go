@@ -119,12 +119,16 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 }
 
 func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
-	legacyTeam, err := s.legacyService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
-		ID:    cmd.ID,
-		OrgID: cmd.OrgID,
-	})
-	if err != nil {
-		return err
+	uid, _ := ctx.Value(team.TeamUIDCtxKey{}).(string)
+	if uid == "" {
+		legacyTeam, err := s.legacyService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+			ID:    cmd.ID,
+			OrgID: cmd.OrgID,
+		})
+		if err != nil {
+			return err
+		}
+		uid = legacyTeam.UID
 	}
 
 	namespace := s.namespaceMapper(cmd.OrgID)
@@ -133,7 +137,7 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 		return err
 	}
 
-	result, err := client.Get(ctx, legacyTeam.UID, metav1.GetOptions{})
+	result, err := client.Get(ctx, uid, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return team.ErrTeamNotFound
