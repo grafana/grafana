@@ -14,8 +14,8 @@ import type { DashboardMutationAPI } from '@grafana/data';
 import { ALL_COMMANDS } from 'app/features/dashboard-scene/mutation-api';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import type { MutationClient, MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
-import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { provideMutationClientFactory } from 'app/features/dashboard-scene/scene/DashboardMutationClientSetter';
+import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 let _client: MutationClient | null = null;
 
