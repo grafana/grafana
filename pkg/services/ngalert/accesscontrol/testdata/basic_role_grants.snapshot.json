@@ -3,6 +3,7 @@
     "grant": "Admin",
     "roles": [
       "fixed:alerting.legacy.config:reader",
+      "fixed:alerting.legacy.config:writer",
       "fixed:alerting.provisioning.provenance:writer",
       "fixed:alerting.provisioning.secrets:reader",
       "fixed:alerting.provisioning:writer",
@@ -27,6 +28,12 @@
         "action": "alert.instances:write"
       },
       {
+        "action": "alert.notifications.config-history:read"
+      },
+      {
+        "action": "alert.notifications.config-history:write"
+      },
+      {
         "action": "alert.notifications.external:read",
         "scope": "datasources:*"
       },
@@ -45,9 +52,6 @@
       {
         "action": "alert.notifications.inhibition-rules:write",
         "scope": "inhibition-rules:*"
-      },
-      {
-        "action": "alert.notifications.legacy-config:read"
       },
       {
         "action": "alert.notifications.provisioning:read"

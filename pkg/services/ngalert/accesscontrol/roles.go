@@ -467,23 +467,6 @@ var (
 		Grants: []string{string(org.RoleViewer)}, // TODO remove when we decide tò limit access to raw config API
 	}
 
-	// legacyAdminReaderRole grants access to the raw Alertmanager config GET endpoint, which is now admin-only.
-	// This endpoint is deprecated and will be removed in v14.
-	legacyAdminReaderRole = accesscontrol.RoleRegistration{
-		Role: accesscontrol.RoleDTO{
-			Name:        accesscontrol.FixedRolePrefix + "alerting.legacy.config:reader",
-			Hidden:      true,
-			DisplayName: "Alerting legacy config read permission (deprecated, admin only)",
-			Group:       models.AlertRolesGroup,
-			Permissions: []accesscontrol.Permission{
-				{
-					Action: accesscontrol.ActionAlertingNotificationsLegacyConfigRead,
-				},
-			},
-		},
-		Grants: []string{string(org.RoleAdmin)},
-	}
-
 	// Add legacy permissions that we keep for backward compatibility but do not want in the fixed roles.
 	legacyWriteRole = accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
@@ -499,6 +482,44 @@ var (
 		},
 		Grants: []string{string(org.RoleEditor)}, // TODO remove when we decide tò limit access to raw config API
 	}
+
+	// legacyAdminReaderRole grants read access to the raw Alertmanager config endpoints:
+	// GET /config/api/v1/alerts and GET /config/history. Admin-only in v13; removed in v14.
+	// Deprecated: do not use this role in new code, it is only kept for backward compatibility and will be removed in a
+	// future release.
+	legacyAdminReaderRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.legacy.config:reader",
+			Hidden:      true,
+			DisplayName: "Alerting legacy config read permission (deprecated, admin only)",
+			Group:       models.AlertRolesGroup,
+			Permissions: []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionAlertingNotificationsConfigHistoryRead,
+				},
+			},
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
+	// legacyAdminWriterRole grants write access to the raw Alertmanager config history endpoint:
+	// POST /config/history/{id}/_activate. Admin-only in v13; removed in v14.
+	// Deprecated: do not use this role in new code, it is only kept for backward compatibility and will be removed in a
+	// future release.
+	legacyAdminWriterRole = accesscontrol.RoleRegistration{
+		Role: accesscontrol.RoleDTO{
+			Name:        accesscontrol.FixedRolePrefix + "alerting.legacy.config:writer",
+			Hidden:      true,
+			DisplayName: "Alerting legacy config write permission (deprecated, admin only)",
+			Group:       models.AlertRolesGroup,
+			Permissions: accesscontrol.ConcatPermissions(legacyAdminReaderRole.Role.Permissions, []accesscontrol.Permission{
+				{
+					Action: accesscontrol.ActionAlertingNotificationsConfigHistoryWrite,
+				},
+			}),
+		},
+		Grants: []string{string(org.RoleAdmin)},
+	}
 )
 
 func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.FeatureToggles) error {
@@ -507,7 +528,7 @@ func DeclareFixedRoles(service accesscontrol.Service, features featuremgmt.Featu
 		instancesReaderRole, instancesWriterRole,
 		notificationsReaderRole, notificationsWriterRole,
 		alertingReaderRole, alertingWriterRole, alertingAdminRole, alertingProvisionerRole, alertingProvisioningReaderWithSecretsRole, alertingProvisioningStatus,
-		externalNotificationsReaderRole, externalNotificationsWriterRole, legacyReaderRole, legacyWriteRole, legacyAdminReaderRole,
+		externalNotificationsReaderRole, externalNotificationsWriterRole, legacyReaderRole, legacyWriteRole, legacyAdminReaderRole, legacyAdminWriterRole,
 		// k8s roles
 		receiversReaderRole, receiversCreatorRole, receiversWriterRole, templatesReaderRole, templatesWriterRole,
 		timeIntervalsReaderRole, timeIntervalsWriterRole, routesReaderRole, routesWriterRole, inhibitionRulesReaderRole, inhibitionRulesWriterRole,
