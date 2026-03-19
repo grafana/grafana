@@ -2349,6 +2349,7 @@
       },
       "filterBy": "",
       "firing-alerts": "",
+      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -6745,6 +6746,9 @@
       "tooltip-move-link-up": "Déplacer le lien vers le haut",
       "type": "Type"
     },
+    "dashboard-links-list": {
+      "add-link": ""
+    },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Erreur lors du chargement du tableau de bord"
     },
@@ -7024,6 +7028,13 @@
       "type-dashboards": "",
       "type-link": "",
       "with-tags": ""
+    },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": ""
     },
     "managed-badge": {
       "kubectl": "Géré par : Kubectl",
@@ -7381,6 +7392,13 @@
       "page-nav": {
         "text": {
           "settings": "Paramètres"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -12786,6 +12804,7 @@
       "empty": "Vide",
       "error-field-required": "Ce champ est obligatoire.",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "Un problème est survenu lors de la connexion au référentiel. Veuillez vérifier les paramètres du référentiel et réessayer.",
       "error-repository-status-unhealthy-title": "État du référentiel : non sain",
@@ -12795,6 +12814,7 @@
       "retry-action": "",
       "text-loading-resource-information": "Chargement des informations sur les ressources...",
       "unmanaged-resources-label": "Ressources non gérées",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} tableau de bord",
       "dashboards-count_other": "{{count}} tableau de bord",
@@ -12847,7 +12867,8 @@
     "connect-repository-button": {
       "configure": "Configurer",
       "instance-fully-managed-tooltip": "La configuration est désactivée car cette instance est entièrement gérée",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -13051,7 +13072,7 @@
       "token-label": "Token d’accès",
       "token-required": "Le token Git est requis",
       "token-user-description": "Le nom d’utilisateur qui sera utilisé pour accéder au dépôt avec le token d’accès",
-      "url-description": "L’URL du dépôt Git",
+      "url-description": "",
       "url-pattern": "Doit être une URL de dépôt Git valide",
       "url-required": "L’URL du dépôt est requise"
     },
@@ -13177,23 +13198,25 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_one": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_one": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_one": "",
       "message-both-resources_other": "",
-      "message-repositories-info_one": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_one": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_one": "",
       "message-repository_other": "",
-      "note-message-both-repositories_one": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_one": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_one": "",
-      "note-message-repository_other": "",
-      "note-message-resource_one": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_one": "",
+      "message-repository-onprem_other": "",
+      "message-resource_one": "",
+      "message-resource_other": "",
+      "message-resource-onprem_one": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "Cette ressource est en lecture seule et provisionnée via le provisionnement par fichiers. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",
     "read-only-remote-tooltip": "Cette ressource est en lecture seule et provisionnée via Git. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",

@@ -104,8 +104,11 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 		}
 
 		if resources.IsPathSupported(file.Path) == nil {
-			// The folder metadata file, like .keep, is not a resource we should consider for the changes.
-			// Skip it here; the parent directory change handles folder creation.
+			// The folder metadata file is not a resource itself.
+			// For new folders the parent directory creation handles it;
+			// for existing folders we record an update to reconcile metadata.
+			// TODO(ferruvich): in a later PR, we should handle the metadata file change.
+			// i.e. when the fix job metadata runs, we should record an update to reconcile it.
 			if resources.IsFolderMetadataFile(file.Path) {
 				logger.Debug("skipping folder metadata file - will be handled by parent directory change", "path", file.Path)
 				if err := keep.Add(file.Path); err != nil {

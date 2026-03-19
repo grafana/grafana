@@ -1749,6 +1749,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@elastic/esql@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@elastic/esql@npm:1.0.2"
+  dependencies:
+    antlr4: "npm:4.13.2"
+    tree-dump: "npm:1.1.0"
+    tslib: "npm:2.8.1"
+  checksum: 10/6ea71344b7a7e9e518dd4b694db9056fb7d64a24865634ce1a83f7ea85c36923bed5c79d673a13a3b613e1e6f613054897fc608bc07e75f7c344f710fbb02fee
+  languageName: node
+  linkType: hard
+
+"@elastic/monaco-esql@npm:^3.1.19":
+  version: 3.1.19
+  resolution: "@elastic/monaco-esql@npm:3.1.19"
+  peerDependencies:
+    monaco-editor: "*"
+    monaco-promql: "*"
+  peerDependenciesMeta:
+    monaco-promql:
+      optional: true
+  checksum: 10/3654438770894228ef1c1512b7db8d24918135827672ba08877f27ab54c5d4f9a930690b3fe8a21cf65962312ece41499d17e0b9fcd82156420031d79f9d0713
+  languageName: node
+  linkType: hard
+
 "@emnapi/core@npm:^1.1.0":
   version: 1.2.0
   resolution: "@emnapi/core@npm:1.2.0"
@@ -2640,6 +2664,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/elasticsearch@workspace:public/app/plugins/datasource/elasticsearch"
   dependencies:
+    "@elastic/esql": "npm:^1.0.2"
+    "@elastic/monaco-esql": "npm:^3.1.19"
     "@emotion/css": "npm:11.13.5"
     "@grafana/aws-sdk": "npm:^0.10.1"
     "@grafana/data": "npm:13.0.0-pre"
@@ -12978,6 +13004,13 @@ __metadata:
   version: 3.4.0
   resolution: "ansis@npm:3.4.0"
   checksum: 10/828ad5a8235ff9e745b9b16e7f8f42efc86943cd2ca8fd253a5a18497a573bb2a5d2abdce8c86805c94b67b9a29d9802a27d5299f04e97775d948ba9363ddd78
+  languageName: node
+  linkType: hard
+
+"antlr4@npm:4.13.2":
+  version: 4.13.2
+  resolution: "antlr4@npm:4.13.2"
+  checksum: 10/23ab4742ec937adaaf20d13228c8cca58638e1aafeb28919bdeb4860776a403d0c7eb85a3f07fadc27fc03f773eed6bcc82bd8369b9d0e258e6502ba514cf87e
   languageName: node
   linkType: hard
 
@@ -32898,6 +32931,15 @@ __metadata:
   version: 1.0.1
   resolution: "tracelib@npm:1.0.1"
   checksum: 10/4d7f5e6e38611d3920744c71bd33b29e24c84bde1d750a6735e95a45be041e9ceef0de595ec60a337dc9c0abbacc852268619af99d35843458a2ee5233d64b60
+  languageName: node
+  linkType: hard
+
+"tree-dump@npm:1.1.0":
+  version: 1.1.0
+  resolution: "tree-dump@npm:1.1.0"
+  peerDependencies:
+    tslib: 2
+  checksum: 10/2c20118d2671996aa6f1ba1310cef1404fb525bde5d989ab542013f62b23a3633c0f0b32cbd516ee6205051ec21912b2470dabca006d19c9eba0740b567e2b60
   languageName: node
   linkType: hard
 

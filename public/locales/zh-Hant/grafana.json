@@ -2335,6 +2335,7 @@
       },
       "filterBy": "",
       "firing-alerts": "",
+      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -6708,6 +6709,9 @@
       "tooltip-move-link-up": "向上移動連結",
       "type": "類型"
     },
+    "dashboard-links-list": {
+      "add-link": ""
+    },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "載入控制面板發生錯誤"
     },
@@ -6986,6 +6990,11 @@
       "type-dashboards": "",
       "type-link": "",
       "with-tags": ""
+    },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_other": ""
     },
     "managed-badge": {
       "kubectl": "管理者：Kubectl",
@@ -7342,6 +7351,13 @@
       "page-nav": {
         "text": {
           "settings": "設定"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -12720,6 +12736,7 @@
       "empty": "空",
       "error-field-required": "此為必填欄位。",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "連接到儲存庫時發生問題。請檢查儲存庫設定，然後再試一次。",
       "error-repository-status-unhealthy-title": "儲存庫狀態不佳",
@@ -12729,6 +12746,7 @@
       "retry-action": "",
       "text-loading-resource-information": "正在載入資源資訊…",
       "unmanaged-resources-label": "未受管理的資源",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_other": "{{count}} 個儀表板",
       "files-count_other": "{{count}} 個檔案",
@@ -12778,7 +12796,8 @@
     "connect-repository-button": {
       "configure": "設定",
       "instance-fully-managed-tooltip": "設定已停用，因為此執行個體已完全受管理",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12979,7 +12998,7 @@
       "token-label": "存取權杖",
       "token-required": "Git 權杖為必填",
       "token-user-description": "將用於存取具有存取權杖的儲存庫的使用者名稱",
-      "url-description": "Git 儲存庫網址",
+      "url-description": "",
       "url-pattern": "必須為有效的 Git 儲存庫網址",
       "url-required": "儲存庫網址為必填"
     },
@@ -13105,15 +13124,17 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_other": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_other": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_other": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_other": "",
+      "message-resource_other": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "此資源為唯讀，並透過檔案佈建進行佈建。若要進行任何變更，請更新連線的儲存庫。若要修改設定，請依序前往「管理」>「佈建」>「儲存庫」。",
     "read-only-remote-tooltip": "此資源為唯讀，並透過 Git 進行佈建。若要進行任何變更，請更新連線的儲存庫。若要修改設定，請依序前往「管理」>「佈建」>「儲存庫」。",

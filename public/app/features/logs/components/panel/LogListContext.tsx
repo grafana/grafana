@@ -149,6 +149,7 @@ export interface Props {
   filterLevels?: LogLevel[];
   fontSize: LogListFontSize;
   getRowContextQuery?: GetRowContextQueryFn;
+  isCustomGrammar?: boolean;
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
@@ -194,6 +195,7 @@ export const LogListContextProvider = ({
   displayedFields,
   filterLevels,
   fontSize,
+  isCustomGrammar,
   isLabelFilterActive,
   getRowContextQuery,
   logs,
@@ -582,6 +584,7 @@ export const LogListContextProvider = ({
         hasLogsWithErrors,
         hasSampledLogs,
         hasUnescapedContent,
+        isCustomGrammar,
         isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,

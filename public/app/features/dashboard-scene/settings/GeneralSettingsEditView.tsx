@@ -294,6 +294,17 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             />
           </Field>
 
+          {/* Render here so move-form load errors appear under the Move field. */}
+          {showMoveModal && moveModalProps && (
+            <MoveProvisionedDashboardDrawer
+              dashboard={dashboard}
+              targetFolderUID={moveModalProps.targetFolderUID}
+              targetFolderTitle={moveModalProps.targetFolderTitle}
+              onDismiss={model.onMoveModalDismiss}
+              onSuccess={model.onMoveSuccess}
+            />
+          )}
+
           <Field
             noMargin
             label={t('dashboard-settings.general.editable-label', 'Editable')}
@@ -354,16 +365,6 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
 
         <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton dashboard={dashboard} />}</Box>
       </div>
-
-      {showMoveModal && moveModalProps && (
-        <MoveProvisionedDashboardDrawer
-          dashboard={dashboard}
-          targetFolderUID={moveModalProps.targetFolderUID}
-          targetFolderTitle={moveModalProps.targetFolderTitle}
-          onDismiss={model.onMoveModalDismiss}
-          onSuccess={model.onMoveSuccess}
-        />
-      )}
     </Page>
   );
 }
