@@ -284,7 +284,7 @@ describe('InstanceTimeline component', () => {
     render(<InstanceTimeline records={records} notifications={notifications} filter="notifications" />);
 
     expect(screen.queryByText('Normal')).not.toBeInTheDocument();
-    expect(screen.getByText('1 notification')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /toggle notification details/i })).toBeInTheDocument();
   });
 
   it('filters to show only state changes', () => {
@@ -294,7 +294,7 @@ describe('InstanceTimeline component', () => {
     render(<InstanceTimeline records={records} notifications={notifications} filter="states" />);
 
     expect(screen.getByText('Normal')).toBeInTheDocument();
-    expect(screen.queryByText('1 notification')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /toggle notification details/i })).not.toBeInTheDocument();
   });
 
   it('shows empty filter message when no entries match the selected filter', () => {
@@ -318,9 +318,8 @@ describe('InstanceTimeline component', () => {
 
     render(<InstanceTimeline records={records} notifications={notifications} filter="all" />);
 
-    expect(screen.queryByText('1 notification')).not.toBeInTheDocument();
     expect(screen.getByText('my-slack-receiver')).toBeInTheDocument();
-    expect(screen.getByText('· Slack #1')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /toggle notification details/i })).toBeInTheDocument();
   });
 
   it('does not show outcome label when all notifications succeed', () => {
@@ -354,7 +353,7 @@ describe('InstanceTimeline component', () => {
 
     render(<InstanceTimeline records={records} notifications={notifications} filter="all" />);
 
-    expect(screen.getByText('Webhook #2 failed')).toBeInTheDocument();
+    expect(screen.getByText('1 delivered, 1 failed')).toBeInTheDocument();
   });
 
   it('expands notification details when clicking on the summary row', async () => {
