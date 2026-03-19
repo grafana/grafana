@@ -67,10 +67,6 @@ function hasUid(query: Record<string, unknown> | {}): query is { uid: string } {
   return 'uid' in query && typeof query['uid'] === 'string';
 }
 
-function isRowPanel(panel: Panel | RowPanel): panel is RowPanel {
-  return panel.type === 'row';
-}
-
 function getExportLabel(labels?: { [ExportLabel]?: string }): string | undefined {
   if (!labels) {
     return undefined;
@@ -312,12 +308,7 @@ export function applyV1Inputs(
     return processAnnotation(annotation, inputs, form);
   });
 
-  // Row panels with collapsed=true store their child panels in panel.panels[] rather than
-  // dashboard.panels[]. We recurse one level deep — v1 dashboards do not nest rows further.
-  const panels = (dashboard.panels ?? []).map((panel: Panel | RowPanel) => {
-    if (isRowPanel(panel)) {
-      return { ...panel, panels: panel.panels.map((p: Panel) => processPanel(p, inputs, form)) };
-    }
+  const panels = (dashboard.panels ?? []).map((panel: Panel) => {
     return processPanel(panel, inputs, form);
   });
 
@@ -639,7 +630,7 @@ function processPanel(
     return {
       ...panel,
       ...(panel.datasource && { datasource: resolveInputDatasource(panel.datasource, inputs, form) }),
-      panels: panel.panels?.map((nestedPanel) => {
+      panels: panel.panels.map((nestedPanel) => {
         return processPanel(nestedPanel, inputs, form);
       }),
     };
