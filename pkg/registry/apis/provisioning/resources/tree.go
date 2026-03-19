@@ -191,8 +191,8 @@ func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 	}
 
 	folder := Folder{
-		Title: meta.FindTitle(item.GetName()),
-		ID:    item.GetName(),
+		Title:    meta.FindTitle(item.GetName()),
+		ID:       item.GetName(),
 		ParentID: meta.GetFolder(),
 	}
 	t.mu.Lock()
