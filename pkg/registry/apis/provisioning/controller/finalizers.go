@@ -69,7 +69,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.ReleaseOrphanResourcesFinalizer:
 			logger.Info("releasing orphan resources")
-			count, err = f.processExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger))
+			count, err = f.processExistingItems(ctx, repo.Config(), f.releaseResources(ctx, logger), foldersFirst)
 			if err != nil {
 				err = fmt.Errorf("release resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -77,7 +77,7 @@ func (f *finalizer) process(ctx context.Context,
 
 		case repository.RemoveOrphanResourcesFinalizer:
 			logger.Info("removing orphan resources")
-			count, err = f.processExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger))
+			count, err = f.processExistingItems(ctx, repo.Config(), f.removeResources(ctx, logger), resourcesFirst)
 			if err != nil {
 				err = fmt.Errorf("remove resources: %w", err)
 				outcome = metricutils.ErrorOutcome
@@ -97,11 +97,24 @@ func (f *finalizer) process(ctx context.Context,
 	return nil
 }
 
+type processOrder int
+
+const (
+	// resourcesFirst processes non-folder resources before folders (bottom-up).
+	// Use for deletion — folders must be empty before they can be removed.
+	resourcesFirst processOrder = iota
+	// foldersFirst processes folders before non-folder resources (top-down).
+	// Use for release — un-managing folders first ensures children are released
+	// in unmanaged folders, satisfying the repo-manager consistency invariant.
+	foldersFirst
+)
+
 // internal iterator to walk the existing items
 func (f *finalizer) processExistingItems(
 	ctx context.Context,
 	repo *provisioning.Repository,
 	cb func(client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error,
+	order processOrder,
 ) (int, error) {
 	logger := logging.FromContext(ctx)
 	clients, err := f.clientFactory.Clients(ctx, repo.Namespace)
@@ -115,15 +128,14 @@ func (f *finalizer) processExistingItems(
 		return 0, err
 	}
 
-	// Safe deletion order
 	sortResourceListForDeletion(items)
 
-	var dashboards, folderItems []*provisioning.ResourceListItem
+	var resources, folderItems []*provisioning.ResourceListItem
 	for _, item := range items.Items {
 		if item.Group == folders.GroupVersion.Group {
 			folderItems = append(folderItems, &item)
 		} else {
-			dashboards = append(dashboards, &item)
+			resources = append(resources, &item)
 		}
 	}
 
@@ -164,22 +176,40 @@ func (f *finalizer) processExistingItems(
 		return int(processed), err
 	}
 
-	count := 0
-
-	if len(dashboards) > 0 {
-		processed, err := processGroup(dashboards)
-		if err != nil {
-			return processed, err
-		}
-		count += processed
-	}
-
-	if len(folderItems) > 0 {
+	processFolders := func() (int, error) {
+		var count int
 		for _, item := range folderItems {
 			if err := processItem(ctx, item); err != nil {
 				return count, err
 			}
 			count++
+		}
+		return count, nil
+	}
+
+	// Order the two groups based on the requested strategy.
+	type step func() (int, error)
+	var first, second step
+
+	switch order {
+	case foldersFirst:
+		// Reverse folder order: sortResourceListForDeletion puts deepest first,
+		// but release needs shallowest first (top-down) so parent folders are
+		// unmanaged before their children are released.
+		slices.Reverse(folderItems)
+		first = processFolders
+		second = func() (int, error) { return processGroup(resources) }
+	default:
+		first = func() (int, error) { return processGroup(resources) }
+		second = processFolders
+	}
+
+	count := 0
+	for _, fn := range []step{first, second} {
+		processed, err := fn()
+		count += processed
+		if err != nil {
+			return count, err
 		}
 	}
 

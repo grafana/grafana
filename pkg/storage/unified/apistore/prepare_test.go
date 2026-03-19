@@ -511,7 +511,7 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		require.ErrorContains(t, err, "no config")
 	})
 
-	t.Run("update: manager removal in same folder skips check", func(t *testing.T) {
+	t.Run("update: manager removal in same folder triggers check", func(t *testing.T) {
 		_ = dashv1.AddToScheme(rtscheme)
 		node, err := snowflake.NewNode(rand.Int64N(1024))
 		require.NoError(t, err)
@@ -549,7 +549,8 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 		newMeta.SetAnnotation(utils.AnnoKeyManagerIdentity, "")
 
 		_, err = s.prepareObjectForUpdate(ctx, newDash, oldDash)
-		require.NoError(t, err, "manager removal should be allowed (repo deletion release flow)")
+		require.Error(t, err, "manager removal in managed folder should be blocked")
+		require.ErrorContains(t, err, "no config")
 	})
 
 	t.Run("update: manager addition in same folder triggers check", func(t *testing.T) {

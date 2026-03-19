@@ -242,14 +242,12 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	}
 
 	// If staying in the same folder but manager properties changed, re-validate
-	// consistency with the parent folder. Without this, adding or changing
-	// manager annotations would bypass the repo-managed folder invariant.
-	// Manager removal (!newOk) is intentionally allowed — the provisioning
-	// system removes manager annotations to release resources during repo deletion.
+	// consistency with the parent folder. Without this, removing or changing
+	// manager annotations would leave unmanaged resources in a repo-managed folder.
 	if obj.GetFolder() != "" && obj.GetFolder() == previous.GetFolder() {
 		newMgr, newOk := obj.GetManagerProperties()
 		oldMgr, oldOk := previous.GetManagerProperties()
-		if newOk && (newOk != oldOk || newMgr != oldMgr) {
+		if newOk != oldOk || newMgr != oldMgr {
 			if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
 				return v, err
 			}
