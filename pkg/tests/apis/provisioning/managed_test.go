@@ -33,7 +33,9 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	var managedFolderName string
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		folders, err := helper.Folders.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(collect, err)
+		if !assert.NoError(collect, err) {
+			return
+		}
 		for i := range folders.Items {
 			annotations := folders.Items[i].GetAnnotations()
 			if annotations[utils.AnnoKeyManagerIdentity] == repoName {
