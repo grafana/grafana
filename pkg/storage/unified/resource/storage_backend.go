@@ -32,13 +32,13 @@ import (
 )
 
 const (
-	defaultListBufferSize                 = 100
-	defaultEventRetentionPeriod           = 1 * time.Hour
-	defaultEventPruningLimit              = 20
-	defaultEventPruningInterval           = 5 * time.Minute
-	defaultSearchLookback                 = 1 * time.Second
-	defaultGarbageCollectionBatchWait     = 1 * time.Second
-	clusterScopeNamespace                 = "__cluster__"
+	defaultListBufferSize             = 100
+	defaultEventRetentionPeriod       = 1 * time.Hour
+	defaultEventPruningLimit          = 20
+	defaultEventPruningInterval       = 5 * time.Minute
+	defaultSearchLookback             = 1 * time.Second
+	defaultGarbageCollectionBatchWait = 1 * time.Second
+	clusterScopeNamespace             = "__cluster__"
 )
 
 // customPrunerHistoryLimits defines resource-specific history limits.
