@@ -104,12 +104,26 @@ func Changes(ctx context.Context, source []repository.FileTreeEntry, target *pro
 		}
 
 		if resources.IsPathSupported(file.Path) == nil {
-			// The folder metadata file, like .keep, is not a resource we should consider for the changes.
-			// Skip it here; the parent directory change handles folder creation.
+			// The folder metadata file is not a resource itself.
+			// For new folders the parent directory creation handles it;
+			// for existing folders we compare hashes to detect metadata changes.
 			if resources.IsFolderMetadataFile(file.Path) {
-				logger.Debug("skipping folder metadata file - will be handled by parent directory change", "path", file.Path)
+				logger.Debug("processing folder metadata file", "path", file.Path)
 				if err := keep.Add(file.Path); err != nil {
 					return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
+				}
+				// If the parent directory already exists in Grafana and the hash changed,
+				// record an update to reconcile metadata (e.g. folder title).
+				parentDir := safepath.Dir(file.Path)
+				if !strings.HasSuffix(parentDir, "/") {
+					parentDir += "/"
+				}
+				if existing, ok := lookup[parentDir]; ok && existing.Hash != file.Hash {
+					changes = append(changes, ResourceFileChange{
+						Action:   repository.FileActionUpdated,
+						Path:     parentDir,
+						Existing: existing,
+					})
 				}
 				continue
 			}

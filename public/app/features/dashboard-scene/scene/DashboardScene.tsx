@@ -1,14 +1,28 @@
 import * as H from 'history';
 
-import { CoreApp, DataQueryRequest, FieldConfig, locationUtil, NavIndex, NavModelItem, store } from '@grafana/data';
+import {
+  CoreApp,
+  DataQueryRequest,
+  FieldConfig,
+  FieldConfigSource,
+  filterFieldConfigOverrides,
+  isStandardFieldProp,
+  locationUtil,
+  NavIndex,
+  NavModelItem,
+  store,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
+  SceneDataTransformer,
   sceneGraph,
   SceneObject,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneQueryRunner,
   SceneTimeRange,
   sceneUtils,
   SceneVariable,
@@ -51,6 +65,7 @@ import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
 import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
 import { PanelEditor } from '../panel-edit/PanelEditor';
+import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../saving/shared';
@@ -81,7 +96,6 @@ import {
   getPanelIdForVizPanel,
   hasActualSaveChanges,
 } from '../utils/utils';
-import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
@@ -473,7 +487,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
-    const api = getDashboardAPI();
+    const api = await getDashboardAPI();
     // the id here is the resource version in k8s, use this instead to get the specific version
     const versionRsp = await api.restoreDashboardVersion(version.uid, version.id);
 
@@ -485,7 +499,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     if (isDashboardV2Spec(version.data as Dashboard | DashboardV2Spec)) {
-      const dto = await getDashboardAPI('v2').getDashboardDTO(version.uid);
+      const api = await getDashboardAPI('v2');
+      const dto = await api.getDashboardDTO(version.uid);
       dashScene = transformSaveModelSchemaV2ToScene(dto);
     } else {
       const dashboardDTO: DashboardDTO = {
@@ -517,14 +532,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         saveAsCopy,
         onSaveSuccess,
         showVariablesWarning: this.hasVariableErrors(),
-      }),
-    });
-  }
-
-  public openV2SchemaEditor() {
-    this.setState({
-      overlay: new SchemaV2EditorDrawer({
-        dashboardRef: this.getRef(),
       }),
     });
   }
@@ -816,6 +823,57 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public removePanel(panel: VizPanel) {
     getLayoutManagerFor(panel).removePanel?.(panel);
+  }
+
+  public updatePanelTitle(panel: VizPanel, title: string) {
+    panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+  }
+
+  public async changePanelPlugin(
+    panel: VizPanel,
+    newPluginId: string,
+    newOptions?: Record<string, unknown>,
+    newFieldConfig?: FieldConfigSource
+  ) {
+    const { fieldConfig: prevFieldConfig } = panel.state;
+
+    let cleanFieldConfig: FieldConfigSource = {
+      defaults: { ...prevFieldConfig.defaults, custom: {} },
+      overrides: filterFieldConfigOverrides(prevFieldConfig.overrides, isStandardFieldProp),
+    };
+
+    if (newFieldConfig) {
+      cleanFieldConfig = { ...newFieldConfig, overrides: cleanFieldConfig.overrides };
+    }
+
+    await panel.changePluginType(newPluginId, newOptions, cleanFieldConfig);
+
+    if (newOptions) {
+      panel.onOptionsChange(newOptions, true);
+    }
+
+    if (newFieldConfig) {
+      panel.onFieldConfigChange({ ...newFieldConfig, overrides: cleanFieldConfig.overrides }, true);
+    }
+
+    const pluginMeta = await getPanelPluginMeta(newPluginId);
+    const skipDataQuery = pluginMeta?.skipDataQuery ?? false;
+
+    if (skipDataQuery && panel.state.$data) {
+      panel.setState({ $data: undefined });
+    }
+
+    if (!skipDataQuery && !panel.state.$data) {
+      panel.setState({
+        $data: new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            datasource: { uid: config.defaultDatasource },
+            queries: [{ refId: 'A' }],
+          }),
+          transformations: [],
+        }),
+      });
+    }
   }
 
   public unlinkLibraryPanel(panel: VizPanel) {

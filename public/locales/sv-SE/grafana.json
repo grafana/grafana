@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2349,7 +2350,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2359,8 +2359,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2419,9 +2420,6 @@
       "label-payload": "Nyttolast",
       "label-use-existing-alert-instances": "Använd befintliga larminstanser",
       "reference": "Referens"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Snabba upp skapandet av dina larm nu genom att använda någon av våra skräddarsydda appar"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Den här regeln hanteras av tillägget {{pluginName}}"
@@ -2938,6 +2936,9 @@
       "error-button": "Fel",
       "export-all-grafana-rules": "Exportera alla Grafana-regler",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Avbryt sökning",
         "no-more-results": "Inga fler resultat – hittade {{numberOfRules}} regler",
@@ -3087,8 +3088,6 @@
       "dashboard": "Instrumentpanel",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Hjälp för sökning efter datakällor",
       "filter-options": {
-        "aria-label": "Filteralternativ",
-        "aria-label-show-filters": "Filter",
         "placeholder-namespace": "Välj namnutrymme",
         "placeholder-search-input": "Sök efter namn eller ange filterfråga …"
       },
@@ -3120,6 +3119,9 @@
       "state": "Tillstånd",
       "title-search-help": "Hjälp för sökning",
       "view-as": "Visa som"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Raderar",
@@ -4813,7 +4815,6 @@
     "all": "Alla",
     "apply": "Tillämpa",
     "cancel": "Avbryt",
-    "clear": "Rensa",
     "collapse": "Minimera",
     "disabled": "Inaktiverad",
     "discard": "Kassera",
@@ -5913,6 +5914,12 @@
         "title": "Paneltidsinställningar"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Instrumentpanelen måste sparas innan varningar kan läggas till.",
@@ -6545,6 +6552,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7285,6 +7303,8 @@
       "cannot-be-saved": "Denna instrumentpanel kan inte sparas från Grafanas användargränssnitt eftersom det har provisionerats från en annan källa. Kopiera JSON eller spara den till en fil nedan, så du kan uppdatera instrumentpanelen i provisioneringskällan.",
       "copy-json-to-clipboard": "Kopiera JSON till urklippet",
       "file-path": "<strong>Filsökväg:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Beskrivning",
       "label-target-folder": "Målmapp",
       "label-title": "Titel",
@@ -7970,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fast värde"
       },
+      "label": "",
       "label-limit": "Gräns",
       "label-value": "Värde",
       "noOptionsMessage-no-fields-found": "Inga fält hittades",
@@ -10001,7 +10022,9 @@
       "external-links-heading": "Externa länkar"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Ange reguljärt uttryck"
+      "input-placeholder": "Ange reguljärt uttryck",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Jämförelseoperator",
@@ -10028,6 +10051,18 @@
       "expand-row-tooltip": "Växla rad utökad",
       "tooltip-collapse-all": "Dölj alla rader",
       "tooltip-expand-all": "Expandera alla rader"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Ange egenskaper för fält med namn som matchar en regex",
@@ -11255,7 +11290,7 @@
       "cancel": "Avbryt",
       "change-uid": "Ändra uid",
       "description-library-panels-imported": "Lista över nya bibliotekspaneler som kommer att importeras.",
-      "description-unique-identifier-uid": "Den unika identifieraren (UID) för en instrumentpanel kan användas för att unikt identifiera en instrumentpanel mellan flera Grafana-installationer. UID gör det möjligt att ha konsekventa webbadresser för åtkomst till instrumentpaneler, så att ändring av titeln på en instrumentpanel inte kommer att bryta några bokmärkta länkar till den instrumentpanelen.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Befintliga bibliotekspaneler",
       "label-folder": "Mapp",
       "label-name": "Namn",
@@ -12776,9 +12811,6 @@
     "title-loaded-pull-request-in-repo": "Den här resursen laddas från den gren du just skapade i {{repoType}} och den är bara synlig för dig"
   },
   "provisioning": {
-    "banner": {
-      "message": "Den här funktionen är för närvarande under aktiv utveckling. För den bästa upplevelsen och de senaste förbättringarna rekommenderar vi att du använder <2> nightly-versionen</2> av Grafana."
-    },
     "bitbucket": {
       "branch-required": "Gren krävs",
       "permissions": {
@@ -13475,6 +13507,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Välj vad du vill synkronisera",
       "step-configure-repo": "Konfigurera lagringsplats",
       "step-connect": "Anslut",

@@ -14,7 +14,7 @@ import * as common from '@grafana/schema';
 
 export const pluginVersion = "%VERSION%";
 
-export type QueryType = ('lucene' | 'dsl');
+export type QueryType = ('lucene' | 'dsl' | 'esql');
 
 export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
 
