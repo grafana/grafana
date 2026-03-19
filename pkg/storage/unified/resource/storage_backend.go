@@ -41,12 +41,6 @@ const (
 	clusterScopeNamespace             = "__cluster__"
 )
 
-// customPrunerHistoryLimits defines resource-specific history limits.
-// The key format is "group/resource".
-var customPrunerHistoryLimits = map[string]int{
-	"plugins.grafana.app/plugins": 3,
-}
-
 type GarbageCollectionConfig struct {
 	Enabled          bool
 	DryRun           bool
@@ -628,8 +622,7 @@ func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName 
 }
 
 func (b *kvStorageBackend) prunerHistoryLimit(group, resource string) int {
-	key := fmt.Sprintf("%s/%s", group, resource)
-	if limit, ok := customPrunerHistoryLimits[key]; ok {
+	if limit, ok := LookupCustomPrunerHistoryLimit(group, resource); ok {
 		return limit
 	}
 	return defaultEventPruningLimit
