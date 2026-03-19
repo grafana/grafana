@@ -858,7 +858,7 @@ func TestIntegration_Datasource_WriteAndReadBackUnknown(t *testing.T) {
 	backend.mappers.RegisterMapper(
 		schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"},
 		NewMapper("datasources", []string{"query", "edit", "admin"}),
-		func(_ context.Context) bool { return true },
+		func() bool { return true },
 	)
 
 	// Write: Create a resource permission for loki.datasource.grafana.app
