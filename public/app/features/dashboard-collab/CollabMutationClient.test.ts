@@ -147,6 +147,8 @@ describe('CollabMutationClient', () => {
 
       expect(isExtractionSuppressed()).toBe(false);
       await client.execute({ type: 'UPDATE_PANEL', payload: {} });
+      // Unsuppression is deferred via queueMicrotask to let scene changes settle
+      await new Promise<void>((r) => queueMicrotask(r));
       expect(isExtractionSuppressed()).toBe(false);
     });
 
@@ -170,6 +172,8 @@ describe('CollabMutationClient', () => {
       client = new CollabMutationClient(inner, publishOp, 'user-1');
 
       await expect(client.execute({ type: 'UPDATE_PANEL', payload: {} })).rejects.toThrow('boom');
+      // Unsuppression is deferred via queueMicrotask
+      await new Promise<void>((r) => queueMicrotask(r));
       expect(isExtractionSuppressed()).toBe(false);
     });
 

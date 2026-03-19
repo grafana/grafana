@@ -53,7 +53,11 @@ export class CollabMutationClient implements MutationClient {
       result = await this.inner.execute(mutation);
     } finally {
       if (isWrite && !this._remoteApply) {
-        unsuppressExtraction();
+        // Defer unsuppression to the next microtask so that any scene state
+        // change events triggered by forceRender() settle before opExtractor
+        // is re-enabled. This prevents the extractor from picking up the
+        // state change that *this* client already broadcasts explicitly.
+        queueMicrotask(() => unsuppressExtraction());
       }
     }
 
