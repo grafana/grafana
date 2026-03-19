@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/status"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -51,7 +50,7 @@ func TestJaegerGrpcClient_Services(t *testing.T) {
 			mockStatus:     "OK",
 			expectedResult: []string{},
 			expectError:    true,
-			expectedError:  status.ErrorWithSource{},
+			expectedError:  backend.ErrorWithSource{},
 		},
 	}
 
@@ -148,7 +147,7 @@ func TestJaegerGrpcClient_Trace(t *testing.T) {
 		frame, err := client.GrpcTrace(context.Background(), "", time.Time{}, time.Time{}, "A")
 		assert.Nil(t, frame)
 		assert.Error(t, err)
-		assert.IsType(t, status.ErrorWithSource{}, err)
+		assert.IsType(t, backend.ErrorWithSource{}, err)
 		assert.Contains(t, err.Error(), "traceID is empty")
 	})
 
@@ -164,7 +163,7 @@ func TestJaegerGrpcClient_Trace(t *testing.T) {
 		frame, err := client.GrpcTrace(context.Background(), "trace-1", time.Time{}, time.Time{}, "A")
 		assert.Nil(t, frame)
 		assert.Error(t, err)
-		assert.IsType(t, status.ErrorWithSource{}, err)
+		assert.IsType(t, backend.ErrorWithSource{}, err)
 		assert.Contains(t, err.Error(), "failed to parse settings JSON data")
 	})
 
@@ -185,7 +184,7 @@ func TestJaegerGrpcClient_Trace(t *testing.T) {
 		frame, err := client.GrpcTrace(context.Background(), "trace-1", time.Time{}, time.Time{}, "A")
 		assert.Nil(t, frame)
 		assert.Error(t, err)
-		assert.IsType(t, status.ErrorWithSource{}, err)
+		assert.IsType(t, backend.ErrorWithSource{}, err)
 	})
 
 	t.Run("returns error when response body is invalid", func(t *testing.T) {
@@ -235,7 +234,7 @@ func TestJaegerGrpcClient_Trace(t *testing.T) {
 		frame, err := client.GrpcTrace(context.Background(), "trace-1", time.Time{}, time.Time{}, "A")
 		assert.Nil(t, frame)
 		assert.Error(t, err)
-		assert.IsType(t, status.ErrorWithSource{}, err)
+		assert.IsType(t, backend.ErrorWithSource{}, err)
 		assert.Contains(t, err.Error(), "upstream failure")
 	})
 
@@ -345,7 +344,7 @@ func TestJaegerGrpcClient_Operations(t *testing.T) {
 			mockStatus:     "OK",
 			expectedResult: []string{},
 			expectError:    true,
-			expectedError:  status.ErrorWithSource{},
+			expectedError:  backend.ErrorWithSource{},
 		},
 		{
 			name:    "Service with special characters",

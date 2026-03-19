@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
+	"io"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
@@ -336,5 +339,48 @@ func TestLogTimestampConversion(t *testing.T) {
 		// Must preserve the 0.7ms fractional part, not truncate to 1605873894680
 		assert.InDelta(t, 1605873894680.7, logs[0].Timestamp, 0.001)
 		assert.NotEqual(t, float64(1605873894680), logs[0].Timestamp)
+	})
+}
+
+func TestDecode(t *testing.T) {
+	plain := []byte(`{"data":["a","b"]}`)
+
+	t.Run("empty encoding returns body as-is", func(t *testing.T) {
+		body := io.NopCloser(bytes.NewReader(plain))
+		got, err := Decode("", body)
+		if err != nil {
+			t.Fatalf("Decode(): %v", err)
+		}
+		if !bytes.Equal(got, plain) {
+			t.Errorf("got %q, want %q", got, plain)
+		}
+	})
+
+	t.Run("gzip encoding decompresses body", func(t *testing.T) {
+		var buf bytes.Buffer
+		gz := gzip.NewWriter(&buf)
+		_, _ = gz.Write(plain)
+		_ = gz.Close()
+		gzipped := buf.Bytes()
+
+		body := io.NopCloser(bytes.NewReader(gzipped))
+		got, err := Decode("gzip", body)
+		if err != nil {
+			t.Fatalf("Decode(): %v", err)
+		}
+		if !bytes.Equal(got, plain) {
+			t.Errorf("got %q, want %q", got, plain)
+		}
+	})
+
+	t.Run("unknown encoding returns error", func(t *testing.T) {
+		body := io.NopCloser(bytes.NewReader(plain))
+		_, err := Decode("x-unknown", body)
+		if err == nil {
+			t.Fatal("expected error for unknown encoding")
+		}
+		if !bytes.Contains([]byte(err.Error()), []byte("x-unknown")) {
+			t.Errorf("error should mention encoding: %v", err)
+		}
 	})
 }
