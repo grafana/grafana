@@ -13,16 +13,16 @@ import { DashboardScene } from '../scene/DashboardScene';
 interface Props {
   route?: string;
   dashboard: DashboardScene;
-  datasourceUid?: string;
 }
 
-export function SuggestedDashboardBanner({ route, dashboard, datasourceUid }: Props) {
+export function SuggestedDashboardsBanner({ route, dashboard }: Props) {
   const { title } = dashboard.useState();
   const location = useLocation();
   const [dismissed, setDismissed] = useState(false);
 
   const searchParams = new URLSearchParams(location.search);
   const suggestedDashboardBanner = searchParams.get('suggestedDashboardBanner') === 'true';
+  const datasourceUid = searchParams.get('datasource');
 
   if (route !== DashboardRoutes.Template || !suggestedDashboardBanner || dismissed || !datasourceUid) {
     return null;

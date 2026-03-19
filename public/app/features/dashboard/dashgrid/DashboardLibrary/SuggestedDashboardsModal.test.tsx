@@ -26,6 +26,9 @@ describe('SuggestedDashboardsModal', () => {
   const defaultProps = {
     isOpen: true,
     onDismiss: jest.fn(),
+    provisionedDashboards: [],
+    communityDashboards: [],
+    isDashboardsLoading: false,
   };
 
   beforeEach(() => {
@@ -72,12 +75,7 @@ describe('SuggestedDashboardsModal', () => {
   });
 
   it('should render CommunityDashboardSection when activeView is community', () => {
-    render(
-      <SuggestedDashboardsModal
-        {...defaultProps}
-        communityDashboards={[createMockGnetDashboard()]}
-      />
-    );
+    render(<SuggestedDashboardsModal {...defaultProps} communityDashboards={[createMockGnetDashboard()]} />);
 
     expect(screen.getByTestId('community-dashboard-section')).toBeInTheDocument();
     expect(screen.queryByTestId('dashboard-library-section')).not.toBeInTheDocument();
@@ -122,24 +120,14 @@ describe('SuggestedDashboardsModal', () => {
     });
 
     it('should default to datasource tab when only provisioned dashboards are provided', () => {
-      render(
-        <SuggestedDashboardsModal
-          {...defaultProps}
-          provisionedDashboards={[createMockPluginDashboard()]}
-        />
-      );
+      render(<SuggestedDashboardsModal {...defaultProps} provisionedDashboards={[createMockPluginDashboard()]} />);
 
       expect(screen.getByTestId('dashboard-library-section')).toBeInTheDocument();
       expect(screen.queryByTestId('community-dashboard-section')).not.toBeInTheDocument();
     });
 
     it('should default to community tab when only community dashboards are provided', () => {
-      render(
-        <SuggestedDashboardsModal
-          {...defaultProps}
-          communityDashboards={[createMockGnetDashboard()]}
-        />
-      );
+      render(<SuggestedDashboardsModal {...defaultProps} communityDashboards={[createMockGnetDashboard()]} />);
 
       expect(screen.getByTestId('community-dashboard-section')).toBeInTheDocument();
       expect(screen.queryByTestId('dashboard-library-section')).not.toBeInTheDocument();
@@ -174,10 +162,7 @@ describe('SuggestedDashboardsModal', () => {
 
     it('should switch from community to datasource tab when datasource tab is clicked', async () => {
       const { user } = render(
-        <SuggestedDashboardsModal
-          {...defaultProps}
-          communityDashboards={[createMockGnetDashboard()]}
-        />
+        <SuggestedDashboardsModal {...defaultProps} communityDashboards={[createMockGnetDashboard()]} />
       );
 
       expect(screen.getByTestId('community-dashboard-section')).toBeInTheDocument();

@@ -20,7 +20,7 @@ import { DashboardPreviewBanner } from 'app/features/provisioning/components/Das
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardConversionWarningBanner } from '../components/DashboardConversionWarningBanner';
-import { SuggestedDashboardBanner } from '../components/SuggestedDashboardBanner';
+import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 
@@ -125,7 +125,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
       <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
       <DashboardConversionWarningBanner dashboard={dashboard} />
-      <SuggestedDashboardBanner route={route.routeName} dashboard={dashboard} datasourceUid={queryParams.datasource} />
+      <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       <DashboardBrandingFooter

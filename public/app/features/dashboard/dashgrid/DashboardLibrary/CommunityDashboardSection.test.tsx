@@ -116,6 +116,7 @@ const setup = async (
       datasourceType={mockDatasourceType}
       datasourceUid={datasourceUid}
       dashboards={defaultDashboards}
+      isDashboardsLoading={false}
       {...restProps}
     />
   );
@@ -182,12 +183,9 @@ describe('CommunityDashboardSection', () => {
     const searchInput = screen.getByRole('textbox');
     await user.type(searchInput, 'test');
 
-    await waitFor(
-      () => {
-        expect(screen.getByText('Error loading community dashboards')).toBeInTheDocument();
-      },
-      { timeout: 2000 }
-    );
+    await waitFor(() => {
+      expect(screen.getByText('Error loading community dashboards')).toBeInTheDocument();
+    });
 
     expect(consoleErrorSpy).toHaveBeenCalledWith('Error loading community dashboards', expect.any(Error));
     consoleErrorSpy.mockRestore();

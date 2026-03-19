@@ -22,7 +22,6 @@ export type DashboardPageRouteSearchParams = {
   scenes?: boolean;
   shareView?: string;
   ref?: string; // used for repo preview
-  datasource?: string;
   // Used by template dashboards to identify the specific dashboard file
   path?: string;
 };

@@ -18,11 +18,16 @@ import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHel
 const PAGE_SIZE = 9;
 
 interface DashboardLibrarySectionProps {
-  dashboards?: PluginDashboard[];
+  dashboards: PluginDashboard[];
   datasourceUid?: string;
+  isDashboardsLoading: boolean;
 }
 
-export const DashboardLibrarySection = ({ dashboards, datasourceUid }: DashboardLibrarySectionProps) => {
+export const DashboardLibrarySection = ({
+  dashboards,
+  datasourceUid,
+  isDashboardsLoading,
+}: DashboardLibrarySectionProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const hasTrackedLoaded = useRef(false);
 
@@ -35,10 +40,9 @@ export const DashboardLibrarySection = ({ dashboards, datasourceUid }: Dashboard
     return ds?.type || '';
   }, [datasourceUid]);
 
-  const loading = dashboards === undefined;
   // Track analytics only once on first successful load
   useEffect(() => {
-    if (!loading && !hasTrackedLoaded.current && dashboards && dashboards.length > 0) {
+    if (!isDashboardsLoading && !hasTrackedLoaded.current && dashboards.length > 0) {
       DashboardLibraryInteractions.loaded({
         numberOfItems: dashboards.length,
         contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
@@ -48,7 +52,7 @@ export const DashboardLibrarySection = ({ dashboards, datasourceUid }: Dashboard
       });
       hasTrackedLoaded.current = true;
     }
-  }, [loading, dashboards, datasourceType]);
+  }, [isDashboardsLoading, dashboards, datasourceType]);
 
   // Calculate pagination
   const totalDashboards = dashboards?.length || 0;
@@ -59,7 +63,7 @@ export const DashboardLibrarySection = ({ dashboards, datasourceUid }: Dashboard
 
   const styles = useStyles2(getStyles);
 
-  const showEmptyState = !loading && (!dashboards || dashboards.length === 0);
+  const showEmptyState = !isDashboardsLoading && dashboards.length === 0;
 
   const onUseProvisionedDashboard = async (dashboard: PluginDashboard) => {
     DashboardLibraryInteractions.itemClicked({
@@ -119,11 +123,17 @@ export const DashboardLibrarySection = ({ dashboards, datasourceUid }: Dashboard
           gap={4}
           columns={{
             xs: 1,
-            sm: loading ? 2 : (dashboardsToShow.length || 1) >= 2 ? 2 : 1,
-            lg: loading ? 3 : (dashboardsToShow.length || 1) >= 3 ? 3 : (dashboardsToShow.length || 1) >= 2 ? 2 : 1,
+            sm: isDashboardsLoading ? 2 : (dashboardsToShow.length || 1) >= 2 ? 2 : 1,
+            lg: isDashboardsLoading
+              ? 3
+              : (dashboardsToShow.length || 1) >= 3
+                ? 3
+                : (dashboardsToShow.length || 1) >= 2
+                  ? 2
+                  : 1,
           }}
         >
-          {loading && !dashboards
+          {isDashboardsLoading
             ? Array.from({ length: 9 }).map((_, i) => <DashboardCard.Skeleton key={`skeleton-${i}`} />)
             : dashboardsToShow.map((dashboard, index) => {
                 const globalIndex = startIndex + index;

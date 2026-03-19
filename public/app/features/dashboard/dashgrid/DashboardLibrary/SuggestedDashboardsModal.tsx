@@ -20,8 +20,9 @@ interface SuggestedDashboardsModalProps {
   onDismiss: () => void;
   datasourceUid?: string;
   initialMappingContext?: MappingContext | null;
-  provisionedDashboards?: PluginDashboard[];
-  communityDashboards?: GnetDashboard[];
+  provisionedDashboards: PluginDashboard[];
+  communityDashboards: GnetDashboard[];
+  isDashboardsLoading: boolean;
 }
 
 type ModalView = 'datasource' | 'community' | 'mapping';
@@ -45,6 +46,7 @@ export const SuggestedDashboardsModal = ({
   initialMappingContext,
   provisionedDashboards,
   communityDashboards,
+  isDashboardsLoading,
 }: SuggestedDashboardsModalProps) => {
   const [activeView, setActiveView] = useState<ModalView>();
   const [mappingContext, setMappingContext] = useState<MappingContext | null>(initialMappingContext || null);
@@ -69,7 +71,7 @@ export const SuggestedDashboardsModal = ({
       return;
     }
 
-    if (isOpen) {
+    if (isOpen && !activeView) {
       const view: ModalView =
         communityDashboards?.length && !provisionedDashboards?.length ? 'community' : 'datasource';
       setActiveView(view);
@@ -77,7 +79,7 @@ export const SuggestedDashboardsModal = ({
       // Reset when modal closes
       setMappingContext(null);
     }
-  }, [initialMappingContext, isOpen, communityDashboards, provisionedDashboards]);
+  }, [initialMappingContext, isOpen, communityDashboards, provisionedDashboards, activeView]);
 
   const onTabChange = (tab: 'datasource' | 'community') => {
     setActiveView(tab);
@@ -139,7 +141,11 @@ export const SuggestedDashboardsModal = ({
 
       <TabContent className={styles.tabContent}>
         {activeView === 'datasource' && (
-          <DashboardLibrarySection dashboards={provisionedDashboards} datasourceUid={datasourceUid} />
+          <DashboardLibrarySection
+            dashboards={provisionedDashboards}
+            datasourceUid={datasourceUid}
+            isDashboardsLoading={isDashboardsLoading}
+          />
         )}
         {activeView === 'community' && (
           <CommunityDashboardSection
@@ -147,6 +153,7 @@ export const SuggestedDashboardsModal = ({
             datasourceType={datasourceInfo.type}
             dashboards={communityDashboards}
             datasourceUid={datasourceUid}
+            isDashboardsLoading={isDashboardsLoading}
           />
         )}
         {activeView === 'mapping' && mappingContext && (

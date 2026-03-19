@@ -1,4 +1,5 @@
 import { screen, waitFor, within } from '@testing-library/react';
+import { ComponentProps } from 'react';
 import { render } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
@@ -61,6 +62,17 @@ const mockDashboardLibraryInteractionsItemClicked = DashboardLibraryInteractions
   typeof DashboardLibraryInteractions.itemClicked
 >;
 
+function setup(overrides?: Partial<ComponentProps<typeof DashboardLibrarySection>>) {
+  return render(
+    <DashboardLibrarySection
+      dashboards={[]}
+      datasourceUid="test-uid"
+      isDashboardsLoading={false}
+      {...overrides}
+    />
+  );
+}
+
 describe('DashboardLibrarySection', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -72,20 +84,20 @@ describe('DashboardLibrarySection', () => {
       createMockPluginDashboard({ title: 'Dashboard 2', uid: 'uid-2' }),
     ];
 
-    render(<DashboardLibrarySection dashboards={dashboards} datasourceUid="test-uid" />);
+    setup({ dashboards });
 
     expect(screen.getByTestId('dashboard-card-Dashboard 1')).toBeInTheDocument();
     expect(screen.getByTestId('dashboard-card-Dashboard 2')).toBeInTheDocument();
   });
 
-  it('should show skeletons while dashboards are loading (undefined)', async () => {
-    render(<DashboardLibrarySection dashboards={undefined} datasourceUid="test-uid" />);
+  it('should show skeletons while dashboards are loading', async () => {
+    setup({ isDashboardsLoading: true });
 
     expect(screen.getAllByTestId('dashboard-card-skeleton').length).toBeGreaterThan(0);
   });
 
   it('should show empty state when there are no dashboards', async () => {
-    render(<DashboardLibrarySection dashboards={[]} datasourceUid="test-uid" />);
+    setup();
 
     expect(screen.getByText('No test-datasource provisioned dashboards found')).toBeInTheDocument();
     expect(
@@ -98,7 +110,7 @@ describe('DashboardLibrarySection', () => {
   });
 
   it('should show empty state without datasource type when datasourceUid is not provided', async () => {
-    render(<DashboardLibrarySection dashboards={[]} />);
+    setup({ datasourceUid: undefined });
 
     expect(screen.getByText('No provisioned dashboards found')).toBeInTheDocument();
   });
@@ -108,7 +120,7 @@ describe('DashboardLibrarySection', () => {
       createMockPluginDashboard({ title: `Dashboard ${i + 1}`, uid: `uid-${i + 1}` })
     );
 
-    render(<DashboardLibrarySection dashboards={dashboards} datasourceUid="test-uid" />);
+    setup({ dashboards });
 
     const pagination = screen.getByRole('navigation');
     expect(pagination).toBeInTheDocument();
@@ -121,7 +133,7 @@ describe('DashboardLibrarySection', () => {
       createMockPluginDashboard({ title: `Dashboard ${i + 1}`, uid: `uid-${i + 1}` })
     );
 
-    render(<DashboardLibrarySection dashboards={dashboards} datasourceUid="test-uid" />);
+    setup({ dashboards });
 
     expect(screen.getByTestId('dashboard-card-Dashboard 1')).toBeInTheDocument();
 
@@ -137,7 +149,7 @@ describe('DashboardLibrarySection', () => {
       path: 'test/path.json',
     });
 
-    render(<DashboardLibrarySection dashboards={[dashboard]} datasourceUid="test-uid" />);
+    setup({ dashboards: [dashboard] });
 
     expect(screen.getByTestId('dashboard-card-Test Dashboard')).toBeInTheDocument();
 
@@ -163,7 +175,7 @@ describe('DashboardLibrarySection', () => {
       createMockPluginDashboard({ title: 'Dashboard 2', uid: 'uid-2' }),
     ];
 
-    render(<DashboardLibrarySection dashboards={dashboards} datasourceUid="test-uid" />);
+    setup({ dashboards });
 
     expect(screen.getByTestId('dashboard-card-Dashboard 1')).toBeInTheDocument();
 
@@ -185,7 +197,7 @@ describe('DashboardLibrarySection', () => {
       pluginId: 'test-plugin',
     });
 
-    render(<DashboardLibrarySection dashboards={[dashboard]} datasourceUid="test-uid" />);
+    setup({ dashboards: [dashboard] });
 
     expect(screen.getByTestId('dashboard-card-Test Dashboard')).toBeInTheDocument();
 

@@ -42,6 +42,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({ dashboard: simpleDashboard, meta: { url: '' } }),
+      post: jest.fn().mockResolvedValue(simpleDashboard),
     };
   },
   getDataSourceSrv: () => {
@@ -58,6 +59,11 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('react-router-dom-v5-compat', () => ({
   ...jest.requireActual('react-router-dom-v5-compat'),
   useParams: jest.fn().mockReturnValue({ uid: 'my-dash-uid' }),
+}));
+
+jest.mock('app/features/datasources/components/SuggestedDashboardsLoader', () => ({
+  SuggestedDashboardsLoader: ({ children }: { children: (props: Record<string, unknown>) => JSX.Element }) =>
+    children({ fetchStatus: 'idle', hasDashboards: false, triggerFetch: jest.fn(), openModal: jest.fn() }),
 }));
 
 const getObservablePluginLinks = jest.fn().mockReturnValue(of([]));
@@ -470,6 +476,94 @@ describe('DashboardScenePage', () => {
 
       expect(await screen.findByTestId('dashboard-page-error')).toBeInTheDocument();
       expect(await screen.findByTestId('dashboard-page-error')).toHaveTextContent('Runtime error');
+    });
+  });
+
+  describe('SuggestedDashboardsBanner', () => {
+    let fetchDashboardSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      // Mock fetchDashboard on the state manager to avoid Template route needing window.location.search
+      const manager = getDashboardScenePageStateManager();
+      fetchDashboardSpy = jest
+        .spyOn(manager as unknown as { fetchDashboard: () => Promise<unknown> }, 'fetchDashboard')
+        .mockResolvedValue({ dashboard: simpleDashboard, meta: { slug: '123' } });
+    });
+
+    afterEach(() => {
+      fetchDashboardSpy.mockRestore();
+    });
+
+    it('should render the banner when route is Template and URL params are present', async () => {
+      locationService.push('/d/my-dash-uid?suggestedDashboardBanner=true&datasource=ds1');
+      setup({
+        routeProps: {
+          route: {
+            ...getRouteComponentProps().route,
+            routeName: DashboardRoutes.Template,
+          },
+        },
+      });
+
+      await waitForDashboardToRender();
+
+      expect(screen.getByText(/You are viewing/)).toBeInTheDocument();
+      expect(screen.getByText(/other suggested dashboards/)).toBeInTheDocument();
+      expect(screen.getByText(/create one from scratch/)).toBeInTheDocument();
+    });
+
+    it('should NOT render the banner on a normal route', async () => {
+      locationService.push('/d/my-dash-uid?suggestedDashboardBanner=true&datasource=ds1');
+      setup({
+        routeProps: {
+          route: {
+            ...getRouteComponentProps().route,
+            routeName: DashboardRoutes.Normal,
+          },
+        },
+      });
+
+      await waitForDashboardToRender();
+
+      expect(screen.queryByText(/You are viewing/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/other suggested dashboards/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/create one from scratch/)).not.toBeInTheDocument();
+    });
+
+    it('should NOT render the banner without suggestedDashboardBanner param', async () => {
+      locationService.push('/d/my-dash-uid?datasource=ds1');
+      setup({
+        routeProps: {
+          route: {
+            ...getRouteComponentProps().route,
+            routeName: DashboardRoutes.Template,
+          },
+        },
+      });
+
+      await waitForDashboardToRender();
+
+      expect(screen.queryByText(/You are viewing/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/other suggested dashboards/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/create one from scratch/)).not.toBeInTheDocument();
+    });
+
+    it('should NOT render the banner without datasource param', async () => {
+      locationService.push('/d/my-dash-uid?suggestedDashboardBanner=true');
+      setup({
+        routeProps: {
+          route: {
+            ...getRouteComponentProps().route,
+            routeName: DashboardRoutes.Template,
+          },
+        },
+      });
+
+      await waitForDashboardToRender();
+
+      expect(screen.queryByText(/You are viewing/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/other suggested dashboards/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/create one from scratch/)).not.toBeInTheDocument();
     });
   });
 

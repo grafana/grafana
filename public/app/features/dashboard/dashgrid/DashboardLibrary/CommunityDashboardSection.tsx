@@ -30,6 +30,7 @@ interface Props {
   datasourceType?: string;
   dashboards?: GnetDashboard[];
   datasourceUid?: string;
+  isDashboardsLoading: boolean;
 }
 
 const SEARCH_DEBOUNCE_MS = 500;
@@ -38,7 +39,13 @@ const DEFAULT_SORT_DIRECTION = 'desc';
 const INCLUDE_LOGO = true;
 const INCLUDE_SCREENSHOTS = true;
 
-export const CommunityDashboardSection = ({ onShowMapping, datasourceType, dashboards, datasourceUid }: Props) => {
+export const CommunityDashboardSection = ({
+  onShowMapping,
+  datasourceType,
+  dashboards,
+  datasourceUid,
+  isDashboardsLoading,
+}: Props) => {
   const [searchQuery, setSearchQuery] = useState('');
   const hasTrackedLoaded = useRef(false);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
@@ -135,8 +142,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType, dashb
 
   const styles = useStyles2(getStyles);
 
-  const isLoadingFromParent = dashboards === undefined && !debouncedSearchQuery.trim();
-  const showLoading = loading || isLoadingFromParent;
+  const showLoading = loading || isDashboardsLoading;
   const showEmptyState = !showLoading && (!response?.dashboards || response.dashboards.length === 0);
   const showError = !showLoading && error;
 

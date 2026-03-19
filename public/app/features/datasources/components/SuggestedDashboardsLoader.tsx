@@ -1,4 +1,4 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useRef, useState } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
 import { SuggestedDashboardsModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsModal';
@@ -32,10 +32,12 @@ export const SuggestedDashboardsLoader = ({
   children,
 }: SuggestedDashboardsLoaderProps) => {
   const [fetchStatus, setFetchStatus] = useState<FetchStatus>('idle');
-  const [provisionedDashboards, setProvisionedDashboards] = useState<PluginDashboard[]>();
+  const [provisionedDashboards, setProvisionedDashboards] = useState<PluginDashboard[]>([]);
   const [communityDashboards, setCommunityDashboards] = useState<GnetDashboard[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const hasFetchedRef = useRef(false);
+
+  const hasDashboards = (provisionedDashboards?.length ?? 0) > 0 || (communityDashboards?.length ?? 0) > 0;
 
   const triggerFetch = useCallback(async () => {
     if (hasFetchedRef.current) {
@@ -74,13 +76,10 @@ export const SuggestedDashboardsLoader = ({
     }
   }, [datasourceUid, onFetchComplete]);
 
-  useEffect(() => {
-    if (fetchOnMount) {
-      triggerFetch();
-    }
-  }, [fetchOnMount, triggerFetch]);
+  if (fetchOnMount && !hasFetchedRef.current) {
+    triggerFetch();
+  }
 
-  const hasDashboards = (provisionedDashboards?.length ?? 0) > 0 || (communityDashboards?.length ?? 0) > 0;
   const openModal = useCallback(() => {
     triggerFetch();
     setIsOpen(true);
@@ -95,6 +94,7 @@ export const SuggestedDashboardsLoader = ({
         datasourceUid={datasourceUid}
         provisionedDashboards={provisionedDashboards}
         communityDashboards={communityDashboards}
+        isDashboardsLoading={fetchStatus === 'loading'}
       />
     </>
   );
