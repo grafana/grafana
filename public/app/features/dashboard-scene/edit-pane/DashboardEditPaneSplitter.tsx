@@ -12,6 +12,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
+import { useIsMobile } from '../../../../../packages/grafana-ui/src/components/Sidebar/useSidebar';
 import { type PopoverTarget, AssistantPopoverContext } from '../assistant/AssistantPopoverContext';
 import {
   useDashboardAssistantViewMode,
@@ -132,6 +133,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     }
   }, [isEditing, editPane]);
 
+  const isMobile = useIsMobile();
   const sidebarContext = useSidebar({
     hasOpenPane: Boolean(openPane),
     contentMargin: 1,
@@ -139,6 +141,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     persistanceKey: isEditing ? 'dashboard' : 'dashboard-view',
     defaultToDocked: isEditing ? true : false,
     onClosePane: () => editPane.closePane(),
+    defaultIsHidden: isEditing ? false : isMobile,
   });
 
   useEffect(() => {

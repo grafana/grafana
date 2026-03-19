@@ -1,5 +1,6 @@
 import { clamp } from 'lodash';
 import React, { useCallback, useEffect } from 'react';
+import { useMedia } from 'react-use';
 
 import { store } from '@grafana/data';
 
@@ -23,6 +24,7 @@ export interface SidebarContextValue {
   onResize: (diff: number) => void;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
+  onToggleIsHidden: () => void;
 }
 
 export const SidebarContext: React.Context<SidebarContextValue | undefined> = React.createContext<
@@ -50,12 +52,17 @@ export interface UseSideBarOptions {
    * Can only be app name as the final local storag key will be `grafana.ui.sidebar.{persistanceKey}.{docked|compact|size}`
    */
   persistanceKey?: string;
-  /** Whether the sidebar is hidden */
-  isHidden?: boolean;
+  /** Whether the sidebar is hidden by default */
+  defaultIsHidden?: boolean;
 }
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
 export const SIDE_BAR_WIDTH_WITH_TEXT = 8;
+
+export function useIsMobile() {
+  const theme = useTheme2();
+  return useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
+}
 
 export function useSidebar({
   hasOpenPane,
@@ -68,22 +75,25 @@ export function useSidebar({
   contentMargin = 2,
   persistanceKey,
   onClosePane,
-  isHidden = false,
+  defaultIsHidden = false,
 }: UseSideBarOptions): SidebarContextValue {
   const theme = useTheme2();
-
   const [isDocked, setIsDocked] = useSidebarSavedState(persistanceKey, 'docked', defaultToDocked);
   const [compact, setCompact] = useSidebarSavedState(persistanceKey, 'compact', defaultToCompact);
   const [paneWidth, setPaneWidth] = useSidebarSavedState(persistanceKey, 'size', 240);
+  const [isHidden, setIsHidden] = useSidebarSavedState(persistanceKey, 'hidden', defaultIsHidden);
+  const isMobile = useIsMobile();
+  /** Undocked/floating sidebar is not used on small viewports; keep layout and behavior docked. */
+  const effectiveIsDocked = Boolean(isMobile) || isDocked;
 
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
 
   const onToggleDock = useCallback(() => {
-    setIsDocked((prev) => {
-      return !prev;
-    });
-  }, [setIsDocked]);
+    if (!isMobile) {
+      setIsDocked((prev) => !prev);
+    }
+  }, [isMobile, setIsDocked]);
 
   // Calculate how much space the outer wrapper needs to reserve for the sidebar toolbar + pane (if docked)
   const prop = position === 'right' ? 'paddingRight' : 'paddingLeft';
@@ -95,7 +105,7 @@ export function useSidebar({
     ? {}
     : {
         style: {
-          [prop]: isDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
+          [prop]: effectiveIsDocked && hasOpenPane ? paneWidth + toolbarWidth : toolbarWidth,
         },
       };
 
@@ -126,8 +136,10 @@ export function useSidebar({
     [hasOpenPane, setCompact, setPaneWidth, compact]
   );
 
+  const onToggleIsHidden = useCallback(() => setIsHidden((prev) => !prev), [setIsHidden]);
+
   return {
-    isDocked,
+    isDocked: effectiveIsDocked,
     onToggleDock,
     onResize,
     outerWrapperProps,
@@ -141,6 +153,7 @@ export function useSidebar({
     contentMargin,
     isHidden,
     onClosePane,
+    onToggleIsHidden,
   };
 }
 
