@@ -2241,10 +2241,12 @@ func runTestClusterScopedResources(t *testing.T, sqlBackend, kvBackend resource.
 		require.Nil(t, kvHistory.Error, "KV ListHistory error: %v", kvHistory.Error)
 		require.Len(t, kvHistory.Items, 3, "KV backend should have 3 history entries")
 
-		// Verify both backends return the same versions (descending order by default)
+		// Verify both backends return history in the same order (descending by default)
+		// RVs differ between backends (SQL uses sequential, KV uses snowflakes),
+		// so compare values instead.
 		for i := range sqlHistory.Items {
-			require.Equal(t, sqlHistory.Items[i].ResourceVersion, kvHistory.Items[i].ResourceVersion,
-				"history entry %d: resource version mismatch between backends", i)
+			require.JSONEq(t, string(sqlHistory.Items[i].Value), string(kvHistory.Items[i].Value),
+				"history entry %d: value mismatch between backends", i)
 		}
 	})
 }
