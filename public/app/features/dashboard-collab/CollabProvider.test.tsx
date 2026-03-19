@@ -39,7 +39,7 @@ jest.mock('@grafana/runtime', () => {
     }),
     config: {
       ...actual.config,
-      featureToggles: { dashboardCollaboration: true },
+      featureToggles: { dashboardCollaboration: true, dashboardCursorSync: true },
       bootData: { user: { uid: 'local-user-1' } },
     },
   };
@@ -98,6 +98,7 @@ describe('CollabProvider', () => {
     cursorsSubject = new Subject();
     mockPublish.mockClear();
     config.featureToggles.dashboardCollaboration = true;
+    config.featureToggles.dashboardCursorSync = true;
   });
 
   it('provides default disconnected state', () => {
@@ -159,18 +160,22 @@ describe('CollabProvider', () => {
     expect(result.current.connected).toBe(false);
   });
 
-  it('updates locks on lock messages', () => {
+  it('sets activity-based locks on remote op messages with lockTarget', () => {
     const scene = makeMockScene();
     const { result } = renderHook(() => useCollab(), { wrapper: makeWrapper(scene) });
 
-    // Acquire lock
+    // Remote op with lockTarget triggers activity-based lock
     act(() => {
       opsSubject.next({
         type: LiveChannelEventType.Message,
         message: {
           seq: 1,
-          kind: 'lock',
-          op: { type: 'lock', target: 'panel-2', userId: 'u2' },
+          kind: 'op',
+          op: {
+            mutation: { type: 'UPDATE_PANEL', payload: {} },
+            lockTarget: 'panel-2',
+            userId: 'u2',
+          },
           userId: 'u2',
           timestamp: Date.now(),
         } as ServerMessage,
@@ -178,14 +183,14 @@ describe('CollabProvider', () => {
     });
     expect(result.current.locks).toEqual([{ target: 'panel-2', userId: 'u2' }]);
 
-    // Release lock
+    // Unlock message clears the lock immediately
     act(() => {
       opsSubject.next({
         type: LiveChannelEventType.Message,
         message: {
           seq: 2,
-          kind: 'lock',
-          op: { type: 'unlock', target: 'panel-2', userId: 'u2' },
+          kind: 'unlock',
+          op: { target: 'panel-2', userId: 'u2' },
           userId: 'u2',
           timestamp: Date.now(),
         } as ServerMessage,

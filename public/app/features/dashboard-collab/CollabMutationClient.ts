@@ -40,11 +40,14 @@ export class CollabMutationClient implements MutationClient {
   async execute(mutation: MutationRequest): Promise<MutationResult> {
     const type = mutation.type.toUpperCase();
     const isWrite = !READ_ONLY_COMMANDS.has(type);
+    // Snapshot the flag so it can't change between suppress and unsuppress
+    // if a concurrent remote apply mutates _remoteApply mid-flight.
+    const isRemoteApply = this._remoteApply;
 
     // Suppress opExtractor for write mutations routed through this client.
     // The CollabMutationClient broadcasts the op itself after a successful write,
     // so opExtractor must not also emit from the resulting scene state change.
-    if (isWrite && !this._remoteApply) {
+    if (isWrite && !isRemoteApply) {
       suppressExtraction();
     }
 
@@ -52,7 +55,7 @@ export class CollabMutationClient implements MutationClient {
     try {
       result = await this.inner.execute(mutation);
     } finally {
-      if (isWrite && !this._remoteApply) {
+      if (isWrite && !isRemoteApply) {
         // Defer unsuppression to the next microtask so that any scene state
         // change events triggered by forceRender() settle before opExtractor
         // is re-enabled. This prevents the extractor from picking up the
@@ -62,7 +65,7 @@ export class CollabMutationClient implements MutationClient {
     }
 
     // Don't broadcast read-only commands, failed mutations, or remote applies
-    if (!result.success || !isWrite || this._remoteApply) {
+    if (!result.success || !isWrite || isRemoteApply) {
       return result;
     }
 
