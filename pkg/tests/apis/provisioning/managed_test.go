@@ -686,6 +686,22 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 	})
 
 	t.Run("admin can release repo-managed dashboard via update", func(t *testing.T) {
+		// Release top-down: the folder must be released before the dashboard,
+		// otherwise the folder-manager consistency check rejects an unmanaged
+		// resource inside a managed folder.
+		folder, err := helper.Folders.Resource.Get(ctx, repo, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		fa := folder.GetAnnotations()
+		delete(fa, utils.AnnoKeyManagerKind)
+		delete(fa, utils.AnnoKeyManagerIdentity)
+		delete(fa, utils.AnnoKeySourcePath)
+		delete(fa, utils.AnnoKeySourceChecksum)
+		folder.SetAnnotations(fa)
+
+		_, err = helper.Folders.Resource.Update(ctx, folder, metav1.UpdateOptions{})
+		require.NoError(t, err, "admin should be able to release the folder first")
+
 		fresh, err := helper.DashboardsV1.Resource.Get(ctx, dashboardUID, metav1.GetOptions{})
 		require.NoError(t, err)
 
@@ -785,6 +801,11 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testi
 	})
 
 	t.Run("admin can release via merge patch", func(t *testing.T) {
+		// Release the folder first (top-down) so the dashboard can become
+		// unmanaged without violating folder-manager consistency.
+		_, err := helper.Folders.Resource.Patch(ctx, repo, types.MergePatchType, mergePatch, metav1.PatchOptions{})
+		require.NoError(t, err, "admin should be able to release the folder first")
+
 		updated, err := helper.DashboardsV1.Resource.Patch(ctx, dashboardUID, types.MergePatchType, mergePatch, metav1.PatchOptions{})
 		require.NoError(t, err, "admin should be able to release via merge patch")
 
