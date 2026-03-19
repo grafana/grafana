@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 // mockAttributes implements authorizer.Attributes for testing
@@ -23,6 +24,20 @@ type mockAttributes struct {
 
 func (m *mockAttributes) IsResourceRequest() bool { return m.isResourceRequest }
 func (m *mockAttributes) GetVerb() string         { return m.verb }
+
+func installerWithToggle(on bool, ac accesscontrol.AccessControl) *AppInstaller {
+	var features featuremgmt.FeatureToggles
+	if on {
+		features = featuremgmt.WithFeatures(featuremgmt.FlagPlaylistsRBAC)
+	} else {
+		features = featuremgmt.WithFeatures()
+	}
+	return &AppInstaller{
+		features:      features,
+		accessControl: ac,
+		logger:        log.NewNopLogger(),
+	}
+}
 
 // mockAccessControl implements accesscontrol.AccessControl for testing
 type mockAccessControl struct {
@@ -190,10 +205,7 @@ func TestGetAuthorizer(t *testing.T) {
 				},
 			}
 
-			installer := &AppInstaller{
-				accessControl: mockAC,
-				logger:        log.NewNopLogger(),
-			}
+			installer := installerWithToggle(true, mockAC)
 
 			attrs := &mockAttributes{
 				isResourceRequest: tt.isResourceReq,
@@ -227,4 +239,55 @@ func TestGetAuthorizer(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetAuthorizerToggleOff(t *testing.T) {
+	mockAC := &mockAccessControl{}
+	installer := installerWithToggle(false, mockAC)
+	auth := installer.GetAuthorizer()
+
+	noneCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		OrgID:   1,
+		UserID:  1,
+		OrgRole: identity.RoleNone,
+	})
+	viewerCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		OrgID:   1,
+		UserID:  2,
+		OrgRole: identity.RoleViewer,
+	})
+
+	t.Run("non-resource request defers regardless of role", func(t *testing.T) {
+		attrs := &mockAttributes{isResourceRequest: false, verb: "get"}
+		decision, _, err := auth.Authorize(noneCtx, attrs)
+		require.NoError(t, err)
+		assert.Equal(t, authorizer.DecisionNoOpinion, decision)
+	})
+
+	t.Run("None role with read verb allows (hotfix)", func(t *testing.T) {
+		for _, verb := range []string{"get", "list", "watch"} {
+			attrs := &mockAttributes{isResourceRequest: true, verb: verb}
+			decision, _, err := auth.Authorize(noneCtx, attrs)
+			require.NoError(t, err)
+			assert.Equal(t, authorizer.DecisionAllow, decision, "verb: %s", verb)
+		}
+	})
+
+	t.Run("None role with write verb defers to roleAuthorizer", func(t *testing.T) {
+		for _, verb := range []string{"create", "update", "delete"} {
+			attrs := &mockAttributes{isResourceRequest: true, verb: verb}
+			decision, _, err := auth.Authorize(noneCtx, attrs)
+			require.NoError(t, err)
+			assert.Equal(t, authorizer.DecisionNoOpinion, decision, "verb: %s", verb)
+		}
+	})
+
+	t.Run("non-None role defers to roleAuthorizer", func(t *testing.T) {
+		for _, verb := range []string{"get", "list", "create"} {
+			attrs := &mockAttributes{isResourceRequest: true, verb: verb}
+			decision, _, err := auth.Authorize(viewerCtx, attrs)
+			require.NoError(t, err)
+			assert.Equal(t, authorizer.DecisionNoOpinion, decision, "verb: %s", verb)
+		}
+	})
 }

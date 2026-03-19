@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 var (
@@ -24,6 +25,7 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
+	features      featuremgmt.FeatureToggles
 	accessControl accesscontrol.AccessControl
 	logger        log.Logger
 }
@@ -38,6 +40,7 @@ func RegisterAppInstaller(
 	}
 
 	installer := &AppInstaller{
+		features:      features,
 		accessControl: ac,
 		logger:        log.New("playlist.api"),
 	}
@@ -66,6 +69,21 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if !attr.IsResourceRequest() {
 				return authorizer.DecisionNoOpinion, "", nil
+			}
+
+			if !p.features.IsEnabledGlobally(featuremgmt.FlagPlaylistsRBAC) {
+				// Hotfix: grant None-role users viewer-level access until the toggle is enabled.
+				// All other roles are handled by the default role authorizer.
+				user, err := identity.GetRequester(ctx)
+				if err != nil || user.GetOrgRole() != org.RoleNone {
+					return authorizer.DecisionNoOpinion, "", nil
+				}
+				switch attr.GetVerb() {
+				case "get", "list", "watch":
+					return authorizer.DecisionAllow, "", nil
+				default:
+					return authorizer.DecisionNoOpinion, "", nil
+				}
 			}
 
 			user, err := identity.GetRequester(ctx)

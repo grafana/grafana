@@ -101,7 +101,6 @@ func newPermissionRegistry() *permissionRegistry {
 		"inhibition-rules":    "inhibition-rules:uid:",
 		"secret.securevalues": "secret.securevalues:uid:",
 		"secret.keepers":      "secret.keepers:uid:",
-		"playlists":           "playlists:uid:",
 		"routes":              "routes:uid:",
 	}
 	return &permissionRegistry{

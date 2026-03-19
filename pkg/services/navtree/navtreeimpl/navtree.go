@@ -370,11 +370,11 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	dashboardChildNavs := []*navtree.NavLink{}
 
 	if c.IsSignedIn {
-		// Show Playlists nav if the user has the RBAC playlists:read permission.
-		// If playlists:read is not present (old backend not yet deployed), fall back to
-		// the legacy org-role check so Viewers don't lose the nav item during a
-		// mixed-version rollout.
-		if hasAccess(ac.EvalPermission(playlistregistry.ActionPlaylistsRead)) || c.HasRole(org.RoleViewer) {
+		showPlaylist := c.HasRole(org.RoleViewer)
+		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPlaylistsRBAC) {
+			showPlaylist = hasAccess(ac.EvalPermission(playlistregistry.ActionPlaylistsRead))
+		}
+		if showPlaylist {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 			})
