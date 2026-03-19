@@ -12,14 +12,21 @@ import {
   rangeUtil,
   store,
   TimeRange,
+  toUtc,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { LokiQueryType, LokiQueryDirection } from './dataquery.gen';
 import { LokiDatasource } from './datasource';
-import { splitTimeRange as splitLogsTimeRange, splitTimeRangeAligned as splitLogsTimeRangeAligned } from './logsTimeSplitting';
+import {
+  splitTimeRange as splitLogsTimeRange,
+  splitTimeRangeAligned as splitLogsTimeRangeAligned,
+} from './logsTimeSplitting';
 import { combineResponses } from './mergeResponses';
-import { splitTimeRange as splitMetricTimeRange, splitTimeRangeAligned as splitMetricTimeRangeAligned } from './metricTimeSplitting';
+import {
+  splitTimeRange as splitMetricTimeRange,
+  splitTimeRangeAligned as splitMetricTimeRangeAligned,
+} from './metricTimeSplitting';
 import { addQueryLimitsContext, isLogsQuery, isQueryWithRangeVariable } from './queryUtils';
 import { isRetriableError } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
@@ -44,7 +51,7 @@ export function partitionTimeRange(
     ranges = isLogsQuery
       ? splitLogsTimeRange(start, end, duration)
       : splitMetricTimeRange(start, end, stepMs, duration);
-    }
+  }
 
   return ranges.map(([start, end]) => {
     const from = dateTime(start);

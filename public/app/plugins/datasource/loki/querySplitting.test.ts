@@ -818,8 +818,13 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
         { range: range1d }
       );
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // A, B
-        expect(datasource.runQuery).toHaveBeenCalledTimes(2);
+        if (lokiAlignedQuerySplitting) {
+          // A, B * 2 because of midnight alignment
+          expect(datasource.runQuery).toHaveBeenCalledTimes(4);
+        } else {
+          // A, B
+          expect(datasource.runQuery).toHaveBeenCalledTimes(2);
+        }
       });
     });
 
@@ -832,18 +837,23 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
         { range: range1d }
       );
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // A, B
-        expect(datasource.runQuery).toHaveBeenCalledTimes(2);
+        if (lokiAlignedQuerySplitting) {
+          // A, B * 2 because of midnight alignment
+          expect(datasource.runQuery).toHaveBeenCalledTimes(4);
+        } else {
+          // A, B
+          expect(datasource.runQuery).toHaveBeenCalledTimes(2);
+        }
       });
     });
     test('Groups mixed queries by stepMs', async () => {
       const request = createRequest(
         [
-          { expr: '{a="b"}', refId: 'A', resolution: 3 },
-          { expr: '{a="b"}', refId: 'B', resolution: 5 },
+          { expr: '{a="b"}', refId: 'A' },
+          { expr: '{a="b"}', refId: 'B' },
           { expr: 'count_over_time({a="b"}[1m])', refId: 'C', resolution: 3 },
           { expr: 'count_over_time{a="b"}[1m])', refId: 'D', resolution: 5 },
-          { expr: '{a="b"}', refId: 'E', resolution: 5, queryType: LokiQueryType.Instant },
+          { expr: '{a="b"}', refId: 'E', queryType: LokiQueryType.Instant },
           { expr: 'rate({a="b"}[5m])', refId: 'F', resolution: 5, step: '10' },
           { expr: 'rate({a="b"} | logfmt[5m])', refId: 'G', resolution: 5, step: '10s' },
         ],
@@ -851,7 +861,12 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
       );
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
         // A, B, C, D, E, F+G
-        expect(datasource.runQuery).toHaveBeenCalledTimes(6);
+        if (lokiAlignedQuerySplitting) {
+          expect(datasource.runQuery).toHaveBeenCalledTimes(8);
+        } else {
+          // A+B, G, C, D+F, E
+          expect(datasource.runQuery).toHaveBeenCalledTimes(5);
+        }
       });
     });
     test('Chunked groups mixed queries by stepMs', async () => {
