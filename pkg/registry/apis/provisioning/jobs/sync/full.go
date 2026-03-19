@@ -379,6 +379,11 @@ func applyChanges(
 				if ctx.Err() != nil {
 					break
 				}
+
+				if err := progress.TooManyErrors(); err != nil {
+					return err
+				}
+
 				// Skip if the replacement folder failed to be created.
 				if progress.HasDirPathFailedCreation(old.Path) {
 					skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_renamed_folder_deletion")
@@ -389,7 +394,7 @@ func applyChanges(
 					skipSpan.End()
 					continue
 				}
-				
+
 				resultBuilder := jobs.NewFolderResult(old.Path).
 					WithAction(repository.FileActionDeleted).
 					WithName(old.UID)
