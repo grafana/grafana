@@ -31,6 +31,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -946,3 +947,88 @@ route:
 receivers:
     - name: empty-receiver
 `
+
+func TestPrepareAlerts_GCFingerprintAnnotation(t *testing.T) {
+	t.Run("sets _gc_fingerprint annotation on alerts with nil annotations", func(t *testing.T) {
+		alerts := []amv2.PostableAlert{
+			{
+				Alert: amv2.Alert{
+					Labels: amv2.LabelSet{
+						"alertname": "my-alert",
+						"severity":  "critical",
+					},
+				},
+				Annotations: nil,
+			},
+		}
+
+		sender.PrepareAlerts(alerts)
+
+		require.NotNil(t, alerts[0].Annotations)
+		require.Equal(t,
+			sender.ComputeGCFingerprint(map[string]string{"alertname": "my-alert", "severity": "critical"}),
+			alerts[0].Annotations["_gc_fingerprint"],
+		)
+	})
+
+	t.Run("sets _gc_fingerprint annotation on alerts with existing annotations", func(t *testing.T) {
+		alerts := []amv2.PostableAlert{
+			{
+				Alert: amv2.Alert{
+					Labels: amv2.LabelSet{
+						"alertname": "my-alert",
+						"severity":  "critical",
+					},
+				},
+				Annotations: amv2.LabelSet{
+					"summary": "something broke",
+				},
+			},
+		}
+
+		sender.PrepareAlerts(alerts)
+
+		require.Equal(t, "something broke", alerts[0].Annotations["summary"])
+		require.Equal(t,
+			sender.ComputeGCFingerprint(map[string]string{"alertname": "my-alert", "severity": "critical"}),
+			alerts[0].Annotations["_gc_fingerprint"],
+		)
+	})
+
+	t.Run("_gc_fingerprint excludes private labels and includes monitor_name", func(t *testing.T) {
+		labels := map[string]string{
+			"alertname":                    "my-alert",
+			"severity":                     "critical",
+			"__alert_rule_uid__":           "abc123",
+			"__alert_rule_namespace_uid__": "ns-uid",
+		}
+
+		fp := sender.ComputeGCFingerprint(labels)
+
+		expectedLabels := map[string]string{
+			"alertname":    "my-alert",
+			"severity":     "critical",
+			"monitor_name": "my-alert",
+		}
+		require.Equal(t, sender.ComputeGCFingerprint(expectedLabels), fp)
+	})
+
+	t.Run("_gc_fingerprint does not affect alert label set", func(t *testing.T) {
+		alerts := []amv2.PostableAlert{
+			{
+				Alert: amv2.Alert{
+					Labels: amv2.LabelSet{
+						"alertname": "my-alert",
+						"severity":  "critical",
+					},
+				},
+			},
+		}
+
+		sender.PrepareAlerts(alerts)
+
+		_, hasFingerprint := alerts[0].Labels["_gc_fingerprint"]
+		require.False(t, hasFingerprint, "_gc_fingerprint must not be in labels")
+		require.Len(t, alerts[0].Labels, 2, "label set must be unchanged")
+	})
+}

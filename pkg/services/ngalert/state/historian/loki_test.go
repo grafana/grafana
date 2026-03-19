@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/remote"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -230,7 +230,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 			for k, v := range originalLabels {
 				webhookLabels[k] = v
 			}
-			gcFingerprint := remote.ComputeGCFingerprint(webhookLabels)
+			gcFingerprint := sender.ComputeGCFingerprint(webhookLabels)
 
 			require.Equal(t, gcFingerprint, stateFingerprint,
 				"_gc_fingerprint sent via webhook must match the state history fingerprint")
