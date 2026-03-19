@@ -12,6 +12,8 @@ import {
 } from '@grafana/scenes';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
+import { getDashboardSceneFor } from '../utils/utils';
+
 import { DashboardControls, DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
 
@@ -165,6 +167,24 @@ describe('DashboardControls', () => {
       expect(renderer.getByText('Mocked Component')).toBeInTheDocument();
 
       jest.restoreAllMocks();
+    });
+
+    it('should show loading skeleton when default controls are loading', () => {
+      const scene = buildTestScene();
+      const dashboard = getDashboard(scene);
+      dashboard.setState({ defaultVariablesLoading: true });
+
+      const { container } = render(<scene.Component model={scene} />);
+      expect(container.querySelector('.react-loading-skeleton')).toBeInTheDocument();
+    });
+
+    it('should not show loading skeleton when default controls are done loading', () => {
+      const scene = buildTestScene();
+      const dashboard = getDashboard(scene);
+      dashboard.setState({ defaultVariablesLoading: false, defaultLinksLoading: false });
+
+      const { container } = render(<scene.Component model={scene} />);
+      expect(container.querySelector('.react-loading-skeleton')).not.toBeInTheDocument();
     });
 
     describe('drilldown wrapper hidden variables', () => {
@@ -377,6 +397,10 @@ function buildTestSceneWithEditable(options: {
   dashboard.activate();
 
   return dashboard.state.controls as DashboardControls;
+}
+
+function getDashboard(controls: DashboardControls): DashboardScene {
+  return getDashboardSceneFor(controls);
 }
 
 function buildTestScene(state?: Partial<DashboardControlsState>): DashboardControls {

@@ -35,22 +35,6 @@ describe('DashboardLinksControls', () => {
     expect(links[1]).toHaveTextContent('Link 2');
   });
 
-  it('shows skeleton when defaultLinksLoading is true', () => {
-    const { controls, dashboard } = buildTestScene();
-    dashboard.setState({ defaultLinksLoading: true });
-
-    const { container } = render(<controls.Component model={controls} />);
-    expect(container.querySelector('.react-loading-skeleton')).toBeInTheDocument();
-  });
-
-  it('does not show skeleton when defaultLinksLoading is false', () => {
-    const { controls, dashboard } = buildTestScene();
-    dashboard.setState({ defaultLinksLoading: false });
-
-    const { container } = render(<controls.Component model={controls} />);
-    expect(container.querySelector('.react-loading-skeleton')).not.toBeInTheDocument();
-  });
-
   it('updates link hrefs when time range changes', () => {
     const { controls, dashboard } = buildTestScene();
     render(<controls.Component model={controls} />);
