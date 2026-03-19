@@ -107,6 +107,20 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
               />
             </Field>
           )}
+          {config.featureToggles.dashboardNewLayouts && (
+            <Field noMargin>
+              <Checkbox
+                label={t('playlist.start-modal.label-playlist-nav', 'Navigation buttons')}
+                description={t(
+                  'playlist.start-modal.description-playlist-nav',
+                  'Show previous and next buttons to manually navigate between dashboards'
+                )}
+                name="displayPlaylistNav"
+                value={displayPlaylistNav}
+                onChange={(e) => setDisplayPlaylistNav(e.currentTarget.checked)}
+              />
+            </Field>
+          )}
           {config.featureToggles.dashboardScene && (
             <Field
               noMargin
@@ -136,14 +150,6 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
                     value={displayLinks}
                     onChange={(e) => setDisplayLinks(e.currentTarget.checked)}
                   />
-                  {config.featureToggles.dashboardNewLayouts && (
-                    <Checkbox
-                      label={t('playlist.start-modal.label-playlist-nav', 'Playlist navigation buttons')}
-                      name="displayPlaylistNav"
-                      value={displayPlaylistNav}
-                      onChange={(e) => setDisplayPlaylistNav(e.currentTarget.checked)}
-                    />
-                  )}
                 </Stack>
               </Box>
             </Field>
