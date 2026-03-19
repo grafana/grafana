@@ -177,6 +177,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T)
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-in-001": {Title: "Dashboard One", SourcePath: "dashboard1.json"},
 	})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{})
 
 	require.NoError(t, local.CreateDirPath("team-a"))
 	_, err := local.Git("mv", "dashboard1.json", "team-a/dashboard1.json")
@@ -212,6 +213,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-btwn-001": {Title: "Dashboard Between", SourcePath: "folder-a/dashboard1.json"},
 	})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"folder-a"})
 
 	_, err := local.Git("mv", "folder-a/dashboard1.json", "folder-b/dashboard1.json")
 	require.NoError(t, err)
@@ -245,6 +247,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-root-001": {Title: "Dashboard Root", SourcePath: "team-x/dashboard1.json"},
 	})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"team-x"})
 
 	_, err := local.Git("mv", "team-x/dashboard1.json", "dashboard1.json")
 	require.NoError(t, err)
@@ -257,6 +260,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-root-001": {Title: "Dashboard Root", SourcePath: "dashboard1.json"},
 	})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{})
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_RenameFolder verifies that
@@ -316,6 +320,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child-a/dashboard1.json"},
 	})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/child-a"})
 
 	_, err := local.Git("mv", "parent/child-a/dashboard1.json", "parent/child-b/dashboard1.json")
 	require.NoError(t, err)
@@ -351,6 +356,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 		"ren-nest-001": {Title: "Nested Rename Dash", SourcePath: "parent/old-child/dashboard1.json"},
 		"ren-nest-002": {Title: "Sibling Dash", SourcePath: "parent/sibling/dashboard2.json"},
 	})
+	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/old-child", "parent/sibling"})
 
 	_, err := local.Git("mv", "parent/old-child", "parent/new-child")
 	require.NoError(t, err)
