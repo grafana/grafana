@@ -568,6 +568,84 @@ func TestSortResourceListForDeletion(t *testing.T) {
 	}
 }
 
+func TestSortResourceListForRelease(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    provisioning.ResourceList
+		expected provisioning.ResourceList
+	}{
+		{
+			name: "Folders first (shallowest to deepest), then non-folder items",
+			input: provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{Group: "dashboard.grafana.app", Path: "dashboard1.json"},
+					{Group: "folder.grafana.app", Path: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder1/subfolder1/subfolder2", Folder: "subfolder1"},
+					{Group: "dashboard.grafana.app", Path: "dashboard2.json"},
+					{Group: "folder.grafana.app", Path: "folder2"},
+					{Group: "folder.grafana.app", Path: "folder1/subfolder1", Folder: "folder1"},
+				},
+			},
+			expected: provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{Group: "folder.grafana.app", Path: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder2"},
+					{Group: "folder.grafana.app", Path: "folder1/subfolder1", Folder: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder1/subfolder1/subfolder2", Folder: "subfolder1"},
+					{Group: "dashboard.grafana.app", Path: "dashboard1.json"},
+					{Group: "dashboard.grafana.app", Path: "dashboard2.json"},
+				},
+			},
+		},
+		{
+			name: "Root folders come before nested folders",
+			input: provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{Group: "folder.grafana.app", Path: "folder2/subfolder1", Folder: "folder2"},
+					{Group: "folder.grafana.app", Path: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder2", Folder: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder3", Folder: "folder1"},
+				},
+			},
+			expected: provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{Group: "folder.grafana.app", Path: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder2", Folder: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder3", Folder: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder2/subfolder1", Folder: "folder2"},
+				},
+			},
+		},
+		{
+			name: "Only non-folder items preserves relative order",
+			input: provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{Group: "dashboard.grafana.app", Path: "b.json"},
+					{Group: "dashboard.grafana.app", Path: "a.json"},
+				},
+			},
+			expected: provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{Group: "dashboard.grafana.app", Path: "b.json"},
+					{Group: "dashboard.grafana.app", Path: "a.json"},
+				},
+			},
+		},
+		{
+			name:     "Empty list",
+			input:    provisioning.ResourceList{Items: []provisioning.ResourceListItem{}},
+			expected: provisioning.ResourceList{Items: []provisioning.ResourceListItem{}},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sortResourceListForRelease(&tc.input)
+			assert.Equal(t, tc.expected, tc.input)
+		})
+	}
+}
+
 func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 	testCases := []struct {
 		name                string
