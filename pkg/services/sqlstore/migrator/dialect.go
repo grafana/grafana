@@ -125,6 +125,13 @@ var supportedDialects = map[string]dialectFunc{
 	Postgres + "WithHooks": NewPostgresDialect,
 }
 
+func RegisterDialect(driverName string, f dialectFunc) {
+	if _, has := supportedDialects[driverName]; has {
+		panic(fmt.Errorf("dialect %q already registered", driverName))
+	}
+	supportedDialects[driverName] = f
+}
+
 func NewDialect(driverName string) Dialect {
 	if fn, exist := supportedDialects[driverName]; exist {
 		return fn()
