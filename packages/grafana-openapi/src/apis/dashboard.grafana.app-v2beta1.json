@@ -1088,6 +1088,9 @@
           "description": {
             "type": "string"
           },
+          "docsUrl": {
+            "type": "string"
+          },
           "filters": {
             "type": "array",
             "items": {
@@ -1522,6 +1525,9 @@
           "description": {
             "type": "string"
           },
+          "docsUrl": {
+            "type": "string"
+          },
           "hide": {
             "type": "string",
             "default": ""
@@ -1620,6 +1626,9 @@
             ]
           },
           "description": {
+            "type": "string"
+          },
+          "docsUrl": {
             "type": "string"
           },
           "hide": {
@@ -1905,6 +1914,9 @@
             ]
           },
           "description": {
+            "type": "string"
+          },
+          "docsUrl": {
             "type": "string"
           },
           "hide": {
@@ -2358,6 +2370,9 @@
           "description": {
             "type": "string"
           },
+          "docsUrl": {
+            "type": "string"
+          },
           "hide": {
             "type": "string",
             "default": ""
@@ -2492,6 +2507,9 @@
             ]
           },
           "description": {
+            "type": "string"
+          },
+          "docsUrl": {
             "type": "string"
           },
           "hide": {
@@ -2966,6 +2984,9 @@
           "description": {
             "type": "string"
           },
+          "docsUrl": {
+            "type": "string"
+          },
           "hide": {
             "type": "string",
             "default": ""
@@ -3402,6 +3423,9 @@
             "type": "string",
             "default": ""
           },
+          "docsUrl": {
+            "type": "string"
+          },
           "enabledValue": {
             "type": "string",
             "default": ""
@@ -3550,6 +3574,9 @@
             ]
           },
           "description": {
+            "type": "string"
+          },
+          "docsUrl": {
             "type": "string"
           },
           "hide": {
