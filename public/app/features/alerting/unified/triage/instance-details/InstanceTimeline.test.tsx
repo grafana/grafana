@@ -375,4 +375,62 @@ describe('InstanceTimeline component', () => {
 
     expect(screen.getByText('Delivered')).toBeInTheDocument();
   });
+
+  it('shows error message in expanded notification row when delivery failed', async () => {
+    const user = userEvent.setup();
+    const records = [makeRecord(1000, 'Normal', 'Alerting')];
+    const notifications = [
+      makeNotification({
+        timestamp: '1970-01-01T00:00:01.500Z',
+        outcome: 'error',
+        error: 'connection timeout',
+      }),
+    ];
+
+    render(<InstanceTimeline records={records} notifications={notifications} filter="all" />);
+
+    const summaryButton = screen.getByRole('button', { name: /toggle notification details/i });
+    await user.click(summaryButton);
+
+    expect(screen.getByText('connection timeout')).toBeInTheDocument();
+  });
+
+  it('shows fallback text when failed notification has no error message', async () => {
+    const user = userEvent.setup();
+    const records = [makeRecord(1000, 'Normal', 'Alerting')];
+    const notifications = [
+      makeNotification({
+        timestamp: '1970-01-01T00:00:01.500Z',
+        outcome: 'error',
+      }),
+    ];
+
+    render(<InstanceTimeline records={records} notifications={notifications} filter="all" />);
+
+    const summaryButton = screen.getByRole('button', { name: /toggle notification details/i });
+    await user.click(summaryButton);
+
+    expect(screen.getByText('Failed')).toBeInTheDocument();
+  });
+
+  it('shows receiver count when notifications target multiple contact points', () => {
+    const records = [makeRecord(1000, 'Normal', 'Alerting')];
+    const notifications = [
+      makeNotification({ timestamp: '1970-01-01T00:00:01.500Z', receiver: 'slack-receiver' }),
+      makeNotification({ timestamp: '1970-01-01T00:00:01.600Z', receiver: 'email-receiver' }),
+    ];
+
+    render(<InstanceTimeline records={records} notifications={notifications} filter="all" />);
+
+    expect(screen.getByText('2 uniqueReceivers')).toBeInTheDocument();
+  });
+
+  it('renders Pending state transitions', () => {
+    const records = [makeRecord(1000, 'Normal', 'Pending')];
+
+    render(<InstanceTimeline records={records} notifications={[]} filter="all" />);
+
+    expect(screen.getByText('Normal')).toBeInTheDocument();
+    expect(screen.getByText('Pending')).toBeInTheDocument();
+  });
 });
