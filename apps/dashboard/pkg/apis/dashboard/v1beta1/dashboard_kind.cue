@@ -199,6 +199,8 @@ lineage: schemas: [{
 			skipUrlSync?: bool | *false
 			// Description of variable. It can be defined but `null`.
 			description?: string
+			// Optional documentation URL opened from the variable info icon.
+			docsUrl?: string
 			// Query used to fetch values for a variable
 			query?: string | {...}
 			// Data source used to fetch values for a variable. It can be defined but `null`.

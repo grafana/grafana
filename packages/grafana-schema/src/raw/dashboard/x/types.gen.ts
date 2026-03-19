@@ -151,6 +151,10 @@ export interface VariableModel {
    */
   description?: string;
   /**
+   * Optional documentation URL opened from the variable info icon.
+   */
+  docsUrl?: string;
+  /**
    * Visibility configuration for the variable
    */
   hide?: VariableHide;

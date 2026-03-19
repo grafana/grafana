@@ -645,6 +645,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref common.Ref
 							Format: "",
 						},
 					},
+					"docsUrl": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"allowCustomValue": {
 						SchemaProps: spec.SchemaProps{
 							Default: false,
@@ -1405,6 +1411,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardConstantVariableSpec(ref common.
 							Format: "",
 						},
 					},
+					"docsUrl": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
@@ -1572,6 +1584,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardCustomVariableSpec(ref common.Re
 						},
 					},
 					"description": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"docsUrl": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -2027,6 +2045,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDatasourceVariableSpec(ref commo
 						},
 					},
 					"description": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"docsUrl": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -2763,6 +2787,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableSpec(ref common.R
 							Format: "",
 						},
 					},
+					"docsUrl": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
@@ -2978,6 +3008,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardIntervalVariableSpec(ref common.
 						},
 					},
 					"description": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"docsUrl": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -3680,6 +3716,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryVariableSpec(ref common.Ref
 						},
 					},
 					"description": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"docsUrl": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -4411,6 +4453,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSwitchVariableSpec(ref common.Re
 							Format: "",
 						},
 					},
+					"docsUrl": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),
@@ -4661,6 +4709,12 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTextVariableSpec(ref common.Refe
 						},
 					},
 					"description": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"docsUrl": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",

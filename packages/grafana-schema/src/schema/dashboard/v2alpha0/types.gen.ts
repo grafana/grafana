@@ -267,6 +267,7 @@ export interface QueryOptionsSpec {
 	interval?: string;
 	cacheTimeout?: string;
 	hideTimeOverride?: boolean;
+	timeCompare?: string;
 }
 
 export const defaultQueryOptionsSpec = (): QueryOptionsSpec => ({
@@ -327,7 +328,7 @@ export interface FieldConfig {
 	description?: string;
 	// An explicit path to the field in the datasource.  When the frame meta includes a path,
 	// This will default to `${frame.meta.path}/${field.name}
-	//
+	// 
 	// When defined, this value can be used as an identifier within the datasource scope, and
 	// may be used to update the results
 	path?: string;
@@ -336,7 +337,7 @@ export interface FieldConfig {
 	// True if data source field supports ad-hoc filters
 	filterable?: boolean;
 	// Unit a field should use. The unit you select is applied to all fields except time.
-	// You can use the units ID availables in Grafana or a custom unit.
+	// You can use the units ID available in Grafana or a custom unit.
 	// Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts
 	// As custom unit, you can use the following formats:
 	// `suffix:<suffix>` for custom unit that should go after value.
@@ -760,7 +761,7 @@ export const defaultConditionalRenderingVariableKind = (): ConditionalRenderingV
 
 export interface ConditionalRenderingVariableSpec {
 	variable: string;
-	operator: "equals" | "notEquals";
+	operator: "equals" | "notEquals" | "matches" | "notMatches";
 	value: string;
 }
 
@@ -1044,6 +1045,7 @@ export interface QueryVariableSpec {
 	refresh: VariableRefresh;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 	datasource?: DataSourceRef;
 	query: DataQueryKind;
 	regex: string;
@@ -1078,6 +1080,8 @@ export interface VariableOption {
 	text: string | string[];
 	// Value of the option
 	value: string | string[];
+	// Additional properties for multi-props variables
+	properties?: Record<string, string>;
 }
 
 export const defaultVariableOption = (): VariableOption => ({
@@ -1135,6 +1139,7 @@ export interface TextVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 }
 
 export const defaultTextVariableSpec = (): TextVariableSpec => ({
@@ -1165,6 +1170,7 @@ export interface ConstantVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 }
 
 export const defaultConstantVariableSpec = (): ConstantVariableSpec => ({
@@ -1201,6 +1207,7 @@ export interface DatasourceVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 }
 
 export const defaultDatasourceVariableSpec = (): DatasourceVariableSpec => ({
@@ -1241,6 +1248,7 @@ export interface IntervalVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 }
 
 export const defaultIntervalVariableSpec = (): IntervalVariableSpec => ({
@@ -1280,6 +1288,7 @@ export interface CustomVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 }
 
 export const defaultCustomVariableSpec = (): CustomVariableSpec => ({
@@ -1307,6 +1316,7 @@ export const defaultGroupByVariableKind = (): GroupByVariableKind => ({
 // GroupBy variable specification
 export interface GroupByVariableSpec {
 	name: string;
+	defaultValue?: VariableOption;
 	datasource?: DataSourceRef;
 	current: VariableOption;
 	options: VariableOption[];
@@ -1315,6 +1325,7 @@ export interface GroupByVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 }
 
 export const defaultGroupByVariableSpec = (): GroupByVariableSpec => ({
@@ -1348,6 +1359,7 @@ export interface AdhocVariableSpec {
 	hide: VariableHide;
 	skipUrlSync: boolean;
 	description?: string;
+	docsUrl?: string;
 }
 
 export const defaultAdhocVariableSpec = (): AdhocVariableSpec => ({

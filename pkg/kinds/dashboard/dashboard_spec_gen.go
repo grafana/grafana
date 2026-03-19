@@ -847,6 +847,8 @@ type VariableModel struct {
 	SkipUrlSync *bool `json:"skipUrlSync,omitempty"`
 	// Description of variable. It can be defined but `null`.
 	Description *string `json:"description,omitempty"`
+	// Optional documentation URL opened from the variable info icon.
+	DocsUrl *string `json:"docsUrl,omitempty"`
 	// Query used to fetch values for a variable
 	Query *StringOrMap `json:"query,omitempty"`
 	// Data source used to fetch values for a variable. It can be defined but `null`.

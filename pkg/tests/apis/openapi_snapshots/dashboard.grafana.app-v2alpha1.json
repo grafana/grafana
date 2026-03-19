@@ -1166,6 +1166,9 @@
           "description": {
             "type": "string"
           },
+          "docsUrl": {
+            "type": "string"
+          },
           "enableGroupBy": {
             "description": "Whether the group-by operator is enabled in the ad hoc filter combobox.",
             "type": "boolean"
@@ -1653,6 +1656,9 @@
           "description": {
             "type": "string"
           },
+          "docsUrl": {
+            "type": "string"
+          },
           "hide": {
             "type": "string",
             "default": ""
@@ -1753,6 +1759,9 @@
             ]
           },
           "description": {
+            "type": "string"
+          },
+          "docsUrl": {
             "type": "string"
           },
           "hide": {
@@ -2014,6 +2023,9 @@
             ]
           },
           "description": {
+            "type": "string"
+          },
+          "docsUrl": {
             "type": "string"
           },
           "hide": {
@@ -2490,6 +2502,9 @@
           "description": {
             "type": "string"
           },
+          "docsUrl": {
+            "type": "string"
+          },
           "hide": {
             "type": "string",
             "default": ""
@@ -2628,6 +2643,9 @@
             ]
           },
           "description": {
+            "type": "string"
+          },
+          "docsUrl": {
             "type": "string"
           },
           "hide": {
@@ -3146,6 +3164,9 @@
           "description": {
             "type": "string"
           },
+          "docsUrl": {
+            "type": "string"
+          },
           "hide": {
             "type": "string",
             "default": ""
@@ -3609,6 +3630,9 @@
             "type": "string",
             "default": ""
           },
+          "docsUrl": {
+            "type": "string"
+          },
           "enabledValue": {
             "type": "string",
             "default": ""
@@ -3770,6 +3794,9 @@
             ]
           },
           "description": {
+            "type": "string"
+          },
+          "docsUrl": {
             "type": "string"
           },
           "hide": {
