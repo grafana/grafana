@@ -138,7 +138,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   const cursorsEnabled = Boolean(config.featureToggles.dashboardCursorSync);
 
-  if (collabMode === 'full' && uid && model.isActive) {
+  if (collabMode === 'full' && uid) {
     return (
       <CollabProvider scene={model} dashboardUID={uid} namespace="default">
         {cursorsEnabled && <CollabCursorOverlay />}
@@ -147,7 +147,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     );
   }
 
-  if (collabMode === 'cursor-only' && uid && model.isActive) {
+  if (collabMode === 'cursor-only' && uid) {
     return (
       <CursorOnlyProvider dashboardUID={uid} namespace="default">
         <CollabCursorOverlay />

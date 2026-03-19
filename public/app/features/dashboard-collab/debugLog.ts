@@ -6,7 +6,7 @@
  *   localStorage.setItem('grafana.debug.dashboardCollab', 'false')
  */
 
-import { store } from '@grafana/data';
+import store from 'app/core/store';
 
 export function createDebugLog(key: string, prefix: string) {
   const storageKey = `grafana.debug.${key}`;
