@@ -618,14 +618,14 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		{Namespace: "resource-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}: lastImportTime,
 	}
 
-	support.findIndexesToRebuild(importTimes, nil, now)
+	support.findIndexesToRebuild(importTimes, nil, now, false)
 	require.Equal(t, 7, support.rebuildQueue.Len())
 
 	now5m := now.Add(5 * time.Minute)
 
 	// Running findIndexesToRebuild again should not add any new indexes to the rebuild queue, and all existing
 	// ones should be "combined" with new ones (this will "bump" minBuildTime)
-	support.findIndexesToRebuild(importTimes, nil, now5m)
+	support.findIndexesToRebuild(importTimes, nil, now5m, false)
 	require.Equal(t, 7, support.rebuildQueue.Len())
 
 	// Values that we expect to find in rebuild requests.
@@ -1006,4 +1006,91 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 		require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
 		require.Equal(t, "offset cannot be negative", rsp.Error.Message)
 	})
+}
+
+func TestJitterForKey(t *testing.T) {
+	maxAge := 24 * time.Hour
+
+	t.Run("deterministic", func(t *testing.T) {
+		key := NamespacedResource{Namespace: "ns1", Group: "g1", Resource: "r1"}
+		j1 := jitterForKey(key, maxAge)
+		j2 := jitterForKey(key, maxAge)
+		require.Equal(t, j1, j2)
+	})
+
+	t.Run("zero maxAge returns zero", func(t *testing.T) {
+		key := NamespacedResource{Namespace: "ns1", Group: "g1", Resource: "r1"}
+		require.Equal(t, time.Duration(0), jitterForKey(key, 0))
+	})
+
+	t.Run("bounded to maxAge/5", func(t *testing.T) {
+		for i := 0; i < 100; i++ {
+			key := NamespacedResource{Namespace: fmt.Sprintf("ns%d", i), Group: "g", Resource: "r"}
+			j := jitterForKey(key, maxAge)
+			require.GreaterOrEqual(t, j, time.Duration(0))
+			require.Less(t, j, maxAge/5)
+		}
+	})
+
+	t.Run("different keys produce different values", func(t *testing.T) {
+		k1 := NamespacedResource{Namespace: "ns1", Group: "g", Resource: "r"}
+		k2 := NamespacedResource{Namespace: "ns2", Group: "g", Resource: "r"}
+		// Technically could collide, but FNV-1a on different short strings won't.
+		require.NotEqual(t, jitterForKey(k1, maxAge), jitterForKey(k2, maxAge))
+	})
+}
+
+func TestFindIndexesToRebuildWithJitter(t *testing.T) {
+	storage := &mockStorageBackend{}
+
+	now := time.Now()
+	maxAge := 5 * time.Hour
+
+	// Create indexes that are all barely past maxAge (built 5h1m ago).
+	// Without jitter, all should be queued. With jitter, some will have
+	// their minBuildTime pushed back enough that they won't be queued.
+	numIndexes := 20
+	openIndexes := make([]NamespacedResource, numIndexes)
+	cache := make(map[NamespacedResource]ResourceIndex, numIndexes)
+	for i := 0; i < numIndexes; i++ {
+		key := NamespacedResource{Namespace: fmt.Sprintf("ns%d", i), Group: "group", Resource: "folder"}
+		openIndexes[i] = key
+		cache[key] = &MockResourceIndex{
+			buildInfo: IndexBuildInfo{
+				BuildTime:    now.Add(-(maxAge + 30*time.Minute)),
+				BuildVersion: semver.MustParse("6.0.0"),
+			},
+		}
+	}
+
+	search := &mockSearchBackend{openIndexes: openIndexes, cache: cache}
+	supplier := &TestDocumentBuilderSupplier{
+		GroupsResources: map[string]string{"group": "resource"},
+	}
+
+	opts := SearchOptions{
+		Backend:         search,
+		Resources:       supplier,
+		MaxIndexAge:     maxAge,
+		MinBuildVersion: semver.MustParse("5.0.0"),
+	}
+
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	importTimes := map[NamespacedResource]time.Time{}
+
+	// Without jitter: all indexes are stale and should be queued.
+	chsNoJitter := support.findIndexesToRebuild(importTimes, nil, now, false)
+	require.Equal(t, numIndexes, len(chsNoJitter))
+
+	// Create a second server with the same config to get a fresh rebuild queue.
+	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	// With jitter: some indexes get extra tolerance, so fewer should be queued.
+	chsWithJitter := support2.findIndexesToRebuild(importTimes, nil, now, true)
+	require.Less(t, len(chsWithJitter), numIndexes, "jitter should cause some indexes to not be queued yet")
+	require.Greater(t, len(chsWithJitter), 0, "at least some indexes should still be queued")
 }

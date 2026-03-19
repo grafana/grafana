@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -34,12 +35,37 @@ type MissingFolderMetadata struct {
 }
 
 func (e *MissingFolderMetadata) Error() string {
-	return fmt.Sprintf("folder %q is missing folder metadata file", e.Path)
+	return fmt.Sprintf("folder %q is missing folder metadata file - folder UID will be auto-generated and may change on next sync.", e.Path)
 }
 
 // Unwrap supports errors.Is(err, ErrMissingFolderMetadata).
 func (e *MissingFolderMetadata) Unwrap() error {
 	return ErrMissingFolderMetadata
+}
+
+// NewMissingFolderMetadata creates a MissingFolderMetadata error for the given folder path.
+func NewMissingFolderMetadata(path string) *MissingFolderMetadata {
+	return &MissingFolderMetadata{Path: path}
+}
+
+// ErrFolderMetadataConflict is a sentinel error for folder metadata conflicts.
+var ErrFolderMetadataConflict = errors.New("folder metadata conflict")
+
+// FolderMetadataConflict is returned when the folder metadata in the repository
+// conflicts with the folder state in Grafana (e.g., ID mismatch, user deleted
+// or changed the folder ID).
+type FolderMetadataConflict struct {
+	Path   string
+	Reason string
+}
+
+func (e *FolderMetadataConflict) Error() string {
+	return fmt.Sprintf("folder metadata conflict at %q: %s", e.Path, e.Reason)
+}
+
+// Unwrap supports errors.Is(err, ErrFolderMetadataConflict).
+func (e *FolderMetadataConflict) Unwrap() error {
+	return ErrFolderMetadataConflict
 }
 
 // FindFoldersMissingMetadata returns folder paths from source that do not have
@@ -102,21 +128,21 @@ func marshalFolderManifest(folder *folders.Folder) ([]byte, error) {
 	return data, nil
 }
 
-// ReadFolderMetadata reads _folder.json from folderPath and returns the Folder resource.
-func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath, ref string) (*folders.Folder, error) {
+// ReadFolderMetadata reads _folder.json from folderPath and returns the Folder resource and its file hash.
+func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath, ref string) (*folders.Folder, string, error) {
 	metadataPath := safepath.Join(folderPath, folderMetadataFileName)
 	info, err := repo.Read(ctx, metadataPath, ref)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	var f folders.Folder
 	if err := json.Unmarshal(info.Data, &f); err != nil {
-		return nil, fmt.Errorf("parse folder manifest: %w", err)
+		return nil, "", fmt.Errorf("parse folder manifest: %w", err)
 	}
-	return &f, nil
+	return &f, info.Hash, nil
 }
 
-// WriteFolderMetadata writes _folder.json into folderPath and returns the stable UID.
+// WriteFolderMetadata creates _folder.json into folderPath and returns the stable UID.
 func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, folderPath string, folder *folders.Folder, ref, message string) (string, error) {
 	data, err := marshalFolderManifest(folder)
 	if err != nil {
@@ -134,19 +160,37 @@ func WriteFolderMetadata(ctx context.Context, repo repository.ReaderWriter, fold
 // If metadata file doesn't exist or metadata is disabled, it falls back to the hash-based ID.
 // Returns an error if reading the metadata file fails for reasons other than not existing.
 func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (string, error) {
-	if folderMetadataEnabled {
-		meta, err := ReadFolderMetadata(ctx, reader, path, ref)
-		if err != nil {
-			// Only fall back to hash-based ID if the file doesn't exist
-			if !errors.Is(err, repository.ErrFileNotFound) {
-				return "", fmt.Errorf("read folder metadata: %w", err)
-			}
-			// File doesn't exist - fall back to hash-based ID
-		} else if meta.Name != "" {
-			return meta.Name, nil
-		}
+	folder, err := ParseFolderWithMetadata(ctx, reader, path, ref, folderMetadataEnabled)
+	if err != nil {
+		return "", err
 	}
-	return ParseFolder(path, reader.Config().Name).ID, nil
+	return folder.ID, nil
+}
+
+// ParseFolderWithMetadata parses a Folder at the given path and applies stable UID, title, and checksum from folder metadata if it exists.
+// In case folderMetadataEnabled is false, it returns the parsed folder without applying metadata.
+func ParseFolderWithMetadata(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (Folder, error) {
+	f := ParseFolder(path, reader.Config().Name)
+	if !folderMetadataEnabled {
+		return f, nil
+	}
+
+	meta, hash, err := ReadFolderMetadata(ctx, reader, path, ref)
+	if err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+			return f, nil
+		}
+		return Folder{}, fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
+	}
+
+	if meta.Name != "" {
+		f.ID = meta.Name
+	}
+	if meta.Spec.Title != "" {
+		f.Title = meta.Spec.Title
+	}
+	f.MetadataHash = hash
+	return f, nil
 }
 
 // ParseFolderResource constructs a ParsedResource for a folder at the given path.
@@ -158,19 +202,21 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 	var (
 		folderObj    *folders.Folder
 		folderID     string
+		folderTitle  string
 		err          error
 		folderExists bool
 	)
 
 	if folderMetadataEnabled {
-		folderObj, err = ReadFolderMetadata(ctx, reader, path, ref)
+		folderObj, _, err = ReadFolderMetadata(ctx, reader, path, ref)
 		if err != nil && !errors.Is(err, repository.ErrFileNotFound) {
 			return nil, fmt.Errorf("read folder metadata: %w", err)
 		}
 
-		// If metadata was found, use its stable UID and mark folder as existing
+		// If metadata was found, use its stable UID and title and mark folder as existing
 		if folderObj != nil && folderObj.Name != "" {
 			folderID = folderObj.Name
+			folderTitle = folderObj.Spec.Title
 			folderExists = true
 		}
 	}
@@ -193,15 +239,15 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 	if folderID == "" {
 		folderID = ParseFolder(path, config.Name).ID
 	}
-
-	// Determine the folder title from the path (last part of the path)
-	folderTitle := safepath.Base(path)
+	// If no metadata exists or metadata is disabled, use the path-based title
+	if folderTitle == "" {
+		folderTitle = safepath.Base(path)
+	}
 
 	// If no metadata object exists, create a minimal folder object
 	if folderObj == nil {
 		folderObj = NewFolderManifest(folderID, folderTitle)
-	} else {
-		// Update the title to match the path, even if metadata exists
+	} else if folderObj.Spec.Title == "" {
 		folderObj.Spec.Title = folderTitle
 	}
 
