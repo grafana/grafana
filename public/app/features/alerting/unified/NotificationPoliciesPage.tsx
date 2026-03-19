@@ -250,7 +250,7 @@ function PolicyTreeTab() {
     });
     setManualDefaultExpanded(!isAllExpanded);
     clear();
-  }, [isAllExpanded, clear, visiblePolicies.length]);
+  }, [isAllExpanded, clear, visiblePolicies]);
 
   // Single-tree mode: show filters but no collapse/expand or create button
   if (!useMultiplePolicies) {
