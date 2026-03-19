@@ -1398,6 +1398,17 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardAutoGridLayoutKindOrGridLayoutKind": {
+        "type": "object",
+        "properties": {
+          "AutoGridLayoutKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardAutoGridLayoutKind"
+          },
+          "GridLayoutKind": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardGridLayoutKind"
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardAutoGridLayoutSpec": {
         "type": "object",
         "required": [
@@ -1900,6 +1911,20 @@
           "url": {
             "description": "Link URL. Only required/valid if the type is link",
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardPreferences": {
+        "description": "Dashboard specific preferences (applied per dashboard = all users using the dashboard)",
+        "type": "object",
+        "properties": {
+          "defaultLayoutTemplate": {
+            "description": "default layout template to be used when new containers are created",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardAutoGridLayoutKindOrGridLayoutKind"
+              }
+            ]
           }
         }
       },
@@ -3491,6 +3516,7 @@
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardSpec": {
         "type": "object",
         "required": [
+          "preferences",
           "annotations",
           "cursorSync",
           "elements",
@@ -3551,6 +3577,14 @@
           "liveNow": {
             "description": "When set to true, the dashboard will redraw panels at an interval matching the pixel width. This will keep data \"moving left\" regardless of the query refresh rate. This setting helps avoid dashboards presenting stale live data.",
             "type": "boolean"
+          },
+          "preferences": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDashboardPreferences"
+              }
+            ]
           },
           "preload": {
             "description": "When set to true, the dashboard will load all panels in the dashboard when it's loaded.",
