@@ -21,7 +21,6 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
-  const styles = useStyles2(getStyles);
 
   const visibleVariables = variables.filter(
     (v: SceneVariable) =>

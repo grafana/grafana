@@ -228,8 +228,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           </>
         )}
         {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
-        <DefaultControlsLoadingSkeleton dashboard={dashboard} />
         {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
+        <DefaultControlsLoadingSkeleton dashboard={dashboard} />
         {editPanel && <PanelEditControls panelEditor={editPanel} />}
         {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
       </div>
@@ -270,8 +270,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         </>
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
-      <DefaultControlsLoadingSkeleton dashboard={dashboard} />
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
+      <DefaultControlsLoadingSkeleton dashboard={dashboard} />
       {editPanel && <PanelEditControls panelEditor={editPanel} />}
       {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
     </div>
@@ -337,13 +337,14 @@ function DefaultControlsLoadingSkeleton({ dashboard }: { dashboard: DashboardSce
     return null;
   }
 
-  return <Skeleton width={120} height={32} containerClassName={styles.skeletonContainer} />;
+  return <Skeleton width={60} height={32} containerClassName={styles.skeletonContainer} />;
 }
 
 const getSkeletonStyles = (theme: GrafanaTheme2) => ({
   skeletonContainer: css({
     display: 'inline-flex',
     lineHeight: 1,
+    verticalAlign: 'middle',
     marginBottom: theme.spacing(1),
     marginRight: theme.spacing(1),
   }),

@@ -1862,6 +1862,101 @@ describe('DashboardScene', () => {
       expect(scene.state.links.length).toBe(existingLinkCount + 2);
     });
   });
+
+  describe('clearDefaultControls', () => {
+    it('should remove only origin-bearing variables and links', () => {
+      const scene = buildTestScene();
+
+      // Add default variables (with origin)
+      scene.addDefaultVariables([
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'dsVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[]);
+
+      // Add default links (with origin)
+      scene.addDefaultLinks([
+        {
+          title: 'DS Link',
+          url: 'http://example.com',
+          type: 'link' as const,
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource' as const, group: 'prometheus' },
+        },
+      ]);
+
+      const userDefinedVarCount = sceneGraph.getVariables(scene).state.variables.filter((v) => !v.state.origin).length;
+      const userDefinedLinkCount = scene.state.links.filter((l) => !l.origin).length;
+
+      scene.clearDefaultControls();
+
+      const remainingVars = sceneGraph.getVariables(scene).state.variables;
+      const remainingLinks = scene.state.links;
+
+      expect(remainingVars.length).toBe(userDefinedVarCount);
+      expect(remainingLinks.length).toBe(userDefinedLinkCount);
+      expect(remainingVars.every((v) => !v.state.origin)).toBe(true);
+      expect(remainingLinks.every((l) => !l.origin)).toBe(true);
+    });
+
+    it('should prevent accumulation when called before re-adding defaults', () => {
+      const scene = buildTestScene();
+      const existingVarCount = sceneGraph.getVariables(scene).state.variables.length;
+      const existingLinkCount = scene.state.links.length;
+
+      const defaultVars = [
+        {
+          kind: 'CustomVariable' as const,
+          spec: {
+            name: 'dsVar',
+            current: { text: 'a', value: 'a' },
+            query: 'a,b,c',
+            origin: { type: 'datasource' as const, group: 'prometheus' },
+          },
+        },
+      ] as VariableKind[];
+
+      const defaultLinks = [
+        {
+          title: 'DS Link',
+          url: 'http://example.com',
+          type: 'link' as const,
+          asDropdown: false,
+          icon: '',
+          includeVars: false,
+          keepTime: false,
+          tags: [],
+          targetBlank: false,
+          tooltip: '',
+          origin: { type: 'datasource' as const, group: 'prometheus' },
+        },
+      ];
+
+      // First load
+      scene.addDefaultVariables(defaultVars);
+      scene.addDefaultLinks(defaultLinks);
+
+      // Simulate re-navigation: clear then reload
+      scene.clearDefaultControls();
+      scene.addDefaultVariables(defaultVars);
+      scene.addDefaultLinks(defaultLinks);
+
+      expect(sceneGraph.getVariables(scene).state.variables.length).toBe(existingVarCount + 1);
+      expect(scene.state.links.length).toBe(existingLinkCount + 1);
+    });
+  });
 });
 
 function createV1DashboardWithExpressions(expressionTypes: string[]): Dashboard {

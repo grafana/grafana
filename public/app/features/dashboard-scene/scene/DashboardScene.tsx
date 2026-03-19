@@ -346,6 +346,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     });
   }
 
+  public clearDefaultControls() {
+    const variableSet = sceneGraph.getVariables(this);
+    const nonDefaultVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    variableSet.setState({ variables: nonDefaultVars });
+
+    const nonDefaultLinks = this.state.links.filter((l) => !l.origin);
+    this.setState({ links: nonDefaultLinks });
+  }
+
   public onEnterEditMode = () => {
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
