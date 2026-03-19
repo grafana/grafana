@@ -579,7 +579,7 @@ func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
 // ParseKey parses a string key into a DataKey struct
 func ParseKey(key string) (DataKey, error) {
 	parts := strings.Split(key, "/")
-	dk, _, err := kvpkg.ParseDataKeyParts(parts, 3)
+	dk, _, err := kvpkg.ParseDataKeyParts(parts)
 	if err != nil {
 		return DataKey{}, fmt.Errorf("invalid key: %s: %w", key, err)
 	}

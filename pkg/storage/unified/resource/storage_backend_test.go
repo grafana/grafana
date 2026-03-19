@@ -2124,16 +2124,12 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	})
 
 	t.Run("sqlkv", func(t *testing.T) {
-		sqlKV := setupSqlKV(t)
-		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
-			opts.KvStore = sqlKV
-		})
+		backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)))
 		testClusterScopedResources(t, backend)
 	})
 }
 
 func testClusterScopedResources(t *testing.T, backend *kvStorageBackend) {
-	t.Helper()
 	ctx := context.Background()
 
 	// Start watching for events before creating resources

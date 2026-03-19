@@ -33,7 +33,7 @@ type DataKey struct {
 // ParseDataKeyParts parses the common parts of a data key.
 // Keys are either 4 parts (cluster-scoped: group/resource/name/rvMeta)
 // or 5 parts (namespaced: group/resource/namespace/name/rvMeta).
-func ParseDataKeyParts(parts []string, rvMetaParts int) (DataKey, []string, error) {
+func ParseDataKeyParts(parts []string) (DataKey, []string, error) {
 	var dk DataKey
 	var rvMeta string
 	switch len(parts) {
@@ -52,9 +52,6 @@ func ParseDataKeyParts(parts []string, rvMetaParts int) (DataKey, []string, erro
 		return DataKey{}, nil, fmt.Errorf("invalid key: expected 4 or 5 parts, got %d", len(parts))
 	}
 	rvParts := strings.Split(rvMeta, "~")
-	if len(rvParts) != rvMetaParts {
-		return DataKey{}, nil, fmt.Errorf("invalid key metadata: expected %d tilde-separated parts, got %d", rvMetaParts, len(rvParts))
-	}
 	rv, err := strconv.ParseInt(rvParts[0], 10, 64)
 	if err != nil {
 		return DataKey{}, nil, fmt.Errorf("invalid resource version '%s': %w", rvParts[0], err)
@@ -69,9 +66,12 @@ func ParseDataKeyParts(parts []string, rvMetaParts int) (DataKey, []string, erro
 // Remove once we stop using RvManager in storage_backend.go
 func ParseKeyWithGUID(key string) (DataKey, error) {
 	parts := strings.Split(key, "/")
-	dk, rvParts, err := ParseDataKeyParts(parts, 4)
+	dk, rvParts, err := ParseDataKeyParts(parts)
 	if err != nil {
 		return DataKey{}, fmt.Errorf("invalid key: %s: %w", key, err)
+	}
+	if len(rvParts) != 4 {
+		return DataKey{}, fmt.Errorf("invalid key metadata: expected %d tilde-separated parts, got %d", 4, len(rvParts))
 	}
 	dk.GUID = rvParts[3]
 	return dk, nil

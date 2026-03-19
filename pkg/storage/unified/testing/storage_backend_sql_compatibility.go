@@ -2139,12 +2139,8 @@ func runTestClusterScopedResources(t *testing.T, sqlBackend, kvBackend resource.
 	t.Run("List from both backends", func(t *testing.T) {
 		sqlList := listClusterResources(t, sqlServer)
 		require.Nil(t, sqlList.Error, "SQL List error: %v", sqlList.Error)
-		t.Logf("SQL backend: listed %d cluster-scoped resources", len(sqlList.Items))
-
 		kvList := listClusterResources(t, kvServer)
 		require.Nil(t, kvList.Error, "KV List error: %v", kvList.Error)
-		t.Logf("KV backend: listed %d cluster-scoped resources", len(kvList.Items))
-
 		require.Equal(t, len(sqlList.Items), len(kvList.Items), "list count mismatch between backends")
 
 		// Verify items match
