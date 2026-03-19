@@ -45,14 +45,21 @@ For release highlights and deprecations, refer to our [v13.0 What's new](https:/
 
 #### You are affected if
 
-You use `GET` or `DELETE /api/alertmanager/grafana/config/api/v1/alerts` directly, for example in automation scripts or custom tooling.
+You use any of the following endpoints directly, for example in automation scripts or custom tooling:
+
+- `DELETE /api/alertmanager/grafana/config/api/v1/alerts`
+- `GET /api/alertmanager/grafana/config/api/v1/alerts`
+- `GET /api/alertmanager/grafana/config/history`
+- `POST /api/alertmanager/grafana/config/history/{id}/_activate`
 
 #### Description
 
-Both endpoints were deprecated in Grafana v12 and rely on legacy single-tenant Alertmanager configuration semantics.
+These endpoints were deprecated in Grafana v12 and rely on legacy single-tenant Alertmanager configuration semantics.
 
 - `DELETE /api/alertmanager/grafana/config/api/v1/alerts` has been removed entirely.
 - `GET /api/alertmanager/grafana/config/api/v1/alerts` is now restricted to admin users. A `Warning: 299` response header is included to help identify any remaining automated consumers. The endpoint will be fully removed in Grafana v14.
+- `GET /api/alertmanager/grafana/config/history` is now restricted to admin users. The endpoint will be fully removed in Grafana v14.
+- `POST /api/alertmanager/grafana/config/history/{id}/_activate` is now restricted to admin users. The endpoint will be fully removed in Grafana v14.
 
 #### Migration
 
