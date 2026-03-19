@@ -31,6 +31,8 @@ func ValidatePendingDeletion(a admission.Attributes, meta utils.GrafanaMetaAcces
 		if appcontroller.IsPendingDelete(meta.GetLabels()) {
 			return apierrors.NewForbidden(a.GetResource().GroupResource(), a.GetName(), errors.New("namespace is pending deletion"))
 		}
+	case admission.Delete, admission.Connect:
+		// no checks needed
 	}
 	return nil
 }
