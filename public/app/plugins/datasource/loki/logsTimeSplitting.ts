@@ -2,7 +2,7 @@
 // like returned by `new Date().getTime()`. this is needed because the "math"
 // has to be done on integer numbers.
 
-import { TimeRange, toUtc } from "@grafana/data";
+import { TimeRange, toUtc } from '@grafana/data';
 
 // the way loki handles logs-range-queries is that if you specify start & end,
 // one of those will be included, but the other will not. this allows us to
@@ -44,9 +44,7 @@ export function splitTimeRange(
   return result;
 }
 
-export function splitTimeRangeAligned(
-  timeRange: TimeRange
-): Array<[number, number]> {
+export function splitTimeRangeAligned(timeRange: TimeRange): Array<[number, number]> {
   const oneDayMs = 24 * 60 * 60 * 1000;
   const startTime = timeRange.from.valueOf();
   const endTime = timeRange.to.valueOf();
@@ -58,10 +56,8 @@ export function splitTimeRangeAligned(
   const result: Array<[number, number]> = [];
 
   const startOfFirstDay = toUtc(endTime).startOf('day').valueOf();
-  result.push(
-    [startOfFirstDay, endTime]
-  )
-  
+  result.push([startOfFirstDay, endTime]);
+
   for (let chunkEndTime = startOfFirstDay; chunkEndTime > startTime; chunkEndTime -= oneDayMs) {
     const chunkStartTime = Math.max(chunkEndTime - oneDayMs, startTime);
     result.push([chunkStartTime, chunkEndTime]);
