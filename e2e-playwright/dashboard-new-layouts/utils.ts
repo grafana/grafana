@@ -193,6 +193,24 @@ interface ImportTestDashboardOptions {
   checkPanelsVisible?: boolean;
   requiresDataSourceSelection?: boolean;
 }
+
+export function stripMetadataNameFromImportJson(input: string): string {
+  // Keep fixture JSON intact, but remove a fixed resource name at import time so
+  // each test creates an isolated dashboard via generateName in parallel runs.
+  try {
+    const parsed = JSON.parse(input);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const metadata = Reflect.get(parsed, 'metadata');
+      if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+        Reflect.deleteProperty(metadata, 'name');
+      }
+    }
+    return JSON.stringify(parsed);
+  } catch {
+    return input;
+  }
+}
+
 export async function importTestDashboard(
   page: Page,
   selectors: E2ESelectorGroups,
@@ -201,10 +219,9 @@ export async function importTestDashboard(
   options: ImportTestDashboardOptions = {}
 ) {
   options = { checkPanelsVisible: true, requiresDataSourceSelection: true, ...options };
+  const importJson = stripMetadataNameFromImportJson(dashInput || JSON.stringify(testV2Dashboard));
   await page.goto(selectors.pages.ImportDashboard.url);
-  await page
-    .getByTestId(selectors.components.DashboardImportPage.textarea)
-    .fill(dashInput || JSON.stringify(testV2Dashboard));
+  await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(importJson);
   await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
   await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
   if (options.requiresDataSourceSelection) {

@@ -586,6 +586,14 @@ var (
 			Expression:   "true",
 		},
 		{
+			Name:         "createAlertRuleFromPanel",
+			Description:  "Enables creating alert rules from a panel using a drawer UI",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
 			Name:        "alertmanagerRemotePrimary",
 			Description: "Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.",
 			Stage:       FeatureStageExperimental,
@@ -621,6 +629,14 @@ var (
 			Description:  "Enables new dashboard layouts",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false, // The restore backend feature changes behavior based on this flag
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "dashboardAssistantPopover",
+			Description:  "Enables the assistant prompt popover on panel click in dashboard view mode",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
 		},
@@ -1865,6 +1881,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesAuthzDatasourceResourcePermissions",
+			Description:  "Enables datasource resource permissions via the K8s IAM resource permission APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
 			Stage:       FeatureStageExperimental,
@@ -2311,6 +2335,13 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "elasticsearchESQLQuery",
+			Description: "Enables the ES|QL query editor in the Elasticsearch data source",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaPartnerPluginsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "awsDatasourcesHttpProxy",
 			Description: "Enables http proxy settings for aws datasources",
 			Stage:       FeatureStageExperimental,
@@ -2539,6 +2570,15 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingPolicyRoutingSettings",
+			Description:  "Use notification settings policy field instead of labels for named policy routing in alert rules",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:            "appPluginAPIServer",
 			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
 			Stage:           FeatureStageExperimental,
@@ -2573,6 +2613,14 @@ var (
 		{
 			Name:         "alertingNotificationHistoryTriage",
 			Description:  "Enables the notification history timeline in the triage instance details drawer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "alertingNotificationHistoryDetail",
+			Description:  "Enables the notification history detail page",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,

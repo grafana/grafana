@@ -384,6 +384,11 @@ export interface FeatureToggles {
   */
   alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
+  * Enables creating alert rules from a panel using a drawer UI
+  * @default false
+  */
+  createAlertRuleFromPanel?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   * @default false
   */
@@ -408,6 +413,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardNewLayouts?: boolean;
+  /**
+  * Enables the assistant prompt popover on panel click in dashboard view mode
+  * @default false
+  */
+  dashboardAssistantPopover?: boolean;
   /**
   * Enables undo/redo in dynamic dashboards
   * @default false
@@ -1186,6 +1196,11 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRolesAndRoleBindingsRedirect?: boolean;
   /**
+  * Enables datasource resource permissions via the K8s IAM resource permission APIs
+  * @default false
+  */
+  kubernetesAuthzDatasourceResourcePermissions?: boolean;
+  /**
   * Enables restore deleted dashboards feature
   * @default false
   */
@@ -1461,6 +1476,11 @@ export interface FeatureToggles {
   */
   elasticsearchRawDSLQuery?: boolean;
   /**
+  * Enables the ES|QL query editor in the Elasticsearch data source
+  * @default false
+  */
+  elasticsearchESQLQuery?: boolean;
+  /**
   * Enables http proxy settings for aws datasources
   * @default false
   */
@@ -1601,6 +1621,11 @@ export interface FeatureToggles {
   */
   alertingMultiplePolicies?: boolean;
   /**
+  * Use notification settings policy field instead of labels for named policy routing in alert rules
+  * @default false
+  */
+  alertingPolicyRoutingSettings?: boolean;
+  /**
   * Registers an API server for each backend app plugin exposing a settings endpoint
   * @default false
   */
@@ -1625,6 +1650,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryTriage?: boolean;
+  /**
+  * Enables the notification history detail page
+  * @default false
+  */
+  alertingNotificationHistoryDetail?: boolean;
   /**
   * Whether to use the new React 19 runtime
   * @default false

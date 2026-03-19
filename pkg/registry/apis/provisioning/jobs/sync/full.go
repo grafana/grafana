@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -21,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// FullSync computes and applies the diff between a repository state and Grafana, honoring ordering, quotas,
+// and folder metadata. It orchestrates compare, quota check, and phased application of deletions and creations.
 func FullSync(
 	ctx context.Context,
 	repo repository.Reader,
@@ -104,7 +105,7 @@ func FullSync(
 	}
 	span.SetAttributes(attribute.Bool("pre_check_quota", true))
 
-	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker)
+	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled)
 }
 
 // shouldSkipChange checks if a change should be skipped based on previous failures on parent/child folders.
@@ -139,7 +140,17 @@ func shouldSkipChange(ctx context.Context, change ResourceFileChange, progress j
 	return false
 }
 
-func applyChange(ctx context.Context, change ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, quotaTracker quotas.QuotaTracker) {
+// applyChange applies a single resource or folder change, handling delete/create/update and recording progress.
+func applyChange(
+	ctx context.Context,
+	change ResourceFileChange,
+	clients resources.ResourceClients,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
+) {
 	if ctx.Err() != nil {
 		return
 	}
@@ -184,6 +195,13 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 			resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err))
 		} else {
 			quotaTracker.Release()
+			// Keep this tree mutation scoped to folder metadata for now.
+			// It clears the deleted folder's stale in-memory entry so the same
+			// full sync can recreate that folder at a new path when _folder.json
+			// preserves the UID.
+			if folderMetadataEnabled && safepath.IsDir(change.Path) {
+				repositoryResources.RemoveFolderFromTree(change.Existing.Name)
+			}
 		}
 		progress.Record(deleteCtx, resultBuilder.Build())
 		deleteSpan.End()
@@ -233,7 +251,7 @@ func applyChange(ctx context.Context, change ResourceFileChange, clients resourc
 	writeSpan.End()
 }
 
-// instrument a function with a phase and metrics
+// instrumentedFullSyncPhase records timing metrics around a full-sync phase.
 func instrumentedFullSyncPhase(phase jobs.FullSyncPhase, fn func() error, metrics jobs.JobMetrics) error {
 	phaseStart := time.Now()
 	err := fn()
@@ -241,7 +259,25 @@ func instrumentedFullSyncPhase(phase jobs.FullSyncPhase, fn func() error, metric
 	return err
 }
 
-func applyChanges(ctx context.Context, changes []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker) error {
+// applyChanges orders and executes the diff:
+// - deletions first (files then folders),
+// - then folder creations,
+// - then file creations.
+// It delegates to:
+// - serial folder handling,
+// - parallel resource handling with per-change timeouts.
+func applyChanges(
+	ctx context.Context,
+	changes []ResourceFileChange,
+	clients resources.ResourceClients,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+	maxSyncWorkers int,
+	metrics jobs.JobMetrics,
+	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
+) error {
 	progress.SetTotal(ctx, len(changes))
 
 	_, applyChangesSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes",
@@ -287,7 +323,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 
 	if len(fileDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileDeletions, func() error {
-			return applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker)
+			return applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
@@ -295,7 +331,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 
 	if len(folderDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
-			return applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer, quotaTracker)
+			return applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
@@ -303,7 +339,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 
 	if len(folderCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
-			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer, quotaTracker)
+			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
@@ -311,7 +347,7 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 
 	if len(fileCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileCreations, func() error {
-			return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker)
+			return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
@@ -320,7 +356,17 @@ func applyChanges(ctx context.Context, changes []ResourceFileChange, clients res
 	return nil
 }
 
-func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, quotaTracker quotas.QuotaTracker) error {
+// applyFoldersSerially processes folder changes one by one.
+func applyFoldersSerially(
+	ctx context.Context,
+	folders []ResourceFileChange,
+	clients resources.ResourceClients,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
+) error {
 	for _, folder := range folders {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -331,17 +377,26 @@ func applyFoldersSerially(ctx context.Context, folders []ResourceFileChange, cli
 		}
 
 		wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
-			applyChange(timeoutCtx, folder, clients, repositoryResources, progress, tracer, quotaTracker)
+			applyChange(timeoutCtx, folder, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		})
 	}
 
 	return nil
 }
 
-func applyResourcesInParallel(ctx context.Context, resources []ResourceFileChange, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, maxSyncWorkers int, quotaTracker quotas.QuotaTracker) error {
-	logger := logging.FromContext(ctx)
-	logger.Info("applying resources in parallel test changes 1")
-
+// applyResourcesInParallel applies non-folder changes concurrently up to maxSyncWorkers.
+// Folder changes are handled serially, this is for files.
+func applyResourcesInParallel(
+	ctx context.Context,
+	resources []ResourceFileChange,
+	clients resources.ResourceClients,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+	maxSyncWorkers int,
+	quotaTracker quotas.QuotaTracker,
+	folderMetadataEnabled bool,
+) error {
 	if len(resources) == 0 {
 		return nil
 	}
@@ -371,7 +426,7 @@ loop:
 			defer func() { <-sem }()
 
 			wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
-				applyChange(timeoutCtx, change, clients, repositoryResources, progress, tracer, quotaTracker)
+				applyChange(timeoutCtx, change, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 			})
 		}(change)
 	}
@@ -385,7 +440,7 @@ loop:
 	return ctx.Err()
 }
 
-// wrapWithTimeout wraps a function call with a timeout context
+// wrapWithTimeout runs fn with a derived context that times out after the given duration.
 func wrapWithTimeout(ctx context.Context, timeout time.Duration, fn func(context.Context)) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()

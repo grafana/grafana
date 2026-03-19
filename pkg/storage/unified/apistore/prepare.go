@@ -229,6 +229,10 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
+	if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
+		return v, err
+	}
+
 	// Mark the resource as changed
 	if v.hasChanged {
 		obj.SetGeneration(previous.GetGeneration() + 1)
@@ -238,11 +242,6 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 		obj.SetUpdatedBy(updatedBy)
 		obj.SetUpdatedTimestampMillis(time.Now().UnixMilli())
-
-		// Only validate when the generation has changed
-		if err := checkManagerPropertiesOnUpdateSpec(info, obj, previous); err != nil {
-			return v, err
-		}
 	} else {
 		obj.SetGeneration(previous.GetGeneration())
 		obj.SetAnnotation(utils.AnnoKeyUpdatedBy, previous.GetAnnotation(utils.AnnoKeyUpdatedBy))

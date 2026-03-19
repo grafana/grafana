@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2349,7 +2350,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2359,8 +2359,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2419,9 +2420,6 @@
       "label-payload": "Laadvermogen",
       "label-use-existing-alert-instances": "Bestaande waarschuwingsinstanties gebruiken",
       "reference": "Reference"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Versnel nu het maken van waarschuwingen door een van onze op maat gemaakte apps te gebruiken"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Deze regel wordt beheerd door de plug-in {{pluginName}}"
@@ -2938,6 +2936,9 @@
       "error-button": "Fout",
       "export-all-grafana-rules": "Alle Grafana-regels exporteren",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Zoekopdracht annuleren",
         "no-more-results": "Geen resultaten - {{numberOfRules}} regels gevonden",
@@ -3087,8 +3088,6 @@
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Zoeken op hulp bij gegevensbronnen",
       "filter-options": {
-        "aria-label": "Filteropties",
-        "aria-label-show-filters": "Filter",
         "placeholder-namespace": "Namespace selecteren",
         "placeholder-search-input": "Zoeken op naam of filterquery invoeren..."
       },
@@ -3120,6 +3119,9 @@
       "state": "Status",
       "title-search-help": "Help doorzoeken",
       "view-as": "Bekijk als"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Verwijderen",
@@ -4813,7 +4815,6 @@
     "all": "Alle",
     "apply": "Toepassen",
     "cancel": "Annuleren",
-    "clear": "Wissen",
     "collapse": "Samenvouwen",
     "disabled": "Uitgeschakeld",
     "discard": "Verwerpen",
@@ -5913,6 +5914,12 @@
         "title": "Tijdinstellingen van paneel"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard moet worden opgeslagen voordat waarschuwingen kunnen worden toegevoegd.",
@@ -6545,6 +6552,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7285,6 +7303,8 @@
       "cannot-be-saved": "Dit dashboard kan niet worden opgeslagen vanuit de Grafana-gebruikersinterface omdat het is geprovisioneerd vanuit een andere bron. Kopieer de JSON of sla deze op in een onderstaand bestand. Vervolgens kun je je dashboard bijwerken in de provisioningbron.",
       "copy-json-to-clipboard": "JSON kopiëren naar klembord",
       "file-path": "<strong>Bestandspad:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Beschrijving",
       "label-target-folder": "Doelmap",
       "label-title": "Titel",
@@ -7970,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Vaste waarde"
       },
+      "label": "",
       "label-limit": "Limiet",
       "label-value": "Waarde",
       "noOptionsMessage-no-fields-found": "Geen velden gevonden",
@@ -10001,7 +10022,9 @@
       "external-links-heading": "Externe links"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Voer een reguliere expressie in"
+      "input-placeholder": "Voer een reguliere expressie in",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Vergelijkingsoperator",
@@ -10028,6 +10051,18 @@
       "expand-row-tooltip": "Rij in-/uitschakelen uitgevouwen",
       "tooltip-collapse-all": "Alle rijen samenvouwen",
       "tooltip-expand-all": "Alle rijen uitvouwen"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Eigenschappen instellen voor velden met namen die overeenkomen met een regex",
@@ -11255,7 +11290,7 @@
       "cancel": "Annuleren",
       "change-uid": "UID wijzigen",
       "description-library-panels-imported": "Lijst met nieuwe bibliotheekpanelen die worden geïmporteerd.",
-      "description-unique-identifier-uid": "De unieke id (UID) van een dashboard kan worden gebruikt voor het uniek identificeren van een dashboard tussen meerdere Grafana-installaties. Met de UID kunnen consistente URL's worden gebruikt voor toegang tot dashboards, dus als je de titel van een dashboard wijzigt, worden links naar dat dashboard met bladwijzers niet verbroken.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Bestaande bibliotheekpanelen",
       "label-folder": "Map",
       "label-name": "Naam",
@@ -12776,9 +12811,6 @@
     "title-loaded-pull-request-in-repo": "Deze bron wordt geladen vanuit de tak die je zojuist hebt gemaakt in {{repoType}} en is alleen zichtbaar voor jou"
   },
   "provisioning": {
-    "banner": {
-      "message": "Er wordt momenteel actief gewerkt aan de ontwikkeling van deze functie. Voor de beste ervaring en de nieuwste verbeteringen raden we je aan om de <2>nachtelijke versie</2> van Grafana te gebruiken."
-    },
     "bitbucket": {
       "branch-required": "Tak is vereist",
       "permissions": {
@@ -13475,6 +13507,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Kies wat je wilt synchroniseren",
       "step-configure-repo": "Repository configureren",
       "step-connect": "Verbinden",

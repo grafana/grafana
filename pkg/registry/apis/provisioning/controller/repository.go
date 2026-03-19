@@ -20,6 +20,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
@@ -36,18 +37,7 @@ const loggerName = "provisioning-repository-controller"
 
 const (
 	maxAttempts = 3
-
-	// labelPendingDelete mirrors the label written by the tenant watcher
-	// (pkg/storage/unified/resource/tenant_watcher.go) to signal that a
-	// namespace/stack is being soft-deleted by the cloud platform.
-	labelPendingDelete = "cloud.grafana.com/pending-delete"
 )
-
-// IsPendingDelete reports whether an object's namespace is undergoing a
-// soft-delete, as indicated by the pending-delete label.
-func IsPendingDelete(labels map[string]string) bool {
-	return labels[labelPendingDelete] == "true"
-}
 
 type queueItem struct {
 	key      string
@@ -603,7 +593,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Skip reconciliation for resources whose namespace is being soft-deleted.
-	if IsPendingDelete(obj.Labels) {
+	if appcontroller.IsPendingDelete(obj.Labels) {
 		logger.Info("skipping reconciliation: namespace is pending deletion")
 		return nil
 	}
