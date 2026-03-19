@@ -19,6 +19,11 @@ import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
 
 const VIRTUAL_OVERSCAN_ITEMS = 4;
 const ESTIMATED_ITEM_HEIGHT = 48;
+// Only virtualize when the list is large enough to benefit from it.
+// Small lists render all items directly, which avoids issues with scroll
+// container measurement in test environments and ensures all items are
+// in the DOM for E2E test interactions.
+const VIRTUALIZATION_THRESHOLD = 100;
 
 /**
  * Component props description for the {@link DataSourceList}
@@ -100,8 +105,12 @@ export function DataSourceList(props: DataSourceListProps) {
     [filteredDataSources, current, recentlyUsedDataSources, favoriteDataSources]
   );
 
+  const shouldVirtualize = sortedDataSources.length >= VIRTUALIZATION_THRESHOLD;
+  const shouldVirtualizeRef = useRef(shouldVirtualize);
+  shouldVirtualizeRef.current = shouldVirtualize;
+
   const rowVirtualizer = useVirtualizer({
-    count: sortedDataSources.length,
+    count: shouldVirtualize ? sortedDataSources.length : 0,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => ESTIMATED_ITEM_HEIGHT,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
@@ -110,9 +119,20 @@ export function DataSourceList(props: DataSourceListProps) {
   const virtualizerRef = useRef(rowVirtualizer);
   virtualizerRef.current = rowVirtualizer;
 
-  const stableScrollToIndex = useCallback((index: number) => {
-    virtualizerRef.current?.scrollToIndex(index, { align: 'auto' });
-  }, []);
+  const stableScrollToIndex = useCallback(
+    (index: number) => {
+      if (shouldVirtualizeRef.current) {
+        virtualizerRef.current?.scrollToIndex(index, { align: 'auto' });
+      } else {
+        const container = scrollRef.current;
+        if (container) {
+          const items = container.querySelectorAll('[data-testid="data-source-card"]');
+          items[index]?.scrollIntoView({ block: 'nearest' });
+        }
+      }
+    },
+    [scrollRef]
+  );
 
   const handleSelect = useCallback(
     (index: number) => {
@@ -132,66 +152,74 @@ export function DataSourceList(props: DataSourceListProps) {
     onSelect: handleSelect,
   });
 
+  const renderDataSourceCard = (ds: DataSourceInstanceSettings, isSelected: boolean) => (
+    <DataSourceCard
+      data-testid="data-source-card"
+      {...(enableKeyboardNavigation && {
+        'data-selecteditem': isSelected ? 'true' : 'false',
+      })}
+      ds={ds}
+      onClick={() => {
+        pushRecentlyUsedDataSource(ds);
+        onChange(ds);
+      }}
+      selected={isDataSourceMatch(ds, current)}
+      isFavorite={favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined}
+      onToggleFavorite={
+        favoriteDataSources.enabled
+          ? () => {
+              reportInteraction(INTERACTION_EVENT_NAME, {
+                item: INTERACTION_ITEM.TOGGLE_FAVORITE,
+                ds_type: ds.type,
+                is_favorite: !favoriteDataSources.isFavoriteDatasource(ds.uid),
+              });
+              favoriteDataSources.isFavoriteDatasource(ds.uid)
+                ? favoriteDataSources.removeFavoriteDatasource(ds)
+                : favoriteDataSources.addFavoriteDatasource(ds);
+            }
+          : undefined
+      }
+    />
+  );
+
   return (
     <div className={cx(className, styles.container)} data-testid={selectors.components.DataSourcePicker.dataSourceList}>
       {sortedDataSources.length === 0 && <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />}
-      {sortedDataSources.length > 0 && (
-        <div
-          style={{
-            height: rowVirtualizer.getTotalSize(),
-            width: '100%',
-            position: 'relative',
-          }}
-        >
-          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            const ds = sortedDataSources[virtualRow.index];
-            const isSelected = enableKeyboardNavigation && virtualRow.index === selectedIndex;
-            return (
-              <div
-                key={ds.uid}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: virtualRow.size,
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              >
-                <DataSourceCard
-                  data-testid="data-source-card"
-                  {...(enableKeyboardNavigation && {
-                    'data-selecteditem': isSelected ? 'true' : 'false',
-                  })}
-                  ds={ds}
-                  onClick={() => {
-                    pushRecentlyUsedDataSource(ds);
-                    onChange(ds);
+      {sortedDataSources.length > 0 &&
+        (shouldVirtualize ? (
+          <div
+            style={{
+              height: rowVirtualizer.getTotalSize(),
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const ds = sortedDataSources[virtualRow.index];
+              const isSelected = enableKeyboardNavigation && virtualRow.index === selectedIndex;
+              return (
+                <div
+                  key={ds.uid}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: virtualRow.size,
+                    transform: `translateY(${virtualRow.start}px)`,
                   }}
-                  selected={isDataSourceMatch(ds, current)}
-                  isFavorite={
-                    favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined
-                  }
-                  onToggleFavorite={
-                    favoriteDataSources.enabled
-                      ? () => {
-                          reportInteraction(INTERACTION_EVENT_NAME, {
-                            item: INTERACTION_ITEM.TOGGLE_FAVORITE,
-                            ds_type: ds.type,
-                            is_favorite: !favoriteDataSources.isFavoriteDatasource(ds.uid),
-                          });
-                          favoriteDataSources.isFavoriteDatasource(ds.uid)
-                            ? favoriteDataSources.removeFavoriteDatasource(ds)
-                            : favoriteDataSources.addFavoriteDatasource(ds);
-                        }
-                      : undefined
-                  }
-                />
-              </div>
-            );
-          })}
-        </div>
-      )}
+                >
+                  {renderDataSourceCard(ds, isSelected)}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          sortedDataSources.map((ds, index) => {
+            const isSelected = enableKeyboardNavigation && index === selectedIndex;
+            return <React.Fragment key={ds.uid}>{renderDataSourceCard(ds, isSelected)}</React.Fragment>;
+          })
+        ))}
     </div>
   );
 }
