@@ -229,6 +229,7 @@ const (
 	FullSyncPhaseFolderDeletions
 	FullSyncPhaseFolderCreations
 	FullSyncPhaseFileCreations
+	FullSyncPhaseOldFolderCleanup
 )
 
 func (p FullSyncPhase) String() string {
@@ -243,6 +244,8 @@ func (p FullSyncPhase) String() string {
 		return "folder_creations"
 	case FullSyncPhaseFileCreations:
 		return "file_creations"
+	case FullSyncPhaseOldFolderCleanup:
+		return "old_folder_cleanup"
 	default:
 		return "unknown"
 	}

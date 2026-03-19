@@ -44,7 +44,7 @@ func TestFullSync_ContextCancelled(t *testing.T) {
 		},
 	})
 
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{{}}, nil, nil)
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{{}}, nil, nil)
 	progress.On("SetTotal", mock.Anything, 1).Return()
 
 	err := FullSync(ctx, repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
@@ -64,7 +64,7 @@ func TestFullSync_Error(t *testing.T) {
 		},
 	})
 
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil, fmt.Errorf("some error"))
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil, fmt.Errorf("some error"))
 
 	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
 	require.EqualError(t, err, "compare changes: some error")
@@ -83,7 +83,7 @@ func TestFullSync_NoChanges(t *testing.T) {
 		},
 	})
 
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil, nil)
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil, nil)
 	progress.On("SetFinalMessage", mock.Anything, "no changes to sync").Return()
 
 	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
@@ -109,7 +109,7 @@ func TestFullSync_SuccessfulFolderCreation(t *testing.T) {
 		},
 	})
 
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil, nil)
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil, nil)
 	progress.On("SetFinalMessage", mock.Anything, "no changes to sync").Return()
 	repoResources.On("EnsureFolderExists", mock.Anything, resources.Folder{
 		ID:    "test-repo",
@@ -172,7 +172,7 @@ func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 
 	// No folder creation should be attempted with instance target
 	// But we should still test the error path for completeness
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, nil, fmt.Errorf("compare error"))
 
 	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
@@ -806,7 +806,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			compareFn := NewMockCompareFn(t)
 
 			tt.setupMocks(repo, repoResources, clients, progress, compareFn)
-			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil)
+			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil)
 			repo.On("Config").Return(&provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo",
@@ -1113,7 +1113,7 @@ func TestFullSync_QuotaTrackerSkipsCreationsAtLimit(t *testing.T) {
 		{Action: repository.FileActionCreated, Path: "dashboards/c.json"},
 	}
 
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil, nil)
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil, nil)
 	progress.On("SetTotal", mock.Anything, 3).Return()
 	progress.On("TooManyErrors").Return(nil)
 
@@ -1159,7 +1159,7 @@ func TestFullSync_QuotaTrackerAllowsUpdatesRegardlessOfQuota(t *testing.T) {
 		{Action: repository.FileActionUpdated, Path: "dashboards/existing.json"},
 	}
 
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil, nil)
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(changes, nil, nil)
 	progress.On("SetTotal", mock.Anything, 1).Return()
 	progress.On("TooManyErrors").Return(nil)
 	progress.On("HasDirPathFailedCreation", "dashboards/existing.json").Return(false)
@@ -1196,7 +1196,7 @@ func TestFullSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
 		{Action: repository.FileActionCreated, Path: "myfolder/dashboard.json"},
 	}
 	// Compare returns the missing folder metadata list directly
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(changes, []string{"myfolder/"}, nil)
 
 	// Expect a warning record for the missing folder metadata with action derived from changes
@@ -1241,7 +1241,7 @@ func TestFullSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
 		{Action: repository.FileActionCreated, Path: "myfolder/dashboard.json"},
 	}
 	// Compare always returns missing list, even when flag is disabled
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(changes, []string{"myfolder/"}, nil)
 
 	progress.On("SetTotal", mock.Anything, 1).Return()
@@ -1257,4 +1257,200 @@ func TestFullSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
 
 	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false)
 	require.NoError(t, err)
+}
+
+func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
+	// Verify that old folder UIDs are deleted AFTER folder creations and file creations.
+	// The ordering must be: folder phase -> file phase -> old folder deletion.
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	tracer := tracing.NewNoopTracerService()
+	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
+
+	// Track call ordering. With maxSyncWorkers=1 all phases are sequential,
+	// so no mutex is needed.
+	var callOrder []string
+	recordCall := func(name string) {
+		callOrder = append(callOrder, name)
+	}
+
+	changes := []ResourceFileChange{
+		{
+			// Folder creation with OldFolderUID — triggers deferred deletion
+			Action:        repository.FileActionUpdated,
+			Path:          "myfolder/",
+			FolderRenamed: true,
+			Existing:      &provisioning.ResourceListItem{Name: "old-uid-123"},
+		},
+		{
+			// A file creation that needs to happen before old folder cleanup
+			Action: repository.FileActionCreated,
+			Path:   "myfolder/dashboard.json",
+		},
+	}
+
+	progress.On("SetTotal", mock.Anything, 2).Return()
+	progress.On("TooManyErrors").Return(nil)
+	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+
+	// Folder phase: updated folder triggers RemoveFolderFromTree then EnsureFolderPathExist
+	repoResources.On("RemoveFolderFromTree", "old-uid-123").Run(func(args mock.Arguments) {
+		recordCall("RemoveFolderFromTree")
+	}).Return()
+
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "myfolder/").Run(func(args mock.Arguments) {
+		recordCall("EnsureFolderPathExist")
+	}).Return("new-uid-456", nil)
+
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "myfolder/" && r.Action() == repository.FileActionUpdated
+	})).Return()
+
+	// File phase: dashboard creation
+	repoResources.On("WriteResourceFromFile", mock.Anything, "myfolder/dashboard.json", "").Run(func(args mock.Arguments) {
+		recordCall("WriteResourceFromFile")
+	}).Return("dash-1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
+
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "myfolder/dashboard.json"
+	})).Return()
+
+	// Old folder deletion phase
+	repoResources.On("RemoveFolder", mock.Anything, "old-uid-123").Run(func(args mock.Arguments) {
+		recordCall("RemoveFolder")
+	}).Return(nil)
+
+	// Successful old folder deletion also records progress
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "myfolder/" &&
+			r.Action() == repository.FileActionDeleted &&
+			r.Name() == "old-uid-123" &&
+			r.Error() == nil
+	})).Return()
+
+	err := applyChanges(
+		context.Background(), changes, clients, repoResources, progress, tracer, 1, metrics,
+		quotas.NewInMemoryQuotaTracker(0, 0), true,
+	)
+	require.NoError(t, err)
+
+	// Verify ordering: folder phase -> file phase -> old folder deletion
+	require.Equal(t, []string{
+		"RemoveFolderFromTree",  // folder phase: clear old entry from tree
+		"EnsureFolderPathExist", // folder phase: create/update folder
+		"WriteResourceFromFile", // file phase: create dashboard
+		"RemoveFolder",          // deferred: delete old folder after re-parenting
+	}, callOrder)
+}
+
+func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
+	// When multiple folders have OldFolderUID, deeper paths must be deleted first.
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	tracer := tracing.NewNoopTracerService()
+	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
+
+	// Track deletion order. Old folder deletion is sequential, so no mutex needed.
+	var deletionOrder []string
+
+	changes := []ResourceFileChange{
+		{
+			Action:        repository.FileActionUpdated,
+			Path:          "parent/",
+			FolderRenamed: true,
+			Existing:      &provisioning.ResourceListItem{Name: "old-parent-uid"},
+		},
+		{
+			Action:        repository.FileActionUpdated,
+			Path:          "parent/child/",
+			FolderRenamed: true,
+			Existing:      &provisioning.ResourceListItem{Name: "old-child-uid"},
+		},
+	}
+
+	progress.On("SetTotal", mock.Anything, 2).Return()
+	progress.On("TooManyErrors").Return(nil)
+	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+
+	// Folder phase mocks
+	repoResources.On("RemoveFolderFromTree", mock.Anything).Return()
+	repoResources.On("EnsureFolderPathExist", mock.Anything, mock.Anything).Return("new-uid", nil)
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Action() == repository.FileActionUpdated
+	})).Return()
+
+	// Old folder deletion mocks — record the order
+	repoResources.On("RemoveFolder", mock.Anything, mock.MatchedBy(func(uid string) bool {
+		return uid == "old-parent-uid" || uid == "old-child-uid"
+	})).Run(func(args mock.Arguments) {
+		deletionOrder = append(deletionOrder, args.Get(1).(string))
+	}).Return(nil)
+
+	// Successful old folder deletions also record progress
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Action() == repository.FileActionDeleted && r.Error() == nil
+	})).Return()
+
+	err := applyChanges(
+		context.Background(), changes, clients, repoResources, progress, tracer, 1, metrics,
+		quotas.NewInMemoryQuotaTracker(0, 0), true,
+	)
+	require.NoError(t, err)
+
+	// Deeper path ("parent/child/") must be deleted before shallower ("parent/")
+	require.Equal(t, []string{"old-child-uid", "old-parent-uid"}, deletionOrder)
+}
+
+func TestApplyChanges_OldFolderDeletion_ErrorContinues(t *testing.T) {
+	// When RemoveFolder fails, the error is recorded in progress but applyChanges does NOT fail.
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	tracer := tracing.NewNoopTracerService()
+	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
+
+	changes := []ResourceFileChange{
+		{
+			Action:        repository.FileActionUpdated,
+			Path:          "broken/",
+			FolderRenamed: true,
+			Existing:      &provisioning.ResourceListItem{Name: "old-broken-uid"},
+		},
+	}
+
+	progress.On("SetTotal", mock.Anything, 1).Return()
+	progress.On("TooManyErrors").Return(nil)
+	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+
+	// Folder phase
+	repoResources.On("RemoveFolderFromTree", "old-broken-uid").Return()
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "broken/").Return("new-broken-uid", nil)
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "broken/" && r.Action() == repository.FileActionUpdated && r.Error() == nil
+	})).Return()
+
+	// RemoveFolder fails
+	repoResources.On("RemoveFolder", mock.Anything, "old-broken-uid").Return(errors.New("folder in use"))
+
+	// Expect progress records the error for the old folder deletion
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "broken/" &&
+			r.Action() == repository.FileActionDeleted &&
+			r.Name() == "old-broken-uid" &&
+			r.Error() != nil &&
+			r.Error().Error() == "delete old folder old-broken-uid after UID change: folder in use"
+	})).Return()
+
+	err := applyChanges(
+		context.Background(), changes, clients, repoResources, progress, tracer, 1, metrics,
+		quotas.NewInMemoryQuotaTracker(0, 0), true,
+	)
+
+	// applyChanges must NOT return an error even though RemoveFolder failed
+	require.NoError(t, err)
+
+	// Verify RemoveFolder was actually called
+	repoResources.AssertCalled(t, "RemoveFolder", mock.Anything, "old-broken-uid")
 }
