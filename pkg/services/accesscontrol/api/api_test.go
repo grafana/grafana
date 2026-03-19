@@ -132,7 +132,6 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 		filters        string
 		expectedOutput map[int64]map[string][]string
 		expectedCode   int
-		accessAllowed  bool // For authorization tests
 		serviceErr     error
 	}
 

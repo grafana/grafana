@@ -588,17 +588,17 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 	listAllPerms := map[string][]string{accesscontrol.ActionUsersPermissionsRead: {"users:*"}}
 	listSomePerms := map[string][]string{accesscontrol.ActionUsersPermissionsRead: {"users:id:2"}}
 	tests := []struct {
-		name             string
-		siuPermissions   map[string][]string
-		searchOption     accesscontrol.SearchOptions
-		ramRoles         map[string]*accesscontrol.RoleDTO    // BasicRole => RBAC BasicRole
-		storedPerms      map[int64][]accesscontrol.Permission // UserID => Permissions
-		storedRoles      map[int64][]string                   // UserID => Roles
-		want             map[int64][]accesscontrol.Permission
-		wantErr          bool
+		name           string
+		siuPermissions map[string][]string
+		searchOption   accesscontrol.SearchOptions
+		ramRoles       map[string]*accesscontrol.RoleDTO    // BasicRole => RBAC BasicRole
+		storedPerms    map[int64][]accesscontrol.Permission // UserID => Permissions
+		storedRoles    map[int64][]string                   // UserID => Roles
+		want           map[int64][]accesscontrol.Permission
+		wantErr        bool
 		// Error injection fields - explicitly control which store methods return errors
-		injectSearchErr  bool // When true, SearchUsersPermissions returns an error
-		injectBasicErr   bool // When true, GetUsersBasicRoles returns an error
+		injectSearchErr bool // When true, SearchUsersPermissions returns an error
+		injectBasicErr  bool // When true, GetUsersBasicRoles returns an error
 	}{
 		{
 			name:           "ram only",
@@ -831,9 +831,9 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 		},
 		// error handling
 		{
-			name:            "store.SearchUsersPermissions error is propagated",
-			siuPermissions:  listAllPerms,
-			searchOption:    searchOption,
+			name:           "store.SearchUsersPermissions error is propagated",
+			siuPermissions: listAllPerms,
+			searchOption:   searchOption,
 			storedRoles: map[int64][]string{
 				1: {string(identity.RoleEditor)},
 			},
