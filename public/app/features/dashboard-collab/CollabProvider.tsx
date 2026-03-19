@@ -199,37 +199,44 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
   // Keep the ref in sync so the wrapper always uses the latest publishOp.
   publishOpRef.current = publishOp;
 
-  // Wrap the scene's mutation client with CollabMutationClient on mount.
-  // This makes all callers (GeneralSettingsEditView, PanelEditor, etc.)
-  // automatically broadcast edits without any changes at call sites.
+  // Wrap the scene's mutation client with CollabMutationClient.
+  // The scene may not have its client ready yet at mount time (activation timing),
+  // so we poll briefly until it's available.
   useEffect(() => {
     debugLog('CollabProvider mounted', { dashboardUID, namespace });
 
-    const originalClient = scene.getMutationClient();
-    if (!originalClient) {
-      debugLog('CollabProvider: no mutation client on scene — skipping wrapper');
-      return;
-    }
+    let originalClient = scene.getMutationClient();
+    let wrapper: CollabMutationClient | null = null;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const wrapper = new CollabMutationClient(
-      originalClient,
-      (msg) => publishOpRef.current(msg),
-      localUserIdRef.current
-    );
-    clientRef.current = wrapper;
-    // Replace the client on both the scene (so getMutationClient() returns the wrapper)
-    // and the global API (so plugins also use the wrapper).
-    scene.setMutationClient(wrapper);
-    setDashboardMutationClient(wrapper);
-    debugLog('CollabMutationClient wrapper installed');
+    const install = () => {
+      originalClient = scene.getMutationClient();
+      if (!originalClient) {
+        debugLog('CollabProvider: mutation client not yet available — retrying in 100ms');
+        pollTimer = setTimeout(install, 100);
+        return;
+      }
+
+      wrapper = new CollabMutationClient(
+        originalClient,
+        (msg) => publishOpRef.current(msg),
+        localUserIdRef.current
+      );
+      clientRef.current = wrapper;
+      scene.setMutationClient(wrapper);
+      setDashboardMutationClient(wrapper);
+      debugLog('CollabMutationClient wrapper installed');
+    };
+
+    install();
 
     return () => {
+      if (pollTimer) {
+        clearTimeout(pollTimer);
+      }
       debugLog('CollabProvider unmounting — restoring original mutation client', { dashboardUID });
       clientRef.current = null;
-      // Only restore if scene is still active (hasn't already cleaned up).
-      // DashboardScene deactivation calls setDashboardMutationClient(null);
-      // re-installing the original after that would be incorrect.
-      if (scene.isActive) {
+      if (scene.isActive && originalClient) {
         scene.setMutationClient(originalClient);
         setDashboardMutationClient(originalClient);
       }
