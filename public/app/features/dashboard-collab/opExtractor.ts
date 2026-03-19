@@ -20,22 +20,24 @@ import { debugLog } from './debugLog';
 import { getLockTarget } from './lockTargetMapping';
 import { CollabOperation, MutationRequest } from './protocol/messages';
 
-/** Suppression flag — set true while applying remote ops to prevent echo loops. */
-let suppressed = false;
+/** Ref-counted suppression depth — safe under concurrent async ops.
+ *  Each suppressExtraction() increments, each unsuppressExtraction() decrements.
+ *  Extraction is suppressed whenever depth > 0. Math.max guards against mismatched calls. */
+let suppressionDepth = 0;
 
 /** Suppress extraction (call before applying remote ops locally). */
 export function suppressExtraction(): void {
-  suppressed = true;
+  suppressionDepth++;
 }
 
 /** Unsuppress extraction (call after applying remote ops locally). */
 export function unsuppressExtraction(): void {
-  suppressed = false;
+  suppressionDepth = Math.max(0, suppressionDepth - 1);
 }
 
 /** Returns true if extraction is currently suppressed. */
 export function isExtractionSuppressed(): boolean {
-  return suppressed;
+  return suppressionDepth > 0;
 }
 
 /** Throttle state for large dashboards (edge case #5). */
@@ -60,7 +62,7 @@ export function setLargeDashboardMode(scene: { state: { body?: { state?: { child
  * Returns null if the event doesn't map to a supported mutation or extraction is suppressed.
  */
 export function extractMutationRequest(event: SceneObjectStateChangedEvent): CollabOperation | null {
-  if (suppressed) {
+  if (isExtractionSuppressed()) {
     debugLog('Extraction skipped — suppression flag is set');
     return null;
   }
