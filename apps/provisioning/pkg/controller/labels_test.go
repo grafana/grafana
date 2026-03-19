@@ -24,12 +24,12 @@ func TestIsPendingDelete(t *testing.T) {
 		},
 		{
 			name:   "label set to false returns false",
-			labels: map[string]string{labelPendingDelete: "false"},
+			labels: map[string]string{LabelPendingDelete: "false"},
 			want:   false,
 		},
 		{
 			name:   "label set to true returns true",
-			labels: map[string]string{labelPendingDelete: "true"},
+			labels: map[string]string{LabelPendingDelete: "true"},
 			want:   true,
 		},
 	}

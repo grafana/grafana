@@ -175,7 +175,7 @@ func setupDB(b testing.TB) benchScenario {
 	cache := localcache.ProvideService()
 	userSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, teamSvc, cache, tracing.InitializeTracerForTest(),
-		&quotatest.FakeQuotaService{}, bundleregistry.ProvideService(),
+		&quotatest.FakeQuotaService{}, bundleregistry.ProvideService(), nil,
 	)
 	require.NoError(b, err)
 
@@ -424,7 +424,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil,
 	)
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, apiserver.WithoutRestConfig)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg,
@@ -456,7 +456,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	require.NoError(b, err)
 
 	_, err = ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, dashboardSvc, apiserver.WithoutRestConfig)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 
 	starSvc := startest.NewStarServiceFake()

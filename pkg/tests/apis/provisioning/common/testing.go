@@ -26,6 +26,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 
@@ -1073,6 +1074,23 @@ func UnstructuredToConnection(t *testing.T, obj *unstructured.Unstructured) *pro
 	require.NoError(t, err)
 
 	return c
+}
+
+// ParseTestResults extracts TestResults from an API response k8sruntime.Object.
+func ParseTestResults(t *testing.T, obj k8sruntime.Object) *provisioning.TestResults {
+	t.Helper()
+
+	unstructuredObj, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok, "expected unstructured object")
+
+	data, err := json.Marshal(unstructuredObj.Object)
+	require.NoError(t, err)
+
+	var testResults provisioning.TestResults
+	err = json.Unmarshal(data, &testResults)
+	require.NoError(t, err)
+
+	return &testResults
 }
 
 // FilesPostOptions holds parameters for a direct HTTP POST to the files API.

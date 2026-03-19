@@ -2353,6 +2353,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2377,7 +2378,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2387,8 +2387,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2447,9 +2448,6 @@
       "label-payload": "Ładunek",
       "label-use-existing-alert-instances": "Użyj istniejących instancji alertów",
       "reference": "Odniesienie"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Przyspiesz tworzenie alertów, korzystając z jednej z naszych dostosowanych aplikacji"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Ta reguła jest zarządzana przez wtyczkę {{pluginName}}"
@@ -2972,6 +2970,9 @@
       "error-button": "Błąd",
       "export-all-grafana-rules": "Eksportuj wszystkie reguły Grafany",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Anuluj wyszukiwanie",
         "no-more-results": "Nie ma więcej wyników – liczba znalezionych reguł: {{numberOfRules}}",
@@ -3127,8 +3128,6 @@
       "dashboard": "Pulpit",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Wyszukiwanie według źródeł danych – pomoc",
       "filter-options": {
-        "aria-label": "Opcje filtrów",
-        "aria-label-show-filters": "Filtr",
         "placeholder-namespace": "Wybierz przestrzeń nazw",
         "placeholder-search-input": "Szukaj według nazwy lub wprowadź wyrażenie do filtrowania…"
       },
@@ -3160,6 +3159,9 @@
       "state": "Stan",
       "title-search-help": "Pomoc dotycząca wyszukiwania",
       "view-as": "Wyświetl jako"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Usuwam",
@@ -4877,7 +4879,6 @@
     "all": "Wszystkie",
     "apply": "Zastosuj",
     "cancel": "Anuluj",
-    "clear": "Wyczyść",
     "collapse": "Zwiń",
     "disabled": "Wyłączone",
     "discard": "Odrzuć",
@@ -5979,6 +5980,12 @@
         "title": "Ustawienia czasu panelu"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Przed dodaniem alertów należy zapisać pulpit.",
@@ -6613,6 +6620,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7367,6 +7385,8 @@
       "cannot-be-saved": "Nie można zapisać tego pulpitu z poziomu interfejsu Grafany, ponieważ został on skonfigurowany z innego źródła. Skopiuj treść JSON lub zapisz ją w poniższym pliku, a następnie zaktualizuj pulpit w źródle aprowizacji.",
       "copy-json-to-clipboard": "Kopiuj JSON do schowka",
       "file-path": "<strong>Ścieżka do pliku:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Opis",
       "label-target-folder": "Katalog docelowy",
       "label-title": "Tytuł",
@@ -8060,6 +8080,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Stała wartość"
       },
+      "label": "",
       "label-limit": "Limit",
       "label-value": "Wartość",
       "noOptionsMessage-no-fields-found": "Nie znaleziono pól",
@@ -10115,7 +10136,9 @@
       "external-links-heading": "Linki zewnętrzne"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Wprowadź wyrażenie regularne"
+      "input-placeholder": "Wprowadź wyrażenie regularne",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Operator porównania",
@@ -10142,6 +10165,18 @@
       "expand-row-tooltip": "Przełącz rozwinięcie wiersza",
       "tooltip-collapse-all": "Zwiń wszystkie wiersze",
       "tooltip-expand-all": "Rozwiń wszystkie wiersze"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Ustaw właściwości pól o nazwach pasujących do wyrażenia regularnego",
@@ -11385,7 +11420,7 @@
       "cancel": "Anuluj",
       "change-uid": "Zmień UID",
       "description-library-panels-imported": "Lista nowych paneli biblioteki, które zostaną zaimportowane.",
-      "description-unique-identifier-uid": "Unikalny identyfikator (UID) pulpitu może służyć do jednoznacznej identyfikacji pulpitu między wieloma instalacjami usługi Grafana. Identyfikator UID umożliwia stosowanie spójnych adresów URL umożliwiających dostęp do pulpitów, dzięki czemu zmiana tytułu pulpitu nie spowoduje uszkodzenia żadnych zakładek prowadzących do tego pulpitu.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Istniejące panele biblioteki",
       "label-folder": "Folder",
       "label-name": "Imię",
@@ -12912,9 +12947,6 @@
     "title-loaded-pull-request-in-repo": "Ten zasób został wczytany z gałęzi, która właśnie została przez ciebie utworzona w repozytorium {{repoType}}, i jest widoczny tylko dla ciebie"
   },
   "provisioning": {
-    "banner": {
-      "message": "Ta funkcja jest obecnie aktywnie rozwijana. Aby uzyskać najlepsze wrażenia i najnowsze ulepszenia, zalecamy korzystanie z <2>nocnej kompilacji</2> aplikacji Grafana."
-    },
     "bitbucket": {
       "branch-required": "Gałąź jest wymagana",
       "permissions": {
@@ -13639,6 +13671,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Wybierz, co chcesz zsynchronizować",
       "step-configure-repo": "Skonfiguruj repozytorium",
       "step-connect": "Połącz",
