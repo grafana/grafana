@@ -182,6 +182,13 @@ export function transformSaveModelSchemaV2ToScene(
     .get(dashboard.layout.kind)
     .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
 
+  let templateLayoutManager: DashboardLayoutManager | undefined = undefined;
+  if (config.featureToggles.dashboardDefaultLayoutSelector && dashboard.preferences?.defaultLayoutTemplate) {
+    templateLayoutManager = layoutDeserializerRegistry
+      .get(dashboard.preferences.defaultLayoutTemplate.kind)
+      .deserialize(dashboard.preferences.defaultLayoutTemplate, {}, false);
+  }
+
   // Create profiler once and reuse to avoid duplicate metadata setting
   const dashboardProfiler = getDashboardSceneProfilerWithMetadata(metadata.name, dashboard.title);
 
@@ -207,6 +214,9 @@ export function transformSaveModelSchemaV2ToScene(
   const dashboardScene = new DashboardScene(
     {
       id: deprecatedId ? parseInt(deprecatedId, 10) : undefined,
+      preferences: {
+        defaultLayoutTemplate: templateLayoutManager,
+      },
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,

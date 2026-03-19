@@ -53,6 +53,7 @@ import {
   defaultTimeSettingsSpec,
   defaultDashboardLinkType,
   defaultDashboardLink,
+  DashboardPreferences,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -90,9 +91,20 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
   const timeSettingsDefaults = defaultTimeSettingsSpec();
 
+  let preferences: DashboardPreferences = {};
+
+  if (config.featureToggles.dashboardDefaultLayoutSelector && sceneDash.preferences.defaultLayoutTemplate) {
+    const template = sceneDash.preferences.defaultLayoutTemplate;
+    const serialized = template.serialize();
+    if (serialized.kind === 'AutoGridLayout' || serialized.kind === 'GridLayout') {
+      preferences.defaultLayoutTemplate = serialized;
+    }
+  }
+
   const dashboardSchemaV2: DeepPartial<DashboardV2Spec> = {
     //dashboard settings
     title: sceneDash.title,
+    preferences,
     description: sceneDash.description || undefined,
     cursorSync: getCursorSync(sceneDash),
     liveNow: getLiveNow(sceneDash),
