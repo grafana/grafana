@@ -1,4 +1,4 @@
-package datasource
+package converter
 
 import (
 	"encoding/json"

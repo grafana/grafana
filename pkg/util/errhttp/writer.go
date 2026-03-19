@@ -33,7 +33,7 @@ type ErrorOptions struct {
 // generic 500 Internal Server Error payload by default, this is
 // overrideable by providing [WithFallback] for a custom fallback
 // error.
-func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(ErrorOptions) ErrorOptions) {
+func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(ErrorOptions) ErrorOptions) int {
 	opt := ErrorOptions{}
 	for _, o := range opts {
 		opt = o(opt)
@@ -48,7 +48,7 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(int(status.Code))
 			_ = json.NewEncoder(w).Encode(status)
-			return
+			return int(status.Code)
 		}
 
 		gErr = fallbackOrInternalError(err, opt)
@@ -74,6 +74,7 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 	if err != nil {
 		defaultLogger.FromContext(ctx).Error("error while writing error", "error", err)
 	}
+	return pub.StatusCode
 }
 
 // WithFallback sets the default error returned to the user if the error
