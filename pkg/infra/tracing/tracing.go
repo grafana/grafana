@@ -2,11 +2,14 @@ package tracing
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"math"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -177,7 +180,11 @@ func (ots *TracingService) initOTLPTracerProvider() (*tracesdk.TracerProvider, e
 	if ots.cfg.Insecure {
 		opts = append(opts, otlptracegrpc.WithInsecure())
 	} else {
-		opts = append(opts, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(nil)))
+		tlsCfg, err := ots.buildTLSConfig()
+		if err != nil {
+			return nil, fmt.Errorf("failed to build TLS config for OTLP exporter: %w", err)
+		}
+		opts = append(opts, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(tlsCfg)))
 	}
 
 	client := otlptracegrpc.NewClient(opts...)
@@ -192,6 +199,32 @@ func (ots *TracingService) initOTLPTracerProvider() (*tracesdk.TracerProvider, e
 	}
 
 	return initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.CustomAttribs...)
+}
+
+func (ots *TracingService) buildTLSConfig() (*tls.Config, error) {
+	tlsCfg := &tls.Config{}
+
+	if ots.cfg.CACert != "" {
+		caPEM, err := os.ReadFile(ots.cfg.CACert)
+		if err != nil {
+			return nil, fmt.Errorf("reading CA certificate %q: %w", ots.cfg.CACert, err)
+		}
+		certPool := x509.NewCertPool()
+		if !certPool.AppendCertsFromPEM(caPEM) {
+			return nil, fmt.Errorf("failed to parse CA certificate from %q", ots.cfg.CACert)
+		}
+		tlsCfg.RootCAs = certPool
+	}
+
+	if ots.cfg.ClientCert != "" && ots.cfg.ClientKey != "" {
+		cert, err := tls.LoadX509KeyPair(ots.cfg.ClientCert, ots.cfg.ClientKey)
+		if err != nil {
+			return nil, fmt.Errorf("loading client certificate/key: %w", err)
+		}
+		tlsCfg.Certificates = []tls.Certificate{cert}
+	}
+
+	return tlsCfg, nil
 }
 
 func (ots *TracingService) initSampler() (tracesdk.Sampler, error) {

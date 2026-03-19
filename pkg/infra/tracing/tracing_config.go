@@ -27,6 +27,11 @@ type TracingConfig struct {
 
 	ProfilingIntegration bool
 	Insecure             bool
+
+	// TLS certificate paths for mTLS with the OTLP exporter.
+	CACert     string
+	ClientCert string
+	ClientKey  string
 }
 
 func ProvideTracingConfig(cfgProvider configprovider.ConfigProvider) (*TracingConfig, error) {
@@ -138,6 +143,9 @@ func ParseTracingConfig(cfg *setting.Cfg) (*TracingConfig, error) {
 	}
 	tc.Propagation = section.Key("propagation").MustString("")
 	tc.Insecure = section.Key("insecure").MustBool(true)
+	tc.CACert = section.Key("ca_cert").MustString("")
+	tc.ClientCert = section.Key("client_cert").MustString("")
+	tc.ClientKey = section.Key("client_key").MustString("")
 	return tc, nil
 }
 
