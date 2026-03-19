@@ -1,8 +1,6 @@
 package usermig
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -31,12 +29,21 @@ func (p *ServiceAccountsSameLoginCrossOrgs) SQL(dialect migrator.Dialect) string
 }
 
 func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	p.sess = sess
 	p.dialect = mg.Dialect
-	var err error
+	q := `
+		UPDATE ` + p.dialect.Quote("user") + `
+		SET login = 'sa-' || CAST(org_id AS TEXT) || '-' ||
+			CASE
+				WHEN SUBSTR(login, 1, 3) = 'sa-' THEN SUBSTR(login, 4)
+				ELSE login
+			END
+		WHERE login IS NOT NULL
+		  AND is_service_account = 1
+		  AND login NOT LIKE 'sa-' || CAST(org_id AS TEXT) || '-%';
+	`
 	switch p.dialect.DriverName() {
 	case migrator.Postgres:
-		_, err = p.sess.Exec(`
+		q = `
             UPDATE "user"
             SET login = 'sa-' || org_id::text || '-' ||
                 CASE
@@ -46,9 +53,9 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
             WHERE login IS NOT NULL
               AND is_service_account = true
               AND login NOT LIKE 'sa-' || org_id::text || '-%';
-        `)
+        `
 	case migrator.MySQL:
-		_, err = p.sess.Exec(`
+		q = `
             UPDATE user
             SET login = CONCAT('sa-', CAST(org_id AS CHAR), '-',
                 CASE
@@ -59,23 +66,11 @@ func (p *ServiceAccountsSameLoginCrossOrgs) Exec(sess *xorm.Session, mg *migrato
             WHERE login IS NOT NULL
               AND is_service_account = 1
               AND login NOT LIKE CONCAT('sa-', org_id, '-%');
-        `)
-	case migrator.SQLite:
-		_, err = p.sess.Exec(`
-            UPDATE ` + p.dialect.Quote("user") + `
-            SET login = 'sa-' || CAST(org_id AS TEXT) || '-' ||
-                CASE
-                    WHEN SUBSTR(login, 1, 3) = 'sa-' THEN SUBSTR(login, 4)
-                    ELSE login
-                END
-            WHERE login IS NOT NULL
-              AND is_service_account = 1
-              AND login NOT LIKE 'sa-' || CAST(org_id AS TEXT) || '-%';
-        `)
-
+        `
 	default:
-		return fmt.Errorf("dialect not supported: %s", p.dialect)
+		// nop
 	}
+	_, err := p.sess.Exec(q)
 	return err
 }
 
@@ -89,12 +84,21 @@ func (p *ServiceAccountsDeduplicateOrgInLogin) SQL(dialect migrator.Dialect) str
 
 func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	dialect := mg.Dialect
-	var err error
-
-	// var logins []Login
+	q := `
+		UPDATE ` + dialect.Quote("user") + ` AS u
+		SET login = 'sa-' || CAST(u.org_id AS TEXT) || SUBSTRING(u.login, LENGTH('sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT))+1)
+		WHERE u.login IS NOT NULL
+			AND u.is_service_account = 1
+			AND u.login LIKE 'sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT)||'-%'
+			AND NOT EXISTS (
+				SELECT 1
+				FROM  ` + dialect.Quote("user") + `AS u2
+				WHERE u2.login = 'sa-' || CAST(u.org_id AS TEXT) || SUBSTRING(u.login, LENGTH('sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT))+1)
+			);;
+	`
 	switch dialect.DriverName() {
 	case migrator.Postgres:
-		_, err = sess.Exec(`
+		q = `
             UPDATE "user" AS u
             SET login = 'sa-' || org_id::text || SUBSTRING(login FROM LENGTH('sa-' || org_id::text || '-' || org_id::text)+1)
             WHERE login IS NOT NULL
@@ -105,9 +109,9 @@ func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migr
                 FROM "user" AS u2
                 WHERE u2.login = 'sa-' || u.org_id::text || SUBSTRING(u.login FROM LENGTH('sa-' || u.org_id::text || '-' || u.org_id::text)+1)
             );;
-        `)
+        `
 	case migrator.MySQL:
-		_, err = sess.Exec(`
+		q = `
             UPDATE user AS u
             LEFT JOIN user AS u2 ON u2.login = CONCAT('sa-', u.org_id, SUBSTRING(u.login, LENGTH(CONCAT('sa-', u.org_id, '-', u.org_id))+1))
             SET u.login = CONCAT('sa-', u.org_id, SUBSTRING(u.login, LENGTH(CONCAT('sa-', u.org_id, '-', u.org_id))+1))
@@ -115,23 +119,10 @@ func (p *ServiceAccountsDeduplicateOrgInLogin) Exec(sess *xorm.Session, mg *migr
                 AND u.is_service_account = 1
                 AND u.login LIKE CONCAT('sa-', u.org_id, '-', u.org_id, '-%')
                 AND u2.login IS NULL;
-        `)
-	case migrator.SQLite:
-		_, err = sess.Exec(`
-            UPDATE ` + dialect.Quote("user") + ` AS u
-            SET login = 'sa-' || CAST(u.org_id AS TEXT) || SUBSTRING(u.login, LENGTH('sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT))+1)
-            WHERE u.login IS NOT NULL
-                AND u.is_service_account = 1
-                AND u.login LIKE 'sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT)||'-%'
-                AND NOT EXISTS (
-                    SELECT 1
-                    FROM  ` + dialect.Quote("user") + `AS u2
-                    WHERE u2.login = 'sa-' || CAST(u.org_id AS TEXT) || SUBSTRING(u.login, LENGTH('sa-'||CAST(u.org_id AS TEXT)||'-'||CAST(u.org_id AS TEXT))+1)
-                );;
-        `)
+        `
 	default:
-		return fmt.Errorf("dialect not supported: %s", dialect)
+		// nop
 	}
-
+	_, err := sess.Exec(q)
 	return err
 }
