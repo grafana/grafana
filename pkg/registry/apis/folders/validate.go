@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"slices"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -18,6 +21,41 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+var errOwnerRefsOnManagedFolder = fmt.Errorf("cannot set owner references on folders managed by a repository")
+
+func isRepoManaged(f *folders.Folder) bool {
+	meta, err := utils.MetaAccessor(f)
+	if err != nil {
+		return false
+	}
+	kind := meta.GetAnnotation(utils.AnnoKeyManagerKind)
+	return kind != "" && utils.ParseManagerKindString(kind) == utils.ManagerKindRepo
+}
+
+func validateOwnerReferencesOnManagedFolder(obj *folders.Folder, old *folders.Folder) error {
+	if !isRepoManaged(obj) && (old == nil || !isRepoManaged(old)) {
+		return nil
+	}
+
+	gr := schema.GroupResource{
+		Group:    folders.FolderResourceInfo.GroupVersionResource().Group,
+		Resource: folders.FolderResourceInfo.GroupVersionResource().Resource,
+	}
+
+	if old == nil {
+		if len(obj.OwnerReferences) > 0 {
+			return apierrors.NewForbidden(gr, obj.Name, errOwnerRefsOnManagedFolder)
+		}
+		return nil
+	}
+
+	if !apiequality.Semantic.DeepEqual(old.OwnerReferences, obj.OwnerReferences) {
+		return apierrors.NewForbidden(gr, obj.Name, errOwnerRefsOnManagedFolder)
+	}
+
+	return nil
+}
 
 func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int) error {
 	id := f.Name

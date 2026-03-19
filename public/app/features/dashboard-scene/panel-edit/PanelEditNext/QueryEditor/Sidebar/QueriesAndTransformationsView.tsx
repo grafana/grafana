@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { LoadingBar } from '@grafana/ui';
 
 import { PENDING_CARD_ID, QueryEditorType } from '../../constants';
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
@@ -15,7 +14,7 @@ import { useSidebarDragAndDrop } from './DraggableList/useSidebarDragAndDrop';
 import { SidebarCollapsableHeader } from './SidebarCollapsableHeader';
 
 export function QueriesAndTransformationsView() {
-  const { queries, isLoading } = useQueryRunnerContext();
+  const { queries } = useQueryRunnerContext();
   const { transformations } = usePanelContext();
   const { pendingExpression, pendingSavedQuery, pendingTransformation } = useQueryEditorUIContext();
   const { onQueryDragEnd, onTransformationDragEnd } = useSidebarDragAndDrop();
@@ -25,18 +24,6 @@ export function QueriesAndTransformationsView() {
 
   const expandQueries = useCallback(() => setQueriesOpen(true), []);
   const expandTransformations = useCallback(() => setTransformationsOpen(true), []);
-
-  if (isLoading) {
-    return (
-      <LoadingBar
-        width={400}
-        ariaLabel={t(
-          'query-editor-next.sidebar.loading-queries-transformations',
-          'Loading queries and transformations'
-        )}
-      />
-    );
-  }
 
   return (
     <>

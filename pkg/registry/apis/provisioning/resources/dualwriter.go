@@ -177,7 +177,7 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 		leafPath := strings.TrimSuffix(opts.Path, "/")
 		err = safepath.Walk(ctx, opts.Path, func(ctx context.Context, segPath string) error {
 			folderPath := segPath + "/"
-			existing, readErr := ReadFolderMetadata(ctx, r.repo, folderPath, opts.Ref)
+			existing, _, readErr := ReadFolderMetadata(ctx, r.repo, folderPath, opts.Ref)
 			if readErr == nil {
 				if segPath == leafPath {
 					return apierrors.NewAlreadyExists(
@@ -397,7 +397,7 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 		}
 	}
 
-	if err := r.authorizer.AuthorizeMoveFolder(ctx, opts.OriginalPath, opts.Path); err != nil {
+	if err := r.authorizer.AuthorizeMoveByPath(ctx, opts.OriginalPath, opts.Path); err != nil {
 		return nil, fmt.Errorf("authorize move folder: %w", err)
 	}
 
@@ -567,7 +567,7 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 		}
 	}
 
-	if err := r.authorizer.AuthorizeDeleteFolder(ctx, opts.Path); err != nil {
+	if err := r.authorizer.AuthorizeDeleteByPath(ctx, opts.Path); err != nil {
 		return nil, fmt.Errorf("authorize delete folder: %w", err)
 	}
 

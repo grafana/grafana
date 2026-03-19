@@ -27,12 +27,7 @@ func Mutate(_ context.Context, obj runtime.Object) error {
 	if repo.Spec.Git.URL != "" {
 		url := strings.TrimSpace(repo.Spec.Git.URL)
 		if url != "" {
-			// Remove any trailing slashes
 			url = strings.TrimRight(url, "/")
-			// Only add .git if it's not already present
-			if !strings.HasSuffix(url, ".git") {
-				url = url + ".git"
-			}
 			repo.Spec.Git.URL = url
 		}
 	}

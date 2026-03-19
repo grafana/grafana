@@ -32,12 +32,13 @@ import (
 )
 
 const (
-	defaultListBufferSize       = 100
-	prunerMaxEvents             = 20
-	defaultEventRetentionPeriod = 1 * time.Hour
-	defaultEventPruningInterval = 5 * time.Minute
-	defaultSearchLookback       = 1 * time.Second
-	clusterScopeNamespace       = "__cluster__"
+	defaultListBufferSize             = 100
+	defaultEventRetentionPeriod       = 1 * time.Hour
+	defaultEventPruningLimit          = 20
+	defaultEventPruningInterval       = 5 * time.Minute
+	defaultSearchLookback             = 1 * time.Second
+	defaultGarbageCollectionBatchWait = 1 * time.Second
+	clusterScopeNamespace             = "__cluster__"
 )
 
 type GarbageCollectionConfig struct {
@@ -45,6 +46,7 @@ type GarbageCollectionConfig struct {
 	DryRun           bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
+	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
 	MaxAge           time.Duration // retention period
 	DashboardsMaxAge time.Duration // dashboard retention
 }
@@ -76,7 +78,7 @@ type kvStorageBackend struct {
 	eventStore                   *eventStore
 	notifier                     notifier
 	log                          log.Logger
-	withPruner                   bool
+	disablePruner                bool
 	eventRetentionPeriod         time.Duration
 	eventPruningInterval         time.Duration
 	historyPruner                Pruner
@@ -105,13 +107,13 @@ var _ KVBackend = &kvStorageBackend{}
 
 type KVBackend interface {
 	StorageBackend
-	resourcepb.DiagnosticsServer
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 	Stop()
 }
 
 type KVBackendOptions struct {
 	KvStore                      KV
-	WithPruner                   bool
+	DisablePruner                bool
 	WithExperimentalClusterScope bool                  // Allow empty namespace to be used for cluster-scoped resources.
 	EventRetentionPeriod         time.Duration         // How long to keep events (default: 1 hour)
 	EventPruningInterval         time.Duration         // How often to run the event pruning (default: 5 minutes)
@@ -184,6 +186,11 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		searchLookback = defaultSearchLookback
 	}
 
+	garbageCollection := opts.GarbageCollection
+	if garbageCollection.BatchWait <= 0 {
+		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
+	}
+
 	backend := &kvStorageBackend{
 		kv:                           kv,
 		bulkLock:                     NewBulkLock(),
@@ -200,8 +207,9 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		dbKeepAlive:                  opts.DBKeepAlive,
 		lastImportStore:              newLastImportStore(kv),
 		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
-		garbageCollection:            opts.GarbageCollection,
+		garbageCollection:            garbageCollection,
 		searchLookback:               opts.SearchLookback,
+		disablePruner:                opts.DisablePruner,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -301,8 +309,10 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		return fmt.Errorf("invalid pruning key, all fields must be set: %+v", key)
 	}
 
+	prunerMaxLimit := k.prunerHistoryLimit(key.Group, key.Resource)
 	counter := 0
-	// iterate over all keys for the resource and delete versions beyond the latest 20
+	deleted := 0
+	// iterate over all keys for the resource and delete versions beyond the configured limit
 	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
 		Namespace: key.Namespace,
 		Group:     key.Group,
@@ -314,25 +324,33 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		}
 
 		// Pruner needs to exclude deleted events
-		if counter < prunerMaxEvents && datakey.Action != DataActionDeleted {
+		if counter < prunerMaxLimit && datakey.Action != DataActionDeleted {
 			counter++
 			continue
 		}
 
-		// If we already have 20 versions, delete any more create or update events
+		// If we already have the configured number of versions, delete any more create or update events
 		if datakey.Action != DataActionDeleted {
 			err := k.dataStore.Delete(ctx, datakey)
 			if err != nil {
 				return err
 			}
+			deleted += 1
 		}
 	}
+
+	k.log.Debug("pruned history successfully",
+		"namespace", key.Namespace,
+		"group", key.Group,
+		"resource", key.Resource,
+		"name", key.Name,
+		"rows", deleted)
 
 	return nil
 }
 
 func (k *kvStorageBackend) initPruner(ctx context.Context) error {
-	if !k.withPruner {
+	if k.disablePruner {
 		k.log.Debug("Pruner disabled, using noop pruner")
 		k.historyPruner = &NoopPruner{}
 		return nil
@@ -453,6 +471,9 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	startKey := prefix
 	endKey := PrefixRangeEnd(prefix)
 
+	// track keys that have been processed to avoid processing the same key twice
+	seenKeys := map[ListRequestKey]struct{}{}
+
 	for {
 		keysProcessed := int64(0)
 		keysDeleted := int64(0)
@@ -495,6 +516,13 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			// if the action is deleted and the resource version is older than the cutoff, get all previous versions
 			// of the same resource and delete them in batch
 			if dk.Action == DataActionDeleted && dk.ResourceVersion < cutoffTimestamp {
+				// ensure we don't process/count the same resource twice
+				if _, seen := seenKeys[k]; seen {
+					continue
+				}
+				// mark the key as seen
+				seenKeys[k] = struct{}{}
+
 				startKeyToDelete := k.Prefix()
 				// end key is exclusive, so we need to add a suffix to make sure we include all the versions we want to delete
 				endKeyToDelete := PrefixRangeEnd(dk.String())
@@ -535,8 +563,11 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 		totalDeleted += keysDeleted
 
-		// wait a second between batches to avoid overwhelming the datastore
-		<-time.After(time.Second)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(b.garbageCollection.BatchWait):
+		}
 	}
 
 	if totalDeleted > 0 {
@@ -588,6 +619,13 @@ func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName 
 		cutoffTimestamp = rvmanager.SnowflakeFromRV(cutoffTimestamp)
 	}
 	return cutoffTimestamp
+}
+
+func (b *kvStorageBackend) prunerHistoryLimit(group, resource string) int {
+	if limit, ok := LookupCustomPrunerHistoryLimit(group, resource); ok {
+		return limit
+	}
+	return defaultEventPruningLimit
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
@@ -1661,6 +1699,7 @@ func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.
 	}
 }
 
+//nolint:gocyclo
 func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
 	// TODO cross-node lock
 	err := b.bulkLock.Start(setting.Collection)
@@ -1721,6 +1760,15 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			b.log.Error("failed to delete collection: %s", err)
 			return rsp
 		}
+
+		// Delete legacy resource rows for this collection so they can be re-synced after import.
+		if b.rvManager != nil {
+			if err := b.dataStore.deleteLegacyResourceCollection(ctx, b.rvManager.DB(), key.Namespace, key.Group, key.Resource); err != nil {
+				b.log.Error("failed to delete legacy resource collection", "error", err)
+				return rsp
+			}
+		}
+
 		summaries[NSGR(key)] = &resourcepb.BulkResponse_Summary{
 			Namespace:     key.Namespace,
 			Group:         key.Group,
@@ -1739,6 +1787,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 
 	updatedResources := make(map[NamespacedResource]bool)
+	// Track the last micro RV per resource name for computing previous_resource_version in compat mode.
+	lastMicroRV := make(map[string]int64)
 
 	for iter.Next() {
 		if iter.RollbackRequested() {
@@ -1827,6 +1877,47 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 		saved = append(saved, dataKey)
 		updatedResources[NamespacedResource{Namespace: dataKey.Namespace, Group: dataKey.Group, Resource: dataKey.Resource}] = true
+
+		// Fill in legacy columns on the resource_history row that was just inserted with only key_path and value.
+		if b.rvManager != nil {
+			microRV := rvmanager.RVFromBulkSnowflake(dataKey.ResourceVersion)
+			generation := obj.GetGeneration()
+			if action == DataActionDeleted {
+				generation = 0
+			}
+
+			// For creates, previous RV is 0. For updates/deletes, it's the RV of the previous event for this resource.
+			nameKey := dataKey.Group + "/" + dataKey.Resource + "/" + dataKey.Namespace + "/" + dataKey.Name
+			var previousRV int64
+			if action != DataActionCreated {
+				previousRV = lastMicroRV[nameKey]
+			}
+
+			if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, b.rvManager.DB(), dataKey, microRV, previousRV, generation); err != nil {
+				b.log.Error("failed to update legacy resource_history for bulk", "error", err)
+				return rsp
+			}
+			lastMicroRV[nameKey] = microRV
+		}
+	}
+
+	// Sync legacy resource table and bump RV counter for each collection.
+	if b.rvManager != nil && rsp.Error == nil {
+		for _, key := range setting.Collection {
+			if err := b.dataStore.syncLegacyResourceFromHistory(ctx, b.rvManager.DB(), key.Namespace, key.Group, key.Resource); err != nil {
+				b.log.Error("failed to sync legacy resource from history", "error", err)
+				return rsp
+			}
+
+			// Bump the RV counter so subsequent WriteEvent calls generate RVs above the bulk-imported ones.
+			// Without this, ExecWithRV could produce colliding or lower RVs. Same pattern as SQL backend's ProcessBulk.
+			_, err := b.rvManager.ExecWithRV(ctx, key, func(tx db.Tx) (string, error) {
+				return "", nil
+			})
+			if err != nil {
+				b.log.Warn("error increasing RV for bulk", "error", err)
+			}
+		}
 	}
 
 	if rsp.Error == nil {

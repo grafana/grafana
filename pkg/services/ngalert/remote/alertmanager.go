@@ -19,6 +19,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
+	alertingInstrument "github.com/grafana/alerting/http/instrument"
 	"github.com/grafana/alerting/http/v0mimir"
 	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -45,6 +46,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
+
+const silenceOperationName = "/alertmanager/api/v2/silence/{uid}"
 
 type stateStore interface {
 	GetSilences(ctx context.Context) (string, error)
@@ -517,6 +520,9 @@ func (am *Alertmanager) DeleteSilence(ctx context.Context, silenceID string) err
 		}
 	}()
 
+	// Remove the silence UID from the operation name.
+	ctx = context.WithValue(ctx, alertingInstrument.OperationNameContextKey, silenceOperationName)
+
 	params := amsilence.NewDeleteSilenceParamsWithContext(ctx).WithSilenceID(strfmt.UUID(silenceID))
 	_, err := am.amClient.Silence.DeleteSilence(params)
 	if err != nil {
@@ -531,6 +537,9 @@ func (am *Alertmanager) GetSilence(ctx context.Context, silenceID string) (apimo
 			am.log.Error("Panic while getting silence", "err", r)
 		}
 	}()
+
+	// Remove the silence UID from the operation name.
+	ctx = context.WithValue(ctx, alertingInstrument.OperationNameContextKey, silenceOperationName)
 
 	params := amsilence.NewGetSilenceParamsWithContext(ctx).WithSilenceID(strfmt.UUID(silenceID))
 	res, err := am.amClient.Silence.GetSilence(params)

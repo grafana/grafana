@@ -102,6 +102,7 @@ func newPermissionRegistry() *permissionRegistry {
 		"secret.securevalues": "secret.securevalues:uid:",
 		"secret.keepers":      "secret.keepers:uid:",
 		"playlists":           "playlists:uid:",
+		"routes":              "routes:uid:",
 	}
 	return &permissionRegistry{
 		actionScopePrefixes: make(map[string]PrefixSet, 200),

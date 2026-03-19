@@ -569,7 +569,11 @@ export function sceneVariablesSetToSchemaV2Variables(
 
           baseFilters: validateFiltersOrigin(variable.state.baseFilters) || [],
           filters: [
-            ...validateFiltersOrigin(variable.state.originFilters),
+            ...validateFiltersOrigin(variable.getOriginalFilters()).map(
+              ({ key, operator, value, values, keyLabel, valueLabels, origin }) => {
+                return { key, origin, value, values, valueLabels, keyLabel, operator };
+              }
+            ),
             ...validateFiltersOrigin(variable.state.filters),
           ],
           defaultKeys: variable.state.defaultKeys || [],

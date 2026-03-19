@@ -1,0 +1,165 @@
+# This workflow builds the Go binaries for the different architectures and operating systems to ensure that
+# incoming pull requests are able to be compiled for all supported architectures and operating systems.
+name: Build Go (matrix)
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+permissions: {}
+
+jobs:
+  detect-changes:
+    name: Detect whether code changed
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect-changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+          fetch-depth: 2
+      - name: Detect changes
+        id: detect-changes
+        uses: ./.github/actions/change-detection
+        with:
+          self: .github/workflows/build-go-matrix.yml
+
+  build-go:
+    needs: detect-changes
+    # Run on `main` and on pull_requests where changes were detected
+    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && needs.detect-changes.outputs.changed == 'true')
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux/amd64
+            goos: linux
+            goarch: amd64
+          - name: linux/arm64
+            goos: linux
+            goarch: arm64
+          - name: linux/s390x
+            goos: linux
+            goarch: s390x
+          - name: linux/armv6
+            goos: linux
+            goarch: arm
+            goarm: "6"
+          - name: linux/armv7
+            goos: linux
+            goarch: arm
+            goarm: "7"
+          - name: darwin/arm64
+            goos: darwin
+            goarch: arm64
+          - name: darwin/amd64
+            goos: darwin
+            goarch: amd64
+          - name: windows/arm64
+            goos: windows
+            goarch: arm64
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+      - name: Build Go (${{ matrix.name }})
+        env:
+          CGO_ENABLED: "0"
+          GO_BUILD_OS: ${{ matrix.goos }}
+          GO_BUILD_ARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+        run: make build-go
+
+  build-go-enterprise:
+    needs: detect-changes
+    if: github.event_name != 'pull_request' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true')
+    name: ${{ matrix.name }} (enterprise)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux/amd64
+            goos: linux
+            goarch: amd64
+          - name: linux/arm64
+            goos: linux
+            goarch: arm64
+          - name: linux/s390x
+            goos: linux
+            goarch: s390x
+          - name: linux/armv6
+            goos: linux
+            goarch: arm
+            goarm: "6"
+          - name: linux/armv7
+            goos: linux
+            goarch: arm
+            goarm: "7"
+          - name: darwin/arm64
+            goos: darwin
+            goarch: arm64
+          - name: darwin/amd64
+            goos: darwin
+            goarch: amd64
+          - name: windows/arm64
+            goos: windows
+            goarch: arm64
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Setup Enterprise
+        uses: ./.github/actions/setup-enterprise
+        with:
+          github-app-name: 'grafana-ci-bot'
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+      - name: Build Go (${{ matrix.name }})
+        env:
+          CGO_ENABLED: "0"
+          GO_BUILD_OS: ${{ matrix.goos }}
+          GO_BUILD_ARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+        run: make build-go
+
+  # Job required by branch rules: runs even when detect-changes or build jobs were skipped,
+  # and fails if any build-go or build-go-enterprise matrix job failed.
+  required-build-go-matrix:
+    needs:
+      - detect-changes
+      - build-go
+      - build-go-enterprise
+    if: always()
+    name: All steps completed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Check jobs
+        uses: ./.github/actions/check-jobs
+        with:
+          needs: ${{ toJson(needs) }}
+          failure-message: "One or more build-go matrix jobs failed"
+          success-message: "All steps completed successfully"

@@ -34,6 +34,28 @@ func TestShortURLQueries(t *testing.T) {
 						OrgID: 1,
 					}),
 				},
+				{
+					Name: "last-id",
+					Data: getShortURLQuery(&ShortURLQuery{
+						OrgID:  1,
+						LastID: 5,
+					}),
+				},
+				{
+					Name: "limit",
+					Data: getShortURLQuery(&ShortURLQuery{
+						OrgID: 1,
+						Limit: 10,
+					}),
+				},
+				{
+					Name: "all",
+					Data: getShortURLQuery(&ShortURLQuery{
+						OrgID:  1,
+						LastID: 5,
+						Limit:  10,
+					}),
+				},
 			},
 		},
 	})

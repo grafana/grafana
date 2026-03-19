@@ -12,7 +12,7 @@ import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DataLayerControl } from './DataLayerControl';
 
 export const NEW_ANNOTATION_NAME = 'New annotation';
-const NEW_ANNOTATION_COLOR = 'red';
+export const NEW_ANNOTATION_COLOR = 'red';
 
 export interface DashboardDataLayerSetState extends SceneDataLayerProviderState {
   alertStatesLayer?: AlertStatesDataLayer;
