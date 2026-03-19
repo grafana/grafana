@@ -1,10 +1,12 @@
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, ConfirmModal, Stack } from '@grafana/ui';
+import { Alert, Button, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { useDisconnectOrphanedResource } from '../../hooks/useDisconnectOrphanedResource';
+import { useOrphanedResourceActions } from '../../hooks/useOrphanedResourceActions';
+
+import { OrphanedResourceActionConfirmModal, OrphanedResourceModalAction } from './OrphanedResourceActionConfirmModal';
 
 interface Props {
   uid: string;
@@ -16,25 +18,35 @@ interface Props {
 /**
  * Shared banner/alert for orphaned resources (dashboards or folders) whose
  * provisioning repository no longer exists. All users see the warning;
- * only admins get the "Disconnect" action.
+ * admins can release or delete the resource (API wiring pending).
  */
 export function OrphanedResourceBanner({ uid, resourceType, variant = 'banner' }: Props) {
-  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingAction, setPendingAction] = useState<OrphanedResourceModalAction | null>(null);
   const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
-  const { disconnect, isDisconnecting } = useDisconnectOrphanedResource({
+  const { submitRelease, submitDelete, isSubmitting, error, clearError } = useOrphanedResourceActions({
     uid,
     resourceType,
   });
 
-  const handleConfirm = async () => {
-    // do something
-  };
-
   const resourceLabel = resourceType === 'dashboards' ? 'dashboard' : 'folder';
+
+  const openConfirm = (nextAction: OrphanedResourceModalAction) => {
+    clearError();
+    setPendingAction(nextAction);
+  };
 
   return (
     <>
+      {error != null && (
+        <Alert
+          severity="error"
+          title={t('provisioning.orphaned-resource-banner.action-error-title', 'Something went wrong')}
+          onRemove={clearError}
+        >
+          {error instanceof Error ? error.message : String(error)}
+        </Alert>
+      )}
       <Alert
         severity="warning"
         title={t(
@@ -43,34 +55,51 @@ export function OrphanedResourceBanner({ uid, resourceType, variant = 'banner' }
           { resourceLabel }
         )}
         style={variant === 'banner' ? { flex: 0 } : undefined}
-        onRemove={isAdmin ? () => setShowConfirm(true) : undefined}
-        buttonContent={isAdmin ? t('provisioning.orphaned-resource-banner.disconnect-button', 'Disconnect from repository') : undefined}
+        action={
+          isAdmin ? (
+            <Stack direction="row" gap={1} alignItems="center">
+              <Button variant="secondary" disabled={isSubmitting} onClick={() => openConfirm('release')}>
+                {t('provisioning.orphaned-resource-banner.release-button', 'Release')}
+              </Button>
+              <Button variant="destructive" disabled={isSubmitting} onClick={() => openConfirm('delete')}>
+                {t('provisioning.orphaned-resource-banner.delete-button', 'Delete')}
+              </Button>
+            </Stack>
+          ) : undefined
+        }
       >
         <Stack direction="column" gap={1}>
           {variant === 'banner' ? (
             <Trans i18nKey="provisioning.orphaned-resource-banner.message-banner">
               The provisioning repository that managed this resource has been removed. You can view this resource but
-              cannot save or delete it until it is disconnected from the missing repository.
+              cannot save or delete it until it is released from the missing repository or removed.
             </Trans>
           ) : (
             <Trans i18nKey="provisioning.orphaned-resource-banner.message-alert">
               The provisioning repository that managed this resource has been removed. This resource cannot be saved or
-              deleted through the normal provisioning workflow until it is disconnected.
+              deleted through the normal provisioning workflow until it is released or removed.
+            </Trans>
+          )}
+          {isAdmin ? (
+            <Trans i18nKey="provisioning.orphaned-resource-banner.admin-actions-hint" values={{ resourceLabel }}>
+              As an administrator, use Release to convert this {{resourceLabel}} into a regular {{resourceLabel}} you can
+              edit and save, or Delete to remove it permanently.
+            </Trans>
+          ) : (
+            <Trans i18nKey="provisioning.orphaned-resource-banner.contact-admin">
+              Contact your Grafana administrator to release or delete this resource.
             </Trans>
           )}
         </Stack>
       </Alert>
-      <ConfirmModal
-        isOpen={showConfirm}
-        title={t('provisioning.orphaned-resource-banner.confirm-title', 'Disconnect from repository?')}
-        body={t(
-          'provisioning.orphaned-resource-banner.confirm-body',
-          'This will remove all provisioning annotations from this {{resourceLabel}}, converting it to a regular {{resourceLabel}} that can be saved and deleted normally. This action cannot be undone.',
-          { resourceLabel }
-        )}
-        confirmText={t('provisioning.orphaned-resource-banner.confirm-button', 'Disconnect')}
-        onConfirm={handleConfirm}
-        onDismiss={() => setShowConfirm(false)}
+      <OrphanedResourceActionConfirmModal
+        action={pendingAction}
+        resourceLabel={resourceLabel}
+        isSubmitting={isSubmitting}
+        onDismiss={() => setPendingAction(null)}
+        submitRelease={submitRelease}
+        submitDelete={submitDelete}
+        onSuccess={() => setPendingAction(null)}
       />
     </>
   );
