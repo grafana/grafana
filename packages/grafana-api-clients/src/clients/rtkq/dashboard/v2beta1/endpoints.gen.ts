@@ -873,6 +873,7 @@ export type DashboardAdhocVariableSpec = {
   baseFilters: DashboardAdHocFilterWithLabels[];
   defaultKeys: DashboardMetricFindValue[];
   description?: string;
+  docsUrl?: string;
   filters: DashboardAdHocFilterWithLabels[];
   hide: string;
   label?: string;
@@ -908,6 +909,7 @@ export type DashboardVariableOption = {
 export type DashboardConstantVariableSpec = {
   current: DashboardVariableOption;
   description?: string;
+  docsUrl?: string;
   hide: string;
   label?: string;
   name: string;
@@ -924,6 +926,7 @@ export type DashboardCustomVariableSpec = {
   allowCustomValue: boolean;
   current: DashboardVariableOption;
   description?: string;
+  docsUrl?: string;
   hide: string;
   includeAll: boolean;
   label?: string;
@@ -944,6 +947,7 @@ export type DashboardDatasourceVariableSpec = {
   allowCustomValue: boolean;
   current: DashboardVariableOption;
   description?: string;
+  docsUrl?: string;
   hide: string;
   includeAll: boolean;
   label?: string;
@@ -967,6 +971,7 @@ export type DashboardGroupByVariableSpec = {
   current: DashboardVariableOption;
   defaultValue?: DashboardVariableOption;
   description?: string;
+  docsUrl?: string;
   hide: string;
   label?: string;
   multi: boolean;
@@ -990,6 +995,7 @@ export type DashboardIntervalVariableSpec = {
   auto_min: string;
   current: DashboardVariableOption;
   description?: string;
+  docsUrl?: string;
   hide: string;
   label?: string;
   name: string;
@@ -1009,6 +1015,7 @@ export type DashboardQueryVariableSpec = {
   current: DashboardVariableOption;
   definition?: string;
   description?: string;
+  docsUrl?: string;
   hide: string;
   includeAll: boolean;
   label?: string;
@@ -1034,6 +1041,7 @@ export type DashboardSwitchVariableSpec = {
   current: string;
   description?: string;
   disabledValue: string;
+  docsUrl?: string;
   enabledValue: string;
   hide: string;
   label?: string;
@@ -1048,6 +1056,7 @@ export type DashboardSwitchVariableKind = {
 export type DashboardTextVariableSpec = {
   current: DashboardVariableOption;
   description?: string;
+  docsUrl?: string;
   hide: string;
   label?: string;
   name: string;
