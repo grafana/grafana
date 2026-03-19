@@ -1647,21 +1647,11 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/pages/DashboardScenePage.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/pages/DashboardScenePage.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/pages/PublicDashboardScenePage.test.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -1726,16 +1716,6 @@
   },
   "public/app/features/dashboard-scene/serialization/buildNewDashboardSaveModel.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/serialization/layoutSerializers/utils.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.test.ts": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -1812,11 +1792,6 @@
   },
   "public/app/features/dashboard-scene/utils/PanelModelCompatibilityWrapper.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/createPanelDataProvider.ts": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
