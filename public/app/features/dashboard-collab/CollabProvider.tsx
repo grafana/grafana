@@ -27,7 +27,6 @@ import { config, getGrafanaLiveSrv, locationService } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
-import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import { setDashboardMutationClient } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
@@ -218,13 +217,17 @@ export function CollabProvider({ scene, dashboardUID, namespace, children }: Pro
       localUserIdRef.current
     );
     clientRef.current = wrapper;
+    // Replace the client on both the scene (so getMutationClient() returns the wrapper)
+    // and the global API (so plugins also use the wrapper).
+    scene.setMutationClient(wrapper);
     setDashboardMutationClient(wrapper);
     debugLog('CollabMutationClient wrapper installed');
 
     return () => {
       debugLog('CollabProvider unmounting — restoring original mutation client', { dashboardUID });
       clientRef.current = null;
-      // Restore the original unwrapped client
+      // Restore the original unwrapped client on both scene and global API
+      scene.setMutationClient(originalClient);
       setDashboardMutationClient(originalClient);
     };
   }, [scene, dashboardUID, namespace]);

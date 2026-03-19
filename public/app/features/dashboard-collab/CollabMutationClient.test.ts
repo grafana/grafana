@@ -1,4 +1,4 @@
-import { CollabMutationClient, type PublishOp } from './CollabMutationClient';
+import { CollabMutationClient } from './CollabMutationClient';
 
 import type { MutationClient, MutationRequest, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
 import { isExtractionSuppressed, unsuppressExtraction } from './opExtractor';

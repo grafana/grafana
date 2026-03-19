@@ -80,6 +80,7 @@ function makeMockScene(): any {
     forceRender: jest.fn(),
     setState: jest.fn(),
     getMutationClient: jest.fn().mockReturnValue(makeMockMutationClient()),
+    setMutationClient: jest.fn(),
   };
 }
 
