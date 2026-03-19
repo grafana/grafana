@@ -154,6 +154,9 @@ jobs:
     name: All steps completed
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Check jobs
         uses: ./.github/actions/check-jobs
         with:
