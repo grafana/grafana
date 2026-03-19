@@ -953,3 +953,39 @@ func setupBackendTestStorageDisabled(t *testing.T) (testBackend, context.Context
 		TestDBProvider: dbp,
 	}, ctx
 }
+
+func TestBackend_prunerHistoryLimit(t *testing.T) {
+	tests := []struct {
+		name     string
+		group    string
+		resource string
+		expected int64
+	}{
+		{
+			name:     "plugin resource returns custom limit",
+			group:    "plugins.grafana.app",
+			resource: "plugins",
+			expected: 3,
+		},
+		{
+			name:     "dashboard resource returns default limit",
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			expected: defaultPrunerHistoryLimit,
+		},
+		{
+			name:     "other resource returns default limit",
+			group:    "some.app",
+			resource: "resources",
+			expected: defaultPrunerHistoryLimit,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			b, _ := setupBackendTest(t)
+			limit := b.prunerHistoryLimit(tc.group, tc.resource)
+			require.Equal(t, tc.expected, limit)
+		})
+	}
+}

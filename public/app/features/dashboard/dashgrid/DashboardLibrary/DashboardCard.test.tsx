@@ -108,7 +108,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Use dashboard' }));
+      await user.click(screen.getByRole('button', { name: 'View dashboard: Test Dashboard' }));
 
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
@@ -123,8 +123,8 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'View template' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Use dashboard' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'View template: Test Dashboard' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'View dashboard: Test Dashboard' })).not.toBeInTheDocument();
     });
 
     it('should display dashboard button text', () => {
@@ -137,8 +137,8 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'Use dashboard' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'View template' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'View dashboard: Test Dashboard' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'View template: Test Dashboard' })).not.toBeInTheDocument();
     });
   });
 
@@ -476,7 +476,7 @@ describe('DashboardCard', () => {
       // With dashboardValidatorApp enabled, details button moves into the title row
       const buttons = screen.getAllByRole('button');
       expect(buttons[0]).toHaveAttribute('aria-label', 'Details');
-      expect(buttons[1]).toHaveTextContent('Use dashboard');
+      expect(buttons[1]).toHaveTextContent('View dashboard');
       expect(buttons[2]).toHaveTextContent('Check compatibility');
     });
   });

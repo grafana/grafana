@@ -2353,6 +2353,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2377,7 +2378,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2387,8 +2387,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2447,9 +2448,6 @@
       "label-payload": "Полезные данные",
       "label-use-existing-alert-instances": "Использовать существующие экземпляры оповещений",
       "reference": "Ссылка"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Ускорьте создание оповещений, используя одно из наших специализированных приложений"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Это правило управляется плагином {{pluginName}}"
@@ -2972,6 +2970,9 @@
       "error-button": "Ошибка",
       "export-all-grafana-rules": "Экспорт всех правил Grafana",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Отменить поиск",
         "no-more-results": "Больше нет результатов. Найдено правил: {{numberOfRules}}",
@@ -3127,8 +3128,6 @@
       "dashboard": "Дашборд",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Справка по поиску по источникам данных",
       "filter-options": {
-        "aria-label": "Параметры фильтра",
-        "aria-label-show-filters": "Фильтр",
         "placeholder-namespace": "Выбрать пространство имен",
         "placeholder-search-input": "Выполните поиск по имени или введите запрос фильтра..."
       },
@@ -3160,6 +3159,9 @@
       "state": "Состояние",
       "title-search-help": "Справка по поиску",
       "view-as": "Просмотр в виде"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Удаляется",
@@ -4877,7 +4879,6 @@
     "all": "Все",
     "apply": "Применить",
     "cancel": "Отмена",
-    "clear": "Очистить",
     "collapse": "Свернуть",
     "disabled": "Отключено",
     "discard": "Отменить",
@@ -5979,6 +5980,12 @@
         "title": "Настройки времени панели"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Перед добавлением оповещений необходимо сохранить дашборд.",
@@ -6613,6 +6620,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7367,6 +7385,8 @@
       "cannot-be-saved": "Дашборд невозможно сохранить из пользовательского интерфейса Grafana, поскольку он подготовлен в другом источнике. Скопируйте модель JSON или сохраните ее в файл ниже. Затем можно обновить свой дашборд в источнике подготовки.",
       "copy-json-to-clipboard": "Копировать JSON в буфер обмена",
       "file-path": "<strong>Путь к файлу:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Описание",
       "label-target-folder": "Целевая папка",
       "label-title": "Название",
@@ -8060,6 +8080,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Фиксированное значение"
       },
+      "label": "",
       "label-limit": "Предельное значение",
       "label-value": "Значение",
       "noOptionsMessage-no-fields-found": "Поля не найдены",
@@ -10115,7 +10136,9 @@
       "external-links-heading": "Внешние ссылки"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Ввести регулярное выражение"
+      "input-placeholder": "Ввести регулярное выражение",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Оператор сравнения",
@@ -10142,6 +10165,18 @@
       "expand-row-tooltip": "Развернута строка переключения",
       "tooltip-collapse-all": "Свернуть все строки",
       "tooltip-expand-all": "Развернуть все строки"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Установить свойства для полей с именами, соответствующими регулярному выражению",
@@ -11385,7 +11420,7 @@
       "cancel": "Отмена",
       "change-uid": "Изменить UID",
       "description-library-panels-imported": "Список новых панелей библиотеки для импорта.",
-      "description-unique-identifier-uid": "Уникальный идентификатор (UID) дашборда можно использовать для его идентификации среди нескольких экземпляров Grafana. UID позволяет иметь согласованные URL-адреса для доступа к дашбордам, поэтому изменение имени дашборда не приведет к нарушению работы добавленных в закладки ссылок на этот дашборд.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Существующие панели библиотеки",
       "label-folder": "Папка",
       "label-name": "Имя",
@@ -12912,9 +12947,6 @@
     "title-loaded-pull-request-in-repo": "Этот ресурс загружается из ветви, которую вы только что создали в {{repoType}}, и виден только вам"
   },
   "provisioning": {
-    "banner": {
-      "message": "В настоящее время эта функция находится в стадии активной разработки. Чтобы обеспечить максимальное удобство пользования и получить доступ к последним улучшениям, рекомендуем использовать <2>ночную сборку</2> Grafana."
-    },
     "bitbucket": {
       "branch-required": "Требуется указать ветвь",
       "permissions": {
@@ -13639,6 +13671,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Выберите, что синхронизировать",
       "step-configure-repo": "Настройте репозиторий",
       "step-connect": "Подключить",
