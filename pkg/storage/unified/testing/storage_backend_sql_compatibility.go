@@ -2192,6 +2192,61 @@ func runTestClusterScopedResources(t *testing.T, sqlBackend, kvBackend resource.
 		require.NotNil(t, sqlResp.Error, "resource should be deleted")
 		require.Equal(t, int32(404), sqlResp.Error.Code)
 	})
+
+	t.Run("List history for cluster-scoped resources", func(t *testing.T) {
+		name := nsPrefix + "-cluster-history-1"
+
+		// Create resource
+		created, err := sqlServer.Create(ctx, &resourcepb.CreateRequest{
+			Key:   clusterKey(name),
+			Value: clusterResourceJSON(name, "uid-history-1", "History V1"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error, "Create error: %v", created.Error)
+
+		// Update twice to build history
+		updated1, err := sqlServer.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             clusterKey(name),
+			Value:           clusterResourceJSON(name, "uid-history-1", "History V2"),
+			ResourceVersion: created.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, updated1.Error, "Update 1 error: %v", updated1.Error)
+
+		updated2, err := sqlServer.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             clusterKey(name),
+			Value:           clusterResourceJSON(name, "uid-history-1", "History V3"),
+			ResourceVersion: updated1.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, updated2.Error, "Update 2 error: %v", updated2.Error)
+
+		historyReq := &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{
+				Key: clusterKey(name),
+			},
+			Source: resourcepb.ListRequest_HISTORY,
+			Limit:  10,
+		}
+
+		// List history from SQL backend
+		sqlHistory, err := sqlServer.List(ctx, historyReq)
+		require.NoError(t, err)
+		require.Nil(t, sqlHistory.Error, "SQL ListHistory error: %v", sqlHistory.Error)
+		require.Len(t, sqlHistory.Items, 3, "SQL backend should have 3 history entries")
+
+		// List history from KV backend
+		kvHistory, err := kvServer.List(ctx, historyReq)
+		require.NoError(t, err)
+		require.Nil(t, kvHistory.Error, "KV ListHistory error: %v", kvHistory.Error)
+		require.Len(t, kvHistory.Items, 3, "KV backend should have 3 history entries")
+
+		// Verify both backends return the same versions (descending order by default)
+		for i := range sqlHistory.Items {
+			require.Equal(t, sqlHistory.Items[i].ResourceVersion, kvHistory.Items[i].ResourceVersion,
+				"history entry %d: resource version mismatch between backends", i)
+		}
+	})
 }
 
 // SearchServerFactory is a function that creates a ResourceServer with search enabled
