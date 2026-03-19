@@ -44,8 +44,7 @@ describe('AppNotificationList', () => {
 
     const liveRegion = container.querySelector('[aria-live="polite"]');
     expect(liveRegion).toBeInTheDocument();
-    expect(liveRegion).toHaveTextContent(expectedInfoMessage);
-    expect(liveRegion).toHaveClass('sr-only');
+    expect(liveRegion).toHaveAttribute('aria-label', expect.stringContaining(expectedInfoMessage));
   });
 
   describe('Error notifications', () => {
@@ -53,7 +52,7 @@ describe('AppNotificationList', () => {
       renderWithContext(undefined, '/d/test-dashboard');
       await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      expect((await screen.findAllByText(expectedErrorMessage)).length).toBeGreaterThan(0);
+      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
     });
 
     it('should hide error notifications in kiosk mode on dashboard page', async () => {
@@ -67,7 +66,7 @@ describe('AppNotificationList', () => {
       renderWithContext(KioskMode.Full, '/alerting');
       await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      expect((await screen.findAllByText(expectedErrorMessage)).length).toBeGreaterThan(0);
+      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
     });
 
     it('should hide error notifications in kiosk mode on home dashboard', async () => {
@@ -81,7 +80,7 @@ describe('AppNotificationList', () => {
       renderWithContext(KioskMode.Full, '/');
       await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      expect((await screen.findAllByText(expectedErrorMessage)).length).toBeGreaterThan(0);
+      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
     });
   });
 
@@ -90,21 +89,21 @@ describe('AppNotificationList', () => {
       renderWithContext(KioskMode.Full, '/d/test-dashboard');
       await sendTestNotification(AppEvents.alertSuccess, expectedSuccessMessage);
 
-      expect((await screen.findAllByText(expectedSuccessMessage)).length).toBeGreaterThan(0);
+      expect(await screen.findByText(expectedSuccessMessage)).toBeInTheDocument();
     });
 
     it('should always show warning notifications in kiosk mode on dashboard', async () => {
       renderWithContext(KioskMode.Full, '/d/test-dashboard');
       await sendTestNotification(AppEvents.alertWarning, expectedWarningMessage);
 
-      expect((await screen.findAllByText(expectedWarningMessage)).length).toBeGreaterThan(0);
+      expect(await screen.findByText(expectedWarningMessage)).toBeInTheDocument();
     });
 
     it('should always show info notifications in kiosk mode on dashboard', async () => {
       renderWithContext(KioskMode.Full, '/d/test-dashboard');
       await sendTestNotification(AppEvents.alertInfo, expectedInfoMessage);
 
-      expect((await screen.findAllByText(expectedInfoMessage)).length).toBeGreaterThan(0);
+      expect(await screen.findByText(expectedInfoMessage)).toBeInTheDocument();
     });
   });
 
@@ -156,7 +155,7 @@ describe('AppNotificationList', () => {
       renderWithContext(undefined, '/d/test-uid/test-slug');
       await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      expect((await screen.findAllByText(expectedErrorMessage)).length).toBeGreaterThan(0);
+      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
     });
 
     it('should hide error in kiosk mode on dashboard page with uid and slug', async () => {
@@ -170,7 +169,7 @@ describe('AppNotificationList', () => {
       renderWithContext(KioskMode.Full, '/dashboard/db/test-dashboard');
       await sendTestNotification(AppEvents.alertError, expectedErrorMessage);
 
-      expect((await screen.findAllByText(expectedErrorMessage)).length).toBeGreaterThan(0);
+      expect(await screen.findByText(expectedErrorMessage)).toBeInTheDocument();
     });
   });
 });

@@ -84,13 +84,11 @@ export function AppNotificationList() {
     dispatch(hideAppNotification(id));
   };
 
-  const liveRegionMessage = appNotifications.map((n) => n.title).join('. ');
+  const liveRegionMessage = appNotifications.map((n) => [n.title, n.text].filter(Boolean).join('. ')).join('. ');
 
   return (
     <div className={styles.wrapper}>
-      <div className="sr-only" aria-live="polite" aria-atomic="true">
-        {liveRegionMessage}
-      </div>
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true" aria-label={liveRegionMessage} />
       <Stack direction="column">
         {appNotifications.map((appNotification, index) => {
           return (
