@@ -405,8 +405,8 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 	return meta
 }
 
-func failingDynClient(err error) func() (dynamic.Interface, error) {
-	return func() (dynamic.Interface, error) { return nil, err }
+func failingDynClient(err error) func(context.Context) (dynamic.Interface, error) {
+	return func(context.Context) (dynamic.Interface, error) { return nil, err }
 }
 
 func TestEnsureRepoManagedByParentFolder(t *testing.T) {

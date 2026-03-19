@@ -279,25 +279,27 @@ func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils
 	if !s.opts.EnableFolderSupport || obj.GetFolder() == "" {
 		return nil
 	}
-	if s.getDynClient == nil {
-		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: dynamic client not configured", "resource", s.gr.String())
-		return nil
-	}
 	folder, err := s.getParentFolder(ctx, obj)
 	if err != nil {
 		return err
 	}
+	if folder == nil {
+		return nil
+	}
 	return ensureSameRepoManager(folder, obj)
 }
 
+// getParentFolder fetches the folder that contains obj. Returns (nil, nil)
+// when the dynamic client is not available, signalling the caller to skip
+// the consistency check.
 func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) (utils.GrafanaMetaAccessor, error) {
-	dynClient, err := s.getDynClient()
+	if s.getDynClient == nil {
+		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: dynamic client not configured", "resource", s.gr.String())
+		return nil, nil
+	}
+	dynClient, err := s.getDynClient(ctx)
 	if err != nil {
 		return nil, err
-	}
-	if dynClient == nil {
-		logging.FromContext(ctx).Warn("skipping repo-manager consistency check: dynamic client resolved to nil", "resource", s.gr.String())
-		return nil, fmt.Errorf("dynamic client is nil")
 	}
 
 	name := obj.GetFolder()

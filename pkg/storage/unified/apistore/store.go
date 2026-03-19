@@ -100,7 +100,7 @@ type Storage struct {
 	// Lazily initialized because GetRestConfig blocks until the API server is
 	// fully started (eventualRestConfigProvider), while NewStorage is called
 	// during API group installation — before the server is ready.
-	getDynClient func() (dynamic.Interface, error)
+	getDynClient func(ctx context.Context) (dynamic.Interface, error)
 
 	versioner storage.Versioner
 
@@ -152,17 +152,25 @@ func NewStorage(
 	}
 
 	if opts.EnableFolderSupport && configProvider != nil {
-		s.getDynClient = sync.OnceValues(func() (dynamic.Interface, error) {
-			cfg, err := configProvider.GetRestConfig(context.Background())
-			if err != nil {
-				return nil, fmt.Errorf("failed to get REST config: %w", err)
-			}
-			dc, err := dynamic.NewForConfig(cfg)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create dynamic client: %w", err)
-			}
-			return dc, nil
-		})
+		var (
+			initOnce sync.Once
+			client   dynamic.Interface
+			initErr  error
+		)
+		s.getDynClient = func(ctx context.Context) (dynamic.Interface, error) {
+			initOnce.Do(func() {
+				cfg, err := configProvider.GetRestConfig(ctx)
+				if err != nil {
+					initErr = fmt.Errorf("failed to get REST config: %w", err)
+					return
+				}
+				client, initErr = dynamic.NewForConfig(cfg)
+				if initErr != nil {
+					initErr = fmt.Errorf("failed to create dynamic client: %w", initErr)
+				}
+			})
+			return client, initErr
+		}
 	} else if opts.EnableFolderSupport {
 		logging.DefaultLogger.Warn("configProvider is not configured; repo-manager folder consistency checks will be skipped",
 			"resource", config.GroupResource.String())
