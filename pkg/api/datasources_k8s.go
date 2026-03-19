@@ -136,14 +136,14 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 			metricutil.ObserveWithExemplar(ctx, hs.dsConfigHandlerRequestsDuration.WithLabelValues("callK8sDataSourceResourceHandler"), time.Since(start).Seconds())
 		}()
 
-		redirect := openfeature.NewDefaultClient().Boolean(
+		shouldRedirect := openfeature.NewDefaultClient().Boolean(
 			ctx,
 			featuremgmt.FlagDatasourcesApiserverEnableResourceEndpointRedirect,
 			false,
 			openfeature.TransactionContext(ctx),
 		)
 
-		if !redirect {
+		if !shouldRedirect {
 			hs.dsEndpointRedirects.WithLabelValues("resources", "unknown", "legacy").Inc()
 			hs.CallDatasourceResourceWithUID(c)
 			return
@@ -155,7 +155,7 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 			return
 		}
 
-		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, dsUID) //nolint:staticcheck
+		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, dsUID)
 		if err != nil {
 			if strings.Contains(err.Error(), "not found") {
 				c.JsonApiErr(http.StatusNotFound, "Data source not found", nil)

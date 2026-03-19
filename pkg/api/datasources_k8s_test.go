@@ -71,6 +71,7 @@ type mockDirectRestConfigProvider struct {
 	host             string
 	lastServedPath   string
 	lastServedMethod string
+	lastServedQuery  string
 }
 
 func (m *mockDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
@@ -83,6 +84,7 @@ func (m *mockDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqCo
 func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.lastServedPath = r.URL.Path
 	m.lastServedMethod = r.Method
+	m.lastServedQuery = r.URL.RawQuery
 	w.WriteHeader(http.StatusOK)
 }
 func (m *mockDirectRestConfigProvider) IsReady() bool { return true }
@@ -205,9 +207,9 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 	}
 }
 
-func newResourceTestContext(t *testing.T, method, path string, params map[string]string) (*contextmodel.ReqContext, *httptest.ResponseRecorder) {
+func newResourceTestContext(t *testing.T, method, urlPath string, params map[string]string) (*contextmodel.ReqContext, *httptest.ResponseRecorder) {
 	t.Helper()
-	req, err := http.NewRequest(method, path, nil)
+	req, err := http.NewRequest(method, urlPath, nil)
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
 	if params != nil {
@@ -260,6 +262,7 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 		name             string
 		uid              string
 		subPath          string
+		queryParams      string
 		connectionResult *queryV0.DataSourceConnectionList
 		connectionErr    error
 		expectedCode     int
@@ -305,27 +308,68 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 			expectedMessage: "Data source not found",
 		},
 		{
-			name: "proxies to k8s resource endpoint with sub-path",
+			name: "proxies simple resource path",
 			uid:  "test-uid",
 			connectionResult: &queryV0.DataSourceConnectionList{
 				Items: []queryV0.DataSourceConnection{
 					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
 				},
 			},
-			subPath:         "some/path",
+			subPath:         "api/v1/labels",
 			expectedCode:    http.StatusOK,
-			expectedK8sPath: "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid/resources/some/path",
+			expectedK8sPath: "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid/resources/api/v1/labels",
 		},
 		{
-			name: "proxies to k8s resource endpoint without sub-path",
+			name: "preserves query params on resource path",
 			uid:  "test-uid",
 			connectionResult: &queryV0.DataSourceConnectionList{
 				Items: []queryV0.DataSourceConnection{
 					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
 				},
 			},
+			subPath:         "api/v1/query",
 			expectedCode:    http.StatusOK,
-			expectedK8sPath: "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid/resources",
+			expectedK8sPath: "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid/resources/api/v1/query",
+			queryParams:     "query=up&time=1234567890",
+		},
+		{
+			name: "preserves encoded query params",
+			uid:  "test-uid",
+			connectionResult: &queryV0.DataSourceConnectionList{
+				Items: []queryV0.DataSourceConnection{
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+				},
+			},
+			subPath:         "api/v1/labels",
+			expectedCode:    http.StatusOK,
+			expectedK8sPath: "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid/resources/api/v1/labels",
+			queryParams:     "match%5B%5D=up&start=1234567890&end=1234567899",
+		},
+		{
+			name: "preserves encoded query values with special characters",
+			uid:  "test-uid",
+			connectionResult: &queryV0.DataSourceConnectionList{
+				Items: []queryV0.DataSourceConnection{
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+				},
+			},
+			subPath:         "api/v1/query",
+			expectedCode:    http.StatusOK,
+			expectedK8sPath: "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid/resources/api/v1/query",
+			queryParams:     "query=rate%28http_requests_total%5B5m%5D%29&format=json",
+		},
+		{
+			name: "preserves multiple query params on query_range",
+			uid:  "test-uid",
+			connectionResult: &queryV0.DataSourceConnectionList{
+				Items: []queryV0.DataSourceConnection{
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+				},
+			},
+			subPath:         "api/v1/query_range",
+			expectedCode:    http.StatusOK,
+			expectedK8sPath: "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid/resources/api/v1/query_range",
+			queryParams:     "query=up&start=1614556800&end=1614643200&step=60",
 		},
 	}
 
@@ -350,6 +394,9 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 			if tt.subPath != "" {
 				urlPath += "/" + tt.subPath
 			}
+			if tt.queryParams != "" {
+				urlPath += "?" + tt.queryParams
+			}
 			params := map[string]string{":uid": tt.uid, "*": tt.subPath}
 
 			ctx, recorder := newResourceTestContext(t, http.MethodGet, urlPath, params)
@@ -369,6 +416,52 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 				assert.Equal(t, tt.expectedK8sPath, configProvider.lastServedPath)
 				assert.Equal(t, http.MethodGet, configProvider.lastServedMethod)
 			}
+
+			if tt.queryParams != "" {
+				assert.Equal(t, tt.queryParams, configProvider.lastServedQuery,
+					"query parameters should be preserved through the redirect")
+			}
+		})
+	}
+}
+
+func TestCallK8sDataSourceResourceHandler_PreservesHTTPMethod(t *testing.T) {
+	methods := []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch}
+
+	for _, method := range methods {
+		t.Run(method, func(t *testing.T) {
+			setupOpenFeatureFlag(t, featuremgmt.FlagDatasourcesApiserverEnableResourceEndpointRedirect, true)
+
+			configProvider := &mockDirectRestConfigProvider{
+				host:      "http://localhost",
+				transport: &mockRoundTripper{statusCode: http.StatusOK, responseBody: []byte(`{}`)},
+			}
+			hs := &HTTPServer{
+				Cfg:      setting.NewCfg(),
+				Features: featuremgmt.WithFeatures(),
+				dsConnectionClient: &mockConnectionClient{result: &queryV0.DataSourceConnectionList{
+					Items: []queryV0.DataSourceConnection{
+						{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+					},
+				}},
+				clientConfigProvider: configProvider,
+				namespacer:           func(int64) string { return "default" },
+			}
+			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+
+			ctx, recorder := newResourceTestContext(t, method,
+				"/api/datasources/uid/test-uid/resources/api/v1/query",
+				map[string]string{":uid": "test-uid", "*": "api/v1/query"})
+
+			handler := hs.callK8sDataSourceResourceHandler()
+			handler.(func(*contextmodel.ReqContext))(ctx)
+
+			assert.Equal(t, http.StatusOK, recorder.Code)
+			assert.Equal(t, method, configProvider.lastServedMethod,
+				"HTTP method should be preserved through the proxy")
+			assert.Equal(t,
+				"/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid/resources/api/v1/query",
+				configProvider.lastServedPath)
 		})
 	}
 }
