@@ -21,6 +21,7 @@ import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisi
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { VERSIONS_FETCH_LIMIT } from '../types/revisionModels';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import {
@@ -181,12 +182,31 @@ export class K8sDashboardV2API
   }
 
   async listDashboardHistory(uid: string, options?: ListDashboardHistoryOptions) {
-    return this.client.list({
+    const limit = options?.limit ?? VERSIONS_FETCH_LIMIT;
+    let continueToken = options?.continueToken;
+    let result = await this.client.list({
       labelSelector: 'grafana.app/get-history=true',
       fieldSelector: `metadata.name=${uid}`,
-      limit: options?.limit ?? 10,
-      continue: options?.continueToken,
+      limit,
+      continue: continueToken,
     });
+
+    continueToken = result.metadata.continue;
+    while (continueToken) {
+      const nextPage = await this.client.list({
+        labelSelector: 'grafana.app/get-history=true',
+        fieldSelector: `metadata.name=${uid}`,
+        limit,
+        continue: continueToken,
+      });
+      result = {
+        ...nextPage,
+        items: [...result.items, ...nextPage.items],
+      };
+      continueToken = nextPage.metadata.continue;
+    }
+
+    return result;
   }
 
   async getDashboardHistoryVersions(uid: string, versions: number[]) {

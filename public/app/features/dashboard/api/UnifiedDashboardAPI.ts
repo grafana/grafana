@@ -66,7 +66,7 @@ export class UnifiedDashboardAPI
     const v1Response = await this.v1Client.listDashboardHistory(uid, options);
     const filteredV1Items = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
 
-    if (filteredV1Items.length === v1Response.items.length) {
+    if (filteredV1Items.length === v1Response.items.length && v1Response.items.length > 0) {
       return v1Response;
     }
 
@@ -108,7 +108,7 @@ export class UnifiedDashboardAPI
     const v1Response = await this.v1Client.listDeletedDashboards(options);
     const filteredV1Items = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
 
-    if (filteredV1Items.length === v1Response.items.length) {
+    if (filteredV1Items.length === v1Response.items.length && v1Response.items.length > 0) {
       return v1Response;
     }
 
