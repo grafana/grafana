@@ -9,6 +9,7 @@ import {
   defaultTimeSettingsSpec,
   GroupByVariableKind,
   Spec as DashboardV2Spec,
+  defaultGridLayoutKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -157,6 +158,14 @@ export async function buildNewDashboardSaveModelV2(
 
   if (urlFolderUid && data.metadata.annotations) {
     data.metadata.annotations[AnnoKeyFolder] = urlFolderUid;
+  }
+
+  // Initialize default preferences to be same as the default layout
+  if (config.featureToggles.dashboardDefaultLayoutSelector) {
+    data.spec.preferences = {
+      ...data.spec.preferences,
+      defaultLayoutTemplate: defaultGridLayoutKind(),
+    };
   }
 
   return data;
