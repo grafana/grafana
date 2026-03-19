@@ -1480,14 +1480,6 @@ var (
 			Expression:   "true",
 		},
 		{
-			Name:         "unifiedStorageSearchUI",
-			Description:  "Enable unified storage search UI",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:        "elasticsearchCrossClusterSearch",
 			Description: "Enables cross cluster search in the Elasticsearch data source",
 			Stage:       FeatureStageGeneralAvailability,
