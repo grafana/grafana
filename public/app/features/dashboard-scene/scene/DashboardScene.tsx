@@ -106,7 +106,6 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
-import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
@@ -1313,16 +1312,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return undefined;
   }
 
-  getDefaultLayoutType(): 'AutoGridLayout' | 'GridLayout' | undefined {
-    if (this.state.preferences.defaultLayoutTemplate) {
-      const layout = this.state.preferences.defaultLayoutTemplate;
-      if (layout instanceof AutoGridLayoutManager) {
-        return 'AutoGridLayout';
-      } else if (layout instanceof DefaultGridLayoutManager) {
-        return 'GridLayout';
-      }
-    }
-    return undefined;
+  getDefaultLayoutType() {
+    return this.state.preferences?.defaultLayoutTemplate?.descriptor?.id;
   }
 
   updateDefaultLayoutTemplate(template: DashboardLayoutManager) {

@@ -1,6 +1,6 @@
 import { ChangeEvent } from 'react';
 
-import { PageLayoutType, SelectableValue } from '@grafana/data';
+import { PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
@@ -115,10 +115,10 @@ export class GeneralSettingsEditView
     this._dashboard.setState({ editable: value });
   };
 
-  public onDefaultGridChange = (value: 'AutoGridLayout' | 'GridLayout') => {
-    if (value === 'AutoGridLayout') {
+  public onDefaultGridChange = (value: string) => {
+    if (value === AutoGridLayoutManager.descriptor.id) {
       this._dashboard.updateDefaultLayoutTemplate(AutoGridLayoutManager.createEmpty());
-    } else if (value === 'GridLayout') {
+    } else if (value === DefaultGridLayoutManager.descriptor.id) {
       this._dashboard.updateDefaultLayoutTemplate(DefaultGridLayoutManager.createEmpty());
     }
   };
@@ -226,14 +226,14 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
     },
   ];
 
-  const DEFAULT_GRID_OPTIONS: Array<SelectableValue<'AutoGridLayout' | 'GridLayout'>> = [
+  const DEFAULT_GRID_OPTIONS = [
     {
       label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.auto', 'Auto grid'),
-      value: 'AutoGridLayout',
+      value: AutoGridLayoutManager.descriptor.id,
     },
     {
       label: t('dashboard-scene.general-settings-edit-view.default_grid_options.label.custom', 'Custom grid'),
-      value: 'GridLayout',
+      value: DefaultGridLayoutManager.descriptor.id,
     },
   ];
 
