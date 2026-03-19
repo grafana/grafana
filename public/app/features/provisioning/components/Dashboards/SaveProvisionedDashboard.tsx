@@ -7,7 +7,7 @@ import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
 
 import { FormLoadingErrorAlert } from './FormLoadingErrorAlert';
-import { OrphanedDashboardAlert } from './OrphanedDashboardAlert';
+import { OrphanedProvisionedDrawerNotice } from './OrphanedProvisionedDrawerNotice';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 
 export interface SaveProvisionedDashboardProps {
@@ -26,7 +26,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
   }
 
   if (repoDataStatus === RepoViewStatus.Orphaned) {
-    return <OrphanedDashboardAlert dashboard={dashboard} />;
+    return <OrphanedProvisionedDrawerNotice onDismiss={() => drawer.onClose()} />;
   }
 
   if (repoDataStatus === RepoViewStatus.Error || !defaultValues) {

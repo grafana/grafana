@@ -6,7 +6,7 @@ import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboard
 
 import { DeleteProvisionedDashboardForm } from './DeleteProvisionedDashboardForm';
 import { FormLoadingErrorAlert } from './FormLoadingErrorAlert';
-import { OrphanedDashboardAlert } from './OrphanedDashboardAlert';
+import { OrphanedProvisionedDrawerNotice } from './OrphanedProvisionedDrawerNotice';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -34,7 +34,7 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
   }
 
   if (repoDataStatus === RepoViewStatus.Orphaned) {
-    return <OrphanedDashboardAlert dashboard={dashboard} />;
+    return <OrphanedProvisionedDrawerNotice onDismiss={onDismiss} />;
   }
 
   if (repoDataStatus === RepoViewStatus.Error || !defaultValues) {
