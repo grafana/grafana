@@ -72,10 +72,6 @@ jobs:
           - name: windows/arm64
             goos: windows
             goarch: arm64
-          - name: windows/armv7
-            goos: windows
-            goarch: arm
-            goarm: "7"
     steps:
       - uses: actions/checkout@v6
         with:
