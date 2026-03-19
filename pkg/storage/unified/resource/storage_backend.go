@@ -193,7 +193,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 
 	garbageCollection := opts.GarbageCollection
-	if garbageCollection.BatchWait < 0 {
+	if garbageCollection.BatchWait <= 0 {
 		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
 	}
 
