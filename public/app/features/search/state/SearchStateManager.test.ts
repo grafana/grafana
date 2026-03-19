@@ -1,7 +1,9 @@
 import { waitFor } from '@testing-library/react';
 
 import { DataFrameView } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { getGrafanaSearcher } from '../service/searcher';
 import { DashboardQueryResult } from '../service/types';
@@ -25,6 +27,9 @@ jest.mock('@grafana/runtime', () => {
     ...originalModule,
   };
 });
+
+setBackendSrv(backendSrv);
+setupMockServer();
 
 describe('SearchStateManager', () => {
   const searcher = getGrafanaSearcher();
