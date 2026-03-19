@@ -30,8 +30,8 @@ var (
 	logger = backend.NewLoggerWith("logger", "tsdb.tempo")
 
 	// gRPC client metrics - initialized lazily
-	grpcRequestsTotal   *prometheus.CounterVec
-	grpcRequestDuration *prometheus.HistogramVec
+	grpcRequestsTotal    *prometheus.CounterVec
+	grpcRequestDuration  *prometheus.HistogramVec
 	grpcInFlightRequests *prometheus.GaugeVec
 
 	metricsOnce sync.Once
@@ -53,7 +53,7 @@ func initGRPCMetrics() {
 		grpcRequestDuration = promauto.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Namespace: "grafana",
-				Subsystem: "tempo_grpc", 
+				Subsystem: "tempo_grpc",
 				Name:      "request_duration_seconds",
 				Help:      "Duration of gRPC requests to Tempo",
 				Buckets:   prometheus.DefBuckets,
@@ -165,7 +165,7 @@ func getDialOpts(ctx context.Context, settings backend.DataSourceInstanceSetting
 	}
 
 	dialOps = append(dialOps, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(maxCallRecvMsgSizeBytes)))
-  dialOps = append(dialOps, grpc.WithChainStreamInterceptor(
+	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(
 		MetricsStreamInterceptor(),
 		TracingStreamInterceptor(),
 		CustomHeadersStreamInterceptor(opts),
@@ -295,7 +295,7 @@ func MetricsStreamInterceptor() grpc.StreamClientInterceptor {
 		initGRPCMetrics()
 
 		startTime := time.Now()
-		
+
 		// Track in-flight requests
 		grpcInFlightRequests.WithLabelValues(method).Inc()
 		defer grpcInFlightRequests.WithLabelValues(method).Dec()
