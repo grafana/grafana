@@ -160,12 +160,14 @@ export const SynchronizeStep = memo(function SynchronizeStep({
                   Alerts and library panels are not supported in provisioned folders.
                 </Trans>
               </li>
-              <li>
-                <Trans i18nKey="provisioning.wizard.alert-point-permissions">
-                  Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles
-                  are preserved with their standard access levels.
-                </Trans>
-              </li>
+              {!config.featureToggles.provisioningFolderMetadata && (
+                <li>
+                  <Trans i18nKey="provisioning.wizard.alert-point-permissions">
+                    Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer
+                    roles are preserved with their standard access levels.
+                  </Trans>
+                </li>
+              )}
               <li>
                 <Trans i18nKey="provisioning.wizard.alert-point-3">
                   The duration of this process depends on the number of resources involved.
@@ -211,7 +213,6 @@ export const SynchronizeStep = memo(function SynchronizeStep({
           </Stack>
         </Alert>
       )}
-      {/* Migration/export functionality is experimental and gated behind the provisioningExport feature flag */}
       {config.featureToggles.provisioningExport && (
         <>
           <Text element="h3">

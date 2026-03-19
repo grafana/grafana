@@ -1,9 +1,11 @@
+import deepEqual from 'fast-deep-equal';
 import * as H from 'history';
 import { debounce } from 'lodash';
 
 import { NavIndex, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   PanelBuilders,
@@ -21,10 +23,10 @@ import { Panel } from '@grafana/schema';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
+import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 
 import { DashboardEditActionEvent } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
-import { getPanelChanges } from '../saving/getDashboardChanges';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
@@ -193,8 +195,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _setupChangeDetection() {
     const panel = this.state.panelRef.resolve();
     const performSaveModelDiff = () => {
-      const { hasChanges } = getPanelChanges(this._originalSaveModel, vizPanelToPanel(panel));
-      this.setState({ isDirty: hasChanges });
+      this.setState({ isDirty: !deepEqual(this._originalSaveModel, vizPanelToPanel(panel)) });
     };
 
     const performSaveModelDiffDebounced = this.debounceSaveModelDiff
@@ -264,7 +265,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         this.setState({ dataPane: undefined });
       }
 
-      // clean up data provider when switching from data to non data panel
       if (panel.state.$data) {
         panel.setState({ $data: undefined });
       }
@@ -274,11 +274,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       if (!this.state.dataPane) {
         const dataPane = PanelDataPane.createFor(this.getPanel(), this.state.useQueryExperienceNext);
         this.setState({ dataPane });
-        // This is to notify UrlSyncManager that a new object has been added to scene that requires url sync
         this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);
       }
 
-      // add data provider when switching from non data to data panel
       if (!panel.state.$data) {
         let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
         if (!ds) {
@@ -324,7 +322,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dashboard = getDashboardSceneFor(this);
 
     // clear pending suggestions
-    dashboard.recordPanelSuggestion(panel.state.key!, undefined);
+    vizSuggestionsTracker.record(panel.state.key!, undefined);
 
     if (this.state.isNewPanel) {
       dashboard.removePanel(panel);
@@ -419,7 +417,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
   return new PanelEditor({
-    useQueryExperienceNext: config.featureToggles.queryEditorNext,
+    useQueryExperienceNext: getFeatureFlagClient().getBooleanValue('queryEditorNext', false),
     isInitializing: true,
     panelRef: panel.getRef(),
     isNewPanel,

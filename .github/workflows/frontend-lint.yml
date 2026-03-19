@@ -83,6 +83,8 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
     - uses: actions/checkout@v5
       with:
@@ -101,6 +103,8 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
     name: Typecheck
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
     - uses: actions/checkout@v5
       with:
@@ -155,11 +159,8 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
-    - uses: actions/setup-node@v6
-      with:
-        node-version-file: '.nvmrc'
-        cache: 'yarn'
-        cache-dependency-path: 'yarn.lock'
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - name: Free up disk space

@@ -529,6 +529,84 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 				assert.Equal(t, 3, totalQueries, "all 3 queries should be preserved")
 			},
 		},
+		{
+			name: "dashboard with matcher config conversion (transformation filter and field override)",
+			createV1beta1: func() *dashv1.Dashboard {
+				return &dashv1.Dashboard{
+					Spec: dashv1.DashboardSpec{
+						Object: map[string]interface{}{
+							"title": "Test Dashboard",
+							"panels": []interface{}{
+								map[string]interface{}{
+									"id":    1,
+									"type":  "timeseries",
+									"title": "Panel with matchers",
+									"gridPos": map[string]interface{}{
+										"h": 8, "w": 12, "x": 0, "y": 0,
+									},
+									"transformations": []interface{}{
+										map[string]interface{}{
+											"id":      "filterByValue",
+											"options": map[string]interface{}{},
+											// no filter - exercises nil path
+										},
+										map[string]interface{}{
+											"id": "groupBy",
+											"filter": map[string]interface{}{
+												"id":      "byName",
+												"scope":   "series",
+												"options": map[string]interface{}{"include": ".*"},
+											},
+											"options": map[string]interface{}{"include": ".*"},
+										},
+									},
+									"fieldConfig": map[string]interface{}{
+										"overrides": []interface{}{
+											map[string]interface{}{
+												"matcher": map[string]interface{}{
+													"id":      "byName",
+													"scope":   "nested",
+													"options": map[string]interface{}{"name": "Field1"},
+												},
+												"properties": []interface{}{},
+											},
+										},
+									},
+									"targets": []interface{}{},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				require.Contains(t, v2alpha1.Spec.Elements, "panel-1")
+				el := v2alpha1.Spec.Elements["panel-1"]
+				require.NotNil(t, el.PanelKind, "PanelKind should not be nil")
+
+				// Transformation with no filter: Filter should be nil
+				transformations := el.PanelKind.Spec.Data.Spec.Transformations
+				require.Len(t, transformations, 2)
+				assert.Nil(t, transformations[0].Spec.Filter, "first transformation Filter should be nil")
+
+				// Transformation with filter (scope series): converted Filter should match
+				require.NotNil(t, transformations[1].Spec.Filter, "second transformation Filter should not be nil")
+				assert.Equal(t, "groupBy", transformations[1].Kind)
+				assert.Equal(t, "byName", transformations[1].Spec.Filter.Id)
+				require.NotNil(t, transformations[1].Spec.Filter.Scope)
+				assert.Equal(t, dashv2alpha1.DashboardMatcherScopeSeries, *transformations[1].Spec.Filter.Scope)
+				assert.Equal(t, map[string]interface{}{"include": ".*"}, transformations[1].Spec.Filter.Options)
+
+				// Field config override Matcher (scope nested)
+				fc := el.PanelKind.Spec.VizConfig.Spec.FieldConfig
+				require.Len(t, fc.Overrides, 1)
+				overrideMatcher := fc.Overrides[0].Matcher
+				assert.Equal(t, "byName", overrideMatcher.Id)
+				require.NotNil(t, overrideMatcher.Scope)
+				assert.Equal(t, dashv2alpha1.DashboardMatcherScopeNested, *overrideMatcher.Scope)
+				assert.Equal(t, map[string]interface{}{"name": "Field1"}, overrideMatcher.Options)
+			},
+		},
 	}
 
 	for _, tt := range testCases {

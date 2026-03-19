@@ -77,9 +77,14 @@ export function QueryActionAssistantButton<TQuery extends DataQuery = DataQuery>
     );
   }
 
-  // Get query display text to determine if we're creating or updating
-  const queryDisplayText =
-    hasCurrentQuery && datasourceApi?.getQueryDisplayText ? datasourceApi.getQueryDisplayText(query) : null;
+  let queryDisplayText: string | undefined = undefined;
+  if (hasCurrentQuery && datasourceApi?.getQueryDisplayText) {
+    try {
+      queryDisplayText = datasourceApi.getQueryDisplayText(query)?.trim();
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   // Determine if we're creating or updating based on queryDisplayText
   const isUpdating = !!queryDisplayText;
