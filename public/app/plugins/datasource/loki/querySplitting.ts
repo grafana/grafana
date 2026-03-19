@@ -25,8 +25,6 @@ import { isRetriableError } from './responseUtils';
 import { trackGroupedQueries } from './tracking';
 import { LokiGroupedRequest, LokiQuery } from './types';
 
-const lokiAlignedQuerySplitting = true;
-
 export function partitionTimeRange(
   isLogsQuery: boolean,
   originalTimeRange: TimeRange,
@@ -38,7 +36,7 @@ export function partitionTimeRange(
 
   let ranges: Array<[number, number]>;
 
-  if (lokiAlignedQuerySplitting) {
+  if (config.featureToggles.lokiAlignedQuerySplitting) {
     ranges = isLogsQuery
       ? splitLogsTimeRangeAligned(originalTimeRange)
       : splitMetricTimeRangeAligned(originalTimeRange, stepMs);
