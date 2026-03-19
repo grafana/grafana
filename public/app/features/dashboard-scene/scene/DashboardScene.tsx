@@ -134,7 +134,7 @@ export interface DashboardSceneState extends SceneObjectState {
   id?: number | undefined;
 
   /** Dashboard-specific preferences **/
-  preferences: DashboardScenePreferences;
+  preferences?: DashboardScenePreferences;
 
   /** The title */
   title: string;
@@ -1298,7 +1298,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * Undefined if default layout is not set in preferences
    */
   getDefaultLayout() {
-    if (this.state.preferences.defaultLayoutTemplate) {
+    if (this.state.preferences?.defaultLayoutTemplate) {
       return this.state.preferences.defaultLayoutTemplate.clone();
     }
     return undefined;

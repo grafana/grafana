@@ -214,9 +214,11 @@ export function transformSaveModelSchemaV2ToScene(
   const dashboardScene = new DashboardScene(
     {
       id: deprecatedId ? parseInt(deprecatedId, 10) : undefined,
-      preferences: {
-        defaultLayoutTemplate: templateLayoutManager,
-      },
+      preferences: templateLayoutManager
+        ? {
+            defaultLayoutTemplate: templateLayoutManager,
+          }
+        : undefined,
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,
