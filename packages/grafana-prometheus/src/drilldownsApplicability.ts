@@ -276,20 +276,26 @@ export async function calculateApplicability(
 
   if (rawOptions?.panelQueries) {
     const resultMap = new Map<string, DrilldownsApplicability[]>();
-    for (const [panelKey, queries] of rawOptions.panelQueries) {
-      const panelOptions: NormalizedDrilldownOptions = { ...options, queries };
-      try {
-        const applicability = await calculateApplicabilityForOptions(
-          languageProvider,
-          extractResourceMatcher,
-          panelOptions
-        );
-        resultMap.set(panelKey, applicability);
-      } catch {
-        const fallback = getFallbackResults(panelOptions);
+    const entries = Array.from(rawOptions.panelQueries.entries());
+
+    const settled = await Promise.allSettled(
+      entries.map(([, queries]) => {
+        const panelOptions: NormalizedDrilldownOptions = { ...options, queries };
+        return calculateApplicabilityForOptions(languageProvider, extractResourceMatcher, panelOptions);
+      })
+    );
+
+    for (let i = 0; i < entries.length; i++) {
+      const [panelKey, queries] = entries[i];
+      const result = settled[i];
+      if (result.status === 'fulfilled') {
+        resultMap.set(panelKey, result.value);
+      } else {
+        const fallback = getFallbackResults({ ...options, queries });
         resultMap.set(panelKey, fallback.get('_default_')!);
       }
     }
+
     return resultMap;
   }
 

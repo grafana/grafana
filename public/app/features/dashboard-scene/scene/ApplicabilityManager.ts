@@ -11,6 +11,7 @@ import {
 } from '@grafana/scenes';
 
 import { getDataSourceSrv } from '@grafana/runtime';
+import { debounce } from 'lodash';
 
 import { getQueryRunnerFor } from '../utils/utils';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
@@ -29,6 +30,7 @@ export interface ApplicabilityManagerState extends SceneObjectState {
 
 export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerState> {
   private _adhocSubs: Unsubscribable[] = [];
+  private _bodySub?: Unsubscribable;
   private _dsCache = new Map<string, DataSourceApi>();
   private _groups = new Map<string, ApplicabilityGroup>();
 
@@ -37,12 +39,25 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
     this.addActivationHandler(this._onActivate);
   }
 
+  private _debouncedResolveForAdhoc = debounce((adhocVar: AdHocFiltersVariable) => {
+    this.resolveForAdhoc(adhocVar);
+  }, 250);
+
+  private _debouncedResolveAll = debounce(() => {
+    this.resolveAll();
+  }, 250);
+
   private _onActivate = () => {
     this.resolveAll();
+    this.subscribeToDashboardBodyChanges();
 
     return () => {
       this._adhocSubs.forEach((sub) => sub.unsubscribe());
       this._adhocSubs = [];
+      this._bodySub?.unsubscribe();
+      this._bodySub = undefined;
+      this._debouncedResolveForAdhoc.cancel();
+      this._debouncedResolveAll.cancel();
       this._dsCache.clear();
       this._groups.clear();
     };
@@ -101,6 +116,28 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
     return groups;
   }
 
+  private subscribeToDashboardBodyChanges() {
+    this._bodySub?.unsubscribe();
+
+    const dashboard = this.getDashboard();
+    const dashSub = dashboard.subscribeToState((newState, prevState) => {
+      if (newState.body !== prevState.body) {
+        this._debouncedResolveAll();
+      }
+    });
+
+    const bodySub = dashboard.state.body.subscribeToState(() => {
+      this._debouncedResolveAll();
+    });
+
+    this._bodySub = {
+      unsubscribe: () => {
+        dashSub.unsubscribe();
+        bodySub.unsubscribe();
+      },
+    };
+  }
+
   private subscribeToAdhocChanges() {
     this._adhocSubs.forEach((sub) => sub.unsubscribe());
     this._adhocSubs = [];
@@ -115,11 +152,8 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
 
       const adhocVar = group.adhocVar;
       const sub = adhocVar.subscribeToState((newState, prevState) => {
-        if (
-          newState.filters !== prevState.filters ||
-          newState.originFilters !== prevState.originFilters
-        ) {
-          this.resolveForAdhoc(adhocVar);
+        if (newState.filters !== prevState.filters || newState.originFilters !== prevState.originFilters) {
+          this._debouncedResolveForAdhoc(adhocVar);
         }
       });
 
@@ -131,10 +165,7 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
     const results = new Map<string, DrilldownsApplicability[]>();
 
     const promises = groups.map(async (group) => {
-      const filters = [
-        ...(group.adhocVar.state.originFilters ?? []),
-        ...group.adhocVar.state.filters,
-      ];
+      const filters = [...(group.adhocVar.state.originFilters ?? []), ...group.adhocVar.state.filters];
 
       if (filters.length === 0) {
         for (const panelKey of group.panelQueries.keys()) {
@@ -217,10 +248,7 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
       return;
     }
 
-    const filters = [
-      ...(adhocVar.state.originFilters ?? []),
-      ...adhocVar.state.filters,
-    ];
+    const filters = [...(adhocVar.state.originFilters ?? []), ...adhocVar.state.filters];
 
     if (filters.length === 0) {
       const newResults = new Map(this.state.results);
