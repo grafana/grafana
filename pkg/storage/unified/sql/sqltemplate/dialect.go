@@ -3,6 +3,7 @@ package sqltemplate
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -13,19 +14,28 @@ var (
 	ErrInvalidRowLockingClause = errors.New("invalid row-locking clause")
 )
 
+var supportedDialects = map[string]Dialect{
+	"mysql":    MySQL,
+	"postgres": PostgreSQL,
+	"pgx":      PostgreSQL,
+	"sqlite":   SQLite,
+	"sqlite3":  SQLite,
+}
+
+func RegisterDialect(driverName string, d Dialect) {
+	if _, has := supportedDialects[driverName]; has {
+		panic(fmt.Errorf("dialect %q already registerd", driverName))
+	}
+	supportedDialects[driverName] = d
+}
+
 // DialectForDriver returns a predefined Dialect for the given driver name, or
 // nil if no Dialect is known for that driver.
 func DialectForDriver(driverName string) Dialect {
-	switch strings.ToLower(driverName) {
-	case "mysql":
-		return MySQL
-	case "postgres", "pgx":
-		return PostgreSQL
-	case "sqlite", "sqlite3":
-		return SQLite
-	default:
-		return nil
+	if d, has := supportedDialects[driverName]; has {
+		return d
 	}
+	panic(fmt.Errorf("unknown dialect %q", driverName))
 }
 
 // Dialect should be added to the data types passed to SQL templates to
