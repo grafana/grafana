@@ -2311,6 +2311,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2335,7 +2336,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2345,8 +2345,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2405,9 +2406,6 @@
       "label-payload": "ペイロード",
       "label-use-existing-alert-instances": "既存のアラートインスタンスを使用",
       "reference": "リファレンス"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "今すぐ専用アプリを使用して、アラート作成を効率化しましょう"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "このルールは{{pluginName}}プラグインによって管理されています"
@@ -2921,6 +2919,9 @@
       "error-button": "エラー",
       "export-all-grafana-rules": "すべてのGrafanaルールをエクスポート",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "検索をキャンセル",
         "no-more-results": "これ以上の結果はありません –  {{numberOfRules}}件のルールが見つかりました",
@@ -3067,8 +3068,6 @@
       "dashboard": "ダッシュボード",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "データソースで検索ヘルプ",
       "filter-options": {
-        "aria-label": "フィルターオプション",
-        "aria-label-show-filters": "フィルター",
         "placeholder-namespace": "名前空間を選択してください",
         "placeholder-search-input": "名前で検索するか、フィルタークエリを入力してください…"
       },
@@ -3100,6 +3099,9 @@
       "state": "ステート",
       "title-search-help": "検索ヘルプ",
       "view-as": "表示形式"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "削除しています",
@@ -4781,7 +4783,6 @@
     "all": "すべて",
     "apply": "適用",
     "cancel": "キャンセル",
-    "clear": "消去",
     "collapse": "折りたたみ表示",
     "disabled": "無効",
     "discard": "破棄",
@@ -5880,6 +5881,12 @@
         "title": "パネル時間の設定"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "アラートを追加する前に、ダッシュボードを保存する必要があります。",
@@ -6511,6 +6518,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7244,6 +7262,8 @@
       "cannot-be-saved": "このダッシュボードは別のソースからプロビジョニングされているため、Grafana UIからは保存できません。JSONをコピーするか下記のファイルに保存した上で、プロビジョニング元でダッシュボードを更新できます。",
       "copy-json-to-clipboard": "JSONをクリップボードにコピー",
       "file-path": "<strong>ファイルパス：</strong>{{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "説明",
       "label-target-folder": "ターゲットフォルダ",
       "label-title": "タイトル",
@@ -7925,6 +7945,7 @@
       "fixed-value-options": {
         "label-fixed-values": "固定値"
       },
+      "label": "",
       "label-limit": "制限",
       "label-value": "値",
       "noOptionsMessage-no-fields-found": "フィールドが見つかりません",
@@ -9944,7 +9965,9 @@
       "external-links-heading": "外部リンク"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "正規表現を入力"
+      "input-placeholder": "正規表現を入力",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "比較演算子",
@@ -9971,6 +9994,18 @@
       "expand-row-tooltip": "行の展開を切り替える",
       "tooltip-collapse-all": "すべての行を折りたたむ",
       "tooltip-expand-all": "すべての行を広げる"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "正規表現に一致する名前のフィールドのプロパティを設定",
@@ -11190,7 +11225,7 @@
       "cancel": "キャンセル",
       "change-uid": "UIDを変更",
       "description-library-panels-imported": "インポートされる新しいライブラリパネルのリスト。",
-      "description-unique-identifier-uid": "ダッシュボードの固有識別子（UID）は、複数のGrafanaインストール間でダッシュボードを一意に識別するために使用できます。UIDによりダッシュボードへのアクセス時に利用可能な一貫したURLが維持されるため、ダッシュボードのタイトルを変更してもブックマークされたリンクが壊れることはありません。",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "既存のライブラリパネル",
       "label-folder": "フォルダ",
       "label-name": "名前",
@@ -12708,9 +12743,6 @@
     "title-loaded-pull-request-in-repo": "このリソースは{{repoType}}で作成したブランチから読み込まれており、あなたにのみ表示されます"
   },
   "provisioning": {
-    "banner": {
-      "message": "この機能は現在開発中です。最高の体験と最新の改善を利用するには、Grafanaの<2>ナイトリービルド</2>の使用をお勧めします。"
-    },
     "bitbucket": {
       "branch-required": "ブランチが必要です",
       "permissions": {
@@ -13393,6 +13425,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "同期する内容を選択",
       "step-configure-repo": "リポジトリを設定",
       "step-connect": "接続",

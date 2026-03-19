@@ -52,4 +52,7 @@ export default {
     },
   },
   angularDetected: false,
+  managed: {
+    enabled: true,
+  },
 } as RemotePlugin;

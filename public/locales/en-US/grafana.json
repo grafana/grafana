@@ -6458,12 +6458,15 @@
     "browse-grafana-com": "Browse Grafana.com",
     "browse-plugins": "Browse plugins",
     "card": {
-      "customize-with-assistant-button": "Customize with Assistant",
+      "customize-with-assistant-button": "Customize with assistant",
+      "customize-with-assistant-button-label": "Customize with assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
       "details-tooltip": "Details",
       "no-preview": "No preview available ",
-      "use-dashboard-button": "Use dashboard",
-      "view-template-button": "View template"
+      "view-dashboard-button": "View dashboard",
+      "view-dashboard-button-label": "View dashboard: {{title}}",
+      "view-template-button": "View template",
+      "view-template-button-label": "View template: {{title}}"
     },
     "community-empty-title": "No community dashboards found",
     "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
@@ -11290,7 +11293,7 @@
       "cancel": "Cancel",
       "change-uid": "Change uid",
       "description-library-panels-imported": "List of new library panels that will get imported.",
-      "description-unique-identifier-uid": "The unique identifier (UID) of a dashboard can be used for uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.",
+      "description-unique-identifier-uid": "The unique identifier (UID) of a dashboard can be used to uniquely identify a dashboard between multiple Grafana installs. The UID allows having consistent URLs for accessing dashboards so changing the title of a dashboard will not break any bookmarked links to that dashboard.",
       "label-existing-library-panels": "Existing library panels",
       "label-folder": "Folder",
       "label-name": "Name",
@@ -12811,9 +12814,6 @@
     "title-loaded-pull-request-in-repo": "This resource is loaded from the branch you just created in {{repoType}} and it is only visible to you"
   },
   "provisioning": {
-    "banner": {
-      "message": "This feature is currently under active development. For the best experience and latest improvements, we recommend using the <2>nightly build</2> of Grafana."
-    },
     "bitbucket": {
       "branch-required": "Branch is required",
       "permissions": {
