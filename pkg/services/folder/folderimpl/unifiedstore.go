@@ -255,6 +255,17 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		})
 	}
 
+	// Exclude k6 folder from search results at the query level (not post-filter)
+	// to avoid returning fewer results than the LIMIT, which breaks pagination.
+	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
+	if !allowK6Folder {
+		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_NAME,
+			Operator: string(selection.NotIn),
+			Values:   []string{accesscontrol.K6FolderUID},
+		})
+	}
+
 	// now, get children of the parent folder
 	out, err := ss.k8sclient.Search(ctx, q.OrgID, req)
 	if err != nil {
@@ -266,14 +277,8 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		return nil, err
 	}
 
-	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
-	hits := make([]*folder.FolderReference, 0)
+	hits := make([]*folder.FolderReference, 0, len(res.Hits))
 	for _, item := range res.Hits {
-		// filter out k6 folders if request is not from a service account
-		if item.Name == accesscontrol.K6FolderUID && !allowK6Folder {
-			continue
-		}
-
 		f := &folder.FolderReference{
 			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 			UID:       item.Name,
