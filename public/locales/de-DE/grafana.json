@@ -2325,6 +2325,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2349,7 +2350,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2359,8 +2359,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2419,9 +2420,6 @@
       "label-payload": "Payload",
       "label-use-existing-alert-instances": "Bestehende Warnungsinstanzen verwenden",
       "reference": "Referenz"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Erstellen Sie Ihre Warnungen jetzt noch schneller, indem Sie eine unserer maßgeschneiderten Apps nutzen"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Diese Regel wird vom Plugin {{pluginName}} verwaltet"
@@ -2938,6 +2936,9 @@
       "error-button": "Fehler",
       "export-all-grafana-rules": "Alle Grafana-Regeln exportieren",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Suche abbrechen",
         "no-more-results": "Keine weiteren Ergebnisse – {{numberOfRules}} Regeln gefunden",
@@ -3087,8 +3088,6 @@
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Hilfe für Suche nach Datenquellen",
       "filter-options": {
-        "aria-label": "Filteroptionen",
-        "aria-label-show-filters": "Filter",
         "placeholder-namespace": "Namensraum auswählen",
         "placeholder-search-input": "Nach Name suchen oder Filterabfrage eingeben …"
       },
@@ -3120,6 +3119,9 @@
       "state": "Status",
       "title-search-help": "Hilfe zur Suche",
       "view-as": "Anzeigen als"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Wird gelöscht",
@@ -4813,7 +4815,6 @@
     "all": "Alles",
     "apply": "Anwenden",
     "cancel": "Abbrechen",
-    "clear": "Löschen",
     "collapse": "Einklappen",
     "disabled": "Deaktiviert",
     "discard": "Verwerfen",
@@ -5913,6 +5914,12 @@
         "title": "Zeiteinstellungen des Panels"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Das Dashboard muss gespeichert werden, bevor Warnungen hinzugefügt werden können.",
@@ -6545,6 +6552,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7285,6 +7303,8 @@
       "cannot-be-saved": "Dieses Dashboard kann nicht über die Grafana-Benutzeroberfläche gespeichert werden, da es von einer anderen Quelle bereitgestellt wurde. Kopieren Sie JSON oder speichern Sie es unten in einer Datei. Anschließend können Sie Ihr Dashboard in der Bereitstellungsquelle aktualisieren.",
       "copy-json-to-clipboard": "JSON in die Zwischenablage kopieren",
       "file-path": "<strong>Dateipfad:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Beschreibung",
       "label-target-folder": "Zielordner",
       "label-title": "Titel",
@@ -7970,6 +7990,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fester Wert"
       },
+      "label": "",
       "label-limit": "Limit",
       "label-value": "Wert",
       "noOptionsMessage-no-fields-found": "Keine Felder gefunden",
@@ -10001,7 +10022,9 @@
       "external-links-heading": "Externe Links"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Regulären Ausdruck eingeben"
+      "input-placeholder": "Regulären Ausdruck eingeben",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Vergleichsoperator",
@@ -10028,6 +10051,18 @@
       "expand-row-tooltip": "Zeile umschalten erweitert",
       "tooltip-collapse-all": "Alle Zeilen einklappen",
       "tooltip-expand-all": "Alle Zeilen erweitern"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Eigenschaften für Felder festlegen, deren Namen einem Regex entsprechen",
@@ -11255,7 +11290,7 @@
       "cancel": "Abbrechen",
       "change-uid": "UID ändern",
       "description-library-panels-imported": "Liste der neuen Bibliotheks-Panels, die importiert werden.",
-      "description-unique-identifier-uid": "Mithilfe des eindeutigen Bezeichners (UID) eines Dashboards kann ein Dashboard zwischen mehreren Grafana-Installationen eindeutig identifiziert werden. Der UID ermöglicht konsistente URLs für den Zugriff auf Dashboards, sodass die Änderung des Titels eines Dashboards keine Bookmark-Links zu diesem Dashboard unterbricht.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Vorhandene Bibliotheks-Panels",
       "label-folder": "Ordner",
       "label-name": "Name",
@@ -12776,9 +12811,6 @@
     "title-loaded-pull-request-in-repo": "Diese Ressource wird aus dem Branch geladen, den Sie gerade in {{repoType}} erstellt haben, und ist nur für Sie sichtbar"
   },
   "provisioning": {
-    "banner": {
-      "message": "Diese Funktion befindet sich momentan in der aktiven Entwicklung. Für die bestmögliche Nutzererfahrung und die neuesten Verbesserungen empfehlen wir die Nutzung von <2>Nightly Build</2> von Grafana."
-    },
     "bitbucket": {
       "branch-required": "Branch erforderlich",
       "permissions": {
@@ -13475,6 +13507,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Wählen Sie aus, was synchronisiert wird",
       "step-configure-repo": "Repository konfigurieren",
       "step-connect": "Verbinden",

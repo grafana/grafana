@@ -23,11 +23,6 @@ type MockDualWriter struct {
 	mock.Mock
 }
 
-func (m *MockDualWriter) IsEnabled(gr schema.GroupResource) bool {
-	args := m.Called(gr)
-	return args.Bool(0)
-}
-
 func (m *MockDualWriter) ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error) {
 	args := m.Called(ctx, gr)
 	return args.Bool(0), args.Error(1)
