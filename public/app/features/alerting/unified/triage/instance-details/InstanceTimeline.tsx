@@ -122,6 +122,37 @@ export function buildTimelineEntries(groups: TimelineGroup[]): TimelineEntry[] {
   return entries;
 }
 
+/**
+ * Counts unique integrations that delivered successfully vs failed.
+ *
+ * An integration is identified by `integration:integrationIndex`. If any attempt
+ * (including retries) for an integration succeeded, it counts as delivered.
+ */
+export function computeIntegrationOutcomes(notifications: NotificationEntry[]): {
+  delivered: number;
+  failed: number;
+} {
+  const best = new Map<string, boolean>();
+  for (const n of notifications) {
+    const key = `${n.integration}:${n.integrationIndex}`;
+    if (n.outcome === 'success') {
+      best.set(key, true);
+    } else if (!best.has(key)) {
+      best.set(key, false);
+    }
+  }
+  let delivered = 0;
+  let failed = 0;
+  for (const success of best.values()) {
+    if (success) {
+      delivered++;
+    } else {
+      failed++;
+    }
+  }
+  return { delivered, failed };
+}
+
 function EntryDot({ entry }: { entry: TimelineEntry }) {
   const styles = useStyles2(getStyles);
 
@@ -270,27 +301,7 @@ function NotificationStatusGroup({
   const styles = useStyles2(getStyles);
   const [expanded, setExpanded] = useState(false);
 
-  const integrationOutcomes = useMemo(() => {
-    const best = new Map<string, boolean>();
-    for (const n of notifications) {
-      const key = `${n.integration}:${n.integrationIndex}`;
-      if (n.outcome === 'success') {
-        best.set(key, true);
-      } else if (!best.has(key)) {
-        best.set(key, false);
-      }
-    }
-    let delivered = 0;
-    let failed = 0;
-    for (const success of best.values()) {
-      if (success) {
-        delivered++;
-      } else {
-        failed++;
-      }
-    }
-    return { delivered, failed };
-  }, [notifications]);
+  const integrationOutcomes = useMemo(() => computeIntegrationOutcomes(notifications), [notifications]);
 
   const { delivered: successCount, failed: failedCount } = integrationOutcomes;
 

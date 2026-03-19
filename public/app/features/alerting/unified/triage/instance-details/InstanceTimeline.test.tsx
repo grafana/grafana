@@ -7,7 +7,12 @@ import { GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
 
 import { LogRecord } from '../../components/rules/state-history/common';
 
-import { InstanceTimeline, buildTimelineEntries, buildTimelineGroups } from './InstanceTimeline';
+import {
+  InstanceTimeline,
+  buildTimelineEntries,
+  buildTimelineGroups,
+  computeIntegrationOutcomes,
+} from './InstanceTimeline';
 
 type NotificationEntry = CreateNotificationqueryNotificationEntry;
 
@@ -180,6 +185,80 @@ describe('buildTimelineEntries', () => {
 
     expect(entries).toHaveLength(1);
     expect(entries[0].type).toBe('notifications');
+  });
+});
+
+describe('computeIntegrationOutcomes', () => {
+  it('returns zero counts for empty notifications', () => {
+    expect(computeIntegrationOutcomes([])).toEqual({ delivered: 0, failed: 0 });
+  });
+
+  it('counts a single successful notification as delivered', () => {
+    const notifications = [
+      makeNotification({ timestamp: '1970-01-01T00:00:01Z', integration: 'email', integrationIndex: 0 }),
+    ];
+    expect(computeIntegrationOutcomes(notifications)).toEqual({ delivered: 1, failed: 0 });
+  });
+
+  it('counts a single failed notification as failed', () => {
+    const notifications = [
+      makeNotification({
+        timestamp: '1970-01-01T00:00:01Z',
+        integration: 'email',
+        integrationIndex: 0,
+        outcome: 'error',
+      }),
+    ];
+    expect(computeIntegrationOutcomes(notifications)).toEqual({ delivered: 0, failed: 1 });
+  });
+
+  it('counts distinct integrations separately', () => {
+    const notifications = [
+      makeNotification({ timestamp: '1970-01-01T00:00:01Z', integration: 'email', integrationIndex: 0 }),
+      makeNotification({
+        timestamp: '1970-01-01T00:00:01Z',
+        integration: 'slack',
+        integrationIndex: 1,
+        outcome: 'error',
+      }),
+    ];
+    expect(computeIntegrationOutcomes(notifications)).toEqual({ delivered: 1, failed: 1 });
+  });
+
+  it('treats an integration as delivered if any retry succeeded', () => {
+    const notifications = [
+      makeNotification({
+        timestamp: '1970-01-01T00:00:01Z',
+        integration: 'email',
+        integrationIndex: 0,
+        outcome: 'error',
+      }),
+      makeNotification({
+        timestamp: '1970-01-01T00:00:02Z',
+        integration: 'email',
+        integrationIndex: 0,
+        outcome: 'success',
+      }),
+    ];
+    expect(computeIntegrationOutcomes(notifications)).toEqual({ delivered: 1, failed: 0 });
+  });
+
+  it('counts all failed when no integration succeeded', () => {
+    const notifications = [
+      makeNotification({
+        timestamp: '1970-01-01T00:00:01Z',
+        integration: 'email',
+        integrationIndex: 0,
+        outcome: 'error',
+      }),
+      makeNotification({
+        timestamp: '1970-01-01T00:00:01Z',
+        integration: 'slack',
+        integrationIndex: 1,
+        outcome: 'error',
+      }),
+    ];
+    expect(computeIntegrationOutcomes(notifications)).toEqual({ delivered: 0, failed: 2 });
   });
 });
 
