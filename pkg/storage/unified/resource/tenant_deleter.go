@@ -11,7 +11,6 @@ import (
 
 // TenantDeleterConfig holds configuration for the TenantDeleter.
 type TenantDeleterConfig struct {
-	Enabled  bool
 	DryRun   bool
 	Interval time.Duration
 	Log      log.Logger
@@ -30,7 +29,6 @@ func NewTenantDeleterConfig(cfg *setting.Cfg) *TenantDeleterConfig {
 	}
 
 	return &TenantDeleterConfig{
-		Enabled:  true,
 		DryRun:   cfg.TenantDeleterDryRun,
 		Interval: interval,
 		Log:      log.New("tenant-deleter"),

@@ -60,7 +60,6 @@ func newTestTenantDeleter(t *testing.T, dryRun bool) (*TenantDeleter, *dataStore
 	ds := newDataStore(kv)
 	pds := newPendingDeleteStore(kv)
 	cfg := TenantDeleterConfig{
-		Enabled:  true,
 		DryRun:   dryRun,
 		Interval: time.Hour,
 		Log:      log.NewNopLogger(),
@@ -287,7 +286,6 @@ func TestRunDeletionPass_IdempotentAfterPartialFailure(t *testing.T) {
 	ds := newDataStore(faultyKV)
 	pds := newPendingDeleteStore(realKV)
 	cfg := TenantDeleterConfig{
-		Enabled:  true,
 		DryRun:   false,
 		Interval: time.Hour,
 		Log:      log.NewNopLogger(),
