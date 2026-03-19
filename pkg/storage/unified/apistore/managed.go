@@ -46,8 +46,8 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	if !hasNew && hasOld {
 		if err := enforceManagerProperties(auth, old); err != nil {
 			// Allow admins to release repo-managed resources. There is no
-			// per-resource-type reconciliation loop that would re-attach
-			// ownership, so admins need the ability to detach manually.
+			// reconciliation loop that automatically releases orphaned
+			// resources, so admins need the ability to detach manually.
 			if errors.Is(err, errResourceIsManagedInRepository) {
 				if requester, ok := auth.(identity.Requester); ok &&
 					(requester.GetIsGrafanaAdmin() || requester.HasRole(identity.RoleAdmin)) {
