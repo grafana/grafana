@@ -32,6 +32,8 @@ import {
   DownloadFormat,
 } from './utils';
 
+import { LOG_LINE_BODY_FIELD_NAME  } from 'app/features/logs/components/LogDetailsBody';
+
 jest.mock('file-saver', () => jest.fn());
 
 describe('getLoglevel()', () => {
@@ -621,6 +623,15 @@ describe('downloadLogs', () => {
       const text = typeof blob === 'string' ? blob : await blob.text();
 
       expect(text).toContain('value other value');
+    });
+
+    it('Downloads selected fields including log line', async () => {
+      downloadLogs(DownloadFormat.Text, logs, [], ['label', LOG_LINE_BODY_FIELD_NAME]);
+
+      const blob = jest.mocked(saveAs).mock.calls[0][0];
+      const text = typeof blob === 'string' ? blob : await blob.text();
+
+      expect(text).toContain('test entry');
     });
   });
 
