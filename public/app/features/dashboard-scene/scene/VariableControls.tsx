@@ -28,7 +28,6 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   useEffect(() => {
     const subscription = dashboard.subscribeToEvent(SceneVariableValueChangedEvent, () => {
       reportInteraction('grafana_dashboards_variable_changed');
-      console.log('Variable changed:');
     });
 
     return () => {
