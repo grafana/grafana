@@ -1,7 +1,6 @@
 package encryption
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -161,7 +160,7 @@ next:
 				require.NoError(t, err)
 				result[r.Id] = secret{
 					id:     r.Id,
-					secret: decoded,
+					secret: append([]byte(nil), decoded...),
 				}
 				continue next
 			}
@@ -199,16 +198,13 @@ func verifyAllSecrets(t *testing.T, env *server.TestEnv, before, after map[strin
 
 func verifySecrets(t *testing.T, env *server.TestEnv, before, after map[int]secret) {
 	require.Equal(t, len(before), len(after))
-	changed := 0
 	for k, bef := range before {
 		aft, ok := after[k]
 		require.True(t, ok, "key not found: %d", k)
 
 		require.NotEmpty(t, bef.secret, "before secret is empty for key %d", k)
 		require.NotEmpty(t, aft.secret, "after secret is empty for key %d", k)
-		if !bytes.Equal(bef.secret, aft.secret) {
-			changed++
-		}
+		require.NotEqual(t, bef.secret, aft.secret, "secrets are equal after reencrypt for key %d", k)
 
 		s1, err := env.Server.HTTPServer.SecretsService.Decrypt(context.Background(), bef.secret)
 		require.NoError(t, err)
@@ -220,8 +216,6 @@ func verifySecrets(t *testing.T, env *server.TestEnv, before, after map[int]secr
 		// Since we're storing timestamps with seconds resolution, diff can be 0.
 		require.True(t, 0 <= updatedDiff && updatedDiff <= time.Minute, "Updated time difference (%v) outside of allowed range for key %d", updatedDiff, k)
 	}
-
-	require.Greater(t, changed, 0, "no secrets changed after migration step")
 }
 
 func getSecureJsonSecrets(t *testing.T, store db.DB, table string, secureJsonDataKey string) map[int]secret {
@@ -240,7 +234,7 @@ func getSecureJsonSecrets(t *testing.T, store db.DB, table string, secureJsonDat
 	for _, r := range rows {
 		result[r.Id] = secret{
 			id:     r.Id,
-			secret: r.SecureJsonData[secureJsonDataKey],
+			secret: append([]byte(nil), r.SecureJsonData[secureJsonDataKey]...),
 			update: r.Updated,
 		}
 	}
@@ -265,7 +259,7 @@ func getBase64Secrets(t *testing.T, store db.DB, table, column string, enc *base
 		require.NoError(t, err)
 		result[r.Id] = secret{
 			id:     r.Id,
-			secret: d,
+			secret: append([]byte(nil), d...),
 			update: r.Updated,
 		}
 	}
@@ -289,7 +283,7 @@ func getSigningKeys(t *testing.T, store db.DB) map[int]secret {
 		require.NoError(t, err)
 		result[r.Id] = secret{
 			id:     r.Id,
-			secret: d,
+			secret: append([]byte(nil), d...),
 			// there's no update time, leave it at 0
 		}
 	}
