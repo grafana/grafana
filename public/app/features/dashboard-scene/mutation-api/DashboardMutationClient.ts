@@ -17,6 +17,7 @@ import type { DashboardScene } from '../scene/DashboardScene';
 
 import { ALL_COMMANDS, validatePayload } from './commands/registry';
 import type { MutationCommand, MutationContext } from './commands/types';
+import { debugLog, safeDebugPayload } from './debugLog';
 import type { MutationClient, MutationRequest, MutationResult } from './types';
 
 type MutationHandler = (payload: unknown, context: MutationContext) => Promise<MutationResult>;
@@ -38,21 +39,29 @@ export class DashboardMutationClient implements MutationClient {
     }
   }
 
+  /**
+   * Execute a mutation. UI call sites typically fire-and-forget (no await).
+   * Failures are logged via debugLog but intentionally not surfaced to users.
+   */
   async execute(mutation: MutationRequest): Promise<MutationResult> {
     const type = mutation.type.toUpperCase();
+    debugLog('execute', { type, payload: safeDebugPayload(mutation.payload) });
 
     const registration = this.commands.get(type);
     if (!registration) {
+      debugLog('unknown command', { type });
       return { success: false, error: `Unknown command type: ${type}`, changes: [] };
     }
 
     const permissionResult = registration.canExecute(this.scene);
     if (!permissionResult.allowed) {
+      debugLog('permission denied', { type, error: permissionResult.error });
       return { success: false, error: permissionResult.error, changes: [] };
     }
 
     const validationResult = validatePayload(type, mutation.payload);
     if (!validationResult.success) {
+      debugLog('validation failed', { type, error: validationResult.error });
       return { success: false, error: validationResult.error, changes: [] };
     }
 
@@ -69,8 +78,10 @@ export class DashboardMutationClient implements MutationClient {
         this.scene.forceRender();
       }
 
+      debugLog('result', { type, success: result.success, changes: result.changes?.length ?? 0 });
       return result;
     } catch (error) {
+      debugLog('handler error', { type, error: error instanceof Error ? error.message : String(error) });
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),

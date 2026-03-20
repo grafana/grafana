@@ -1,11 +1,13 @@
 /**
  * UPDATE_DASHBOARD_INFO command
  *
- * Updates dashboard metadata (title, description, tags). All fields are
- * optional; only provided fields are applied. Requires edit permissions.
+ * Partial update of dashboard title, description, and tags.
+ * All fields are optional; only provided fields are applied.
  */
 
 import { z } from 'zod';
+
+import { debugLog } from '../debugLog';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
@@ -20,61 +22,39 @@ export const updateDashboardInfoCommand: MutationCommand<UpdateDashboardInfoPayl
 
   payloadSchema: payloads.updateDashboardInfo,
   permission: requiresEdit,
-  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
+
     enterEditModeIfNeeded(scene);
+    debugLog('UPDATE_DASHBOARD_INFO', { payload });
 
-    try {
-      const previousTitle = scene.state.title ?? '';
-      const previousDescription = scene.state.description ?? '';
-      const previousTags = scene.state.tags ?? [];
+    const changes = [];
+    const update: Record<string, unknown> = {};
 
-      const changes = [];
-
-      if (payload.title !== undefined) {
-        scene.setState({ title: payload.title });
-        changes.push({
-          path: '/title',
-          previousValue: previousTitle,
-          newValue: payload.title,
-        });
-      }
-
-      if (payload.description !== undefined) {
-        scene.setState({ description: payload.description });
-        changes.push({
-          path: '/description',
-          previousValue: previousDescription,
-          newValue: payload.description,
-        });
-      }
-
-      if (payload.tags !== undefined) {
-        scene.setState({ tags: payload.tags });
-        changes.push({
-          path: '/tags',
-          previousValue: previousTags,
-          newValue: payload.tags,
-        });
-      }
-
-      return {
-        success: true,
-        data: {
-          title: scene.state.title ?? '',
-          description: scene.state.description ?? '',
-          tags: scene.state.tags ?? [],
-        },
-        changes,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-        changes: [],
-      };
+    if (payload.title !== undefined) {
+      debugLog('updating title', { from: scene.state.title, to: payload.title });
+      changes.push({ path: 'title', previousValue: scene.state.title, newValue: payload.title });
+      update.title = payload.title;
     }
+
+    if (payload.description !== undefined) {
+      debugLog('updating description', { from: scene.state.description, to: payload.description });
+      changes.push({ path: 'description', previousValue: scene.state.description, newValue: payload.description });
+      update.description = payload.description;
+    }
+
+    if (payload.tags !== undefined) {
+      debugLog('updating tags', { from: scene.state.tags, to: payload.tags });
+      changes.push({ path: 'tags', previousValue: scene.state.tags, newValue: payload.tags });
+      update.tags = payload.tags;
+    }
+
+    if (changes.length > 0) {
+      scene.setState(update);
+    }
+
+    debugLog('UPDATE_DASHBOARD_INFO complete', { changeCount: changes.length });
+    return { success: true, changes };
   },
 };

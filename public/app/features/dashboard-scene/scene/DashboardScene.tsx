@@ -68,9 +68,6 @@ import type { MutationClient } from '../mutation-api/types';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
-// TODO(collab): Restore when real CollabService is wired:
-// import { CollabCheckpointDrawer } from 'app/features/dashboard-collab/CollabCheckpointDrawer';
-// import { isCollabEnabled } from 'app/features/dashboard-collab/CollabProvider';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardChangeInfo } from '../saving/shared';
 import {
@@ -100,7 +97,6 @@ import {
   getPanelIdForVizPanel,
   hasActualSaveChanges,
 } from '../utils/utils';
-import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
@@ -217,11 +213,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
-  /**
-   * Mutation client for programmatic dashboard edits.
-   * Created on activation, cleared on deactivation.
-   */
-  private _mutationClient?: MutationClient;
+  /** Mutation client for programmatic dashboard edits.
+   *  May be replaced with a CollabMutationClient wrapper when collab is active. */
+  private _mutationClient: MutationClient;
 
   protected _renderBeforeActivation = true;
 
@@ -249,6 +243,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       serializerVersion === 'v2' ? getDashboardSceneSerializer('v2') : getDashboardSceneSerializer('v1');
 
     this._changeTracker = new DashboardSceneChangeTracker(this);
+    this._mutationClient = new DashboardMutationClient(this);
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -284,17 +279,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
-    try {
-      this._mutationClient = new DashboardMutationClient(this);
-      setDashboardMutationClient(this._mutationClient);
-    } catch (error) {
-      console.error('Failed to register Dashboard Mutation API:', error);
-    }
+    setDashboardMutationClient(this._mutationClient);
 
     // Deactivation logic
     return () => {
       setDashboardMutationClient(null);
-      this._mutationClient = undefined;
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
@@ -497,7 +486,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
-    const api = getDashboardAPI();
+    const api = await getDashboardAPI();
     // the id here is the resource version in k8s, use this instead to get the specific version
     const versionRsp = await api.restoreDashboardVersion(version.uid, version.id);
 
@@ -509,7 +498,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     if (isDashboardV2Spec(version.data as Dashboard | DashboardV2Spec)) {
-      const dto = await getDashboardAPI('v2').getDashboardDTO(version.uid);
+      const api = await getDashboardAPI('v2');
+      const dto = await api.getDashboardDTO(version.uid);
       dashScene = transformSaveModelSchemaV2ToScene(dto);
     } else {
       const dashboardDTO: DashboardDTO = {
@@ -535,26 +525,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    // TODO(collab): When real CollabService is wired (not noop), restore checkpoint drawer:
-    // if (!saveAsCopy && isCollabEnabled(this)) {
-    //   this.setState({ overlay: new CollabCheckpointDrawer({ dashboardRef: this.getRef() }) });
-    //   return;
-    // }
-
     this.setState({
       overlay: new SaveDashboardDrawer({
         dashboardRef: this.getRef(),
         saveAsCopy,
         onSaveSuccess,
         showVariablesWarning: this.hasVariableErrors(),
-      }),
-    });
-  }
-
-  public openV2SchemaEditor() {
-    this.setState({
-      overlay: new SchemaV2EditorDrawer({
-        dashboardRef: this.getRef(),
       }),
     });
   }
@@ -614,11 +590,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this._initialState;
   }
 
-  public getMutationClient(): MutationClient | undefined {
+  public getMutationClient(): MutationClient {
     return this._mutationClient;
   }
 
-  public setMutationClient(client: MutationClient | undefined): void {
+  /** Replace the mutation client (used by CollabProvider to install the wrapper). */
+  public setMutationClient(client: MutationClient): void {
     this._mutationClient = client;
   }
 
@@ -853,19 +830,27 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public removePanel(panel: VizPanel) {
+    const elementName = this.getElementNameForVizPanel(panel);
+    if (elementName) {
+      this._mutationClient.execute({
+        type: 'REMOVE_PANEL',
+        payload: { elements: [{ name: elementName }] },
+      });
+      return;
+    }
     getLayoutManagerFor(panel).removePanel?.(panel);
   }
 
   public updatePanelTitle(panel: VizPanel, title: string) {
     const elementName = this.getElementNameForVizPanel(panel);
-    if (elementName && this._mutationClient) {
+    if (elementName) {
       this._mutationClient.execute({
         type: 'UPDATE_PANEL',
         payload: { element: { kind: 'ElementReference', name: elementName }, panel: { spec: { title } } },
       });
       return;
     }
-    // Fallback for when mutation client is not yet available
+    // Fallback for panels without v2 element names
     panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
   }
 
