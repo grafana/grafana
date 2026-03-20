@@ -2,6 +2,7 @@ package actest
 
 import (
 	"context"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -28,7 +29,40 @@ func (f FakeService) GetUserPermissions(ctx context.Context, user identity.Reque
 }
 
 func (f FakeService) SearchUsersPermissions(ctx context.Context, user identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
-	return f.ExpectedUsersPermissions, f.ExpectedErr
+	if f.ExpectedErr != nil {
+		return nil, f.ExpectedErr
+	}
+
+	// Filter permissions based on SearchOptions
+	result := make(map[int64][]accesscontrol.Permission)
+	for userID, perms := range f.ExpectedUsersPermissions {
+		// Filter by UserID if specified
+		if options.UserID > 0 && userID != options.UserID {
+			continue
+		}
+
+		var filtered []accesscontrol.Permission
+		for _, p := range perms {
+			// Filter by Action or ActionPrefix
+			if options.Action != "" && p.Action != options.Action {
+				continue
+			}
+			if options.ActionPrefix != "" && !strings.HasPrefix(p.Action, options.ActionPrefix) {
+				continue
+			}
+			// Filter by Scope
+			if options.Scope != "" && p.Scope != options.Scope {
+				continue
+			}
+			filtered = append(filtered, p)
+		}
+
+		if len(filtered) > 0 {
+			result[userID] = filtered
+		}
+	}
+
+	return result, nil
 }
 
 func (f FakeService) SearchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {

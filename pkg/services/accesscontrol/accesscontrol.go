@@ -96,6 +96,18 @@ type SearchOptions struct {
 	RolePrefixes []string
 }
 
+// GetActionFilter returns a function that checks if an action matches the given search options.
+// When ActionPrefix is set, the action must start with that prefix.
+// When Action is set, the action must match exactly.
+func GetActionFilter(options SearchOptions) func(action string) bool {
+	return func(action string) bool {
+		if options.ActionPrefix != "" {
+			return strings.HasPrefix(action, options.ActionPrefix)
+		}
+		return action == options.Action
+	}
+}
+
 // Wildcards computes the wildcard scopes that include the scope
 func (s *SearchOptions) Wildcards() []string {
 	if s.wildcards != nil {

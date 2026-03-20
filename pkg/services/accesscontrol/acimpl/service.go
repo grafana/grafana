@@ -71,7 +71,7 @@ func ProvideService(
 		lock,
 	)
 
-	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
+	api.NewAccessControlAPI(routeRegister, accessControl, service, userService, features, nil, actionResolver).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
 		return nil, err
 	}
@@ -620,16 +620,6 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 	return nil
 }
 
-func GetActionFilter(options accesscontrol.SearchOptions) func(action string) bool {
-	return func(action string) bool {
-		if options.ActionPrefix != "" {
-			return strings.HasPrefix(action, options.ActionPrefix)
-		} else {
-			return action == options.Action
-		}
-	}
-}
-
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.SearchUsersPermissions")
@@ -732,7 +722,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 
 	if len(options.ActionSets) > 0 {
 		for id, perms := range res {
-			res[id] = s.actionResolver.ExpandActionSetsWithFilter(perms, GetActionFilter(options))
+			res[id] = s.actionResolver.ExpandActionSetsWithFilter(perms, accesscontrol.GetActionFilter(options))
 		}
 	}
 
@@ -795,7 +785,7 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	permissions = append(permissions, dbPermissions[searchOptions.UserID]...)
 
 	if len(searchOptions.ActionSets) != 0 {
-		permissions = s.actionResolver.ExpandActionSetsWithFilter(permissions, GetActionFilter(searchOptions))
+		permissions = s.actionResolver.ExpandActionSetsWithFilter(permissions, accesscontrol.GetActionFilter(searchOptions))
 	}
 
 	key, err := accesscontrol.GetSearchPermissionCacheKey(s.log, &user.SignedInUser{UserID: searchOptions.UserID, OrgID: orgID}, searchOptions)
