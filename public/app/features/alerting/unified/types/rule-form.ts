@@ -1,3 +1,4 @@
+import { EvalFunction } from 'app/features/alerting/state/alertDef';
 import { AlertQuery, GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 export enum RuleFormType {
@@ -69,3 +70,11 @@ export interface RuleFormValues {
 }
 
 export type Folder = { title: string; uid: string };
+
+export interface SimpleCondition {
+  whenField?: string;
+  evaluator: {
+    params: number[];
+    type: EvalFunction;
+  };
+}

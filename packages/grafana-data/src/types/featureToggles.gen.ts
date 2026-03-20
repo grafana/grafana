@@ -1725,4 +1725,9 @@ export interface FeatureToggles {
   * @default false
   */
   colorblindThemes?: boolean;
+  /**
+  * Enables fine-grained Y-axis tick options beyond the auto-ticks
+  * @default false
+  */
+  yAxisTickControl?: boolean;
 }
