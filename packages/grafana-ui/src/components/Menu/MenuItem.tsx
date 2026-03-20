@@ -131,6 +131,13 @@ export const MenuItem = React.memo(
             event.preventDefault();
             localRef.current?.click();
           }
+          if (hasSubMenu && !isSubMenuOpen) {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsSubMenuOpen(true);
+            setIsActive(true);
+            return;
+          }
           break;
         case 'ArrowRight':
           event.preventDefault();
@@ -141,7 +148,6 @@ export const MenuItem = React.memo(
           }
           break;
         case 'Enter':
-        case ' ':
           if (hasSubMenu && !isSubMenuOpen) {
             event.preventDefault();
             event.stopPropagation();
