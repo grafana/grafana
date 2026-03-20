@@ -71,6 +71,47 @@ describe('ElasticsearchVariableUtils', () => {
 
       expect(result.query).toBe('');
     });
+
+    it('should convert legacy {"find":"terms"} query to a terms bucket aggregation', () => {
+      const result = migrateVariableQuery('{"find":"terms","field":"Platform.keyword"}');
+
+      expect(result).toEqual({
+        refId,
+        query: '',
+        metrics: [{ type: 'count', id: '1' }],
+        bucketAggs: [
+          {
+            type: 'terms',
+            id: '2',
+            field: 'Platform.keyword',
+            settings: { size: '500', order: 'asc', orderBy: '_term', min_doc_count: '1' },
+          },
+        ],
+      });
+    });
+
+    it('should preserve query filter from legacy {"find":"terms"} query', () => {
+      const result = migrateVariableQuery('{"find":"terms","field":"env","query":"region:eu-*","size":100,"order":"desc"}');
+
+      expect(result.query).toBe('region:eu-*');
+      expect(result.bucketAggs?.[0]).toMatchObject({
+        type: 'terms',
+        field: 'env',
+        settings: expect.objectContaining({ size: '100', order: 'desc' }),
+      });
+    });
+
+    it('should fall through to raw_document for unrecognised JSON', () => {
+      const result = migrateVariableQuery('{"someOtherKey":"value"}');
+
+      expect(result.metrics).toEqual([{ type: 'raw_document', id: '1' }]);
+    });
+
+    it('should fall through to raw_document for plain Lucene strings', () => {
+      const result = migrateVariableQuery('status:active AND region:eu-*');
+
+      expect(result.metrics).toEqual([{ type: 'raw_document', id: '1' }]);
+    });
   });
 
   describe('convertFieldsToVariableFields', () => {
