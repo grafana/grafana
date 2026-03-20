@@ -1560,6 +1560,55 @@ func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx 
 		"folders for repo %q should have sourcePaths %v", repoName, expectedSourcePaths)
 }
 
+// GetFolderGeneration returns the current generation of the folder with the given UID.
+func GetFolderGeneration(t *testing.T, helper *ProvisioningTestHelper, folderUID string) int64 {
+	t.Helper()
+	obj, err := helper.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get folder %s", folderUID)
+	return obj.GetGeneration()
+}
+
+// GetDashboardGeneration returns the current generation of the dashboard with the given UID.
+func GetDashboardGeneration(t *testing.T, helper *ProvisioningTestHelper, dashboardUID string) int64 {
+	t.Helper()
+	obj, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get dashboard %s", dashboardUID)
+	return obj.GetGeneration()
+}
+
+// GetDashboardCreationTimestamp returns the creation timestamp of the dashboard with the given UID.
+func GetDashboardCreationTimestamp(t *testing.T, helper *ProvisioningTestHelper, dashboardUID string) metav1.Time {
+	t.Helper()
+	obj, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get dashboard %s", dashboardUID)
+	return obj.GetCreationTimestamp()
+}
+
+// FindDashboardUIDBySourcePath returns the UID of the dashboard managed by repoName at sourcePath.
+func FindDashboardUIDBySourcePath(t *testing.T, helper *ProvisioningTestHelper, repoName, sourcePath string) string {
+	t.Helper()
+	var uid string
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		for _, d := range list.Items {
+			annotations := d.GetAnnotations()
+			if annotations["grafana.app/managerId"] != repoName {
+				continue
+			}
+			if annotations["grafana.app/sourcePath"] == sourcePath {
+				uid = d.GetName()
+				return
+			}
+		}
+		c.Errorf("no dashboard managed by %q with sourcePath %q found", repoName, sourcePath)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected dashboard with sourcePath %q for repo %q", sourcePath, repoName)
+	return uid
+}
+
 // FindCondition finds a condition by type in the conditions list
 func FindCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
 	for i := range conditions {
