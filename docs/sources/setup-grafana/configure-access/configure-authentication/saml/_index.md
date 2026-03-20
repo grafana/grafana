@@ -28,7 +28,7 @@ Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERS
 
 The SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
 
-## Set up options for SAML authentication in Grafana 
+## Set up options for SAML authentication in Grafana
 
 You can configure SAML authentication in Grafana with different methods. While the configuration options don't change, if you want to keep all of Grafana authentication settings in one place, use the Grafana configuration file or the Terraform provider. If you're a Grafana Cloud user, you don't have access to Grafana configuration file. Instead, configure SAML through the other methods.
 
@@ -42,7 +42,7 @@ The available methods are:
 
 - Configure SAML using the [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/)
 - Configure SAML using the [SAML user interface](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-ui/)
-- Configure SAML using the [Grafana configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-file/) - **not available in Grafana Cloud** 
+- Configure SAML using the [Grafana configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml/saml-file/) - **not available in Grafana Cloud**
 - Configure SAML using the [Grafana Terraform provider](https://registry.terraform.io/providers/grafana/grafana/<GRAFANA_VERSION>/docs/resources/sso_settings)
 
 If you're using Okta or Entra ID as Identity Provider, see the following documentation for configuration:

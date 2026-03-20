@@ -37,32 +37,32 @@ To follow this guide, you need:
 
 - Knowledge of SAML authentication. Refer to [SAML authentication in Grafana](../) for an overview of the SAML integration in Grafana.
 - Permissions `settings:read` and `settings:write` with scope `settings:auth.saml:*` that allow you to read and update SAML authentication settings, which are granted by `fixed:authentication.config:writer` role. By default, this role is granted to Grafana server administrator in self-hosted instances and to Organization admins in Grafana Cloud instances.
-- A Grafana instance running Grafana version 10.0 or later with [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/), or a select Grafana Cloud account. 
+- A Grafana instance running Grafana version 10.0 or later with [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/), or a select Grafana Cloud account.
 
-## General Settings 
+## General Settings
 
 Complete the **General settings** fields:
 
-- **Allow signup:** If enabled, you can create users through SAML login. If it's disabled, only existing Grafana users can log in with SAML.     
-- **Auto login:** If enabled, Grafana automatically logs in with SAML, skipping the login screen. 
+- **Allow signup:** If enabled, you can create users through SAML login. If it's disabled, only existing Grafana users can log in with SAML.
+- **Auto login:** If enabled, Grafana automatically logs in with SAML, skipping the login screen.
 - **Single logout:** The SAML single logout feature enables users to log out from all applications associated with the current IdP session established using SAML SSO. For more information, refer to [SAML single logout documentation](../configure-saml-single-logout).
-- **Identity provider initiated login:** Enables users to log in to Grafana directly from the SAML IdP. For more information, refer to [IdP initiated login documentation](../#idp-initiated-single-sign-on-sso).         
+- **Identity provider initiated login:** Enables users to log in to Grafana directly from the SAML IdP. For more information, refer to [IdP initiated login documentation](../#idp-initiated-single-sign-on-sso).
 
-## Sign Requests 
+## Sign Requests
 
-Toggle **Sign requests** to specify whether you want the outgoing requests to be signed. If you select to sign them: 
+Toggle **Sign requests** to specify whether you want the outgoing requests to be signed. If you select to sign them:
 
 - Provide a certificate and a private key that'll be used by the service provider (Grafana) and the SAML IdP.
 
-   Use the [PKCS #8](https://en.wikipedia.org/wiki/PKCS_8) format to issue the private key.
+  Use the [PKCS #8](https://en.wikipedia.org/wiki/PKCS_8) format to issue the private key.
 
-   For more information, refer to an [example on how to generate SAML credentials](../configure-saml-signing-encryption/#example-of-private-key-generation-for-saml-authentication).
+  For more information, refer to an [example on how to generate SAML credentials](../configure-saml-signing-encryption/#example-of-private-key-generation-for-saml-authentication).
 
-   Alternatively, you can generate a new private key and certificate pair directly from the UI. Click the `Generate key and certificate` button to open a form where you provide information to embed in the new certificate.
+  Alternatively, you can generate a new private key and certificate pair directly from the UI. Click the `Generate key and certificate` button to open a form where you provide information to embed in the new certificate.
 
 - Choose which signature algorithm to use. The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests to avoid [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
 
-## Connect Grafana with the Identity Provider 
+## Connect Grafana with the Identity Provider
 
 {{< admonition type="note" >}}
 You can skip this screen.
@@ -79,13 +79,13 @@ Finish configuring Grafana using IdP data:
 - The metadata contains the necessary information for Grafana to establish a connection with the IdP.
 - This can be provided as Base64-encoded value, a path to a file, or as a URL.
 
-## User Mapping 
+## User Mapping
 
 ### Assertion mapping
 
 If you want to [map user information from SAML assertions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-access/configure-authentication/saml#assertion-mapping), complete the **Assertion attributes mappings** section.
 
--  To use team sync you need to configure the **Groups attribute** field. Team sync automatically maps users to Grafana teams based on their SAML group membership. Learn more about [team sync](../../../configure-team-sync) and [configuring team sync for SAML](../configure-saml-team-role-mapping/#configure-team-sync).
+- To use team sync you need to configure the **Groups attribute** field. Team sync automatically maps users to Grafana teams based on their SAML group membership. Learn more about [team sync](../../../configure-team-sync) and [configuring team sync for SAML](../configure-saml-team-role-mapping/#configure-team-sync).
 
 ### Role mapping
 
@@ -135,7 +135,7 @@ Organization mapping automatically updates user's organization memberships (and 
 
 If you want to limit the access to Grafana based on user's SAML organization membership, fill in the **Allowed organizations** field.
 
-## Test And Enable 
+## Test And Enable
 
 1. Click **Save and enable**. If there are issues with your configuration, an error message will appear. Refer back to the previous steps to correct the issues and click on `Save and apply` on the top right corner once you are done.
 1. If there are no configuration issues, the SAML integration status will change to `Enabled`. Your SAML configuration is now enabled.
