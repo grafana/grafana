@@ -1503,19 +1503,19 @@ func convertDatasourceVariableToV1(variable *dashv2alpha1.DashboardDatasourceVar
 func convertCustomVariableToV1(variable *dashv2alpha1.DashboardCustomVariableKind) (map[string]interface{}, error) {
 	spec := variable.Spec
 	varMap := map[string]interface{}{
-		"name":        spec.Name,
-		"type":        "custom",
-		"hide":        transformVariableHideFromEnum(spec.Hide),
-		"skipUrlSync": spec.SkipUrlSync,
-		"multi":       spec.Multi,
-		"includeAll":  spec.IncludeAll,
-		"query":       spec.Query,
+		"name":             spec.Name,
+		"type":             "custom",
+		"hide":             transformVariableHideFromEnum(spec.Hide),
+		"skipUrlSync":      spec.SkipUrlSync,
+		"multi":            spec.Multi,
+		"includeAll":       spec.IncludeAll,
+		"query":            spec.Query,
+		"allowCustomValue": spec.AllowCustomValue,
 		"current": map[string]interface{}{
 			"text":  convertStringOrArrayOfStringToV1(spec.Current.Text),
 			"value": convertStringOrArrayOfStringToV1(spec.Current.Value),
 		},
-		"options":          convertVariableOptionsToV1(spec.Options),
-		"allowCustomValue": spec.AllowCustomValue,
+		"options": convertVariableOptionsToV1(spec.Options),
 	}
 
 	if spec.Label != nil {
