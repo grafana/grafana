@@ -14,7 +14,6 @@ export interface Props {
   stats: string[];
   allowMultiple?: boolean;
   defaultStat?: string;
-  className?: string;
   width?: number;
   inputId?: string;
   filterOptions?: (ext: FieldReducerInfo) => boolean;
