@@ -175,6 +175,7 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 	tests := []struct {
 		name           string
 		query          *team.GetTeamByIDQuery
+		ctxUID         string
 		legacyResult   *team.TeamDTO
 		legacyErr      error
 		serverResponse func(w http.ResponseWriter, r *http.Request)
@@ -183,6 +184,39 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 		expectErr      bool
 		expectDTO      *team.TeamDTO
 	}{
+		{
+			name: "successfully gets a team by UID from context",
+			query: &team.GetTeamByIDQuery{
+				ID:    42,
+				OrgID: 1,
+			},
+			ctxUID: "team-uid-from-ctx",
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Contains(t, r.URL.Path, "team-uid-from-ctx")
+				resp := iamv0alpha1.Team{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+						Kind:       "Team",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "team-uid-from-ctx",
+						Namespace: "org-1",
+					},
+					Spec: iamv0alpha1.TeamSpec{
+						Title: "Context Team",
+						Email: "ctx@example.com",
+					},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+			expectDTO: &team.TeamDTO{
+				UID:   "team-uid-from-ctx",
+				OrgID: 1,
+				Name:  "Context Team",
+				Email: "ctx@example.com",
+			},
+		},
 		{
 			name: "successfully gets a team by UID",
 			query: &team.GetTeamByIDQuery{
@@ -326,6 +360,10 @@ func TestTeamK8sService_GetTeamByID(t *testing.T) {
 				ctx = context.Background()
 			} else {
 				ctx = contextWithReqContext()
+			}
+
+			if tt.ctxUID != "" {
+				ctx = context.WithValue(ctx, team.TeamUIDCtxKey{}, tt.ctxUID)
 			}
 
 			result, err := svc.GetTeamByID(ctx, tt.query)

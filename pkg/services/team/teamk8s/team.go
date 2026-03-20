@@ -174,7 +174,10 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 	}
 
 	uid := query.UID
-	if query.ID != 0 {
+	if uid == "" {
+		uid, _ = ctx.Value(team.TeamUIDCtxKey{}).(string)
+	}
+	if uid == "" && query.ID != 0 {
 		teamDTO, err := s.legacyService.GetTeamByID(ctx, query)
 		if err != nil {
 			return nil, err
