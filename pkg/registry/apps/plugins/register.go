@@ -57,10 +57,15 @@ func ProvideAppInstaller(
 	logger := logging.DefaultLogger.With("app", "plugins.app")
 
 	localProvider := meta.NewLocalProvider(pluginStore, moduleHashCalc)
-	coreProvider := meta.NewCoreProvider(logger, func() (string, error) {
-		return getPluginsPath(cfgProvider)
+	coreProvider, err := meta.NewCoreProvider(logger, meta.CoreProviderOpts{
+		PluginsPath: func() (string, error) {
+			return getPluginsPath(cfgProvider)
+		},
 	})
-	if err := coreProvider.Init(context.Background()); err != nil {
+	if err != nil {
+		return nil, err
+	}
+	if err = coreProvider.Init(context.Background()); err != nil {
 		logger.Warn("Failed to eagerly load core plugins", "error", err)
 	}
 	metaProviderManager := meta.NewProviderManager(coreProvider, localProvider)
@@ -93,7 +98,7 @@ func getPluginsPath(cfgProvider configprovider.ConfigProvider) (string, error) {
 		return pluginsPath, nil
 	}
 
-	pluginsPath := filepath.Join(cfg.StaticRootPath, "public", "app", "plugins")
+	pluginsPath := filepath.Join(cfg.StaticRootPath, "app", "plugins")
 	if _, err = os.Stat(pluginsPath); err != nil {
 		return "", errors.New("could not find core plugins directory")
 	}

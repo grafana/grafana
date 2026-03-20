@@ -21,7 +21,10 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("returns cached plugin when available", func(t *testing.T) {
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(""))
+		provider, err := NewCoreProvider(&logging.NoOpLogger{}, CoreProviderOpts{
+			PluginsPath: pluginsPathFunc(""),
+		})
+		require.NoError(t, err)
 
 		expectedMeta := pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{
@@ -45,7 +48,10 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	})
 
 	t.Run("returns ErrMetaNotFound for non-existent plugin", func(t *testing.T) {
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(""))
+		provider, err := NewCoreProvider(&logging.NoOpLogger{}, CoreProviderOpts{
+			PluginsPath: pluginsPathFunc(""),
+		})
+		require.NoError(t, err)
 
 		provider.mu.Lock()
 		provider.initialized = true
@@ -59,7 +65,10 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 	})
 
 	t.Run("ignores version parameter", func(t *testing.T) {
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(""))
+		provider, err := NewCoreProvider(&logging.NoOpLogger{}, CoreProviderOpts{
+			PluginsPath: pluginsPathFunc(""),
+		})
+		require.NoError(t, err)
 
 		expectedMeta := pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{
@@ -84,7 +93,8 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 
 	t.Run("uses custom TTL when provided", func(t *testing.T) {
 		customTTL := 2 * time.Hour
-		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, pluginsPathFunc(""), customTTL)
+		provider, err := NewCoreProviderWithTTL(&logging.NoOpLogger{}, "", CoreProviderRemoteAssets{}, customTTL)
+		require.NoError(t, err)
 
 		expectedMeta := pluginsv0alpha1.MetaSpec{
 			PluginJson: pluginsv0alpha1.MetaJSONData{
@@ -117,7 +127,11 @@ func TestCoreProvider_GetMeta(t *testing.T) {
 
 		require.NoError(t, os.Chdir(tempDir))
 
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(""))
+		provider, err := NewCoreProvider(&logging.NoOpLogger{}, CoreProviderOpts{
+			PluginsPath: pluginsPathFunc(""),
+		})
+		require.NoError(t, err)
+
 		result, err := provider.GetMeta(ctx, PluginRef{ID: "any-plugin", Version: "1.0.0"})
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrMetaNotFound))
@@ -146,7 +160,10 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		require.NoError(t, os.Chdir(grafanaRoot))
 
 		pluginsPath := filepath.Join(grafanaRoot, "public", "app", "plugins")
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(pluginsPath))
+		provider, err := NewCoreProvider(&logging.NoOpLogger{}, CoreProviderOpts{
+			PluginsPath: pluginsPathFunc(pluginsPath),
+		})
+		require.NoError(t, err)
 		err = provider.loadPlugins(ctx)
 		require.NoError(t, err)
 		assert.Len(t, provider.loadedPlugins, 52)
@@ -163,10 +180,11 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 
 		require.NoError(t, os.Chdir(tempDir))
 
-		provider := NewCoreProvider(&logging.NoOpLogger{}, func() (string, error) { return "", errors.New("not found") })
-		err = provider.loadPlugins(ctx)
-
+		provider, err := NewCoreProvider(&logging.NoOpLogger{}, CoreProviderOpts{
+			PluginsPath: func() (string, error) { return "", errors.New("not found") },
+		})
 		assert.Error(t, err)
+		assert.Nil(t, provider)
 	})
 
 	t.Run("returns no error when no plugins found", func(t *testing.T) {
@@ -183,7 +201,10 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		require.NoError(t, os.Chdir(tempDir))
 
 		pluginsPath := filepath.Join(tempDir, "public", "app", "plugins")
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(pluginsPath))
+		provider, err := NewCoreProvider(&logging.NoOpLogger{}, CoreProviderOpts{
+			PluginsPath: pluginsPathFunc(pluginsPath),
+		})
+		require.NoError(t, err)
 		err = provider.loadPlugins(ctx)
 		assert.NoError(t, err)
 	})
@@ -221,7 +242,10 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 		require.NoError(t, os.Chdir(tempDir))
 
 		pluginsPath := filepath.Join(tempDir, "public", "app", "plugins")
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc(pluginsPath))
+		provider, err := NewCoreProvider(&logging.NoOpLogger{}, CoreProviderOpts{
+			PluginsPath: pluginsPathFunc(pluginsPath),
+		})
+		require.NoError(t, err)
 		err = provider.loadPlugins(ctx)
 
 		if err != nil {
@@ -243,33 +267,36 @@ func TestCoreProvider_loadPlugins(t *testing.T) {
 
 func TestNewCoreProvider(t *testing.T) {
 	t.Run("creates provider with default TTL", func(t *testing.T) {
-		provider := NewCoreProvider(&logging.NoOpLogger{}, pluginsPathFunc("/test/path"))
+		provider, err := NewCoreProvider(&logging.NoOpLogger{}, CoreProviderOpts{
+			PluginsPath: pluginsPathFunc("/test/path"),
+		})
+		require.NoError(t, err)
 		assert.Equal(t, defaultCoreTTL, provider.ttl)
 		assert.NotNil(t, provider.loadedPlugins)
 		assert.False(t, provider.initialized)
-		assert.NotNil(t, provider.pluginsPathFunc)
+		assert.Equal(t, "/test/path", provider.pluginsPath)
 	})
 }
 
 func TestNewCoreProviderWithTTL(t *testing.T) {
 	t.Run("creates provider with custom TTL", func(t *testing.T) {
 		customTTL := 2 * time.Hour
-		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, pluginsPathFunc("/test/path"), customTTL)
+		provider, err := NewCoreProviderWithTTL(&logging.NoOpLogger{}, "/test/path", CoreProviderRemoteAssets{}, customTTL)
+		require.NoError(t, err)
 		assert.Equal(t, customTTL, provider.ttl)
 	})
 
 	t.Run("accepts zero TTL", func(t *testing.T) {
-		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, pluginsPathFunc("/test/path"), 0)
+		provider, err := NewCoreProviderWithTTL(&logging.NoOpLogger{}, "/test/path", CoreProviderRemoteAssets{}, 0)
+		require.NoError(t, err)
 		assert.Equal(t, time.Duration(0), provider.ttl)
 	})
 
-	t.Run("stores plugins path function", func(t *testing.T) {
+	t.Run("stores plugins path", func(t *testing.T) {
 		expectedPath := "/usr/share/grafana/public/app/plugins"
-		provider := NewCoreProviderWithTTL(&logging.NoOpLogger{}, pluginsPathFunc(expectedPath), defaultCoreTTL)
-		assert.NotNil(t, provider.pluginsPathFunc)
-		path, err := provider.pluginsPathFunc()
+		provider, err := NewCoreProviderWithTTL(&logging.NoOpLogger{}, expectedPath, CoreProviderRemoteAssets{}, defaultCoreTTL)
 		require.NoError(t, err)
-		assert.Equal(t, expectedPath, path)
+		assert.Equal(t, expectedPath, provider.pluginsPath)
 	})
 }
 

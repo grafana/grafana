@@ -2,6 +2,9 @@ package meta
 
 import (
 	"context"
+	"net/url"
+	"path"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -16,7 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/validation"
+	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
+	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginerrs"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 )
@@ -27,32 +32,50 @@ const (
 
 // CoreProvider retrieves plugin metadata for core plugins.
 type CoreProvider struct {
-	mu              sync.RWMutex
-	loadedPlugins   map[string]pluginsv0alpha1.MetaSpec
-	initialized     bool
-	ttl             time.Duration
-	loader          pluginsLoader.Service
-	pluginsPathFunc func() (string, error)
-	logger          logging.Logger
+	mu            sync.RWMutex
+	loadedPlugins map[string]pluginsv0alpha1.MetaSpec
+	initialized   bool
+	ttl           time.Duration
+	loader        pluginsLoader.Service
+	pluginsPath   string
+	logger        logging.Logger
+}
+
+type CoreProviderOpts struct {
+	PluginsPath  func() (string, error)
+	RemoteAssets CoreProviderRemoteAssets
+}
+
+type CoreProviderRemoteAssets struct {
+	Enabled       bool
+	GrafanaCDNURL func() (string, error)
 }
 
 // NewCoreProvider creates a new CoreProvider for core plugins.
-func NewCoreProvider(logger logging.Logger, pluginsPath func() (string, error)) *CoreProvider {
-	return NewCoreProviderWithTTL(logger, pluginsPath, defaultCoreTTL)
+func NewCoreProvider(logger logging.Logger, opts CoreProviderOpts) (*CoreProvider, error) {
+	pluginsPath, err := opts.PluginsPath()
+	if err != nil {
+		logger.Warn("Could not get core plugins path", "error", err)
+		return nil, err
+	}
+
+	return NewCoreProviderWithTTL(logger, pluginsPath, opts.RemoteAssets, defaultCoreTTL)
 }
 
 // NewCoreProviderWithTTL creates a new CoreProvider with a custom TTL.
-func NewCoreProviderWithTTL(logger logging.Logger, pluginsPathFunc func() (string, error), ttl time.Duration) *CoreProvider {
-	cfg := &config.PluginManagementCfg{
-		Features: config.Features{},
+func NewCoreProviderWithTTL(logger logging.Logger, pluginsPath string, remoteAssets CoreProviderRemoteAssets, ttl time.Duration) (*CoreProvider, error) {
+	loader, err := createLoader(remoteAssets)
+	if err != nil {
+		return nil, err
 	}
+
 	return &CoreProvider{
-		loadedPlugins:   make(map[string]pluginsv0alpha1.MetaSpec),
-		ttl:             ttl,
-		loader:          createLoader(cfg),
-		pluginsPathFunc: pluginsPathFunc,
-		logger:          logger,
-	}
+		loadedPlugins: make(map[string]pluginsv0alpha1.MetaSpec),
+		ttl:           ttl,
+		loader:        loader,
+		pluginsPath:   pluginsPath,
+		logger:        logger,
+	}, nil
 }
 
 func (p *CoreProvider) Init(ctx context.Context) error {
@@ -114,13 +137,7 @@ func (p *CoreProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, err
 // This error will be handled gracefully by GetMeta, which will return ErrMetaNotFound
 // to allow other providers to handle the request.
 func (p *CoreProvider) loadPlugins(ctx context.Context) error {
-	pluginsPath, err := p.pluginsPathFunc()
-	if err != nil {
-		p.logger.WithContext(ctx).Warn("Could not get core plugins path", "error", err)
-		return err
-	}
-
-	src := sources.NewLocalSource(plugins.ClassCore, []string{pluginsPath})
+	src := sources.NewLocalSource(plugins.ClassCore, []string{p.pluginsPath})
 	loadedPlugins, err := p.loader.Load(ctx, src)
 	if err != nil {
 		return err
@@ -140,13 +157,25 @@ func (p *CoreProvider) loadPlugins(ctx context.Context) error {
 }
 
 // createLoader creates a loader service configured for core plugins.
-func createLoader(cfg *config.PluginManagementCfg) pluginsLoader.Service {
+func createLoader(remoteAssets CoreProviderRemoteAssets) (pluginsLoader.Service, error) {
+	cfg := &config.PluginManagementCfg{}
+
+	constructFunc := bootstrap.DefaultConstructFunc(cfg, signature.DefaultCalculator(cfg), pluginassets.NewLocalProvider())
+	if remoteAssets.Enabled {
+		cdnURL, err := remoteAssets.GrafanaCDNURL()
+		if err != nil {
+			return nil, err
+		}
+		constructFunc = bootstrap.DefaultConstructFunc(cfg, signature.DefaultCalculator(cfg), newCoreAssetProvider(cdnURL))
+	}
+
 	d := discovery.New(cfg, discovery.Opts{
 		FilterFuncs: []discovery.FilterFunc{
 			// Allow all plugin types for core plugins
 		},
 	})
 	b := bootstrap.New(cfg, bootstrap.Opts{
+		ConstructFunc: constructFunc,
 		DecorateFuncs: []bootstrap.DecorateFunc{
 			bootstrap.LoadingStrategyDecorateFunc(cfg, pluginscdn.ProvideService(cfg)),
 		}, // no decoration required for metadata
@@ -169,5 +198,23 @@ func createLoader(cfg *config.PluginManagementCfg) pluginsLoader.Service {
 
 	et := pluginerrs.ProvideErrorTracker()
 
-	return pluginsLoader.New(cfg, d, b, v, i, t, et)
+	return pluginsLoader.New(cfg, d, b, v, i, t, et), nil
+}
+
+type CoreAssetProvider struct {
+	cdnURL string
+}
+
+func newCoreAssetProvider(cdnURL string) *CoreAssetProvider {
+	return &CoreAssetProvider{
+		cdnURL: cdnURL,
+	}
+}
+
+func (p *CoreAssetProvider) Module(plugin pluginassets.PluginInfo) (string, error) {
+	return path.Join("core:plugin", filepath.Base(plugin.FS.Base())), nil
+}
+
+func (p *CoreAssetProvider) AssetPath(_ pluginassets.PluginInfo, assetPath ...string) (string, error) {
+	return url.JoinPath(p.cdnURL, assetPath...)
 }
