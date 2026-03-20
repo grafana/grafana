@@ -148,7 +148,7 @@ func ParseFolder(dirPath, repositoryName string) Folder {
 	return Folder{
 		Title: base,
 		ID:    hasher(sanitiseKubeName(base)),
-		Path:  safepath.EnsureTrailingSlash(dirPath),
+		Path:  dirPath,
 	}
 }
 
