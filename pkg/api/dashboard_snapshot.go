@@ -2,7 +2,6 @@ package api
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -19,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -29,13 +27,14 @@ func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
 		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
 		return func(w http.ResponseWriter, r *http.Request) {
-			user, err := identity.GetRequester(r.Context())
-			if err != nil || user == nil {
-				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
+			requester, err := identity.GetRequester(r.Context())
+			if err != nil || requester == nil {
+				w.WriteHeader(http.StatusUnauthorized)
+				_, _ = w.Write([]byte(`{"message":"Unauthorized"}`))
 				return
 			}
 			r.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
-				namespaceMapper(user.GetOrgID()) + "/snapshots/create"
+				namespaceMapper(requester.GetOrgID()) + "/snapshots/create"
 			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
 		}
 	}
@@ -172,7 +171,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqCont
 		return response.Error(http.StatusNotFound, "Snapshot not found", nil)
 	}
 
-	err := dashboardsnapshots.DeleteWithKey(c.Req.Context(), key, hs.dashboardsnapshotsService)
+	err := dashboardsnapshots.DeleteWithKey(c.Req.Context(), key, hs.dashboardsnapshotsService, hs.Cfg.ExternalSnapshotToken)
 	if err != nil {
 		if errors.Is(err, dashboardsnapshots.ErrBaseNotFound) {
 			return response.Error(http.StatusNotFound, "Snapshot not found", err)
@@ -239,7 +238,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	}
 
 	if queryResult.External {
-		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
+		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL, hs.Cfg.ExternalSnapshotToken)
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Failed to delete external dashboard", err)
 		}

@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
 	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -74,9 +74,16 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 	var snapshotURL string
 
 	if cmd.External {
-		resp, err := createExternalDashboardSnapshot(cmd, cfg.ExternalSnapshotURL)
+		resp, err := createExternalDashboardSnapshot(cmd, cfg.ExternalSnapshotURL, cfg.ExternalSnapshotToken)
 		if err != nil {
-			c.JsonApiErr(http.StatusInternalServerError, "Failed to create external snapshot", err)
+			status := http.StatusInternalServerError
+			message := "Failed to create external snapshot"
+			var grafanaErr errutil.Error
+			if errors.As(err, &grafanaErr) {
+				status = grafanaErr.Reason.Status().HTTPStatus()
+				message = grafanaErr.PublicMessage
+			}
+			c.JsonApiErr(status, message, err)
 			return
 		}
 
@@ -146,8 +153,24 @@ func saveAndRespond(c *contextmodel.ReqContext, svc Service, cmd CreateDashboard
 
 var plog = log.New("external-snapshot")
 
-func DeleteExternalDashboardSnapshot(externalUrl string) error {
-	resp, err := client.Get(externalUrl)
+var (
+	ErrExternalSnapshotAuthFailed = errutil.BadGateway("dashboardsnapshots.externalAuthFailed",
+		errutil.WithPublicMessage("External snapshot server rejected the request. Check external_snapshot_token configuration."),
+	)
+	ErrExternalSnapshotFailed = errutil.BadGateway("dashboardsnapshots.externalFailed",
+		errutil.WithPublicMessage("External snapshot server returned an unexpected error."),
+	)
+)
+
+func DeleteExternalDashboardSnapshot(externalUrl string, token string) error {
+	req, err := http.NewRequest(http.MethodGet, externalUrl, nil)
+	if err != nil {
+		return err
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -175,10 +198,13 @@ func DeleteExternalDashboardSnapshot(externalUrl string) error {
 		}
 	}
 
-	return fmt.Errorf("unexpected response when deleting external snapshot, status code: %d", resp.StatusCode)
+	if resp.StatusCode == 401 || resp.StatusCode == 403 {
+		return ErrExternalSnapshotAuthFailed.Errorf("external snapshot server returned %d on delete", resp.StatusCode)
+	}
+	return ErrExternalSnapshotFailed.Errorf("unexpected response when deleting external snapshot, status code: %d", resp.StatusCode)
 }
 
-func createExternalDashboardSnapshot(cmd CreateDashboardSnapshotCommand, externalSnapshotUrl string) (*CreateExternalSnapshotResponse, error) {
+func createExternalDashboardSnapshot(cmd CreateDashboardSnapshotCommand, externalSnapshotUrl string, token string) (*CreateExternalSnapshotResponse, error) {
 	var createSnapshotResponse CreateExternalSnapshotResponse
 
 	name := cmd.Name
@@ -199,7 +225,15 @@ func createExternalDashboardSnapshot(cmd CreateDashboardSnapshotCommand, externa
 		return nil, err
 	}
 
-	resp, err := client.Post(externalSnapshotUrl+"/api/snapshots", "application/json", bytes.NewBuffer(messageBytes))
+	req, err := http.NewRequest(http.MethodPost, externalSnapshotUrl+"/api/snapshots", bytes.NewBuffer(messageBytes))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +244,10 @@ func createExternalDashboardSnapshot(cmd CreateDashboardSnapshotCommand, externa
 	}()
 
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("create external snapshot response status code %d", resp.StatusCode)
+		if resp.StatusCode == 401 || resp.StatusCode == 403 {
+			return nil, ErrExternalSnapshotAuthFailed.Errorf("external snapshot server returned %d", resp.StatusCode)
+		}
+		return nil, ErrExternalSnapshotFailed.Errorf("external snapshot server returned status code %d", resp.StatusCode)
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&createSnapshotResponse); err != nil {
@@ -220,7 +257,7 @@ func createExternalDashboardSnapshot(cmd CreateDashboardSnapshotCommand, externa
 	return &createSnapshotResponse, nil
 }
 
-func DeleteWithKey(ctx context.Context, key string, svc Service) error {
+func DeleteWithKey(ctx context.Context, key string, svc Service, token string) error {
 	query := &GetDashboardSnapshotQuery{DeleteKey: key}
 	queryResult, err := svc.GetDashboardSnapshot(ctx, query)
 	if err != nil {
@@ -228,7 +265,7 @@ func DeleteWithKey(ctx context.Context, key string, svc Service) error {
 	}
 
 	if queryResult.External {
-		err := DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
+		err := DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL, token)
 		if err != nil {
 			return err
 		}

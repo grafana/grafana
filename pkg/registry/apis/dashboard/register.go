@@ -167,11 +167,12 @@ func RegisterAPIService(
 	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
-		SnapshotsEnabled:     cfg.SnapshotEnabled,
-		ExternalSnapshotURL:  cfg.ExternalSnapshotUrl,
-		ExternalSnapshotName: cfg.ExternalSnapshotName,
-		ExternalEnabled:      cfg.ExternalEnabled,
-		SnapshotPublicMode:   cfg.SnapshotPublicMode,
+		SnapshotsEnabled:      cfg.SnapshotEnabled,
+		ExternalSnapshotURL:   cfg.ExternalSnapshotUrl,
+		ExternalSnapshotName:  cfg.ExternalSnapshotName,
+		ExternalEnabled:       cfg.ExternalEnabled,
+		ExternalSnapshotToken: cfg.ExternalSnapshotToken,
+		SnapshotPublicMode:    cfg.SnapshotPublicMode,
 	}
 
 	builder := &DashboardsAPIBuilder{
@@ -818,9 +819,10 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	// Snapshots - only v0alpha1
 	if snapshots != nil && dashboards.GroupVersion().Version == "v0alpha1" {
 		snapshotLegacyStore := &snapshot.SnapshotLegacyStore{
-			ResourceInfo: *snapshots,
-			Service:      b.snapshotService,
-			Namespacer:   b.namespacer,
+			ResourceInfo:          *snapshots,
+			Service:               b.snapshotService,
+			Namespacer:            b.namespacer,
+			ExternalSnapshotToken: b.snapshotOptions.ExternalSnapshotToken,
 		}
 
 		unifiedSnapshotStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *snapshots, opts.OptsGetter)
@@ -1075,7 +1077,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 // Snapshots use RBAC-based authorization; other resources fall back to ServiceAuthorizer.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
-	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl, b.snapshotOptions)
+	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {

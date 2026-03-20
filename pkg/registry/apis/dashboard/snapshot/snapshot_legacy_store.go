@@ -29,9 +29,10 @@ var (
 )
 
 type SnapshotLegacyStore struct {
-	ResourceInfo utils.ResourceInfo
-	Service      dashboardsnapshots.Service
-	Namespacer   request.NamespaceMapper
+	ResourceInfo          utils.ResourceInfo
+	Service               dashboardsnapshots.Service
+	Namespacer            request.NamespaceMapper
+	ExternalSnapshotToken string
 }
 
 func (s *SnapshotLegacyStore) New() runtime.Object {
@@ -67,7 +68,7 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 
 	// Delete the external one first
 	if snap.ExternalDeleteURL != "" {
-		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(snap.ExternalDeleteURL)
+		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(snap.ExternalDeleteURL, s.ExternalSnapshotToken)
 		if err != nil {
 			return nil, false, err
 		}

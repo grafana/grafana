@@ -204,10 +204,6 @@ func ProvideService(
 			s.handler.ServeHTTP(resp, req)
 		}
 		k8sRoute.Any("/features.grafana.app/v0alpha1/*", handler)
-		if cfg.SnapshotPublicMode {
-			k8sRoute.Any("/dashboard.grafana.app/v0alpha1/namespaces/*/snapshots/public-create", handler)
-			k8sRoute.Any("/dashboard.grafana.app/v0alpha1/namespaces/*/snapshots/public-delete/*", handler)
-		}
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
 	}
