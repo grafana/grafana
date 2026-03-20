@@ -67,11 +67,12 @@ var _ datasource.ConnectionClient = (*mockConnectionClient)(nil)
 
 // implements grafanaapiserver.DirectRestConfigProvider
 type mockDirectRestConfigProvider struct {
-	transport        http.RoundTripper
-	host             string
-	lastServedPath   string
-	lastServedMethod string
-	lastServedQuery  string
+	transport          http.RoundTripper
+	host               string
+	lastServedPath     string
+	lastServedMethod   string
+	lastServedQuery    string
+	lastServedHeaders  http.Header
 }
 
 func (m *mockDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
@@ -85,6 +86,7 @@ func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, 
 	m.lastServedPath = r.URL.Path
 	m.lastServedMethod = r.Method
 	m.lastServedQuery = r.URL.RawQuery
+	m.lastServedHeaders = r.Header.Clone()
 	w.WriteHeader(http.StatusOK)
 }
 func (m *mockDirectRestConfigProvider) IsReady() bool { return true }
@@ -462,6 +464,125 @@ func TestCallK8sDataSourceResourceHandler_PreservesHTTPMethod(t *testing.T) {
 			assert.Equal(t,
 				"/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid/resources/api/v1/query",
 				configProvider.lastServedPath)
+		})
+	}
+}
+
+func TestCallK8sDataSourceResourceHandler_Headers(t *testing.T) {
+	tests := []struct {
+		name            string
+		requestHeaders  map[string]string
+		expectedPresent map[string]string
+		expectedAbsent  []string
+	}{
+		{
+			name: "preserves content-type header",
+			requestHeaders: map[string]string{
+				"Content-Type": "application/json",
+			},
+			expectedPresent: map[string]string{
+				"Content-Type": "application/json",
+			},
+		},
+		{
+			name: "preserves accept header",
+			requestHeaders: map[string]string{
+				"Accept": "application/json, text/plain, */*",
+			},
+			expectedPresent: map[string]string{
+				"Accept": "application/json, text/plain, */*",
+			},
+		},
+		{
+			name: "preserves authorization header",
+			requestHeaders: map[string]string{
+				"Authorization": "Bearer some-token",
+			},
+			expectedPresent: map[string]string{
+				"Authorization": "Bearer some-token",
+			},
+		},
+		{
+			name: "preserves custom plugin headers",
+			requestHeaders: map[string]string{
+				"X-Datasource-Uid": "test-uid",
+				"X-Plugin-Id":      "prometheus",
+				"X-Custom-Header":  "custom-value",
+			},
+			expectedPresent: map[string]string{
+				"X-Datasource-Uid": "test-uid",
+				"X-Plugin-Id":      "prometheus",
+				"X-Custom-Header":  "custom-value",
+			},
+		},
+		{
+			name: "preserves multiple headers simultaneously",
+			requestHeaders: map[string]string{
+				"Content-Type":  "application/x-www-form-urlencoded",
+				"Authorization": "Bearer token-123",
+				"Accept":        "application/json",
+				"X-Request-Id":  "req-abc-123",
+			},
+			expectedPresent: map[string]string{
+				"Content-Type":  "application/x-www-form-urlencoded",
+				"Authorization": "Bearer token-123",
+				"Accept":        "application/json",
+				"X-Request-Id":  "req-abc-123",
+			},
+		},
+		{
+			name:           "headers not set on request are absent on proxy",
+			requestHeaders: map[string]string{},
+			expectedAbsent: []string{
+				"Authorization",
+				"X-Custom-Header",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupOpenFeatureFlag(t, featuremgmt.FlagDatasourcesApiserverEnableResourceEndpointRedirect, true)
+
+			configProvider := &mockDirectRestConfigProvider{
+				host:      "http://localhost",
+				transport: &mockRoundTripper{statusCode: http.StatusOK, responseBody: []byte(`{}`)},
+			}
+			hs := &HTTPServer{
+				Cfg:      setting.NewCfg(),
+				Features: featuremgmt.WithFeatures(),
+				dsConnectionClient: &mockConnectionClient{result: &queryV0.DataSourceConnectionList{
+					Items: []queryV0.DataSourceConnection{
+						{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1"},
+					},
+				}},
+				clientConfigProvider: configProvider,
+				namespacer:           func(int64) string { return "default" },
+			}
+			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+
+			ctx, recorder := newResourceTestContext(t, http.MethodPost,
+				"/api/datasources/uid/test-uid/resources/api/v1/query",
+				map[string]string{":uid": "test-uid", "*": "api/v1/query"})
+
+			for k, v := range tt.requestHeaders {
+				ctx.Req.Header.Set(k, v)
+			}
+
+			handler := hs.callK8sDataSourceResourceHandler()
+			handler.(func(*contextmodel.ReqContext))(ctx)
+
+			require.Equal(t, http.StatusOK, recorder.Code)
+
+			for key, expectedVal := range tt.expectedPresent {
+				assert.Equal(t, expectedVal, configProvider.lastServedHeaders.Get(key),
+					"header %q should be forwarded with value %q", key, expectedVal)
+			}
+
+			for _, key := range tt.expectedAbsent {
+				assert.Empty(t, configProvider.lastServedHeaders.Get(key),
+					"header %q should not be present on the proxied request", key)
+			}
 		})
 	}
 }
