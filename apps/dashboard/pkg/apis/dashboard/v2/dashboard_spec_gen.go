@@ -2507,6 +2507,23 @@ func (DashboardTimeRangeOption) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardTimeRangeOption"
 }
 
+// Dashboard specific preferences (applied per dashboard = all users using the dashboard)
+// +k8s:openapi-gen=true
+type DashboardDashboardPreferences struct {
+	// default layout template to be used when new containers are created
+	DefaultLayoutTemplate *DashboardAutoGridLayoutKindOrGridLayoutKind `json:"defaultLayoutTemplate,omitempty"`
+}
+
+// NewDashboardDashboardPreferences creates a new DashboardDashboardPreferences object.
+func NewDashboardDashboardPreferences() *DashboardDashboardPreferences {
+	return &DashboardDashboardPreferences{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardPreferences.
+func (DashboardDashboardPreferences) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardDashboardPreferences"
+}
+
 // +k8s:openapi-gen=true
 type DashboardSpec struct {
 	Annotations []DashboardAnnotationQueryKind `json:"annotations"`
@@ -2538,7 +2555,8 @@ type DashboardSpec struct {
 	// Title of dashboard.
 	Title string `json:"title"`
 	// Configured template variables.
-	Variables []DashboardVariableKind `json:"variables"`
+	Variables   []DashboardVariableKind        `json:"variables"`
+	Preferences *DashboardDashboardPreferences `json:"preferences,omitempty"`
 }
 
 // NewDashboardSpec creates a new DashboardSpec object.
@@ -3518,4 +3536,71 @@ func (resource *DashboardStringOrFloat64) UnmarshalJSON(raw []byte) error {
 // OpenAPIModelName returns the OpenAPI model name for DashboardStringOrFloat64.
 func (DashboardStringOrFloat64) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardStringOrFloat64"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridLayoutKindOrGridLayoutKind struct {
+	AutoGridLayoutKind *DashboardAutoGridLayoutKind `json:"AutoGridLayoutKind,omitempty"`
+	GridLayoutKind     *DashboardGridLayoutKind     `json:"GridLayoutKind,omitempty"`
+}
+
+// NewDashboardAutoGridLayoutKindOrGridLayoutKind creates a new DashboardAutoGridLayoutKindOrGridLayoutKind object.
+func NewDashboardAutoGridLayoutKindOrGridLayoutKind() *DashboardAutoGridLayoutKindOrGridLayoutKind {
+	return &DashboardAutoGridLayoutKindOrGridLayoutKind{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardAutoGridLayoutKindOrGridLayoutKind` as JSON.
+func (resource DashboardAutoGridLayoutKindOrGridLayoutKind) MarshalJSON() ([]byte, error) {
+	if resource.AutoGridLayoutKind != nil {
+		return json.Marshal(resource.AutoGridLayoutKind)
+	}
+	if resource.GridLayoutKind != nil {
+		return json.Marshal(resource.GridLayoutKind)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardAutoGridLayoutKindOrGridLayoutKind` from JSON.
+func (resource *DashboardAutoGridLayoutKindOrGridLayoutKind) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["kind"]
+	if !found {
+		return nil
+	}
+
+	switch discriminator {
+	case "AutoGridLayout":
+		var dashboardAutoGridLayoutKind DashboardAutoGridLayoutKind
+		if err := json.Unmarshal(raw, &dashboardAutoGridLayoutKind); err != nil {
+			return err
+		}
+
+		resource.AutoGridLayoutKind = &dashboardAutoGridLayoutKind
+		return nil
+	case "GridLayout":
+		var dashboardGridLayoutKind DashboardGridLayoutKind
+		if err := json.Unmarshal(raw, &dashboardGridLayoutKind); err != nil {
+			return err
+		}
+
+		resource.GridLayoutKind = &dashboardGridLayoutKind
+		return nil
+	}
+
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutKindOrGridLayoutKind.
+func (DashboardAutoGridLayoutKindOrGridLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutKindOrGridLayoutKind"
 }
