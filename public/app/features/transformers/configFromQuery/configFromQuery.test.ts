@@ -114,6 +114,33 @@ describe('config from data', () => {
     expect(thresholdConfig?.value).toBe(50);
   });
 
+  it('With multiple thresholds should sort steps regardless of field order', () => {
+    const configFrame = toDataFrame({
+      fields: [
+        { name: 'upper', type: FieldType.number, values: [8] },
+        { name: 'lower', type: FieldType.number, values: [3] },
+      ],
+      refId: 'A',
+    });
+
+    const options: ConfigFromQueryTransformOptions = {
+      configRefId: 'A',
+      mappings: [
+        { fieldName: 'upper', handlerKey: 'threshold1', handlerArguments: { threshold: { color: 'red' } } },
+        { fieldName: 'lower', handlerKey: 'threshold1', handlerArguments: { threshold: { color: 'orange' } } },
+      ],
+    };
+
+    const results = extractConfigFromQuery(options, [configFrame, seriesA]);
+    const steps = results[0].fields[1].config.thresholds?.steps;
+    expect(steps).toBeDefined();
+    expect(steps).toHaveLength(2);
+    expect(steps![0].value).toBe(3);
+    expect(steps![0].color).toBe('orange');
+    expect(steps![1].value).toBe(8);
+    expect(steps![1].color).toBe('red');
+  });
+
   it('With custom matcher and displayName mapping', () => {
     const options: ConfigFromQueryTransformOptions = {
       configRefId: 'A',

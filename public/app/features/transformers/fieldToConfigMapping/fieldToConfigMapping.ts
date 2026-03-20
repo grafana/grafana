@@ -8,6 +8,7 @@ import {
   getFieldDisplayName,
   MappingType,
   ReducerID,
+  sortThresholds,
   ThresholdsMode,
   ValueMapping,
   ValueMap,
@@ -76,6 +77,10 @@ export function getFieldConfigFromFrame(
 
   if (context.mappingValues) {
     config.mappings = combineValueMappings(context);
+  }
+
+  if (config.thresholds) {
+    sortThresholds(config.thresholds.steps);
   }
 
   return config;
