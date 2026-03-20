@@ -18,7 +18,7 @@ describe('ElasticsearchVariableEditor', () => {
     query: {
       refId: 'A',
       query: 'test query',
-      metrics: [{ type: 'raw_document', id: '1' }],
+      metrics: [{ type: 'count', id: '1' }],
     },
     onChange: jest.fn(),
     onRunQuery: jest.fn(),
@@ -195,15 +195,15 @@ describe('ElasticsearchVariableEditor', () => {
     const onChange = jest.fn();
     const queryWithMeta: ElasticsearchDataQuery = {
       ...defaultProps.query,
-      metrics: [{ type: 'raw_document', id: '1' }],
+      metrics: [{ type: 'count', id: '1' }],
       meta: { textField: 'name', valueField: 'id' },
     };
 
     render(<ElasticsearchVariableEditor {...{ ...defaultProps, query: queryWithMeta, onChange }} />);
 
-    // Simulate the user clicking the Metrics tab inside QueryEditor
+    // Simulate the user switching the metric type inside QueryEditor
     const queryEditorOnChange = (QueryEditor as jest.Mock).mock.calls.at(-1)[0].onChange;
-    act(() => queryEditorOnChange({ ...queryWithMeta, metrics: [{ type: 'count', id: '1' }] }));
+    act(() => queryEditorOnChange({ ...queryWithMeta, metrics: [{ type: 'raw_document', id: '1' }] }));
 
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ meta: undefined }));
   });

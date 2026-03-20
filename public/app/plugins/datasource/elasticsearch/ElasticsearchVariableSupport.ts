@@ -83,7 +83,7 @@ export class ElasticsearchVariableSupport<
     return {
       refId,
       query: '',
-      metrics: [{ type: 'raw_document', id: '1' }],
+      metrics: [{ type: 'count', id: '1' }],
     };
   }
 }

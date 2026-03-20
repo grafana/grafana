@@ -27,7 +27,7 @@ describe('ElasticsearchVariableSupport', () => {
       expect(defaultQuery).toEqual({
         refId: 'ElasticsearchVariableQueryEditor-VariableQuery',
         query: '',
-        metrics: [{ type: 'raw_document', id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
       });
     });
   });
