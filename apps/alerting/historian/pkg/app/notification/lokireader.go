@@ -258,6 +258,7 @@ func buildMetricsRangeQuery(logqlInner string, step time.Duration, groupBy Query
 	}
 	if groupBy.RuleUID {
 		labels = append(labels, "rule_uids")
+		labels = append(labels, "groupLabels_alertname")
 	}
 	sumBy := ""
 	if len(labels) > 0 {
@@ -466,6 +467,9 @@ func parseCountLabels(m map[string]string) (Count, error) {
 		// Store the raw comma-separated rule_uids string temporarily in the RuleUID
 		// field. The explodeRuleUIDCounts function will split and reaggregate later.
 		entry.RuleUID = &v
+	}
+	if v, ok := m["groupLabels_alertname"]; ok && v != "" {
+		entry.RuleTitle = &v
 	}
 	return entry, nil
 }

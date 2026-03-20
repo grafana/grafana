@@ -1133,7 +1133,7 @@ func TestBuildMetricsQuery(t *testing.T) {
 			to:         now,
 			limit:      100,
 			groupBy:    QueryGroupBy{RuleUID: true},
-			expected:   fmt.Sprintf(`sum by (rule_uids) (count_over_time({foo="bar"} | json[%ds]))`, rangeSeconds),
+			expected:   fmt.Sprintf(`sum by (rule_uids,groupLabels_alertname) (count_over_time({foo="bar"} | json[%ds]))`, rangeSeconds),
 		},
 		{
 			name:       "group by ruleUID and receiver omits topk",
@@ -1142,7 +1142,7 @@ func TestBuildMetricsQuery(t *testing.T) {
 			to:         now,
 			limit:      50,
 			groupBy:    QueryGroupBy{Receiver: true, RuleUID: true},
-			expected:   fmt.Sprintf(`sum by (receiver,rule_uids) (count_over_time({foo="bar"} | json[%ds]))`, rangeSeconds),
+			expected:   fmt.Sprintf(`sum by (receiver,rule_uids,groupLabels_alertname) (count_over_time({foo="bar"} | json[%ds]))`, rangeSeconds),
 		},
 	}
 
@@ -1224,6 +1224,22 @@ func TestParseCount(t *testing.T) {
 			want: Count{Count: 15, RuleUID: stringPtr("ruleA,ruleB")},
 		},
 		{
+			name: "with groupLabels_alertname populates ruleTitle",
+			sample: lokiclient.MetricSample{
+				Metric: map[string]string{"rule_uids": "ruleA", "groupLabels_alertname": "HighCPU"},
+				Value:  makeValue("8"),
+			},
+			want: Count{Count: 8, RuleUID: stringPtr("ruleA"), RuleTitle: stringPtr("HighCPU")},
+		},
+		{
+			name: "empty groupLabels_alertname does not set ruleTitle",
+			sample: lokiclient.MetricSample{
+				Metric: map[string]string{"rule_uids": "ruleA", "groupLabels_alertname": ""},
+				Value:  makeValue("3"),
+			},
+			want: Count{Count: 3, RuleUID: stringPtr("ruleA")},
+		},
+		{
 			name: "non-integer count",
 			sample: lokiclient.MetricSample{
 				Metric: map[string]string{},
@@ -1258,6 +1274,7 @@ func TestParseCount(t *testing.T) {
 			assert.Equal(t, tt.want.Outcome, got.Outcome)
 			assert.Equal(t, tt.want.Error, got.Error)
 			assert.Equal(t, tt.want.RuleUID, got.RuleUID)
+			assert.Equal(t, tt.want.RuleTitle, got.RuleTitle)
 		})
 	}
 }
@@ -1403,7 +1420,7 @@ func TestBuildMetricsRangeQuery(t *testing.T) {
 			logqlInner: `{foo="bar"} | json`,
 			step:       step,
 			groupBy:    QueryGroupBy{RuleUID: true},
-			expected:   `sum by (rule_uids) (count_over_time({foo="bar"} | json[60s]))`,
+			expected:   `sum by (rule_uids,groupLabels_alertname) (count_over_time({foo="bar"} | json[60s]))`,
 		},
 	}
 
