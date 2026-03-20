@@ -13,6 +13,16 @@ jest.mock('./components/QueryEditor', () => ({
   ElasticQueryEditorProps: {},
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      multiPropsVariables: true,
+    },
+  },
+}));
+
 describe('ElasticsearchVariableEditor', () => {
   const defaultProps: ElasticQueryEditorProps = {
     query: {
@@ -223,5 +233,17 @@ describe('ElasticsearchVariableEditor', () => {
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ query: 'updated lucene query', meta: { textField: 'name', valueField: 'id' } })
     );
+  });
+
+  it('should not render field mapping when multiPropsVariables feature flag is disabled', () => {
+    const { config } = jest.requireMock('@grafana/runtime');
+    config.featureToggles.multiPropsVariables = false;
+
+    render(<ElasticsearchVariableEditor {...defaultProps} />);
+
+    expect(screen.queryByText('Value Field')).not.toBeInTheDocument();
+    expect(screen.queryByText('Text Field')).not.toBeInTheDocument();
+
+    config.featureToggles.multiPropsVariables = true;
   });
 });

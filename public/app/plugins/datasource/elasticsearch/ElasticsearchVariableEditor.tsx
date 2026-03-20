@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { DataQueryRequest, dateTime, Field } from '@grafana/data';
 import { EditorRows, EditorRow, EditorField } from '@grafana/plugin-ui';
+import { config } from '@grafana/runtime';
 import { Combobox, ComboboxOption, Text } from '@grafana/ui';
 
 import { ElasticsearchVariableQuery, migrateVariableQuery, refId } from './ElasticsearchVariableUtils';
@@ -29,7 +30,9 @@ export const ElasticsearchVariableEditor = (props: ElasticsearchVariableQueryEdi
   return (
     <>
       <QueryEditor {...props} query={query} onChange={handleQueryChange} />
-      <FieldMapping datasource={props.datasource} query={query} onChange={props.onChange} />
+      {config.featureToggles.multiPropsVariables && (
+        <FieldMapping datasource={props.datasource} query={query} onChange={props.onChange} />
+      )}
     </>
   );
 };
