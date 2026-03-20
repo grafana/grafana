@@ -66,7 +66,14 @@ func ReplacePolicyVariables(policyTemplate, appURL string, frameAncestorHosts []
 	rootPath := re.ReplaceAllString(appURL, "")
 	policy = strings.ReplaceAll(policy, "$ROOT_PATH", rootPath)
 
-	hostList := strings.Join(frameAncestorHosts, " ")
+	// If the CSP directive has a $ALLOW_EMBEDDING_HOSTS variable, and the frameAncestorHosts is empty
+	// then we deny all embedding by setting it to 'none'.
+	var hostList string
+	if len(frameAncestorHosts) == 0 {
+		hostList = "'none'"
+	} else {
+		hostList = strings.Join(frameAncestorHosts, " ")
+	}
 	policy = strings.ReplaceAll(policy, "$ALLOW_EMBEDDING_HOSTS", hostList)
 
 	return policy
