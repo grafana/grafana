@@ -323,7 +323,7 @@ func detectDeletedFolderMetadata(
 		if item.Group != resources.FolderResource.Group || item.Hash == "" {
 			continue
 		}
-		
+
 		path := safepath.NormalizeDirPath(item.Path)
 		if path == "" {
 			continue // root folder
@@ -350,7 +350,7 @@ func detectDeletedFolderMetadata(
 }
 
 // detectFolderUIDChanges iterates existing folder update changes, reads their
-// _folder.json and compares the UID. 
+// _folder.json and compares the UID.
 // Returns a map of the folder paths that will be renamed.
 func detectFolderUIDChanges(
 	ctx context.Context,
@@ -366,7 +366,7 @@ func detectFolderUIDChanges(
 		if !change.IsUpdatedFolder() || change.FolderRenamed {
 			continue
 		}
-		
+
 		meta, _, err := resources.ReadFolderMetadata(ctx, repo, change.Path, ref)
 		if err != nil {
 			// Metadata file not found, meaning the folder has no metadata, skipping.
@@ -419,7 +419,7 @@ func emitDirectChildrenChanges(
 		if !affectedFolders[parentDir] {
 			continue
 		}
-		
+
 		// If the specific resource path has already been marked for update, skip
 		if pathsWithChanges[path] {
 			continue

@@ -261,9 +261,9 @@ func TestRelativeTo(t *testing.T) {
 
 func TestNormalizeDirPath(t *testing.T) {
 	tests := []struct {
-		name     string
-		path     string
-		want     string
+		name string
+		path string
+		want string
 	}{
 		{
 			name: "empty path",
