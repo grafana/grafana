@@ -1082,10 +1082,10 @@ var (
 		{
 			Name:         "alertingNavigationV2",
 			Description:  "Enables the new Alerting navigation structure with improved menu grouping",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: false,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "alertingSavedSearches",
