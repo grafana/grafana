@@ -183,6 +183,29 @@ func Test_StateToPostableAlert(t *testing.T) {
 				require.Equal(t, alertState.StateReason, result.Annotations[ngModels.StateReasonAnnotation])
 			})
 
+			t.Run("should propagate namespace UID label as annotation", func(t *testing.T) {
+				t.Run("when label is present and non-empty", func(t *testing.T) {
+					alertState := randomTransition(eval.Normal, tc.state)
+					alertState.Labels[alertingModels.NamespaceUIDLabel] = "test-namespace-uid"
+					result := StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures())
+					require.Equal(t, "test-namespace-uid", result.Annotations[alertingModels.NamespaceUIDLabel])
+				})
+
+				t.Run("when label is empty", func(t *testing.T) {
+					alertState := randomTransition(eval.Normal, tc.state)
+					alertState.Labels[alertingModels.NamespaceUIDLabel] = ""
+					result := StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures())
+					require.NotContains(t, result.Annotations, alertingModels.NamespaceUIDLabel)
+				})
+
+				t.Run("when label is missing", func(t *testing.T) {
+					alertState := randomTransition(eval.Normal, tc.state)
+					delete(alertState.Labels, alertingModels.NamespaceUIDLabel)
+					result := StateToPostableAlert(alertState, appURL, featuremgmt.WithFeatures())
+					require.NotContains(t, result.Annotations, alertingModels.NamespaceUIDLabel)
+				})
+			})
+
 			switch tc.state {
 			case eval.NoData:
 				t.Run("should keep existing labels and change name", func(t *testing.T) {

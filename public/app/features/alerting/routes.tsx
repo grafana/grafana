@@ -18,6 +18,29 @@ import { PERMISSIONS_TEMPLATES } from './unified/components/templates/permission
 import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
 import { evaluateAccess } from './unified/utils/access-control';
 
+function RedirectToAlerting() {
+  return <Navigate replace to="/alerting" />;
+}
+
+function RedirectToHistoryNotifications() {
+  return <Navigate replace to="/alerting/history?tab=notifications" />;
+}
+
+function getNotificationsHistoryComponent(cfg: typeof config): GrafanaRouteComponent {
+  if (cfg.featureToggles.alertingNavigationV2) {
+    if (cfg.featureToggles.alertingNotificationHistoryGlobal) {
+      return importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "NotificationsPage" */ 'app/features/alerting/unified/notifications/NotificationsPage'
+          )
+      );
+    }
+    return RedirectToAlerting;
+  }
+  return RedirectToHistoryNotifications;
+}
+
 export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
   const routes = [
     {
@@ -283,12 +306,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/notifications-history/',
-      component: cfg.featureToggles.alertingNotificationHistoryGlobal
+      path: '/alerting/notifications-history',
+      component: getNotificationsHistoryComponent(cfg),
+    },
+    {
+      path: '/alerting/notifications-history/view/:uuid',
+      component: cfg.featureToggles.alertingNotificationHistoryDetail
         ? importAlertingComponent(
             () =>
               import(
-                /* webpackChunkName: "NotificationsPage" */ 'app/features/alerting/unified/notifications/NotificationsPage'
+                /* webpackChunkName: "NotificationDetailPage" */ 'app/features/alerting/unified/notifications/NotificationDetailPage'
               )
           )
         : () => <Navigate replace to="/alerting" />,

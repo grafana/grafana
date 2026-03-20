@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { of } from 'rxjs';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -143,11 +144,13 @@ describe('TemplateDashboardModal', () => {
 
       await waitFor(() => {
         // Assert DashboardCard components are rendered by checking for their headings
-        expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
-        expect(screen.getByRole('heading', { name: 'Test Template Dashboard 2' })).toBeInTheDocument();
+        const cardHeadings = screen.getAllByTestId(selectors.components.Card.heading);
+        expect(cardHeadings).toHaveLength(2);
+        expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
+        expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');
 
         // Assert DashboardCard components are rendered by checking for "View template" buttons
-        const viewTemplateButtons = screen.getAllByRole('button', { name: 'View template' });
+        const viewTemplateButtons = screen.getAllByRole('button', { name: /^View template:/i });
         expect(viewTemplateButtons).toHaveLength(2);
 
         // Assert text content (descriptions)
@@ -172,7 +175,10 @@ describe('TemplateDashboardModal', () => {
         });
 
         await waitFor(() => {
-          expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
+          const cardHeadings = screen.getAllByTestId(selectors.components.Card.heading);
+          expect(cardHeadings).toHaveLength(2);
+          expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
+          expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');
         });
 
         expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
@@ -186,7 +192,10 @@ describe('TemplateDashboardModal', () => {
         });
 
         await waitFor(() => {
-          expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
+          const cardHeadings = screen.getAllByTestId(selectors.components.Card.heading);
+          expect(cardHeadings).toHaveLength(2);
+          expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
+          expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');
         });
 
         expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
@@ -200,7 +209,10 @@ describe('TemplateDashboardModal', () => {
         });
 
         await waitFor(() => {
-          expect(screen.getByRole('heading', { name: 'Test Template Dashboard' })).toBeInTheDocument();
+          const cardHeadings = screen.getAllByTestId(selectors.components.Card.heading);
+          expect(cardHeadings).toHaveLength(2);
+          expect(cardHeadings[0]).toHaveTextContent('Test Template Dashboard');
+          expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');
         });
 
         expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
@@ -276,10 +288,10 @@ describe('TemplateDashboardModal', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getAllByRole('button', { name: 'View template' })).toHaveLength(2);
+        expect(screen.getAllByRole('button', { name: /^View template:/i })).toHaveLength(2);
       });
 
-      await user.click(screen.getAllByRole('button', { name: 'View template' })[0]);
+      await user.click(screen.getAllByRole('button', { name: /^View template:/i })[0]);
 
       expect(mockItemClicked).toHaveBeenCalledWith(
         expect.objectContaining({

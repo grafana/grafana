@@ -27,7 +27,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `publicDashboardsScene`               | Enables public dashboard rendering using scenes                                                                                                               | Yes                |
 | `featureHighlights`                   | Highlight Grafana Enterprise features                                                                                                                         |                    |
 | `cloudWatchCrossAccountQuerying`      | Enables cross-account querying in CloudWatch datasources                                                                                                      | Yes                |
-| `logsContextDatasourceUi`             | Allow datasource to provide custom UI for context view                                                                                                        | Yes                |
 | `lokiQuerySplitting`                  | Split large interval queries into subqueries with smaller time intervals                                                                                      | Yes                |
 | `influxdbBackendMigration`            | Query InfluxDB InfluxQL without the proxy                                                                                                                     | Yes                |
 | `logsExploreTableVisualisation`       | A table visualisation for logs in Explore                                                                                                                     | Yes                |
@@ -40,6 +39,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashboardScene`                      | Enables dashboard rendering using scenes for all roles                                                                                                        | Yes                |
 | `alertingQueryOptimization`           | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `cloudWatchNewLabelParsing`           | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
+| `playlistsRBAC`                       | Enables RBAC for playlists                                                                                                                                    |                    |
 | `pluginProxyPreserveTrailingSlash`    | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
 | `azureMonitorPrometheusExemplars`     | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                                                  | Yes                |
 | `cloudWatchRoundUpEndTime`            | Round up end time for metric queries to the next minute to avoid missing data                                                                                 | Yes                |
@@ -78,7 +78,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `renderAuthJWT`                   | Uses JWT-based auth for rendering instead of relying on remote cache                                   |
 | `refactorVariablesTimeRange`      | Refactor time range variables flow to reduce number of API calls made when query variables are chained |
 | `faroDatasourceSelector`          | Enable the data source selector within the Frontend Apps section of the Frontend Observability         |
-| `enableDatagridEditing`           | Enables the edit functionality in the datagrid panel                                                   |
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
 | `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
@@ -89,6 +88,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `sqlExpressions`                  | Enables SQL Expressions, which can execute SQL queries against data source results.                    |
 | `queryLibrary`                    | Enables Saved queries (query library) feature                                                          |
 | `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                                 |
+| `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                         |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                                     |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                                 |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                        |
@@ -96,6 +96,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `interactiveLearning`             | Enables the interactive learning app                                                                   |
 | `newVizSuggestions`               | Enable new visualization suggestions                                                                   |
 | `vizPresets`                      | Enable visualization presets                                                                           |
+| `nestedFramesFieldOverrides`      | Enable field overrides for FieldType.nestedFrames fields (like in nested tables)                       |
 | `preventPanelChromeOverflow`      | Restrict PanelChrome contents with overflow: hidden;                                                   |
 | `newPanelPadding`                 | Increases panel padding globally                                                                       |
 | `transformationsEmptyPlaceholder` | Show transformation quick-start cards in empty transformations state                                   |

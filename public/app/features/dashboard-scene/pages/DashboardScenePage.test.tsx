@@ -11,12 +11,11 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   LocationServiceProvider,
-  config,
   locationSearchToObject,
   locationService,
   setPluginImportUtils,
 } from '@grafana/runtime';
-import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
+import { setGetObservablePluginLinks, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
@@ -138,7 +137,13 @@ const panelPlugin = getPanelPlugin(
   CustomVizPanel
 );
 
-config.panels['custom-viz-panel'] = panelPlugin.meta;
+beforeEach(() => {
+  setPanelPluginMetas({ 'custom-viz-panel': panelPlugin.meta });
+});
+
+afterEach(() => {
+  setPanelPluginMetas({});
+});
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(panelPlugin),

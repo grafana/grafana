@@ -5,7 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Alert, Box, Button, CodeEditor, Icon, Modal, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -42,7 +42,13 @@ import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResou
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { DryRunValidationResult } from './types';
 import { useExtraConfigState } from './useExtraConfigState';
-import { filterRulerRulesConfig, useDryRunNotifications, useImportNotifications, useImportRules } from './useImport';
+import {
+  buildRoutingParams,
+  filterRulerRulesConfig,
+  useDryRunNotifications,
+  useImportNotifications,
+  useImportRules,
+} from './useImport';
 import { getRoutingTreeLabel } from './useRoutingTrees';
 
 export interface ImportFormValues {
@@ -221,14 +227,18 @@ function ImportWizardContent() {
   // Note: WizardStep and NextButton handle stepper state (completed, skipped, visited, navigation)
   // These handlers only need to update form values and control whether to proceed
   const handleStep1Next = useCallback((): boolean => {
-    // Block navigation if dry-run validation failed
     if (dryRunState === 'error') {
       return false;
     }
     setValue('step1Completed', true);
     setValue('step1Skipped', false);
+    const currentPolicyTreeName = getValues('policyTreeName');
+    const currentRoutingTree = getValues('selectedRoutingTree');
+    if (currentPolicyTreeName && !currentRoutingTree) {
+      setValue('selectedRoutingTree', currentPolicyTreeName);
+    }
     return true;
-  }, [dryRunState, setValue]);
+  }, [dryRunState, setValue, getValues]);
 
   const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
@@ -290,20 +300,25 @@ function ImportWizardContent() {
           rulesPayload = filteredConfig;
         }
 
-        // Add routing tree label to all imported rules
-        const extraLabels = values.selectedRoutingTree
-          ? `${MERGE_MATCHERS_LABEL_NAME}=${values.selectedRoutingTree}`
-          : undefined;
-
-        await importRules({
+        const baseParams = {
           dataSourceUID: values.rulesDatasourceUID,
           targetFolderUID: values.targetFolder?.uid,
           pauseAlertingRules: values.pauseAlertingRules,
           pauseRecordingRules: values.pauseRecordingRules,
           payload: rulesPayload,
           targetDatasourceUID: values.targetDatasourceUID,
-          extraLabels,
-        });
+        };
+
+        const { notificationSettings, extraLabels } = buildRoutingParams(
+          values.selectedRoutingTree,
+          Boolean(config.featureToggles.alertingPolicyRoutingSettings)
+        );
+
+        if (notificationSettings !== undefined) {
+          await importRules({ ...baseParams, notificationSettings });
+        } else {
+          await importRules({ ...baseParams, extraLabels });
+        }
       }
 
       setImportStatus('success');

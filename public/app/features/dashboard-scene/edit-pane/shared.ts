@@ -19,6 +19,7 @@ import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRo
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
 import { AnnotationSetEditableElement } from '../settings/annotations/AnnotationSetEditableElement';
+import { LinkEdit, LinkEditEditableElement } from '../settings/links/LinkAddEditableElement';
 import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableAdd, VariableAddEditableElement } from '../settings/variables/VariableAddEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
@@ -27,6 +28,7 @@ import { isSceneVariable } from '../settings/variables/utils';
 
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
+import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
 
 export function useEditPaneCollapsed() {
   return useSessionStorage('grafana.dashboards.edit-pane.isCollapsed', false);
@@ -69,6 +71,10 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
     return new VariableAddEditableElement(sceneObj);
   }
 
+  if (sceneObj instanceof LinkEdit) {
+    return new LinkEditEditableElement(sceneObj);
+  }
+
   if (sceneObj instanceof DashboardDataLayerSet) {
     return new AnnotationSetEditableElement(sceneObj);
   }
@@ -100,26 +106,7 @@ export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
   static type = 'repeats-updated';
 }
 
-export interface DashboardEditActionEventPayload {
-  removedObject?: SceneObject;
-  addedObject?: SceneObject;
-  movedObject?: SceneObject;
-  source: SceneObject;
-  description?: string;
-  perform: () => void;
-  undo: () => void;
-}
-
-export class DashboardEditActionEvent extends BusEventWithPayload<DashboardEditActionEventPayload> {
-  static type = 'dashboard-edit-action';
-}
-
-/**
- * Emitted after DashboardEditActionEvent has been processed (or undone)
- */
-export class DashboardStateChangedEvent extends BusEventWithPayload<{ source: SceneObject }> {
-  static type = 'dashboard-state-changed';
-}
+export { DashboardEditActionEvent, DashboardStateChangedEvent, type DashboardEditActionEventPayload } from './events';
 
 export interface AddElementActionHelperProps {
   addedObject: SceneObject;
