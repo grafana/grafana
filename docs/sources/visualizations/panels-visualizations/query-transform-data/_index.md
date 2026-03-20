@@ -169,7 +169,7 @@ From here, you can:
   Use the **Remember filters** switch to persist your filter selections across sessions in your local storage.
   {{< /admonition >}}
 
-- Star queries so that they appear in the **Starred** filter view.
+- Star queries so that they appear in the **Starred queries** filter view.
 - Duplicate, or delete a saved query.
 - Edit a query title, description, or tags.
 - When you access the **Saved queries** dialog box from Explore, you can use the **Edit in Explore** option to edit the body of a query.
