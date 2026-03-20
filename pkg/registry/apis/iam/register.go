@@ -53,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	teamservice "github.com/grafana/grafana/pkg/services/team"
 	legacyuser "github.com/grafana/grafana/pkg/services/user"
@@ -90,6 +91,7 @@ func RegisterAPIService(
 	userService legacyuser.Service,
 	teamService teamservice.Service,
 	restConfig apiserver.RestConfigProvider,
+	mappers *resourcepermission.MappersRegistry,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
 	store := legacy.NewLegacySQLStores(dbProvider)
@@ -97,7 +99,7 @@ func RegisterAPIService(
 	authorizer := newIAMAuthorizer(accessClient, legacyAccessClient, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, externalGroupMappingApiInstaller)
 	registerMetrics(reg)
 
-	rpStorage := resourcepermission.ProvideStorageBackend(dbProvider)
+	rpStorage := resourcepermission.ProvideStorageBackend(dbProvider, mappers)
 
 	// When resourcepermissions are in Mode5 (unistore only), search must error; pass nil backend so the handler returns that error.
 	resourcePermsSearchBackend := resource.StorageBackend(rpStorage)
@@ -129,6 +131,7 @@ func RegisterAPIService(
 		teamLBACApiInstaller:              teamLBACApiInstaller,
 		externalGroupMappingApiInstaller:  externalGroupMappingApiInstaller,
 		resourcePermissionsStorage:        rpStorage,
+		mappers:                           mappers,
 		roleBindingsStorage:               roleBindingsStorage,
 		teamGroupsHandler:                 teamGroupsHandlerImpl,
 		externalGroupMappingSearchHandler: externalGroupMappingSearchHandler,
@@ -177,9 +180,11 @@ func NewAPIService(
 	tokenExchanger authn.TokenExchanger,
 	authorizerDialConfigs map[schema.GroupResource]iamauthorizer.DialConfig,
 	tracingService tracing.Tracer,
+	mappers *resourcepermission.MappersRegistry,
+	settingService settingsvc.Service,
 ) *IdentityAccessManagementAPIBuilder {
 	store := legacy.NewLegacySQLStores(dbProvider)
-	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider)
+	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider, mappers)
 	registerMetrics(reg)
 
 	globalRoleAuthorizer := globalRoleApiInstaller.GetAuthorizer()
@@ -199,6 +204,7 @@ func NewAPIService(
 		display:                    user.NewLegacyDisplayREST(store),
 		tracing:                    tracingService,
 		resourcePermissionsStorage: resourcePermissionsStorage,
+		mappers:                    mappers,
 		roleBindingsStorage:        roleBindingsStorage,
 		logger:                     log.New("iam.apis"),
 		features:                   features,
@@ -211,6 +217,7 @@ func NewAPIService(
 		globalRoleApiInstaller:     globalRoleApiInstaller,
 		apiConfig:                  Config{SingleOrganization: true},
 		teamLBACApiInstaller:       teamLBACApiInstaller,
+		settingService:             settingService,
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				user, ok := types.AuthInfoFrom(ctx)
@@ -541,7 +548,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		}
 	}
 
-	storage[userResource.StoragePath()] = storewrapper.New(userStore, user.NewStoreWrapper(b.cfgProvider), storewrapper.WithPreserveIdentity())
+	storage[userResource.StoragePath()] = storewrapper.New(userStore, user.NewStoreWrapper(b.cfgProvider, b.settingService), storewrapper.WithPreserveIdentity())
 
 	if b.dual != nil && b.unified != nil {
 		legacyTeamBindingSearchClient := teambinding.NewLegacyTeamBindingSearchClient(b.store, b.tracing)
@@ -858,7 +865,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 	case *iamv0.TeamBinding:
 		return teambinding.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.ResourcePermission:
-		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
+		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj, b.mappers)
 	case *iamv0.ExternalGroupMapping:
 		return b.externalGroupMappingApiInstaller.ValidateOnCreate(ctx, typedObj)
 	case *iamv0.Role:
@@ -881,7 +888,7 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 		}
 		return user.ValidateOnUpdate(ctx, b.userSearchClient, oldUserObj, typedObj)
 	case *iamv0.ResourcePermission:
-		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj)
+		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj, b.mappers)
 	case *iamv0.Team:
 		oldTeamObj, ok := oldObj.(*iamv0.Team)
 		if !ok {
@@ -927,6 +934,8 @@ func (b *IdentityAccessManagementAPIBuilder) validateDelete(ctx context.Context,
 			return b.teamLBACApiInstaller.ValidateOnDelete(ctx, oldObj)
 		}
 		return nil
+	case *iamv0.ResourcePermission:
+		return resourcepermission.ValidateDeleteInput(ctx, oldObj.Name, b.mappers)
 	}
 	return nil
 }

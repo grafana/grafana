@@ -213,4 +213,33 @@ describe('TransformationActionButtons', () => {
       });
     });
   });
+
+  describe('debug button behaviour', () => {
+    it('always shows the debug action for a selected transformation', () => {
+      renderWithQueryEditorProvider(<TransformationActionButtons />, {
+        selectedTransformation: makeTransformation(),
+      });
+
+      expect(screen.getByRole('button', { name: /debug/i })).toBeInTheDocument();
+    });
+
+    it('toggles debug mode when clicked', async () => {
+      const toggleDebug = jest.fn();
+      const { user } = renderWithQueryEditorProvider(<TransformationActionButtons />, {
+        selectedTransformation: makeTransformation(),
+        uiStateOverrides: {
+          transformToggles: {
+            showHelp: false,
+            toggleHelp: jest.fn(),
+            showDebug: false,
+            toggleDebug,
+          },
+        },
+      });
+
+      await user.click(screen.getByRole('button', { name: /debug/i }));
+
+      expect(toggleDebug).toHaveBeenCalledTimes(1);
+    });
+  });
 });

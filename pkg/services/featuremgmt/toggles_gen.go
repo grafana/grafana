@@ -355,6 +355,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagPlaylistsRBAC
+	// Enables RBAC for playlists
+	FlagPlaylistsRBAC = "playlistsRBAC"
+
 	// FlagSavedQueriesRBAC
 	// Enables Saved queries (query library) RBAC permissions
 	FlagSavedQueriesRBAC = "savedQueriesRBAC"

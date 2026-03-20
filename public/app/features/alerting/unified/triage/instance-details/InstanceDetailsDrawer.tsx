@@ -40,16 +40,14 @@ import { QueryVisualization } from './QueryVisualization';
 import { isDrawerRangeShorterThanQuery } from './drawerTimeRangeUtils';
 import { useInstanceAlertState } from './instanceStateUtils';
 import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
-import { dateFormatter, noop } from './timelineUtils';
+import { formatTimelineDate, noop } from './timelineUtils';
 
 const { useGetAlertRuleQuery } = alertRuleApi;
 const { useGetRuleHistoryQuery } = stateHistoryApi;
 
 function calculateDrawerWidth(rightColumnWidth: number): number {
-  //first add the padding from the Page (32px)
   const calculatedWidth = rightColumnWidth + 32;
-  // now clamp the width to a max of 1400px
-  return Math.min(calculatedWidth, 1400);
+  return Math.max(700, Math.min(calculatedWidth, 1400));
 }
 
 interface InstanceDetailsDrawerProps {
@@ -269,7 +267,7 @@ function InstanceStateTransitions({
       {sortedRecords.map((record, index) => (
         <Fragment key={`${record.timestamp}-${index}`}>
           <Text color="secondary" variant="bodySmall">
-            {dateFormatter.format(new Date(record.timestamp))}
+            {formatTimelineDate(record.timestamp)}
           </Text>
           <EventState state={record.line.previous} showLabel addFilter={noop} type="from" />
           <Icon name="arrow-right" size="sm" />

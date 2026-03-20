@@ -4,7 +4,10 @@ import (
 	"context"
 	"testing"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFolderTree(t *testing.T) {
@@ -226,4 +229,116 @@ func TestFolderTree(t *testing.T) {
 			"a": "b",
 		}, visited)
 	})
+}
+
+func TestFolderTree_Get(t *testing.T) {
+	t.Run("returns folder entry with MetadataHash", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+		f := Folder{ID: "uid-1", Title: "My Folder", Path: "my-folder", MetadataHash: "abc123"}
+		tree.Add(f, "")
+
+		got, ok := tree.Get("uid-1")
+		require.True(t, ok)
+		assert.Equal(t, "uid-1", got.ID)
+		assert.Equal(t, "My Folder", got.Title)
+		assert.Equal(t, "abc123", got.MetadataHash)
+	})
+
+	t.Run("returns false for missing folder", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+
+		_, ok := tree.Get("nonexistent")
+		assert.False(t, ok)
+	})
+}
+
+func TestNewFolderTreeFromResourceList_MetadataHash(t *testing.T) {
+	t.Run("populates MetadataHash from ResourceListItem.Hash", func(t *testing.T) {
+		rl := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{
+					Name:   "folder-uid",
+					Title:  "My Folder",
+					Path:   "my-folder",
+					Hash:   "stored-checksum",
+					Group:  folders.GROUP,
+					Folder: "",
+				},
+			},
+		}
+
+		tree := NewFolderTreeFromResourceList(rl)
+		got, ok := tree.Get("folder-uid")
+		require.True(t, ok)
+		assert.Equal(t, "stored-checksum", got.MetadataHash)
+	})
+
+	t.Run("empty hash when no sourceChecksum stored", func(t *testing.T) {
+		rl := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{
+					Name:  "folder-uid",
+					Title: "My Folder",
+					Path:  "my-folder",
+					Hash:  "",
+					Group: folders.GROUP,
+				},
+			},
+		}
+
+		tree := NewFolderTreeFromResourceList(rl)
+		got, ok := tree.Get("folder-uid")
+		require.True(t, ok)
+		assert.Empty(t, got.MetadataHash)
+	})
+
+	t.Run("populates ParentID from ResourceListItem.Folder", func(t *testing.T) {
+		rl := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{
+					Name:   "parent-uid",
+					Title:  "Parent",
+					Path:   "parent",
+					Group:  folders.GROUP,
+					Folder: "",
+				},
+				{
+					Name:   "child-uid",
+					Title:  "Child",
+					Path:   "parent/child",
+					Group:  folders.GROUP,
+					Folder: "parent-uid",
+				},
+			},
+		}
+
+		tree := NewFolderTreeFromResourceList(rl)
+
+		parent, ok := tree.Get("parent-uid")
+		require.True(t, ok)
+		assert.Empty(t, parent.ParentID, "root folder should have empty ParentID")
+
+		child, ok := tree.Get("child-uid")
+		require.True(t, ok)
+		assert.Equal(t, "parent-uid", child.ParentID)
+	})
+}
+
+func TestFolderTree_Add_SetsParentID(t *testing.T) {
+	tree := NewEmptyFolderTree()
+
+	f := Folder{ID: "child", Title: "Child", Path: "child/"}
+	tree.Add(f, "parent-uid")
+
+	got, ok := tree.Get("child")
+	require.True(t, ok)
+	assert.Equal(t, "parent-uid", got.ParentID, "Add should set ParentID to parent")
+
+	// Root folder
+	root := Folder{ID: "root", Title: "Root", Path: "root/"}
+	tree.Add(root, "")
+
+	gotRoot, ok := tree.Get("root")
+	require.True(t, ok)
+	assert.Empty(t, gotRoot.ParentID, "root folder should have empty ParentID")
 }

@@ -26,6 +26,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 
@@ -1075,6 +1076,23 @@ func UnstructuredToConnection(t *testing.T, obj *unstructured.Unstructured) *pro
 	return c
 }
 
+// ParseTestResults extracts TestResults from an API response k8sruntime.Object.
+func ParseTestResults(t *testing.T, obj k8sruntime.Object) *provisioning.TestResults {
+	t.Helper()
+
+	unstructuredObj, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok, "expected unstructured object")
+
+	data, err := json.Marshal(unstructuredObj.Object)
+	require.NoError(t, err)
+
+	var testResults provisioning.TestResults
+	err = json.Unmarshal(data, &testResults)
+	require.NoError(t, err)
+
+	return &testResults
+}
+
 // FilesPostOptions holds parameters for a direct HTTP POST to the files API.
 // This bypasses Kubernetes REST client limitations with '/' characters in subresource names.
 type FilesPostOptions struct {
@@ -1452,6 +1470,94 @@ func (h *GitExportHelper) GitReadFile(t *testing.T, ctx context.Context, repoNam
 	data, err := os.ReadFile(filepath.Join(cloneDir, filePath)) //nolint:gosec
 	require.NoError(t, err, "file %s not found in git repo %s", filePath, repoName)
 	return data
+}
+
+// ExpectedDashboard describes the expected state of a single dashboard.
+type ExpectedDashboard struct {
+	Title      string
+	SourcePath string
+}
+
+// RequireDashboardCount asserts the total number of dashboards in the instance.
+func RequireDashboardCount(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, expected int) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		assert.Len(c, list.Items, expected, "unexpected dashboard count")
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %d dashboard(s)", expected)
+}
+
+// RequireDashboardTitle asserts that the dashboard with the given uid (K8s name)
+// has the expected title.
+func RequireDashboardTitle(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, uid, expectedTitle string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		for _, d := range list.Items {
+			if d.GetName() != uid {
+				continue
+			}
+			title, _, _ := unstructured.NestedString(d.Object, "spec", "title")
+			assert.Equal(c, expectedTitle, title, "dashboard %q title mismatch", uid)
+			return
+		}
+		c.Errorf("dashboard with uid %q not found", uid)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboard %q should have title %q", uid, expectedTitle)
+}
+
+// RequireDashboards lists dashboards once and asserts that exactly the expected
+// set exists with matching count, title, and grafana.app/sourcePath for each UID.
+func RequireDashboards(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, expected map[string]ExpectedDashboard) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		if !assert.Len(c, list.Items, len(expected), "unexpected dashboard count") {
+			return
+		}
+		for _, d := range list.Items {
+			uid := d.GetName()
+			exp, ok := expected[uid]
+			if !assert.True(c, ok, "unexpected dashboard %q", uid) {
+				continue
+			}
+			title, _, _ := unstructured.NestedString(d.Object, "spec", "title")
+			assert.Equal(c, exp.Title, title, "dashboard %q title mismatch", uid)
+			sp, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			assert.Equal(c, exp.SourcePath, sp, "dashboard %q sourcePath mismatch", uid)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboards should match expected state")
+}
+
+// RequireRepoFolders lists folders once and asserts that the set of
+// grafana.app/sourcePath values for folders managed by repoName matches exactly.
+func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx context.Context, repoName string, expectedSourcePaths []string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := folderClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		var gotPaths []string
+		for _, f := range list.Items {
+			mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+			if mgr != repoName {
+				continue
+			}
+			sp, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			gotPaths = append(gotPaths, sp)
+		}
+		assert.ElementsMatch(c, expectedSourcePaths, gotPaths, "folder sourcePaths mismatch for repo %q", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"folders for repo %q should have sourcePaths %v", repoName, expectedSourcePaths)
 }
 
 // FindCondition finds a condition by type in the conditions list

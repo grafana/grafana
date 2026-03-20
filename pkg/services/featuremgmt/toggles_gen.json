@@ -3792,6 +3792,19 @@
     },
     {
       "metadata": {
+        "name": "playlistsRBAC",
+        "resourceVersion": "1773926203085",
+        "creationTimestamp": "2026-03-19T13:16:43Z"
+      },
+      "spec": {
+        "description": "Enables RBAC for playlists",
+        "stage": "GA",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "playlistsReconciler",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-12-20T03:09:31Z"
