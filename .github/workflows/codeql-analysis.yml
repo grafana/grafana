@@ -53,6 +53,8 @@ jobs:
     if: github.repository == 'grafana/grafana'
     permissions:
       contents: read
+      # Required for github/codeql-action/analyze to upload SARIF (job-level permissions replace defaults; omitting this blocks upload).
+      security-events: write
 
     strategy:
       fail-fast: false
