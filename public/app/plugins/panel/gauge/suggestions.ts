@@ -11,7 +11,7 @@ import { t } from '@grafana/i18n';
 import { GraphFieldConfig } from '@grafana/ui';
 import { defaultNumericVizOptions } from 'app/features/panel/suggestions/utils';
 
-import { Options } from '../panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 const withDefaults = (
   suggestion: VisualizationSuggestion<Options, GraphFieldConfig>
