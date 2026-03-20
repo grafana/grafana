@@ -1,6 +1,6 @@
 import { createTheme, LogsSortOrder } from '@grafana/data';
 
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
 
 import { LogListModel, PreProcessOptions } from './processing';
