@@ -524,6 +524,90 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		})
 	})
 
+	t.Run("rename folder with both resources and folder children", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-rename-mixed"
+		const parentUID = "mx-parent-uid"
+		const childUID = "mx-child-uid"
+
+		// Seed: parent folder with a dashboard and a child folder that also has a dashboard.
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"old-parent/_folder.json":                   folderMetadataJSON(parentUID, "Parent"),
+			"old-parent/parent-dash.json":               dashboardJSON("mx-parent-dash", "Parent Dashboard", 1),
+			"old-parent/child/_folder.json":             folderMetadataJSON(childUID, "Child"),
+			"old-parent/child/child-dash.json":          dashboardJSON("mx-child-dash", "Child Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"old-parent", "old-parent/child"})
+
+		// Snapshot all four objects before the rename.
+		parentBefore, err := helper.FoldersV1.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		parentSnap := common.SnapshotObject(t, parentBefore)
+
+		childBefore, err := helper.FoldersV1.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		childSnap := common.SnapshotObject(t, childBefore)
+
+		parentDashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "mx-parent-dash", metav1.GetOptions{})
+		require.NoError(t, err)
+		parentDashSnap := common.SnapshotObject(t, parentDashBefore)
+
+		childDashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "mx-child-dash", metav1.GetOptions{})
+		require.NoError(t, err)
+		childDashSnap := common.SnapshotObject(t, childDashBefore)
+
+		// Rename the parent folder.
+		_, err = local.Git("mv", "old-parent", "new-parent")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename parent folder with child and dashboards")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.syncAndWaitIncremental(t, repoName)
+
+		// Verify parent folder updated in place.
+		parentAfter, err := helper.FoldersV1.Resource.Get(ctx, parentUID, metav1.GetOptions{})
+		require.NoError(t, err, "parent folder should still exist with same UID")
+		common.RequireUpdatedInPlace(t, "parent folder", parentSnap, common.SnapshotObject(t, parentAfter))
+
+		sp, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "new-parent/", sp)
+		parentAnnotation, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Empty(t, parentAnnotation, "root-level parent should have no parent annotation")
+
+		// Verify child folder updated in place and still parented under the renamed parent.
+		childAfter, err := helper.FoldersV1.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err, "child folder should still exist with same UID")
+		common.RequireUpdatedInPlace(t, "child folder", childSnap, common.SnapshotObject(t, childAfter))
+
+		childSP, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
+		require.Equal(t, "new-parent/child/", childSP)
+		childParent, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, parentUID, childParent, "child should still be parented under renamed parent")
+
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-parent", "new-parent/child"})
+
+		// Verify parent's dashboard updated in place.
+		parentDashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "mx-parent-dash", metav1.GetOptions{})
+		require.NoError(t, err)
+		common.RequireUpdatedInPlace(t, "parent dashboard", parentDashSnap, common.SnapshotObject(t, parentDashAfter))
+
+		// Verify child's dashboard updated in place.
+		childDashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "mx-child-dash", metav1.GetOptions{})
+		require.NoError(t, err)
+		common.RequireUpdatedInPlace(t, "child dashboard", childDashSnap, common.SnapshotObject(t, childDashAfter))
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"mx-parent-dash": {Title: "Parent Dashboard", SourcePath: "new-parent/parent-dash.json", Folder: parentUID},
+			"mx-child-dash":  {Title: "Child Dashboard", SourcePath: "new-parent/child/child-dash.json", Folder: childUID},
+		})
+	})
+
 	t.Run("non-metadata folder rename still works via delete and create", func(t *testing.T) {
 		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
