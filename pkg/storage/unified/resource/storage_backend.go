@@ -811,6 +811,12 @@ func (k *kvStorageBackend) validateCreateWrite(ctx context.Context, key *resourc
 	return k.waitForConcurrentCreateSettlement(ctx, key, namespace, dataKey)
 }
 
+// waitForConcurrentCreateSettlement handles the non-rvManager create race where
+// our write is currently the latest version, but its immediate predecessor is
+// also a create. In that case the predecessor may be a transient loser that is
+// about to delete itself, or it may be the real winner that will persist an
+// event. We briefly poll until one of those outcomes becomes observable before
+// deciding whether to keep or delete our write.
 func (k *kvStorageBackend) waitForConcurrentCreateSettlement(ctx context.Context, key *resourcepb.ResourceKey, namespace string, dataKey DataKey) error {
 	ticker := time.NewTicker(concurrentCreateSettleDelay)
 	defer ticker.Stop()
