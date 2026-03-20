@@ -189,10 +189,11 @@ export function InstallControlsButton({
 
   if (pluginStatus === PluginStatus.UPDATE) {
     const disableUpdate = config.pluginAdminExternalManageEnabled ? plugin.isUpdatingFromInstance : isInstalling;
+    const isManagedPlugin = plugin.managed.enabled;
 
     return (
       <Stack alignItems="flex-start" width="auto" height="auto">
-        {!plugin.isManaged && !plugin.isPreinstalled.withVersion && (
+        {!isManagedPlugin && !plugin.isPreinstalled.withVersion && (
           <Button disabled={disableUpdate} onClick={onUpdate}>
             {isInstalling
               ? t('plugins.install-controls.updating', 'Updating')

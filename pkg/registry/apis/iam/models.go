@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -113,7 +114,8 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	tracing tracing.Tracer
 
-	cfgProvider configprovider.ConfigProvider
+	cfgProvider    configprovider.ConfigProvider
+	settingService settingsvc.Service
 
 	apiConfig Config
 }

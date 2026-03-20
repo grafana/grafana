@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -206,6 +207,88 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainPare
 	})
 }
 
+func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	const repo = "folder-move-root-to-nested"
+
+	// Root-level folder with metadata + a target nested parent.
+	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
+	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
+
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repo,
+		Target: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json": "myfolder/dashboard.json",
+		},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	requireFolderState(t, helper, "my-uid", "My Folder", "myfolder", repo)
+	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"myfolder/dashboard.json": "my-uid",
+	})
+
+	// Move root-level folder into nested parent.
+	moveInProvisioningPath(t, helper, "myfolder", "parent/myfolder")
+	helper.SyncAndWait(t, repo, nil)
+
+	// Folder should preserve UID but now be nested under parent.
+	requireFolderState(t, helper, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
+	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	assertNoFolderAtPath(t, helper, repo, "myfolder")
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"parent/myfolder/dashboard.json": "my-uid",
+	})
+}
+
+func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	const repo = "folder-move-nested-to-root"
+
+	// Nested folder with metadata.
+	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
+	writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
+
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repo,
+		Target: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json": "parent/child/dashboard.json",
+		},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	requireFolderState(t, helper, "child-uid", "Child", "parent/child", "parent-uid")
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"parent/child/dashboard.json": "child-uid",
+	})
+
+	// Move nested folder to root level.
+	moveInProvisioningPath(t, helper, "parent/child", "child")
+	helper.SyncAndWait(t, repo, nil)
+
+	// Child should preserve UID but now be at root (parent = repo).
+	requireFolderState(t, helper, "child-uid", "Child", "child", repo)
+	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	assertNoFolderAtPath(t, helper, repo, "parent/child")
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"child/dashboard.json": "child-uid",
+	})
+}
+
 func folderMetadataJSON(uid, title string) []byte {
 	folder := map[string]any{
 		"apiVersion": "folder.grafana.app/v1beta1",
@@ -326,4 +409,18 @@ func assertNoFolderAtPath(t *testing.T, helper *common.ProvisioningTestHelper, r
 		}
 	}, 30*time.Second, 100*time.Millisecond,
 		"folder at path %q should be absent for repo %q", sourcePath, repoName)
+}
+
+func assertNoFolderByUID(t *testing.T, helper *common.ProvisioningTestHelper, folderUID string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		_, err := helper.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
+		if err == nil {
+			c.Errorf("folder %q still exists, expected NotFound", folderUID)
+			return
+		}
+		assert.True(c, apierrors.IsNotFound(err),
+			"expected NotFound error for folder %q, got: %v", folderUID, err)
+	}, 30*time.Second, 100*time.Millisecond,
+		"folder %q should be deleted", folderUID)
 }
