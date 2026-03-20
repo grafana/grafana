@@ -1,6 +1,6 @@
 import { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { config, setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler, minimalCustomFoldersHandler } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler, apiFoldersHandlers } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -193,7 +193,7 @@ describe('browse-dashboards services', () => {
     describe('URL generation', () => {
       it('sets URL to undefined for shared with me folder', async () => {
         server.use(
-          minimalCustomFoldersHandler([
+          apiFoldersHandlers.minimalCustomFoldersHandler([
             { uid: 'sharedwithme', title: 'Shared with me' },
             { uid: 'regular-folder', title: 'Regular folder' },
           ])
