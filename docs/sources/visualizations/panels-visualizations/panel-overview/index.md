@@ -59,7 +59,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/share-query/
   tooltips:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-tooltips/
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/configure-tooltips/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-tooltips/
   ai:
