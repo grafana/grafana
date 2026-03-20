@@ -172,7 +172,8 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 					resultBuilder.WithName(folder)
 					folderSpan.End()
 				}
-				// Created _folder.json files are handled by the folder path
+				// TODO: Handle created _folder.json as folder reconciliation in a separate task.
+				// Currently, created _folder.json files are handled by the folder path
 				// that WriteResourceFromFile ensures for the accompanying resources.
 				break
 			}
