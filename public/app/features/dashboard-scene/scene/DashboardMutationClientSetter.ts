@@ -19,7 +19,9 @@ export function provideMutationClientFactory(create: CreateMutationClient): void
 
 export function createMutationClient(scene: unknown): () => void {
   if (!_create) {
-    console.warn('createMutationClient called before provideMutationClientFactory. Mutation API will not be available.');
+    console.warn(
+      'createMutationClient called before provideMutationClientFactory. Mutation API will not be available.'
+    );
     return () => {};
   }
   const teardown = _create(scene);
