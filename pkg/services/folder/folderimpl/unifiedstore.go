@@ -229,6 +229,19 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		}
 	}
 
+	// The k6 folder (k6-app) is hidden from non-service-account users by filtering
+	// it out of the results. To avoid breaking pagination (returning fewer results
+	// than the limit causes the frontend to stop paginating), we request one extra
+	// result and post-filter k6 from the response. We use this approach instead of
+	// a NotIn search filter because the search has two backend implementations
+	// (legacy SQL and unified/bleve), and the legacy one does not support NotIn
+	// on the name field.
+	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
+	searchLimit := q.Limit
+	if !allowK6Folder {
+		searchLimit = q.Limit + 1
+	}
+
 	req := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Fields: []*resourcepb.Requirement{
@@ -239,7 +252,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 				},
 			},
 		},
-		Limit: q.Limit,
+		Limit: searchLimit,
 		// legacy fallback search requires page, unistore requires offset,
 		// so set both
 		Offset: q.Limit * (q.Page - 1),
@@ -255,17 +268,6 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		})
 	}
 
-	// Exclude k6 folder from search results at the query level (not post-filter)
-	// to avoid returning fewer results than the LIMIT, which breaks pagination.
-	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
-	if !allowK6Folder {
-		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_NAME,
-			Operator: string(selection.NotIn),
-			Values:   []string{accesscontrol.K6FolderUID},
-		})
-	}
-
 	// now, get children of the parent folder
 	out, err := ss.k8sclient.Search(ctx, q.OrgID, req)
 	if err != nil {
@@ -277,8 +279,14 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		return nil, err
 	}
 
-	hits := make([]*folder.FolderReference, 0, len(res.Hits))
+	hits := make([]*folder.FolderReference, 0, q.Limit)
 	for _, item := range res.Hits {
+		if item.Name == accesscontrol.K6FolderUID && !allowK6Folder {
+			continue
+		}
+		if int64(len(hits)) >= q.Limit {
+			break
+		}
 		f := &folder.FolderReference{
 			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 			UID:       item.Name,
