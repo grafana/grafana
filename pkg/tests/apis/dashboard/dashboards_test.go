@@ -514,9 +514,8 @@ func TestIntegrationListPagination(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: mode,
-					},
+					"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
+					"folders.folder.grafana.app":       {DualWriterMode: mode},
 				},
 			})
 			t.Cleanup(helper.Shutdown)
@@ -602,9 +601,8 @@ func TestIntegrationListPagination(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous: true,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: mode,
-					},
+					"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
+					"folders.folder.grafana.app":       {DualWriterMode: mode},
 				},
 			})
 			t.Cleanup(helper.Shutdown)
