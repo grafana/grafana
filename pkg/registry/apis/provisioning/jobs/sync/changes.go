@@ -327,8 +327,8 @@ func detectDeletedFolderMetadata(
 		}
 
 		path := safepath.EnsureTrailingSlash(item.Path)
-		if path == "" {
-			continue // root folder
+		if path == "" || path == "/" {
+			continue // root folder doesn't contain metadata and doesn't need to be renamed
 		}
 		if !sourceFolders[path] {
 			continue // entire folder deleted — handled by normal flow
