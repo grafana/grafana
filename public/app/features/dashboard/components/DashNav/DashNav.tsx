@@ -144,6 +144,7 @@ export const DashNav = memo<Props>((props) => {
         });
         reportInteraction('grafana_dashboards_star_dashboard', {
           origin: 'dashnav',
+          status: newState ? 'starred' : 'unstarred',
         });
       } else {
         removeNavIndex(ID_PREFIX + dashboard.uid);

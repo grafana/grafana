@@ -38,11 +38,10 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
   const handleStarToggle = async () => {
     await handleItemStar({ id, title }, !isStarred);
     onStarChange?.(id, !isStarred);
-    if (!isStarred) {
-      reportInteraction('grafana_dashboards_star_dashboard', {
-        origin: 'StarToolbarButton',
-      });
-    }
+    reportInteraction('grafana_dashboards_star_dashboard', {
+      origin: 'StarToolbarButton',
+      status: !isStarred ? 'starred' : 'unstarred',
+    });
   };
 
   const iconProps = useMemo(() => {
