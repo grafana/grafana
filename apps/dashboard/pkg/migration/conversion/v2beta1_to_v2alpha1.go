@@ -994,8 +994,17 @@ func convertCustomValuesFormat_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardCust
 	if in == nil {
 		return nil
 	}
-	v := dashv2alpha1.DashboardCustomVariableSpecValuesFormat(*in)
-	return &v
+
+	switch *in {
+	case dashv2beta1.DashboardCustomVariableSpecValuesFormatJson:
+		v := dashv2alpha1.DashboardCustomVariableSpecValuesFormatJson
+		return &v
+	case dashv2beta1.DashboardCustomVariableSpecValuesFormatCsv:
+		v := dashv2alpha1.DashboardCustomVariableSpecValuesFormatCsv
+		return &v
+	default:
+		return nil
+	}
 }
 
 func convertConditionalRenderingGroupKind_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardConditionalRenderingGroupKind) *dashv2alpha1.DashboardConditionalRenderingGroupKind {
