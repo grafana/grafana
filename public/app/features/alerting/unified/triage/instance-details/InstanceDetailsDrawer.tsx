@@ -28,6 +28,7 @@ import { EventState } from '../../components/rules/central-state-history/EventLi
 import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { quoteWithEscape } from '../../utils/matchers';
 import { stringifyErrorLike } from '../../utils/misc';
 import { groups, rulesNav } from '../../utils/navigation';
 import { useWorkbenchContext } from '../WorkbenchContext';
@@ -56,6 +57,20 @@ interface InstanceDetailsDrawerProps {
   onClose: () => void;
 }
 
+/**
+ * Converts a Labels map (Record<string, string>) into a PromQL selector string
+ * suitable for the `matchers` query parameter, e.g. `{alertname="cpu",env="prod"}`.
+ * Returns undefined when the map is empty.
+ */
+function labelsToMatchersParam(labels: Labels): string | undefined {
+  const entries = Object.entries(labels);
+  if (entries.length === 0) {
+    return undefined;
+  }
+  const parts = entries.map(([k, v]) => `${k}=${quoteWithEscape(v)}`);
+  return `{${parts.join(',')}}`;
+}
+
 export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: InstanceDetailsDrawerProps) {
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
   const [timeRange] = useTimeRange();
@@ -79,7 +94,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     isError: stateHistoryError,
   } = useGetRuleHistoryQuery({
     ruleUid: ruleUID,
-    labels: instanceLabels,
+    matchers: labelsToMatchersParam(instanceLabels),
     from: timeRange.from.unix(),
     to: timeRange.to.unix(),
   });

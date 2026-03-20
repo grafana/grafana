@@ -39,7 +39,7 @@ import { LABELS_FILTER, STATE_FILTER_FROM, STATE_FILTER_TO } from './CentralAler
 import { EventDetails } from './EventDetails';
 import { HistoryErrorMessage } from './HistoryErrorMessage';
 import { useRuleHistoryRecords } from './useRuleHistoryRecords';
-import { parseBackendLabelFilters } from './utils';
+import { toMatchersParam } from './utils';
 
 export const LIMIT_EVENTS = 5000; // limit is hard-capped at 5000 at the BE level.
 const PAGE_SIZE = 100;
@@ -69,8 +69,6 @@ export const HistoryEventsList = ({
   const from = timeRange?.from.unix();
   const to = timeRange?.to.unix();
 
-  const labelFilters = parseBackendLabelFilters(valueInLabelFilter.toString());
-
   const stateTo = valueInStateToFilter.toString();
   const stateFrom = valueInStateFromFilter.toString();
 
@@ -83,7 +81,7 @@ export const HistoryEventsList = ({
     from: from,
     to: to,
     limit: LIMIT_EVENTS,
-    labels: labelFilters,
+    matchers: toMatchersParam(valueInLabelFilter.toString()),
     current: stateTo !== 'all' ? stateTo : undefined,
     previous: stateFrom !== 'all' ? stateFrom : undefined,
   });
