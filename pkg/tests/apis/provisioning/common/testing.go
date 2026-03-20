@@ -1560,32 +1560,6 @@ func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx 
 		"folders for repo %q should have sourcePaths %v", repoName, expectedSourcePaths)
 }
 
-// RequireRepoFile asserts that a file exists at the given path in the repository.
-// pathParts are joined with the "files" subresource prefix, e.g. ("moved", "dashboard1.json").
-func RequireRepoFile(t *testing.T, repoClient *apis.K8sResourceClient, ctx context.Context, repoName string, pathParts ...string) {
-	t.Helper()
-	subresources := append([]string{"files"}, pathParts...)
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		_, err := repoClient.Resource.Get(ctx, repoName, metav1.GetOptions{}, subresources...)
-		assert.NoError(c, err, "file %v should exist in repo %q", pathParts, repoName)
-	}, WaitTimeoutDefault, WaitIntervalDefault,
-		"file %v should exist in repo %q", pathParts, repoName)
-}
-
-// RequireNoRepoFile asserts that a file does NOT exist at the given path in the repository.
-func RequireNoRepoFile(t *testing.T, repoClient *apis.K8sResourceClient, ctx context.Context, repoName string, pathParts ...string) {
-	t.Helper()
-	subresources := append([]string{"files"}, pathParts...)
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		_, err := repoClient.Resource.Get(ctx, repoName, metav1.GetOptions{}, subresources...)
-		if !assert.Error(c, err, "file %v should not exist in repo %q", pathParts, repoName) {
-			return
-		}
-		assert.True(c, apierrors.IsNotFound(err), "expected NotFound for file %v in repo %q, got: %v", pathParts, repoName, err)
-	}, WaitTimeoutDefault, WaitIntervalDefault,
-		"file %v should not exist in repo %q", pathParts, repoName)
-}
-
 // FindCondition finds a condition by type in the conditions list
 func FindCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
 	for i := range conditions {
