@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	cleanuppkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/cleanup"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
@@ -835,10 +836,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			fixMetadataWorker := fixfoldermetadata.NewWorker()
+			cleanupWorker := cleanuppkg.NewWorker(b.resourceLister, b.clients)
 
 			// All workers registered - export/migrate will check feature flag at runtime
-			workers := make([]jobs.Worker, 0, 6+len(b.extraWorkers))
+			workers := make([]jobs.Worker, 0, 7+len(b.extraWorkers))
 			workers = append(workers,
+				cleanupWorker,
 				deleteWorker,
 				exportWorker,
 				fixMetadataWorker,

@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	authlib "github.com/grafana/authlib/types"
@@ -120,6 +121,25 @@ func (c *jobsConnector) Connect(
 			return
 		}
 
+		if idx > 0 {
+			responder.Error(apierrors.NewBadRequest("can not post to a job UID"))
+			return
+		}
+
+		spec := provisioning.JobSpec{}
+		if err := unmarshalJSON(r, defaultMaxBodySize, &spec); err != nil {
+			responder.Error(apierrors.NewBadRequest("error decoding provisioning.Job from request"))
+			return
+		}
+		spec.Repository = name
+
+		// Orphan cleanup actions have inverted validation: only allowed when the
+		// repository does not exist or is stuck in Terminating state.
+		if isOrphanCleanupAction(spec.Action) {
+			c.handleOrphanCleanupJob(ctx, r, name, spec, responder)
+			return
+		}
+
 		// POST operations: require healthy repository
 		repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
 		if err != nil {
@@ -137,18 +157,6 @@ func (c *jobsConnector) Connect(
 			))
 			return
 		}
-
-		if idx > 0 {
-			responder.Error(apierrors.NewBadRequest("can not post to a job UID"))
-			return
-		}
-
-		spec := provisioning.JobSpec{}
-		if err := unmarshalJSON(r, defaultMaxBodySize, &spec); err != nil {
-			responder.Error(apierrors.NewBadRequest("error decoding provisioning.Job from request"))
-			return
-		}
-		spec.Repository = name
 
 		// Pull jobs trigger a repository sync and require admin privileges.
 		if spec.Action == provisioning.JobActionPull {
@@ -235,6 +243,54 @@ var (
 	_ rest.Storage         = (*jobsConnector)(nil)
 	_ rest.StorageMetadata = (*jobsConnector)(nil)
 )
+
+// isOrphanCleanupAction returns true for job actions that operate on orphaned resources
+// and do not require the repository to exist.
+func isOrphanCleanupAction(action provisioning.JobAction) bool {
+	return action == provisioning.JobActionReleaseResources ||
+		action == provisioning.JobActionDeleteResources
+}
+
+// handleOrphanCleanupJob handles job creation for releaseResources and deleteResources
+// actions. These have inverted validation compared to normal jobs: they are only allowed
+// when the repository does NOT exist or is stuck in Terminating state.
+func (c *jobsConnector) handleOrphanCleanupJob(ctx context.Context, r *http.Request, name string, spec provisioning.JobSpec, responder rest.Responder) {
+	ns, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		responder.Error(apierrors.NewBadRequest("missing namespace"))
+		return
+	}
+
+	repo, err := c.repoGetter.GetRepository(ctx, name)
+	if err == nil {
+		cfg := repo.Config()
+		if cfg.DeletionTimestamp == nil || cfg.DeletionTimestamp.IsZero() {
+			responder.Error(apierrors.NewConflict(
+				provisioning.RepositoryResourceInfo.GroupResource(),
+				name,
+				fmt.Errorf("repository exists and is not being deleted; use the normal delete flow"),
+			))
+			return
+		}
+	} else if !apierrors.IsNotFound(err) {
+		responder.Error(err)
+		return
+	}
+
+	if err := c.authorizeAdminJob(r.Context(), &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Namespace: ns},
+	}); err != nil {
+		responder.Error(err)
+		return
+	}
+
+	job, err := c.jobs.GetJobQueue().Insert(ctx, ns, spec)
+	if err != nil {
+		responder.Error(err)
+		return
+	}
+	responder.Object(http.StatusAccepted, job)
+}
 
 // authorizeJob dispatches pre-flight validation and authorization checks based on the job action.
 func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, spec provisioning.JobSpec) error {

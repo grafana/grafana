@@ -368,6 +368,10 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 
 		repo, err := d.repoGetter.GetRepository(ctx, namespace, repoName)
 		if err != nil {
+			if apierrors.IsNotFound(err) && isRepoOptionalAction(job.Spec.Action) {
+				logger.Info("repository not found -- expected for orphan cleanup job")
+				return worker.Process(ctx, nil, *job, recorder)
+			}
 			span.RecordError(err)
 			return apifmt.Errorf("failed to get repository '%s': %w", repoName, err)
 		}
@@ -382,6 +386,10 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 		)
 
 		if r.DeletionTimestamp != nil && !r.DeletionTimestamp.IsZero() {
+			if isRepoOptionalAction(job.Spec.Action) {
+				logger.Info("repository marked for deletion -- proceeding with cleanup job")
+				return worker.Process(ctx, repo, *job, recorder)
+			}
 			logger.Info("repository marked for deletion - skip job",
 				"deletionTimestamp", r.DeletionTimestamp,
 			)
@@ -404,6 +412,13 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 	err := apifmt.Errorf("no workers were registered to handle the job")
 	span.RecordError(err)
 	return err
+}
+
+// isRepoOptionalAction returns true for job actions that can proceed
+// even when the target repository does not exist.
+func isRepoOptionalAction(action provisioning.JobAction) bool {
+	return action == provisioning.JobActionReleaseResources ||
+		action == provisioning.JobActionDeleteResources
 }
 
 func (d *jobDriver) onProgress() ProgressFn {

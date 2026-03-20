@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"slices"
 	"sort"
@@ -21,7 +20,6 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
@@ -189,7 +187,7 @@ func (f *finalizer) deleteExistingItems(
 		return 0, err
 	}
 
-	sortResourceListForDeletion(items)
+	resources.SortResourceListForDeletion(items)
 	folderItems, resourceItems := splitItems(items)
 	process := f.newItemProcessor(ctx, clients, f.removeResources(ctx, logger))
 
@@ -257,7 +255,7 @@ func (f *finalizer) releaseResources(
 			"resource", item.Resource,
 		)
 
-		patchAnnotations, err := getPatchedAnnotations(item)
+		patchAnnotations, err := resources.GetReleasePatch(item)
 		if err != nil {
 			return fmt.Errorf("get patched annotations: %w", err)
 		}
@@ -283,43 +281,6 @@ func (f *finalizer) removeResources(
 		)
 		return client.Delete(ctx, item.Name, v1.DeleteOptions{})
 	}
-}
-
-type jsonPatchOperation struct {
-	Op   string `json:"op"`
-	Path string `json:"path"`
-}
-
-func getPatchedAnnotations(item *provisioning.ResourceListItem) ([]byte, error) {
-	annotations := []jsonPatchOperation{
-		{Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeyManagerKind)},
-		{Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeyManagerIdentity)},
-	}
-
-	if item.Path != "" {
-		annotations = append(
-			annotations,
-			jsonPatchOperation{
-				Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeySourcePath),
-			},
-		)
-	}
-	if item.Hash != "" {
-		annotations = append(
-			annotations,
-			jsonPatchOperation{
-				Op: "remove", Path: "/metadata/annotations/" + escapePatchString(utils.AnnoKeySourceChecksum),
-			},
-		)
-	}
-
-	return json.Marshal(annotations)
-}
-
-func escapePatchString(s string) string {
-	s = strings.ReplaceAll(s, "~", "~0")
-	s = strings.ReplaceAll(s, "/", "~1")
-	return s
 }
 
 // sortResourceListForRelease orders items top-down by depth so that parent
@@ -349,45 +310,6 @@ func sortResourceListForRelease(list *provisioning.ResourceList) {
 			return isFolderI
 		}
 
-		return false
-	})
-}
-
-func sortResourceListForDeletion(list *provisioning.ResourceList) {
-	// FIXME: this code should be simplified once unified storage folders support recursive deletion
-	// Sort by the following logic:
-	// - Put folders at the end so that we empty them first.
-	// - Sort folders by depth so that we remove the deepest first
-	// - If the repo is created within a folder in grafana, make sure that folder is last.
-	sort.Slice(list.Items, func(i, j int) bool {
-		isFolderI := list.Items[i].Group == folders.GroupVersion.Group
-		isFolderJ := list.Items[j].Group == folders.GroupVersion.Group
-
-		// non-folders always go first in the order of deletion.
-		if isFolderI != isFolderJ {
-			return !isFolderI
-		}
-
-		// if both are not folders, keep order (doesn't matter)
-		if !isFolderI && !isFolderJ {
-			return false
-		}
-
-		hasFolderI := list.Items[i].Folder != ""
-		hasFolderJ := list.Items[j].Folder != ""
-		// if one folder is in the root (i.e. does not have a folder specified), put that last
-		if hasFolderI != hasFolderJ {
-			return hasFolderI
-		}
-
-		// if both are nested folder, sort by depth, with the deepest one being first
-		depthI := len(strings.Split(list.Items[i].Path, "/"))
-		depthJ := len(strings.Split(list.Items[j].Path, "/"))
-		if depthI != depthJ {
-			return depthI > depthJ
-		}
-
-		// otherwise, keep order (doesn't matter)
 		return false
 	})
 }
