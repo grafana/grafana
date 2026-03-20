@@ -289,6 +289,71 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 	})
 }
 
+func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	const repo = "folder-move-preserves-gen"
+
+	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
+	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
+	writeToProvisioningPath(t, helper, "plain/.keep", []byte{})
+
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repo,
+		Target: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json":   "myfolder/dashboard.json",
+			"../testdata/text-options.json": "plain/dashboard.json",
+		},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	requireFolderState(t, helper, "my-uid", "My Folder", "myfolder", repo)
+	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+
+	plainUID := findFolderUIDBySourcePath(t, helper, repo, "plain")
+	require.NotEmpty(t, plainUID)
+
+	initialGen := getFolderGeneration(t, helper, "my-uid")
+	require.Equal(t, int64(1), initialGen, "initial generation should be 1")
+
+	// Move metadata-backed folder under a different parent.
+	moveInProvisioningPath(t, helper, "myfolder", "parent/myfolder")
+	// Move non-metadata folder as well.
+	moveInProvisioningPath(t, helper, "plain", "parent/plain")
+
+	helper.SyncAndWait(t, repo, nil)
+
+	// Metadata-backed folder: UID preserved, generation proves in-place update.
+	requireFolderState(t, helper, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
+	newGen := getFolderGeneration(t, helper, "my-uid")
+	require.Greater(t, newGen, initialGen, "generation should increase (in-place update, not delete+create)")
+
+	// Non-metadata folder: gets a new hash-based UID since the path changed.
+	newPlainUID := findFolderUIDBySourcePath(t, helper, repo, "parent/plain")
+	require.NotEmpty(t, newPlainUID)
+
+	// Old paths should be gone.
+	assertNoFolderAtPath(t, helper, repo, "myfolder")
+	assertNoFolderAtPath(t, helper, repo, "plain")
+
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"parent/myfolder/dashboard.json": "my-uid",
+		"parent/plain/dashboard.json":    newPlainUID,
+	})
+}
+
+func getFolderGeneration(t *testing.T, helper *common.ProvisioningTestHelper, folderUID string) int64 {
+	t.Helper()
+	obj, err := helper.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get folder %s", folderUID)
+	return obj.GetGeneration()
+}
+
 func folderMetadataJSON(uid, title string) []byte {
 	folder := map[string]any{
 		"apiVersion": "folder.grafana.app/v1beta1",

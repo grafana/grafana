@@ -64,6 +64,11 @@ func Compare(
 		if err != nil {
 			return nil, nil, fmt.Errorf("augment changes for UID changes: %w", err)
 		}
+
+		changes, err = augmentChangesForFolderMoves(ctx, repo, ref, changes)
+		if err != nil {
+			return nil, nil, fmt.Errorf("augment changes for folder moves: %w", err)
+		}
 	}
 
 	if len(changes) > 0 {
@@ -313,4 +318,79 @@ func augmentChangesForUIDChanges(
 	// 4. Re-sort by depth (deepest first) since we appended new entries
 	safepath.SortByDepth(changes, func(c ResourceFileChange) string { return c.Path }, false)
 	return changes, nil
+}
+
+// augmentChangesForFolderMoves detects metadata-backed folder moves where the
+// directory path changed but the UID in _folder.json stayed the same. The initial
+// diff produces a DELETE (old path) and a CREATE (new path); this function merges
+// them into a single UPDATE so the folder is updated in-place instead of being
+// deleted and recreated (which would reset the K8s generation).
+func augmentChangesForFolderMoves(
+	ctx context.Context,
+	repo repository.Reader,
+	ref string,
+	changes []ResourceFileChange,
+) ([]ResourceFileChange, error) {
+	type folderDelete struct {
+		index int
+		uid   string
+	}
+
+	deletedFolders := make(map[string]folderDelete) // UID -> delete info
+	var createIndices []int
+
+	for i, c := range changes {
+		if !safepath.IsDir(c.Path) {
+			continue
+		}
+		if c.Action == repository.FileActionDeleted && c.Existing != nil {
+			deletedFolders[c.Existing.Name] = folderDelete{index: i, uid: c.Existing.Name}
+		} else if c.Action == repository.FileActionCreated {
+			createIndices = append(createIndices, i)
+		}
+	}
+
+	if len(deletedFolders) == 0 || len(createIndices) == 0 {
+		return changes, nil
+	}
+
+	removedIndices := make(map[int]bool)
+	for _, ci := range createIndices {
+		create := &changes[ci]
+		meta, _, err := resources.ReadFolderMetadata(ctx, repo, create.Path, ref)
+		if err != nil {
+			if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+				continue
+			}
+			return nil, fmt.Errorf("read folder metadata for %s: %w", create.Path, err)
+		}
+		if meta.Name == "" {
+			continue
+		}
+
+		del, ok := deletedFolders[meta.Name]
+		if !ok {
+			continue
+		}
+
+		// Same UID at a different path: convert CREATE to UPDATE.
+		create.Action = repository.FileActionUpdated
+		create.Existing = changes[del.index].Existing
+		removedIndices[del.index] = true
+		delete(deletedFolders, meta.Name)
+	}
+
+	if len(removedIndices) == 0 {
+		return changes, nil
+	}
+
+	filtered := make([]ResourceFileChange, 0, len(changes)-len(removedIndices))
+	for i, c := range changes {
+		if !removedIndices[i] {
+			filtered = append(filtered, c)
+		}
+	}
+
+	safepath.SortByDepth(filtered, func(c ResourceFileChange) string { return c.Path }, false)
+	return filtered, nil
 }
