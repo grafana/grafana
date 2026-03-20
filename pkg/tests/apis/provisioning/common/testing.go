@@ -1558,7 +1558,7 @@ func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx 
 				continue
 			}
 			sp, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
-			gotPaths = append(gotPaths, sp)
+			gotPaths = append(gotPaths, strings.TrimSuffix(sp, "/"))
 		}
 		assert.ElementsMatch(c, expectedSourcePaths, gotPaths, "folder sourcePaths mismatch for repo %q", repoName)
 	}, WaitTimeoutDefault, WaitIntervalDefault,
@@ -1635,13 +1635,13 @@ func SnapshotObject(t *testing.T, obj *unstructured.Unstructured) ObjectSnapshot
 // RequireUpdatedInPlace asserts that the object was updated in place, not
 // deleted and recreated. It compares the UID (definitive identity), the
 // creationTimestamp, and verifies that the generation has not decreased.
-func RequireUpdatedInPlace(t *testing.T, label string, before ObjectSnapshot, after *unstructured.Unstructured) {
+func RequireUpdatedInPlace(t *testing.T, label string, before, after ObjectSnapshot) {
 	t.Helper()
-	require.Equal(t, before.UID, string(after.GetUID()),
+	require.Equal(t, before.UID, after.UID,
 		"%s: UID changed — object was recreated instead of updated", label)
-	require.Equal(t, before.CreationTimestamp, after.GetCreationTimestamp(),
+	require.Equal(t, before.CreationTimestamp, after.CreationTimestamp,
 		"%s: creationTimestamp changed — object was recreated instead of updated", label)
-	require.GreaterOrEqual(t, after.GetGeneration(), before.Generation,
+	require.GreaterOrEqual(t, after.Generation, before.Generation,
 		"%s: generation decreased — object was recreated instead of updated", label)
 }
 

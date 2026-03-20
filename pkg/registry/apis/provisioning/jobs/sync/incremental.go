@@ -160,30 +160,53 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
-			name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
-			if err != nil {
-				writeSpan.RecordError(err)
-				resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
-			}
-			resultBuilder.WithName(name).WithGVK(gvk)
-			writeSpan.End()
-		case repository.FileActionDeleted:
-			removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file")
-			name, folderName, gvk, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
-			if err != nil {
-				removeSpan.RecordError(err)
-				resultBuilder.WithError(fmt.Errorf("removing resource from file %s: %w", change.Path, err))
+			if safepath.IsDir(change.Path) {
+				// Directory appearing inside the configured path (e.g. from a
+				// cross-boundary rename). Ensure the folder exists in Grafana
+				// rather than trying to read it as file content.
+				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.ensure_folder_path_exist")
+				folderID, err := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path)
+				if err != nil {
+					folderSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("ensuring folder %s: %w", change.Path, err))
+				}
+				resultBuilder.WithName(folderID)
+				folderSpan.End()
 			} else {
-				quotaTracker.Release()
+				writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
+				name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
+				if err != nil {
+					writeSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
+				}
+				resultBuilder.WithName(name).WithGVK(gvk)
+				writeSpan.End()
 			}
-			resultBuilder.WithName(name).WithGVK(gvk)
+		case repository.FileActionDeleted:
+			if safepath.IsDir(change.Path) {
+				// Directory disappearing from the configured path (e.g. from a
+				// cross-boundary rename). The individual file-level deletes within
+				// this directory are emitted as separate changes, so they will
+				// populate affectedFolders and trigger orphan cleanup. We only
+				// need to avoid routing this directory entry to RemoveResourceFromFile.
+				break
+			} else {
+				removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file")
+				name, folderName, gvk, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
+				if err != nil {
+					removeSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("removing resource from file %s: %w", change.Path, err))
+				} else {
+					quotaTracker.Release()
+				}
+				resultBuilder.WithName(name).WithGVK(gvk)
 
-			if folderName != "" {
-				affectedFolders[safepath.Dir(change.Path)] = folderName
+				if folderName != "" {
+					affectedFolders[safepath.Dir(change.Path)] = folderName
+				}
+
+				removeSpan.End()
 			}
-
-			removeSpan.End()
 		case repository.FileActionRenamed:
 			if safepath.IsDir(change.Path) {
 				renameFolderCtx, renameFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_folder_path")
