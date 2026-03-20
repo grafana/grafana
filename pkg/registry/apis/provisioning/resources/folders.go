@@ -107,12 +107,10 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return "", err
 	}
 	if fm.tree.In(f.ID) {
-		if existing, ok := fm.tree.Get(f.ID); ok {
-			desired := f.State()
-			desired.ParentID = existing.ParentID // parent hasn't been resolved yet
-			if desired.Equal(existing.State()) {
-				return f.ID, nil
-			}
+		// ParentID is only resolved during the walk below, so we skip it here
+		// to avoid a false mismatch against the already-resolved tree entry.
+		if existing, ok := fm.tree.Get(f.ID); ok && f.HasState(existing.State(), IgnoreParent()) {
+			return f.ID, nil
 		}
 	}
 
@@ -123,7 +121,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		}
 		f.ParentID = parent
 		if fm.tree.In(f.ID) {
-			if existing, ok := fm.tree.Get(f.ID); ok && f.State().Equal(existing.State()) {
+			if existing, ok := fm.tree.Get(f.ID); ok && f.HasState(existing.State()) {
 				parent = f.ID
 				return nil
 			}
@@ -177,7 +175,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			ParentID:     meta.GetFolder(),
 		}
 
-		if !folder.State().Equal(currentState) {
+		if !folder.HasState(currentState) {
 			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
 				return fmt.Errorf("set folder title: %w", err)
 			}

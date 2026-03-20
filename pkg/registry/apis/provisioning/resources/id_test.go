@@ -94,46 +94,6 @@ func TestParseFolderID(t *testing.T) {
 	}
 }
 
-func TestFolderState_Equal(t *testing.T) {
-	state := FolderState{Title: "My Team", Path: "my-team/", MetadataHash: "abc123", ParentID: "root"}
-
-	t.Run("equal when all fields match", func(t *testing.T) {
-		assert.True(t, state.Equal(FolderState{
-			Title: "My Team", Path: "my-team/", MetadataHash: "abc123", ParentID: "root",
-		}))
-	})
-
-	t.Run("not equal when title differs", func(t *testing.T) {
-		assert.False(t, state.Equal(FolderState{
-			Title: "Old Name", Path: "my-team/", MetadataHash: "abc123", ParentID: "root",
-		}))
-	})
-
-	t.Run("not equal when path differs", func(t *testing.T) {
-		assert.False(t, state.Equal(FolderState{
-			Title: "My Team", Path: "old-team/", MetadataHash: "abc123", ParentID: "root",
-		}))
-	})
-
-	t.Run("not equal when checksum differs", func(t *testing.T) {
-		assert.False(t, state.Equal(FolderState{
-			Title: "My Team", Path: "my-team/", MetadataHash: "old-hash", ParentID: "root",
-		}))
-	})
-
-	t.Run("not equal when parent differs", func(t *testing.T) {
-		assert.False(t, state.Equal(FolderState{
-			Title: "My Team", Path: "my-team/", MetadataHash: "abc123", ParentID: "other-parent",
-		}))
-	})
-
-	t.Run("not equal when all fields differ", func(t *testing.T) {
-		assert.False(t, state.Equal(FolderState{
-			Title: "Other", Path: "other/", MetadataHash: "zzz", ParentID: "x",
-		}))
-	})
-}
-
 func TestFolder_State(t *testing.T) {
 	folder := Folder{
 		Title: "My Team", ID: "my-team-abc", Path: "my-team/",
@@ -143,4 +103,53 @@ func TestFolder_State(t *testing.T) {
 	assert.Equal(t, FolderState{
 		Title: "My Team", Path: "my-team/", MetadataHash: "abc123", ParentID: "root",
 	}, got)
+}
+
+func TestFolder_HasState(t *testing.T) {
+	folder := Folder{
+		Title: "My Team", ID: "my-team-abc", Path: "my-team/",
+		MetadataHash: "abc123", ParentID: "root",
+	}
+	matching := FolderState{Title: "My Team", Path: "my-team/", MetadataHash: "abc123", ParentID: "root"}
+
+	t.Run("matches when all state fields are equal", func(t *testing.T) {
+		assert.True(t, folder.HasState(matching))
+	})
+
+	t.Run("does not match when title differs", func(t *testing.T) {
+		s := matching
+		s.Title = "Other"
+		assert.False(t, folder.HasState(s))
+	})
+
+	t.Run("does not match when path differs", func(t *testing.T) {
+		s := matching
+		s.Path = "old-team/"
+		assert.False(t, folder.HasState(s))
+	})
+
+	t.Run("does not match when checksum differs", func(t *testing.T) {
+		s := matching
+		s.MetadataHash = "old-hash"
+		assert.False(t, folder.HasState(s))
+	})
+
+	t.Run("does not match when parent differs", func(t *testing.T) {
+		s := matching
+		s.ParentID = "other-parent"
+		assert.False(t, folder.HasState(s))
+	})
+
+	t.Run("ignores ID field", func(t *testing.T) {
+		other := folder
+		other.ID = "different-id"
+		assert.True(t, other.HasState(matching))
+	})
+
+	t.Run("IgnoreParent skips parent comparison", func(t *testing.T) {
+		s := matching
+		s.ParentID = "different-parent"
+		assert.False(t, folder.HasState(s))
+		assert.True(t, folder.HasState(s, IgnoreParent()))
+	})
 }

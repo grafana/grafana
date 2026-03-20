@@ -110,8 +110,7 @@ type Folder struct {
 }
 
 // FolderState captures the comparable properties of a folder: title, source
-// path, metadata checksum, and parent. Use Folder.State() to extract one from
-// a Folder, or construct directly from K8s object annotations.
+// path, metadata checksum, and parent.
 type FolderState struct {
 	Title        string
 	Path         string
@@ -119,7 +118,19 @@ type FolderState struct {
 	ParentID     string
 }
 
-// State returns the comparable properties of a Folder.
+// FolderCompareOption configures how HasState compares folder states.
+type FolderCompareOption func(*folderCompareConfig)
+
+type folderCompareConfig struct {
+	ignoreParent bool
+}
+
+// IgnoreParent skips the ParentID field when comparing folder states.
+func IgnoreParent() FolderCompareOption {
+	return func(c *folderCompareConfig) { c.ignoreParent = true }
+}
+
+// State extracts the comparable properties from a Folder.
 func (f Folder) State() FolderState {
 	return FolderState{
 		Title:        f.Title,
@@ -129,9 +140,18 @@ func (f Folder) State() FolderState {
 	}
 }
 
-// Equal reports whether two folder states are identical.
-func (s FolderState) Equal(other FolderState) bool {
-	return s == other
+// HasState reports whether the folder's comparable properties match the given state.
+func (f Folder) HasState(s FolderState, opts ...FolderCompareOption) bool {
+	var cfg folderCompareConfig
+	for _, o := range opts {
+		o(&cfg)
+	}
+
+	if f.Title != s.Title || f.Path != s.Path || f.MetadataHash != s.MetadataHash {
+		return false
+	}
+
+	return cfg.ignoreParent || f.ParentID == s.ParentID
 }
 
 func ParseFolder(dirPath, repositoryName string) Folder {
