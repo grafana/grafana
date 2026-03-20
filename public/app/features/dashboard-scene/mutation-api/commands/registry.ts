@@ -23,6 +23,7 @@ import { removeTabCommand } from './removeTab';
 import { removeVariableCommand } from './removeVariable';
 import type { MutationCommand } from './types';
 import { updateLayoutCommand } from './updateLayout';
+import { updateDashboardInfoCommand } from './updateDashboardInfo';
 import { updatePanelCommand } from './updatePanel';
 import { updateRowCommand } from './updateRow';
 import { updateTabCommand } from './updateTab';
@@ -51,6 +52,7 @@ export const ALL_COMMANDS: Array<MutationCommand<any>> = [
   removePanelCommand,
   listPanelsCommand,
   getDashboardInfoCommand,
+  updateDashboardInfoCommand,
 ];
 
 /** All valid command names. */

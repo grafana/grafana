@@ -83,7 +83,8 @@ func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersio
 				dashboard_version.created,
 				dashboard_version.created_by,
 				dashboard_version.message,
-				dashboard_version.data`).
+				dashboard_version.data,
+				dashboard_version.version_type`).
 			Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
 			Where("dashboard_version.dashboard_id=? AND dashboard.org_id=?", query.DashboardID, query.OrgID).
 			OrderBy("dashboard_version.version DESC").

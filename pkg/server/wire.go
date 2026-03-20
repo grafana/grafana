@@ -114,6 +114,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
+	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
@@ -290,6 +291,7 @@ var wireBasicSet = wire.NewSet(
 	search.ProvideService,
 	store.ProvideService,
 	store.ProvideSystemUsersService,
+	features.ProvideNoopCollabService,
 	live.ProvideService,
 	live.ProvideDashboardActivityChannel,
 	pushhttp.ProvideService,

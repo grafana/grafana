@@ -941,4 +941,11 @@ export const payloads = {
     'Move a panel to a different group or reposition within the current group'
   ),
   getDashboardInfo: emptyPayloadSchema.describe('Get dashboard metadata (title, description, uid, tags, folder info)'),
+  updateDashboardInfo: z
+    .object({
+      title: z.string().optional().describe('New dashboard title'),
+      description: z.string().optional().describe('New dashboard description'),
+      tags: z.array(z.string()).optional().describe('New dashboard tags (replaces existing)'),
+    })
+    .describe('Update dashboard metadata (title, description, tags). Only provided fields are updated.'),
 };

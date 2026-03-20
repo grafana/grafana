@@ -64,6 +64,7 @@ import {
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
 import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
+import type { MutationClient } from '../mutation-api/types';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -212,6 +213,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
 
+  /** Mutation client for programmatic dashboard edits.
+   *  May be replaced with a CollabMutationClient wrapper when collab is active. */
+  private _mutationClient: MutationClient;
+
   protected _renderBeforeActivation = true;
 
   public serializer: DashboardSceneSerializerLike<
@@ -238,6 +243,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       serializerVersion === 'v2' ? getDashboardSceneSerializer('v2') : getDashboardSceneSerializer('v1');
 
     this._changeTracker = new DashboardSceneChangeTracker(this);
+    this._mutationClient = new DashboardMutationClient(this);
 
     this.addActivationHandler(() => this._activationHandler());
   }
@@ -273,18 +279,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
-    let mutationClient: DashboardMutationClient | undefined;
-    try {
-      mutationClient = new DashboardMutationClient(this);
-      setDashboardMutationClient(mutationClient);
-    } catch (error) {
-      console.error('Failed to register Dashboard Mutation API:', error);
-    }
+    setDashboardMutationClient(this._mutationClient);
 
     // Deactivation logic
     return () => {
       setDashboardMutationClient(null);
-      mutationClient = undefined;
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
@@ -591,6 +590,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     return this._initialState;
   }
 
+  public getMutationClient(): MutationClient {
+    return this._mutationClient;
+  }
+
+  /** Replace the mutation client (used by CollabProvider to install the wrapper). */
+  public setMutationClient(client: MutationClient): void {
+    this._mutationClient = client;
+  }
+
   public addPanel(vizPanel: VizPanel): void {
     if (!this.state.isEditing) {
       this.onEnterEditMode();
@@ -822,11 +830,36 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public removePanel(panel: VizPanel) {
+    const elementName = this.getElementNameForVizPanel(panel);
+    if (elementName) {
+      this._mutationClient.execute({
+        type: 'REMOVE_PANEL',
+        payload: { elements: [{ name: elementName }] },
+      });
+      return;
+    }
     getLayoutManagerFor(panel).removePanel?.(panel);
   }
 
   public updatePanelTitle(panel: VizPanel, title: string) {
+    const elementName = this.getElementNameForVizPanel(panel);
+    if (elementName) {
+      this._mutationClient.execute({
+        type: 'UPDATE_PANEL',
+        payload: { element: { kind: 'ElementReference', name: elementName }, panel: { spec: { title } } },
+      });
+      return;
+    }
+    // Fallback for panels without v2 element names
     panel.setState({ title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
+  }
+
+  /**
+   * Resolves the v2 element name for a given VizPanel.
+   */
+  public getElementNameForVizPanel(panel: VizPanel): string | undefined {
+    const panelId = getPanelIdForVizPanel(panel);
+    return this.serializer.getElementIdForPanel(panelId);
   }
 
   public async changePanelPlugin(

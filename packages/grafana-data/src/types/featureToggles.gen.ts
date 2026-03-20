@@ -1725,4 +1725,14 @@ export interface FeatureToggles {
   * @default false
   */
   colorblindThemes?: boolean;
+  /**
+  * Enable real-time collaborative editing for dashboards
+  * @default false
+  */
+  dashboardCollaboration?: boolean;
+  /**
+  * Enable real-time cursor sharing on dashboards without full collaboration
+  * @default false
+  */
+  dashboardCursorSync?: boolean;
 }

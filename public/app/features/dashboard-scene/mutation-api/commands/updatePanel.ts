@@ -16,6 +16,7 @@ import { getUpdatedHoverHeader } from '../../panel-edit/getPanelFrameOptions';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getElements, panelQueryKindToSceneQuery } from '../../serialization/layoutSerializers/utils';
 import { getQueryRunnerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { debugLog } from '../debugLog';
 
 import { serializeResultLayoutItem } from './panelSerialization';
 import { payloads, type PanelQueryKind, type TransformationKind } from './schemas';
@@ -81,6 +82,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
       const { element, panel } = payload;
       const elementName = element.name;
       const spec = panel.spec;
+      debugLog('UPDATE_PANEL', { elementName, specKeys: Object.keys(spec) });
 
       const panelId = scene.serializer.getPanelIdForElement(elementName);
       if (panelId === undefined) {
@@ -98,11 +100,18 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
       const previousElement = getElements(scene.state.body, scene)[elementName];
 
       if (spec.title !== undefined) {
-        scene.updatePanelTitle(vizPanel, spec.title);
+        debugLog('updating panel title', { elementName, from: vizPanel.state.title, to: spec.title });
+        // Direct setState to avoid infinite loop — facade methods route back through MutationClient.
+        vizPanel.setState({
+          title: spec.title,
+          hoverHeader: getUpdatedHoverHeader(spec.title, vizPanel.state.$timeRange),
+        });
       }
 
       if (spec.description !== undefined) {
-        vizPanel.onDescriptionChange(spec.description);
+        debugLog('updating panel description', { elementName, from: vizPanel.state.description, to: spec.description });
+        // Direct setState to avoid infinite loop — facade methods route back through MutationClient.
+        vizPanel.setState({ description: spec.description });
       }
 
       if (spec.transparent !== undefined) {
@@ -128,11 +137,13 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
         // Zod parsed types and VizPanel state types don't overlap, so casts are needed.
         /* eslint-disable @typescript-eslint/consistent-type-assertions */
         if (isPluginChange) {
+          debugLog('changing panel plugin', { elementName, from: vizPanel.state.pluginId, to: vizConfig.group });
           const newOptions = vizConfig.spec?.options as Record<string, unknown> | undefined;
           const newFieldConfig = vizConfig.spec?.fieldConfig as FieldConfigSource | undefined;
           await scene.changePanelPlugin(vizPanel, vizConfig.group!, newOptions, newFieldConfig);
         } else {
           if (vizConfig.spec?.options) {
+            debugLog('updating panel options', { elementName });
             const merged = mergeReplacingArrays(
               (vizPanel.state.options ?? {}) as Record<string, unknown>,
               vizConfig.spec.options as Record<string, unknown>
@@ -141,6 +152,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
           }
 
           if (vizConfig.spec?.fieldConfig) {
+            debugLog('updating panel fieldConfig', { elementName });
             const merged = mergeReplacingArrays(
               vizPanel.state.fieldConfig as unknown as Record<string, unknown>,
               vizConfig.spec.fieldConfig as unknown as Record<string, unknown>
@@ -153,6 +165,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
 
       const dataSpec = spec.data?.spec;
       if (dataSpec) {
+        debugLog('updating panel data', { elementName, dataKeys: Object.keys(dataSpec) });
         const dataPipeline = vizPanel.state.$data;
         const queryRunner = getQueryRunnerFor(vizPanel);
         if (dataSpec.queries && queryRunner) {

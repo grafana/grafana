@@ -314,6 +314,23 @@ describe('Panel mutation commands', () => {
       expect(result.error).toContain('Validation failed');
     });
 
+    it('succeeds with minimal payload (only panel, no parentPath or layoutItem)', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+
+      const result: MutationResult = await client.execute({
+        type: 'ADD_PANEL',
+        payload: { panel: makePanelPayload('Minimal Panel') },
+      });
+
+      expect(result.success).toBe(true);
+
+      const body = scene.state.body as unknown as DefaultGridLayoutManager;
+      const panels = body.getVizPanels();
+      expect(panels).toHaveLength(1);
+      expect(panels[0].state.title).toBe('Minimal Panel');
+    });
+
     it('emits warning when layoutItem kind does not match target layout', async () => {
       const scene = buildPanelScene();
       const client = new DashboardMutationClient(scene);

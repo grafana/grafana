@@ -3,6 +3,13 @@ package v1beta1
 // Used in OpenAPI generation to ensure the correct package is used for the generated schema
 const OpenAPIPrefix = "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1."
 
+// Collaboration annotation (grafana.app/collaboration)
+//
+// When set to "enabled" on a Dashboard resource AND the dashboardCollaboration
+// feature flag is active, the dashboard enters real-time collaborative editing
+// mode. Provisioned dashboards (those with grafana.app/managedBy set) ignore
+// this annotation because their content is externally managed.
+
 // This is like the legacy DTO where access and metadata are all returned in a single call
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

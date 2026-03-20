@@ -73,7 +73,8 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	pluginStore pluginstore.Store, pluginClient plugins.Client, dataSourceCache datasources.CacheService,
 	usageStatsService usagestats.Service, toggles featuremgmt.FeatureToggles,
 	dashboardService dashboards.DashboardAccessService,
-	configProvider apiserver.RestConfigProvider) (*GrafanaLive, error) {
+	configProvider apiserver.RestConfigProvider,
+	collabService features.CollabService) (*GrafanaLive, error) {
 	g := &GrafanaLive{
 		Cfg:                   cfg,
 		Features:              toggles,
@@ -175,6 +176,13 @@ func ProvideService(cfg *setting.Cfg, routeRegister routing.RouteRegister, plugC
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["watch"] = features.NewWatchRunner(g.Publish, configProvider)
+
+	// Register collaboration channel handler when feature flag is enabled.
+	if toggles.IsEnabledGlobally(featuremgmt.FlagDashboardCollaboration) && collabService != nil {
+		g.GrafanaScope.Features["collab"] = features.NewCollabHandler(
+			collabService, toggles, dashboardService, g.Publish,
+		)
+	}
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()

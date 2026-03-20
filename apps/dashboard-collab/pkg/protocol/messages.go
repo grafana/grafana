@@ -1,0 +1,77 @@
+package protocol
+
+import "encoding/json"
+
+// MessageKind identifies the type of message on the ops channel.
+type MessageKind string
+
+const (
+	MessageKindOp         MessageKind = "op"
+	MessageKindLock       MessageKind = "lock"
+	MessageKindCheckpoint MessageKind = "checkpoint"
+	MessageKindPresence   MessageKind = "presence" // server-only
+)
+
+// LockType identifies whether a lock operation is an acquire or release.
+type LockType string
+
+const (
+	LockTypeAcquire LockType = "lock"
+	LockTypeRelease LockType = "unlock"
+)
+
+// ClientMessage is what clients send to the ops channel.
+type ClientMessage struct {
+	Kind MessageKind     `json:"kind"`
+	Op   json.RawMessage `json:"op"`
+}
+
+// CollabOperation wraps a DashboardMutationAPI request with collab metadata.
+type CollabOperation struct {
+	Mutation   MutationRequest `json:"mutation"`
+	LockTarget string          `json:"lockTarget"`
+}
+
+// MutationRequest is the protocol's own representation of a dashboard mutation.
+// It mirrors the MutationRequest interface in dashboard-scene/mutation-api/types.ts
+// but is defined locally to keep the wire protocol self-contained and avoid coupling
+// to dashboard-scene internals. The backend treats the payload as opaque — it does
+// not import or depend on DashboardMutationAPI command definitions.
+type MutationRequest struct {
+	Type    string          `json:"type"`    // e.g., "UPDATE_PANEL"
+	Payload json.RawMessage `json:"payload"` // Zod-validated on frontend
+}
+
+// LockOperation requests or releases a panel-level soft lock.
+type LockOperation struct {
+	Type   LockType `json:"type"`
+	Target string   `json:"target"` // panelId or "__dashboard__", "__variables__", "__layout__"
+	UserID string   `json:"userId"`
+}
+
+// CheckpointOperation requests a named version snapshot.
+type CheckpointOperation struct {
+	Type    string `json:"type"`              // "checkpoint"
+	Message string `json:"message,omitempty"` // version name
+}
+
+// ServerMessage is what the server broadcasts to all clients.
+type ServerMessage struct {
+	Seq       int64           `json:"seq"`
+	Kind      MessageKind     `json:"kind"`
+	Op        json.RawMessage `json:"op"`
+	UserID    string          `json:"userId"`
+	Timestamp int64           `json:"timestamp"`
+}
+
+// CursorUpdate is ephemeral — sent on the cursors channel only, never hits server logic.
+type CursorUpdate struct {
+	Type        string  `json:"type"` // "cursor"
+	UserID      string  `json:"userId"`
+	DisplayName string  `json:"displayName"`
+	AvatarURL   string  `json:"avatarUrl"`
+	Color       string  `json:"color"`
+	X           float64 `json:"x"`
+	Y           float64 `json:"y"`
+	PanelID     string  `json:"panelId,omitempty"`
+}

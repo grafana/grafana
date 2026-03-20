@@ -60,4 +60,8 @@ FROM dashboard;`
 	mg.AddMigration("Add apiVersion for dashboard_version", NewAddColumnMigration(dashboardVersionV1, &Column{
 		Name: "api_version", Type: DB_Varchar, Length: 16, Nullable: true,
 	}))
+
+	mg.AddMigration("Add version_type for dashboard_version", NewAddColumnMigration(dashboardVersionV1, &Column{
+		Name: "version_type", Type: DB_Varchar, Length: 16, Nullable: true, Default: "'manual'",
+	}))
 }

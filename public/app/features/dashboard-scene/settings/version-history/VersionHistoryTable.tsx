@@ -1,10 +1,11 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
+import { useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
+import { Checkbox, Button, Tag, ModalsController, Switch, useStyles2, Stack } from '@grafana/ui';
 import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
@@ -26,9 +27,28 @@ export const VersionHistoryTable = ({
   isLoadingUserDisplayNames,
 }: VersionsTableProps) => {
   const styles = useStyles2(getStyles);
+  const [showAutoSaves, setShowAutoSaves] = useState(false);
+
+  const hasAutoSaves = versions.some((v) => v.versionType === 'auto');
+  const filteredVersions = showAutoSaves ? versions : versions.filter((v) => v.versionType !== 'auto');
 
   return (
     <div className={styles.margin}>
+      {hasAutoSaves && (
+        <Stack alignItems="center" gap={1}>
+          <Switch
+            value={showAutoSaves}
+            onChange={() => setShowAutoSaves(!showAutoSaves)}
+            data-testid="show-auto-saves-toggle"
+          />
+          <label
+            className={styles.toggleLabel}
+            onClick={() => setShowAutoSaves(!showAutoSaves)}
+          >
+            <Trans i18nKey="dashboard-scene.version-history-table.show-auto-saves">Show auto-saves</Trans>
+          </label>
+        </Stack>
+      )}
       <table className={cx('filter-table', styles.table)}>
         <thead>
           <tr>
@@ -49,59 +69,70 @@ export const VersionHistoryTable = ({
           </tr>
         </thead>
         <tbody>
-          {versions.map((version, idx) => (
-            <tr key={version.id}>
-              <td>
-                <Checkbox
-                  aria-label={t(
-                    'dashboard-scene.version-history-table.aria-label-toggle-selection',
-                    'Toggle selection of version {{version}}',
-                    { version: version.version }
-                  )}
-                  className={css({
-                    display: 'inline',
-                  })}
-                  checked={version.checked}
-                  onChange={(ev) => onCheck(ev, version.id)}
-                  disabled={!version.checked && canCompare}
-                />
-              </td>
-              <td>{version.version}</td>
-              <td>{version.createdDateString}</td>
-              <td>{isLoadingUserDisplayNames ? <Skeleton width={100} /> : version.createdBy}</td>
-              <td>{version.message}</td>
-              <td className="text-right">
-                {idx === 0 ? (
-                  <Tag name={t('dashboard-scene.version-history-table.name-latest', 'Latest')} colorIndex={17} />
-                ) : (
-                  <ModalsController>
-                    {({ showModal, hideModal }) => (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        icon="history"
-                        onClick={() => {
-                          showModal(RevertDashboardModal, {
-                            version,
-                            hideModal,
-                            onRestore,
-                          });
-                          DashboardInteractions.versionRestoreClicked({
-                            version: version.version,
-                            index: idx,
-                            confirm: false,
-                            version_date: new Date(version.created),
-                          });
-                        }}
-                      >
-                        <Trans i18nKey="dashboard-scene.version-history-table.restore">Restore</Trans>
-                      </Button>
+          {filteredVersions.map((version, idx) => {
+            const isAuto = version.versionType === 'auto';
+            return (
+              <tr key={version.id} className={cx(isAuto && styles.autoSaveRow)} data-testid="version-row">
+                <td>
+                  <Checkbox
+                    aria-label={t(
+                      'dashboard-scene.version-history-table.aria-label-toggle-selection',
+                      'Toggle selection of version {{version}}',
+                      { version: version.version }
                     )}
-                  </ModalsController>
-                )}
-              </td>
-            </tr>
-          ))}
+                    className={css({
+                      display: 'inline',
+                    })}
+                    checked={version.checked}
+                    onChange={(ev) => onCheck(ev, version.id)}
+                    disabled={!version.checked && canCompare}
+                  />
+                </td>
+                <td>{version.version}</td>
+                <td>{version.createdDateString}</td>
+                <td>{isLoadingUserDisplayNames ? <Skeleton width={100} /> : version.createdBy}</td>
+                <td>
+                  {version.message}
+                  {isAuto && (
+                    <Tag
+                      name={t('dashboard-scene.version-history-table.auto-save-tag', 'auto')}
+                      className={styles.autoTag}
+                    />
+                  )}
+                </td>
+                <td className="text-right">
+                  {idx === 0 ? (
+                    <Tag name={t('dashboard-scene.version-history-table.name-latest', 'Latest')} colorIndex={17} />
+                  ) : (
+                    <ModalsController>
+                      {({ showModal, hideModal }) => (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          icon="history"
+                          onClick={() => {
+                            showModal(RevertDashboardModal, {
+                              version,
+                              hideModal,
+                              onRestore,
+                            });
+                            DashboardInteractions.versionRestoreClicked({
+                              version: version.version,
+                              index: idx,
+                              confirm: false,
+                              version_date: new Date(version.created),
+                            });
+                          }}
+                        >
+                          <Trans i18nKey="dashboard-scene.version-history-table.restore">Restore</Trans>
+                        </Button>
+                      )}
+                    </ModalsController>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -117,6 +148,19 @@ function getStyles(theme: GrafanaTheme2) {
       td: {
         whiteSpace: 'normal !important',
       },
+    }),
+    toggleLabel: css({
+      cursor: 'pointer',
+      fontSize: theme.typography.bodySmall.fontSize,
+      color: theme.colors.text.secondary,
+      userSelect: 'none',
+    }),
+    autoSaveRow: css({
+      opacity: 0.6,
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    autoTag: css({
+      marginLeft: theme.spacing(1),
     }),
   };
 }

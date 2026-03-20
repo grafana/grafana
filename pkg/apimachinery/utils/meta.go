@@ -59,6 +59,14 @@ const AnnoKeyManagerIdentity = "grafana.app/managerId"
 const AnnoKeyManagerAllowsEdits = "grafana.app/managerAllowsEdits"
 const AnnoKeyManagerSuspended = "grafana.app/managerSuspended"
 
+// AnnoKeyCollaboration enables real-time collaborative editing for a dashboard.
+// Value is "enabled" or absent. Only effective when the dashboardCollaboration
+// feature flag is also on. Ignored on provisioned dashboards (managedBy set).
+const AnnoKeyCollaboration = "grafana.app/collaboration"
+
+// CollaborationEnabled is the annotation value that turns on collaboration.
+const CollaborationEnabled = "enabled"
+
 // Annotations used to store source properties
 
 const AnnoKeySourcePath = "grafana.app/sourcePath"

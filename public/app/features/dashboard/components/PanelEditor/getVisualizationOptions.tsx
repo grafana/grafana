@@ -2,6 +2,7 @@ import { get as lodashGet } from 'lodash';
 
 import {
   EventBus,
+  FieldConfigSource,
   InterpolateFunction,
   PanelData,
   PanelPlugin,
@@ -202,10 +203,22 @@ export interface OptionPaneRenderProps2 {
   plugin: PanelPlugin;
   data?: PanelData;
   instanceState: unknown;
+  /** Optional override for option changes. When provided, called instead of panel.onOptionsChange(). */
+  onOptionsChange?: (options: Record<string, unknown>) => void;
+  /** Optional override for field config changes. When provided, called instead of panel.onFieldConfigChange(). */
+  onFieldConfigChange?: (fieldConfig: FieldConfigSource) => void;
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
-  const { plugin, panel, data, eventBus, instanceState } = props;
+  const {
+    plugin,
+    panel,
+    data,
+    eventBus,
+    instanceState,
+    onOptionsChange: onOptionsChangeOverride,
+    onFieldConfigChange: onFieldConfigChangeOverride,
+  } = props;
 
   const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
   const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
@@ -236,7 +249,12 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       }
 
       const newOptions = setOptionImmutably(currentOptions, path, value);
-      panel.onOptionsChange(newOptions);
+      if (onOptionsChangeOverride) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        onOptionsChangeOverride(newOptions as Record<string, unknown>);
+      } else {
+        panel.onOptionsChange(newOptions);
+      }
     },
   };
 
@@ -286,10 +304,17 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
         render: function renderEditor() {
           const onChange = (v: unknown) => {
-            panel.onFieldConfigChange(
-              updateDefaultFieldConfigValue(currentFieldConfig, fieldOption.path, v, fieldOption.isCustom),
-              true
+            const newFieldConfig = updateDefaultFieldConfigValue(
+              currentFieldConfig,
+              fieldOption.path,
+              v,
+              fieldOption.isCustom
             );
+            if (onFieldConfigChangeOverride) {
+              onFieldConfigChangeOverride(newFieldConfig);
+            } else {
+              panel.onFieldConfigChange(newFieldConfig, true);
+            }
           };
 
           return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;

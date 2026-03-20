@@ -9,6 +9,7 @@ export interface RevisionModel {
   createdBy: string;
   message: string;
   data: object;
+  versionType?: string;
 }
 
 export type DecoratedRevisionModel = RevisionModel & {

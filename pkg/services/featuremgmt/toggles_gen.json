@@ -1368,6 +1368,37 @@
     },
     {
       "metadata": {
+        "name": "dashboardCollaboration",
+        "resourceVersion": "1773847067253",
+        "creationTimestamp": "2026-03-18T15:17:47Z"
+      },
+      "spec": {
+        "description": "Enable real-time collaborative editing for dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardCursorSync",
+        "resourceVersion": "1773868849610",
+        "creationTimestamp": "2026-03-18T21:15:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-18 21:20:49.61058 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable real-time cursor sharing on dashboards without full collaboration",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-11T16:52:46Z"

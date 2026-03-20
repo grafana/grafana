@@ -24,6 +24,7 @@ type DashboardVersion struct {
 	RestoredFrom  int    `json:"restoredFrom" db:"restored_from"`
 	Version       int    `json:"version" db:"version"`
 	APIVersion    string `json:"apiVersion" xorm:"api_version" db:"api_version"`
+	VersionType   string `json:"versionType" xorm:"version_type" db:"version_type"`
 
 	Created   time.Time `json:"created" db:"created"`
 	CreatedBy int64     `json:"createdBy" db:"created_by"`
@@ -45,6 +46,7 @@ func (v *DashboardVersion) ToDTO(dashUid string) *DashboardVersionDTO {
 		CreatedBy:     v.CreatedBy,
 		Message:       v.Message,
 		Data:          v.Data,
+		VersionType:   v.VersionType,
 	}
 }
 
@@ -95,6 +97,7 @@ type DashboardVersionDTO struct {
 	CreatedBy     int64            `json:"createdBy"`
 	Message       string           `json:"message"`
 	Data          *simplejson.Json `json:"data" db:"data"`
+	VersionType   string           `json:"versionType"`
 }
 
 // DashboardVersionMeta extends the DashboardVersionDTO with the names
@@ -111,6 +114,7 @@ type DashboardVersionMeta struct {
 	Message       string           `json:"message"`
 	Data          *simplejson.Json `json:"data"`
 	CreatedBy     string           `json:"createdBy"`
+	VersionType   string           `json:"versionType"`
 }
 
 type DashboardVersionResponseMeta struct {

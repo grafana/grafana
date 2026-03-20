@@ -65,6 +65,9 @@ export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 // Grant permissions to the created resource
 export const AnnoKeyGrantPermissions = 'grafana.app/grant-permissions';
 
+// Version type for dashboard version history entries ("auto" or "manual")
+export const AnnoKeyVersionType = 'grafana.app/versionType';
+
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeySlug = 'grafana.app/slug';
 /** @deprecated NOT A REAL annotation -- this is just a shim */

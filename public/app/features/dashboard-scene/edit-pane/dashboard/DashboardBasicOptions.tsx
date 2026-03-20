@@ -16,7 +16,7 @@ export function DashboardTitleInput({ dashboard, id }: { dashboard: DashboardSce
       id={id}
       value={title}
       onChange={(e) => {
-        dashboard.setState({ title: e.currentTarget.value });
+        dashboard.getMutationClient().execute({ type: 'UPDATE_DASHBOARD_INFO', payload: { title: e.currentTarget.value } });
       }}
       onFocus={(e) => {
         valueBeforeEdit.current = e.currentTarget.value;
@@ -48,7 +48,9 @@ export function DashboardDescriptionInput({ dashboard, id }: { dashboard: Dashbo
     <TextArea
       id={id}
       value={description}
-      onChange={(e) => dashboard.setState({ description: e.currentTarget.value })}
+      onChange={(e) => {
+        dashboard.getMutationClient().execute({ type: 'UPDATE_DASHBOARD_INFO', payload: { description: e.currentTarget.value } });
+      }}
       onFocus={(e) => {
         valueBeforeEdit.current = e.currentTarget.value;
       }}

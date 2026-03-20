@@ -26,6 +26,7 @@ interface RevisionsModel {
   createdBy: string;
   message: string;
   data: Dashboard;
+  versionType?: string;
 }
 
 export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
@@ -93,6 +94,7 @@ export class LegacyDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard>
           annotations: {
             'grafana.app/updatedBy': v.createdBy,
             'grafana.app/message': v.message,
+            ...(v.versionType ? { 'grafana.app/versionType': v.versionType } : {}),
           },
         },
         spec: v.data,
