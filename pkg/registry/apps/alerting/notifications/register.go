@@ -2,7 +2,10 @@ package notifications
 
 import (
 	"context"
+	"unsafe"
 
+	"k8s.io/apimachinery/pkg/conversion"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
@@ -12,6 +15,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
+	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	v1beta1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -127,4 +132,99 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 		return routingtree.NewStorage(api.RouteService, namespacer)
 	}
 	panic("unknown legacy storage requested: " + gvr.String())
+}
+
+// AddToScheme overrides the embedded AppInstaller to also register list conversion functions
+// between v0alpha1 and v1beta1. The SDK only registers conversions for individual kinds;
+// list conversions must be added manually. Since both versions have identical schemas,
+// conversion is a JSON round-trip.
+func (a AppInstaller) AddToScheme(scheme *runtime.Scheme) error {
+	if err := a.AppInstaller.AddToScheme(scheme); err != nil {
+		return err
+	}
+	// All list types have identical memory layouts between v0alpha1 and v1beta1
+	// (same fields: TypeMeta, ListMeta, Items), so we can reinterpret the pointer
+	// directly — the same approach used by conversion-gen for layout-identical types.
+	type convPair struct {
+		src, dst  interface{}
+		convertFn conversion.ConversionFunc
+	}
+	pairs := []convPair{
+		{
+			(*v0alpha1.ReceiverList)(nil), (*v1beta1.ReceiverList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v1beta1.ReceiverList) = *(*v1beta1.ReceiverList)(unsafe.Pointer(in.(*v0alpha1.ReceiverList)))
+				return nil
+			},
+		},
+		{
+			(*v1beta1.ReceiverList)(nil), (*v0alpha1.ReceiverList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v0alpha1.ReceiverList) = *(*v0alpha1.ReceiverList)(unsafe.Pointer(in.(*v1beta1.ReceiverList)))
+				return nil
+			},
+		},
+		{
+			(*v0alpha1.InhibitionRuleList)(nil), (*v1beta1.InhibitionRuleList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v1beta1.InhibitionRuleList) = *(*v1beta1.InhibitionRuleList)(unsafe.Pointer(in.(*v0alpha1.InhibitionRuleList)))
+				return nil
+			},
+		},
+		{
+			(*v1beta1.InhibitionRuleList)(nil), (*v0alpha1.InhibitionRuleList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v0alpha1.InhibitionRuleList) = *(*v0alpha1.InhibitionRuleList)(unsafe.Pointer(in.(*v1beta1.InhibitionRuleList)))
+				return nil
+			},
+		},
+		{
+			(*v0alpha1.RoutingTreeList)(nil), (*v1beta1.RoutingTreeList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v1beta1.RoutingTreeList) = *(*v1beta1.RoutingTreeList)(unsafe.Pointer(in.(*v0alpha1.RoutingTreeList)))
+				return nil
+			},
+		},
+		{
+			(*v1beta1.RoutingTreeList)(nil), (*v0alpha1.RoutingTreeList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v0alpha1.RoutingTreeList) = *(*v0alpha1.RoutingTreeList)(unsafe.Pointer(in.(*v1beta1.RoutingTreeList)))
+				return nil
+			},
+		},
+		{
+			(*v0alpha1.TemplateGroupList)(nil), (*v1beta1.TemplateGroupList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v1beta1.TemplateGroupList) = *(*v1beta1.TemplateGroupList)(unsafe.Pointer(in.(*v0alpha1.TemplateGroupList)))
+				return nil
+			},
+		},
+		{
+			(*v1beta1.TemplateGroupList)(nil), (*v0alpha1.TemplateGroupList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v0alpha1.TemplateGroupList) = *(*v0alpha1.TemplateGroupList)(unsafe.Pointer(in.(*v1beta1.TemplateGroupList)))
+				return nil
+			},
+		},
+		{
+			(*v0alpha1.TimeIntervalList)(nil), (*v1beta1.TimeIntervalList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v1beta1.TimeIntervalList) = *(*v1beta1.TimeIntervalList)(unsafe.Pointer(in.(*v0alpha1.TimeIntervalList)))
+				return nil
+			},
+		},
+		{
+			(*v1beta1.TimeIntervalList)(nil), (*v0alpha1.TimeIntervalList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v0alpha1.TimeIntervalList) = *(*v0alpha1.TimeIntervalList)(unsafe.Pointer(in.(*v1beta1.TimeIntervalList)))
+				return nil
+			},
+		},
+	}
+	for _, p := range pairs {
+		if err := scheme.AddConversionFunc(p.src, p.dst, p.convertFn); err != nil {
+			return err
+		}
+	}
+	return nil
 }
