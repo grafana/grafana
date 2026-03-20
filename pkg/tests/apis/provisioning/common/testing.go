@@ -1645,6 +1645,13 @@ func RequireUpdatedInPlace(t *testing.T, label string, before, after ObjectSnaps
 		"%s: generation decreased — object was recreated instead of updated", label)
 }
 
+// RequireRecreated asserts that the object was deleted and recreated (new UID).
+func RequireRecreated(t *testing.T, label string, before, after ObjectSnapshot) {
+	t.Helper()
+	require.NotEqual(t, before.UID, after.UID,
+		"%s: UID unchanged — object was updated in place instead of recreated", label)
+}
+
 // FindCondition finds a condition by type in the conditions list
 func FindCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
 	for i := range conditions {
