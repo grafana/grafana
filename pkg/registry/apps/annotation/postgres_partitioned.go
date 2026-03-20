@@ -44,10 +44,11 @@ type PostgreSQLStoreConfig struct {
 
 // PostgreSQLStore implements the Store interface using PostgreSQL as the backend
 type PostgreSQLStore struct {
-	pool     *pgxpool.Pool
-	config   PostgreSQLStoreConfig
-	tagCache *tagCache
-	logger   log.Logger
+	pool          *pgxpool.Pool
+	config        PostgreSQLStoreConfig
+	tagCache      *tagCache
+	logger        log.Logger
+	cleanupCancel context.CancelFunc
 }
 
 var _ Store = (*PostgreSQLStore)(nil)
@@ -114,16 +115,24 @@ func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*Postgr
 		return nil, fmt.Errorf("failed to create tag cache: %w", err)
 	}
 
-	return &PostgreSQLStore{
+	store := &PostgreSQLStore{
 		pool:     pool,
 		config:   cfg,
 		tagCache: cache,
 		logger:   log.New("postgres.annotation.store"),
-	}, nil
+	}
+
+	// Start background cleanup
+	store.startCleanup(ctx)
+
+	return store, nil
 }
 
-// Close closes the database connection pool
+// Close closes the database connection pool and stops background cleanup
 func (s *PostgreSQLStore) Close() {
+	if s.cleanupCancel != nil {
+		s.cleanupCancel()
+	}
 	if s.pool != nil {
 		s.pool.Close()
 	}

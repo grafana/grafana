@@ -6,9 +6,53 @@ import (
 	"time"
 )
 
+const (
+	// cleanupInterval is how often the background cleanup runs to drop old partitions
+	cleanupInterval = 24 * time.Hour
+)
+
+// startCleanup starts a background goroutine that periodically runs cleanup
+func (s *PostgreSQLStore) startCleanup(parentCtx context.Context) {
+	ctx, cancel := context.WithCancel(parentCtx)
+	s.cleanupCancel = cancel
+
+	go func() {
+		ticker := time.NewTicker(cleanupInterval)
+		defer ticker.Stop()
+
+		s.logger.Info("Starting partition cleanup loop", "interval", cleanupInterval, "retention", s.config.RetentionTTL)
+
+		// Run immediately on startup
+		s.runCleanup(ctx)
+
+		for {
+			select {
+			case <-ticker.C:
+				s.runCleanup(ctx)
+			case <-ctx.Done():
+				s.logger.Info("Stopping partition cleanup loop")
+				return
+			}
+		}
+	}()
+}
+
+// runCleanup executes cleanup with timeout and logging
+func (s *PostgreSQLStore) runCleanup(ctx context.Context) {
+	cleanupCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+
+	start := time.Now()
+	deleted, err := s.Cleanup(cleanupCtx)
+	if err != nil {
+		s.logger.Error("Partition cleanup failed", "error", err, "duration", time.Since(start))
+	} else if deleted > 0 {
+		s.logger.Info("Partition cleanup completed", "rows_deleted", deleted, "duration", time.Since(start))
+	}
+}
+
 // Cleanup implements the LifecycleManager interface
 // It removes old partitions that are beyond the retention TTL
-// TODO: figure out where this needs to be called from (e.g., background goroutine in the store, or an external cron job)
 func (s *PostgreSQLStore) Cleanup(ctx context.Context) (int64, error) {
 	// Calculate cutoff timestamp
 	cutoff := time.Now().Add(-s.config.RetentionTTL)
