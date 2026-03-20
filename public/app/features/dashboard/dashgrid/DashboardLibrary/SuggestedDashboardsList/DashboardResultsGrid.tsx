@@ -60,6 +60,9 @@ export const DashboardResultsGrid = ({
 
       const showCompatBadge = isCompatibilityAppEnabled && !!datasourceUid && datasourceType === 'prometheus';
 
+      const onCompatibilityCheck =
+        showCompatBadge && isGnetDashboard(dashboard) ? () => onCheckCompatibility(dashboard, 'manual') : undefined;
+
       return (
         <DashboardCard
           key={`comm-${dashboard.id}`}
@@ -73,9 +76,7 @@ export const DashboardResultsGrid = ({
           showCommunityBadge
           showCompatibilityBadge={showCompatBadge}
           compatibilityState={compatibilityMap.get(dashboard.id)}
-          onCompatibilityCheck={
-            showCompatBadge && isGnetDashboard(dashboard) ? () => onCheckCompatibility(dashboard, 'manual') : undefined
-          }
+          onCompatibilityCheck={onCompatibilityCheck}
         />
       );
     })}
