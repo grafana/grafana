@@ -321,6 +321,15 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testi
 	initialGen := getFolderGeneration(t, helper, "my-uid")
 	require.Equal(t, int64(1), initialGen, "initial generation should be 1")
 
+	myFolderObj, err := helper.Folders.Resource.Get(t.Context(), "my-uid", metav1.GetOptions{})
+	require.NoError(t, err)
+	initialCreationTimestamp := myFolderObj.GetCreationTimestamp()
+
+	parentGenBefore := getFolderGeneration(t, helper, "parent-uid")
+
+	myFolderDashUID := findDashboardUIDBySourcePath(t, helper, repo, "myfolder/dashboard.json")
+	require.NotEmpty(t, myFolderDashUID)
+
 	// Move metadata-backed folder under a different parent.
 	moveInProvisioningPath(t, helper, "myfolder", "parent/myfolder")
 	// Move non-metadata folder as well.
@@ -331,11 +340,25 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testi
 	// Metadata-backed folder: UID preserved, generation proves in-place update.
 	requireFolderState(t, helper, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
 	newGen := getFolderGeneration(t, helper, "my-uid")
-	require.Greater(t, newGen, initialGen, "generation should increase (in-place update, not delete+create)")
+	require.Equal(t, initialGen+1, newGen, "generation should increment by exactly 1 (in-place update, not delete+create)")
+
+	// Creation timestamp must be unchanged — a delete+recreate would reset it.
+	myFolderObjAfter, err := helper.Folders.Resource.Get(t.Context(), "my-uid", metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, initialCreationTimestamp, myFolderObjAfter.GetCreationTimestamp(),
+		"creation timestamp must not change: folder was deleted and recreated")
+
+	// Parent folder must not have been touched by the child move.
+	parentGenAfter := getFolderGeneration(t, helper, "parent-uid")
+	require.Equal(t, parentGenBefore, parentGenAfter, "parent folder generation should not change when a child is moved under it")
 
 	// Non-metadata folder: gets a new hash-based UID since the path changed.
 	newPlainUID := findFolderUIDBySourcePath(t, helper, repo, "parent/plain")
 	require.NotEmpty(t, newPlainUID)
+	require.NotEqual(t, plainUID, newPlainUID, "non-metadata folder should get a new UID when its path changes")
+
+	// Old plain folder object must be deleted, not just re-annotated.
+	assertNoFolderByUID(t, helper, plainUID)
 
 	// Old paths should be gone.
 	assertNoFolderAtPath(t, helper, repo, "myfolder")
@@ -345,6 +368,11 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testi
 		"parent/myfolder/dashboard.json": "my-uid",
 		"parent/plain/dashboard.json":    newPlainUID,
 	})
+
+	// Dashboard under the moved metadata folder must not be deleted and recreated.
+	newMyFolderDashUID := findDashboardUIDBySourcePath(t, helper, repo, "parent/myfolder/dashboard.json")
+	require.Equal(t, myFolderDashUID, newMyFolderDashUID,
+		"dashboard UID should be preserved when its parent folder is moved")
 }
 
 func getFolderGeneration(t *testing.T, helper *common.ProvisioningTestHelper, folderUID string) int64 {
@@ -488,4 +516,28 @@ func assertNoFolderByUID(t *testing.T, helper *common.ProvisioningTestHelper, fo
 			"expected NotFound error for folder %q, got: %v", folderUID, err)
 	}, 30*time.Second, 100*time.Millisecond,
 		"folder %q should be deleted", folderUID)
+}
+
+func findDashboardUIDBySourcePath(t *testing.T, helper *common.ProvisioningTestHelper, repoName, sourcePath string) string {
+	t.Helper()
+	var uid string
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		for _, d := range list.Items {
+			annotations := d.GetAnnotations()
+			if annotations["grafana.app/managerId"] != repoName {
+				continue
+			}
+			if annotations["grafana.app/sourcePath"] == sourcePath {
+				uid = d.GetName()
+				return
+			}
+		}
+		c.Errorf("no dashboard managed by %q with sourcePath %q found", repoName, sourcePath)
+	}, 30*time.Second, 100*time.Millisecond,
+		"expected dashboard with sourcePath %q for repo %q", sourcePath, repoName)
+	return uid
 }
