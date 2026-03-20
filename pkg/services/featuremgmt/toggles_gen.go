@@ -922,7 +922,7 @@ const (
 	// Enables the new colorblind-friendly themes
 	FlagColorblindThemes = "colorblindThemes"
 
-	// FlagRbacIAMClientEnabled
+	// FlagRbacIAMClient
 	// Enables the IAM client integration for fetching remote IAM global roles
-	FlagRbacIAMClientEnabled = "rbacIAMClientEnabled"
+	FlagRbacIAMClient = "rbacIAMClient"
 )
