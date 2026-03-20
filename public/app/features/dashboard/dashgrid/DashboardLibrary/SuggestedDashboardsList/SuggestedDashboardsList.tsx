@@ -12,10 +12,11 @@ import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { CompatibilityState } from '../CompatibilityBadge';
 import { DashboardCard } from '../DashboardCard';
 import { MappingContext } from '../SuggestedDashboardsModal';
+import { useTrackingContext } from '../TrackingContext';
 import { checkDashboardCompatibility } from '../api/compatibilityApi';
 import { fetchCommunityDashboards } from '../api/dashboardLibraryApi';
-import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../constants';
-import { DashboardLibraryInteractions, SuggestedDashboardInteractions } from '../interactions';
+import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS } from '../constants';
+import { DashboardLibraryInteractions } from '../interactions';
 import { GnetDashboard } from '../types';
 import { onUseCommunityDashboard, interpolateDashboardForCompatibilityCheck } from '../utils/communityDashboardHelpers';
 import { getPageSlice } from '../utils/suggestedDashboardHelpers';
@@ -60,6 +61,7 @@ export const SuggestedDashboardsList = ({
   onDismiss,
 }: SuggestedDashboardsListProps) => {
   const styles = useStyles2(getStyles);
+  const { sourceEntryPoint, eventLocation } = useTrackingContext();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
@@ -153,6 +155,8 @@ export const SuggestedDashboardsList = ({
       setIsCommunityLoading(true);
 
       try {
+        let totalFetched = 0;
+
         for (const page of pagesToFetch) {
           const response = await fetchCommunityDashboards({
             orderBy: DEFAULT_SORT_ORDER,
@@ -164,6 +168,8 @@ export const SuggestedDashboardsList = ({
             dataSourceSlugIn: datasourceType,
             filter: debouncedSearchQuery.trim() || undefined,
           });
+
+          totalFetched += response.items.length;
 
           setCommunityCache((prev) => {
             const newItems = [...prev.items];
@@ -185,10 +191,10 @@ export const SuggestedDashboardsList = ({
         if (debouncedSearchQuery.trim()) {
           DashboardLibraryInteractions.searchPerformed({
             datasourceTypes: [datasourceType],
-            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-            eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
-            hasResults: true,
-            resultCount: PAGE_SIZE,
+            sourceEntryPoint,
+            eventLocation,
+            hasResults: totalFetched > 0,
+            resultCount: totalFetched,
           });
         }
       } catch (err) {
@@ -207,6 +213,8 @@ export const SuggestedDashboardsList = ({
     datasourceType,
     isDashboardsLoading,
     communityCache.cachedPages,
+    sourceEntryPoint,
+    eventLocation,
   ]);
 
   // Track analytics on first load
@@ -224,16 +232,16 @@ export const SuggestedDashboardsList = ({
         contentKinds.push(CONTENT_KINDS.COMMUNITY_DASHBOARD);
       }
 
-      SuggestedDashboardInteractions.loaded({
+      DashboardLibraryInteractions.loaded({
         numberOfItems: provisionedDashboards.length + communityDashboards.length,
         contentKinds,
         datasourceTypes: [datasourceType],
-        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-        eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+        sourceEntryPoint,
+        eventLocation,
       });
       hasTrackedLoaded.current = true;
     }
-  }, [isDashboardsLoading, provisionedDashboards, communityDashboards, datasourceType]);
+  }, [isDashboardsLoading, provisionedDashboards, communityDashboards, datasourceType, sourceEntryPoint, eventLocation]);
 
   // Provisioned dashboard click handler
   const onClickProvisionedDashboard = (dashboard: PluginDashboard) => {
@@ -242,8 +250,8 @@ export const SuggestedDashboardsList = ({
       datasourceTypes: [dashboard.pluginId],
       libraryItemId: dashboard.uid,
       libraryItemTitle: dashboard.title,
-      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-      eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+      sourceEntryPoint,
+      eventLocation,
       discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
     });
 
@@ -253,10 +261,10 @@ export const SuggestedDashboardsList = ({
       pluginId: dashboard.pluginId,
       path: dashboard.path,
       suggestedDashboardBanner: 'true',
-      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      sourceEntryPoint,
       libraryItemId: dashboard.uid,
       creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD,
-      eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+      eventLocation,
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
     });
 
@@ -267,25 +275,25 @@ export const SuggestedDashboardsList = ({
   // Community dashboard click handler
   const [{ error: isPreviewDashboardError }, onClickCommunityDashboard] = useAsyncFn(
     async (dashboard: GnetDashboard) => {
-      SuggestedDashboardInteractions.itemClicked({
+      DashboardLibraryInteractions.itemClicked({
         contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes: [datasourceType],
         libraryItemId: String(dashboard.id),
         libraryItemTitle: dashboard.name,
-        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-        eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+        sourceEntryPoint,
+        eventLocation,
         discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
       });
 
       await onUseCommunityDashboard({
         dashboard,
         datasourceUid: datasourceUid || '',
-        datasourceType,
-        eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+        sourceEntryPoint,
+        eventLocation,
         onShowMapping,
       });
     },
-    [datasourceType, datasourceUid, debouncedSearchQuery, onShowMapping]
+    [datasourceType, datasourceUid, debouncedSearchQuery, onShowMapping, sourceEntryPoint, eventLocation]
   );
 
   // Compatibility check handler
@@ -301,7 +309,8 @@ export const SuggestedDashboardsList = ({
       dashboardTitle: dashboard.name,
       datasourceType,
       triggerMethod,
-      eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+      eventLocation,
+      sourceEntryPoint,
     });
 
     try {
@@ -337,7 +346,8 @@ export const SuggestedDashboardsList = ({
         metricsFound,
         metricsTotal,
         triggerMethod,
-        eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+        eventLocation,
+        sourceEntryPoint,
       });
     } catch (err) {
       console.error('Error checking dashboard compatibility:', err);

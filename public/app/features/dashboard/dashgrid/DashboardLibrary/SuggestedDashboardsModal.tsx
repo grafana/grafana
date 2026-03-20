@@ -10,7 +10,7 @@ import { PluginDashboard } from 'app/types/plugins';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
 import { SuggestedDashboardsList } from './SuggestedDashboardsList/SuggestedDashboardsList';
-import { ContentKind, EventLocation } from './constants';
+import { ContentKind } from './constants';
 import { GnetDashboard } from './types';
 import { InputMapping } from './utils/autoMapDatasources';
 
@@ -35,7 +35,6 @@ export interface MappingContext {
   existingMappings: InputMapping[];
   onInterpolateAndNavigate: (mappings: InputMapping[]) => void;
   // Tracking context for analytics
-  eventLocation: EventLocation;
   contentKind: ContentKind;
 }
 
@@ -135,7 +134,6 @@ export const SuggestedDashboardsModal = ({
             }}
             dashboardName={mappingContext.dashboardName}
             libraryItemId={String(mappingContext.dashboardJson.gnetId || '')}
-            eventLocation={mappingContext.eventLocation}
             contentKind={mappingContext.contentKind}
             datasourceTypes={[datasourceInfo.type]}
           />

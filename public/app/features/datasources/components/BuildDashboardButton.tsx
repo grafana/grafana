@@ -48,6 +48,11 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
   return (
     <SuggestedDashboardsLoader
       datasourceUid={dataSource.uid}
+      sourceEntryPoint={
+        context === 'datasource_page'
+          ? SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON
+          : SOURCE_ENTRY_POINTS.DATASOURCE_LIST_BUILD_BUTTON
+      }
       onFetchComplete={(hasDashboards) => {
         if (!hasDashboards) {
           dispatch(notifyApp(createWarningNotification('No dashboards found for this data source')));

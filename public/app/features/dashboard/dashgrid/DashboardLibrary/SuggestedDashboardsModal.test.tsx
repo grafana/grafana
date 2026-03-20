@@ -5,7 +5,7 @@ import { setDataSourceSrv } from '@grafana/runtime';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { SuggestedDashboardsModal } from './SuggestedDashboardsModal';
-import { CONTENT_KINDS, EVENT_LOCATIONS } from './constants';
+import { CONTENT_KINDS } from './constants';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
 
 jest.mock('./SuggestedDashboardsList/SuggestedDashboardsList', () => ({
@@ -69,7 +69,6 @@ describe('SuggestedDashboardsModal', () => {
           constantInputs: [],
           existingMappings: [],
           onInterpolateAndNavigate: jest.fn(),
-          eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
           contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         }}
       />
@@ -122,7 +121,6 @@ describe('SuggestedDashboardsModal', () => {
             constantInputs: [],
             existingMappings: [],
             onInterpolateAndNavigate: jest.fn(),
-            eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
             contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
           }}
         />

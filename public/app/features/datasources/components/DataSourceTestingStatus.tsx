@@ -265,7 +265,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
               {detailsMessage ? <>{String(detailsMessage)}</> : null}
               {severity === 'success' ? (
                 config.featureToggles.suggestedDashboards ? (
-                  <SuggestedDashboardsLoader datasourceUid={dataSource.uid} fetchOnMount>
+                  <SuggestedDashboardsLoader datasourceUid={dataSource.uid} sourceEntryPoint={SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_SUCCESS_BANNER} fetchOnMount>
                     {({ fetchStatus, hasDashboards, openModal }) => {
                       const onSuggestedDashboardsClick = () => {
                         DashboardLibraryInteractions.entryPointClicked({
