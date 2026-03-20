@@ -61,6 +61,7 @@ type SearchServer interface {
 	// Deprecated: clients should use grpc.health.v1.Health with modules.SearchServer service name instead
 	resourcepb.DiagnosticsServer //nolint:staticcheck
 	ResourceServerStopper
+	Init(ctx context.Context) error
 }
 
 type ResourceServerStopper interface {
@@ -299,8 +300,10 @@ type ResourceServerOptions struct {
 	QuotasConfig QuotasConfig
 }
 
-// NewSearchServer creates a standalone search server.
-func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
+// NewUninitializedSearchServer creates a standalone search server without calling Init.
+// The caller must call Init on the returned server before it handles requests.
+// This is useful when initialization must be deferred (e.g., until a ring reaches Running state).
+func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing backend implementation")
 	}
@@ -321,16 +324,27 @@ func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 	}
 	searchServer.backendDiagnostics = opts.Diagnostics
 
-	// Initialize the search server
-	ctx := context.Background()
-	if err := searchServer.Init(ctx); err != nil {
+	return searchServer, nil
+}
+
+// NewSearchServer creates a standalone search server and initializes it immediately.
+func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
+	searchServer, err := NewUninitializedSearchServer(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := searchServer.Init(context.Background()); err != nil {
 		return nil, fmt.Errorf("failed to initialize search server: %w", err)
 	}
 
 	return searchServer, nil
 }
 
-func NewResourceServer(opts ResourceServerOptions) (*server, error) {
+// NewUninitializedResourceServer creates a resource server without calling Init.
+// The caller must call Init on the returned server before it handles requests.
+// This is useful when initialization must be deferred (e.g., until a ring reaches Running state).
+func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
 	}
@@ -412,8 +426,16 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		}
 	}
 
-	err = s.Init(ctx)
+	return s, nil
+}
+
+func NewResourceServer(opts ResourceServerOptions) (*server, error) {
+	s, err := NewUninitializedResourceServer(opts)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := s.Init(s.ctx); err != nil {
 		s.log.Error("resource server init failed", "error", err)
 		return nil, err
 	}

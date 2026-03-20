@@ -69,6 +69,10 @@ type service struct {
 	ringLifecycler   *ring.BasicLifecycler // Ring state for sharding
 	searchStandalone bool
 	authenticator    interceptors.AuthenticatorFunc
+
+	// uninitializedSearchServer holds the server created during module init, whose Init() is
+	// deferred to starting() so the ring is Running when search indexes are built.
+	uninitializedSearchServer resource.SearchServer
 }
 
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
@@ -334,6 +338,14 @@ func (s *service) starting(ctx context.Context) error {
 		s.log.Info("resource server is ACTIVE in the ring")
 	}
 
+	// Initialize the server (builds search indexes) after the ring is Running,
+	// so that OwnsIndex checks work correctly with sharding enabled.
+	if s.uninitializedSearchServer != nil {
+		if err := s.uninitializedSearchServer.Init(ctx); err != nil {
+			return fmt.Errorf("failed to initialize server: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -468,18 +480,20 @@ func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecycl
 
 func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts ServerOptions) error {
 	if s.searchStandalone {
-		server, err := NewSearchServer(opts)
+		server, err := NewUninitializedSearchServer(opts)
 		if err != nil {
 			return err
 		}
 		s.serverStopper = server
+		s.uninitializedSearchServer = server
 		return s.registerSearchServer(provider, server)
 	}
-	server, err := NewResourceServer(opts)
+	server, err := NewUninitializedResourceServer(opts)
 	if err != nil {
 		return err
 	}
 	s.serverStopper = server
+	s.uninitializedSearchServer = server
 	s.registerUnifiedResourceServer(provider, server)
 	return nil
 }
