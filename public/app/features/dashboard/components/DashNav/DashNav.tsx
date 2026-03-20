@@ -158,6 +158,7 @@ export const DashNav = memo<Props>((props) => {
       return [];
     }
 
+    // uid check narrows the type for StarToolbarButton's required `id` prop
     if (canStar && dashboard.uid) {
       buttons.push(
         <StarToolbarButton
