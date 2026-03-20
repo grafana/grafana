@@ -787,19 +787,22 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 			newPath, newPathErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
 			oldPath, oldPathErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
 
+			// A rename may span the repository boundary: one side inside the
+			// configured path and the other outside. Resolve this upfront so
+			// the switch below only deals with the four semantic cases.
+			newInsidePath := newPathErr == nil
+			oldInsidePath := oldPathErr == nil
+
 			// Tree entries (directories) are emitted with trailing slashes so
 			// downstream code can identify them via safepath.IsDir.
 			if f.Type == protocol.ObjectTypeTree {
-				if newPathErr == nil {
+				if newInsidePath {
 					newPath = safepath.EnsureTrailingSlash(newPath)
 				}
-				if oldPathErr == nil {
+				if oldInsidePath {
 					oldPath = safepath.EnsureTrailingSlash(oldPath)
 				}
 			}
-
-			newInsidePath := newPathErr == nil
-			oldInsidePath := oldPathErr == nil
 
 			switch {
 			case newInsidePath && oldInsidePath:
