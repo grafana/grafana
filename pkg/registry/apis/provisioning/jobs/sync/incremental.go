@@ -150,26 +150,13 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
 
-		// Directory entries (trailing-slash paths from cross-boundary renames)
-		// are handled separately: created dirs go through EnsureFolderPathExist,
-		// deleted dirs are no-ops (file-level deletes handle cleanup).
-		// They must not consume resource quota.
+		// Directory entries (trailing-slash paths) appear from cross-boundary
+		// renames. The individual file-level changes within the directory are
+		// emitted separately and already handle folder creation (via
+		// EnsureFolderPathExist inside WriteResourceFromFile) and deletion
+		// (via affectedFolders / orphan cleanup). Skip them here to avoid
+		// routing directory paths to file-processing logic.
 		if safepath.IsDir(change.Path) {
-			switch change.Action {
-			case repository.FileActionCreated, repository.FileActionUpdated:
-				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.ensure_folder_path_exist")
-				folderID, err := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path)
-				if err != nil {
-					folderSpan.RecordError(err)
-					resultBuilder.WithError(fmt.Errorf("ensuring folder %s: %w", change.Path, err))
-				}
-				resultBuilder.WithName(folderID)
-				folderSpan.End()
-			case repository.FileActionDeleted:
-				// Individual file-level deletes within this directory are emitted
-				// as separate changes, so they will populate affectedFolders and
-				// trigger orphan cleanup.
-			}
 			progress.Record(ctx, resultBuilder.Build())
 			continue
 		}
