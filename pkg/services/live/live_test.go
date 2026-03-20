@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/live/features"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -346,7 +347,8 @@ func setupLiveService(cfg *setting.Cfg, t *testing.T) (*GrafanaLive, error) {
 		&usagestats.UsageStatsMock{T: t},
 		featuremgmt.WithFeatures(),
 		&dashboards.FakeDashboardService{},
-		nil)
+		nil,
+		features.ProvideNoopCollabService())
 }
 
 type dummyTransport struct {
