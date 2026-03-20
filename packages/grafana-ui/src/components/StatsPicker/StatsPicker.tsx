@@ -8,18 +8,32 @@ import { MultiCombobox, MultiComboboxProps } from '../Combobox/MultiCombobox';
 import { ComboboxOption } from '../Combobox/types';
 import { selectableValueToComboboxOption } from '../Combobox/utils';
 
+import { pickComboboxLayout } from './pickComboboxLayout';
+
+/** Props managed by StatsPicker — forwarded combobox props must not replace these. */
+type ComboboxManagedProps = 'value' | 'options' | 'onChange' | 'isClearable' | 'width' | 'minWidth' | 'maxWidth';
+
+/** Forwarded props (managed keys + layout are applied after the spread). */
+type MultiSpread = Omit<MultiComboboxProps<string>, ComboboxManagedProps>;
+type SingleSpread = Omit<ComboboxProps<string>, ComboboxManagedProps>;
+
 interface BaseProps {
-  onChange: (stats: string[]) => void;
   stats: string[];
+  onChange: (stats: string[]) => void;
   defaultStat?: string;
-  /** @deprecated use id instead */
+  /** @deprecated use `id` instead */
   inputId?: string;
+  id?: string;
+  width?: number | 'auto';
+  minWidth?: number;
+  maxWidth?: number;
   filterOptions?: (ext: FieldReducerInfo) => boolean;
 }
-type ComboboxManagedProps = 'value' | 'options' | 'onChange' | 'isClearable';
-type MultiProps = Omit<MultiComboboxProps<string>, ComboboxManagedProps> & { allowMultiple: true };
-type SingleProps = Omit<ComboboxProps<string>, ComboboxManagedProps> & { allowMultiple?: false };
-type StatsPickerProps = BaseProps & (MultiProps | SingleProps);
+
+type MultiProps = MultiSpread & { allowMultiple: true };
+type SingleProps = SingleSpread & { allowMultiple?: false };
+
+export type StatsPickerProps = BaseProps & (MultiProps | SingleProps);
 
 export const StatsPicker = memo<StatsPickerProps>(
   ({
@@ -29,12 +43,15 @@ export const StatsPicker = memo<StatsPickerProps>(
     allowMultiple = false,
     defaultStat,
     width,
+    minWidth,
+    maxWidth,
     inputId,
     id: idProp,
     filterOptions,
     ...rest
   }) => {
     const id = idProp ?? inputId;
+    const layout = pickComboboxLayout(width, minWidth, maxWidth);
 
     useEffect(() => {
       const current = fieldReducers.list(stats);
@@ -60,29 +77,52 @@ export const StatsPicker = memo<StatsPickerProps>(
     const select = fieldReducers.selectOptions(stats, filterOptions);
     const options = select.options.map((v) => selectableValueToComboboxOption(v)).filter((v) => !!v);
     const value = select.current.map((v) => selectableValueToComboboxOption(v)).filter((v) => !!v);
-    return allowMultiple ? (
-      <MultiCombobox<string>
-        id={id}
-        value={value}
-        isClearable={!defaultStat}
-        width={width}
-        options={options}
-        placeholder={placeholder}
-        onChange={(items) => onChange(items.map((v) => v.value))}
-        {...rest}
-      />
-    ) : (
-      <Combobox<string>
-        id={id}
-        value={value[0]}
-        isClearable={!defaultStat}
-        width={width}
-        options={options}
-        placeholder={placeholder}
-        onChange={(item: ComboboxOption<string> | null) => onChange(item && item.value ? [item.value] : [])}
-        {...rest}
-      />
-    );
+
+    if (allowMultiple) {
+      const multiOnlyRest: MultiSpread = rest;
+      const multiProps = {
+        ...multiOnlyRest,
+        id,
+        ...layout,
+        value,
+        isClearable: !defaultStat,
+        options,
+        placeholder,
+        onChange: (items: Array<ComboboxOption<string>>) => onChange(items.map((v) => v.value)),
+      } satisfies MultiComboboxProps<string>;
+
+      return <MultiCombobox {...multiProps} />;
+    }
+
+    const singleSpread: SingleSpread = rest;
+
+    if (defaultStat) {
+      const notClearableProps = {
+        ...singleSpread,
+        id,
+        ...layout,
+        value: value[0],
+        options,
+        placeholder,
+        isClearable: false as const,
+        onChange: (item: ComboboxOption<string>) => onChange(item.value ? [item.value] : []),
+      } satisfies ComboboxProps<string>;
+
+      return <Combobox {...notClearableProps} />;
+    }
+
+    const clearableProps = {
+      ...singleSpread,
+      id,
+      ...layout,
+      value: value[0],
+      options,
+      placeholder,
+      isClearable: true as const,
+      onChange: (item: ComboboxOption<string> | null) => onChange(item && item.value ? [item.value] : []),
+    } satisfies ComboboxProps<string>;
+
+    return <Combobox {...clearableProps} />;
   }
 );
 
