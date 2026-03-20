@@ -2736,6 +2736,13 @@ var (
 			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
+		}, {
+			Name:         "yAxisTickControl",
+			Description:  "Enables fine-grained Y-axis tick options beyond the auto-ticks",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
 		},
 	}
 )

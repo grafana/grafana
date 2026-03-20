@@ -261,7 +261,7 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
 }
 
 // Auxiliar components to build the texts and descriptions in the NotificationsStep
-function NeedHelpInfoForNotificationPolicy() {
+export function NeedHelpInfoForNotificationPolicy() {
   return (
     <NeedHelpInfo
       contentText={

@@ -193,6 +193,22 @@ export const trackNewGrafanaAlertRuleFormError = () => {
   reportInteraction('grafana_alerting_grafana_rule_creation_new_error');
 };
 
+export const trackCreateRuleFromPanelDrawerOpened = () => {
+  reportInteraction('grafana_alerting_create_rule_from_panel_drawer_opened');
+};
+
+export const trackCreateRuleFromPanelDrawerRuleCreated = () => {
+  reportInteraction('grafana_alerting_create_rule_from_panel_drawer_rule_created');
+};
+
+export const trackCreateRuleFromPanelDrawerContinueInAlertingClicked = () => {
+  reportInteraction('grafana_alerting_create_rule_from_panel_drawer_continue_in_alerting_clicked');
+};
+
+export const trackCreateRuleFromPanelDrawerClosedWithoutSaving = () => {
+  reportInteraction('grafana_alerting_create_rule_from_panel_drawer_closed_without_saving');
+};
+
 export const trackInsightsFeedback = async (props: { useful: boolean; panel: string }) => {
   const defaults = {
     grafana_version: config.buildInfo.version,

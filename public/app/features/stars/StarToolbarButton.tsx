@@ -67,6 +67,7 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
       disabled={isLoading}
       tooltip={tooltipAndLabel.tooltip}
       aria-label={tooltipAndLabel.label}
+      aria-pressed={isStarred}
       icon={icon}
       data-testid={selectors.components.NavToolbar.markAsFavorite}
       onClick={handleStarToggle}
