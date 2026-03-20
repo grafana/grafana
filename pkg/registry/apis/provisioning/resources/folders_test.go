@@ -815,7 +815,10 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
-				return managedFolder(name, "Same Title", config.Name), nil
+				obj := managedFolder(name, "Same Title", config.Name)
+				annots := obj.Object["metadata"].(map[string]interface{})["annotations"].(map[string]interface{})
+				annots["grafana.app/sourcePath"] = "my-folder"
+				return obj, nil
 			},
 		}
 
@@ -1154,7 +1157,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 		require.Equal(t, "Same Title", title)
 	})
 
-	t.Run("preserves existing source path when updating checksum", func(t *testing.T) {
+	t.Run("updates source path along with checksum when folder moved", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
@@ -1183,9 +1186,8 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, updatedObj)
 
-		// Verify existing sourcePath is preserved, not overwritten with folder.Path
 		sourcePath, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/sourcePath")
-		require.Equal(t, "original/path", sourcePath, "existing sourcePath should be preserved")
+		require.Equal(t, "my-folder", sourcePath, "sourcePath should be updated to the new folder path")
 
 		checksum, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/sourceChecksum")
 		require.Equal(t, "new-hash", checksum)
@@ -1263,12 +1265,15 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 		}
 	}
 
-	managedFolderWithParent := func(name, title, managerIdentity, parent string) *unstructured.Unstructured {
+	managedFolderWithParent := func(name, title, managerIdentity, parent, sourcePath string) *unstructured.Unstructured {
 		annotations := map[string]interface{}{
 			"grafana.app/managerId": managerIdentity,
 		}
 		if parent != "" {
 			annotations["grafana.app/folder"] = parent
+		}
+		if sourcePath != "" {
+			annotations["grafana.app/sourcePath"] = sourcePath
 		}
 		return &unstructured.Unstructured{
 			Object: map[string]interface{}{
@@ -1296,7 +1301,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 		var updatedObj *unstructured.Unstructured
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
-				return managedFolderWithParent(name, "Same Title", config.Name, "old-parent-uid"), nil
+				return managedFolderWithParent(name, "Same Title", config.Name, "old-parent-uid", "my-folder"), nil
 			},
 			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 				updatedObj = obj
@@ -1329,7 +1334,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
-				return managedFolderWithParent(name, "Same Title", config.Name, "same-parent"), nil
+				return managedFolderWithParent(name, "Same Title", config.Name, "same-parent", "my-folder"), nil
 			},
 		}
 
@@ -1355,7 +1360,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 		var updatedObj *unstructured.Unstructured
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
-				return managedFolderWithParent(name, "Same Title", config.Name, "some-parent"), nil
+				return managedFolderWithParent(name, "Same Title", config.Name, "some-parent", "my-folder"), nil
 			},
 			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 				updatedObj = obj
@@ -1389,7 +1394,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
 				// Existing folder also has no parent (root)
-				return managedFolderWithParent(name, "Same Title", config.Name, ""), nil
+				return managedFolderWithParent(name, "Same Title", config.Name, "", "my-folder"), nil
 			},
 		}
 
