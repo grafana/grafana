@@ -258,3 +258,44 @@ func TestRelativeTo(t *testing.T) {
 		})
 	}
 }
+
+func TestNormalizeDirPath(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		want     string
+	}{
+		{
+			name: "empty path",
+			path: "",
+			want: "/",
+		},
+		{
+			name: "directory path with trailing slash",
+			path: "folder/",
+			want: "folder/",
+		},
+		{
+			name: "directory path without trailing slash",
+			path: "folder",
+			want: "folder/",
+		},
+		{
+			name: "nested directory path with trailing slash",
+			path: "folder/subfolder/",
+			want: "folder/subfolder/",
+		},
+		{
+			name: "nested directory path without trailing slash",
+			path: "folder/subfolder",
+			want: "folder/subfolder/",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NormalizeDirPath(tt.path)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}

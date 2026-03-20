@@ -63,3 +63,13 @@ func RelativeTo(filePath, dir string) (string, error) {
 
 	return relativePath, nil
 }
+
+// NormalizeDirPath returns the normalized path of the given directory path,
+// by adding a trailing slash if it's missing.
+func NormalizeDirPath(p string) string {
+	if IsDir(p) && strings.HasSuffix(p, "/") {
+		return p
+	}
+
+	return p + "/"
+}
