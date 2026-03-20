@@ -72,33 +72,29 @@ describe('ElasticsearchVariableUtils', () => {
       expect(result.query).toBe('');
     });
 
-    it('should convert legacy {"find":"terms"} query to a terms bucket aggregation', () => {
+    it('should convert legacy {"find":"terms"} query to raw DSL', () => {
       const result = migrateVariableQuery('{"find":"terms","field":"Platform.keyword"}');
 
-      expect(result).toEqual({
-        refId,
-        query: '',
-        metrics: [{ type: 'count', id: '1' }],
-        bucketAggs: [
-          {
-            type: 'terms',
-            id: '2',
-            field: 'Platform.keyword',
-            settings: { size: '500', order: 'asc', orderBy: '_term', min_doc_count: '1' },
-          },
-        ],
-      });
+      expect(result.queryType).toBe('dsl');
+      expect(result.editorType).toBe('code');
+      const dsl = JSON.parse(result.query!);
+      expect(dsl.aggs['1'].terms.field).toBe('Platform.keyword');
+      expect(dsl.aggs['1'].terms.size).toBe(500);
+      expect(dsl.aggs['1'].terms.order).toEqual({ _key: 'asc' });
+      expect(dsl.query).toBeUndefined();
     });
 
-    it('should preserve query filter from legacy {"find":"terms"} query', () => {
-      const result = migrateVariableQuery('{"find":"terms","field":"env","query":"region:eu-*","size":100,"order":"desc"}');
+    it('should preserve query filter from legacy {"find":"terms"} query in DSL', () => {
+      const result = migrateVariableQuery(
+        '{"find":"terms","field":"env","query":"region:eu-*","size":100,"order":"desc"}'
+      );
 
-      expect(result.query).toBe('region:eu-*');
-      expect(result.bucketAggs?.[0]).toMatchObject({
-        type: 'terms',
-        field: 'env',
-        settings: expect.objectContaining({ size: '100', order: 'desc' }),
-      });
+      expect(result.queryType).toBe('dsl');
+      const dsl = JSON.parse(result.query!);
+      expect(dsl.aggs['1'].terms.field).toBe('env');
+      expect(dsl.aggs['1'].terms.size).toBe(100);
+      expect(dsl.aggs['1'].terms.order).toEqual({ _key: 'desc' });
+      expect(dsl.query.bool.filter[0].query_string.query).toBe('region:eu-*');
     });
 
     it('should fall through to raw_document for unrecognised JSON', () => {

@@ -41,26 +41,31 @@ export const migrateVariableQuery = (rawQuery: string | ElasticsearchDataQuery):
 
   // Legacy Grafana-syntax query: {"find":"terms","field":"..."} or {"find":"fields",...}
   // Before ElasticsearchVariableSupport existed, these were handled by metricFindQuery().
-  // Convert them to the equivalent structured query so the new editor handles them correctly.
+  // Convert to raw DSL to avoid introducing a spurious count metric and to stay one-to-one
+  // with the original getTermsQuery() output.
   const legacy = parseLegacyFindQuery(rawQuery);
   if (legacy?.find === 'terms' && legacy.field) {
-    return {
-      refId,
-      query: legacy.query ?? '',
-      metrics: [{ type: 'count', id: '1' }],
-      bucketAggs: [
-        {
-          type: 'terms',
-          id: '2',
-          field: legacy.field,
-          settings: {
-            size: String(legacy.size ?? 500),
-            order: legacy.order ?? 'asc',
-            orderBy: legacy.orderBy ?? '_term',
-            min_doc_count: '1',
+    const orderByKey = legacy.orderBy === 'doc_count' ? '_count' : '_key';
+    const dslBody: Record<string, unknown> = {
+      size: 0,
+      aggs: {
+        '1': {
+          terms: {
+            field: legacy.field,
+            size: legacy.size ?? 500,
+            order: { [orderByKey]: legacy.order ?? 'asc' },
           },
         },
-      ],
+      },
+    };
+    if (legacy.query) {
+      dslBody.query = { bool: { filter: [{ query_string: { analyze_wildcard: true, query: legacy.query } }] } };
+    }
+    return {
+      refId,
+      queryType: 'dsl',
+      editorType: 'code',
+      query: JSON.stringify(dslBody),
     };
   }
 

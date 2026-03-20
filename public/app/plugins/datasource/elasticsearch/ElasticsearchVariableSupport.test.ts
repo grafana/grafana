@@ -150,12 +150,10 @@ describe('ElasticsearchVariableSupport', () => {
     });
 
     it('should route {"find":"fields"} query through metricFindQuery', (done) => {
-      mockDatasource.metricFindQuery = jest
-        .fn()
-        .mockResolvedValue([
-          { text: 'hostname', value: 'hostname' },
-          { text: 'status', value: 'status' },
-        ]);
+      mockDatasource.metricFindQuery = jest.fn().mockResolvedValue([
+        { text: 'hostname', value: 'hostname' },
+        { text: 'status', value: 'status' },
+      ]);
 
       const request: DataQueryRequest<ElasticsearchDataQuery> = {
         targets: ['{"find":"fields","type":"keyword"}' as unknown as ElasticsearchDataQuery],
@@ -172,10 +170,9 @@ describe('ElasticsearchVariableSupport', () => {
       variableSupport.query(request).subscribe({
         next: (response) => {
           expect(mockDatasource.query).not.toHaveBeenCalled();
-          expect(mockDatasource.metricFindQuery).toHaveBeenCalledWith(
-            '{"find":"fields","type":"keyword"}',
-            { range: request.range }
-          );
+          expect(mockDatasource.metricFindQuery).toHaveBeenCalledWith('{"find":"fields","type":"keyword"}', {
+            range: request.range,
+          });
           expect(response.data[0].fields[0].name).toBe('text');
           expect(response.data[0].fields[0].values).toEqual(['hostname', 'status']);
           done();
