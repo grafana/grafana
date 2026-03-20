@@ -3,8 +3,12 @@ package legacy
 import (
 	"context"
 	"embed"
+	"errors"
 	"fmt"
 	"text/template"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -51,6 +55,21 @@ func NewLegacySQLStores(sql legacysql.LegacyDatabaseProvider) LegacyIdentityStor
 
 type legacySQLStore struct {
 	sql legacysql.LegacyDatabaseProvider
+}
+
+// getDB wraps s.sql(ctx) and converts ErrStackNotFound to a K8s NotFound error.
+func (s *legacySQLStore) getDB(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+	db, err := s.sql(ctx)
+	if err != nil {
+		if errors.Is(err, legacysql.ErrStackNotFound) {
+			return nil, apierrors.NewNotFound(
+				schema.GroupResource{Group: "iam.grafana.app"},
+				"namespace",
+			)
+		}
+		return nil, err
+	}
+	return db, nil
 }
 
 // Templates setup.

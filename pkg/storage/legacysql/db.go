@@ -2,12 +2,16 @@ package legacysql
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+// ErrStackNotFound indicates the stack/namespace does not exist (deleted/archived).
+var ErrStackNotFound = errors.New("stack not found")
 
 // The database may depend on the request context
 type LegacyDatabaseProvider func(ctx context.Context) (*LegacyDatabaseHelper, error)

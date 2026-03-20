@@ -10,6 +10,7 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
@@ -93,6 +94,10 @@ func (s *ResourcePermSqlBackend) ListIterator(ctx context.Context, req *resource
 	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
 		logger := s.logger.FromContext(ctx)
+		if errors.Is(err, legacysql.ErrStackNotFound) {
+			logger.Warn("Stack not found for namespace", "error", err)
+			return 0, apierrors.NewNotFound(schema.GroupResource{Group: v0alpha1.GROUP, Resource: v0alpha1.ResourcePermissionInfo.GroupResource().Resource}, opts.Key.Namespace)
+		}
 		logger.Error("Failed to get database helper", "error", err)
 		return 0, apierrors.NewInternalError(errDatabaseHelper)
 	}
@@ -142,8 +147,12 @@ func (s *ResourcePermSqlBackend) ReadResource(ctx context.Context, req *resource
 	ctx = request.WithNamespace(ctx, ns.Value)
 	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
-		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
+		if errors.Is(err, legacysql.ErrStackNotFound) {
+			logger.Warn("Stack not found for namespace", "error", err)
+			rsp.Error = resource.AsErrorResult(apierrors.NewNotFound(schema.GroupResource{Group: v0alpha1.GROUP, Resource: v0alpha1.ResourcePermissionInfo.GroupResource().Resource}, req.Key.Namespace))
+			return rsp
+		}
 		logger.Error("Failed to get database helper", "error", err)
 		return rsp
 	}
@@ -218,8 +227,11 @@ func (s *ResourcePermSqlBackend) WriteEvent(ctx context.Context, event resource.
 	ctx = request.WithNamespace(ctx, ns.Value)
 	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
-		// Hide the error from the user, but log it
 		logger := s.logger.FromContext(ctx)
+		if errors.Is(err, legacysql.ErrStackNotFound) {
+			logger.Warn("Stack not found for namespace", "error", err)
+			return 0, apierrors.NewNotFound(schema.GroupResource{Group: v0alpha1.GROUP, Resource: v0alpha1.ResourcePermissionInfo.GroupResource().Resource}, event.Key.Namespace)
+		}
 		logger.Error("Failed to get database helper", "error", err)
 		return 0, errDatabaseHelper
 	}
