@@ -255,10 +255,13 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		})
 	}
 
-	// Exclude k6 folder from search results at the query level (not post-filter)
-	// to avoid returning fewer results than the LIMIT, which breaks pagination.
-	// NOTE: The legacy search backend does not support NotIn on this field, but
-	// legacy search is being removed.
+	// Exclude k6 folder from search results at the query level to avoid returning
+	// fewer results than the LIMIT, which breaks pagination. The unified/bleve
+	// search backend handles NotIn correctly. The legacy search backend ignores
+	// NotIn (it is not supported), so we also keep a post-filter as a fallback
+	// for legacy mode. The post-filter alone would break pagination (returning
+	// 49 instead of 50 results), but this is acceptable as a temporary state
+	// until legacy search is fully removed.
 	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
 	if !allowK6Folder {
 		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
@@ -281,6 +284,11 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 
 	hits := make([]*folder.FolderReference, 0, len(res.Hits))
 	for _, item := range res.Hits {
+		// Post-filter k6 folder as a fallback for the legacy search backend,
+		// which ignores the NotIn filter above.
+		if item.Name == accesscontrol.K6FolderUID && !allowK6Folder {
+			continue
+		}
 		f := &folder.FolderReference{
 			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 			UID:       item.Name,
