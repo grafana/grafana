@@ -262,7 +262,13 @@ func (s *k8sRESTAdapter) New() runtime.Object {
 	return annotationV0.AnnotationKind().ZeroValue()
 }
 
-func (s *k8sRESTAdapter) Destroy() {}
+func (s *k8sRESTAdapter) Destroy() {
+	// Call Close() on the PostgreSQL store to cleanup connection pool and background goroutines
+	// TODO: add Close() to the Store interface so we can do proper cleanup for other store types
+	if pg, ok := s.store.(*PostgreSQLStore); ok {
+		pg.Close()
+	}
+}
 
 func (s *k8sRESTAdapter) NamespaceScoped() bool {
 	return true // namespace == org
