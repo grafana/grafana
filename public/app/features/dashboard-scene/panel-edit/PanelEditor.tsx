@@ -42,6 +42,8 @@ import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { PanelEditorRendererNext } from './PanelEditNext/PanelEditorRendererNext';
+import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
+import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/localStorageWithTTL';
 import { trackEditorVersionToggle } from './PanelEditNext/tracking';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
@@ -405,6 +407,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     trackEditorVersionToggle(newUseQueryExperienceNext ? 'upgrade' : 'downgrade');
     const dataPane = PanelDataPane.createFor(this.getPanel(), newUseQueryExperienceNext);
 
+    setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, newUseQueryExperienceNext);
+
     this.setState({
       useQueryExperienceNext: newUseQueryExperienceNext,
       dataPane,
@@ -416,8 +420,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 }
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
+  const isQueryEditorNextEnabled = getFeatureFlagClient().getBooleanValue('queryEditorNext', false);
+  const storedPreference = isQueryEditorNextEnabled
+    ? getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY)
+    : null;
+  const useQueryExperienceNext = storedPreference ?? isQueryEditorNextEnabled;
+
   return new PanelEditor({
-    useQueryExperienceNext: getFeatureFlagClient().getBooleanValue('queryEditorNext', false),
+    useQueryExperienceNext,
     isInitializing: true,
     panelRef: panel.getRef(),
     isNewPanel,

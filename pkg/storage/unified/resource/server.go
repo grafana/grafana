@@ -1791,8 +1791,11 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	})
 
 	// Allow cluster-scoped resources to be enqueued with an empty tenantID.
+	// This is only used as a QOS queue key, not as a storage namespace.
 	if tenantID == "" {
-		tenantID = clusterScopeNamespace
+		// "cs" = cluster scoped. 2 characters on purpose as the min size of namespace is 3 characters, guaranteed not
+		// to clash
+		tenantID = "cs"
 	}
 
 	for {

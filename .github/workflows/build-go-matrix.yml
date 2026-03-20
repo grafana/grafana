@@ -153,6 +153,8 @@ jobs:
     if: always()
     name: All steps completed
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
         with:
