@@ -2,7 +2,6 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 // this test requires a larger viewport so all gauge panels load properly
 test.use({
-  featureToggles: { newGauge: true },
   viewport: { width: 1280, height: 3000 },
 });
 
