@@ -44,7 +44,21 @@ func New(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, 
 
 	// SigV4 signing should be performed after all headers are added
 	if cfg.SigV4AuthEnabled {
-		middlewares = append(middlewares, awsauth.NewSigV4Middleware())
+		awsCfg := backend.NewGrafanaCfg(map[string]string{
+			awsds.AllowedAuthProvidersEnvVarKeyName:  strings.Join(cfg.AWSAllowedAuthProviders, ","),
+			awsds.AssumeRoleEnabledEnvVarKeyName:     strconv.FormatBool(cfg.AWSAssumeRoleEnabled),
+			awsds.GrafanaAssumeRoleExternalIdKeyName: cfg.AWSExternalId,
+			awsds.ListMetricsPageLimitKeyName:        strconv.Itoa(cfg.AWSListMetricsPageLimit),
+			awsds.SessionDurationEnvVarKeyName:       cfg.AWSSessionDuration,
+			proxy.PluginSecureSocksProxyEnabled:      strconv.FormatBool(cfg.SecureSocksDSProxy.Enabled),
+		})
+		middlewares = append(middlewares, sdkhttpclient.NamedMiddlewareFunc("sigv4-aws-config", func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
+			sigv4 := awsauth.NewSigV4Middleware().CreateMiddleware(opts, next)
+			return sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+				ctx := backend.WithGrafanaConfig(req.Context(), awsCfg)
+				return sigv4.RoundTrip(req.WithContext(ctx))
+			})
+		}))
 	}
 
 	setDefaultTimeoutOptions(cfg)
