@@ -36,20 +36,6 @@ jest.mock('../hooks/useExplorePageTitle', () => ({
   useExplorePageTitle: jest.fn(),
 }));
 
-beforeAll(() => {
-  // Required for @tanstack/react-virtual in DataSourcePicker to calculate visible items in JSDOM
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: jest.fn(() => ({
-      width: 400,
-      height: 400,
-      top: 0,
-      left: 0,
-      bottom: 400,
-      right: 400,
-    })),
-  });
-});
-
 describe('Explore: handle datasource states', () => {
   afterEach(() => {
     tearDown();

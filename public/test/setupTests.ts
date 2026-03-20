@@ -59,6 +59,22 @@ jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
 // so we increase the default timeout to 2secs to avoid flakiness
 configure({ asyncUtilTimeout: 2000 });
 
+// Required for @tanstack/react-virtual to calculate visible items in JSDOM.
+// Without this, virtualizers cannot measure container dimensions and render nothing.
+Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+  value: () => ({
+    width: 400,
+    height: 400,
+    top: 0,
+    left: 0,
+    bottom: 400,
+    right: 400,
+    x: 0,
+    y: 0,
+    toJSON: () => {},
+  }),
+});
+
 // Mock Performance API methods not implemented in jsdom
 if (window.performance) {
   // Type-safe spies with proper return type definitions

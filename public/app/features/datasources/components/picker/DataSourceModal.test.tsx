@@ -44,20 +44,6 @@ const mockDSBuiltIn = createDS('mock.datasource.builtin', 3, true);
 
 const mockDSList = [mockDS1, mockDS2, mockDSBuiltIn];
 
-beforeAll(() => {
-  // Required for @tanstack/react-virtual to calculate visible items in JSDOM
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: jest.fn(() => ({
-      width: 400,
-      height: 400,
-      top: 0,
-      left: 0,
-      bottom: 400,
-      right: 400,
-    })),
-  });
-});
-
 const setup = (partialProps: Partial<DataSourceModalProps> = {}) => {
   window.HTMLElement.prototype.scrollIntoView = function () {};
 
