@@ -26,7 +26,7 @@ The Grafana SAML UI provides the following advantages over configuring SAML in t
 
 - It's accessible by Grafana Cloud users.
 - Access to the SAML UI only requires access to authentication settings, so users with limited access to the Grafana configuration can use it.
-- The SAML UI carries out input validation and gives feedback on wether the configuration works, making SAML set-up easier.
+- The SAML UI carries out input validation and gives feedback on whether the configuration works, making SAML setup easier.
 - It doesn't require Grafana to be restarted after a configuration update.
 
 To configure SAML authentication from the UI, sign in to Grafana and navigate to **Administration > Authentication > Configure SAML** and follow this document.
@@ -43,8 +43,8 @@ To follow this guide, you need:
 
 Complete the **General settings** fields:
 
-- **Allow signup:** If enabled, you can create new users through the SAML login. If disabled, then only existing Grafana users can log in with SAML.     
-- **Auto login:** If enabled, Grafana will attempt to automatically log in with SAML skipping the login screen. 
+- **Allow signup:** If enabled, you can create users through SAML login. If it's disabled, only existing Grafana users can log in with SAML.     
+- **Auto login:** If enabled, Grafana automatically logs in with SAML, skipping the login screen. 
 - **Single logout:** The SAML single logout feature enables users to log out from all applications associated with the current IdP session established using SAML SSO. For more information, refer to [SAML single logout documentation](../configure-saml-single-logout).
 - **Identity provider initiated login:** Enables users to log in to Grafana directly from the SAML IdP. For more information, refer to [IdP initiated login documentation](../#idp-initiated-single-sign-on-sso).         
 
@@ -52,13 +52,13 @@ Complete the **General settings** fields:
 
 Toggle **Sign requests** to specify whether you want the outgoing requests to be signed. If you select to sign them: 
 
-- Provide a certificate and a private key that will be used by the service provider (Grafana) and the SAML IdP.
+- Provide a certificate and a private key that'll be used by the service provider (Grafana) and the SAML IdP.
 
    Use the [PKCS #8](https://en.wikipedia.org/wiki/PKCS_8) format to issue the private key.
 
    For more information, refer to an [example on how to generate SAML credentials](../configure-saml-signing-encryption/#example-of-private-key-generation-for-saml-authentication).
 
-   Alternatively, you can generate a new private key and certificate pair directly from the UI. Click on the `Generate key and certificate` button to open a form where you enter some information you want to be embedded into the new certificate.
+   Alternatively, you can generate a new private key and certificate pair directly from the UI. Click the `Generate key and certificate` button to open a form where you provide information to embed in the new certificate.
 
 - Choose which signature algorithm to use. The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests to avoid [man-in-the-middle attacks](https://en.wikipedia.org/wiki/Man-in-the-middle_attack).
 
@@ -70,13 +70,13 @@ You can skip this screen.
 
 Configure IdP using Grafana metadata:
 
-- Copy the **Metadata URL** and provide it to your SAML IdP to establish a connection between Grafana and the IdP. The metadata URL contains all the necessary information for the IdP to establish a connection with Grafana.
+- Copy the **Metadata URL** and provide it to your SAML IdP to establish a connection between Grafana and the IdP. The metadata URL contains the necessary information for the IdP to establish a connection with Grafana.
 - Copy the **Assertion Consumer Service URL** and provide it to your SAML IdP. The Assertion Consumer Service URL is the endpoint where the IdP sends the SAML assertion after the user has been authenticated.
 - If you want to use the **Single Logout** feature, copy the **Single Logout Service URL** and provide it to your SAML IdP.
 
 Finish configuring Grafana using IdP data:
 
-- The metadata contains all the necessary information for Grafana to establish a connection with the IdP.
+- The metadata contains the necessary information for Grafana to establish a connection with the IdP.
 - This can be provided as Base64-encoded value, a path to a file, or as a URL.
 
 ## User Mapping 
@@ -93,7 +93,7 @@ If you want to automatically assign users' roles based on their SAML roles, comp
 
 First, you need to configure the **Role attribute** field to specify which SAML attribute should be used to retrieve SAML role information. Then enter the SAML roles that you want to map to Grafana roles in **Role mapping** section. If you want to map multiple SAML roles to a Grafana role, separate them by a comma and a space. For example, `Editor: editor, developer`.
 
-Role mapping will automatically update user's [basic role](../../../../../administration/roles-and-permissions/access-control/#basic-roles) based on their SAML roles every time the user logs in to Grafana. Learn more about [SAML role synchronization](../configure-saml-team-role-mapping/#configure-role-sync).
+Role mapping automatically updates user's [basic role](../../../../../administration/roles-and-permissions/access-control/#basic-roles) based on their SAML roles every time the user logs in to Grafana. Learn more about [SAML role synchronization](../configure-saml-team-role-mapping/#configure-role-sync).
 
 ### Mapping with Entra ID
 
@@ -131,7 +131,7 @@ First, you need to configure the **Org attribute** field to specify which SAML a
 Now fill in the **Org mapping** field with mappings from SAML organization to Grafana organization. For example, `Org mapping: Engineering:2, Sales:2` will map users who belong to `Engineering` or `Sales` organizations in SAML to Grafana organization with ID 2.
 If you want users to have different roles in different organizations, you can additionally specify a role. For example, `Org mapping: Engineering:2:Editor` will map users who belong to `Engineering` organizations in SAML to Grafana organization with ID 2 and assign them Editor role.
 
-Organization mapping will automatically update user's organization memberships (and roles, if they have been configured) based on their SAML organization every time the user logs in to Grafana. Learn more about [SAML organization mapping](../configure-saml-org-mapping/).
+Organization mapping automatically updates user's organization memberships (and roles, if they've been configured) based on their SAML organization every time the user logs in to Grafana. Learn more about [SAML organization mapping](../configure-saml-org-mapping/).
 
 If you want to limit the access to Grafana based on user's SAML organization membership, fill in the **Allowed organizations** field.
 
