@@ -5,20 +5,39 @@ function makeFetchError(status: number, data?: Record<string, unknown>) {
 }
 
 describe('getProvisionedRequestError', () => {
-  describe('404 fetch errors', () => {
-    it('returns dashboard branch-not-found message', () => {
-      const result = getProvisionedRequestError(makeFetchError(404), 'dashboard', 'fallback');
+  describe('404 - file not found', () => {
+    it('returns dashboard file-not-found message', () => {
+      const result = getProvisionedRequestError(
+        makeFetchError(404, { message: 'file not found' }),
+        'dashboard',
+        'fallback'
+      );
       expect(result).toBe('You have selected a branch that does not contain this dashboard. Select another branch.');
     });
 
-    it('returns folder branch-not-found message', () => {
-      const result = getProvisionedRequestError(makeFetchError(404), 'folder', 'fallback');
+    it('returns folder file-not-found message', () => {
+      const result = getProvisionedRequestError(
+        makeFetchError(404, { message: 'file not found' }),
+        'folder',
+        'fallback'
+      );
       expect(result).toBe('You have selected a branch that does not contain this folder. Select another branch.');
     });
+  });
 
-    it('ignores the data.message field on a 404', () => {
-      const result = getProvisionedRequestError(makeFetchError(404, { message: 'Not Found' }), 'dashboard', 'fallback');
-      expect(result).toContain('does not contain this dashboard');
+  describe('404 - unknown message', () => {
+    it('extracts data.message for unrecognized 404', () => {
+      const result = getProvisionedRequestError(
+        makeFetchError(404, { message: 'something unexpected' }),
+        'dashboard',
+        'fallback'
+      );
+      expect(result).toBe('something unexpected');
+    });
+
+    it('returns fallback when 404 has no message', () => {
+      const result = getProvisionedRequestError(makeFetchError(404), 'dashboard', 'fallback');
+      expect(result).toBe('fallback');
     });
   });
 
@@ -53,6 +72,18 @@ describe('getProvisionedRequestError', () => {
     it('uses String coercion for non-empty string errors', () => {
       const result = getProvisionedRequestError('custom error text', 'dashboard', 'fallback');
       expect(result).toBe('custom error text');
+    });
+  });
+
+  describe('nullish errors', () => {
+    it('returns fallback for undefined error', () => {
+      const result = getProvisionedRequestError(undefined, 'folder', 'fallback');
+      expect(result).toBe('fallback');
+    });
+
+    it('returns fallback for null error', () => {
+      const result = getProvisionedRequestError(null, 'folder', 'fallback');
+      expect(result).toBe('fallback');
     });
   });
 });

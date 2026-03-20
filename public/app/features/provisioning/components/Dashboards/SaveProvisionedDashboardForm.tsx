@@ -77,7 +77,7 @@ export function SaveProvisionedDashboardForm({
     reset(defaultValues);
   }, [defaultValues, reset]);
 
-  const onRequestError = (error: unknown) => {
+  const showError = (error: unknown) => {
     setError(
       getProvisionedRequestError(
         error,
@@ -167,7 +167,7 @@ export function SaveProvisionedDashboardForm({
     handlers: {
       onBranchSuccess: ({ ref, path }, info, resource) => onBranchSuccess(ref, path, info, resource),
       onWriteSuccess,
-      onError: onRequestError,
+      onError: showError,
     },
   });
 
@@ -184,7 +184,7 @@ export function SaveProvisionedDashboardForm({
     setError(undefined);
     // Validate required fields
     if (!repo || !path) {
-      onRequestError(new Error(`Missing required fields for saving: ${repo}, ${path}`));
+      showError(new Error(`Missing required fields for saving: ${repo}, ${path}`));
       return;
     }
 

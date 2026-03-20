@@ -11,11 +11,6 @@ import { DeleteProvisionedDashboardForm, Props } from './DeleteProvisionedDashbo
 
 setupProvisioningMswServer();
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppEvents: jest.fn().mockReturnValue({ publish: jest.fn() }),
-}));
-
 jest.mock('../../hooks/useProvisionedRequestHandler', () => ({
   useProvisionedRequestHandler: jest.fn(),
 }));
@@ -137,13 +132,12 @@ describe('DeleteProvisionedDashboardForm', () => {
         repository: undefined,
       });
 
-      const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-
       const deleteButton = screen.getByRole('button', { name: /delete dashboard/i });
       await user.click(deleteButton);
 
-      expect(consoleSpy).toHaveBeenCalledWith('Missing required repository for deletion:', { repo: '' });
-      consoleSpy.mockRestore();
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent('Missing required repository for deletion');
+      });
     });
   });
 
@@ -168,7 +162,7 @@ describe('DeleteProvisionedDashboardForm', () => {
     it('should display branch-not-found message for 404 errors', async () => {
       server.use(
         http.delete(`${BASE}/repositories/:name/files/*`, () => {
-          return HttpResponse.json({ message: 'Not Found' }, { status: 404 });
+          return HttpResponse.json({ message: 'file not found' }, { status: 404 });
         })
       );
 

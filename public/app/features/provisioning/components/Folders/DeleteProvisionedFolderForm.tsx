@@ -61,7 +61,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   const handleSubmitForm = async ({ repo, path, comment }: BaseProvisionedFormData) => {
     setError(undefined);
     if (!repo || !repository) {
-      showError();
+      showError('Missing required repository for deletion');
       return;
     }
 
@@ -140,10 +140,6 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     }
   };
 
-  const onError = (error: unknown) => {
-    showError(error);
-  };
-
   useProvisionedRequestHandler({
     request,
     workflow,
@@ -157,7 +153,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     handlers: {
       onDismiss,
       onBranchSuccess,
-      onError,
+      onError: showError,
     },
   });
 

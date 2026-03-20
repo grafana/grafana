@@ -61,7 +61,7 @@ export function DeleteProvisionedDashboardForm({
   const { handleSubmit, watch } = methods;
   const [ref, workflow] = watch(['ref', 'workflow']);
 
-  const showError = (error?: unknown) => {
+  const showError = (error: unknown) => {
     setSubmitError(
       getProvisionedRequestError(
         error,
@@ -74,7 +74,6 @@ export function DeleteProvisionedDashboardForm({
   const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
     setSubmitError(undefined);
     if (!repo || !repository) {
-      console.error('Missing required repository for deletion:', { repo });
       showError('Missing required repository for deletion');
       return;
     }

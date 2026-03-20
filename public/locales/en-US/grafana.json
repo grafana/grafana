@@ -4303,12 +4303,12 @@
       "name-label": "Folder name"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "Error creating folder",
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
       "error-invalid-characters": "Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.",
       "error-required": "Folder name is required",
+      "error-saving": "An error occurred while creating folder.",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
