@@ -72,7 +72,7 @@ func ParseHistoryQuery(orgID int64, user identity.Requester, query url.Values) (
 	var matchers labels.Matchers
 	for k, v := range query {
 		if strings.HasPrefix(k, labelQueryPrefix) {
-			m, err := labels.NewMatcher(labels.MatchEqual, k[len(labelQueryPrefix):], v[0])
+			m, err := labels.ParseMatcher(k[len(labelQueryPrefix):] + "=" + v[0])
 			if err != nil {
 				return models.HistoryQuery{}, fmt.Errorf("invalid label filter %q: %w", k, err)
 			}
