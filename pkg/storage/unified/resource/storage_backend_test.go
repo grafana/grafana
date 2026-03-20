@@ -2709,8 +2709,9 @@ func TestKvStorageBackend_ListHistory_Behaviour(t *testing.T) {
 		ctx := t.Context()
 
 		// Create and delete 5 resources
-		expectedNames := []string{}
-		for i := range 5 {
+		const numResources = 5
+		expectedNames := make([]string, 0, numResources)
+		for i := range numResources {
 			name := fmt.Sprintf("page-item-%d", i)
 			rv, _ := addTestObject(t, backend, ctx, ns, name, "v1")
 			obj, err := createTestObjectWithName(name, ns, "v1")
@@ -2765,7 +2766,7 @@ func TestKvStorageBackend_ListHistory_Behaviour(t *testing.T) {
 		}
 
 		// Should have collected all 5 names
-		require.Len(t, allNames, 5)
+		require.Len(t, allNames, numResources)
 		slices.Sort(allNames)
 		slices.Sort(expectedNames)
 		require.Equal(t, expectedNames, allNames)
