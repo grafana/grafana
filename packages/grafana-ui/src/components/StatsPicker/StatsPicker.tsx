@@ -21,9 +21,6 @@ interface BaseProps {
   stats: string[];
   onChange: (stats: string[]) => void;
   defaultStat?: string;
-  /** @deprecated use `id` instead */
-  inputId?: string;
-  id?: string;
   width?: number | 'auto';
   minWidth?: number;
   maxWidth?: number;
@@ -45,12 +42,9 @@ export const StatsPicker = memo<StatsPickerProps>(
     width,
     minWidth,
     maxWidth,
-    inputId,
-    id: idProp,
     filterOptions,
     ...rest
   }) => {
-    const id = idProp ?? inputId;
     const layout = pickComboboxLayout(width, minWidth, maxWidth);
 
     useEffect(() => {
@@ -82,7 +76,6 @@ export const StatsPicker = memo<StatsPickerProps>(
       const multiOnlyRest: MultiSpread = rest;
       const multiProps = {
         ...multiOnlyRest,
-        id,
         ...layout,
         value,
         isClearable: !defaultStat,
@@ -99,7 +92,6 @@ export const StatsPicker = memo<StatsPickerProps>(
     if (defaultStat) {
       const notClearableProps = {
         ...singleSpread,
-        id,
         ...layout,
         value: value[0],
         options,
@@ -113,7 +105,6 @@ export const StatsPicker = memo<StatsPickerProps>(
 
     const clearableProps = {
       ...singleSpread,
-      id,
       ...layout,
       value: value[0],
       options,

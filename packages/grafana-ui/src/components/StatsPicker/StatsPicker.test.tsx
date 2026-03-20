@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useCallback, useRef, useState, type ReactElement } from 'react';
+import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 
 import { ReducerID } from '@grafana/data';
 
@@ -42,18 +43,7 @@ describe('StatsPicker', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeAll(() => {
-    const mockGetBoundingClientRect = jest.fn(() => ({
-      width: 300,
-      height: 40,
-      top: 0,
-      left: 0,
-      bottom: 0,
-      right: 0,
-    }));
-
-    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-      value: mockGetBoundingClientRect,
-    });
+    comboboxTestSetup();
   });
 
   beforeEach(() => {
@@ -76,19 +66,9 @@ describe('StatsPicker', () => {
     expect(screen.getByDisplayValue('Total')).toBeInTheDocument();
   });
 
-  it('applies deprecated inputId to the combobox input', () => {
-    render(<StatsPicker stats={[ReducerID.sum]} onChange={jest.fn()} inputId="stats-picker-field" />);
-    expect(screen.getByRole('combobox')).toHaveAttribute('id', 'stats-picker-field');
-  });
-
   it('applies the id prop to the combobox input', () => {
     render(<StatsPicker stats={[ReducerID.sum]} onChange={jest.fn()} id="stats-picker-by-id" />);
     expect(screen.getByRole('combobox')).toHaveAttribute('id', 'stats-picker-by-id');
-  });
-
-  it('uses id over inputId when both are set', () => {
-    render(<StatsPicker stats={[ReducerID.sum]} onChange={jest.fn()} id="canonical-id" inputId="legacy-input-id" />);
-    expect(screen.getByRole('combobox')).toHaveAttribute('id', 'canonical-id');
   });
 
   it('applies id to the MultiCombobox input', () => {
@@ -143,7 +123,7 @@ describe('StatsPicker', () => {
   it('renders MultiCombobox when allowMultiple is true', () => {
     render(
       <StatsPicker
-        inputId={TEST_INPUT_ID}
+        id={TEST_INPUT_ID}
         data-testid={TEST_INPUT_TESTID}
         stats={[ReducerID.sum]}
         onChange={jest.fn()}
@@ -180,7 +160,7 @@ describe('StatsPicker', () => {
 
   it('shows the clear control when defaultStat is omitted and a value is selected', () => {
     render(<StatsPicker stats={[ReducerID.sum]} onChange={jest.fn()} data-testid={TEST_INPUT_TESTID} />);
-    expect(screen.getByTestId('combobox-clear')).toBeInTheDocument();
+    expect(screen.getByLabelText('Clear value')).toBeInTheDocument();
   });
 
   it('hides the clear control when defaultStat is provided', () => {
@@ -192,7 +172,7 @@ describe('StatsPicker', () => {
         data-testid={TEST_INPUT_TESTID}
       />
     );
-    expect(screen.queryByTestId('combobox-clear')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Clear value')).not.toBeInTheDocument();
   });
 
   it('forwards combobox selection to onChange as a single-element array', async () => {
@@ -252,7 +232,7 @@ describe('StatsPicker', () => {
 
     renderWithField(<Controlled />);
 
-    await user.click(screen.getByTestId('combobox-clear'));
+    await user.click(screen.getByLabelText('Clear value'));
 
     await waitFor(() => {
       expect(onChange).toHaveBeenLastCalledWith([]);
