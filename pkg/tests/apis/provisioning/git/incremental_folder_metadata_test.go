@@ -301,6 +301,99 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 	})
 }
 
+// TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate verifies
+// that incremental sync propagates title changes in _folder.json to Grafana folders.
+func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("updates folder title when _folder.json spec.title changes", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-title-update"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"alpha/_folder.json": folderMetadataJSON("alpha-uid", "Alpha"),
+			"alpha/dash.json":    dashboardJSON("alpha-dash", "Alpha Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Alpha")
+
+		require.NoError(t, local.UpdateFile("alpha/_folder.json", string(folderMetadataJSON("alpha-uid", "Alpha Renamed"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename folder title in _folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.syncAndWaitIncremental(t, repoName)
+
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Alpha Renamed")
+	})
+
+	t.Run("updates nested folder title", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-title-nested-upd"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"parent/_folder.json":       folderMetadataJSON("parent-uid-upd", "Parent Title"),
+			"parent/child/_folder.json": folderMetadataJSON("child-uid-upd", "Child Title"),
+			"parent/child/dash.json":    dashboardJSON("nested-upd-dash", "Nested Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Title")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Title")
+
+		require.NoError(t, local.UpdateFile("parent/child/_folder.json", string(folderMetadataJSON("child-uid-upd", "Child Title Updated"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "update nested folder title")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.syncAndWaitIncremental(t, repoName)
+
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Title")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Title Updated")
+	})
+
+	t.Run("updates title alongside dashboard changes", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-title-with-dash"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"team/_folder.json": folderMetadataJSON("team-uid-combo", "Original Team"),
+			"team/dash.json":    dashboardJSON("combo-dash", "Original Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Original Team")
+		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "combo-dash", "Original Dashboard")
+
+		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON("team-uid-combo", "Updated Team"))))
+		require.NoError(t, local.UpdateFile("team/dash.json", string(dashboardJSON("combo-dash", "Updated Dashboard", 2))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "update folder title and dashboard in same commit")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.syncAndWaitIncremental(t, repoName)
+
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Updated Team")
+		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "combo-dash", "Updated Dashboard")
+	})
+}
+
 // TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename verifies
 // that renaming a folder backed by _folder.json updates the K8s object in place
 // (preserving its UID, generation and creationTimestamp) instead of deleting
