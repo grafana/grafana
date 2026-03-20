@@ -241,18 +241,10 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 	return affectedFolders, nil
 }
 
-// applyFolderMetadataUpdate handles _folder.json file changes during incremental sync.
-// Updated files trigger EnsureFolderPathExist to reconcile title/hash/annotations.
-// Created files are skipped since the folder is ensured when accompanying resources are written.
-//
-// TODO: Handle created _folder.json as folder reconciliation in a separate task.
-// Currently, created _folder.json files are handled by the folder path
-// that WriteResourceFromFile ensures for the accompanying resources.
+// applyFolderMetadataUpdate routes _folder.json changes through EnsureFolderPathExist
+// so the folder manager can create or update the folder with the correct title,
+// metadata hash, and annotations.
 func applyFolderMetadataUpdate(ctx context.Context, change repository.VersionedFileChange, repositoryResources resources.RepositoryResources, tracer tracing.Tracer) (string, error) {
-	if change.Action != repository.FileActionUpdated {
-		return "", nil
-	}
-
 	folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.update_folder_metadata")
 	defer folderSpan.End()
 
