@@ -175,7 +175,7 @@ describe('StatsPicker', () => {
 
   it('shows the clear control when defaultStat is omitted and a value is selected', () => {
     render(<StatsPicker stats={[ReducerID.sum]} onChange={jest.fn()} data-testid={TEST_INPUT_TESTID} />);
-    expect(screen.getByLabelText('Clear value')).toBeInTheDocument();
+    expect(screen.getByTitle('Clear value')).toBeInTheDocument();
   });
 
   it('hides the clear control when defaultStat is provided', () => {
@@ -187,7 +187,7 @@ describe('StatsPicker', () => {
         data-testid={TEST_INPUT_TESTID}
       />
     );
-    expect(screen.queryByLabelText('Clear value')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Clear value')).not.toBeInTheDocument();
   });
 
   it('forwards combobox selection to onChange as a single-element array', async () => {
@@ -247,7 +247,7 @@ describe('StatsPicker', () => {
 
     renderWithField(<Controlled />);
 
-    await user.click(screen.getByLabelText('Clear value'));
+    await user.click(screen.getByTitle('Clear value'));
 
     await waitFor(() => {
       expect(onChange).toHaveBeenLastCalledWith([]);
