@@ -2744,6 +2744,14 @@ var (
 			Owner:        grafanaDatavizSquad,
 			Expression:   "false",
 		},
+		{
+			Name:         "rbacIAMClient",
+			Description:  "Enables the IAM client integration for fetching remote IAM global roles",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
 	}
 )
 
