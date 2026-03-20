@@ -136,8 +136,7 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 
 // AddToScheme overrides the embedded AppInstaller to also register list conversion functions
 // between v0alpha1 and v1beta1. The SDK only registers conversions for individual kinds;
-// list conversions must be added manually. Since both versions have identical schemas,
-// conversion is a JSON round-trip.
+// list conversions must be added manually.
 func (a AppInstaller) AddToScheme(scheme *runtime.Scheme) error {
 	if err := a.AppInstaller.AddToScheme(scheme); err != nil {
 		return err
@@ -153,70 +152,70 @@ func (a AppInstaller) AddToScheme(scheme *runtime.Scheme) error {
 		{
 			(*v0alpha1.ReceiverList)(nil), (*v1beta1.ReceiverList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v1beta1.ReceiverList) = *(*v1beta1.ReceiverList)(unsafe.Pointer(in.(*v0alpha1.ReceiverList)))
+				*out.(*v1beta1.ReceiverList) = *(*v1beta1.ReceiverList)(unsafe.Pointer(in.(*v0alpha1.ReceiverList))) // #nosec G103
 				return nil
 			},
 		},
 		{
 			(*v1beta1.ReceiverList)(nil), (*v0alpha1.ReceiverList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v0alpha1.ReceiverList) = *(*v0alpha1.ReceiverList)(unsafe.Pointer(in.(*v1beta1.ReceiverList)))
+				*out.(*v0alpha1.ReceiverList) = *(*v0alpha1.ReceiverList)(unsafe.Pointer(in.(*v1beta1.ReceiverList))) // #nosec G103
 				return nil
 			},
 		},
 		{
 			(*v0alpha1.InhibitionRuleList)(nil), (*v1beta1.InhibitionRuleList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v1beta1.InhibitionRuleList) = *(*v1beta1.InhibitionRuleList)(unsafe.Pointer(in.(*v0alpha1.InhibitionRuleList)))
+				*out.(*v1beta1.InhibitionRuleList) = *(*v1beta1.InhibitionRuleList)(unsafe.Pointer(in.(*v0alpha1.InhibitionRuleList))) // #nosec G103
 				return nil
 			},
 		},
 		{
 			(*v1beta1.InhibitionRuleList)(nil), (*v0alpha1.InhibitionRuleList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v0alpha1.InhibitionRuleList) = *(*v0alpha1.InhibitionRuleList)(unsafe.Pointer(in.(*v1beta1.InhibitionRuleList)))
+				*out.(*v0alpha1.InhibitionRuleList) = *(*v0alpha1.InhibitionRuleList)(unsafe.Pointer(in.(*v1beta1.InhibitionRuleList))) // #nosec G103
 				return nil
 			},
 		},
 		{
 			(*v0alpha1.RoutingTreeList)(nil), (*v1beta1.RoutingTreeList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v1beta1.RoutingTreeList) = *(*v1beta1.RoutingTreeList)(unsafe.Pointer(in.(*v0alpha1.RoutingTreeList)))
+				*out.(*v1beta1.RoutingTreeList) = *(*v1beta1.RoutingTreeList)(unsafe.Pointer(in.(*v0alpha1.RoutingTreeList))) // #nosec G103
 				return nil
 			},
 		},
 		{
 			(*v1beta1.RoutingTreeList)(nil), (*v0alpha1.RoutingTreeList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v0alpha1.RoutingTreeList) = *(*v0alpha1.RoutingTreeList)(unsafe.Pointer(in.(*v1beta1.RoutingTreeList)))
+				*out.(*v0alpha1.RoutingTreeList) = *(*v0alpha1.RoutingTreeList)(unsafe.Pointer(in.(*v1beta1.RoutingTreeList))) // #nosec G103
 				return nil
 			},
 		},
 		{
 			(*v0alpha1.TemplateGroupList)(nil), (*v1beta1.TemplateGroupList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v1beta1.TemplateGroupList) = *(*v1beta1.TemplateGroupList)(unsafe.Pointer(in.(*v0alpha1.TemplateGroupList)))
+				*out.(*v1beta1.TemplateGroupList) = *(*v1beta1.TemplateGroupList)(unsafe.Pointer(in.(*v0alpha1.TemplateGroupList))) // #nosec G103
 				return nil
 			},
 		},
 		{
 			(*v1beta1.TemplateGroupList)(nil), (*v0alpha1.TemplateGroupList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v0alpha1.TemplateGroupList) = *(*v0alpha1.TemplateGroupList)(unsafe.Pointer(in.(*v1beta1.TemplateGroupList)))
+				*out.(*v0alpha1.TemplateGroupList) = *(*v0alpha1.TemplateGroupList)(unsafe.Pointer(in.(*v1beta1.TemplateGroupList))) // #nosec G103
 				return nil
 			},
 		},
 		{
 			(*v0alpha1.TimeIntervalList)(nil), (*v1beta1.TimeIntervalList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v1beta1.TimeIntervalList) = *(*v1beta1.TimeIntervalList)(unsafe.Pointer(in.(*v0alpha1.TimeIntervalList)))
+				*out.(*v1beta1.TimeIntervalList) = *(*v1beta1.TimeIntervalList)(unsafe.Pointer(in.(*v0alpha1.TimeIntervalList))) // #nosec G103
 				return nil
 			},
 		},
 		{
 			(*v1beta1.TimeIntervalList)(nil), (*v0alpha1.TimeIntervalList)(nil),
 			func(in, out interface{}, _ conversion.Scope) error {
-				*out.(*v0alpha1.TimeIntervalList) = *(*v0alpha1.TimeIntervalList)(unsafe.Pointer(in.(*v1beta1.TimeIntervalList)))
+				*out.(*v0alpha1.TimeIntervalList) = *(*v0alpha1.TimeIntervalList)(unsafe.Pointer(in.(*v1beta1.TimeIntervalList))) // #nosec G103
 				return nil
 			},
 		},
