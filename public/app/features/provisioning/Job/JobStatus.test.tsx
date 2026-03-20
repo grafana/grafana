@@ -14,40 +14,46 @@ setupProvisioningMswServer();
 const repositoryName = 'test-repo-abc123';
 const repositoryLabel = { 'provisioning.grafana.app/repository': repositoryName };
 
-function createJob(overrides: Partial<Job> = {}): Job {
-  const metadata = {
-    name: 'job-1',
-    uid: 'uid-1',
-    ...overrides.metadata,
-    labels: {
-      ...repositoryLabel,
-      ...overrides.metadata?.labels,
-    },
-  };
-  const spec = {
-    action: 'pull',
-    ...overrides.spec,
-  };
-  const status = {
-    state: 'working',
-    message: 'Pulling...',
-    progress: 30,
-    ...overrides.status,
-  };
+function createJob(overrides: Record<string, unknown> = {}): Job {
+  const {
+    metadata: metadataOverrides,
+    spec: specOverrides,
+    status: statusOverrides,
+    ...rest
+  } = overrides as Partial<Job>;
 
   return {
-    ...overrides,
-    metadata,
-    spec,
-    status,
-  };
+    ...rest,
+    metadata: {
+      name: 'job-1',
+      uid: 'uid-1',
+      ...metadataOverrides,
+      labels: {
+        ...repositoryLabel,
+        ...metadataOverrides?.labels,
+      },
+    },
+    spec: {
+      action: 'pull' as const,
+      ...specOverrides,
+    },
+    status: {
+      state: 'working' as const,
+      message: 'Pulling...',
+      progress: 30,
+      ...statusOverrides,
+    },
+  } as Job;
 }
 
-function createRepository(overrides: Partial<Repository> = {}): Repository {
+function createRepository(overrides: Record<string, unknown> = {}): Repository {
+  const { metadata: metadataOverrides, spec: specOverrides, ...rest } = overrides as Partial<Repository>;
+
   return {
+    ...rest,
     metadata: {
       name: repositoryName,
-      ...overrides.metadata,
+      ...metadataOverrides,
     },
     spec: {
       title: 'Test Repository',
@@ -58,10 +64,9 @@ function createRepository(overrides: Partial<Repository> = {}): Repository {
         url: 'https://github.com/test/repo',
         branch: 'main',
       },
-      ...overrides.spec,
+      ...specOverrides,
     },
-    ...overrides,
-  };
+  } as Repository;
 }
 
 function mockJobList(job: Job) {

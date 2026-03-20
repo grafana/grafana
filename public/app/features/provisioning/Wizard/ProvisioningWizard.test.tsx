@@ -173,36 +173,43 @@ function setupMockSubmitData() {
 const syncRepositoryName = 'test-repo-abc123';
 const syncRepositoryLabel = { 'provisioning.grafana.app/repository': syncRepositoryName };
 
-function createSyncJob(overrides: Partial<Job> = {}): Job {
-  const { metadata: metadataOverrides, spec: specOverrides, status: statusOverrides, ...rest } = overrides;
-  const metadata = {
-    name: 'sync-job-1',
-    uid: 'uid-1',
-    ...metadataOverrides,
-    labels: {
-      ...syncRepositoryLabel,
-      ...metadataOverrides?.labels,
-    },
-  };
-  const spec = {
-    action: 'pull',
-    ...specOverrides,
-  };
-  const status = {
-    state: 'pending',
-    ...statusOverrides,
-  };
+function createSyncJob(overrides: Record<string, unknown> = {}): Job {
+  const {
+    metadata: metadataOverrides,
+    spec: specOverrides,
+    status: statusOverrides,
+    ...rest
+  } = overrides as Partial<Job>;
 
   return {
     ...rest,
-    metadata,
-    spec,
-    status,
-  };
+    metadata: {
+      name: 'sync-job-1',
+      uid: 'uid-1',
+      ...metadataOverrides,
+      labels: {
+        ...syncRepositoryLabel,
+        ...metadataOverrides?.labels,
+      },
+    },
+    spec: {
+      action: 'pull' as const,
+      ...specOverrides,
+    },
+    status: {
+      state: 'pending' as const,
+      ...statusOverrides,
+    },
+  } as Job;
 }
 
-function createSyncRepository(overrides: Partial<Repository> = {}): Repository {
-  const { metadata: metadataOverrides, spec: specOverrides, status: statusOverrides, ...rest } = overrides;
+function createSyncRepository(overrides: Record<string, unknown> = {}): Repository {
+  const {
+    metadata: metadataOverrides,
+    spec: specOverrides,
+    status: statusOverrides,
+    ...rest
+  } = overrides as Partial<Repository>;
 
   return {
     ...rest,
@@ -231,7 +238,7 @@ function createSyncRepository(overrides: Partial<Repository> = {}): Repository {
       },
       ...statusOverrides,
     },
-  };
+  } as Repository;
 }
 
 function enableSynchronizationStep() {

@@ -9,9 +9,16 @@ import {
   LiveChannelEventType,
 } from '@grafana/data';
 import type { GrafanaLiveSrv, LiveDataStreamOptions } from '@grafana/runtime';
-import { ResourceEvent } from 'app/features/apiserver/types';
-
 type ProvisioningResource = 'jobs' | 'repositories' | 'connections';
+
+/**
+ * A loose version of ResourceEvent that accepts generated API types
+ * (where metadata, spec, etc. are optional) without requiring strict Resource<T>.
+ */
+interface WatchEvent {
+  type: 'ADDED' | 'DELETED' | 'MODIFIED';
+  object: Record<string, unknown>;
+}
 
 function addressToKey(address: LiveChannelAddress): string {
   return `${address.scope}/${address.stream}/${address.path}`;
@@ -52,7 +59,7 @@ export class MockGrafanaLiveSrv implements GrafanaLiveSrv {
    * Emit a watch event (ADDED, MODIFIED, DELETED) to all matching streams for the given resource.
    * The event is wrapped in a LiveChannelMessageEvent so it flows through the ScopedResourceClient.watch() pipe.
    */
-  emitWatchEvent<T>(resource: ProvisioningResource, event: ResourceEvent<T>): void {
+  emitWatchEvent(resource: ProvisioningResource, event: WatchEvent): void {
     const messageEvent: LiveChannelEvent = {
       type: LiveChannelEventType.Message,
       message: event,
