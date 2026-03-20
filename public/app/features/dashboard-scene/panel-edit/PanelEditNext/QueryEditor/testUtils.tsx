@@ -58,7 +58,7 @@ export const dashboardDsSettingsMock: DataSourceInstanceSettings = {
   id: 99,
   uid: '-- Dashboard --',
   name: '-- Dashboard --',
-  type: 'dashboard',
+  type: 'datasource',
   meta: {
     id: 'dashboard',
     name: '-- Dashboard --',

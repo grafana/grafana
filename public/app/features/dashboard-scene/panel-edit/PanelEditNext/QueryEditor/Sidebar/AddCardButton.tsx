@@ -8,7 +8,7 @@ import { DataQuery } from '@grafana/schema';
 import { Dropdown, Icon, Menu, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
-import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import {
@@ -49,7 +49,7 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
 
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const isDashboardDs = isSharedDashboardQuery(dsSettings?.name ?? null);
+  const isDashboardDs = dsSettings?.name === SHARED_DASHBOARD_QUERY;
 
   // When the savedQueriesRBAC feature toggle is enabled, access to the query
   // library is governed by fine-grained RBAC permissions. Otherwise, any
