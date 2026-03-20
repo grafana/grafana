@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, getByText, getByLabelText, within, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, getByLabelText, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { comboboxTestSetup } from 'test/helpers/comboboxTestSetup';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
