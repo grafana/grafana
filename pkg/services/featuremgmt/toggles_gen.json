@@ -5038,6 +5038,20 @@
     },
     {
       "metadata": {
+        "name": "yAxisTickControl",
+        "resourceVersion": "1773934597640",
+        "creationTimestamp": "2026-03-19T15:36:37Z"
+      },
+      "spec": {
+        "description": "Enables fine-grained Y-axis tick options beyond the auto-ticks",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "zanzana",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-06-19T13:59:47Z"

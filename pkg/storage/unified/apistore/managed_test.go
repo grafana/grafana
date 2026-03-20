@@ -22,6 +22,8 @@ import (
 
 func TestManagedAuthorizer(t *testing.T) {
 	user := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "uuu"}
+	serverAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "server-admin-uuu", IsGrafanaAdmin: true}
+	orgAdmin := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "org-admin-uuu", OrgRole: identity.RoleAdmin}
 	_, provisioner, err := identity.WithProvisioningIdentity(context.Background(), "default")
 	require.NoError(t, err)
 
@@ -52,7 +54,7 @@ func TestManagedAuthorizer(t *testing.T) {
 		{
 			name: "user can not create provisioned resource",
 			auth: user,
-			err:  "Provisioned resources must be manaaged by the provisioning service account",
+			err:  "this resource is managed by a repository",
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Annotations: map[string]string{
@@ -65,7 +67,7 @@ func TestManagedAuthorizer(t *testing.T) {
 		{
 			name: "user can not update provisioned resource",
 			auth: user,
-			err:  "Provisioned resources must be manaaged by the provisioning service account",
+			err:  "Can not remove resource manager from resource",
 			obj: &dashboard.Dashboard{
 				ObjectMeta: v1.ObjectMeta{
 					Generation: 1,
@@ -205,6 +207,83 @@ func TestManagedAuthorizer(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "server admin can release repo-managed dashboard",
+			auth: serverAdmin,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
+					},
+				},
+			},
+		},
+		{
+			name: "server admin can release repo-managed folder",
+			auth: serverAdmin,
+			obj: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"generation": int64(1),
+					},
+				},
+			},
+			old: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"metadata": map[string]interface{}{
+						"generation": int64(2),
+						"annotations": map[string]interface{}{
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+							utils.AnnoKeyManagerIdentity: "my-repo",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "org admin can release repo-managed dashboard",
+			auth: orgAdmin,
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
+					},
+				},
+			},
+		},
+		{
+			name: "non-admin user cannot release repo-managed resource",
+			auth: user,
+			err:  "Can not remove resource manager from resource",
+			obj: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 1,
+				},
+			},
+			old: &dashboard.Dashboard{
+				ObjectMeta: v1.ObjectMeta{
+					Generation: 2,
+					Annotations: map[string]string{
+						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+						utils.AnnoKeyManagerIdentity: "my-repo",
+					},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -220,7 +299,7 @@ func TestManagedAuthorizer(t *testing.T) {
 			}
 
 			if tt.err != "" {
-				require.Error(t, err, tt.err)
+				require.ErrorContains(t, err, tt.err)
 			} else {
 				require.NoError(t, err)
 			}
