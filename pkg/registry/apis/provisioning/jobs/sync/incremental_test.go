@@ -1106,6 +1106,50 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 		}}, plan.replacedFolders)
 	})
 
+	t.Run("skips synthetic update for renamed direct child old path", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionCreated, Path: "myfolder/_folder.json", Ref: "new-ref"},
+			{Action: repository.FileActionRenamed, Path: "myfolder/dashboard-renamed.json", PreviousPath: "myfolder/dashboard.json", PreviousRef: "old-ref", Ref: "new-ref"},
+		}
+
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{
+					Name:     "hash-uid",
+					Group:    resources.FolderResource.Group,
+					Resource: resources.FolderResource.Resource,
+					Path:     "myfolder/",
+				},
+				{
+					Name:     "dash-uid",
+					Group:    "dashboards",
+					Resource: "dashboards",
+					Path:     "myfolder/dashboard.json",
+				},
+			},
+		}, nil).Once()
+		repo.MockReader.On("Read", mock.Anything, "myfolder/_folder.json", "new-ref").Return(&repository.FileInfo{
+			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"Updated Title"}}`),
+			Hash: "newhash",
+		}, nil).Once()
+
+		plan, err := planFolderMetadataChanges(
+			context.Background(), diff, repo, repoResources, "new-ref", tracing.NewNoopTracerService(), true,
+		)
+
+		require.NoError(t, err)
+		require.Equal(t, []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "myfolder/", Ref: "new-ref"},
+			{Action: repository.FileActionRenamed, Path: "myfolder/dashboard-renamed.json", PreviousPath: "myfolder/dashboard.json", PreviousRef: "old-ref", Ref: "new-ref"},
+		}, plan.filteredDiff)
+		require.Equal(t, []replacedFolder{{
+			Path:   "myfolder/",
+			OldUID: "hash-uid",
+		}}, plan.replacedFolders)
+	})
+
 	t.Run("creates synthetic folder create when metadata is added for a brand-new folder", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
 		repoResources := resources.NewMockRepositoryResources(t)

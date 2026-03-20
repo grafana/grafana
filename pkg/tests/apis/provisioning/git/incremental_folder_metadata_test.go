@@ -298,6 +298,40 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Display")
 		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Display")
 	})
+
+	t.Run("new _folder.json with direct child rename does not replay the old child path", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-create-child-rename"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"myfolder/dash.json": dashboardJSON("my-dash", "My Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+
+		oldUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "myfolder")
+		require.NotEqual(t, "stable-uid", oldUID, "folder should start with a hash-based UID")
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/dash.json", oldUID)
+
+		require.NoError(t, local.CreateFile("myfolder/_folder.json", string(folderMetadataJSON("stable-uid", "My Folder"))))
+		_, err := local.Git("mv", "myfolder/dash.json", "myfolder/dash-renamed.json")
+		require.NoError(t, err)
+		_, err = local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "add folder metadata and rename child dashboard")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.syncAndWaitIncremental(t, repoName)
+
+		common.RequireRepoFolderUID(t, helper.FoldersV1, ctx, repoName, "stable-uid")
+		requireRepoFolderCount(t, helper, ctx, repoName, 1)
+		requireRepoDashboardCount(t, helper, ctx, repoName, 1)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/dash-renamed.json", "stable-uid")
+	})
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate verifies
