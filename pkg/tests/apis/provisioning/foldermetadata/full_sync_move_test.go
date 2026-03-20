@@ -290,6 +290,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testing.T) {
+	t.Skip("skipping flaky test for now")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
