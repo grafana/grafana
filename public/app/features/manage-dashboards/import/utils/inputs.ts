@@ -297,6 +297,118 @@ function getDataSourceDescription(input: Record<string, unknown>): string {
 }
 
 /**
+ * Input mapping shape used by the community dashboard / suggested dashboards flow.
+ * Matches the format previously sent to POST /api/dashboards/interpolate.
+ */
+export interface InterpolateInputMapping {
+  name: string;
+  type: 'datasource' | 'constant';
+  pluginId?: string;
+  value: string;
+}
+
+/**
+ * Interpolate a v1 dashboard in the frontend using applyV1Inputs, replacing the
+ * backend POST /api/dashboards/interpolate round-trip.
+ *
+ * Converts InputMapping[] (the format used by the community/suggested dashboard flow)
+ * into the shape that applyV1Inputs expects and applies the substitution.
+ */
+export function interpolateV1Dashboard(
+  dashboard: Record<string, unknown>,
+  inputMappings: InterpolateInputMapping[]
+): Record<string, unknown> {
+  const rawInputs = dashboard.__inputs as Array<Record<string, unknown>> | undefined;
+  const dsInputs: DataSourceInput[] = (rawInputs ?? [])
+    .filter(
+      (input): input is Record<string, unknown> & { type: 'datasource'; pluginId: string } =>
+        input.type === 'datasource' && typeof input.pluginId === 'string'
+    )
+    .map((input) => ({
+      name: String(input.name ?? ''),
+      label: String(input.label ?? ''),
+      info: String(input.description ?? ''),
+      value: String(input.value ?? ''),
+      type: InputType.DataSource,
+      pluginId: String(input.pluginId),
+    }));
+  const constantRawInputs = (rawInputs ?? []).filter((input) => input.type === 'constant');
+
+  const wildcardMapping = inputMappings.find((m) => m.name === '*' && m.type === 'datasource');
+  const effectiveMappings = wildcardMapping
+    ? dsInputs.map((input) => ({
+        name: input.name,
+        type: 'datasource' as const,
+        pluginId: input.pluginId,
+        value: wildcardMapping.value,
+      }))
+    : inputMappings;
+
+  const formDataSources: DataSourceInstanceSettings[] = [];
+  const seenPluginIds = new Set<string>();
+  for (const mapping of effectiveMappings.filter((m) => m.type === 'datasource')) {
+    const dsInput = dsInputs.find((i) => i.name === mapping.name);
+    const pluginId = mapping.pluginId ?? dsInput?.pluginId;
+    if (pluginId && !seenPluginIds.has(pluginId)) {
+      if (pluginId === ExpressionDatasourceRef.type) {
+        formDataSources.push({
+          uid: ExpressionDatasourceRef.uid,
+          type: ExpressionDatasourceRef.type,
+          name: ExpressionDatasourceRef.name,
+        } as DataSourceInstanceSettings);
+        seenPluginIds.add(pluginId);
+        continue;
+      }
+      const settings = getDataSourceSrv().getInstanceSettings(mapping.value);
+      if (settings) {
+        formDataSources.push(settings);
+        seenPluginIds.add(pluginId);
+      }
+    }
+  }
+  for (const dsInput of dsInputs) {
+    if (dsInput.pluginId === ExpressionDatasourceRef.type && !seenPluginIds.has(ExpressionDatasourceRef.type)) {
+      formDataSources.push({
+        uid: ExpressionDatasourceRef.uid,
+        type: ExpressionDatasourceRef.type,
+        name: ExpressionDatasourceRef.name,
+      } as DataSourceInstanceSettings);
+      seenPluginIds.add(ExpressionDatasourceRef.type);
+    }
+  }
+
+  const constants: DashboardInput[] = constantRawInputs.map((input) => ({
+    name: String(input.name ?? ''),
+    label: String(input.label ?? ''),
+    info: String(input.description ?? 'Specify a string constant'),
+    value: String(input.value ?? ''),
+    type: InputType.Constant,
+  }));
+  const formConstants: string[] = constants.map((c) => {
+    const mapping = effectiveMappings.find((m) => m.type === 'constant' && m.name === c.name);
+    return mapping ? mapping.value : c.value;
+  });
+
+  const form: ImportDashboardDTO = {
+    title: String(dashboard.title ?? ''),
+    uid: String(dashboard.uid ?? ''),
+    gnetId: '',
+    constants: formConstants,
+    dataSources: formDataSources,
+    elements: [],
+    folder: { uid: '' },
+  };
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const result = applyV1Inputs(dashboard as unknown as Dashboard, { dataSources: dsInputs, constants }, form);
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  const raw = result as unknown as Record<string, unknown>;
+  delete raw.__inputs;
+  delete raw.__elements;
+  delete raw.__requires;
+  return raw;
+}
+
+/**
  * Apply user's datasource selections to a v1 dashboard
  */
 export function applyV1Inputs(
