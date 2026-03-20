@@ -176,10 +176,9 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 		source, _ := meta.GetSourceProperties()
 		if source.Checksum != folder.MetadataHash || source.Path != folder.Path {
-			meta.SetSourceProperties(utils.SourceProperties{
-				Path:     folder.Path,
-				Checksum: folder.MetadataHash,
-			})
+			source.Path = folder.Path
+			source.Checksum = folder.MetadataHash
+			meta.SetSourceProperties(source)
 			needsUpdate = true
 		}
 
