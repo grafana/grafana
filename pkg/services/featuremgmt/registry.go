@@ -1082,10 +1082,10 @@ var (
 		{
 			Name:         "alertingNavigationV2",
 			Description:  "Enables the new Alerting navigation structure with improved menu grouping",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: false,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "alertingSavedSearches",
@@ -2736,6 +2736,13 @@ var (
 			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
+		}, {
+			Name:         "yAxisTickControl",
+			Description:  "Enables fine-grained Y-axis tick options beyond the auto-ticks",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
 		},
 	}
 )

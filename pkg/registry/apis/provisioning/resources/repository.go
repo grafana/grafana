@@ -30,6 +30,7 @@ type RepositoryResources interface {
 	EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error
 	RemoveFolderFromTree(folderID string)
 	RemoveFolder(ctx context.Context, folderName string) error
+	RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, error)
 	// File from Resource
 	WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error)
 	// Resource from file

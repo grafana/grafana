@@ -736,6 +736,234 @@ func TestCompare_FolderMetadataFlagDisabled(t *testing.T) {
 	})
 }
 
+func TestAugmentChangesForFolderMoves(t *testing.T) {
+	existingItem := func(path, uid string) *provisioning.ResourceListItem {
+		return &provisioning.ResourceListItem{
+			Path:     path,
+			Resource: resources.FolderResource.Resource,
+			Group:    resources.FolderResource.Group,
+			Name:     uid,
+		}
+	}
+
+	folderMetaJSON := func(uid string) []byte {
+		return []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"` + uid + `"},"spec":{"title":"My Folder"}}`)
+	}
+
+	t.Run("no-op when no deleted folders", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+
+		input := []ResourceFileChange{
+			{Action: repository.FileActionCreated, Path: "new-folder/"},
+			{Action: repository.FileActionCreated, Path: "file.json"},
+		}
+
+		result, err := augmentChangesForFolderMoves(context.Background(), repo, "main", input)
+		require.NoError(t, err)
+		require.Equal(t, input, result)
+	})
+
+	t.Run("no-op when no created folders", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+
+		input := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old-folder/", Existing: existingItem("old-folder/", "folder-uid")},
+			{Action: repository.FileActionDeleted, Path: "file.json"},
+		}
+
+		result, err := augmentChangesForFolderMoves(context.Background(), repo, "main", input)
+		require.NoError(t, err)
+		require.Equal(t, input, result)
+	})
+
+	t.Run("no-op when deleted folder has no Existing item", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		// deletedFolders stays empty because nil Existing is not tracked,
+		// so the early-return fires and repo.Read is never called.
+
+		input := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old-folder/", Existing: nil},
+			{Action: repository.FileActionCreated, Path: "new-folder/"},
+		}
+
+		result, err := augmentChangesForFolderMoves(context.Background(), repo, "main", input)
+		require.NoError(t, err)
+		require.Equal(t, input, result)
+	})
+
+	t.Run("simple folder move merges delete into update", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
+			Return(&repository.FileInfo{Data: folderMetaJSON("folder-uid")}, nil)
+
+		oldExisting := existingItem("old-folder/", "folder-uid")
+		input := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old-folder/", Existing: oldExisting},
+			{Action: repository.FileActionCreated, Path: "new-folder/"},
+		}
+
+		result, err := augmentChangesForFolderMoves(context.Background(), repo, "main", input)
+		require.NoError(t, err)
+		// DELETE is removed, CREATE becomes UPDATE
+		require.Len(t, result, 1)
+		require.Equal(t, "new-folder/", result[0].Path)
+		require.Equal(t, repository.FileActionUpdated, result[0].Action)
+		require.Equal(t, oldExisting, result[0].Existing)
+	})
+
+	t.Run("non-matching UIDs produce no merge", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
+			Return(&repository.FileInfo{Data: folderMetaJSON("different-uid")}, nil)
+
+		input := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old-folder/", Existing: existingItem("old-folder/", "folder-uid")},
+			{Action: repository.FileActionCreated, Path: "new-folder/"},
+		}
+
+		result, err := augmentChangesForFolderMoves(context.Background(), repo, "main", input)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+
+		paths := map[string]repository.FileAction{}
+		for _, c := range result {
+			paths[c.Path] = c.Action
+		}
+		require.Equal(t, repository.FileActionDeleted, paths["old-folder/"])
+		require.Equal(t, repository.FileActionCreated, paths["new-folder/"])
+	})
+
+	t.Run("metadata read error is propagated", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
+			Return(nil, fmt.Errorf("storage unavailable"))
+
+		input := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old-folder/", Existing: existingItem("old-folder/", "folder-uid")},
+			{Action: repository.FileActionCreated, Path: "new-folder/"},
+		}
+
+		result, err := augmentChangesForFolderMoves(context.Background(), repo, "main", input)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "read folder metadata for new-folder/")
+		require.Nil(t, result)
+	})
+
+	t.Run("metadata file not found is skipped", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
+			Return(nil, repository.ErrFileNotFound)
+
+		input := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old-folder/", Existing: existingItem("old-folder/", "folder-uid")},
+			{Action: repository.FileActionCreated, Path: "new-folder/"},
+		}
+
+		result, err := augmentChangesForFolderMoves(context.Background(), repo, "main", input)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+	})
+
+	t.Run("empty UID in metadata is skipped", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
+			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"No UID"}}`)}, nil)
+
+		input := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old-folder/", Existing: existingItem("old-folder/", "folder-uid")},
+			{Action: repository.FileActionCreated, Path: "new-folder/"},
+		}
+
+		result, err := augmentChangesForFolderMoves(context.Background(), repo, "main", input)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+
+		for _, c := range result {
+			require.NotEqual(t, repository.FileActionUpdated, c.Action, "no UPDATE should be emitted")
+		}
+	})
+
+	t.Run("non-folder paths are ignored", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
+			Return(&repository.FileInfo{Data: folderMetaJSON("folder-uid")}, nil)
+
+		oldExisting := existingItem("old-folder/", "folder-uid")
+		input := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "dashboard.json"},
+			{Action: repository.FileActionDeleted, Path: "old-folder/", Existing: oldExisting},
+			{Action: repository.FileActionCreated, Path: "new-file.json"},
+			{Action: repository.FileActionCreated, Path: "new-folder/"},
+		}
+
+		result, err := augmentChangesForFolderMoves(context.Background(), repo, "main", input)
+		require.NoError(t, err)
+
+		// Only old-folder/ DELETE was merged into new-folder/ UPDATE;
+		// non-folder paths pass through unchanged.
+		paths := map[string]repository.FileAction{}
+		for _, c := range result {
+			paths[c.Path] = c.Action
+		}
+		require.Equal(t, repository.FileActionDeleted, paths["dashboard.json"])
+		require.Equal(t, repository.FileActionCreated, paths["new-file.json"])
+		require.Equal(t, repository.FileActionUpdated, paths["new-folder/"])
+		require.NotContains(t, paths, "old-folder/")
+	})
+
+	t.Run("multiple independent folder moves", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repo.On("Read", mock.Anything, "new-a/_folder.json", "main").
+			Return(&repository.FileInfo{Data: folderMetaJSON("uid-a")}, nil)
+		repo.On("Read", mock.Anything, "new-b/_folder.json", "main").
+			Return(&repository.FileInfo{Data: folderMetaJSON("uid-b")}, nil)
+
+		existingA := existingItem("old-a/", "uid-a")
+		existingB := existingItem("old-b/", "uid-b")
+		input := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old-a/", Existing: existingA},
+			{Action: repository.FileActionDeleted, Path: "old-b/", Existing: existingB},
+			{Action: repository.FileActionCreated, Path: "new-a/"},
+			{Action: repository.FileActionCreated, Path: "new-b/"},
+		}
+
+		result, err := augmentChangesForFolderMoves(context.Background(), repo, "main", input)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+
+		byPath := map[string]ResourceFileChange{}
+		for _, c := range result {
+			byPath[c.Path] = c
+		}
+		require.Equal(t, repository.FileActionUpdated, byPath["new-a/"].Action)
+		require.Equal(t, existingA, byPath["new-a/"].Existing)
+		require.Equal(t, repository.FileActionUpdated, byPath["new-b/"].Action)
+		require.Equal(t, existingB, byPath["new-b/"].Existing)
+	})
+
+	t.Run("result is sorted deepest path first", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repo.On("Read", mock.Anything, "new-top/_folder.json", "main").
+			Return(&repository.FileInfo{Data: folderMetaJSON("uid-top")}, nil)
+		repo.On("Read", mock.Anything, "a/new-nested/_folder.json", "main").
+			Return(&repository.FileInfo{Data: folderMetaJSON("uid-nested")}, nil)
+
+		input := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old-top/", Existing: existingItem("old-top/", "uid-top")},
+			{Action: repository.FileActionDeleted, Path: "a/old-nested/", Existing: existingItem("a/old-nested/", "uid-nested")},
+			{Action: repository.FileActionCreated, Path: "new-top/"},
+			{Action: repository.FileActionCreated, Path: "a/new-nested/"},
+		}
+
+		result, err := augmentChangesForFolderMoves(context.Background(), repo, "main", input)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		// SortByDepth(false) = descending depth, deepest first
+		require.Equal(t, "a/new-nested/", result[0].Path)
+		require.Equal(t, "new-top/", result[1].Path)
+	})
+}
+
 func TestAugmentChangesForFolderMetadata(t *testing.T) {
 	// --- UID change subtests ---
 
