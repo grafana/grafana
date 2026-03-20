@@ -107,7 +107,9 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return "", err
 	}
 	if fm.tree.In(f.ID) {
-		if existing, ok := fm.tree.Get(f.ID); ok && existing.MetadataHash == f.MetadataHash {
+		// ParentID is only resolved during the walk below, so we skip it here
+		// to avoid a false mismatch against the already-resolved tree entry.
+		if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing, IgnoreParent()) {
 			return f.ID, nil
 		}
 	}
@@ -117,14 +119,13 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		if err != nil {
 			return err
 		}
+		f.ParentID = parent
 		if fm.tree.In(f.ID) {
-			if existing, ok := fm.tree.Get(f.ID); ok && existing.MetadataHash == f.MetadataHash {
+			if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing) {
 				parent = f.ID
 				return nil
 			}
 		}
-
-		f.ParentID = parent
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
 			return &PathCreationError{
 				Path: f.Path,
@@ -165,29 +166,24 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			return fmt.Errorf("create meta accessor: %w", err)
 		}
 
-		needsUpdate := false
 		currentTitle, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
-		if currentTitle != folder.Title {
+		source, _ := meta.GetSourceProperties()
+		existing := Folder{
+			Title:        currentTitle,
+			Path:         source.Path,
+			MetadataHash: source.Checksum,
+			ParentID:     meta.GetFolder(),
+		}
+
+		if !folder.Equal(existing) {
 			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
 				return fmt.Errorf("set folder title: %w", err)
 			}
-			needsUpdate = true
-		}
-
-		source, _ := meta.GetSourceProperties()
-		if source.Checksum != folder.MetadataHash {
-			source.Checksum = folder.MetadataHash
-			meta.SetSourceProperties(source)
-			needsUpdate = true
-		}
-
-		currentParent := meta.GetFolder()
-		if currentParent != folder.ParentID {
+			meta.SetSourceProperties(utils.SourceProperties{
+				Path:     folder.Path,
+				Checksum: folder.MetadataHash,
+			})
 			meta.SetFolder(folder.ParentID)
-			needsUpdate = true
-		}
-
-		if needsUpdate {
 			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
 			if err != nil {
 				return fmt.Errorf("unable to use provisioning identity %w", err)
@@ -311,6 +307,33 @@ func (fm *FolderManager) RemoveFolderFromTree(folderID string) {
 
 func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
+}
+
+// RenameFolderPath handles a directory rename during incremental sync.
+// For metadata-backed folders (stable UID), the existing K8s object is
+// updated in place and an empty string is returned (no cleanup needed).
+// For non-metadata folders the UID changes, so a new folder is created
+// at newPath and the old folder ID is returned for cleanup.
+func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, error) {
+	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef, fm.folderMetadataEnabled)
+	if err != nil {
+		return "", fmt.Errorf("parse old folder: %w", err)
+	}
+
+	if _, err := fm.EnsureFolderPathExist(ctx, newPath); err != nil {
+		return "", fmt.Errorf("ensure new folder path: %w", err)
+	}
+
+	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef, fm.folderMetadataEnabled)
+	if err != nil {
+		return "", fmt.Errorf("parse new folder: %w", err)
+	}
+
+	if oldFolder.ID == newFolder.ID {
+		return "", nil
+	}
+
+	return oldFolder.ID, nil
 }
 
 // EnsureFolderTreeExists replicates the folder tree to the repository.

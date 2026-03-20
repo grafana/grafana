@@ -171,7 +171,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
         }
       });
     }
-    return options;
+    return options.sort((a, b) => (a.value?.toLowerCase()! < b.value?.toLowerCase()! ? -1 : 1));
   }
 
   getTimeRangeForTags = (timeRangeForTags: number, range: TimeRange) => {

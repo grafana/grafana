@@ -128,6 +128,12 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
       onChange(migrateFromSearchToTraceQLSearch(query));
     }
 
+    // only show query with assistant button if:
+    // feature toggle is enabled
+    // app is Explore, Dashboard, or PanelEditor
+    const showAssistant =
+      config.featureToggles.queryWithAssistant &&
+      (app === CoreApp.Explore || app === CoreApp.Dashboard || app === CoreApp.PanelEditor);
     return (
       <>
         <Modal
@@ -153,7 +159,7 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
             />
           </div>
         </Modal>
-        {!isAlerting && (
+        {!isAlerting && showAssistant && (
           <InlineFieldRow className={css({ marginBottom: this.props.theme.spacing(1) })}>
             <QueryWithAssistantButton
               currentQuery={query}

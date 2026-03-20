@@ -344,6 +344,66 @@ func (_c *MockRepositoryResources_RemoveFolder_Call) RunAndReturn(run func(conte
 	return _c
 }
 
+// RenameFolderPath provides a mock function with given fields: ctx, previousPath, previousRef, newPath, newRef
+func (_m *MockRepositoryResources) RenameFolderPath(ctx context.Context, previousPath string, previousRef string, newPath string, newRef string) (string, error) {
+	ret := _m.Called(ctx, previousPath, previousRef, newPath, newRef)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RenameFolderPath")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (string, error)); ok {
+		return rf(ctx, previousPath, previousRef, newPath, newRef)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) string); ok {
+		r0 = rf(ctx, previousPath, previousRef, newPath, newRef)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+		r1 = rf(ctx, previousPath, previousRef, newPath, newRef)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryResources_RenameFolderPath_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RenameFolderPath'
+type MockRepositoryResources_RenameFolderPath_Call struct {
+	*mock.Call
+}
+
+// RenameFolderPath is a helper method to define mock.On call
+//   - ctx context.Context
+//   - previousPath string
+//   - previousRef string
+//   - newPath string
+//   - newRef string
+func (_e *MockRepositoryResources_Expecter) RenameFolderPath(ctx interface{}, previousPath interface{}, previousRef interface{}, newPath interface{}, newRef interface{}) *MockRepositoryResources_RenameFolderPath_Call {
+	return &MockRepositoryResources_RenameFolderPath_Call{Call: _e.mock.On("RenameFolderPath", ctx, previousPath, previousRef, newPath, newRef)}
+}
+
+func (_c *MockRepositoryResources_RenameFolderPath_Call) Run(run func(ctx context.Context, previousPath string, previousRef string, newPath string, newRef string)) *MockRepositoryResources_RenameFolderPath_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryResources_RenameFolderPath_Call) Return(_a0 string, _a1 error) *MockRepositoryResources_RenameFolderPath_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryResources_RenameFolderPath_Call) RunAndReturn(run func(context.Context, string, string, string, string) (string, error)) *MockRepositoryResources_RenameFolderPath_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemoveFolderFromTree provides a mock function with given fields: folderID
 func (_m *MockRepositoryResources) RemoveFolderFromTree(folderID string) {
 	_m.Called(folderID)

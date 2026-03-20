@@ -57,7 +57,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
-	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker)
+	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
 		return err
@@ -84,7 +84,8 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	return nil
 }
 
-func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker) (affectedFolders map[string]string, err error) {
+//nolint:gocyclo
+func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) (affectedFolders map[string]string, err error) {
 	// this will keep track of any folders that had resources deleted from it
 	// with key-value as path:grafana uid.
 	// after cleaning up all resources, we will look to see if the foldrs are
@@ -150,6 +151,29 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
 
+		// Created/deleted directory entries (trailing-slash paths) appear from
+		// cross-boundary renames. The individual file-level changes within the
+		// directory are emitted separately and already handle folder creation
+		// (via EnsureFolderPathExist inside WriteResourceFromFile) and deletion
+		// (via affectedFolders / orphan cleanup). Skip them to avoid routing
+		// directory paths to file-processing logic. Renamed directories must
+		// still reach RenameFolderPath below.
+		if safepath.IsDir(change.Path) && change.Action != repository.FileActionRenamed {
+			progress.Record(ctx, resultBuilder.Build())
+			continue
+		}
+
+		if folderMetadataEnabled && resources.IsFolderMetadataFile(change.Path) &&
+			(change.Action == repository.FileActionCreated || change.Action == repository.FileActionUpdated) {
+			name, err := applyFolderMetadataUpdate(ctx, change, repositoryResources, tracer)
+			if err != nil {
+				resultBuilder.WithError(err)
+			}
+			resultBuilder.WithName(name)
+			progress.Record(ctx, resultBuilder.Build())
+			continue
+		}
+
 		if change.Action == repository.FileActionCreated && !quotaTracker.TryAcquire() {
 			progress.Record(ctx, resultBuilder.
 				WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
@@ -185,19 +209,32 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 			removeSpan.End()
 		case repository.FileActionRenamed:
-			renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_resource_file")
-			name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
-			if err != nil {
-				renameSpan.RecordError(err)
-				resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))
-			}
-			resultBuilder.WithName(name).WithGVK(gvk)
+			if safepath.IsDir(change.Path) {
+				renameFolderCtx, renameFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_folder_path")
+				oldFolderID, err := repositoryResources.RenameFolderPath(renameFolderCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
+				if err != nil {
+					renameFolderSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("renaming folder from %s to %s: %w", change.PreviousPath, change.Path, err))
+				}
+				if oldFolderID != "" {
+					affectedFolders[change.PreviousPath] = oldFolderID
+				}
+				renameFolderSpan.End()
+			} else {
+				renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_resource_file")
+				name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
+				if err != nil {
+					renameSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))
+				}
+				resultBuilder.WithName(name).WithGVK(gvk)
 
-			if oldFolderName != "" {
-				affectedFolders[safepath.Dir(change.PreviousPath)] = oldFolderName
-			}
+				if oldFolderName != "" {
+					affectedFolders[safepath.Dir(change.PreviousPath)] = oldFolderName
+				}
 
-			renameSpan.End()
+				renameSpan.End()
+			}
 		case repository.FileActionIgnored:
 			// do nothing
 		}
@@ -205,6 +242,22 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 	}
 
 	return affectedFolders, nil
+}
+
+// applyFolderMetadataUpdate routes _folder.json changes through EnsureFolderPathExist
+// so the folder manager can create or update the folder with the correct title,
+// metadata hash, and annotations.
+func applyFolderMetadataUpdate(ctx context.Context, change repository.VersionedFileChange, repositoryResources resources.RepositoryResources, tracer tracing.Tracer) (string, error) {
+	folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.update_folder_metadata")
+	defer folderSpan.End()
+
+	folderDir := safepath.Dir(change.Path)
+	folder, err := repositoryResources.EnsureFolderPathExist(folderCtx, folderDir)
+	if err != nil {
+		folderSpan.RecordError(err)
+		return "", fmt.Errorf("updating folder metadata at %s: %w", folderDir, err)
+	}
+	return folder, nil
 }
 
 // sortChangesByActionPriority reorders changes so deletions are processed before creations.
