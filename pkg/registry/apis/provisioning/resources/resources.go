@@ -303,16 +303,18 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse new file: %w", err)
 	}
 
-	oldFolderName := existingFolder(ctx, oldParsed)
-
 	// Only delete the old resource when the identity (metadata.name) changed.
 	// When the name stays the same, WriteResourceFromFile will update in place.
 	if oldParsed.Obj.GetName() != newParsed.Obj.GetName() {
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.Run(ctx); err != nil {
-			return oldParsed.Obj.GetName(), oldFolderName, oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
+			return oldParsed.Obj.GetName(), folderFromExisting(oldParsed.Existing), oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
 		}
+	} else if oldParsed.Client != nil {
+		oldParsed.Existing, _ = oldParsed.Client.Get(ctx, oldParsed.Obj.GetName(), metav1.GetOptions{})
 	}
+
+	oldFolderName := folderFromExisting(oldParsed.Existing)
 
 	newName, gvk, err := r.WriteResourceFromFile(ctx, newPath, newRef)
 	if err != nil {
@@ -321,14 +323,8 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	return newName, oldFolderName, gvk, nil
 }
 
-// existingFolder returns the folder annotation of a resource's current Grafana
-// object, or empty string if the resource doesn't exist yet.
-func existingFolder(ctx context.Context, parsed *ParsedResource) string {
-	if parsed.Client == nil {
-		return ""
-	}
-	existing, err := parsed.Client.Get(ctx, parsed.Obj.GetName(), metav1.GetOptions{})
-	if err != nil || existing == nil {
+func folderFromExisting(existing *unstructured.Unstructured) string {
+	if existing == nil {
 		return ""
 	}
 	meta, err := utils.MetaAccessor(existing)
