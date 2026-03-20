@@ -3,13 +3,14 @@ import { screen } from '@testing-library/react';
 import { UserEvent } from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import type { JSX } from 'react';
-import { render } from 'test/test-utils';
+import { act, render, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
-import { setupProvisioningMswServer } from '../mocks/server';
+import { getMockLiveSrv, setupProvisioningMswServer } from '../mocks/server';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
 import { StepStatusProvider } from './StepStatusContext';
@@ -169,6 +170,133 @@ function setupMockSubmitData() {
   return mockSubmitData;
 }
 
+const syncRepositoryName = 'test-repo-abc123';
+const syncRepositoryLabel = { 'provisioning.grafana.app/repository': syncRepositoryName };
+
+function createSyncJob(overrides: Partial<Job> = {}): Job {
+  const { metadata: metadataOverrides, spec: specOverrides, status: statusOverrides, ...rest } = overrides;
+  const metadata = {
+    name: 'sync-job-1',
+    uid: 'uid-1',
+    ...metadataOverrides,
+    labels: {
+      ...syncRepositoryLabel,
+      ...metadataOverrides?.labels,
+    },
+  };
+  const spec = {
+    action: 'pull',
+    ...specOverrides,
+  };
+  const status = {
+    state: 'pending',
+    ...statusOverrides,
+  };
+
+  return {
+    ...rest,
+    metadata,
+    spec,
+    status,
+  };
+}
+
+function createSyncRepository(overrides: Partial<Repository> = {}): Repository {
+  const { metadata: metadataOverrides, spec: specOverrides, status: statusOverrides, ...rest } = overrides;
+
+  return {
+    ...rest,
+    metadata: {
+      name: syncRepositoryName,
+      generation: 1,
+      ...metadataOverrides,
+    },
+    spec: {
+      title: 'Test Repository',
+      type: 'github',
+      sync: { target: 'folder', enabled: true },
+      workflows: [],
+      github: {
+        url: 'https://github.com/test/repo',
+        branch: 'main',
+      },
+      ...specOverrides,
+    },
+    status: {
+      observedGeneration: 1,
+      health: {
+        healthy: true,
+        checked: 1704067200000,
+        message: [],
+      },
+      ...statusOverrides,
+    },
+  };
+}
+
+function enableSynchronizationStep() {
+  server.use(
+    http.get(`${BASE}/stats`, () => HttpResponse.json({ instance: [{ group: 'dashboard.grafana.app', count: 1 }] })),
+    http.get(`${BASE}/repositories/:name/files/`, () =>
+      HttpResponse.json({ items: [{ name: 'test.json', path: 'test.json' }] })
+    )
+  );
+}
+
+function mockRepositoryList(repository: Repository = createSyncRepository()) {
+  server.use(
+    http.get(`${BASE}/repositories`, () =>
+      HttpResponse.json({
+        items: [repository],
+        metadata: { resourceVersion: '1' },
+      })
+    )
+  );
+}
+
+function mockSyncRepositoryLookup(repository: Repository = createSyncRepository()) {
+  server.use(http.get(`${BASE}/repositories/:name`, () => HttpResponse.json(repository)));
+}
+
+async function navigateToBootstrapStep(user: UserEvent) {
+  enableSynchronizationStep();
+
+  await fillConnectionForm(user, 'github', {
+    token: 'test-token',
+    url: 'https://github.com/test/repo',
+    branch: 'main',
+  });
+
+  await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
+  expect(await screen.findByRole('heading', { name: /3\. Choose what to synchronize/i })).toBeInTheDocument();
+}
+
+async function navigateToSynchronizationStep(user: UserEvent) {
+  await navigateToBootstrapStep(user);
+  await user.click(screen.getByRole('button', { name: /Synchronize with external storage/i }));
+  expect(await screen.findByRole('heading', { name: /4\. Synchronize with external storage/i })).toBeInTheDocument();
+}
+
+function setupWorkingJobHandlers() {
+  const createdJob = createSyncJob();
+  const workingJob = createSyncJob({
+    status: { state: 'working', message: 'Pulling...', progress: 30 },
+  });
+  server.use(
+    http.post(`${BASE}/repositories/:name/jobs`, () => HttpResponse.json(createdJob)),
+    http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [workingJob], metadata: { resourceVersion: '1' } }))
+  );
+  return { createdJob, workingJob };
+}
+
+async function beginSynchronization(user: UserEvent) {
+  await navigateToSynchronizationStep(user);
+  const finishButton = screen.getByRole('button', { name: /Choose additional settings/i });
+  await user.click(screen.getByRole('button', { name: /Begin synchronization/i }));
+  expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+  return { finishButton };
+}
+
 describe('ProvisioningWizard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -207,38 +335,6 @@ describe('ProvisioningWizard', () => {
 
       // Verify connection step
       expect(await screen.findByRole('heading', { name: /Configure repository/i })).toBeInTheDocument();
-    });
-
-    it('should progress through first 3 steps successfully', async () => {
-      // Override stats and files for this test via MSW
-      server.use(
-        http.get(`${BASE}/stats`, () =>
-          HttpResponse.json({ instance: [{ group: 'dashboard.grafana.app', count: 1 }] })
-        ),
-        http.get(`${BASE}/repositories/:name/files/`, () =>
-          HttpResponse.json({ items: [{ name: 'test.json', path: 'test.json' }] })
-        )
-      );
-
-      const { user } = setup(<ProvisioningWizard type="github" />);
-
-      await fillConnectionForm(user, 'github', {
-        token: 'test-token',
-        url: 'https://github.com/test/repo',
-      });
-
-      await user.click(screen.getByRole('button', { name: /Choose what to synchronize/i }));
-
-      expect(await screen.findByRole('heading', { name: /3\. Choose what to synchronize/i })).toBeInTheDocument();
-
-      expect(mockUseCreateOrUpdateRepository).toHaveBeenCalled();
-
-      await user.click(screen.getByRole('button', { name: /Synchronize with external storage/i }));
-
-      expect(
-        await screen.findByRole('heading', { name: /4\. Synchronize with external storage/i })
-      ).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Begin synchronization/i })).toBeInTheDocument();
     });
 
     it('should skip sync step when there are no resources', async () => {
@@ -391,6 +487,277 @@ describe('ProvisioningWizard', () => {
       // Should still be on connection step due to validation
       expect(screen.getByRole('heading', { name: /2\. Configure repository/i })).toBeInTheDocument();
       expect(screen.getByText(/Branch is required/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Repository Reconciliation', () => {
+    it('shows loading while waiting for reconciliation, then shows bootstrap content after a healthy watch event', async () => {
+      mockRepositoryList(
+        createSyncRepository({
+          status: {
+            observedGeneration: undefined,
+          },
+        })
+      );
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      await navigateToBootstrapStep(user);
+
+      expect(screen.getByText('Loading resource information...')).toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('repositories', {
+          type: 'MODIFIED',
+          object: createSyncRepository(),
+        });
+      });
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText('Loading resource information...')).not.toBeInTheDocument();
+      });
+    });
+
+    it('shows an unhealthy repository error and clears it after retry plus a healthy watch event', async () => {
+      mockRepositoryList(
+        createSyncRepository({
+          status: {
+            observedGeneration: 1,
+            health: {
+              healthy: false,
+              checked: 1704067200000,
+              message: ['Connection failed'],
+            },
+          },
+        })
+      );
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      await navigateToBootstrapStep(user);
+
+      expect(await screen.findByText('Repository status unhealthy')).toBeInTheDocument();
+
+      // Retry is rendered via Alert's buttonContent/onRemove, not as a standard named button
+      const retryButton = (await screen.findByText('Retry')).closest('button');
+      expect(retryButton).not.toBeNull();
+      await user.click(retryButton!);
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('repositories', {
+          type: 'MODIFIED',
+          object: createSyncRepository(),
+        });
+      });
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText('Repository status unhealthy')).not.toBeInTheDocument();
+      });
+    });
+
+    it('transitions from loading to unhealthy to healthy as repository watch events arrive', async () => {
+      mockRepositoryList(
+        createSyncRepository({
+          status: {
+            observedGeneration: undefined,
+          },
+        })
+      );
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      await navigateToBootstrapStep(user);
+
+      expect(screen.getByText('Loading resource information...')).toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('repositories', {
+          type: 'MODIFIED',
+          object: createSyncRepository({
+            status: {
+              observedGeneration: 1,
+              health: {
+                healthy: false,
+                checked: 1704067200000,
+                message: ['Connection failed'],
+              },
+            },
+          }),
+        });
+      });
+
+      expect(await screen.findByText('Repository status unhealthy')).toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('repositories', {
+          type: 'MODIFIED',
+          object: createSyncRepository(),
+        });
+      });
+
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.queryByText('Repository status unhealthy')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Synchronization Step', () => {
+    it('enables the finish button after the sync job succeeds via a watch event', async () => {
+      setupWorkingJobHandlers();
+      mockSyncRepositoryLookup();
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+      const { finishButton } = await beginSynchronization(user);
+      expect(finishButton).toBeDisabled();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('jobs', {
+          type: 'MODIFIED',
+          object: createSyncJob({ status: { state: 'success' } }),
+        });
+      });
+
+      await waitFor(() => {
+        expect(finishButton).toBeEnabled();
+      });
+      expect(await screen.findByText(/Your resources are now in your external storage/i)).toBeInTheDocument();
+    });
+
+    it('enables the finish button and shows a warning alert when the sync job completes with warnings', async () => {
+      setupWorkingJobHandlers();
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+      const { finishButton } = await beginSynchronization(user);
+      expect(finishButton).toBeDisabled();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('jobs', {
+          type: 'MODIFIED',
+          object: createSyncJob({ status: { state: 'warning', message: 'Completed with warnings' } }),
+        });
+      });
+
+      await waitFor(() => {
+        expect(finishButton).toBeEnabled();
+      });
+      expect(await screen.findByText('Job completed with warnings')).toBeInTheDocument();
+      expect(screen.getByText('Completed with warnings')).toBeInTheDocument();
+    });
+
+    it('shows an error alert and keeps the finish button disabled when the sync job fails', async () => {
+      setupWorkingJobHandlers();
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+      const { finishButton } = await beginSynchronization(user);
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('jobs', {
+          type: 'MODIFIED',
+          object: createSyncJob({ status: { state: 'error', message: 'Sync failed' } }),
+        });
+      });
+
+      expect(await screen.findByText('Error running job')).toBeInTheDocument();
+      expect(finishButton).toBeDisabled();
+    });
+
+    it('shows an error alert and keeps the finish button disabled when the jobs watch stream errors', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        setupWorkingJobHandlers();
+
+        const { user } = setup(<ProvisioningWizard type="github" />);
+        const { finishButton } = await beginSynchronization(user);
+
+        act(() => {
+          getMockLiveSrv().emitWatchError('jobs', new Error('connection lost'));
+        });
+
+        expect(await screen.findByText('Error running job')).toBeInTheDocument();
+        expect(screen.getByText('Error: connection lost')).toBeInTheDocument();
+        expect(finishButton).toBeDisabled();
+      } finally {
+        consoleErrorSpy.mockRestore();
+      }
+    });
+
+    it('creates a new sync job when retry is clicked after a job error', async () => {
+      const createdJobs = [
+        createSyncJob(),
+        createSyncJob({
+          metadata: {
+            name: 'sync-job-2',
+            uid: 'uid-2',
+            labels: syncRepositoryLabel,
+          },
+        }),
+      ];
+      const jobLists = {
+        'metadata.name=sync-job-1': createSyncJob({
+          status: {
+            state: 'working',
+            message: 'Pulling...',
+            progress: 30,
+          },
+        }),
+        'metadata.name=sync-job-2': createSyncJob({
+          metadata: {
+            name: 'sync-job-2',
+            uid: 'uid-2',
+            labels: syncRepositoryLabel,
+          },
+          status: {
+            state: 'working',
+            message: 'Retrying...',
+            progress: 10,
+          },
+        }),
+      };
+      const errorJob = createSyncJob({
+        status: {
+          state: 'error',
+          message: 'Sync failed',
+        },
+      });
+
+      let createJobCalls = 0;
+      server.use(
+        http.post(`${BASE}/repositories/:name/jobs`, () => {
+          const job = createdJobs[Math.min(createJobCalls, createdJobs.length - 1)];
+          createJobCalls++;
+          return HttpResponse.json(job);
+        }),
+        http.get(`${BASE}/jobs`, ({ request }) => {
+          const fieldSelector = new URL(request.url).searchParams.get('fieldSelector') ?? 'metadata.name=sync-job-1';
+          return HttpResponse.json({
+            items: [jobLists[fieldSelector as keyof typeof jobLists]],
+            metadata: { resourceVersion: '1' },
+          });
+        })
+      );
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+      await navigateToSynchronizationStep(user);
+
+      await user.click(screen.getByRole('button', { name: /Begin synchronization/i }));
+      expect(await screen.findByText('Pulling...')).toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('jobs', { type: 'MODIFIED', object: errorJob });
+      });
+
+      // Retry is rendered via Alert's buttonContent/onRemove, not as a standard named button
+      const retryButton = (await screen.findByText('Retry')).closest('button');
+      expect(retryButton).not.toBeNull();
+      await user.click(retryButton!);
+
+      await waitFor(() => {
+        expect(createJobCalls).toBe(2);
+      });
+      expect(await screen.findByText('Retrying...')).toBeInTheDocument();
     });
   });
 
