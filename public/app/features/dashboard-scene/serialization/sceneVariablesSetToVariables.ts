@@ -578,6 +578,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           ],
           defaultKeys: variable.state.defaultKeys || [],
           allowCustomValue: variable.state.allowCustomValue ?? true,
+          enableGroupBy: variable.state.supportsGroupByOperator ?? false,
         },
       };
       variables.push(adhocVariable);

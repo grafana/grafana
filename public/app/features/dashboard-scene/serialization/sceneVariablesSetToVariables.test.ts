@@ -1418,6 +1418,7 @@ describe('sceneVariablesSetToVariables', () => {
         ],
         "defaultKeys": [],
         "description": "test-desc",
+        "enableGroupBy": false,
         "filters": [
           {
             "key": "filterTest",
@@ -1508,6 +1509,7 @@ describe('sceneVariablesSetToVariables', () => {
           },
         ],
         "description": "test-desc",
+        "enableGroupBy": false,
         "filters": [
           {
             "key": "filterTest",
@@ -1522,6 +1524,47 @@ describe('sceneVariablesSetToVariables', () => {
       },
     }
     `);
+    });
+
+    it('should persist supportsGroupByOperator as enableGroupBy', () => {
+      const variable = new AdHocFiltersVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
+        filters: [],
+        baseFilters: [],
+        supportsGroupByOperator: true,
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(true);
+    });
+
+    it('should persist enableGroupBy as false when supportsGroupByOperator is not set', () => {
+      const variable = new AdHocFiltersVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
+        filters: [],
+        baseFilters: [],
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
+      });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(false);
     });
 
     describe('when the groupByVariable feature toggle is enabled', () => {

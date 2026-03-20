@@ -5,6 +5,7 @@ import { DataSourceInstanceSettings, GrafanaTheme2, MetricFindValue, readCSV } f
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
+import { config } from '@grafana/runtime';
 import { AdHocFiltersController } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch, Stack, useStyles2 } from '@grafana/ui';
@@ -12,31 +13,36 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 
 import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
 import { VariableLegend } from './VariableLegend';
-
 export interface AdHocVariableFormProps {
   datasource?: DataSourceRef;
   onDataSourceChange: (dsSettings: DataSourceInstanceSettings) => void;
   allowCustomValue?: boolean;
+  enableGroupBy?: boolean;
   infoText?: string;
   defaultKeys?: MetricFindValue[];
   onDefaultKeysChange?: (keys?: MetricFindValue[]) => void;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
+  onEnableGroupByChange?: (event: FormEvent<HTMLInputElement>) => void;
   originFiltersController?: AdHocFiltersController;
   inline?: boolean;
   datasourceSupported: boolean;
+  datasourceSupportsGroupBy?: boolean;
 }
 
 export function AdHocVariableForm({
   datasource,
   infoText,
   allowCustomValue,
+  enableGroupBy,
   onDataSourceChange,
   onDefaultKeysChange,
   onAllowCustomValueChange,
+  onEnableGroupByChange,
   originFiltersController,
   defaultKeys,
   inline,
   datasourceSupported,
+  datasourceSupportsGroupBy,
 }: AdHocVariableFormProps) {
   const styles = useStyles2(getStyles);
   const updateStaticKeys = useCallback(
@@ -152,6 +158,23 @@ export function AdHocVariableForm({
           />
         </Field>
       )}
+
+      {config.featureToggles.dashboardUnifiedDrilldownControls &&
+        datasource &&
+        datasourceSupported &&
+        datasourceSupportsGroupBy &&
+        onEnableGroupByChange && (
+          <Field
+            label={t('dashboard-scene.ad-hoc-variable-form.name-enable-group-by', 'Enable group by')}
+            description={t(
+              'dashboard-scene.ad-hoc-variable-form.description-enable-group-by',
+              'Enables group by operator in the ad hoc filter combobox'
+            )}
+            noMargin
+          >
+            <Switch value={enableGroupBy ?? false} onChange={onEnableGroupByChange} />
+          </Field>
+        )}
     </Stack>
   );
 }
