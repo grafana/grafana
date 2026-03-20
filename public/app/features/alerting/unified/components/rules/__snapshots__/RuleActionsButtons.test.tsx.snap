@@ -26,21 +26,3 @@ exports[`RuleActionsButtons renders minimal "More" menu when appropriate 1`] = `
   "Copy link",
 ]
 `;
-
-exports[`RuleActionsButtons renders minimal "More" menu when appropriate 2`] = `
-[
-  "Copy link",
-]
-`;
-
-exports[`RuleActionsButtons should be able to pause a Grafana rule 1`] = `
-[
-  "Pause evaluation",
-  "Silence notifications",
-  "Declare incident",
-  "Duplicate",
-  "Copy link",
-  "Export",
-  "Delete",
-]
-`;
