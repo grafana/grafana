@@ -308,30 +308,30 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	if oldParsed.Obj.GetName() != newParsed.Obj.GetName() {
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.Run(ctx); err != nil {
-			return oldParsed.Obj.GetName(), folderFromExisting(oldParsed.Existing), oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
+			var folderName string
+			if oldParsed.Existing != nil {
+				if meta, metaErr := utils.MetaAccessor(oldParsed.Existing); metaErr == nil {
+					folderName = meta.GetFolder()
+				}
+			}
+			return oldParsed.Obj.GetName(), folderName, oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
 		}
 	} else if oldParsed.Client != nil {
 		oldParsed.Existing, _ = oldParsed.Client.Get(ctx, oldParsed.Obj.GetName(), metav1.GetOptions{})
 	}
 
-	oldFolderName := folderFromExisting(oldParsed.Existing)
+	var oldFolderName string
+	if oldParsed.Existing != nil {
+		if meta, metaErr := utils.MetaAccessor(oldParsed.Existing); metaErr == nil {
+			oldFolderName = meta.GetFolder()
+		}
+	}
 
 	newName, gvk, err := r.WriteResourceFromFile(ctx, newPath, newRef)
 	if err != nil {
 		return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
 	}
 	return newName, oldFolderName, gvk, nil
-}
-
-func folderFromExisting(existing *unstructured.Unstructured) string {
-	if existing == nil {
-		return ""
-	}
-	meta, err := utils.MetaAccessor(existing)
-	if err != nil {
-		return ""
-	}
-	return meta.GetFolder()
 }
 
 func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, string, schema.GroupVersionKind, error) {
