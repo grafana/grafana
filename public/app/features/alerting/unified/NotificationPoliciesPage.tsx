@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSet } from 'react-use';
 
@@ -181,24 +182,30 @@ function PolicyTreeTab() {
 
   const handleChangeContactPoint = useCallback(
     (value: string | undefined) => {
+      if (value === contactPointFilter) {
+        return;
+      }
       if (value) {
         trackNotificationPoliciesFilterContactPoint();
       }
       setContactPointFilter(value);
       resetExpandState();
     },
-    [resetExpandState]
+    [contactPointFilter, resetExpandState]
   );
 
   const handleChangeLabelMatchers = useCallback(
     (value: ObjectMatcher[]) => {
+      if (isEqual(value, labelMatchersFilter)) {
+        return;
+      }
       if (value.length > 0) {
         trackNotificationPoliciesFilterMatchers();
       }
       setLabelMatchersFilter(value);
       resetExpandState();
     },
-    [resetExpandState]
+    [labelMatchersFilter, resetExpandState]
   );
 
   // Reset expand state when the policy-tree selector filter changes
