@@ -7,13 +7,13 @@ import { Input } from '../Input/Input';
 import { MultiSelect } from '../Select/Select';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
-import { useFieldDisplayNames, useSelectOptions, frameHasName } from './utils';
+import { useFieldDisplayNames, useMatcherSelectOptions, frameHasName } from './utils';
 
 export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>((props) => {
-  const { id, data, options, onChange: onChangeFromProps } = props;
+  const { id, data, options, onChange: onChangeFromProps, scope } = props;
   const { readOnly, prefix } = options;
-  const names = useFieldDisplayNames(data);
-  const selectOptions = useSelectOptions(names, undefined);
+  const names = useFieldDisplayNames(data, undefined, scope);
+  const selectOptions = useMatcherSelectOptions(names, undefined, { scope });
 
   const onChange = useCallback(
     (selections: Array<SelectableValue<string>>) => {

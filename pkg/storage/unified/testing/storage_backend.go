@@ -3,7 +3,6 @@ package test
 import (
 	"context"
 	"fmt"
-	"iter"
 	"net/http"
 	"slices"
 	"strings"
@@ -43,6 +42,7 @@ const (
 	TestCreateNewResource         = "create new resource"
 	TestGetResourceLastImportTime = "get resource last import time"
 	TestOptimisticLocking         = "optimistic locking on concurrent writes"
+	TestClusterScopedResources    = "cluster scoped resources"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -91,6 +91,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestListModifiedSince, runTestIntegrationBackendListModifiedSince},
 		{TestGetResourceLastImportTime, runTestIntegrationGetResourceLastImportTime},
 		{TestOptimisticLocking, runTestIntegrationBackendOptimisticLocking},
+		{TestClusterScopedResources, runTestIntegrationBackendClusterScopedResources},
 	}
 
 	for _, tc := range cases {
@@ -549,7 +550,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 			Group:     "group",
 			Resource:  "resource",
 		}
-		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated, nil)
 		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
 		counter := 0
@@ -561,31 +562,50 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		require.Equal(t, 1, counter) // only one event should be returned
 	})
 
-	t.Run("no events if none after the given resource version", func(t *testing.T) {
+	t.Run("at most one event if none after the given resource version", func(t *testing.T) {
 		key := resource.NamespacedResource{
 			Namespace: ns,
 			Group:     "group",
 			Resource:  "resource",
 		}
-		latestRv, seq := backend.ListModifiedSince(ctx, key, rvDeleted)
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvDeleted, nil)
 		require.GreaterOrEqual(t, latestRv, rvDeleted)
 
-		isEmpty(t, seq)
+		// ListModifiedSince is allowed to return some events prior to the requested
+		// RV (e.g., lookback window), so we allow 0 or 1 results.
+		counter := 0
+		for _, err := range seq {
+			require.NoError(t, err)
+			counter++
+		}
+		require.LessOrEqual(t, counter, 1)
 	})
 
-	t.Run("no events for subsequent listModifiedSince calls", func(t *testing.T) {
+	t.Run("at most one event for subsequent listModifiedSince calls", func(t *testing.T) {
 		key := resource.NamespacedResource{
 			Namespace: ns,
 			Group:     "group",
 			Resource:  "resource",
 		}
-		latestRv1, seq := backend.ListModifiedSince(ctx, key, rvDeleted)
+		latestRv1, seq := backend.ListModifiedSince(ctx, key, rvDeleted, nil)
 		require.GreaterOrEqual(t, latestRv1, rvDeleted)
-		isEmpty(t, seq)
+		// ListModifiedSince is allowed to return some events prior to the requested
+		// RV (e.g., lookback window), so we allow 0 or 1 results.
+		counter := 0
+		for _, err := range seq {
+			require.NoError(t, err)
+			counter++
+		}
+		require.LessOrEqual(t, counter, 1)
 
-		latestRv2, seq := backend.ListModifiedSince(ctx, key, latestRv1)
+		latestRv2, seq := backend.ListModifiedSince(ctx, key, latestRv1, nil)
 		require.Equal(t, latestRv1, latestRv2)
-		isEmpty(t, seq)
+		counter = 0
+		for _, err := range seq {
+			require.NoError(t, err)
+			counter++
+		}
+		require.LessOrEqual(t, counter, 1)
 	})
 
 	t.Run("will only return modified events for the given key", func(t *testing.T) {
@@ -599,7 +619,7 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		rvCreatedOtherTenant, err := WriteEvent(ctx, backend, "item2", resourcepb.WatchEvent_ADDED, WithNamespace("other-ns"))
 		require.NoError(t, err)
 
-		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated)
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rvCreated, nil)
 		require.Greater(t, latestRv, rvCreated)
 
 		counter := 0
@@ -643,29 +663,27 @@ func runTestIntegrationBackendListModifiedSince(t *testing.T, backend resource.S
 		rv10, err := WriteEvent(ctx, backend, "bItem", resourcepb.WatchEvent_ADDED, WithNamespace(ns))
 		require.NoError(t, err)
 
-		latestRv, seq := backend.ListModifiedSince(ctx, key, rv1-1)
+		latestRv, seq := backend.ListModifiedSince(ctx, key, rv1-1, nil)
 		require.GreaterOrEqual(t, latestRv, rv10)
 
-		counter := 0
-		names := []string{"bItem", "aItem", "cItem"}
-		rvs := []int64{rv10, rv9, rv6}
+		expected := map[string]int64{
+			"bItem": rv10,
+			"aItem": rv9,
+			"cItem": rv6,
+		}
+		results := make(map[string]int64)
 		for res, err := range seq {
 			require.NoError(t, err)
 			require.Equal(t, key.Namespace, res.Key.Namespace)
-			require.Equal(t, names[counter], res.Key.Name)
-			require.Equal(t, rvs[counter], res.ResourceVersion)
-			counter++
+			results[res.Key.Name] = res.ResourceVersion
 		}
-		require.Equal(t, 3, counter)
+		require.GreaterOrEqual(t, len(results), len(expected))
+		for name, expectedRv := range expected {
+			actualRv, ok := results[name]
+			require.True(t, ok, "expected resource %s not found in results", name)
+			require.Equal(t, expectedRv, actualRv, "wrong RV for %s", name)
+		}
 	})
-}
-
-func isEmpty(t *testing.T, seq iter.Seq2[*resource.ModifiedResource, error]) {
-	counter := 0
-	for range seq {
-		counter++
-	}
-	require.Equal(t, 0, counter)
 }
 
 func runTestIntegrationBackendListHistory(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
@@ -1751,5 +1769,81 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 		// Note: Due to timing, it's possible that all creates detect each other and all fail.
 		// The important thing is that at most one succeeds (race condition is prevented).
 		require.LessOrEqual(t, successes, 1, "at most one create should succeed (errors: %v)", errorMessages)
+	})
+}
+
+func runTestIntegrationBackendClusterScopedResources(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
+
+	group := "cluster.example.com"
+	res := "clusterresources"
+
+	t.Run("Create cluster-scoped resources", func(t *testing.T) {
+		rv1, err := WriteEvent(ctx, backend, "cluster-item1", resourcepb.WatchEvent_ADDED,
+			WithNamespace(""), WithGroup(group), WithResource(res))
+		require.NoError(t, err)
+		require.Greater(t, rv1, int64(0))
+
+		rv2, err := WriteEvent(ctx, backend, "cluster-item2", resourcepb.WatchEvent_ADDED,
+			WithNamespace(""), WithGroup(group), WithResource(res))
+		require.NoError(t, err)
+		require.Greater(t, rv2, rv1)
+	})
+
+	t.Run("Read cluster-scoped resource", func(t *testing.T) {
+		resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "",
+				Group:     group,
+				Resource:  res,
+				Name:      "cluster-item1",
+			},
+		})
+		require.Nil(t, resp.Error, "Read error: %v", resp.Error)
+		require.Greater(t, resp.ResourceVersion, int64(0))
+	})
+
+	t.Run("Update cluster-scoped resource", func(t *testing.T) {
+		resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "",
+				Group:     group,
+				Resource:  res,
+				Name:      "cluster-item1",
+			},
+		})
+		require.Nil(t, resp.Error)
+
+		_, err := WriteEvent(ctx, backend, "cluster-item1", resourcepb.WatchEvent_MODIFIED,
+			WithNamespaceAndRV("", resp.ResourceVersion), WithGroup(group), WithResource(res))
+		require.NoError(t, err)
+	})
+
+	t.Run("Delete cluster-scoped resource", func(t *testing.T) {
+		resp := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "",
+				Group:     group,
+				Resource:  res,
+				Name:      "cluster-item2",
+			},
+		})
+		require.Nil(t, resp.Error)
+
+		_, err := WriteEvent(ctx, backend, "cluster-item2", resourcepb.WatchEvent_DELETED,
+			WithNamespaceAndRV("", resp.ResourceVersion), WithGroup(group), WithResource(res))
+		require.NoError(t, err)
+
+		// Verify deleted
+		resp = backend.ReadResource(ctx, &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "",
+				Group:     group,
+				Resource:  res,
+				Name:      "cluster-item2",
+			},
+		})
+		require.NotNil(t, resp.Error)
+		require.Equal(t, int32(404), resp.Error.Code)
 	})
 }

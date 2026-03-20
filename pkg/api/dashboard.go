@@ -610,7 +610,7 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 		}
 	}
 
-	validation := "Strict"
+	validation := "Warn"
 	if strings.HasPrefix(gv.Version, "v0") {
 		validation = "Ignore" // v0 can be anything
 	}
@@ -625,7 +625,7 @@ func (hs *HTTPServer) saveDashboardViaK8s(c *contextmodel.ReqContext, cmd dashbo
 		})
 	}
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to save dashboard", err)
+		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, err)
 	}
 
 	meta, err = utils.MetaAccessor(dash)

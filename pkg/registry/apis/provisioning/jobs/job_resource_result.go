@@ -10,6 +10,41 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
+// ResourceOutcome describes whether a resource operation succeeded, produced
+// a non-fatal warning, or failed with an error.
+type ResourceOutcome string
+
+const (
+	// OutcomeSuccess indicates the operation completed without issues.
+	OutcomeSuccess ResourceOutcome = "success"
+	// OutcomeWarning indicates the operation completed but with a non-fatal issue
+	// (e.g. missing folder metadata, quota exceeded).
+	OutcomeWarning ResourceOutcome = "warning"
+	// OutcomeError indicates the operation failed.
+	OutcomeError ResourceOutcome = "error"
+)
+
+// ResourceOperation describes the type of action performed on a resource
+// during a provisioning job. Values align with repository.FileAction where
+// applicable.
+type ResourceOperation string
+
+const (
+	// OperationCreated indicates a new resource was created.
+	OperationCreated ResourceOperation = "created"
+	// OperationUpdated indicates an existing resource was modified.
+	OperationUpdated ResourceOperation = "updated"
+	// OperationDeleted indicates a resource was removed.
+	OperationDeleted ResourceOperation = "deleted"
+	// OperationRenamed indicates a resource was moved or renamed.
+	OperationRenamed ResourceOperation = "renamed"
+	// OperationIgnored indicates the resource was skipped (no change needed).
+	OperationIgnored ResourceOperation = "ignored"
+	// OperationReplaced indicates a resource was replaced (e.g. folder metadata
+	// UID migration from path-based to metadata-based).
+	OperationReplaced ResourceOperation = "replaced"
+)
+
 // classifyWarning returns the warning reason for err and whether it is a warning.
 func classifyWarning(err error) (string, bool) {
 	if err == nil {
@@ -18,7 +53,10 @@ func classifyWarning(err error) (string, bool) {
 
 	var validationErr *resources.ResourceValidationError
 	var ownershipErr *resources.ResourceOwnershipConflictError
+	var unmanagedErr *resources.ResourceUnmanagedConflictError
 	var quotaExceededErr *quotas.QuotaExceededError
+	var missingMetaErr *resources.MissingFolderMetadata
+	var metaConflictErr *resources.FolderMetadataConflict
 
 	switch {
 	case errors.As(err, &quotaExceededErr):
@@ -27,6 +65,12 @@ func classifyWarning(err error) (string, bool) {
 		return provisioning.ReasonResourceInvalid, true
 	case errors.As(err, &ownershipErr):
 		return provisioning.ReasonResourceInvalid, true
+	case errors.As(err, &unmanagedErr):
+		return provisioning.ReasonResourceInvalid, true
+	case errors.As(err, &missingMetaErr):
+		return provisioning.ReasonMissingFolderMetadata, true
+	case errors.As(err, &metaConflictErr):
+		return provisioning.ReasonFolderMetadataConflict, true
 	default:
 		return "", false
 	}

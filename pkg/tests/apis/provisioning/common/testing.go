@@ -8,8 +8,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"testing"
@@ -17,12 +19,14 @@ import (
 	"time"
 
 	"github.com/google/go-github/v82/github"
+	"github.com/grafana/nanogit/gittest"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 
@@ -45,6 +49,35 @@ const (
 	WaitTimeoutDefault  = 30 * time.Second
 	WaitIntervalDefault = 100 * time.Millisecond
 )
+
+//nolint:gosec // Test RSA private key (generated for testing purposes only, never used in production)
+const TestGithubPrivateKeyPEM = "-----BEGIN RSA PRIVATE KEY-----\n" + // trufflehog:ignore
+	`MIIEoQIBAAKCAQBn1MuM5hIfH6d3TNStI1ofWv/gcjQ4joi9cFijEwVLuPYkF1nD
+KkSbaMGFUWiOTaB/H9fxmd/V2u04NlBY3av6m5T/sHfVSiEWAEUblh3cA34HVCmD
+cqyyVty5HLGJJlSs2C7W2x7yUc9ImzyDBsyjpKOXuojJ9wN9a17D2cYU5WkXjoDC
+4BHid61jn9WBTtPZXSgOdirwahNzxZQSIP7DA9T8yiZwIWPp5YesgsAPyQLCFPgM
+s77xz/CEUnEYQ35zI/k/mQrwKdQ/ZP8xLwQohUID0BIxE7G5quL069RuuCZWZkoF
+oPiZbp7HSryz1+19jD3rFT7eHGUYvAyCnXmXAgMBAAECggEADSs4Bc7ITZo+Kytb
+bfol3AQ2n8jcRrANN7mgBE7NRSVYUouDnvUlbnCC2t3QXPwLdxQa11GkygLSQ2bg
+GeVDgq1o4GUJTcvxFlFCcpU/hEANI/DQsxNAQ/4wUGoLOlHaO3HPvwBblHA70gGe
+Ux/xpG+lMAFAiB0EHEwZ4M0mClBEOQv3NzaFTWuBHtIMS8eid7M1q5qz9+rCgZSL
+KBBHo0OvUbajG4CWl8SM6LUYapASGg+U17E+4xA3npwpIdsk+CbtX+vvX324n4kn
+0EkrJqCjv8M1KiCKAP+UxwP00ywxOg4PN+x+dHI/I7xBvEKe/x6BltVSdGA+PlUK
+02wagQKBgQDF7gdQLFIagPH7X7dBP6qEGxj/Ck9Qdz3S1gotPkVeq+1/UtQijYZ1
+j44up/0yB2B9P4kW091n+iWcyfoU5UwBua9dHvCZP3QH05LR1ZscUHxLGjDPBASt
+l2xSq0hqqNWBspb1M0eCY0Yxi65iDkj3xsI2iN35BEb1FlWdR5KGvwKBgQCGS0ce
+wASWbZIPU2UoKGOQkIJU6QmLy0KZbfYkpyfE8IxGttYVEQ8puNvDDNZWHNf+LP85
+c8iV6SfnWiLmu1XkG2YmJFBCCAWgJ8Mq2XQD8E+a/xcaW3NqlcC5+I2czX367j3r
+69wZSxRbzR+DCfOiIkrekJImwN183ZYy2cBbKQKBgFj86IrSMmO6H5Ft+j06u5ZD
+fJyF7Rz3T3NwSgkHWzbyQ4ggHEIgsRg/36P4YSzSBj6phyAdRwkNfUWdxXMJmH+a
+FU7frzqnPaqbJAJ1cBRt10QI1XLtkpDdaJVObvONTtjOC3LYiEkGCzQRYeiyFXpZ
+AU51gJ8JnkFotjtNR4KPAoGAehVREDlLcl0lnN0ZZspgyPk2Im6/iOA9KTH3xBZZ
+ZwWu4FIyiHA7spgk4Ep5R0ttZ9oMI3SIcw/EgONGOy8uw/HMiPwWIhEc3B2JpRiO
+CU6bb7JalFFyuQBudiHoyxVcY5PVovWF31CLr3DoJr4TR9+Y5H/U/XnzYCIo+w1N
+exECgYBFAGKYTIeGAvhIvD5TphLpbCyeVLBIq5hRyrdRY+6Iwqdr5PGvLPKwin5+
++4CDhWPW4spq8MYPCRiMrvRSctKt/7FhVGL2vE/0VY3TcLk14qLC+2+0lnPVgnYn
+u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
+-----END RSA PRIVATE KEY-----`
 
 type ProvisioningTestHelper struct {
 	*apis.K8sTestHelper
@@ -383,6 +416,18 @@ func (h *ProvisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to s
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
+// WriteToProvisioningPath writes raw data to a file inside the provisioning path.
+// Parent directories are created automatically.
+func (h *ProvisioningTestHelper) WriteToProvisioningPath(t *testing.T, name string, data []byte) {
+	t.Helper()
+	fullPath := path.Join(h.ProvisioningPath, name)
+	t.Logf("Writing file to provisioning path '%s'", fullPath)
+	err := os.MkdirAll(path.Dir(fullPath), 0o750)
+	require.NoError(t, err, "failed to create directories for provisioning path")
+	err = os.WriteFile(fullPath, data, 0o600)
+	require.NoError(t, err, "failed to write file to provisioning path")
+}
+
 // DebugState logs the current state of filesystem, repository, and Grafana resources for debugging
 func (h *ProvisioningTestHelper) DebugState(t *testing.T, repo string, label string) {
 	t.Helper()
@@ -586,7 +631,11 @@ func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 		templateVars[key] = value
 	}
 
-	tmpl := "testdata/local-write.json.tmpl"
+	var thisFile string
+	if _, file, _, ok := runtime.Caller(0); ok {
+		thisFile = file
+	}
+	tmpl := filepath.Join(filepath.Dir(thisFile), "../testdata/local-write.json.tmpl")
 	if repo.Template != "" {
 		tmpl = repo.Template
 	}
@@ -716,6 +765,34 @@ func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoNam
 	require.Equal(t, expectedCount, count, "unexpected number of dashboards managed by repo %s", repoName)
 }
 
+// TriggerConnectionReconciliation forces the controller to re-process a connection
+// by touching its status (aging the health timestamp by 1ms).
+// Retries on conflict errors caused by optimistic locking.
+func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, name string) {
+	t.Helper()
+	ctx := t.Context()
+
+	const maxRetries = 5
+	for attempt := range maxRetries {
+		conn, err := h.Connections.Resource.Get(ctx, name, metav1.GetOptions{})
+		require.NoError(t, err, "failed to get connection %s", name)
+
+		health, ok := conn.Object["status"].(map[string]any)["health"].(map[string]any)
+		require.True(t, ok, "missing status.health on connection %s", name)
+
+		health["checked"] = time.Now().UnixMilli() - 1
+
+		_, err = h.Connections.Resource.UpdateStatus(ctx, conn, metav1.UpdateOptions{})
+		if err == nil {
+			return
+		}
+		if apierrors.IsConflict(err) && attempt < maxRetries-1 {
+			continue
+		}
+		require.NoError(t, err, "failed to update status for connection %s", name)
+	}
+}
+
 // TriggerRepositoryReconciliation forces the controller to re-process a repo
 // by touching its status (aging the health timestamp by 1ms).
 // Updating it by incrementing its generation by +1 is not triggering a reconciliation.
@@ -786,6 +863,11 @@ type GrafanaOption func(opts *testinfra.GrafanaOpts)
 //nolint:golint,unused
 func WithLogs(opts *testinfra.GrafanaOpts) {
 	opts.EnableLog = true
+}
+
+// WithProvisioningFolderMetadata enables the FlagProvisioningFolderMetadata feature toggle.
+func WithProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
+	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
 }
 
 func WithRepositoryTypes(types []string) GrafanaOption {
@@ -992,6 +1074,23 @@ func UnstructuredToConnection(t *testing.T, obj *unstructured.Unstructured) *pro
 	require.NoError(t, err)
 
 	return c
+}
+
+// ParseTestResults extracts TestResults from an API response k8sruntime.Object.
+func ParseTestResults(t *testing.T, obj k8sruntime.Object) *provisioning.TestResults {
+	t.Helper()
+
+	unstructuredObj, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok, "expected unstructured object")
+
+	data, err := json.Marshal(unstructuredObj.Object)
+	require.NoError(t, err)
+
+	var testResults provisioning.TestResults
+	err = json.Unmarshal(data, &testResults)
+	require.NoError(t, err)
+
+	return &testResults
 }
 
 // FilesPostOptions holds parameters for a direct HTTP POST to the files API.
@@ -1326,6 +1425,238 @@ func requestHelper(
 	return result, resp.Response.StatusCode, nil
 }
 
+// cloneRemote clones the remote into a fresh temporary directory (not git-init'd)
+// and returns the clone path along with a cleanup function.
+func (h *GitExportHelper) cloneRemote(t *testing.T, ctx context.Context, repoName string) (string, func()) {
+	t.Helper()
+	info, ok := h.repoInfos[repoName]
+	if !ok {
+		t.Fatalf("repo %q not registered with GitExportHelper – call CreateGitRepo first", repoName)
+	}
+
+	tmpDir, err := os.MkdirTemp("", "grafana-test-clone-*")
+	require.NoError(t, err, "failed to create temp dir for git clone")
+
+	cloneDir := filepath.Join(tmpDir, "repo")
+	cmd := exec.CommandContext(ctx, "git", "clone", info.remote.AuthURL, cloneDir) //nolint:gosec
+	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		_ = os.RemoveAll(tmpDir)
+		t.Fatalf("failed to clone repo %q: %v\n%s", repoName, err, out)
+	}
+
+	return cloneDir, func() { _ = os.RemoveAll(tmpDir) }
+}
+
+// GitFileExists reports whether filePath exists on the main branch of repoName.
+// It clones the repository via the git protocol (bypassing the provisioning files
+// endpoint, which rejects hidden files such as .keep).
+func (h *GitExportHelper) GitFileExists(t *testing.T, ctx context.Context, repoName, filePath string) bool {
+	t.Helper()
+	cloneDir, cleanup := h.cloneRemote(t, ctx, repoName)
+	defer cleanup()
+
+	_, err := os.Stat(filepath.Join(cloneDir, filePath))
+	return err == nil
+}
+
+// GitReadFile returns the raw bytes of filePath on the main branch of repoName.
+// It fails the test if the file does not exist.
+func (h *GitExportHelper) GitReadFile(t *testing.T, ctx context.Context, repoName, filePath string) []byte {
+	t.Helper()
+	cloneDir, cleanup := h.cloneRemote(t, ctx, repoName)
+	defer cleanup()
+
+	data, err := os.ReadFile(filepath.Join(cloneDir, filePath)) //nolint:gosec
+	require.NoError(t, err, "file %s not found in git repo %s", filePath, repoName)
+	return data
+}
+
+// ExpectedDashboard describes the expected state of a single dashboard.
+type ExpectedDashboard struct {
+	Title      string
+	SourcePath string
+	Folder     string // grafana.app/folder annotation; only checked when non-empty
+}
+
+// RequireDashboardCount asserts the total number of dashboards in the instance.
+func RequireDashboardCount(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, expected int) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		assert.Len(c, list.Items, expected, "unexpected dashboard count")
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %d dashboard(s)", expected)
+}
+
+// RequireDashboardTitle asserts that the dashboard with the given uid (K8s name)
+// has the expected title.
+func RequireDashboardTitle(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, uid, expectedTitle string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		for _, d := range list.Items {
+			if d.GetName() != uid {
+				continue
+			}
+			title, _, _ := unstructured.NestedString(d.Object, "spec", "title")
+			assert.Equal(c, expectedTitle, title, "dashboard %q title mismatch", uid)
+			return
+		}
+		c.Errorf("dashboard with uid %q not found", uid)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboard %q should have title %q", uid, expectedTitle)
+}
+
+// RequireDashboards lists dashboards once and asserts that exactly the expected
+// set exists with matching count, title, and grafana.app/sourcePath for each UID.
+func RequireDashboards(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, expected map[string]ExpectedDashboard) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		if !assert.Len(c, list.Items, len(expected), "unexpected dashboard count") {
+			return
+		}
+		for _, d := range list.Items {
+			uid := d.GetName()
+			exp, ok := expected[uid]
+			if !assert.True(c, ok, "unexpected dashboard %q", uid) {
+				continue
+			}
+			title, _, _ := unstructured.NestedString(d.Object, "spec", "title")
+			assert.Equal(c, exp.Title, title, "dashboard %q title mismatch", uid)
+			sp, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			assert.Equal(c, exp.SourcePath, sp, "dashboard %q sourcePath mismatch", uid)
+			if exp.Folder != "" {
+				folder, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/folder")
+				assert.Equal(c, exp.Folder, folder, "dashboard %q folder mismatch", uid)
+			}
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboards should match expected state")
+}
+
+// RequireRepoFolders lists folders once and asserts that the set of
+// grafana.app/sourcePath values for folders managed by repoName matches exactly.
+func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx context.Context, repoName string, expectedSourcePaths []string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := folderClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		var gotPaths []string
+		for _, f := range list.Items {
+			mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+			if mgr != repoName {
+				continue
+			}
+			sp, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			gotPaths = append(gotPaths, strings.TrimSuffix(sp, "/"))
+		}
+		assert.ElementsMatch(c, expectedSourcePaths, gotPaths, "folder sourcePaths mismatch for repo %q", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"folders for repo %q should have sourcePaths %v", repoName, expectedSourcePaths)
+}
+
+// GetFolderGeneration returns the current generation of the folder with the given UID.
+func GetFolderGeneration(t *testing.T, helper *ProvisioningTestHelper, folderUID string) int64 {
+	t.Helper()
+	obj, err := helper.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get folder %s", folderUID)
+	return obj.GetGeneration()
+}
+
+// GetDashboardGeneration returns the current generation of the dashboard with the given UID.
+func GetDashboardGeneration(t *testing.T, helper *ProvisioningTestHelper, dashboardUID string) int64 {
+	t.Helper()
+	obj, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get dashboard %s", dashboardUID)
+	return obj.GetGeneration()
+}
+
+// GetDashboardCreationTimestamp returns the creation timestamp of the dashboard with the given UID.
+func GetDashboardCreationTimestamp(t *testing.T, helper *ProvisioningTestHelper, dashboardUID string) metav1.Time {
+	t.Helper()
+	obj, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get dashboard %s", dashboardUID)
+	return obj.GetCreationTimestamp()
+}
+
+// FindDashboardUIDBySourcePath returns the UID of the dashboard managed by repoName at sourcePath.
+func FindDashboardUIDBySourcePath(t *testing.T, helper *ProvisioningTestHelper, repoName, sourcePath string) string {
+	t.Helper()
+	var uid string
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		for _, d := range list.Items {
+			annotations := d.GetAnnotations()
+			if annotations["grafana.app/managerId"] != repoName {
+				continue
+			}
+			if annotations["grafana.app/sourcePath"] == sourcePath {
+				uid = d.GetName()
+				return
+			}
+		}
+		c.Errorf("no dashboard managed by %q with sourcePath %q found", repoName, sourcePath)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected dashboard with sourcePath %q for repo %q", sourcePath, repoName)
+	return uid
+}
+
+// ObjectSnapshot captures the identity and version fields of a K8s object
+// so we can later verify it was updated in place (not deleted+recreated).
+type ObjectSnapshot struct {
+	UID               string
+	Generation        int64
+	CreationTimestamp metav1.Time
+}
+
+// SnapshotObject extracts an ObjectSnapshot from an Unstructured K8s object.
+func SnapshotObject(t *testing.T, obj *unstructured.Unstructured) ObjectSnapshot {
+	t.Helper()
+	return ObjectSnapshot{
+		UID:               string(obj.GetUID()),
+		Generation:        obj.GetGeneration(),
+		CreationTimestamp: obj.GetCreationTimestamp(),
+	}
+}
+
+// RequireUpdatedInPlace asserts that the object was updated in place, not
+// deleted and recreated. It compares the UID (definitive identity), the
+// creationTimestamp, and verifies that the generation has not decreased.
+func RequireUpdatedInPlace(t *testing.T, label string, before, after ObjectSnapshot) {
+	t.Helper()
+	require.Equal(t, before.UID, after.UID,
+		"%s: UID changed — object was recreated instead of updated", label)
+	require.Equal(t, before.CreationTimestamp, after.CreationTimestamp,
+		"%s: creationTimestamp changed — object was recreated instead of updated", label)
+	require.GreaterOrEqual(t, after.Generation, before.Generation,
+		"%s: generation decreased — object was recreated instead of updated", label)
+}
+
+// RequireRecreated asserts that the object was deleted and recreated, not
+// updated in place. A different UID is the definitive signal. Generation
+// must reset to 1 on a fresh object. creationTimestamp is not checked
+// because sub-second delete+create can produce identical timestamps.
+func RequireRecreated(t *testing.T, label string, before, after ObjectSnapshot) {
+	t.Helper()
+	require.NotEqual(t, before.UID, after.UID,
+		"%s: UID unchanged — object was updated in place instead of recreated", label)
+	require.Equal(t, int64(1), after.Generation,
+		"%s: generation should reset to 1 after recreate", label)
+}
+
 // FindCondition finds a condition by type in the conditions list
 func FindCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
 	for i := range conditions {
@@ -1334,4 +1665,112 @@ func FindCondition(conditions []metav1.Condition, conditionType string) *metav1.
 		}
 	}
 	return nil
+}
+
+// ── Git-server helpers ──────────────────────────────────────────────────────
+
+// gitRepoInfo stores the user and remote repository created for a named git repository.
+type gitRepoInfo struct {
+	user   *gittest.User
+	remote *gittest.RemoteRepository
+}
+
+// GitExportHelper wraps ProvisioningTestHelper with an embedded gittest server
+// so that export jobs can target a real remote git repository.
+type GitExportHelper struct {
+	*ProvisioningTestHelper
+	gitServer *gittest.Server
+	repoInfos map[string]*gitRepoInfo
+}
+
+// RunGrafanaWithGitServerForExport starts a Grafana instance with git
+// repository support enabled alongside a local gittest server.
+func RunGrafanaWithGitServerForExport(t *testing.T, options ...GrafanaOption) *GitExportHelper {
+	t.Helper()
+
+	ctx := context.Background()
+	srv, err := gittest.NewServer(ctx, gittest.WithLogger(gittest.NewTestLogger(t)))
+	require.NoError(t, err, "failed to start git server")
+	t.Cleanup(func() {
+		if err := srv.Cleanup(); err != nil {
+			t.Logf("failed to cleanup git server: %v", err)
+		}
+	})
+
+	allOpts := append([]GrafanaOption{WithRepositoryTypes([]string{"git"})}, options...)
+	helper := RunGrafana(t, allOpts...)
+
+	return &GitExportHelper{
+		ProvisioningTestHelper: helper,
+		gitServer:              srv,
+		repoInfos:              make(map[string]*gitRepoInfo),
+	}
+}
+
+// CreateGitRepo registers a new git repository on the test server with
+// Grafana provisioning and waits for it to become healthy.
+func (h *GitExportHelper) CreateGitRepo(t *testing.T, repoName string) {
+	t.Helper()
+
+	ctx := context.Background()
+
+	user, err := h.gitServer.CreateUser(ctx)
+	require.NoError(t, err, "failed to create git user")
+
+	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
+	require.NoError(t, err, "failed to create remote git repository")
+
+	h.repoInfos[repoName] = &gitRepoInfo{user: user, remote: remote}
+
+	local, err := gittest.NewLocalRepo(ctx)
+	require.NoError(t, err, "failed to create local git repository")
+	t.Cleanup(func() {
+		if err := local.Cleanup(); err != nil {
+			t.Logf("failed to cleanup local repo: %v", err)
+		}
+	})
+
+	_, err = local.InitWithRemote(user, remote)
+	require.NoError(t, err, "failed to initialize local repo with remote")
+
+	spec := map[string]interface{}{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]interface{}{
+			"name":      repoName,
+			"namespace": "default",
+		},
+		"spec": map[string]interface{}{
+			"title": repoName,
+			"type":  "git",
+			"git": map[string]interface{}{
+				"url":       remote.URL,
+				"branch":    "main",
+				"tokenUser": user.Username,
+			},
+			"sync": map[string]interface{}{
+				"enabled": false,
+				"target":  "instance",
+			},
+			"workflows": []string{"write"},
+		},
+		"secure": map[string]interface{}{
+			"token": map[string]interface{}{
+				"create": user.Password,
+			},
+		},
+	}
+
+	body, err := json.Marshal(spec)
+	require.NoError(t, err)
+
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(ctx)
+	require.NoError(t, result.Error(), "failed to register git repository %q with Grafana", repoName)
+
+	h.WaitForHealthyRepository(t, repoName)
 }

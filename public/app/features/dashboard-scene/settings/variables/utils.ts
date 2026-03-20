@@ -162,12 +162,16 @@ export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVa
     description: editableVariables[variableType].description,
   }));
 
-  if (!config.featureToggles.groupByVariable) {
-    // Remove group by variable type if feature toggle is off
-    return results.filter((option) => option.value !== 'groupby');
-  }
+  return results.filter((option) => {
+    if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
+      return false;
+    }
+    if (config.featureToggles.dashboardUnifiedDrilldownControls && option.value === 'adhoc') {
+      return false;
+    }
 
-  return results;
+    return true;
+  });
 }
 
 export function getVariableEditor(type: EditableVariableType) {
@@ -321,4 +325,8 @@ export function validateVariableName(
   }
 
   return { isValid: true };
+}
+
+export function isVariableEditable(variable: SceneVariable) {
+  return variable.state.type !== 'system' && variable.state.origin === undefined;
 }

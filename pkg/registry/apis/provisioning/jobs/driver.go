@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -78,6 +79,9 @@ type jobDriver struct {
 	// notifications channel for job create events
 	notifications chan struct{}
 
+	// metrics for recording job-level Prometheus metrics (warnings, operations, etc.)
+	metrics *JobMetrics
+
 	// Mutex to protect concurrent access to job processing
 	mu sync.Mutex
 	// currentJob is the job currently being processed
@@ -90,6 +94,7 @@ func NewJobDriver(
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
 	notifications chan struct{},
+	metrics *JobMetrics,
 	workers ...Worker,
 ) (*jobDriver, error) {
 	return &jobDriver{
@@ -101,6 +106,7 @@ func NewJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		notifications:        notifications,
+		metrics:              metrics,
 	}, nil
 }
 
@@ -203,7 +209,7 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	go d.leaseRenewalLoop(leaseRenewalCtx, logger, leaseExpired)
 	defer cancelLeaseRenewal()
 
-	recorder := newJobProgressRecorder(d.onProgress())
+	recorder := newJobProgressRecorder(d.onProgress(), d.metrics, claimedJob.Spec.Action)
 	recorder.SetMessage(ctx, "start job")
 
 	// Process the job with lease loss detection
@@ -382,6 +388,12 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 			return nil
 		}
 
+		if appcontroller.IsPendingDelete(r.Labels) {
+			logger.Info("repository namespace is pending deletion - skip job")
+			recorder.Record(ctx, NewPathOnlyResult(repoName).WithWarning(errors.New("repository namespace is pending deletion - job skipped")).Build())
+			return nil
+		}
+
 		err = worker.Process(ctx, repo, *job, recorder)
 		if err != nil {
 			span.RecordError(err)
@@ -431,7 +443,7 @@ func (d *jobDriver) onProgress() ProgressFn {
 			updated, err := d.store.Update(ctx, job)
 			if err != nil {
 				if apierrors.IsConflict(err) && attempt < maxRetries-1 {
-					// Conflict detected, retry with fresh data
+					d.mu.Unlock()
 					logging.FromContext(ctx).Debug("progress update conflict, retrying", "attempt", attempt+1)
 					continue
 				}
