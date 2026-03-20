@@ -23,6 +23,7 @@ export const defaultDataSourceRef = (): DataSourceRef => ({
 export interface ConfigSpec {
 	field: string;
 	target: TargetSpec;
+	timeRange?: TimeRangeSpec;
 	transformations?: TransformationSpec[];
 }
 
@@ -34,6 +35,17 @@ export const defaultConfigSpec = (): ConfigSpec => ({
 export type TargetSpec = Record<string, any>;
 
 export const defaultTargetSpec = (): TargetSpec => ({});
+
+export interface TimeRangeSpec {
+	field?: string;
+	range?: {
+		from: number;
+		to: number;
+	};
+}
+
+export const defaultTimeRangeSpec = (): TimeRangeSpec => ({
+});
 
 export interface TransformationSpec {
 	type: "regex" | "logfmt";

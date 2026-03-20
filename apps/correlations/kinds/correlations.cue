@@ -34,11 +34,20 @@ DataSourceRef: {
 ConfigSpec: {
 	field: string
 	target: TargetSpec
+	timeRange?: TimeRangeSpec
 	transformations?: [...TransformationSpec]
 }
 
 TargetSpec: {
 	...
+}
+
+TimeRangeSpec: {
+	field?: string
+	range?:  {
+		from: int
+		to: int
+	}
 }
 
 TransformationSpec: {

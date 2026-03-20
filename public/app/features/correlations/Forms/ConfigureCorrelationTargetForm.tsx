@@ -67,6 +67,7 @@ export const ConfigureCorrelationTargetForm = () => {
           }}
           render={({ field: { onChange, value, ...field } }) => (
             <Field
+              noMargin={false}
               label={t('correlations.target-form.type-label', 'Type')}
               description={t('correlations.target-form.target-type-description', 'Specify the type of correlation')}
               htmlFor="corrType"
@@ -104,6 +105,7 @@ export const ConfigureCorrelationTargetForm = () => {
                   }}
                   render={({ field: { onChange, value } }) => (
                     <Field
+                      noMargin={false}
                       label={t('correlations.target-form.target-label', 'Target')}
                       description={t(
                         'correlations.target-form.target-description-query',
@@ -153,6 +155,7 @@ export const ConfigureCorrelationTargetForm = () => {
                 const castVal = value as CorrelationExternal['config']['target']; // the target under "query" type can contain anything a datasource query contains
                 return (
                   <Field
+                    noMargin={false}
                     label={t('correlations.target-form.target-label', 'Target')}
                     description={t(
                       'correlations.target-form.target-description-external',

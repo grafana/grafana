@@ -38,6 +38,7 @@ func (CorrelationDataSourceRef) OpenAPIModelName() string {
 type CorrelationConfigSpec struct {
 	Field           string                          `json:"field"`
 	Target          CorrelationTargetSpec           `json:"target"`
+	TimeRange       *CorrelationTimeRangeSpec       `json:"timeRange,omitempty"`
 	Transformations []CorrelationTransformationSpec `json:"transformations,omitempty"`
 }
 
@@ -57,6 +58,22 @@ type CorrelationTargetSpec map[string]interface{}
 // OpenAPIModelName returns the OpenAPI model name for CorrelationTargetSpec.
 func (CorrelationTargetSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTargetSpec"
+}
+
+// +k8s:openapi-gen=true
+type CorrelationTimeRangeSpec struct {
+	Field *string                                `json:"field,omitempty"`
+	Range *CorrelationV0alpha1TimeRangeSpecRange `json:"range,omitempty"`
+}
+
+// NewCorrelationTimeRangeSpec creates a new CorrelationTimeRangeSpec object.
+func NewCorrelationTimeRangeSpec() *CorrelationTimeRangeSpec {
+	return &CorrelationTimeRangeSpec{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for CorrelationTimeRangeSpec.
+func (CorrelationTimeRangeSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTimeRangeSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -98,6 +115,22 @@ func NewCorrelationSpec() *CorrelationSpec {
 // OpenAPIModelName returns the OpenAPI model name for CorrelationSpec.
 func (CorrelationSpec) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationSpec"
+}
+
+// +k8s:openapi-gen=true
+type CorrelationV0alpha1TimeRangeSpecRange struct {
+	From int64 `json:"from"`
+	To   int64 `json:"to"`
+}
+
+// NewCorrelationV0alpha1TimeRangeSpecRange creates a new CorrelationV0alpha1TimeRangeSpecRange object.
+func NewCorrelationV0alpha1TimeRangeSpecRange() *CorrelationV0alpha1TimeRangeSpecRange {
+	return &CorrelationV0alpha1TimeRangeSpecRange{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for CorrelationV0alpha1TimeRangeSpecRange.
+func (CorrelationV0alpha1TimeRangeSpecRange) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationV0alpha1TimeRangeSpecRange"
 }
 
 // +k8s:openapi-gen=true

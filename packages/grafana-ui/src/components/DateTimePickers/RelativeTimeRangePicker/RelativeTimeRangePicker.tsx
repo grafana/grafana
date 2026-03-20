@@ -33,6 +33,7 @@ import {
 export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
   onChange: (timeRange: RelativeTimeRange) => void;
+  customQuickOptions?: TimeOption[];
 }
 
 type InputState = {
@@ -45,7 +46,7 @@ type InputState = {
  * @internal
  */
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
-  const { timeRange, onChange } = props;
+  const { timeRange, onChange, customQuickOptions } = props;
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
   const timeOption = mapRelativeTimeRangeToOption(timeRange);
@@ -57,7 +58,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
     ref
   );
   const { dialogProps } = useDialog({}, ref);
-  const validOptions = getQuickOptions().filter((o) => isRelativeFormat(o.from));
+  const validOptions = (customQuickOptions ?? getQuickOptions()).filter((o) => isRelativeFormat(o.from));
   const placement = 'bottom-start';
 
   // the order of middleware is important!

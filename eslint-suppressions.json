@@ -1612,9 +1612,6 @@
   "public/app/features/correlations/Forms/ConfigureCorrelationTargetForm.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    },
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/features/correlations/Forms/QueryEditorField.tsx": {
