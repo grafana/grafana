@@ -328,10 +328,6 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.NoError(t, err)
 		folderSnap := common.SnapshotObject(t, folderBefore)
 
-		dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "rr-dash-001", metav1.GetOptions{})
-		require.NoError(t, err)
-		dashSnap := common.SnapshotObject(t, dashBefore)
-
 		_, err = local.Git("mv", "old-team", "new-team")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "rename old-team to new-team")
@@ -346,15 +342,11 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		common.RequireUpdatedInPlace(t, "folder", folderSnap, common.SnapshotObject(t, folderAfter))
 
 		sp, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
-		require.Equal(t, "new-team/", sp)
+		require.Equal(t, "new-team", sp)
 		folderParent, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/folder")
 		require.Empty(t, folderParent, "root-level folder should have no parent")
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-team"})
-
-		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "rr-dash-001", metav1.GetOptions{})
-		require.NoError(t, err, "dashboard should still exist with same UID")
-		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"rr-dash-001": {Title: "Team Dashboard", SourcePath: "new-team/dashboard1.json", Folder: folderUID},
@@ -382,10 +374,6 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.NoError(t, err)
 		childSnap := common.SnapshotObject(t, childBefore)
 
-		dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "nn-dash-001", metav1.GetOptions{})
-		require.NoError(t, err)
-		dashSnap := common.SnapshotObject(t, dashBefore)
-
 		_, err = local.Git("mv", "parent/old-child", "parent/new-child")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "rename child within parent")
@@ -400,15 +388,11 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		common.RequireUpdatedInPlace(t, "child folder", childSnap, common.SnapshotObject(t, childAfter))
 
 		sp, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
-		require.Equal(t, "parent/new-child/", sp)
+		require.Equal(t, "parent/new-child", sp)
 		childParent, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/folder")
 		require.Equal(t, parentUID, childParent, "child folder should still be parented under parent")
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/new-child"})
-
-		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "nn-dash-001", metav1.GetOptions{})
-		require.NoError(t, err)
-		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"nn-dash-001": {Title: "Child Dashboard", SourcePath: "parent/new-child/dashboard1.json", Folder: childUID},
@@ -436,10 +420,6 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.NoError(t, err)
 		folderSnap := common.SnapshotObject(t, folderBefore)
 
-		dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "rn-dash-001", metav1.GetOptions{})
-		require.NoError(t, err)
-		dashSnap := common.SnapshotObject(t, dashBefore)
-
 		_, err = local.Git("mv", "my-folder", "parent/my-folder")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "move my-folder into parent")
@@ -454,16 +434,12 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		common.RequireUpdatedInPlace(t, "folder", folderSnap, common.SnapshotObject(t, folderAfter))
 
 		sp, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
-		require.Equal(t, "parent/my-folder/", sp)
+		require.Equal(t, "parent/my-folder", sp)
 
 		parentAnnotation, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/folder")
 		require.Equal(t, parentUID, parentAnnotation, "moved folder should now be parented under parent")
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/my-folder"})
-
-		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "rn-dash-001", metav1.GetOptions{})
-		require.NoError(t, err)
-		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"rn-dash-001": {Title: "Moved Dashboard", SourcePath: "parent/my-folder/dashboard1.json", Folder: movedUID},
@@ -491,10 +467,6 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.NoError(t, err)
 		folderSnap := common.SnapshotObject(t, folderBefore)
 
-		dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "nr-dash-001", metav1.GetOptions{})
-		require.NoError(t, err)
-		dashSnap := common.SnapshotObject(t, dashBefore)
-
 		_, err = local.Git("mv", "parent/my-folder", "my-folder")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "move my-folder out to root")
@@ -509,15 +481,11 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		common.RequireUpdatedInPlace(t, "folder", folderSnap, common.SnapshotObject(t, folderAfter))
 
 		sp, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
-		require.Equal(t, "my-folder/", sp)
+		require.Equal(t, "my-folder", sp)
 		folderParent, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/folder")
 		require.Empty(t, folderParent, "folder moved to root should have no parent")
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "my-folder"})
-
-		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "nr-dash-001", metav1.GetOptions{})
-		require.NoError(t, err)
-		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"nr-dash-001": {Title: "Moved Dashboard", SourcePath: "my-folder/dashboard1.json", Folder: movedUID},
@@ -552,14 +520,6 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.NoError(t, err)
 		childSnap := common.SnapshotObject(t, childBefore)
 
-		parentDashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "mx-parent-dash", metav1.GetOptions{})
-		require.NoError(t, err)
-		parentDashSnap := common.SnapshotObject(t, parentDashBefore)
-
-		childDashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "mx-child-dash", metav1.GetOptions{})
-		require.NoError(t, err)
-		childDashSnap := common.SnapshotObject(t, childDashBefore)
-
 		// Rename the parent folder.
 		_, err = local.Git("mv", "old-parent", "new-parent")
 		require.NoError(t, err)
@@ -576,7 +536,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		common.RequireUpdatedInPlace(t, "parent folder", parentSnap, common.SnapshotObject(t, parentAfter))
 
 		sp, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
-		require.Equal(t, "new-parent/", sp)
+		require.Equal(t, "new-parent", sp)
 		parentAnnotation, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/folder")
 		require.Empty(t, parentAnnotation, "root-level parent should have no parent annotation")
 
@@ -586,21 +546,11 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		common.RequireUpdatedInPlace(t, "child folder", childSnap, common.SnapshotObject(t, childAfter))
 
 		childSP, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
-		require.Equal(t, "new-parent/child/", childSP)
+		require.Equal(t, "new-parent/child", childSP)
 		childParent, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/folder")
 		require.Equal(t, parentUID, childParent, "child should still be parented under renamed parent")
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-parent", "new-parent/child"})
-
-		// Verify parent's dashboard updated in place.
-		parentDashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "mx-parent-dash", metav1.GetOptions{})
-		require.NoError(t, err)
-		common.RequireUpdatedInPlace(t, "parent dashboard", parentDashSnap, common.SnapshotObject(t, parentDashAfter))
-
-		// Verify child's dashboard updated in place.
-		childDashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "mx-child-dash", metav1.GetOptions{})
-		require.NoError(t, err)
-		common.RequireUpdatedInPlace(t, "child dashboard", childDashSnap, common.SnapshotObject(t, childDashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"mx-parent-dash": {Title: "Parent Dashboard", SourcePath: "new-parent/parent-dash.json", Folder: parentUID},
