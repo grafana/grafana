@@ -168,9 +168,19 @@ func TestEnsureTrailingSlash(t *testing.T) {
 		want string
 	}{
 		{
-			name: "empty path",
+			name: "root path version 1",
 			path: "",
-			want: "/",
+			want: "",
+		},
+		{
+			name: "root path version 2",
+			path: ".",
+			want: "",
+		},
+		{
+			name: "root path version 3",
+			path: "/",
+			want: "",
 		},
 		{
 			name: "directory path with trailing slash",

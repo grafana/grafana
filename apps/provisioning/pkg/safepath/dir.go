@@ -40,7 +40,13 @@ func InDir(filePath, dir string) bool {
 
 // EnsureTrailingSlash returns the path with a trailing slash appended if it
 // doesn't already have one. This is useful for marking paths as directories.
+// To keep compatibility with the functions in this package, the "root" directory
+// "which can be represented as "" or "." or "/", is returned as "".
 func EnsureTrailingSlash(filePath string) string {
+	if filePath == "" || filePath == "." || filePath == "/" {
+		return ""
+	}
+
 	if strings.HasSuffix(filePath, "/") {
 		return filePath
 	}

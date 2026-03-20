@@ -319,7 +319,7 @@ func detectDeletedFolderMetadata(
 	affectedFolders := make(map[string]bool)
 
 	for i := range target.Items {
-		item := target.Items[i]
+		item := &target.Items[i]
 
 		// Non-folder resources or resources without a metadata file already are not affected.
 		if item.Group != resources.FolderResource.Group || item.Hash == "" {
@@ -327,7 +327,7 @@ func detectDeletedFolderMetadata(
 		}
 
 		path := safepath.EnsureTrailingSlash(item.Path)
-		if path == "" || path == "/" {
+		if path == "" {
 			continue // root folder doesn't contain metadata and doesn't need to be renamed
 		}
 		if !sourceFolders[path] {
@@ -343,7 +343,7 @@ func detectDeletedFolderMetadata(
 		changes = append(changes, ResourceFileChange{
 			Action:        repository.FileActionUpdated,
 			Path:          path,
-			Existing:      &item,
+			Existing:      item,
 			FolderRenamed: true,
 		})
 		affectedFolders[path] = true
@@ -396,13 +396,13 @@ func emitDirectChildrenChanges(
 	pathsWithChanges, affectedFolders map[string]bool,
 	changes []ResourceFileChange,
 ) []ResourceFileChange {
-	existingByPath := make(map[string]provisioning.ResourceListItem, len(target.Items))
+	existingByPath := make(map[string]*provisioning.ResourceListItem, len(target.Items))
 	for _, item := range target.Items {
 		path := item.Path
 		if item.Group == resources.FolderResource.Group {
 			path = safepath.EnsureTrailingSlash(path)
 		}
-		existingByPath[path] = item
+		existingByPath[path] = &item
 	}
 
 	for _, file := range source {
@@ -436,7 +436,7 @@ func emitDirectChildrenChanges(
 		changes = append(changes, ResourceFileChange{
 			Action:   repository.FileActionUpdated,
 			Path:     path,
-			Existing: &existing,
+			Existing: existing,
 		})
 		pathsWithChanges[path] = true
 	}
