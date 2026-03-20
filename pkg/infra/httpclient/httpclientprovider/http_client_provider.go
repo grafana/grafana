@@ -2,10 +2,15 @@ package httpclientprovider
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsauth"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/mwitkow/go-conntrack"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -45,12 +50,13 @@ func New(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, 
 	// SigV4 signing should be performed after all headers are added
 	if cfg.SigV4AuthEnabled {
 		awsCfg := backend.NewGrafanaCfg(map[string]string{
-			awsds.AllowedAuthProvidersEnvVarKeyName:  strings.Join(cfg.AWSAllowedAuthProviders, ","),
-			awsds.AssumeRoleEnabledEnvVarKeyName:     strconv.FormatBool(cfg.AWSAssumeRoleEnabled),
-			awsds.GrafanaAssumeRoleExternalIdKeyName: cfg.AWSExternalId,
-			awsds.ListMetricsPageLimitKeyName:        strconv.Itoa(cfg.AWSListMetricsPageLimit),
-			awsds.SessionDurationEnvVarKeyName:       cfg.AWSSessionDuration,
-			proxy.PluginSecureSocksProxyEnabled:      strconv.FormatBool(cfg.SecureSocksDSProxy.Enabled),
+			awsds.AllowedAuthProvidersEnvVarKeyName:          strings.Join(cfg.AWSAllowedAuthProviders, ","),
+			awsds.AssumeRoleEnabledEnvVarKeyName:             strconv.FormatBool(cfg.AWSAssumeRoleEnabled),
+			awsds.GrafanaAssumeRoleExternalIdKeyName:         cfg.AWSExternalId,
+			awsds.ListMetricsPageLimitKeyName:                strconv.Itoa(cfg.AWSListMetricsPageLimit),
+			awsds.SessionDurationEnvVarKeyName:               cfg.AWSSessionDuration,
+			awsds.PerDatasourceHTTPProxyEnabledEnvVarKeyName: strconv.FormatBool(cfg.AWSPerDatasourceHTTPProxyEnabled),
+			proxy.PluginSecureSocksProxyEnabled:              strconv.FormatBool(cfg.SecureSocksDSProxy.Enabled),
 		})
 		middlewares = append(middlewares, sdkhttpclient.NamedMiddlewareFunc("sigv4-aws-config", func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 			sigv4 := awsauth.NewSigV4Middleware().CreateMiddleware(opts, next)
