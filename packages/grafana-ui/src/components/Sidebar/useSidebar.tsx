@@ -1,10 +1,10 @@
 import { clamp } from 'lodash';
-import React, { useCallback, useEffect } from 'react';
-import { useMedia } from 'react-use';
+import React, { useCallback, useContext, useEffect } from 'react';
 
 import { store } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { useIsMobile } from '../../utils/useIsMobile';
 
 export type SidebarPosition = 'left' | 'right';
 
@@ -30,6 +30,8 @@ export interface SidebarContextValue {
 export const SidebarContext: React.Context<SidebarContextValue | undefined> = React.createContext<
   SidebarContextValue | undefined
 >(undefined);
+
+export const useSidebarContext = () => useContext(SidebarContext);
 
 export interface UseSideBarOptions {
   hasOpenPane?: boolean;
@@ -58,11 +60,6 @@ export interface UseSideBarOptions {
 
 export const SIDE_BAR_WIDTH_ICON_ONLY = 5;
 export const SIDE_BAR_WIDTH_WITH_TEXT = 8;
-
-export function useIsMobile() {
-  const theme = useTheme2();
-  return useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
-}
 
 export function useSidebar({
   hasOpenPane,

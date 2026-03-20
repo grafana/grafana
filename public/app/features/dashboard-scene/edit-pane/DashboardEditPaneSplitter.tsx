@@ -12,7 +12,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
-import { useIsMobile } from '../../../../../packages/grafana-ui/src/components/Sidebar/useSidebar';
+import { useIsMobile } from '../../../../../packages/grafana-ui/src/utils/useIsMobile';
 import { type PopoverTarget, AssistantPopoverContext } from '../assistant/AssistantPopoverContext';
 import {
   useDashboardAssistantViewMode,

@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode, useContext } from 'react';
-import { useMedia } from 'react-use';
+import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useIsMobile } from '../../utils/useIsMobile';
 import { IconButton } from '../IconButton/IconButton';
 import { getPortalContainer } from '../Portal/Portal';
 
@@ -18,6 +18,7 @@ import {
   SIDE_BAR_WIDTH_WITH_TEXT,
   SidebarContext,
   type SidebarContextValue,
+  useSidebarContext,
 } from './useSidebar';
 import { useCustomClickAway } from './useSidebarClickAway';
 
@@ -56,7 +57,7 @@ export function SidebarComp({ children, contextValue }: Props) {
     return (
       <SidebarContext.Provider value={contextValue}>
         <IconButton
-          className={styles.showButton}
+          className={cx(styles.showButton, position === 'left' ? styles.showButtonLeft : styles.showButtonRight)}
           variant="secondary"
           name={'arrow-to-right'}
           tooltip={t('grafana-ui.sidebar.show', 'Show')}
@@ -91,23 +92,24 @@ export interface SiderbarToolbarProps {
 
 export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
   const styles = useStyles2(getStyles);
-  const context = useContext(SidebarContext);
-  const theme = useTheme2();
-  const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
+  const sidebarContext = useSidebarContext();
+  const isMobile = useIsMobile();
 
-  if (!context) {
+  if (!sidebarContext) {
     throw new Error('Sidebar.Toolbar must be used within a Sidebar component');
   }
 
   return (
-    <div className={cx(styles.toolbar, context.compact && styles.toolbarIconsOnly)}>
+    <div className={cx(styles.toolbar, sidebarContext.compact && styles.toolbarIconsOnly)}>
       {children}
       <div className={styles.flexGrow} />
       {!isMobile && (
         <SidebarButton
           icon={'web-section-alt'}
-          onClick={context.onToggleDock}
-          title={context.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')}
+          onClick={sidebarContext.onToggleDock}
+          title={
+            sidebarContext.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')
+          }
           data-testid={selectors.components.Sidebar.dockToggle}
         />
       )}
@@ -127,16 +129,19 @@ export interface SidebarOpenPaneProps {
 
 export function SidebarOpenPane({ children }: SidebarOpenPaneProps) {
   const styles = useStyles2(getStyles);
-  const context = useContext(SidebarContext);
+  const sidebarContext = useSidebarContext();
 
-  if (!context) {
+  if (!sidebarContext) {
     throw new Error('Sidebar.OpenPane must be used within a Sidebar component');
   }
 
-  const className = cx(styles.openPane, context.position === 'right' ? styles.openPaneRight : styles.openPaneLeft);
+  const className = cx(
+    styles.openPane,
+    sidebarContext.position === 'right' ? styles.openPaneRight : styles.openPaneLeft
+  );
 
   return (
-    <div className={className} style={{ width: context.paneWidth }}>
+    <div className={className} style={{ width: sidebarContext.paneWidth }}>
       {children}
     </div>
   );
@@ -216,13 +221,18 @@ export const getStyles = (theme: GrafanaTheme2) => {
     }),
     showButton: css({
       position: 'fixed',
-      right: theme.spacing(0.5),
       top: '50%',
       zIndex: theme.zIndex.navbarFixed,
-      transform: 'scaleX(-1)',
       padding: theme.spacing(1),
       backgroundColor: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.strong}`,
+    }),
+    showButtonRight: css({
+      right: theme.spacing(0.5),
+      transform: 'scaleX(-1)',
+    }),
+    showButtonLeft: css({
+      left: theme.spacing(0.5),
     }),
   };
 };
@@ -235,4 +245,4 @@ export const Sidebar = Object.assign(SidebarComp, {
   PaneHeader: SidebarPaneHeader,
 });
 
-export { useSidebar, type SidebarContextValue, type SidebarPosition } from './useSidebar';
+export { useSidebar, useSidebarContext, type SidebarContextValue, type SidebarPosition } from './useSidebar';
