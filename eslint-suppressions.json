@@ -612,11 +612,6 @@
       "count": 3
     }
   },
-  "packages/grafana-ui/src/components/Gauge/Gauge.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Icon/Icon.story.tsx": {
     "no-restricted-syntax": {
       "count": 1

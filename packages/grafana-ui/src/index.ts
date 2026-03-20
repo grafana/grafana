@@ -138,7 +138,6 @@ export {
 } from './components/BigValue/BigValue';
 export { Sparkline } from './components/Sparkline/Sparkline';
 
-export { Gauge } from './components/Gauge/Gauge';
 export { BarGauge } from './components/BarGauge/BarGauge';
 export {
   VizTooltip,
