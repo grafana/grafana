@@ -1617,6 +1617,7 @@ func FindDashboardUIDBySourcePath(t *testing.T, helper *ProvisioningTestHelper, 
 // ObjectSnapshot captures the identity and version fields of a K8s object
 // so we can later verify it was updated in place (not deleted+recreated).
 type ObjectSnapshot struct {
+	UID               string
 	Generation        int64
 	CreationTimestamp metav1.Time
 }
@@ -1625,15 +1626,19 @@ type ObjectSnapshot struct {
 func SnapshotObject(t *testing.T, obj *unstructured.Unstructured) ObjectSnapshot {
 	t.Helper()
 	return ObjectSnapshot{
+		UID:               string(obj.GetUID()),
 		Generation:        obj.GetGeneration(),
 		CreationTimestamp: obj.GetCreationTimestamp(),
 	}
 }
 
-// RequireUpdatedInPlace asserts that the object was updated, not recreated:
-// the creationTimestamp must be identical and the generation must not decrease.
+// RequireUpdatedInPlace asserts that the object was updated in place, not
+// deleted and recreated. It compares the UID (definitive identity), the
+// creationTimestamp, and verifies that the generation has not decreased.
 func RequireUpdatedInPlace(t *testing.T, label string, before ObjectSnapshot, after *unstructured.Unstructured) {
 	t.Helper()
+	require.Equal(t, before.UID, string(after.GetUID()),
+		"%s: UID changed — object was recreated instead of updated", label)
 	require.Equal(t, before.CreationTimestamp, after.GetCreationTimestamp(),
 		"%s: creationTimestamp changed — object was recreated instead of updated", label)
 	require.GreaterOrEqual(t, after.GetGeneration(), before.Generation,

@@ -119,9 +119,9 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 
 		var pathErr *PathCreationError
 		require.ErrorAs(t, err, &pathErr)
-		require.Equal(t, "a", pathErr.Path)
+		require.Equal(t, "a/", pathErr.Path)
 		require.ErrorIs(t, err, hookErr)
-		require.Equal(t, []string{"a"}, intercepted)
+		require.Equal(t, []string{"a/"}, intercepted)
 		require.Equal(t, []string{fA.ID}, client.getCalls)
 		require.Empty(t, client.createCalls)
 	})
@@ -152,7 +152,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 		fABC := ParseFolder("a/b/c", cfg.GetName())
 
 		require.Equal(t, fABC.ID, parent)
-		require.Equal(t, []string{"a", "a/b", "a/b/c"}, intercepted)
+		require.Equal(t, []string{"a/", "a/b/", "a/b/c/"}, intercepted)
 		require.Equal(t, []string{fA.ID, fAB.ID, fABC.ID}, client.getCalls)
 		require.Equal(t, []string{fA.ID, fAB.ID, fABC.ID}, client.createCalls)
 		require.True(t, tree.In(fA.ID))
@@ -176,7 +176,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 		var intercepted []string
 		fm := NewFolderManager(repo, client, tree, WithBeforeCreate(func(_ context.Context, folder Folder) error {
 			intercepted = append(intercepted, folder.Path)
-			if folder.Path == "a/b" {
+			if folder.Path == "a/b/" {
 				return hookErr
 			}
 			return nil
@@ -188,9 +188,9 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 
 		var pathErr *PathCreationError
 		require.ErrorAs(t, err, &pathErr)
-		require.Equal(t, "a/b", pathErr.Path)
+		require.Equal(t, "a/b/", pathErr.Path)
 		require.ErrorIs(t, err, hookErr)
-		require.Equal(t, []string{"a", "a/b"}, intercepted)
+		require.Equal(t, []string{"a/", "a/b/"}, intercepted)
 
 		fA := ParseFolder("a", cfg.GetName())
 		fAB := ParseFolder("a/b", cfg.GetName())
@@ -232,7 +232,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 
 		fABC := ParseFolder("a/b/c", cfg.GetName())
 		require.Equal(t, fABC.ID, parent)
-		require.Equal(t, []string{"a/b/c"}, intercepted)
+		require.Equal(t, []string{"a/b/c/"}, intercepted)
 		require.Equal(t, []string{fABC.ID}, client.getCalls)
 		require.Equal(t, []string{fABC.ID}, client.createCalls)
 	})
@@ -1076,7 +1076,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 		var pathErr *PathCreationError
 		require.ErrorAs(t, err, &pathErr)
-		require.Equal(t, "parent", pathErr.Path)
+		require.Equal(t, "parent/", pathErr.Path)
 		require.ErrorContains(t, err, "update folder")
 		require.ErrorContains(t, err, "conflict")
 	})

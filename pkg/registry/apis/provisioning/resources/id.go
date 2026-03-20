@@ -130,7 +130,11 @@ func (f Folder) Equal(other Folder, opts ...FolderCompareOption) bool {
 		o(&cfg)
 	}
 
-	if f.Title != other.Title || f.Path != other.Path || f.MetadataHash != other.MetadataHash {
+	if f.Title != other.Title || f.MetadataHash != other.MetadataHash {
+		return false
+	}
+
+	if strings.TrimSuffix(f.Path, "/") != strings.TrimSuffix(other.Path, "/") {
 		return false
 	}
 
@@ -144,7 +148,7 @@ func ParseFolder(dirPath, repositoryName string) Folder {
 	return Folder{
 		Title: base,
 		ID:    hasher(sanitiseKubeName(base)),
-		Path:  dirPath,
+		Path:  safepath.EnsureTrailingSlash(dirPath),
 	}
 }
 

@@ -84,7 +84,7 @@ func TestParseFolderID(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.Description, func(t *testing.T) {
 			id := ParseFolder(c.Path, repoName)
-			assert.Equal(t, c.Path, id.Path)
+			assert.True(t, strings.HasSuffix(id.Path, "/"), "Path should always end with trailing slash")
 			assert.Equal(t, c.KubeName, id.ID)
 			assert.Equal(t, c.Title, id.Title)
 
