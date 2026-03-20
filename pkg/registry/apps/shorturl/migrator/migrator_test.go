@@ -102,14 +102,14 @@ func TestMigrateShortURLs_ProgressTimingLogs(t *testing.T) {
 			records := makeShortURLRows(tc.totalRows)
 			for _, lastID := range tc.expectedLastIDs {
 				query := fmt.Sprintf("SELECT %d", lastID)
-				mock.ExpectQuery(query).WillReturnRows(newShortURLSQLRows(recordsAfter(records, lastID)))
+				mock.ExpectQuery(query).WillReturnRows(newShortURLSQLRows(recordsAfter(records, lastID, 1000)))
 			}
 
 			var observedLastIDs []int64
 			m := &shortURLMigrator{
 				listShortURLsFn: func(_ context.Context, orgID int64, lastID int64, limit int64) (*sql.Rows, error) {
 					require.Equal(t, int64(1), orgID)
-					require.Equal(t, int64(1001), limit)
+					require.Equal(t, int64(1000), limit)
 					observedLastIDs = append(observedLastIDs, lastID)
 					return db.Query(fmt.Sprintf("SELECT %d", lastID))
 				},
@@ -164,32 +164,42 @@ func (c *capturingBulkProcessClient) CloseAndRecv() (*resourcepb.BulkResponse, e
 	return &resourcepb.BulkResponse{}, nil
 }
 
-func makeShortURLRows(total int) []shortURLRow {
-	rows := make([]shortURLRow, 0, total)
+type testShortURLRow struct {
+	id int64
+	shortURLRow
+}
+
+func makeShortURLRows(total int) []testShortURLRow {
+	rows := make([]testShortURLRow, 0, total)
 	for i := 1; i <= total; i++ {
-		rows = append(rows, shortURLRow{
-			id:         int64(i),
-			uid:        fmt.Sprintf("uid-%04d", i),
-			path:       fmt.Sprintf("/d/%04d", i),
-			createdBy:  42,
-			createdAt:  1710000000 + int64(i),
-			lastSeenAt: 1710001000 + int64(i),
+		rows = append(rows, testShortURLRow{
+			id: int64(i),
+			shortURLRow: shortURLRow{
+				uid:        fmt.Sprintf("uid-%04d", i),
+				path:       fmt.Sprintf("/d/%04d", i),
+				createdBy:  42,
+				createdAt:  1710000000 + int64(i),
+				lastSeenAt: 1710001000 + int64(i),
+			},
 		})
 	}
 	return rows
 }
 
-func recordsAfter(rows []shortURLRow, lastID int64) []shortURLRow {
-	result := make([]shortURLRow, 0, len(rows))
+func recordsAfter(rows []testShortURLRow, lastID int64, limit int) []testShortURLRow {
+	result := make([]testShortURLRow, 0, len(rows))
 	for _, row := range rows {
 		if row.id > lastID {
 			result = append(result, row)
+		}
+		if len(result) == limit {
+			break
 		}
 	}
 	return result
 }
 
-func newShortURLSQLRows(rows []shortURLRow) *sqlmock.Rows {
+func newShortURLSQLRows(rows []testShortURLRow) *sqlmock.Rows {
 	sqlRows := sqlmock.NewRows([]string{"id", "org_id", "uid", "path", "created_by", "created_at", "last_seen_at"})
 	for _, row := range rows {
 		sqlRows.AddRow(row.id, int64(1), row.uid, row.path, row.createdBy, row.createdAt, row.lastSeenAt)
