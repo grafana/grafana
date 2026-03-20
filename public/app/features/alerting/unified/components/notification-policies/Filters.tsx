@@ -1,5 +1,6 @@
 import { compact, isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
+import { useDebounce } from 'react-use';
 
 import {
   ContactPointSelector as GrafanaManagedContactPointSelector,
@@ -41,15 +42,13 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
     [queryString]
   );
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
+  useDebounce(
+    () => {
       onChangeMatchers(matchers);
-    }, 500);
-    return () => clearTimeout(timeout);
-    // onChangeMatchers is intentionally omitted: it is stable (useCallback in the parent) and
-    // including it would restart the debounce on every re-render, delaying initial URL filter application.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [matchers]);
+    },
+    500,
+    [matchers, onChangeMatchers]
+  );
 
   useEffect(() => {
     onChangeReceiver(contactPoint);
