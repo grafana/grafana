@@ -9,17 +9,29 @@ import { useStyles2 } from '@grafana/ui';
 
 import { Field } from './Field';
 import { FieldWithStats } from './FieldSelector';
+import { LogLevelField } from './LogLevelField';
 
 interface Props {
   activeFields: string[];
   clear(): void;
   fields: FieldWithStats[];
+  logLevelActive?: boolean;
   reorder: (columns: string[]) => void;
   suggestedFields: FieldWithStats[];
   toggle: (key: string) => void;
+  toggleLevel?: () => void;
 }
 
-export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFields, toggle }: Props) => {
+export const ActiveFields = ({
+  activeFields,
+  clear,
+  fields,
+  logLevelActive,
+  reorder,
+  suggestedFields,
+  toggle,
+  toggleLevel,
+}: Props) => {
   const styles = useStyles2(getLogsFieldsStyles);
 
   const onDragEnd = useCallback(
@@ -77,6 +89,7 @@ export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFi
           <Droppable droppableId="order-fields" direction="vertical">
             {(provided) => (
               <div className={styles.columnWrapper} {...provided.droppableProps} ref={provided.innerRef}>
+                {logLevelActive && toggleLevel && <LogLevelField active toggle={toggleLevel} />}
                 {active.map((field, index) => (
                   <Draggable
                     draggableId={field.name}
@@ -117,6 +130,7 @@ export const ActiveFields = ({ activeFields, clear, fields, reorder, suggestedFi
               <Trans i18nKey="explore.logs-table-multi-select.suggested-fields">Suggested</Trans>
             </div>
             <div className={styles.columnWrapper}>
+              {logLevelActive === false && toggleLevel && <LogLevelField active={false} toggle={toggleLevel} />}
               {suggested.map((field) => (
                 <div className={styles.wrap} key={field.name}>
                   <Field field={field} toggle={toggleSelectedField} />

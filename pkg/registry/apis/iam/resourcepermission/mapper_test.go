@@ -153,3 +153,215 @@ func TestMappersRegistry_EnabledFiltered(t *testing.T) {
 		assert.Contains(t, actions, "dashboards:edit")
 	})
 }
+
+// --- Wildcard group resolution ---
+
+func TestMappersRegistry_WildcardResolution(t *testing.T) {
+	t.Run("exact match takes precedence over wildcard", func(t *testing.T) {
+		m := NewMappersRegistry()
+		// Register wildcard first
+		m.RegisterMapper(
+			schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"},
+			NewMapper("datasources", []string{"query", "edit", "admin"}),
+			nil,
+		)
+		// Register exact match
+		exactGR := schema.GroupResource{Group: "loki.datasource.grafana.app", Resource: "datasources"}
+		m.RegisterMapper(exactGR, NewMapper("lokidatasources", []string{"view"}), nil)
+
+		// Should return the exact match
+		mapper, ok := m.Get(exactGR)
+		require.True(t, ok)
+		assert.Equal(t, "lokidatasources:uid:%", mapper.ScopePattern())
+	})
+
+	t.Run("wildcard matches single-segment prefix", func(t *testing.T) {
+		m := NewMappersRegistry()
+		m.RegisterMapper(
+			schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"},
+			NewMapper("datasources", []string{"query", "edit", "admin"}),
+			nil,
+		)
+
+		testCases := []struct {
+			group       string
+			shouldMatch bool
+		}{
+			{"loki.datasource.grafana.app", true},
+			{"tempo.datasource.grafana.app", true},
+			{"prometheus.datasource.grafana.app", true},
+			{"mysql.datasource.grafana.app", true},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.group, func(t *testing.T) {
+				gr := schema.GroupResource{Group: tc.group, Resource: "datasources"}
+				mapper, ok := m.Get(gr)
+				if tc.shouldMatch {
+					require.True(t, ok, "expected wildcard match for %s", tc.group)
+					assert.NotNil(t, mapper)
+					assert.Equal(t, "datasources:uid:%", mapper.ScopePattern())
+					assert.True(t, m.IsEnabled(gr))
+				} else {
+					assert.False(t, ok, "expected no match for %s", tc.group)
+				}
+			})
+		}
+	})
+
+	t.Run("wildcard does not match multi-segment prefix", func(t *testing.T) {
+		m := NewMappersRegistry()
+		m.RegisterMapper(
+			schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"},
+			NewMapper("datasources", []string{"query", "edit", "admin"}),
+			nil,
+		)
+
+		// Multi-segment prefix should not match
+		gr := schema.GroupResource{Group: "foo.loki.datasource.grafana.app", Resource: "datasources"}
+		_, ok := m.Get(gr)
+		assert.False(t, ok, "multi-segment prefix should not match wildcard")
+		assert.False(t, m.IsEnabled(gr))
+	})
+
+	t.Run("wildcard as input is rejected", func(t *testing.T) {
+		m := NewMappersRegistry()
+		m.RegisterMapper(
+			schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"},
+			NewMapper("datasources", []string{"query", "edit", "admin"}),
+			nil,
+		)
+
+		// Using the wildcard key directly as input should not work
+		gr := schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"}
+		_, ok := m.Get(gr)
+		assert.False(t, ok, "wildcard as input should be rejected")
+		assert.False(t, m.IsEnabled(gr))
+	})
+
+	t.Run("wildcard with disabled mapper", func(t *testing.T) {
+		m := NewMappersRegistry()
+		enabled := false
+		m.RegisterMapper(
+			schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"},
+			NewMapper("datasources", []string{"query", "edit", "admin"}),
+			func() bool { return enabled },
+		)
+
+		// Get should work (returns mapper regardless of enabled state)
+		gr := schema.GroupResource{Group: "loki.datasource.grafana.app", Resource: "datasources"}
+		mapper, ok := m.Get(gr)
+		require.True(t, ok)
+		assert.NotNil(t, mapper)
+
+		// But IsEnabled should return false
+		assert.False(t, m.IsEnabled(gr))
+
+		// Should not appear in enabled lists
+		assert.NotContains(t, m.EnabledScopePatterns(), "datasources:uid:%")
+		assert.NotContains(t, m.EnabledActionSets(), "datasources:query")
+
+		// Enable it
+		enabled = true
+		assert.True(t, m.IsEnabled(gr))
+		assert.Contains(t, m.EnabledScopePatterns(), "datasources:uid:%")
+		assert.Contains(t, m.EnabledActionSets(), "datasources:query")
+	})
+}
+
+func TestMappersRegistry_Wildcard_EnabledPatterns(t *testing.T) {
+	m := NewMappersRegistry()
+
+	// Register wildcard datasources
+	m.RegisterMapper(
+		schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"},
+		NewMapper("datasources", []string{"query", "edit", "admin"}),
+		nil,
+	)
+
+	t.Run("EnabledScopePatterns emits wildcard scope pattern once", func(t *testing.T) {
+		patterns := m.EnabledScopePatterns()
+
+		// Count occurrences of datasources:uid:%
+		count := 0
+		for _, p := range patterns {
+			if p == "datasources:uid:%" {
+				count++
+			}
+		}
+		assert.Equal(t, 1, count, "wildcard entry should emit scope pattern exactly once")
+
+		// Should also include folders and dashboards from default registry
+		assert.Contains(t, patterns, "folders:uid:%")
+		assert.Contains(t, patterns, "dashboards:uid:%")
+	})
+
+	t.Run("EnabledActionSets includes datasource action sets", func(t *testing.T) {
+		actionSets := m.EnabledActionSets()
+
+		// Datasource action sets should appear
+		assert.Contains(t, actionSets, "datasources:query")
+		assert.Contains(t, actionSets, "datasources:edit")
+		assert.Contains(t, actionSets, "datasources:admin")
+
+		// Default action sets should still appear
+		assert.Contains(t, actionSets, "folders:view")
+		assert.Contains(t, actionSets, "dashboards:view")
+	})
+}
+
+func TestMappersRegistry_Wildcard_ParseScope(t *testing.T) {
+	m := NewMappersRegistry()
+
+	// Register datasource mapper under wildcard key (like enterprise does)
+	m.RegisterMapper(
+		schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"},
+		NewMapper("datasources", []string{"query", "edit", "admin"}),
+		nil,
+	)
+
+	// ParseScope should work for the registered scope prefix.
+	// For wildcard entries, returns "unknown.<suffix>" since we can't determine the concrete group.
+	grn, err := m.ParseScope("datasources:uid:ds1")
+	require.NoError(t, err)
+	assert.Equal(t, "unknown.datasource.grafana.app", grn.Group)
+	assert.Equal(t, "datasources", grn.Resource)
+	assert.Equal(t, "ds1", grn.Name)
+}
+
+func TestMappersRegistry_MultipleWildcards(t *testing.T) {
+	m := NewMappersRegistry()
+
+	// Register multiple wildcard entries
+	m.RegisterMapper(
+		schema.GroupResource{Group: "*.datasource.grafana.app", Resource: "datasources"},
+		NewMapper("datasources", []string{"query", "edit", "admin"}),
+		nil,
+	)
+	m.RegisterMapper(
+		schema.GroupResource{Group: "*.alerting.grafana.app", Resource: "alertrules"},
+		NewMapper("alertrules", []string{"view", "edit"}),
+		nil,
+	)
+
+	// Each concrete group should resolve to its respective wildcard
+	dsGR := schema.GroupResource{Group: "loki.datasource.grafana.app", Resource: "datasources"}
+	dsMapper, ok := m.Get(dsGR)
+	require.True(t, ok)
+	assert.Equal(t, "datasources:uid:%", dsMapper.ScopePattern())
+
+	alertGR := schema.GroupResource{Group: "prometheus.alerting.grafana.app", Resource: "alertrules"}
+	alertMapper, ok := m.Get(alertGR)
+	require.True(t, ok)
+	assert.Equal(t, "alertrules:uid:%", alertMapper.ScopePattern())
+
+	// ParseScope should work for both
+	// For wildcard entries, returns "unknown.<suffix>" since we can't determine the concrete group.
+	dsGrn, err := m.ParseScope("datasources:uid:ds1")
+	require.NoError(t, err)
+	assert.Equal(t, "unknown.datasource.grafana.app", dsGrn.Group)
+
+	alertGrn, err := m.ParseScope("alertrules:uid:rule1")
+	require.NoError(t, err)
+	assert.Equal(t, "unknown.alerting.grafana.app", alertGrn.Group)
+}

@@ -8,7 +8,6 @@ import (
 	"io"
 	"iter"
 	"math"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -88,9 +87,6 @@ type GroupResource struct {
 
 // TODO transform this into Validate() method on DataKey once we pull that struct back here
 func validateDataKey(dataKey DataKey) error {
-	if dataKey.Namespace == "" {
-		return NewValidationError("namespace", dataKey.Namespace, ErrNamespaceRequired)
-	}
 	if dataKey.ResourceVersion <= 0 {
 		return NewValidationError("resourceVersion", fmt.Sprintf("%d", dataKey.ResourceVersion), ErrResourceVersionInvalid)
 	}
@@ -99,7 +95,7 @@ func validateDataKey(dataKey DataKey) error {
 	}
 
 	// Validate naming conventions for all required fields
-	if dataKey.Namespace != clusterScopeNamespace {
+	if dataKey.Namespace != "" {
 		if err := validation.IsValidNamespace(dataKey.Namespace); err != nil {
 			return NewValidationError("namespace", dataKey.Namespace, err[0])
 		}
@@ -138,10 +134,7 @@ type ListRequestKey struct {
 }
 
 func (k ListRequestKey) Validate() error {
-	if k.Namespace == "" && k.Name != "" {
-		return errors.New(ErrNameMustBeEmptyWhenNamespaceEmpty)
-	}
-	if k.Namespace != "" && k.Namespace != clusterScopeNamespace {
+	if k.Namespace != "" {
 		if err := validation.IsValidNamespace(k.Namespace); err != nil {
 			return NewValidationError("namespace", k.Namespace, err[0])
 		}
@@ -158,7 +151,10 @@ func (k ListRequestKey) Validate() error {
 
 func (k ListRequestKey) Prefix() string {
 	if k.Namespace == "" {
-		return fmt.Sprintf("%s/%s/", k.Group, k.Resource)
+		if k.Name == "" {
+			return fmt.Sprintf("%s/%s/", k.Group, k.Resource)
+		}
+		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Name)
 	}
 	if k.Name == "" {
 		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Namespace)
@@ -176,10 +172,7 @@ type GetRequestKey struct {
 
 // Validate validates the get request key
 func (k GetRequestKey) Validate() error {
-	if k.Namespace == "" {
-		return errors.New(ErrNamespaceRequired)
-	}
-	if k.Namespace != clusterScopeNamespace {
+	if k.Namespace != "" {
 		if err := validation.IsValidNamespace(k.Namespace); err != nil {
 			return NewValidationError("namespace", k.Namespace, err[0])
 		}
@@ -199,6 +192,9 @@ func (k GetRequestKey) Validate() error {
 
 // Prefix returns the prefix for getting a specific data object
 func (k GetRequestKey) Prefix() string {
+	if k.Namespace == "" {
+		return fmt.Sprintf("%s/%s/%s/", k.Group, k.Resource, k.Name)
+	}
 	return fmt.Sprintf("%s/%s/%s/%s/", k.Group, k.Resource, k.Namespace, k.Name)
 }
 
@@ -243,8 +239,8 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 	if err := key.Validate(); err != nil {
 		return DataKey{}, fmt.Errorf("invalid data key: %w", err)
 	}
-	if key.Group == "" || key.Resource == "" || key.Namespace == "" || key.Name == "" {
-		return DataKey{}, fmt.Errorf("group, resource, namespace or name is empty")
+	if key.Group == "" || key.Resource == "" || key.Name == "" {
+		return DataKey{}, fmt.Errorf("group, resource or name is empty")
 	}
 	prefix := key.Prefix()
 	for key, err := range d.kv.Keys(ctx, dataSection, ListOptions{
@@ -268,8 +264,8 @@ func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequest
 	if err := key.Validate(); err != nil {
 		return DataKey{}, DataKey{}, fmt.Errorf("invalid data key: %w", err)
 	}
-	if key.Group == "" || key.Resource == "" || key.Namespace == "" || key.Name == "" {
-		return DataKey{}, DataKey{}, fmt.Errorf("group, resource, namespace or name is empty")
+	if key.Group == "" || key.Resource == "" || key.Name == "" {
+		return DataKey{}, DataKey{}, fmt.Errorf("group, resource or name is empty")
 	}
 	prefix := key.Prefix()
 	var latest, predecessor DataKey
@@ -583,26 +579,11 @@ func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
 // ParseKey parses a string key into a DataKey struct
 func ParseKey(key string) (DataKey, error) {
 	parts := strings.Split(key, "/")
-	if len(parts) != 5 {
-		return DataKey{}, fmt.Errorf("invalid key: %s", key)
-	}
-	rvActionFolderParts := strings.Split(parts[4], "~")
-	if len(rvActionFolderParts) != 3 {
-		return DataKey{}, fmt.Errorf("invalid key: %s", key)
-	}
-	rv, err := strconv.ParseInt(rvActionFolderParts[0], 10, 64)
+	dk, _, err := kvpkg.ParseDataKeyParts(parts)
 	if err != nil {
-		return DataKey{}, fmt.Errorf("invalid resource version '%s' in key %s: %w", rvActionFolderParts[0], key, err)
+		return DataKey{}, fmt.Errorf("invalid key: %s: %w", key, err)
 	}
-	return DataKey{
-		Group:           parts[0],
-		Resource:        parts[1],
-		Namespace:       parts[2],
-		Name:            parts[3],
-		ResourceVersion: rv,
-		Action:          kvpkg.DataAction(rvActionFolderParts[1]),
-		Folder:          rvActionFolderParts[2],
-	}, nil
+	return dk, nil
 }
 
 // GetResourceStats returns resource stats within the data store by first discovering

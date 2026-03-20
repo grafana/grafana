@@ -385,6 +385,7 @@
         "group-by": "Grouped by",
         "group-title": "Notification configuration",
         "mute-timings": "Mute timings",
+        "notification-policy": "Notification policy",
         "timing-options": "Timings"
       },
       "pending-period": "Pending period",
@@ -1849,7 +1850,7 @@
       },
       "history-error": "Failed to load state history",
       "history-error-desc": "Unable to fetch state transition history for this instance.",
-      "instance-timeline": "Instance Timeline",
+      "instance-history-heading": "History",
       "no-history": "No recent state changes",
       "notifications-error": "Could not load notification history",
       "notifications-error-desc": "The timeline will only show state changes. Check that notification history is enabled and try again.",
@@ -1861,6 +1862,8 @@
       "timeline-all-failed": "failed",
       "timeline-all-failed-plural": "all failed",
       "timeline-delivered": "Delivered",
+      "timeline-dot-all-failed": "All notifications failed",
+      "timeline-dot-some-failed": "Some notifications failed",
       "timeline-empty": "No events found for this time range",
       "timeline-failed": "Failed",
       "timeline-filter-all": "All",
@@ -1868,12 +1871,10 @@
       "timeline-filter-notifications": "Notifications",
       "timeline-filter-states": "State changes",
       "timeline-loading": "Loading timeline...",
-      "timeline-mixed-outcome": "{{successCount}} delivered, {{failedCount}} failed",
-      "timeline-n-notifications_one": "{{count}} notifications",
-      "timeline-n-notifications_other": "{{count}} notifications",
-      "timeline-n-receivers_one": "{{count}} receivers",
-      "timeline-n-receivers_other": "{{count}} receivers",
-      "timeline-one-notification": "1 notification",
+      "timeline-n-uniqueReceivers_one": "{{count}} uniqueReceivers",
+      "timeline-n-uniqueReceivers_other": "{{count}} uniqueReceivers",
+      "timeline-notification-label": "notification",
+      "timeline-partial-failure": "{{successCount}} delivered, {{failedCount}} failed",
       "timeline-status-firing": "Firing",
       "timeline-status-resolved": "Resolved",
       "timeline-toggle-notifications": "Toggle notification details",
@@ -3494,7 +3495,9 @@
       "hidden-label-count_other": "and {{ count }} more",
       "high-activity-labels": "High Activity Labels",
       "instance-details-drawer": {
-        "instance-details": "Instance details"
+        "declare-incident": "Declare incident",
+        "instance-details": "Instance details",
+        "silence-button": "Silence"
       },
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
@@ -6567,6 +6570,9 @@
       "label-data-source": "Data source",
       "label-use-static-key-dimensions": "Use static key dimensions",
       "name-allow-custom-values": "Allow custom values"
+    },
+    "add-filters": {
+      "label": "Filter and Group by"
     },
     "add-link": {
       "inline-instance-name": "New link",
@@ -10356,11 +10362,14 @@
       "remove-button": "Remove {{children}}"
     },
     "viz-legend": {
+      "all-series-selected": "All series selected",
       "clear-filters": "Clear all",
+      "color-picker": "Edit color for {{seriesName}}",
       "faceted-by-labels": "By labels",
       "faceted-by-name": "By name",
       "faceted-deselect-all": "Deselect all",
       "faceted-select-all": "Select all",
+      "only-this-series-selected": "Only {{label}} selected",
       "pin-filter": "Pin to sidebar",
       "right-axis-indicator": "(right y-axis)",
       "series-visibility": "Series visibility",
@@ -10960,6 +10969,7 @@
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
       "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
+      "log-level": "Log level",
       "placeholder-search-fields-by-name": "Search fields by name",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },
@@ -11995,8 +12005,9 @@
       "upgrade-tooltip": "Upgrade to add more users"
     },
     "item": {
-      "add-bookmark": "Add {{itemName}} to Bookmarks",
-      "remove-bookmark": "Remove {{itemName}} from Bookmarks"
+      "bookmark": {
+        "tooltip": "Bookmark {{itemName}}"
+      }
     },
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"

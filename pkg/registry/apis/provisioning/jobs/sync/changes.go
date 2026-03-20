@@ -22,8 +22,10 @@ type ResourceFileChange struct {
 	// The current value in the database -- only required for delete
 	Existing *provisioning.ResourceListItem
 
-	// FolderRenamed is set when a folder's _folder.json UID changed.
-	// The old folder needs cleanup after all children have been re-parented.
+	// FolderRenamed is set when folder metadata reconciliation changes the folder ID
+	// (for example, a UID change in _folder.json or reverting to a hash-based ID
+	// after _folder.json deletion). The old folder needs cleanup after children
+	// have been re-parented.
 	FolderRenamed bool
 }
 
@@ -60,9 +62,14 @@ func Compare(
 	}
 
 	if folderMetadataEnabled {
-		changes, err = augmentChangesForUIDChanges(ctx, repo, ref, source, target, changes)
+		changes, err = augmentChangesForFolderMetadata(ctx, repo, ref, source, target, changes)
 		if err != nil {
-			return nil, nil, fmt.Errorf("augment changes for UID changes: %w", err)
+			return nil, nil, fmt.Errorf("augment changes for folder metadata: %w", err)
+		}
+
+		changes, err = augmentChangesForFolderMoves(ctx, repo, ref, changes)
+		if err != nil {
+			return nil, nil, fmt.Errorf("augment changes for folder moves: %w", err)
 		}
 	}
 
@@ -226,11 +233,11 @@ func Changes(
 	return changes, nil
 }
 
-// augmentChangesForUIDChanges detects folder UID changes (new _folder.json metadata.name
-// differs from the existing Grafana folder name) and emits FileActionUpdated for direct
-// children of affected folders. This ensures children are re-parented during the normal
-// apply flow without scanning all resources.
-func augmentChangesForUIDChanges(
+// augmentChangesForFolderMetadata detects two categories of folder metadata changes:
+// (1) folders whose _folder.json was deleted, and (2) folders whose _folder.json UID
+// changed. In both cases, direct children are emitted as FileActionUpdated so they
+// are re-parented during the normal apply flow.
+func augmentChangesForFolderMetadata(
 	ctx context.Context,
 	repo repository.Reader,
 	ref string,
@@ -238,79 +245,279 @@ func augmentChangesForUIDChanges(
 	target *provisioning.ResourceList,
 	changes []ResourceFileChange,
 ) ([]ResourceFileChange, error) {
-	// 1. Find affected folders: folder updates where UID actually changed.
-	// Also annotate the folder change with OldFolderUID for deferred cleanup.
-	affectedFolders := make(map[string]bool)
-	for i := range changes {
-		change := &changes[i]
-		if !change.IsUpdatedFolder() {
-			continue
-		}
-		meta, _, err := resources.ReadFolderMetadata(ctx, repo, change.Path, ref)
-		if err != nil {
-			if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
-				continue // no _folder.json — not metadata-backed, skip
-			}
-			return nil, fmt.Errorf("read folder metadata for %s: %w", change.Path, err)
-		}
-		if meta.Name != change.Existing.Name {
-			affectedFolders[change.Path] = true
-			change.FolderRenamed = true
-		}
+	sourceFolders, foldersWithMetadata := buildSourceMetadataIndex(source)
+
+	pathsWithChanges := make(map[string]bool, len(changes))
+	for _, c := range changes {
+		pathsWithChanges[c.Path] = true
 	}
+
+	affectedFolders := make(map[string]bool)
+
+	// Detect folders whose _folder.json was deleted.
+	deletedChanges, deletedAffected := detectDeletedFolderMetadata(target, sourceFolders, foldersWithMetadata, pathsWithChanges)
+	for _, change := range deletedChanges {
+		pathsWithChanges[change.Path] = true
+	}
+	changes = append(changes, deletedChanges...)
+	affectedFolders = mergeAffectedFolders(affectedFolders, deletedAffected)
+
+	// Detect folders whose _folder.json UID changed.
+	var err error
+	uidAffected, err := detectFolderUIDChanges(ctx, repo, ref, changes)
+	if err != nil {
+		return nil, err
+	}
+	affectedFolders = mergeAffectedFolders(affectedFolders, uidAffected)
+
+	// No folders will be renamed, so we can return the changes as is.
 	if len(affectedFolders) == 0 {
 		return changes, nil
 	}
 
-	// 2. Build lookups
-	existingPaths := make(map[string]bool, len(changes))
-	for _, c := range changes {
-		existingPaths[c.Path] = true
-	}
+	// Emit children for re-parenting and re-sort by path depth.
+	changes = emitDirectChildrenChanges(source, target, pathsWithChanges, affectedFolders, changes)
+	safepath.SortByDepth(changes, func(c ResourceFileChange) string { return c.Path }, false)
+	return changes, nil
+}
 
-	targetLookup := make(map[string]*provisioning.ResourceListItem, len(target.Items))
+// buildSourceMetadataIndex performs a single pass over the source tree, returning
+// which directories exist and which contain a _folder.json metadata file.
+func buildSourceMetadataIndex(source []repository.FileTreeEntry) (map[string]bool, map[string]bool) {
+	sourceFolders := make(map[string]bool)
+	foldersWithMetadata := make(map[string]bool)
+	for _, file := range source {
+		if !file.Blob {
+			path := safepath.EnsureTrailingSlash(file.Path)
+			sourceFolders[path] = true
+		} else if resources.IsFolderMetadataFile(file.Path) {
+			if parent := safepath.Dir(file.Path); parent != "" {
+				foldersWithMetadata[parent] = true
+			}
+		}
+	}
+	return sourceFolders, foldersWithMetadata
+}
+
+func mergeAffectedFolders(dst, src map[string]bool) map[string]bool {
+	if len(src) == 0 {
+		return dst
+	}
+	if dst == nil {
+		dst = make(map[string]bool, len(src))
+	}
+	for path := range src {
+		dst[path] = true
+	}
+	return dst
+}
+
+// detectDeletedFolderMetadata finds folders in target that had metadata (non-empty Hash)
+// but whose _folder.json is now absent from source (while the directory still exists).
+// It emits FileActionUpdated with FolderRenamed=true.
+func detectDeletedFolderMetadata(
+	target *provisioning.ResourceList,
+	sourceFolders, foldersWithMetadata map[string]bool,
+	pathsWithChanges map[string]bool,
+) ([]ResourceFileChange, map[string]bool) {
+	var changes []ResourceFileChange
+	affectedFolders := make(map[string]bool)
+
 	for i := range target.Items {
 		item := &target.Items[i]
-		path := item.Path
-		if item.Group == resources.FolderResource.Group && !safepath.IsDir(path) {
-			path += "/"
+
+		// Non-folder resources or resources without a metadata file already are not affected.
+		if item.Group != resources.FolderResource.Group || item.Hash == "" {
+			continue
 		}
-		targetLookup[path] = item
+
+		path := safepath.EnsureTrailingSlash(item.Path)
+		if path == "" {
+			continue // root folder doesn't contain metadata and doesn't need to be renamed
+		}
+		if !sourceFolders[path] {
+			continue // entire folder deleted — handled by normal flow
+		}
+		if foldersWithMetadata[path] {
+			continue // metadata still exists
+		}
+		if pathsWithChanges[path] {
+			continue // this path is already marked for update
+		}
+
+		changes = append(changes, ResourceFileChange{
+			Action:        repository.FileActionUpdated,
+			Path:          path,
+			Existing:      item,
+			FolderRenamed: true,
+		})
+		affectedFolders[path] = true
+	}
+	return changes, affectedFolders
+}
+
+// detectFolderUIDChanges iterates existing folder update changes, reads their
+// _folder.json and compares the UID.
+// Returns a map of the folder paths that will be renamed.
+func detectFolderUIDChanges(
+	ctx context.Context,
+	repo repository.Reader,
+	ref string,
+	changes []ResourceFileChange,
+) (map[string]bool, error) {
+	affectedFolders := make(map[string]bool)
+	for i := range changes {
+		change := &changes[i]
+
+		// Skip if the folder was not marked as updated or if it was already marked for renaming.
+		if !change.IsUpdatedFolder() || change.FolderRenamed {
+			continue
+		}
+
+		meta, _, err := resources.ReadFolderMetadata(ctx, repo, change.Path, ref)
+		if err != nil {
+			// Metadata file not found, meaning the folder has no metadata, skipping.
+			if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+				continue
+			}
+			return nil, fmt.Errorf("read folder metadata for %s: %w", change.Path, err)
+		}
+
+		// If the metadata file exists, check if the UID has changed.
+		if meta.Name != change.Existing.Name {
+			path := safepath.EnsureTrailingSlash(change.Path)
+			affectedFolders[path] = true
+			change.FolderRenamed = true
+		}
+	}
+	return affectedFolders, nil
+}
+
+// emitDirectChildrenChanges iterates the source tree and emits FileActionUpdated for
+// direct children of affected folders that exist in target but aren't already in changes.
+func emitDirectChildrenChanges(
+	source []repository.FileTreeEntry,
+	target *provisioning.ResourceList,
+	pathsWithChanges, affectedFolders map[string]bool,
+	changes []ResourceFileChange,
+) []ResourceFileChange {
+	existingByPath := make(map[string]*provisioning.ResourceListItem, len(target.Items))
+	for i := range target.Items {
+		item := &target.Items[i]
+
+		path := item.Path
+		if item.Group == resources.FolderResource.Group {
+			path = safepath.EnsureTrailingSlash(path)
+		}
+
+		existingByPath[path] = item
 	}
 
-	// 3. Emit FileActionUpdated for direct children of affected folders
 	for _, file := range source {
 		path := file.Path
-		if !file.Blob && !safepath.IsDir(path) {
-			path += "/"
+		if !file.Blob {
+			path = safepath.EnsureTrailingSlash(path)
 		}
+
+		// Not emit update for metadata files.
 		if resources.IsFolderMetadataFile(path) {
 			continue
 		}
 
-		// Direct parent check
 		parentDir := safepath.Dir(path)
+		// If the directory of given resource is not being renamed, skip
 		if !affectedFolders[parentDir] {
 			continue
 		}
-		if existingPaths[path] {
-			continue // already in changes
+
+		// If the specific resource path has already been marked for update, skip
+		if pathsWithChanges[path] {
+			continue
 		}
 
-		existing, ok := targetLookup[path]
+		existing, ok := existingByPath[path]
+		// If the resource path doesn't exist in Grafana, it means it's new
+		// therefore it doesn't need to be updated.
 		if !ok {
-			continue // new resource, not a re-parenting case
+			continue
 		}
-
 		changes = append(changes, ResourceFileChange{
 			Action:   repository.FileActionUpdated,
 			Path:     path,
 			Existing: existing,
 		})
-		existingPaths[path] = true
+		pathsWithChanges[path] = true
 	}
 
-	// 4. Re-sort by depth (deepest first) since we appended new entries
-	safepath.SortByDepth(changes, func(c ResourceFileChange) string { return c.Path }, false)
-	return changes, nil
+	return changes
+}
+
+// augmentChangesForFolderMoves detects metadata-backed folder moves where the
+// directory path changed but the UID in _folder.json stayed the same. The initial
+// diff produces a DELETE (old path) and a CREATE (new path); this function merges
+// them into a single UPDATE so the folder is updated in-place instead of being
+// deleted and recreated (which would reset the K8s generation).
+func augmentChangesForFolderMoves(
+	ctx context.Context,
+	repo repository.Reader,
+	ref string,
+	changes []ResourceFileChange,
+) ([]ResourceFileChange, error) {
+	deletedFolders := make(map[string]int) // UID -> index in changes
+	var createIndices []int
+
+	for i, c := range changes {
+		if !safepath.IsDir(c.Path) {
+			continue
+		}
+		if c.Action == repository.FileActionDeleted && c.Existing != nil {
+			deletedFolders[c.Existing.Name] = i
+		} else if c.Action == repository.FileActionCreated {
+			createIndices = append(createIndices, i)
+		}
+	}
+
+	if len(deletedFolders) == 0 || len(createIndices) == 0 {
+		return changes, nil
+	}
+
+	removedIndices := make(map[int]bool)
+	for _, ci := range createIndices {
+		create := &changes[ci]
+		meta, _, err := resources.ReadFolderMetadata(ctx, repo, create.Path, ref)
+		if err != nil {
+			if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+				continue
+			}
+			return nil, fmt.Errorf("read folder metadata for %s: %w", create.Path, err)
+		}
+		if meta.Name == "" {
+			continue
+		}
+
+		idx, ok := deletedFolders[meta.Name]
+		if !ok {
+			continue
+		}
+
+		// Same UID at a different path: convert CREATE to UPDATE.
+		create.Action = repository.FileActionUpdated
+		create.Existing = changes[idx].Existing
+		removedIndices[idx] = true
+		delete(deletedFolders, meta.Name)
+	}
+
+	if len(removedIndices) == 0 {
+		return changes, nil
+	}
+
+	filtered := make([]ResourceFileChange, 0, len(changes)-len(removedIndices))
+	for i, c := range changes {
+		if !removedIndices[i] {
+			filtered = append(filtered, c)
+		}
+	}
+
+	safepath.SortByDepth(filtered, func(c ResourceFileChange) string { return c.Path }, false)
+	return filtered, nil
 }

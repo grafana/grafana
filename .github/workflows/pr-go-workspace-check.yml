@@ -31,6 +31,8 @@ jobs:
     if: needs.detect-changes.outputs.changed == 'true'
     name: Go Workspace Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
     - name: Checkout repository

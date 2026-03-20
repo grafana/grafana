@@ -1,8 +1,9 @@
 import { Meta } from '@storybook/react';
 
-import { GraphContextMenuHeader } from '../../graveyard/Graph/GraphContextMenu';
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { Stack } from '../Layout/Stack/Stack';
+import { Text } from '../Text/Text';
+import { SeriesIcon } from '../VizLegend/SeriesIcon';
 
 import { Menu } from './Menu';
 import mdx from './Menu.mdx';
@@ -119,15 +120,18 @@ export function Examples() {
       <StoryExample name="With header & groups">
         <Menu
           header={
-            <GraphContextMenuHeader
-              timestamp="2020-11-25 19:04:25"
-              seriesColor="#00ff00"
-              displayName="A-series"
-              displayValue={{
-                text: '128',
-                suffix: 'km/h',
-              }}
-            />
+            <Stack direction="column" gap={0}>
+              <Text variant="bodySmall" weight="medium">
+                2020-11-25 19:04:25
+              </Text>
+              <Stack direction="row" alignItems="center">
+                <SeriesIcon color="#00ff00" />
+                <Text variant="bodySmall">A-series</Text>
+                <Text variant="bodySmall" color="secondary">
+                  128 km/h
+                </Text>
+              </Stack>
+            </Stack>
           }
           ariaLabel="Menu header"
         >
