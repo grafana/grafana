@@ -1526,7 +1526,7 @@ describe('sceneVariablesSetToVariables', () => {
     `);
     });
 
-    it('should persist supportsGroupByOperator as enableGroupBy', () => {
+    it('should persist enableGroupBy as enableGroupBy', () => {
       const variable = new AdHocFiltersVariable({
         name: 'test',
         label: 'test-label',
@@ -1535,7 +1535,7 @@ describe('sceneVariablesSetToVariables', () => {
         datasource: { uid: 'fake-uid', type: 'fake-type' },
         filters: [],
         baseFilters: [],
-        supportsGroupByOperator: true,
+        enableGroupBy: true,
       });
       const set = new SceneVariableSet({
         variables: [variable],
@@ -1547,7 +1547,7 @@ describe('sceneVariablesSetToVariables', () => {
       expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(true);
     });
 
-    it('should persist enableGroupBy as false when supportsGroupByOperator is not set', () => {
+    it('should persist enableGroupBy as false when enableGroupBy is not set', () => {
       const variable = new AdHocFiltersVariable({
         name: 'test',
         label: 'test-label',

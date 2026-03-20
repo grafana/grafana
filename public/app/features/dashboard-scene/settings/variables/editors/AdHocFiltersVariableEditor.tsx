@@ -18,7 +18,7 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const { datasource: datasourceRef, defaultKeys, allowCustomValue, supportsGroupByOperator } = variable.useState();
+  const { datasource: datasourceRef, defaultKeys, allowCustomValue, enableGroupBy } = variable.useState();
 
   const [wip, setWip] = useState<AdHocFilterWithLabels | undefined>(undefined);
   const [originalFilters, setOriginalFilters] = useState(() => variable.getOriginalFilters());
@@ -71,7 +71,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       datasource: dsRef,
       supportsMultiValueOperators: ds.meta.multiValueFilterOperators,
       ...(config.featureToggles.dashboardUnifiedDrilldownControls && {
-        supportsGroupByOperator: !!dsInstance?.getGroupByKeys,
+        enableGroupBy: !!dsInstance?.getGroupByKeys,
       }),
     });
   };
@@ -87,7 +87,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   };
 
   const onEnableGroupByChange = (event: FormEvent<HTMLInputElement>) => {
-    variable.setState({ supportsGroupByOperator: event.currentTarget.checked });
+    variable.setState({ enableGroupBy: event.currentTarget.checked });
   };
 
   return (
@@ -95,7 +95,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       datasource={datasourceRef ?? undefined}
       infoText={message}
       allowCustomValue={allowCustomValue}
-      enableGroupBy={supportsGroupByOperator}
+      enableGroupBy={enableGroupBy}
       onDataSourceChange={onDataSourceChange}
       defaultKeys={defaultKeys}
       onDefaultKeysChange={onDefaultKeysChange}

@@ -393,7 +393,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(adhocVariable.state.defaultKeys).toEqual(adhocVar.spec.defaultKeys);
     });
 
-    it('should set supportsGroupByOperator to true when feature flag is on and enableGroupBy is true', () => {
+    it('should set enableGroupBy to true when feature flag is on and enableGroupBy is true', () => {
       config.featureToggles.dashboardUnifiedDrilldownControls = true;
       try {
         const dashboard = cloneDeep(defaultDashboard);
@@ -404,13 +404,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
         const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
         expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
-        expect(adhocVariable.state.supportsGroupByOperator).toBe(true);
+        expect(adhocVariable.state.enableGroupBy).toBe(true);
       } finally {
         config.featureToggles.dashboardUnifiedDrilldownControls = false;
       }
     });
 
-    it('should set supportsGroupByOperator to false when feature flag is on and enableGroupBy is false', () => {
+    it('should set enableGroupBy to false when feature flag is on and enableGroupBy is false', () => {
       config.featureToggles.dashboardUnifiedDrilldownControls = true;
       try {
         const dashboard = cloneDeep(defaultDashboard);
@@ -421,13 +421,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
         const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
         expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
-        expect(adhocVariable.state.supportsGroupByOperator).toBe(false);
+        expect(adhocVariable.state.enableGroupBy).toBe(false);
       } finally {
         config.featureToggles.dashboardUnifiedDrilldownControls = false;
       }
     });
 
-    it('should default supportsGroupByOperator to false when feature flag is on and enableGroupBy is not set', () => {
+    it('should default enableGroupBy to false when feature flag is on and enableGroupBy is not set', () => {
       config.featureToggles.dashboardUnifiedDrilldownControls = true;
       try {
         const dashboard = cloneDeep(defaultDashboard);
@@ -435,13 +435,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
         const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
         expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
-        expect(adhocVariable.state.supportsGroupByOperator).toBe(false);
+        expect(adhocVariable.state.enableGroupBy).toBe(false);
       } finally {
         config.featureToggles.dashboardUnifiedDrilldownControls = false;
       }
     });
 
-    it('should not set supportsGroupByOperator when dashboardUnifiedDrilldownControls is disabled', () => {
+    it('should not set enableGroupBy when dashboardUnifiedDrilldownControls is disabled', () => {
       config.featureToggles.dashboardUnifiedDrilldownControls = false;
       const dashboard = cloneDeep(defaultDashboard);
       const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
@@ -451,7 +451,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
       const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
       expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
-      expect(adhocVariable.state.supportsGroupByOperator).toBe(false);
+      expect(adhocVariable.state.enableGroupBy).toBe(false);
     });
   });
 

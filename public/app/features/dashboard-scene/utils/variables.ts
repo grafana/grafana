@@ -182,7 +182,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
       ),
-      supportsGroupByOperator: config.featureToggles.dashboardUnifiedDrilldownControls
+      enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
         ? (variable.enableGroupBy ?? false)
         : false,
     });

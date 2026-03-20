@@ -126,41 +126,41 @@ describe('AdHocFiltersVariableEditor', () => {
     expect(variable.state.defaultKeys).toEqual(undefined);
   });
 
-  describe('supportsGroupByOperator', () => {
+  describe('enableGroupBy', () => {
     afterEach(() => {
       config.featureToggles.dashboardUnifiedDrilldownControls = false;
     });
 
-    it('should set supportsGroupByOperator to true when feature flag is on and datasource supports getGroupByKeys', async () => {
+    it('should set enableGroupBy to true when feature flag is on and datasource supports getGroupByKeys', async () => {
       config.featureToggles.dashboardUnifiedDrilldownControls = true;
       getGroupByKeysMock = () => Promise.resolve([]);
 
       const { variable } = await setup();
 
       await waitFor(() => {
-        expect(variable.state.supportsGroupByOperator).toBe(true);
+        expect(variable.state.enableGroupBy).toBe(true);
       });
     });
 
-    it('should set supportsGroupByOperator to false when feature flag is on and datasource does not support getGroupByKeys', async () => {
+    it('should set enableGroupBy to false when feature flag is on and datasource does not support getGroupByKeys', async () => {
       config.featureToggles.dashboardUnifiedDrilldownControls = true;
       getGroupByKeysMock = undefined;
 
       const { variable } = await setup();
 
       await waitFor(() => {
-        expect(variable.state.supportsGroupByOperator).toBe(false);
+        expect(variable.state.enableGroupBy).toBe(false);
       });
     });
 
-    it('should not update supportsGroupByOperator when feature flag is off', async () => {
+    it('should not update enableGroupBy when feature flag is off', async () => {
       config.featureToggles.dashboardUnifiedDrilldownControls = false;
       getGroupByKeysMock = () => Promise.resolve([]);
 
       const { variable } = await setup();
 
       await waitFor(() => {
-        expect(variable.state.supportsGroupByOperator).toBeUndefined();
+        expect(variable.state.enableGroupBy).toBeUndefined();
       });
     });
 
@@ -197,7 +197,7 @@ describe('AdHocFiltersVariableEditor', () => {
       });
     });
 
-    it('should toggle supportsGroupByOperator when Enable group by switch is clicked', async () => {
+    it('should toggle enableGroupBy when Enable group by switch is clicked', async () => {
       config.featureToggles.dashboardUnifiedDrilldownControls = true;
       getGroupByKeysMock = () => Promise.resolve([]);
 
@@ -212,7 +212,7 @@ describe('AdHocFiltersVariableEditor', () => {
 
       await user.click(toggle!);
 
-      expect(variable.state.supportsGroupByOperator).toBe(false);
+      expect(variable.state.enableGroupBy).toBe(false);
     });
   });
 
