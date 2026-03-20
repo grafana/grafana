@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
 
+import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';
 import { createLogRow } from './components/mocks/logRow';
 import { logSeriesToLogsModel } from './logsModel';
 import {
@@ -31,8 +32,6 @@ import {
   downloadLogs,
   DownloadFormat,
 } from './utils';
-
-import { LOG_LINE_BODY_FIELD_NAME  } from 'app/features/logs/components/LogDetailsBody';
 
 jest.mock('file-saver', () => jest.fn());
 
