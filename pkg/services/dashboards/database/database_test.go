@@ -1230,9 +1230,7 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	return dash
 }
 
-// insertTestDashFolder inserts matching rows in dashboard and folder tables. Real folder
-// creation is via Kubernetes; this helper exists so SQL-based search/ACL tests still work,
-// because the dashboard permission filter resolves folder trees from the folder table.
+// this still uses the folder table.. dashboard database will be removed soon as well (then along with this test)
 func insertTestDashFolder(t *testing.T, dashboardStore dashboards.Store, sqlStore db.DB, title string, orgId int64,
 	folderId int64, parentFolderUID string, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
