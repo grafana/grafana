@@ -341,7 +341,9 @@ func TestIntegrationFindByDashboardUid(t *testing.T) {
 }
 
 func TestIntegrationFindByOrgAndUid(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	var sqlStore db.DB
 	var cfg *setting.Cfg
