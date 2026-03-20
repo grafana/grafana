@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	libmodel "github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -52,8 +51,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		//   test dash 23
 		//   test dash 45
 		// test dash 67
-		folderStore := folderimpl.ProvideStore(sqlStore, cfg)
-		savedFolder = insertTestDashFolder(t, dashboardStore, folderStore, "1 test dash folder", 1, 0, "", "prod", "webapp")
+		savedFolder = insertTestDashFolder(t, dashboardStore, sqlStore, "1 test dash folder", 1, 0, "", "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.ID, savedFolder.UID, false, "prod")
 		savedDash2 = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, "", false, "prod")
@@ -1232,32 +1230,14 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	return dash
 }
 
-func insertTestDashFolder(t *testing.T, dashboardStore dashboards.Store, folderStore folder.Store, title string, orgId int64,
-	folderId int64, folderUID string, tags ...interface{}) *dashboards.Dashboard {
+// insertTestDashFolder inserts matching rows in dashboard and folder tables. Real folder
+// creation is via Kubernetes; this helper exists so SQL-based search/ACL tests still work,
+// because the dashboard permission filter resolves folder trees from the folder table.
+func insertTestDashFolder(t *testing.T, dashboardStore dashboards.Store, sqlStore db.DB, title string, orgId int64,
+	folderId int64, parentFolderUID string, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
-	cmd := dashboards.SaveDashboardCommand{
-		OrgID:     orgId,
-		FolderID:  folderId, // nolint:staticcheck
-		FolderUID: folderUID,
-		IsFolder:  true,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"id":    nil,
-			"title": title,
-			"tags":  tags,
-		}),
-	}
-	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
-	require.NoError(t, err)
-	require.NotNil(t, dash)
-	dash.Data.Set("id", dash.ID)
-	dash.Data.Set("uid", dash.UID)
-	_, err = folderStore.Create(context.Background(), folder.CreateFolderCommand{
-		Title: title,
-		UID:   dash.UID,
-		OrgID: orgId,
-	})
-	require.NoError(t, err)
-	return dash
+	_ = folderId // legacy dashboard.parent folder_id; parent is represented by parentFolderUID for the folder row
+	return insertTestFolder(t, dashboardStore, sqlStore, title, orgId, parentFolderUID, tags...)
 }
 
 func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,

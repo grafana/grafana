@@ -16,8 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -41,43 +39,8 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 	require.NoError(t, err)
-	fStore := folderimpl.ProvideStore(db, cfg)
 	tempUser := &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{}}
-
-	folder1UID := "test1"
 	now := time.Now()
-	dashFolder1 := dashboards.NewDashboardFolder("test1")
-	dashFolder1.SetUID(folder1UID)
-	dashFolder1.OrgID = 1
-	dashFolder1.CreatedBy = tempUser.UserID
-	dashFolder1.UpdatedBy = tempUser.UserID
-	_, err = dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
-		Dashboard: dashFolder1.Data,
-		OrgID:     1,
-		UserID:    tempUser.UserID,
-		IsFolder:  true,
-	})
-	require.NoError(t, err)
-	_, err = fStore.Create(ctx, folder.CreateFolderCommand{Title: "test1", UID: folder1UID, OrgID: 1, SignedInUser: tempUser})
-	require.NoError(t, err)
-
-	folder2UID := "test2"
-	dashFolder2 := dashboards.NewDashboardFolder("test2")
-	dashFolder2.SetUID(folder2UID)
-	dashFolder2.OrgID = 1
-	dashFolder2.FolderUID = folder1UID
-	dashFolder2.CreatedBy = tempUser.UserID
-	dashFolder2.UpdatedBy = tempUser.UserID
-	_, err = dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
-		Dashboard: dashFolder2.Data,
-		OrgID:     1,
-		UserID:    tempUser.UserID,
-		IsFolder:  true,
-		FolderUID: folder1UID,
-	})
-	require.NoError(t, err)
-	_, err = fStore.Create(ctx, folder.CreateFolderCommand{Title: "test2", UID: folder2UID, OrgID: 1, ParentUID: folder1UID, SignedInUser: tempUser})
-	require.NoError(t, err)
 
 	ruleStore := ngalertstore.SetupStoreForTesting(t, db)
 	dashboardUID := "test"
@@ -100,7 +63,6 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 			},
 			Condition:       "ok",
 			Updated:         now,
-			NamespaceUID:    folder2UID,
 			ExecErrState:    ngmodels.ExecutionErrorState(ngmodels.Alerting),
 			NoDataState:     ngmodels.Alerting,
 			IntervalSeconds: 60,
@@ -109,7 +71,6 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 
 	_, err = dashStore.SaveDashboard(ctx, dashboards.SaveDashboardCommand{
 		Dashboard: simplejson.New(),
-		FolderUID: folder1UID,
 		OrgID:     1,
 	})
 	require.NoError(t, err)
@@ -119,39 +80,35 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 	}
 
 	// Helper to create a cfg with specific dual-writer modes
-	cfgWithModes := func(dashboardsMode, foldersMode int) *setting.Cfg {
+	cfgWithModes := func(dashboardsMode int) *setting.Cfg {
 		return &setting.Cfg{
 			UnifiedStorage: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: rest.DualWriterMode(dashboardsMode)},
-				"folders.folder.grafana.app":       {DualWriterMode: rest.DualWriterMode(foldersMode)},
 			},
 		}
 	}
 
-	t.Run("GetStatsForFolder1", func(t *testing.T) {
+	t.Run("GetStatsForGeneralFolder", func(t *testing.T) {
 		ctx := context.Background()
 		ctx = request.WithNamespace(ctx, "default")
 
 		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: "default",
-			Folder:    folder1UID,
 		})
 		require.NoError(t, err)
 
 		jj, _ := json.MarshalIndent(stats.Stats, "", "  ")
+		// Note: folders are only stored in unified storage (k8s), not legacy SQL
+		// so we only expect dashboards, alertrules, and library_elements from SQL fallback
 		require.JSONEq(t, `[
 			{
 				"group": "sql-fallback",
-				"resource": "alertrules"
-			},
-			{
-				"group": "sql-fallback",
-				"resource": "dashboards",
+				"resource": "alertrules",
 				"count": 1
 			},
 			{
 				"group": "sql-fallback",
-				"resource": "folders",
+				"resource": "dashboards",
 				"count": 1
 			},
 			{
@@ -162,131 +119,32 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 	})
 
 	// New tests to verify per-resource fallback disabling
-	t.Run("GetStatsForFolder1_DisableDashboardsFallback", func(t *testing.T) {
+	t.Run("GetStatsForGeneralFolder_DisableDashboardsFallback", func(t *testing.T) {
 		ctx := context.Background()
 		ctx = request.WithNamespace(ctx, "default")
 
 		store := &LegacyStatsGetter{
 			SQL: legacysql.NewDatabaseProvider(db),
-			Cfg: cfgWithModes(5, 0), // dashboards Mode5, folders Mode0
+			Cfg: cfgWithModes(5), // dashboards Mode5
 		}
 
 		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: "default",
-			Folder:    folder1UID,
 		})
 		require.NoError(t, err)
 
-		var hasDashboards, hasFolders bool
+		var hasDashboards, hasAlertRules bool
 		for _, s := range stats.Stats {
 			if s.Resource == "dashboards" {
 				hasDashboards = true
-			}
-			if s.Resource == "folders" {
-				hasFolders = true
-				require.EqualValues(t, 1, s.Count)
-			}
-		}
-		require.False(t, hasDashboards, "dashboards stats should be disabled")
-		require.True(t, hasFolders, "folders stats should be present")
-	})
-
-	t.Run("GetStatsForFolder1_DisableFoldersFallback", func(t *testing.T) {
-		ctx := context.Background()
-		ctx = request.WithNamespace(ctx, "default")
-
-		store := &LegacyStatsGetter{
-			SQL: legacysql.NewDatabaseProvider(db),
-			Cfg: cfgWithModes(0, 5), // dashboards Mode0, folders Mode5
-		}
-
-		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
-			Namespace: "default",
-			Folder:    folder1UID,
-		})
-		require.NoError(t, err)
-
-		var hasDashboards, hasFolders bool
-		for _, s := range stats.Stats {
-			if s.Resource == "dashboards" {
-				hasDashboards = true
-				require.EqualValues(t, 1, s.Count)
-			}
-			if s.Resource == "folders" {
-				hasFolders = true
-			}
-		}
-		require.True(t, hasDashboards, "dashboards stats should be present")
-		require.False(t, hasFolders, "folders stats should be disabled")
-	})
-
-	t.Run("GetStatsForFolder1_DisableBothFallbacks", func(t *testing.T) {
-		ctx := context.Background()
-		ctx = request.WithNamespace(ctx, "default")
-
-		store := &LegacyStatsGetter{
-			SQL: legacysql.NewDatabaseProvider(db),
-			Cfg: cfgWithModes(5, 5), // both Mode5
-		}
-
-		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
-			Namespace: "default",
-			Folder:    folder1UID,
-		})
-		require.NoError(t, err)
-
-		var hasDashboards, hasFolders bool
-		var hasAlertRules, hasLibrary bool
-		for _, s := range stats.Stats {
-			if s.Resource == "dashboards" {
-				hasDashboards = true
-			}
-			if s.Resource == "folders" {
-				hasFolders = true
 			}
 			if s.Resource == "alertrules" {
 				hasAlertRules = true
 			}
-			if s.Resource == "library_elements" {
-				hasLibrary = true
-			}
 		}
+		// dashboards are disabled in Mode5, but alertrules should still be present
 		require.False(t, hasDashboards, "dashboards stats should be disabled")
-		require.False(t, hasFolders, "folders stats should be disabled")
 		require.True(t, hasAlertRules, "alertrules should still be present")
-		require.True(t, hasLibrary, "library_elements should still be present")
-	})
-
-	t.Run("GetStatsForFolder2", func(t *testing.T) {
-		ctx := context.Background()
-		ctx = request.WithNamespace(ctx, "default")
-
-		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
-			Namespace: "default",
-			Folder:    folder2UID,
-		})
-		require.NoError(t, err)
-
-		jj, _ := json.MarshalIndent(stats.Stats, "", "  ")
-		require.JSONEq(t, `[
-			{
-				"group": "sql-fallback",
-				"resource": "alertrules",
-				"count": 1
-			},
-			{
-				"group": "sql-fallback",
-				"resource": "dashboards"
-			},
-			{
-				"group": "sql-fallback",
-				"resource": "folders"
-			},
-			{
-				"group": "sql-fallback",
-				"resource": "library_elements"
-			}
-		]`, string(jj))
 	})
 
 	// Verify that changing the cfg mode dynamically affects the stats query.
@@ -296,7 +154,7 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 		ctx := context.Background()
 		ctx = request.WithNamespace(ctx, "default")
 
-		cfg := cfgWithModes(0, 0) // start with Mode0 for both
+		cfg := cfgWithModes(0) // start with Mode0 for dashboards
 		store := &LegacyStatsGetter{
 			SQL: legacysql.NewDatabaseProvider(db),
 			Cfg: cfg,
@@ -305,7 +163,6 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 		// With Mode0, legacy dashboard stats should be returned
 		stats, err := store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: "default",
-			Folder:    folder1UID,
 		})
 		require.NoError(t, err)
 		var hasDashboards bool
@@ -324,7 +181,6 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 		// Now legacy dashboard stats should be skipped
 		stats, err = store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 			Namespace: "default",
-			Folder:    folder1UID,
 		})
 		require.NoError(t, err)
 		hasDashboards = false

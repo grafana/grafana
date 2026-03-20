@@ -87,7 +87,7 @@ func convertUnstructuredToFolder(item *unstructured.Unstructured, identifiers ma
 	}, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context, item *unstructured.Unstructured) (*folder.Folder, error) {
+func (s *Service) UnstructuredToLegacyFolder(ctx context.Context, item *unstructured.Unstructured) (*folder.Folder, error) {
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 	identifiers[meta.GetCreatedBy()] = struct{}{}
 	identifiers[meta.GetUpdatedBy()] = struct{}{}
 
-	folderUserIdentifiers, err := ss.getFolderIdentifiers(ctx, identifiers)
+	folderUserIdentifiers, err := s.getFolderIdentifiers(ctx, identifiers)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 	return folder, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Context, unstructuredList *unstructured.UnstructuredList) ([]*folder.Folder, error) {
+func (s *Service) UnstructuredToLegacyFolderList(ctx context.Context, unstructuredList *unstructured.UnstructuredList) ([]*folder.Folder, error) {
 	identifiers := make(map[string]struct{}, 0)
 	for _, item := range unstructuredList.Items {
 		meta, err := utils.MetaAccessor(&item)
@@ -122,7 +122,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Con
 		identifiers[meta.GetUpdatedBy()] = struct{}{}
 	}
 
-	folderUserIdentifiers, err := ss.getFolderIdentifiers(ctx, identifiers)
+	folderUserIdentifiers, err := s.getFolderIdentifiers(ctx, identifiers)
 	if err != nil {
 		return nil, err
 	}
@@ -138,13 +138,13 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Con
 	return folders, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) getFolderIdentifiers(ctx context.Context, identifiers map[string]struct{}) (map[string]*user.User, error) {
+func (s *Service) getFolderIdentifiers(ctx context.Context, identifiers map[string]struct{}) (map[string]*user.User, error) {
 	identifierMap, userUIDs, userIds := separateUIDsAndIDs(identifiers)
 	if len(userUIDs) == 0 && len(userIds) == 0 {
 		return nil, nil
 	}
 
-	users, err := ss.userService.ListByIdOrUID(ctx, userUIDs, userIds)
+	users, err := s.userService.ListByIdOrUID(ctx, userUIDs, userIds)
 	if err != nil {
 		return nil, err
 	}

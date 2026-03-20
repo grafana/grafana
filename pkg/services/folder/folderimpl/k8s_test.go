@@ -2,13 +2,22 @@ package folderimpl
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"testing"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -16,14 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/selection"
 )
 
 func TestComputeFullPath(t *testing.T) {
@@ -98,10 +99,11 @@ func TestComputeFullPath(t *testing.T) {
 func TestGetParents(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
 	tracer := noop.NewTracerProvider().Tracer("TestGetParents")
-	store := FolderUnifiedStoreImpl{
+	store := Service{
 		k8sclient:   mockCli,
 		userService: usertest.NewUserServiceFake(),
 		tracer:      tracer,
+		log:         slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 	}
 
 	ctx := context.Background()
@@ -196,10 +198,11 @@ func TestGetParents(t *testing.T) {
 func TestGetChildren(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
 	tracer := noop.NewTracerProvider().Tracer("TestGetChildren")
-	store := FolderUnifiedStoreImpl{
+	store := Service{
 		k8sclient:   mockCli,
 		userService: usertest.NewUserServiceFake(),
 		tracer:      tracer,
+		log:         slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 	}
 
 	ctx := context.Background()
@@ -254,7 +257,7 @@ func TestGetChildren(t *testing.T) {
 		}, nil).Once()
 
 		// don't set page or limit - should be automatically added
-		result, err := store.GetChildren(ctx, folder.GetChildrenQuery{
+		result, err := store.getChildrenViaK8s(ctx, folder.GetChildrenQuery{
 			UID:   "folder1",
 			OrgID: orgID,
 		})
@@ -298,7 +301,7 @@ func TestGetChildren(t *testing.T) {
 		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "folder1", orgID, mock.Anything, mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "folder1")).Once()
 
-		_, err := store.GetChildren(ctx, folder.GetChildrenQuery{
+		_, err := store.getChildrenViaK8s(ctx, folder.GetChildrenQuery{
 			UID:   "folder1",
 			OrgID: orgID,
 		})
@@ -344,7 +347,7 @@ func TestGetChildren(t *testing.T) {
 			},
 		}, nil).Once()
 
-		result, err := store.GetChildren(ctx, folder.GetChildrenQuery{
+		result, err := store.getChildrenViaK8s(ctx, folder.GetChildrenQuery{
 			UID:        "general",
 			OrgID:      orgID,
 			Limit:      10,
@@ -382,14 +385,14 @@ func TestGetChildren(t *testing.T) {
 			},
 		}, nil)
 
-		result, err := store.GetChildren(ctx, folder.GetChildrenQuery{
+		result, err := store.getChildrenViaK8s(ctx, folder.GetChildrenQuery{
 			UID:   "folder",
 			OrgID: orgID,
 		})
 		require.NoError(t, err)
 		require.Len(t, result, 0)
 
-		result, err = store.GetChildren(ctx, folder.GetChildrenQuery{
+		result, err = store.getChildrenViaK8s(ctx, folder.GetChildrenQuery{
 			UID:          "folder",
 			OrgID:        orgID,
 			SignedInUser: &identity.StaticRequester{Type: claims.TypeServiceAccount},
@@ -438,7 +441,7 @@ func TestGetChildren(t *testing.T) {
 		}, nil).Once()
 
 		// don't set page or limit - should be automatically added
-		result, err := store.GetChildren(ctx, folder.GetChildrenQuery{
+		result, err := store.getChildrenViaK8s(ctx, folder.GetChildrenQuery{
 			UID:   "folder1",
 			OrgID: orgID,
 		})
@@ -452,7 +455,7 @@ func TestGetChildren(t *testing.T) {
 func TestGetFolders(t *testing.T) {
 	type args struct {
 		ctx context.Context
-		q   folder.GetFoldersFromStoreQuery
+		q   folder.GetFoldersQueryWithAncestors
 	}
 	tests := []struct {
 		name    string
@@ -465,7 +468,7 @@ func TestGetFolders(t *testing.T) {
 			name: "should return all folders from k8s",
 			args: args{
 				ctx: context.Background(),
-				q: folder.GetFoldersFromStoreQuery{
+				q: folder.GetFoldersQueryWithAncestors{
 					GetFoldersQuery: folder.GetFoldersQuery{
 						OrgID: orgID,
 					},
@@ -520,7 +523,7 @@ func TestGetFolders(t *testing.T) {
 			name: "should return folders from k8s by uid",
 			args: args{
 				ctx: context.Background(),
-				q: folder.GetFoldersFromStoreQuery{
+				q: folder.GetFoldersQueryWithAncestors{
 					GetFoldersQuery: folder.GetFoldersQuery{
 						OrgID: orgID,
 						UIDs:  []string{"folder1", "folder2"},
@@ -587,7 +590,7 @@ func TestGetFolders(t *testing.T) {
 			name: "should return error if k8s returns error",
 			args: args{
 				ctx: context.Background(),
-				q: folder.GetFoldersFromStoreQuery{
+				q: folder.GetFoldersQueryWithAncestors{
 					GetFoldersQuery: folder.GetFoldersQuery{
 						OrgID: orgID,
 						UIDs:  []string{"folder1", "folder2"},
@@ -609,12 +612,12 @@ func TestGetFolders(t *testing.T) {
 			mockCLI := new(client.MockK8sHandler)
 			tt.mock(mockCLI)
 			tracer := noop.NewTracerProvider().Tracer("TestGetFolders")
-			ss := &FolderUnifiedStoreImpl{
+			ss := &Service{
 				k8sclient:   mockCLI,
 				userService: usertest.NewUserServiceFake(),
 				tracer:      tracer,
 			}
-			got, err := ss.GetFolders(tt.args.ctx, tt.args.q)
+			got, err := ss.getFoldersViaK8s(tt.args.ctx, tt.args.q)
 			require.Equal(t, tt.wantErr, err != nil, "GetFolders() error = %v, wantErr %v", err, tt.wantErr)
 			if !tt.wantErr {
 				require.Len(t, got, len(tt.want), "GetFolders() = %v, want %v", got, tt.want)
@@ -872,12 +875,13 @@ func TestGetDescendants(t *testing.T) {
 			mockCLI := new(client.MockK8sHandler)
 			tt.mock(mockCLI)
 			tracer := noop.NewTracerProvider().Tracer("TestGetDescendants")
-			ss := &FolderUnifiedStoreImpl{
+			ss := &Service{
 				k8sclient:   mockCLI,
 				userService: usertest.NewUserServiceFake(),
 				tracer:      tracer,
+				log:         slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 			}
-			got, err := ss.GetDescendants(tt.args.ctx, tt.args.orgID, tt.args.ancestorUID)
+			got, err := ss.getDescendantsViaK8s(tt.args.ctx, tt.args.orgID, tt.args.ancestorUID)
 			if tt.wantErr {
 				require.ErrorIs(t, err, folder.ErrCircularReference)
 				return
@@ -1379,12 +1383,13 @@ func TestList(t *testing.T) {
 			mockCLI := new(client.MockK8sHandler)
 			tt.mock(mockCLI)
 			tracer := noop.NewTracerProvider().Tracer("TestList")
-			ss := &FolderUnifiedStoreImpl{
+			ss := &Service{
 				k8sclient:   mockCLI,
 				userService: usertest.NewUserServiceFake(),
 				tracer:      tracer,
+				log:         slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 			}
-			got, err := ss.list(tt.args.ctx, tt.args.orgID, tt.args.opts)
+			got, err := ss.listViaK8s(tt.args.ctx, tt.args.orgID, tt.args.opts)
 			if tt.wantErr {
 				require.Error(t, err)
 				return

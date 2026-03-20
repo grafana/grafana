@@ -20,13 +20,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -128,15 +128,22 @@ func TestIntegrationDashboardFileReader(t *testing.T) {
 		}
 	}
 
-	sql, cfgT := db.InitTestDBWithCfg(t)
-	features := featuremgmt.WithFeatures()
-	fStore := folderimpl.ProvideStore(sql, cfgT)
-	tagService := tagimpl.ProvideService(sql)
-	dashStore, err := database.ProvideDashboardStore(sql, cfgT, features, tagService)
-	require.NoError(t, err)
-	folderSvc := folderimpl.ProvideService(fStore, actest.FakeAccessControl{}, bus.ProvideBus(tracing.InitializeTracerForTest()),
-		dashStore, nil, sql, featuremgmt.WithFeatures(),
-		supportbundlestest.NewFakeBundleService(), nil, cfgT, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+	_, cfgT := db.InitTestDBWithCfg(t)
+	folderSvc := folderimpl.ProvideService(
+		actest.FakeAccessControl{},
+		bus.ProvideBus(tracing.InitializeTracerForTest()),
+		usertest.NewUserServiceFake(),
+		featuremgmt.WithFeatures(),
+		supportbundlestest.NewFakeBundleService(),
+		&publicdashboards.FakePublicDashboardServiceWrapper{},
+		cfgT,
+		nil,
+		tracing.InitializeTracerForTest(),
+		nil,
+		dualwrite.ProvideTestService(),
+		sort.ProvideService(),
+		apiserver.WithoutRestConfig,
+	)
 
 	t.Run("Reading dashboards from disk", func(t *testing.T) {
 		t.Run("Can read default dashboard", func(t *testing.T) {

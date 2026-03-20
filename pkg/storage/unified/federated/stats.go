@@ -26,13 +26,6 @@ func (s *LegacyStatsGetter) isDashboardsFallbackDisabled() bool {
 	return s.Cfg.UnifiedStorage["dashboards.dashboard.grafana.app"].DualWriterMode == grafanarest.Mode5
 }
 
-func (s *LegacyStatsGetter) isFoldersFallbackDisabled() bool {
-	if s.Cfg == nil {
-		return false
-	}
-	return s.Cfg.UnifiedStorage["folders.folder.grafana.app"].DualWriterMode == grafanarest.Mode5
-}
-
 func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	info, err := claims.ParseNamespace(in.Namespace)
 	if err != nil {
@@ -83,14 +76,6 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 		// Legacy dashboard table
 		if !s.isDashboardsFallbackDisabled() {
 			err = fn("dashboard", "org_id=? AND folder_uid=? AND is_folder=false", group, "dashboards", true)
-			if err != nil {
-				return err
-			}
-		}
-
-		// Legacy folder table
-		if !s.isFoldersFallbackDisabled() {
-			err = fn("folder", "org_id=? AND parent_uid=?", group, "folders", true)
 			if err != nil {
 				return err
 			}

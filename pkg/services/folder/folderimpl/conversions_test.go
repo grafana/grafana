@@ -2,18 +2,19 @@ package folderimpl
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
-	"github.com/grafana/grafana/pkg/setting"
-	"go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestFolderConversions(t *testing.T) {
@@ -63,7 +64,11 @@ func TestFolderConversions(t *testing.T) {
 		},
 	}
 
-	fs := ProvideUnifiedStore(nil, fake, tracer, setting.NewCfg())
+	fs := &Service{
+		log:         slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
+		userService: fake,
+		tracer:      tracer,
+	}
 
 	converted, err := fs.UnstructuredToLegacyFolder(context.Background(), input)
 	require.NoError(t, err)
@@ -269,7 +274,11 @@ func TestFolderListConversions(t *testing.T) {
 		},
 	}
 
-	fs := ProvideUnifiedStore(nil, fake, tracer, setting.NewCfg())
+	fs := &Service{
+		log:         slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
+		userService: fake,
+		tracer:      tracer,
+	}
 
 	converted, err := fs.UnstructuredToLegacyFolderList(context.Background(), input)
 	require.NoError(t, err)

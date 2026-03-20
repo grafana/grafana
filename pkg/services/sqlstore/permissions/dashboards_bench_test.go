@@ -19,17 +19,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
@@ -73,13 +73,21 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 		nestingLevel = cfg.MaxNestedFolderDepth
 	}
 
-	dashboardWriteStore, err := database.ProvideDashboardStore(store, cfg, features, tagimpl.ProvideService(store))
-	require.NoError(b, err)
-
-	fStore := folderimpl.ProvideStore(store, cfg)
 	folderSvc := folderimpl.ProvideService(
-		fStore, mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardWriteStore,
-		nil, store, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
+		mock.New(),
+		bus.ProvideBus(tracing.InitializeTracerForTest()),
+		usertest.NewUserServiceFake(),
+		features,
+		supportbundlestest.NewFakeBundleService(),
+		&publicdashboards.FakePublicDashboardServiceWrapper{},
+		cfg,
+		nil,
+		tracing.InitializeTracerForTest(),
+		nil,
+		dualwrite.ProvideTestService(),
+		sort.ProvideService(),
+		apiserver.WithoutRestConfig,
+	)
 
 	rootFolders := make([]*folder.Folder, 0, numFolders)
 	dashes := make([]dashboards.Dashboard, 0, numDashboards)
@@ -127,7 +135,7 @@ func setupBenchMark(b *testing.B, usr user.SignedInUser, features featuremgmt.Fe
 		})
 	}
 
-	err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		now := time.Now()
 		for i := len(dashes); i < numDashboards; i++ {
 			str := strconv.Itoa(i)

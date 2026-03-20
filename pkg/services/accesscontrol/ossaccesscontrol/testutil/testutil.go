@@ -11,17 +11,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -41,16 +40,6 @@ func ProvideFolderPermissions(
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore))
-	if err != nil {
-		return nil, err
-	}
-
-	fStore := folderimpl.ProvideStore(sqlStore, cfg)
-	fService := folderimpl.ProvideService(
-		fStore, ac, bus.ProvideBus(tracing.InitializeTracerForTest()), dashboardStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
-
 	acSvc := acimpl.ProvideOSSService(
 		cfg, acdb.ProvideService(sqlStore), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), sqlStore, permreg.ProvidePermissionRegistry(),
@@ -81,6 +70,22 @@ func ProvideFolderPermissions(
 	if err != nil {
 		return nil, err
 	}
+
+	fService := folderimpl.ProvideService(
+		ac,
+		bus.ProvideBus(tracing.InitializeTracerForTest()),
+		userSvc,
+		features,
+		supportbundlestest.NewFakeBundleService(),
+		&publicdashboards.FakePublicDashboardServiceWrapper{},
+		cfg,
+		nil,
+		tracing.InitializeTracerForTest(),
+		nil,
+		dualwrite.ProvideTestService(),
+		sort.ProvideService(),
+		apiserver.WithoutRestConfig,
+	)
 
 	return ossaccesscontrol.ProvideFolderPermissions(
 		cfg,

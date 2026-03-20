@@ -35,7 +35,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -60,7 +59,6 @@ type FolderAPIBuilder struct {
 	maxNestedFolderDepth int
 
 	// Legacy services -- these will not exist in the MT environment
-	folderSvc              folder.LegacyService
 	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
 	folderPermissionsSvc   accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
 	acService              accesscontrol.Service
@@ -70,7 +68,6 @@ type FolderAPIBuilder struct {
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
-	folderSvc folder.LegacyService,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessControl accesscontrol.AccessControl,
 	acService accesscontrol.Service,
@@ -82,7 +79,6 @@ func RegisterAPIService(cfg *setting.Cfg,
 	builder := &FolderAPIBuilder{
 		features:             features,
 		namespacer:           request.GetNamespaceMapper(cfg),
-		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
 		acService:            acService,
 		ac:                   accessControl,
@@ -165,26 +161,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	}
 	b.registerPermissionHooks(unified)
 	b.storage = unified
-
-	if b.folderSvc != nil {
-		legacyStore := &legacyStorage{
-			service:        b.folderSvc,
-			namespacer:     b.namespacer,
-			tableConverter: resourceInfo.TableConverter(),
-		}
-		dw, err := opts.DualWriteBuilder(resourceInfo.GroupResource(), legacyStore, unified)
-		if err != nil {
-			return err
-		}
-		b.storage = &folderStorage{
-			tableConverter:       resourceInfo.TableConverter(),
-			folderPermissionsSvc: b.folderPermissionsSvc,
-			features:             b.features,
-			acService:            b.acService,
-			permissionsOnCreate:  b.permissionsOnCreate,
-			store:                dw,
-		}
-	}
 
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = b.storage

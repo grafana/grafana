@@ -204,6 +204,18 @@ type GetFolderQuery struct {
 	SignedInUser identity.Requester `json:"-"`
 }
 
+type GetFoldersQueryWithAncestors struct {
+	GetFoldersQuery
+	AncestorUIDs []string
+}
+
+func NewGetFoldersQuery(q GetFoldersQuery) GetFoldersQueryWithAncestors {
+	return GetFoldersQueryWithAncestors{
+		GetFoldersQuery: q,
+		AncestorUIDs:    []string{},
+	}
+}
+
 type GetFoldersQuery struct {
 	OrgID            int64
 	UIDs             []string
