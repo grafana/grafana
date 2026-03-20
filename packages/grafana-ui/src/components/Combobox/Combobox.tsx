@@ -371,7 +371,9 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         <Icon
           name="times"
           className={styles.clear}
+          data-testid="combobox-clear"
           title={t('combobox.clear.title', 'Clear value')}
+          aria-label={t('combobox.clear.title', 'Clear value')}
           tabIndex={0}
           role="button"
           onClick={() => {
