@@ -463,12 +463,7 @@ func augmentChangesForFolderMoves(
 	ref string,
 	changes []ResourceFileChange,
 ) ([]ResourceFileChange, error) {
-	type folderDelete struct {
-		index int
-		uid   string
-	}
-
-	deletedFolders := make(map[string]folderDelete) // UID -> delete info
+	deletedFolders := make(map[string]int) // UID -> index in changes
 	var createIndices []int
 
 	for i, c := range changes {
@@ -476,7 +471,7 @@ func augmentChangesForFolderMoves(
 			continue
 		}
 		if c.Action == repository.FileActionDeleted && c.Existing != nil {
-			deletedFolders[c.Existing.Name] = folderDelete{index: i, uid: c.Existing.Name}
+			deletedFolders[c.Existing.Name] = i
 		} else if c.Action == repository.FileActionCreated {
 			createIndices = append(createIndices, i)
 		}
@@ -500,15 +495,15 @@ func augmentChangesForFolderMoves(
 			continue
 		}
 
-		del, ok := deletedFolders[meta.Name]
+		idx, ok := deletedFolders[meta.Name]
 		if !ok {
 			continue
 		}
 
 		// Same UID at a different path: convert CREATE to UPDATE.
 		create.Action = repository.FileActionUpdated
-		create.Existing = changes[del.index].Existing
-		removedIndices[del.index] = true
+		create.Existing = changes[idx].Existing
+		removedIndices[idx] = true
 		delete(deletedFolders, meta.Name)
 	}
 
