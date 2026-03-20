@@ -258,6 +258,11 @@ async function calculateApplicabilityForOptions(
   const precedence = buildFilterPrecedence(options.filters);
 
   const availableLabelKeys = await fetchAvailableLabelKeys(languageProvider, options, extractResourceMatcher);
+
+  if (availableLabelKeys.length === 0) {
+    return getFallbackResults(options).get(DEFAULT_APPLICABILITY_KEY)!;
+  }
+
   const availableLabelKeysSet = new Set(availableLabelKeys);
   const keysNeedingValueCheck = getKeysNeedingValueCheck(options, availableLabelKeysSet, precedence);
   const valuesByKey = await fetchValuesByKey(languageProvider, options, keysNeedingValueCheck, extractResourceMatcher);
