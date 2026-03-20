@@ -6,6 +6,28 @@ export const refId = 'ElasticsearchVariableQueryEditor-VariableQuery';
 
 export type ElasticsearchVariableQuery = ElasticsearchDataQuery;
 
+// Shape of the old Grafana-syntax variable query, e.g. {"find":"terms","field":"Platform.keyword"}
+interface LegacyFindQuery {
+  find: 'terms' | 'fields';
+  field?: string;
+  query?: string;
+  size?: number;
+  order?: 'asc' | 'desc';
+  orderBy?: string;
+}
+
+const isLegacyFindQuery = (v: unknown): v is LegacyFindQuery =>
+  v !== null && typeof v === 'object' && 'find' in v && (v.find === 'terms' || v.find === 'fields');
+
+const parseLegacyFindQuery = (raw: string): LegacyFindQuery | null => {
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return isLegacyFindQuery(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 export const migrateVariableQuery = (rawQuery: string | ElasticsearchDataQuery): ElasticsearchVariableQuery => {
   if (typeof rawQuery !== 'string') {
     return {
@@ -15,7 +37,33 @@ export const migrateVariableQuery = (rawQuery: string | ElasticsearchDataQuery):
       meta: rawQuery.meta,
     };
   }
-  // Legacy string-based query
+
+  // Legacy Grafana-syntax query: {"find":"terms","field":"..."} or {"find":"fields",...}
+  // Before ElasticsearchVariableSupport existed, these were handled by metricFindQuery().
+  // Convert them to the equivalent structured query so the new editor handles them correctly.
+  const legacy = parseLegacyFindQuery(rawQuery);
+  if (legacy?.find === 'terms' && legacy.field) {
+    return {
+      refId,
+      query: legacy.query ?? '',
+      metrics: [{ type: 'count', id: '1' }],
+      bucketAggs: [
+        {
+          type: 'terms',
+          id: '2',
+          field: legacy.field,
+          settings: {
+            size: String(legacy.size ?? 500),
+            order: legacy.order ?? 'asc',
+            orderBy: legacy.orderBy ?? '_term',
+            min_doc_count: '1',
+          },
+        },
+      ],
+    };
+  }
+
+  // Legacy string-based Lucene query (plain text or unrecognised JSON)
   return {
     refId,
     query: rawQuery,
