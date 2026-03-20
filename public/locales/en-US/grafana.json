@@ -385,6 +385,7 @@
         "group-by": "Grouped by",
         "group-title": "Notification configuration",
         "mute-timings": "Mute timings",
+        "notification-policy": "Notification policy",
         "timing-options": "Timings"
       },
       "pending-period": "Pending period",
@@ -10962,6 +10963,7 @@
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
       "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
+      "log-level": "Log level",
       "placeholder-search-fields-by-name": "Search fields by name",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },

@@ -703,7 +703,7 @@ func TestCompare(t *testing.T) {
 }
 
 func TestCompare_FolderMetadataFlagDisabled(t *testing.T) {
-	t.Run("augmentChangesForUIDChanges skipped when flag off", func(t *testing.T) {
+	t.Run("augmentChangesForFolderMetadata skipped when flag off", func(t *testing.T) {
 		repo := repository.NewMockRepository(t)
 		repoResources := resources.NewMockRepositoryResources(t)
 
@@ -964,10 +964,11 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 	})
 }
 
-func TestAugmentChangesForUIDChanges(t *testing.T) {
+func TestAugmentChangesForFolderMetadata(t *testing.T) {
+	// --- UID change subtests ---
+
 	t.Run("emits children for UID change", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
-		// ReadFolderMetadata reads "my-folder/_folder.json" and returns a new UID
 		repo.On("Read", mock.Anything, "my-folder/_folder.json", "main").
 			Return(&repository.FileInfo{
 				Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"new-uid"},"spec":{"title":"My Folder"}}`),
@@ -996,10 +997,9 @@ func TestAugmentChangesForUIDChanges(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForUIDChanges(context.Background(), repo, "main", source, target, changes)
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
-		// Should contain: the original folder update + dashboard + child folder
 		paths := make(map[string]bool)
 		for _, c := range result {
 			paths[c.Path] = true
@@ -1011,7 +1011,6 @@ func TestAugmentChangesForUIDChanges(t *testing.T) {
 
 	t.Run("skips children for title-only change (UID same)", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
-		// ReadFolderMetadata returns the same UID as existing
 		repo.On("Read", mock.Anything, "my-folder/_folder.json", "main").
 			Return(&repository.FileInfo{
 				Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"same-uid"},"spec":{"title":"New Title"}}`),
@@ -1038,13 +1037,13 @@ func TestAugmentChangesForUIDChanges(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForUIDChanges(context.Background(), repo, "main", source, target, changes)
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Len(t, result, 1, "only the original folder update — no children emitted")
 		require.Equal(t, "my-folder/", result[0].Path)
 	})
 
-	t.Run("only emits direct children, not grandchildren", func(t *testing.T) {
+	t.Run("only emits direct children not grandchildren for UID change", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repo.On("Read", mock.Anything, "parent/_folder.json", "main").
 			Return(&repository.FileInfo{
@@ -1061,7 +1060,8 @@ func TestAugmentChangesForUIDChanges(t *testing.T) {
 		target := &provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{Path: "parent/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "old-parent-uid"},
-				{Path: "parent/child/", Hash: "def", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "child-uid"},
+				// Hash empty: child never had _folder.json metadata
+				{Path: "parent/child/", Hash: "", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "child-uid"},
 				{Path: "parent/child/grandchild.json", Hash: "ghi", Resource: "dashboards", Group: "dashboard.grafana.app", Name: "gc-1"},
 			},
 		}
@@ -1074,7 +1074,7 @@ func TestAugmentChangesForUIDChanges(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForUIDChanges(context.Background(), repo, "main", source, target, changes)
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
@@ -1086,7 +1086,7 @@ func TestAugmentChangesForUIDChanges(t *testing.T) {
 		require.False(t, paths["parent/child/grandchild.json"], "grandchild should NOT be emitted")
 	})
 
-	t.Run("does not duplicate already-existing changes", func(t *testing.T) {
+	t.Run("does not duplicate already-existing changes for UID change", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repo.On("Read", mock.Anything, "my-folder/_folder.json", "main").
 			Return(&repository.FileInfo{
@@ -1120,10 +1120,9 @@ func TestAugmentChangesForUIDChanges(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForUIDChanges(context.Background(), repo, "main", source, target, changes)
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
-		// Count dashboard entries — should be exactly 1 (no duplicate)
 		count := 0
 		for _, c := range result {
 			if c.Path == "my-folder/dashboard.json" {
@@ -1148,8 +1147,244 @@ func TestAugmentChangesForUIDChanges(t *testing.T) {
 			{Action: repository.FileActionCreated, Path: "my-folder/dashboard.json"},
 		}
 
-		result, err := augmentChangesForUIDChanges(context.Background(), repo, "main", source, target, changes)
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Equal(t, changes, result, "should return changes unchanged")
+	})
+
+	// --- Deleted metadata subtests ---
+
+	t.Run("emits folder update with FolderRenamed when _folder.json deleted", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Blob: false},
+			{Path: "my-folder/dashboard.json", Hash: "xyz", Blob: true},
+			// No _folder.json — it was deleted
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "stable-uid"},
+			},
+		}
+
+		changes := []ResourceFileChange{} // no changes from Changes()
+
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		require.NoError(t, err)
+
+		require.Len(t, result, 1)
+		require.Equal(t, repository.FileActionUpdated, result[0].Action)
+		require.Equal(t, "my-folder/", result[0].Path)
+		require.True(t, result[0].FolderRenamed, "should mark FolderRenamed")
+		require.Equal(t, "stable-uid", result[0].Existing.Name)
+	})
+
+	t.Run("emits direct children of affected folder for deleted metadata", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Blob: false},
+			{Path: "my-folder/dashboard.json", Hash: "xyz", Blob: true},
+			{Path: "my-folder/child/", Blob: false},
+			// No _folder.json
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "stable-uid"},
+				{Path: "my-folder/dashboard.json", Hash: "xyz", Resource: "dashboards", Group: "dashboard.grafana.app", Name: "dash-1"},
+				{Path: "my-folder/child/", Hash: "def", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "child-uid"},
+			},
+		}
+
+		changes := []ResourceFileChange{} // empty
+
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		require.NoError(t, err)
+
+		require.Len(t, result, 3, "folder update + dashboard + child folder")
+		paths := make(map[string]bool)
+		for _, c := range result {
+			paths[c.Path] = true
+			require.Equal(t, repository.FileActionUpdated, c.Action)
+		}
+		require.True(t, paths["my-folder/"], "folder itself should be updated")
+		require.True(t, paths["my-folder/dashboard.json"], "direct child dashboard should be emitted")
+		require.True(t, paths["my-folder/child/"], "direct child folder should be emitted")
+	})
+
+	t.Run("normalizes source and target directory paths before emitting children", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder", Blob: false},
+			{Path: "my-folder/dashboard.json", Hash: "xyz", Blob: true},
+			{Path: "my-folder/child", Blob: false},
+			// No _folder.json - metadata was deleted.
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "stable-uid"},
+				{Path: "my-folder/dashboard.json", Hash: "xyz", Resource: "dashboards", Group: "dashboard.grafana.app", Name: "dash-1"},
+				{Path: "my-folder/child", Hash: "def", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "child-uid"},
+			},
+		}
+
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, nil)
+		require.NoError(t, err)
+
+		paths := make(map[string]bool)
+		for _, c := range result {
+			paths[c.Path] = true
+		}
+		require.True(t, paths["my-folder/"], "folder update should be emitted with normalized path")
+		require.True(t, paths["my-folder/dashboard.json"], "direct child dashboard should be emitted")
+		require.True(t, paths["my-folder/child/"], "direct child folder should be emitted with normalized path")
+	})
+
+	t.Run("no-op when folder never had metadata (Hash empty)", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Blob: false},
+			{Path: "my-folder/dashboard.json", Hash: "xyz", Blob: true},
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "hash-uid"},
+			},
+		}
+
+		changes := []ResourceFileChange{}
+
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		require.NoError(t, err)
+		require.Empty(t, result, "no changes expected when folder never had metadata")
+	})
+
+	t.Run("no-op when _folder.json still exists", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Blob: false},
+			{Path: "my-folder/_folder.json", Hash: "some-hash", Blob: true},
+			{Path: "my-folder/dashboard.json", Hash: "xyz", Blob: true},
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "some-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "stable-uid"},
+			},
+		}
+
+		changes := []ResourceFileChange{}
+
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		require.NoError(t, err)
+		require.Empty(t, result, "no changes expected when _folder.json still exists")
+	})
+
+	t.Run("no-op when folder directory gone from source", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+
+		source := []repository.FileTreeEntry{
+			// Folder entirely removed from source
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "stable-uid"},
+			},
+		}
+
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "my-folder/", Existing: &provisioning.ResourceListItem{
+				Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "stable-uid",
+			}},
+		}
+
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		require.NoError(t, err)
+		require.Equal(t, changes, result, "no additional changes expected when folder is entirely deleted")
+	})
+
+	t.Run("does not duplicate already-existing changes for deleted metadata", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+
+		source := []repository.FileTreeEntry{
+			{Path: "my-folder/", Blob: false},
+			{Path: "my-folder/dashboard.json", Hash: "changed", Blob: true},
+			// No _folder.json — deleted
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "stable-uid"},
+				{Path: "my-folder/dashboard.json", Hash: "original", Resource: "dashboards", Group: "dashboard.grafana.app", Name: "dash-1"},
+			},
+		}
+
+		// dashboard.json already appears in changes (hash changed)
+		changes := []ResourceFileChange{
+			{
+				Action:   repository.FileActionUpdated,
+				Path:     "my-folder/dashboard.json",
+				Existing: &provisioning.ResourceListItem{Path: "my-folder/dashboard.json", Hash: "original", Resource: "dashboards", Group: "dashboard.grafana.app", Name: "dash-1"},
+			},
+		}
+
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		require.NoError(t, err)
+
+		folderCount := 0
+		dashCount := 0
+		for _, c := range result {
+			if c.Path == "my-folder/" {
+				folderCount++
+				require.True(t, c.FolderRenamed, "folder change should be marked FolderRenamed")
+			}
+			if c.Path == "my-folder/dashboard.json" {
+				dashCount++
+			}
+		}
+		require.Equal(t, 1, folderCount, "folder update should be added")
+		require.Equal(t, 1, dashCount, "dashboard should appear only once, not duplicated")
+	})
+
+	t.Run("only emits direct children not grandchildren for deleted metadata", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+
+		source := []repository.FileTreeEntry{
+			{Path: "parent/", Blob: false},
+			{Path: "parent/child/", Blob: false},
+			{Path: "parent/child/_folder.json", Hash: "child-meta", Blob: true}, // child still has metadata
+			{Path: "parent/child/gc.json", Hash: "ghi", Blob: true},
+			// No _folder.json in parent/ — metadata was deleted
+		}
+
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "parent/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "parent-uid"},
+				{Path: "parent/child/", Hash: "child-meta", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "child-uid"},
+				{Path: "parent/child/gc.json", Hash: "ghi", Resource: "dashboards", Group: "dashboard.grafana.app", Name: "gc-1"},
+			},
+		}
+
+		changes := []ResourceFileChange{}
+
+		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		require.NoError(t, err)
+
+		paths := make(map[string]bool)
+		for _, c := range result {
+			paths[c.Path] = true
+		}
+		require.True(t, paths["parent/"], "parent folder update should be present")
+		require.True(t, paths["parent/child/"], "direct child folder should be emitted")
+		require.False(t, paths["parent/child/gc.json"], "grandchild should NOT be emitted")
 	})
 }

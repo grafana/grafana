@@ -71,6 +71,14 @@ jest.mock('../services', () => ({
 }));
 jest.mock('./publicDashboardQueryHandler');
 
+const mockGetBooleanValue = jest.fn().mockReturnValue(false);
+jest.mock('../internal/openFeature', () => ({
+  ...jest.requireActual('../internal/openFeature'),
+  getFeatureFlagClient: () => ({
+    getBooleanValue: mockGetBooleanValue,
+  }),
+}));
+
 describe('DataSourceWithBackend', () => {
   beforeEach(async () => {
     jest.useFakeTimers();
@@ -737,6 +745,25 @@ describe('DataSourceWithBackend', () => {
 
       await ds.setValue('multiplier', '1');
       expect(await ds.getValue('multiplier')).toBe('1');
+    });
+  });
+
+  describe('buildResourcesDatasourceUrl', () => {
+    afterEach(() => {
+      mockGetBooleanValue.mockReset().mockReturnValue(false);
+    });
+
+    test('check that buildResourcesDatasourceUrl uses the new URL when feature flag is enabled', () => {
+      mockGetBooleanValue.mockReturnValue(true);
+      const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
+      expect(mockGetBooleanValue).toHaveBeenCalledWith('datasources.apiserver.useNewAPIsForDatasourceResources', false);
+      expect(url).toBe('/apis/dummy.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels');
+    });
+
+    test('check that buildResourcesDatasourceUrl uses the legacy URL when feature flag is disabled', () => {
+      mockGetBooleanValue.mockReturnValue(false);
+      const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
+      expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
     });
   });
 });

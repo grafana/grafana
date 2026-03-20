@@ -174,12 +174,22 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 		var lastID int64
 		for rows.Next() {
 			u := common.UserWithRole{}
-			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &u.Email, &u.Name,
+			var name, email, role stdsql.NullString
+			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &email, &name,
 				&u.Created, &u.Updated, &u.IsServiceAccount, &u.IsDisabled, &u.IsAdmin, &u.EmailVerified,
-				&u.IsProvisioned, &u.LastSeenAt, &u.Role,
+				&u.IsProvisioned, &u.LastSeenAt, &role,
 			)
 			if err != nil {
 				return res, err
+			}
+			if name.Valid {
+				u.Name = name.String
+			}
+			if email.Valid {
+				u.Email = email.String
+			}
+			if role.Valid {
+				u.Role = role.String
 			}
 
 			lastID = u.ID
