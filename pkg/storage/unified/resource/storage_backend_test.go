@@ -2703,74 +2703,92 @@ func TestKvStorageBackend_ListHistory_Behaviour(t *testing.T) {
 		require.Len(t, items, 0)
 	})
 
-	t.Run("Trash_Pagination_EmptyName", func(t *testing.T) {
-		// Multi-page iteration with ContinueToken(Name+RV) for trash with empty name
-		backend := setupTestStorageBackend(t)
-		ctx := t.Context()
+	for _, tc := range []struct {
+		name       string
+		ns         NamespacedResource
+		namePrefix string
+	}{
+		{
+			name:       "Trash_Pagination_EmptyName",
+			ns:         ns,
+			namePrefix: "page-item",
+		},
+		{
+			name: "Trash_Pagination_EmptyName_ClusterScoped",
+			ns: NamespacedResource{
+				Namespace: "", // cluster-scoped
+				Group:     "cluster.example.com",
+				Resource:  "clusterresources",
+			},
+			namePrefix: "cluster-item",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := t.Context()
 
-		// Create and delete 5 resources
-		const numResources = 5
-		expectedNames := make([]string, 0, numResources)
-		for i := range numResources {
-			name := fmt.Sprintf("page-item-%d", i)
-			rv, _ := addTestObject(t, backend, ctx, ns, name, "v1")
-			obj, err := createTestObjectWithName(name, ns, "v1")
-			require.NoError(t, err)
-			deleteTestObject(t, backend, ctx, obj, rv, ns, name)
-			expectedNames = append(expectedNames, name)
-		}
+			const numResources = 5
+			expectedNames := make([]string, 0, numResources)
+			for i := range numResources {
+				name := fmt.Sprintf("%s-%d", tc.namePrefix, i)
+				rv, _ := addTestObject(t, backend, ctx, tc.ns, name, "v1")
+				obj, err := createTestObjectWithName(name, tc.ns, "v1")
+				require.NoError(t, err)
+				deleteTestObject(t, backend, ctx, obj, rv, tc.ns, name)
+				expectedNames = append(expectedNames, name)
+			}
 
-		// Page through with limit=2
-		var allNames []string
-		nextToken := ""
-		for range 5 {
-			req := &resourcepb.ListRequest{
-				Source: resourcepb.ListRequest_TRASH,
-				Limit:  2,
-				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{
-						Namespace: ns.Namespace, Group: ns.Group, Resource: ns.Resource,
+			// Page through with limit=2
+			var allNames []string
+			nextToken := ""
+			for range numResources {
+				req := &resourcepb.ListRequest{
+					Source: resourcepb.ListRequest_TRASH,
+					Limit:  2,
+					Options: &resourcepb.ListOptions{
+						Key: &resourcepb.ResourceKey{
+							Namespace: tc.ns.Namespace, Group: tc.ns.Group, Resource: tc.ns.Resource,
+						},
 					},
-				},
-			}
-			if nextToken != "" {
-				req.NextPageToken = nextToken
-			}
-
-			var items []historyItem
-			_, err := backend.ListHistory(ctx, req, func(iter ListIterator) error {
-				count := 0
-				for iter.Next() {
-					if err := iter.Error(); err != nil {
-						return err
-					}
-					items = append(items, historyItem{name: iter.Name(), rv: iter.ResourceVersion()})
-					count++
-					if count >= int(req.Limit) {
-						nextToken = iter.ContinueToken()
-						return nil
-					}
 				}
-				nextToken = "" // no more pages
-				return iter.Error()
-			})
-			require.NoError(t, err)
+				if nextToken != "" {
+					req.NextPageToken = nextToken
+				}
 
-			for _, it := range items {
-				allNames = append(allNames, it.name)
+				var items []historyItem
+				_, err := backend.ListHistory(ctx, req, func(iter ListIterator) error {
+					count := 0
+					for iter.Next() {
+						if err := iter.Error(); err != nil {
+							return err
+						}
+						items = append(items, historyItem{name: iter.Name(), rv: iter.ResourceVersion()})
+						count++
+						if count >= int(req.Limit) {
+							nextToken = iter.ContinueToken()
+							return nil
+						}
+					}
+					nextToken = "" // no more pages
+					return iter.Error()
+				})
+				require.NoError(t, err)
+
+				for _, it := range items {
+					allNames = append(allNames, it.name)
+				}
+
+				if nextToken == "" {
+					break
+				}
 			}
 
-			if nextToken == "" {
-				break
-			}
-		}
-
-		// Should have collected all 5 names
-		require.Len(t, allNames, numResources)
-		slices.Sort(allNames)
-		slices.Sort(expectedNames)
-		require.Equal(t, expectedNames, allNames)
-	})
+			require.Len(t, allNames, numResources)
+			slices.Sort(allNames)
+			slices.Sort(expectedNames)
+			require.Equal(t, expectedNames, allNames)
+		})
+	}
 }
 
 type historyItem struct {

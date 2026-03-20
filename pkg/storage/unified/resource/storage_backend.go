@@ -1447,7 +1447,7 @@ func (k *kvStorageBackend) processTrashEntries(
 		// Continue from a specific name using kv.Keys directly for efficient seek.
 		// We bypass dataStore.Keys because it uses the same prefix for both start and end,
 		// which would restrict iteration to just lastSeenName's keys.
-		nsPrefix := fmt.Sprintf("%s/%s/%s/", reqKey.Group, reqKey.Resource, reqKey.Namespace)
+		nsPrefix := ListRequestKey{Group: reqKey.Group, Resource: reqKey.Resource, Namespace: reqKey.Namespace}.Prefix()
 		startKey := nsPrefix + lastSeenName + "/"
 		endKey := PrefixRangeEnd(nsPrefix)
 		keysIter = func(yield func(DataKey, error) bool) {
