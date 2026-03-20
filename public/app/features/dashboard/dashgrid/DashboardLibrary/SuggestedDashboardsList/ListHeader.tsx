@@ -19,7 +19,12 @@ export const ListHeader = ({ error, onCreateFromScratch }: ListHeaderProps) => (
       </div>
     )}
 
-    <Box display="flex" justifyContent="space-between" alignItems="center">
+    <Box
+      display="flex"
+      direction={{ xs: 'column', lg: 'row' }}
+      justifyContent="space-between"
+      alignItems={{ xs: 'flex-start', lg: 'center' }}
+    >
       <Text element="p">
         <Trans i18nKey="dashboard-library.merged-description">
           Browse and select from data-source provided or community dashboards

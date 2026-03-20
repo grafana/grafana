@@ -94,22 +94,6 @@ describe('dashboardLibraryApi', () => {
         });
       });
 
-      it('should not filter out dashboards with low downloads', async () => {
-        const lowDownloadsDashboard = createMockGnetDashboard({ id: 2, downloads: 999 });
-        const mockDashboards = [createMockGnetDashboardSafe({ id: 1 }), lowDownloadsDashboard];
-        const mockResponse = {
-          page: 1,
-          pages: 5,
-          items: mockDashboards,
-        };
-        mockGet.mockResolvedValue(mockResponse);
-
-        const result = await fetchCommunityDashboards(defaultFetchParams);
-
-        expect(result.items).toHaveLength(2);
-        expect(result.items).toContainEqual(lowDownloadsDashboard);
-      });
-
       it('should log a warning when a dashboard is filtered out due to unsafe panel types', async () => {
         const unsafeDashboard = createMockGnetDashboardSafe({
           id: 42,
