@@ -49,7 +49,7 @@ DashboardSpec: {
 	// Configured template variables.
 	variables: [...VariableKind] | *[]
 
-	preferences?: DashboardPreferences
+	preferences?: Preferences
 }
 
 // Supported dashboard elements
@@ -1119,7 +1119,7 @@ ConditionalRenderingTimeRangeSizeSpec: {
 }
 
 // Dashboard specific preferences (applied per dashboard = all users using the dashboard)
-DashboardPreferences: {
+Preferences: {
 	// default layout template to be used when new containers are created
-	defaultLayoutTemplate?: AutoGridLayoutKind | GridLayoutKind
+	layout?: AutoGridLayoutKind | GridLayoutKind
 }

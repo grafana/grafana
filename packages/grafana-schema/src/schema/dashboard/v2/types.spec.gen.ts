@@ -1567,12 +1567,12 @@ export const defaultTimeRangeOption = (): TimeRangeOption => ({
 });
 
 // Dashboard specific preferences (applied per dashboard = all users using the dashboard)
-export interface DashboardPreferences {
+export interface Preferences {
 	// default layout template to be used when new containers are created
-	defaultLayoutTemplate?: AutoGridLayoutKind | GridLayoutKind;
+	layout?: AutoGridLayoutKind | GridLayoutKind;
 }
 
-export const defaultDashboardPreferences = (): DashboardPreferences => ({
+export const defaultPreferences = (): Preferences => ({
 });
 
 export interface Spec {
@@ -1606,7 +1606,7 @@ export interface Spec {
 	title: string;
 	// Configured template variables.
 	variables: VariableKind[];
-	preferences?: DashboardPreferences;
+	preferences?: Preferences;
 }
 
 export const defaultSpec = (): Spec => ({

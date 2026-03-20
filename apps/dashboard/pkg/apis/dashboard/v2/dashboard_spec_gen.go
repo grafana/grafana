@@ -2509,19 +2509,19 @@ func (DashboardTimeRangeOption) OpenAPIModelName() string {
 
 // Dashboard specific preferences (applied per dashboard = all users using the dashboard)
 // +k8s:openapi-gen=true
-type DashboardDashboardPreferences struct {
+type DashboardPreferences struct {
 	// default layout template to be used when new containers are created
-	DefaultLayoutTemplate *DashboardAutoGridLayoutKindOrGridLayoutKind `json:"defaultLayoutTemplate,omitempty"`
+	Layout *DashboardAutoGridLayoutKindOrGridLayoutKind `json:"layout,omitempty"`
 }
 
-// NewDashboardDashboardPreferences creates a new DashboardDashboardPreferences object.
-func NewDashboardDashboardPreferences() *DashboardDashboardPreferences {
-	return &DashboardDashboardPreferences{}
+// NewDashboardPreferences creates a new DashboardPreferences object.
+func NewDashboardPreferences() *DashboardPreferences {
+	return &DashboardPreferences{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for DashboardDashboardPreferences.
-func (DashboardDashboardPreferences) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardDashboardPreferences"
+// OpenAPIModelName returns the OpenAPI model name for DashboardPreferences.
+func (DashboardPreferences) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardPreferences"
 }
 
 // +k8s:openapi-gen=true
@@ -2555,8 +2555,8 @@ type DashboardSpec struct {
 	// Title of dashboard.
 	Title string `json:"title"`
 	// Configured template variables.
-	Variables   []DashboardVariableKind        `json:"variables"`
-	Preferences *DashboardDashboardPreferences `json:"preferences,omitempty"`
+	Variables   []DashboardVariableKind `json:"variables"`
+	Preferences *DashboardPreferences   `json:"preferences,omitempty"`
 }
 
 // NewDashboardSpec creates a new DashboardSpec object.
