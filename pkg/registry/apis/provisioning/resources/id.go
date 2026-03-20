@@ -109,49 +109,32 @@ type Folder struct {
 	ParentID string
 }
 
-// FolderState captures the comparable properties of a folder: title, source
-// path, metadata checksum, and parent.
-type FolderState struct {
-	Title        string
-	Path         string
-	MetadataHash string
-	ParentID     string
-}
-
-// FolderCompareOption configures how HasState compares folder states.
+// FolderCompareOption configures how Equal compares folders.
 type FolderCompareOption func(*folderCompareConfig)
 
 type folderCompareConfig struct {
 	ignoreParent bool
 }
 
-// IgnoreParent skips the ParentID field when comparing folder states.
+// IgnoreParent skips the ParentID field when comparing folders.
 func IgnoreParent() FolderCompareOption {
 	return func(c *folderCompareConfig) { c.ignoreParent = true }
 }
 
-// State extracts the comparable properties from a Folder.
-func (f Folder) State() FolderState {
-	return FolderState{
-		Title:        f.Title,
-		Path:         f.Path,
-		MetadataHash: f.MetadataHash,
-		ParentID:     f.ParentID,
-	}
-}
-
-// HasState reports whether the folder's comparable properties match the given state.
-func (f Folder) HasState(s FolderState, opts ...FolderCompareOption) bool {
+// Equal reports whether two folders have the same comparable properties
+// (title, path, metadata hash, and parent). The ID field is intentionally
+// excluded. Use IgnoreParent() to skip the parent comparison.
+func (f Folder) Equal(other Folder, opts ...FolderCompareOption) bool {
 	var cfg folderCompareConfig
 	for _, o := range opts {
 		o(&cfg)
 	}
 
-	if f.Title != s.Title || f.Path != s.Path || f.MetadataHash != s.MetadataHash {
+	if f.Title != other.Title || f.Path != other.Path || f.MetadataHash != other.MetadataHash {
 		return false
 	}
 
-	return cfg.ignoreParent || f.ParentID == s.ParentID
+	return cfg.ignoreParent || f.ParentID == other.ParentID
 }
 
 func ParseFolder(dirPath, repositoryName string) Folder {

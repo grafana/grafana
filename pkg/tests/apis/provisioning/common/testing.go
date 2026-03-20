@@ -1476,6 +1476,7 @@ func (h *GitExportHelper) GitReadFile(t *testing.T, ctx context.Context, repoNam
 type ExpectedDashboard struct {
 	Title      string
 	SourcePath string
+	Folder     string // grafana.app/folder annotation; only checked when non-empty
 }
 
 // RequireDashboardCount asserts the total number of dashboards in the instance.
@@ -1533,6 +1534,10 @@ func RequireDashboards(t *testing.T, dashboardClient *apis.K8sResourceClient, ct
 			assert.Equal(c, exp.Title, title, "dashboard %q title mismatch", uid)
 			sp, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/sourcePath")
 			assert.Equal(c, exp.SourcePath, sp, "dashboard %q sourcePath mismatch", uid)
+			if exp.Folder != "" {
+				folder, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/folder")
+				assert.Equal(c, exp.Folder, folder, "dashboard %q folder mismatch", uid)
+			}
 		}
 	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboards should match expected state")
 }
@@ -1607,6 +1612,32 @@ func FindDashboardUIDBySourcePath(t *testing.T, helper *ProvisioningTestHelper, 
 	}, WaitTimeoutDefault, WaitIntervalDefault,
 		"expected dashboard with sourcePath %q for repo %q", sourcePath, repoName)
 	return uid
+}
+
+// ObjectSnapshot captures the identity and version fields of a K8s object
+// so we can later verify it was updated in place (not deleted+recreated).
+type ObjectSnapshot struct {
+	Generation        int64
+	CreationTimestamp metav1.Time
+}
+
+// SnapshotObject extracts an ObjectSnapshot from an Unstructured K8s object.
+func SnapshotObject(t *testing.T, obj *unstructured.Unstructured) ObjectSnapshot {
+	t.Helper()
+	return ObjectSnapshot{
+		Generation:        obj.GetGeneration(),
+		CreationTimestamp: obj.GetCreationTimestamp(),
+	}
+}
+
+// RequireUpdatedInPlace asserts that the object was updated, not recreated:
+// the creationTimestamp must be identical and the generation must not decrease.
+func RequireUpdatedInPlace(t *testing.T, label string, before ObjectSnapshot, after *unstructured.Unstructured) {
+	t.Helper()
+	require.Equal(t, before.CreationTimestamp, after.GetCreationTimestamp(),
+		"%s: creationTimestamp changed — object was recreated instead of updated", label)
+	require.GreaterOrEqual(t, after.GetGeneration(), before.Generation,
+		"%s: generation decreased — object was recreated instead of updated", label)
 }
 
 // FindCondition finds a condition by type in the conditions list
