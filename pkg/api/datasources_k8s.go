@@ -155,7 +155,10 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 			return
 		}
 
-		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, dsUID)
+		// This uses the deprecated api on purpose because we need to get the connection details for the redirect.
+		// /api/ we only have the UID so we cannot use the new api until the client updates to /apis/ which will not use this
+		// redirect.
+		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, dsUID) //nolint:staticcheck
 		if err != nil {
 			if strings.Contains(err.Error(), "not found") {
 				c.JsonApiErr(http.StatusNotFound, "Data source not found", nil)

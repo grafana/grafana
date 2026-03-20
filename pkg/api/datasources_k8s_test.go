@@ -67,12 +67,12 @@ var _ datasource.ConnectionClient = (*mockConnectionClient)(nil)
 
 // implements grafanaapiserver.DirectRestConfigProvider
 type mockDirectRestConfigProvider struct {
-	transport          http.RoundTripper
-	host               string
-	lastServedPath     string
-	lastServedMethod   string
-	lastServedQuery    string
-	lastServedHeaders  http.Header
+	transport         http.RoundTripper
+	host              string
+	lastServedPath    string
+	lastServedMethod  string
+	lastServedQuery   string
+	lastServedHeaders http.Header
 }
 
 func (m *mockDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
