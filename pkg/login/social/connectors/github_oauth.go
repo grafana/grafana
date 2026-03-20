@@ -220,7 +220,14 @@ func (s *SocialGithub) fetchPrivateEmail(ctx context.Context, client *http.Clien
 
 	var email = ""
 	for _, record := range records {
-		if record.Primary {
+		if s.IsEmailAllowed(record.Email) {
+			if record.Primary {
+				email = record.Email
+				break
+			}
+			email = record.Email
+		}
+		if !s.IsEmailAllowed(record.Email) && record.Primary {
 			email = record.Email
 		}
 	}
