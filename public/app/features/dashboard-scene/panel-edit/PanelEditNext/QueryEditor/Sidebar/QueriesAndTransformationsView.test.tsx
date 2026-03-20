@@ -139,57 +139,17 @@ describe('QueryEditorSidebar', () => {
     expect(screen.getByRole('button', { name: /add transformation below organize/i })).toBeInTheDocument();
   });
 
-  describe('dashboard datasource restrictions', () => {
-    it('should hide query add buttons when panel datasource is dashboard datasource', () => {
-      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'dashboard', uid: '-- Dashboard --' } }];
+  it('should disable "Add expression" when panel datasource is dashboard datasource', async () => {
+    const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'dashboard', uid: '-- Dashboard --' } }];
 
-      renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
-        queries,
-        selectedQuery: queries[0],
-        dsState: { dsSettings: dashboardDsSettingsMock },
-      });
-
-      // Header "+" for queries section should not be rendered
-      expect(screen.queryByRole('button', { name: /add query or expression/i })).not.toBeInTheDocument();
-
-      // Per-card "Add below" for query cards should not be rendered
-      expect(screen.queryByRole('button', { name: /add below A/i })).not.toBeInTheDocument();
+    const { user } = renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
+      queries,
+      selectedQuery: queries[0],
+      dsState: { dsSettings: dashboardDsSettingsMock },
     });
 
-    it('should still show transformation add buttons when panel datasource is dashboard datasource', () => {
-      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'dashboard', uid: '-- Dashboard --' } }];
-      const transformations: Transformation[] = [
-        { transformId: 'organize', registryItem: undefined, transformConfig: { id: 'organize', options: {} } },
-      ];
+    await user.click(screen.getByRole('button', { name: /add query or expression/i }));
 
-      renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
-        queries,
-        transformations,
-        selectedQuery: queries[0],
-        dsState: { dsSettings: dashboardDsSettingsMock },
-      });
-
-      // Header "+" for transformations section should still be rendered
-      expect(screen.getByRole('button', { name: /add transformation$/i })).toBeInTheDocument();
-
-      // Per-card "Add below" for transformation cards should still be rendered
-      expect(screen.getByRole('button', { name: /add transformation below organize/i })).toBeInTheDocument();
-    });
-
-    it('should show query add buttons when panel datasource is a regular datasource', () => {
-      const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
-
-      renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
-        queries,
-        selectedQuery: queries[0],
-        dsState: { dsSettings: ds1SettingsMock },
-      });
-
-      // Header "+" for queries section should be rendered
-      expect(screen.getByRole('button', { name: /add query or expression/i })).toBeInTheDocument();
-
-      // Per-card "Add below" for query cards should be rendered
-      expect(screen.getByRole('button', { name: /add below A/i })).toBeInTheDocument();
-    });
+    expect(screen.getByRole('menuitem', { name: /add expression/i })).toBeDisabled();
   });
 });

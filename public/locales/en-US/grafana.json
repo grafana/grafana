@@ -13860,6 +13860,7 @@
     "sidebar": {
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
+      "add-expression-disabled": "Expressions are not supported with the Dashboard data source",
       "add-query": "Add query",
       "add-query-or-expression": "Add query or expression",
       "add-saved-query": "Add saved query",

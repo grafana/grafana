@@ -5,7 +5,7 @@ import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config as grafanaConfig } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { Dropdown, Icon, Menu, useStyles2, useTheme2 } from '@grafana/ui';
+import { Dropdown, Icon, Menu, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
@@ -103,20 +103,37 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
             }}
           />
         )}
-        <Menu.Item
-          label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
-          icon="calculator-alt"
-          onClick={() => {
-            trackAddExpressionInitiated(afterId ? 'inline' : 'section_header');
-            setPendingExpression({ insertAfter: afterId ?? '' });
-            onAdd?.();
-          }}
-        />
+        {isDashboardDs ? (
+          <Tooltip
+            content={t(
+              'query-editor-next.sidebar.add-expression-disabled',
+              'Expressions are not supported with the Dashboard data source'
+            )}
+            placement="right"
+          >
+            <Menu.Item
+              label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
+              icon="calculator-alt"
+              disabled
+            />
+          </Tooltip>
+        ) : (
+          <Menu.Item
+            label={t('query-editor-next.sidebar.add-expression', 'Add expression')}
+            icon="calculator-alt"
+            onClick={() => {
+              trackAddExpressionInitiated(afterId ? 'inline' : 'section_header');
+              setPendingExpression({ insertAfter: afterId ?? '' });
+              onAdd?.();
+            }}
+          />
+        )}
       </Menu>
     ),
     [
       queryLibraryEnabled,
       canReadQueries,
+      isDashboardDs,
       addAndSelectQuery,
       setPendingSavedQuery,
       afterId,
@@ -131,10 +148,6 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
     setPendingTransformation({ insertAfter: afterId });
     onAdd?.();
   }, [afterId, setPendingTransformation, onAdd]);
-
-  if (variant === 'query' && isDashboardDs) {
-    return null;
-  }
 
   const ariaLabel = getButtonAriaLabel(variant, afterId);
 
