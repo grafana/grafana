@@ -21,8 +21,7 @@ on:
   schedule:
     - cron: '0 4 * * 6'
 
-permissions:
-  security-events: write
+permissions: {}
 
 jobs:
   detect-changes:
@@ -53,7 +52,7 @@ jobs:
     if: github.repository == 'grafana/grafana'
     permissions:
       contents: read
-      # Required for github/codeql-action/analyze to upload SARIF (job-level permissions replace defaults; omitting this blocks upload).
+      # Upload SARIF to code scanning results
       security-events: write
 
     strategy:
