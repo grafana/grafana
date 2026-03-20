@@ -6628,6 +6628,12 @@
       "schema": {
        "$ref": "#/definitions/ContactPoints"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Get all the contact points.",
@@ -6665,6 +6671,12 @@
       "description": "ValidationError",
       "schema": {
        "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -6756,6 +6768,12 @@
     "responses": {
      "202": {
       "description": " The contact point was deleted successfully."
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Delete a contact point.",
@@ -6800,6 +6818,12 @@
       "description": "ValidationError",
       "schema": {
        "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -7018,6 +7042,12 @@
       "schema": {
        "$ref": "#/definitions/MuteTimings"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Get all the mute timings.",
@@ -7055,6 +7085,12 @@
       "description": "ValidationError",
       "schema": {
        "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -7142,6 +7178,12 @@
      "204": {
       "description": " The mute timing was deleted successfully."
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "409": {
       "description": "PublicError",
       "schema": {
@@ -7170,6 +7212,12 @@
       "description": "MuteTimeInterval",
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      },
      "404": {
@@ -7218,6 +7266,12 @@
       "description": "ValidationError",
       "schema": {
        "$ref": "#/definitions/ValidationError"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      },
      "409": {
@@ -7303,6 +7357,12 @@
       "schema": {
        "$ref": "#/definitions/Ack"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Clears the notification policy tree.",
@@ -7317,6 +7377,12 @@
       "description": "Route",
       "schema": {
        "$ref": "#/definitions/Route"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -7357,6 +7423,12 @@
       "schema": {
        "$ref": "#/definitions/ValidationError"
       }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
      }
     },
     "summary": "Sets the notification policy tree.",
@@ -7382,6 +7454,12 @@
        "$ref": "#/definitions/AlertingFileExport"
       }
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "404": {
       "description": "NotFound",
       "schema": {
@@ -7403,6 +7481,12 @@
       "description": "NotificationTemplates",
       "schema": {
        "$ref": "#/definitions/NotificationTemplates"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      }
     },
@@ -7434,6 +7518,12 @@
      "204": {
       "description": " The template was deleted successfully."
      },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
      "409": {
       "description": "PublicError",
       "schema": {
@@ -7462,6 +7552,12 @@
       "description": "NotificationTemplate",
       "schema": {
        "$ref": "#/definitions/NotificationTemplate"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      },
      "404": {
@@ -7513,6 +7609,12 @@
       "description": "PublicError",
       "schema": {
        "$ref": "#/definitions/PublicError"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
       }
      },
      "409": {
