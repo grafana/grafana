@@ -19,7 +19,7 @@ module.exports = (env = {}) => {
     ]
   };
 
-  // yarn build:stats --env filtered
+  // yarn build:filtStats
   if (env.filtered) {
     config.plugins.push(
       new FilterStatsPlugin({
