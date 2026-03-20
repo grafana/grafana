@@ -240,7 +240,7 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) e
 	// 1. Build expected tuple map from CRDs
 	expectedMap, err := r.fetchAndTranslateTuples(ctx, namespace)
 	if err != nil {
-		if isNamespaceDeletedOrArchived(err) {
+		if apierrors.IsNotFound(err) {
 			r.logger.Warn("Namespace deleted or archived, removing store from Zanzana", "namespace", namespace)
 			if delErr := r.server.DeleteStore(ctx, namespace); delErr != nil {
 				r.logger.Error("Failed to delete orphaned store", "namespace", namespace, "error", delErr)
@@ -316,11 +316,4 @@ func (r *Reconciler) EnsureNamespace(ctx context.Context, namespace string) erro
 	}
 
 	return nil
-}
-
-// isNamespaceDeletedOrArchived checks if the error indicates that the namespace
-// no longer exists (deleted or archived stack).
-func isNamespaceDeletedOrArchived(err error) bool {
-	var statusErr *apierrors.StatusError
-	return errors.As(err, &statusErr) && apierrors.IsNotFound(statusErr)
 }
