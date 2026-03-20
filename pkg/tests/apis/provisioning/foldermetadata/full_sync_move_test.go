@@ -335,8 +335,8 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testi
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "my-uid", "My Folder", "myfolder", repo)
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "myfolder", repo)
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 
 	plainUID := findFolderUIDBySourcePath(t, helper, repo, "plain")
 	require.NotEmpty(t, plainUID)
@@ -361,7 +361,7 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testi
 	helper.SyncAndWait(t, repo, nil)
 
 	// Metadata-backed folder: UID preserved, generation proves in-place update.
-	requireFolderState(t, helper, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
 	newGen := common.GetFolderGeneration(t, helper, "my-uid")
 	require.Equal(t, initialGen+1, newGen, "generation should increment by exactly 1 (in-place update, not delete+create)")
 
@@ -425,9 +425,9 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToNested_PreservesGen
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "parent-a-uid", "Parent A", "parentA", repo)
-	requireFolderState(t, helper, "parent-b-uid", "Parent B", "parentB", repo)
-	requireFolderState(t, helper, "my-uid", "My Folder", "parentA/myfolder", "parent-a-uid")
+	common.RequireFolderState(t, helper.Folders, "parent-a-uid", "Parent A", "parentA", repo)
+	common.RequireFolderState(t, helper.Folders, "parent-b-uid", "Parent B", "parentB", repo)
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "parentA/myfolder", "parent-a-uid")
 
 	initialGen := common.GetFolderGeneration(t, helper, "my-uid")
 	require.Equal(t, int64(1), initialGen, "initial generation should be 1")
@@ -443,7 +443,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToNested_PreservesGen
 	moveInProvisioningPath(t, helper, "parentA/myfolder", "parentB/myfolder")
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "my-uid", "My Folder", "parentB/myfolder", "parent-b-uid")
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "parentB/myfolder", "parent-b-uid")
 	assertNoFolderAtPath(t, helper, repo, "parentA/myfolder")
 
 	newGen := common.GetFolderGeneration(t, helper, "my-uid")
@@ -486,8 +486,8 @@ func TestIntegrationProvisioning_FullSync_FolderMove_RootToNested_PreservesGener
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "my-uid", "My Folder", "myfolder", repo)
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "myfolder", repo)
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 
 	initialGen := common.GetFolderGeneration(t, helper, "my-uid")
 	require.Equal(t, int64(1), initialGen, "initial generation should be 1")
@@ -503,7 +503,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_RootToNested_PreservesGener
 	moveInProvisioningPath(t, helper, "myfolder", "parent/myfolder")
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
 	assertNoFolderAtPath(t, helper, repo, "myfolder")
 
 	newGen := common.GetFolderGeneration(t, helper, "my-uid")
@@ -546,8 +546,8 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToRoot_PreservesGener
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
-	requireFolderState(t, helper, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
 
 	initialGen := common.GetFolderGeneration(t, helper, "my-uid")
 	require.Equal(t, int64(1), initialGen, "initial generation should be 1")
@@ -563,8 +563,8 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToRoot_PreservesGener
 	moveInProvisioningPath(t, helper, "parent/myfolder", "myfolder")
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "my-uid", "My Folder", "myfolder", repo)
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "myfolder", repo)
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 	assertNoFolderAtPath(t, helper, repo, "parent/myfolder")
 
 	newGen := common.GetFolderGeneration(t, helper, "my-uid")
@@ -612,24 +612,24 @@ func TestIntegrationProvisioning_FullSync_FolderMoveUpdatesChildrenFolders(t *te
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "a-uid", "Folder A", "folderA", repo)
-	requireFolderState(t, helper, "b-uid", "Folder B", "folderA/folderB", "a-uid")
-	requireFolderState(t, helper, "c-uid", "Folder C", "folderA/folderB/folderC", "b-uid")
-	requireFolderState(t, helper, "target-uid", "Target", "target", repo)
+	common.RequireFolderState(t, helper.Folders, "a-uid", "Folder A", "folderA", repo)
+	common.RequireFolderState(t, helper.Folders, "b-uid", "Folder B", "folderA/folderB", "a-uid")
+	common.RequireFolderState(t, helper.Folders, "c-uid", "Folder C", "folderA/folderB/folderC", "b-uid")
+	common.RequireFolderState(t, helper.Folders, "target-uid", "Target", "target", repo)
 
 	// Move the intermediate folder B (with its subtree) out of A and into target.
 	moveInProvisioningPath(t, helper, "folderA/folderB", "target/folderB")
 	helper.SyncAndWait(t, repo, nil)
 
 	// Folder A stays in place, unaffected.
-	requireFolderState(t, helper, "a-uid", "Folder A", "folderA", repo)
+	common.RequireFolderState(t, helper.Folders, "a-uid", "Folder A", "folderA", repo)
 
 	// Folder B moved: sourcePath and parent annotation must reflect the new location.
-	requireFolderState(t, helper, "b-uid", "Folder B", "target/folderB", "target-uid")
+	common.RequireFolderState(t, helper.Folders, "b-uid", "Folder B", "target/folderB", "target-uid")
 
 	// Folder C (child of B): sourcePath must be updated, but parent annotation stays as b-uid
 	// because B kept its UID — no pointer is broken.
-	requireFolderState(t, helper, "c-uid", "Folder C", "target/folderB/folderC", "b-uid")
+	common.RequireFolderState(t, helper.Folders, "c-uid", "Folder C", "target/folderB/folderC", "b-uid")
 
 	// Old paths must be gone.
 	assertNoFolderAtPath(t, helper, repo, "folderA/folderB")
@@ -658,7 +658,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithUIDChange_NoGenerationPr
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "original-uid", "My Folder", "myfolder", repo)
+	common.RequireFolderState(t, helper.Folders, "original-uid", "My Folder", "myfolder", repo)
 	require.Equal(t, int64(1), common.GetFolderGeneration(t, helper, "original-uid"), "initial generation should be 1")
 
 	// Move the folder directory to a new path AND replace the _folder.json with a different UID.
@@ -673,7 +673,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithUIDChange_NoGenerationPr
 	assertNoFolderByUID(t, helper, "original-uid")
 
 	// The new folder at the moved path must exist with the new UID, freshly created.
-	requireFolderState(t, helper, "new-uid", "My Folder", "newlocation", repo)
+	common.RequireFolderState(t, helper.Folders, "new-uid", "My Folder", "newlocation", repo)
 	require.Equal(t, int64(1), common.GetFolderGeneration(t, helper, "new-uid"),
 		"generation must be 1: folder was deleted and recreated, not updated in-place")
 }
