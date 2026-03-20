@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext } from 'react';
+import { createContext, Dispatch, ReactNode, SetStateAction, useContext } from 'react';
 
 import { CoreApp } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
@@ -78,6 +78,7 @@ export type QueryLibraryContextType = {
   onFavorite: (uid: string) => void;
   onUnfavorite: (uid: string) => void;
   userFavorites: { [key: string]: boolean };
+  setUserFavorites: Dispatch<SetStateAction<{ [key: string]: boolean }>>;
   isEditingQuery: boolean;
   setIsEditingQuery: (isEditingQuery: boolean) => void;
   onAddHistoryQueryToLibrary: (newQuery: SavedQuery) => void;
@@ -89,6 +90,9 @@ export type QueryLibraryContextType = {
   activeDatasources: string[];
   /** Set a guard function that returns true to allow closing, false to prevent closing */
   setCloseGuard: (shouldAllowClose: () => boolean) => void;
+  /** Template variable overrides keyed by unresolved variable string (for example `${var}`) */
+  templateVariableOverrides: Record<string, string>;
+  setTemplateVariableOverrides: (overrides: Record<string, string>) => void;
 };
 
 export const QueryLibraryContext = createContext<QueryLibraryContextType>({
@@ -114,6 +118,7 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   onFavorite: () => {},
   onUnfavorite: () => {},
   userFavorites: {},
+  setUserFavorites: (_favorites) => {},
   isEditingQuery: false,
   setIsEditingQuery: () => {},
   onAddHistoryQueryToLibrary: () => {},
@@ -124,6 +129,8 @@ export const QueryLibraryContext = createContext<QueryLibraryContextType>({
   newQuery: undefined,
   activeDatasources: [],
   setCloseGuard: () => {},
+  templateVariableOverrides: {},
+  setTemplateVariableOverrides: () => {},
 });
 
 export function useQueryLibraryContext() {

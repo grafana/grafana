@@ -3,6 +3,7 @@ import { RuleGroupIdentifierV2, RuleIdentifier } from 'app/types/unified-alertin
 
 import { createReturnTo } from '../hooks/useReturnTo';
 
+import { ROOT_ROUTE_NAME } from './k8s/constants';
 import { stringifyIdentifier } from './rule-id';
 import { RelativeUrl, createRelativeUrl } from './url';
 
@@ -18,6 +19,7 @@ const ContactPointsTab = {
  * Navigation IDs used for Alerting pages
  */
 export const NAV_IDS = {
+  ALERT_ACTIVITY: 'alert-activity',
   NOTIFICATION_CONFIG: 'notification-config',
   RECEIVERS: 'receivers',
   ROUTES: 'am-routes',
@@ -27,6 +29,8 @@ export const NAV_IDS = {
  * Alerting page paths
  */
 export const ALERTING_PATHS: Record<string, RelativeUrl> = {
+  ALERTS: '/alerting/alerts',
+  ALERT_GROUPS: '/alerting/groups',
   NOTIFICATIONS: '/alerting/notifications',
   TEMPLATES: '/alerting/notifications/templates',
   TIME_INTERVALS: '/alerting/routes/mute-timing',
@@ -148,6 +152,12 @@ export const notificationPolicies = {
     return createRelativeUrl('/alerting/routes', {
       queryString: matchers.map((matcher) => matcher.join('')).join(','),
       alertmanager: alertmanagerSourceName ?? 'grafana',
+    });
+  },
+  policyLink: (policyName = ROOT_ROUTE_NAME, alertmanagerSourceName = 'grafana') => {
+    return createRelativeUrl('/alerting/routes', {
+      includeTree: policyName,
+      alertmanager: alertmanagerSourceName,
     });
   },
 };

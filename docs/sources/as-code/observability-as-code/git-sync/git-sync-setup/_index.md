@@ -64,6 +64,7 @@ If you want to configure Git Sync for GitHub, you can connect using a **Personal
 
 If you want to configure Git Sync for GitHub and authenticate with a Personal Access Token, sign in to GitHub and [create a new fine-grained personal access token](https://github.com/settings/personal-access-tokens/new) with these permissions:
 
+- **Administration**: Read-only permission (enables validation of branch protection rules against the configured branch when users can push directly to it; may be used in the future to check other repository settings and make the setup process smoother)
 - **Contents**: Read and write permission
 - **Metadata**: Read-only permission
 - **Pull requests**: Read and write permission
@@ -104,6 +105,7 @@ If you want to configure Git Sync for GitHub and authenticate with GitHub App:
 
 Note that your GitHub App must have the following permissions:
 
+- **Administration**: Read-only permission (enables validation of branch protection rules against the configured branch when users can push directly to it; may be used in the future to check other repository settings and make the setup process smoother)
 - **Contents**: Read and write permission
 - **Metadata**: Read-only permission
 - **Pull requests**: Read and write permission
@@ -119,7 +121,9 @@ If you want to configure Git Sync for GitLab, you need a GitLab Personal Access 
 - **User**: Read only permission
 - **API**: Read and write permission
 
-Return to Grafana and fill in the following fields:
+If you're using a token from a **service account**, you need to add the service account to the GitLab project as a member to avoid authentication issues.
+
+After creating the token, return to Grafana and fill in the following fields:
 
 1. Paste the token into the **Project Access Token** text box.
 1. Paste the **Repository URL** for your GitLab repository into the text box.

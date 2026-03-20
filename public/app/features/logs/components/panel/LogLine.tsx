@@ -11,6 +11,7 @@ import {
   useLayoutEffect,
 } from 'react';
 import Highlighter from 'react-highlight-words';
+import { useIntersection } from 'react-use';
 import tinycolor from 'tinycolor2';
 
 import { findHighlightChunksInText, GrafanaTheme2, LogsDedupStrategy, TimeRange } from '@grafana/data';
@@ -118,6 +119,7 @@ const LogLineComponent = memo(
       fontSize,
       hasLogsWithErrors,
       hasSampledLogs,
+      showLevel,
       showUniqueLabels,
       timestampResolution,
       onLogLineHover,
@@ -127,19 +129,27 @@ const LogLineComponent = memo(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
     const logLineRef = useRef<HTMLDivElement | null>(null);
+    const intersection = useIntersection(logLineRef, {});
     const pinned = useLogIsPinned(log);
     const permalinked = useLogIsPermalinked(log);
 
     const handleLogLineResize = useCallback(() => {
-      if (!onOverflow || !logLineRef.current || !virtualization || !height) {
+      if (!onOverflow || !logLineRef.current || !height) {
+        return;
+      }
+      /*
+       * We want to skip measurements when the element is not visible or part of a reused node
+       * by react window, as it provides inaccurate measurements.
+       */
+      if (!intersection?.isIntersecting) {
         return;
       }
       const calculatedHeight = typeof height === 'number' ? height : undefined;
-      const actualHeight = getLogLineDOMHeight(virtualization, logLineRef.current, calculatedHeight, log.collapsed);
+      const actualHeight = getLogLineDOMHeight(logLineRef.current, calculatedHeight);
       if (actualHeight) {
         onOverflow(index, log.uid, actualHeight);
       }
-    }, [height, index, log.collapsed, log.uid, onOverflow, virtualization]);
+    }, [height, index, intersection?.isIntersecting, log.uid, onOverflow]);
 
     useLayoutEffect(() => {
       handleLogLineResize();
@@ -166,15 +176,15 @@ const LogLineComponent = memo(
       };
     }, [handleLogLineResize]);
 
+    // Sync collapsed from log when log identity or wrapLogMessage changes.
+    // Critical for react-window: when a row is recycled for a different log, we must reset state from the new log.
     useEffect(() => {
       if (!wrapLogMessage) {
         setCollapsed(undefined);
-      } else if (collapsed === undefined && log.collapsed !== undefined) {
-        setCollapsed(log.collapsed);
-      } else if (collapsed !== undefined && log.collapsed === undefined) {
-        setCollapsed(log.collapsed);
+      } else {
+        setCollapsed(log.collapsed ?? undefined);
       }
-    }, [collapsed, log.collapsed, wrapLogMessage]);
+    }, [log.uid, log.collapsed, wrapLogMessage]);
 
     const handleMouseOver = useCallback(() => onLogLineHover?.(log), [log, onLogLineHover]);
 
@@ -198,12 +208,11 @@ const LogLineComponent = memo(
     const detailsShown = detailsDisplayed(log);
 
     return (
-      <>
+      <div ref={onOverflow ? logLineRef : undefined} data-log-index={index}>
         {/* A button element could be used but in Safari it prevents text selection. Fallback available for a11y in LogLineMenu  */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
         <div
           className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''} ${permalinked ? styles.permalinkedLogLine : ''} ${detailsShown ? styles.detailsDisplayed : ''} ${isLogDetailsFocused ? styles.currentLog : ''} ${fontSize === 'small' ? styles.fontSizeSmall : styles.fontSizeDefault} ${enableLogDetails ? styles.clickable : ''}`}
-          ref={onOverflow ? logLineRef : undefined}
           onMouseEnter={handleMouseOver}
           onFocus={handleMouseOver}
           onClick={handleClick}
@@ -260,6 +269,7 @@ const LogLineComponent = memo(
               collapsed={collapsed}
               displayedFields={displayedFields}
               log={log}
+              showLevel={showLevel}
               showTime={showTime}
               showUniqueLabels={showUniqueLabels}
               styles={styles}
@@ -303,7 +313,7 @@ const LogLineComponent = memo(
             timeZone={timeZone}
           />
         )}
-      </>
+      </div>
     );
   }
 );
@@ -315,6 +325,7 @@ interface LogProps {
   collapsed?: boolean;
   displayedFields: string[];
   log: LogListModel;
+  showLevel: boolean;
   showTime: boolean;
   showUniqueLabels?: boolean;
   styles: LogLineStyles;
@@ -323,7 +334,16 @@ interface LogProps {
 }
 
 const Log = memo(
-  ({ displayedFields, log, showTime, showUniqueLabels, styles, timestampResolution, wrapLogMessage }: LogProps) => {
+  ({
+    displayedFields,
+    log,
+    showLevel,
+    showTime,
+    showUniqueLabels,
+    styles,
+    timestampResolution,
+    wrapLogMessage,
+  }: LogProps) => {
     const handleLabelsToggle = useCallback(
       (expanded: boolean) => {
         log.uniqueLabelsExpanded = expanded;
@@ -340,7 +360,7 @@ const Log = memo(
         {
           // When logs are unwrapped, we want an empty column space to align with other log lines.
         }
-        {(log.displayLevel || !wrapLogMessage) && (
+        {showLevel && (log.displayLevel || !wrapLogMessage) && (
           <span className={`${styles.level} level-${log.logLevel} field`}>{log.displayLevel} </span>
         )}
         {showUniqueLabels && log.uniqueLabels && (
@@ -375,7 +395,7 @@ const DisplayedFields = ({
   styles: LogLineStyles;
 }) => {
   const { matchingUids, search } = useLogListSearchContext();
-  const { syntaxHighlighting, unwrappedColumns, wrapLogMessage } = useLogListContext();
+  const { isCustomGrammar, syntaxHighlighting, unwrappedColumns, wrapLogMessage } = useLogListContext();
 
   const searchWords = useMemo(() => {
     const searchWords = log.searchWords && log.searchWords[0] ? log.searchWords.slice() : [];
@@ -394,8 +414,9 @@ const DisplayedFields = ({
         return <LogLineBody log={log} key={field} styles={styles} />;
       }
       if (field === OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME && syntaxHighlighting) {
+        const className = isCustomGrammar ? 'field prism-syntax-highlight' : 'field log-syntax-highlight';
         return (
-          <span className="field log-syntax-highlight" title={getNormalizedFieldName(field)} key={field}>
+          <span className={className} title={getNormalizedFieldName(field)} key={field}>
             <HighlightedLogRenderer tokens={log.highlightedLogAttributesTokens} />{' '}
           </span>
         );
@@ -427,7 +448,7 @@ const DisplayedFields = ({
 };
 
 const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles }) => {
-  const { syntaxHighlighting } = useLogListContext();
+  const { isCustomGrammar, syntaxHighlighting } = useLogListContext();
   const { matchingUids, search } = useLogListSearchContext();
 
   const highlight = useMemo(() => {
@@ -462,8 +483,12 @@ const LogLineBody = ({ log, styles }: { log: LogListModel; styles: LogLineStyles
     );
   }
 
+  const className = isCustomGrammar
+    ? 'field prism-syntax-highlight log-line-body'
+    : 'field log-syntax-highlight log-line-body';
+
   return (
-    <span className="field log-syntax-highlight log-line-body">
+    <span className={className}>
       <HighlightedLogRenderer tokens={log.highlightedBodyTokens} />{' '}
     </span>
   );

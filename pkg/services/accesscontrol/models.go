@@ -479,9 +479,19 @@ const (
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 
-	// Alerting routes policies actions
+	// Alerting routes policies actions (legacy, unscoped - kept for backward compatibility)
 	ActionAlertingRoutesRead  = "alert.notifications.routes:read"
 	ActionAlertingRoutesWrite = "alert.notifications.routes:write"
+
+	// Alerting managed routes actions (new, scoped per-resource)
+	ActionAlertingManagedRoutesRead   = "alert.notifications.routes.managed:read"
+	ActionAlertingManagedRoutesWrite  = "alert.notifications.routes.managed:write"
+	ActionAlertingManagedRoutesCreate = "alert.notifications.routes.managed:create"
+	ActionAlertingManagedRoutesDelete = "alert.notifications.routes.managed:delete"
+
+	// Alerting routes permissions actions
+	ActionAlertingRoutesPermissionsRead  = "routes.permissions:read"
+	ActionAlertingRoutesPermissionsWrite = "routes.permissions:write"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
@@ -519,6 +529,9 @@ const (
 
 	// Usage stats actions
 	ActionUsageStatsRead = "server.usagestats.report:read"
+
+	// Live (Grafana Live) actions
+	ActionLivePush = "live:push"
 )
 
 var (

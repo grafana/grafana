@@ -42,13 +42,6 @@ var appManifestData = app.ManifestData{
 				},
 
 				{
-					Kind:       "CoreRole",
-					Plural:     "CoreRoles",
-					Scope:      "Namespaced",
-					Conversion: false,
-				},
-
-				{
 					Kind:       "Role",
 					Plural:     "Roles",
 					Scope:      "Namespaced",
@@ -83,7 +76,7 @@ var appManifestData = app.ManifestData{
 							Get: &spec3.Operation{
 								OperationProps: spec3.OperationProps{
 
-									OperationId: "getTeams",
+									OperationId: "getUserTeams",
 
 									Responses: &spec3.Responses{
 										ResponsesProps: spec3.ResponsesProps{
@@ -110,7 +103,7 @@ var appManifestData = app.ManifestData{
 																						Schema: &spec.Schema{
 																							SchemaProps: spec.SchemaProps{
 
-																								Ref: spec.MustCreateRef("#/components/schemas/getTeamsUserTeam"),
+																								Ref: spec.MustCreateRef("#/components/schemas/getUserTeamsUserTeam"),
 																							}},
 																					},
 																				},
@@ -149,7 +142,7 @@ var appManifestData = app.ManifestData{
 							Get: &spec3.Operation{
 								OperationProps: spec3.OperationProps{
 
-									OperationId: "getGroups",
+									OperationId: "getTeamGroups",
 
 									Responses: &spec3.Responses{
 										ResponsesProps: spec3.ResponsesProps{
@@ -176,7 +169,7 @@ var appManifestData = app.ManifestData{
 																						Schema: &spec.Schema{
 																							SchemaProps: spec.SchemaProps{
 
-																								Ref: spec.MustCreateRef("#/components/schemas/getGroupsExternalGroupMapping"),
+																								Ref: spec.MustCreateRef("#/components/schemas/getTeamGroupsExternalGroupMapping"),
 																							}},
 																					},
 																				},
@@ -206,7 +199,7 @@ var appManifestData = app.ManifestData{
 							Get: &spec3.Operation{
 								OperationProps: spec3.OperationProps{
 
-									OperationId: "getMembers",
+									OperationId: "getTeamMembers",
 
 									Responses: &spec3.Responses{
 										ResponsesProps: spec3.ResponsesProps{
@@ -233,7 +226,7 @@ var appManifestData = app.ManifestData{
 																						Schema: &spec.Schema{
 																							SchemaProps: spec.SchemaProps{
 
-																								Ref: spec.MustCreateRef("#/components/schemas/getMembersTeamUser"),
+																								Ref: spec.MustCreateRef("#/components/schemas/getTeamMembersTeamUser"),
 																							}},
 																					},
 																				},
@@ -546,6 +539,18 @@ var appManifestData = app.ManifestData{
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
+								"accessControl": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"boolean"},
+												},
+											},
+										},
+									},
+								},
 								"email": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
@@ -585,6 +590,18 @@ var appManifestData = app.ManifestData{
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
+								"accessControl": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"boolean"},
+												},
+											},
+										},
+									},
+								},
 								"email": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
@@ -661,7 +678,6 @@ func RemoteManifest() app.Manifest {
 var kindVersionToGoType = map[string]resource.Kind{
 	"GlobalRole/v0alpha1":           v0alpha1.GlobalRoleKind(),
 	"GlobalRoleBinding/v0alpha1":    v0alpha1.GlobalRoleBindingKind(),
-	"CoreRole/v0alpha1":             v0alpha1.CoreRoleKind(),
 	"Role/v0alpha1":                 v0alpha1.RoleKind(),
 	"RoleBinding/v0alpha1":          v0alpha1.RoleBindingKind(),
 	"ResourcePermission/v0alpha1":   v0alpha1.ResourcePermissionKind(),
@@ -681,11 +697,11 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1|User|teams|GET": v0alpha1.GetTeamsResponse{},
+	"v0alpha1|User|teams|GET": v0alpha1.GetUserTeamsResponse{},
 
-	"v0alpha1|Team|groups|GET": v0alpha1.GetGroupsResponse{},
+	"v0alpha1|Team|groups|GET": v0alpha1.GetTeamGroupsResponse{},
 
-	"v0alpha1|Team|members|GET": v0alpha1.GetMembersResponse{},
+	"v0alpha1|Team|members|GET": v0alpha1.GetTeamMembersResponse{},
 
 	"v0alpha1||<namespace>/searchTeams|GET": v0alpha1.GetSearchTeamsResponse{},
 	"v0alpha1||<namespace>/searchUsers|GET": v0alpha1.GetSearchUsersResponse{},

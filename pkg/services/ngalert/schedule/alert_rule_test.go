@@ -1394,7 +1394,7 @@ func TestAlertRuleRetry(t *testing.T) {
 	t.Run("first attempt", func(t *testing.T) {
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 1)
-		}, 5*time.Millisecond, 1*time.Millisecond)
+		}, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("second attempt", func(t *testing.T) {
@@ -1402,7 +1402,7 @@ func TestAlertRuleRetry(t *testing.T) {
 		fakeClock.Add(backoffDuration)
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 2)
-		}, 5*time.Millisecond, 1*time.Millisecond)
+		}, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("third attempt", func(t *testing.T) {
@@ -1410,7 +1410,7 @@ func TestAlertRuleRetry(t *testing.T) {
 		fakeClock.Add(backoffDuration)
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 3)
-		}, 5*time.Millisecond, 1*time.Millisecond)
+		}, time.Second, 10*time.Millisecond)
 	})
 
 	t.Run("no fourth attempt", func(t *testing.T) {
@@ -1418,7 +1418,7 @@ func TestAlertRuleRetry(t *testing.T) {
 		fakeClock.Add(backoffDuration * 10)
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			compareMetrics(c, 1, 3)
-		}, 5*time.Millisecond, 1*time.Millisecond)
+		}, time.Second, 10*time.Millisecond)
 	})
 }
 

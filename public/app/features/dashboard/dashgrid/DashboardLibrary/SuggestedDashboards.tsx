@@ -12,14 +12,8 @@ import { PluginDashboard } from 'app/types/plugins';
 import { DashboardCard } from './DashboardCard';
 import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
 import { fetchCommunityDashboards, fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import {
-  CONTENT_KINDS,
-  CREATION_ORIGINS,
-  DISCOVERY_METHODS,
-  EVENT_LOCATIONS,
-  SOURCE_ENTRY_POINTS,
-  SuggestedDashboardInteractions,
-} from './interactions';
+import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
+import { SuggestedDashboardInteractions } from './interactions';
 import { GnetDashboard } from './types';
 import {
   getThumbnailUrl,
@@ -305,10 +299,15 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
         {isPreviewCommunityDashboardError && (
           <div>
             <Alert
-              title={t('dashboard-library.community-error-title', 'Error loading community dashboard')}
+              title={t(
+                'dashboard-library.suggested-dashboards-community-error-title',
+                'Error loading community dashboard'
+              )}
               severity="error"
             >
-              <Trans i18nKey="dashboard-library.community-error-description">Failed to load community dashboard.</Trans>
+              <Trans i18nKey="dashboard-library.suggested-dashboards-community-error-description">
+                Failed to load community dashboard.
+              </Trans>
             </Alert>
           </div>
         )}

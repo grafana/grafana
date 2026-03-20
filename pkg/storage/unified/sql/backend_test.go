@@ -225,12 +225,12 @@ func TestBackend_IsHealthy(t *testing.T) {
 	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 
 	dbp.SQLMock.ExpectPing().WillReturnError(nil)
-	res, err := b.IsHealthy(ctx, nil)
+	res, err := b.IsHealthy(ctx, nil) //nolint:staticcheck
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
 	dbp.SQLMock.ExpectPing().WillReturnError(errTest)
-	res, err = b.IsHealthy(ctx, nil)
+	res, err = b.IsHealthy(ctx, nil) //nolint:staticcheck
 	require.Nil(t, res)
 	require.Error(t, err)
 	require.ErrorIs(t, err, errTest)
@@ -272,7 +272,7 @@ func TestBackend_create(t *testing.T) {
 		)
 		b.SQLMock.ExpectCommit()
 		b.SQLMock.ExpectBegin()
-		b.SQLMock.ExpectExec("insert resource").WillReturnError(sqlite.TestErrUniqueConstraintViolation)
+		b.SQLMock.ExpectExec("insert resource").WillReturnError(sqlite.ErrTestUniqueConstraintViolation)
 		b.SQLMock.ExpectRollback()
 
 		// First we insert the resource successfully. This is what the happy path test does as well.
@@ -952,4 +952,40 @@ func setupBackendTestStorageDisabled(t *testing.T) (testBackend, context.Context
 		backend:        bb,
 		TestDBProvider: dbp,
 	}, ctx
+}
+
+func TestBackend_prunerHistoryLimit(t *testing.T) {
+	tests := []struct {
+		name     string
+		group    string
+		resource string
+		expected int64
+	}{
+		{
+			name:     "plugin resource returns custom limit",
+			group:    "plugins.grafana.app",
+			resource: "plugins",
+			expected: 3,
+		},
+		{
+			name:     "dashboard resource returns default limit",
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			expected: defaultPrunerHistoryLimit,
+		},
+		{
+			name:     "other resource returns default limit",
+			group:    "some.app",
+			resource: "resources",
+			expected: defaultPrunerHistoryLimit,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			b, _ := setupBackendTest(t)
+			limit := b.prunerHistoryLimit(tc.group, tc.resource)
+			require.Equal(t, tc.expected, limit)
+		})
+	}
 }

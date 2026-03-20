@@ -219,7 +219,7 @@ func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		res, err := publicdashboardStore.ExistsEnabledByDashboardUid(context.Background(), savedDashboard.UID)
+		res, err := publicdashboardStore.ExistsEnabledByDashboardUid(context.Background(), savedDashboard.OrgID, savedDashboard.UID)
 		require.NoError(t, err)
 
 		require.True(t, res)
@@ -241,7 +241,29 @@ func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		res, err := publicdashboardStore.ExistsEnabledByDashboardUid(context.Background(), savedDashboard.UID)
+		res, err := publicdashboardStore.ExistsEnabledByDashboardUid(context.Background(), savedDashboard.OrgID, savedDashboard.UID)
+		require.NoError(t, err)
+
+		require.False(t, res)
+	})
+
+	t.Run("ExistsEnabledByDashboardUid will return false for a different org", func(t *testing.T) {
+		setup()
+
+		_, err := publicdashboardStore.Create(context.Background(), SavePublicDashboardCommand{
+			PublicDashboard: PublicDashboard{
+				IsEnabled:    true,
+				Uid:          "abc123",
+				DashboardUid: savedDashboard.UID,
+				OrgId:        savedDashboard.OrgID,
+				CreatedAt:    time.Now(),
+				CreatedBy:    7,
+				AccessToken:  "NOTAREALUUID",
+			},
+		})
+		require.NoError(t, err)
+
+		res, err := publicdashboardStore.ExistsEnabledByDashboardUid(context.Background(), savedDashboard.OrgID+1, savedDashboard.UID)
 		require.NoError(t, err)
 
 		require.False(t, res)
@@ -309,6 +331,41 @@ func TestIntegrationFindByDashboardUid(t *testing.T) {
 	t.Run("returns nil when public dashboard doesn't exist", func(t *testing.T) {
 		setup()
 		pubdash, err := publicdashboardStore.FindByDashboardUid(context.Background(), 9, "fake-dashboard-uid")
+		require.NoError(t, err)
+		assert.Nil(t, pubdash)
+	})
+}
+
+func TestIntegrationFindByOrgAndUid(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	var sqlStore db.DB
+	var cfg *setting.Cfg
+	var dashboardStore dashboards.Store
+	var publicdashboardStore *PublicDashboardStoreImpl
+	var savedDashboard *dashboards.Dashboard
+	var savedPubdash *PublicDashboard
+	var err error
+
+	setup := func() {
+		sqlStore, cfg = db.InitTestDBWithCfg(t)
+		dashboardStore, err = dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore))
+		require.NoError(t, err)
+		publicdashboardStore = ProvideStore(sqlStore, cfg, featuremgmt.WithFeatures())
+		savedDashboard = insertTestDashboard(t, dashboardStore, "testDashie", 1, "", true)
+		savedPubdash = insertPublicDashboard(t, publicdashboardStore, savedDashboard.UID, savedDashboard.OrgID, false, PublicShareType)
+	}
+
+	t.Run("returns public dashboard by org and uid", func(t *testing.T) {
+		setup()
+		pubdash, err := publicdashboardStore.FindByOrgAndUid(context.Background(), savedDashboard.OrgID, savedPubdash.Uid)
+		require.NoError(t, err)
+		assert.Equal(t, savedPubdash, pubdash)
+	})
+
+	t.Run("returns nil for a different org", func(t *testing.T) {
+		setup()
+		pubdash, err := publicdashboardStore.FindByOrgAndUid(context.Background(), savedDashboard.OrgID+1, savedPubdash.Uid)
 		require.NoError(t, err)
 		assert.Nil(t, pubdash)
 	})
@@ -559,6 +616,55 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		assert.NotEqual(t, updatedPublicDashboard.AnnotationsEnabled, pdNotUpdatedRetrieved.AnnotationsEnabled)
 		assert.NotEqual(t, updatedPublicDashboard.Share, pdNotUpdatedRetrieved.Share)
 	})
+
+	t.Run("does not update a dashboard from another org", func(t *testing.T) {
+		setup()
+
+		pdUid := "orgScopedUpdateUid"
+		createCmd := SavePublicDashboardCommand{
+			PublicDashboard: PublicDashboard{
+				Uid:                  pdUid,
+				DashboardUid:         savedDashboard.UID,
+				OrgId:                savedDashboard.OrgID,
+				IsEnabled:            false,
+				AnnotationsEnabled:   true,
+				TimeSelectionEnabled: true,
+				Share:                PublicShareType,
+				CreatedAt:            DefaultTime,
+				CreatedBy:            7,
+				AccessToken:          "anotherfakeaccesstoken",
+			},
+		}
+		affectedRows, err := publicdashboardStore.Create(context.Background(), createCmd)
+		require.NoError(t, err)
+		assert.EqualValues(t, affectedRows, 1)
+
+		updateCmd := SavePublicDashboardCommand{
+			PublicDashboard: PublicDashboard{
+				Uid:                  pdUid,
+				OrgId:                savedDashboard.OrgID + 1,
+				IsEnabled:            true,
+				AnnotationsEnabled:   false,
+				TimeSelectionEnabled: false,
+				Share:                EmailShareType,
+				TimeSettings:         &TimeSettings{From: "now-1h", To: "now"},
+				UpdatedAt:            time.Now().UTC(),
+				UpdatedBy:            8,
+			},
+		}
+
+		rowsAffected, err := publicdashboardStore.Update(context.Background(), updateCmd)
+		require.NoError(t, err)
+		assert.EqualValues(t, rowsAffected, 0)
+
+		pdRetrieved, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard.OrgID, savedDashboard.UID)
+		require.NoError(t, err)
+		assert.NotNil(t, pdRetrieved)
+		assert.Equal(t, false, pdRetrieved.IsEnabled)
+		assert.Equal(t, true, pdRetrieved.AnnotationsEnabled)
+		assert.Equal(t, true, pdRetrieved.TimeSelectionEnabled)
+		assert.Equal(t, PublicShareType, pdRetrieved.Share)
+	})
 }
 
 func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
@@ -654,7 +760,7 @@ func TestIntegrationDelete(t *testing.T) {
 	t.Run("Delete success", func(t *testing.T) {
 		setup()
 		// Do the deletion
-		affectedRows, err := publicdashboardStore.Delete(context.Background(), savedPublicDashboard.Uid)
+		affectedRows, err := publicdashboardStore.Delete(context.Background(), savedPublicDashboard.OrgId, savedPublicDashboard.Uid)
 		require.NoError(t, err)
 		assert.EqualValues(t, affectedRows, 1)
 
@@ -667,9 +773,21 @@ func TestIntegrationDelete(t *testing.T) {
 	t.Run("Non-existent public dashboard deletion doesn't throw an error", func(t *testing.T) {
 		setup()
 
-		affectedRows, err := publicdashboardStore.Delete(context.Background(), "non-existent-uid")
+		affectedRows, err := publicdashboardStore.Delete(context.Background(), savedPublicDashboard.OrgId, "non-existent-uid")
 		require.NoError(t, err)
 		assert.EqualValues(t, affectedRows, 0)
+	})
+
+	t.Run("Delete does not remove a dashboard from another org", func(t *testing.T) {
+		setup()
+
+		affectedRows, err := publicdashboardStore.Delete(context.Background(), savedPublicDashboard.OrgId+1, savedPublicDashboard.Uid)
+		require.NoError(t, err)
+		assert.EqualValues(t, affectedRows, 0)
+
+		existingDashboard, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedPublicDashboard.OrgId, savedPublicDashboard.DashboardUid)
+		require.NoError(t, err)
+		require.NotNil(t, existingDashboard)
 	})
 }
 

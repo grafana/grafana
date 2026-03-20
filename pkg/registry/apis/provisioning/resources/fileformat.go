@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -88,6 +89,32 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 	}
 
 	return nil, nil, "", ErrUnableToReadResourceBytes
+}
+
+// ParseFileResource parses repository file data into a Kubernetes resource. It first tries the
+// standard K8s YAML/JSON decoder, then falls back to classic Grafana formats (e.g. dashboards
+// with panels/schemaVersion/tags but no apiVersion/kind).
+//
+// On success the returned object and GVK are guaranteed to be non-nil.
+// Returns a ResourceValidationError when the file does not contain a recognised resource format.
+func ParseFileResource(ctx context.Context, info *repository.FileInfo) (*unstructured.Unstructured, *schema.GroupVersionKind, provisioning.ClassicFileType, error) {
+	obj, gvk, err := DecodeYAMLObject(bytes.NewReader(info.Data))
+	if err == nil && obj != nil && gvk != nil {
+		return obj, gvk, "", nil
+	}
+
+	logging.FromContext(ctx).Debug("failed to decode as k8s resource, trying classic format", "error", err)
+	obj, gvk, classic, classicErr := ReadClassicResource(ctx, info)
+	if classicErr == nil && obj != nil && gvk != nil {
+		return obj, gvk, classic, nil
+	}
+
+	// Neither decoder recognised the file — return a validation error so callers
+	// can treat this as a "not a resource" rather than a transient failure.
+	if classicErr != nil {
+		return nil, nil, "", NewResourceValidationError(fmt.Errorf("file does not contain a valid resource: %w", classicErr))
+	}
+	return nil, nil, "", NewResourceValidationError(fmt.Errorf("file does not contain a valid resource: %w", err))
 }
 
 // DecodeYAMLObject reads the input as YAML and outputs its Kubernetes resource, if it is one.

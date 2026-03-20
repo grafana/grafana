@@ -70,6 +70,11 @@ interface ComboboxStaticProps<T extends string | number>
    * Icon to display at the start of the ComboBox input
    */
   prefixIcon?: ComponentProps<typeof Icon>['name'];
+
+  /**
+   * Message to display when there are no options found. Defaults to "No options found."
+   */
+  noOptionsMessage?: string;
 }
 
 interface ClearableProps<T extends string | number> {
@@ -151,6 +156,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     portalContainer,
     invalid,
     prefixIcon,
+    noOptionsMessage,
   } = props;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
@@ -164,6 +170,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     updateOptions,
     asyncLoading,
     asyncError,
+    resetSearch,
   } = useOptions(props.options, createCustomValue, customValueDescription);
   const isAsync = typeof allOptions === 'function';
 
@@ -241,6 +248,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       }
       return itemHeight;
     },
+    getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
     overscan: VIRTUAL_OVERSCAN_ITEMS,
     rangeExtractor,
   });
@@ -292,6 +300,10 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     onIsOpenChange: ({ isOpen, inputValue }) => {
       if (isOpen && inputValue === '') {
         updateOptions(inputValue);
+      }
+
+      if (!isOpen) {
+        resetSearch();
       }
     },
 
@@ -426,6 +438,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
               scrollRef={scrollRef}
               getItemProps={getItemProps}
               error={asyncError}
+              noOptionsMessage={noOptionsMessage}
             />
           )}
         </div>

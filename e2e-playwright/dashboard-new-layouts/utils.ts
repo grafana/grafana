@@ -92,6 +92,13 @@ export const flows = {
     await expect(inputField).toBeVisible();
     await inputField.fill(variable.value);
     await inputField.blur();
+
+    if (variable.display) {
+      await dashboardPage
+        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect)
+        .click();
+      await dashboardPage.ctx.page.getByText(variable.display, { exact: true }).click();
+    }
   },
 };
 
@@ -101,6 +108,7 @@ export type Variable = {
   label?: string;
   description?: string;
   value: string;
+  display?: string;
 };
 
 export async function saveDashboard(
@@ -183,22 +191,43 @@ export async function verifyChanges(
 }
 interface ImportTestDashboardOptions {
   checkPanelsVisible?: boolean;
+  requiresDataSourceSelection?: boolean;
 }
+
+export function stripMetadataNameFromImportJson(input: string): string {
+  // Keep fixture JSON intact, but remove a fixed resource name at import time so
+  // each test creates an isolated dashboard via generateName in parallel runs.
+  try {
+    const parsed = JSON.parse(input);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const metadata = Reflect.get(parsed, 'metadata');
+      if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+        Reflect.deleteProperty(metadata, 'name');
+      }
+    }
+    return JSON.stringify(parsed);
+  } catch {
+    return input;
+  }
+}
+
 export async function importTestDashboard(
   page: Page,
   selectors: E2ESelectorGroups,
   title: string,
   dashInput?: string,
-  options: ImportTestDashboardOptions = { checkPanelsVisible: true }
+  options: ImportTestDashboardOptions = {}
 ) {
+  options = { checkPanelsVisible: true, requiresDataSourceSelection: true, ...options };
+  const importJson = stripMetadataNameFromImportJson(dashInput || JSON.stringify(testV2Dashboard));
   await page.goto(selectors.pages.ImportDashboard.url);
-  await page
-    .getByTestId(selectors.components.DashboardImportPage.textarea)
-    .fill(dashInput || JSON.stringify(testV2Dashboard));
+  await page.getByTestId(selectors.components.DashboardImportPage.textarea).fill(importJson);
   await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
   await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
-  await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-  await page.locator('div[data-testid="data-source-card"]').first().click();
+  if (options.requiresDataSourceSelection) {
+    await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
+    await page.locator('div[data-testid="data-source-card"]').first().click();
+  }
   await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
   const undockMenuButton = page.locator('[aria-label="Undock menu"]');
   const undockMenuVisible = await undockMenuButton.isVisible();

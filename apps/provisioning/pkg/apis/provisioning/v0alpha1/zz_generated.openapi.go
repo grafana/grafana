@@ -77,6 +77,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		SyncStatus{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref),
 		TestResults{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_TestResults(ref),
 		TokenStatus{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_TokenStatus(ref),
+		WebhookConfig{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_WebhookConfig(ref),
 		WebhookResponse{}.OpenAPIModelName():             schema_pkg_apis_provisioning_v0alpha1_WebhookResponse(ref),
 		WebhookStatus{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref),
 	}
@@ -808,6 +809,15 @@ func schema_pkg_apis_provisioning_v0alpha1_FixFolderMetadataJobOptions(ref commo
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Ref to the branch to create the commit on (uses repository's default branch if not specified)",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -927,7 +937,7 @@ func schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref common.Refere
 				Properties: map[string]spec.Schema{
 					"url": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The repository URL (e.g. `https://github.com/example/test.git`).",
+							Description: "The repository URL (e.g. `https://github.com/example/test`).",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1448,6 +1458,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 					"action": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"fixFolderMetadata\"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
+							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 							Enum:        []interface{}{"delete", "fixFolderMetadata", "migrate", "move", "pr", "pull", "push"},
@@ -1503,6 +1514,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobSpec(ref common.ReferenceCallback)
 						},
 					},
 				},
+				Required: []string{"action"},
 			},
 		},
 		Dependencies: []string{
@@ -2063,6 +2075,12 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 							Enum:        []interface{}{"bitbucket", "git", "github", "gitlab", "local"},
 						},
 					},
+					"webhook": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider.",
+							Ref:         ref(WebhookConfig{}.OpenAPIModelName()),
+						},
+					},
 					"local": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The repository on the local file system. Mutually exclusive with local | github.",
@@ -2104,7 +2122,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketRepositoryConfig{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName()},
+			BitbucketRepositoryConfig{}.OpenAPIModelName(), ConnectionInfo{}.OpenAPIModelName(), GitHubRepositoryConfig{}.OpenAPIModelName(), GitLabRepositoryConfig{}.OpenAPIModelName(), GitRepositoryConfig{}.OpenAPIModelName(), LocalRepositoryConfig{}.OpenAPIModelName(), SyncOptions{}.OpenAPIModelName(), WebhookConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -3222,6 +3240,25 @@ func schema_pkg_apis_provisioning_v0alpha1_TokenStatus(ref common.ReferenceCallb
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"integer"},
 							Format: "int64",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_WebhookConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"baseUrl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 				},

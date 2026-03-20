@@ -1,7 +1,7 @@
 import { api } from './baseAPI';
 export const addTagTypes = [
-  'enterprise',
   'access_control',
+  'enterprise',
   'admin_ldap',
   'admin_provisioning',
   'admin',
@@ -48,10 +48,6 @@ const injectedRtkApi = api
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      searchResult: build.mutation<SearchResultApiResponse, SearchResultApiArg>({
-        query: () => ({ url: `/access-control/assignments/search`, method: 'POST' }),
-        invalidatesTags: ['enterprise'],
-      }),
       listRoles: build.query<ListRolesApiResponse, ListRolesApiArg>({
         query: (queryArg) => ({
           url: `/access-control/roles`,
@@ -162,7 +158,6 @@ const injectedRtkApi = api
           url: `/access-control/users/${queryArg.userId}/roles`,
           params: {
             includeHidden: queryArg.includeHidden,
-            includeMapped: queryArg.includeMapped,
             targetOrgId: queryArg.targetOrgId,
           },
         }),
@@ -2070,8 +2065,6 @@ const injectedRtkApi = api
     overrideExisting: false,
   });
 export { injectedRtkApi as generatedAPI };
-export type SearchResultApiResponse = /** status 200 (empty) */ SearchResult;
-export type SearchResultApiArg = void;
 export type ListRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListRolesApiArg = {
   delegatable?: boolean;
@@ -2150,7 +2143,6 @@ export type ListUserRolesApiResponse = /** status 200 (empty) */ RoleDto[];
 export type ListUserRolesApiArg = {
   userId: number;
   includeHidden?: boolean;
-  includeMapped?: boolean;
   targetOrgId?: number;
 };
 export type AddUserRoleApiResponse =
@@ -3789,29 +3781,6 @@ export type UpdateProviderSettingsApiArg = {
     };
   };
 };
-export type SearchResultItem = {
-  action?: string;
-  basicRole?: string;
-  orgId?: number;
-  roleName?: string;
-  scope?: string;
-  teamId?: number;
-  userId?: number;
-  version?: number;
-};
-export type SearchResult = {
-  result?: SearchResultItem[];
-};
-export type ErrorResponseBody = {
-  /** Error An optional detailed description of the actual error. Only included if running in developer mode. */
-  error?: string;
-  /** a human readable version of the error */
-  message: string;
-  /** Status An optional status to denote the cause of the error.
-    
-    For example, a 412 Precondition Failed error may include additional information of why that error happened. */
-  status?: string;
-};
 export type Permission = {
   action?: string;
   created?: string;
@@ -3832,6 +3801,16 @@ export type RoleDto = {
   uid: string;
   updated: string;
   version: number;
+};
+export type ErrorResponseBody = {
+  /** Error An optional detailed description of the actual error. Only included if running in developer mode. */
+  error?: string;
+  /** a human readable version of the error */
+  message: string;
+  /** Status An optional status to denote the cause of the error.
+    
+    For example, a 412 Precondition Failed error may include additional information of why that error happened. */
+  status?: string;
 };
 export type CreateRoleForm = {
   description?: string;
@@ -4051,6 +4030,7 @@ export type Annotation = {
   timeEnd?: number;
   updated?: number;
   userId?: number;
+  userUID?: string;
 };
 export type PostAnnotationsCmd = {
   dashboardId?: number;
@@ -5021,6 +5001,7 @@ export type GroupAttributes = {
   roles?: string[];
 };
 export type HealthResponse = {
+  apiserver?: string;
   commit?: string;
   database?: string;
   enterpriseCommit?: string;
@@ -5649,20 +5630,7 @@ export type PolicyMappingRepresentsAPolicyMappingEntryInThePolicyMappingsExtensi
 };
 export type PublicKeyAlgorithm = number;
 export type SignatureAlgorithm = number;
-export type Userinfo = object;
-export type AUrlRepresentsAParsedUrlTechnicallyAUriReference = {
-  ForceQuery?: boolean;
-  Fragment?: string;
-  Host?: string;
-  OmitHost?: boolean;
-  Opaque?: string;
-  Path?: string;
-  RawFragment?: string;
-  RawPath?: string;
-  RawQuery?: string;
-  Scheme?: string;
-  User?: Userinfo;
-};
+export type Url = string;
 export type ACertificateRepresentsAnX509Certificate = {
   AuthorityKeyId?: number[];
   /** BasicConstraintsValid indicates whether IsCA, MaxPathLen,
@@ -5807,7 +5775,7 @@ export type ACertificateRepresentsAnX509Certificate = {
   SignatureAlgorithm?: SignatureAlgorithm;
   Subject?: Name;
   SubjectKeyId?: number[];
-  URIs?: AUrlRepresentsAParsedUrlTechnicallyAUriReference[];
+  URIs?: Url[];
   /** UnhandledCriticalExtensions contains a list of extension IDs that
     were not (fully) processed when parsing. Verify will fail if this
     slice is non-empty, unless verification is delegated to an OS
@@ -5829,7 +5797,7 @@ export type JsonWebKey = {
   CertificateThumbprintSHA256?: number[];
   /** X.509 certificate chain, parsed from `x5c` header. */
   Certificates?: ACertificateRepresentsAnX509Certificate[];
-  CertificatesURL?: AUrlRepresentsAParsedUrlTechnicallyAUriReference;
+  CertificatesURL?: Url;
   /** Key is the Go in-memory representation of this key. It must have one
     of these types:
     ed25519.PublicKey
@@ -6369,7 +6337,6 @@ export type NotificationTemplateContent = {
   version?: string;
 };
 export const {
-  useSearchResultMutation,
   useListRolesQuery,
   useLazyListRolesQuery,
   useCreateRoleMutation,

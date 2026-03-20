@@ -32,7 +32,7 @@ func (n *NoopREST) NewList() runtime.Object {
 }
 
 func (n *NoopREST) NamespaceScoped() bool {
-	return true
+	return !n.ResourceInfo.IsClusterScoped()
 }
 
 func (n *NoopREST) GetSingularName() string {

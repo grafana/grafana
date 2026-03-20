@@ -79,7 +79,7 @@ func (r *TeamBindingAuthorizer) BeforeDelete(ctx context.Context, obj runtime.Ob
 }
 
 // BeforeUpdate implements ResourceStorageAuthorizer.
-func (r *TeamBindingAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+func (r *TeamBindingAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	return r.beforeWrite(ctx, obj)
 }
 

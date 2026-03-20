@@ -20,6 +20,7 @@ import {
   useDeleteNotificationTemplate,
   useNotificationTemplateMetadata,
 } from '../contact-points/useNotificationTemplates';
+import { isLegacyTemplate } from '../contact-points/utils';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { TemplateEditor } from './TemplateEditor';
@@ -142,6 +143,16 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
         </td>
         <td>
           {name} {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}{' '}
+          {isLegacyTemplate(notificationTemplate) && (
+            <Badge
+              text={t('alerting.templates.legacy-badge-text', 'Legacy')}
+              color="orange"
+              tooltip={t(
+                'alerting.templates.legacy-badge-tooltip',
+                'This template was imported from a Mimir Alertmanager and uses a legacy format.'
+              )}
+            />
+          )}{' '}
           {missing && !isGrafanaAlertmanager && (
             <Tooltip
               content={

@@ -41,8 +41,13 @@ composableKinds: DataQuery: {
 				bucketAggs?: [...#BucketAggregation]
 				// List of metric aggregations
 				metrics?: [...#MetricAggregation]
+				// Metadata for variable queries
+				meta?: {
+					textField?:  string
+					valueField?: string
+				}
 
-				#QueryType: "lucene" | "dsl" @cuetsy(kind="type")
+				#QueryType: "lucene" | "dsl" | "esql" @cuetsy(kind="type")
 
 				#BucketAggregation: #DateHistogram | #Histogram | #Terms | #Filters | #GeoHashGrid | #Nested @cuetsy(kind="type")
 				#MetricAggregation: #Count | #PipelineMetricAggregation | #MetricAggregationWithSettings     @cuetsy(kind="type")
