@@ -500,7 +500,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			}
 
 			// since we are processing keys in descending order of resource version,
-			// if the first occurence is a create or update action, then it means the
+			// if the first occurrence is a create or update action, then it means the
 			// resource is live, so we can add the key to the live keys map and
 			// skip the rest of the logic for this key (no need to delete anything)
 			if dk.Action == DataActionCreated || dk.Action == DataActionUpdated {
