@@ -29,8 +29,7 @@ export const VizLegendList = <T extends unknown>({
 }: Props<T>) => {
   const styles = useStyles2(getStyles);
 
-  const selectedCount = useMemo(() => items.filter((item) => !item.disabled).length, [items]);
-  const allItemsSelected = items.length === selectedCount;
+  const allItemsSelected = useMemo(() => !items.some((item) => item.disabled), [items]);
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
