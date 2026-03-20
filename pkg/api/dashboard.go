@@ -311,9 +311,9 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, uid s
 	defer span.End()
 
 	queryResult, err := hs.DashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-		UID:               uid,
-		OrgID:             orgID,
-		K8sGetAPIVersion:  k8sGetAPIVersion,
+		UID:              uid,
+		OrgID:            orgID,
+		K8sGetAPIVersion: k8sGetAPIVersion,
 	})
 	if err != nil {
 		return nil, response.Error(http.StatusNotFound, "Dashboard not found", err)
