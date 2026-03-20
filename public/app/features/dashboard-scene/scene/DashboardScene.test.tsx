@@ -25,6 +25,7 @@ import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
@@ -79,6 +80,12 @@ jest.mock('@grafana/runtime', () => ({
         angular: { detected: true, hideDeprecation: false },
       },
     },
+  },
+}));
+
+jest.mock('app/core/services/context_srv', () => ({
+  contextSrv: {
+    hasEditPermissionInFolders: true,
   },
 }));
 
@@ -209,6 +216,8 @@ describe('DashboardScene', () => {
         const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
         config.featureToggles.dashboardNewLayouts = true;
 
+        scene.setState({ meta: { ...scene.state.meta, canSave: true } });
+
         const publishSpy = jest.spyOn(appEvents, 'publish');
         const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
 
@@ -231,6 +240,31 @@ describe('DashboardScene', () => {
 
         overlay.state.onSaveSuccess!();
         expect(scene.state.isEditing).toBe(false);
+
+        publishSpy.mockRestore();
+        hasActualSaveChangesSpy.mockRestore();
+        config.featureToggles.dashboardNewLayouts = originalFeatureToggle;
+      });
+
+      it('Should not show Save option in unsaved changes modal when user cannot save', () => {
+        const originalFeatureToggle = config.featureToggles.dashboardNewLayouts;
+        config.featureToggles.dashboardNewLayouts = true;
+
+        scene.setState({ meta: { ...scene.state.meta, canSave: false } });
+
+        const publishSpy = jest.spyOn(appEvents, 'publish');
+        const hasActualSaveChangesSpy = jest.spyOn(utils, 'hasActualSaveChanges').mockReturnValue(true);
+
+        scene.setState({ title: 'Updated title' });
+        expect(scene.state.isDirty).toBe(true);
+        scene.exitEditMode({ skipConfirm: false });
+
+        const modalCall = publishSpy.mock.calls.find((call) => call[0] instanceof ShowConfirmModalEvent);
+        expect(modalCall).toBeDefined();
+
+        const modalEvent = modalCall![0] as ShowConfirmModalEvent;
+        expect(modalEvent.payload.altActionText).toBeUndefined();
+        expect(modalEvent.payload.onAltAction).toBeUndefined();
 
         publishSpy.mockRestore();
         hasActualSaveChangesSpy.mockRestore();
