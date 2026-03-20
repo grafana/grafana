@@ -328,6 +328,10 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.NoError(t, err)
 		folderSnap := common.SnapshotObject(t, folderBefore)
 
+		dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "rr-dash-001", metav1.GetOptions{})
+		require.NoError(t, err)
+		dashSnap := common.SnapshotObject(t, dashBefore)
+
 		_, err = local.Git("mv", "old-team", "new-team")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "rename old-team to new-team")
@@ -347,6 +351,12 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.Empty(t, folderParent, "root-level folder should have no parent")
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-team"})
+
+		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
+		// folders are recreated with new UIDs. They should be updated in place instead.
+		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "rr-dash-001", metav1.GetOptions{})
+		require.NoError(t, err)
+		common.RequireRecreated(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"rr-dash-001": {Title: "Team Dashboard", SourcePath: "new-team/dashboard1.json", Folder: folderUID},
@@ -374,6 +384,10 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.NoError(t, err)
 		childSnap := common.SnapshotObject(t, childBefore)
 
+		dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "nn-dash-001", metav1.GetOptions{})
+		require.NoError(t, err)
+		dashSnap := common.SnapshotObject(t, dashBefore)
+
 		_, err = local.Git("mv", "parent/old-child", "parent/new-child")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "rename child within parent")
@@ -393,6 +407,12 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.Equal(t, parentUID, childParent, "child folder should still be parented under parent")
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/new-child"})
+
+		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
+		// folders are recreated with new UIDs. They should be updated in place instead.
+		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "nn-dash-001", metav1.GetOptions{})
+		require.NoError(t, err)
+		common.RequireRecreated(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"nn-dash-001": {Title: "Child Dashboard", SourcePath: "parent/new-child/dashboard1.json", Folder: childUID},
@@ -420,6 +440,10 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.NoError(t, err)
 		folderSnap := common.SnapshotObject(t, folderBefore)
 
+		dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "rn-dash-001", metav1.GetOptions{})
+		require.NoError(t, err)
+		dashSnap := common.SnapshotObject(t, dashBefore)
+
 		_, err = local.Git("mv", "my-folder", "parent/my-folder")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "move my-folder into parent")
@@ -440,6 +464,12 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.Equal(t, parentUID, parentAnnotation, "moved folder should now be parented under parent")
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/my-folder"})
+
+		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
+		// folders are recreated with new UIDs. They should be updated in place instead.
+		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "rn-dash-001", metav1.GetOptions{})
+		require.NoError(t, err)
+		common.RequireRecreated(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"rn-dash-001": {Title: "Moved Dashboard", SourcePath: "parent/my-folder/dashboard1.json", Folder: movedUID},
@@ -467,6 +497,10 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.NoError(t, err)
 		folderSnap := common.SnapshotObject(t, folderBefore)
 
+		dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "nr-dash-001", metav1.GetOptions{})
+		require.NoError(t, err)
+		dashSnap := common.SnapshotObject(t, dashBefore)
+
 		_, err = local.Git("mv", "parent/my-folder", "my-folder")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "move my-folder out to root")
@@ -486,6 +520,12 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.Empty(t, folderParent, "folder moved to root should have no parent")
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "my-folder"})
+
+		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
+		// folders are recreated with new UIDs. They should be updated in place instead.
+		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "nr-dash-001", metav1.GetOptions{})
+		require.NoError(t, err)
+		common.RequireRecreated(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"nr-dash-001": {Title: "Moved Dashboard", SourcePath: "my-folder/dashboard1.json", Folder: movedUID},
@@ -511,7 +551,6 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		helper.syncAndWait(t, repoName)
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"old-parent", "old-parent/child"})
 
-		// Snapshot all four objects before the rename.
 		parentBefore, err := helper.FoldersV1.Resource.Get(ctx, parentUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		parentSnap := common.SnapshotObject(t, parentBefore)
@@ -519,6 +558,14 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		childBefore, err := helper.FoldersV1.Resource.Get(ctx, childUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		childSnap := common.SnapshotObject(t, childBefore)
+
+		parentDashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "mx-parent-dash", metav1.GetOptions{})
+		require.NoError(t, err)
+		parentDashSnap := common.SnapshotObject(t, parentDashBefore)
+
+		childDashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "mx-child-dash", metav1.GetOptions{})
+		require.NoError(t, err)
+		childDashSnap := common.SnapshotObject(t, childDashBefore)
 
 		// Rename the parent folder.
 		_, err = local.Git("mv", "old-parent", "new-parent")
@@ -551,6 +598,16 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		require.Equal(t, parentUID, childParent, "child should still be parented under renamed parent")
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-parent", "new-parent/child"})
+
+		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
+		// folders are recreated with new UIDs. They should be updated in place instead.
+		parentDashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "mx-parent-dash", metav1.GetOptions{})
+		require.NoError(t, err)
+		common.RequireRecreated(t, "parent dashboard", parentDashSnap, common.SnapshotObject(t, parentDashAfter))
+
+		childDashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "mx-child-dash", metav1.GetOptions{})
+		require.NoError(t, err)
+		common.RequireRecreated(t, "child dashboard", childDashSnap, common.SnapshotObject(t, childDashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"mx-parent-dash": {Title: "Parent Dashboard", SourcePath: "new-parent/parent-dash.json", Folder: parentUID},
