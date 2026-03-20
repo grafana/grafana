@@ -96,7 +96,7 @@ function ExpandedRow({ row }: ExpandedRowProps) {
     if (!action) {
       return v;
     }
-    const def = row.spec?.[action];
+    const def = (row.spec as Record<string, unknown> | undefined)?.[action];
     if (!def) {
       return v;
     }
