@@ -815,7 +815,10 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
-				return managedFolder(name, "Same Title", config.Name), nil
+				obj := managedFolder(name, "Same Title", config.Name)
+				annots := obj.Object["metadata"].(map[string]interface{})["annotations"].(map[string]interface{})
+				annots["grafana.app/sourcePath"] = "my-folder"
+				return obj, nil
 			},
 		}
 
@@ -1154,7 +1157,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 		require.Equal(t, "Same Title", title)
 	})
 
-	t.Run("preserves existing source path when updating checksum", func(t *testing.T) {
+	t.Run("updates source path along with checksum when folder moved", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
@@ -1183,9 +1186,8 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, updatedObj)
 
-		// Verify existing sourcePath is preserved, not overwritten with folder.Path
 		sourcePath, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/sourcePath")
-		require.Equal(t, "original/path", sourcePath, "existing sourcePath should be preserved")
+		require.Equal(t, "my-folder", sourcePath, "sourcePath should be updated to the new folder path")
 
 		checksum, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/sourceChecksum")
 		require.Equal(t, "new-hash", checksum)
@@ -1248,6 +1250,164 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 
 		checksum, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/sourceChecksum")
 		require.Empty(t, checksum, "checksum should be cleared")
+	})
+}
+
+func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
+	ctx := context.Background()
+
+	newTestRepoConfig := func(name string) *provisioning.Repository {
+		return &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		}
+	}
+
+	managedFolderWithParent := func(name, title, managerIdentity, parent, sourcePath string) *unstructured.Unstructured {
+		annotations := map[string]interface{}{
+			"grafana.app/managerId": managerIdentity,
+		}
+		if parent != "" {
+			annotations["grafana.app/folder"] = parent
+		}
+		if sourcePath != "" {
+			annotations["grafana.app/sourcePath"] = sourcePath
+		}
+		return &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "folder.grafana.app/v1beta1",
+				"kind":       "Folder",
+				"metadata": map[string]interface{}{
+					"name":        name,
+					"namespace":   "default",
+					"annotations": annotations,
+				},
+				"spec": map[string]interface{}{
+					"title": title,
+				},
+			},
+		}
+	}
+
+	t.Run("updates parent when ParentID differs", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		tree := NewEmptyFolderTree()
+
+		var updatedObj *unstructured.Unstructured
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolderWithParent(name, "Same Title", config.Name, "old-parent-uid", "my-folder"), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:       "folder-uid",
+			Title:    "Same Title",
+			Path:     "my-folder",
+			ParentID: "new-parent-uid",
+		}, "new-parent-uid")
+
+		require.NoError(t, err)
+		require.Equal(t, []string{"folder-uid"}, client.updateCalls, "should update to fix parent annotation")
+		require.NotNil(t, updatedObj)
+
+		parentAnnotation, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, "new-parent-uid", parentAnnotation)
+	})
+
+	t.Run("skips parent update when ParentID matches", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolderWithParent(name, "Same Title", config.Name, "same-parent", "my-folder"), nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:       "folder-uid",
+			Title:    "Same Title",
+			Path:     "my-folder",
+			ParentID: "same-parent",
+		}, "same-parent")
+
+		require.NoError(t, err)
+		require.Empty(t, client.updateCalls, "should not update when parent matches")
+	})
+
+	t.Run("updates parent when ParentID empty and current parent is non-empty", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		tree := NewEmptyFolderTree()
+
+		var updatedObj *unstructured.Unstructured
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolderWithParent(name, "Same Title", config.Name, "some-parent", "my-folder"), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "folder-uid",
+			Title: "Same Title",
+			Path:  "my-folder",
+			// ParentID is empty — moving to root
+		}, "")
+
+		require.NoError(t, err)
+		require.Equal(t, []string{"folder-uid"}, client.updateCalls, "should update to clear parent annotation when moving to root")
+		require.NotNil(t, updatedObj)
+
+		parentAnnotation, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Empty(t, parentAnnotation, "parent annotation should be cleared")
+	})
+
+	t.Run("skips update when both ParentID and current parent are empty", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				// Existing folder also has no parent (root)
+				return managedFolderWithParent(name, "Same Title", config.Name, "", "my-folder"), nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "folder-uid",
+			Title: "Same Title",
+			Path:  "my-folder",
+			// ParentID is empty — root folder, same as existing
+		}, "")
+
+		require.NoError(t, err)
+		require.Empty(t, client.updateCalls, "should not update when both ParentID and current parent are empty")
 	})
 }
 

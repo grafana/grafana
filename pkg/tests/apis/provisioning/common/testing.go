@@ -1472,6 +1472,143 @@ func (h *GitExportHelper) GitReadFile(t *testing.T, ctx context.Context, repoNam
 	return data
 }
 
+// ExpectedDashboard describes the expected state of a single dashboard.
+type ExpectedDashboard struct {
+	Title      string
+	SourcePath string
+}
+
+// RequireDashboardCount asserts the total number of dashboards in the instance.
+func RequireDashboardCount(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, expected int) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		assert.Len(c, list.Items, expected, "unexpected dashboard count")
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected %d dashboard(s)", expected)
+}
+
+// RequireDashboardTitle asserts that the dashboard with the given uid (K8s name)
+// has the expected title.
+func RequireDashboardTitle(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, uid, expectedTitle string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		for _, d := range list.Items {
+			if d.GetName() != uid {
+				continue
+			}
+			title, _, _ := unstructured.NestedString(d.Object, "spec", "title")
+			assert.Equal(c, expectedTitle, title, "dashboard %q title mismatch", uid)
+			return
+		}
+		c.Errorf("dashboard with uid %q not found", uid)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboard %q should have title %q", uid, expectedTitle)
+}
+
+// RequireDashboards lists dashboards once and asserts that exactly the expected
+// set exists with matching count, title, and grafana.app/sourcePath for each UID.
+func RequireDashboards(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, expected map[string]ExpectedDashboard) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		if !assert.Len(c, list.Items, len(expected), "unexpected dashboard count") {
+			return
+		}
+		for _, d := range list.Items {
+			uid := d.GetName()
+			exp, ok := expected[uid]
+			if !assert.True(c, ok, "unexpected dashboard %q", uid) {
+				continue
+			}
+			title, _, _ := unstructured.NestedString(d.Object, "spec", "title")
+			assert.Equal(c, exp.Title, title, "dashboard %q title mismatch", uid)
+			sp, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			assert.Equal(c, exp.SourcePath, sp, "dashboard %q sourcePath mismatch", uid)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboards should match expected state")
+}
+
+// RequireRepoFolders lists folders once and asserts that the set of
+// grafana.app/sourcePath values for folders managed by repoName matches exactly.
+func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx context.Context, repoName string, expectedSourcePaths []string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := folderClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		var gotPaths []string
+		for _, f := range list.Items {
+			mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+			if mgr != repoName {
+				continue
+			}
+			sp, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
+			gotPaths = append(gotPaths, sp)
+		}
+		assert.ElementsMatch(c, expectedSourcePaths, gotPaths, "folder sourcePaths mismatch for repo %q", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"folders for repo %q should have sourcePaths %v", repoName, expectedSourcePaths)
+}
+
+// GetFolderGeneration returns the current generation of the folder with the given UID.
+func GetFolderGeneration(t *testing.T, helper *ProvisioningTestHelper, folderUID string) int64 {
+	t.Helper()
+	obj, err := helper.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get folder %s", folderUID)
+	return obj.GetGeneration()
+}
+
+// GetDashboardGeneration returns the current generation of the dashboard with the given UID.
+func GetDashboardGeneration(t *testing.T, helper *ProvisioningTestHelper, dashboardUID string) int64 {
+	t.Helper()
+	obj, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get dashboard %s", dashboardUID)
+	return obj.GetGeneration()
+}
+
+// GetDashboardCreationTimestamp returns the creation timestamp of the dashboard with the given UID.
+func GetDashboardCreationTimestamp(t *testing.T, helper *ProvisioningTestHelper, dashboardUID string) metav1.Time {
+	t.Helper()
+	obj, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
+	require.NoError(t, err, "failed to get dashboard %s", dashboardUID)
+	return obj.GetCreationTimestamp()
+}
+
+// FindDashboardUIDBySourcePath returns the UID of the dashboard managed by repoName at sourcePath.
+func FindDashboardUIDBySourcePath(t *testing.T, helper *ProvisioningTestHelper, repoName, sourcePath string) string {
+	t.Helper()
+	var uid string
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		for _, d := range list.Items {
+			annotations := d.GetAnnotations()
+			if annotations["grafana.app/managerId"] != repoName {
+				continue
+			}
+			if annotations["grafana.app/sourcePath"] == sourcePath {
+				uid = d.GetName()
+				return
+			}
+		}
+		c.Errorf("no dashboard managed by %q with sourcePath %q found", repoName, sourcePath)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected dashboard with sourcePath %q for repo %q", sourcePath, repoName)
+	return uid
+}
+
 // FindCondition finds a condition by type in the conditions list
 func FindCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
 	for i := range conditions {
