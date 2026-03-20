@@ -1263,6 +1263,14 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
+			// Modes 0-3 use the legacy search backend which does not support NotIn
+			// on the name field. Folder listing uses NotIn to exclude the k6-app
+			// folder at the query level. Skip legacy modes until legacy search is
+			// fully removed.
+			if mode < 4 {
+				t.Skip("Skipping: legacy search does not support NotIn on name field")
+			}
+
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableDataMigrations: true,
 				AppModeProduction:     true,

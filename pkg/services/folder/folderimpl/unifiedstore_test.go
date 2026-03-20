@@ -214,11 +214,16 @@ func TestGetChildren(t *testing.T) {
 						Operator: string(selection.In),
 						Values:   []string{"folder1"},
 					},
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: string(selection.NotIn),
+						Values:   []string{accesscontrol.K6FolderUID},
+					},
 				},
 			},
-			Limit:  folderSearchLimit + 1, // +1 to compensate for potential k6 folder removal
-			Offset: 0,                     // should be set as limit * (page - 1)
-			Page:   1,                     // should be set to 1 by default
+			Limit:  folderSearchLimit, // should default to folderSearchLimit
+			Offset: 0,                 // should be set as limit * (page - 1)
+			Page:   1,                 // should be set to 1 by default
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -273,11 +278,16 @@ func TestGetChildren(t *testing.T) {
 						Operator: string(selection.In),
 						Values:   []string{"folder1"},
 					},
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: string(selection.NotIn),
+						Values:   []string{accesscontrol.K6FolderUID},
+					},
 				},
 			},
-			Limit:  folderSearchLimit + 1,
-			Offset: 0,
-			Page:   1,
+			Limit:  folderSearchLimit, // should default to folderSearchLimit
+			Offset: 0,                 // should be set as limit * (page - 1)
+			Page:   1,                 // should be set to 1 by default
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -319,10 +329,15 @@ func TestGetChildren(t *testing.T) {
 						Operator: string(selection.In),
 						Values:   []string{"folder2"},
 					},
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: string(selection.NotIn),
+						Values:   []string{accesscontrol.K6FolderUID},
+					},
 				},
 			},
-			Limit:  11, // 10 + 1 for k6 compensation
-			Offset: 20, // should be set as limit * (page - 1), using original limit
+			Limit:  10,
+			Offset: 20, // should be set as limit * (page - 1)
 			Page:   3,
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
@@ -356,22 +371,28 @@ func TestGetChildren(t *testing.T) {
 		require.Equal(t, "folder2", result[0].UID)
 	})
 
-	t.Run("k6 folder should be filtered out for non-service accounts", func(t *testing.T) {
-		// Search returns k6-app among results; it should be post-filtered out
-		mockCli.On("Search", mock.Anything, orgID, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+	t.Run("k6 folder should be excluded via NotIn filter for non-service accounts", func(t *testing.T) {
+		// For non-service-account users, the search request should include a NotIn filter for k6-app
+		hasK6NotInFilter := func(req *resourcepb.ResourceSearchRequest) bool {
+			for _, f := range req.Options.Fields {
+				if f.Key == resource.SEARCH_FIELD_NAME &&
+					f.Operator == string(selection.NotIn) &&
+					len(f.Values) == 1 && f.Values[0] == accesscontrol.K6FolderUID {
+					return true
+				}
+			}
+			return false
+		}
+
+		mockCli.On("Search", mock.Anything, orgID, mock.MatchedBy(hasK6NotInFilter)).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key:   &resourcepb.ResourceKey{Name: accesscontrol.K6FolderUID, Resource: "folder"},
-						Cells: [][]byte{[]byte("folder1")},
-					},
-				},
+				Rows: []*resourcepb.ResourceTableRow{},
 			},
-			TotalHits: 1,
-		}, nil)
+			TotalHits: 0,
+		}, nil).Once()
 		mockCli.On("Get", mock.Anything, "folder", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"metadata": map[string]interface{}{"name": "folder"},
@@ -386,11 +407,19 @@ func TestGetChildren(t *testing.T) {
 		require.Len(t, result, 0)
 	})
 
-	t.Run("k6 folder should be returned for service accounts", func(t *testing.T) {
-		// Service accounts should see k6 folder, and search limit should NOT be incremented
-		mockCli.On("Search", mock.Anything, orgID, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-			return req.Limit == folderSearchLimit // no +1 for service accounts
-		})).Return(&resourcepb.ResourceSearchResponse{
+	t.Run("k6 folder should be returned for service accounts (no NotIn filter)", func(t *testing.T) {
+		// For service accounts, the search request should NOT include a NotIn filter for k6-app
+		hasNoK6NotInFilter := func(req *resourcepb.ResourceSearchRequest) bool {
+			for _, f := range req.Options.Fields {
+				if f.Key == resource.SEARCH_FIELD_NAME &&
+					f.Operator == string(selection.NotIn) {
+					return false
+				}
+			}
+			return true
+		}
+
+		mockCli.On("Search", mock.Anything, orgID, mock.MatchedBy(hasNoK6NotInFilter)).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
 					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
@@ -429,11 +458,16 @@ func TestGetChildren(t *testing.T) {
 						Operator: string(selection.In),
 						Values:   []string{"folder1"},
 					},
+					{
+						Key:      resource.SEARCH_FIELD_NAME,
+						Operator: string(selection.NotIn),
+						Values:   []string{accesscontrol.K6FolderUID},
+					},
 				},
 			},
-			Limit:  folderSearchLimit + 1,
-			Offset: 0,
-			Page:   1,
+			Limit:  folderSearchLimit, // should default to folderSearchLimit
+			Offset: 0,                 // should be set as limit * (page - 1)
+			Page:   1,                 // should be set to 1 by default
 		}).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
