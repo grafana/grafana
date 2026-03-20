@@ -1669,8 +1669,9 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		_, err := fm.EnsureFolderPathExist(ctx, "team-a/dashboard.json")
 
 		require.Error(t, err)
-		wantMsg := `folder UID "shared-uid" defined in "team-a" is already used by folder at path "team-b"`
-		require.EqualError(t, err, wantMsg)
+		var validationErr *ResourceValidationError
+		require.ErrorAs(t, err, &validationErr, "UID conflict should be a ResourceValidationError")
+		require.ErrorContains(t, err, `folder UID "shared-uid" defined in "team-a" is already used by folder at path "team-b"`)
 	})
 }
 
@@ -1889,5 +1890,81 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		}
 		require.False(t, callByTitle["alpha"].created)
 		require.True(t, callByTitle["beta"].created)
+	})
+}
+
+// TestEnsureFolderPathExist_EarlyReturnCheckIDConflict covers the conflict check
+// at root folder check..
+func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
+	ctx := context.Background()
+
+	folderJSON := func(uid, title string) []byte {
+		return []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"` + uid + `"},"spec":{"title":"` + title + `"}}`)
+	}
+
+	t.Run("returns error when hash matches but folder is registered under a different path", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		// Pre-walk reads "my-folder/_folder.json" — returns a stable UID and hash.
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+			Return(&repository.FileInfo{
+				Data: folderJSON("shared-uid", "My Folder"),
+				Hash: "same-hash",
+			}, nil)
+
+		// The tree already has "shared-uid" with the SAME hash but under a DIFFERENT path.
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{
+			ID:           "shared-uid",
+			Path:         "other-folder",
+			Title:        "Other Folder",
+			MetadataHash: "same-hash", // identical hash triggers the early-return branch
+		}, "")
+
+		client := &fakeDynamicResourceClient{}
+		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+
+		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+
+		require.Error(t, err)
+		var validationErr *ResourceValidationError
+		require.ErrorAs(t, err, &validationErr, "conflict from early-return branch must be a ResourceValidationError")
+		require.ErrorContains(t, err, "shared-uid")
+		require.ErrorContains(t, err, "my-folder")
+		require.ErrorContains(t, err, "other-folder")
+		// No folder creation should have been attempted.
+		require.Empty(t, client.getCalls)
+		require.Empty(t, client.createCalls)
+	})
+
+	t.Run("returns folder ID without API calls when hash and path both match", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+			Return(&repository.FileInfo{
+				Data: folderJSON("stable-uid", "My Folder"),
+				Hash: "same-hash",
+			}, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{
+			ID:           "stable-uid",
+			Path:         "my-folder",
+			Title:        "My Folder",
+			MetadataHash: "same-hash",
+		}, "")
+
+		client := &fakeDynamicResourceClient{}
+		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+
+		require.NoError(t, err)
+		require.Equal(t, "stable-uid", parent)
+		// Early-return path must not call any Kubernetes API.
+		require.Empty(t, client.getCalls, "no GET should be made when hash and path already match")
+		require.Empty(t, client.createCalls)
 	})
 }
