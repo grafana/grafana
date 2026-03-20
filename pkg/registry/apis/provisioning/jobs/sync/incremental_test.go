@@ -999,7 +999,7 @@ func TestIncrementalSync_FolderMetadataRouting(t *testing.T) {
 		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/")
 	})
 
-	t.Run("created _folder.json routes to EnsureFolderPathExist", func(t *testing.T) {
+	t.Run("created _folder.json is ignored", func(t *testing.T) {
 		mockVersioned := repository.NewMockVersioned(t)
 		mockReader := repository.NewMockReader(t)
 		repo := &compositeRepo{
@@ -1023,13 +1023,9 @@ func TestIncrementalSync_FolderMetadataRouting(t *testing.T) {
 		progress.On("HasDirPathFailedCreation", "beta/_folder.json").Return(false)
 		progress.On("TooManyErrors").Return(nil)
 
-		repoResources.On("EnsureFolderPathExist", mock.Anything, "beta/").
-			Return("beta-folder", nil)
-
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 			return result.Action() == repository.FileActionCreated &&
 				result.Path() == "beta/_folder.json" &&
-				result.Name() == "beta-folder" &&
 				result.Error() == nil
 		})).Return()
 
@@ -1041,8 +1037,8 @@ func TestIncrementalSync_FolderMetadataRouting(t *testing.T) {
 		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
 		require.NoError(t, err)
 
-		repoResources.AssertNotCalled(t, "WriteResourceFromFile", mock.Anything, "beta/_folder.json", mock.Anything)
-		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "beta/")
+		repoResources.AssertNotCalled(t, "WriteResourceFromFile", mock.Anything, mock.Anything, mock.Anything)
+		repoResources.AssertNotCalled(t, "EnsureFolderPathExist", mock.Anything, mock.Anything)
 	})
 
 	t.Run("_folder.json with disabled flag routes to WriteResourceFromFile", func(t *testing.T) {

@@ -161,15 +161,19 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
 			if folderMetadataEnabled && resources.IsFolderMetadataFile(change.Path) {
-				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.update_folder_metadata")
-				folderDir := safepath.Dir(change.Path)
-				folder, err := repositoryResources.EnsureFolderPathExist(folderCtx, folderDir)
-				if err != nil {
-					folderSpan.RecordError(err)
-					resultBuilder.WithError(fmt.Errorf("updating folder metadata at %s: %w", folderDir, err))
+				if change.Action == repository.FileActionUpdated {
+					folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.update_folder_metadata")
+					folderDir := safepath.Dir(change.Path)
+					folder, err := repositoryResources.EnsureFolderPathExist(folderCtx, folderDir)
+					if err != nil {
+						folderSpan.RecordError(err)
+						resultBuilder.WithError(fmt.Errorf("updating folder metadata at %s: %w", folderDir, err))
+					}
+					resultBuilder.WithName(folder)
+					folderSpan.End()
 				}
-				resultBuilder.WithName(folder)
-				folderSpan.End()
+				// Created _folder.json files are handled by the folder path
+				// that WriteResourceFromFile ensures for the accompanying resources.
 				break
 			}
 
