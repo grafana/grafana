@@ -150,11 +150,13 @@ describe('UnifiedDashboardAPI', () => {
       const mockV1Response = {
         apiVersion: 'dashboard.grafana.app/v1beta1',
         kind: 'DashboardList',
-        metadata: { resourceVersion: '1' },
+        metadata: { resourceVersion: '1', continue: 'v1-token' },
         items: [],
       };
       const mockV2Response = {
-        metadata: { resourceVersion: '2' },
+        apiVersion: 'dashboard.grafana.app/v2beta1',
+        kind: 'DashboardList',
+        metadata: { resourceVersion: '2', continue: 'v2-token' },
         items: [
           {
             kind: 'Dashboard',
@@ -190,13 +192,18 @@ describe('UnifiedDashboardAPI', () => {
 
       expect(v1Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 10, continueToken: undefined });
       expect(v2Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 10, continueToken: undefined });
-      expect(result).toBe(mockV2Response);
       expect(result.items).toHaveLength(2);
+      expect(result.items).toEqual(mockV2Response.items);
+
+      const decoded = JSON.parse(atob(result.metadata.continue!));
+      expect(decoded).toEqual({ v1: 'v1-token', v2: 'v2-token' });
     });
 
     it('should return v1 history when all v1 items are valid', async () => {
       const mockV1Response = {
-        metadata: { resourceVersion: '1' },
+        apiVersion: 'dashboard.grafana.app/v1beta1',
+        kind: 'DashboardList',
+        metadata: { resourceVersion: '1', continue: 'v1-token' },
         items: [
           {
             kind: 'Dashboard',
@@ -217,8 +224,11 @@ describe('UnifiedDashboardAPI', () => {
 
       const result = await api.listDashboardHistory('dash-1');
 
-      expect(result).toBe(mockV1Response);
+      expect(result.items).toEqual(mockV1Response.items);
       expect(v2Client.listDashboardHistory).not.toHaveBeenCalled();
+
+      const decoded = JSON.parse(atob(result.metadata.continue!));
+      expect(decoded).toEqual({ v1: 'v1-token' });
     });
 
     it('should merge-sort valid items by generation descending for mixed v1/v2 history', async () => {
@@ -415,6 +425,9 @@ describe('UnifiedDashboardAPI', () => {
   describe('listDeletedDashboards', () => {
     it('should try v1 first and return result if successful', async () => {
       const mockV1Response = {
+        apiVersion: 'dashboard.grafana.app/v1beta1',
+        kind: 'DashboardList',
+        metadata: { resourceVersion: '1', continue: 'v1-token' },
         items: [
           { spec: { title: 'deleted-dash-1' }, metadata: { name: 'dash-1' } },
           { spec: { title: 'deleted-dash-2' }, metadata: { name: 'dash-2' } },
@@ -424,9 +437,12 @@ describe('UnifiedDashboardAPI', () => {
 
       const result = await api.listDeletedDashboards({ limit: 10 });
 
-      expect(result).toBe(mockV1Response);
+      expect(result.items).toEqual(mockV1Response.items);
       expect(v1Client.listDeletedDashboards).toHaveBeenCalledWith({ limit: 10, continue: undefined });
       expect(v2Client.listDeletedDashboards).not.toHaveBeenCalled();
+
+      const decoded = JSON.parse(atob(result.metadata.continue!));
+      expect(decoded).toEqual({ v1: 'v1-token' });
     });
 
     it('should combine responses when v1 returns mixed v1/v2 dashboards', async () => {
@@ -488,11 +504,13 @@ describe('UnifiedDashboardAPI', () => {
       const mockV1Response = {
         apiVersion: 'dashboard.grafana.app/v1beta1',
         kind: 'DashboardList',
-        metadata: { resourceVersion: '1' },
+        metadata: { resourceVersion: '1', continue: 'v1-token' },
         items: [],
       };
       const mockV2Response = {
-        metadata: { resourceVersion: '2' },
+        apiVersion: 'dashboard.grafana.app/v2beta1',
+        kind: 'DashboardList',
+        metadata: { resourceVersion: '2', continue: 'v2-token' },
         items: [
           {
             kind: 'Dashboard',
@@ -511,6 +529,9 @@ describe('UnifiedDashboardAPI', () => {
 
       expect(v2Client.listDeletedDashboards).toHaveBeenCalled();
       expect(result.items).toHaveLength(1);
+
+      const decoded = JSON.parse(atob(result.metadata.continue!));
+      expect(decoded).toEqual({ v1: 'v1-token', v2: 'v2-token' });
     });
 
     it('should decode composite continue token and pass separate tokens to v1/v2 clients', async () => {

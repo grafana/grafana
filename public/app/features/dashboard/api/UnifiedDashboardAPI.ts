@@ -95,14 +95,26 @@ export class UnifiedDashboardAPI
     const v1Valid = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
 
     if (v1Valid.length === v1Response.items.length && v1Response.items.length > 0) {
-      return v1Response;
+      return {
+        ...v1Response,
+        metadata: {
+          ...v1Response.metadata,
+          continue: encodeCompositeToken(v1Response.metadata.continue, v2Token),
+        },
+      };
     }
 
     const v2Response = await this.v2Client.listDashboardHistory(uid, { limit, continueToken: v2Token });
     const v2Valid = v2Response.items.filter((item) => !failedFromVersion(item, ['v0', 'v1']));
 
     if (v1Valid.length === 0) {
-      return v2Response;
+      return {
+        ...v2Response,
+        metadata: {
+          ...v2Response.metadata,
+          continue: encodeCompositeToken(v1Response.metadata.continue, v2Response.metadata.continue),
+        },
+      };
     }
 
     // Both APIs return the same generation sequence; every generation is valid in
@@ -140,14 +152,26 @@ export class UnifiedDashboardAPI
     const v1Valid = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
 
     if (v1Valid.length === v1Response.items.length && v1Response.items.length > 0) {
-      return v1Response;
+      return {
+        ...v1Response,
+        metadata: {
+          ...v1Response.metadata,
+          continue: encodeCompositeToken(v1Response.metadata.continue, v2Token),
+        },
+      };
     }
 
     const v2Response = await this.v2Client.listDeletedDashboards({ ...options, continue: v2Token });
     const v2Valid = v2Response.items.filter((item) => !failedFromVersion(item, ['v0', 'v1']));
 
     if (v1Valid.length === 0) {
-      return v2Response;
+      return {
+        ...v2Response,
+        metadata: {
+          ...v2Response.metadata,
+          continue: encodeCompositeToken(v1Response.metadata.continue, v2Response.metadata.continue),
+        },
+      };
     }
 
     const merged = [...v1Valid, ...v2Valid].filter(isResource);
