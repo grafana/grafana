@@ -117,10 +117,20 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		if err != nil {
 			return err
 		}
-		if fm.tree.In(f.ID) {
-			if existing, ok := fm.tree.Get(f.ID); ok && existing.MetadataHash == f.MetadataHash {
+
+		if existing, ok := fm.tree.Get(f.ID); ok {
+			if existing.MetadataHash == f.MetadataHash {
 				parent = f.ID
 				return nil
+			}
+
+			// The UID claimed by this folder's metadata file is already registered
+			// in the tree under a different path. This is a UID conflict.
+			if safepath.EnsureTrailingSlash(existing.Path) != safepath.EnsureTrailingSlash(f.Path) {
+				return fmt.Errorf(
+					"folder UID %q defined in %q is already used by folder at path %q",
+					f.ID, f.Path, existing.Path,
+				)
 			}
 		}
 

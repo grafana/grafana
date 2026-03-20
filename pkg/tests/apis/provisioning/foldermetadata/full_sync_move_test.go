@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -286,6 +287,64 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 	assertNoFolderAtPath(t, helper, repo, "parent/child")
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"child/dashboard.json": "child-uid",
+	})
+}
+
+func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_DuplicateUID(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	const repo = "folder-duplicate-uid"
+
+	// Set up two separate folders each with their own unique UIDs.
+	writeToProvisioningPath(t, helper, "folderA/_folder.json", folderMetadataJSON("uid-a", "Folder A"))
+	writeToProvisioningPath(t, helper, "folderB/_folder.json", folderMetadataJSON("uid-b", "Folder B"))
+
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repo,
+		Target: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json":   "folderA/dashboard.json",
+			"../testdata/text-options.json": "folderB/dashboard.json",
+		},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	requireFolderState(t, helper, "uid-a", "Folder A", "folderA", repo)
+	requireFolderState(t, helper, "uid-b", "Folder B", "folderB", repo)
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"folderA/dashboard.json": "uid-a",
+		"folderB/dashboard.json": "uid-b",
+	})
+
+	// Update folderB's metadata to claim the same UID as folderA — a conflict.
+	writeToProvisioningPath(t, helper, "folderB/_folder.json", folderMetadataJSON("uid-a", "Folder B Renamed"))
+
+	// The sync must fail: folderB cannot take over uid-a which is already owned by folderA.
+	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+	require.Equal(t, string(provisioning.JobStateError), common.MustNestedString(job.Object, "status", "state"),
+		"sync must fail when a folder metadata file claims a UID already owned by another folder")
+
+	jobErrors := common.MustNestedStringSlice(job.Object, "status", "errors")
+	require.NotEmpty(t, jobErrors, "sync job must report the UID conflict")
+	require.Contains(t, jobErrors[0], "uid-a", "error should mention the conflicting UID")
+
+	// Folder A must remain intact and unchanged.
+	requireFolderState(t, helper, "uid-a", "Folder A", "folderA", repo)
+
+	// Folder B must remain exactly as it was before the conflicting sync — still on uid-b and not renamed.
+	requireFolderState(t, helper, "uid-b", "Folder B", "folderB", repo)
+
+	// Both dashboards must remain parented under their original folders.
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"folderA/dashboard.json": "uid-a",
+		"folderB/dashboard.json": "uid-b",
 	})
 }
 
