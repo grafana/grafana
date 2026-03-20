@@ -232,15 +232,11 @@ describe('SuggestedDashboardsList', () => {
   describe('merged pagination and slicing', () => {
     // Helper: generate N provisioned dashboards
     const makeProvisioned = (count: number) =>
-      Array.from({ length: count }, (_, i) =>
-        createMockPluginDashboard({ title: `Prov ${i + 1}`, uid: `p${i + 1}` })
-      );
+      Array.from({ length: count }, (_, i) => createMockPluginDashboard({ title: `Prov ${i + 1}`, uid: `p${i + 1}` }));
 
     // Helper: generate N community dashboards named C1, C2, ...
     const makeCommunity = (count: number, startAt = 1) =>
-      Array.from({ length: count }, (_, i) =>
-        createMockGnetDashboard({ id: startAt + i, name: `C${startAt + i}` })
-      );
+      Array.from({ length: count }, (_, i) => createMockGnetDashboard({ id: startAt + i, name: `C${startAt + i}` }));
 
     it('page 1 fills remaining slots with community when provisioned < PAGE_SIZE', async () => {
       const community6 = makeCommunity(6);
@@ -315,14 +311,10 @@ describe('SuggestedDashboardsList', () => {
       }
 
       // Should have fetched page 2 from the API
-      expect(mockFetchCommunityDashboards).toHaveBeenCalledWith(
-        expect.objectContaining({ page: 2 })
-      );
+      expect(mockFetchCommunityDashboards).toHaveBeenCalledWith(expect.objectContaining({ page: 2 }));
 
       // Page 1 was pre-seeded via communityDashboards prop, so no extra fetch for page 1 should occur
-      const page1Calls = mockFetchCommunityDashboards.mock.calls.filter(
-        (call) => call[0].page === 1
-      );
+      const page1Calls = mockFetchCommunityDashboards.mock.calls.filter((call) => call[0].page === 1);
       expect(page1Calls).toHaveLength(0);
     });
 

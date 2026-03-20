@@ -143,11 +143,7 @@ function DashboardCardComponent({
         )}
         {showCommunityBadge && (
           <div className={styles.badgeContainer}>
-            <Badge
-              text={t('dashboard-library.card.community-badge', 'Community')}
-              icon="info-circle"
-              color="blue"
-            />
+            <Badge text={t('dashboard-library.card.community-badge', 'Community')} icon="info-circle" color="blue" />
           </div>
         )}
         <div className={styles.thumbnailOverlay}>

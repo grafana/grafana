@@ -7,7 +7,7 @@ import { GnetDashboard, isGnetDashboard } from '../types';
 import { getThumbnailUrl, getLogoUrl, buildDashboardDetails } from '../utils/communityDashboardHelpers';
 import { getProvisionedDashboardImageUrl } from '../utils/provisionedDashboardHelpers';
 
-import { PAGE_SIZE } from './SuggestedDashboardsList';
+import { PAGE_SIZE } from '../constants';
 
 interface DashboardResultsGridProps {
   provisionedSlice: PluginDashboard[];

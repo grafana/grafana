@@ -37,7 +37,10 @@ export function SuggestedDashboardsBanner({ route, dashboard }: Props) {
   };
 
   return (
-    <SuggestedDashboardsLoader datasourceUid={datasourceUid} sourceEntryPoint={SOURCE_ENTRY_POINTS.DASHBOARD_PAGE_SUGGESTED_DASHBOARDS_BANNER}>
+    <SuggestedDashboardsLoader
+      datasourceUid={datasourceUid}
+      sourceEntryPoint={SOURCE_ENTRY_POINTS.DASHBOARD_PAGE_SUGGESTED_DASHBOARDS_BANNER}
+    >
       {({ openModal }) => (
         <Alert
           severity="info"

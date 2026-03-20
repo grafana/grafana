@@ -11,11 +11,11 @@ import { PluginDashboard } from 'app/types/plugins';
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { CompatibilityState } from '../CompatibilityBadge';
 import { DashboardCard } from '../DashboardCard';
-import { MappingContext } from '../SuggestedDashboardsModal';
+import type { MappingContext } from '../SuggestedDashboardsModal';
 import { useTrackingContext } from '../TrackingContext';
 import { checkDashboardCompatibility } from '../api/compatibilityApi';
 import { fetchCommunityDashboards } from '../api/dashboardLibraryApi';
-import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS } from '../constants';
+import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, PAGE_SIZE } from '../constants';
 import { DashboardLibraryInteractions } from '../interactions';
 import { GnetDashboard } from '../types';
 import { onUseCommunityDashboard, interpolateDashboardForCompatibilityCheck } from '../utils/communityDashboardHelpers';
@@ -25,7 +25,6 @@ import { DashboardResultsGrid } from './DashboardResultsGrid';
 import { EmptyResults } from './EmptyResults';
 import { ListHeader } from './ListHeader';
 
-export const PAGE_SIZE = 6;
 const SEARCH_DEBOUNCE_MS = 500;
 const DEFAULT_SORT_ORDER = 'downloads';
 const DEFAULT_SORT_DIRECTION = 'desc' as const;
@@ -241,7 +240,14 @@ export const SuggestedDashboardsList = ({
       });
       hasTrackedLoaded.current = true;
     }
-  }, [isDashboardsLoading, provisionedDashboards, communityDashboards, datasourceType, sourceEntryPoint, eventLocation]);
+  }, [
+    isDashboardsLoading,
+    provisionedDashboards,
+    communityDashboards,
+    datasourceType,
+    sourceEntryPoint,
+    eventLocation,
+  ]);
 
   // Provisioned dashboard click handler
   const onClickProvisionedDashboard = (dashboard: PluginDashboard) => {

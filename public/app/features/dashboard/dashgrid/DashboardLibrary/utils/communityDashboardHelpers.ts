@@ -7,7 +7,7 @@ import { DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/t
 import { dispatch } from 'app/types/store';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
-import { MappingContext } from '../SuggestedDashboardsModal';
+import type { MappingContext } from '../SuggestedDashboardsModal';
 import { fetchCommunityDashboard, GnetDashboardDependency } from '../api/dashboardLibraryApi';
 import { CONTENT_KINDS, ContentKind, CREATION_ORIGINS, EventLocation, SourceEntryPoint } from '../constants';
 import { GnetDashboard, Link } from '../types';

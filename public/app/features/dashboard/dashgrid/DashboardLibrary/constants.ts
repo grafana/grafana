@@ -72,3 +72,6 @@ export type ContentKind = (typeof CONTENT_KINDS)[keyof typeof CONTENT_KINDS];
 export type SourceEntryPoint = (typeof SOURCE_ENTRY_POINTS)[keyof typeof SOURCE_ENTRY_POINTS];
 export type DiscoveryMethod = (typeof DISCOVERY_METHODS)[keyof typeof DISCOVERY_METHODS];
 export type CreationOrigin = (typeof CREATION_ORIGINS)[keyof typeof CREATION_ORIGINS];
+
+/** Number of dashboards shown per page in the suggested dashboards list. */
+export const PAGE_SIZE = 6;
