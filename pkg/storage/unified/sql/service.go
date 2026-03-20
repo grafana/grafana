@@ -331,19 +331,22 @@ func (s *service) starting(ctx context.Context) error {
 			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
 		}
 		s.log.Info("resource server is JOINING in the ring")
-
-		if err := s.ringLifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
-			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
-		}
-		s.log.Info("resource server is ACTIVE in the ring")
 	}
 
-	// Initialize the server (builds search indexes) after the ring is Running,
-	// so that OwnsIndex checks work correctly with sharding enabled.
+	// Initialize the server (builds search indexes) while in JOINING state.
+	// The ring is Running so OwnsIndex checks work, but this instance won't
+	// receive ring-routed queries until it switches to ACTIVE below.
 	if s.uninitializedSearchServer != nil {
 		if err := s.uninitializedSearchServer.Init(ctx); err != nil {
 			return fmt.Errorf("failed to initialize server: %w", err)
 		}
+	}
+
+	if s.cfg.EnableSharding {
+		if err := s.ringLifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
+			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
+		}
+		s.log.Info("resource server is ACTIVE in the ring")
 	}
 
 	return nil
