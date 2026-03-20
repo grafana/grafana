@@ -295,6 +295,34 @@ describe('Language_provider', () => {
     });
   });
 
+  describe('getOptionsV2', () => {
+    it('returns tag values sorted alphabetically', async () => {
+      const datasource: TempoDatasource = {
+        instanceSettings: {
+          jsonData: {},
+        },
+        metadataRequest: jest.fn().mockResolvedValue({
+          tagValues: [
+            { type: 'string', value: 'zebra' },
+            { type: 'string', value: 'apple' },
+            { type: 'string', value: 'monkey' },
+          ],
+        }),
+        search: {
+          filters: [],
+        },
+      } as unknown as TempoDatasource;
+
+      const lp = new TempoLanguageProvider(datasource);
+
+      await expect(lp.getOptionsV2({ tag: 'resource.service.name' })).resolves.toEqual([
+        { type: 'string', value: 'apple', label: 'apple' },
+        { type: 'string', value: 'monkey', label: 'monkey' },
+        { type: 'string', value: 'zebra', label: 'zebra' },
+      ]);
+    });
+  });
+
   const setup = (tagsV2?: Scope[]) => {
     const datasource: TempoDatasource = {
       search: {

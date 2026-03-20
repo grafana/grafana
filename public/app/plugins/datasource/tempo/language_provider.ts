@@ -20,6 +20,7 @@ export const TAGS_LIMIT = 5000;
 
 // Limit maximum options in select dropdowns
 export const OPTIONS_LIMIT = 1000;
+const optionLabelCollator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 interface GetOptionsV2 {
   tag: string;
@@ -171,7 +172,7 @@ export default class TempoLanguageProvider extends LanguageProvider {
         }
       });
     }
-    return options;
+    return options.sort((a, b) => optionLabelCollator.compare(a.label ?? '', b.label ?? ''));
   }
 
   getTimeRangeForTags = (timeRangeForTags: number, range: TimeRange) => {
