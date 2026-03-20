@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -79,7 +80,7 @@ func getPartitionBounds(ts int64) (start, end int64) {
 
 // ensurePartition creates a partition for the given timestamp if it doesn't exist
 // TODO: should we pre-create partitions for the next N weeks in a background job instead of creating on-demand during inserts?
-func ensurePartition(ctx context.Context, pool *pgxpool.Pool, ts int64) error {
+func ensurePartition(ctx context.Context, pool *pgxpool.Pool, logger log.Logger, ts int64) error {
 	partitionName := getPartitionName(ts)
 	start, end := getPartitionBounds(ts)
 
@@ -88,7 +89,11 @@ func ensurePartition(ctx context.Context, pool *pgxpool.Pool, ts int64) error {
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		if err := tx.Rollback(ctx); err != nil {
+			logger.Error("failed to rollback transaction", "error", err)
+		}
+	}()
 
 	// Create partition
 	createPartition := fmt.Sprintf(createPartitionSQL, partitionName, start, end)
@@ -157,10 +162,14 @@ func listPartitions(ctx context.Context, pool *pgxpool.Pool) ([]PartitionInfo, e
 }
 
 // runMigrations executes database migrations using goose
-func runMigrations(ctx context.Context, pool *pgxpool.Pool) error {
+func runMigrations(ctx context.Context, pool *pgxpool.Pool, logger log.Logger) error {
 	// goose operates on *sql.DB, so we need to create one from our pgxpool
 	db := stdlib.OpenDBFromPool(pool)
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			logger.Error("failed to close database connection", "error", err)
+		}
+	}()
 
 	// Configure goose to use embedded migrations
 	goose.SetBaseFS(embedMigrations)

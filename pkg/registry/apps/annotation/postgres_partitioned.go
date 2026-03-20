@@ -93,8 +93,10 @@ func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*Postgr
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
+	logger := log.New("postgres.annotation.store")
+
 	// Run database migrations
-	if err := runMigrations(ctx, pool); err != nil {
+	if err := runMigrations(ctx, pool, logger); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
@@ -113,7 +115,7 @@ func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*Postgr
 		pool:     pool,
 		config:   cfg,
 		tagCache: cache,
-		logger:   log.New("postgres.annotation.store"),
+		logger:   logger,
 	}
 
 	// Start background cleanup
@@ -169,7 +171,7 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 // Create creates a new annotation
 func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
 	// Ensure partition exists for this timestamp
-	if err := ensurePartition(ctx, s.pool, anno.Spec.Time); err != nil {
+	if err := ensurePartition(ctx, s.pool, s.logger, anno.Spec.Time); err != nil {
 		return nil, fmt.Errorf("failed to ensure partition: %w", err)
 	}
 
@@ -407,7 +409,6 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 	dashboardUID *string, panelID *int64, text string, tags, scopes []string,
 	createdBy *string, createdAt int64) *annotationV0.Annotation {
-
 	anno := &annotationV0.Annotation{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
