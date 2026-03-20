@@ -37,6 +37,11 @@ export interface DescribeLogGroupsRequest extends ResourceRequest {
   accountId?: string;
 }
 
+export interface ListDataSourcesRequest {
+  region: string;
+  pattern?: string;
+}
+
 export interface Account {
   arn: string;
   id: string;
@@ -47,6 +52,11 @@ export interface Account {
 export interface LogGroupResponse {
   arn: string;
   name: string;
+}
+
+export interface LogDataSourceResponse {
+  name: string;
+  type: string;
 }
 
 export interface MetricResponse {

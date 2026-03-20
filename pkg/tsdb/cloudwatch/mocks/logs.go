@@ -25,6 +25,12 @@ func (l *LogsAPI) GetLogGroupFields(_ context.Context, input *cloudwatchlogs.Get
 	return args.Get(0).(*cloudwatchlogs.GetLogGroupFieldsOutput), args.Error(1)
 }
 
+func (l *LogsAPI) ListAggregateLogGroupSummaries(_ context.Context, input *cloudwatchlogs.ListAggregateLogGroupSummariesInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.ListAggregateLogGroupSummariesOutput, error) {
+	args := l.Called(input)
+
+	return args.Get(0).(*cloudwatchlogs.ListAggregateLogGroupSummariesOutput), args.Error(1)
+}
+
 type LogsService struct {
 	mock.Mock
 }
@@ -39,6 +45,16 @@ func (l *LogsService) GetLogGroupFields(_ context.Context, request resources.Log
 	args := l.Called(request)
 
 	return args.Get(0).([]resources.ResourceResponse[resources.LogGroupField]), args.Error(1)
+}
+
+type DataSourcesService struct {
+	mock.Mock
+}
+
+func (l *DataSourcesService) GetDataSources(_ context.Context, request resources.DataSourcesRequest) ([]resources.ResourceResponse[resources.LogDataSource], error) {
+	args := l.Called(request)
+
+	return args.Get(0).([]resources.ResourceResponse[resources.LogDataSource]), args.Error(1)
 }
 
 type MockLogEvents struct {

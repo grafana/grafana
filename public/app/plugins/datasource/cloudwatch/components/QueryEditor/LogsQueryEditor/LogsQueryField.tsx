@@ -7,6 +7,7 @@ import { useStyles2 } from '@grafana/ui';
 import { CloudWatchLogsQuery, LogGroupClass, LogsQueryLanguage, LogsQueryScope } from '../../../dataquery.gen';
 import { CloudWatchDatasource } from '../../../datasource';
 import { CloudWatchJsonData, CloudWatchQuery } from '../../../types';
+import { DataSourcesField } from '../../shared/DataSources/DataSourcesField';
 import { LogGroupsFieldWrapper } from '../../shared/LogGroups/LogGroupsField';
 
 import { LogsQLCodeEditor } from './code-editors/LogsQLCodeEditor';
@@ -60,6 +61,14 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
         //legacy props
         legacyOnChange={(logGroupNames) => {
           onChangeLogs({ ...query, logGroupNames });
+        }}
+      />
+      <DataSourcesField
+        region={query.region}
+        datasource={datasource}
+        dataSources={query.logDataSources}
+        onChange={(logDataSources) => {
+          onChangeLogs({ ...query, logDataSources });
         }}
       />
       <div>

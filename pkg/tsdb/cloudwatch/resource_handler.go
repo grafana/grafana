@@ -24,6 +24,7 @@ func (ds *DataSource) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/ec2-instance-attribute", ds.handleResourceReq(ds.handleGetEc2InstanceAttribute))
 	mux.HandleFunc("/resource-arns", ds.handleResourceReq(ds.handleGetResourceArns))
 	mux.HandleFunc("/log-groups", ds.resourceRequestMiddleware(ds.LogGroupsHandler))
+	mux.HandleFunc("/data-sources", ds.resourceRequestMiddleware(ds.DataSourcesHandler))
 	mux.HandleFunc("/metrics", ds.resourceRequestMiddleware(ds.MetricsHandler))
 	mux.HandleFunc("/dimension-values", ds.resourceRequestMiddleware(ds.DimensionValuesHandler))
 	mux.HandleFunc("/dimension-keys", ds.resourceRequestMiddleware(ds.DimensionKeysHandler))
@@ -99,6 +100,30 @@ func (ds *DataSource) LogGroupsHandler(ctx context.Context, parameters url.Value
 	}
 
 	return logGroupsResponse, nil
+}
+
+func (ds *DataSource) DataSourcesHandler(ctx context.Context, parameters url.Values) ([]byte, *models.HttpError) {
+	request, err := resources.ParseDataSourcesRequest(parameters)
+	if err != nil {
+		return nil, models.NewHttpError("error in DataSourcesHandler", http.StatusBadRequest, err)
+	}
+
+	service, err := ds.GetDataSourcesService(ctx, request.Region)
+	if err != nil {
+		return nil, models.NewHttpError("GetDataSourcesService error", http.StatusInternalServerError, err)
+	}
+
+	dataSources, err := service.GetDataSources(ctx, request)
+	if err != nil {
+		return nil, models.NewHttpError("GetDataSources error", http.StatusInternalServerError, err)
+	}
+
+	dataSourcesResponse, err := json.Marshal(dataSources)
+	if err != nil {
+		return nil, models.NewHttpError("DataSourcesHandler json error", http.StatusInternalServerError, err)
+	}
+
+	return dataSourcesResponse, nil
 }
 func (ds *DataSource) MetricsHandler(ctx context.Context, parameters url.Values) ([]byte, *models.HttpError) {
 	metricsRequest, err := resources.GetMetricsRequest(parameters)
@@ -301,6 +326,14 @@ func (ds *DataSource) GetLogGroupsService(ctx context.Context, region string) (m
 		return nil, err
 	}
 	return services.NewLogGroupsService(NewLogsAPI(awsConfig), features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying)), nil
+}
+
+func (ds *DataSource) GetDataSourcesService(ctx context.Context, region string) (models.DataSourcesProvider, error) {
+	awsConfig, err := ds.newAWSConfig(ctx, region)
+	if err != nil {
+		return nil, err
+	}
+	return services.NewDataSourcesService(NewLogsAPI(awsConfig), features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying)), nil
 }
 
 func (ds *DataSource) GetListMetricsService(ctx context.Context, region string) (models.ListMetricsProvider, error) {

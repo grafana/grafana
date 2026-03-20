@@ -97,7 +97,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const validLogQueries = logQueries.filter(this.filterQuery);
 
     const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => {
-      const { expression, logGroups, logGroupNames, logGroupPrefixes, selectedAccountIds } =
+      const { expression, logGroups, logGroupNames, logGroupPrefixes, selectedAccountIds, logDataSources } =
         this.interpolateLogsQueryVariables(target, options.scopedVars);
       return {
         refId: target.refId,
@@ -105,6 +105,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
         queryString: expression ?? '',
         logGroups,
         logGroupNames,
+        logDataSources,
         queryLanguage: target.queryLanguage,
         logsMode: target.logsMode ?? LogsMode.Insights,
         logsQueryScope: target.logsQueryScope,
@@ -252,7 +253,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     scopedVars: ScopedVars
   ): Pick<
     CloudWatchLogsQuery,
-    'expression' | 'logGroups' | 'logGroupNames' | 'logGroupPrefixes' | 'selectedAccountIds'
+    'expression' | 'logGroups' | 'logGroupNames' | 'logGroupPrefixes' | 'selectedAccountIds' | 'logDataSources'
   > {
     const interpolatedLogGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
       this.templateSrv,
@@ -340,6 +341,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       expression,
       logGroupPrefixes,
       selectedAccountIds,
+      logDataSources: query.logDataSources,
     };
   }
 
@@ -555,6 +557,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   private filterQuery(query: CloudWatchLogsQuery) {
     const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length;
     const hasMissingLogGroups = !query.logGroups?.length;
+    const hasMissingLogDataSources = !query.logDataSources?.length;
     const hasMissingQueryString = !query.expression?.length;
     const hasMissingPrefixes = !query.logGroupPrefixes?.length;
 
@@ -570,6 +573,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     const hasValidLogGroupSelection =
       !hasMissingLogGroups ||
+      !hasMissingLogDataSources ||
       !hasMissingLegacyLogGroupNames ||
       usesNamePrefixScope ||
       usesAllLogGroupsScope ||

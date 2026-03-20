@@ -144,6 +144,7 @@ export interface StartQueryRequest extends DataQuery {
    */
   logGroupNames?: string[] /* not quite deprecated yet, but will be soon */;
   logGroups?: raw.LogGroup[];
+  logDataSources?: raw.LogDataSource[];
   /**
    * The query string to use. For more information, see CloudWatch Logs Insights Query Syntax.
    */
