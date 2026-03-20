@@ -11,7 +11,7 @@ const NEW_GAUGES_DASHBOARD_UID = 'panel-tests-gauge-new';
 const OLD_TO_NEW_GAUGES_DASHBOARD_UID = 'panel-tests-old-gauge-to-new';
 
 const OLD_GAUGES_DASHBOARD_GAUGE_COUNT = 16;
-const NEW_GAUGE_DASHBOARD_GAUGE_COUNT = 34;
+const NEW_GAUGE_DASHBOARD_GAUGE_COUNT = 36;
 
 test.describe(
   'Gauge Panel',
