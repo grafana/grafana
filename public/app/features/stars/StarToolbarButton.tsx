@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Icon, ToolbarButton } from '@grafana/ui';
 
 import { useStarItem, useStarredItems } from './hooks';
@@ -37,6 +38,10 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
   const handleStarToggle = async () => {
     await handleItemStar({ id, title }, !isStarred);
     onStarChange?.(id, !isStarred);
+    reportInteraction('grafana_dashboards_star_dashboard', {
+      origin: 'StarToolbarButton',
+      status: !isStarred ? 'starred' : 'unstarred',
+    });
   };
 
   const iconProps = useMemo(() => {

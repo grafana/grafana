@@ -14,7 +14,7 @@ import { config, PanelDataErrorView } from '@grafana/runtime';
 import { DataLinksContextMenu, Stack, useStyles2, VizRepeater, VizRepeaterRenderValueProps } from '@grafana/ui';
 import { DataLinksContextMenuApi, RadialGauge } from '@grafana/ui/internal';
 
-import { Options } from '../panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 export function GaugePanel({
   id,

@@ -5,7 +5,7 @@ import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Stack, Switch, Label, Tooltip, Grid, useStyles2 } from '@grafana/ui';
 
-import { GaugePanelEffects } from '../panelcfg.gen';
+import { GaugePanelEffects } from './panelcfg.gen';
 
 function EffectsEditorInput(props: ComponentProps<typeof Switch> & { tooltip?: string }) {
   const id = useId();
