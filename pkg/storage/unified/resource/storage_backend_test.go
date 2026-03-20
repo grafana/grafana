@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand/v2"
@@ -510,6 +511,228 @@ func TestKvStorageBackend_WriteEvent_ResourceAlreadyExists(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, int64(0), rv2)
 	require.ErrorIs(t, err, ErrResourceAlreadyExists)
+}
+
+func TestKvStorageBackend_validateCreateWrite_WaitsForTransientPredecessorToDisappear(t *testing.T) {
+	testCases := []struct {
+		name    string
+		backend func(*testing.T) *kvStorageBackend
+	}{
+		{
+			name: "badger",
+			backend: func(t *testing.T) *kvStorageBackend {
+				return setupTestStorageBackend(t)
+			},
+		},
+		{
+			name: "sqlkv",
+			backend: func(t *testing.T) *kvStorageBackend {
+				return setupTestStorageBackend(t, withKV(setupSqlKV(t)))
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := tc.backend(t)
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+
+			key := &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      "settling-create",
+			}
+
+			prevKey := DataKey{
+				Namespace:       key.Namespace,
+				Group:           key.Group,
+				Resource:        key.Resource,
+				Name:            key.Name,
+				ResourceVersion: 1,
+				Action:          DataActionCreated,
+			}
+			dataKey := DataKey{
+				Namespace:       key.Namespace,
+				Group:           key.Group,
+				Resource:        key.Resource,
+				Name:            key.Name,
+				ResourceVersion: 2,
+				Action:          DataActionCreated,
+			}
+
+			require.NoError(t, backend.dataStore.Save(ctx, prevKey, strings.NewReader("predecessor")))
+			require.NoError(t, backend.dataStore.Save(ctx, dataKey, strings.NewReader("winner")))
+
+			go func() {
+				time.Sleep(20 * time.Millisecond)
+				_ = backend.dataStore.Delete(context.Background(), prevKey)
+			}()
+
+			err := backend.validateCreateWrite(ctx, key, key.Namespace, dataKey)
+			require.NoError(t, err)
+
+			reader, err := backend.dataStore.Get(ctx, dataKey)
+			require.NoError(t, err)
+			require.NoError(t, reader.Close())
+		})
+	}
+}
+
+func TestKvStorageBackend_validateCreateWrite_DeletesOurWriteWhenPredecessorEventAppears(t *testing.T) {
+	testCases := []struct {
+		name    string
+		backend func(*testing.T) *kvStorageBackend
+	}{
+		{
+			name: "badger",
+			backend: func(t *testing.T) *kvStorageBackend {
+				return setupTestStorageBackend(t)
+			},
+		},
+		{
+			name: "sqlkv",
+			backend: func(t *testing.T) *kvStorageBackend {
+				return setupTestStorageBackend(t, withKV(setupSqlKV(t)))
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := tc.backend(t)
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+			defer cancel()
+
+			key := &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "apps",
+				Resource:  "resources",
+				Name:      "settling-create-with-event",
+			}
+
+			prevKey := DataKey{
+				Namespace:       key.Namespace,
+				Group:           key.Group,
+				Resource:        key.Resource,
+				Name:            key.Name,
+				ResourceVersion: 1,
+				Action:          DataActionCreated,
+			}
+			dataKey := DataKey{
+				Namespace:       key.Namespace,
+				Group:           key.Group,
+				Resource:        key.Resource,
+				Name:            key.Name,
+				ResourceVersion: 2,
+				Action:          DataActionCreated,
+			}
+
+			require.NoError(t, backend.dataStore.Save(ctx, prevKey, strings.NewReader("predecessor")))
+			require.NoError(t, backend.dataStore.Save(ctx, dataKey, strings.NewReader("winner")))
+
+			go func() {
+				time.Sleep(20 * time.Millisecond)
+				_ = backend.eventStore.Save(context.Background(), Event{
+					Namespace:       key.Namespace,
+					Group:           key.Group,
+					Resource:        key.Resource,
+					Name:            key.Name,
+					ResourceVersion: prevKey.ResourceVersion,
+					Action:          DataActionCreated,
+				})
+			}()
+
+			err := backend.validateCreateWrite(ctx, key, key.Namespace, dataKey)
+			require.ErrorIs(t, err, ErrResourceAlreadyExists)
+
+			_, err = backend.dataStore.Get(ctx, dataKey)
+			require.ErrorIs(t, err, ErrNotFound)
+		})
+	}
+}
+
+func TestKvStorageBackend_WriteEvent_ConcurrentCreatesSameName(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	const (
+		iterations  = 10
+		concurrency = 4
+	)
+
+	for i := range iterations {
+		name := fmt.Sprintf("concurrent-create-%d", i)
+
+		type writeResult struct {
+			rv  int64
+			err error
+		}
+
+		results := make(chan writeResult, concurrency)
+		start := make(chan struct{})
+		var wg sync.WaitGroup
+
+		for j := range concurrency {
+			obj, err := createTestObjectWithName(name, appsNamespace, fmt.Sprintf("value-%d-%d", i, j))
+			require.NoError(t, err)
+
+			metaAccessor, err := utils.MetaAccessor(obj)
+			require.NoError(t, err)
+
+			event := WriteEvent{
+				Type: resourcepb.WatchEvent_ADDED,
+				Key: &resourcepb.ResourceKey{
+					Namespace: appsNamespace.Namespace,
+					Group:     appsNamespace.Group,
+					Resource:  appsNamespace.Resource,
+					Name:      name,
+				},
+				Value:      objectToJSONBytes(t, obj),
+				Object:     metaAccessor,
+				ObjectOld:  metaAccessor,
+				PreviousRV: 0,
+			}
+
+			wg.Go(func() {
+				<-start
+				rv, err := backend.WriteEvent(ctx, event)
+				results <- writeResult{rv: rv, err: err}
+			})
+		}
+
+		close(start)
+		wg.Wait()
+		close(results)
+
+		successes := 0
+		for result := range results {
+			if result.err == nil {
+				successes++
+				require.Greater(t, result.rv, int64(0))
+				continue
+			}
+
+			require.True(t,
+				errors.Is(result.err, ErrResourceAlreadyExists) || strings.Contains(result.err.Error(), "concurrent create"),
+				"unexpected concurrent create error: %v", result.err)
+		}
+
+		require.Equal(t, 1, successes, "expected exactly one create to succeed for %s", name)
+
+		response := backend.ReadResource(ctx, &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: appsNamespace.Namespace,
+				Group:     appsNamespace.Group,
+				Resource:  appsNamespace.Resource,
+				Name:      name,
+			},
+		})
+		require.Nil(t, response.Error, "resource should remain readable after concurrent creates for %s", name)
+		require.NotEmpty(t, response.Value)
+	}
 }
 
 func TestKvStorageBackend_ReadResource_Success(t *testing.T) {
