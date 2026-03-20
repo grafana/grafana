@@ -158,7 +158,7 @@ export function useCollabEditGuard(panelId: string): {
     if (isLockedByOther && lockHolder) {
       notifyApp.warning(
         t('dashboard-collab.panel-locked.title', 'Panel locked'),
-        t('dashboard-collab.panel-locked.message', 'Being edited by {{name}}', {
+        t('dashboard-collab.panel-locked.message', 'This panel is being edited by {{name}}', {
           name: lockHolder.displayName,
         })
       );

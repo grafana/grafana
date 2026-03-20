@@ -6454,6 +6454,46 @@
       }
     }
   },
+  "dashboard-collab": {
+    "checkpoint": {
+      "cancel": "Cancel",
+      "not-connected-message": "Collaboration session is not active",
+      "not-connected-title": "Not connected",
+      "save": "Save version",
+      "saved-message": "Checkpoint created",
+      "saved-message-named": "Checkpoint \"{{name}}\" created",
+      "saved-title": "Version saved",
+      "title": "Save version",
+      "version-name-description": "Optional name for this version. Leave blank for an unnamed checkpoint.",
+      "version-name-label": "Version name",
+      "version-name-placeholder": "e.g. Added latency panel"
+    },
+    "error": {
+      "dashboard-deleted-message": "This dashboard has been deleted. Redirecting to home.",
+      "dashboard-deleted-title": "Dashboard deleted",
+      "permission-revoked-message": "You no longer have access to this dashboard.",
+      "permission-revoked-title": "Access revoked"
+    },
+    "panel-border": {
+      "being-edited-by": "Being edited by {{name}}",
+      "tooltip-being-edited-by": "Being edited by {{name}}"
+    },
+    "panel-locked": {
+      "message": "This panel is being edited by {{name}}",
+      "title": "Panel locked"
+    },
+    "presence-bar": {
+      "overflow_one": "{{count}} more user(s)",
+      "overflow_other": "{{count}} more user(s)"
+    },
+    "save-status": {
+      "edited": "Edited",
+      "failed": "Save failed",
+      "retry": "Retry",
+      "saved": "Saved",
+      "saving": "Saving..."
+    }
+  },
   "dashboard-import": {
     "file-dropzone": {
       "primary-text": "Upload dashboard JSON file",
@@ -7585,10 +7625,12 @@
     },
     "version-history-table": {
       "aria-label-toggle-selection": "Toggle selection of version {{version}}",
+      "auto-save-tag": "auto",
       "date": "Date",
       "name-latest": "Latest",
       "notes": "Notes",
       "restore": "Restore",
+      "show-auto-saves": "Show auto-saves",
       "updated-by": "Updated by",
       "version": "Version"
     },
