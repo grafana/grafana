@@ -82,13 +82,13 @@ describe('ElasticsearchVariableEditor', () => {
     expect(screen.getByDisplayValue('id')).toBeInTheDocument();
   });
 
-  it('should migrate string query to object query', () => {
+  it('should not migrate legacy queries', () => {
     const stringQuery = 'test string query' as unknown as ElasticsearchDataQuery;
 
     render(<ElasticsearchVariableEditor {...{ ...defaultProps, query: stringQuery }} />);
 
-    // migrateVariableQuery should have converted the string into an object query
-    expect(screen.getByText('Query: test string query')).toBeInTheDocument();
+    expect(screen.getByText('Legacy variable query')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('test string query')).toBeInTheDocument();
   });
 
   it('should handle query errors gracefully', async () => {
