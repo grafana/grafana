@@ -29,6 +29,24 @@ export const updateFrame = (frame: DataFrame, meta?: { textField?: string; value
   return { ...frame, length, fields };
 };
 
+const extractJsonProperty = (field: Field, key: string): Field | undefined => {
+  const values = field.values.map((v) => {
+    if (v === null || v === undefined) {
+      return null;
+    }
+    try {
+      const obj = typeof v === 'string' ? JSON.parse(v) : v;
+      const val = obj?.[key];
+      return val !== undefined ? String(val) : null;
+    } catch {
+      return null;
+    }
+  });
+  return values.every((v) => v === null)
+    ? undefined
+    : { ...field, name: key, type: FieldType.string, values };
+};
+
 export const convertFieldsToVariableFields = (
   original_fields: Field[],
   meta?: { textField?: string; valueField?: string }
@@ -42,6 +60,20 @@ export const convertFieldsToVariableFields = (
   if (meta?.textField || meta?.valueField) {
     let tf = meta.textField ? original_fields.find((f) => f.name === meta.textField) : undefined;
     let vf = meta.valueField ? original_fields.find((f) => f.name === meta.valueField) : undefined;
+
+    // Named columns not found — the response may be a raw_document query where the backend
+    // returns a single NullableJSON blob field rather than individual columns. Try to extract
+    // the requested property from each JSON object in that blob field.
+    const jsonBlobField = original_fields.find((f) => f.type === FieldType.other);
+    if (jsonBlobField) {
+      if (!tf && meta.textField) {
+        tf = extractJsonProperty(jsonBlobField, meta.textField);
+      }
+      if (!vf && meta.valueField) {
+        vf = extractJsonProperty(jsonBlobField, meta.valueField);
+      }
+    }
+
     const textField = tf || vf || original_fields[0];
     const valueField = vf || tf || original_fields[0];
     const otherFields = original_fields.filter((f: Field) => f.name !== 'value' && f.name !== 'text');

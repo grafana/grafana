@@ -114,6 +114,33 @@ describe('ElasticsearchVariableUtils', () => {
       expect(resultEmptyMeta[0].values).toEqual(['a', 'b', 'c', 'd']);
     });
 
+    it('should extract properties from NullableJSON blob field when meta fields are specified', () => {
+      // This simulates the raw_document response: one FieldType.other field named by refId,
+      // whose values are JSON objects (as returned by the Elasticsearch backend).
+      const blob1 = { hostname: 'srv01', ip: '10.0.0.1', region: 'eu-west' };
+      const blob2 = { hostname: 'srv02', ip: '10.0.0.2', region: 'us-east' };
+      const fields = [{ name: 'ElasticsearchVariableQueryEditor-VariableQuery', type: FieldType.other, config: {}, values: [blob1, blob2] }];
+
+      const result = convertFieldsToVariableFields(fields, { textField: 'hostname', valueField: 'ip' });
+
+      expect(result[0].name).toBe('text');
+      expect(result[0].values).toEqual(['srv01', 'srv02']);
+      expect(result[1].name).toBe('value');
+      expect(result[1].values).toEqual(['10.0.0.1', '10.0.0.2']);
+    });
+
+    it('should fall back to first blob field when the requested property does not exist in the JSON', () => {
+      const blob = { hostname: 'srv01' };
+      const fields = [{ name: 'A', type: FieldType.other, config: {}, values: [blob] }];
+
+      // 'missing' key does not exist → extractJsonProperty returns undefined → falls back to original_fields[0]
+      const result = convertFieldsToVariableFields(fields, { valueField: 'missing' });
+
+      expect(result[1].name).toBe('value');
+      // Falls back to the blob field itself
+      expect(result[1].values[0]).toEqual(blob);
+    });
+
     it('should use textField for both when valueField not specified', () => {
       const fields = [
         { name: 'name', type: FieldType.string, config: {}, values: ['a', 'b'] },
