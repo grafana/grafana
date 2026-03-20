@@ -9,7 +9,7 @@ import (
 	lru "github.com/hashicorp/golang-lru/v2"
 )
 
-// tagCache is a simple LRU cache with TTL for tag queries
+// tagCache is an LRU cache with TTL for tag queries
 type tagCache struct {
 	cache *lru.Cache[string, *cachedTagResult]
 	ttl   time.Duration
@@ -69,7 +69,8 @@ func tagCacheKey(namespace, prefix string, limit int) string {
 	return fmt.Sprintf("%s:%s:%d", namespace, prefix, limit)
 }
 
-// ListTags implements the TagProvider interface
+// ListTags implements the TagProvider interface.
+// We use a cache here because tag queries can be expensive, and they don't change frequently.
 func (s *PostgreSQLStore) ListTags(ctx context.Context, namespace string, opts TagListOptions) ([]Tag, error) {
 	// Try cache first
 	cacheKey := tagCacheKey(namespace, opts.Prefix, opts.Limit)

@@ -78,7 +78,7 @@ func getPartitionBounds(ts int64) (start, end int64) {
 }
 
 // ensurePartition creates a partition for the given timestamp if it doesn't exist
-// TODO: can we pre-create partitions for the next N weeks in a background job instead of creating on-demand during inserts?
+// TODO: should we pre-create partitions for the next N weeks in a background job instead of creating on-demand during inserts?
 func ensurePartition(ctx context.Context, pool *pgxpool.Pool, ts int64) error {
 	partitionName := getPartitionName(ts)
 	start, end := getPartitionBounds(ts)
@@ -93,7 +93,7 @@ func ensurePartition(ctx context.Context, pool *pgxpool.Pool, ts int64) error {
 	// Create partition
 	createPartition := fmt.Sprintf(createPartitionSQL, partitionName, start, end)
 	if _, err := tx.Exec(ctx, createPartition); err != nil {
-		// Check if error is "already exists" - this is OK due to concurrent inserts
+		// Check if error is "already exists", which is fine since we just want to ensure it exists
 		if !isAlreadyExistsError(err) {
 			return fmt.Errorf("failed to create partition %s: %w", partitionName, err)
 		}
@@ -158,9 +158,7 @@ func listPartitions(ctx context.Context, pool *pgxpool.Pool) ([]PartitionInfo, e
 
 // runMigrations executes database migrations using goose
 func runMigrations(ctx context.Context, pool *pgxpool.Pool) error {
-	// Get underlying *sql.DB from pgxpool for goose
-	// Note: This creates a new *sql.DB from the pool config, which is safe
-	// because goose operations are short-lived
+	// goose operates on *sql.DB, so we need to create one from our pgxpool
 	db := stdlib.OpenDBFromPool(pool)
 	defer db.Close()
 
@@ -187,7 +185,7 @@ func isAlreadyExistsError(err error) bool {
 	// Check for pgx error code "42P07" (duplicate_table)
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
-		return pgErr.Code == "42P07" // duplicate_table
+		return pgErr.Code == "42P07"
 	}
 	return false
 }

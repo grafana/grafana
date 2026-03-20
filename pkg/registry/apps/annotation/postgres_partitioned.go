@@ -16,12 +16,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Common errors
 var (
 	ErrNotFound = errors.New("annotation not found")
 )
 
-// Default configuration values
 const (
 	defaultMaxConnections  = 10
 	defaultMaxIdleConns    = 5
@@ -31,7 +29,6 @@ const (
 	defaultTagCacheSize    = 1000
 )
 
-// PostgreSQLStoreConfig contains configuration for the PostgreSQL store
 type PostgreSQLStoreConfig struct {
 	ConnectionString string
 	MaxConnections   int
@@ -57,7 +54,6 @@ var _ LifecycleManager = (*PostgreSQLStore)(nil)
 
 // NewPostgreSQLStore creates a new PostgreSQL-backed annotation store
 func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*PostgreSQLStore, error) {
-	// Set defaults
 	if cfg.MaxConnections == 0 {
 		cfg.MaxConnections = defaultMaxConnections
 	}
@@ -77,7 +73,7 @@ func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*Postgr
 		cfg.TagCacheSize = defaultTagCacheSize
 	}
 
-	// Configure connection pool
+	// Create connection pool
 	poolConfig, err := pgxpool.ParseConfig(cfg.ConnectionString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse connection string: %w", err)
@@ -87,13 +83,11 @@ func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*Postgr
 	poolConfig.MinConns = int32(cfg.MaxIdleConns)
 	poolConfig.MaxConnLifetime = cfg.ConnMaxLifetime
 
-	// Create connection pool
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create connection pool: %w", err)
 	}
 
-	// Test connection
 	if err := pool.Ping(ctx); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", err)
@@ -179,7 +173,6 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 		return nil, fmt.Errorf("failed to ensure partition: %w", err)
 	}
 
-	// Extract values
 	namespace := anno.Namespace
 	name := anno.Name
 	timeMs := anno.Spec.Time
@@ -278,7 +271,7 @@ func (s *PostgreSQLStore) List(ctx context.Context, namespace string, opts ListO
 	}
 	query, args := buildListQuery(namespace, opts, offset, limit)
 
-	// Execute query (query will request limit + 1 to detect if there are more results for pagination)
+	// Execute query
 	rows, err := s.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query annotations: %w", err)
@@ -325,9 +318,9 @@ func (s *PostgreSQLStore) List(ctx context.Context, namespace string, opts ListO
 }
 
 // buildListQuery constructs the SQL query and arguments for List
-func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (string, []interface{}) {
+func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (string, []any) {
 	var conditions []string
-	var args []interface{}
+	var args []any
 	argNum := 1
 
 	// Namespace is always required
@@ -405,7 +398,7 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 
 	// Add pagination
 	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argNum, argNum+1)
-	args = append(args, limit+1, offset) // Request one extra to detect more results
+	args = append(args, limit+1, offset) // Request one extra to detect more results for pagination
 
 	return query, args
 }

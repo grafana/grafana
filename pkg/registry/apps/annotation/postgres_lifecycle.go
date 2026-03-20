@@ -37,8 +37,8 @@ func (s *PostgreSQLStore) startCleanup(parentCtx context.Context) {
 	}()
 }
 
-// runCleanup executes cleanup with timeout and logging
 func (s *PostgreSQLStore) runCleanup(ctx context.Context) {
+	// Set a 5-minute timeout for the cleanup. This should be plenty given we're simply dropping entire partitions.
 	cleanupCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
@@ -54,11 +54,9 @@ func (s *PostgreSQLStore) runCleanup(ctx context.Context) {
 // Cleanup implements the LifecycleManager interface
 // It removes old partitions that are beyond the retention TTL
 func (s *PostgreSQLStore) Cleanup(ctx context.Context) (int64, error) {
-	// Calculate cutoff timestamp
+	// Calculate cutoff timestamp and corresponding partition name
 	cutoff := time.Now().Add(-s.config.RetentionTTL)
 	cutoffMs := cutoff.UnixMilli()
-
-	// Calculate the cutoff partition name
 	cutoffPartition := getPartitionName(cutoffMs)
 
 	// Get all existing partitions

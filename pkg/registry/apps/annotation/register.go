@@ -86,10 +86,11 @@ func NewAppInstaller(
 			return nil, fmt.Errorf("failed to create Postgres store: %w", err)
 		}
 	case "legacy-sql":
+		// legacy-sql is the default, but we allow explicitly specifying it for clarity
+		fallthrough
+	default:
 		// Layer 1→2: Wrap old annotations.Repository with sqlAdapter (implements Store interface)
 		store = NewSQLAdapter(service, cleaner, cfg.CleanupSettings)
-	default:
-		return nil, fmt.Errorf("unknown store backend: %s (valid options: memory, grpc, postgres, legacy-sql)", cfg.StoreBackend)
 	}
 
 	installer.k8sAdapter = &k8sRESTAdapter{

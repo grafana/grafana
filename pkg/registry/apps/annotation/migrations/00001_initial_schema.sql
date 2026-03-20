@@ -1,7 +1,5 @@
 -- +goose Up
 -- Create partitioned annotations table
--- This table uses PostgreSQL declarative partitioning (available in PG 10+)
--- Partitions are created on-demand at runtime based on the time column
 CREATE TABLE IF NOT EXISTS annotations (
   namespace VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
