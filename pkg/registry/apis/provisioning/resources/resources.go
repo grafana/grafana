@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -284,17 +285,57 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 }
 
 func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, string, schema.GroupVersionKind, error) {
-	name, oldFolderName, gvk, err := r.RemoveResourceFromFile(ctx, previousPath, previousRef)
+	oldInfo, err := r.repo.Read(ctx, previousPath, previousRef)
 	if err != nil {
-		return name, oldFolderName, gvk, fmt.Errorf("failed to remove resource: %w", err)
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read previous file: %w", err)
+	}
+	oldParsed, err := r.parser.Parse(ctx, oldInfo)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse previous file: %w", err)
+	}
+
+	newInfo, err := r.repo.Read(ctx, newPath, newRef)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to read new file: %w", err)
+	}
+	newParsed, err := r.parser.Parse(ctx, newInfo)
+	if err != nil {
+		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse new file: %w", err)
+	}
+
+	oldFolderName := existingFolder(ctx, oldParsed)
+
+	// Only delete the old resource when the identity (metadata.name) changed.
+	// When the name stays the same, WriteResourceFromFile will update in place.
+	if oldParsed.Obj.GetName() != newParsed.Obj.GetName() {
+		oldParsed.Action = provisioning.ResourceActionDelete
+		if err := oldParsed.Run(ctx); err != nil {
+			return oldParsed.Obj.GetName(), oldFolderName, oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
+		}
 	}
 
 	newName, gvk, err := r.WriteResourceFromFile(ctx, newPath, newRef)
 	if err != nil {
-		return name, oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
+		return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
 	}
-
 	return newName, oldFolderName, gvk, nil
+}
+
+// existingFolder returns the folder annotation of a resource's current Grafana
+// object, or empty string if the resource doesn't exist yet.
+func existingFolder(ctx context.Context, parsed *ParsedResource) string {
+	if parsed.Client == nil {
+		return ""
+	}
+	existing, err := parsed.Client.Get(ctx, parsed.Obj.GetName(), metav1.GetOptions{})
+	if err != nil || existing == nil {
+		return ""
+	}
+	meta, err := utils.MetaAccessor(existing)
+	if err != nil {
+		return ""
+	}
+	return meta.GetFolder()
 }
 
 func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path string, ref string) (string, string, schema.GroupVersionKind, error) {
