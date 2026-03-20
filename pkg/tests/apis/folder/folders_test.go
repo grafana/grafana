@@ -145,8 +145,8 @@ func TestIntegrationFoldersApp(t *testing.T) {
 				DisableAnonymous:     true,
 				APIServerStorageType: "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folders.RESOURCEGROUP:      {DualWriterMode: modeDw},
-					setting.DashboardResource:  {DualWriterMode: modeDw},
+					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
+					setting.DashboardResource: {DualWriterMode: modeDw},
 				},
 				EnableFeatureToggles: []string{},
 			}))
