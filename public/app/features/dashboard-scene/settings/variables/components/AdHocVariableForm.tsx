@@ -172,7 +172,11 @@ export function AdHocVariableForm({
             )}
             noMargin
           >
-            <Switch value={enableGroupBy ?? false} onChange={onEnableGroupByChange} />
+            <Switch
+              value={enableGroupBy ?? false}
+              onChange={onEnableGroupByChange}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle}
+            />
           </Field>
         )}
     </Stack>

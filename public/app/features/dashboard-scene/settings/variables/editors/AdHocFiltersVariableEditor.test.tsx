@@ -116,7 +116,7 @@ describe('AdHocFiltersVariableEditor', () => {
 
   it('should update the variable default keys when the default keys option is disabled', async () => {
     getTagKeysMock = () => Promise.resolve(['key1', 'key2']);
-    const { renderer, variable, user } = await setup(undefined, true);
+    const { renderer, variable, user } = await setup(undefined, { withDefaultKeys: true });
 
     // Simulate toggling default options off
     await user.click(
@@ -131,37 +131,13 @@ describe('AdHocFiltersVariableEditor', () => {
       config.featureToggles.dashboardUnifiedDrilldownControls = false;
     });
 
-    it('should set enableGroupBy to true when feature flag is on and datasource supports getGroupByKeys', async () => {
+    it('should preserve enableGroupBy from deserialization', async () => {
       config.featureToggles.dashboardUnifiedDrilldownControls = true;
       getGroupByKeysMock = () => Promise.resolve([]);
 
-      const { variable } = await setup();
+      const { variable } = await setup(undefined, { enableGroupBy: true });
 
-      await waitFor(() => {
-        expect(variable.state.enableGroupBy).toBe(true);
-      });
-    });
-
-    it('should set enableGroupBy to false when feature flag is on and datasource does not support getGroupByKeys', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-      getGroupByKeysMock = undefined;
-
-      const { variable } = await setup();
-
-      await waitFor(() => {
-        expect(variable.state.enableGroupBy).toBe(false);
-      });
-    });
-
-    it('should not update enableGroupBy when feature flag is off', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-      getGroupByKeysMock = () => Promise.resolve([]);
-
-      const { variable } = await setup();
-
-      await waitFor(() => {
-        expect(variable.state.enableGroupBy).toBeUndefined();
-      });
+      expect(variable.state.enableGroupBy).toBe(true);
     });
 
     it('should show Enable group by toggle when datasource supports getGroupByKeys and feature flag is on', async () => {
@@ -201,16 +177,16 @@ describe('AdHocFiltersVariableEditor', () => {
       config.featureToggles.dashboardUnifiedDrilldownControls = true;
       getGroupByKeysMock = () => Promise.resolve([]);
 
-      const { renderer, variable, user } = await setup();
+      const { renderer, variable, user } = await setup(undefined, { enableGroupBy: true });
 
       await waitFor(() => {
         expect(renderer.getByText('Enable group by')).toBeInTheDocument();
       });
 
-      const toggle = renderer.getByText('Enable group by').closest('div')?.querySelector('input[type="checkbox"]');
-      expect(toggle).toBeInTheDocument();
-
-      await user.click(toggle!);
+      const toggle = renderer.getByTestId(
+        selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle
+      );
+      await user.click(toggle);
 
       expect(variable.state.enableGroupBy).toBe(false);
     });
@@ -242,7 +218,13 @@ describe('AdHocFiltersVariableEditor', () => {
   });
 });
 
-async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEditor>, withDefaultKeys = false) {
+interface SetupOptions {
+  withDefaultKeys?: boolean;
+  enableGroupBy?: boolean;
+}
+
+async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEditor>, options: SetupOptions = {}) {
+  const { withDefaultKeys = false, enableGroupBy } = options;
   const onRunQuery = jest.fn();
   const variable = new AdHocFiltersVariable({
     name: 'adhocVariable',
@@ -266,6 +248,7 @@ async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEdi
     ],
     allowCustomValue: true,
     defaultKeys: withDefaultKeys ? [{ text: 'A', value: 'A' }] : undefined,
+    enableGroupBy,
   });
   return {
     renderer: await act(() =>
