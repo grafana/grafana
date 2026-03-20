@@ -431,6 +431,14 @@ var (
 			Expression:      "false",
 		},
 		{
+			Name:            "kubernetesQueryHistory",
+			Description:     "Enables App Platform API for query history",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
+		{
 			Name:        "dashboardDisableSchemaValidationV1",
 			Description: "Disable schema validation for dashboards/v1",
 			Stage:       FeatureStageExperimental,

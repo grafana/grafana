@@ -284,6 +284,11 @@ export interface FeatureToggles {
   */
   kubernetesQueryCaching?: boolean;
   /**
+  * Enables App Platform API for query history
+  * @default false
+  */
+  kubernetesQueryHistory?: boolean;
+  /**
   * Disable schema validation for dashboards/v1
   * @default false
   */

@@ -2902,6 +2902,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesQueryHistory",
+        "resourceVersion": "1774042718613",
+        "creationTimestamp": "2026-03-20T21:38:38Z"
+      },
+      "spec": {
+        "description": "Enables App Platform API for query history",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesServiceAccountTokensApi",
         "resourceVersion": "1773060933794",
         "creationTimestamp": "2026-03-09T12:55:33Z"

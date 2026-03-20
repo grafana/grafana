@@ -171,6 +171,10 @@ const (
 	// Adds support for Kubernetes querycaching
 	FlagKubernetesQueryCaching = "kubernetesQueryCaching"
 
+	// FlagKubernetesQueryHistory
+	// Enables App Platform API for query history
+	FlagKubernetesQueryHistory = "kubernetesQueryHistory"
+
 	// FlagDashboardDisableSchemaValidationV1
 	// Disable schema validation for dashboards/v1
 	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"

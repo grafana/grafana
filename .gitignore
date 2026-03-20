@@ -275,3 +275,9 @@ devenv/docker/blocks/auth/signer/keys/ec_private_key.pem
 .specs
 .playwright-mcp/
 overrides.yaml
+
+# Local AI working documents
+.hive
+docs/superpowers/
+# GSD planning docs (local-only)
+.planning/
