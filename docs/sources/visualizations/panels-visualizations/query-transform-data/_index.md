@@ -157,9 +157,9 @@ Learn more about saved queries:
 
 The **Saved queries** dialog box gives you access to all the saved queries in your organization:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-drawer-v13.0.png" max-width="600px" alt="List of saved queries and the edit query form" caption="The **Saved queries** dialog box accessed from Dashboards" >}}
+{{< figure src="screenshot-saved-queries-dialog-v13.0.png" max-width="750px" alt="List of saved queries" caption="The **Saved queries** dialog box accessed from Dashboards" >}}
 
-<!-- update screenshot -->
+<!-- upload images and update image path -->
 
 From here, you can:
 
@@ -226,9 +226,9 @@ You can map the original variables to either:
 - A variable in your dashboard
 - A custom value that you enter
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-saved-queries-variables-v13.0.png" max-width="600px" alt="A saved query with substituted variables" >}}
+{{< figure src="screenshot-saved-query-variable-v13.0.png" max-width="450px" alt="A saved query with substituted variables" >}}
 
-<!-- update screenshot -->
+<!-- upload images and update image path -->
 
 Grafana applies your selections to the query before inserting it into the dashboard.
 However, the substitutions only apply to the query when it's reused, and the original saved query remains unchanged.
