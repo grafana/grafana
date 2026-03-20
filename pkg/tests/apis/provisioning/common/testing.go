@@ -1702,7 +1702,7 @@ func SetPendingDeleteLabel(t *testing.T, resource dynamic.ResourceInterface, nam
 // error (or nil on success).
 func RetryOnConflict(fn func() error) error {
 	var err error
-	for range 5 {
+	for range 10 {
 		err = fn()
 		if !apierrors.IsConflict(err) {
 			return err
