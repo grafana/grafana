@@ -117,9 +117,7 @@ describe('ElasticsearchVariableSupport', () => {
     });
 
     it('should handle string query migration', (done) => {
-      mockDatasource.metricFindQuery = jest
-        .fn()
-        .mockResolvedValue([{ text: 'value1', value: 'value1' }]) as ElasticDatasource['metricFindQuery'];
+      mockDatasource.metricFindQuery = jest.fn().mockResolvedValue([{ text: 'value1', value: 'value1' }]);
 
       const request: DataQueryRequest<ElasticsearchDataQuery> = {
         targets: ['test query' as unknown as ElasticsearchDataQuery],
