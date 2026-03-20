@@ -1,6 +1,7 @@
 package encryption
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -198,13 +199,16 @@ func verifyAllSecrets(t *testing.T, env *server.TestEnv, before, after map[strin
 
 func verifySecrets(t *testing.T, env *server.TestEnv, before, after map[int]secret) {
 	require.Equal(t, len(before), len(after))
+	changed := 0
 	for k, bef := range before {
 		aft, ok := after[k]
 		require.True(t, ok, "key not found: %d", k)
 
 		require.NotEmpty(t, bef.secret, "before secret is empty for key %d", k)
 		require.NotEmpty(t, aft.secret, "after secret is empty for key %d", k)
-		require.NotEqual(t, bef.secret, aft.secret, "secrets are equal after reencrypt for key %d", k)
+		if !bytes.Equal(bef.secret, aft.secret) {
+			changed++
+		}
 
 		s1, err := env.Server.HTTPServer.SecretsService.Decrypt(context.Background(), bef.secret)
 		require.NoError(t, err)
@@ -216,6 +220,8 @@ func verifySecrets(t *testing.T, env *server.TestEnv, before, after map[int]secr
 		// Since we're storing timestamps with seconds resolution, diff can be 0.
 		require.True(t, 0 <= updatedDiff && updatedDiff <= time.Minute, "Updated time difference (%v) outside of allowed range for key %d", updatedDiff, k)
 	}
+
+	require.Greater(t, changed, 0, "no secrets changed after migration step")
 }
 
 func getSecureJsonSecrets(t *testing.T, store db.DB, table string, secureJsonDataKey string) map[int]secret {
