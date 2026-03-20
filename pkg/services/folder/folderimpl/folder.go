@@ -1051,6 +1051,9 @@ func (s *Service) getUIDFromLegacyID(ctx context.Context, orgID, id int64) (stri
 	ctx, span := s.tracer.Start(ctx, "folder.getUIDFromLegacyID")
 	defer span.End()
 
+	// set it as a background service identity
+	ctx, _ = identity.WithServiceIdentity(ctx, orgID)
+
 	f, err := s.getFolderByID(ctx, id, orgID)
 	if err != nil {
 		return "", err

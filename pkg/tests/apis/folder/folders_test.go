@@ -215,27 +215,19 @@ func TestIntegrationFoldersApp(t *testing.T) {
 	// directory for now, so we (search and storage) keep it here as we own this part of the tests.
 	t.Run("make sure list works with continue tokens", func(t *testing.T) {
 		t.Skip("Skipping flaky test - list works with continue tokens")
-		modes := []grafanarest.DualWriterMode{
-			grafanarest.Mode1,
-			grafanarest.Mode5,
-		}
-		for _, mode := range modes {
-			t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
-				doListFoldersTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-					DisableDataMigrations: true,
-					AppModeProduction:     true,
-					DisableAnonymous:      true,
-					APIServerStorageType:  "unified",
-					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-						folders.RESOURCEGROUP: {
-							DualWriterMode: mode,
-						},
-					},
-					// We set it to 1 here, so we always get forced pagination based on the response size.
-					UnifiedStorageMaxPageSizeBytes: 1,
-				}), mode)
-			})
-		}
+		doListFoldersTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+			DisableDataMigrations: true,
+			AppModeProduction:     true,
+			DisableAnonymous:      true,
+			APIServerStorageType:  "unified",
+			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+				folders.RESOURCEGROUP: {
+					DualWriterMode: grafanarest.Mode5,
+				},
+			},
+			// We set it to 1 here, so we always get forced pagination based on the response size.
+			UnifiedStorageMaxPageSizeBytes: 1,
+		}))
 	})
 }
 
@@ -601,7 +593,7 @@ func doCreateCircularReferenceFolderTest(t *testing.T, helper *apis.K8sTestHelpe
 	require.Equal(t, 400, create.Response.StatusCode)
 }
 
-func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.DualWriterMode) {
+func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper) {
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
 		GVR:  gvr,
@@ -626,16 +618,11 @@ func doListFoldersTest(t *testing.T, helper *apis.K8sTestHelper, mode grafanares
 	require.Equal(t, []string{"uid-0", "uid-1", "uid-2"}, fetchedFolders)
 	require.Equal(t, []int{1, 1, 1}, fetchItemsPerCall[:3])
 
-	// Now let's see if the iterator also works when we are limited by the page size, which should be set
-	// to 1 byte for this test. We only need to check that if we test unified storage as the primary storage,
-	// as legacy doesn't have such a page size limit.
-	if mode >= grafanarest.Mode4 {
-		t.Run("check page size iterator", func(t *testing.T) {
-			fetchedFolders, fetchItemsPerCall := checkListRequest(t, 3, client)
-			require.Equal(t, []string{"uid-0", "uid-1", "uid-2"}, fetchedFolders)
-			require.Equal(t, []int{1, 1, 1}, fetchItemsPerCall[:3])
-		})
-	}
+	t.Run("check page size iterator", func(t *testing.T) {
+		fetchedFolders, fetchItemsPerCall := checkListRequest(t, 3, client)
+		require.Equal(t, []string{"uid-0", "uid-1", "uid-2"}, fetchedFolders)
+		require.Equal(t, []int{1, 1, 1}, fetchItemsPerCall[:3])
+	})
 }
 
 func checkListRequest(t *testing.T, limit int64, client *apis.K8sResourceClient) ([]string, []int) {
@@ -737,75 +724,70 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 		},
 	}
 
-	// test on all dualwriter modes
-	for mode := 0; mode <= 4; mode++ {
-		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
-			modeDw := grafanarest.DualWriterMode(mode)
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				APIServerStorageType:  "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folders.RESOURCEGROUP: {
-						DualWriterMode: modeDw,
-					},
-				},
-			})
-			for i, tc := range tcs {
-				t.Run(fmt.Sprintf("[Mode: %v] "+tc.description, mode), func(t *testing.T) {
-					username := fmt.Sprintf("user-%d", i)
-					parentUID := fmt.Sprintf("parentuid-%d", i)
-					childUID := fmt.Sprintf("uid-%d", i)
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+		AppModeProduction:     true,
+		DisableAnonymous:      true,
+		APIServerStorageType:  "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			folders.RESOURCEGROUP: {
+				DualWriterMode: grafanarest.Mode5,
+			},
+		},
+	})
 
-					// Update permissions to use unique parent UID
-					permissions := make([]resourcepermissions.SetResourcePermissionCommand, len(tc.permissions))
-					for j, perm := range tc.permissions {
-						permissions[j] = perm
-						if perm.ResourceID == "parentuid" {
-							permissions[j].ResourceID = parentUID
-						}
-					}
+	for i, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			username := fmt.Sprintf("user-%d", i)
+			parentUID := fmt.Sprintf("parentuid-%d", i)
+			childUID := fmt.Sprintf("uid-%d", i)
 
-					user := helper.CreateUser(username, apis.Org1, org.RoleViewer, permissions)
+			// Update permissions to use unique parent UID
+			permissions := make([]resourcepermissions.SetResourcePermissionCommand, len(tc.permissions))
+			for j, perm := range tc.permissions {
+				permissions[j] = perm
+				if perm.ResourceID == "parentuid" {
+					permissions[j].ResourceID = parentUID
+				}
+			}
 
-					// Get user ID for cleanup
-					userID, _ := user.Identity.GetInternalID()
+			user := helper.CreateUser(username, apis.Org1, org.RoleViewer, permissions)
 
-					// Register cleanup for this test case
-					t.Cleanup(helper.CleanupTestResources([]string{parentUID, childUID}, []int64{userID}))
+			// Get user ID for cleanup
+			userID, _ := user.Identity.GetInternalID()
 
-					parentPayload := fmt.Sprintf(`{
+			// Register cleanup for this test case
+			t.Cleanup(helper.CleanupTestResources([]string{parentUID, childUID}, []int64{userID}))
+
+			parentPayload := fmt.Sprintf(`{
 				"title": "Test/parent",
 				"uid": "%s"
 				}`, parentUID)
-					parentCreate := apis.DoRequest(helper, apis.RequestParams{
-						User:   helper.Org1.Admin,
-						Method: http.MethodPost,
-						Path:   "/api/folders",
-						Body:   []byte(parentPayload),
-					}, &folder.Folder{})
-					require.NotNil(t, parentCreate.Result)
-					createdParentUID := parentCreate.Result.UID
-					require.NotEmpty(t, createdParentUID)
+			parentCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(parentPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, parentCreate.Result)
+			createdParentUID := parentCreate.Result.UID
+			require.NotEmpty(t, createdParentUID)
 
-					// Update input to use unique UIDs
-					input := strings.ReplaceAll(tc.input, "parentuid", parentUID)
-					input = strings.ReplaceAll(input, `"uid": "uid"`, fmt.Sprintf(`"uid": "%s"`, childUID))
+			// Update input to use unique UIDs
+			input := strings.ReplaceAll(tc.input, "parentuid", parentUID)
+			input = strings.ReplaceAll(input, `"uid": "uid"`, fmt.Sprintf(`"uid": "%s"`, childUID))
 
-					resp := apis.DoRequest(helper, apis.RequestParams{
-						User:   user,
-						Method: http.MethodPost,
-						Path:   "/api/folders",
-						Body:   []byte(input),
-					}, &dtos.Folder{})
-					require.Equal(t, tc.expectedCode, resp.Response.StatusCode)
+			resp := apis.DoRequest(helper, apis.RequestParams{
+				User:   user,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(input),
+			}, &dtos.Folder{})
+			require.Equal(t, tc.expectedCode, resp.Response.StatusCode)
 
-					if tc.expectedCode == http.StatusOK {
-						require.Equal(t, childUID, resp.Result.UID)
-						require.Equal(t, "Folder", resp.Result.Title)
-					}
-				})
+			if tc.expectedCode == http.StatusOK {
+				require.Equal(t, childUID, resp.Result.UID)
+				require.Equal(t, "Folder", resp.Result.Title)
 			}
 		})
 	}
@@ -865,138 +847,132 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 		},
 	}
 
-	// test on all dualwriter modes
-	for mode := 0; mode <= 4; mode++ {
-		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
-			modeDw := grafanarest.DualWriterMode(mode)
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				APIServerStorageType:  "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folders.RESOURCEGROUP: {
-						DualWriterMode: modeDw,
-					},
-				},
-			})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+		AppModeProduction:     true,
+		DisableAnonymous:      true,
+		APIServerStorageType:  "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			folders.RESOURCEGROUP: {
+				DualWriterMode: grafanarest.Mode5,
+			},
+		},
+	})
 
-			// Run all test cases within the same server instance
-			for i, tc := range tcs {
-				t.Run(tc.description, func(t *testing.T) {
-					// Use unique UIDs per test case to avoid conflicts
-					parentUID := fmt.Sprintf("parentuid-%d", i)
-					descUID := fmt.Sprintf("descuid-%d", i)
-					parentTitle := fmt.Sprintf("testparent-%d", i)
-					userLogin := fmt.Sprintf("user-%d", i)
-					acUserLogin := fmt.Sprintf("acuser-%d", i)
+	// Run all test cases within the same server instance
+	for i, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			// Use unique UIDs per test case to avoid conflicts
+			parentUID := fmt.Sprintf("parentuid-%d", i)
+			descUID := fmt.Sprintf("descuid-%d", i)
+			parentTitle := fmt.Sprintf("testparent-%d", i)
+			userLogin := fmt.Sprintf("user-%d", i)
+			acUserLogin := fmt.Sprintf("acuser-%d", i)
 
-					// Create parent folder
-					parentPayload := fmt.Sprintf(`{
+			// Create parent folder
+			parentPayload := fmt.Sprintf(`{
 					"title": "%s",
 					"uid": "%s"
 					}`, parentTitle, parentUID)
-					parentCreate := apis.DoRequest(helper, apis.RequestParams{
-						User:   helper.Org1.Admin,
-						Method: http.MethodPost,
-						Path:   "/api/folders",
-						Body:   []byte(parentPayload),
-					}, &folder.Folder{})
-					require.NotNil(t, parentCreate.Result)
-					require.Equal(t, parentUID, parentCreate.Result.UID)
+			parentCreate := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(parentPayload),
+			}, &folder.Folder{})
+			require.NotNil(t, parentCreate.Result)
+			require.Equal(t, parentUID, parentCreate.Result.UID)
 
-					// Create descendant folder
-					payload := fmt.Sprintf(`{ "uid": "%s", "title": "Folder-%d", "parentUid": "%s"}`, descUID, i, parentUID)
-					resp := apis.DoRequest(helper, apis.RequestParams{
-						User:   helper.Org1.Admin,
-						Method: http.MethodPost,
-						Path:   "/api/folders",
-						Body:   []byte(payload),
-					}, &dtos.Folder{})
-					require.Equal(t, http.StatusOK, resp.Response.StatusCode)
+			// Create descendant folder
+			payload := fmt.Sprintf(`{ "uid": "%s", "title": "Folder-%d", "parentUid": "%s"}`, descUID, i, parentUID)
+			resp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   "/api/folders",
+				Body:   []byte(payload),
+			}, &dtos.Folder{})
+			require.Equal(t, http.StatusOK, resp.Response.StatusCode)
 
-					// Update permissions to use unique descUID where needed
-					permissions := tc.permissions
-					for j := range permissions {
-						if permissions[j].ResourceID == "descuid" {
-							permissions[j].ResourceID = descUID
-						}
+			// Update permissions to use unique descUID where needed
+			permissions := tc.permissions
+			for j := range permissions {
+				if permissions[j].ResourceID == "descuid" {
+					permissions[j].ResourceID = descUID
+				}
+			}
+
+			user := helper.CreateUser(userLogin, apis.Org1, org.RoleNone, permissions)
+
+			// Get user ID for cleanup
+			userID, err := user.Identity.GetInternalID()
+			require.NoError(t, err)
+
+			// Register cleanup to delete created resources
+			t.Cleanup(helper.CleanupTestResources([]string{descUID, parentUID}, []int64{userID}))
+
+			// Adjust expected UIDs and titles
+			expectedParentUIDs := tc.expectedParentUIDs
+			expectedParentTitles := tc.expectedParentTitles
+			if len(expectedParentUIDs) > 0 {
+				expectedParentUIDs = []string{parentUID}
+				expectedParentTitles = []string{parentTitle}
+			}
+
+			// Get with accesscontrol disabled
+			getResp := apis.DoRequest(helper, apis.RequestParams{
+				User:   user,
+				Method: http.MethodGet,
+				Path:   "/api/folders/" + descUID,
+			}, &dtos.Folder{})
+			require.Equal(t, tc.expectedCode, getResp.Response.StatusCode)
+
+			if tc.expectedCode == http.StatusOK {
+				require.NotNil(t, getResp.Result)
+				require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersRead])
+				require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersWrite])
+
+				parents := getResp.Result.Parents
+				require.Equal(t, len(expectedParentUIDs), len(parents))
+				require.Equal(t, len(expectedParentTitles), len(parents))
+				for j := 0; j < len(expectedParentUIDs); j++ {
+					require.Equal(t, expectedParentUIDs[j], parents[j].UID)
+					require.Equal(t, expectedParentTitles[j], parents[j].Title)
+				}
+
+				// Get with accesscontrol enabled
+				if tc.checkAccessControl {
+					acPerms := []resourcepermissions.SetResourcePermissionCommand{
+						{
+							Actions:           []string{dashboards.ActionFoldersRead},
+							Resource:          "folders",
+							ResourceAttribute: "uid",
+							ResourceID:        "*",
+						},
+						{
+							Actions:           []string{dashboards.ActionFoldersWrite},
+							Resource:          "folders",
+							ResourceAttribute: "uid",
+							ResourceID:        parentUID,
+						},
 					}
-
-					user := helper.CreateUser(userLogin, apis.Org1, org.RoleNone, permissions)
+					acUser := helper.CreateUser(acUserLogin, apis.Org1, org.RoleNone, acPerms)
 
 					// Get user ID for cleanup
-					userID, err := user.Identity.GetInternalID()
+					acUserID, err := acUser.Identity.GetInternalID()
 					require.NoError(t, err)
+					t.Cleanup(helper.CleanupTestResources([]string{}, []int64{acUserID}))
 
-					// Register cleanup to delete created resources
-					t.Cleanup(helper.CleanupTestResources([]string{descUID, parentUID}, []int64{userID}))
-
-					// Adjust expected UIDs and titles
-					expectedParentUIDs := tc.expectedParentUIDs
-					expectedParentTitles := tc.expectedParentTitles
-					if len(expectedParentUIDs) > 0 {
-						expectedParentUIDs = []string{parentUID}
-						expectedParentTitles = []string{parentTitle}
-					}
-
-					// Get with accesscontrol disabled
-					getResp := apis.DoRequest(helper, apis.RequestParams{
-						User:   user,
+					getWithAC := apis.DoRequest(helper, apis.RequestParams{
+						User:   acUser,
 						Method: http.MethodGet,
-						Path:   "/api/folders/" + descUID,
+						Path:   "/api/folders/" + descUID + "?accesscontrol=true",
 					}, &dtos.Folder{})
-					require.Equal(t, tc.expectedCode, getResp.Response.StatusCode)
+					require.Equal(t, tc.expectedCode, getWithAC.Response.StatusCode)
+					require.NotNil(t, getWithAC.Result)
 
-					if tc.expectedCode == http.StatusOK {
-						require.NotNil(t, getResp.Result)
-						require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersRead])
-						require.False(t, getResp.Result.AccessControl[dashboards.ActionFoldersWrite])
-
-						parents := getResp.Result.Parents
-						require.Equal(t, len(expectedParentUIDs), len(parents))
-						require.Equal(t, len(expectedParentTitles), len(parents))
-						for j := 0; j < len(expectedParentUIDs); j++ {
-							require.Equal(t, expectedParentUIDs[j], parents[j].UID)
-							require.Equal(t, expectedParentTitles[j], parents[j].Title)
-						}
-
-						// Get with accesscontrol enabled
-						if tc.checkAccessControl {
-							acPerms := []resourcepermissions.SetResourcePermissionCommand{
-								{
-									Actions:           []string{dashboards.ActionFoldersRead},
-									Resource:          "folders",
-									ResourceAttribute: "uid",
-									ResourceID:        "*",
-								},
-								{
-									Actions:           []string{dashboards.ActionFoldersWrite},
-									Resource:          "folders",
-									ResourceAttribute: "uid",
-									ResourceID:        parentUID,
-								},
-							}
-							acUser := helper.CreateUser(acUserLogin, apis.Org1, org.RoleNone, acPerms)
-
-							// Get user ID for cleanup
-							acUserID, err := acUser.Identity.GetInternalID()
-							require.NoError(t, err)
-							t.Cleanup(helper.CleanupTestResources([]string{}, []int64{acUserID}))
-
-							getWithAC := apis.DoRequest(helper, apis.RequestParams{
-								User:   acUser,
-								Method: http.MethodGet,
-								Path:   "/api/folders/" + descUID + "?accesscontrol=true",
-							}, &dtos.Folder{})
-							require.Equal(t, tc.expectedCode, getWithAC.Response.StatusCode)
-							require.NotNil(t, getWithAC.Result)
-
-							require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersRead])
-							require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersWrite])
-						}
-					}
-				})
+					require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersRead])
+					require.True(t, getWithAC.Result.AccessControl[dashboards.ActionFoldersWrite])
+				}
 			}
 		})
 	}
@@ -1084,82 +1060,77 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 		},
 	}
 
-	// test on all dualwriter modes
-	for mode := 0; mode <= 4; mode++ {
-		modeDw := grafanarest.DualWriterMode(mode)
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  "unified",
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				folders.RESOURCEGROUP: {
-					DualWriterMode: modeDw,
-				},
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+		AppModeProduction:     true,
+		DisableAnonymous:      true,
+		APIServerStorageType:  "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			folders.RESOURCEGROUP: {
+				DualWriterMode: grafanarest.Mode5,
 			},
+		}})
+	for i, tc := range tcs {
+		t.Run(testDescription(tc.description, tc.expectedFolderSvcError), func(t *testing.T) {
+			username := fmt.Sprintf("user-%d", i)
+			folderUID := fmt.Sprintf("uid-%d", i)
+
+			// Update input to use unique UIDs
+			input := strings.ReplaceAll(tc.input, `"uid": "uid"`, fmt.Sprintf(`"uid": "%s"`, folderUID))
+
+			userTest := helper.CreateUser(username, apis.Org1, org.RoleViewer, tc.permissions)
+
+			if tc.createSecondRecord {
+				client := helper.GetResourceClient(apis.ResourceClientArgs{
+					User: helper.Org1.Admin,
+					GVR:  gvr,
+				})
+				create2 := apis.DoRequest(helper, apis.RequestParams{
+					User:   client.Args.User,
+					Method: http.MethodPost,
+					Path:   "/api/folders",
+					Body:   []byte(input),
+				}, &folder.Folder{})
+				require.NotEmpty(t, create2.Response)
+				require.Equal(t, http.StatusOK, create2.Response.StatusCode)
+			}
+
+			addr := helper.GetEnv().Server.HTTPServer.Listener.Addr()
+			login := userTest.Identity.GetLogin()
+			baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password(username), addr)
+
+			req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(
+				"%s%s",
+				baseUrl,
+				"/api/folders",
+			), bytes.NewBuffer([]byte(input)))
+			require.NoError(t, err)
+			req.Header.Set("Content-Type", "application/json")
+
+			resp, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+			type folderWithMessage struct {
+				dtos.Folder
+				Message string `json:"message"`
+			}
+
+			folder := folderWithMessage{}
+			err = json.NewDecoder(resp.Body).Decode(&folder)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
+			if tc.expectedCode == http.StatusOK {
+				require.Equal(t, folderUID, folder.UID)
+				require.Equal(t, "Folder", folder.Title)
+			}
+
+			if tc.expectedMessage != "" {
+				require.Equal(t, tc.expectedMessage, folder.Message)
+			}
 		})
-		for i, tc := range tcs {
-			t.Run(fmt.Sprintf("[Mode: %v] "+testDescription(tc.description, tc.expectedFolderSvcError), mode), func(t *testing.T) {
-				username := fmt.Sprintf("user-%d", i)
-				folderUID := fmt.Sprintf("uid-%d", i)
-
-				// Update input to use unique UIDs
-				input := strings.ReplaceAll(tc.input, `"uid": "uid"`, fmt.Sprintf(`"uid": "%s"`, folderUID))
-
-				userTest := helper.CreateUser(username, apis.Org1, org.RoleViewer, tc.permissions)
-
-				if tc.createSecondRecord {
-					client := helper.GetResourceClient(apis.ResourceClientArgs{
-						User: helper.Org1.Admin,
-						GVR:  gvr,
-					})
-					create2 := apis.DoRequest(helper, apis.RequestParams{
-						User:   client.Args.User,
-						Method: http.MethodPost,
-						Path:   "/api/folders",
-						Body:   []byte(input),
-					}, &folder.Folder{})
-					require.NotEmpty(t, create2.Response)
-					require.Equal(t, http.StatusOK, create2.Response.StatusCode)
-				}
-
-				addr := helper.GetEnv().Server.HTTPServer.Listener.Addr()
-				login := userTest.Identity.GetLogin()
-				baseUrl := fmt.Sprintf("http://%s:%s@%s", login, user.Password(username), addr)
-
-				req, err := http.NewRequest(http.MethodPost, fmt.Sprintf(
-					"%s%s",
-					baseUrl,
-					"/api/folders",
-				), bytes.NewBuffer([]byte(input)))
-				require.NoError(t, err)
-				req.Header.Set("Content-Type", "application/json")
-
-				resp, err := http.DefaultClient.Do(req)
-				require.NoError(t, err)
-				require.NotNil(t, resp)
-				require.Equal(t, tc.expectedCode, resp.StatusCode)
-
-				type folderWithMessage struct {
-					dtos.Folder
-					Message string `json:"message"`
-				}
-
-				folder := folderWithMessage{}
-				err = json.NewDecoder(resp.Body).Decode(&folder)
-				require.NoError(t, err)
-				require.NoError(t, resp.Body.Close())
-
-				if tc.expectedCode == http.StatusOK {
-					require.Equal(t, folderUID, folder.UID)
-					require.Equal(t, "Folder", folder.Title)
-				}
-
-				if tc.expectedMessage != "" {
-					require.Equal(t, tc.expectedMessage, folder.Message)
-				}
-			})
-		}
 	}
 }
 
@@ -2329,106 +2300,91 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	// Test dry-run on dual-writer modes 1-4.
-	// Mode 0 (legacy-only) does not use the dualWriter, so dry-run is not intercepted.
-	for mode := 1; mode <= 4; mode++ {
-		modeDw := grafanarest.DualWriterMode(mode)
-		t.Run(fmt.Sprintf("dry-run mode %v", modeDw), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				APIServerStorageType:  "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					folders.RESOURCEGROUP: {
-						DualWriterMode: modeDw,
-					},
-				},
-				EnableFeatureToggles: []string{},
-			})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableDataMigrations: true,
+		AppModeProduction:     true,
+		DisableAnonymous:      true,
+		APIServerStorageType:  "unified",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			folders.RESOURCEGROUP: {
+				DualWriterMode: grafanarest.Mode5,
+			},
+		}})
 
-			client := helper.GetResourceClient(apis.ResourceClientArgs{
-				User: helper.Org1.Admin,
-				GVR:  gvr,
-			})
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
 
-			// Create a real folder first
-			folderObj := &unstructured.Unstructured{
-				Object: map[string]any{
-					"spec": map[string]any{
-						"title": "DryRun Test Folder",
-					},
-				},
-			}
-			folderObj.SetGenerateName("dryrun-test-")
-			created, err := client.Resource.Create(context.Background(), folderObj, metav1.CreateOptions{})
-			require.NoError(t, err)
-			createdName := created.GetName()
-			require.NotEmpty(t, createdName)
-
-			t.Run("delete with dry-run should not actually delete", func(t *testing.T) {
-				err := client.Resource.Delete(context.Background(), createdName, metav1.DeleteOptions{
-					DryRun: []string{metav1.DryRunAll},
-				})
-				require.NoError(t, err)
-
-				// Folder should still exist
-				got, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
-				require.NoError(t, err, "folder should still exist after dry-run delete")
-				require.Equal(t, createdName, got.GetName())
-			})
-
-			t.Run("create with dry-run should not actually create", func(t *testing.T) {
-				dryRunFolder := &unstructured.Unstructured{
-					Object: map[string]any{
-						"spec": map[string]any{
-							"title": "DryRun Create Folder",
-						},
-					},
-				}
-				dryRunFolder.SetName("dryrun-create-test")
-				_, err := client.Resource.Create(context.Background(), dryRunFolder, metav1.CreateOptions{
-					DryRun: []string{metav1.DryRunAll},
-				})
-				require.NoError(t, err)
-
-				// Folder should NOT exist
-				_, err = client.Resource.Get(context.Background(), "dryrun-create-test", metav1.GetOptions{})
-				require.Error(t, err, "folder should not exist after dry-run create")
-			})
-
-			// Update dry-run only works reliably in modes 4+ where unified storage is
-			// the primary read source, so the client-sent UID matches the unified store.
-			// In modes 1/2/3, the client reads from legacy (which has a different UID than
-			// unified), causing a UID precondition mismatch on dry-run update.
-			if mode >= 4 {
-				t.Run("update with dry-run should not actually update", func(t *testing.T) {
-					// Get the current folder
-					current, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
-					require.NoError(t, err)
-
-					// Modify the title
-					spec := current.Object["spec"].(map[string]any)
-					originalTitle := spec["title"]
-					spec["title"] = "DryRun Updated Title"
-					current.Object["spec"] = spec
-
-					_, err = client.Resource.Update(context.Background(), current, metav1.UpdateOptions{
-						DryRun: []string{metav1.DryRunAll},
-					})
-					require.NoError(t, err)
-
-					// Title should be unchanged
-					got, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
-					require.NoError(t, err)
-					gotSpec := got.Object["spec"].(map[string]any)
-					require.Equal(t, originalTitle, gotSpec["title"], "title should not change after dry-run update")
-				})
-			}
-
-			// Clean up
-			err = client.Resource.Delete(context.Background(), createdName, metav1.DeleteOptions{})
-			require.NoError(t, err)
-		})
+	// Create a real folder first
+	folderObj := &unstructured.Unstructured{
+		Object: map[string]any{
+			"spec": map[string]any{
+				"title": "DryRun Test Folder",
+			},
+		},
 	}
+	folderObj.SetGenerateName("dryrun-test-")
+	created, err := client.Resource.Create(context.Background(), folderObj, metav1.CreateOptions{})
+	require.NoError(t, err)
+	createdName := created.GetName()
+	require.NotEmpty(t, createdName)
+
+	t.Run("delete with dry-run should not actually delete", func(t *testing.T) {
+		err := client.Resource.Delete(context.Background(), createdName, metav1.DeleteOptions{
+			DryRun: []string{metav1.DryRunAll},
+		})
+		require.NoError(t, err)
+
+		// Folder should still exist
+		got, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+		require.NoError(t, err, "folder should still exist after dry-run delete")
+		require.Equal(t, createdName, got.GetName())
+	})
+
+	t.Run("create with dry-run should not actually create", func(t *testing.T) {
+		dryRunFolder := &unstructured.Unstructured{
+			Object: map[string]any{
+				"spec": map[string]any{
+					"title": "DryRun Create Folder",
+				},
+			},
+		}
+		dryRunFolder.SetName("dryrun-create-test")
+		_, err := client.Resource.Create(context.Background(), dryRunFolder, metav1.CreateOptions{
+			DryRun: []string{metav1.DryRunAll},
+		})
+		require.NoError(t, err)
+
+		// Folder should NOT exist
+		_, err = client.Resource.Get(context.Background(), "dryrun-create-test", metav1.GetOptions{})
+		require.Error(t, err, "folder should not exist after dry-run create")
+	})
+
+	t.Run("update with dry-run should not actually update", func(t *testing.T) {
+		// Get the current folder
+		current, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+		require.NoError(t, err)
+
+		// Modify the title
+		spec := current.Object["spec"].(map[string]any)
+		originalTitle := spec["title"]
+		spec["title"] = "DryRun Updated Title"
+		current.Object["spec"] = spec
+
+		_, err = client.Resource.Update(context.Background(), current, metav1.UpdateOptions{
+			DryRun: []string{metav1.DryRunAll},
+		})
+		require.NoError(t, err)
+
+		// Title should be unchanged
+		got, err := client.Resource.Get(context.Background(), createdName, metav1.GetOptions{})
+		require.NoError(t, err)
+		gotSpec := got.Object["spec"].(map[string]any)
+		require.Equal(t, originalTitle, gotSpec["title"], "title should not change after dry-run update")
+	})
+
+	// Clean up
+	err = client.Resource.Delete(context.Background(), createdName, metav1.DeleteOptions{})
+	require.NoError(t, err)
 }
