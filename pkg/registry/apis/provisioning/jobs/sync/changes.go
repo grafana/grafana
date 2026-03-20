@@ -64,6 +64,11 @@ func Compare(
 		if err != nil {
 			return nil, nil, fmt.Errorf("augment changes for UID changes: %w", err)
 		}
+
+		changes, err = detectFolderMoves(ctx, repo, ref, changes)
+		if err != nil {
+			return nil, nil, fmt.Errorf("detect folder moves: %w", err)
+		}
 	}
 
 	if len(changes) > 0 {
@@ -313,4 +318,94 @@ func augmentChangesForUIDChanges(
 	// 4. Re-sort by depth (deepest first) since we appended new entries
 	safepath.SortByDepth(changes, func(c ResourceFileChange) string { return c.Path }, false)
 	return changes, nil
+}
+
+// detectFolderMoves identifies folder-move patterns: a FileActionDeleted folder whose
+// stable UID (from _folder.json) reappears under a FileActionCreated folder at a new path.
+//
+// Each detected move is converted to a single FileActionUpdated change (Existing holds the
+// old ResourceListItem) and the original deletion is dropped. This causes the existing
+// applyChange flow to re-parent the folder via EnsureFolderPathExist without deleting it,
+// preserving all ACL entries.
+func detectFolderMoves(
+	ctx context.Context,
+	repo repository.Reader,
+	ref string,
+	changes []ResourceFileChange,
+) ([]ResourceFileChange, error) {
+	// Build an index of deleted folders keyed by their Grafana UID.
+	deletedByUID := make(map[string]*provisioning.ResourceListItem)
+	for _, c := range changes {
+		if c.Action == repository.FileActionDeleted &&
+			c.Existing != nil && c.Existing.Name != "" &&
+			safepath.IsDir(c.Path) &&
+			c.Existing.Resource == resources.FolderResource.Resource {
+			deletedByUID[c.Existing.Name] = c.Existing
+		}
+	}
+	if len(deletedByUID) == 0 {
+		return changes, nil
+	}
+
+	// For each created folder, read _folder.json to detect whether its stable UID
+	// matches a folder that is being deleted — indicating a move rather than delete+create.
+	type folderMove struct {
+		uid      string
+		newPath  string
+		existing *provisioning.ResourceListItem
+	}
+	var moves []folderMove
+	for _, c := range changes {
+		if c.Action != repository.FileActionCreated || !safepath.IsDir(c.Path) {
+			continue
+		}
+		meta, _, err := resources.ReadFolderMetadata(ctx, repo, c.Path, ref)
+		if err != nil {
+			if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+				continue // no _folder.json at this path — not a metadata-backed folder
+			}
+			return nil, fmt.Errorf("read folder metadata for %s: %w", c.Path, err)
+		}
+		if meta == nil || meta.Name == "" {
+			continue
+		}
+		if existing, ok := deletedByUID[meta.Name]; ok {
+			moves = append(moves, folderMove{uid: meta.Name, newPath: c.Path, existing: existing})
+		}
+	}
+	if len(moves) == 0 {
+		return changes, nil
+	}
+
+	movedUIDs := make(map[string]struct{}, len(moves))
+	movedPaths := make(map[string]*provisioning.ResourceListItem, len(moves))
+	for _, m := range moves {
+		movedUIDs[m.uid] = struct{}{}
+		movedPaths[m.newPath] = m.existing
+	}
+
+	result := make([]ResourceFileChange, 0, len(changes))
+	for _, c := range changes {
+		// Drop the deletion — the folder will be moved instead of deleted.
+		if c.Action == repository.FileActionDeleted && c.Existing != nil {
+			if _, isMoved := movedUIDs[c.Existing.Name]; isMoved {
+				continue
+			}
+		}
+		// Convert the creation to an update so the existing applyChange folder-update
+		// path handles it: RemoveFolderFromTree + EnsureFolderPathExist re-parents the folder.
+		if c.Action == repository.FileActionCreated && safepath.IsDir(c.Path) {
+			if existing, isMoved := movedPaths[c.Path]; isMoved {
+				result = append(result, ResourceFileChange{
+					Action:   repository.FileActionUpdated,
+					Path:     c.Path,
+					Existing: existing,
+					// FolderRenamed intentionally not set: no old folder to clean up.
+				})
+				continue
+			}
+		}
+		result = append(result, c)
+	}
+	return result, nil
 }
