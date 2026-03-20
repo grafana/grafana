@@ -162,6 +162,16 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			continue
 		}
 
+		if folderMetadataEnabled && resources.IsFolderMetadataFile(change.Path) {
+			name, err := applyFolderMetadataUpdate(ctx, change, repositoryResources, tracer)
+			if err != nil {
+				resultBuilder.WithError(err)
+			}
+			resultBuilder.WithName(name)
+			progress.Record(ctx, resultBuilder.Build())
+			continue
+		}
+
 		if change.Action == repository.FileActionCreated && !quotaTracker.TryAcquire() {
 			progress.Record(ctx, resultBuilder.
 				WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
@@ -172,15 +182,6 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
-			if folderMetadataEnabled && resources.IsFolderMetadataFile(change.Path) {
-				name, err := applyFolderMetadataUpdate(ctx, change, repositoryResources, tracer)
-				if err != nil {
-					resultBuilder.WithError(err)
-				}
-				resultBuilder.WithName(name)
-				break
-			}
-
 			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
 			name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
