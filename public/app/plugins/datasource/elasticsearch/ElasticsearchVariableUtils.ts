@@ -7,19 +7,20 @@ export const refId = 'ElasticsearchVariableQueryEditor-VariableQuery';
 export type ElasticsearchVariableQuery = ElasticsearchDataQuery;
 
 // Shape of the old Grafana-syntax variable query, e.g. {"find":"terms","field":"Platform.keyword"}
-interface LegacyFindQuery {
+export interface LegacyFindQuery {
   find: 'terms' | 'fields';
   field?: string;
   query?: string;
   size?: number;
   order?: 'asc' | 'desc';
   orderBy?: string;
+  type?: string;
 }
 
 const isLegacyFindQuery = (v: unknown): v is LegacyFindQuery =>
   v !== null && typeof v === 'object' && 'find' in v && (v.find === 'terms' || v.find === 'fields');
 
-const parseLegacyFindQuery = (raw: string): LegacyFindQuery | null => {
+export const parseLegacyFindQuery = (raw: string): LegacyFindQuery | null => {
   try {
     const parsed: unknown = JSON.parse(raw);
     return isLegacyFindQuery(parsed) ? parsed : null;

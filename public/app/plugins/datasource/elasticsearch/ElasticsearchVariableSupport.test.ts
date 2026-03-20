@@ -15,6 +15,7 @@ describe('ElasticsearchVariableSupport', () => {
   beforeEach(() => {
     mockDatasource = {
       query: jest.fn(),
+      getFields: jest.fn(),
     } as unknown as jest.Mocked<ElasticDatasource>;
 
     variableSupport = new ElasticsearchVariableSupport(mockDatasource, jest.fn());
@@ -143,6 +144,61 @@ describe('ElasticsearchVariableSupport', () => {
           expect(response.data[0].fields[0].values).toEqual(['value1']);
           expect(response.data[0].fields[1].name).toBe('value');
           expect(response.data[0].fields[1].values).toEqual(['value1']);
+          done();
+        },
+        error: done,
+      });
+    });
+
+    it('should handle legacy {"find":"fields"} query by calling getFields', (done) => {
+      mockDatasource.getFields.mockReturnValue(
+        of([
+          { text: 'hostname', value: 'hostname' },
+          { text: 'status', value: 'status' },
+        ])
+      );
+
+      const request: DataQueryRequest<ElasticsearchDataQuery> = {
+        targets: ['{"find":"fields","type":"keyword"}' as unknown as ElasticsearchDataQuery],
+        requestId: 'test',
+        interval: '1s',
+        intervalMs: 1000,
+        range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
+        scopedVars: {},
+        timezone: 'browser',
+        app: 'dashboard',
+        startTime: Date.now(),
+      };
+
+      variableSupport.query(request).subscribe({
+        next: (response) => {
+          expect(mockDatasource.query).not.toHaveBeenCalled();
+          expect(mockDatasource.getFields).toHaveBeenCalledWith(['keyword'], request.range);
+          expect(response.data[0].fields[0].values).toEqual(['hostname', 'status']);
+          done();
+        },
+        error: done,
+      });
+    });
+
+    it('should handle legacy {"find":"fields"} with no type', (done) => {
+      mockDatasource.getFields.mockReturnValue(of([{ text: 'field1', value: 'field1' }]));
+
+      const request: DataQueryRequest<ElasticsearchDataQuery> = {
+        targets: ['{"find":"fields"}' as unknown as ElasticsearchDataQuery],
+        requestId: 'test',
+        interval: '1s',
+        intervalMs: 1000,
+        range: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
+        scopedVars: {},
+        timezone: 'browser',
+        app: 'dashboard',
+        startTime: Date.now(),
+      };
+
+      variableSupport.query(request).subscribe({
+        next: () => {
+          expect(mockDatasource.getFields).toHaveBeenCalledWith(undefined, request.range);
           done();
         },
         error: done,
