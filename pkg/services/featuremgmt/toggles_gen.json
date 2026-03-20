@@ -486,14 +486,17 @@
     {
       "metadata": {
         "name": "alertingNavigationV2",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-01-14T10:58:11Z"
+        "resourceVersion": "1774017407453",
+        "creationTimestamp": "2026-01-14T10:58:11Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-20 14:36:47.453993 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new Alerting navigation structure with improved menu grouping",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3761,6 +3764,19 @@
     },
     {
       "metadata": {
+        "name": "playlistsRBAC",
+        "resourceVersion": "1773926203085",
+        "creationTimestamp": "2026-03-19T13:16:43Z"
+      },
+      "spec": {
+        "description": "Enables RBAC for playlists",
+        "stage": "GA",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "playlistsReconciler",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-12-20T03:09:31Z"
@@ -5032,6 +5048,20 @@
       "spec": {
         "description": "Enable visualization presets",
         "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "yAxisTickControl",
+        "resourceVersion": "1773934597640",
+        "creationTimestamp": "2026-03-19T15:36:37Z"
+      },
+      "spec": {
+        "description": "Enables fine-grained Y-axis tick options beyond the auto-ticks",
+        "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"

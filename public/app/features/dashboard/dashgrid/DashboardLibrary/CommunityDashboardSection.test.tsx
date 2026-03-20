@@ -172,7 +172,7 @@ describe('CommunityDashboardSection', () => {
       expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
     });
 
-    const useDashboardButton = screen.getByRole('button', { name: 'Use dashboard' });
+    const useDashboardButton = screen.getByRole('button', { name: 'View dashboard: Test Dashboard' });
     await user.click(useDashboardButton);
 
     await waitFor(() => {

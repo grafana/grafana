@@ -634,6 +634,11 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
+  * Enables RBAC for playlists
+  * @default false
+  */
+  playlistsRBAC?: boolean;
+  /**
   * Enables Saved queries (query library) RBAC permissions
   * @default false
   */
@@ -685,7 +690,7 @@ export interface FeatureToggles {
   alertingAlertListPanelEnhancements?: boolean;
   /**
   * Enables the new Alerting navigation structure with improved menu grouping
-  * @default false
+  * @default true
   */
   alertingNavigationV2?: boolean;
   /**
@@ -1721,8 +1726,8 @@ export interface FeatureToggles {
   */
   colorblindThemes?: boolean;
   /**
-  * Enables the IAM client integration for fetching remote IAM global roles
+  * Enables fine-grained Y-axis tick options beyond the auto-ticks
   * @default false
   */
-  rbacIAMClientEnabled?: boolean;
+  yAxisTickControl?: boolean;
 }

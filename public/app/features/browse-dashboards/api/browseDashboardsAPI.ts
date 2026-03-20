@@ -253,8 +253,9 @@ export const browseDashboardsAPI = createApi({
       queryFn: async ({ dashboardUIDs, destinationUID }, _api, _extraOptions, baseQuery) => {
         // Move all the dashboards sequentially
         // TODO error handling here
+        const api = await getDashboardAPI();
         for (const dashboardUID of dashboardUIDs) {
-          const fullDash = await getDashboardAPI().getDashboardDTO(dashboardUID);
+          const fullDash = await api.getDashboardDTO(dashboardUID);
           const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
           const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
 
@@ -267,7 +268,7 @@ export const browseDashboardsAPI = createApi({
               continue;
             }
           }
-          await getDashboardAPI().saveDashboard({
+          await api.saveDashboard({
             dashboard,
             folderUid: destinationUID,
             overwrite: false,
@@ -373,12 +374,13 @@ export const browseDashboardsAPI = createApi({
         const deletedDashboardUIDs: string[] = [];
         // Delete all the dashboards sequentially
         // TODO error handling here
+        const api = await getDashboardAPI();
         try {
           for (const dashboardUID of dashboardUIDs) {
             // It's not possible to select a mix of provisioned and non-provisioned dashboards
             // from the UI, so this is mostly a guard in case that somehow happens
             if (config.featureToggles.provisioning) {
-              const dto = await getDashboardAPI().getDashboardDTO(dashboardUID);
+              const dto = await api.getDashboardDTO(dashboardUID);
               if (isProvisionedDashboard(dto)) {
                 appEvents.publish({
                   type: AppEvents.alertWarning.name,
@@ -389,7 +391,7 @@ export const browseDashboardsAPI = createApi({
                 continue;
               }
             }
-            await getDashboardAPI().deleteDashboard(dashboardUID, !restoreDashboardsEnabled);
+            await api.deleteDashboard(dashboardUID, !restoreDashboardsEnabled);
 
             deletedCount++;
             deletedDashboardUIDs.push(dashboardUID);
@@ -453,12 +455,14 @@ export const browseDashboardsAPI = createApi({
       queryFn: async (cmd) => {
         try {
           if (isV2DashboardCommand(cmd)) {
-            const response = await getDashboardAPI('v2').saveDashboard(cmd);
+            const api = await getDashboardAPI('v2');
+            const response = await api.saveDashboard(cmd);
             return { data: response };
           }
 
           if (isV1DashboardCommand(cmd)) {
-            const rsp = await getDashboardAPI('v1').saveDashboard(cmd);
+            const api = await getDashboardAPI('v1');
+            const rsp = await api.saveDashboard(cmd);
             return { data: rsp };
           }
           throw new Error('Invalid dashboard version');
@@ -501,7 +505,8 @@ export const browseDashboardsAPI = createApi({
         let currentFolderUid: string | undefined;
         if (dashboard.uid) {
           try {
-            const existingDashboard = await getDashboardAPI().getDashboardDTO(dashboard.uid);
+            const api = await getDashboardAPI();
+            const existingDashboard = await api.getDashboardDTO(dashboard.uid);
             currentFolderUid = isDashboardV2Resource(existingDashboard)
               ? existingDashboard.metadata?.name
               : existingDashboard.meta?.folderUid;
@@ -549,7 +554,7 @@ export const browseDashboardsAPI = createApi({
       providesTags: ['getFolder'],
       queryFn: async () => {
         try {
-          const api = getDashboardAPI();
+          const api = await getDashboardAPI();
           const response = await api.listDeletedDashboards({});
 
           return { data: response };
@@ -564,7 +569,7 @@ export const browseDashboardsAPI = createApi({
       invalidatesTags: ['getFolder'],
       queryFn: async ({ dashboard }) => {
         try {
-          const api = getDashboardAPI();
+          const api = await getDashboardAPI();
           const response = await api.restoreDashboard(dashboard);
           const name = response.spec.title || '';
           const parentFolder = response.metadata?.annotations?.[AnnoKeyFolder];
