@@ -44,4 +44,11 @@ describe('logs splitTimeRangeAligned', () => {
       [Date.parse('2022-02-06T00:00:00.0Z'), Date.parse('2022-02-06T14:11:03.567Z')],
     ]);
   });
+
+  it('should correctly handle less-than-24h time ranges', () => {
+    const timeRange = makeTimeRange(toUtc('2022-02-01T08:10:03.234Z'), toUtc('2022-02-01T20:10:03.234Z'));
+    const result = splitTimeRangeAligned(timeRange);
+
+    expect(result).toStrictEqual([[Date.parse('2022-02-01T08:10:03.234Z'), Date.parse('2022-02-01T20:10:03.234Z')]]);
+  });
 });

@@ -43,7 +43,7 @@ export function splitTimeRangeAligned(timeRange: TimeRange, step: number): Array
   const startTime = timeRange.from.valueOf();
   const endTime = timeRange.to.valueOf();
 
-  if (oneDayMs < step) {
+  if (oneDayMs < step || endTime - startTime <= oneDayMs) {
     // we cannot create chunks smaller than `step`
     return [[startTime, endTime]];
   }

@@ -63,7 +63,7 @@ describe('metric splitTimeRange', () => {
   });
 });
 
-describe('logs splitTimeRangeAkugbed', () => {
+describe('logs splitTimeRangeAligned', () => {
   it('should split time range into midnight-aligned chunks', () => {
     const timeRange = makeTimeRange(toUtc('2022-02-01T14:10:03.234Z'), toUtc('2022-02-06T14:11:03.567Z'));
     const result = splitTimeRangeAligned(timeRange, 200);
@@ -75,5 +75,14 @@ describe('logs splitTimeRangeAkugbed', () => {
       [Date.parse('2022-02-05T00:00:00.0Z'), Date.parse('2022-02-05T23:59:59.800Z')],
       [Date.parse('2022-02-06T00:00:00.0Z'), Date.parse('2022-02-06T14:11:03.567Z')],
     ]);
+  });
+
+  it('should correctly handle less-than-24h time ranges', () => {
+    const timeRange = makeTimeRange(toUtc('2022-02-01T08:10:03.234Z'), toUtc('2022-02-01T20:10:03.234Z'));
+    const result = splitTimeRangeAligned(timeRange, 200);
+
+    console.log(toUtc(result[0][0]).toISOString(), toUtc(result[0][1]).toISOString());
+
+    expect(result).toStrictEqual([[Date.parse('2022-02-01T08:10:03.234Z'), Date.parse('2022-02-01T20:10:03.234Z')]]);
   });
 });
