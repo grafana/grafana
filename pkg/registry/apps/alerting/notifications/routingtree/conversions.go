@@ -52,6 +52,10 @@ func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, namespace
 	}
 
 	var result = &model.RoutingTree{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
+			Kind:       kind.Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            r.Name,
 			Namespace:       namespacer(orgID),

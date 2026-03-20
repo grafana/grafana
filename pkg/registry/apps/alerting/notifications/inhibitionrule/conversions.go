@@ -31,6 +31,10 @@ func ConvertToK8sResources(orgID int64, rules []definitions.InhibitionRule, name
 
 func ConvertToK8sResource(orgID int64, rule definitions.InhibitionRule, namespacer request.NamespaceMapper) *model.InhibitionRule {
 	i := model.InhibitionRule{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
+			Kind:       kind.Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.Name,
 			Namespace:       namespacer(orgID),

@@ -884,7 +884,10 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 			expectedRoutes = append(expectedRoutes, *k8sRoute(t, v1beta1.UserDefinedRoutingTreeName, &defaultPolicy))
 
 			for i := range expectedRoutes {
-				expectedRoutes[i].TypeMeta = v1.TypeMeta{} // List does not include this information.
+				expectedRoutes[i].TypeMeta = v1.TypeMeta{
+					APIVersion: v1beta1.RoutingTreeKind().GroupVersionKind().GroupVersion().String(),
+					Kind:       v1beta1.RoutingTreeKind().Kind(),
+				}
 			}
 			assert.ElementsMatch(t, expectedRoutes, list.Items)
 		})

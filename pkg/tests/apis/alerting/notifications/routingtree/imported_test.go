@@ -72,6 +72,10 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 	}
 	require.NotNil(t, importedRoute)
 	expected := &v1beta1.RoutingTree{
+		TypeMeta: v1.TypeMeta{
+			APIVersion: v1beta1.RoutingTreeKind().GroupVersionKind().GroupVersion().String(),
+			Kind:       v1beta1.RoutingTreeKind().Kind(),
+		},
 		ObjectMeta: v1.ObjectMeta{
 			Name:            identifier,
 			Namespace:       apis.DefaultNamespace,

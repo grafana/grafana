@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/simple"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
@@ -23,9 +24,19 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
+	converter := &identityConverter{}
+	apiGroup := v1beta1.ReceiverKind().Group()
+
 	c := simple.AppConfig{
 		Name:       "alerting.notification",
 		KubeConfig: cfg.KubeConfig,
+		Converters: map[schema.GroupKind]simple.Converter{
+			{Group: apiGroup, Kind: v1beta1.ReceiverKind().Kind()}:       converter,
+			{Group: apiGroup, Kind: v1beta1.RoutingTreeKind().Kind()}:    converter,
+			{Group: apiGroup, Kind: v1beta1.TemplateGroupKind().Kind()}:  converter,
+			{Group: apiGroup, Kind: v1beta1.TimeIntervalKind().Kind()}:   converter,
+			{Group: apiGroup, Kind: v1beta1.InhibitionRuleKind().Kind()}: converter,
+		},
 		InformerConfig: simple.AppInformerConfig{
 			InformerOptions: operator.InformerOptions{
 				ErrorHandler: func(ctx context.Context, err error) {

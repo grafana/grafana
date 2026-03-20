@@ -75,6 +75,10 @@ func convertToK8sResource(
 	}
 
 	r := &model.Receiver{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
+			Kind:       kind.Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			UID:             types.UID(receiver.GetUID()), // This is needed to make PATCH work
 			Name:            receiver.GetUID(),

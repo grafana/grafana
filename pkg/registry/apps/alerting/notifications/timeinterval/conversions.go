@@ -56,6 +56,10 @@ func ConvertToK8sResource(orgID int64, interval definitions.MuteTimeInterval, na
 
 func buildTimeInterval(orgID int64, interval definitions.MuteTimeInterval, spec model.TimeIntervalSpec, namespacer request.NamespaceMapper) model.TimeInterval {
 	i := model.TimeInterval{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
+			Kind:       kind.Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			UID:             types.UID(interval.UID), // TODO This is needed to make PATCH work
 			Name:            interval.UID,            // TODO replace to stable UID when we switch to normal storage

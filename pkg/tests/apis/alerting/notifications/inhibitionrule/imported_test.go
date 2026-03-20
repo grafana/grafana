@@ -1,9 +1,11 @@
 package inhibitionrule
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
+	"os"
 	"path"
 	"testing"
 
@@ -68,13 +70,18 @@ func TestIntegrationImportedInhibitionRules(t *testing.T) {
 	importedRule := inhibitionRules.Items[0]
 
 	t.Run("list should return all imported inhibition rules", func(t *testing.T) {
-		got, err := json.MarshalIndent(inhibitionRules, "", "  ")
+		got, err := json.Marshal(inhibitionRules)
 		require.NoError(t, err)
 
-		exp, err := testData.ReadFile(path.Join("test-data", "list.json"))
+		snapshotPath := path.Join("test-data", "list.json")
+		exp, err := os.ReadFile(snapshotPath)
 		require.NoError(t, err)
 
-		require.JSONEq(t, string(exp), string(got), "response should match expected snapshot")
+		if !assert.JSONEq(t, string(exp), string(got), "response should match expected snapshot") {
+			var prettyJSON bytes.Buffer
+			require.NoError(t, json.Indent(&prettyJSON, got, "", "  "))
+			require.NoError(t, os.WriteFile(snapshotPath, prettyJSON.Bytes(), 0o644))
+		}
 	})
 
 	t.Run("should not be able to update imported inhibition rules", func(t *testing.T) {
