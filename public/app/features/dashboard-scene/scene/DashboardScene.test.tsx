@@ -25,7 +25,6 @@ import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
-import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
