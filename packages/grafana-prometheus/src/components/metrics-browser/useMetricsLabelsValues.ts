@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { useDebounce } from 'react-use';
 
 import { TimeRange } from '@grafana/data';
 
