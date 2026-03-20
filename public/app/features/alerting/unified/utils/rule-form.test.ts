@@ -1,6 +1,6 @@
 import { PromQuery } from '@grafana/prometheus';
 import { config } from '@grafana/runtime';
-import { ExpressionDatasourceUID, ExpressionQueryType } from 'app/features/expressions/types';
+import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
   AlertDataQuery,
@@ -51,6 +51,35 @@ describe('formValuesToRulerGrafanaRuleDTO', () => {
     };
 
     expect(formValuesToRulerGrafanaRuleDTO(formValues)).toMatchSnapshot();
+  });
+
+  it('sets notification_settings.receiver only when manualRouting is true', () => {
+    const base: RuleFormValues = {
+      ...getDefaultFormValues(),
+      type: RuleFormType.grafana,
+      condition: 'A',
+      contactPoints: {
+        grafana: {
+          selectedContactPoint: 'team-receiver',
+          muteTimeIntervals: [],
+          activeTimeIntervals: [],
+          overrideGrouping: false,
+          overrideTimings: false,
+          groupBy: [],
+          groupWaitValue: '',
+          groupIntervalValue: '',
+          repeatIntervalValue: '',
+        },
+      },
+    };
+
+    // manualRouting false → no notification_settings
+    const dtoNoManual = formValuesToRulerGrafanaRuleDTO({ ...base, manualRouting: false });
+    expect(dtoNoManual.grafana_alert.notification_settings).toBeUndefined();
+
+    // manualRouting true → notification_settings.receiver present
+    const dtoManual = formValuesToRulerGrafanaRuleDTO({ ...base, manualRouting: true });
+    expect(dtoManual.grafana_alert.notification_settings?.receiver).toBe('team-receiver');
   });
 
   it('should not save both instant and range type queries', () => {
@@ -587,15 +616,24 @@ describe('getInstantFromDataQuery', () => {
   });
 });
 
+function isExpressionQuery(model: unknown): model is ExpressionQuery {
+  return typeof model === 'object' && model !== null && 'type' in model;
+}
+
 describe('getDefaultExpressions', () => {
   it('should create a reduce expression as the first query', () => {
     const result = getDefaultExpressions('B', 'C');
     const reduceQuery = result[0];
-    const model = reduceQuery.model;
+    const { model } = reduceQuery;
 
     expect(reduceQuery.refId).toBe('B');
     expect(reduceQuery.datasourceUid).toBe(ExpressionDatasourceUID);
-    expect(reduceQuery.queryType).toBe('');
+    expect(reduceQuery.queryType).toBe('expression');
+
+    if (!isExpressionQuery(model)) {
+      throw new Error('Expected ExpressionQuery');
+    }
+
     expect(model.type).toBe(ExpressionQueryType.reduce);
     expect(model.datasource?.uid).toBe(ExpressionDatasourceUID);
     expect(model.reducer).toBe('last');
@@ -604,7 +642,11 @@ describe('getDefaultExpressions', () => {
   it('should create reduce expression with proper conditions structure', () => {
     const result = getDefaultExpressions('B', 'C');
     const reduceQuery = result[0];
-    const model = reduceQuery.model;
+    const { model } = reduceQuery;
+
+    if (!isExpressionQuery(model)) {
+      throw new Error('Expected ExpressionQuery');
+    }
 
     expect(model.conditions).toHaveLength(1);
     expect(model.expression).toBe('A');
@@ -630,11 +672,16 @@ describe('getDefaultExpressions', () => {
   it('should create a threshold expression as the second query', () => {
     const result = getDefaultExpressions('B', 'C');
     const thresholdQuery = result[1];
-    const model = thresholdQuery.model;
+    const { model } = thresholdQuery;
 
     expect(thresholdQuery.refId).toBe('C');
     expect(thresholdQuery.datasourceUid).toBe(ExpressionDatasourceUID);
-    expect(thresholdQuery.queryType).toBe('');
+    expect(thresholdQuery.queryType).toBe('expression');
+
+    if (!isExpressionQuery(model)) {
+      throw new Error('Expected ExpressionQuery');
+    }
+
     expect(model.type).toBe(ExpressionQueryType.threshold);
     expect(model.datasource?.uid).toBe(ExpressionDatasourceUID);
   });
@@ -642,7 +689,11 @@ describe('getDefaultExpressions', () => {
   it('should create threshold expression with proper conditions structure', () => {
     const result = getDefaultExpressions('B', 'C');
     const thresholdQuery = result[1];
-    const model = thresholdQuery.model;
+    const { model } = thresholdQuery;
+
+    if (!isExpressionQuery(model)) {
+      throw new Error('Expected ExpressionQuery');
+    }
 
     expect(model.conditions).toHaveLength(1);
     expect(model.conditions?.[0]).toEqual({
@@ -655,7 +706,7 @@ describe('getDefaultExpressions', () => {
         type: 'and',
       },
       query: {
-        params: [],
+        params: ['C'],
       },
       reducer: {
         params: [],
@@ -667,7 +718,11 @@ describe('getDefaultExpressions', () => {
   it('should reference the reduce expression in the threshold expression', () => {
     const result = getDefaultExpressions('B', 'C');
     const thresholdQuery = result[1];
-    const model = thresholdQuery.model;
+    const { model } = thresholdQuery;
+
+    if (!isExpressionQuery(model)) {
+      throw new Error('Expected ExpressionQuery');
+    }
 
     expect(model.expression).toBe('B');
   });
@@ -676,6 +731,10 @@ describe('getDefaultExpressions', () => {
     const result = getDefaultExpressions('X', 'Y');
     const reduceModel = result[0].model;
     const thresholdModel = result[1].model;
+
+    if (!isExpressionQuery(reduceModel) || !isExpressionQuery(thresholdModel)) {
+      throw new Error('Expected ExpressionQuery');
+    }
 
     expect(result[0].refId).toBe('X');
     expect(reduceModel.refId).toBe('X');
