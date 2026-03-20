@@ -397,12 +397,15 @@ func emitDirectChildrenChanges(
 	changes []ResourceFileChange,
 ) []ResourceFileChange {
 	existingByPath := make(map[string]*provisioning.ResourceListItem, len(target.Items))
-	for _, item := range target.Items {
+	for i := range target.Items {
+		item := &target.Items[i]
+
 		path := item.Path
 		if item.Group == resources.FolderResource.Group {
 			path = safepath.EnsureTrailingSlash(path)
 		}
-		existingByPath[path] = &item
+
+		existingByPath[path] = item
 	}
 
 	for _, file := range source {
