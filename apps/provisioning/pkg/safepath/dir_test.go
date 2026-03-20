@@ -161,7 +161,6 @@ func TestInDir(t *testing.T) {
 	}
 }
 
-
 func TestEnsureTrailingSlash(t *testing.T) {
 	tests := []struct {
 		name string
