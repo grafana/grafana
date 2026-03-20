@@ -162,7 +162,8 @@ runs:
           --registry=${DOCKER_REGISTRY}
           --checksum=${CHECKSUM}
           --cache-builders=${CACHE_BUILDERS}
-          --verify=${VERIFY} > $OUTFILE
+          --verify=${VERIFY}
+          --bundle-catalog-plugins-file=${GRAFANA_PATH}/pkg/build/bundled-plugins.json > $OUTFILE
     - id: output
       shell: bash
       env:
