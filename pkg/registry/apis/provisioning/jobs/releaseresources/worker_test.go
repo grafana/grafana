@@ -1,4 +1,4 @@
-package cleanup
+package releaseresources
 
 import (
 	"context"
@@ -23,10 +23,8 @@ import (
 var _ dynamic.ResourceInterface = (*fakeDynamicClient)(nil)
 
 type fakeDynamicClient struct {
-	patchCalls  []string
-	deleteCalls []string
-	patchErr    error
-	deleteErr   error
+	patchCalls []string
+	patchErr   error
 }
 
 func (f *fakeDynamicClient) Create(context.Context, *unstructured.Unstructured, metav1.CreateOptions, ...string) (*unstructured.Unstructured, error) {
@@ -38,9 +36,8 @@ func (f *fakeDynamicClient) Update(context.Context, *unstructured.Unstructured, 
 func (f *fakeDynamicClient) UpdateStatus(context.Context, *unstructured.Unstructured, metav1.UpdateOptions) (*unstructured.Unstructured, error) {
 	panic("unexpected")
 }
-func (f *fakeDynamicClient) Delete(_ context.Context, name string, _ metav1.DeleteOptions, _ ...string) error {
-	f.deleteCalls = append(f.deleteCalls, name)
-	return f.deleteErr
+func (f *fakeDynamicClient) Delete(context.Context, string, metav1.DeleteOptions, ...string) error {
+	panic("unexpected")
 }
 func (f *fakeDynamicClient) DeleteCollection(context.Context, metav1.DeleteOptions, metav1.ListOptions) error {
 	panic("unexpected")
@@ -77,11 +74,10 @@ func TestWorker_IsSupported(t *testing.T) {
 		expected bool
 	}{
 		{"releaseResources is supported", provisioning.JobActionReleaseResources, true},
-		{"deleteResources is supported", provisioning.JobActionDeleteResources, true},
+		{"deleteResources is not supported", provisioning.JobActionDeleteResources, false},
 		{"pull is not supported", provisioning.JobActionPull, false},
 		{"push is not supported", provisioning.JobActionPush, false},
 		{"delete is not supported", provisioning.JobActionDelete, false},
-		{"migrate is not supported", provisioning.JobActionMigrate, false},
 	}
 
 	for _, tt := range tests {
@@ -92,7 +88,7 @@ func TestWorker_IsSupported(t *testing.T) {
 	}
 }
 
-func TestWorker_Process_ReleaseResources(t *testing.T) {
+func TestWorker_Process(t *testing.T) {
 	ctx := context.Background()
 	lister := resources.NewMockResourceLister(t)
 	clientFactory := resources.NewMockClientFactory(t)
@@ -131,47 +127,6 @@ func TestWorker_Process_ReleaseResources(t *testing.T) {
 	err := w.Process(ctx, nil, job, progress)
 	require.NoError(t, err)
 	require.Equal(t, []string{"dash-1", "dash-2"}, fakeClient.patchCalls)
-	require.Empty(t, fakeClient.deleteCalls)
-}
-
-func TestWorker_Process_DeleteResources(t *testing.T) {
-	ctx := context.Background()
-	lister := resources.NewMockResourceLister(t)
-	clientFactory := resources.NewMockClientFactory(t)
-	mockClients := resources.NewMockResourceClients(t)
-	fakeClient := &fakeDynamicClient{}
-
-	w := NewWorker(lister, clientFactory)
-
-	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
-		Spec: provisioning.JobSpec{
-			Action:     provisioning.JobActionDeleteResources,
-			Repository: "my-repo",
-		},
-	}
-
-	items := &provisioning.ResourceList{
-		Items: []provisioning.ResourceListItem{
-			{Name: "dash-1", Group: "dashboard.grafana.app", Resource: "dashboards"},
-			{Name: "folder-1", Group: "folder.grafana.app", Resource: "folders"},
-		},
-	}
-
-	lister.EXPECT().List(mock.Anything, "default", "my-repo").Return(items, nil)
-	clientFactory.EXPECT().Clients(mock.Anything, "default").Return(mockClients, nil)
-	mockClients.EXPECT().ForResource(mock.Anything, mock.Anything).Return(fakeClient, schema.GroupVersionKind{}, nil)
-
-	progress := jobs.NewMockJobProgressRecorder(t)
-	progress.On("SetTotal", mock.Anything, 2).Return()
-	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
-	progress.On("Record", mock.Anything, mock.Anything).Return()
-	progress.On("TooManyErrors").Return(nil)
-
-	err := w.Process(ctx, nil, job, progress)
-	require.NoError(t, err)
-	require.Empty(t, fakeClient.patchCalls)
-	require.Equal(t, []string{"dash-1", "folder-1"}, fakeClient.deleteCalls)
 }
 
 func TestWorker_Process_EmptyResourceList(t *testing.T) {
@@ -205,7 +160,7 @@ func TestWorker_Process_ListError(t *testing.T) {
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
 		Spec: provisioning.JobSpec{
-			Action:     provisioning.JobActionDeleteResources,
+			Action:     provisioning.JobActionReleaseResources,
 			Repository: "gone-repo",
 		},
 	}
@@ -225,14 +180,14 @@ func TestWorker_Process_NotFoundResourceSkipped(t *testing.T) {
 	mockClients := resources.NewMockResourceClients(t)
 
 	notFoundErr := apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "dash-1")
-	fakeClient := &fakeDynamicClient{deleteErr: notFoundErr}
+	fakeClient := &fakeDynamicClient{patchErr: notFoundErr}
 
 	w := NewWorker(lister, clientFactory)
 
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
 		Spec: provisioning.JobSpec{
-			Action:     provisioning.JobActionDeleteResources,
+			Action:     provisioning.JobActionReleaseResources,
 			Repository: "my-repo",
 		},
 	}

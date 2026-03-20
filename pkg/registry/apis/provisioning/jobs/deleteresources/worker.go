@@ -1,4 +1,4 @@
-package cleanup
+package deleteresources
 
 import (
 	"context"
@@ -9,8 +9,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -20,9 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-// Worker handles releaseResources and deleteResources job actions.
-// These actions operate on orphaned resources whose managing repository
-// no longer exists or is stuck in Terminating state.
+// Worker handles the deleteResources job action.
+// It deletes all resources managed by a repository that no longer exists or is
+// stuck in Terminating state.
 // The repo parameter in Process may be nil when the repository has been deleted.
 type Worker struct {
 	lister        resources.ResourceLister
@@ -37,14 +35,13 @@ func NewWorker(lister resources.ResourceLister, clientFactory resources.ClientFa
 }
 
 func (w *Worker) IsSupported(_ context.Context, job provisioning.Job) bool {
-	return job.Spec.Action == provisioning.JobActionReleaseResources ||
-		job.Spec.Action == provisioning.JobActionDeleteResources
+	return job.Spec.Action == provisioning.JobActionDeleteResources
 }
 
 func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
-	logger := logging.FromContext(ctx).With("logger", "cleanup-worker", "action", job.Spec.Action)
+	logger := logging.FromContext(ctx).With("logger", "delete-resources-worker")
 	ctx = logging.Context(ctx, logger)
-	ctx, span := tracing.Start(ctx, "provisioning.cleanup.process")
+	ctx, span := tracing.Start(ctx, "provisioning.deleteresources.process")
 	defer span.End()
 	span.SetAttributes(
 		attribute.String("cleanup.action", string(job.Spec.Action)),
@@ -74,6 +71,7 @@ func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provi
 
 	for _, item := range items.Items {
 		result := jobs.NewPathOnlyResult(item.Name)
+		result.WithAction(repository.FileActionDeleted)
 
 		res, _, err := clients.ForResource(ctx, schema.GroupVersionResource{
 			Group:    item.Group,
@@ -88,22 +86,17 @@ func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provi
 			continue
 		}
 
-		switch job.Spec.Action {
-		case provisioning.JobActionReleaseResources:
-			result.WithAction(repository.FileActionUpdated)
-			progress.SetMessage(ctx, fmt.Sprintf("releasing %s/%s", item.Resource, item.Name))
-			err = w.releaseResource(ctx, res, &item)
-		case provisioning.JobActionDeleteResources:
-			result.WithAction(repository.FileActionDeleted)
-			progress.SetMessage(ctx, fmt.Sprintf("deleting %s/%s", item.Resource, item.Name))
-			err = w.deleteResource(ctx, res, &item)
-		}
+		progress.SetMessage(ctx, fmt.Sprintf("deleting %s/%s", item.Resource, item.Name))
+
+		delCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+		err = res.Delete(delCtx, item.Name, v1.DeleteOptions{})
+		cancel()
 
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				logger.Info("resource not found, skipping", "name", item.Name, "group", item.Group, "resource", item.Resource)
 			} else {
-				result.WithError(fmt.Errorf("process %s/%s: %w", item.Resource, item.Name, err))
+				result.WithError(fmt.Errorf("delete %s/%s: %w", item.Resource, item.Name, err))
 			}
 		}
 
@@ -114,24 +107,4 @@ func (w *Worker) Process(ctx context.Context, _ repository.Repository, job provi
 	}
 
 	return nil
-}
-
-func (w *Worker) releaseResource(ctx context.Context, client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-	patchBytes, err := resources.GetReleasePatch(item)
-	if err != nil {
-		return fmt.Errorf("build release patch: %w", err)
-	}
-
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
-
-	_, err = client.Patch(ctx, item.Name, types.JSONPatchType, patchBytes, v1.PatchOptions{})
-	return err
-}
-
-func (w *Worker) deleteResource(ctx context.Context, client dynamic.ResourceInterface, item *provisioning.ResourceListItem) error {
-	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
-	defer cancel()
-
-	return client.Delete(ctx, item.Name, v1.DeleteOptions{})
 }
