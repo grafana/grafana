@@ -39,6 +39,17 @@ func (b *APIBuilder) RegisterHTTPRoutes(rr routing.RouteRegister) {
 	})
 }
 
+// RootHTTPHandler returns the mount prefix and an http.Handler for the
+// root-level /ofrep/v1/... routes. Used in standalone API mode where
+// Grafana's RouteRegister is unavailable; authentication is handled upstream
+// by the k8s request handler chain.
+func (b *APIBuilder) RootHTTPHandler() (string, http.Handler) {
+	r := mux.NewRouter()
+	r.Methods(http.MethodPost).Path("/ofrep/v1/evaluate/flags").HandlerFunc(b.rootAllFlagsHandler)
+	r.Methods(http.MethodPost).Path("/ofrep/v1/evaluate/flags/{flagKey}").HandlerFunc(b.rootOneFlagHandler)
+	return "/ofrep/", r
+}
+
 // grafanaHTTPHandler wraps a ReqContext handler to set up the identity context
 // from Grafana's signed-in user before calling the inner handler.
 // We use IsSignedIn rather than SignedInUser != nil because Grafana always
