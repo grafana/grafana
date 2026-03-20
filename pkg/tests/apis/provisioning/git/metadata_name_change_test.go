@@ -7,7 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -68,7 +70,6 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 // path, incremental sync creates a new resource with the new name while the old
 // resource remains orphaned.
 func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testing.T) {
-	t.Skip("Skipping incremental sync test (flaky)")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafanaWithGitServer(t)
@@ -84,6 +85,10 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "name-change-incr-001", "Dashboard One")
 
+	// Ensure lastRef is set so the next sync actually runs incrementally
+	// rather than falling back to a full sync.
+	helper.waitForRepoLastRef(t, repoName)
+
 	// Change the metadata.name (uid) in the same file path.
 	require.NoError(t, local.UpdateFile("dashboard1.json", string(dashboardJSON("name-change-incr-002", "Dashboard One Renamed", 2))))
 	_, err := local.Git("add", ".")
@@ -93,7 +98,13 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	job := helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+	})
+	jobState, _, _ := unstructured.NestedString(job.Object, "status", "state")
+	require.Equal(t, string(provisioning.JobStateSuccess), jobState,
+		"incremental sync job should succeed")
 
 	// The new dashboard should exist with the new name.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
