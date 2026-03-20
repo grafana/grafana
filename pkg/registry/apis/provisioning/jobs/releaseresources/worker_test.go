@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -66,7 +68,7 @@ func (f *fakeDynamicClient) ApplyStatus(context.Context, string, *unstructured.U
 }
 
 func TestWorker_IsSupported(t *testing.T) {
-	w := NewWorker(nil, nil)
+	w := NewWorker(nil, nil, 1)
 
 	tests := []struct {
 		name     string
@@ -95,7 +97,7 @@ func TestWorker_Process(t *testing.T) {
 	mockClients := resources.NewMockResourceClients(t)
 	fakeClient := &fakeDynamicClient{}
 
-	w := NewWorker(lister, clientFactory)
+	w := NewWorker(lister, clientFactory, 1)
 
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
@@ -132,7 +134,7 @@ func TestWorker_Process(t *testing.T) {
 func TestWorker_Process_EmptyResourceList(t *testing.T) {
 	ctx := context.Background()
 	lister := resources.NewMockResourceLister(t)
-	w := NewWorker(lister, nil)
+	w := NewWorker(lister, nil, 1)
 
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
@@ -145,8 +147,8 @@ func TestWorker_Process_EmptyResourceList(t *testing.T) {
 	lister.EXPECT().List(mock.Anything, "default", "my-repo").Return(&provisioning.ResourceList{}, nil)
 
 	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 	progress.On("SetTotal", mock.Anything, 0).Return()
-	progress.On("SetMessage", mock.Anything, "no managed resources found").Return()
 
 	err := w.Process(ctx, nil, job, progress)
 	require.NoError(t, err)
@@ -155,7 +157,7 @@ func TestWorker_Process_EmptyResourceList(t *testing.T) {
 func TestWorker_Process_ListError(t *testing.T) {
 	ctx := context.Background()
 	lister := resources.NewMockResourceLister(t)
-	w := NewWorker(lister, nil)
+	w := NewWorker(lister, nil, 1)
 
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
@@ -168,9 +170,33 @@ func TestWorker_Process_ListError(t *testing.T) {
 	lister.EXPECT().List(mock.Anything, "default", "gone-repo").Return(nil, errors.New("storage error"))
 
 	progress := jobs.NewMockJobProgressRecorder(t)
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 
 	err := w.Process(ctx, nil, job, progress)
 	require.ErrorContains(t, err, "list managed resources")
+}
+
+func TestWorker_Process_HealthyRepoRejected(t *testing.T) {
+	w := NewWorker(nil, nil, 1)
+
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "healthy-repo"},
+	})
+
+	job := provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+		Spec: provisioning.JobSpec{
+			Action:     provisioning.JobActionReleaseResources,
+			Repository: "healthy-repo",
+		},
+	}
+
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	err := w.Process(context.Background(), mockRepo, job, progress)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "was recreated")
 }
 
 func TestWorker_Process_NotFoundResourceSkipped(t *testing.T) {
@@ -182,7 +208,7 @@ func TestWorker_Process_NotFoundResourceSkipped(t *testing.T) {
 	notFoundErr := apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "dash-1")
 	fakeClient := &fakeDynamicClient{patchErr: notFoundErr}
 
-	w := NewWorker(lister, clientFactory)
+	w := NewWorker(lister, clientFactory, 1)
 
 	job := provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},

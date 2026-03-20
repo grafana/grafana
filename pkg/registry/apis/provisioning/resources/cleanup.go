@@ -46,6 +46,49 @@ func EscapePatchString(s string) string {
 	return s
 }
 
+// SortResourceListForRelease orders items top-down by depth so that parent
+// resources are unmanaged before their children. At equal depth, folders are
+// ordered before other resources so a folder is released before anything it
+// contains at the same level.
+//
+// Example result for a repo with nested folders and dashboards:
+//
+//	folderA/                          (depth 1, folder)
+//	root-dashboard.json               (depth 1, resource)
+//	folderA/subfolderB/               (depth 2, folder)
+//	folderA/dashboard.json            (depth 2, resource)
+//	folderA/subfolderB/dashboard.json (depth 3, resource)
+func SortResourceListForRelease(list *provisioning.ResourceList) {
+	sort.SliceStable(list.Items, func(i, j int) bool {
+		depthI := len(strings.Split(list.Items[i].Path, "/"))
+		depthJ := len(strings.Split(list.Items[j].Path, "/"))
+		if depthI != depthJ {
+			return depthI < depthJ
+		}
+
+		isFolderI := list.Items[i].Group == folders.GroupVersion.Group
+		isFolderJ := list.Items[j].Group == folders.GroupVersion.Group
+		if isFolderI != isFolderJ {
+			return isFolderI
+		}
+
+		return false
+	})
+}
+
+// SplitItems separates a resource list into folder items and non-folder items,
+// preserving the order within each group.
+func SplitItems(items *provisioning.ResourceList) (folderItems, resourceItems []*provisioning.ResourceListItem) {
+	for i := range items.Items {
+		if items.Items[i].Group == folders.GroupVersion.Group {
+			folderItems = append(folderItems, &items.Items[i])
+		} else {
+			resourceItems = append(resourceItems, &items.Items[i])
+		}
+	}
+	return folderItems, resourceItems
+}
+
 // SortResourceListForDeletion sorts items so that non-folder resources come
 // first (safe to delete in any order) followed by folders sorted deepest-first,
 // ensuring child folders are emptied before their parents.

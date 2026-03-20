@@ -396,6 +396,13 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 			return nil
 		}
 
+		if IsOrphanCleanupAction(job.Spec.Action) {
+			logger.Info("repository was recreated since cleanup job was queued -- aborting",
+				"repository", repoName,
+			)
+			return apifmt.Errorf("repository '%s' exists and is healthy; orphan cleanup is no longer needed", repoName)
+		}
+
 		if appcontroller.IsPendingDelete(r.Labels) {
 			logger.Info("repository namespace is pending deletion - skip job")
 			recorder.Record(ctx, NewPathOnlyResult(repoName).WithWarning(errors.New("repository namespace is pending deletion - job skipped")).Build())
@@ -413,7 +420,6 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 	span.RecordError(err)
 	return err
 }
-
 
 func (d *jobDriver) onProgress() ProgressFn {
 	return func(ctx context.Context, status provisioning.JobStatus) error {

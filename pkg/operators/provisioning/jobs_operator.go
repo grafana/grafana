@@ -339,11 +339,11 @@ func setupWorkers(
 	workers = append(workers, fixMetadataWorker)
 
 	// Release Resources (orphan cleanup — removes ownership annotations)
-	releaseResourcesWorker := releaseresourcespkg.NewWorker(resourceLister, clients)
+	releaseResourcesWorker := releaseresourcespkg.NewWorker(resourceLister, clients, 10)
 	workers = append(workers, releaseResourcesWorker)
 
 	// Delete Resources (orphan cleanup — deletes managed resources)
-	deleteResourcesWorker := deleteresourcespkg.NewWorker(resourceLister, clients)
+	deleteResourcesWorker := deleteresourcespkg.NewWorker(resourceLister, clients, 10)
 	workers = append(workers, deleteResourcesWorker)
 
 	// PullRequest

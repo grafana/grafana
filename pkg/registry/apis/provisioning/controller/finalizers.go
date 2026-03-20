@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"sort"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -17,7 +15,6 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -157,16 +154,7 @@ func (f *finalizer) processResourceItems(ctx context.Context, items []*provision
 
 // splitItems separates a sorted list into folder items and non-folder items,
 // preserving the order within each group.
-func splitItems(items *provisioning.ResourceList) (folderItems, resourceItems []*provisioning.ResourceListItem) {
-	for i := range items.Items {
-		if items.Items[i].Group == folders.GroupVersion.Group {
-			folderItems = append(folderItems, &items.Items[i])
-		} else {
-			resourceItems = append(resourceItems, &items.Items[i])
-		}
-	}
-	return folderItems, resourceItems
-}
+var splitItems = resources.SplitItems
 
 // deleteExistingItems removes all resources managed by the repository.
 // Non-folder resources are deleted concurrently first, then folders are
@@ -225,7 +213,7 @@ func (f *finalizer) releaseExistingItems(
 		return 0, err
 	}
 
-	sortResourceListForRelease(items)
+	resources.SortResourceListForRelease(items)
 	folderItems, resourceItems := splitItems(items)
 	process := f.newItemProcessor(ctx, clients, f.releaseResources(ctx, logger))
 
@@ -281,35 +269,4 @@ func (f *finalizer) removeResources(
 		)
 		return client.Delete(ctx, item.Name, v1.DeleteOptions{})
 	}
-}
-
-// sortResourceListForRelease orders items top-down by depth so that parent
-// resources are unmanaged before their children. At equal depth, folders are
-// ordered before other resources so a folder is released before anything it
-// contains at the same level.
-//
-// Example result for a repo with nested folders and dashboards:
-//
-//	folderA/                          (depth 1, folder)
-//	root-dashboard.json               (depth 1, resource)
-//	folderA/subfolderB/               (depth 2, folder)
-//	folderA/dashboard.json            (depth 2, resource)
-//	folderA/subfolderB/dashboard.json (depth 3, resource)
-func sortResourceListForRelease(list *provisioning.ResourceList) {
-	sort.SliceStable(list.Items, func(i, j int) bool {
-		depthI := len(strings.Split(list.Items[i].Path, "/"))
-		depthJ := len(strings.Split(list.Items[j].Path, "/"))
-		if depthI != depthJ {
-			return depthI < depthJ
-		}
-
-		// at equal depth, folders before non-folders
-		isFolderI := list.Items[i].Group == folders.GroupVersion.Group
-		isFolderJ := list.Items[j].Group == folders.GroupVersion.Group
-		if isFolderI != isFolderJ {
-			return isFolderI
-		}
-
-		return false
-	})
 }

@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -53,6 +54,24 @@ type Worker interface {
 func IsOrphanCleanupAction(action provisioning.JobAction) bool {
 	return action == provisioning.JobActionReleaseResources ||
 		action == provisioning.JobActionDeleteResources
+}
+
+// ValidateRepoForCleanup checks that the repository is still missing or
+// terminating at the time the cleanup worker starts processing. The repo was
+// validated at job creation time, but it may have been recreated while the
+// job sat in the queue.
+//   - repo == nil → repository was not found (expected, proceed)
+//   - repo has DeletionTimestamp → repository is terminating (expected, proceed)
+//   - repo exists and is healthy → repository was recreated (abort)
+func ValidateRepoForCleanup(repo repository.Repository) error {
+	if repo == nil {
+		return nil
+	}
+	cfg := repo.Config()
+	if cfg.DeletionTimestamp != nil && !cfg.DeletionTimestamp.IsZero() {
+		return nil
+	}
+	return fmt.Errorf("repository %q was recreated since cleanup job was queued; aborting", cfg.Name)
 }
 
 // ProgressFn is a function that can be called to update the progress of a job

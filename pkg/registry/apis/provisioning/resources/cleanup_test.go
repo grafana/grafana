@@ -33,12 +33,12 @@ func TestEscapePatchString(t *testing.T) {
 
 func TestGetReleasePatch(t *testing.T) {
 	tests := []struct {
-		name         string
-		item         *provisioning.ResourceListItem
-		expectedOps  int
-		expectPath   bool
-		expectHash   bool
-		expectErr    bool
+		name        string
+		item        *provisioning.ResourceListItem
+		expectedOps int
+		expectPath  bool
+		expectHash  bool
+		expectErr   bool
 	}{
 		{
 			name:        "minimal item — only manager annotations removed",
@@ -99,6 +99,84 @@ func TestGetReleasePatch(t *testing.T) {
 			if tt.expectHash {
 				assert.True(t, paths["/metadata/annotations/"+EscapePatchString("grafana.app/sourceChecksum")])
 			}
+		})
+	}
+}
+
+func TestSortResourceListForRelease(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    provisioning.ResourceList
+		expected provisioning.ResourceList
+	}{
+		{
+			name: "Top-down by depth, folders before resources at same depth",
+			input: provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{Group: "dashboard.grafana.app", Path: "dashboard1.json"},
+					{Group: "folder.grafana.app", Path: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder1/subfolder1/subfolder2", Folder: "subfolder1"},
+					{Group: "dashboard.grafana.app", Path: "folder1/dashboard2.json"},
+					{Group: "folder.grafana.app", Path: "folder2"},
+					{Group: "folder.grafana.app", Path: "folder1/subfolder1", Folder: "folder1"},
+				},
+			},
+			expected: provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{Group: "folder.grafana.app", Path: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder2"},
+					{Group: "dashboard.grafana.app", Path: "dashboard1.json"},
+					{Group: "folder.grafana.app", Path: "folder1/subfolder1", Folder: "folder1"},
+					{Group: "dashboard.grafana.app", Path: "folder1/dashboard2.json"},
+					{Group: "folder.grafana.app", Path: "folder1/subfolder1/subfolder2", Folder: "subfolder1"},
+				},
+			},
+		},
+		{
+			name: "Root folders come before nested folders",
+			input: provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{Group: "folder.grafana.app", Path: "folder2/subfolder1", Folder: "folder2"},
+					{Group: "folder.grafana.app", Path: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder2", Folder: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder3", Folder: "folder1"},
+				},
+			},
+			expected: provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{Group: "folder.grafana.app", Path: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder2", Folder: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder3", Folder: "folder1"},
+					{Group: "folder.grafana.app", Path: "folder2/subfolder1", Folder: "folder2"},
+				},
+			},
+		},
+		{
+			name: "Only non-folder items preserves relative order",
+			input: provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{Group: "dashboard.grafana.app", Path: "b.json"},
+					{Group: "dashboard.grafana.app", Path: "a.json"},
+				},
+			},
+			expected: provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{Group: "dashboard.grafana.app", Path: "b.json"},
+					{Group: "dashboard.grafana.app", Path: "a.json"},
+				},
+			},
+		},
+		{
+			name:     "Empty list",
+			input:    provisioning.ResourceList{Items: []provisioning.ResourceListItem{}},
+			expected: provisioning.ResourceList{Items: []provisioning.ResourceListItem{}},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			SortResourceListForRelease(&tc.input)
+			assert.Equal(t, tc.expected, tc.input)
 		})
 	}
 }
@@ -198,4 +276,57 @@ func TestSortResourceListForDeletion(t *testing.T) {
 			assert.Equal(t, tc.expected, tc.input)
 		})
 	}
+}
+
+func TestSplitItems(t *testing.T) {
+	items := &provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{Name: "dash-1", Group: "dashboard.grafana.app", Resource: "dashboards"},
+			{Name: "folder-1", Group: "folder.grafana.app", Resource: "folders"},
+			{Name: "dash-2", Group: "dashboard.grafana.app", Resource: "dashboards"},
+			{Name: "folder-2", Group: "folder.grafana.app", Resource: "folders"},
+			{Name: "alert-1", Group: "alerting.grafana.app", Resource: "rules"},
+		},
+	}
+
+	folderItems, resourceItems := SplitItems(items)
+
+	require.Len(t, folderItems, 2)
+	assert.Equal(t, "folder-1", folderItems[0].Name)
+	assert.Equal(t, "folder-2", folderItems[1].Name)
+
+	require.Len(t, resourceItems, 3)
+	assert.Equal(t, "dash-1", resourceItems[0].Name)
+	assert.Equal(t, "dash-2", resourceItems[1].Name)
+	assert.Equal(t, "alert-1", resourceItems[2].Name)
+}
+
+func TestSplitItems_Empty(t *testing.T) {
+	items := &provisioning.ResourceList{}
+	folderItems, resourceItems := SplitItems(items)
+	assert.Empty(t, folderItems)
+	assert.Empty(t, resourceItems)
+}
+
+func TestSplitItems_AllFolders(t *testing.T) {
+	items := &provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{Name: "folder-1", Group: "folder.grafana.app", Resource: "folders"},
+			{Name: "folder-2", Group: "folder.grafana.app", Resource: "folders"},
+		},
+	}
+	folderItems, resourceItems := SplitItems(items)
+	require.Len(t, folderItems, 2)
+	assert.Empty(t, resourceItems)
+}
+
+func TestSplitItems_NoFolders(t *testing.T) {
+	items := &provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{Name: "dash-1", Group: "dashboard.grafana.app", Resource: "dashboards"},
+		},
+	}
+	folderItems, resourceItems := SplitItems(items)
+	assert.Empty(t, folderItems)
+	require.Len(t, resourceItems, 1)
 }
