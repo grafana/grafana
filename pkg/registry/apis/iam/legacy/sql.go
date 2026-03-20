@@ -58,11 +58,11 @@ type legacySQLStore struct {
 	sql legacysql.LegacyDatabaseProvider
 }
 
-// getDB wraps s.sql(ctx) and converts ErrStackNotFound to a K8s NotFound error.
+// getDB wraps s.sql(ctx) and converts ErrNamespaceNotFound to a K8s NotFound error.
 func (s *legacySQLStore) getDB(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 	db, err := s.sql(ctx)
 	if err != nil {
-		if errors.Is(err, legacysql.ErrStackNotFound) {
+		if errors.Is(err, legacysql.ErrNamespaceNotFound) {
 			return nil, apierrors.NewNotFound(
 				schema.GroupResource{Group: iamv0.GROUP},
 				"namespace",

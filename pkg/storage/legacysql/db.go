@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-// ErrStackNotFound indicates the stack/namespace does not exist (deleted/archived).
-var ErrStackNotFound = errors.New("stack not found")
+// ErrNamespaceNotFound indicates the namespace does not exist (e.g. deleted or archived).
+var ErrNamespaceNotFound = errors.New("namespace not found")
 
 // The database may depend on the request context
 type LegacyDatabaseProvider func(ctx context.Context) (*LegacyDatabaseHelper, error)
