@@ -1,6 +1,6 @@
 import { compact, isEqual } from 'lodash';
-import { useCallback, useEffect, useMemo } from 'react';
-import { useDebounce } from 'react-use';
+import { useCallback, useMemo } from 'react';
+import { useDebounce, useFirstMountState, useUpdateEffect } from 'react-use';
 
 import {
   ContactPointSelector as GrafanaManagedContactPointSelector,
@@ -42,15 +42,19 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
     [queryString]
   );
 
+  const isFirstMount = useFirstMountState();
   useDebounce(
     () => {
+      if (isFirstMount) {
+        return;
+      }
       onChangeMatchers(matchers);
     },
     500,
     [matchers, onChangeMatchers]
   );
 
-  useEffect(() => {
+  useUpdateEffect(() => {
     onChangeReceiver(contactPoint);
   }, [contactPoint, onChangeReceiver]);
 

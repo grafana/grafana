@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { isEqual } from 'lodash';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSet } from 'react-use';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
@@ -165,9 +164,6 @@ function PolicyTreeTab() {
   const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
-  const prevLabelMatchersRef = useRef<ObjectMatcher[]>([]);
-  const prevContactPointRef = useRef<string | undefined>(undefined);
-
   /**
    * Expand / collapse state
    * `defaultExpanded` is the baseline; `expandedOverrides` holds route IDs (hash-based) that are
@@ -185,10 +181,6 @@ function PolicyTreeTab() {
 
   const handleChangeContactPoint = useCallback(
     (value: string | undefined) => {
-      if (prevContactPointRef.current === value) {
-        return;
-      }
-      prevContactPointRef.current = value;
       if (value) {
         trackNotificationPoliciesFilterContactPoint();
       }
@@ -200,10 +192,6 @@ function PolicyTreeTab() {
 
   const handleChangeLabelMatchers = useCallback(
     (value: ObjectMatcher[]) => {
-      if (isEqual(prevLabelMatchersRef.current, value)) {
-        return;
-      }
-      prevLabelMatchersRef.current = value;
       if (value.length > 0) {
         trackNotificationPoliciesFilterMatchers();
       }
@@ -250,7 +238,7 @@ function PolicyTreeTab() {
     });
     setManualDefaultExpanded(!isAllExpanded);
     clear();
-  }, [isAllExpanded, clear, visiblePolicies]);
+  }, [isAllExpanded, clear, visiblePolicies.length]);
 
   // Single-tree mode: show filters but no collapse/expand or create button
   if (!useMultiplePolicies) {
