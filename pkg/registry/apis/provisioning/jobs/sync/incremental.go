@@ -57,7 +57,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
-	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker)
+	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	return nil
 }
 
-func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker) (affectedFolders map[string]string, err error) {
+func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) (affectedFolders map[string]string, err error) {
 	// this will keep track of any folders that had resources deleted from it
 	// with key-value as path:grafana uid.
 	// after cleaning up all resources, we will look to see if the foldrs are
@@ -160,6 +160,19 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 		switch change.Action {
 		case repository.FileActionCreated, repository.FileActionUpdated:
+			if folderMetadataEnabled && resources.IsFolderMetadataFile(change.Path) {
+				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.update_folder_metadata")
+				folderDir := safepath.Dir(change.Path)
+				folder, err := repositoryResources.EnsureFolderPathExist(folderCtx, folderDir)
+				if err != nil {
+					folderSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("updating folder metadata at %s: %w", folderDir, err))
+				}
+				resultBuilder.WithName(folder)
+				folderSpan.End()
+				break
+			}
+
 			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
 			name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
