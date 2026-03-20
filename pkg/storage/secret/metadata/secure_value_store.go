@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
@@ -47,7 +47,7 @@ type secureValueMetadataStorage struct {
 	tracer  trace.Tracer
 }
 
-func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, svmCreateErr error) {
+func (s *secureValueMetadataStorage) Create(ctx context.Context, keeper string, sv *secretv1.SecureValue, actorUID string) (_ *secretv1.SecureValue, svmCreateErr error) {
 	start := s.clock.Now()
 	name := sv.GetName()
 	namespace := sv.GetNamespace()
@@ -271,7 +271,7 @@ func (s *secureValueMetadataStorage) readActiveVersion(ctx context.Context, name
 	return secureValue, nil
 }
 
-func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (_ *secretv1beta1.SecureValue, readErr error) {
+func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (_ *secretv1.SecureValue, readErr error) {
 	start := s.clock.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.Read", trace.WithAttributes(
 		attribute.String("name", name),
@@ -312,7 +312,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	return secureValueKub, nil
 }
 
-func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (svList []secretv1beta1.SecureValue, listErr error) {
+func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (svList []secretv1.SecureValue, listErr error) {
 	start := s.clock.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.List", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
@@ -355,7 +355,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	}
 	defer func() { _ = rows.Close() }()
 
-	secureValues := make([]secretv1beta1.SecureValue, 0)
+	secureValues := make([]secretv1.SecureValue, 0)
 	for rows.Next() {
 		row := secureValueDB{}
 
@@ -587,7 +587,7 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 	return nil
 }
 
-func (s *secureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) (out []secretv1beta1.SecureValue, err error) {
+func (s *secureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) (out []secretv1.SecureValue, err error) {
 	start := s.clock.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.LeaseInactiveSecureValues", trace.WithAttributes(
 		attribute.Int("maxBatchSize", int(maxBatchSize)),
@@ -641,7 +641,7 @@ func (s *secureValueMetadataStorage) acquireLeases(ctx context.Context, leaseTok
 	return nil
 }
 
-func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, leaseToken string) ([]secretv1beta1.SecureValue, error) {
+func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, leaseToken string) ([]secretv1.SecureValue, error) {
 	req := listSecureValuesByLeaseToken{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		LeaseToken:  leaseToken,
@@ -658,7 +658,7 @@ func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, lease
 	}
 	defer func() { _ = rows.Close() }()
 
-	secureValues := make([]secretv1beta1.SecureValue, 0)
+	secureValues := make([]secretv1.SecureValue, 0)
 	for rows.Next() {
 		row := secureValueDB{}
 		var leaseTokenDB string

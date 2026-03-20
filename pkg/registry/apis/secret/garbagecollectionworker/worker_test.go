@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -105,12 +105,12 @@ func TestBasic(t *testing.T) {
 
 		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
 
-		sv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1beta1.SecureValue{
+		sv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: keeper.Namespace,
 				Name:      "sv1",
 			},
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "desc1",
 				Ref:         ptr.To("ref1"),
 				Decrypters:  []string{"decrypter1"},
@@ -135,7 +135,7 @@ func TestProperty(t *testing.T) {
 
 		t.Repeat(map[string]func(*rapid.T){
 			"create": func(t *rapid.T) {
-				var sv *secretv1beta1.SecureValue
+				var sv *secretv1.SecureValue
 				if rapid.Bool().Draw(t, "withRef") {
 					sv = testutils.AnySecureValueWithRefGen.Draw(t, "sv")
 				} else {

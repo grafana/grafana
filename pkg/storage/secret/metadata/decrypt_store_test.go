@@ -12,7 +12,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
@@ -82,12 +82,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a secure value
-		spec := secretv1beta1.SecureValueSpec{
+		spec := secretv1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       ptr.To(secretv1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv1beta1.SecureValue{Spec: spec}
+		sv := &secretv1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
@@ -117,12 +117,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a secure value
-		spec := secretv1beta1.SecureValueSpec{
+		spec := secretv1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       ptr.To(secretv1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv1beta1.SecureValue{Spec: spec}
+		sv := &secretv1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
@@ -151,12 +151,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a secure value
-		spec := secretv1beta1.SecureValueSpec{
+		spec := secretv1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       ptr.To(secretv1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv1beta1.SecureValue{Spec: spec}
+		sv := &secretv1.SecureValue{Spec: spec}
 		sv.Name = svName
 		sv.Namespace = "default"
 
@@ -183,12 +183,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a secure value
-		spec := secretv1beta1.SecureValueSpec{
+		spec := secretv1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       ptr.To(secretv1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv1beta1.SecureValue{Spec: spec}
+		sv := &secretv1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
@@ -216,12 +216,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a secure value
-		spec := secretv1beta1.SecureValueSpec{
+		spec := secretv1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       ptr.To(secretv1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv1beta1.SecureValue{Spec: spec}
+		sv := &secretv1.SecureValue{Spec: spec}
 		sv.Name = svName
 		sv.Namespace = "default"
 
@@ -248,12 +248,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a secure value
-		spec := secretv1beta1.SecureValueSpec{
+		spec := secretv1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       ptr.To(secretv1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv1beta1.SecureValue{Spec: spec}
+		sv := &secretv1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
@@ -281,12 +281,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a secure value
-		spec := secretv1beta1.SecureValueSpec{
+		spec := secretv1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{svcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       ptr.To(secretv1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv1beta1.SecureValue{Spec: spec}
+		sv := &secretv1.SecureValue{Spec: spec}
 		sv.Name = svName
 		sv.Namespace = "default"
 
@@ -319,12 +319,12 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a secure value
-		spec := secretv1beta1.SecureValueSpec{
+		spec := secretv1.SecureValueSpec{
 			Description: "description",
 			Decrypters:  []string{tokenSvcIdentity},
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+			Value:       ptr.To(secretv1.NewExposedSecureValue("value")),
 		}
-		sv := &secretv1beta1.SecureValue{Spec: spec}
+		sv := &secretv1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
@@ -385,25 +385,25 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sut.ModelSecretsManager.Create("ref1", "value")
 
 		// Create a 3rd party keeper
-		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1.Keeper{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "default",
 				Name:      "k1",
 			},
-			Spec: secretv1beta1.KeeperSpec{
-				Aws: &secretv1beta1.KeeperAWSConfig{},
+			Spec: secretv1.KeeperSpec{
+				Aws: &secretv1.KeeperAWSConfig{},
 			},
 		}, "actor-uid")
 		require.NoError(t, err)
 		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
 
 		// Create a secure value
-		sv := &secretv1beta1.SecureValue{
+		sv := &secretv1.SecureValue{
 			ObjectMeta: v1.ObjectMeta{
 				Namespace: "default",
 				Name:      "sv-test",
 			},
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "description",
 				Decrypters:  []string{tokenSvcIdentity},
 				Ref:         ptr.To("ref1"),

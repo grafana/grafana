@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"k8s.io/client-go/dynamic"
-
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"k8s.io/client-go/dynamic"
 )
 
 // The maximum size of a secure value in bytes when written as raw input.
@@ -33,22 +32,22 @@ type ReadOpts struct {
 
 // SecureValueMetadataStorage is the interface for wiring and dependency injection.
 type SecureValueMetadataStorage interface {
-	Create(ctx context.Context, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
-	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv1beta1.SecureValue, error)
-	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1beta1.SecureValue, error)
+	Create(ctx context.Context, keeper string, sv *secretv1.SecureValue, actorUID string) (*secretv1.SecureValue, error)
+	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv1.SecureValue, error)
+	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1.SecureValue, error)
 	SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID ExternalID) error
 	Delete(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
-	LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) ([]secretv1beta1.SecureValue, error)
+	LeaseInactiveSecureValues(ctx context.Context, maxBatchSize uint16) ([]secretv1.SecureValue, error)
 }
 
 type SecureValueService interface {
-	Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
-	Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
-	List(ctx context.Context, namespace xkube.Namespace) (*secretv1beta1.SecureValueList, error)
-	Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, bool, error)
-	Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1beta1.SecureValue, error)
+	Create(ctx context.Context, sv *secretv1.SecureValue, actorUID string) (*secretv1.SecureValue, error)
+	Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1.SecureValue, error)
+	List(ctx context.Context, namespace xkube.Namespace) (*secretv1.SecureValueList, error)
+	Update(ctx context.Context, newSecureValue *secretv1.SecureValue, actorUID string) (*secretv1.SecureValue, bool, error)
+	Delete(ctx context.Context, namespace xkube.Namespace, name string) (*secretv1.SecureValue, error)
 }
 
 type SecureValueClient interface {

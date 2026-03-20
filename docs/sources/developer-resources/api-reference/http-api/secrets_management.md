@@ -53,7 +53,7 @@ Currently available decrypters:
 
 ## Create a secure value
 
-`POST /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues`
+`POST /apis/secret.grafana.app/v1/namespaces/:namespace/securevalues`
 
 Creates a new secure value.
 
@@ -82,7 +82,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 **Example create request**:
 
 ```http
-POST /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues HTTP/1.1
+POST /apis/secret.grafana.app/v1/namespaces/default/securevalues HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -107,7 +107,7 @@ Content-Type: application/json; charset=UTF-8
 Content-Length: 343
 
 {
-  "apiVersion": "secret.grafana.app/v1beta1",
+  "apiVersion": "secret.grafana.app/v1",
   "kind": "SecureValue",
   "metadata": {
     "name": "api-key",
@@ -137,7 +137,7 @@ The `spec.value` field is never returned by API endpoints. Users cannot not decr
 
 ## List secure values
 
-`GET /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues`
+`GET /apis/secret.grafana.app/v1/namespaces/:namespace/securevalues`
 
 List all secure values in a namespace.
 
@@ -163,7 +163,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 **Example list request**:
 
 ```http
-GET /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues HTTP/1.1
+GET /apis/secret.grafana.app/v1/namespaces/default/securevalues HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -177,14 +177,14 @@ Content-Type: application/json; charset=UTF-8
 Content-Length: 383
 
 {
-  "apiVersion": "secret.grafana.app/v1beta1",
+  "apiVersion": "secret.grafana.app/v1",
   "kind": "SecureValueList",
   "metadata": {
     "resourceVersion": "12345"
   },
   "items": [
     {
-      "apiVersion": "secret.grafana.app/v1beta1",
+      "apiVersion": "secret.grafana.app/v1",
       "kind": "SecureValue",
       "metadata": {
         "name": "database-password",
@@ -209,7 +209,7 @@ Status Codes:
 
 ## Get a secure value
 
-`GET /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues/:name`
+`GET /apis/secret.grafana.app/v1/namespaces/:namespace/securevalues/:name`
 
 Get the details of a specific secure value. It will not return the secret value.
 
@@ -232,7 +232,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 **Example get request**:
 
 ```http
-GET /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
+GET /apis/secret.grafana.app/v1/namespaces/default/securevalues/api-key HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -246,7 +246,7 @@ Content-Type: application/json; charset=UTF-8
 Content-Length: 294
 
 {
-  "apiVersion": "secret.grafana.app/v1beta1",
+  "apiVersion": "secret.grafana.app/v1",
   "kind": "SecureValue",
   "metadata": {
     "name": "api-key",
@@ -271,7 +271,7 @@ Status Codes:
 
 ## Update a secure value
 
-`PUT /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues/:name`
+`PUT /apis/secret.grafana.app/v1/namespaces/:namespace/securevalues/:name`
 
 Replace an existing secure value with a new specification.
 
@@ -300,7 +300,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 **Example update request**:
 
 ```http
-PUT /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
+PUT /apis/secret.grafana.app/v1/namespaces/default/securevalues/api-key HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -325,7 +325,7 @@ Content-Type: application/json; charset=UTF-8
 Content-Length: 282
 
 {
-  "apiVersion": "secret.grafana.app/v1beta1",
+  "apiVersion": "secret.grafana.app/v1",
   "kind": "SecureValue",
   "metadata": {
     "name": "api-key",
@@ -350,7 +350,7 @@ Status Codes:
 
 ## Delete a secure value
 
-`DELETE /apis/secret.grafana.app/v1beta1/namespaces/:namespace/securevalues/:name`
+`DELETE /apis/secret.grafana.app/v1/namespaces/:namespace/securevalues/:name`
 
 Permanently delete a secure value. This also deletes the underlying stored secret value.
 
@@ -373,7 +373,7 @@ See note in the [introduction](#secrets-management-api) for an explanation.
 **Example delete request**:
 
 ```http
-DELETE /apis/secret.grafana.app/v1beta1/namespaces/default/securevalues/api-key HTTP/1.1
+DELETE /apis/secret.grafana.app/v1/namespaces/default/securevalues/api-key HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk

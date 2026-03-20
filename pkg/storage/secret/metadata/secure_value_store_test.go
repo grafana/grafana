@@ -10,7 +10,7 @@ import (
 	"k8s.io/utils/ptr"
 	"pgregory.net/rapid"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
@@ -24,10 +24,10 @@ import (
 func createTestKeeper(t *testing.T, ctx context.Context, keeperStorage contracts.KeeperMetadataStorage, name, namespace string) string {
 	t.Helper()
 
-	testKeeper := &secretv1beta1.Keeper{
-		Spec: secretv1beta1.KeeperSpec{
+	testKeeper := &secretv1.Keeper{
+		Spec: secretv1.KeeperSpec{
 			Description: "test keeper description",
-			Aws:         &secretv1beta1.KeeperAWSConfig{},
+			Aws:         &secretv1.KeeperAWSConfig{},
 		},
 	}
 	testKeeper.Name = name
@@ -59,12 +59,12 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		keeperName := createTestKeeper(t, ctx, keeperStorage, "test-keeper", "default")
 
 		// Create a test secure value
-		testSecureValue := &secretv1beta1.SecureValue{
-			Spec: secretv1beta1.SecureValueSpec{
+		testSecureValue := &secretv1.SecureValue{
+			Spec: secretv1.SecureValueSpec{
 				Description: "test description",
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("test-value")),
+				Value:       ptr.To(secretv1.NewExposedSecureValue("test-value")),
 			},
-			Status: secretv1beta1.SecureValueStatus{Keeper: keeperName},
+			Status: secretv1.SecureValueStatus{Keeper: keeperName},
 		}
 		testSecureValue.Name = "sv-test"
 		testSecureValue.Namespace = "default"
@@ -113,12 +113,12 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		keeperName := createTestKeeper(t, ctx, keeperStorage, "test-keeper-2", "default")
 
 		// Create a test secure value
-		testSecureValue := &secretv1beta1.SecureValue{
-			Spec: secretv1beta1.SecureValueSpec{
+		testSecureValue := &secretv1.SecureValue{
+			Spec: secretv1.SecureValueSpec{
 				Description: "test description 2",
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("test-value-2")),
+				Value:       ptr.To(secretv1.NewExposedSecureValue("test-value-2")),
 			},
-			Status: secretv1beta1.SecureValueStatus{Keeper: keeperName},
+			Status: secretv1.SecureValueStatus{Keeper: keeperName},
 		}
 		testSecureValue.Name = "sv-test-2"
 		testSecureValue.Namespace = "default"

@@ -45,7 +45,7 @@ go run secrets.go -help              # Show all flags
 ## Configuration
 
 Edit `secrets-config.yaml` to add or modify test data. The keeper config structure
-mirrors the backend Go types at `apps/secret/pkg/apis/secret/v1beta1/keeper_spec_gen.go`.
+mirrors the backend Go types at `apps/secret/pkg/apis/secret/v1/keeper_spec_gen.go`.
 
 ```yaml
 keepers:
@@ -99,7 +99,7 @@ make devenv sources="mt-db"
 # Start the API server
 CFG_secret_key__v1__secret_key=hunter2 go run -tags "enterprise" ./pkg/cmd/grafana apiserver \
   --skip-auth=true \
-  --runtime-config secret.grafana.app/v1beta1=true \
+  --runtime-config secret.grafana.app/v1=true \
   --secure-port=6443 \
   --database.servers="default=superuser:password@tcp(localhost:13306)/secret_grafana_app" \
   --database.max_idle_conn=5 \

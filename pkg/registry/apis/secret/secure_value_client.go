@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -16,7 +17,6 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/client-go/dynamic"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -252,7 +252,7 @@ func (c *secureValueClient) mapError(err error, name string) error {
 		return nil
 	}
 
-	gr := secretv1beta1.SecureValuesResourceInfo.GroupResource()
+	gr := secretv1.SecureValuesResourceInfo.GroupResource()
 
 	switch {
 	case errors.Is(err, ErrSecureValueNotFound):
@@ -270,7 +270,7 @@ func (c *secureValueClient) checkAccess(ctx context.Context, name, verb string) 
 		return apierrors.NewUnauthorized("missing auth info in context")
 	}
 
-	gr := secretv1beta1.SecureValuesResourceInfo.GroupResource()
+	gr := secretv1.SecureValuesResourceInfo.GroupResource()
 
 	if !claims.NamespaceMatches(authInfo.GetNamespace(), c.namespace) {
 		return apierrors.NewForbidden(gr, name, fmt.Errorf("namespace mismatch: %s != %s", authInfo.GetNamespace(), c.namespace))
@@ -279,8 +279,8 @@ func (c *secureValueClient) checkAccess(ctx context.Context, name, verb string) 
 	decision, reason, err := c.access.Authorize(ctx, authorizer.AttributesRecord{
 		Verb:            verb,
 		Namespace:       c.namespace,
-		APIGroup:        secretv1beta1.APIGroup,
-		APIVersion:      secretv1beta1.APIVersion,
+		APIGroup:        secretv1.APIGroup,
+		APIVersion:      secretv1.APIVersion,
 		Resource:        gr.Resource,
 		Subresource:     "",
 		Name:            name,
@@ -298,7 +298,7 @@ func (c *secureValueClient) checkAccess(ctx context.Context, name, verb string) 
 	return nil
 }
 
-func toUnstructured(sv *secretv1beta1.SecureValue) (*unstructured.Unstructured, error) {
+func toUnstructured(sv *secretv1.SecureValue) (*unstructured.Unstructured, error) {
 	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(sv)
 	if err != nil {
 		return nil, err
@@ -306,8 +306,8 @@ func toUnstructured(sv *secretv1beta1.SecureValue) (*unstructured.Unstructured, 
 	return &unstructured.Unstructured{Object: unstructuredObj}, nil
 }
 
-func fromUnstructured(u *unstructured.Unstructured) (*secretv1beta1.SecureValue, error) {
-	sv := new(secretv1beta1.SecureValue)
+func fromUnstructured(u *unstructured.Unstructured) (*secretv1.SecureValue, error) {
+	sv := new(secretv1.SecureValue)
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(u.Object, sv); err != nil {
 		return nil, err
 	}

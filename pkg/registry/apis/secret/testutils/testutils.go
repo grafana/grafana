@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	decryptcontracts "github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
@@ -35,7 +35,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
-
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 )
@@ -222,28 +221,28 @@ type Sut struct {
 }
 
 type CreateSvConfig struct {
-	Sv *secretv1beta1.SecureValue
+	Sv *secretv1.SecureValue
 }
 
-func CreateSvWithSv(sv *secretv1beta1.SecureValue) func(*CreateSvConfig) {
+func CreateSvWithSv(sv *secretv1.SecureValue) func(*CreateSvConfig) {
 	return func(cfg *CreateSvConfig) {
 		cfg.Sv = sv
 	}
 }
 
-func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*secretv1beta1.SecureValue, error) {
+func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*secretv1.SecureValue, error) {
 	cfg := CreateSvConfig{
-		Sv: &secretv1beta1.SecureValue{
+		Sv: &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sv1",
 				Namespace: "ns1",
 			},
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "desc1",
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("v1")),
+				Value:       ptr.To(secretv1.NewExposedSecureValue("v1")),
 				Decrypters:  []string{"decrypter1"},
 			},
-			Status: secretv1beta1.SecureValueStatus{},
+			Status: secretv1.SecureValueStatus{},
 		},
 	}
 	for _, opt := range opts {
@@ -257,38 +256,38 @@ func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*sec
 	return createdSv, nil
 }
 
-func (s *Sut) UpdateSv(ctx context.Context, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
+func (s *Sut) UpdateSv(ctx context.Context, sv *secretv1.SecureValue) (*secretv1.SecureValue, error) {
 	newSv, _, err := s.SecureValueService.Update(ctx, sv, "actor-uid")
 	return newSv, err
 }
 
-func (s *Sut) DeleteSv(ctx context.Context, namespace, name string) (*secretv1beta1.SecureValue, error) {
+func (s *Sut) DeleteSv(ctx context.Context, namespace, name string) (*secretv1.SecureValue, error) {
 	sv, err := s.SecureValueService.Delete(ctx, xkube.Namespace(namespace), name)
 	return sv, err
 }
 
 type CreateKeeperConfig struct {
 	// The default keeper payload. Mutate it to change which keeper ends up being created
-	Keeper *secretv1beta1.Keeper
+	Keeper *secretv1.Keeper
 }
 
-func (s *Sut) CreateAWSKeeper(ctx context.Context) (*secretv1beta1.Keeper, error) {
+func (s *Sut) CreateAWSKeeper(ctx context.Context) (*secretv1.Keeper, error) {
 	return s.CreateKeeper(ctx, func(cfg *CreateKeeperConfig) {
-		cfg.Keeper.Spec = secretv1beta1.KeeperSpec{
-			Aws: &secretv1beta1.KeeperAWSConfig{},
+		cfg.Keeper.Spec = secretv1.KeeperSpec{
+			Aws: &secretv1.KeeperAWSConfig{},
 		}
 	})
 }
 
-func (s *Sut) CreateKeeper(ctx context.Context, opts ...func(*CreateKeeperConfig)) (*secretv1beta1.Keeper, error) {
+func (s *Sut) CreateKeeper(ctx context.Context, opts ...func(*CreateKeeperConfig)) (*secretv1.Keeper, error) {
 	cfg := CreateKeeperConfig{
-		Keeper: &secretv1beta1.Keeper{
+		Keeper: &secretv1.Keeper{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sv1",
 				Namespace: "ns1",
 			},
-			Spec: secretv1beta1.KeeperSpec{
-				Aws: &secretv1beta1.KeeperAWSConfig{},
+			Spec: secretv1.KeeperSpec{
+				Aws: &secretv1.KeeperAWSConfig{},
 			},
 		},
 	}
@@ -308,9 +307,9 @@ func newKeeperServiceWrapper(sqlKeeper *sqlkeeper.SQLKeeper, awsKeeper *ModelAWS
 	return &keeperServiceWrapper{sqlKeeper: sqlKeeper, awsKeeper: awsKeeper}
 }
 
-func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv1beta1.KeeperConfig) (contracts.Keeper, error) {
+func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv1.KeeperConfig) (contracts.Keeper, error) {
 	switch cfg.(type) {
-	case *secretv1beta1.NamedKeeperConfig[*secretv1beta1.KeeperAWSConfig]:
+	case *secretv1.NamedKeeperConfig[*secretv1.KeeperAWSConfig]:
 		return wrapper.awsKeeper, nil
 	default:
 		return wrapper.sqlKeeper, nil
@@ -454,7 +453,7 @@ func NewModelSecretsManager() *ModelAWSSecretsManager {
 	}
 }
 
-func (m *ModelAWSSecretsManager) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (externalID contracts.ExternalID, err error) {
+func (m *ModelAWSSecretsManager) Store(ctx context.Context, cfg secretv1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (externalID contracts.ExternalID, err error) {
 	if exposedValueOrRef == "" {
 		return "", fmt.Errorf("failed to satisfy constraint: Member must have length greater than or equal to 1")
 	}
@@ -488,7 +487,7 @@ func (m *ModelAWSSecretsManager) Create(name, value string) {
 	}
 }
 
-func (m *ModelAWSSecretsManager) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (exposedValue secretv1beta1.ExposedSecureValue, err error) {
+func (m *ModelAWSSecretsManager) Expose(ctx context.Context, cfg secretv1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (exposedValue secretv1.ExposedSecureValue, err error) {
 	versionID := buildVersionID(namespace, name, version)
 
 	if m.deleted(versionID) {
@@ -500,19 +499,19 @@ func (m *ModelAWSSecretsManager) Expose(ctx context.Context, cfg secretv1beta1.K
 		return "", fmt.Errorf("ResourceNotFoundException: Secrets Manager can't find the specified secret")
 	}
 
-	return secretv1beta1.ExposedSecureValue(entry.exposedValueOrRef), nil
+	return secretv1.ExposedSecureValue(entry.exposedValueOrRef), nil
 }
 
 // TODO: this could be namespaced to make it more realistic
-func (m *ModelAWSSecretsManager) RetrieveReference(ctx context.Context, _ secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
+func (m *ModelAWSSecretsManager) RetrieveReference(ctx context.Context, _ secretv1.KeeperConfig, ref string) (secretv1.ExposedSecureValue, error) {
 	entry, ok := m.secrets[ref]
 	if !ok {
 		return "", fmt.Errorf("ResourceNotFoundException: Secrets Manager can't find the specified secret")
 	}
-	return secretv1beta1.ExposedSecureValue(entry.exposedValueOrRef), nil
+	return secretv1.ExposedSecureValue(entry.exposedValueOrRef), nil
 }
 
-func (m *ModelAWSSecretsManager) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (err error) {
+func (m *ModelAWSSecretsManager) Delete(ctx context.Context, cfg secretv1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (err error) {
 	versionID := buildVersionID(namespace, name, version)
 
 	// Deleting a secret that existed at some point is idempotent

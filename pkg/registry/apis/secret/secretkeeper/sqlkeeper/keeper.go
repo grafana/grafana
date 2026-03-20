@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/metrics"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -55,7 +55,7 @@ func NewSQLKeeper(
 	}, nil
 }
 
-func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (contracts.ExternalID, error) {
+func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (contracts.ExternalID, error) {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Store",
 		trace.WithAttributes(
 			attribute.String("namespace", namespace.String()),
@@ -82,7 +82,7 @@ func (s *SQLKeeper) Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, n
 	return contracts.ExternalID(""), nil
 }
 
-func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error) {
+func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (secretv1.ExposedSecureValue, error) {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Expose", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),
@@ -101,17 +101,17 @@ func (s *SQLKeeper) Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, 
 		return "", fmt.Errorf("unable to decrypt value: %w", err)
 	}
 
-	exposedValue := secretv1beta1.NewExposedSecureValue(string(exposedBytes))
+	exposedValue := secretv1.NewExposedSecureValue(string(exposedBytes))
 	s.metrics.ExposeDuration.WithLabelValues(string(cfg.Type())).Observe(time.Since(start).Seconds())
 
 	return exposedValue, nil
 }
 
-func (s *SQLKeeper) RetrieveReference(ctx context.Context, cfg secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error) {
+func (s *SQLKeeper) RetrieveReference(ctx context.Context, cfg secretv1.KeeperConfig, ref string) (secretv1.ExposedSecureValue, error) {
 	return "", fmt.Errorf("reference is not implemented by the SQLKeeper")
 }
 
-func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) error {
+func (s *SQLKeeper) Delete(ctx context.Context, cfg secretv1.KeeperConfig, namespace xkube.Namespace, name string, version int64) error {
 	ctx, span := s.tracer.Start(ctx, "SQLKeeper.Delete", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),

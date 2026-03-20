@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/fullstorydev/grpchan"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -23,7 +24,6 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	decryptv1beta1 "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
@@ -144,7 +144,7 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		g.tokenExchanger,
 		authnlib.WithClientInterceptorTracer(g.tracer),
 		authnlib.WithClientInterceptorNamespace(namespace),
-		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
+		authnlib.WithClientInterceptorAudience([]string{secretv1.APIGroup}),
 	)
 
 	clientConn := grpchan.InterceptClientConn(
@@ -178,7 +178,7 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		if result.GetErrorMessage() != "" {
 			results[name] = decrypt.NewDecryptResultErr(errors.New(result.GetErrorMessage()))
 		} else {
-			exposedSecureValue := secretv1beta1.NewExposedSecureValue(result.GetValue())
+			exposedSecureValue := secretv1.NewExposedSecureValue(result.GetValue())
 			results[name] = decrypt.NewDecryptResultValue(&exposedSecureValue)
 		}
 	}

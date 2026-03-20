@@ -13,7 +13,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
@@ -44,7 +44,7 @@ func ProvideKeeperMetadataStorage(
 	}, nil
 }
 
-func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv1beta1.Keeper, actorUID string) (_ *secretv1beta1.Keeper, createErr error) {
+func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv1.Keeper, actorUID string) (_ *secretv1.Keeper, createErr error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.Create", trace.WithAttributes(
 		attribute.String("name", keeper.GetName()),
@@ -125,7 +125,7 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv1beta
 	return createdKeeper, nil
 }
 
-func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (_ *secretv1beta1.Keeper, readErr error) {
+func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (_ *secretv1.Keeper, readErr error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.Read", trace.WithAttributes(
 		attribute.String("name", name),
@@ -209,7 +209,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 	return &keeper, nil
 }
 
-func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv1beta1.Keeper, actorUID string) (_ *secretv1beta1.Keeper, updateErr error) {
+func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv1.Keeper, actorUID string) (_ *secretv1.Keeper, updateErr error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.Update", trace.WithAttributes(
 		attribute.String("name", newKeeper.GetName()),
@@ -354,7 +354,7 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 	return nil
 }
 
-func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (keeperList []secretv1beta1.Keeper, err error) {
+func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (keeperList []secretv1.Keeper, err error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.List", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
@@ -397,7 +397,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 	}
 	defer func() { _ = rows.Close() }()
 
-	keepers := make([]secretv1beta1.Keeper, 0)
+	keepers := make([]secretv1.Keeper, 0)
 
 	for rows.Next() {
 		var row keeperDB
@@ -430,7 +430,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 
 // validateSecureValueReferences checks that all secure values referenced by the keeper exist and are not referenced by other third-party keepers.
 // It is used by other methods inside a transaction.
-func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Context, keeper *secretv1beta1.Keeper) (err error) {
+func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Context, keeper *secretv1.Keeper) (err error) {
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.ValidateSecureValueReferences", trace.WithAttributes(
 		attribute.String("name", keeper.GetName()),
 		attribute.String("namespace", keeper.GetNamespace()),
@@ -577,7 +577,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	return nil
 }
 
-func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name string, opts contracts.ReadOpts) (_ secretv1beta1.KeeperConfig, getErr error) {
+func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name string, opts contracts.ReadOpts) (_ secretv1.KeeperConfig, getErr error) {
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.GetKeeperConfig", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
@@ -609,7 +609,7 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 
 	// Check if keeper is the systemwide one.
 	if name == contracts.SystemKeeperName {
-		return secretv1beta1.NewNamedKeeperConfig(contracts.SystemKeeperName, &secretv1beta1.SystemKeeperConfig{}), nil
+		return secretv1.NewNamedKeeperConfig(contracts.SystemKeeperName, &secretv1.SystemKeeperConfig{}), nil
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
@@ -618,7 +618,7 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 		return nil, err
 	}
 
-	keeperConfig := parseKeeperConfigJson(kp.Name, secretv1beta1.KeeperType(kp.Type), kp.Payload)
+	keeperConfig := parseKeeperConfigJson(kp.Name, secretv1.KeeperType(kp.Type), kp.Payload)
 
 	// TODO: this would be a good place to check if credentials are secure values and load them.
 	return keeperConfig, nil
@@ -644,7 +644,7 @@ func (s *keeperMetadataStorage) SetAsActive(ctx context.Context, namespace xkube
 	return nil
 }
 
-func (s *keeperMetadataStorage) GetActiveKeeper(ctx context.Context, namespace string) (keeper *secretv1beta1.Keeper, readErr error) {
+func (s *keeperMetadataStorage) GetActiveKeeper(ctx context.Context, namespace string) (keeper *secretv1.Keeper, readErr error) {
 	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "KeeperMetadataStorage.GetActiveKeeper", trace.WithAttributes(
 		attribute.String("namespace", namespace),
@@ -714,12 +714,12 @@ func (s *keeperMetadataStorage) GetActiveKeeper(ctx context.Context, namespace s
 	return keeper, nil
 }
 
-func (s *keeperMetadataStorage) GetActiveKeeperConfig(ctx context.Context, namespace string) (string, secretv1beta1.KeeperConfig, error) {
+func (s *keeperMetadataStorage) GetActiveKeeperConfig(ctx context.Context, namespace string) (string, secretv1.KeeperConfig, error) {
 	keeper, err := s.GetActiveKeeper(ctx, namespace)
 	if err != nil {
 		// When there are not active keepers, default to the system keeper
 		if errors.Is(err, contracts.ErrKeeperNotFound) {
-			return contracts.SystemKeeperName, secretv1beta1.NewNamedKeeperConfig(contracts.SystemKeeperName, &secretv1beta1.SystemKeeperConfig{}), nil
+			return contracts.SystemKeeperName, secretv1.NewNamedKeeperConfig(contracts.SystemKeeperName, &secretv1.SystemKeeperConfig{}), nil
 		}
 		return "", nil, fmt.Errorf("fetching active keeper from db: %w", err)
 	}

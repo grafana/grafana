@@ -6,13 +6,13 @@ import (
 	"slices"
 	"time"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
 type ModelSecureValue struct {
-	*secretv1beta1.SecureValue
+	*secretv1.SecureValue
 	active       bool
 	created      time.Time
 	leaseCreated time.Time
@@ -22,7 +22,7 @@ type ModelKeeper struct {
 	namespace  string
 	name       string
 	active     bool
-	keeperType secretv1beta1.KeeperType
+	keeperType secretv1.KeeperType
 }
 
 // A simplified in memoruy model of the grafana secrets manager
@@ -73,10 +73,10 @@ func (m *ModelGsm) ReadActiveVersion(namespace, name string) *ModelSecureValue {
 	return nil
 }
 
-func (m *ModelGsm) Create(now time.Time, sv *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, error) {
+func (m *ModelGsm) Create(now time.Time, sv *secretv1.SecureValue) (*secretv1.SecureValue, error) {
 	keeper := m.getActiveKeeper(sv.Namespace)
 
-	if sv.Spec.Ref != nil && keeper.keeperType == secretv1beta1.SystemKeeperType {
+	if sv.Spec.Ref != nil && keeper.keeperType == secretv1.SystemKeeperType {
 		return nil, contracts.ErrReferenceWithSystemKeeper
 	}
 
@@ -109,7 +109,7 @@ func (m *ModelGsm) getActiveKeeper(namespace string) *ModelKeeper {
 		namespace:  namespace,
 		name:       contracts.SystemKeeperName,
 		active:     true,
-		keeperType: secretv1beta1.SystemKeeperType,
+		keeperType: secretv1.SystemKeeperType,
 	}
 }
 
@@ -120,7 +120,7 @@ func (m *ModelGsm) keeperExists(namespace, name string) bool {
 func (m *ModelGsm) findKeeper(namespace, name string) *ModelKeeper {
 	// The system keeper is not in the list of keepers
 	if name == contracts.SystemKeeperName {
-		return &ModelKeeper{namespace: namespace, name: contracts.SystemKeeperName, active: true, keeperType: secretv1beta1.SystemKeeperType}
+		return &ModelKeeper{namespace: namespace, name: contracts.SystemKeeperName, active: true, keeperType: secretv1.SystemKeeperType}
 	}
 	for _, k := range m.Keepers {
 		if k.namespace == namespace && k.name == name {
@@ -130,17 +130,17 @@ func (m *ModelGsm) findKeeper(namespace, name string) *ModelKeeper {
 	return nil
 }
 
-func (m *ModelGsm) CreateKeeper(keeper *secretv1beta1.Keeper) (*secretv1beta1.Keeper, error) {
+func (m *ModelGsm) CreateKeeper(keeper *secretv1.Keeper) (*secretv1.Keeper, error) {
 	if m.keeperExists(keeper.Namespace, keeper.Name) {
 		return nil, contracts.ErrKeeperAlreadyExists
 	}
 
-	var keeperType secretv1beta1.KeeperType
+	var keeperType secretv1.KeeperType
 	switch {
 	case keeper.Spec.Aws != nil:
-		keeperType = secretv1beta1.AWSKeeperType
+		keeperType = secretv1.AWSKeeperType
 	default:
-		keeperType = secretv1beta1.SystemKeeperType
+		keeperType = secretv1.SystemKeeperType
 	}
 
 	m.Keepers = append(m.Keepers, &ModelKeeper{namespace: keeper.Namespace, name: keeper.Name, keeperType: keeperType})
@@ -159,7 +159,7 @@ func (m *ModelGsm) SetKeeperAsActive(namespace, keeperName string) error {
 	return nil
 }
 
-func (m *ModelGsm) Update(now time.Time, newSecureValue *secretv1beta1.SecureValue) (*secretv1beta1.SecureValue, bool, error) {
+func (m *ModelGsm) Update(now time.Time, newSecureValue *secretv1.SecureValue) (*secretv1.SecureValue, bool, error) {
 	sv := m.ReadActiveVersion(newSecureValue.Namespace, newSecureValue.Name)
 	if sv == nil {
 		return nil, false, contracts.ErrSecureValueNotFound
@@ -184,7 +184,7 @@ func (m *ModelGsm) Update(now time.Time, newSecureValue *secretv1beta1.SecureVal
 	return createdSv, true, err
 }
 
-func (m *ModelGsm) Delete(namespace, name string) (*secretv1beta1.SecureValue, error) {
+func (m *ModelGsm) Delete(namespace, name string) (*secretv1.SecureValue, error) {
 	modelSv := m.ReadActiveVersion(namespace, name)
 	if modelSv == nil {
 		return nil, contracts.ErrSecureValueNotFound
@@ -193,8 +193,8 @@ func (m *ModelGsm) Delete(namespace, name string) (*secretv1beta1.SecureValue, e
 	return modelSv.SecureValue, nil
 }
 
-func (m *ModelGsm) List(namespace string) (*secretv1beta1.SecureValueList, error) {
-	out := make([]secretv1beta1.SecureValue, 0)
+func (m *ModelGsm) List(namespace string) (*secretv1.SecureValueList, error) {
+	out := make([]secretv1.SecureValue, 0)
 
 	for _, v := range m.SecureValues {
 		if v.Namespace == namespace && v.active {
@@ -202,7 +202,7 @@ func (m *ModelGsm) List(namespace string) (*secretv1beta1.SecureValueList, error
 		}
 	}
 
-	return &secretv1beta1.SecureValueList{Items: out}, nil
+	return &secretv1.SecureValueList{Items: out}, nil
 }
 
 func (m *ModelGsm) Decrypt(ctx context.Context, decrypter, namespace, name string) (map[string]decrypt.DecryptResult, error) {
@@ -222,7 +222,7 @@ func (m *ModelGsm) Decrypt(ctx context.Context, decrypter, namespace, name strin
 				case v.Spec.Ref != nil:
 					keeper := m.findKeeper(v.Namespace, v.Status.Keeper)
 					switch keeper.keeperType {
-					case secretv1beta1.AWSKeeperType:
+					case secretv1.AWSKeeperType:
 						exposedValue, err := m.modelSecretsManager.RetrieveReference(ctx, nil, *v.Spec.Ref)
 						if err != nil {
 							return map[string]decrypt.DecryptResult{
@@ -256,7 +256,7 @@ func (m *ModelGsm) Decrypt(ctx context.Context, decrypter, namespace, name strin
 	}, nil
 }
 
-func (m *ModelGsm) Read(namespace, name string) (*secretv1beta1.SecureValue, error) {
+func (m *ModelGsm) Read(namespace, name string) (*secretv1.SecureValue, error) {
 	modelSv := m.ReadActiveVersion(namespace, name)
 	if modelSv == nil {
 		return nil, contracts.ErrSecureValueNotFound

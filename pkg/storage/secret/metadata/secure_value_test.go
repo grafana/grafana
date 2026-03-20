@@ -10,7 +10,7 @@ import (
 	"k8s.io/utils/ptr"
 	"pgregory.net/rapid"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -19,17 +19,17 @@ import (
 func TestModel(t *testing.T) {
 	t.Parallel()
 
-	sv := &secretv1beta1.SecureValue{
+	sv := &secretv1.SecureValue{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "sv1",
 			Namespace: "ns1",
 		},
-		Spec: secretv1beta1.SecureValueSpec{
+		Spec: secretv1.SecureValueSpec{
 			Description: "desc1",
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("v1")),
+			Value:       ptr.To(secretv1.NewExposedSecureValue("v1")),
 			Decrypters:  []string{"decrypter1"},
 		},
-		Status: secretv1beta1.SecureValueStatus{},
+		Status: secretv1.SecureValueStatus{},
 	}
 
 	t.Run("creating secure values", func(t *testing.T) {
@@ -80,7 +80,7 @@ func TestModel(t *testing.T) {
 		// Updating a value that doesn't exist creates a new version
 		sv4 := sv3.DeepCopy()
 		sv4.Name = "i_dont_exist"
-		sv4.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("sv4"))
+		sv4.Spec.Value = ptr.To(secretv1.NewExposedSecureValue("sv4"))
 		_, _, err = m.Update(now, sv4)
 		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
 	})
@@ -163,13 +163,13 @@ func TestModel(t *testing.T) {
 		m := testutils.NewModelGsm(secretsManager)
 		now := time.Now()
 
-		keeper, err := m.CreateKeeper(&secretv1beta1.Keeper{
+		keeper, err := m.CreateKeeper(&secretv1.Keeper{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns1",
 				Name:      "k1",
 			},
-			Spec: secretv1beta1.KeeperSpec{
-				Aws: &secretv1beta1.KeeperAWSConfig{},
+			Spec: secretv1.KeeperSpec{
+				Aws: &secretv1.KeeperAWSConfig{},
 			},
 		})
 		require.NoError(t, err)
@@ -180,17 +180,17 @@ func TestModel(t *testing.T) {
 		secretsManager.Create("ref1", secret)
 
 		// Create a secure value that references the secret on the 3rd party secret store
-		sv, err := m.Create(now, &secretv1beta1.SecureValue{
+		sv, err := m.Create(now, &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sv1",
 				Namespace: "ns1",
 			},
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "desc1",
 				Ref:         ptr.To("ref1"),
 				Decrypters:  []string{"decrypter1"},
 			},
-			Status: secretv1beta1.SecureValueStatus{},
+			Status: secretv1.SecureValueStatus{},
 		})
 		require.NoError(t, err)
 
@@ -285,7 +285,7 @@ func TestStateMachine(t *testing.T) {
 
 				// PERFORMANCE: The lists are always small
 				for _, v1 := range modelList.Items {
-					if !slices.ContainsFunc(list.Items, func(v2 secretv1beta1.SecureValue) bool {
+					if !slices.ContainsFunc(list.Items, func(v2 secretv1.SecureValue) bool {
 						return v2.Namespace == v1.Namespace && v2.Name == v1.Name && v2.Status.Version == v1.Status.Version
 					}) {
 						t.Fatalf("expected sut to return secure value ns=%+v name=%+v version=%+v in the result",
@@ -381,24 +381,24 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// - Create a secret with k1
-		k1, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+		k1, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1.Keeper{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "n1",
 				Name:      "k1",
 			},
-			Spec: secretv1beta1.KeeperSpec{
+			Spec: secretv1.KeeperSpec{
 				Description: "description",
-				Aws:         &secretv1beta1.KeeperAWSConfig{},
+				Aws:         &secretv1.KeeperAWSConfig{},
 			},
 		}, "actor-uid")
 		require.NoError(t, err)
 
 		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(k1.Namespace), k1.Name))
 
-		value := secretv1beta1.NewExposedSecureValue("v1")
-		sv1, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1beta1.SecureValue{
+		value := secretv1.NewExposedSecureValue("v1")
+		sv1, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{Namespace: k1.Namespace, Name: "s1"},
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "desc",
 				Value:       &value,
 			},
@@ -407,14 +407,14 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 		require.Equal(t, k1.Name, sv1.Status.Keeper)
 
 		// - Set a new keeper as active
-		k2, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+		k2, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1.Keeper{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "n1",
 				Name:      "k2",
 			},
-			Spec: secretv1beta1.KeeperSpec{
+			Spec: secretv1.KeeperSpec{
 				Description: "description",
-				Aws:         &secretv1beta1.KeeperAWSConfig{},
+				Aws:         &secretv1.KeeperAWSConfig{},
 			},
 		}, "actor-uid")
 		require.NoError(t, err)

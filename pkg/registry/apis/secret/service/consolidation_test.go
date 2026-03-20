@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
@@ -75,14 +75,14 @@ func TestConsolidation(t *testing.T) {
 
 		// Create secure values and store their original decrypted values and encrypted data
 		for _, tc := range testCases {
-			sv := &secretv1beta1.SecureValue{
+			sv := &secretv1.SecureValue{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      tc.name,
 					Namespace: tc.namespace,
 				},
-				Spec: secretv1beta1.SecureValueSpec{
+				Spec: secretv1.SecureValueSpec{
 					Description: "test description",
-					Value:       ptr.To(secretv1beta1.NewExposedSecureValue(tc.value)),
+					Value:       ptr.To(secretv1.NewExposedSecureValue(tc.value)),
 					Decrypters:  []string{"decrypter1"},
 				},
 			}
@@ -178,14 +178,14 @@ func TestConsolidation(t *testing.T) {
 		initialEncryptedData := make([][]byte, 0, len(initialSecrets))
 
 		for _, tc := range initialSecrets {
-			sv := &secretv1beta1.SecureValue{
+			sv := &secretv1.SecureValue{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      tc.name,
 					Namespace: tc.namespace,
 				},
-				Spec: secretv1beta1.SecureValueSpec{
+				Spec: secretv1.SecureValueSpec{
 					Description: "test description",
-					Value:       ptr.To(secretv1beta1.NewExposedSecureValue(tc.value)),
+					Value:       ptr.To(secretv1.NewExposedSecureValue(tc.value)),
 					Decrypters:  []string{"decrypter1"},
 				},
 			}
@@ -227,14 +227,14 @@ func TestConsolidation(t *testing.T) {
 				}
 
 				for _, tc := range newSecrets {
-					sv := &secretv1beta1.SecureValue{
+					sv := &secretv1.SecureValue{
 						ObjectMeta: metav1.ObjectMeta{
 							Name:      tc.name,
 							Namespace: tc.namespace,
 						},
-						Spec: secretv1beta1.SecureValueSpec{
+						Spec: secretv1.SecureValueSpec{
 							Description: tc.desc,
-							Value:       ptr.To(secretv1beta1.NewExposedSecureValue(tc.value)),
+							Value:       ptr.To(secretv1.NewExposedSecureValue(tc.value)),
 							Decrypters:  []string{"decrypter1"},
 						},
 					}

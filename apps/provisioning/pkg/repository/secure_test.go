@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -37,7 +37,7 @@ func TestRepositorySecureValues(t *testing.T) {
 			},
 			decrypt: func(t *testing.T, names ...string) (map[string]decrypt.DecryptResult, error) {
 				require.Equal(t, []string{"secret"}, names)
-				val := secretv1beta1.NewExposedSecureValue(names[0])
+				val := secretv1.NewExposedSecureValue(names[0])
 				return map[string]decrypt.DecryptResult{
 					names[0]: decrypt.NewDecryptResultValue(&val),
 				}, nil

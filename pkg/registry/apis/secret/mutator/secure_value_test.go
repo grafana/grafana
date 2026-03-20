@@ -4,17 +4,16 @@ import (
 	"strings"
 	"testing"
 
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
-
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 )
 
 func TestSecureValueMutator(t *testing.T) {
 	mutator := ProvideSecureValueMutator()
 
-	populatedStatus := secretv1beta1.SecureValueStatus{
+	populatedStatus := secretv1.SecureValueStatus{
 		ExternalID: "existing-external-id",
 		Version:    1,
 	}
@@ -26,7 +25,7 @@ func TestSecureValueMutator(t *testing.T) {
 	})
 
 	t.Run("when operation is Create and name is empty", func(t *testing.T) {
-		secureValue := &secretv1beta1.SecureValue{
+		secureValue := &secretv1.SecureValue{
 			Status: populatedStatus,
 		}
 
@@ -39,7 +38,7 @@ func TestSecureValueMutator(t *testing.T) {
 	})
 
 	t.Run("when operation is Create and name is already set", func(t *testing.T) {
-		secureValue := &secretv1beta1.SecureValue{
+		secureValue := &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "existing-name",
 			},
@@ -55,7 +54,7 @@ func TestSecureValueMutator(t *testing.T) {
 	})
 
 	t.Run("when operation is Create and GenerateName is set", func(t *testing.T) {
-		secureValue := &secretv1beta1.SecureValue{
+		secureValue := &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				GenerateName: "custom-prefix-",
 			},
@@ -71,7 +70,7 @@ func TestSecureValueMutator(t *testing.T) {
 	})
 
 	t.Run("when operation is Create and both name and GenerateName are set", func(t *testing.T) {
-		secureValue := &secretv1beta1.SecureValue{
+		secureValue := &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:         "existing-name",
 				GenerateName: "custom-prefix-",
@@ -88,7 +87,7 @@ func TestSecureValueMutator(t *testing.T) {
 	})
 
 	t.Run("when operation is Update", func(t *testing.T) {
-		secureValue := &secretv1beta1.SecureValue{
+		secureValue := &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "existing-name",
 			},
@@ -104,7 +103,7 @@ func TestSecureValueMutator(t *testing.T) {
 	})
 
 	t.Run("when operation is Update and name is empty", func(t *testing.T) {
-		secureValue := &secretv1beta1.SecureValue{
+		secureValue := &secretv1.SecureValue{
 			Status: populatedStatus,
 		}
 
@@ -116,7 +115,7 @@ func TestSecureValueMutator(t *testing.T) {
 	})
 
 	t.Run("when operation is Delete", func(t *testing.T) {
-		secureValue := &secretv1beta1.SecureValue{
+		secureValue := &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "existing-name",
 			},
@@ -134,7 +133,7 @@ func TestSecureValueMutator(t *testing.T) {
 	})
 
 	t.Run("when operation is Connect", func(t *testing.T) {
-		secureValue := &secretv1beta1.SecureValue{
+		secureValue := &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "existing-name",
 			},
@@ -152,7 +151,7 @@ func TestSecureValueMutator(t *testing.T) {
 	})
 
 	t.Run("when operation is Create with empty status", func(t *testing.T) {
-		secureValue := &secretv1beta1.SecureValue{
+		secureValue := &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "existing-name",
 			},
@@ -165,7 +164,7 @@ func TestSecureValueMutator(t *testing.T) {
 	})
 
 	t.Run("when operation is Update with empty status", func(t *testing.T) {
-		secureValue := &secretv1beta1.SecureValue{
+		secureValue := &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "existing-name",
 			},

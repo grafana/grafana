@@ -22,7 +22,7 @@ import (
 
 const (
 	prefix     = "gdev"
-	apiVersion = "secret.grafana.app/v1beta1"
+	apiVersion = "secret.grafana.app/v1"
 	defaultURL = "http://localhost:3000"
 )
 
@@ -57,7 +57,7 @@ type KeeperConfig struct {
 }
 
 // AWSConfig mirrors KeeperAWSConfig from the backend API.
-// Source: apps/secret/pkg/apis/secret/v1beta1/keeper_spec_gen.go
+// Source: apps/secret/pkg/apis/secret/v1/keeper_spec_gen.go
 type AWSConfig struct {
 	Region        string `yaml:"region"`
 	AssumeRoleArn string `yaml:"assumeRoleArn"`
@@ -73,7 +73,7 @@ type SecureValueConfig struct {
 
 // ── API resource types (JSON for POST) ──────────────────────────────────────
 // These mirror the K8s resource shapes from the generated OpenAPI spec.
-// Source: apps/secret/pkg/apis/secret/v1beta1/keeper_spec_gen.go
+// Source: apps/secret/pkg/apis/secret/v1/keeper_spec_gen.go
 
 type KeeperResource struct {
 	APIVersion string       `json:"apiVersion"`
@@ -373,7 +373,7 @@ func runSelfTests() {
 		}
 	}
 
-	fmt.Println("Running self-tests...\n")
+	fmt.Println("Running self-tests...")
 
 	// ── Config parsing ──────────────────────────────────────────────────
 	fmt.Println("Config parsing:")

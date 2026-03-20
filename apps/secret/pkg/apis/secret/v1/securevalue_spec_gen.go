@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v1beta1
+package v1
 
 // ExposedSecureValue contains the raw decrypted secure value.
 // +k8s:openapi-gen=true
@@ -41,5 +41,5 @@ func NewSecureValueSpec() *SecureValueSpec {
 
 // OpenAPIModelName returns the OpenAPI model name for SecureValueSpec.
 func (SecureValueSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.SecureValueSpec"
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1.SecureValueSpec"
 }

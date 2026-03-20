@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -24,14 +24,14 @@ var (
 
 // KeeperMetadataStorage is the interface for wiring and dependency injection.
 type KeeperMetadataStorage interface {
-	Create(ctx context.Context, keeper *secretv1beta1.Keeper, actorUID string) (*secretv1beta1.Keeper, error)
-	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv1beta1.Keeper, error)
-	Update(ctx context.Context, keeper *secretv1beta1.Keeper, actorUID string) (*secretv1beta1.Keeper, error)
+	Create(ctx context.Context, keeper *secretv1.Keeper, actorUID string) (*secretv1.Keeper, error)
+	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv1.Keeper, error)
+	Update(ctx context.Context, keeper *secretv1.Keeper, actorUID string) (*secretv1.Keeper, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
-	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1beta1.Keeper, error)
-	GetKeeperConfig(ctx context.Context, namespace string, name string, opts ReadOpts) (secretv1beta1.KeeperConfig, error)
+	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1.Keeper, error)
+	GetKeeperConfig(ctx context.Context, namespace string, name string, opts ReadOpts) (secretv1.KeeperConfig, error)
 	SetAsActive(ctx context.Context, namespace xkube.Namespace, name string) error
-	GetActiveKeeperConfig(ctx context.Context, namespace string) (string, secretv1beta1.KeeperConfig, error)
+	GetActiveKeeperConfig(ctx context.Context, namespace string) (string, secretv1.KeeperConfig, error)
 }
 
 // ErrKeeperInvalidSecureValues is returned when a Keeper references SecureValues that do not exist.
@@ -106,14 +106,14 @@ func (s ExternalID) String() string {
 
 // Keeper is the interface for secret keepers.
 type Keeper interface {
-	Store(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (ExternalID, error)
-	Expose(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (secretv1beta1.ExposedSecureValue, error)
-	RetrieveReference(ctx context.Context, cfg secretv1beta1.KeeperConfig, ref string) (secretv1beta1.ExposedSecureValue, error)
-	Delete(ctx context.Context, cfg secretv1beta1.KeeperConfig, namespace xkube.Namespace, name string, version int64) error
+	Store(ctx context.Context, cfg secretv1.KeeperConfig, namespace xkube.Namespace, name string, version int64, exposedValueOrRef string) (ExternalID, error)
+	Expose(ctx context.Context, cfg secretv1.KeeperConfig, namespace xkube.Namespace, name string, version int64) (secretv1.ExposedSecureValue, error)
+	RetrieveReference(ctx context.Context, cfg secretv1.KeeperConfig, ref string) (secretv1.ExposedSecureValue, error)
+	Delete(ctx context.Context, cfg secretv1.KeeperConfig, namespace xkube.Namespace, name string, version int64) error
 }
 
 // Service is the interface for secret keeper services.
 // This exists because OSS and Enterprise have different amounts of keepers available.
 type KeeperService interface {
-	KeeperForConfig(secretv1beta1.KeeperConfig) (Keeper, error)
+	KeeperForConfig(secretv1.KeeperConfig) (Keeper, error)
 }

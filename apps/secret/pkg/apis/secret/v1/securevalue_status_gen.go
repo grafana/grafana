@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v1beta1
+package v1
 
 // +k8s:openapi-gen=true
 type SecureValuestatusOperatorState struct {
@@ -22,7 +22,7 @@ func NewSecureValuestatusOperatorState() *SecureValuestatusOperatorState {
 
 // OpenAPIModelName returns the OpenAPI model name for SecureValuestatusOperatorState.
 func (SecureValuestatusOperatorState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.SecureValuestatusOperatorState"
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1.SecureValuestatusOperatorState"
 }
 
 // +k8s:openapi-gen=true
@@ -49,7 +49,7 @@ func NewSecureValueStatus() *SecureValueStatus {
 
 // OpenAPIModelName returns the OpenAPI model name for SecureValueStatus.
 func (SecureValueStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.SecureValueStatus"
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1.SecureValueStatus"
 }
 
 // +k8s:openapi-gen=true
@@ -63,5 +63,5 @@ const (
 
 // OpenAPIModelName returns the OpenAPI model name for SecureValueStatusOperatorStateState.
 func (SecureValueStatusOperatorStateState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.SecureValueStatusOperatorStateState"
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1.SecureValueStatusOperatorStateState"
 }

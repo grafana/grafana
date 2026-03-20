@@ -8,7 +8,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -23,10 +23,10 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	defaultKeeperName := "kp-test"
 	defaultKeeperNS := "default"
 
-	testKeeper := &secretv1beta1.Keeper{
-		Spec: secretv1beta1.KeeperSpec{
+	testKeeper := &secretv1.Keeper{
+		Spec: secretv1.KeeperSpec{
 			Description: "description",
-			Aws:         &secretv1beta1.KeeperAWSConfig{},
+			Aws:         &secretv1.KeeperAWSConfig{},
 		},
 	}
 
@@ -42,7 +42,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		// get system keeper config
 		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, defaultKeeperNS, contracts.SystemKeeperName, contracts.ReadOpts{})
 		require.NoError(t, err)
-		require.IsType(t, &secretv1beta1.NamedKeeperConfig[*secretv1beta1.SystemKeeperConfig]{}, keeperConfig)
+		require.IsType(t, &secretv1.NamedKeeperConfig[*secretv1.SystemKeeperConfig]{}, keeperConfig)
 	})
 
 	t.Run("get test keeper config", func(t *testing.T) {
@@ -91,10 +91,10 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		keeperTest := "kp-test2"
 		keeperNamespaceTest := "ns"
 
-		testKeeper := &secretv1beta1.Keeper{
-			Spec: secretv1beta1.KeeperSpec{
+		testKeeper := &secretv1.Keeper{
+			Spec: secretv1.KeeperSpec{
 				Description: "another description",
-				Aws:         &secretv1beta1.KeeperAWSConfig{},
+				Aws:         &secretv1.KeeperAWSConfig{},
 			},
 		}
 		testKeeper.Name = keeperTest
@@ -129,10 +129,10 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		keeperNamespaceTest := "ns"
 
 		// Create initial keeper
-		initialKeeper := &secretv1beta1.Keeper{
-			Spec: secretv1beta1.KeeperSpec{
+		initialKeeper := &secretv1.Keeper{
+			Spec: secretv1.KeeperSpec{
 				Description: "initial description",
-				Aws:         &secretv1beta1.KeeperAWSConfig{},
+				Aws:         &secretv1.KeeperAWSConfig{},
 			},
 		}
 		initialKeeper.Name = keeperTest
@@ -148,10 +148,10 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		require.Equal(t, "initial description", keeper.Spec.Description)
 
 		// Update the keeper with new values
-		updatedKeeper := &secretv1beta1.Keeper{
-			Spec: secretv1beta1.KeeperSpec{
+		updatedKeeper := &secretv1.Keeper{
+			Spec: secretv1.KeeperSpec{
 				Description: "updated description",
-				Aws:         &secretv1beta1.KeeperAWSConfig{},
+				Aws:         &secretv1.KeeperAWSConfig{},
 			},
 		}
 		updatedKeeper.Name = keeperTest
@@ -183,12 +183,12 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		keeperNamespaceTest := "ns"
 
 		// Create initial keeper with first AWS config
-		initialKeeper := &secretv1beta1.Keeper{
-			Spec: secretv1beta1.KeeperSpec{
+		initialKeeper := &secretv1.Keeper{
+			Spec: secretv1.KeeperSpec{
 				Description: "initial description",
-				Aws: &secretv1beta1.KeeperAWSConfig{
+				Aws: &secretv1.KeeperAWSConfig{
 					Region: "us-east-1",
-					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+					AssumeRole: &secretv1.KeeperAWSAssumeRole{
 						AssumeRoleArn: "arn",
 						ExternalID:    "external-id",
 					},
@@ -210,12 +210,12 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		require.Equal(t, "external-id", keeper.Spec.Aws.AssumeRole.ExternalID)
 
 		// Update with new AWS config
-		updatedKeeper := &secretv1beta1.Keeper{
-			Spec: secretv1beta1.KeeperSpec{
+		updatedKeeper := &secretv1.Keeper{
+			Spec: secretv1.KeeperSpec{
 				Description: "updated description",
-				Aws: &secretv1beta1.KeeperAWSConfig{
+				Aws: &secretv1.KeeperAWSConfig{
 					Region: "us-east-2",
-					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+					AssumeRole: &secretv1.KeeperAWSAssumeRole{
 						AssumeRoleArn: "arn-2",
 						ExternalID:    "external-id-2",
 					},
@@ -269,12 +269,12 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		keeperNamespaceTest := "ns1"
 
 		// Create initial keeper
-		initialKeeper := &secretv1beta1.Keeper{
-			Spec: secretv1beta1.KeeperSpec{
+		initialKeeper := &secretv1.Keeper{
+			Spec: secretv1.KeeperSpec{
 				Description: "initial description",
-				Aws: &secretv1beta1.KeeperAWSConfig{
+				Aws: &secretv1.KeeperAWSConfig{
 					Region: "us-east-1",
-					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+					AssumeRole: &secretv1.KeeperAWSAssumeRole{
 						AssumeRoleArn: "arn",
 						ExternalID:    "external-id",
 					},
@@ -310,10 +310,10 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		ctx := context.Background()
 		keeperMetadataStorage := initStorage(t)
 
-		nonExistentKeeper := &secretv1beta1.Keeper{
-			Spec: secretv1beta1.KeeperSpec{
+		nonExistentKeeper := &secretv1.Keeper{
+			Spec: secretv1.KeeperSpec{
 				Description: "some description",
-				Aws:         &secretv1beta1.KeeperAWSConfig{},
+				Aws:         &secretv1.KeeperAWSConfig{},
 			},
 		}
 		nonExistentKeeper.Name = "non-existent"
@@ -329,20 +329,20 @@ func Test_KeeperMetadataStorage_SetAsActive(t *testing.T) {
 
 	keeperMetadataStorage := initStorage(t)
 
-	k1, err := keeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+	k1, err := keeperMetadataStorage.Create(t.Context(), &secretv1.Keeper{
 		ObjectMeta: v1.ObjectMeta{Namespace: "ns1", Name: "k1"},
-		Spec: secretv1beta1.KeeperSpec{
+		Spec: secretv1.KeeperSpec{
 			Description: "description",
-			Aws:         &secretv1beta1.KeeperAWSConfig{},
+			Aws:         &secretv1.KeeperAWSConfig{},
 		},
 	}, "actor-uid")
 	require.NoError(t, err)
 
-	k2, err := keeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+	k2, err := keeperMetadataStorage.Create(t.Context(), &secretv1.Keeper{
 		ObjectMeta: v1.ObjectMeta{Namespace: "ns1", Name: "k2"},
-		Spec: secretv1beta1.KeeperSpec{
+		Spec: secretv1.KeeperSpec{
 			Description: "description",
-			Aws:         &secretv1beta1.KeeperAWSConfig{},
+			Aws:         &secretv1.KeeperAWSConfig{},
 		},
 	}, "actor-uid")
 	require.NoError(t, err)
