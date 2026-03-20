@@ -1,14 +1,15 @@
 import { of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, DrilldownsApplicability, LoadingState } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataSourceApi,
+  DEFAULT_APPLICABILITY_KEY,
+  DrilldownsApplicability,
+  LoadingState,
+} from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import {
-  AdHocFiltersVariable,
-  SceneQueryRunner,
-  SceneVariableSet,
-  VizPanel,
-} from '@grafana/scenes';
+import { AdHocFiltersVariable, SceneQueryRunner, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { activateFullSceneTree } from '../utils/test-utils';
 
@@ -201,81 +202,6 @@ describe('ApplicabilityManager', () => {
     });
   });
 
-  describe('getApplicabilityForPanel', () => {
-    it('returns the correct DrilldownsApplicability for a given panel key', async () => {
-      const adhocVar = new AdHocFiltersVariable({
-        name: 'adhoc',
-        label: 'adhoc',
-        filters: [{ key: 'env', operator: '=', value: 'prod' }],
-        datasource: { uid: 'ds-1' },
-        applicabilityEnabled: true,
-      });
-
-      const panel1 = new VizPanel({
-        key: 'panel-1',
-        title: 'Panel 1',
-        pluginId: 'timeseries',
-        $data: new SceneQueryRunner({
-          datasource: { uid: 'ds-1' },
-          queries: [{ refId: 'A', datasource: { uid: 'ds-1' } }],
-        }),
-      });
-
-      const panel1Result = [{ key: 'panel1-env', applicable: true }];
-      getDrilldownsApplicabilityMock.mockResolvedValue(
-        new Map([['panel-1', panel1Result]])
-      );
-
-      const applicabilityManager = new ApplicabilityManager();
-      const scene = new DashboardScene({
-        $variables: new SceneVariableSet({ variables: [adhocVar] }),
-        $behaviors: [applicabilityManager],
-        body: DefaultGridLayoutManager.fromVizPanels([panel1]),
-      });
-
-      activateFullSceneTree(scene);
-      await new Promise((r) => setTimeout(r, 1));
-
-      expect(applicabilityManager.getApplicabilityForPanel('panel-1')).toEqual(panel1Result);
-    });
-
-    it('returns undefined for unknown panel key', async () => {
-      const adhocVar = new AdHocFiltersVariable({
-        name: 'adhoc',
-        label: 'adhoc',
-        filters: [{ key: 'env', operator: '=', value: 'prod' }],
-        datasource: { uid: 'ds-1' },
-        applicabilityEnabled: true,
-      });
-
-      const panel1 = new VizPanel({
-        key: 'panel-1',
-        title: 'Panel 1',
-        pluginId: 'timeseries',
-        $data: new SceneQueryRunner({
-          datasource: { uid: 'ds-1' },
-          queries: [{ refId: 'A', datasource: { uid: 'ds-1' } }],
-        }),
-      });
-
-      getDrilldownsApplicabilityMock.mockResolvedValue(
-        new Map([['panel-1', mockApplicabilityPanelQueries]])
-      );
-
-      const applicabilityManager = new ApplicabilityManager();
-      const scene = new DashboardScene({
-        $variables: new SceneVariableSet({ variables: [adhocVar] }),
-        $behaviors: [applicabilityManager],
-        body: DefaultGridLayoutManager.fromVizPanels([panel1]),
-      });
-
-      activateFullSceneTree(scene);
-      await new Promise((r) => setTimeout(r, 1));
-
-      expect(applicabilityManager.getApplicabilityForPanel('unknown-panel')).toBeUndefined();
-    });
-  });
-
   describe('refreshForPanel', () => {
     it('calls getDrilldownsApplicability with queries (not panelQueries)', async () => {
       const adhocVar = new AdHocFiltersVariable({
@@ -302,7 +228,7 @@ describe('ApplicabilityManager', () => {
       });
 
       getDrilldownsApplicabilityMock.mockResolvedValue(
-        new Map([['_default_', mockApplicabilityQueries]])
+        new Map([[DEFAULT_APPLICABILITY_KEY, mockApplicabilityQueries]])
       );
 
       const applicabilityManager = new ApplicabilityManager();
@@ -347,9 +273,7 @@ describe('ApplicabilityManager', () => {
         }),
       });
 
-      getDrilldownsApplicabilityMock.mockResolvedValue(
-        new Map([['panel-1', mockApplicabilityPanelQueries]])
-      );
+      getDrilldownsApplicabilityMock.mockResolvedValue(new Map([['panel-1', mockApplicabilityPanelQueries]]));
 
       const applicabilityManager = new ApplicabilityManager();
       const scene = new DashboardScene({
@@ -361,13 +285,11 @@ describe('ApplicabilityManager', () => {
       activateFullSceneTree(scene);
       await new Promise((r) => setTimeout(r, 1));
 
-      getDrilldownsApplicabilityMock.mockResolvedValue(
-        new Map([['_default_', refreshResult]])
-      );
+      getDrilldownsApplicabilityMock.mockResolvedValue(new Map([[DEFAULT_APPLICABILITY_KEY, refreshResult]]));
 
       await applicabilityManager.refreshForPanel('panel-1', customQueries);
 
-      expect(applicabilityManager.getApplicabilityForPanel('panel-1')).toEqual(refreshResult);
+      expect(applicabilityManager.state.results.get('panel-1')).toEqual(refreshResult);
     });
   });
 
@@ -391,9 +313,7 @@ describe('ApplicabilityManager', () => {
         }),
       });
 
-      getDrilldownsApplicabilityMock.mockResolvedValue(
-        new Map([['panel-1', mockApplicabilityPanelQueries]])
-      );
+      getDrilldownsApplicabilityMock.mockResolvedValue(new Map([['panel-1', mockApplicabilityPanelQueries]]));
 
       const applicabilityManager = new ApplicabilityManager();
       const scene = new DashboardScene({

@@ -9,6 +9,7 @@ import {
   DataQueryRequest,
   DataSourceInstanceSettings,
   dateTime,
+  DEFAULT_APPLICABILITY_KEY,
   LoadingState,
   Scope,
   ScopeSpecFilter,
@@ -1475,7 +1476,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toEqual([
       { key: 'env', applicable: true, origin: undefined },
       { key: 'cluster', applicable: true, origin: undefined },
@@ -1495,7 +1496,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toHaveLength(2);
     expect(results[0]).toEqual({ key: 'env', applicable: true, origin: undefined });
     expect(results[1]).toMatchObject({ key: 'nonexistent', applicable: false });
@@ -1512,7 +1513,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toHaveLength(1);
     expect(results[0]).toMatchObject({ key: 'env', applicable: false });
     expect(results[0].reason).toContain('missing-value');
@@ -1528,7 +1529,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toHaveLength(1);
     expect(results[0]).toMatchObject({ key: 'env', applicable: false });
   });
@@ -1543,7 +1544,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toEqual([{ key: 'env', applicable: true, origin: undefined }]);
   });
 
@@ -1557,7 +1558,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toEqual([{ key: 'env', applicable: true, origin: undefined }]);
   });
 
@@ -1574,7 +1575,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toHaveLength(2);
     expect(results[0]).toMatchObject({ key: 'env', applicable: false, origin: 'dashboard' });
     expect(results[0].reason).toContain('Overridden');
@@ -1594,7 +1595,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toHaveLength(2);
     expect(results[0]).toMatchObject({ key: 'env', applicable: false });
     expect(results[0].reason).toContain('Overridden');
@@ -1611,7 +1612,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toHaveLength(3);
     expect(results[0]).toEqual({ key: 'namespace', applicable: true });
     expect(results[1]).toMatchObject({ key: 'nonexistent', applicable: false });
@@ -1631,7 +1632,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toHaveLength(3);
     expect(results[0]).toEqual({ key: 'env', applicable: true, origin: undefined });
     expect(results[1]).toEqual({ key: 'namespace', applicable: true });
@@ -1652,7 +1653,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toEqual([
       { key: 'env', applicable: true, origin: undefined },
       { key: 'ns', applicable: true },
@@ -1673,7 +1674,7 @@ describe('getDrilldownsApplicability', () => {
       timeRange: mockTimeRange,
     });
 
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toEqual([{ key: 'env', applicable: true, origin: undefined }]);
   });
 
@@ -1701,7 +1702,7 @@ describe('getDrilldownsApplicability', () => {
     });
 
     expect(fetchSuggestionsSpy).toHaveBeenCalledWith(mockTimeRange, expect.any(Array), scopes);
-    const results = resultMap.get('_default_')!;
+    const results = resultMap.get(DEFAULT_APPLICABILITY_KEY)!;
     expect(results).toHaveLength(1);
     expect(results[0]).toMatchObject({ key: 'env', applicable: true });
   });

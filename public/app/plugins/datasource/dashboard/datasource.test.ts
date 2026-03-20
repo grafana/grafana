@@ -11,6 +11,7 @@ import {
   DataFrame,
   AdHocVariableFilter,
   DataTopic,
+  DEFAULT_APPLICABILITY_KEY,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -685,7 +686,7 @@ describe('DashboardDatasource', () => {
           queries: [{ refId: 'A', panelId: 1, adHocFiltersEnabled: true }],
         });
 
-        expect(result.get('_default_')).toEqual([
+        expect(result.get(DEFAULT_APPLICABILITY_KEY)).toEqual([
           { key: 'name', applicable: true },
           { key: 'age', applicable: true },
         ]);
@@ -700,7 +701,7 @@ describe('DashboardDatasource', () => {
           queries: [{ refId: 'A', panelId: 1, adHocFiltersEnabled: false }],
         });
 
-        expect(result.get('_default_')).toEqual([]);
+        expect(result.get(DEFAULT_APPLICABILITY_KEY)).toEqual([]);
       });
 
       it('should return empty array when queries is undefined', async () => {
@@ -711,7 +712,7 @@ describe('DashboardDatasource', () => {
           ],
         });
 
-        expect(result.get('_default_')).toEqual([]);
+        expect(result.get(DEFAULT_APPLICABILITY_KEY)).toEqual([]);
       });
 
       it('should mark unsupported operators as not applicable with reason', async () => {
@@ -724,7 +725,7 @@ describe('DashboardDatasource', () => {
           queries: [{ refId: 'A', panelId: 1, adHocFiltersEnabled: true }],
         });
 
-        expect(result.get('_default_')).toEqual([
+        expect(result.get(DEFAULT_APPLICABILITY_KEY)).toEqual([
           {
             key: 'name',
             applicable: false,
@@ -753,7 +754,7 @@ describe('DashboardDatasource', () => {
           queries: [{ refId: 'A', panelId: 1, adHocFiltersEnabled: true }],
         });
 
-        expect(result.get('_default_')).toEqual([
+        expect(result.get(DEFAULT_APPLICABILITY_KEY)).toEqual([
           { key: 'name', applicable: true },
           {
             key: 'age',
@@ -766,12 +767,12 @@ describe('DashboardDatasource', () => {
 
       it('should handle empty filters array', async () => {
         const result = await ds.getDrilldownsApplicability({ filters: [] });
-        expect(result.get('_default_')).toEqual([]);
+        expect(result.get(DEFAULT_APPLICABILITY_KEY)).toEqual([]);
       });
 
       it('should handle missing options', async () => {
         const result = await ds.getDrilldownsApplicability();
-        expect(result.get('_default_')).toEqual([]);
+        expect(result.get(DEFAULT_APPLICABILITY_KEY)).toEqual([]);
       });
     });
   });

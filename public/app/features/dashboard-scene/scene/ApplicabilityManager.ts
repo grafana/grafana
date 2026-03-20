@@ -140,12 +140,6 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
     this._bodySub?.unsubscribe();
 
     const dashboard = this.getDashboard();
-    const dashSub = dashboard.subscribeToState((newState, prevState) => {
-      if (newState.body !== prevState.body) {
-        this.subscribeToDashboardBodyChanges();
-        this._debouncedResolveAll();
-      }
-    });
 
     const bodySub = dashboard.state.body.subscribeToState(() => {
       if (this.hasPanelSetChanged()) {
@@ -155,7 +149,6 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
 
     this._bodySub = {
       unsubscribe: () => {
-        dashSub.unsubscribe();
         bodySub.unsubscribe();
       },
     };
@@ -306,9 +299,5 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
     } catch (error) {
       console.error('ApplicabilityManager: failed to refresh applicability for panel', panelKey, error);
     }
-  }
-
-  public getApplicabilityForPanel(panelKey: string): DrilldownsApplicability[] | undefined {
-    return this.state.results.get(panelKey);
   }
 }

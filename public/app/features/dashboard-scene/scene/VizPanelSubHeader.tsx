@@ -8,6 +8,7 @@ import {
   AdHocFiltersVariable,
   SceneQueryRunner,
   VizPanel,
+  findClosestAdHocFilterInHierarchy,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
@@ -62,9 +63,14 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
   private subscribeToDrilldownVariableChanges() {
     const vars = sceneGraph.getVariables(this);
     const queryRunner = this.getQueryRunner();
+    const panel = this.parent;
 
-    this._adHocVar = vars.state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
-    this._queryRunnerDatasource = queryRunner ? getDatasourceFromQueryRunner(queryRunner) : undefined;
+    if (!(panel instanceof VizPanel) || !queryRunner) {
+      return;
+    }
+
+    this._queryRunnerDatasource = getDatasourceFromQueryRunner(queryRunner);
+    this._adHocVar = findClosestAdHocFilterInHierarchy(this._queryRunnerDatasource?.uid, panel);
 
     this.setDrilldownApplicabilitySupportHelper();
 
@@ -83,7 +89,7 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
     // check when var set updates and search for drilldown vars
     this._subs.add(
       vars.subscribeToState((n) => {
-        this._adHocVar = n.variables.find((variable) => variable instanceof AdHocFiltersVariable);
+        this._adHocVar = findClosestAdHocFilterInHierarchy(this._queryRunnerDatasource?.uid, panel);
 
         this.refreshDrilldownVarsSubscriptions();
       })
@@ -131,9 +137,7 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
   public getApplicabilityManager(): ApplicabilityManager | undefined {
     try {
       const dashboard = sceneGraph.getAncestor(this, DashboardScene);
-      return dashboard.state.$behaviors?.find(
-        (b): b is ApplicabilityManager => b instanceof ApplicabilityManager
-      );
+      return dashboard.state.$behaviors?.find((b): b is ApplicabilityManager => b instanceof ApplicabilityManager);
     } catch {
       return undefined;
     }
@@ -166,10 +170,5 @@ export function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPane
     return null;
   }
 
-  return (
-    <PanelNonApplicableDrilldownsSubHeader
-      filtersVar={adhocFiltersVar}
-      applicability={applicability}
-    />
-  );
+  return <PanelNonApplicableDrilldownsSubHeader filtersVar={adhocFiltersVar} applicability={applicability} />;
 }
