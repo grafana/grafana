@@ -2,6 +2,7 @@ package migrator
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,10 +13,13 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
@@ -28,25 +32,120 @@ type DataSourceMigrator interface {
 }
 
 type dataSourceMigrator struct {
-	sql             legacysql.LegacyDatabaseProvider
-	dsService       datasources.DataSourceService
-	secretStore     secret.InlineSecureValueSupport
-	namespaceMapper request.NamespaceMapper
+	sql                legacysql.LegacyDatabaseProvider
+	inlineSecureValues secret.InlineSecureValueSupport
+	namespaceMapper    request.NamespaceMapper
+	secretsService     secrets.Service
+	secretsStore       kvstore.SecretsKVStore
 }
 
 // ProvideDataSourceMigrator creates a dataSourceMigrator for use in wire DI.
 func ProvideDataSourceMigrator(
 	sql legacysql.LegacyDatabaseProvider,
-	dsService datasources.DataSourceService,
-	secretStore secret.InlineSecureValueSupport,
+	inlineSecureValues secret.InlineSecureValueSupport,
 	cfg *setting.Cfg,
+	secretsService secrets.Service,
+	secretsStore kvstore.SecretsKVStore,
 ) DataSourceMigrator {
 	return &dataSourceMigrator{
-		sql:             sql,
-		dsService:       dsService,
-		secretStore:     secretStore,
-		namespaceMapper: request.GetNamespaceMapper(cfg),
+		sql:                sql,
+		inlineSecureValues: inlineSecureValues,
+		namespaceMapper:    request.GetNamespaceMapper(cfg),
+		secretsService:     secretsService,
+		secretsStore:       secretsStore,
 	}
+}
+
+func (m *dataSourceMigrator) GetDataSources(ctx context.Context, orgId int64) ([]*datasources.DataSource, error) {
+	helper, err := m.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+	dsListSQL := `SELECT
+                    ds.id, ds.org_id, ds.version, ds.type, ds.name, ds.access, ds.url,
+                    ds.user, ds.database, ds.basic_auth, ds.basic_auth_user, ds.json_data,
+                    ds.secure_json_data, ds.with_credentials, ds.is_default, ds.read_only,
+                    ds.uid, ds.created, ds.updated
+	              FROM data_source AS ds
+	              WHERE ds.org_id = ?`
+	rows, err := helper.DB.GetSqlxSession().Query(ctx, dsListSQL, orgId)
+	if err != nil {
+		return nil, err
+	}
+	dsList := []*datasources.DataSource{}
+	for rows.Next() {
+		ds, err := scanDataSource(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scanning datasource row: %w", err)
+		}
+		dsList = append(dsList, ds)
+	}
+	return dsList, nil
+}
+
+func scanDataSource(rows *sql.Rows) (*datasources.DataSource, error) {
+	ds := &datasources.DataSource{}
+	var jsonDataBytes []byte
+	var secureJsonDataBytes []byte
+
+	err := rows.Scan(
+		&ds.ID, &ds.OrgID, &ds.Version, &ds.Type, &ds.Name, &ds.Access, &ds.URL,
+		&ds.User, &ds.Database, &ds.BasicAuth, &ds.BasicAuthUser,
+		&jsonDataBytes, &secureJsonDataBytes, &ds.WithCredentials,
+		&ds.IsDefault, &ds.ReadOnly, &ds.UID, &ds.Created, &ds.Updated,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(jsonDataBytes) > 0 {
+		ds.JsonData, err = simplejson.NewJson(jsonDataBytes)
+		if err != nil {
+			ds.JsonData = simplejson.New()
+		}
+	}
+
+	if len(secureJsonDataBytes) > 0 {
+		var secureJsonData map[string][]byte
+		if err := json.Unmarshal(secureJsonDataBytes, &secureJsonData); err == nil {
+			ds.SecureJsonData = secureJsonData
+		}
+	}
+
+	return ds, nil
+}
+
+func (m *dataSourceMigrator) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+	decryptedValues := make(map[string]string)
+	secret, exist, err := m.secretsStore.Get(ctx, ds.OrgID, ds.Name, kvstore.DataSourceSecretType)
+	if err != nil {
+		return nil, err
+	}
+
+	if exist {
+		err = json.Unmarshal([]byte(secret), &decryptedValues)
+	}
+
+	if !exist || err != nil {
+		decryptedValues, err = m.decryptLegacySecrets(ctx, ds)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return decryptedValues, nil
+}
+
+func (m *dataSourceMigrator) decryptLegacySecrets(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
+	secureJsonData := make(map[string]string)
+	for k, v := range ds.SecureJsonData {
+		decrypted, err := m.secretsService.Decrypt(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		secureJsonData[k] = string(decrypted)
+	}
+	return secureJsonData, nil
 }
 
 // MigrateDataSources reads datasources from legacy SQL storage and streams them as
@@ -54,10 +153,7 @@ func ProvideDataSourceMigrator(
 // types found in the database, grouping by type and using per-plugin converters.
 func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
 	opts.Progress(-1, "migrating datasources...")
-	datasources, err := m.dsService.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
-		OrgID:           orgId,
-		DataSourceLimit: 10000,
-	})
+	datasources, err := m.GetDataSources(ctx, orgId)
 	if err != nil {
 		return err
 	}
@@ -87,7 +183,7 @@ func (m *dataSourceMigrator) MigrateDataSources(ctx context.Context, orgId int64
 		}
 
 		// TODO: this assumes we've cleaned up all secrets from previous migrations.
-		dsSecrets, err := m.dsService.DecryptedValues(ctx, ds)
+		dsSecrets, err := m.DecryptedValues(ctx, ds)
 		if err != nil {
 			return fmt.Errorf("error decrypting existing secrets for datasource %s (type=%s): %w", ds.UID, ds.Type, err)
 		}
@@ -154,7 +250,7 @@ func (m *dataSourceMigrator) createSecrets(ctx context.Context, dsSecrets map[st
 		if v == "" {
 			continue // do not create empty secret values
 		}
-		name, err := m.secretStore.CreateInline(ctx, objRef, common.NewSecretValue(v), nil)
+		name, err := m.inlineSecureValues.CreateInline(ctx, objRef, common.NewSecretValue(v), nil)
 		if err != nil {
 			return nil, err
 		}
