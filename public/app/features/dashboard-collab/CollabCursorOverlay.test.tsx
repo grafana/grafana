@@ -1,5 +1,7 @@
 import { render, screen, act } from '@testing-library/react';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import { CollabContext, type CollabContextValue } from './CollabContext';
 import { CollabCursorOverlay } from './CollabCursorOverlay';
 import type { CursorUpdate } from './protocol/messages';
@@ -10,6 +12,17 @@ jest.mock('@grafana/runtime', () => ({
     bootData: { user: { uid: 'local-user', name: 'Me', gravatarUrl: '' } },
   },
 }));
+
+/** Create a fake canvas element that the overlay will find via data-testid. */
+function createCanvasElement(): HTMLDivElement {
+  const el = document.createElement('div');
+  el.setAttribute('data-testid', selectors.components.DashboardEditPaneSplitter.bodyContainer);
+  // Provide scroll dimensions for pixel-position calculations.
+  Object.defineProperty(el, 'scrollWidth', { value: 1000, configurable: true });
+  Object.defineProperty(el, 'scrollHeight', { value: 2000, configurable: true });
+  document.body.appendChild(el);
+  return el;
+}
 
 function makeCollabValue(overrides: Partial<CollabContextValue> = {}): CollabContextValue {
   return {
@@ -47,12 +60,16 @@ function renderWithContext(value: CollabContextValue) {
 }
 
 describe('CollabCursorOverlay', () => {
+  let canvasEl: HTMLDivElement;
+
   beforeEach(() => {
     jest.useFakeTimers();
+    canvasEl = createCanvasElement();
   });
 
   afterEach(() => {
     jest.useRealTimers();
+    canvasEl.remove();
   });
 
   it('renders nothing when not connected', () => {
@@ -83,17 +100,17 @@ describe('CollabCursorOverlay', () => {
     expect(screen.getByText('Bob')).toBeInTheDocument();
   });
 
-  it('positions cursors using percentage-based left/top', () => {
+  it('positions cursors using pixel-based transform from scroll-content percentages', () => {
     const cursors = new Map<string, CursorUpdate>();
-    cursors.set('user-1', makeCursor('user-1', 'Alice', 42.5, 67.3));
+    // 50% of 1000px scrollWidth = 500px, 25% of 2000px scrollHeight = 500px
+    cursors.set('user-1', makeCursor('user-1', 'Alice', 50, 25));
 
     const value = makeCollabValue({ cursors });
     renderWithContext(value);
 
     const label = screen.getByText('Alice');
     const cursorEl = label.parentElement!;
-    expect(cursorEl.style.left).toBe('42.5%');
-    expect(cursorEl.style.top).toBe('67.3%');
+    expect(cursorEl.style.transform).toBe('translate(500px, 500px)');
   });
 
   it('renders cursor arrow SVG', () => {
@@ -101,9 +118,9 @@ describe('CollabCursorOverlay', () => {
     cursors.set('user-1', makeCursor('user-1', 'Alice', 50, 50));
 
     const value = makeCollabValue({ cursors });
-    const { container } = renderWithContext(value);
+    renderWithContext(value);
 
-    const svg = container.querySelector('svg');
+    const svg = canvasEl.querySelector('svg');
     expect(svg).toBeInTheDocument();
   });
 

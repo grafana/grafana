@@ -10,8 +10,10 @@
 
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
@@ -26,12 +28,65 @@ interface CursorState {
   labelVisible: boolean;
 }
 
+/** Selector for the scrollable dashboard canvas container. */
+const CANVAS_SELECTOR = `[data-testid="${selectors.components.DashboardEditPaneSplitter.bodyContainer}"]`;
+
+/**
+ * Locate the dashboard canvas element (the scrollable panel grid container).
+ * Returns null if the element hasn't mounted yet.
+ */
+function findCanvasElement(): HTMLElement | null {
+  return document.querySelector<HTMLElement>(CANVAS_SELECTOR);
+}
+
 export function CollabCursorOverlay() {
   const { connected, cursors, sendCursor } = useCollab();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLElement | null>(null);
+  const [canvasEl, setCanvasEl] = useState<HTMLElement | null>(null);
   const [cursorStates, setCursorStates] = useState<Map<string, CursorState>>(new Map());
   const styles = useStyles2(getStyles);
   const localUserId = config.bootData?.user?.uid ?? '';
+
+  // Locate the canvas element once it mounts.
+  useEffect(() => {
+    if (!connected) {
+      return;
+    }
+
+    // The canvas may not be in the DOM yet when this effect first runs,
+    // so poll briefly until we find it (or give up).
+    let attempts = 0;
+    const maxAttempts = 20;
+    const intervalMs = 100;
+
+    function tryFind() {
+      const el = findCanvasElement();
+      if (el) {
+        canvasRef.current = el;
+        // Ensure the canvas is a containing block for the absolutely-positioned
+        // overlay. The scroll container may not have position: relative by default.
+        if (getComputedStyle(el).position === 'static') {
+          el.style.position = 'relative';
+        }
+        setCanvasEl(el);
+        return true;
+      }
+      return false;
+    }
+
+    if (tryFind()) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      attempts++;
+      if (tryFind() || attempts >= maxAttempts) {
+        clearInterval(timer);
+      }
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [connected]);
 
   // Update cursor states when new cursor data arrives from context
   useEffect(() => {
@@ -90,10 +145,10 @@ export function CollabCursorOverlay() {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- throttle returns a stable wrapper; inner fn uses refs
   const handleMouseMove = useCallback(
     throttle((e: MouseEvent) => {
-      if (!containerRef.current) {
+      if (!canvasRef.current) {
         return;
       }
-      const { x, y } = toViewportPercent(e.clientX, e.clientY, containerRef.current);
+      const { x, y } = toViewportPercent(e.clientX, e.clientY, canvasRef.current);
       sendCursorRef.current({
         userId: localUserId,
         displayName: config.bootData?.user?.name ?? '',
@@ -118,34 +173,44 @@ export function CollabCursorOverlay() {
     };
   }, [connected, handleMouseMove]);
 
-  if (!connected) {
+  if (!connected || !canvasEl) {
     return null;
   }
 
-  return (
-    <div ref={containerRef} className={styles.overlay}>
+  // Portal the overlay into the canvas element so cursor positions are
+  // relative to the scrollable dashboard content area.
+  return createPortal(
+    <div className={styles.overlay}>
       {Array.from(cursorStates.entries()).map(([userId, state]) => (
-        <RemoteCursor key={userId} cursor={state.cursor} labelVisible={state.labelVisible} />
+        <RemoteCursor key={userId} cursor={state.cursor} labelVisible={state.labelVisible} canvasRef={canvasRef} />
       ))}
-    </div>
+    </div>,
+    canvasEl
   );
 }
 
 interface RemoteCursorProps {
   cursor: CursorUpdate;
   labelVisible: boolean;
+  canvasRef: React.RefObject<HTMLElement | null>;
 }
 
-function RemoteCursor({ cursor, labelVisible }: RemoteCursorProps) {
+function RemoteCursor({ cursor, labelVisible, canvasRef }: RemoteCursorProps) {
   const styles = useStyles2(getStyles);
   const color = cursor.color || '#e74c3c';
+
+  // Convert scroll-content percentages to pixel positions.
+  // The overlay is inside the canvas scroll container, so pixel offsets
+  // from its top-left map directly to scroll-content positions.
+  const canvas = canvasRef.current;
+  const leftPx = canvas ? (cursor.x / 100) * canvas.scrollWidth : 0;
+  const topPx = canvas ? (cursor.y / 100) * canvas.scrollHeight : 0;
 
   return (
     <div
       className={styles.cursor}
       style={{
-        left: `${cursor.x}%`,
-        top: `${cursor.y}%`,
+        transform: `translate(${leftPx}px, ${topPx}px)`,
       }}
     >
       <svg
@@ -178,13 +243,15 @@ function getStyles(theme: GrafanaTheme2) {
       inset: 0,
       pointerEvents: 'none',
       zIndex: theme.zIndex.tooltip - 1,
-      overflow: 'hidden',
+      overflow: 'visible',
     }),
     cursor: css({
       position: 'absolute',
+      top: 0,
+      left: 0,
       // eslint-disable-next-line @grafana/no-unreduced-motion
-      transition: 'left 100ms linear, top 100ms linear',
-      willChange: 'left, top',
+      transition: 'transform 100ms linear',
+      willChange: 'transform',
       pointerEvents: 'none',
     }),
     arrow: css({

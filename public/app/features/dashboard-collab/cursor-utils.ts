@@ -32,15 +32,28 @@ export function throttle<T extends (...args: any[]) => void>(fn: T, ms: number):
   return throttled as unknown as T;
 }
 
-/** Convert absolute pixel position to viewport-relative percentage (0-100). */
+/**
+ * Convert absolute pixel position to canvas-relative percentage (0–100).
+ *
+ * Coordinates are relative to the full scrollable content of `canvas`, not
+ * just the visible viewport. This means a cursor halfway down a tall
+ * dashboard will have y≈50 regardless of scroll position, and remote users
+ * with different window sizes will see the cursor at the same panel position.
+ */
 export function toViewportPercent(
   clientX: number,
   clientY: number,
-  container: HTMLElement
+  canvas: HTMLElement
 ): { x: number; y: number } {
-  const rect = container.getBoundingClientRect();
-  const x = ((clientX - rect.left) / rect.width) * 100;
-  const y = ((clientY - rect.top) / rect.height) * 100;
+  const rect = canvas.getBoundingClientRect();
+  // Position within the visible area, then add scroll offset to get the
+  // position within the full scrollable content.
+  const xPx = clientX - rect.left + canvas.scrollLeft;
+  const yPx = clientY - rect.top + canvas.scrollTop;
+  // Use scrollWidth/scrollHeight as the basis so percentages are stable
+  // across different window sizes / scroll positions.
+  const x = (xPx / canvas.scrollWidth) * 100;
+  const y = (yPx / canvas.scrollHeight) * 100;
   return { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
 }
 
