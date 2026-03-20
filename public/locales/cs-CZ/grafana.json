@@ -2353,6 +2353,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2377,7 +2378,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2387,8 +2387,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2447,9 +2448,6 @@
       "label-payload": "Datový obsah",
       "label-use-existing-alert-instances": "Použít existující instance výstrah",
       "reference": "Reference"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Urychlete vytváření výstrah pomocí jedné z našich přizpůsobených aplikací"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Toto pravidlo je spravováno pluginem {{pluginName}}"
@@ -2972,6 +2970,9 @@
       "error-button": "Chyba",
       "export-all-grafana-rules": "Exportovat všechna pravidla Grafany",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Zrušit vyhledávání",
         "no-more-results": "Žádné další výsledky – nalezená pravidla: {{numberOfRules}}",
@@ -3127,8 +3128,6 @@
       "dashboard": "Nástěnka",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Nápověda pro hledání podle zdrojů dat",
       "filter-options": {
-        "aria-label": "Možnosti filtru",
-        "aria-label-show-filters": "Filtr",
         "placeholder-namespace": "Vyberte jmenný prostor",
         "placeholder-search-input": "Hledejte podle názvu nebo zadejte dotaz na filtr…"
       },
@@ -3160,6 +3159,9 @@
       "state": "Stav",
       "title-search-help": "Nápověda pro vyhledávání",
       "view-as": "Zobrazit jako"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Odstraňování",
@@ -4877,7 +4879,6 @@
     "all": "Vše",
     "apply": "Použít",
     "cancel": "Zrušit",
-    "clear": "Vymazat",
     "collapse": "Sbalit",
     "disabled": "Deaktivováno",
     "discard": "Zahodit",
@@ -5979,6 +5980,12 @@
         "title": "Nastavení času panelu"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Před přidáním výstrahy musí být nástěnka uložena.",
@@ -6613,6 +6620,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7367,6 +7385,8 @@
       "cannot-be-saved": "Tuto nástěnku nelze uložit z uživatelského rozhraní Grafana, protože byla zajištěna z jiného zdroje. Zkopírujte JSON nebo ho uložte do souboru níže a následně aktualizujte nástěnku ve zdroji zajištění.",
       "copy-json-to-clipboard": "Kopírovat JSON do schránky",
       "file-path": "<strong>Cesta k souboru:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Popis",
       "label-target-folder": "Cílová složka",
       "label-title": "Název",
@@ -8060,6 +8080,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Fixní hodnota"
       },
+      "label": "",
       "label-limit": "Limit",
       "label-value": "Hodnota",
       "noOptionsMessage-no-fields-found": "Nebyla nalezena žádná pole",
@@ -10115,7 +10136,9 @@
       "external-links-heading": "Externí odkazy"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Zadejte regulární výraz"
+      "input-placeholder": "Zadejte regulární výraz",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Operátor porovnání",
@@ -10142,6 +10165,18 @@
       "expand-row-tooltip": "Řádek přepnutí rozbalen",
       "tooltip-collapse-all": "Sbalit všechny řádky",
       "tooltip-expand-all": "Rozbalit všechny řádky"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Nastavit vlastnosti pro pole s názvy odpovídajícími regulárnímu výrazu",
@@ -11385,7 +11420,7 @@
       "cancel": "Zrušit",
       "change-uid": "Změnit UID",
       "description-library-panels-imported": "Seznam nových panelů knihovny, které budou importovány.",
-      "description-unique-identifier-uid": "Jedinečný identifikátor (UID) nástěnky lze použít k jedinečné identifikaci nástěnky mezi více instalacemi Grafany. UID umožňuje zachovat konzistentnost adres URL pro přístup k nástěnkám, aby změna názvu nástěnky neovlivnila odkazy na nástěnku v záložkách.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Existující panely knihovny",
       "label-folder": "Složka",
       "label-name": "Název",
@@ -12912,9 +12947,6 @@
     "title-loaded-pull-request-in-repo": "Tento zdroj je načten z větve, kterou jste právě vytvořili v úložišti {{repoType}}, a je viditelný pouze pro vás"
   },
   "provisioning": {
-    "banner": {
-      "message": "Tato funkce je v současné době v aktivním vývoji. Pro nejlepší zážitek a nejnovější vylepšení doporučujeme použít <2>noční sestavení</2> Grafany."
-    },
     "bitbucket": {
       "branch-required": "Větev je povinná",
       "permissions": {
@@ -13639,6 +13671,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Vyberte, co chcete synchronizovat",
       "step-configure-repo": "Nakonfigurovat úložiště",
       "step-connect": "Připojit",

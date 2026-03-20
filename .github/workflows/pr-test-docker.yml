@@ -11,7 +11,7 @@ jobs:
     permissions:
       contents: read
     outputs:
-      changed: ${{ steps.detect-changes.outputs.backend || steps.detect-changes.outputs.frontend || steps.detect-changes.outputs.dockerfile }}
+      changed: ${{ steps.detect-changes.outputs.backend == 'true' || steps.detect-changes.outputs.frontend == 'true' || steps.detect-changes.outputs.dockerfile == 'true' }}
     steps:
       - uses: actions/checkout@v5
         with:

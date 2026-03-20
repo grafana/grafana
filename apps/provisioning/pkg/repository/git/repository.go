@@ -724,9 +724,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 		return nil, fmt.Errorf("resolve ref: %w", err)
 	}
 
-	// Get commit hashes for base and ref
-	// Compare commits using nanogit
-	files, err := r.client.CompareCommits(ctx, baseHash, refHash)
+	files, err := r.client.CompareCommits(ctx, baseHash, refHash, nanogit.WithRenameDetection())
 	if err != nil {
 		return nil, fmt.Errorf("compare commits: %w", err)
 	}
@@ -785,6 +783,56 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 				Ref:    ref,
 				Action: repository.FileActionUpdated,
 			})
+		case protocol.FileStatusRenamed:
+			newPath, newErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
+			oldPath, oldErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
+
+			// Tree entries (directories) cannot be processed as file renames.
+			// Decompose into delete + create so folder bookkeeping still works.
+			if f.Mode == 0o40000 {
+				if oldErr == nil {
+					changes = append(changes, repository.VersionedFileChange{
+						Action:       repository.FileActionDeleted,
+						Path:         oldPath,
+						PreviousPath: oldPath,
+						Ref:          ref,
+						PreviousRef:  base,
+					})
+				}
+				if newErr == nil {
+					changes = append(changes, repository.VersionedFileChange{
+						Action: repository.FileActionCreated,
+						Path:   newPath,
+						Ref:    ref,
+					})
+				}
+				continue
+			}
+
+			switch {
+			case newErr == nil && oldErr == nil:
+				changes = append(changes, repository.VersionedFileChange{
+					Action:       repository.FileActionRenamed,
+					Path:         newPath,
+					PreviousPath: oldPath,
+					Ref:          ref,
+					PreviousRef:  base,
+				})
+			case newErr == nil:
+				changes = append(changes, repository.VersionedFileChange{
+					Action: repository.FileActionCreated,
+					Path:   newPath,
+					Ref:    ref,
+				})
+			case oldErr == nil:
+				changes = append(changes, repository.VersionedFileChange{
+					Action:       repository.FileActionDeleted,
+					Path:         oldPath,
+					PreviousPath: oldPath,
+					Ref:          ref,
+					PreviousRef:  base,
+				})
+			}
 		default:
 			logger.Error("ignore unhandled file", "file", f.Path, "status", string(f.Status))
 		}

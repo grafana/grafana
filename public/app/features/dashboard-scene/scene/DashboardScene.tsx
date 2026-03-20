@@ -96,7 +96,6 @@ import {
   getPanelIdForVizPanel,
   hasActualSaveChanges,
 } from '../utils/utils';
-import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
@@ -488,7 +487,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
-    const api = getDashboardAPI();
+    const api = await getDashboardAPI();
     // the id here is the resource version in k8s, use this instead to get the specific version
     const versionRsp = await api.restoreDashboardVersion(version.uid, version.id);
 
@@ -500,7 +499,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     if (isDashboardV2Spec(version.data as Dashboard | DashboardV2Spec)) {
-      const dto = await getDashboardAPI('v2').getDashboardDTO(version.uid);
+      const api = await getDashboardAPI('v2');
+      const dto = await api.getDashboardDTO(version.uid);
       dashScene = transformSaveModelSchemaV2ToScene(dto);
     } else {
       const dashboardDTO: DashboardDTO = {
@@ -532,14 +532,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         saveAsCopy,
         onSaveSuccess,
         showVariablesWarning: this.hasVariableErrors(),
-      }),
-    });
-  }
-
-  public openV2SchemaEditor() {
-    this.setState({
-      overlay: new SchemaV2EditorDrawer({
-        dashboardRef: this.getRef(),
       }),
     });
   }
