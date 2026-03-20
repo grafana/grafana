@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	claims "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -63,7 +64,7 @@ func (s *legacySQLStore) getDB(ctx context.Context) (*legacysql.LegacyDatabaseHe
 	if err != nil {
 		if errors.Is(err, legacysql.ErrStackNotFound) {
 			return nil, apierrors.NewNotFound(
-				iamv0.UserResourceInfo.GroupResource(),
+				schema.GroupResource{Group: iamv0.GROUP},
 				"namespace",
 			)
 		}
