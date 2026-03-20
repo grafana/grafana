@@ -327,6 +327,69 @@ func TestIncrementalSync(t *testing.T) {
 	})
 }
 
+func TestIncrementalSync_CrossBoundaryDirectoryChanges(t *testing.T) {
+	permissiveQt := newPermissiveMockQuotaTracker(t)
+
+	// Directory entries (trailing-slash paths) from cross-boundary renames are
+	// skipped entirely — the individual file-level changes already handle
+	// folder creation (via WriteResourceFromFile → EnsureFolderPathExist) and
+	// deletion (via affectedFolders / orphan cleanup). Neither
+	// WriteResourceFromFile nor RemoveResourceFromFile should be called.
+	runIncrementalSyncTests(t, []incrementalSyncTestCase{
+		{
+			name:         "directory created is skipped",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionCreated,
+						Path:   "new-team/",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+				progress.On("HasDirPathFailedCreation", "new-team/").Return(false)
+				progress.On("TooManyErrors").Return(nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionCreated &&
+						result.Path() == "new-team/"
+				})).Return()
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "directory deleted is skipped",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:      repository.FileActionDeleted,
+						Path:        "old-team/",
+						PreviousRef: "old-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+				progress.On("TooManyErrors").Return(nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionDeleted &&
+						result.Path() == "old-team/"
+				})).Return()
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+	})
+}
+
 func TestIncrementalSync_ErrorHandling(t *testing.T) {
 	permissiveQt := newPermissiveMockQuotaTracker(t)
 	runIncrementalSyncTests(t, []incrementalSyncTestCase{

@@ -7,6 +7,8 @@ jobs:
   gen-swagger:
     name: Alerting Swagger spec generation cron job
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository

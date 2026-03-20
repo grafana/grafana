@@ -150,6 +150,18 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
 
+		// Created/deleted directory entries (trailing-slash paths) appear from
+		// cross-boundary renames. The individual file-level changes within the
+		// directory are emitted separately and already handle folder creation
+		// (via EnsureFolderPathExist inside WriteResourceFromFile) and deletion
+		// (via affectedFolders / orphan cleanup). Skip them to avoid routing
+		// directory paths to file-processing logic. Renamed directories must
+		// still reach RenameFolderPath below.
+		if safepath.IsDir(change.Path) && change.Action != repository.FileActionRenamed {
+			progress.Record(ctx, resultBuilder.Build())
+			continue
+		}
+
 		if change.Action == repository.FileActionCreated && !quotaTracker.TryAcquire() {
 			progress.Record(ctx, resultBuilder.
 				WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
@@ -203,19 +215,32 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 			removeSpan.End()
 		case repository.FileActionRenamed:
-			renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_resource_file")
-			name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
-			if err != nil {
-				renameSpan.RecordError(err)
-				resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))
-			}
-			resultBuilder.WithName(name).WithGVK(gvk)
+			if safepath.IsDir(change.Path) {
+				renameFolderCtx, renameFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_folder_path")
+				oldFolderID, err := repositoryResources.RenameFolderPath(renameFolderCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
+				if err != nil {
+					renameFolderSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("renaming folder from %s to %s: %w", change.PreviousPath, change.Path, err))
+				}
+				if oldFolderID != "" {
+					affectedFolders[change.PreviousPath] = oldFolderID
+				}
+				renameFolderSpan.End()
+			} else {
+				renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_resource_file")
+				name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
+				if err != nil {
+					renameSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))
+				}
+				resultBuilder.WithName(name).WithGVK(gvk)
 
-			if oldFolderName != "" {
-				affectedFolders[safepath.Dir(change.PreviousPath)] = oldFolderName
-			}
+				if oldFolderName != "" {
+					affectedFolders[safepath.Dir(change.PreviousPath)] = oldFolderName
+				}
 
-			renameSpan.End()
+				renameSpan.End()
+			}
 		case repository.FileActionIgnored:
 			// do nothing
 		}

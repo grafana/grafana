@@ -51,12 +51,6 @@ const defaultWatchBufferSize = 100 // number of events to buffer in the watch st
 const defaultPrunerHistoryLimit = 20
 const defaultGarbageCollectionBatchWait = 1 * time.Second
 
-// customPrunerHistoryLimits defines resource-specific history limits.
-// The key format is "group/resource".
-var customPrunerHistoryLimits = map[string]int64{
-	"plugins.grafana.app/plugins": 3,
-}
-
 type GarbageCollectionConfig struct {
 	Enabled          bool
 	Interval         time.Duration // how often the process runs
@@ -541,10 +535,9 @@ func (b *backend) garbageCollectionCutoffTimestamp(group, resourceName string, d
 	return defaultCutoff
 }
 
-func (b *backend) prunerHistoryLimit(group, resource string) int64 {
-	key := fmt.Sprintf("%s/%s", group, resource)
-	if limit, ok := customPrunerHistoryLimits[key]; ok {
-		return limit
+func (b *backend) prunerHistoryLimit(group, resourceName string) int64 {
+	if limit, ok := resource.LookupCustomPrunerHistoryLimit(group, resourceName); ok {
+		return int64(limit)
 	}
 	return defaultPrunerHistoryLimit
 }

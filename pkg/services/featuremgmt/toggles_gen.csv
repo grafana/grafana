@@ -250,7 +250,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-15,sharingDashboardImage,GA,@grafana/sharing-squad,false,false,true
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
-2025-06-30,enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
+2025-06-29,enableAppChromeExtensions,experimental,@grafana/plugins-platform-backend,false,false,true
 2025-10-13,enableDashboardEmptyExtensions,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-03,foldersAppPlatformAPI,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2025-07-16,otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
@@ -340,3 +340,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-11,advisorDatasourceIntegration,experimental,@grafana/plugins-platform-backend,false,false,false
 2026-03-04,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,false
 2026-02-06,colorblindThemes,GA,@grafana/grafana-frontend-platform,false,true,false
+2026-03-19,yAxisTickControl,experimental,@grafana/dataviz-squad,false,false,true
