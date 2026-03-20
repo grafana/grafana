@@ -90,34 +90,9 @@ func (c *jobsConnector) Connect(
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		prefix := fmt.Sprintf("/%s/jobs/", name)
 		idx := strings.Index(r.URL.Path, prefix)
+
 		if r.Method == http.MethodGet {
-			// GET operations: allow even for unhealthy repositories
-			repo, err := c.repoGetter.GetRepository(ctx, name)
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-			cfg := repo.Config()
-			if idx > 0 {
-				jobUID := r.URL.Path[idx+len(prefix):]
-				if !ValidUUID(jobUID) {
-					responder.Error(apierrors.NewBadRequest(fmt.Sprintf("invalid job uid: %s", jobUID)))
-					return
-				}
-				job, err := c.historic.GetJob(ctx, cfg.Namespace, name, jobUID)
-				if err != nil {
-					responder.Error(err)
-					return
-				}
-				responder.Object(http.StatusOK, job)
-				return
-			}
-			recent, err := c.historic.RecentJobs(ctx, cfg.Namespace, name)
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-			responder.Object(http.StatusOK, recent)
+			c.handleGetJob(ctx, r.URL.Path, name, prefix, idx, responder)
 			return
 		}
 
@@ -133,109 +108,135 @@ func (c *jobsConnector) Connect(
 		}
 		spec.Repository = name
 
-		// Orphan cleanup actions have inverted validation: only allowed when the
-		// repository does not exist or is stuck in Terminating state.
 		if jobs.IsOrphanCleanupAction(spec.Action) {
 			c.handleOrphanCleanupJob(ctx, r, name, spec, responder)
 			return
 		}
 
-		// POST operations: require healthy repository
-		repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-
-		cfg := repo.Config()
-
-		if cfg.DeletionTimestamp != nil && !cfg.DeletionTimestamp.IsZero() {
-			responder.Error(apierrors.NewConflict(
-				provisioning.RepositoryResourceInfo.GroupResource(),
-				"cannot create jobs for a repository marked for deletion",
-				fmt.Errorf("cannot create jobs for a repository marked for deletion"),
-			))
-			return
-		}
-
-		// Pull jobs trigger a repository sync and require admin privileges.
-		if spec.Action == provisioning.JobActionPull {
-			if err := c.authorizeAdminJob(r.Context(), cfg); err != nil {
-				responder.Error(err)
-				return
-			}
-		}
-
-		// Validate write operations before queueing the job
-		requiresWrite := spec.Action == provisioning.JobActionDelete ||
-			spec.Action == provisioning.JobActionMove ||
-			spec.Action == provisioning.JobActionPush ||
-			spec.Action == provisioning.JobActionMigrate
-
-		if requiresWrite {
-			var targetRef string
-			switch spec.Action {
-			case provisioning.JobActionDelete:
-				if spec.Delete != nil {
-					targetRef = spec.Delete.Ref
-				}
-			case provisioning.JobActionMove:
-				if spec.Move != nil {
-					targetRef = spec.Move.Ref
-				}
-			case provisioning.JobActionPush:
-				if spec.Push != nil {
-					targetRef = spec.Push.Branch
-				}
-			case provisioning.JobActionMigrate:
-				targetRef = ""
-			default:
-				targetRef = ""
-			}
-
-			if err := repository.IsWriteAllowed(cfg, targetRef); err != nil {
-				responder.Error(err)
-				return
-			}
-		}
-
-		if err := c.authorizeJob(r.Context(), repo, cfg, spec); err != nil {
-			responder.Error(err)
-			return
-		}
-
-		job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
-		if err != nil {
-			responder.Error(err)
-			return
-		}
-
-		// For pull jobs update the sync status
-		// patch the sync status 'state' to 'pending', and reset the 'started' field, leaving other fields unchanged.
-		// Intentionally maintain the previous job name until the jobs is picked up.
-		if spec.Pull != nil {
-			err = c.statusPatcherProvider.GetStatusPatcher().Patch(ctx, cfg,
-				map[string]interface{}{
-					"op":    "replace",
-					"path":  "/status/sync/state",
-					"value": provisioning.JobStatePending,
-				},
-				map[string]interface{}{
-					// Use "replace" instead of "remove" since "remove" fails if the path does not exist (RFC 6902).
-					// "started" field uses "omitempty", so it may be missing in the JSON.
-					"op":    "replace",
-					"path":  "/status/sync/started",
-					"value": int64(0),
-				},
-			)
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-		}
-
-		responder.Object(http.StatusAccepted, job)
+		c.handleCreateJob(ctx, r, name, spec, responder)
 	}), 30*time.Second), nil
+}
+
+// handleGetJob serves GET requests for job history — either a single job by
+// UID or the recent jobs list for a repository.
+func (c *jobsConnector) handleGetJob(ctx context.Context, urlPath, name, prefix string, idx int, responder rest.Responder) {
+	repo, err := c.repoGetter.GetRepository(ctx, name)
+	if err != nil {
+		responder.Error(err)
+		return
+	}
+	cfg := repo.Config()
+
+	if idx > 0 {
+		jobUID := urlPath[idx+len(prefix):]
+		if !ValidUUID(jobUID) {
+			responder.Error(apierrors.NewBadRequest(fmt.Sprintf("invalid job uid: %s", jobUID)))
+			return
+		}
+		job, err := c.historic.GetJob(ctx, cfg.Namespace, name, jobUID)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+		responder.Object(http.StatusOK, job)
+		return
+	}
+
+	recent, err := c.historic.RecentJobs(ctx, cfg.Namespace, name)
+	if err != nil {
+		responder.Error(err)
+		return
+	}
+	responder.Object(http.StatusOK, recent)
+}
+
+// handleCreateJob handles POST requests to create a new job for a healthy repository.
+func (c *jobsConnector) handleCreateJob(ctx context.Context, r *http.Request, name string, spec provisioning.JobSpec, responder rest.Responder) {
+	repo, err := c.repoGetter.GetHealthyRepository(ctx, name)
+	if err != nil {
+		responder.Error(err)
+		return
+	}
+
+	cfg := repo.Config()
+
+	if cfg.DeletionTimestamp != nil && !cfg.DeletionTimestamp.IsZero() {
+		responder.Error(apierrors.NewConflict(
+			provisioning.RepositoryResourceInfo.GroupResource(),
+			"cannot create jobs for a repository marked for deletion",
+			fmt.Errorf("cannot create jobs for a repository marked for deletion"),
+		))
+		return
+	}
+
+	if spec.Action == provisioning.JobActionPull {
+		if err := c.authorizeAdminJob(r.Context(), cfg); err != nil {
+			responder.Error(err)
+			return
+		}
+	}
+
+	if err := c.validateWriteAccess(cfg, spec); err != nil {
+		responder.Error(err)
+		return
+	}
+
+	if err := c.authorizeJob(r.Context(), repo, cfg, spec); err != nil {
+		responder.Error(err)
+		return
+	}
+
+	job, err := c.jobs.GetJobQueue().Insert(ctx, cfg.Namespace, spec)
+	if err != nil {
+		responder.Error(err)
+		return
+	}
+
+	if spec.Pull != nil {
+		err = c.statusPatcherProvider.GetStatusPatcher().Patch(ctx, cfg,
+			map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/sync/state",
+				"value": provisioning.JobStatePending,
+			},
+			map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/sync/started",
+				"value": int64(0),
+			},
+		)
+		if err != nil {
+			responder.Error(err)
+			return
+		}
+	}
+
+	responder.Object(http.StatusAccepted, job)
+}
+
+// validateWriteAccess checks if a write operation is allowed for the given
+// repository and job spec. Returns nil for read-only actions.
+func (c *jobsConnector) validateWriteAccess(cfg *provisioning.Repository, spec provisioning.JobSpec) error {
+	var targetRef string
+	switch spec.Action {
+	case provisioning.JobActionDelete:
+		if spec.Delete != nil {
+			targetRef = spec.Delete.Ref
+		}
+	case provisioning.JobActionMove:
+		if spec.Move != nil {
+			targetRef = spec.Move.Ref
+		}
+	case provisioning.JobActionPush:
+		if spec.Push != nil {
+			targetRef = spec.Push.Branch
+		}
+	case provisioning.JobActionMigrate:
+		// no ref needed
+	default:
+		return nil
+	}
+	return repository.IsWriteAllowed(cfg, targetRef)
 }
 
 var (
@@ -308,6 +309,9 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata:
 		// Read-only operations don't require pre-flight resource authorization.
 		// Pull is authorized inline in Connect.
+	case provisioning.JobActionReleaseResources, provisioning.JobActionDeleteResources:
+		// Orphan cleanup actions are handled separately via handleOrphanCleanupJob
+		// and never reach authorizeJob.
 	}
 	return nil
 }
