@@ -162,7 +162,8 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			continue
 		}
 
-		if folderMetadataEnabled && resources.IsFolderMetadataFile(change.Path) {
+		if folderMetadataEnabled && resources.IsFolderMetadataFile(change.Path) &&
+			(change.Action == repository.FileActionCreated || change.Action == repository.FileActionUpdated) {
 			name, err := applyFolderMetadataUpdate(ctx, change, repositoryResources, tracer)
 			if err != nil {
 				resultBuilder.WithError(err)
