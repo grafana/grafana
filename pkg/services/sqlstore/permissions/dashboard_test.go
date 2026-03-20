@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -686,34 +685,20 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 	db, cfg := db.InitTestDBWithCfg(t)
 	dashStore, err := database.ProvideDashboardStore(db, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db))
 	require.NoError(t, err)
-	fStore := folderimpl.ProvideStore(db, cfg)
 
-	// Create a signed-in user for folder creation
-	usr := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  1,
-		Login:  "test",
-	}
-
-	// folders need to be created in both the folder and dashboard table
+	// Folders must exist in both the dashboard table (is_folder) and the legacy folder table for permission SQL.
 	for i := 1; i <= numFolders; i++ {
 		str := strconv.Itoa(i)
-		folder, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
-			Title:        str,
-			OrgID:        1,
-			UID:          str,
-			SignedInUser: usr,
-		})
-		require.NoError(t, err)
 		_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 			OrgID: 1,
 			Dashboard: simplejson.NewFromAny(map[string]any{
 				"title": str,
-				"uid":   folder.UID,
+				"uid":   str,
 			}),
 			IsFolder: true,
 		})
 		require.NoError(t, err)
+		require.NoError(t, insertLegacyFolderRow(db, 1, str, str, nil))
 	}
 
 	// now create dashboards
@@ -793,7 +778,7 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 	return db
 }
 
-func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol.Permission, orgID int64, features featuremgmt.FeatureToggles) db.DB {
+func setupNestedTest(t *testing.T, _ *user.SignedInUser, perms []accesscontrol.Permission, orgID int64, features featuremgmt.FeatureToggles) db.DB {
 	t.Helper()
 
 	db, cfg := db.InitTestDBWithCfg(t)
@@ -801,42 +786,32 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	// dashboard store commands that should be called.
 	dashStore, err := database.ProvideDashboardStore(db, cfg, features, tagimpl.ProvideService(db))
 	require.NoError(t, err)
-	fStore := folderimpl.ProvideStore(db, cfg)
-	// create in both the folder & dashboard tables
-	parent, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
-		Title:        "parent",
-		OrgID:        orgID,
-		UID:          "parent",
-		SignedInUser: usr,
-	})
-	require.NoError(t, err)
+
+	const parentUID = "parent"
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 		OrgID: orgID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "parent",
-			"uid":   parent.UID,
+			"uid":   parentUID,
 		}),
 		IsFolder: true,
 	})
 	require.NoError(t, err)
-	subfolder, err := fStore.Create(context.Background(), folder.CreateFolderCommand{
-		Title:        "subfolder",
-		OrgID:        orgID,
-		UID:          "subfolder",
-		ParentUID:    parent.UID,
-		SignedInUser: usr,
-	})
-	require.NoError(t, err)
+	require.NoError(t, insertLegacyFolderRow(db, orgID, parentUID, "parent", nil))
+
+	const subfolderUID = "subfolder"
+	parent := parentUID
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 		OrgID:     orgID,
-		FolderUID: parent.UID,
+		FolderUID: parentUID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "subfolder",
-			"uid":   subfolder.UID,
+			"uid":   subfolderUID,
 		}),
 		IsFolder: true,
 	})
 	require.NoError(t, err)
+	require.NoError(t, insertLegacyFolderRow(db, orgID, subfolderUID, "subfolder", &parent))
 	// create a root level dashboard
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 		OrgID: orgID,
@@ -849,7 +824,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	// create dashboard under parent folder
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 		OrgID:     orgID,
-		FolderUID: parent.UID,
+		FolderUID: parentUID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "dashboard under parent folder",
 		}),
@@ -859,7 +834,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	// create dashboard under subfolder
 	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 		OrgID:     orgID,
-		FolderUID: subfolder.UID,
+		FolderUID: subfolderUID,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"title": "dashboard under subfolder",
 		}),
@@ -907,4 +882,33 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	require.NoError(t, err)
 
 	return db
+}
+
+// note: this still inserts into the legacy folder table. this code is used when dashboards legacy search is being used
+// and will be removed in a subsequent PR when dashboard db is removed too.
+func insertLegacyFolderRow(sqlDB db.DB, orgID int64, uid, title string, parentUID *string) error {
+	type folder struct {
+		ID          int64     `xorm:"pk autoincr 'id'"`
+		OrgID       int64     `xorm:"org_id"`
+		UID         string    `xorm:"uid"`
+		ParentUID   *string   `xorm:"parent_uid"`
+		Title       string    `xorm:"title"`
+		Description string    `xorm:"description"`
+		Created     time.Time `xorm:"created"`
+		Updated     time.Time `xorm:"updated"`
+	}
+	now := time.Now()
+	f := &folder{
+		OrgID:       orgID,
+		UID:         uid,
+		Title:       title,
+		Description: "",
+		ParentUID:   parentUID,
+		Created:     now,
+		Updated:     now,
+	}
+	return sqlDB.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		_, err := sess.Insert(f)
+		return err
+	})
 }

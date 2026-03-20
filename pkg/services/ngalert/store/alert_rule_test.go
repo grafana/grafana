@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -27,8 +28,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/testutil"
+	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -1906,12 +1910,16 @@ func createRule(tb testing.TB, store *DBstore, generator *models.AlertRuleGenera
 	return rule
 }
 
-func setupFolderService(t testing.TB, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
+func setupFolderService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
+	tb.Helper()
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
-	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, cfg)
+	publicDashboardsWrapper := publicdashboards.NewFakePublicDashboardServiceWrapper(tb)
+	publicDashboardsWrapper.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+	publicDashboardsWrapper.On("Delete", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+	publicDashboardsWrapper.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil, nil)
 
-	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true})
+	return testutil.SetupFolderService(tb, cfg, sqlStore, inProcBus, features, &actest.FakeAccessControl{ExpectedEvaluate: true}, usertest.NewUserServiceFake(), supportbundlestest.NewFakeBundleService(), publicDashboardsWrapper)
 }
 
 func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {

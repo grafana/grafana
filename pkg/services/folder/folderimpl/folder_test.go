@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/selection"
 	clientrest "k8s.io/client-go/rest"
 
@@ -884,17 +886,38 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 					}},
 					Rows: []*resourcepb.ResourceTableRow{{
 						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
+							Name:     "foouid",
 							Resource: "folder",
 						},
 						Cells: [][]byte{
-							[]byte("foouid"),
+							[]byte("foo title"),
 							[]byte("parentuid"),
 						}},
 					},
 				},
 				TotalHits: 1,
 			}, nil).Once()
+
+		getFolderObj := &unstructured.Unstructured{}
+		err := getFolderObj.UnmarshalJSON([]byte(`{
+			"kind": "Folder",
+			"apiVersion": "folder.grafana.app/v1beta1",
+			"metadata": {
+				"name": "foouid",
+				"namespace": "default",
+				"labels": {
+					"grafana.app/deprecatedInternalID": "2"
+				},
+				"annotations": {
+					"grafana.app/folder": "parentuid"
+				}
+			},
+			"spec": {
+				"title": "foo title"
+			}
+		}`))
+		require.NoError(t, err)
+		fakeK8sClient.On("Get", mock.Anything, "foouid", int64(1), metav1.GetOptions{}, mock.Anything).Return(getFolderObj, nil).Once()
 
 		parentid := "parentuid"
 		result, err := service.getFolderByTitle(ctx, 1, "foo title", &parentid)
