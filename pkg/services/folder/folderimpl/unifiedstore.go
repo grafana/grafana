@@ -284,6 +284,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 
 	hits := make([]*folder.FolderReference, 0, len(res.Hits))
 	for _, item := range res.Hits {
+		// TODO: Remove this post-filter once legacy search is fully removed.
 		// Post-filter k6 folder as a fallback for the legacy search backend,
 		// which ignores the NotIn filter above.
 		if item.Name == accesscontrol.K6FolderUID && !allowK6Folder {
