@@ -301,7 +301,6 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 	})
 }
 
-
 // TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate verifies
 // that incremental sync propagates title changes in _folder.json to Grafana folders.
 func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *testing.T) {
