@@ -370,9 +370,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		const childUID = "nn-child-uid"
 
 		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-			"parent/_folder.json":                folderMetadataJSON(parentUID, "Parent"),
-			"parent/old-child/_folder.json":      folderMetadataJSON(childUID, "Child"),
-			"parent/old-child/dashboard1.json":   dashboardJSON("nn-dash-001", "Child Dashboard", 1),
+			"parent/_folder.json":              folderMetadataJSON(parentUID, "Parent"),
+			"parent/old-child/_folder.json":    folderMetadataJSON(childUID, "Child"),
+			"parent/old-child/dashboard1.json": dashboardJSON("nn-dash-001", "Child Dashboard", 1),
 		})
 
 		helper.syncAndWait(t, repoName)
@@ -424,9 +424,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		const movedUID = "rn-moved-uid"
 
 		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-			"parent/_folder.json":          folderMetadataJSON(parentUID, "Parent"),
-			"my-folder/_folder.json":       folderMetadataJSON(movedUID, "My Folder"),
-			"my-folder/dashboard1.json":    dashboardJSON("rn-dash-001", "Moved Dashboard", 1),
+			"parent/_folder.json":       folderMetadataJSON(parentUID, "Parent"),
+			"my-folder/_folder.json":    folderMetadataJSON(movedUID, "My Folder"),
+			"my-folder/dashboard1.json": dashboardJSON("rn-dash-001", "Moved Dashboard", 1),
 		})
 
 		helper.syncAndWait(t, repoName)
@@ -479,9 +479,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		const movedUID = "nr-moved-uid"
 
 		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-			"parent/_folder.json":                  folderMetadataJSON(parentUID, "Parent"),
-			"parent/my-folder/_folder.json":        folderMetadataJSON(movedUID, "My Folder"),
-			"parent/my-folder/dashboard1.json":     dashboardJSON("nr-dash-001", "Moved Dashboard", 1),
+			"parent/_folder.json":              folderMetadataJSON(parentUID, "Parent"),
+			"parent/my-folder/_folder.json":    folderMetadataJSON(movedUID, "My Folder"),
+			"parent/my-folder/dashboard1.json": dashboardJSON("nr-dash-001", "Moved Dashboard", 1),
 		})
 
 		helper.syncAndWait(t, repoName)
@@ -534,10 +534,10 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 
 		// Seed: parent folder with a dashboard and a child folder that also has a dashboard.
 		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-			"old-parent/_folder.json":                   folderMetadataJSON(parentUID, "Parent"),
-			"old-parent/parent-dash.json":               dashboardJSON("mx-parent-dash", "Parent Dashboard", 1),
-			"old-parent/child/_folder.json":             folderMetadataJSON(childUID, "Child"),
-			"old-parent/child/child-dash.json":          dashboardJSON("mx-child-dash", "Child Dashboard", 1),
+			"old-parent/_folder.json":          folderMetadataJSON(parentUID, "Parent"),
+			"old-parent/parent-dash.json":      dashboardJSON("mx-parent-dash", "Parent Dashboard", 1),
+			"old-parent/child/_folder.json":    folderMetadataJSON(childUID, "Child"),
+			"old-parent/child/child-dash.json": dashboardJSON("mx-child-dash", "Child Dashboard", 1),
 		})
 
 		helper.syncAndWait(t, repoName)
