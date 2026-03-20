@@ -47,8 +47,8 @@ function decodeCompositeToken(token?: string): CompositeContinueToken {
   }
 }
 
-function sortByGenerationDesc(items: Array<Resource<unknown>>): Array<Resource<unknown>> {
-  return items.sort((a, b) => (b.metadata.generation ?? 0) - (a.metadata.generation ?? 0));
+function sortByGenerationDesc<T extends Resource<unknown>>(items: T[]): T[] {
+  return [...items].sort((a, b) => (b.metadata.generation ?? 0) - (a.metadata.generation ?? 0));
 }
 
 export class UnifiedDashboardAPI
@@ -134,21 +134,23 @@ export class UnifiedDashboardAPI
   async listDeletedDashboards(
     options: ListDeletedDashboardsOptions
   ): Promise<ResourceList<Dashboard | DashboardV2Spec>> {
-    const v1Response = await this.v1Client.listDeletedDashboards(options);
+    const { v1: v1Token, v2: v2Token } = decodeCompositeToken(options.continue);
+
+    const v1Response = await this.v1Client.listDeletedDashboards({ ...options, continue: v1Token });
     const v1Valid = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
 
     if (v1Valid.length === v1Response.items.length && v1Response.items.length > 0) {
       return v1Response;
     }
 
-    const v2Response = await this.v2Client.listDeletedDashboards(options);
+    const v2Response = await this.v2Client.listDeletedDashboards({ ...options, continue: v2Token });
     const v2Valid = v2Response.items.filter((item) => !failedFromVersion(item, ['v0', 'v1']));
 
     if (v1Valid.length === 0) {
       return v2Response;
     }
 
-    const merged = sortByGenerationDesc([...v1Valid, ...v2Valid].filter(isResource));
+    const merged = [...v1Valid, ...v2Valid].filter(isResource);
 
     return {
       ...v1Response,
