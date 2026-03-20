@@ -1368,6 +1368,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardDefaultLayoutSelector",
+        "resourceVersion": "1773923636566",
+        "creationTimestamp": "2026-03-19T12:33:56Z"
+      },
+      "spec": {
+        "description": "Enables default layout selector in dashboard settings",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-04-11T16:52:46Z"
