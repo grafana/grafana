@@ -55,7 +55,12 @@ func New(cfg *setting.Cfg, validator validations.DataSourceRequestURLValidator, 
 		middlewares = append(middlewares, sdkhttpclient.NamedMiddlewareFunc("sigv4-aws-config", func(opts sdkhttpclient.Options, next http.RoundTripper) http.RoundTripper {
 			sigv4 := awsauth.NewSigV4Middleware().CreateMiddleware(opts, next)
 			return sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-				ctx := backend.WithGrafanaConfig(req.Context(), awsCfg)
+				ctx := req.Context()
+				// Normally the sigv4 middleware would read auth settings from ctx. But for frontend-only datasources using the data proxy,
+				// GrafanaConfig is never injected into the request context. In this case fall back to cfg values
+				if _, exists := awsds.ReadAuthSettingsFromContext(ctx); !exists {
+					ctx = backend.WithGrafanaConfig(ctx, awsCfg)
+				}
 				return sigv4.RoundTrip(req.WithContext(ctx))
 			})
 		}))
