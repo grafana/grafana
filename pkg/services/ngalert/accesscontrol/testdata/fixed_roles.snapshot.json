@@ -816,6 +816,39 @@
     ]
   },
   {
+    "name": "fixed:alerting.legacy.config:reader",
+    "displayName": "Alerting legacy config read permission (deprecated, admin only)",
+    "description": "",
+    "group": "Alerting",
+    "hidden": true,
+    "permissions": [
+      {
+        "action": "alert.notifications.config-history:read"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
+  },
+  {
+    "name": "fixed:alerting.legacy.config:writer",
+    "displayName": "Alerting legacy config write permission (deprecated, admin only)",
+    "description": "",
+    "group": "Alerting",
+    "hidden": true,
+    "permissions": [
+      {
+        "action": "alert.notifications.config-history:read"
+      },
+      {
+        "action": "alert.notifications.config-history:write"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
+  },
+  {
     "name": "fixed:alerting.receivers:reader",
     "displayName": "Contact Point Reader",
     "description": "Read all contact points in Grafana",
