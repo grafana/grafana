@@ -165,13 +165,18 @@ From here, you can:
 
 - Search for queries by data source name, query content, title, or description.
 - Sort queries alphabetically or by creation date.
-- Filter by data source name, author name, and tags (the tag filter uses the `OR` operator, while the others use the `AND` operator).
-- Star queries so that they appear in the **Starred** tab.
+- Filter by data source name, author name, and tags. The tag filter uses the `OR` operator, while the others use the `AND` operator.
+  
+   {{< admonition type="tip">}}
+   Use the **Remember filters** switch to persist your filter selections across sessions in your local storage.
+   {{< /admonition >}}
+
+- Star queries so that they appear in the **Starred** filter view.
 - Duplicate, or delete a saved query.
 - Edit a query title, description, or tags.
 - When you access the **Saved queries** dialog box from Explore, you can use the **Edit in Explore** option to edit the body of a query.
 
-You can apply all the same search, filter, and sort options in the **Starred queries** tab.
+You can apply all the same search, filter, and sort options in the **Starred queries** filter view.
 
 To access your saved queries, click **+ Add from saved queries** or open the **Saved queries** drop-down menu and click **Replace query** in the query editor:
 
