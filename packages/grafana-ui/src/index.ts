@@ -372,12 +372,6 @@ export { VariablesInputModal } from './components/Actions/VariablesInputModal';
 // These will be removed in the future
 // -----------------------------------------------------
 
-export { Graph } from './graveyard/Graph/Graph';
-export { GraphWithLegend } from './graveyard/Graph/GraphWithLegend';
-export { GraphContextMenu, GraphContextMenuHeader } from './graveyard/Graph/GraphContextMenu';
-export { graphTimeFormat, graphTickFormatter } from './graveyard/Graph/utils';
-export { GraphSeriesToggler, type GraphSeriesTogglerAPI } from './graveyard/Graph/GraphSeriesToggler';
-
 export { GraphNG, type GraphNGProps } from './graveyard/GraphNG/GraphNG';
 export { TimeSeries } from './graveyard/TimeSeries/TimeSeries';
 export { useGraphNGContext } from './graveyard/GraphNG/hooks';

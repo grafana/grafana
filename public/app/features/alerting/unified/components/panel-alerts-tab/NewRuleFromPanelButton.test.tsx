@@ -24,6 +24,20 @@ jest.mock('react-use', () => ({
   useAsync: () => ({ loading: false, value: {} }),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    ...jest.requireActual('@grafana/runtime').config,
+    featureToggles: {
+      createAlertRuleFromPanel: true,
+    },
+  },
+}));
+
+jest.mock('../../components/AlertRuleDrawerForm', () => ({
+  AlertRuleDrawerForm: () => null,
+}));
+
 describe('Analytics', () => {
   it('Sends log info when creating an alert rule from a panel', async () => {
     const panel = new PanelModel({
