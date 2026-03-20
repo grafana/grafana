@@ -283,7 +283,7 @@ func buildSourceMetadataIndex(source []repository.FileTreeEntry) (map[string]boo
 	foldersWithMetadata := make(map[string]bool)
 	for _, file := range source {
 		if !file.Blob {
-			path := safepath.NormalizeDirPath(file.Path)
+			path := safepath.EnsureTrailingSlash(file.Path)
 			sourceFolders[path] = true
 		} else if resources.IsFolderMetadataFile(file.Path) {
 			if parent := safepath.Dir(file.Path); parent != "" {
@@ -318,13 +318,15 @@ func detectDeletedFolderMetadata(
 	var changes []ResourceFileChange
 	affectedFolders := make(map[string]bool)
 
-	for _, item := range target.Items {
+	for i := range target.Items {
+		item := target.Items[i]
+
 		// Non-folder resources or resources without a metadata file already are not affected.
 		if item.Group != resources.FolderResource.Group || item.Hash == "" {
 			continue
 		}
 
-		path := safepath.NormalizeDirPath(item.Path)
+		path := safepath.EnsureTrailingSlash(item.Path)
 		if path == "" {
 			continue // root folder
 		}
@@ -378,7 +380,7 @@ func detectFolderUIDChanges(
 
 		// If the metadata file exists, check if the UID has changed.
 		if meta.Name != change.Existing.Name {
-			path := safepath.NormalizeDirPath(change.Path)
+			path := safepath.EnsureTrailingSlash(change.Path)
 			affectedFolders[path] = true
 			change.FolderRenamed = true
 		}
@@ -398,7 +400,7 @@ func emitDirectChildrenChanges(
 	for _, item := range target.Items {
 		path := item.Path
 		if item.Group == resources.FolderResource.Group {
-			path = safepath.NormalizeDirPath(path)
+			path = safepath.EnsureTrailingSlash(path)
 		}
 		existingByPath[path] = item
 	}
@@ -406,7 +408,7 @@ func emitDirectChildrenChanges(
 	for _, file := range source {
 		path := file.Path
 		if !file.Blob {
-			path = safepath.NormalizeDirPath(path)
+			path = safepath.EnsureTrailingSlash(path)
 		}
 
 		// Not emit update for metadata files.
