@@ -1,4 +1,4 @@
-export const VERSIONS_FETCH_LIMIT = 10;
+export const VERSIONS_FETCH_LIMIT = 50;
 
 export interface RevisionModel {
   id: number;
