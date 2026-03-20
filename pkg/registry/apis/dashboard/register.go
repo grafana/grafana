@@ -406,13 +406,8 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 
 	// Validate folder existence if specified
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
-		folder, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID())
-		if err != nil {
+		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
 			return err
-		}
-
-		if err := b.validateFolderManagedBySameManager(folder, accessor); err != nil {
-			return apierrors.NewBadRequest(err.Error())
 		}
 	}
 
@@ -491,13 +486,8 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 			return err
 		}
 
-		folder, err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID)
-		if err != nil {
+		if _, err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID); err != nil {
 			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), newAccessor.GetFolder())
-		}
-
-		if err := b.validateFolderManagedBySameManager(folder, newAccessor); err != nil {
-			return err
 		}
 	}
 
@@ -528,28 +518,6 @@ func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderU
 	}
 
 	return folder, nil
-}
-
-// validation should fail if:
-// 1. The parent folder is managed but this dashboard is not
-// 2. The parent folder is managed by a different repository than this dashboard
-func (b *DashboardsAPIBuilder) validateFolderManagedBySameManager(folder *unstructured.Unstructured, dashboardAccessor utils.GrafanaMetaAccessor) error {
-	folderAccessor, err := utils.MetaAccessor(folder)
-	if err != nil {
-		return fmt.Errorf("error getting meta accessor: %w", err)
-	}
-
-	if folderManager, ok := folderAccessor.GetManagerProperties(); ok && folderManager.Kind == utils.ManagerKindRepo {
-		manager, ok := dashboardAccessor.GetManagerProperties()
-		if !ok {
-			return fmt.Errorf("folder is managed by a repository, but the dashboard is not managed")
-		}
-		if manager.Kind != utils.ManagerKindRepo || manager.Identity != folderManager.Identity {
-			return fmt.Errorf("folder is managed by a repository, but the dashboard is not managed by the same manager")
-		}
-	}
-
-	return nil
 }
 
 // getDashboardProperties extracts title and refresh interval from any dashboard version
