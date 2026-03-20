@@ -107,10 +107,12 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return "", err
 	}
 	if fm.tree.In(f.ID) {
-		if existing, ok := fm.tree.Get(f.ID); ok && !f.NeedsUpdate(FolderState{
-			Title: existing.Title, Path: existing.Path, Checksum: existing.MetadataHash,
-		}) {
-			return f.ID, nil
+		if existing, ok := fm.tree.Get(f.ID); ok {
+			desired := f.State()
+			desired.ParentID = existing.ParentID // parent hasn't been resolved yet
+			if desired.Equal(existing.State()) {
+				return f.ID, nil
+			}
 		}
 	}
 
@@ -119,16 +121,13 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		if err != nil {
 			return err
 		}
+		f.ParentID = parent
 		if fm.tree.In(f.ID) {
-			if existing, ok := fm.tree.Get(f.ID); ok && !f.NeedsUpdate(FolderState{
-				Title: existing.Title, Path: existing.Path, Checksum: existing.MetadataHash,
-			}) {
+			if existing, ok := fm.tree.Get(f.ID); ok && f.State().Equal(existing.State()) {
 				parent = f.ID
 				return nil
 			}
 		}
-
-		f.ParentID = parent
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
 			return &PathCreationError{
 				Path: f.Path,
@@ -172,13 +171,13 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		currentTitle, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
 		source, _ := meta.GetSourceProperties()
 		currentState := FolderState{
-			Title:    currentTitle,
-			Path:     source.Path,
-			Checksum: source.Checksum,
-			Parent:   meta.GetFolder(),
+			Title:        currentTitle,
+			Path:         source.Path,
+			MetadataHash: source.Checksum,
+			ParentID:     meta.GetFolder(),
 		}
 
-		if folder.NeedsUpdate(currentState) {
+		if !folder.State().Equal(currentState) {
 			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
 				return fmt.Errorf("set folder title: %w", err)
 			}

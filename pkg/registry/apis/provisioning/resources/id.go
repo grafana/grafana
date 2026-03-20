@@ -109,22 +109,29 @@ type Folder struct {
 	ParentID string
 }
 
-// FolderState represents the current state of a folder as stored in K8s.
+// FolderState captures the comparable properties of a folder: title, source
+// path, metadata checksum, and parent. Use Folder.State() to extract one from
+// a Folder, or construct directly from K8s object annotations.
 type FolderState struct {
-	Title    string
-	Path     string
-	Checksum string
-	Parent   string
+	Title        string
+	Path         string
+	MetadataHash string
+	ParentID     string
 }
 
-// NeedsUpdate reports whether the desired Folder state differs from the
-// current K8s state. This encapsulates the full staleness check: title,
-// source path, metadata checksum, and parent.
-func (f Folder) NeedsUpdate(current FolderState) bool {
-	return f.Title != current.Title ||
-		f.Path != current.Path ||
-		f.MetadataHash != current.Checksum ||
-		f.ParentID != current.Parent
+// State returns the comparable properties of a Folder.
+func (f Folder) State() FolderState {
+	return FolderState{
+		Title:        f.Title,
+		Path:         f.Path,
+		MetadataHash: f.MetadataHash,
+		ParentID:     f.ParentID,
+	}
+}
+
+// Equal reports whether two folder states are identical.
+func (s FolderState) Equal(other FolderState) bool {
+	return s == other
 }
 
 func ParseFolder(dirPath, repositoryName string) Folder {
