@@ -102,25 +102,28 @@ func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
 func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
 	namespacer := request.GetNamespaceMapper(a.cfg)
 	api := a.ng.Api
-	if gvr == inhibitionrule.ResourceInfo.GroupVersionResource() {
+	// Match on group+resource only (ignoring version) so that both v0alpha1 and v1beta1
+	// requests are served by the same legacy storage.
+	switch gvr.Resource {
+	case inhibitionrule.ResourceInfo.GroupResource().Resource:
 		return inhibitionrule.NewStorage(api.InhibitionRules, namespacer)
-	} else if gvr == receiver.ResourceInfo.GroupVersionResource() {
+	case receiver.ResourceInfo.GroupResource().Resource:
 		return receiver.NewStorage(api.ReceiverService, namespacer, api.ReceiverService)
-	} else if gvr == timeinterval.ResourceInfo.GroupVersionResource() {
+	case timeinterval.ResourceInfo.GroupResource().Resource:
 		srv := api.MuteTimings
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 			srv = srv.WithIncludeImported()
 		}
 		return timeinterval.NewStorage(srv, namespacer)
-	} else if gvr == templategroup.ResourceInfo.GroupVersionResource() {
+	case templategroup.ResourceInfo.GroupResource().Resource:
 		srv := api.Templates
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 			srv = srv.WithIncludeImported()
 		}
 		return templategroup.NewStorage(srv, namespacer)
-	} else if gvr == routingtree.ResourceInfo.GroupVersionResource() {
+	case routingtree.ResourceInfo.GroupResource().Resource:
 		return routingtree.NewStorage(api.RouteService, namespacer)
 	}
 	panic("unknown legacy storage requested: " + gvr.String())
