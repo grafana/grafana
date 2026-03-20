@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
@@ -10,6 +10,7 @@ import {
   Combobox,
   ComboboxOption,
   Field,
+  FieldValidationMessage,
   Input,
   Label,
   RadioButtonGroup,
@@ -126,8 +127,7 @@ export function RuleNotificationSection() {
 
   // Validate runbook URL for form-level validation feedback
   const runbookUrlError = useMemo(() => validateRunbookUrl(runbookUrlValue), [runbookUrlValue]);
-
-  const recipientLabelId = 'recipient-label';
+  const runbookUrlErrorId = useId();
 
   return (
     <section className={styles.section} aria-labelledby="notification-section-heading">
@@ -143,11 +143,7 @@ export function RuleNotificationSection() {
           <Stack direction="column" gap={1}>
             <Stack direction="column" gap={1}>
               <Stack direction="row" alignItems="end" justifyContent="space-between" gap={1}>
-                <Label htmlFor={recipientLabelId}>
-                  <span id={recipientLabelId}>
-                    {t('alerting.simplified.notification.recipient.label', 'Recipient')}
-                  </span>
-                </Label>
+                <Label>{t('alerting.simplified.notification.recipient.label', 'Recipient')}</Label>
                 <div className={styles.manualRoutingInline}>
                   <RadioButtonGroup
                     size="sm"
@@ -282,38 +278,45 @@ export function RuleNotificationSection() {
             label={t('alerting.simplified.notification.runbook-url.label', 'Runbook URL (optional)')}
             noMargin
             invalid={!!runbookUrlError}
-            error={runbookUrlError}
+            htmlFor="runbook-url-input"
           >
-            <Input
-              id="runbook-url-input"
-              type="url"
-              value={runbookUrlValue}
-              onChange={(e) => {
-                const value = e.currentTarget.value;
-                updateAnnotationValue(Annotation.runbookURL, value);
-              }}
-              onBlur={(e) => {
-                const value = e.currentTarget.value.trim();
-                // Sanitize and update the URL on blur if it's valid
-                if (value) {
-                  const error = validateRunbookUrl(value);
-                  if (!error) {
-                    // Sanitize the URL before storing
-                    const sanitizedUrl = sanitizeRunbookUrl(value);
-                    if (sanitizedUrl !== value) {
-                      updateAnnotationValue(Annotation.runbookURL, sanitizedUrl);
+            <>
+              <Input
+                id="runbook-url-input"
+                type="url"
+                value={runbookUrlValue}
+                onChange={(e) => {
+                  const value = e.currentTarget.value;
+                  updateAnnotationValue(Annotation.runbookURL, value);
+                }}
+                onBlur={(e) => {
+                  const value = e.currentTarget.value.trim();
+                  // Sanitize and update the URL on blur if it's valid
+                  if (value) {
+                    const error = validateRunbookUrl(value);
+                    if (!error) {
+                      // Sanitize the URL before storing
+                      const sanitizedUrl = sanitizeRunbookUrl(value);
+                      if (sanitizedUrl !== value) {
+                        updateAnnotationValue(Annotation.runbookURL, sanitizedUrl);
+                      }
                     }
                   }
-                }
-              }}
-              placeholder={t(
-                'alerting.simplified.notification.runbook-url.placeholder',
-                'Enter the webpage where you keep your runbook for the alert…'
+                }}
+                placeholder={t(
+                  'alerting.simplified.notification.runbook-url.placeholder',
+                  'Enter the webpage where you keep your runbook for the alert…'
+                )}
+                aria-label={t('alerting.simplified.notification.runbook-url.aria-label', 'Runbook URL')}
+                aria-invalid={!!runbookUrlError}
+                aria-describedby={runbookUrlError ? runbookUrlErrorId : undefined}
+              />
+              {runbookUrlError && (
+                <div id={runbookUrlErrorId} role="alert" className={styles.runbookUrlError}>
+                  <FieldValidationMessage>{runbookUrlError}</FieldValidationMessage>
+                </div>
               )}
-              aria-label={t('alerting.simplified.notification.runbook-url.aria-label', 'Runbook URL')}
-              aria-invalid={!!runbookUrlError}
-              aria-describedby={runbookUrlError ? 'runbook-url-error' : undefined}
-            />
+            </>
           </Field>
         </Stack>
       </div>
@@ -337,6 +340,9 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(0.5),
       whiteSpace: 'nowrap',
       maxWidth: '100%',
+    }),
+    runbookUrlError: css({
+      marginTop: theme.spacing(0.5),
     }),
   };
 }

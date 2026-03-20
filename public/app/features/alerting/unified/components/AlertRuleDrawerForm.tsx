@@ -49,13 +49,13 @@ export function AlertRuleDrawerForm({
   const notifyApp = useAppNotification();
   const ruleCreatedRef = useRef(false);
 
-  // Keep form in sync if prefill changes between openings
+  // Reset form and ref when drawer opens
   useEffect(() => {
     if (isOpen) {
       ruleCreatedRef.current = false;
+      methods.reset(prefill ? { ...baseDefaults, ...prefill } : baseDefaults);
     }
-    methods.reset(prefill ? { ...baseDefaults, ...prefill } : baseDefaults);
-  }, [prefill, methods, baseDefaults, isOpen]);
+  }, [isOpen, prefill, methods, baseDefaults]);
 
   if (!isOpen) {
     return null;

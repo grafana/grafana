@@ -44,11 +44,29 @@ export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {
   const totalExpressions = values.queries.filter((query) => isExpressionQueryInAlert(query)).length;
   const hasInvalidExpressions = totalExpressions > expressionQueries.length;
 
-  if (hasDataQueries && (!hasValidExpressions || hasInvalidExpressions)) {
+  if (hasDataQueries && hasInvalidExpressions) {
+    const validRefIds = new Set(expressionQueries.map((q) => q.refId));
+    const conditionRefStillValid = values.condition && validRefIds.has(values.condition);
+    const strippedQueries = [...dataQueries, ...expressionQueries];
+
     return {
       ...values,
-      queries: dataQueries, // Only keep data queries, remove invalid expressions
-      condition: '', // Clear condition so simplified editor can set it
+      queries: strippedQueries,
+      condition: conditionRefStillValid ? values.condition : (expressionQueries[0]?.refId ?? ''),
+      editorSettings: {
+        simplifiedQueryEditor: hasValidExpressions
+          ? areQueriesTransformableToSimpleCondition(dataQueries, expressionQueries)
+          : true,
+        simplifiedNotificationEditor: true,
+      },
+    };
+  }
+
+  if (hasDataQueries && !hasValidExpressions) {
+    return {
+      ...values,
+      queries: dataQueries,
+      condition: '',
       editorSettings: {
         simplifiedQueryEditor: true,
         simplifiedNotificationEditor: true,

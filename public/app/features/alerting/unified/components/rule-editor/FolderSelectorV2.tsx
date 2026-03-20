@@ -85,7 +85,7 @@ export function FolderSelectorV2() {
                 },
               }}
             />
-            <CreateNewFolder onCreate={handleFolderCreation} />
+            <CreateNewFolder onCreate={handleFolderCreation} fill="solid" size="sm" />
           </Stack>
         </Field>
       }
