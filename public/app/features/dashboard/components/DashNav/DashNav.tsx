@@ -30,7 +30,6 @@ import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { KioskMode } from 'app/types/dashboard';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
-import { StoreState } from 'app/types/store';
 
 import {
   DynamicDashNavButtonModel,
@@ -46,9 +45,7 @@ const mapDispatchToProps = {
   updateTimeZoneForSession,
 };
 
-const mapStateToProps = (_state: StoreState) => ({});
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(null, mapDispatchToProps);
 
 export interface OwnProps {
   dashboard: DashboardModel;
