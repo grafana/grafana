@@ -1527,6 +1527,9 @@ func convertCustomVariableToV1(variable *dashv2alpha1.DashboardCustomVariableKin
 		varMap["allValue"] = *spec.AllValue
 	}
 	varMap["allowCustomValue"] = spec.AllowCustomValue
+	if spec.ValuesFormat != nil {
+		varMap["valuesFormat"] = string(*spec.ValuesFormat)
+	}
 
 	return varMap, nil
 }

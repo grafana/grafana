@@ -747,6 +747,7 @@ func convertVariable_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardVariableKind, 
 				SkipUrlSync:      in.CustomVariableKind.Spec.SkipUrlSync,
 				Description:      in.CustomVariableKind.Spec.Description,
 				AllowCustomValue: in.CustomVariableKind.Spec.AllowCustomValue,
+				ValuesFormat:     convertCustomValuesFormat_V2beta1_to_V2alpha1(in.CustomVariableKind.Spec.ValuesFormat),
 			},
 		}
 	}
@@ -987,6 +988,14 @@ func convertTabRepeatOptions_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardTabRep
 		Mode:  in.Mode,
 		Value: in.Value,
 	}
+}
+
+func convertCustomValuesFormat_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardCustomVariableSpecValuesFormat) *dashv2alpha1.DashboardCustomVariableSpecValuesFormat {
+	if in == nil {
+		return nil
+	}
+	v := dashv2alpha1.DashboardCustomVariableSpecValuesFormat(*in)
+	return &v
 }
 
 func convertConditionalRenderingGroupKind_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardConditionalRenderingGroupKind) *dashv2alpha1.DashboardConditionalRenderingGroupKind {
