@@ -35,6 +35,7 @@ export function getCustomSearchHandler(hits: DashboardHit[]) {
     const limitFilter = parseInt(url.searchParams.get('limit') || '', 10) || hits.length;
     const folderFilter = url.searchParams.get('folder') || null;
     const typeFilter = url.searchParams.getAll('type');
+    const mappedTypeFilters = typeFilter.map((f) => typeMap[f] || f);
     const nameFilter = url.searchParams.getAll('name');
     const tagFilter = url.searchParams.getAll('tag');
     const offset = parseInt(url.searchParams.get('offset') || '', 10) || 0;
@@ -47,7 +48,7 @@ export function getCustomSearchHandler(hits: DashboardHit[]) {
     }
 
     if (typeFilter.length > 0) {
-      filters.push((hit) => typeFilter.includes(hit.resource));
+      filters.push((hit) => mappedTypeFilters.includes(hit.resource));
     }
 
     if (tagFilter.length > 0) {

@@ -1,52 +1,27 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
-import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { ContextSrv, contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { DashboardQueryResult, QueryResponse } from 'app/features/search/service/types';
 
 import { getRecentDashboardActions, getSearchResultActions, useSearchResults } from './dashboardActions';
 
+setBackendSrv(backendSrv);
+setupMockServer();
+
+// const searchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search';
+
 describe('dashboardActions', () => {
-  let grafanaSearcherSpy: jest.SpyInstance;
-  let mockContextSrv: jest.MockedObjectDeep<ContextSrv>;
-  const mockRecentDashboardUids = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+  const mockContextSrv: jest.MockedObjectDeep<ContextSrv> = jest.mocked(contextSrv);
+  const mockRecentDashboardUids = ['my-dashboard-1'];
 
-  const searchData: DataFrame = {
-    fields: [
-      { name: 'kind', type: FieldType.string, config: {}, values: ['dashboard'] },
-      { name: 'name', type: FieldType.string, config: {}, values: ['My dashboard 1'] },
-      { name: 'uid', type: FieldType.string, config: {}, values: ['my-dashboard-1'] },
-      { name: 'url', type: FieldType.string, config: {}, values: ['/my-dashboard-1'] },
-      { name: 'tags', type: FieldType.other, config: {}, values: [['foo', 'bar']] },
-      { name: 'location', type: FieldType.string, config: {}, values: ['my-folder-1'] },
-    ],
-    meta: {
-      custom: {
-        locationInfo: {
-          'my-folder-1': {
-            name: 'My folder 1',
-            kind: 'folder',
-            url: '/my-folder-1',
-          },
-        },
-      },
-    },
-    length: 1,
-  };
-
-  const mockSearchResult: QueryResponse = {
-    isItemLoaded: jest.fn(),
-    loadMoreItems: jest.fn(),
-    totalRows: searchData.length,
-    view: new DataFrameView<DashboardQueryResult>(searchData),
-  };
-
-  beforeAll(() => {
-    mockContextSrv = jest.mocked(contextSrv);
-    grafanaSearcherSpy = jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
+  beforeEach(() => {
+    server.use(
+      getCustomSearchHandler([{ resource: 'dashboards', name: 'my-dashboard-1', title: 'My dashboard 1', field: {} }])
+    );
   });
 
   afterEach(() => {
@@ -68,7 +43,6 @@ describe('dashboardActions', () => {
       it('returns an empty array, does not call the impressionSrv and does not call the search backend', async () => {
         const results = await getRecentDashboardActions();
         expect(impressionSrvSpy).not.toHaveBeenCalled();
-        expect(grafanaSearcherSpy).not.toHaveBeenCalled();
         expect(results).toEqual([]);
       });
     });
@@ -81,18 +55,13 @@ describe('dashboardActions', () => {
       it('calls the search backend with recent dashboards and returns an array of CommandPaletteActions', async () => {
         const results = await getRecentDashboardActions();
         expect(impressionSrvSpy).toHaveBeenCalled();
-        expect(grafanaSearcherSpy).toHaveBeenCalledWith({
-          kind: ['dashboard'],
-          limit: 5,
-          uid: ['1', '2', '3', '4', '5'],
-        });
         expect(results).toEqual([
           {
-            id: 'recent-dashboards/my-dashboard-1',
+            id: 'recent-dashboards/d/my-dashboard-1/my-dashboard-1',
             name: 'My dashboard 1',
             priority: 6,
             section: 'Recent dashboards',
-            url: '/my-dashboard-1',
+            url: '/d/my-dashboard-1/my-dashboard-1',
           },
         ]);
       });
@@ -103,7 +72,6 @@ describe('dashboardActions', () => {
     it('returns an empty array if the search query is empty', async () => {
       const searchQuery = '';
       const results = await getSearchResultActions(searchQuery);
-      expect(grafanaSearcherSpy).not.toHaveBeenCalled();
       expect(results).toEqual([]);
     });
 
@@ -116,7 +84,6 @@ describe('dashboardActions', () => {
         config.anonymousEnabled = false;
         const searchQuery = 'mySearchQuery';
         const results = await getSearchResultActions(searchQuery);
-        expect(grafanaSearcherSpy).not.toHaveBeenCalled();
         expect(results).toEqual([]);
       });
 
@@ -124,19 +91,14 @@ describe('dashboardActions', () => {
         config.anonymousEnabled = true;
         const searchQuery = 'mySearchQuery';
         const results = await getSearchResultActions(searchQuery);
-        expect(grafanaSearcherSpy).toHaveBeenCalledWith({
-          kind: ['dashboard', 'folder'],
-          query: searchQuery,
-          limit: 100,
-        });
         expect(results).toEqual([
           {
-            id: 'go/dashboard/my-dashboard-1',
+            id: 'go/dashboard/d/my-dashboard-1/my-dashboard-1',
             name: 'My dashboard 1',
             priority: 1,
             section: 'Dashboards',
-            subtitle: 'My folder 1',
-            url: '/my-dashboard-1',
+            subtitle: 'Dashboards',
+            url: '/d/my-dashboard-1/my-dashboard-1',
           },
         ]);
       });
@@ -150,19 +112,14 @@ describe('dashboardActions', () => {
       it('calls the search backend with recent dashboards and returns an array of CommandPaletteActions', async () => {
         const searchQuery = 'mySearchQuery';
         const results = await getSearchResultActions(searchQuery);
-        expect(grafanaSearcherSpy).toHaveBeenCalledWith({
-          kind: ['dashboard', 'folder'],
-          query: searchQuery,
-          limit: 100,
-        });
         expect(results).toEqual([
           {
-            id: 'go/dashboard/my-dashboard-1',
+            id: 'go/dashboard/d/my-dashboard-1/my-dashboard-1',
             name: 'My dashboard 1',
             priority: 1,
             section: 'Dashboards',
-            subtitle: 'My folder 1',
-            url: '/my-dashboard-1',
+            subtitle: 'Dashboards',
+            url: '/d/my-dashboard-1/my-dashboard-1',
           },
         ]);
       });
@@ -195,12 +152,12 @@ describe('dashboardActions', () => {
       await waitFor(() => {
         expect(result.current.searchResults).toEqual([
           {
-            id: 'go/dashboard/my-dashboard-1',
+            id: 'go/dashboard/d/my-dashboard-1/my-dashboard-1',
             name: 'My dashboard 1',
             priority: 1,
             section: 'Dashboards',
-            subtitle: 'My folder 1',
-            url: '/my-dashboard-1',
+            subtitle: 'Dashboards',
+            url: '/d/my-dashboard-1/my-dashboard-1',
           },
         ]);
       });

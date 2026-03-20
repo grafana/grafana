@@ -10,12 +10,8 @@ import {
   PanelPluginMeta,
   toDataFrame,
 } from '@grafana/data';
-import { setBackendSrv } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { setupMockServer } from '@grafana/test-utils/server';
-import { backendSrv } from 'app/core/services/backend_srv';
 
-import { getGrafanaSearcher } from '../../service/searcher';
 import { DashboardQueryResult, QueryResponse } from '../../service/types';
 import { DashboardSearchItemType } from '../../types';
 
@@ -25,9 +21,6 @@ jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   usePanelPluginMetasMap: jest.fn(),
 }));
-
-setBackendSrv(backendSrv);
-setupMockServer();
 
 const usePanelPluginMetasMapMock = jest.mocked(usePanelPluginMetasMap);
 
@@ -78,10 +71,6 @@ describe('SearchResultsTable', () => {
       totalRows: searchData.length,
       view: new DataFrameView<DashboardQueryResult>(dataFrames[0]),
     };
-
-    beforeAll(() => {
-      jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockSearchResult);
-    });
 
     it('shows the table with the correct accessible label', async () => {
       render(
@@ -205,10 +194,6 @@ describe('SearchResultsTable', () => {
       totalRows: emptySearchData.length,
       view: new DataFrameView<DashboardQueryResult>(emptySearchData),
     };
-
-    beforeAll(() => {
-      jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue(mockEmptySearchResult);
-    });
 
     it('shows a "No data" message', async () => {
       render(

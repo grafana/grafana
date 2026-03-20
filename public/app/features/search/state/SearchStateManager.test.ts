@@ -1,16 +1,14 @@
 import { waitFor } from '@testing-library/react';
 
-import { DataFrameView } from '@grafana/data';
 import { locationService, setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { getGrafanaSearcher } from '../service/searcher';
-import { DashboardQueryResult } from '../service/types';
 import { SearchLayout } from '../types';
 import * as utils from '../utils';
 
-import { getSearchStateManager } from './SearchStateManager';
+import { initialState, SearchStateManager } from './SearchStateManager';
 
 jest.mock('lodash', () => {
   const orig = jest.requireActual('lodash');
@@ -31,31 +29,27 @@ jest.mock('@grafana/runtime', () => {
 setBackendSrv(backendSrv);
 setupMockServer();
 
-describe('SearchStateManager', () => {
-  const searcher = getGrafanaSearcher();
-  jest.spyOn(searcher, 'search').mockResolvedValue({
-    isItemLoaded: jest.fn(),
-    loadMoreItems: jest.fn(),
-    totalRows: 0,
-    view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
-  });
+const createSearchStateManager = () => new SearchStateManager({ ...initialState, includePanels: false });
 
+describe('SearchStateManager', () => {
   beforeEach(() => {
     jest.useFakeTimers();
+    server.use(getCustomSearchHandler([]));
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     jest.useRealTimers();
   });
 
   it('Can get search state manager with initial state', async () => {
-    const stm = getSearchStateManager();
+    const stm = createSearchStateManager();
     expect(stm.state.layout).toBe(SearchLayout.Folders);
   });
 
   describe('initStateFromUrl', () => {
     it('should read and set state from URL and trigger search', async () => {
-      const stm = getSearchStateManager();
+      const stm = createSearchStateManager();
       locationService.partial({ query: 'test', tag: ['tag1', 'tag2'] });
       stm.initStateFromUrl();
       expect(stm.state.folderUid).toBe(undefined);
@@ -64,7 +58,7 @@ describe('SearchStateManager', () => {
     });
 
     it('should init or clear folderUid', async () => {
-      const stm = getSearchStateManager();
+      const stm = createSearchStateManager();
       stm.initStateFromUrl('asdsadas');
       expect(stm.state.folderUid).toBe('asdsadas');
 
@@ -79,7 +73,7 @@ describe('SearchStateManager', () => {
         query: 'hello',
         sort: 'alpha-asc',
       }));
-      const stm = getSearchStateManager();
+      const stm = createSearchStateManager();
       // Set list layout since folders layout implies sort to be undefined
       stm.onLayoutChange(SearchLayout.List);
       stm.initStateFromUrl();
@@ -99,42 +93,52 @@ describe('SearchStateManager', () => {
     });
 
     it('updates search results in order', async () => {
-      const stm = getSearchStateManager();
+      const stm = createSearchStateManager();
+      let now = 0;
+      jest.spyOn(Date, 'now').mockImplementation(() => ++now);
+      jest.spyOn(backendSrv, 'get').mockImplementation((url) => {
+        const requestUrl = typeof url === 'string' ? url : '';
+        const parsedUrl = new URL(requestUrl, 'http://localhost');
+        const query = parsedUrl.searchParams.get('query');
+        const typeFilters = parsedUrl.searchParams.getAll('type');
 
-      jest.spyOn(searcher, 'search').mockReturnValueOnce(
-        new Promise(async (resolve) => {
-          await wait(100);
+        if (typeFilters.includes('folder') && query === null) {
+          return Promise.resolve({ totalHits: 0, hits: [] });
+        }
 
-          resolve({
-            isItemLoaded: jest.fn(),
-            loadMoreItems: jest.fn(),
-            totalRows: 100,
-            view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
+        if (query === 'd') {
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              resolve({
+                totalHits: 100,
+                hits: [{ resource: 'dashboard', name: 'dash-d', title: 'Dash D', field: {} }],
+              });
+            }, 100);
           });
-        })
-      );
+        }
+
+        if (query === 'debugging') {
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              resolve({
+                totalHits: 10,
+                hits: [{ resource: 'dashboard', name: 'dash-debugging', title: 'Dash Debugging', field: {} }],
+              });
+            }, 50);
+          });
+        }
+
+        return Promise.resolve({ totalHits: 0, hits: [] });
+      });
+
       stm.onQueryChange('d');
-
-      jest.spyOn(searcher, 'search').mockReturnValueOnce(
-        new Promise(async (resolve) => {
-          await wait(50);
-
-          resolve({
-            isItemLoaded: jest.fn(),
-            loadMoreItems: jest.fn(),
-            totalRows: 10,
-            view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
-          });
-        })
-      );
-
       stm.onQueryChange('debugging');
 
       jest.advanceTimersByTime(150);
+      jest.runOnlyPendingTimers();
+      await Promise.resolve();
 
       await waitFor(() => expect(stm.state.result?.totalRows).toEqual(10));
     });
   });
 });
-
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
