@@ -14,29 +14,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-func TestIsRepoOptionalAction(t *testing.T) {
-	tests := []struct {
-		action   provisioning.JobAction
-		expected bool
-	}{
-		{provisioning.JobActionReleaseResources, true},
-		{provisioning.JobActionDeleteResources, true},
-		{provisioning.JobActionPull, false},
-		{provisioning.JobActionPush, false},
-		{provisioning.JobActionDelete, false},
-		{provisioning.JobActionMigrate, false},
-		{provisioning.JobActionMove, false},
-		{provisioning.JobActionPullRequest, false},
-		{provisioning.JobActionFixFolderMetadata, false},
-	}
-
-	for _, tt := range tests {
-		t.Run(string(tt.action), func(t *testing.T) {
-			assert.Equal(t, tt.expected, isRepoOptionalAction(tt.action))
-		})
-	}
-}
-
 func newConflictError() error {
 	return apierrors.NewConflict(
 		schema.GroupResource{Group: provisioning.GROUP, Resource: "jobs"},

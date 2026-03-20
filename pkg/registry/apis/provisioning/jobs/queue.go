@@ -48,6 +48,13 @@ type Worker interface {
 	Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress JobProgressRecorder) error
 }
 
+// IsOrphanCleanupAction returns true for job actions that operate on orphaned
+// resources and do not require the target repository to exist.
+func IsOrphanCleanupAction(action provisioning.JobAction) bool {
+	return action == provisioning.JobActionReleaseResources ||
+		action == provisioning.JobActionDeleteResources
+}
+
 // ProgressFn is a function that can be called to update the progress of a job
 //
 //go:generate mockery --name ProgressFn --structname MockProgressFn --inpackage --filename progress_fn_mock.go --with-expecter

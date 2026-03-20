@@ -135,7 +135,7 @@ func (c *jobsConnector) Connect(
 
 		// Orphan cleanup actions have inverted validation: only allowed when the
 		// repository does not exist or is stuck in Terminating state.
-		if isOrphanCleanupAction(spec.Action) {
+		if jobs.IsOrphanCleanupAction(spec.Action) {
 			c.handleOrphanCleanupJob(ctx, r, name, spec, responder)
 			return
 		}
@@ -243,13 +243,6 @@ var (
 	_ rest.Storage         = (*jobsConnector)(nil)
 	_ rest.StorageMetadata = (*jobsConnector)(nil)
 )
-
-// isOrphanCleanupAction returns true for job actions that operate on orphaned resources
-// and do not require the repository to exist.
-func isOrphanCleanupAction(action provisioning.JobAction) bool {
-	return action == provisioning.JobActionReleaseResources ||
-		action == provisioning.JobActionDeleteResources
-}
 
 // handleOrphanCleanupJob handles job creation for releaseResources and deleteResources
 // actions. These have inverted validation compared to normal jobs: they are only allowed
