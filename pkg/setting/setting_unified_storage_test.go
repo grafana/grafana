@@ -179,12 +179,11 @@ func TestApplyMigrationEnforcements(t *testing.T) {
 
 	enableMigrations := func(cfg *Cfg) {
 		cfg.Target = []string{"all"}
-		cfg.DisableDataMigrations = false
 		// storage_type defaults to "unified", no need to set it
 	}
 
 	disableMigrations := func(cfg *Cfg) {
-		cfg.DisableDataMigrations = true
+		cfg.Target = []string{"backend"}
 	}
 
 	t.Run("enforces EnableSearch when migrations run and search is disabled", func(t *testing.T) {

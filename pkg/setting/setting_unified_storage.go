@@ -218,7 +218,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 // or disables local search when a remote search server is configured.
 func (cfg *Cfg) applyMigrationEnforcements() {
 	if !cfg.ShouldRunMigrations() {
-		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations, "target", cfg.Target)
+		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "target", cfg.Target)
 		if cfg.shouldProxySearchRemotely() {
 			cfg.EnableSearch = false
 		}
@@ -269,8 +269,7 @@ func (cfg *Cfg) shouldProxySearchRemotely() bool {
 
 // ShouldRunMigrations reports whether data migrations to unified storage should run.
 func (cfg *Cfg) ShouldRunMigrations() bool {
-	return !cfg.DisableDataMigrations &&
-		cfg.UnifiedStorageType() == "unified" &&
+	return cfg.UnifiedStorageType() == "unified" &&
 		isTargetEligibleForMigrations(cfg.Target)
 }
 
