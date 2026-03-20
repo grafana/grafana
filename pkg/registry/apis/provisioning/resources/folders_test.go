@@ -752,17 +752,21 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 	ctx := context.Background()
 
-	managedFolder := func(name, title, managerIdentity string) *unstructured.Unstructured {
+	managedFolder := func(name, title, managerIdentity, sourcePath string) *unstructured.Unstructured {
+		annotations := map[string]interface{}{
+			"grafana.app/managerId": managerIdentity,
+		}
+		if sourcePath != "" {
+			annotations["grafana.app/sourcePath"] = sourcePath
+		}
 		return &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"apiVersion": "folder.grafana.app/v1beta1",
 				"kind":       "Folder",
 				"metadata": map[string]interface{}{
-					"name":      name,
-					"namespace": "default",
-					"annotations": map[string]interface{}{
-						"grafana.app/managerId": managerIdentity,
-					},
+					"name":        name,
+					"namespace":   "default",
+					"annotations": annotations,
 				},
 				"spec": map[string]interface{}{
 					"title": title,
@@ -784,7 +788,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		var updatedObj *unstructured.Unstructured
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
-				return managedFolder(name, "Old Title", config.Name), nil
+				return managedFolder(name, "Old Title", config.Name, "my-folder"), nil
 			},
 			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 				updatedObj = obj.DeepCopy()
@@ -815,10 +819,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
-				obj := managedFolder(name, "Same Title", config.Name)
-				annots := obj.Object["metadata"].(map[string]interface{})["annotations"].(map[string]interface{})
-				annots["grafana.app/sourcePath"] = "my-folder"
-				return obj, nil
+				return managedFolder(name, "Same Title", config.Name, "my-folder"), nil
 			},
 		}
 
@@ -869,7 +870,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
 				if name == "parent-uid" {
-					return managedFolder(name, "Old Parent Title", config.Name), nil
+					return managedFolder(name, "Old Parent Title", config.Name, "parent"), nil
 				}
 				return nil, apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, name)
 			},
@@ -930,10 +931,11 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 				Hash: "same-hash",
 			}, nil)
 
-		// Folder IS in tree with matching hash — returns early.
+		// Folder IS in tree with matching state (title, path, hash) — returns early.
 		tree := NewEmptyFolderTree()
 		f := ParseFolder("my-folder/", config.Name)
 		f.ID = "stable-uid"
+		f.Title = "Same Title"
 		f.MetadataHash = "same-hash"
 		tree.Add(f, "")
 
@@ -967,7 +969,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		var updatedObj *unstructured.Unstructured
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
-				return managedFolder(name, "Old Title", config.Name), nil
+				return managedFolder(name, "Old Title", config.Name, "my-folder"), nil
 			},
 			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 				updatedObj = obj
@@ -1004,7 +1006,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
-				return managedFolder(name, "Same Title", config.Name), nil
+				return managedFolder(name, "Same Title", config.Name, "my-folder"), nil
 			},
 			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 				return obj, nil
@@ -1031,7 +1033,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
-				return managedFolder(name, "Old Title", config.Name), nil
+				return managedFolder(name, "Old Title", config.Name, "my-folder"), nil
 			},
 			updateFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 				return nil, fmt.Errorf("conflict")
@@ -1061,7 +1063,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 
 		client := &fakeDynamicResourceClient{
 			getFn: func(name string) (*unstructured.Unstructured, error) {
-				return managedFolder(name, "Old Parent Title", config.Name), nil
+				return managedFolder(name, "Old Parent Title", config.Name, "parent"), nil
 			},
 			updateFn: func(_ *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 				return nil, fmt.Errorf("conflict")
@@ -1157,7 +1159,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 		require.Equal(t, "Same Title", title)
 	})
 
-	t.Run("updates source path along with checksum when folder moved", func(t *testing.T) {
+	t.Run("updates source path and checksum when both differ", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
@@ -1187,7 +1189,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 		require.NotNil(t, updatedObj)
 
 		sourcePath, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/sourcePath")
-		require.Equal(t, "my-folder", sourcePath, "sourcePath should be updated to the new folder path")
+		require.Equal(t, "my-folder", sourcePath, "sourcePath should be updated to the new path")
 
 		checksum, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", "grafana.app/sourceChecksum")
 		require.Equal(t, "new-hash", checksum)
@@ -1706,5 +1708,152 @@ func TestEnsureFolderTreeExists(t *testing.T) {
 		}
 		require.False(t, callByTitle["alpha"].created)
 		require.True(t, callByTitle["beta"].created)
+	})
+}
+
+func TestRenameFolderPath(t *testing.T) {
+	ctx := context.Background()
+
+	managedFolder := func(name, title, managerIdentity string) *unstructured.Unstructured {
+		return &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "folder.grafana.app/v1beta1",
+				"kind":       "Folder",
+				"metadata": map[string]interface{}{
+					"name":      name,
+					"namespace": "default",
+					"annotations": map[string]interface{}{
+						"grafana.app/managedBy":  "repo",
+						"grafana.app/managerId":  managerIdentity,
+						"grafana.app/sourcePath": "",
+					},
+				},
+				"spec": map[string]interface{}{
+					"title": title,
+				},
+			},
+		}
+	}
+
+	t.Run("same stable UID returns empty string (no cleanup needed)", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		metaJSON := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"My Folder"}}`)
+		rw.On("Read", mock.Anything, "old-team/_folder.json", "ref-old").
+			Return(&repository.FileInfo{Data: metaJSON}, nil)
+		// EnsureFolderPathExist reads with empty ref; RenameFolderPath reads with "ref-new"
+		rw.On("Read", mock.Anything, "new-team/_folder.json", "").
+			Return(&repository.FileInfo{Data: metaJSON}, nil)
+		rw.On("Read", mock.Anything, "new-team/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: metaJSON}, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "stable-uid", Title: "My Folder", Path: "old-team/"}, "")
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "My Folder", config.Name), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
+		require.NoError(t, err)
+		require.Empty(t, oldID, "same UID means in-place update, no cleanup needed")
+	})
+
+	t.Run("different UIDs returns old folder ID for cleanup", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		oldMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"old-uid"},"spec":{"title":"Old"}}`)
+		newMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"new-uid"},"spec":{"title":"New"}}`)
+		rw.On("Read", mock.Anything, "old-team/_folder.json", "ref-old").
+			Return(&repository.FileInfo{Data: oldMeta}, nil)
+		rw.On("Read", mock.Anything, "new-team/_folder.json", "").
+			Return(&repository.FileInfo{Data: newMeta}, nil)
+		rw.On("Read", mock.Anything, "new-team/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: newMeta}, nil)
+
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{}, name)
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
+		require.NoError(t, err)
+		require.Equal(t, "old-uid", oldID, "different UIDs means old folder needs cleanup")
+	})
+
+	t.Run("no metadata uses hash-based IDs which always differ on rename", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		tree := NewEmptyFolderTree()
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{}, name)
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree)
+		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "", "new-team/", "")
+		require.NoError(t, err)
+
+		oldFolder := ParseFolder("old-team/", config.Name)
+		require.Equal(t, oldFolder.ID, oldID, "hash-based IDs differ on rename, old ID returned for cleanup")
+	})
+
+	t.Run("error parsing old folder propagates", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "bad-folder/_folder.json", "ref").
+			Return(nil, fmt.Errorf("disk error"))
+
+		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
+		_, err := fm.RenameFolderPath(ctx, "bad-folder/", "ref", "new-folder/", "ref")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "parse old folder")
+	})
+
+	t.Run("error ensuring new path propagates", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+		rw.On("Read", mock.Anything, "old-team/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound)
+		rw.On("Read", mock.Anything, "new-team/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound)
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, fmt.Errorf("server error")
+			},
+		}
+
+		tree := NewEmptyFolderTree()
+		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		_, err := fm.RenameFolderPath(ctx, "old-team/", "", "new-team/", "")
+		require.Error(t, err)
+		require.ErrorContains(t, err, "ensure new folder path")
 	})
 }
