@@ -74,7 +74,7 @@ func TestIntegrationImportedInhibitionRules(t *testing.T) {
 		require.NoError(t, err)
 
 		snapshotPath := path.Join("test-data", "list.json")
-		exp, err := os.ReadFile(snapshotPath)
+		exp, err := os.ReadFile(snapshotPath) // #nosec G304
 		require.NoError(t, err)
 
 		if !assert.JSONEq(t, string(exp), string(got), "response should match expected snapshot") {
