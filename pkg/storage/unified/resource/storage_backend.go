@@ -545,6 +545,9 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 					// resource still exists, no need to delete anything
 					continue
 				}
+				if !errors.Is(err, ErrNotFound) {
+					return fmt.Errorf("garbage collection: latest resource key lookup for %s: %w", dk, err)
+				}
 
 				if b.garbageCollection.DryRun {
 					// if in dry run mode, just count the keys to delete
