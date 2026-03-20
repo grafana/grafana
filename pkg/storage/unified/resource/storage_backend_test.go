@@ -31,28 +31,30 @@ func withChannelNotifier(opts *KVBackendOptions) {
 	opts.UseChannelNotifier = true
 }
 
+func withKV(kv KV) func(*KVBackendOptions) {
+	return func(opts *KVBackendOptions) {
+		opts.KvStore = kv
+	}
+}
+
+func withSettleDelay(d time.Duration) func(*KVBackendOptions) {
+	return func(opts *KVBackendOptions) {
+		opts.WatchOptions.SettleDelay = d
+	}
+}
+
 func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *kvStorageBackend {
 	kv := setupBadgerKV(t)
 	opts := KVBackendOptions{
 		KvStore: kv,
+		// keep it low in tests as most of them don't exercise concurrent writes
+		WatchOptions: WatchOptions{SettleDelay: time.Millisecond},
 	}
 
 	for _, cfg := range configs {
 		cfg(&opts)
 	}
 
-	backend, err := NewKVStorageBackend(opts)
-	kvBackend := backend.(*kvStorageBackend)
-	require.NoError(t, err)
-	return kvBackend
-}
-
-func setupTestStorageBackendWithClusterScope(t *testing.T) *kvStorageBackend {
-	kv := setupBadgerKV(t)
-	opts := KVBackendOptions{
-		KvStore:                      kv,
-		WithExperimentalClusterScope: true,
-	}
 	backend, err := NewKVStorageBackend(opts)
 	kvBackend := backend.(*kvStorageBackend)
 	require.NoError(t, err)
@@ -345,24 +347,21 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 // in ascending ResourceVersion order.
 func TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	t.Skip("skipping flaky test for now")
+	var settleDelay time.Duration = 0 // use default value to exercise handling concurrent writes
 
 	t.Run("pollingNotifier", func(t *testing.T) {
 		if db.IsTestDbSQLite() {
 			t.Skip("sqlite uses channel notifier")
 		}
-		sqlKV := setupSqlKV(t)
-		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
-			opts.KvStore = sqlKV
-		})
+		backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)), withSettleDelay(settleDelay))
 		testConcurrentWatchWriteEvents(t, backend)
 	})
 
 	t.Run("channelNotifier", func(t *testing.T) {
-		sqlKV := setupSqlKV(t)
-		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
-			opts.KvStore = sqlKV
-		}, withChannelNotifier)
+		if !db.IsTestDbSQLite() {
+			t.Skip("channel notifier only enabled with sqlite")
+		}
+		backend := setupTestStorageBackend(t, withChannelNotifier, withKV(setupSqlKV(t)), withSettleDelay(settleDelay))
 		testConcurrentWatchWriteEvents(t, backend)
 	})
 }
@@ -373,7 +372,7 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	const numEvents = 500
+	const numEvents = 20
 
 	// Pre-create all WriteEvent structs.
 	writeEvents := make([]WriteEvent, numEvents)
@@ -405,7 +404,7 @@ func testConcurrentWatchWriteEvents(t *testing.T, backend *kvStorageBackend) {
 	require.NoError(t, err)
 
 	// Write events in batches of fixed concurrency until all are written.
-	const concurrency = 20
+	const concurrency = 5
 	writtenRVs := make(map[int64]bool, numEvents)
 	for batch := 0; batch < numEvents; batch += concurrency {
 		end := batch + concurrency
@@ -1969,9 +1968,9 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		rv1, err := backend.WriteEvent(ctx, writeEvent)
 		require.NoError(t, err)
 
-		// Update the resource prunerMaxEvents times. This will create one more event than the pruner limit.
+		// Update the resource defaultEventPruningLimit times. This will create one more event than the pruner limit.
 		previousRV := rv1
-		for i := 0; i < prunerMaxEvents; i++ {
+		for i := 0; i < defaultEventPruningLimit; i++ {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -2003,7 +2002,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		_, err = backend.dataStore.Get(ctx, eventKey1)
 		require.Error(t, err) // Should return error as event is pruned
 
-		// assert prunerMaxEvents most recent events exist
+		// assert defaultEventPruningLimit most recent events exist
 		counter := 0
 		for datakey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
 			Namespace: "default",
@@ -2015,7 +2014,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			require.NotEqual(t, rv1, datakey.ResourceVersion)
 			counter++
 		}
-		require.Equal(t, prunerMaxEvents, counter)
+		require.Equal(t, defaultEventPruningLimit, counter)
 	})
 
 	t.Run("will not prune events when less than limit", func(t *testing.T) {
@@ -2047,9 +2046,9 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		rv1, err := backend.WriteEvent(ctx, writeEvent)
 		require.NoError(t, err)
 
-		// Update the resource prunerMaxEvents-1 times. This will create same number of events as the pruner limit.
+		// Update the resource defaultEventPruningLimit-1 times. This will create same number of events as the pruner limit.
 		previousRV := rv1
-		for i := 0; i < prunerMaxEvents-1; i++ {
+		for i := 0; i < defaultEventPruningLimit-1; i++ {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
 			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
 			writeEvent.Value = objectToJSONBytes(t, testObj)
@@ -2080,7 +2079,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			require.NoError(t, err)
 			counter++
 		}
-		require.Equal(t, prunerMaxEvents, counter)
+		require.Equal(t, defaultEventPruningLimit, counter)
 	})
 
 	t.Run("will not prune deleted events", func(t *testing.T) {
@@ -2112,12 +2111,12 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		rv1, err := backend.WriteEvent(ctx, writeEvent)
 		require.NoError(t, err)
 
-		// Create prunerMaxEvents deleted events by repeatedly deleting and recreating the resource
-		// This will create: 1 initial ADDED + prunerMaxEvents cycles of (DELETE + ADDED)
+		// Create defaultEventPruningLimit deleted events by repeatedly deleting and recreating the resource
+		// This will create: 1 initial ADDED + defaultEventPruningLimit cycles of (DELETE + ADDED)
 		// = 1 + 20 + 20 = 41 total events (21 ADDED + 20 DELETED)
 		// Multiple deleted events for a resource shouldn't happen - this is just to ensure the pruner won't remove deleted events
 		previousRV := rv1
-		for i := 0; i < prunerMaxEvents; i++ {
+		for i := 0; i < defaultEventPruningLimit; i++ {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("delete-%d", i)
 			metaAccessor, err := utils.MetaAccessor(testObj)
 			require.NoError(t, err)
@@ -2169,8 +2168,8 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			}
 			counter++
 		}
-		require.Equal(t, prunerMaxEvents, deletedCount, "All deleted events should be kept")
-		require.Equal(t, prunerMaxEvents*2, counter, "Should have 20 deleted + 20 non-deleted events")
+		require.Equal(t, defaultEventPruningLimit, deletedCount, "All deleted events should be kept")
+		require.Equal(t, defaultEventPruningLimit*2, counter, "Should have 20 deleted + 20 non-deleted events")
 	})
 }
 
@@ -2261,7 +2260,7 @@ func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstruc
 
 // TestKvStorageBackend_ClusterScopedResources tests create, update, delete, list, and watch
 // operations for cluster-scoped resources (empty namespace).
-// This test requires the backend to be configured with WithExperimentalClusterScoped set to true.
+// Cluster-scoped resources use empty namespace, like etcd.
 //
 // The test verifies that:
 // - All write operations accept empty namespace
@@ -2269,7 +2268,18 @@ func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstruc
 // - ListIterator results return empty namespace
 // - WatchWriteEvents return empty namespace
 func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
-	backend := setupTestStorageBackendWithClusterScope(t)
+	t.Run("badger", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		testClusterScopedResources(t, backend)
+	})
+
+	t.Run("sqlkv", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)))
+		testClusterScopedResources(t, backend)
+	})
+}
+
+func testClusterScopedResources(t *testing.T, backend *kvStorageBackend) {
 	ctx := context.Background()
 
 	// Start watching for events before creating resources
@@ -2506,5 +2516,41 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 		case <-ctx.Done():
 			t.Fatalf("Timeout waiting for event %d", i)
 		}
+	}
+}
+
+func TestKvStorageBackend_prunerHistoryLimit(t *testing.T) {
+	tests := []struct {
+		name     string
+		group    string
+		resource string
+		expected int
+	}{
+		{
+			name:     "plugin resource returns custom limit",
+			group:    "plugins.grafana.app",
+			resource: "plugins",
+			expected: 3,
+		},
+		{
+			name:     "dashboard resource returns default limit",
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			expected: defaultEventPruningLimit,
+		},
+		{
+			name:     "other resource returns default limit",
+			group:    "some.app",
+			resource: "resources",
+			expected: defaultEventPruningLimit,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			limit := backend.prunerHistoryLimit(tc.group, tc.resource)
+			require.Equal(t, tc.expected, limit)
+		})
 	}
 }

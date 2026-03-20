@@ -706,6 +706,9 @@ export const versionedComponents = {
       addAnnotationButton: {
         '12.6.0': 'data-testid add annotation button',
       },
+      addLinkButton: {
+        '12.6.0': 'data-testid add link button',
+      },
       variableNameInput: {
         '12.0.0': 'data-testid variable name input',
       },

@@ -150,7 +150,7 @@ describe('TemplateDashboardModal', () => {
         expect(cardHeadings[1]).toHaveTextContent('Test Template Dashboard 2');
 
         // Assert DashboardCard components are rendered by checking for "View template" buttons
-        const viewTemplateButtons = screen.getAllByRole('button', { name: 'View template' });
+        const viewTemplateButtons = screen.getAllByRole('button', { name: /^View template:/i });
         expect(viewTemplateButtons).toHaveLength(2);
 
         // Assert text content (descriptions)
@@ -288,10 +288,10 @@ describe('TemplateDashboardModal', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getAllByRole('button', { name: 'View template' })).toHaveLength(2);
+        expect(screen.getAllByRole('button', { name: /^View template:/i })).toHaveLength(2);
       });
 
-      await user.click(screen.getAllByRole('button', { name: 'View template' })[0]);
+      await user.click(screen.getAllByRole('button', { name: /^View template:/i })[0]);
 
       expect(mockItemClicked).toHaveBeenCalledWith(
         expect.objectContaining({

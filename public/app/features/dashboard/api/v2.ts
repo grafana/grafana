@@ -22,6 +22,7 @@ import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
+import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import {
   DashboardAPI,
   DashboardVersionError,
@@ -31,11 +32,13 @@ import {
 } from './types';
 import { isV0V1StoredVersion } from './utils';
 
-export const K8S_V2_DASHBOARD_API_CONFIG = {
-  group: 'dashboard.grafana.app',
-  version: 'v2beta1',
-  resource: 'dashboards',
-};
+export function getK8sV2DashboardApiConfig() {
+  return {
+    group: 'dashboard.grafana.app',
+    version: dashboardAPIVersionResolver.getV2(),
+    resource: 'dashboards',
+  };
+}
 
 export class K8sDashboardV2API
   implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO, DashboardV2Spec>
@@ -43,7 +46,7 @@ export class K8sDashboardV2API
   private client: ResourceClient<DashboardV2Spec, Status>;
 
   constructor() {
-    this.client = new ScopedResourceClient<DashboardV2Spec>(K8S_V2_DASHBOARD_API_CONFIG);
+    this.client = new ScopedResourceClient<DashboardV2Spec>(getK8sV2DashboardApiConfig());
   }
 
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {

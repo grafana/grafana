@@ -42,12 +42,12 @@ function makeNotification(overrides: Partial<NotificationEntry> = {}): Notificat
 
 function renderPage(uuid: string, timestamp?: string) {
   const path = timestamp
-    ? `/alerting/notifications-history/view/${uuid}/${encodeURIComponent(timestamp)}`
+    ? `/alerting/notifications-history/view/${uuid}?ts=${new Date(timestamp).getTime()}`
     : `/alerting/notifications-history/view/${uuid}`;
 
   return render(
     <Routes>
-      <Route path="/alerting/notifications-history/view/:uuid/:timestamp?" element={<NotificationDetailPage />} />
+      <Route path="/alerting/notifications-history/view/:uuid" element={<NotificationDetailPage />} />
     </Routes>,
     { historyOptions: { initialEntries: [path] } }
   );

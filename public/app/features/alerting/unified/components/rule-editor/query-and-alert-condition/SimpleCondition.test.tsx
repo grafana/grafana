@@ -6,8 +6,9 @@ import { ClassicCondition, ExpressionQuery } from 'app/features/expressions/type
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { mockReduceExpression, mockThresholdExpression } from '../../../mocks';
+import { SimpleCondition } from '../../../types/rule-form';
 
-import { SimpleCondition, SimpleConditionEditor } from './SimpleCondition';
+import { SimpleConditionEditor } from './SimpleCondition';
 
 const defaultSimpleCondition: SimpleCondition = {
   whenField: ReducerID.last,

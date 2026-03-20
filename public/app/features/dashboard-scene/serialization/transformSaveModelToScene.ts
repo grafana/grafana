@@ -21,7 +21,7 @@ import {
   LocalValueVariable,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
-import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
+import { getK8sV1DashboardApiConfig } from 'app/features/dashboard/api/v1';
 import {
   getDashboardSceneProfilerWithMetadata,
   enablePanelProfilingForDashboard,
@@ -39,7 +39,6 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
-// DashboardPanelProfilingBehavior removed - now using composed SceneRenderProfiler
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -125,9 +124,8 @@ export function transformSaveModelToScene(
   const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard, options, sceneOptions);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
 
-  const apiVersion = config.featureToggles.kubernetesDashboards
-    ? `${K8S_V1_DASHBOARD_API_CONFIG.group}/${K8S_V1_DASHBOARD_API_CONFIG.version}`
-    : undefined;
+  const v1Config = getK8sV1DashboardApiConfig();
+  const apiVersion = config.featureToggles.kubernetesDashboards ? `${v1Config.group}/${v1Config.version}` : undefined;
 
   scene.setInitialSaveModel(rsp.dashboard, rsp.meta, apiVersion);
 

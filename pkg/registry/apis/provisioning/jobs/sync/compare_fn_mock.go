@@ -24,9 +24,9 @@ func (_m *MockCompareFn) EXPECT() *MockCompareFn_Expecter {
 	return &MockCompareFn_Expecter{mock: &_m.Mock}
 }
 
-// Execute provides a mock function with given fields: ctx, repo, repositoryResources, ref
-func (_m *MockCompareFn) Execute(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string) ([]ResourceFileChange, []string, error) {
-	ret := _m.Called(ctx, repo, repositoryResources, ref)
+// Execute provides a mock function with given fields: ctx, repo, repositoryResources, ref, folderMetadataEnabled
+func (_m *MockCompareFn) Execute(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string, folderMetadataEnabled bool) ([]ResourceFileChange, []string, error) {
+	ret := _m.Called(ctx, repo, repositoryResources, ref, folderMetadataEnabled)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Execute")
@@ -35,27 +35,27 @@ func (_m *MockCompareFn) Execute(ctx context.Context, repo repository.Reader, re
 	var r0 []ResourceFileChange
 	var r1 []string
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, resources.RepositoryResources, string) ([]ResourceFileChange, []string, error)); ok {
-		return rf(ctx, repo, repositoryResources, ref)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, resources.RepositoryResources, string, bool) ([]ResourceFileChange, []string, error)); ok {
+		return rf(ctx, repo, repositoryResources, ref, folderMetadataEnabled)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, resources.RepositoryResources, string) []ResourceFileChange); ok {
-		r0 = rf(ctx, repo, repositoryResources, ref)
+	if rf, ok := ret.Get(0).(func(context.Context, repository.Reader, resources.RepositoryResources, string, bool) []ResourceFileChange); ok {
+		r0 = rf(ctx, repo, repositoryResources, ref, folderMetadataEnabled)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]ResourceFileChange)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, repository.Reader, resources.RepositoryResources, string) []string); ok {
-		r1 = rf(ctx, repo, repositoryResources, ref)
+	if rf, ok := ret.Get(1).(func(context.Context, repository.Reader, resources.RepositoryResources, string, bool) []string); ok {
+		r1 = rf(ctx, repo, repositoryResources, ref, folderMetadataEnabled)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).([]string)
 		}
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, repository.Reader, resources.RepositoryResources, string) error); ok {
-		r2 = rf(ctx, repo, repositoryResources, ref)
+	if rf, ok := ret.Get(2).(func(context.Context, repository.Reader, resources.RepositoryResources, string, bool) error); ok {
+		r2 = rf(ctx, repo, repositoryResources, ref, folderMetadataEnabled)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -73,13 +73,14 @@ type MockCompareFn_Execute_Call struct {
 //   - repo repository.Reader
 //   - repositoryResources resources.RepositoryResources
 //   - ref string
-func (_e *MockCompareFn_Expecter) Execute(ctx interface{}, repo interface{}, repositoryResources interface{}, ref interface{}) *MockCompareFn_Execute_Call {
-	return &MockCompareFn_Execute_Call{Call: _e.mock.On("Execute", ctx, repo, repositoryResources, ref)}
+//   - folderMetadataEnabled bool
+func (_e *MockCompareFn_Expecter) Execute(ctx interface{}, repo interface{}, repositoryResources interface{}, ref interface{}, folderMetadataEnabled interface{}) *MockCompareFn_Execute_Call {
+	return &MockCompareFn_Execute_Call{Call: _e.mock.On("Execute", ctx, repo, repositoryResources, ref, folderMetadataEnabled)}
 }
 
-func (_c *MockCompareFn_Execute_Call) Run(run func(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string)) *MockCompareFn_Execute_Call {
+func (_c *MockCompareFn_Execute_Call) Run(run func(ctx context.Context, repo repository.Reader, repositoryResources resources.RepositoryResources, ref string, folderMetadataEnabled bool)) *MockCompareFn_Execute_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(repository.Reader), args[2].(resources.RepositoryResources), args[3].(string))
+		run(args[0].(context.Context), args[1].(repository.Reader), args[2].(resources.RepositoryResources), args[3].(string), args[4].(bool))
 	})
 	return _c
 }
@@ -89,7 +90,7 @@ func (_c *MockCompareFn_Execute_Call) Return(_a0 []ResourceFileChange, _a1 []str
 	return _c
 }
 
-func (_c *MockCompareFn_Execute_Call) RunAndReturn(run func(context.Context, repository.Reader, resources.RepositoryResources, string) ([]ResourceFileChange, []string, error)) *MockCompareFn_Execute_Call {
+func (_c *MockCompareFn_Execute_Call) RunAndReturn(run func(context.Context, repository.Reader, resources.RepositoryResources, string, bool) ([]ResourceFileChange, []string, error)) *MockCompareFn_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }

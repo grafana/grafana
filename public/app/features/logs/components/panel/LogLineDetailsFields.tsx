@@ -11,8 +11,8 @@ import { ClipboardButton, DataLinkButton, IconButton, IconSize, useStyles2 } fro
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
 import { LogLabelStats } from '../LogLabelStats';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { FieldDef } from '../logParser';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { LogListFontSize } from './LogList';

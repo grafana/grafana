@@ -41,6 +41,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
+import { NAMED_ROOT_LABEL_NAME } from '../components/notification-policies/useNotificationPolicyRoute';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { normalizeDefaultAnnotations } from '../rule-editor/formProcessing';
 import {
@@ -109,8 +110,12 @@ export function listifyLabelsOrAnnotations(item: Labels | Annotations | undefine
 
 export function getNotificationSettingsForDTO(
   manualRouting: boolean,
-  contactPoints?: AlertManagerManualRouting
+  contactPoints?: AlertManagerManualRouting,
+  selectedPolicy?: string
 ): GrafanaNotificationSettings | undefined {
+  if (config.featureToggles.alertingPolicyRoutingSettings && selectedPolicy && !manualRouting) {
+    return { policy: selectedPolicy };
+  }
   if (contactPoints?.grafana?.selectedContactPoint && manualRouting) {
     return {
       receiver: contactPoints?.grafana?.selectedContactPoint,
@@ -153,6 +158,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     isPaused,
     contactPoints,
     manualRouting,
+    selectedPolicy,
     type,
     metric,
     targetDatasourceUid,
@@ -162,13 +168,18 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     throw new Error('You cannot create an alert rule without specifying the alert condition');
   }
 
-  const notificationSettings = getNotificationSettingsForDTO(manualRouting, contactPoints);
+  const notificationSettings = getNotificationSettingsForDTO(manualRouting, contactPoints, selectedPolicy);
   const metadata = values.editorSettings
     ? { editor_settings: getEditorSettingsForDTO(values.editorSettings) }
     : undefined;
 
   const annotations = arrayToRecord(cleanAnnotations(values.annotations));
   const labels = arrayToRecord(cleanLabels(values.labels));
+  // When the new policy routing is active, the legacy label must not be sent so that both
+  // routing mechanisms never coexist in the same payload.
+  if (config.featureToggles.alertingPolicyRoutingSettings) {
+    delete labels[NAMED_ROOT_LABEL_NAME];
+  }
 
   const wantsAlertingRule = isGrafanaAlertingRuleByType(type);
   const wantsRecordingRule = isGrafanaRecordingRuleByType(type!);
@@ -232,31 +243,77 @@ const trimKeyAndValue = ({ key, value }: KVObject): KVObject => ({
   value: value.trim(),
 });
 
-export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {
-  const contactPoint: ContactPoint | undefined = ga.notification_settings
-    ? {
-        selectedContactPoint: ga.notification_settings.receiver,
-        muteTimeIntervals: ga.notification_settings.mute_time_intervals ?? [],
-        activeTimeIntervals: ga.notification_settings.active_time_intervals ?? [],
-        overrideGrouping:
-          Array.isArray(ga.notification_settings.group_by) && ga.notification_settings.group_by.length > 0,
-        overrideTimings: [
-          ga.notification_settings.group_wait,
-          ga.notification_settings.group_interval,
-          ga.notification_settings.repeat_interval,
-        ].some(Boolean),
-        groupBy: ga.notification_settings.group_by || [],
-        groupWaitValue: ga.notification_settings.group_wait || '',
-        groupIntervalValue: ga.notification_settings.group_interval || '',
-        repeatIntervalValue: ga.notification_settings.repeat_interval || '',
-      }
-    : undefined;
-  const routingSettings: AlertManagerManualRouting | undefined = contactPoint
-    ? {
-        [GRAFANA_RULES_SOURCE_NAME]: contactPoint,
-      }
-    : undefined;
-  return routingSettings;
+export function getContactPointsFromDTO(ruleDefinition: GrafanaRuleDefinition): AlertManagerManualRouting | undefined {
+  const notificationSettings = ruleDefinition.notification_settings;
+
+  // if the rule is configured to send to a policy, return early
+  if (!notificationSettings || 'policy' in notificationSettings) {
+    return undefined;
+  }
+
+  const {
+    receiver,
+    active_time_intervals,
+    mute_time_intervals,
+    group_by,
+    group_interval,
+    group_wait,
+    repeat_interval,
+  } = notificationSettings;
+
+  const contactPoint: ContactPoint = {
+    selectedContactPoint: receiver,
+    muteTimeIntervals: mute_time_intervals ?? [],
+    activeTimeIntervals: active_time_intervals ?? [],
+    overrideGrouping: Array.isArray(group_by) && group_by.length > 0,
+    overrideTimings: [group_wait, group_interval, repeat_interval].some(Boolean),
+    groupBy: group_by || [],
+    groupWaitValue: group_wait || '',
+    groupIntervalValue: group_interval || '',
+    repeatIntervalValue: repeat_interval || '',
+  };
+
+  return {
+    [GRAFANA_RULES_SOURCE_NAME]: contactPoint,
+  };
+}
+
+/**
+ * Normalizes contact point fields to ensure all properties have defined values.
+ * This is needed when passing RuleFormValues to the rule editor page, as the form
+ * expects all ContactPoint fields to be defined. The submit flow doesn't need this
+ * because getNotificationSettingsForDTO handles partial/missing fields when building
+ * the DTO for the backend.
+ */
+export function normalizeContactPoints(
+  contactPoints: AlertManagerManualRouting | undefined
+): AlertManagerManualRouting | undefined {
+  if (!contactPoints) {
+    return contactPoints;
+  }
+
+  const normalized: AlertManagerManualRouting = {};
+
+  for (const [alertManager, contactPoint] of Object.entries(contactPoints)) {
+    if (contactPoint.selectedContactPoint) {
+      const defaultContactPoint: ContactPoint = {
+        selectedContactPoint: contactPoint.selectedContactPoint,
+        overrideGrouping: contactPoint.overrideGrouping ?? false,
+        groupBy: contactPoint.groupBy ?? [],
+        overrideTimings: contactPoint.overrideTimings ?? false,
+        groupWaitValue: contactPoint.groupWaitValue ?? '',
+        groupIntervalValue: contactPoint.groupIntervalValue ?? '',
+        repeatIntervalValue: contactPoint.repeatIntervalValue ?? '',
+        muteTimeIntervals: contactPoint.muteTimeIntervals ?? [],
+        activeTimeIntervals: contactPoint.activeTimeIntervals ?? [],
+      };
+      normalized[alertManager] = defaultContactPoint;
+    } else {
+      normalized[alertManager] = contactPoint;
+    }
+  }
+
+  return normalized;
 }
 
 function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
@@ -309,6 +366,11 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       // grafana alerting rule
       const ga = normalizedRule.grafana_alert;
       const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
+      const selectedPolicy =
+        ga.notification_settings?.policy ??
+        (config.featureToggles.alertingPolicyRoutingSettings
+          ? normalizedRule.labels?.[NAMED_ROOT_LABEL_NAME]
+          : undefined);
       if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
         return {
           ...defaultFormValues,
@@ -329,6 +391,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 
           contactPoints: routingSettings,
           manualRouting: Boolean(routingSettings),
+          selectedPolicy,
 
           editorSettings: getEditorSettingsFromDTO(ga),
 
@@ -453,6 +516,9 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
 
   // grafana alerting rule
   const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
+  const cloneSelectedPolicy =
+    ga.notification_settings?.policy ??
+    (config.featureToggles.alertingPolicyRoutingSettings ? rule.labels?.[NAMED_ROOT_LABEL_NAME] : undefined);
   if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
     return {
       ...commonProperties,
@@ -465,6 +531,7 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
 
       contactPoints: routingSettings,
       manualRouting: Boolean(routingSettings),
+      selectedPolicy: cloneSelectedPolicy,
 
       editorSettings: getEditorSettingsFromDTO(ga),
     };
@@ -559,14 +626,85 @@ export const getDefaultRecordingRulesQueries = (
   ];
 };
 
-export const getDefaultExpressions = (...refIds: [string, string]) => {
+export const getDefaultExpressions = (...refIds: [string, string] | [string, string, string]): AlertQuery[] => {
   const refOne = refIds[0];
   const refTwo = refIds[1];
+  // If a third parameter is provided, use it as the source query refId, otherwise default to 'A'
+  const sourceRefId = refIds.length === 3 ? refIds[2] : 'A';
 
-  const reduceQuery = getDefaultReduceExpression({ inputRefId: 'A', reduceRefId: refOne });
-  const thresholdQuery = getDefaultThresholdExpression({ inputRefId: refOne, thresholdRefId: refTwo });
+  const reduceExpression: ExpressionQuery = {
+    refId: refIds[0],
+    type: ExpressionQueryType.reduce,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: ExpressionDatasourceRef.type,
+    },
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: [],
+          type: EvalFunction.IsAbove,
+        },
+        operator: {
+          type: 'and',
+        },
+        query: {
+          params: [],
+        },
+        reducer: {
+          params: [],
+          type: 'last',
+        },
+      },
+    ],
+    reducer: 'last',
+    expression: sourceRefId,
+  };
 
-  return [reduceQuery, thresholdQuery] as const;
+  const thresholdExpression: ExpressionQuery = {
+    refId: refTwo,
+    type: ExpressionQueryType.threshold,
+    datasource: {
+      uid: ExpressionDatasourceUID,
+      type: ExpressionDatasourceRef.type,
+    },
+    conditions: [
+      {
+        type: 'query',
+        evaluator: {
+          params: [0],
+          type: EvalFunction.IsAbove,
+        },
+        operator: {
+          type: 'and',
+        },
+        query: {
+          params: [refTwo],
+        },
+        reducer: {
+          params: [],
+          type: 'last',
+        },
+      },
+    ],
+    expression: refOne,
+  };
+
+  return [
+    {
+      refId: refOne,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: 'expression',
+      model: reduceExpression,
+    },
+    {
+      refId: refTwo,
+      datasourceUid: ExpressionDatasourceUID,
+      queryType: 'expression',
+      model: thresholdExpression,
+    },
+  ];
 };
 
 const getDefaultExpressionsForRecording = (refOne: string): Array<AlertQuery<ExpressionQuery>> => {
@@ -609,95 +747,6 @@ const getDefaultExpressionsForRecording = (refOne: string): Array<AlertQuery<Exp
     },
   ];
 };
-
-export function getDefaultReduceExpression({
-  inputRefId,
-  reduceRefId,
-}: {
-  inputRefId: string;
-  reduceRefId: string;
-}): AlertQuery<ExpressionQuery> {
-  const reduceExpression: ExpressionQuery = {
-    refId: reduceRefId,
-    type: ExpressionQueryType.reduce,
-    datasource: {
-      uid: ExpressionDatasourceUID,
-      type: ExpressionDatasourceRef.type,
-    },
-    conditions: [
-      {
-        type: 'query',
-        evaluator: {
-          params: [],
-          type: EvalFunction.IsAbove,
-        },
-        operator: {
-          type: 'and',
-        },
-        query: {
-          params: [],
-        },
-        reducer: {
-          params: [],
-          type: 'last',
-        },
-      },
-    ],
-    reducer: 'last',
-    expression: inputRefId,
-  };
-
-  return {
-    refId: reduceRefId,
-    datasourceUid: ExpressionDatasourceUID,
-    queryType: '',
-    model: reduceExpression,
-  };
-}
-
-export function getDefaultThresholdExpression({
-  inputRefId,
-  thresholdRefId,
-}: {
-  inputRefId: string;
-  thresholdRefId: string;
-}): AlertQuery<ExpressionQuery> {
-  const thresholdExpression: ExpressionQuery = {
-    refId: thresholdRefId,
-    type: ExpressionQueryType.threshold,
-    datasource: {
-      uid: ExpressionDatasourceUID,
-      type: ExpressionDatasourceRef.type,
-    },
-    conditions: [
-      {
-        type: 'query',
-        evaluator: {
-          params: [0],
-          type: EvalFunction.IsAbove,
-        },
-        operator: {
-          type: 'and',
-        },
-        query: {
-          params: [],
-        },
-        reducer: {
-          params: [],
-          type: 'last',
-        },
-      },
-    ],
-    expression: inputRefId,
-  };
-
-  return {
-    refId: thresholdRefId,
-    datasourceUid: ExpressionDatasourceUID,
-    queryType: '',
-    model: thresholdExpression,
-  };
-}
 
 export const dataQueriesToGrafanaQueries = async (
   queries: DataQuery[],
@@ -783,24 +832,15 @@ export const panelToRuleFormValues = async (
     return undefined;
   }
 
-  const lastQuery = queries.at(-1);
-  if (!lastQuery) {
-    return undefined;
-  }
-
+  // Add default expression queries if they don't exist
   if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const reduceExpression = getDefaultReduceExpression({
-      inputRefId: lastQuery.refId,
-      reduceRefId: getNextRefId(queries),
-    });
-    queries.push(reduceExpression);
-
-    const thresholdExpression = getDefaultThresholdExpression({
-      inputRefId: reduceExpression.refId,
-      thresholdRefId: getNextRefId(queries),
-    });
-
-    queries.push(thresholdExpression);
+    // Get the last data query's refId to use as the source for the reduce expression
+    const lastDataQueryRefId = queries[queries.length - 1].refId;
+    const reduceRefId = getNextRefId(queries);
+    const queriesWithReduce = [...queries, { refId: reduceRefId, datasourceUid: '', queryType: '', model: {} }];
+    const thresholdRefId = getNextRefId(queriesWithReduce);
+    const expressions = getDefaultExpressions(reduceRefId, thresholdRefId, lastDataQueryRefId);
+    queries.push(...expressions);
   }
 
   const { folderTitle, folderUid } = dashboard.meta;
@@ -870,24 +910,15 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
     return undefined;
   }
 
-  const lastQuery = grafanaQueries.at(-1);
-  if (!lastQuery) {
-    return undefined;
-  }
-
+  // Add default expression queries if they don't exist
   if (!grafanaQueries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const reduceExpression = getDefaultReduceExpression({
-      inputRefId: lastQuery.refId,
-      reduceRefId: getNextRefId(grafanaQueries),
-    });
-    grafanaQueries.push(reduceExpression);
-
-    const thresholdExpression = getDefaultThresholdExpression({
-      inputRefId: reduceExpression.refId,
-      thresholdRefId: getNextRefId(grafanaQueries),
-    });
-
-    grafanaQueries.push(thresholdExpression);
+    // Get the last data query's refId to use as the source for the reduce expression
+    const lastDataQueryRefId = grafanaQueries[grafanaQueries.length - 1].refId;
+    const reduceRefId = getNextRefId(grafanaQueries);
+    const queriesWithReduce = [...grafanaQueries, { refId: reduceRefId, datasourceUid: '', queryType: '', model: {} }];
+    const thresholdRefId = getNextRefId(queriesWithReduce);
+    const expressions = getDefaultExpressions(reduceRefId, thresholdRefId, lastDataQueryRefId);
+    grafanaQueries.push(...expressions);
   }
 
   const { folderTitle, folderUid } = dashboard.state.meta;

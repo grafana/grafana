@@ -529,6 +529,9 @@ const (
 
 	// Usage stats actions
 	ActionUsageStatsRead = "server.usagestats.report:read"
+
+	// Live (Grafana Live) actions
+	ActionLivePush = "live:push"
 )
 
 var (
