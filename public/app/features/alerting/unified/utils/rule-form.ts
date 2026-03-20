@@ -10,6 +10,7 @@ import {
   getNextRefId,
   rangeUtil,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { PromQuery } from '@grafana/prometheus';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
@@ -47,6 +48,7 @@ import { normalizeDefaultAnnotations } from '../rule-editor/formProcessing';
 import {
   AlertManagerManualRouting,
   ContactPoint,
+  Folder,
   KVObject,
   RuleFormType,
   RuleFormValues,
@@ -806,6 +808,19 @@ export const dataQueriesToGrafanaQueries = async (
   return result;
 };
 
+/**
+ * Folder that contains the dashboard, used to pre-fill the alert rule folder.
+ */
+export function folderFromDashboardMeta(meta: { folderUid?: string; folderTitle?: string }): Folder | undefined {
+  const uid = meta.folderUid ?? '';
+  const title = meta.folderTitle ?? '';
+  if (!uid && !title) {
+    return undefined;
+  }
+  const displayTitle = title || (uid ? uid : t('browse-dashboards.folder-picker.root-title', 'Dashboards'));
+  return { uid, title: displayTitle };
+}
+
 export const panelToRuleFormValues = async (
   panel: PanelModel,
   dashboard: DashboardModel
@@ -843,15 +858,7 @@ export const panelToRuleFormValues = async (
     queries.push(...expressions);
   }
 
-  const { folderTitle, folderUid } = dashboard.meta;
-  const folder =
-    folderUid && folderTitle
-      ? {
-          kind: 'folder',
-          uid: folderUid,
-          title: folderTitle,
-        }
-      : undefined;
+  const folder = folderFromDashboardMeta(dashboard.meta);
 
   const formValues = {
     type: RuleFormType.grafana,
@@ -921,16 +928,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
     grafanaQueries.push(...expressions);
   }
 
-  const { folderTitle, folderUid } = dashboard.state.meta;
-
-  const folder =
-    folderUid && folderTitle
-      ? {
-          kind: 'folder',
-          uid: folderUid,
-          title: folderTitle,
-        }
-      : undefined;
+  const folder = folderFromDashboardMeta(dashboard.state.meta);
 
   const formValues = {
     type: RuleFormType.grafana,
