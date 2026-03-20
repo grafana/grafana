@@ -3,16 +3,12 @@ import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { GrafanaSearcher, SearchQuery } from './types';
+import { SearchQuery } from './types';
 import { toDashboardResults, SearchHit, SearchAPIResponse, UnifiedSearcher } from './unified';
 
 beforeEach(() => {
   jest.clearAllMocks();
 });
-
-const mockFallbackSearcher = {
-  search: jest.fn(),
-} as unknown as GrafanaSearcher;
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -31,7 +27,7 @@ describe('Unified Storage Searcher', () => {
       ])
     );
 
-    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+    const searcher = new UnifiedSearcher();
 
     const response = await searcher.search(query);
 
@@ -59,7 +55,7 @@ describe('Unified Storage Searcher', () => {
       limit: 50,
     };
 
-    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+    const searcher = new UnifiedSearcher();
 
     const response = await searcher.search(query);
 
@@ -88,7 +84,7 @@ describe('Unified Storage Searcher', () => {
       ])
     );
 
-    const searcher = new UnifiedSearcher(mockFallbackSearcher);
+    const searcher = new UnifiedSearcher();
     const response = await searcher.search(query);
 
     expect(response.view.length).toBe(1);
