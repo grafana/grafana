@@ -25,7 +25,7 @@ You can configure SAML authentication in Grafana using the configuration file, T
 The Grafana SAML UI provides the following advantages over configuring SAML in the Grafana configuration file:
 
 - It's accessible by Grafana Cloud users.
-- Access to the SAML UI only requires access to authentication settings, so users with limited access to Grafana's configuration can use it.
+- Access to the SAML UI only requires access to authentication settings, so users with limited access to the Grafana configuration can use it.
 - The SAML UI carries out input validation and gives feedback on wether the configuration works, making SAML set-up easier.
 - It doesn't require Grafana to be restarted after a configuration update.
 
