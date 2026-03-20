@@ -153,7 +153,6 @@
 /pkg/apimachinery @grafana/grafana-app-platform-squad
 /pkg/apimachinery/identity/ @grafana/identity-squad
 /pkg/apimachinery/errutil/ @grafana/grafana-backend-group
-/pkg/operators/iam @grafana/access-squad
 /pkg/storage/ @grafana/grafana-search-and-storage
 /pkg/storage/secret/ @grafana/grafana-operator-experience-squad
 /pkg/services/annotations/ @grafana/grafana-backend-services-squad
@@ -430,6 +429,8 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/cloud-plugins-suite/ @grafana/partner-datasources
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
 /e2e-playwright/dashboard-cujs/ @grafana/dashboards-squad
+/e2e-playwright/dashboard-cujs/scope-*.spec.ts @grafana/dashboards-squad @grafana/grafana-operator-experience-squad
+/e2e-playwright/utils/scope* @grafana/grafana-operator-experience-squad
 /e2e-playwright/dashboards-search-suite/ @grafana/dashboards-squad
 /e2e-playwright/dashboards/cujs/ @grafana/dashboards-squad
 /e2e-playwright/dashboards/DashboardForConditionalRendering.json @grafana/dashboards-squad
