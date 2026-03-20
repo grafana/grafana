@@ -53,36 +53,16 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
 		helper.SyncAndWait(t, repo, nil)
 
-		// FIXME: use the helpers for assertions
-		// Verify file is moved in repository
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "moved", "dashboard1.json")
-		require.NoError(t, err, "file should exist at new location in repository")
+		common.RequireRepoFile(t, helper.Repositories, ctx, repo, "moved", "dashboard1.json")
+		common.RequireNoRepoFile(t, helper.Repositories, ctx, repo, "dashboard1.json")
+		common.RequireRepoFile(t, helper.Repositories, ctx, repo, "dashboard2.json")
+		common.RequireRepoFile(t, helper.Repositories, ctx, repo, "folder", "dashboard3.json")
 
-		// Verify original file is gone from repository
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard1.json")
-		require.Error(t, err, "original file should be gone from repository")
-		require.True(t, apierrors.IsNotFound(err), "should be not found error")
-
-		// Verify other files still exist at original locations
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
-		require.NoError(t, err, "other files should still exist")
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
-		require.NoError(t, err, "nested files should still exist")
-
-		// Verify dashboard still exists in Grafana after sync
-		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
-		// Verify that dashboards have the correct source paths
-		foundPaths := make(map[string]bool)
-		for _, dashboard := range dashboards.Items {
-			sourcePath := dashboard.GetAnnotations()["grafana.app/sourcePath"]
-			foundPaths[sourcePath] = true
-		}
-
-		require.True(t, foundPaths["moved/dashboard1.json"], "should have dashboard with moved source path")
-		require.True(t, foundPaths["dashboard2.json"], "should have dashboard2 in original location")
-		require.True(t, foundPaths["folder/dashboard3.json"], "should have dashboard3 in original nested location")
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "moved/dashboard1.json"},
+			"WZ7AhQiVz": {Title: "Text options", SourcePath: "dashboard2.json"},
+			"mIJjFy8Kz": {Title: "Timeline Demo", SourcePath: "folder/dashboard3.json"},
+		})
 	})
 
 	t.Run("move multiple files and folder", func(t *testing.T) {
@@ -102,38 +82,16 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 		// TODO: This additional sync should not be necessary - the move job should handle sync properly
 		helper.SyncAndWait(t, repo, nil)
 
-		// Verify files are moved in repository
-		_, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "archived", "dashboard2.json")
-		require.NoError(t, err, "dashboard2.json should exist at new location")
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "archived", "folder", "dashboard3.json")
-		require.NoError(t, err, "folder/dashboard3.json should exist at new nested location")
+		common.RequireRepoFile(t, helper.Repositories, ctx, repo, "archived", "dashboard2.json")
+		common.RequireRepoFile(t, helper.Repositories, ctx, repo, "archived", "folder", "dashboard3.json")
+		common.RequireNoRepoFile(t, helper.Repositories, ctx, repo, "dashboard2.json")
+		common.RequireNoRepoFile(t, helper.Repositories, ctx, repo, "folder", "dashboard3.json")
 
-		// Verify original files are gone from repository
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "dashboard2.json")
-		require.Error(t, err, "dashboard2.json should be gone from original location")
-		require.True(t, apierrors.IsNotFound(err))
-
-		_, err = helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{}, "files", "folder", "dashboard3.json")
-		require.Error(t, err, "folder should be gone from original location")
-		require.True(t, apierrors.IsNotFound(err), err.Error())
-
-		// Verify dashboards still exist in Grafana after sync
-		// Note: Since dashboard1.json was moved in the previous test, we now expect all 3 dashboards
-		// to be accessible from their moved locations (dashboard1 from moved/, dashboard2 and dashboard3 from archived/)
-		dashboards, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Len(t, dashboards.Items, 3, "should still have 3 dashboards after move")
-
-		// Verify that dashboards have the correct source paths after cumulative moves
-		foundPaths := make(map[string]bool)
-		for _, dashboard := range dashboards.Items {
-			sourcePath := dashboard.GetAnnotations()["grafana.app/sourcePath"]
-			foundPaths[sourcePath] = true
-		}
-
-		require.True(t, foundPaths["moved/dashboard1.json"], "should have dashboard1 from first move")
-		require.True(t, foundPaths["archived/dashboard2.json"], "should have dashboard2 in archived location")
-		require.True(t, foundPaths["archived/folder/dashboard3.json"], "should have dashboard3 in archived nested location")
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "moved/dashboard1.json"},
+			"WZ7AhQiVz": {Title: "Text options", SourcePath: "archived/dashboard2.json"},
+			"mIJjFy8Kz": {Title: "Timeline Demo", SourcePath: "archived/folder/dashboard3.json"},
+		})
 	})
 
 	t.Run("move non-existent file is rejected", func(t *testing.T) {

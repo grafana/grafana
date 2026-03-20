@@ -80,6 +80,12 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 		"teamA/teamC/teamB/dashboard.json": "team-b-uid",
 		"teamA/teamC/dashboard.json":       newTeamCUID,
 	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "teamA/dashboard.json"},
+		"WZ7AhQiVz": {Title: "Text options", SourcePath: "teamA/teamC/teamB/dashboard.json"},
+		"mIJjFy8Kz": {Title: "Timeline Demo", SourcePath: "teamA/teamC/dashboard.json"},
+	})
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t *testing.T) {
@@ -129,6 +135,12 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t
 		"other/child/dashboard.json":       "child-uid",
 		"other/child/grand/dashboard.json": newGrandUID,
 	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "root/dashboard.json"},
+		"WZ7AhQiVz": {Title: "Text options", SourcePath: "other/child/dashboard.json"},
+		"mIJjFy8Kz": {Title: "Timeline Demo", SourcePath: "other/child/grand/dashboard.json"},
+	})
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *testing.T) {
@@ -170,6 +182,11 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *
 		"metaA/dashboard.json":        "meta-a-uid",
 		"metaA/plainB/dashboard.json": newPlainBUID,
 	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "metaA/dashboard.json"},
+		"WZ7AhQiVz": {Title: "Text options", SourcePath: "metaA/plainB/dashboard.json"},
+	})
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainParent(t *testing.T) {
@@ -204,6 +221,10 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainPare
 	assertNoFolderAtPath(t, helper, repo, "parent/child")
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"child/dashboard.json": "child-uid",
+	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "child/dashboard.json"},
 	})
 }
 
@@ -246,6 +267,10 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t 
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"parent/myfolder/dashboard.json": "my-uid",
 	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "parent/myfolder/dashboard.json"},
+	})
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t *testing.T) {
@@ -286,6 +311,10 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 	assertNoFolderAtPath(t, helper, repo, "parent/child")
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"child/dashboard.json": "child-uid",
+	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "child/dashboard.json"},
 	})
 }
 
