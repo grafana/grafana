@@ -1426,48 +1426,32 @@ func (k *kvStorageBackend) processTrashEntries(
 ) (int64, error) {
 	reqKey := req.Options.Key
 
-	// Determine iteration range based on Name and continue token
-	var keysIter iter.Seq2[DataKey, error]
-	if reqKey.Name != "" {
-		// Single-name scan
-		keysIter = k.dataStore.Keys(ctx, ListRequestKey{
-			Namespace: reqKey.Namespace,
-			Group:     reqKey.Group,
-			Resource:  reqKey.Resource,
-			Name:      reqKey.Name,
-		}, SortOrderAsc)
-	} else if lastSeenName == "" {
-		// Full namespace scan (no continue token)
-		keysIter = k.dataStore.Keys(ctx, ListRequestKey{
-			Namespace: reqKey.Namespace,
-			Group:     reqKey.Group,
-			Resource:  reqKey.Resource,
-		}, SortOrderAsc)
-	} else {
-		// Continue from a specific name using kv.Keys directly for efficient seek.
-		// We bypass dataStore.Keys because it uses the same prefix for both start and end,
-		// which would restrict iteration to just lastSeenName's keys.
-		nsPrefix := ListRequestKey{Group: reqKey.Group, Resource: reqKey.Resource, Namespace: reqKey.Namespace}.Prefix()
-		startKey := nsPrefix + lastSeenName + "/"
-		endKey := PrefixRangeEnd(nsPrefix)
-		keysIter = func(yield func(DataKey, error) bool) {
-			for rawKey, err := range k.dataStore.kv.Keys(ctx, dataSection, ListOptions{
-				StartKey: startKey,
-				EndKey:   endKey,
-				Sort:     SortOrderAsc,
-			}) {
-				if err != nil {
-					yield(DataKey{}, err)
-					return
-				}
-				dk, err := ParseKey(rawKey)
-				if err != nil {
-					yield(DataKey{}, err)
-					return
-				}
-				if !yield(dk, nil) {
-					return
-				}
+	listKey := ListRequestKey{Group: reqKey.Group, Resource: reqKey.Resource, Namespace: reqKey.Namespace, Name: reqKey.Name}
+	startKey := listKey
+	if lastSeenName != "" {
+		// If we are continuing from a previous name (pagination), the start
+		// key should include the name, but the end key should not.
+		startKey.Name = lastSeenName
+	}
+
+	listOptions := ListOptions{
+		StartKey: startKey.Prefix(),
+		EndKey:   PrefixRangeEnd(listKey.Prefix()),
+		Sort:     SortOrderAsc,
+	}
+	keysIter := func(yield func(DataKey, error) bool) {
+		for rawKey, err := range k.dataStore.kv.Keys(ctx, dataSection, listOptions) {
+			if err != nil {
+				yield(DataKey{}, err)
+				return
+			}
+			dk, err := ParseKey(rawKey)
+			if err != nil {
+				yield(DataKey{}, err)
+				return
+			}
+			if !yield(dk, nil) {
+				return
 			}
 		}
 	}
