@@ -784,33 +784,28 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 				Action: repository.FileActionUpdated,
 			})
 		case protocol.FileStatusRenamed:
-			newPath, newErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			oldPath, oldErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
+			newPath, newPathErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
+			oldPath, oldPathErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
 
-			// Tree entries (directories) cannot be processed as file renames.
-			// Decompose into delete + create so folder bookkeeping still works.
-			if f.Mode == 0o40000 {
-				if oldErr == nil {
-					changes = append(changes, repository.VersionedFileChange{
-						Action:       repository.FileActionDeleted,
-						Path:         oldPath,
-						PreviousPath: oldPath,
-						Ref:          ref,
-						PreviousRef:  base,
-					})
+			// A rename may span the repository boundary: one side inside the
+			// configured path and the other outside. Resolve this upfront so
+			// the switch below only deals with the four semantic cases.
+			newInsidePath := newPathErr == nil
+			oldInsidePath := oldPathErr == nil
+
+			// Tree entries (directories) are emitted with trailing slashes so
+			// downstream code can identify them via safepath.IsDir.
+			if f.Type == protocol.ObjectTypeTree {
+				if newInsidePath {
+					newPath = safepath.EnsureTrailingSlash(newPath)
 				}
-				if newErr == nil {
-					changes = append(changes, repository.VersionedFileChange{
-						Action: repository.FileActionCreated,
-						Path:   newPath,
-						Ref:    ref,
-					})
+				if oldInsidePath {
+					oldPath = safepath.EnsureTrailingSlash(oldPath)
 				}
-				continue
 			}
 
 			switch {
-			case newErr == nil && oldErr == nil:
+			case newInsidePath && oldInsidePath:
 				changes = append(changes, repository.VersionedFileChange{
 					Action:       repository.FileActionRenamed,
 					Path:         newPath,
@@ -818,13 +813,13 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 					Ref:          ref,
 					PreviousRef:  base,
 				})
-			case newErr == nil:
+			case newInsidePath:
 				changes = append(changes, repository.VersionedFileChange{
 					Action: repository.FileActionCreated,
 					Path:   newPath,
 					Ref:    ref,
 				})
-			case oldErr == nil:
+			case oldInsidePath:
 				changes = append(changes, repository.VersionedFileChange{
 					Action:       repository.FileActionDeleted,
 					Path:         oldPath,

@@ -1476,6 +1476,7 @@ func (h *GitExportHelper) GitReadFile(t *testing.T, ctx context.Context, repoNam
 type ExpectedDashboard struct {
 	Title      string
 	SourcePath string
+	Folder     string // grafana.app/folder annotation; only checked when non-empty
 }
 
 // RequireDashboardCount asserts the total number of dashboards in the instance.
@@ -1533,6 +1534,10 @@ func RequireDashboards(t *testing.T, dashboardClient *apis.K8sResourceClient, ct
 			assert.Equal(c, exp.Title, title, "dashboard %q title mismatch", uid)
 			sp, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/sourcePath")
 			assert.Equal(c, exp.SourcePath, sp, "dashboard %q sourcePath mismatch", uid)
+			if exp.Folder != "" {
+				folder, _, _ := unstructured.NestedString(d.Object, "metadata", "annotations", "grafana.app/folder")
+				assert.Equal(c, exp.Folder, folder, "dashboard %q folder mismatch", uid)
+			}
 		}
 	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboards should match expected state")
 }
@@ -1553,7 +1558,7 @@ func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx 
 				continue
 			}
 			sp, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/sourcePath")
-			gotPaths = append(gotPaths, sp)
+			gotPaths = append(gotPaths, strings.TrimSuffix(sp, "/"))
 		}
 		assert.ElementsMatch(c, expectedSourcePaths, gotPaths, "folder sourcePaths mismatch for repo %q", repoName)
 	}, WaitTimeoutDefault, WaitIntervalDefault,
@@ -1607,6 +1612,49 @@ func FindDashboardUIDBySourcePath(t *testing.T, helper *ProvisioningTestHelper, 
 	}, WaitTimeoutDefault, WaitIntervalDefault,
 		"expected dashboard with sourcePath %q for repo %q", sourcePath, repoName)
 	return uid
+}
+
+// ObjectSnapshot captures the identity and version fields of a K8s object
+// so we can later verify it was updated in place (not deleted+recreated).
+type ObjectSnapshot struct {
+	UID               string
+	Generation        int64
+	CreationTimestamp metav1.Time
+}
+
+// SnapshotObject extracts an ObjectSnapshot from an Unstructured K8s object.
+func SnapshotObject(t *testing.T, obj *unstructured.Unstructured) ObjectSnapshot {
+	t.Helper()
+	return ObjectSnapshot{
+		UID:               string(obj.GetUID()),
+		Generation:        obj.GetGeneration(),
+		CreationTimestamp: obj.GetCreationTimestamp(),
+	}
+}
+
+// RequireUpdatedInPlace asserts that the object was updated in place, not
+// deleted and recreated. It compares the UID (definitive identity), the
+// creationTimestamp, and verifies that the generation has not decreased.
+func RequireUpdatedInPlace(t *testing.T, label string, before, after ObjectSnapshot) {
+	t.Helper()
+	require.Equal(t, before.UID, after.UID,
+		"%s: UID changed — object was recreated instead of updated", label)
+	require.Equal(t, before.CreationTimestamp, after.CreationTimestamp,
+		"%s: creationTimestamp changed — object was recreated instead of updated", label)
+	require.GreaterOrEqual(t, after.Generation, before.Generation,
+		"%s: generation decreased — object was recreated instead of updated", label)
+}
+
+// RequireRecreated asserts that the object was deleted and recreated, not
+// updated in place. A different UID is the definitive signal. Generation
+// must reset to 1 on a fresh object. creationTimestamp is not checked
+// because sub-second delete+create can produce identical timestamps.
+func RequireRecreated(t *testing.T, label string, before, after ObjectSnapshot) {
+	t.Helper()
+	require.NotEqual(t, before.UID, after.UID,
+		"%s: UID unchanged — object was updated in place instead of recreated", label)
+	require.Equal(t, int64(1), after.Generation,
+		"%s: generation should reset to 1 after recreate", label)
 }
 
 // FindCondition finds a condition by type in the conditions list
