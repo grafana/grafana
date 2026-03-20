@@ -93,6 +93,7 @@ func sqLite3TestDB() (*TestDB, error) {
 			return nil, err
 		}
 		sqliteDb = f.Name()
+
 		// Close the temp file handle immediately -- we only need the path.
 		// The database driver will open it with its own handle.
 		if err := f.Close(); err != nil {
