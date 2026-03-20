@@ -1,7 +1,7 @@
-package v1beta1
+package v1
 
 // Used in OpenAPI generation to ensure the correct package is used for the generated schema
-const OpenAPIPrefix = "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1."
+const OpenAPIPrefix = "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1."
 
 // This is like the legacy DTO where access and metadata are all returned in a single call
 // +k8s:deepcopy-gen=true

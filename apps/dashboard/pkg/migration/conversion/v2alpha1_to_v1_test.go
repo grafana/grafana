@@ -12,16 +12,16 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	migrationtestutil "github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
 
-// TestV2alpha1ToV1beta1RoundTrip tests round-trip conversion: v2alpha1 → v1beta1 → v2alpha1
-// This ensures no data loss during conversion between v2alpha1 and v1beta1
-func TestV2alpha1ToV1beta1RoundTrip(t *testing.T) {
+// TestV2alpha1ToV1RoundTrip tests round-trip conversion: v2alpha1 → v1 → v2alpha1
+// This ensures no data loss during conversion between v2alpha1 and v1
+func TestV2alpha1ToV1RoundTrip(t *testing.T) {
 	scheme := setupTestConversionScheme(t)
 
 	// Read all v2alpha1 input files
@@ -48,15 +48,15 @@ func TestV2alpha1ToV1beta1RoundTrip(t *testing.T) {
 			// Collect original statistics
 			originalStats := collectStatsV2alpha1(originalV2alpha1.Spec)
 
-			// Step 1: Convert v2alpha1 → v1beta1
-			var v1beta1 dashv1.Dashboard
-			err = scheme.Convert(&originalV2alpha1, &v1beta1, nil)
-			require.NoError(t, err, "Failed to convert v2alpha1 to v1beta1")
+			// Step 1: Convert v2alpha1 → v1
+			var v1 dashv1.Dashboard
+			err = scheme.Convert(&originalV2alpha1, &v1, nil)
+			require.NoError(t, err, "Failed to convert v2alpha1 to v1")
 
-			// Step 2: Convert v1beta1 → v2alpha1 (back)
+			// Step 2: Convert v1 → v2alpha1 (back)
 			var roundTripV2alpha1 dashv2alpha1.Dashboard
-			err = scheme.Convert(&v1beta1, &roundTripV2alpha1, nil)
-			require.NoError(t, err, "Failed to convert v1beta1 back to v2alpha1")
+			err = scheme.Convert(&v1, &roundTripV2alpha1, nil)
+			require.NoError(t, err, "Failed to convert v1 back to v2alpha1")
 
 			// Collect round-trip statistics
 			roundTripStats := collectStatsV2alpha1(roundTripV2alpha1.Spec)
@@ -75,9 +75,9 @@ func TestV2alpha1ToV1beta1RoundTrip(t *testing.T) {
 	}
 }
 
-// TestV2alpha1ToV1beta1WriteOutputFiles writes output files from v2alpha1 input files
-// This test reads v2alpha1 input files, converts them to v1beta1, and writes the output files
-func TestV2alpha1ToV1beta1WriteOutputFiles(t *testing.T) {
+// TestV2alpha1ToV1WriteOutputFiles writes output files from v2alpha1 input files
+// This test reads v2alpha1 input files, converts them to v1, and writes the output files
+func TestV2alpha1ToV1WriteOutputFiles(t *testing.T) {
 	scheme := setupTestConversionScheme(t)
 
 	// Read all v2alpha1 input files
@@ -99,8 +99,8 @@ func TestV2alpha1ToV1beta1WriteOutputFiles(t *testing.T) {
 
 		// Extract the base name (e.g., "v2alpha1.complete" from "v2alpha1.complete.json")
 		baseName := strings.TrimSuffix(file.Name(), ".json")
-		// The output file should be "v2alpha1.complete.v1beta1.json"
-		outputFileName := baseName + ".v1beta1.json"
+		// The output file should be "v2alpha1.complete.v1.json"
+		outputFileName := baseName + ".v1.json"
 
 		t.Run(fmt.Sprintf("WriteOutput_%s", file.Name()), func(t *testing.T) {
 			// Read the v2alpha1 input file
@@ -108,14 +108,14 @@ func TestV2alpha1ToV1beta1WriteOutputFiles(t *testing.T) {
 			var v2alpha1 dashv2alpha1.Dashboard
 			readInputFile(t, inputFile, &v2alpha1)
 
-			// Convert v2alpha1 → v1beta1
-			var convertedV1beta1 dashv1.Dashboard
-			err = scheme.Convert(&v2alpha1, &convertedV1beta1, nil)
-			require.NoError(t, err, "Failed to convert v2alpha1 to v1beta1")
+			// Convert v2alpha1 → v1
+			var convertedV1 dashv1.Dashboard
+			err = scheme.Convert(&v2alpha1, &convertedV1, nil)
+			require.NoError(t, err, "Failed to convert v2alpha1 to v1")
 
 			// Write output file using the shared testConversion helper
 			// dashv1.Dashboard implements metav1.Object, so we can use testConversion directly
-			testConversion(t, &convertedV1beta1, outputFileName, outputDir)
+			testConversion(t, &convertedV1, outputFileName, outputDir)
 		})
 	}
 }
@@ -165,9 +165,9 @@ func TestV2alpha1ToV2beta1WriteOutputFiles(t *testing.T) {
 	}
 }
 
-// TestV2alpha1ToV1beta1FromInputFiles tests conversion from v2alpha1 input files to v1beta1
-// and compares with expected v1beta1 output files
-func TestV2alpha1ToV1beta1FromInputFiles(t *testing.T) {
+// TestV2alpha1ToV1FromInputFiles tests conversion from v2alpha1 input files to v1
+// and compares with expected v1 output files
+func TestV2alpha1ToV1FromInputFiles(t *testing.T) {
 	scheme := setupTestConversionScheme(t)
 
 	// Read all v2alpha1 input files
@@ -189,26 +189,26 @@ func TestV2alpha1ToV1beta1FromInputFiles(t *testing.T) {
 
 		// Extract the base name (e.g., "v2alpha1.complete" from "v2alpha1.complete.json")
 		baseName := strings.TrimSuffix(file.Name(), ".json")
-		// The corresponding output file should be "v2alpha1.complete.v1beta1.json"
-		expectedOutputFile := baseName + ".v1beta1.json"
+		// The corresponding output file should be "v2alpha1.complete.v1.json"
+		expectedOutputFile := baseName + ".v1.json"
 
 		t.Run(fmt.Sprintf("Convert_%s", file.Name()), func(t *testing.T) {
 			inputFile := filepath.Join(inputDir, file.Name())
 			var v2alpha1 dashv2alpha1.Dashboard
 			readInputFile(t, inputFile, &v2alpha1)
 
-			var convertedV1beta1 dashv1.Dashboard
-			err = scheme.Convert(&v2alpha1, &convertedV1beta1, nil)
-			require.NoError(t, err, "Failed to convert v2alpha1 to v1beta1")
+			var convertedV1 dashv1.Dashboard
+			err = scheme.Convert(&v2alpha1, &convertedV1, nil)
+			require.NoError(t, err, "Failed to convert v2alpha1 to v1")
 
 			expectedOutputPath := filepath.Join(outputDir, expectedOutputFile)
-			writeOrCompareOutputFile(t, convertedV1beta1, expectedOutputPath)
+			writeOrCompareOutputFile(t, convertedV1, expectedOutputPath)
 		})
 	}
 }
 
-// TestV2alpha1ToV1beta1LayoutErrors tests that AutoGridLayout and TabsLayout return appropriate errors
-func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
+// TestV2alpha1ToV1LayoutErrors tests that AutoGridLayout and TabsLayout return appropriate errors
+func TestV2alpha1ToV1LayoutErrors(t *testing.T) {
 	// Initialize the migrator with test data source and library element providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
@@ -271,13 +271,13 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 			},
 		}
 
-		var v1beta1 dashv1.Dashboard
-		err := scheme.Convert(&v2alpha1, &v1beta1, nil)
+		var v1 dashv1.Dashboard
+		err := scheme.Convert(&v2alpha1, &v1, nil)
 		require.NoError(t, err, "AutoGridLayout conversion should succeed")
 
 		// Verify panels were created with calculated grid positioning
 		// Dashboard JSON is directly at Spec.Object level (no "dashboard" wrapper)
-		dashboard := v1beta1.Spec.Object
+		dashboard := v1.Spec.Object
 
 		panels, ok := dashboard["panels"].([]interface{})
 		require.True(t, ok, "Panels should exist")
@@ -367,13 +367,13 @@ func TestV2alpha1ToV1beta1LayoutErrors(t *testing.T) {
 			},
 		}
 
-		var v1beta1 dashv1.Dashboard
-		err := scheme.Convert(&v2alpha1, &v1beta1, nil)
+		var v1 dashv1.Dashboard
+		err := scheme.Convert(&v2alpha1, &v1, nil)
 		require.NoError(t, err, "TabsLayout conversion should succeed")
 
 		// Verify: each tab becomes a row panel + extracted panels
 		// Dashboard JSON is directly at Spec.Object level (no "dashboard" wrapper)
-		dashboard := v1beta1.Spec.Object
+		dashboard := v1.Spec.Object
 
 		panels, ok := dashboard["panels"].([]interface{})
 		require.True(t, ok, "Panels should exist")
@@ -429,8 +429,8 @@ func getIntValue(v interface{}) int64 {
 	}
 }
 
-// TestV2alpha1ToV1beta1BasicFields tests conversion of basic dashboard fields
-func TestV2alpha1ToV1beta1BasicFields(t *testing.T) {
+// TestV2alpha1ToV1BasicFields tests conversion of basic dashboard fields
+func TestV2alpha1ToV1BasicFields(t *testing.T) {
 	// Initialize the migrator with test data source and library element providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
@@ -467,12 +467,12 @@ func TestV2alpha1ToV1beta1BasicFields(t *testing.T) {
 		},
 	}
 
-	var v1beta1 dashv1.Dashboard
-	err = scheme.Convert(&v2alpha1, &v1beta1, nil)
+	var v1 dashv1.Dashboard
+	err = scheme.Convert(&v2alpha1, &v1, nil)
 	require.NoError(t, err)
 
 	// Verify the conversion - dashboard JSON is directly at Spec.Object level (no "dashboard" wrapper)
-	dashboard := v1beta1.Spec.Object
+	dashboard := v1.Spec.Object
 
 	assert.Equal(t, "Test Dashboard", dashboard["title"])
 	assert.Equal(t, "Test Description", dashboard["description"])
@@ -497,8 +497,8 @@ func TestV2alpha1ToV1beta1BasicFields(t *testing.T) {
 	}
 }
 
-// TestV2alpha1ToV1beta1MatcherConfig tests conversion of matcher scope/config (transformation filter and field override)
-func TestV2alpha1ToV1beta1MatcherConfig(t *testing.T) {
+// TestV2alpha1ToV1MatcherConfig tests conversion of matcher scope/config (transformation filter and field override)
+func TestV2alpha1ToV1MatcherConfig(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
 	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
@@ -596,11 +596,11 @@ func TestV2alpha1ToV1beta1MatcherConfig(t *testing.T) {
 		},
 	}
 
-	var v1beta1 dashv1.Dashboard
-	err = scheme.Convert(&v2alpha1, &v1beta1, nil)
+	var v1 dashv1.Dashboard
+	err = scheme.Convert(&v2alpha1, &v1, nil)
 	require.NoError(t, err)
 
-	dashboard := v1beta1.Spec.Object
+	dashboard := v1.Spec.Object
 
 	// Find the panel (may be under panels[0] or in a row's panels depending on layout conversion)
 	panels, ok := dashboard["panels"].([]interface{})
@@ -670,9 +670,9 @@ func TestV2alpha1ToV1beta1MatcherConfig(t *testing.T) {
 	assert.Equal(t, map[string]interface{}{"name": "Field1"}, matcher["options"])
 }
 
-// TestV2beta1ToV1beta1WriteOutputFiles writes output files from v2beta1 input files
-// This test reads v2beta1 input files (including subdirectories), converts them to v1beta1, and writes the output files
-func TestV2beta1ToV1beta1WriteOutputFiles(t *testing.T) {
+// TestV2beta1ToV1WriteOutputFiles writes output files from v2beta1 input files
+// This test reads v2beta1 input files (including subdirectories), converts them to v1, and writes the output files
+func TestV2beta1ToV1WriteOutputFiles(t *testing.T) {
 	scheme := setupTestConversionScheme(t)
 
 	// Read all v2beta1 input files recursively
@@ -701,8 +701,8 @@ func TestV2beta1ToV1beta1WriteOutputFiles(t *testing.T) {
 
 		// Extract the base name (e.g., "v2beta1.complete" from "v2beta1.complete.json")
 		baseName := strings.TrimSuffix(d.Name(), ".json")
-		// The output file should be "v2beta1.complete.v1beta1.json"
-		outputFileName := baseName + ".v1beta1.json"
+		// The output file should be "v2beta1.complete.v1.json"
+		outputFileName := baseName + ".v1.json"
 
 		// Calculate output directory (preserve subdirectory structure)
 		relDir := filepath.Dir(relPath)
@@ -716,14 +716,14 @@ func TestV2beta1ToV1beta1WriteOutputFiles(t *testing.T) {
 			var v2beta1 dashv2beta1.Dashboard
 			readInputFile(t, path, &v2beta1)
 
-			// Convert v2beta1 → v1beta1
-			var convertedV1beta1 dashv1.Dashboard
-			err := scheme.Convert(&v2beta1, &convertedV1beta1, nil)
-			require.NoError(t, err, "Failed to convert v2beta1 to v1beta1")
+			// Convert v2beta1 → v1
+			var convertedV1 dashv1.Dashboard
+			err := scheme.Convert(&v2beta1, &convertedV1, nil)
+			require.NoError(t, err, "Failed to convert v2beta1 to v1")
 
 			// Write output file using the shared testConversion helper
 			// dashv1.Dashboard implements metav1.Object, so we can use testConversion directly
-			testConversion(t, &convertedV1beta1, outputFileName, outputDir)
+			testConversion(t, &convertedV1, outputFileName, outputDir)
 		})
 
 		return nil

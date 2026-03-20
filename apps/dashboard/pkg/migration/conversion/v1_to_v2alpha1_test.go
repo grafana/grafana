@@ -8,14 +8,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	migrationtestutil "github.com/grafana/grafana/apps/dashboard/pkg/migration/testutil"
 )
 
-// TestV1beta1ToV2alpha1 tests conversion from v1beta1 to v2alpha1 with various datasource scenarios
-func TestV1beta1ToV2alpha1(t *testing.T) {
+// TestV1ToV2alpha1 tests conversion from v1 to v2alpha1 with various datasource scenarios
+func TestV1ToV2alpha1(t *testing.T) {
 	// Initialize the migrator with test providers
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
 	leProvider := migrationtestutil.NewLibraryElementProvider()
@@ -28,12 +28,12 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 
 	testCases := []struct {
 		name             string
-		createV1beta1    func() *dashv1.Dashboard
+		createV1         func() *dashv1.Dashboard
 		validateV2alpha1 func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard)
 	}{
 		{
 			name: "panel type datasource with no UID - use panel ref (query empty), resolve to grafana UID",
-			createV1beta1: func() *dashv1.Dashboard {
+			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
 						Object: map[string]interface{}{
@@ -85,7 +85,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 		},
 		{
 			name: "targets with empty datasource {} - use panel ref (query has no ref), get panel DS",
-			createV1beta1: func() *dashv1.Dashboard {
+			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
 						Object: map[string]interface{}{
@@ -134,7 +134,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 		{
 			// query ref != panel ref and panel is not mixed and query is not expression.
 			name: "panel ref used when query ref differs from panel ref (panel not mixed, query not expression)",
-			createV1beta1: func() *dashv1.Dashboard {
+			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
 						Object: map[string]interface{}{
@@ -189,7 +189,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 		{
 			// Mixed is identified by panel uid "-- Mixed --". When panel is mixed we do not use panel ref.
 			name: "mixed panel (uid -- Mixed --) - each query keeps its target datasource",
-			createV1beta1: func() *dashv1.Dashboard {
+			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
 						Object: map[string]interface{}{
@@ -243,7 +243,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 		{
 			// Expression queries (__expr__) are never overwritten by panel ref (same as frontend).
 			name: "expression query (__expr__) keeps expression ref when panel has different datasource",
-			createV1beta1: func() *dashv1.Dashboard {
+			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
 						Object: map[string]interface{}{
@@ -296,7 +296,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 		},
 		{
 			name: "expression query with template variable UID keeps expression ref when panel has different datasource",
-			createV1beta1: func() *dashv1.Dashboard {
+			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
 						Object: map[string]interface{}{
@@ -353,7 +353,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 		},
 		{
 			name: "panel datasource null and target has no datasource field - no default set",
-			createV1beta1: func() *dashv1.Dashboard {
+			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
 						Object: map[string]interface{}{
@@ -390,7 +390,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 		},
 		{
 			name: "empty panel and target datasource {} - preserved as empty (no panel ref to apply)",
-			createV1beta1: func() *dashv1.Dashboard {
+			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
 						Object: map[string]interface{}{
@@ -428,7 +428,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 		},
 		{
 			name: "missing refIds are assigned while existing refIds are preserved",
-			createV1beta1: func() *dashv1.Dashboard {
+			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
 						Object: map[string]interface{}{
@@ -470,7 +470,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 		},
 		{
 			name: "panels without IDs should not overwrite each other",
-			createV1beta1: func() *dashv1.Dashboard {
+			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
 						Object: map[string]interface{}{
@@ -531,7 +531,7 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 		},
 		{
 			name: "dashboard with matcher config conversion (transformation filter and field override)",
-			createV1beta1: func() *dashv1.Dashboard {
+			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{
 					Spec: dashv1.DashboardSpec{
 						Object: map[string]interface{}{
@@ -611,11 +611,11 @@ func TestV1beta1ToV2alpha1(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			v1beta1Dash := tt.createV1beta1()
+			v1Dash := tt.createV1()
 
 			// Convert to v2alpha1
 			var v2alpha1Dash dashv2alpha1.Dashboard
-			err := scheme.Convert(v1beta1Dash, &v2alpha1Dash, nil)
+			err := scheme.Convert(v1Dash, &v2alpha1Dash, nil)
 			require.NoError(t, err)
 
 			// Validate the conversion result

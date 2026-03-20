@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -19,6 +20,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	const repoName = "folder-manager-repo"
+	dashboardAPIVersion := dashboardV1.DashboardResourceInfo.GroupVersion().String()
 	helper := common.RunGrafana(t)
 
 	helper.CreateRepo(t, common.TestRepo{
@@ -52,7 +54,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject unmanaged dashboard in managed folder", func(t *testing.T) {
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "unmanaged-in-managed-",
@@ -77,7 +79,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 	t.Run("reject dashboard managed by different repo in managed folder", func(t *testing.T) {
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "wrong-manager-",
@@ -119,7 +121,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "managed-in-unmanaged-",
@@ -159,7 +161,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "plain-dash-",
@@ -199,7 +201,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "move-to-managed-",
@@ -263,7 +265,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "movable-dash-",
@@ -314,7 +316,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "kubectl-dash-",
@@ -364,7 +366,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 
 		dashboard := &unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": "dashboard.grafana.app/v1beta1",
+				"apiVersion": dashboardAPIVersion,
 				"kind":       "Dashboard",
 				"metadata": map[string]interface{}{
 					"generateName": "tf-dash-",
