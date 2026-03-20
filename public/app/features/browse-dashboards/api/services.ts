@@ -36,7 +36,7 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
   // Add shared with me item statically to the array as it is not returned from the
   // API anymore. This also means we show it every time, whether it has children or not. This is the same as in folder
   // picker for now. In the future we could to additional request to see if there are any children in it.
-  if (!parentUID && config.sharedWithMeFolderUID) {
+  if (page === 1 && !parentUID && config.sharedWithMeFolderUID) {
     folders.unshift({
       kind: 'folder',
       name: t('browse-dashboards.shared-with-me', 'Shared with me'),

@@ -20,6 +20,19 @@
     },
     {
       "metadata": {
+        "name": "advisorDatasourceIntegration",
+        "resourceVersion": "1773236180800",
+        "creationTimestamp": "2026-03-11T13:36:20Z"
+      },
+      "spec": {
+        "description": "Enables the advisor report integration with datasource pages",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "aiGeneratedDashboardChanges",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-03-05T12:01:31Z"
@@ -70,6 +83,20 @@
       },
       "spec": {
         "description": "Allow multiple steps per enrichment.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertEnrichmentPreview",
+        "resourceVersion": "1772750000943",
+        "creationTimestamp": "2026-03-05T22:33:20Z"
+      },
+      "spec": {
+        "description": "Enable alert enrichment preview (notification-history-based) in view and edit drawers.",
         "stage": "experimental",
         "codeowner": "@grafana/alerting-squad",
         "hideFromDocs": true,
@@ -485,6 +512,20 @@
     },
     {
       "metadata": {
+        "name": "alertingNotificationHistoryDetail",
+        "resourceVersion": "1773693012438",
+        "creationTimestamp": "2026-03-16T20:30:12Z"
+      },
+      "spec": {
+        "description": "Enables the notification history detail page",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingNotificationHistoryGlobal",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -537,6 +578,21 @@
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingPolicyRoutingSettings",
+        "resourceVersion": "1773692781781",
+        "creationTimestamp": "2026-03-16T20:26:21Z"
+      },
+      "spec": {
+        "description": "Use notification settings policy field instead of labels for named policy routing in alert rules",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -882,6 +938,23 @@
     },
     {
       "metadata": {
+        "name": "annotationsClustering",
+        "resourceVersion": "1773352347788",
+        "creationTimestamp": "2026-03-12T21:45:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-12 21:52:27.788294 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables annotation clustering and switches to refactored annotation code",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appPlatformGrpcClientAuth",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-10-14T10:47:18Z"
@@ -1195,6 +1268,21 @@
     },
     {
       "metadata": {
+        "name": "colorblindThemes",
+        "resourceVersion": "1770395198316",
+        "creationTimestamp": "2026-02-06T16:26:38Z"
+      },
+      "spec": {
+        "description": "Enables the new colorblind-friendly themes",
+        "stage": "GA",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "configurableSchedulerTick",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-07-26T16:44:12Z"
@@ -1224,6 +1312,20 @@
     },
     {
       "metadata": {
+        "name": "createAlertRuleFromPanel",
+        "resourceVersion": "1773673451775",
+        "creationTimestamp": "2026-03-16T15:04:11Z"
+      },
+      "spec": {
+        "description": "Enables creating alert rules from a panel using a drawer UI",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "createdByMeSearchFilter",
         "resourceVersion": "1771965456951",
         "creationTimestamp": "2026-02-24T20:37:36Z"
@@ -1247,6 +1349,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboardAssistantPopover",
+        "resourceVersion": "1773181791824",
+        "creationTimestamp": "2026-03-10T22:29:51Z"
+      },
+      "spec": {
+        "description": "Enables the assistant prompt popover on panel click in dashboard view mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -1502,10 +1618,25 @@
       "metadata": {
         "name": "datasourceDisableIdApi",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-03-12T10:43:25Z"
       },
       "spec": {
         "description": "Does not register datasource apis that use the numeric id",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourceLegacyIdApi",
+        "resourceVersion": "1773312205880",
+        "creationTimestamp": "2026-03-12T10:43:25Z"
+      },
+      "spec": {
+        "description": "Register legacy datasource apis that use the numeric id",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "requiresRestart": true,
@@ -1536,6 +1667,23 @@
         "description": "Handle datasource health requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourcesApiServerEnableHealthEndpointFrontend",
+        "resourceVersion": "1773063626484",
+        "creationTimestamp": "2026-03-03T16:55:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-09 13:40:26.484445 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -1648,6 +1796,19 @@
     },
     {
       "metadata": {
+        "name": "elasticsearchESQLQuery",
+        "resourceVersion": "1769025600000",
+        "creationTimestamp": "2026-01-21T12:00:00Z"
+      },
+      "spec": {
+        "description": "Enables the ES|QL query editor in the Elasticsearch data source",
+        "stage": "experimental",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "elasticsearchImprovedParsing",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-01-15T17:05:54Z"
@@ -1699,19 +1860,6 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "enableDatagridEditing",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-04-24T14:46:31Z"
-      },
-      "spec": {
-        "description": "Enables the edit functionality in the datagrid panel",
-        "stage": "preview",
-        "codeowner": "@grafana/dataviz-squad",
         "expression": "false"
       }
     },
@@ -2374,12 +2522,15 @@
     {
       "metadata": {
         "name": "kubernetesAuthZHandlerRedirect",
-        "resourceVersion": "1771434338561",
+        "resourceVersion": "1773696968793",
         "creationTimestamp": "2025-08-29T14:46:39Z",
-        "deletionTimestamp": "2025-09-01T09:33:33Z"
+        "deletionTimestamp": "2025-09-01T09:33:33Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-16 21:36:08.79386 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead",
+        "description": "Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesAndRoleBindingsRedirect instead",
         "stage": "deprecated",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -2404,7 +2555,8 @@
       "metadata": {
         "name": "kubernetesAuthZRoleBindingsRedirect",
         "resourceVersion": "1772825568777",
-        "creationTimestamp": "2026-03-06T19:32:48Z"
+        "creationTimestamp": "2026-03-06T19:32:48Z",
+        "deletionTimestamp": "2026-03-16T21:36:08Z"
       },
       "spec": {
         "description": "Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints",
@@ -2416,9 +2568,25 @@
     },
     {
       "metadata": {
+        "name": "kubernetesAuthZRolesAndRoleBindingsRedirect",
+        "resourceVersion": "1773696968793",
+        "creationTimestamp": "2026-03-16T21:36:08Z",
+        "deletionTimestamp": "2026-03-16T21:39:26Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesAuthZRolesRedirect",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-03-16T21:36:08Z"
       },
       "spec": {
         "description": "Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints",
@@ -2432,7 +2600,8 @@
       "metadata": {
         "name": "kubernetesAuthnMutation",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-07-25T15:05:32Z"
+        "creationTimestamp": "2025-07-25T15:05:32Z",
+        "deletionTimestamp": "2026-03-16T21:39:26Z"
       },
       "spec": {
         "description": "Enables create, delete, and update mutations for resources owned by IAM identity",
@@ -2446,7 +2615,8 @@
       "metadata": {
         "name": "kubernetesAuthzApis",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2025-06-18T07:43:01Z"
+        "creationTimestamp": "2025-06-18T07:43:01Z",
+        "deletionTimestamp": "2026-03-16T21:39:26Z"
       },
       "spec": {
         "description": "Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead",
@@ -2460,10 +2630,25 @@
       "metadata": {
         "name": "kubernetesAuthzCoreRolesApi",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-01-12T08:00:51Z"
+        "creationTimestamp": "2026-01-12T08:00:51Z",
+        "deletionTimestamp": "2026-03-11T20:37:53Z"
       },
       "spec": {
         "description": "Registers AuthZ Core Roles /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzDatasourceResourcePermissions",
+        "resourceVersion": "1773784985598",
+        "creationTimestamp": "2026-03-17T22:03:05Z"
+      },
+      "spec": {
+        "description": "Enables datasource resource permissions via the K8s IAM resource permission APIs",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -2507,6 +2692,20 @@
       },
       "spec": {
         "description": "Registers AuthZ Role Bindings /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAuthzRolesAndRoleBindingsRedirect",
+        "resourceVersion": "1773697166517",
+        "creationTimestamp": "2026-03-16T21:39:26Z"
+      },
+      "spec": {
+        "description": "Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -2760,6 +2959,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesSsoSettingsApi",
+        "resourceVersion": "1773664314259",
+        "creationTimestamp": "2026-03-16T12:31:54Z"
+      },
+      "spec": {
+        "description": "Enables SSO settings APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesStars",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-08-29T14:46:39Z",
@@ -2804,6 +3017,24 @@
     },
     {
       "metadata": {
+        "name": "kubernetesTeamService",
+        "resourceVersion": "1773147086908",
+        "creationTimestamp": "2026-03-06T08:45:27Z",
+        "deletionTimestamp": "2026-03-16T16:16:46Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-10 12:51:26.908818 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Use the new team service that uses the app platform APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesTeamSync",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -2834,7 +3065,22 @@
       "metadata": {
         "name": "kubernetesTeamsHandlerRedirect",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2026-02-18T17:05:38Z"
+        "creationTimestamp": "2026-02-18T17:05:38Z",
+        "deletionTimestamp": "2026-03-16T16:16:46Z"
+      },
+      "spec": {
+        "description": "Redirects the request of the team endpoints to the app platform APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesTeamsRedirect",
+        "resourceVersion": "1773677806097",
+        "creationTimestamp": "2026-03-16T16:16:46Z"
       },
       "spec": {
         "description": "Redirects the request of the team endpoints to the app platform APIs",
@@ -2866,6 +3112,20 @@
       },
       "spec": {
         "description": "Enables user APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesUsersRedirect",
+        "resourceVersion": "1773676176614",
+        "creationTimestamp": "2026-03-16T15:49:36Z"
+      },
+      "spec": {
+        "description": "Redirects the requests of the user service to the app platform APIs",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -3265,6 +3525,20 @@
     },
     {
       "metadata": {
+        "name": "newSavedQueriesExperience",
+        "resourceVersion": "1773689097406",
+        "creationTimestamp": "2026-03-16T19:24:57Z"
+      },
+      "spec": {
+        "description": "Enables the new Saved queries (query library) modal experience",
+        "stage": "preview",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newShareReportDrawer",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-02-17T19:05:46Z"
@@ -3482,6 +3756,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "playlistsRBAC",
+        "resourceVersion": "1773926203085",
+        "creationTimestamp": "2026-03-19T13:16:43Z"
+      },
+      "spec": {
+        "description": "Enables RBAC for playlists",
+        "stage": "GA",
+        "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
     },
@@ -4117,6 +4404,19 @@
     },
     {
       "metadata": {
+        "name": "sceneCsvExport",
+        "resourceVersion": "1770806976610",
+        "creationTimestamp": "2026-02-11T10:49:36Z"
+      },
+      "spec": {
+        "description": "Enables CSV export using scenes dashboard architecture",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "scopeApi",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-11-27T07:58:25Z"
@@ -4313,6 +4613,23 @@
     },
     {
       "metadata": {
+        "name": "suggestedDashboardsAssistantButton",
+        "resourceVersion": "1773330648535",
+        "creationTimestamp": "2026-03-12T15:47:05Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-12 15:50:48.535908189 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the 'Customize with Assistant' button on suggested dashboard cards",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "tableSharedCrosshair",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-12-13T09:33:14Z"
@@ -4374,6 +4691,19 @@
       },
       "spec": {
         "description": "Enables LBAC for datasources for Tempo to apply LBAC filtering of traces to the client requests for users in teams",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "teamLBACApiReadFromAppPlatform",
+        "resourceVersion": "1773679095440",
+        "creationTimestamp": "2026-03-16T16:38:15Z"
+      },
+      "spec": {
+        "description": "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "expression": "false"
@@ -4666,6 +4996,20 @@
     },
     {
       "metadata": {
+        "name": "vizLegendFacetedFilter",
+        "resourceVersion": "1773129262183",
+        "creationTimestamp": "2026-03-10T07:54:22Z"
+      },
+      "spec": {
+        "description": "Enable faceted labels filter for series visibility in the legend",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "vizLegendSeriesLimit",
         "resourceVersion": "1772507615654",
         "creationTimestamp": "2026-03-03T03:13:35Z"
@@ -4687,6 +5031,20 @@
       "spec": {
         "description": "Enable visualization presets",
         "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "yAxisTickControl",
+        "resourceVersion": "1773934597640",
+        "creationTimestamp": "2026-03-19T15:36:37Z"
+      },
+      "spec": {
+        "description": "Enables fine-grained Y-axis tick options beyond the auto-ticks",
+        "stage": "experimental",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"

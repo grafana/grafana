@@ -5,17 +5,21 @@ import (
 	stdsql "database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"text/template"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type GetUserInternalIDQuery struct {
@@ -170,12 +174,22 @@ func (s *legacySQLStore) queryUsers(ctx context.Context, sql *legacysql.LegacyDa
 		var lastID int64
 		for rows.Next() {
 			u := common.UserWithRole{}
-			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &u.Email, &u.Name,
+			var name, email, role stdsql.NullString
+			err = rows.Scan(&u.OrgID, &u.ID, &u.UID, &u.Login, &email, &name,
 				&u.Created, &u.Updated, &u.IsServiceAccount, &u.IsDisabled, &u.IsAdmin, &u.EmailVerified,
-				&u.IsProvisioned, &u.LastSeenAt, &u.Role,
+				&u.IsProvisioned, &u.LastSeenAt, &role,
 			)
 			if err != nil {
 				return res, err
+			}
+			if name.Valid {
+				u.Name = name.String
+			}
+			if email.Valid {
+				u.Email = email.String
+			}
+			if role.Valid {
+				u.Role = role.String
 			}
 
 			lastID = u.ID
@@ -472,10 +486,34 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, toUserConflictError(sql.DB.GetDialect(), err, cmd.UID)
 	}
 
 	return &CreateUserResult{User: createdUser}, nil
+}
+
+// toUserConflictError converts a UNIQUE constraint violation on user.email or
+// user.login into a 409 Conflict API error. All other errors are returned as-is.
+// It uses the DB dialect to detect the violation across SQLite, MySQL and PostgreSQL.
+func toUserConflictError(dialect migrator.Dialect, err error, uid string) error {
+	if err == nil {
+		return nil
+	}
+	if dialect != nil && dialect.IsUniqueConstraintViolation(err) {
+		msg := dialect.ErrorMessage(err)
+		switch {
+		case strings.Contains(msg, "email"):
+			return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+				fmt.Errorf("email is already taken"))
+		case strings.Contains(msg, "login"):
+			return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+				fmt.Errorf("login is already taken"))
+		default:
+			return apierrors.NewConflict(iamv0.UserResourceInfo.GroupResource(), uid,
+				fmt.Errorf("user already exists"))
+		}
+	}
+	return err
 }
 
 func newDeleteUser(sql *legacysql.LegacyDatabaseHelper, cmd *DeleteUserCommand) deleteUserQuery {
@@ -733,7 +771,7 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, toUserConflictError(sql.DB.GetDialect(), err, cmd.UID)
 	}
 
 	return &UpdateUserResult{User: updatedUser}, nil

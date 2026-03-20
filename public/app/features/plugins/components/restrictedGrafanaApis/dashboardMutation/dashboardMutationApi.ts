@@ -31,4 +31,7 @@ export const dashboardMutationApi: DashboardMutationAPI = {
     const cmd = ALL_COMMANDS.find((c) => c.name === normalized);
     return cmd?.payloadSchema ?? null;
   },
+  getAvailableCommands: () => {
+    return _client?.getAvailableCommands() ?? [];
+  },
 };

@@ -31,6 +31,8 @@ jobs:
     if: needs.detect-changes.outputs.changed == 'true'
     name: Go Workspace Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
     - name: Checkout repository
@@ -40,6 +42,8 @@ jobs:
 
     - name: Setup Go
       uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Update workspace
       run: make update-workspace
@@ -53,8 +57,6 @@ jobs:
           echo "If there is a change in enterprise dependencies, please update pkg/extensions/main.go."
           exit 1
         fi
-    - name: Ensure Dockerfile contains submodule COPY commands
-      run: ./scripts/go-workspace/validate-dockerfile.sh
 
   check-wire:
     needs: detect-changes
@@ -80,6 +82,8 @@ jobs:
     # modules are visible when the Go cache key is computed.
     - name: Setup Go
       uses: ./.github/actions/setup-go
+      with:
+        cache-build: 'false'
 
     - name: Calculate generated wire checksums
       id: pre_gen_oss
