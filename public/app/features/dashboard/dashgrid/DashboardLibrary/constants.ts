@@ -2,6 +2,7 @@ export const EVENT_LOCATIONS = {
   EMPTY_DASHBOARD: 'empty_dashboard',
   MODAL_PROVISIONED_TAB: 'suggested_dashboards_modal_provisioned_tab',
   MODAL_COMMUNITY_TAB: 'suggested_dashboards_modal_community_tab',
+  MODAL_MERGED_VIEW: 'suggested_dashboards_modal_merged_view',
   BROWSE_DASHBOARDS_PAGE: 'browse_dashboards_page',
   COMMUNITY_DASHBOARD_LOADED: 'community_dashboard_loaded',
 } as const;

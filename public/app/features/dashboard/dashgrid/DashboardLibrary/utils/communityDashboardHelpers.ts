@@ -119,7 +119,7 @@ interface UseCommunityDashboardParams {
   dashboard: GnetDashboard;
   datasourceUid: string;
   datasourceType: string;
-  eventLocation: 'empty_dashboard' | 'suggested_dashboards_modal_community_tab';
+  eventLocation: 'empty_dashboard' | 'suggested_dashboards_modal_community_tab' | 'suggested_dashboards_modal_merged_view';
   onShowMapping?: (context: MappingContext) => void;
 }
 

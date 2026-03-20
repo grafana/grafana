@@ -1,0 +1,462 @@
+import { css } from '@emotion/css';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAsyncFn, useDebounce } from 'react-use';
+
+import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { config, getDataSourceSrv, isFetchError, locationService } from '@grafana/runtime';
+import { FilterInput, Grid, Pagination, Stack, useStyles2 } from '@grafana/ui';
+import { PluginDashboard } from 'app/types/plugins';
+
+import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
+import { CompatibilityState } from '../CompatibilityBadge';
+import { DashboardCard } from '../DashboardCard';
+import { MappingContext } from '../SuggestedDashboardsModal';
+import { checkDashboardCompatibility } from '../api/compatibilityApi';
+import { fetchCommunityDashboards } from '../api/dashboardLibraryApi';
+import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../constants';
+import { DashboardLibraryInteractions, SuggestedDashboardInteractions } from '../interactions';
+import { GnetDashboard } from '../types';
+import { onUseCommunityDashboard, interpolateDashboardForCompatibilityCheck } from '../utils/communityDashboardHelpers';
+import { getPageSlice } from '../utils/suggestedDashboardHelpers';
+
+import { DashboardResultsGrid } from './DashboardResultsGrid';
+import { EmptyResults } from './EmptyResults';
+import { ListHeader } from './ListHeader';
+
+export const PAGE_SIZE = 6;
+const SEARCH_DEBOUNCE_MS = 500;
+const DEFAULT_SORT_ORDER = 'downloads';
+const DEFAULT_SORT_DIRECTION = 'desc' as const;
+const INCLUDE_LOGO = true;
+const INCLUDE_SCREENSHOTS = true;
+
+interface SuggestedDashboardsListProps {
+  provisionedDashboards: PluginDashboard[];
+  communityDashboards: GnetDashboard[];
+  communityTotalPages: number;
+  datasourceUid?: string;
+  datasourceType: string;
+  isDashboardsLoading: boolean;
+  onShowMapping: (context: MappingContext) => void;
+  onDismiss: () => void;
+}
+
+interface CommunityCache {
+  searchQuery: string;
+  items: Array<GnetDashboard | undefined>;
+  cachedPages: Set<number>;
+  totalApiPages: number;
+}
+
+export const SuggestedDashboardsList = ({
+  provisionedDashboards,
+  communityDashboards,
+  communityTotalPages,
+  datasourceUid,
+  datasourceType,
+  isDashboardsLoading,
+  onShowMapping,
+  onDismiss,
+}: SuggestedDashboardsListProps) => {
+  const styles = useStyles2(getStyles);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+  const [isCommunityLoading, setIsCommunityLoading] = useState(false);
+  const hasTrackedLoaded = useRef(false);
+  const hasAutoCheckedRef = useRef(false);
+  const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
+
+  const [compatibilityMap, setCompatibilityMap] = useState<Map<number, CompatibilityState>>(new Map());
+
+  // Community cache state — initialized with pre-fetched page 1 data from the loader
+  const [communityCache, setCommunityCache] = useState<CommunityCache>(() => ({
+    searchQuery: '',
+    items: communityDashboards,
+    cachedPages: new Set<number>(communityDashboards.length > 0 ? [1] : []),
+    totalApiPages: communityTotalPages,
+  }));
+
+  // Filter provisioned dashboards client-side
+  const filteredProvisioned = useMemo(() => {
+    if (!debouncedSearchQuery.trim()) {
+      return provisionedDashboards;
+    }
+    const query = debouncedSearchQuery.toLowerCase();
+    return provisionedDashboards.filter(
+      (d) => d.title.toLowerCase().includes(query) || (d.description ?? '').toLowerCase().includes(query)
+    );
+  }, [provisionedDashboards, debouncedSearchQuery]);
+
+  // Debounce search — updates debouncedSearchQuery and resets cache after delay
+  useDebounce(
+    () => {
+      setDebouncedSearchQuery(searchQuery);
+      setCurrentPage(1);
+
+      // Clear community cache when search changes
+      if (searchQuery.trim()) {
+        setCommunityCache({
+          searchQuery: searchQuery.trim(),
+          items: [],
+          cachedPages: new Set<number>(),
+          totalApiPages: 0,
+        });
+      } else {
+        // Revert to pre-fetched data — page 1 is already cached from the loader
+        setCommunityCache({
+          searchQuery: '',
+          items: communityDashboards,
+          cachedPages: new Set<number>(communityDashboards.length > 0 ? [1] : []),
+          totalApiPages: communityTotalPages,
+        });
+      }
+    },
+    SEARCH_DEBOUNCE_MS,
+    [searchQuery, communityDashboards, communityTotalPages]
+  );
+
+  // Calculate pagination slices for the merged provisioned + community list
+  const { totalPages, provisionedSlice, communityNeededCount, communityStartIndex, communitySlice } = useMemo(
+    () => getPageSlice({ currentPage, pageSize: PAGE_SIZE, filteredProvisioned, communityCache }),
+    [currentPage, filteredProvisioned, communityCache]
+  );
+
+  // Fetch community pages as needed
+  useEffect(() => {
+    if (communityNeededCount <= 0 || !datasourceType || isDashboardsLoading) {
+      return;
+    }
+
+    const fetchNeeded = async () => {
+      // Community items are fetched in pages of PAGE_SIZE from the API.
+      // communityStartIndex is the offset into the flat community list (e.g. 8 means "start at the 9th community item").
+      // We convert that offset to 1-based API page numbers:
+      //   e.g. index 0–5 → page 1, index 6–11 → page 2, etc.
+      const firstApiPage = Math.floor(communityStartIndex / PAGE_SIZE) + 1;
+      // The last item we need is at (communityStartIndex + communityNeededCount - 1).
+      // We find which API page contains that last item to know the full range of pages to fetch.
+      const lastApiPage = Math.floor((communityStartIndex + communityNeededCount - 1) / PAGE_SIZE) + 1;
+
+      const pagesToFetch: number[] = [];
+      for (let p = firstApiPage; p <= lastApiPage; p++) {
+        if (!communityCache.cachedPages.has(p)) {
+          pagesToFetch.push(p);
+        }
+      }
+
+      if (pagesToFetch.length === 0) {
+        return;
+      }
+
+      setIsCommunityLoading(true);
+
+      try {
+        for (const page of pagesToFetch) {
+          const response = await fetchCommunityDashboards({
+            orderBy: DEFAULT_SORT_ORDER,
+            direction: DEFAULT_SORT_DIRECTION,
+            page,
+            pageSize: PAGE_SIZE,
+            includeLogo: INCLUDE_LOGO,
+            includeScreenshots: INCLUDE_SCREENSHOTS,
+            dataSourceSlugIn: datasourceType,
+            filter: debouncedSearchQuery.trim() || undefined,
+          });
+
+          setCommunityCache((prev) => {
+            const newItems = [...prev.items];
+            const offset = (page - 1) * PAGE_SIZE;
+            response.items.forEach((item, i) => {
+              newItems[offset + i] = item;
+            });
+            const newCachedPages = new Set(prev.cachedPages);
+            newCachedPages.add(page);
+            return {
+              ...prev,
+              items: newItems,
+              cachedPages: newCachedPages,
+              totalApiPages: response.pages,
+            };
+          });
+        }
+
+        if (debouncedSearchQuery.trim()) {
+          DashboardLibraryInteractions.searchPerformed({
+            datasourceTypes: [datasourceType],
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+            hasResults: true,
+            resultCount: PAGE_SIZE,
+          });
+        }
+      } catch (err) {
+        console.error('Error loading community dashboards', err);
+      } finally {
+        setIsCommunityLoading(false);
+      }
+    };
+
+    fetchNeeded();
+  }, [
+    currentPage,
+    communityNeededCount,
+    communityStartIndex,
+    debouncedSearchQuery,
+    datasourceType,
+    isDashboardsLoading,
+    communityCache.cachedPages,
+  ]);
+
+  // Track analytics on first load
+  useEffect(() => {
+    if (
+      !isDashboardsLoading &&
+      !hasTrackedLoaded.current &&
+      (provisionedDashboards.length > 0 || communityDashboards.length > 0)
+    ) {
+      const contentKinds: Array<(typeof CONTENT_KINDS)[keyof typeof CONTENT_KINDS]> = [];
+      if (provisionedDashboards.length > 0) {
+        contentKinds.push(CONTENT_KINDS.DATASOURCE_DASHBOARD);
+      }
+      if (communityDashboards.length > 0) {
+        contentKinds.push(CONTENT_KINDS.COMMUNITY_DASHBOARD);
+      }
+
+      SuggestedDashboardInteractions.loaded({
+        numberOfItems: provisionedDashboards.length + communityDashboards.length,
+        contentKinds,
+        datasourceTypes: [datasourceType],
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+      });
+      hasTrackedLoaded.current = true;
+    }
+  }, [isDashboardsLoading, provisionedDashboards, communityDashboards, datasourceType]);
+
+  // Provisioned dashboard click handler
+  const onClickProvisionedDashboard = (dashboard: PluginDashboard) => {
+    DashboardLibraryInteractions.itemClicked({
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
+      datasourceTypes: [dashboard.pluginId],
+      libraryItemId: dashboard.uid,
+      libraryItemTitle: dashboard.title,
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+      discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
+    });
+
+    const params = new URLSearchParams({
+      datasource: datasourceUid || '',
+      title: dashboard.title || 'Template',
+      pluginId: dashboard.pluginId,
+      path: dashboard.path,
+      suggestedDashboardBanner: 'true',
+      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+      libraryItemId: dashboard.uid,
+      creationOrigin: CREATION_ORIGINS.DASHBOARD_LIBRARY_DATASOURCE_DASHBOARD,
+      eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
+    });
+
+    const templateUrl = `${DASHBOARD_LIBRARY_ROUTES.Template}?${params.toString()}`;
+    locationService.push(templateUrl);
+  };
+
+  // Community dashboard click handler
+  const [{ error: isPreviewDashboardError }, onClickCommunityDashboard] = useAsyncFn(
+    async (dashboard: GnetDashboard) => {
+      SuggestedDashboardInteractions.itemClicked({
+        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+        datasourceTypes: [datasourceType],
+        libraryItemId: String(dashboard.id),
+        libraryItemTitle: dashboard.name,
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+        eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+        discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
+      });
+
+      await onUseCommunityDashboard({
+        dashboard,
+        datasourceUid: datasourceUid || '',
+        datasourceType,
+        eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+        onShowMapping,
+      });
+    },
+    [datasourceType, datasourceUid, debouncedSearchQuery, onShowMapping]
+  );
+
+  // Compatibility check handler
+  const onCheckCompatibility = async (dashboard: GnetDashboard, triggerMethod: 'manual' | 'auto_initial_load') => {
+    if (!datasourceUid || !datasourceType) {
+      return;
+    }
+
+    setCompatibilityMap((prev) => new Map(prev).set(dashboard.id, { status: 'loading' }));
+
+    DashboardLibraryInteractions.compatibilityCheckTriggered({
+      dashboardId: String(dashboard.id),
+      dashboardTitle: dashboard.name,
+      datasourceType,
+      triggerMethod,
+      eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+    });
+
+    try {
+      const interpolatedDashboard = await interpolateDashboardForCompatibilityCheck(dashboard.id, datasourceUid);
+
+      const result = await checkDashboardCompatibility(interpolatedDashboard, [
+        {
+          uid: datasourceUid,
+          type: datasourceType,
+          name: getDataSourceSrv().getInstanceSettings(datasourceUid)?.name ?? '',
+        },
+      ]);
+
+      const dsResult = result.datasourceResults[0];
+      const score = Math.round(dsResult.compatibilityScore * 100);
+      const metricsFound = dsResult.foundMetrics;
+      const metricsTotal = dsResult.totalMetrics;
+
+      setCompatibilityMap((prev) =>
+        new Map(prev).set(dashboard.id, {
+          status: 'success',
+          score,
+          metricsFound,
+          metricsTotal,
+        })
+      );
+
+      DashboardLibraryInteractions.compatibilityCheckCompleted({
+        dashboardId: String(dashboard.id),
+        dashboardTitle: dashboard.name,
+        datasourceType,
+        score,
+        metricsFound,
+        metricsTotal,
+        triggerMethod,
+        eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
+      });
+    } catch (err) {
+      console.error('Error checking dashboard compatibility:', err);
+
+      const errorMessage = isFetchError(err) ? err.data?.message : 'Failed to check compatibility';
+      const errorCode = isFetchError(err) ? err.data?.code : undefined;
+
+      setCompatibilityMap((prev) =>
+        new Map(prev).set(dashboard.id, {
+          status: 'error',
+          errorMessage,
+          errorCode,
+        })
+      );
+    }
+  };
+
+  // Auto-trigger compatibility checks on initial load for Prometheus
+  useEffect(() => {
+    if (
+      !isDashboardsLoading &&
+      !hasAutoCheckedRef.current &&
+      communitySlice.length > 0 &&
+      datasourceUid &&
+      datasourceType === 'prometheus' &&
+      isCompatibilityAppEnabled &&
+      !debouncedSearchQuery.trim()
+    ) {
+      hasAutoCheckedRef.current = true;
+      communitySlice.forEach((dashboard) => {
+        onCheckCompatibility(dashboard, 'auto_initial_load');
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isDashboardsLoading,
+    communitySlice,
+    datasourceUid,
+    datasourceType,
+    isCompatibilityAppEnabled,
+    debouncedSearchQuery,
+  ]);
+
+  const showLoading = isDashboardsLoading || isCommunityLoading;
+  const hasNoResults = !showLoading && provisionedSlice.length === 0 && communitySlice.length === 0;
+
+  const onCreateFromScratch = () => {
+    onDismiss();
+    locationService.push('/dashboard/new');
+  };
+
+  return (
+    <Stack direction="column" gap={2} height="100%">
+      <ListHeader error={isPreviewDashboardError} onCreateFromScratch={onCreateFromScratch} />
+      <FilterInput
+        placeholder={
+          datasourceType
+            ? t(
+                'dashboard-library.merged-search-placeholder-with-datasource',
+                'Search {{datasourceType}} dashboards...',
+                { datasourceType }
+              )
+            : t('dashboard-library.merged-search-placeholder', 'Search dashboards...')
+        }
+        value={searchQuery}
+        onChange={setSearchQuery}
+      />
+      <div className={styles.resultsContainer}>
+        {showLoading ? (
+          <Grid gap={4} columns={{ xs: 1, sm: 2, lg: 3 }}>
+            {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+              <DashboardCard.Skeleton key={`skeleton-${i}`} />
+            ))}
+          </Grid>
+        ) : hasNoResults ? (
+          <EmptyResults datasourceType={datasourceType} hasSearchQuery={!!debouncedSearchQuery.trim()} />
+        ) : (
+          <DashboardResultsGrid
+            provisionedSlice={provisionedSlice}
+            communitySlice={communitySlice}
+            currentPage={currentPage}
+            datasourceType={datasourceType}
+            datasourceUid={datasourceUid}
+            isCompatibilityAppEnabled={isCompatibilityAppEnabled}
+            compatibilityMap={compatibilityMap}
+            onClickProvisionedDashboard={onClickProvisionedDashboard}
+            onClickCommunityDashboard={onClickCommunityDashboard}
+            onCheckCompatibility={onCheckCompatibility}
+          />
+        )}
+      </div>
+      {!hasNoResults && totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          numberOfPages={totalPages}
+          onNavigate={(page) => setCurrentPage(page)}
+          className={styles.pagination}
+        />
+      )}
+    </Stack>
+  );
+};
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    resultsContainer: css({
+      width: '100%',
+      flex: 1,
+      overflow: 'auto',
+      paddingBottom: theme.spacing(2),
+    }),
+    pagination: css({
+      position: 'sticky',
+      bottom: 0,
+      backgroundColor: theme.colors.background.primary,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 2,
+    }),
+  };
+}

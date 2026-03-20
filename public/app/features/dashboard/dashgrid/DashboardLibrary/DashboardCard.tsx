@@ -32,6 +32,7 @@ interface Props {
   onClose?: () => void;
   isLogo?: boolean; // Indicates if imageUrl is a small logo vs full screenshot
   showDatasourceProvidedBadge?: boolean;
+  showCommunityBadge?: boolean;
   dimThumbnail?: boolean; // Apply 50% opacity to thumbnail when badge is shown
   kind: 'template_dashboard' | 'suggested_dashboard';
   /** Show the compact compatibility badge (replaces showCompatibilityButton) */
@@ -53,6 +54,7 @@ function DashboardCardComponent({
   details,
   isLogo,
   showDatasourceProvidedBadge,
+  showCommunityBadge,
   dimThumbnail,
   kind,
   showCompatibilityBadge,
@@ -136,6 +138,15 @@ function DashboardCardComponent({
             <Badge
               text={t('dashboard-library.card.datasource-provided-badge', 'Data source provided')}
               color="orange"
+            />
+          </div>
+        )}
+        {showCommunityBadge && (
+          <div className={styles.badgeContainer}>
+            <Badge
+              text={t('dashboard-library.card.community-badge', 'Community')}
+              icon="info-circle"
+              color="blue"
             />
           </div>
         )}
@@ -291,6 +302,17 @@ function getStyles(theme: GrafanaTheme2) {
       [`&:hover .${thumbnailOverlay}, &:focus-within .${thumbnailOverlay}`]: {
         opacity: 1,
       },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '50%',
+        background: 'linear-gradient(to bottom, rgba(6, 6, 6, 0) 26%, #060606 100%)',
+        pointerEvents: 'none',
+        zIndex: 0,
+      },
     }),
     thumbnailOverlay,
     overlayButton: css({
@@ -321,6 +343,17 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       [`&:hover .${thumbnailOverlay}, &:focus-within .${thumbnailOverlay}`]: {
         opacity: 1,
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: '50%',
+        background: 'linear-gradient(to bottom, rgba(6, 6, 6, 0) 26%, #060606 100%)',
+        pointerEvents: 'none',
+        zIndex: 0,
       },
     }),
     logo: css({
@@ -387,7 +420,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     badgeContainer: css({
       position: 'absolute',
-      top: theme.spacing(1),
+      bottom: theme.spacing(1),
       right: theme.spacing(1),
       zIndex: 1,
     }),

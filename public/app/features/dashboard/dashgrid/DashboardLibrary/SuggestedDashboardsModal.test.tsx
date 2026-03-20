@@ -8,12 +8,8 @@ import { SuggestedDashboardsModal } from './SuggestedDashboardsModal';
 import { CONTENT_KINDS, EVENT_LOCATIONS } from './constants';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
 
-jest.mock('./DashboardLibrarySection', () => ({
-  DashboardLibrarySection: () => <div data-testid="dashboard-library-section">Dashboard Library Section</div>,
-}));
-
-jest.mock('./CommunityDashboardSection', () => ({
-  CommunityDashboardSection: () => <div data-testid="community-dashboard-section">Community Dashboard Section</div>,
+jest.mock('./SuggestedDashboardsList/SuggestedDashboardsList', () => ({
+  SuggestedDashboardsList: () => <div data-testid="suggested-dashboards-list">Suggested Dashboards List</div>,
 }));
 
 jest.mock('./CommunityDashboardMappingForm', () => ({
@@ -28,6 +24,7 @@ describe('SuggestedDashboardsModal', () => {
     onDismiss: jest.fn(),
     provisionedDashboards: [],
     communityDashboards: [],
+    communityTotalPages: 0,
     isDashboardsLoading: false,
   };
 
@@ -47,39 +44,18 @@ describe('SuggestedDashboardsModal', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  it('should render both tabs: Data-source provided and Community', () => {
+  it('should render SuggestedDashboardsList in list view', () => {
     render(<SuggestedDashboardsModal {...defaultProps} />);
 
-    expect(screen.getByRole('tab', { name: 'Data-source provided' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Community' })).toBeInTheDocument();
-  });
-
-  it('should render tablist with both tabs', () => {
-    render(<SuggestedDashboardsModal {...defaultProps} />);
-
-    const tablist = screen.getByRole('tablist');
-    expect(tablist).toBeInTheDocument();
-
-    const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(2);
-    expect(tabs[0]).toHaveTextContent('Data-source provided');
-    expect(tabs[1]).toHaveTextContent('Community');
-  });
-
-  it('should render DashboardLibrarySection when activeView is datasource', () => {
-    render(<SuggestedDashboardsModal {...defaultProps} />);
-
-    expect(screen.getByTestId('dashboard-library-section')).toBeInTheDocument();
-    expect(screen.queryByTestId('community-dashboard-section')).not.toBeInTheDocument();
+    expect(screen.getByTestId('suggested-dashboards-list')).toBeInTheDocument();
     expect(screen.queryByTestId('community-dashboard-mapping-form')).not.toBeInTheDocument();
   });
 
-  it('should render CommunityDashboardSection when activeView is community', () => {
-    render(<SuggestedDashboardsModal {...defaultProps} communityDashboards={[createMockGnetDashboard()]} />);
+  it('should not render tabs', () => {
+    render(<SuggestedDashboardsModal {...defaultProps} />);
 
-    expect(screen.getByTestId('community-dashboard-section')).toBeInTheDocument();
-    expect(screen.queryByTestId('dashboard-library-section')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('community-dashboard-mapping-form')).not.toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
   it('should render CommunityDashboardMappingForm when activeView is mapping', () => {
@@ -93,109 +69,26 @@ describe('SuggestedDashboardsModal', () => {
           constantInputs: [],
           existingMappings: [],
           onInterpolateAndNavigate: jest.fn(),
-          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+          eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
           contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         }}
       />
     );
 
     expect(screen.getByTestId('community-dashboard-mapping-form')).toBeInTheDocument();
-    expect(screen.queryByTestId('dashboard-library-section')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('community-dashboard-section')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('suggested-dashboards-list')).not.toBeInTheDocument();
   });
 
-  describe('default tab selection', () => {
-    it('should default to datasource tab when both provisioned and community dashboards are provided', () => {
-      render(
-        <SuggestedDashboardsModal
-          {...defaultProps}
-          provisionedDashboards={[createMockPluginDashboard()]}
-          communityDashboards={[createMockGnetDashboard()]}
-        />
-      );
+  it('should render SuggestedDashboardsList with both provisioned and community dashboards', () => {
+    render(
+      <SuggestedDashboardsModal
+        {...defaultProps}
+        provisionedDashboards={[createMockPluginDashboard()]}
+        communityDashboards={[createMockGnetDashboard()]}
+      />
+    );
 
-      expect(screen.getByTestId('dashboard-library-section')).toBeInTheDocument();
-      expect(screen.queryByTestId('community-dashboard-section')).not.toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: 'Data-source provided' })).toHaveAttribute('aria-selected', 'true');
-    });
-
-    it('should default to datasource tab when only provisioned dashboards are provided', () => {
-      render(<SuggestedDashboardsModal {...defaultProps} provisionedDashboards={[createMockPluginDashboard()]} />);
-
-      expect(screen.getByTestId('dashboard-library-section')).toBeInTheDocument();
-      expect(screen.queryByTestId('community-dashboard-section')).not.toBeInTheDocument();
-    });
-
-    it('should default to community tab when only community dashboards are provided', () => {
-      render(<SuggestedDashboardsModal {...defaultProps} communityDashboards={[createMockGnetDashboard()]} />);
-
-      expect(screen.getByTestId('community-dashboard-section')).toBeInTheDocument();
-      expect(screen.queryByTestId('dashboard-library-section')).not.toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: 'Community' })).toHaveAttribute('aria-selected', 'true');
-    });
-
-    it('should default to datasource tab when no dashboards are provided', () => {
-      render(<SuggestedDashboardsModal {...defaultProps} />);
-
-      expect(screen.getByTestId('dashboard-library-section')).toBeInTheDocument();
-      expect(screen.queryByTestId('community-dashboard-section')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('tab switching', () => {
-    it('should switch from datasource to community tab when community tab is clicked', async () => {
-      const { user } = render(
-        <SuggestedDashboardsModal
-          {...defaultProps}
-          provisionedDashboards={[createMockPluginDashboard()]}
-          communityDashboards={[createMockGnetDashboard()]}
-        />
-      );
-
-      expect(screen.getByTestId('dashboard-library-section')).toBeInTheDocument();
-
-      await user.click(screen.getByRole('tab', { name: 'Community' }));
-
-      expect(screen.getByTestId('community-dashboard-section')).toBeInTheDocument();
-      expect(screen.queryByTestId('dashboard-library-section')).not.toBeInTheDocument();
-    });
-
-    it('should switch from community to datasource tab when datasource tab is clicked', async () => {
-      const { user } = render(
-        <SuggestedDashboardsModal {...defaultProps} communityDashboards={[createMockGnetDashboard()]} />
-      );
-
-      expect(screen.getByTestId('community-dashboard-section')).toBeInTheDocument();
-
-      await user.click(screen.getByRole('tab', { name: 'Data-source provided' }));
-
-      expect(screen.getByTestId('dashboard-library-section')).toBeInTheDocument();
-      expect(screen.queryByTestId('community-dashboard-section')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('tabs visibility in mapping view', () => {
-    it('should hide tabs when in mapping view', () => {
-      render(
-        <SuggestedDashboardsModal
-          {...defaultProps}
-          initialMappingContext={{
-            dashboardName: 'Mapping Dashboard',
-            dashboardJson: { title: 'Mapping Dashboard', panels: [], schemaVersion: 41 } as DashboardJson,
-            unmappedDsInputs: [],
-            constantInputs: [],
-            existingMappings: [],
-            onInterpolateAndNavigate: jest.fn(),
-            eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-            contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-          }}
-        />
-      );
-
-      expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: 'Data-source provided' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: 'Community' })).not.toBeInTheDocument();
-    });
+    expect(screen.getByTestId('suggested-dashboards-list')).toBeInTheDocument();
   });
 
   describe('modal title', () => {
@@ -229,7 +122,7 @@ describe('SuggestedDashboardsModal', () => {
             constantInputs: [],
             existingMappings: [],
             onInterpolateAndNavigate: jest.fn(),
-            eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+            eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
             contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
           }}
         />

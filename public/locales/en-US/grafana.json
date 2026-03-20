@@ -6470,9 +6470,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Browse Grafana.com",
-    "browse-plugins": "Browse plugins",
     "card": {
+      "community-badge": "Community",
       "customize-with-assistant-button": "Customize with assistant",
       "customize-with-assistant-button-label": "Customize with assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
@@ -6483,8 +6482,6 @@
       "view-template-button": "View template",
       "view-template-button-label": "View template: {{title}}"
     },
-    "community-empty-title": "No community dashboards found",
-    "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
     "community-error-description": "Failed to load community dashboard.",
     "community-error-title": "Error loading community dashboard",
     "community-mapping-form": {
@@ -6497,8 +6494,6 @@
       "preview": "Preview dashboard"
     },
     "community-mapping-select-datasource": "Select a datasource",
-    "community-search-placeholder": "Search community dashboards...",
-    "community-search-placeholder-with-datasource": "Search {{datasourceType}} community dashboards...",
     "compatibility-auto-map-failed": "Unable to automatically map all datasource inputs for this dashboard. Compatibility check requires all datasource variables to be resolved.",
     "compatibility-badge": {
       "check": "Check compatibility",
@@ -6512,6 +6507,7 @@
       "tooltip-orange": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard may contain panels that require heavy customization.",
       "tooltip-red": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard will require heavy query customization."
     },
+    "create-from-scratch": "Create a dashboard from scratch instead",
     "dashboard-card": {
       "details": {
         "datasource": "Datasource",
@@ -6522,22 +6518,18 @@
         "view-on-grafana-com": "View on Grafana.com"
       }
     },
+    "merged-description": "Browse and select from data-source provided or community dashboards",
+    "merged-empty-no-dashboards": "No dashboards are available for this datasource.",
+    "merged-empty-search": "Try a different search term or browse more dashboards on Grafana.com.",
+    "merged-empty-title": "No dashboards found",
+    "merged-empty-title-with-datasource": "No {{datasourceType}} dashboards found",
+    "merged-search-placeholder": "Search dashboards...",
+    "merged-search-placeholder-with-datasource": "Search {{datasourceType}} dashboards...",
     "modal": {
-      "description": "Browse and select from data-source provided or community dashboards",
-      "tab-community": "Community",
-      "tab-datasource": "Data-source provided",
       "title": "Suggested dashboards",
       "title-mapping-with-name": "Configure datasources for {{dashboardName}}",
       "title-with-datasource": "Suggested dashboards for your {{datasourceType}} datasource"
     },
-    "multi-community-error": "Failed to load community dashboards. Please try again.",
-    "multi-community-error-title": "Error loading community dashboards",
-    "no-community-dashboards-datasource": "Try a different search term or browse dashboards for different datasource types on Grafana.com.",
-    "no-community-dashboards-search": "Try a different search term or browse more dashboards on Grafana.com.",
-    "no-provisioned-dashboards": "Provisioned dashboards are provided by data source plugins. You can find more plugins on Grafana.com.",
-    "provisioned-empty-title": "No provisioned dashboards found",
-    "provisioned-empty-title-with-datasource": "No {{datasourceType}} provisioned dashboards found",
-    "retry": "Retry",
     "template-dashboard-modal": {
       "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
       "title": "Start a dashboard from a template"

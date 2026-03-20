@@ -2,15 +2,14 @@ import { css } from '@emotion/css';
 import { useState, useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Modal, TabsBar, Tab, TabContent, useStyles2, Text } from '@grafana/ui';
+import { Modal, useStyles2 } from '@grafana/ui';
 import { DashboardInput, DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
-import { CommunityDashboardSection } from './CommunityDashboardSection';
-import { DashboardLibrarySection } from './DashboardLibrarySection';
+import { SuggestedDashboardsList } from './SuggestedDashboardsList/SuggestedDashboardsList';
 import { ContentKind, EventLocation } from './constants';
 import { GnetDashboard } from './types';
 import { InputMapping } from './utils/autoMapDatasources';
@@ -22,10 +21,11 @@ interface SuggestedDashboardsModalProps {
   initialMappingContext?: MappingContext | null;
   provisionedDashboards: PluginDashboard[];
   communityDashboards: GnetDashboard[];
+  communityTotalPages: number;
   isDashboardsLoading: boolean;
 }
 
-type ModalView = 'datasource' | 'community' | 'mapping';
+type ModalView = 'list' | 'mapping';
 
 export interface MappingContext {
   dashboardName: string;
@@ -46,13 +46,14 @@ export const SuggestedDashboardsModal = ({
   initialMappingContext,
   provisionedDashboards,
   communityDashboards,
+  communityTotalPages,
   isDashboardsLoading,
 }: SuggestedDashboardsModalProps) => {
-  const [activeView, setActiveView] = useState<ModalView>();
+  const [activeView, setActiveView] = useState<ModalView>('list');
   const [mappingContext, setMappingContext] = useState<MappingContext | null>(initialMappingContext || null);
   const styles = useStyles2(getStyles);
 
-  // Get datasource info for modal title and search
+  // Get datasource info for modal title
   const datasourceInfo = useMemo(() => {
     if (!datasourceUid) {
       return { type: '' };
@@ -71,19 +72,12 @@ export const SuggestedDashboardsModal = ({
       return;
     }
 
-    if (isOpen && !activeView) {
-      const view: ModalView =
-        communityDashboards?.length && !provisionedDashboards?.length ? 'community' : 'datasource';
-      setActiveView(view);
+    if (isOpen) {
+      setActiveView('list');
     } else {
-      // Reset when modal closes
       setMappingContext(null);
     }
-  }, [initialMappingContext, isOpen, communityDashboards, provisionedDashboards, activeView]);
-
-  const onTabChange = (tab: 'datasource' | 'community') => {
-    setActiveView(tab);
-  };
+  }, [initialMappingContext, isOpen]);
 
   const handleShowMapping = (context: MappingContext) => {
     setMappingContext(context);
@@ -92,7 +86,7 @@ export const SuggestedDashboardsModal = ({
 
   const handleBackToDashboards = () => {
     setMappingContext(null);
-    setActiveView('community');
+    setActiveView('list');
   };
 
   return (
@@ -115,48 +109,22 @@ export const SuggestedDashboardsModal = ({
       className={styles.modal}
       contentClassName={styles.modalContent}
     >
-      {activeView !== 'mapping' && (
-        <div className={styles.stickyHeader}>
-          <Text element="p">
-            <Trans i18nKey="dashboard-library.modal.description">
-              Browse and select from data-source provided or community dashboards
-            </Trans>
-          </Text>
-          <TabsBar>
-            <Tab
-              label={t('dashboard-library.modal.tab-datasource', 'Data-source provided')}
-              icon="apps"
-              active={activeView === 'datasource'}
-              onChangeTab={() => onTabChange('datasource')}
-            />
-            <Tab
-              label={t('dashboard-library.modal.tab-community', 'Community')}
-              icon="users-alt"
-              active={activeView === 'community'}
-              onChangeTab={() => onTabChange('community')}
-            />
-          </TabsBar>
+      {activeView === 'list' && (
+        <div className={styles.listContent}>
+          <SuggestedDashboardsList
+            provisionedDashboards={provisionedDashboards}
+            communityDashboards={communityDashboards}
+            communityTotalPages={communityTotalPages}
+            datasourceUid={datasourceUid}
+            datasourceType={datasourceInfo.type}
+            isDashboardsLoading={isDashboardsLoading}
+            onShowMapping={handleShowMapping}
+            onDismiss={onDismiss}
+          />
         </div>
       )}
-
-      <TabContent className={styles.tabContent}>
-        {activeView === 'datasource' && (
-          <DashboardLibrarySection
-            dashboards={provisionedDashboards}
-            datasourceUid={datasourceUid}
-            isDashboardsLoading={isDashboardsLoading}
-          />
-        )}
-        {activeView === 'community' && (
-          <CommunityDashboardSection
-            onShowMapping={handleShowMapping}
-            datasourceType={datasourceInfo.type}
-            dashboards={communityDashboards}
-            datasourceUid={datasourceUid}
-            isDashboardsLoading={isDashboardsLoading}
-          />
-        )}
-        {activeView === 'mapping' && mappingContext && (
+      {activeView === 'mapping' && mappingContext && (
+        <div className={styles.listContent}>
           <CommunityDashboardMappingForm
             unmappedDsInputs={mappingContext.unmappedDsInputs}
             constantInputs={mappingContext.constantInputs}
@@ -171,8 +139,8 @@ export const SuggestedDashboardsModal = ({
             contentKind={mappingContext.contentKind}
             datasourceTypes={[datasourceInfo.type]}
           />
-        )}
-      </TabContent>
+        </div>
+      )}
     </Modal>
   );
 };
@@ -190,28 +158,15 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
-      padding: 0,
+      padding: theme.spacing(2),
       marginBottom: 0,
       height: '100%',
     }),
-    stickyHeader: css({
-      position: 'sticky',
-      top: 0,
-      zIndex: 2,
-      backgroundColor: theme.colors.background.primary,
-      paddingTop: theme.spacing(3),
-      paddingLeft: theme.spacing(3),
-      paddingRight: theme.spacing(3),
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(2),
-    }),
-    tabContent: css({
+    listContent: css({
       flex: 1,
       overflow: 'auto',
-      paddingTop: theme.spacing(3),
-      paddingLeft: theme.spacing(3),
-      paddingRight: theme.spacing(3),
+      paddingLeft: theme.spacing(1),
+      paddingRight: theme.spacing(1),
     }),
   };
 }
