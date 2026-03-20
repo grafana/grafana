@@ -196,7 +196,7 @@ export function DataSourceList(props: DataSourceListProps) {
           >
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const ds = sortedDataSources[virtualRow.index];
-              const isSelected = enableKeyboardNavigation && virtualRow.index === selectedIndex;
+              const isSelected = !!enableKeyboardNavigation && virtualRow.index === selectedIndex;
               return (
                 <div
                   key={ds.uid}
@@ -216,7 +216,7 @@ export function DataSourceList(props: DataSourceListProps) {
           </div>
         ) : (
           sortedDataSources.map((ds, index) => {
-            const isSelected = enableKeyboardNavigation && index === selectedIndex;
+            const isSelected = !!enableKeyboardNavigation && index === selectedIndex;
             return <React.Fragment key={ds.uid}>{renderDataSourceCard(ds, isSelected)}</React.Fragment>;
           })
         ))}
