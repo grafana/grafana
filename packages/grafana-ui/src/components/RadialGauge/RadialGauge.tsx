@@ -5,7 +5,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { getFormattedThresholds } from '../Gauge/utils';
 import { Box } from '../Layout/Box/Box';
 
 import { RadialBar } from './RadialBar';
@@ -18,7 +17,7 @@ import { buildGradientColors } from './colors';
 import { ARC_END, ARC_START, DEFAULT_DECIMALS } from './constants';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { RadialShape, RadialTextMode } from './types';
-import { calculateDimensions, getValueAngleForValue } from './utils';
+import { calculateDimensions, getValueAngleForValue, getFormattedThresholds } from './utils';
 
 export interface RadialGaugeProps {
   values: FieldDisplay[];
