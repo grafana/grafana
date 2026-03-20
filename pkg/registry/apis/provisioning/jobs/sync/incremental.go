@@ -150,13 +150,14 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
 
-		// Directory entries (trailing-slash paths) appear from cross-boundary
-		// renames. The individual file-level changes within the directory are
-		// emitted separately and already handle folder creation (via
-		// EnsureFolderPathExist inside WriteResourceFromFile) and deletion
-		// (via affectedFolders / orphan cleanup). Skip them here to avoid
-		// routing directory paths to file-processing logic.
-		if safepath.IsDir(change.Path) {
+		// Created/deleted directory entries (trailing-slash paths) appear from
+		// cross-boundary renames. The individual file-level changes within the
+		// directory are emitted separately and already handle folder creation
+		// (via EnsureFolderPathExist inside WriteResourceFromFile) and deletion
+		// (via affectedFolders / orphan cleanup). Skip them to avoid routing
+		// directory paths to file-processing logic. Renamed directories must
+		// still reach RenameFolderPath below.
+		if safepath.IsDir(change.Path) && change.Action != repository.FileActionRenamed {
 			progress.Record(ctx, resultBuilder.Build())
 			continue
 		}
