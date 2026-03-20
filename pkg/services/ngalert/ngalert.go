@@ -466,8 +466,9 @@ func (ng *AlertNG) init() error {
 		receiverAccess,
 	)
 
+	provisioningReceiverAuthz := ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true)
 	provisioningReceiverService := notifier.NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](ng.accesscontrol, true),
+		provisioningReceiverAuthz,
 		configStore,
 		ng.store,
 		ng.store,
@@ -513,8 +514,8 @@ func (ng *AlertNG) init() error {
 	}
 
 	// Provisioning
-	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
+	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, routeService, ng.Cfg.UnifiedAlerting, ng.Log)
+	contactPointService := provisioning.NewContactPointService(provisioningReceiverAuthz, configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions)
 	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log)
 	templateServiceWithLimits := templateService.WithLimitsProvider(limitsProvider)
 	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store, routeService)

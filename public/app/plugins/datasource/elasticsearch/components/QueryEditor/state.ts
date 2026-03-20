@@ -19,9 +19,10 @@ export const changeAliasPattern = createAction<ElasticsearchDataQuery['alias']>(
 
 export const changeEditorType = createAction<ElasticsearchDataQuery['editorType']>('change_editor_type');
 
-export const changeEditorTypeAndResetQuery = createAction<ElasticsearchDataQuery['editorType']>(
-  'change_editor_type_and_reset_query'
-);
+export const changeEditorTypeAndResetQuery = createAction<{
+  editorType: ElasticsearchDataQuery['editorType'];
+  queryType: ElasticsearchDataQuery['queryType'];
+}>('change_editor_type_and_reset_query');
 
 export const queryReducer = (prevQuery: ElasticsearchDataQuery['query'], action: Action) => {
   if (changeQuery.match(action)) {
@@ -54,11 +55,15 @@ export const queryTypeReducer = (prevQueryType: ElasticsearchDataQuery['queryTyp
     return action.payload;
   }
 
-  if (changeEditorType.match(action) || changeEditorTypeAndResetQuery.match(action)) {
+  if (changeEditorTypeAndResetQuery.match(action)) {
     // When switching editor types, set queryType accordingly:
     // - 'code' editor uses DSL queries
     // - 'builder' editor uses Lucene queries
-    return action.payload === 'code' ? 'dsl' : 'lucene';
+    return action.payload.editorType === 'code' ? action.payload.queryType : 'lucene';
+  }
+
+  if (changeEditorType.match(action)) {
+    return action.payload === 'builder' ? 'lucene' : 'dsl';
   }
 
   if (initQuery.match(action)) {
@@ -90,7 +95,7 @@ export const editorTypeReducer = (prevEditorType: ElasticsearchDataQuery['editor
   }
 
   if (changeEditorTypeAndResetQuery.match(action)) {
-    return action.payload;
+    return action.payload.editorType;
   }
 
   if (initQuery.match(action)) {

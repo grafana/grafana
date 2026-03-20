@@ -2311,6 +2311,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2335,7 +2336,6 @@
       },
       "filterBy": "",
       "firing-alerts": "",
-      "group-labels": "",
       "header": {
         "contact-point": "",
         "group-labels": "",
@@ -2345,8 +2345,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2405,9 +2406,6 @@
       "label-payload": "Payload",
       "label-use-existing-alert-instances": "Gunakan instans peringatan yang ada",
       "reference": "Referensi"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Percepat pembuatan peringatan Anda sekarang dengan menggunakan salah satu aplikasi khusus kami"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Aturan ini dikelola oleh plugin {{pluginName}}"
@@ -2921,6 +2919,9 @@
       "error-button": "Kesalahan",
       "export-all-grafana-rules": "Ekspor semua aturan Grafana",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Batalkan pencarian",
         "no-more-results": "Tidak ada hasil lagi – {{numberOfRules}} aturan ditemukan",
@@ -3067,8 +3068,6 @@
       "dashboard": "Dasbor",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Cari berdasarkan bantuan sumber data",
       "filter-options": {
-        "aria-label": "Filter opsi",
-        "aria-label-show-filters": "Filter",
         "placeholder-namespace": "Pilih namespace",
         "placeholder-search-input": "Cari berdasarkan nama atau masukkan kueri filter..."
       },
@@ -3100,6 +3099,9 @@
       "state": "Status",
       "title-search-help": "Cari bantuan",
       "view-as": "Tampilkan sebagai"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Menghapus",
@@ -4781,7 +4783,6 @@
     "all": "Semua",
     "apply": "Terapkan",
     "cancel": "Batalkan",
-    "clear": "Hapus",
     "collapse": "Ciutkan",
     "disabled": "Dinonaktifkan",
     "discard": "Buang",
@@ -5880,6 +5881,12 @@
         "title": "Pengaturan waktu panel"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dasbor harus disimpan sebelum peringatan dapat ditambahkan.",
@@ -6511,6 +6518,17 @@
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -7244,6 +7262,8 @@
       "cannot-be-saved": "Dasbor ini tidak dapat disimpan dari UI Grafana karena telah disediakan dari sumber lain. Salin JSON atau simpan ke file di bawah ini, lalu Anda dapat memperbarui dasbor Anda di sumber penyediaan.",
       "copy-json-to-clipboard": "Salin JSON ke papan klip",
       "file-path": "<strong>Jalur file:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Deskripsi",
       "label-target-folder": "Folder target",
       "label-title": "Judul",
@@ -7925,6 +7945,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Nilai tetap"
       },
+      "label": "",
       "label-limit": "Batas",
       "label-value": "Nilai",
       "noOptionsMessage-no-fields-found": "Tidak ada bidang yang ditemukan",
@@ -9944,7 +9965,9 @@
       "external-links-heading": "Tautan eksternal"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Masukkan ekspresi reguler"
+      "input-placeholder": "Masukkan ekspresi reguler",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Operator perbandingan",
@@ -9971,6 +9994,18 @@
       "expand-row-tooltip": "Alihkan baris diperluas",
       "tooltip-collapse-all": "Ciutkan semua baris",
       "tooltip-expand-all": "Perluas semua baris"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Atur properti untuk bidang dengan nama yang cocok dengan regex",
@@ -11190,7 +11225,7 @@
       "cancel": "Batalkan",
       "change-uid": "Ubah uid",
       "description-library-panels-imported": "Daftar panel pustaka baru yang akan diimpor.",
-      "description-unique-identifier-uid": "Pengidentifikasi unik (UID) dasbor dapat digunakan untuk mengidentifikasi dasbor secara unik antara beberapa instalasi Grafana. UID memungkinkan memiliki URL yang konsisten untuk mengakses dasbor sehingga mengubah judul dasbor tidak akan merusak tautan bookmark ke dasbor tersebut.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Panel pustaka yang ada",
       "label-folder": "Folder",
       "label-name": "Nama",
@@ -12708,9 +12743,6 @@
     "title-loaded-pull-request-in-repo": "Sumber daya ini dimuat dari cabang yang baru saja Anda buat di {{repoType}} dan hanya dapat dilihat oleh Anda"
   },
   "provisioning": {
-    "banner": {
-      "message": "Fitur ini saat ini sedang dalam pengembangan aktif. Untuk pengalaman terbaik dan peningkatan terbaru, kami merekomendasikan Anda untuk menggunakan <2>versi nightly </2> Grafana."
-    },
     "bitbucket": {
       "branch-required": "Cabang wajib diisi",
       "permissions": {
@@ -13393,6 +13425,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Pilih item yang akan disinkronkan",
       "step-configure-repo": "Konfigurasikan repositori",
       "step-connect": "Hubungkan",

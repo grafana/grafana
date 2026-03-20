@@ -161,7 +161,7 @@ For a comprehensive list of the basic role permissions refer to [Permissions ass
 
 You can use RBAC to modify the permissions associated with any basic role, which changes what viewers, editors, or admins can do. If you modify a basic role, [the change is not propagated to the other basic roles](#permission-propagation). You can't delete basic roles.
 
-You can modify basic roles via the UI or using the RBAC API. Refer to [Manage RBAC roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles) to learn how.
+You can modify basic roles using the configuration file or with the RBAC API. Refer to [Manage RBAC roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/manage-rbac-roles) to learn how.
 
 Note that:
 

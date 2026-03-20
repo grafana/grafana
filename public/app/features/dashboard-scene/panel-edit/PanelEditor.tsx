@@ -265,7 +265,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         this.setState({ dataPane: undefined });
       }
 
-      // clean up data provider when switching from data to non data panel
       if (panel.state.$data) {
         panel.setState({ $data: undefined });
       }
@@ -275,11 +274,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       if (!this.state.dataPane) {
         const dataPane = PanelDataPane.createFor(this.getPanel(), this.state.useQueryExperienceNext);
         this.setState({ dataPane });
-        // This is to notify UrlSyncManager that a new object has been added to scene that requires url sync
         this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);
       }
 
-      // add data provider when switching from non data to data panel
       if (!panel.state.$data) {
         let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
         if (!ds) {
