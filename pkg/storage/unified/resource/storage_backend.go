@@ -32,12 +32,12 @@ import (
 )
 
 const (
-	defaultListBufferSize       = 100
-	prunerMaxEvents             = 20
-	defaultEventRetentionPeriod = 1 * time.Hour
-	defaultEventPruningInterval = 5 * time.Minute
-	defaultSearchLookback       = 1 * time.Second
-	clusterScopeNamespace       = "__cluster__"
+	defaultListBufferSize             = 100
+	defaultEventRetentionPeriod       = 1 * time.Hour
+	defaultEventPruningLimit          = 20
+	defaultEventPruningInterval       = 5 * time.Minute
+	defaultSearchLookback             = 1 * time.Second
+	defaultGarbageCollectionBatchWait = 1 * time.Second
 )
 
 type GarbageCollectionConfig struct {
@@ -45,45 +45,27 @@ type GarbageCollectionConfig struct {
 	DryRun           bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
+	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
 	MaxAge           time.Duration // retention period
 	DashboardsMaxAge time.Duration // dashboard retention
 }
 
-// convertClusterNamespaceToEmpty converts the internal __cluster__ namespace back to empty string
-// for cluster-scoped resources when returning to users
-func convertClusterNamespaceToEmpty(namespace string) string {
-	if namespace == clusterScopeNamespace {
-		return ""
-	}
-	return namespace
-}
-
-// convertEmptyToClusterNamespace converts empty namespace to the internal __cluster__ namespace
-// for cluster-scoped resources when WithExperimentalClusterScope is enabled
-func convertEmptyToClusterNamespace(namespace string, withExperimentalClusterScope bool) string {
-	if withExperimentalClusterScope && namespace == "" {
-		return clusterScopeNamespace
-	}
-	return namespace
-}
-
 // kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	snowflake                    *snowflake.Node
-	kv                           KV
-	bulkLock                     *BulkLock
-	dataStore                    *dataStore
-	eventStore                   *eventStore
-	notifier                     notifier
-	log                          log.Logger
-	disablePruner                bool
-	eventRetentionPeriod         time.Duration
-	eventPruningInterval         time.Duration
-	historyPruner                Pruner
-	garbageCollection            GarbageCollectionConfig
-	withExperimentalClusterScope bool
-	lastImportStore              *lastImportStore
-	lastImportTimeMaxAge         time.Duration
+	snowflake            *snowflake.Node
+	kv                   KV
+	bulkLock             *BulkLock
+	dataStore            *dataStore
+	eventStore           *eventStore
+	notifier             notifier
+	log                  log.Logger
+	disablePruner        bool
+	eventRetentionPeriod time.Duration
+	eventPruningInterval time.Duration
+	historyPruner        Pruner
+	garbageCollection    GarbageCollectionConfig
+	lastImportStore      *lastImportStore
+	lastImportTimeMaxAge time.Duration
 	//tracer        trace.Tracer
 	//reg           prometheus.Registerer
 
@@ -110,15 +92,14 @@ type KVBackend interface {
 }
 
 type KVBackendOptions struct {
-	KvStore                      KV
-	DisablePruner                bool
-	WithExperimentalClusterScope bool                  // Allow empty namespace to be used for cluster-scoped resources.
-	EventRetentionPeriod         time.Duration         // How long to keep events (default: 1 hour)
-	EventPruningInterval         time.Duration         // How often to run the event pruning (default: 5 minutes)
-	Tracer                       trace.Tracer          // TODO add tracing
-	Reg                          prometheus.Registerer // TODO add metrics
-	Log                          log.Logger
-	GarbageCollection            GarbageCollectionConfig
+	KvStore              KV
+	DisablePruner        bool
+	EventRetentionPeriod time.Duration         // How long to keep events (default: 1 hour)
+	EventPruningInterval time.Duration         // How often to run the event pruning (default: 5 minutes)
+	Tracer               trace.Tracer          // TODO add tracing
+	Reg                  prometheus.Registerer // TODO add metrics
+	Log                  log.Logger
+	GarbageCollection    GarbageCollectionConfig
 
 	UseChannelNotifier bool
 	WatchOptions       WatchOptions
@@ -184,25 +165,29 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		searchLookback = defaultSearchLookback
 	}
 
+	garbageCollection := opts.GarbageCollection
+	if garbageCollection.BatchWait <= 0 {
+		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
+	}
+
 	backend := &kvStorageBackend{
-		kv:                           kv,
-		bulkLock:                     NewBulkLock(),
-		dataStore:                    newDataStore(kv),
-		eventStore:                   eventStore,
-		notifier:                     newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
-		watchOpts:                    opts.WatchOptions.normalize(),
-		snowflake:                    s,
-		log:                          logger,
-		eventRetentionPeriod:         eventRetentionPeriod,
-		eventPruningInterval:         eventPruningInterval,
-		withExperimentalClusterScope: opts.WithExperimentalClusterScope,
-		rvManager:                    opts.RvManager,
-		dbKeepAlive:                  opts.DBKeepAlive,
-		lastImportStore:              newLastImportStore(kv),
-		lastImportTimeMaxAge:         opts.LastImportTimeMaxAge,
-		garbageCollection:            opts.GarbageCollection,
-		searchLookback:               opts.SearchLookback,
-		disablePruner:                opts.DisablePruner,
+		kv:                   kv,
+		bulkLock:             NewBulkLock(),
+		dataStore:            newDataStore(kv),
+		eventStore:           eventStore,
+		notifier:             newNotifier(eventStore, notifierOptions{log: logger, useChannelNotifier: opts.UseChannelNotifier}),
+		watchOpts:            opts.WatchOptions.normalize(),
+		snowflake:            s,
+		log:                  logger,
+		eventRetentionPeriod: eventRetentionPeriod,
+		eventPruningInterval: eventPruningInterval,
+		rvManager:            opts.RvManager,
+		dbKeepAlive:          opts.DBKeepAlive,
+		lastImportStore:      newLastImportStore(kv),
+		lastImportTimeMaxAge: opts.LastImportTimeMaxAge,
+		garbageCollection:    garbageCollection,
+		searchLookback:       opts.SearchLookback,
+		disablePruner:        opts.DisablePruner,
 	}
 	err = backend.initPruner(ctx)
 	if err != nil {
@@ -302,9 +287,10 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		return fmt.Errorf("invalid pruning key, all fields must be set: %+v", key)
 	}
 
+	prunerMaxLimit := k.prunerHistoryLimit(key.Group, key.Resource)
 	counter := 0
 	deleted := 0
-	// iterate over all keys for the resource and delete versions beyond the latest 20
+	// iterate over all keys for the resource and delete versions beyond the configured limit
 	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
 		Namespace: key.Namespace,
 		Group:     key.Group,
@@ -316,12 +302,12 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		}
 
 		// Pruner needs to exclude deleted events
-		if counter < prunerMaxEvents && datakey.Action != DataActionDeleted {
+		if counter < prunerMaxLimit && datakey.Action != DataActionDeleted {
 			counter++
 			continue
 		}
 
-		// If we already have 20 versions, delete any more create or update events
+		// If we already have the configured number of versions, delete any more create or update events
 		if datakey.Action != DataActionDeleted {
 			err := k.dataStore.Delete(ctx, datakey)
 			if err != nil {
@@ -463,6 +449,9 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	startKey := prefix
 	endKey := PrefixRangeEnd(prefix)
 
+	// track keys that have been processed to avoid processing the same key twice
+	seenKeys := map[ListRequestKey]struct{}{}
+
 	for {
 		keysProcessed := int64(0)
 		keysDeleted := int64(0)
@@ -505,6 +494,13 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			// if the action is deleted and the resource version is older than the cutoff, get all previous versions
 			// of the same resource and delete them in batch
 			if dk.Action == DataActionDeleted && dk.ResourceVersion < cutoffTimestamp {
+				// ensure we don't process/count the same resource twice
+				if _, seen := seenKeys[k]; seen {
+					continue
+				}
+				// mark the key as seen
+				seenKeys[k] = struct{}{}
+
 				startKeyToDelete := k.Prefix()
 				// end key is exclusive, so we need to add a suffix to make sure we include all the versions we want to delete
 				endKeyToDelete := PrefixRangeEnd(dk.String())
@@ -545,8 +541,11 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 		totalDeleted += keysDeleted
 
-		// wait a second between batches to avoid overwhelming the datastore
-		<-time.After(time.Second)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(b.garbageCollection.BatchWait):
+		}
 	}
 
 	if totalDeleted > 0 {
@@ -600,6 +599,13 @@ func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName 
 	return cutoffTimestamp
 }
 
+func (b *kvStorageBackend) prunerHistoryLimit(group, resource string) int {
+	if limit, ok := LookupCustomPrunerHistoryLimit(group, resource); ok {
+		return limit
+	}
+	return defaultEventPruningLimit
+}
+
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
 //
 //nolint:gocyclo
@@ -610,7 +616,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 
 	rv := k.snowflake.Generate().Int64()
 
-	namespace := convertEmptyToClusterNamespace(event.Key.Namespace, k.withExperimentalClusterScope)
+	namespace := event.Key.Namespace
 
 	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
 	if event.PreviousRV != 0 {
@@ -798,7 +804,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "missing key"}}
 	}
 
-	namespace := convertEmptyToClusterNamespace(req.Key.Namespace, k.withExperimentalClusterScope)
+	namespace := req.Key.Namespace
 
 	// If a specific resource version is requested, validate that it's not too high
 	if req.ResourceVersion > 0 {
@@ -874,14 +880,12 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
 
-	namespace := convertEmptyToClusterNamespace(req.Options.Key.Namespace, k.withExperimentalClusterScope)
-
 	// Parse continue token if provided
 	listOptions := ListRequestOptions{
 		Key: ListRequestKey{
 			Group:     req.Options.Key.Group,
 			Resource:  req.Options.Key.Resource,
-			Namespace: namespace,
+			Namespace: req.Options.Key.Namespace,
 			Name:      req.Options.Key.Name,
 		},
 		ResourceVersion: req.ResourceVersion,
@@ -1011,7 +1015,7 @@ func (i *kvListIterator) ResourceVersion() int64 {
 }
 
 func (i *kvListIterator) Namespace() string {
-	return convertClusterNamespaceToEmpty(i.currentDataObj.Key.Namespace)
+	return i.currentDataObj.Key.Namespace
 }
 
 func (i *kvListIterator) Name() string {
@@ -1036,9 +1040,6 @@ func validateListHistoryRequest(req *resourcepb.ListRequest) error {
 	}
 	if key.Resource == "" {
 		return fmt.Errorf("resource is required")
-	}
-	if key.Namespace == "" {
-		return fmt.Errorf("namespace is required")
 	}
 	return nil
 }
@@ -1633,7 +1634,7 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 
 			events <- &WrittenEvent{
 				Key: &resourcepb.ResourceKey{
-					Namespace: convertClusterNamespaceToEmpty(event.Namespace),
+					Namespace: event.Namespace,
 					Group:     event.Group,
 					Resource:  event.Resource,
 					Name:      event.Name,

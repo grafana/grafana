@@ -1,4 +1,4 @@
-package reconcilers
+package folders
 
 import (
 	"context"
@@ -14,12 +14,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
 
+// PermissionStore interface for managing folder permissions
+type PermissionStore interface {
+	GetFolderParents(ctx context.Context, namespace, folderUID string) ([]string, error)
+	SetFolderParent(ctx context.Context, namespace, folderUID, parentUID string) error
+	DeleteFolderParents(ctx context.Context, namespace, folderUID string) error
+}
+
+// ZanzanaPermissionStore implements PermissionStore using Zanzana.
 type ZanzanaPermissionStore struct {
 	zanzanaClient zanzana.Client
 }
 
 var _ PermissionStore = (*ZanzanaPermissionStore)(nil)
 
+// NewZanzanaPermissionStore creates a new ZanzanaPermissionStore.
 func NewZanzanaPermissionStore(zanzanaClient zanzana.Client) PermissionStore {
 	return &ZanzanaPermissionStore{zanzanaClient}
 }

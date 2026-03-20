@@ -31,6 +31,8 @@ jobs:
     if: needs.detect-changes.outputs.changed == 'true'
     name: Go Workspace Check
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
     - name: Checkout repository
@@ -55,8 +57,6 @@ jobs:
           echo "If there is a change in enterprise dependencies, please update pkg/extensions/main.go."
           exit 1
         fi
-    - name: Ensure Dockerfile contains submodule COPY commands
-      run: ./scripts/go-workspace/validate-dockerfile.sh
 
   check-wire:
     needs: detect-changes

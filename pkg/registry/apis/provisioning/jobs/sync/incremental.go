@@ -194,7 +194,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			resultBuilder.WithName(name).WithGVK(gvk)
 
 			if oldFolderName != "" {
-				affectedFolders[safepath.Dir(change.Path)] = oldFolderName
+				affectedFolders[safepath.Dir(change.PreviousPath)] = oldFolderName
 			}
 
 			renameSpan.End()
