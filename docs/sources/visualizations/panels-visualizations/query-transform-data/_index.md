@@ -166,10 +166,10 @@ From here, you can:
 - Search for queries by data source name, query content, title, or description.
 - Sort queries alphabetically or by creation date.
 - Filter by data source name, author name, and tags. The tag filter uses the `OR` operator, while the others use the `AND` operator.
-  
-   {{< admonition type="tip">}}
-   Use the **Remember filters** switch to persist your filter selections across sessions in your local storage.
-   {{< /admonition >}}
+
+  {{< admonition type="tip">}}
+  Use the **Remember filters** switch to persist your filter selections across sessions in your local storage.
+  {{< /admonition >}}
 
 - Star queries so that they appear in the **Starred** filter view.
 - Duplicate, or delete a saved query.
