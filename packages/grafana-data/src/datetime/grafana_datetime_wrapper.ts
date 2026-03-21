@@ -1,90 +1,13 @@
 import { DateTime as LuxonDateTime, Duration as LuxonDuration, IANAZone, Info, Settings } from 'luxon';
 
 import { TimeZone } from '../types/time';
+import type { DurationUnit, DateTimeInput, DateTime, DateTimeDuration, DateTimeLocale, FormatInput, DurationInput } from './types';
+import { ISO_8601 } from './types';
+import {looseMomentDurationUnitsToLuxon} from "./compability-layer/loose-moment-duration-units-to-luxon";
+import {formatWithMomentTokens} from "./compability-layer/luxon-format-with-moment-tokens";
+import {looseMomentParseString} from "./compability-layer/loose-moment-parse-string";
 
-const ISO_8601_TOKEN = 'ISO_8601';
 let configuredWeekStart = 0;
-
-export interface DateTimeBuiltinFormat {
-  __momentBuiltinFormatBrand: any;
-}
-
-export const ISO_8601: DateTimeBuiltinFormat = ISO_8601_TOKEN as unknown as DateTimeBuiltinFormat;
-export type DateTimeInput = Date | string | number | Array<string | number> | DateTime | null;
-export type FormatInput = string | DateTimeBuiltinFormat | undefined;
-export type DurationInput = string | number | DateTimeDuration;
-export type DurationUnit =
-  | 'year'
-  | 'years'
-  | 'y'
-  | 'month'
-  | 'months'
-  | 'M'
-  | 'week'
-  | 'weeks'
-  | 'isoWeek'
-  | 'w'
-  | 'day'
-  | 'days'
-  | 'd'
-  | 'hour'
-  | 'hours'
-  | 'h'
-  | 'minute'
-  | 'minutes'
-  | 'm'
-  | 'second'
-  | 'seconds'
-  | 's'
-  | 'millisecond'
-  | 'milliseconds'
-  | 'ms'
-  | 'quarter'
-  | 'quarters'
-  | 'Q';
-
-export interface DateTimeLocale {
-  firstDayOfWeek: () => number;
-}
-
-export interface DateTimeDuration {
-  asHours: () => number;
-  hours: () => number;
-  minutes: () => number;
-  seconds: () => number;
-  asSeconds: () => number;
-}
-
-export interface DateTime extends Object {
-  add: (amount?: DateTimeInput, unit?: DurationUnit) => DateTime;
-  clone: () => DateTime;
-  set: (unit: DurationUnit | 'date', amount: DateTimeInput) => void;
-  diff: (amount: DateTimeInput, unit?: DurationUnit, truncate?: boolean) => number;
-  endOf: (unitOfTime: DurationUnit) => DateTime;
-  format: (formatInput?: FormatInput) => string;
-  fromNow: (withoutSuffix?: boolean) => string;
-  from: (formaInput: DateTimeInput) => string;
-  isSame: (input?: DateTimeInput, granularity?: DurationUnit) => boolean;
-  isBefore: (input?: DateTimeInput) => boolean;
-  isValid: () => boolean;
-  local: () => DateTime;
-  locale: (locale: string) => DateTime;
-  startOf: (unitOfTime: DurationUnit) => DateTime;
-  subtract: (amount?: DateTimeInput, unit?: DurationUnit) => DateTime;
-  toDate: () => Date;
-  toISOString: (keepOffset?: boolean) => string;
-  isoWeekday: (day?: number | string) => number | string;
-  valueOf: () => number;
-  unix: () => number;
-  utc: () => DateTime;
-  utcOffset: () => number;
-  hour?: () => number;
-  minute?: () => number;
-  month?: () => number;
-  date?: () => number;
-  year?: () => number;
-  tz?: (timeZone?: string) => DateTime | string;
-}
 
 class GrafanaDuration implements DateTimeDuration {
   constructor(private readonly value: LuxonDuration) {}
@@ -156,7 +79,7 @@ class GrafanaDateTime implements DateTime {
 
   diff = (amount: DateTimeInput, unit: DurationUnit = 'milliseconds', truncate?: boolean): number => {
     const other = normalizeInput(amount, this.value.zoneName ?? undefined);
-    const result = this.value.diff(other.value, normalizeDiffUnit(unit)).as(normalizeDiffUnit(unit));
+    const result = this.value.diff(other.value, looseMomentDurationUnitsToLuxon(unit)).as(looseMomentDurationUnitsToLuxon(unit));
     return truncate ? Math.trunc(result) : result;
   };
 
@@ -381,7 +304,7 @@ const normalizeInput = (input?: DateTimeInput, zone?: string | null, formatInput
   }
 
   if (typeof input === 'string') {
-    value = parseStringInput(input, formatInput, normalizedZone, locale);
+    value = looseMomentParseString(input, formatInput, normalizedZone, locale);
     return new GrafanaDateTime(value);
   }
 
@@ -406,143 +329,6 @@ const normalizeInput = (input?: DateTimeInput, zone?: string | null, formatInput
 
   return new GrafanaDateTime(LuxonDateTime.invalid('Unsupported input'));
 };
-
-const parseStringInput = (input: string, formatInput: FormatInput, zone: string | undefined, locale: string) => {
-  if (!formatInput) {
-    const iso = LuxonDateTime.fromISO(input, { zone: zone ?? undefined, setZone: true, locale });
-    if (iso.isValid) {
-      return zone && !inputHasZone(input) ? iso.setZone(zone, { keepLocalTime: true }) : iso;
-    }
-
-    const jsDate = new Date(input);
-    return Number.isNaN(jsDate.valueOf())
-      ? LuxonDateTime.invalid('Invalid date')
-      : LuxonDateTime.fromJSDate(jsDate, { zone: zone ?? undefined }).setLocale(locale);
-  }
-
-  if (formatInput === ISO_8601) {
-    const iso = LuxonDateTime.fromISO(input, { zone: zone ?? undefined, setZone: true, locale });
-    return zone && !inputHasZone(input) ? iso.setZone(zone, { keepLocalTime: true }) : iso;
-  }
-
-  if (inputHasZone(input) && input.includes('T')) {
-    const iso = LuxonDateTime.fromISO(input, { zone: zone ?? undefined, setZone: true, locale });
-    if (iso.isValid) {
-      return zone && !inputHasZone(input) ? iso.setZone(zone, { keepLocalTime: true }) : iso;
-    }
-  }
-
-  const format = String(formatInput);
-  const variants: Array<{ input: string; format: string }> = [
-    { input, format: toLuxonFormat(format) },
-    { input, format: toLuxonFormat(format).replace(/LLLL/g, 'MMM').replace(/cccc/g, 'ccc') },
-    { input: input.replace(/,/g, ''), format: toLuxonFormat(format).replace(/,/g, '').replace(/LLLL/g, 'MMM') },
-  ];
-  for (const candidate of variants) {
-    const parsed = LuxonDateTime.fromFormat(candidate.input, candidate.format, {
-      zone: zone ?? undefined,
-      locale,
-      setZone: Boolean(zone),
-    });
-
-    if (parsed.isValid) {
-      return parsed;
-    }
-
-    const prefixParsed = parseFormatPrefix(candidate.input, candidate.format, zone, locale);
-    if (prefixParsed?.isValid) {
-      return prefixParsed;
-    }
-  }
-
-  return LuxonDateTime.invalid('Invalid date');
-};
-
-const parseFormatPrefix = (input: string, format: string, zone: string | undefined, locale: string) => {
-  const prefix = input.match(buildFormatPrefixRegex(format))?.[0];
-  if (!prefix) {
-    return undefined;
-  }
-
-  return LuxonDateTime.fromFormat(prefix, format, {
-    zone: zone ?? undefined,
-    locale,
-    setZone: Boolean(zone),
-  });
-};
-
-const buildFormatPrefixRegex = (format: string) => {
-  const tokenPatterns: Array<[string, string]> = [
-    ['yyyy', '\\d{4}'],
-    ['yy', '\\d{2}'],
-    ['LLLL', '[\\p{L}.]+'],
-    ['LLL', '[\\p{L}.]+'],
-    ['LL', '\\d{2}'],
-    ['L', '\\d{1,2}'],
-    ['cccc', '[\\p{L}.]+'],
-    ['ccc', '[\\p{L}.]+'],
-    ['cc', '[\\p{L}]{2}'],
-    ['ooo', '\\d{3}'],
-    ['o', '\\d{1,3}'],
-    ['dd', '\\d{2}'],
-    ['d', '\\d{1,2}'],
-    ['HH', '\\d{2}'],
-    ['H', '\\d{1,2}'],
-    ['hh', '\\d{2}'],
-    ['h', '\\d{1,2}'],
-    ['mm', '\\d{2}'],
-    ['m', '\\d{1,2}'],
-    ['ss', '\\d{2}'],
-    ['s', '\\d{1,2}'],
-    ['SSS', '\\d{3}'],
-    ['ZZ', '(?:Z|[+-]\\d{2}:?\\d{2})'],
-    ['a', '[\\p{L}.]+'],
-    ['q', '\\d'],
-  ];
-
-  let pattern = '^';
-  for (let i = 0; i < format.length; ) {
-    if (format[i] === "'") {
-      let literal = '';
-      i++;
-      while (i < format.length) {
-        if (format[i] === "'" && format[i + 1] === "'") {
-          literal += "'";
-          i += 2;
-          continue;
-        }
-        if (format[i] === "'") {
-          i++;
-          break;
-        }
-        literal += format[i++];
-      }
-      pattern += escapeRegExp(literal);
-      continue;
-    }
-
-    let matched = false;
-    for (const [token, tokenPattern] of tokenPatterns) {
-      if (format.slice(i, i + token.length) === token) {
-        pattern += tokenPattern;
-        i += token.length;
-        matched = true;
-        break;
-      }
-    }
-
-    if (matched) {
-      continue;
-    }
-
-    pattern += escapeRegExp(format[i]);
-    i++;
-  }
-
-  return new RegExp(pattern, 'u');
-};
-
-const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const normalizeZone = (zone?: string) => {
   if (!zone || zone === 'browser') {
@@ -587,48 +373,8 @@ const normalizeDuration = (amount?: DateTimeInput, unit?: DurationUnit) => {
     return {};
   }
 
-  const normalizedUnit = normalizeDiffUnit(unit ?? 'milliseconds');
+  const normalizedUnit = looseMomentDurationUnitsToLuxon(unit ?? 'milliseconds');
   return { [normalizedUnit]: amount };
-};
-
-const normalizeDiffUnit = (unit: DurationUnit) => {
-  switch (unit) {
-    case 'y':
-    case 'year':
-    case 'years':
-      return 'years';
-    case 'M':
-    case 'month':
-    case 'months':
-      return 'months';
-    case 'Q':
-    case 'quarter':
-    case 'quarters':
-      return 'quarters';
-    case 'w':
-    case 'week':
-    case 'weeks':
-    case 'isoWeek':
-      return 'weeks';
-    case 'd':
-    case 'day':
-    case 'days':
-      return 'days';
-    case 'h':
-    case 'hour':
-    case 'hours':
-      return 'hours';
-    case 'm':
-    case 'minute':
-    case 'minutes':
-      return 'minutes';
-    case 's':
-    case 'second':
-    case 'seconds':
-      return 'seconds';
-    default:
-      return 'milliseconds';
-  }
 };
 
 const adjustToBoundary = (value: LuxonDateTime, unit: DurationUnit, roundUp: boolean) => {
@@ -640,7 +386,7 @@ const adjustToBoundary = (value: LuxonDateTime, unit: DurationUnit, roundUp: boo
     return boundaryForWeek(value, 1, roundUp);
   }
 
-  const normalizedUnit = normalizeDiffUnit(unit);
+  const normalizedUnit = looseMomentDurationUnitsToLuxon(unit);
   if (normalizedUnit === 'quarters') {
     const quarterStartMonth = Math.floor((value.month - 1) / 3) * 3 + 1;
     const quarterStart = value.set({ month: quarterStartMonth, day: 1 }).startOf('day');
@@ -660,7 +406,7 @@ const boundaryForWeek = (value: LuxonDateTime, weekStart: number, roundUp: boole
 };
 
 const convertToMilliseconds = (value: number, unit?: DurationUnit) => {
-  switch (normalizeDiffUnit(unit ?? 'milliseconds')) {
+  switch (looseMomentDurationUnitsToLuxon(unit ?? 'milliseconds')) {
     case 'seconds':
       return value * 1000;
     case 'minutes':
@@ -680,8 +426,6 @@ const convertToMilliseconds = (value: number, unit?: DurationUnit) => {
   }
 };
 
-const inputHasZone = (value: string) => /(?:Z|[+-]\d{2}(?::?\d{2})?)$/.test(value);
-
 const formatRelative = (value: string | null, withoutSuffix?: boolean) => {
   if (!value) {
     return 'Invalid date';
@@ -692,139 +436,6 @@ const formatRelative = (value: string | null, withoutSuffix?: boolean) => {
   }
 
   return value.replace(/^in /, '').replace(/ ago$/, '');
-};
-
-const formatWithMomentTokens = (value: LuxonDateTime, format: string) => {
-  const zonePlaceholder = '¤0¤';
-  const lowerMeridiemPlaceholder = '¤1¤';
-  const upperMeridiemPlaceholder = '¤2¤';
-  const luxonFormat = toLuxonFormat(injectFormatPlaceholders(format, zonePlaceholder, lowerMeridiemPlaceholder, upperMeridiemPlaceholder));
-
-  const meridiem = value.toFormat('a');
-  return value
-    .toFormat(luxonFormat)
-    .replace(new RegExp(lowerMeridiemPlaceholder, 'g'), meridiem.toLowerCase())
-    .replace(new RegExp(upperMeridiemPlaceholder, 'g'), meridiem.toUpperCase())
-    .replace(new RegExp(zonePlaceholder, 'g'), getTimeZoneAbbreviation(value));
-};
-
-const getTimeZoneAbbreviation = (value: LuxonDateTime) => {
-  const zoneName = value.zoneName ?? 'UTC';
-  const date = value.toJSDate();
-
-  try {
-    const abbreviation = new Intl.DateTimeFormat('en-US', {
-      timeZone: zoneName,
-      timeZoneName: 'short',
-    })
-      .formatToParts(date)
-      .find((part) => part.type === 'timeZoneName')?.value;
-
-    if (abbreviation) {
-      return abbreviation;
-    }
-  } catch {
-    // Ignore invalid Intl timezone formatting and fall through to Luxon.
-  }
-
-  return value.offsetNameShort || 'UTC';
-};
-
-const injectFormatPlaceholders = (
-  format: string,
-  zonePlaceholder: string,
-  lowerMeridiemPlaceholder: string,
-  upperMeridiemPlaceholder: string
-) => {
-  let output = '';
-
-  for (let i = 0; i < format.length; i++) {
-    if (format[i] === '\\' && i + 1 < format.length) {
-      output += format[i] + format[i + 1];
-      i++;
-      continue;
-    }
-
-    switch (format[i]) {
-      case 'z':
-        output += zonePlaceholder;
-        break;
-      case 'a':
-        output += lowerMeridiemPlaceholder;
-        break;
-      case 'A':
-        output += upperMeridiemPlaceholder;
-        break;
-      default:
-        output += format[i];
-    }
-  }
-
-  return output;
-};
-
-// Luxon ref: https://moment.github.io/luxon/#/formatting?id=table-of-tokens
-// Moment ref: https://momentjs.com/docs/#/displaying/format/
-const tokenMap: Array<[string, string]> = [
-  ['YYYY', 'yyyy'],
-  ['YY', 'yy'],
-  ['MMMM', 'LLLL'],
-  ['MMM', 'LLL'],
-  ['MM', 'LL'],
-  ['M', 'L'],
-  ['DDDD', 'ooo'],
-  ['DDD', 'o'],
-  ['DD', 'dd'],
-  ['D', 'd'],
-  ['dddd', 'cccc'],
-  ['ddd', 'ccc'],
-  ['dd', 'cc'],
-  ['A', 'a'],
-  ['a', 'a'],
-  ['HH', 'HH'],
-  ['H', 'H'],
-  ['hh', 'hh'],
-  ['h', 'h'],
-  ['mm', 'mm'],
-  ['m', 'm'],
-  ['ss', 'ss'],
-  ['s', 's'],
-  ['SSS', 'SSS'],
-  ['Q', 'q'],
-  ['ZZ', 'ZZ'],
-  ['Z', 'ZZ'],
-];
-
-const toLuxonFormat = (format: string) => {
-  let output = '';
-  for (let i = 0; i < format.length; ) {
-    const escaped = format[i] === '\\' && i + 1 < format.length;
-    if (escaped) {
-      output += `'${format[i + 1].replace(/'/g, "''")}'`;
-      i += 2;
-      continue;
-    }
-
-    let matched = false;
-    for (const [momentToken, luxonToken] of tokenMap) {
-      if (format.slice(i, i + momentToken.length) === momentToken) {
-        output += luxonToken;
-        i += momentToken.length;
-        matched = true;
-        break;
-      }
-    }
-
-    if (matched) {
-      continue;
-    }
-
-    const char = format[i];
-    output += /[A-Za-z_]/.test(char) ? `'${char.replace(/'/g, "''")}'` : char;
-    i++;
-  }
-
-  return output;
 };
 
 configuredWeekStart = getLocaleWeekStart(getLocale());
