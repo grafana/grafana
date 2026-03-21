@@ -406,3 +406,83 @@ func TestRenameResourceFile(t *testing.T) {
 		require.Empty(t, folderName, "folder should be empty when resource does not exist")
 	})
 }
+
+func TestFetchExisting(t *testing.T) {
+	t.Run("no-op when Existing is already set", func(t *testing.T) {
+		existing := &unstructured.Unstructured{Object: map[string]any{
+			"metadata": map[string]any{"name": "already-here"},
+		}}
+		parsed := &ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "my-resource", "namespace": "default"},
+			}},
+			Existing: existing,
+		}
+
+		require.NoError(t, parsed.FetchExisting(context.Background()))
+		require.Same(t, existing, parsed.Existing, "Existing should not be replaced")
+	})
+
+	t.Run("no-op when Client is nil", func(t *testing.T) {
+		parsed := &ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "my-resource", "namespace": "default"},
+			}},
+		}
+
+		require.NoError(t, parsed.FetchExisting(context.Background()))
+		require.Nil(t, parsed.Existing)
+	})
+
+	t.Run("populates Existing when resource is found", func(t *testing.T) {
+		mockClient := &MockDynamicResourceInterface{}
+		grafanaObj := managedGrafanaObj("my-resource", "default", nil)
+		mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+
+		parsed := &ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "my-resource", "namespace": "default"},
+			}},
+			Client: mockClient,
+		}
+
+		require.NoError(t, parsed.FetchExisting(context.Background()))
+		require.NotNil(t, parsed.Existing)
+		require.Equal(t, "my-resource", parsed.Existing.GetName())
+	})
+
+	t.Run("NotFound leaves Existing nil without error", func(t *testing.T) {
+		mockClient := &MockDynamicResourceInterface{}
+		mockClient.On("Get", mock.Anything, "missing", metav1.GetOptions{}, mock.Anything).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "missing"))
+
+		parsed := &ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "missing", "namespace": "default"},
+			}},
+			Client: mockClient,
+		}
+
+		require.NoError(t, parsed.FetchExisting(context.Background()))
+		require.Nil(t, parsed.Existing)
+	})
+
+	t.Run("non-NotFound error is propagated", func(t *testing.T) {
+		mockClient := &MockDynamicResourceInterface{}
+		mockClient.On("Get", mock.Anything, "broken", metav1.GetOptions{}, mock.Anything).
+			Return(nil, fmt.Errorf("connection refused"))
+
+		parsed := &ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "broken", "namespace": "default"},
+			}},
+			Client: mockClient,
+		}
+
+		err := parsed.FetchExisting(context.Background())
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to get existing resource")
+		require.Contains(t, err.Error(), "connection refused")
+		require.Nil(t, parsed.Existing)
+	})
+}
