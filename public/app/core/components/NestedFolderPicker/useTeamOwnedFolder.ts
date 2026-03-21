@@ -106,4 +106,3 @@ function coercedError(error: unknown, fallbackMessage = 'Failed to load teams') 
 
   return new Error(fallbackMessage);
 }
-
