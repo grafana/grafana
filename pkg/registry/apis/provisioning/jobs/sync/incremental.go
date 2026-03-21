@@ -74,7 +74,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	if len(affectedFolders) > 0 {
 		cleanupStart := time.Now()
 		span.AddEvent("checking if impacted folders should be deleted", trace.WithAttributes(attribute.Int("affected_folders", len(affectedFolders))))
-		err := cleanupOrphanedFolders(ctx, repo, affectedFolders, repositoryResources, tracer, progress)
+		err := cleanupOrphanedFolders(ctx, repo, currentRef, affectedFolders, repositoryResources, tracer, progress)
 		metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCleanup, time.Since(cleanupStart))
 		if err != nil {
 			return tracing.Error(span, fmt.Errorf("cleanup orphaned folders: %w", err))
@@ -123,7 +123,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			}
 
 			if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
-				folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment)
+				folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment, change.Ref)
 				if err != nil {
 					ensureFolderSpan.RecordError(err)
 					ensureFolderSpan.End()
@@ -233,6 +233,7 @@ func actionPriority(action repository.FileAction) int {
 func cleanupOrphanedFolders(
 	ctx context.Context,
 	repo repository.Versioned,
+	currentRef string,
 	affectedFolders map[string]string,
 	repositoryResources resources.RepositoryResources,
 	tracer tracing.Tracer,
@@ -257,7 +258,7 @@ func cleanupOrphanedFolders(
 		}
 
 		// if we can no longer find the folder in git, then we can delete it from grafana
-		_, err := readerRepo.Read(ctx, path, "")
+		_, err := readerRepo.Read(ctx, path, currentRef)
 		if err != nil && (errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			span.AddEvent("folder not found in git, removing from grafana")
 			if err := repositoryResources.RemoveFolder(ctx, folderName); err != nil {

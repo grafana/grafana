@@ -257,7 +257,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 			folderPath = safepath.Dir(safepath.Dir(path))
 		}
 		folderCtx, folderSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.ensure_folder")
-		folder, err := r.folders.EnsureFolderPathExist(folderCtx, folderPath)
+		folder, err := r.folders.EnsureFolderPathExist(folderCtx, folderPath, ref)
 		if err != nil {
 			folderSpan.RecordError(err)
 			folderSpan.End()

@@ -74,9 +74,9 @@ func (_c *MockRepositoryResources_EnsureFolderExists_Call) RunAndReturn(run func
 	return _c
 }
 
-// EnsureFolderPathExist provides a mock function with given fields: ctx, filePath
-func (_m *MockRepositoryResources) EnsureFolderPathExist(ctx context.Context, filePath string) (string, error) {
-	ret := _m.Called(ctx, filePath)
+// EnsureFolderPathExist provides a mock function with given fields: ctx, filePath, ref
+func (_m *MockRepositoryResources) EnsureFolderPathExist(ctx context.Context, filePath string, ref string) (string, error) {
+	ret := _m.Called(ctx, filePath, ref)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnsureFolderPathExist")
@@ -84,17 +84,17 @@ func (_m *MockRepositoryResources) EnsureFolderPathExist(ctx context.Context, fi
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
-		return rf(ctx, filePath)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (string, error)); ok {
+		return rf(ctx, filePath, ref)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
-		r0 = rf(ctx, filePath)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
+		r0 = rf(ctx, filePath, ref)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, filePath)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, filePath, ref)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -110,13 +110,14 @@ type MockRepositoryResources_EnsureFolderPathExist_Call struct {
 // EnsureFolderPathExist is a helper method to define mock.On call
 //   - ctx context.Context
 //   - filePath string
-func (_e *MockRepositoryResources_Expecter) EnsureFolderPathExist(ctx interface{}, filePath interface{}) *MockRepositoryResources_EnsureFolderPathExist_Call {
-	return &MockRepositoryResources_EnsureFolderPathExist_Call{Call: _e.mock.On("EnsureFolderPathExist", ctx, filePath)}
+//   - ref string
+func (_e *MockRepositoryResources_Expecter) EnsureFolderPathExist(ctx interface{}, filePath interface{}, ref interface{}) *MockRepositoryResources_EnsureFolderPathExist_Call {
+	return &MockRepositoryResources_EnsureFolderPathExist_Call{Call: _e.mock.On("EnsureFolderPathExist", ctx, filePath, ref)}
 }
 
-func (_c *MockRepositoryResources_EnsureFolderPathExist_Call) Run(run func(ctx context.Context, filePath string)) *MockRepositoryResources_EnsureFolderPathExist_Call {
+func (_c *MockRepositoryResources_EnsureFolderPathExist_Call) Run(run func(ctx context.Context, filePath string, ref string)) *MockRepositoryResources_EnsureFolderPathExist_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
 	})
 	return _c
 }
@@ -126,7 +127,7 @@ func (_c *MockRepositoryResources_EnsureFolderPathExist_Call) Return(parent stri
 	return _c
 }
 
-func (_c *MockRepositoryResources_EnsureFolderPathExist_Call) RunAndReturn(run func(context.Context, string) (string, error)) *MockRepositoryResources_EnsureFolderPathExist_Call {
+func (_c *MockRepositoryResources_EnsureFolderPathExist_Call) RunAndReturn(run func(context.Context, string, string) (string, error)) *MockRepositoryResources_EnsureFolderPathExist_Call {
 	_c.Call.Return(run)
 	return _c
 }

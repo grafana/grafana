@@ -69,7 +69,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				// First file triggers folder creation which fails
 				progress.On("HasDirPathFailedCreation", "unsupported/file.txt").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "unsupported/", Err: fmt.Errorf("permission denied")}
-				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/").Return("", folderErr).Once()
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/", mock.Anything).Return("", folderErr).Once()
 
 				// First file recorded with error (note: error is from folder creation, but recorded against file)
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
@@ -195,7 +195,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				// First file triggers level1/ failure
 				progress.On("HasDirPathFailedCreation", "level1/file.txt").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "level1/", Err: fmt.Errorf("permission denied")}
-				repoResources.On("EnsureFolderPathExist", mock.Anything, "level1/").Return("", folderErr).Once()
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "level1/", mock.Anything).Return("", folderErr).Once()
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "level1/file.txt" && r.Action() == repository.FileActionIgnored
@@ -240,7 +240,7 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				// Failure path fails
 				progress.On("HasDirPathFailedCreation", "failure/file3.txt").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "failure/", Err: fmt.Errorf("disk full")}
-				repoResources.On("EnsureFolderPathExist", mock.Anything, "failure/").Return("", folderErr).Once()
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "failure/", mock.Anything).Return("", folderErr).Once()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 					return r.Path() == "failure/file3.txt" && r.Action() == repository.FileActionIgnored
 				})).Return().Once()
@@ -394,7 +394,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_FailedFolderCreation(t *testi
 	folderErr := &resources.PathCreationError{Path: "unsupported/", Err: fmt.Errorf("permission denied")}
 	// First check is before it fails.
 	progress.On("HasDirPathFailedCreation", "unsupported/file.txt").Return(false).Once()
-	repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/").Return("", folderErr).Once()
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/", mock.Anything).Return("", folderErr).Once()
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "unsupported/file.txt" && r.Action() == repository.FileActionIgnored && r.Error() != nil
@@ -520,7 +520,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_MultiLevelNesting(t *testing.
 	folderErr := &resources.PathCreationError{Path: "level1/", Err: fmt.Errorf("permission denied")}
 	// First check is before it fails.
 	progress.On("HasDirPathFailedCreation", "level1/file.txt").Return(false).Once()
-	repoResources.On("EnsureFolderPathExist", mock.Anything, "level1/").Return("", folderErr).Once()
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "level1/", mock.Anything).Return("", folderErr).Once()
 
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "level1/file.txt" && r.Action() == repository.FileActionIgnored && r.Error() != nil
@@ -578,7 +578,7 @@ func TestIncrementalSync_HierarchicalErrorHandling_MixedSuccessAndFailure(t *tes
 
 	folderErr := &resources.PathCreationError{Path: "failure/", Err: fmt.Errorf("disk full")}
 	progress.On("HasDirPathFailedCreation", "failure/file3.txt").Return(false).Once()
-	repoResources.On("EnsureFolderPathExist", mock.Anything, "failure/").Return("", folderErr).Once()
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "failure/", mock.Anything).Return("", folderErr).Once()
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "failure/file3.txt" && r.Action() == repository.FileActionIgnored
 	})).Return().Once()

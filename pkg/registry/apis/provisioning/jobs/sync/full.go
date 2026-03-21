@@ -105,7 +105,7 @@ func FullSync(
 	}
 	span.SetAttributes(attribute.Bool("pre_check_quota", true))
 
-	return applyChanges(ctx, changes, clients, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled)
+	return applyChanges(ctx, changes, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, metrics, quotaTracker, folderMetadataEnabled)
 }
 
 // shouldSkipChange checks if a change should be skipped based on previous failures on parent/child folders.
@@ -145,6 +145,7 @@ func applyChange(
 	ctx context.Context,
 	change ResourceFileChange,
 	clients resources.ResourceClients,
+	currentRef string,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
@@ -220,7 +221,7 @@ func applyChange(
 			repositoryResources.RemoveFolderFromTree(change.Existing.Name)
 		}
 
-		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path)
+		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path, currentRef)
 		if err != nil {
 			resultBuilder.WithError(fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err))
 			ensureFolderSpan.RecordError(err)
@@ -246,7 +247,7 @@ func applyChange(
 	}
 
 	writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
-	name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
+	name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, currentRef)
 	resultBuilder := jobs.NewGVKResult(name, gvk).WithAction(change.Action).WithPath(change.Path)
 	if err != nil {
 		writeSpan.RecordError(err)
@@ -276,6 +277,7 @@ func applyChanges(
 	ctx context.Context,
 	changes []ResourceFileChange,
 	clients resources.ResourceClients,
+	currentRef string,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
@@ -330,7 +332,7 @@ func applyChanges(
 
 	if len(fileDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileDeletions, func() error {
-			return applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
+			return applyResourcesInParallel(ctx, fileDeletions, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
@@ -338,7 +340,7 @@ func applyChanges(
 
 	if len(folderDeletions) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
-			return applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+			return applyFoldersSerially(ctx, folderDeletions, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
@@ -346,7 +348,7 @@ func applyChanges(
 
 	if len(folderCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
-			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+			return applyFoldersSerially(ctx, folderCreations, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
@@ -354,7 +356,7 @@ func applyChanges(
 
 	if len(fileCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileCreations, func() error {
-			return applyResourcesInParallel(ctx, fileCreations, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
+			return applyResourcesInParallel(ctx, fileCreations, clients, currentRef, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
@@ -417,6 +419,7 @@ func applyFoldersSerially(
 	ctx context.Context,
 	folders []ResourceFileChange,
 	clients resources.ResourceClients,
+	currentRef string,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
@@ -433,7 +436,7 @@ func applyFoldersSerially(
 		}
 
 		wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
-			applyChange(timeoutCtx, folder, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+			applyChange(timeoutCtx, folder, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		})
 	}
 
@@ -446,6 +449,7 @@ func applyResourcesInParallel(
 	ctx context.Context,
 	resources []ResourceFileChange,
 	clients resources.ResourceClients,
+	currentRef string,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
@@ -482,7 +486,7 @@ loop:
 			defer func() { <-sem }()
 
 			wrapWithTimeout(ctx, 15*time.Second, func(timeoutCtx context.Context) {
-				applyChange(timeoutCtx, change, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+				applyChange(timeoutCtx, change, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 			})
 		}(change)
 	}

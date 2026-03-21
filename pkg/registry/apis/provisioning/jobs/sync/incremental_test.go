@@ -169,7 +169,7 @@ func TestIncrementalSync(t *testing.T) {
 
 				progress.On("HasDirPathFailedCreation", "unsupported/path/file.txt").Return(false)
 
-				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/path/").
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/path/", mock.Anything).
 					Return("test-folder", nil)
 
 				progress.On("Record", mock.Anything, jobs.NewFolderResult("unsupported/path/").
@@ -348,7 +348,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 
 				progress.On("HasDirPathFailedCreation", "unsupported/path/file.txt").Return(false)
 
-				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/path/").
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/path/", mock.Anything).
 					Return("", fmt.Errorf("failed to create folder"))
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
@@ -752,7 +752,7 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 				progress.On("HasDirPathFailedDeletion", "dashboards/").Return(false)
 
 				// if the folder is not found in git, there should be a call to remove the folder from grafana
-				repo.MockReader.On("Read", mock.Anything, "dashboards/", "").
+				repo.MockReader.On("Read", mock.Anything, "dashboards/", "new-ref").
 					Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 				repoResources.On("RemoveFolder", mock.Anything, "folder-uid").Return(nil)
 
@@ -781,7 +781,7 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 				progress.On("HasDirPathFailedDeletion", "dashboards/").Return(false)
 
 				// if the folder still exists in git, there should not be a call to delete it from grafana
-				repo.MockReader.On("Read", mock.Anything, "dashboards/", "").
+				repo.MockReader.On("Read", mock.Anything, "dashboards/", "new-ref").
 					Return(&repository.FileInfo{}, nil)
 
 				progress.On("Record", mock.Anything, mock.Anything).Return()
@@ -820,9 +820,9 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 				progress.On("HasDirPathFailedDeletion", "alerts/").Return(false)
 
 				// both not found in git, both should be deleted
-				repo.MockReader.On("Read", mock.Anything, "dashboards/", "").
+				repo.MockReader.On("Read", mock.Anything, "dashboards/", "new-ref").
 					Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
-				repo.MockReader.On("Read", mock.Anything, "alerts/", "").
+				repo.MockReader.On("Read", mock.Anything, "alerts/", "new-ref").
 					Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 				repoResources.On("RemoveFolder", mock.Anything, "folder-uid-1").Return(nil)
 				repoResources.On("RemoveFolder", mock.Anything, "folder-uid-2").Return(nil)

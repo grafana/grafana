@@ -286,7 +286,7 @@ func TestEnsureFolderPathExist_UsesStableUID(t *testing.T) {
 
 	fm := NewFolderManager(rw, nil, tree, WithFolderMetadataEnabled(true))
 
-	parentID, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+	parentID, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "")
 	require.NoError(t, err)
 	require.Equal(t, stableUID, parentID)
 }

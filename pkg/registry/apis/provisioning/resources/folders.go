@@ -88,8 +88,8 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
 }
 
-// EnsureFoldersExist creates the folder structure in the cluster.
-func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error) {
+// EnsureFolderPathExist creates the folder structure in the cluster.
+func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, ref string) (parent string, err error) {
 	cfg := fm.repo.Config()
 	parent = RootFolder(cfg)
 
@@ -102,7 +102,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return parent, nil
 	}
 
-	f, err := ParseFolderWithMetadata(ctx, fm.repo, dir, "", fm.folderMetadataEnabled)
+	f, err := ParseFolderWithMetadata(ctx, fm.repo, dir, ref, fm.folderMetadataEnabled)
 	if err != nil {
 		return "", err
 	}
@@ -113,7 +113,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
-		f, err := ParseFolderWithMetadata(ctx, fm.repo, traverse, "", fm.folderMetadataEnabled)
+		f, err := ParseFolderWithMetadata(ctx, fm.repo, traverse, ref, fm.folderMetadataEnabled)
 		if err != nil {
 			return err
 		}
@@ -280,7 +280,7 @@ func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructu
 // instead of the path-derived hash UID produced by ParseFolder.
 // It ensures all ancestor folders exist first, then creates the leaf folder.
 // Used when _folder.json has already been written to the repository.
-func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, stableUID string) error {
+func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, stableUID, ref string) error {
 	cfg := fm.repo.Config()
 
 	// Determine the parent folder ID, ensuring ancestor folders exist.
@@ -290,7 +290,7 @@ func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, st
 		parentFolderID = RootFolder(cfg)
 	} else {
 		var err error
-		parentFolderID, err = fm.EnsureFolderPathExist(ctx, parentPath)
+		parentFolderID, err = fm.EnsureFolderPathExist(ctx, parentPath, ref)
 		if err != nil {
 			return fmt.Errorf("ensure parent folder path: %w", err)
 		}

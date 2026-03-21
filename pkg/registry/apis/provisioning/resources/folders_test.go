@@ -111,7 +111,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 			return hookErr
 		}))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/dashboard.json", "")
 		require.Error(t, err)
 		require.Empty(t, parent)
 
@@ -144,7 +144,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 			return nil
 		}))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/c/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/c/dashboard.json", "")
 		require.NoError(t, err)
 
 		fA := ParseFolder("a", cfg.GetName())
@@ -182,7 +182,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 			return nil
 		}))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/c/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/c/dashboard.json", "")
 		require.Error(t, err)
 		require.Empty(t, parent)
 
@@ -227,7 +227,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 			return nil
 		}))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/c/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/c/dashboard.json", "")
 		require.NoError(t, err)
 
 		fABC := ParseFolder("a/b/c", cfg.GetName())
@@ -497,7 +497,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 			Return(nil, nil)
 
 		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree())
-		err := fm.CreateFolderWithUID(ctx, "myfolder/", stableUID)
+		err := fm.CreateFolderWithUID(ctx, "myfolder/", stableUID, "")
 
 		require.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -526,7 +526,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 			Return(nil, nil)
 
 		fm := NewFolderManager(rw, mockClient, tree)
-		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID)
+		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID, "")
 
 		require.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -556,7 +556,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 			Return(nil, nil).Once()
 
 		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree())
-		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID)
+		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID, "")
 
 		require.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -586,7 +586,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 			Return(nil, nil).Once()
 
 		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
-		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID)
+		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID, "")
 
 		require.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -617,7 +617,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 			Return(nil, nil).Once()
 
 		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
-		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID)
+		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID, "")
 
 		require.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -649,7 +649,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			return nil
 		}), WithFolderMetadataEnabled(true))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Equal(t, "Custom Title", createdFolder.Title)
@@ -678,7 +678,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			return nil
 		}), WithFolderMetadataEnabled(true))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Equal(t, "my-folder", createdFolder.Title)
@@ -706,7 +706,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			return nil
 		}), WithFolderMetadataEnabled(true))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "")
 		require.NoError(t, err)
 		require.Equal(t, "my-folder", createdFolder.Title)
 		require.NotEmpty(t, parent)
@@ -738,7 +738,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			return nil
 		}), WithFolderMetadataEnabled(true))
 
-		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json", "")
 		require.NoError(t, err)
 		require.Len(t, createdFolders, 2)
 		// First created folder is "parent" — should have custom title from _folder.json
@@ -793,7 +793,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Equal(t, []string{"stable-uid"}, client.getCalls)
@@ -820,7 +820,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Equal(t, []string{"stable-uid"}, client.getCalls)
@@ -841,7 +841,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "")
 		require.NoError(t, err)
 		require.Equal(t, f.ID, parent)
 		require.Empty(t, client.getCalls, "should not call GET when no _folder.json")
@@ -880,7 +880,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json", "")
 		require.NoError(t, err)
 
 		// Parent title should have been reconciled
@@ -910,7 +910,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Empty(t, client.getCalls, "should not call GET when _folder.json has empty title")
@@ -937,7 +937,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Empty(t, client.getCalls, "should not call GET when hash matches")
@@ -973,7 +973,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Contains(t, client.getCalls, "stable-uid", "should call GET to reconcile")
@@ -1009,7 +1009,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Contains(t, client.getCalls, "stable-uid", "should call GET to store hash")
@@ -1036,7 +1036,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "update folder")
 		require.ErrorContains(t, err, "conflict")
@@ -1066,7 +1066,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json", "")
 		require.Error(t, err)
 
 		var pathErr *PathCreationError
@@ -1419,7 +1419,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
 
-		_, err := fm.EnsureFolderPathExist(ctx, "parent/child.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child.json", "")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "connection refused")
 		require.Empty(t, client.getCalls)
@@ -1439,7 +1439,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
 
-		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json", "")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "connection refused")
 		require.Empty(t, client.getCalls)
@@ -1458,7 +1458,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 		fm := NewFolderManager(rw, client, tree)
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json", "")
 		require.NoError(t, err)
 		require.Equal(t, parentFolder.ID, parent)
 		require.Empty(t, client.getCalls)
@@ -1479,7 +1479,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json", "")
 		require.NoError(t, err)
 		require.Equal(t, parentFolder.ID, parent)
 		require.Empty(t, client.getCalls)
