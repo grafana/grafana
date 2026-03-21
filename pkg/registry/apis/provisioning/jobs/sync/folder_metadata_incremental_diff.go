@@ -17,6 +17,7 @@ import (
 type FolderMetadataIncrementalDiffBuilder interface {
 	BuildIncrementalDiff(
 		ctx context.Context,
+		currentRef string,
 		repoDiff []repository.VersionedFileChange,
 	) ([]repository.VersionedFileChange, []replacedFolder, error)
 }
@@ -64,14 +65,15 @@ func NewFolderMetadataIncrementalDiffBuilder(
 	}
 }
 
-// BuildIncrementalDiff rewrites handled `_folder.json` create/update events
-// into synthetic folder changes plus direct-child updates.
+// BuildIncrementalDiff rewrites handled `_folder.json` create/update/delete
+// events into synthetic folder changes plus direct-child updates.
 //
 // The rebuilder keeps unrelated git changes intact, preserves real diff paths,
 // and returns any old folder UIDs that must be deleted after the rewritten diff
 // is applied.
 func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	ctx context.Context,
+	currentRef string,
 	repoDiff []repository.VersionedFileChange,
 ) ([]repository.VersionedFileChange, []replacedFolder, error) {
 	input := newVersionedChanges(repoDiff)
@@ -88,7 +90,7 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	result := newRebuiltIncrementalDiff(input.PassthroughChanges())
 
 	for _, change := range input.MetadataChanges() {
-		if err := d.rewriteMetadataChange(ctx, input, index, result, change); err != nil {
+		if err := d.rewriteMetadataChange(ctx, currentRef, input, index, result, change); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -202,6 +204,24 @@ func (result *rebuiltIncrementalDiff) AppendReplaced(replaced replacedFolder) {
 
 func (d *folderMetadataIncrementalDiffBuilder) rewriteMetadataChange(
 	ctx context.Context,
+	currentRef string,
+	input versionedChanges,
+	index managedResourceIndex,
+	result *rebuiltIncrementalDiff,
+	change repository.VersionedFileChange,
+) error {
+	switch change.Action {
+	case repository.FileActionCreated, repository.FileActionUpdated:
+		return d.rewriteCreatedOrUpdatedMetadataChange(ctx, input, index, result, change)
+	case repository.FileActionDeleted:
+		return d.rewriteDeletedMetadataChange(ctx, currentRef, input, index, result, change)
+	default:
+		return nil
+	}
+}
+
+func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataChange(
+	ctx context.Context,
 	input versionedChanges,
 	index managedResourceIndex,
 	result *rebuiltIncrementalDiff,
@@ -234,6 +254,60 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteMetadataChange(
 			Action: repository.FileActionUpdated,
 			Path:   childPath,
 			Ref:    change.Ref,
+		})
+	}
+
+	return nil
+}
+
+func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
+	ctx context.Context,
+	currentRef string,
+	input versionedChanges,
+	index managedResourceIndex,
+	result *rebuiltIncrementalDiff,
+	change repository.VersionedFileChange,
+) error {
+	folderPath := folderPathForMetadataChange(change.Path)
+	existing := index.ExistingAt(folderPath)
+	if existing == nil {
+		return nil
+	}
+
+	replacement, directoryExists, err := d.replacementForDeletedMetadataChange(ctx, currentRef, folderPath, existing)
+	if err != nil {
+		return err
+	}
+
+	if replacement != nil {
+		result.AppendReplaced(*replacement)
+	}
+
+	if !directoryExists {
+		return nil
+	}
+
+	if !input.HasRealChangeAt(folderPath) && !result.HasSyntheticPath(folderPath) {
+		result.Append(repository.VersionedFileChange{
+			Action: repository.FileActionUpdated,
+			Path:   folderPath,
+			Ref:    currentRef,
+		})
+	}
+
+	if replacement == nil {
+		return nil
+	}
+
+	for _, childPath := range index.DirectChildrenOf(folderPath) {
+		if input.HasRealChangeAt(childPath) || input.HasMetadataFolderAt(childPath) || result.HasSyntheticPath(childPath) {
+			continue
+		}
+
+		result.Append(repository.VersionedFileChange{
+			Action: repository.FileActionUpdated,
+			Path:   childPath,
+			Ref:    currentRef,
 		})
 	}
 
@@ -274,12 +348,48 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForMetadataChange(
 	}, nil
 }
 
+// replacementForDeletedMetadataChange determines whether deleting _folder.json
+// changes the current folder identity.
+//
+// When the directory still exists at currentRef, the folder falls back to its
+// path-derived UID. When the directory is gone, the existing folder can be
+// cleaned up directly without emitting synthetic replay work.
+func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataChange(
+	ctx context.Context,
+	currentRef string,
+	folderPath string,
+	existing *provisioning.ResourceListItem,
+) (*replacedFolder, bool, error) {
+	_, err := d.repo.Read(ctx, folderPath, currentRef)
+	if err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+			return &replacedFolder{
+				Path:   folderPath,
+				OldUID: existing.Name,
+			}, false, nil
+		}
+		return nil, false, fmt.Errorf("read folder directory %s at ref %s: %w", folderPath, currentRef, err)
+	}
+
+	folder := resources.ParseFolder(folderPath, d.repo.Config().Name)
+	if folder.ID == existing.Name {
+		return nil, true, nil
+	}
+
+	return &replacedFolder{
+		Path:   folderPath,
+		OldUID: existing.Name,
+	}, true, nil
+}
+
 func isHandledFolderMetadataChange(change repository.VersionedFileChange) bool {
 	if !resources.IsFolderMetadataFile(change.Path) {
 		return false
 	}
 
-	return change.Action == repository.FileActionCreated || change.Action == repository.FileActionUpdated
+	return change.Action == repository.FileActionCreated ||
+		change.Action == repository.FileActionUpdated ||
+		change.Action == repository.FileActionDeleted
 }
 
 func folderPathForMetadataChange(metadataPath string) string {

@@ -372,7 +372,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		common.RequireRepoFolderUID(t, helper.FoldersV1, ctx, repoName, "stable-uid")
 		requireRepoFolderCount(t, helper, ctx, repoName, 1)
@@ -408,7 +408,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
 
 		common.RequireRepoFolderUID(t, helper.FoldersV1, ctx, repoName, "stable-uid")
 		childUID = common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "child")
@@ -445,7 +445,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		common.RequireRepoFolderUID(t, helper.FoldersV1, ctx, repoName, "stable-uid")
 		requireRepoFolderCount(t, helper, ctx, repoName, 1)
@@ -482,7 +482,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		_, err = helper.FoldersV1.Resource.Get(ctx, oldParentUID, metav1.GetOptions{})
 		require.True(t, apierrors.IsNotFound(err), "old parent folder should be deleted")
