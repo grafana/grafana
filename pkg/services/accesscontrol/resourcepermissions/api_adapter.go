@@ -88,23 +88,6 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 		dto = append(dto, provisionedDTO...)
 	}
 
-	// Add default Admin role when access control enforcement is disabled
-	// This maintains parity with the legacy API behavior
-	if a.service.options.Assignments.BuiltInRoles && !a.service.license.FeatureEnabled("accesscontrol.enforcement") {
-		permission := a.service.MapActions(accesscontrol.ResourcePermission{
-			Actions: a.service.actions,
-		})
-		if permission != "" {
-			dto = append(dto, resourcePermissionDTO{
-				BuiltInRole: string(org.RoleAdmin),
-				Actions:     a.service.actions,
-				Permission:  permission,
-				IsManaged:   false,
-				IsInherited: false,
-			})
-		}
-	}
-
 	return dto, nil
 }
 
@@ -185,6 +168,23 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePerm
 		}
 
 		dto = append(dto, permDTO)
+	}
+
+	// Add default Admin role when access control enforcement is disabled
+	// This maintains parity with the legacy API behavior
+	if a.service.options.Assignments.BuiltInRoles && !a.service.license.FeatureEnabled("accesscontrol.enforcement") {
+		permission := a.service.MapActions(accesscontrol.ResourcePermission{
+			Actions: a.service.actions,
+		})
+		if permission != "" {
+			dto = append(dto, resourcePermissionDTO{
+				BuiltInRole: string(org.RoleAdmin),
+				Actions:     a.service.actions,
+				Permission:  permission,
+				IsManaged:   false,
+				IsInherited: isInherited,
+			})
+		}
 	}
 
 	return dto, nil
