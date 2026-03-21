@@ -191,14 +191,8 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		Kind:     utils.ManagerKindRepo,
 		Identity: r.repo.Name,
 	})
-	sourcePath := info.Path
-	// _folder.json represents the directory it lives in; store the directory path
-	// so it stays consistent with folders created by EnsureFolderPathExist.
-	if r.folderMetadataEnabled && IsFolderMetadataFile(info.Path) {
-		sourcePath = safepath.Dir(info.Path)
-	}
 	parsed.Meta.SetSourceProperties(utils.SourceProperties{
-		Path:     sourcePath,
+		Path:     info.Path, // joinPathWithRef(info.Path, info.Ref),
 		Checksum: info.Hash,
 	})
 
