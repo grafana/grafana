@@ -11,6 +11,11 @@ describe('extractErrorMessage', () => {
 
   it('returns string error values as-is', () => {
     expect(extractErrorMessage('plain string error')).toBe('plain string error');
+    expect(extractErrorMessage('')).toBe('');
+  });
+
+  it('return extracts message from Error instances', () => {
+    expect(extractErrorMessage(new Error('test error'))).toBe('test error');
   });
 
   it('returns undefined for missing or invalid object error shapes', () => {
@@ -20,6 +25,7 @@ describe('extractErrorMessage', () => {
     expect(extractErrorMessage(0)).toBeUndefined();
     expect(extractErrorMessage(false)).toBeUndefined();
     expect(extractErrorMessage({ data: 'bad-shape' })).toBeUndefined();
+    expect(extractErrorMessage(undefined)).toBeUndefined();
   });
 
   it('stringifies non-string message values', () => {

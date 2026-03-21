@@ -4250,6 +4250,9 @@
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
+    "bulk-actions": {
+      "error-generic": "Unexpected error"
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
