@@ -385,6 +385,7 @@
         "group-by": "Agrupado por",
         "group-title": "Configuração de notificações",
         "mute-timings": "Tempos de silêncio",
+        "notification-policy": "",
         "timing-options": "Tempos"
       },
       "pending-period": "Período pendente",
@@ -497,6 +498,15 @@
     },
     "alert-rule": {
       "term": "Regra de alerta"
+    },
+    "alert-rule-drawer": {
+      "error-title": "",
+      "error-unexpected": "",
+      "error-unknown": "",
+      "success-message": "",
+      "success-title": "",
+      "validation-error-message": "",
+      "validation-error-title": ""
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -880,6 +890,8 @@
       "export-all": "Exportar tudo",
       "learn-more": "Saiba mais",
       "loading": "A carregar...",
+      "optional": "",
+      "refresh": "",
       "search-by-matchers": "Pesquisar por correspondências",
       "titles": {
         "notification-templates": "Modelos de notificação"
@@ -1849,7 +1861,7 @@
       },
       "history-error": "Falha ao carregar o histórico do estado",
       "history-error-desc": "Não foi possível obter o histórico de transição de estado para esta instância.",
-      "instance-timeline": "",
+      "instance-history-heading": "",
       "no-history": "Sem alterações de estado recentes",
       "notifications-error": "",
       "notifications-error-desc": "",
@@ -1861,6 +1873,8 @@
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
+      "timeline-dot-all-failed": "",
+      "timeline-dot-some-failed": "",
       "timeline-empty": "",
       "timeline-failed": "",
       "timeline-filter-all": "",
@@ -1868,17 +1882,15 @@
       "timeline-filter-notifications": "",
       "timeline-filter-states": "",
       "timeline-loading": "",
-      "timeline-mixed-outcome": "",
-      "timeline-one-notification": "",
+      "timeline-notification-label": "",
+      "timeline-partial-failure": "",
       "timeline-status-firing": "",
       "timeline-status-resolved": "",
       "timeline-toggle-notifications": "",
       "view-notification-detail": "",
       "view-notification-tooltip": "",
-      "timeline-n-notifications_one": "",
-      "timeline-n-notifications_other": "",
-      "timeline-n-receivers_one": "",
-      "timeline-n-receivers_other": ""
+      "timeline-n-uniqueReceivers_one": "",
+      "timeline-n-uniqueReceivers_other": ""
     },
     "instance-match": {
       "non-matching-labels": "Etiquetas não correspondentes",
@@ -2021,6 +2033,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "",
+          "notification-policy": "",
           "select-contact-point": "Selecionar ponto de contacto",
           "use-notification-policy": "Utilização da política de notificação"
         }
@@ -3276,12 +3290,57 @@
       "title-the-selected-alertmanager-has-no-configuration": "O Alertmanager selecionado não tem configuração"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "",
+      "aria-label-threshold": "",
+      "aria-label-threshold-from": "",
+      "aria-label-threshold-to": "",
       "label-of-query": "CONSULTA DE",
       "label-when": "QUANDO",
       "label-when-query": "CONSULTA QUANDO"
     },
     "simpleCondition": {
       "alertCondition": "Condição de alerta"
+    },
+    "simplified": {
+      "condition": {
+        "title": ""
+      },
+      "continue-in-alerting": "",
+      "create": "",
+      "evaluation": {
+        "immediate-warning": ""
+      },
+      "notification": {
+        "contact-point-selected": "",
+        "description": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "manual-routing": {
+          "aria": ""
+        },
+        "policy-selected": "",
+        "recipient": {
+          "label": ""
+        },
+        "refresh-error": "",
+        "runbook-url": {
+          "aria-label": "",
+          "invalid-format": "",
+          "invalid-protocol": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "select-contact-point": "",
+        "summary": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "title": ""
+      },
+      "rule-definition": ""
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Gerido pela origem de dados",
@@ -3492,7 +3551,9 @@
       "error-loading-rule": "Erro ao carregar a regra",
       "high-activity-labels": "",
       "instance-details-drawer": {
-        "instance-details": "Detalhes da instância"
+        "declare-incident": "",
+        "instance-details": "Detalhes da instância",
+        "silence-button": ""
       },
       "no-firing-or-pending-instances": "Não tem instâncias de alerta num estado de disparo ou pendente para o intervalo de tempo selecionado.",
       "no-instances-found": "Nenhuma instância de alerta encontrada para a regra: {{ruleUID}}",
@@ -5220,6 +5281,12 @@
       "ungroup-rows": "Desagrupar linhas",
       "ungroup-tabs": "Desagrupar separadores"
     },
+    "code-pane": {
+      "collapse": "",
+      "expand": "",
+      "header": "",
+      "modal-title": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -6102,6 +6169,13 @@
       "save-json-to-file": "Guardar JSON no ficheiro",
       "see-docs": "Consulte a <2>documentação</2> para obter mais informações sobre aprovisionamento."
     },
+    "schema-editor": {
+      "apply-button": "",
+      "apply-button-disabled-tooltip": "",
+      "apply-button-disabled-tooltip-yaml": "",
+      "apply-error-title": "",
+      "undo-title": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6116,6 +6190,10 @@
       "dashboard-options": {
         "title": "Opções",
         "tooltip": "Opções do painel de controlo"
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
       },
       "export": {
         "title": "Exportar"
@@ -6459,11 +6537,14 @@
     "browse-plugins": "Procurar plugins",
     "card": {
       "customize-with-assistant-button": "",
+      "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Origem de dados fornecida",
       "details-tooltip": "Detalhes",
       "no-preview": "",
-      "use-dashboard-button": "Utilizar painel de controlo",
-      "view-template-button": ""
+      "view-dashboard-button": "",
+      "view-dashboard-button-label": "",
+      "view-template-button": "",
+      "view-template-button-label": ""
     },
     "community-empty-title": "Nenhum painel de controlo da comunidade encontrado",
     "community-empty-title-with-datasource": "Nenhum painel de controlo {{datasourceType}} da comunidade encontrado",
@@ -6547,6 +6628,9 @@
       "label-data-source": "Origem dos dados",
       "label-use-static-key-dimensions": "Utilizar dimensões de chave estática",
       "name-allow-custom-values": "Permitir valores personalizados"
+    },
+    "add-filters": {
+      "label": ""
     },
     "add-link": {
       "inline-instance-name": "",
@@ -7589,6 +7673,11 @@
   "dashboard-scene-help-wizard": {
     "support-bundle": "Também pode recuperar um pacote de suporte que contém informações sobre a sua instância da Grafana e origens de dados configuradas na <1>secção de pacotes de suporte</1>."
   },
+  "dashboard-schema-editor": {
+    "format-label": "",
+    "json-disabled-tooltip": "",
+    "yaml-disabled-tooltip": ""
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Anotações"
@@ -7619,6 +7708,8 @@
     },
     "json-editor": {
       "save-button": "Guardar alterações",
+      "save-button-disabled-tooltip": "",
+      "save-button-disabled-tooltip-yaml": "",
       "subtitle": "O modelo JSON abaixo é a estrutura de dados que define o painel de controlo. Isto inclui definições do painel de controlo, definições do painel, layout, consultas, etc.",
       "title": "Modelo JSON"
     },
@@ -8898,9 +8989,6 @@
     "data-links-actions-menu": "",
     "description-min-height": "Altura mínima da linha (orientação horizontal)",
     "description-min-width": "Largura mínima da coluna (orientação vertical)",
-    "description-neutral": "Deixe em branco para usar Mín. como ponto neutro",
-    "description-show-threshold-labels": "Renderizar os valores de limite em torno da barra de medição",
-    "description-show-threshold-markers": "Renderiza os limites como uma barra externa",
     "gauge-size-options": {
       "label-auto": "Automático",
       "label-manual": "Manual"
@@ -8908,11 +8996,7 @@
     "name-gauge-size": "Tamanho do medidor",
     "name-min-height": "Altura mín.",
     "name-min-width": "Largura mín.",
-    "name-neutral": "Neutro",
-    "name-show-threshold-labels": "Mostrar as etiquetas de limite",
-    "name-show-threshold-markers": "Mostrar os marcadores de limite",
     "neutral": "Neutro {{value}}",
-    "placeholder-neutral": "auto",
     "presets": {
       "circle": "",
       "circle_desc": "",
@@ -8929,8 +9013,7 @@
     },
     "suggestions": {
       "arc": "Medidor",
-      "circular": "Medidor circular",
-      "no-thresholds": "Medidor - sem limites"
+      "circular": "Medidor circular"
     },
     "threshold": "Limite {{value}}"
   },
@@ -10329,11 +10412,14 @@
       "remove-button": "Remover {{children}}"
     },
     "viz-legend": {
+      "all-series-selected": "",
       "clear-filters": "",
+      "color-picker": "",
       "faceted-by-labels": "",
       "faceted-by-name": "",
       "faceted-deselect-all": "",
       "faceted-select-all": "",
+      "only-this-series-selected": "",
       "pin-filter": "",
       "right-axis-indicator": "(eixo y direito)",
       "series-visibility": "",
@@ -10933,6 +11019,7 @@
       "collapse": "Recolher barra lateral",
       "expand": "Expandir barra lateral",
       "label-title": "{{fieldName}} aparece em {{percentage}}% das linhas de registo",
+      "log-level": "",
       "placeholder-search-fields-by-name": "Pesquisar campos por nome",
       "title-drag-and-drop-to-reorder": "Arrastar e largar para reordenar"
     },
@@ -11968,8 +12055,9 @@
       "upgrade-tooltip": "Atualize para adicionar mais utilizadores"
     },
     "item": {
-      "add-bookmark": "",
-      "remove-bookmark": ""
+      "bookmark": {
+        "tooltip": ""
+      }
     },
     "kiosk": {
       "tv-alert": "Pressione ESC para sair do modo de quiosque"
@@ -13830,6 +13918,7 @@
     "sidebar": {
       "add-below": "",
       "add-expression": "",
+      "add-expression-disabled": "",
       "add-query": "",
       "add-query-or-expression": "",
       "add-saved-query": "",
