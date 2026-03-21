@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 
@@ -22,7 +23,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/live/model"
-	stdurl "net/url"
 )
 
 const (
@@ -35,23 +35,26 @@ const (
 // the OTLP HTTP exporter that will send spans to the provided url (Jaeger collector).
 // The returned TracerProvider will also use a Resource configured with all the information
 // about the application.
-func tracerProvider(url string) (*tracesdk.TracerProvider, error) {
+func tracerProvider(urlStr string) (*tracesdk.TracerProvider, error) {
 	// Create the OTLP HTTP exporter for Jaeger (Jaeger supports OTLP natively)
 	var opts []otlptracehttp.Option
 
 	// Extract host:port from URL and handle secure/insecure
-	if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
-		u, err := stdurl.Parse(url)
+	if strings.HasPrefix(urlStr, "http://") || strings.HasPrefix(urlStr, "https://") {
+		u, err := url.Parse(urlStr)
 		if err != nil {
-			return nil, fmt.Errorf("invalid tracer URL: %s", url)
+			return nil, fmt.Errorf("invalid tracer URL %q: %w", urlStr, err)
 		}
 		opts = append(opts, otlptracehttp.WithEndpoint(u.Host))
-		if strings.HasPrefix(url, "http://") {
+		if u.Path != "" && u.Path != "/" {
+			opts = append(opts, otlptracehttp.WithURLPath(u.Path))
+		}
+		if u.Scheme == "http" {
 			opts = append(opts, otlptracehttp.WithInsecure())
 		}
 	} else {
 		// Assume host:port format, default to insecure
-		opts = append(opts, otlptracehttp.WithEndpoint(url), otlptracehttp.WithInsecure())
+		opts = append(opts, otlptracehttp.WithEndpoint(urlStr), otlptracehttp.WithInsecure())
 	}
 
 	client := otlptracehttp.NewClient(opts...)
