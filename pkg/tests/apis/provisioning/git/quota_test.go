@@ -162,7 +162,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		_, err = local.Git("push", "origin", "main")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repo)
+		helper.syncAndWaitSuccessfulIncremental(t, repo)
 		requireRepoDashboardCount(t, helper, ctx, repo, 1)
 		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
@@ -177,7 +177,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		_, err = local.Git("push", "origin", "main")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repo)
+		helper.syncAndWaitSuccessfulIncremental(t, repo)
 		requireRepoDashboardCount(t, helper, ctx, repo, 2)
 		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
@@ -268,7 +268,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		require.NoError(t, err)
 
 		// Incremental sync processes the deletion; orphan cleanup removes folder1.
-		helper.syncAndWaitIncremental(t, repo)
+		helper.syncAndWaitSuccessfulIncremental(t, repo)
 
 		// dashboard1 and folder1 are gone; only dashboard2 remains.
 		requireRepoDashboardCount(t, helper, ctx, repo, 1)

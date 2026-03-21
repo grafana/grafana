@@ -326,35 +326,16 @@ func (h *gitTestHelper) syncAndWait(t *testing.T, repoName string) {
 	h.waitForJobsComplete(t, repoName)
 }
 
-// syncAndWaitIncremental triggers an incremental pull sync — only files changed
-// since the previous sync (LastRef) are processed — and waits for completion.
-func (h *gitTestHelper) syncAndWaitIncremental(t *testing.T, repoName string) {
+// syncAndWaitSuccessfulIncremental triggers an incremental pull sync, waits
+// for completion, and asserts the job succeeded.
+func (h *gitTestHelper) syncAndWaitSuccessfulIncremental(t *testing.T, repoName string) {
 	t.Helper()
 
-	jobSpec := map[string]interface{}{
-		"action": "pull",
-		"pull":   map[string]interface{}{"incremental": true},
-	}
-
-	jobJSON, err := json.Marshal(jobSpec)
-	require.NoError(t, err)
-
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repoName).
-		SubResource("jobs").
-		Body(jobJSON).
-		SetHeader("Content-Type", "application/json").
-		Do(context.Background())
-
-	if apierrors.IsAlreadyExists(result.Error()) {
-		h.waitForJobsComplete(t, repoName)
-		return
-	}
-
-	require.NoError(t, result.Error(), "failed to trigger incremental sync")
-	h.waitForJobsComplete(t, repoName)
+	job := h.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+	})
+	common.RequireJobSuccess(t, job)
 }
 
 // waitForJobsComplete waits for all active jobs for a repository to complete.

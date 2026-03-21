@@ -1597,6 +1597,18 @@ func (h *ProvisioningTestHelper) SyncAndWaitWithSuccess(t *testing.T, repoName s
 	WaitForRepoLastRef(t, h.Repositories, repoName)
 }
 
+// SyncAndWaitSuccessfulIncremental triggers an incremental pull sync, waits for
+// it to complete, and asserts that the job succeeded.
+func (h *ProvisioningTestHelper) SyncAndWaitSuccessfulIncremental(t *testing.T, repoName string) {
+	t.Helper()
+
+	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+	})
+	RequireJobSuccess(t, job)
+}
+
 // RequireJobSuccess asserts that a completed job has state "success" and no errors.
 func RequireJobSuccess(t *testing.T, job *unstructured.Unstructured) {
 	t.Helper()

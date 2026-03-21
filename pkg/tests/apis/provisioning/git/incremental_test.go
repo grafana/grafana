@@ -38,7 +38,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Add(t *testing.T) {
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	helper.syncAndWaitSuccessfulIncremental(t, repoName)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
 }
 
@@ -67,7 +67,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Update(t *testing.T) {
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	helper.syncAndWaitSuccessfulIncremental(t, repoName)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "incr-dash-001", "Dashboard One Updated")
 }
@@ -97,7 +97,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Delete(t *testing.T) {
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	helper.syncAndWaitSuccessfulIncremental(t, repoName)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -123,7 +123,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Noop(t *testing.T) {
 	helper.syncAndWaitWithSuccess(t, repoName)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	helper.syncAndWaitSuccessfulIncremental(t, repoName)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 }
 
@@ -153,7 +153,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Rename(t *testing.T) {
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	helper.syncAndWaitSuccessfulIncremental(t, repoName)
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"incr-dash-001": {Title: "Dashboard One", SourcePath: "renamed-dashboard1.json"},
 	})
@@ -187,7 +187,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T)
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	helper.syncAndWaitSuccessfulIncremental(t, repoName)
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-in-001": {Title: "Dashboard One", SourcePath: "team-a/dashboard1.json"},
 	})
@@ -222,7 +222,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	helper.syncAndWaitSuccessfulIncremental(t, repoName)
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-btwn-001": {Title: "Dashboard Between", SourcePath: "folder-b/dashboard1.json"},
 	})
@@ -256,7 +256,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	helper.syncAndWaitSuccessfulIncremental(t, repoName)
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"move-root-001": {Title: "Dashboard Root", SourcePath: "dashboard1.json"},
 	})
@@ -293,7 +293,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	helper.syncAndWaitSuccessfulIncremental(t, repoName)
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"ren-fold-001": {Title: "Folder Dash One", SourcePath: "new-team/dashboard1.json"},
 		"ren-fold-002": {Title: "Folder Dash Two", SourcePath: "new-team/dashboard2.json"},
@@ -329,7 +329,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	helper.syncAndWaitSuccessfulIncremental(t, repoName)
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child-b/dashboard1.json"},
 	})
@@ -365,7 +365,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	helper.syncAndWaitSuccessfulIncremental(t, repoName)
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"ren-nest-001": {Title: "Nested Rename Dash", SourcePath: "parent/new-child/dashboard1.json"},
 		"ren-nest-002": {Title: "Sibling Dash", SourcePath: "parent/sibling/dashboard2.json"},

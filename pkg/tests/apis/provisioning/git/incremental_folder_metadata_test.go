@@ -212,7 +212,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		require.NoError(t, err)
 
 		// Incremental sync.
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		// Verify the Grafana folder was created with the metadata title, not the directory name.
 		requireRepoFolderTitle(t, helper, ctx, repoName, "My Team Display Name")
@@ -239,7 +239,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		// Should use directory name "reports" as the title.
 		requireRepoFolderTitle(t, helper, ctx, repoName, "reports")
@@ -265,7 +265,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		// Should use directory name "analytics" as the title.
 		requireRepoFolderTitle(t, helper, ctx, repoName, "analytics")
@@ -293,7 +293,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		// Both folders should use their metadata titles.
 		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Display")
@@ -328,7 +328,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		requireRepoFolderTitle(t, helper, ctx, repoName, "Alpha Renamed")
 	})
@@ -357,7 +357,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Title")
 		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Title Updated")
@@ -387,7 +387,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		requireRepoFolderTitle(t, helper, ctx, repoName, "Updated Team")
 		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "combo-dash", "Updated Dashboard")
@@ -432,7 +432,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, folderUID, metav1.GetOptions{})
 		require.NoError(t, err, "folder should still exist with same UID")
@@ -488,7 +488,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		childAfter, err := helper.FoldersV1.Resource.Get(ctx, childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child folder should still exist with same UID")
@@ -544,7 +544,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, movedUID, metav1.GetOptions{})
 		require.NoError(t, err, "moved folder should still exist with same UID")
@@ -601,7 +601,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, movedUID, metav1.GetOptions{})
 		require.NoError(t, err, "moved folder should still exist with same UID")
@@ -668,7 +668,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		// Verify parent folder updated in place.
 		parentAfter, err := helper.FoldersV1.Resource.Get(ctx, parentUID, metav1.GetOptions{})
@@ -728,7 +728,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.syncAndWaitSuccessfulIncremental(t, repoName)
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-team"})
 
