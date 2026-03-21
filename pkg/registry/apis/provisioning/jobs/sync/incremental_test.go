@@ -330,6 +330,35 @@ func TestIncrementalSync(t *testing.T) {
 	})
 }
 
+func TestIncrementalSync_FolderMetadataRequiresReader(t *testing.T) {
+	repo := repository.NewMockVersioned(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return([]repository.VersionedFileChange{
+		{
+			Action: repository.FileActionUpdated,
+			Path:   "alpha/_folder.json",
+			Ref:    "new-ref",
+		},
+	}, nil)
+
+	err := IncrementalSync(
+		context.Background(),
+		repo,
+		"old-ref",
+		"new-ref",
+		repoResources,
+		progress,
+		tracing.NewNoopTracerService(),
+		jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()),
+		newPermissiveMockQuotaTracker(t),
+		true,
+	)
+
+	require.EqualError(t, err, "folder metadata incremental sync requires repository.Reader")
+}
+
 func TestIncrementalSync_CrossBoundaryDirectoryChanges(t *testing.T) {
 	permissiveQt := newPermissiveMockQuotaTracker(t)
 

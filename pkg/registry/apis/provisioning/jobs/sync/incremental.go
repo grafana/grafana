@@ -56,12 +56,15 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 
 	var replaced []replacedFolder
 	if folderMetadataEnabled {
-		if readerRepo, ok := repo.(repository.Reader); ok {
-			folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo, repositoryResources)
-			diff, replaced, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff)
-			if err != nil {
-				return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
-			}
+		readerRepo, ok := repo.(repository.Reader)
+		if !ok {
+			return tracing.Error(span, fmt.Errorf("folder metadata incremental sync requires repository.Reader"))
+		}
+
+		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo, repositoryResources)
+		diff, replaced, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff)
+		if err != nil {
+			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
 		}
 	}
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -32,29 +31,9 @@ type replacedFolder struct {
 	OldUID string
 }
 
-// versionedChanges wraps a raw incremental diff with the queries needed by the
-// folder-metadata rewrite logic.
-type versionedChanges struct {
-	passthroughChanges  []repository.VersionedFileChange
-	metadataChanges     []repository.VersionedFileChange
-	changedPaths        map[string]struct{}
-	metadataFolderPaths map[string]struct{}
-}
-
-// managedResourceIndex is a path index over the current managed resources so
-// the rebuilder can find existing folders and direct children efficiently.
-type managedResourceIndex struct {
-	byPath map[string]*provisioning.ResourceListItem
-}
-
-// rebuiltIncrementalDiff accumulates the rewritten diff and tracks
-// paths gerenated due to folder metadata changes so we do not emit duplicate changes.
-type rebuiltIncrementalDiff struct {
-	filteredDiff   []repository.VersionedFileChange
-	generatedPaths map[string]struct{}
-	replaced       []replacedFolder
-}
-
+// NewFolderMetadataIncrementalDiffBuilder wires the repository reader and
+// managed-resource lister used to rewrite `_folder.json` changes into the
+// directory/resource diff entries consumed by incremental apply.
 func NewFolderMetadataIncrementalDiffBuilder(
 	repo repository.Reader,
 	repositoryResources resources.RepositoryResources,
@@ -76,7 +55,7 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	currentRef string,
 	repoDiff []repository.VersionedFileChange,
 ) ([]repository.VersionedFileChange, []replacedFolder, error) {
-	input := newVersionedChanges(repoDiff)
+	input := newFolderMetadataDiffSplit(repoDiff)
 	if !input.HasMetadataChanges() {
 		return repoDiff, nil, nil
 	}
@@ -87,7 +66,7 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	}
 
 	index := newManagedResourceIndex(target)
-	result := newRebuiltIncrementalDiff(input.PassthroughChanges())
+	result := newRebuiltIncrementalDiff(input.OtherChanges())
 
 	for _, change := range input.MetadataChanges() {
 		if err := d.rewriteMetadataChange(ctx, currentRef, input, index, result, change); err != nil {
@@ -98,114 +77,12 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	return result.filteredDiff, result.replaced, nil
 }
 
-func newVersionedChanges(repoDiff []repository.VersionedFileChange) versionedChanges {
-	input := versionedChanges{
-		passthroughChanges:  make([]repository.VersionedFileChange, 0, len(repoDiff)),
-		metadataChanges:     make([]repository.VersionedFileChange, 0),
-		changedPaths:        make(map[string]struct{}, len(repoDiff)),
-		metadataFolderPaths: make(map[string]struct{}),
-	}
-
-	for _, change := range repoDiff {
-		if isHandledFolderMetadataChange(change) {
-			input.metadataChanges = append(input.metadataChanges, change)
-			input.metadataFolderPaths[folderPathForMetadataChange(change.Path)] = struct{}{}
-			continue
-		}
-
-		input.passthroughChanges = append(input.passthroughChanges, change)
-		input.changedPaths[change.Path] = struct{}{}
-		if change.Action == repository.FileActionRenamed {
-			input.changedPaths[change.PreviousPath] = struct{}{}
-		}
-	}
-
-	safepath.SortByDepth(input.metadataChanges, func(change repository.VersionedFileChange) string {
-		return change.Path
-	}, false)
-
-	return input
-}
-
-func (input versionedChanges) HasMetadataChanges() bool {
-	return len(input.metadataChanges) > 0
-}
-
-func (input versionedChanges) PassthroughChanges() []repository.VersionedFileChange {
-	return slices.Clone(input.passthroughChanges)
-}
-
-func (input versionedChanges) MetadataChanges() []repository.VersionedFileChange {
-	return slices.Clone(input.metadataChanges)
-}
-
-func (input versionedChanges) HasRealChangeAt(path string) bool {
-	_, ok := input.changedPaths[path]
-	return ok
-}
-
-func (input versionedChanges) HasMetadataFolderAt(path string) bool {
-	_, ok := input.metadataFolderPaths[path]
-	return ok
-}
-
-func newManagedResourceIndex(target *provisioning.ResourceList) managedResourceIndex {
-	index := managedResourceIndex{
-		byPath: make(map[string]*provisioning.ResourceListItem),
-	}
-	if target == nil {
-		return index
-	}
-
-	for i := range target.Items {
-		item := &target.Items[i]
-		index.byPath[normalizeManagedResourcePath(item)] = item
-	}
-
-	return index
-}
-
-func (index managedResourceIndex) ExistingAt(path string) *provisioning.ResourceListItem {
-	return index.byPath[path]
-}
-
-func (index managedResourceIndex) DirectChildrenOf(parentPath string) []string {
-	childrenPaths := make([]string, 0)
-	for path := range index.byPath {
-		if safepath.Dir(path) == parentPath {
-			childrenPaths = append(childrenPaths, path)
-		}
-	}
-	slices.Sort(childrenPaths)
-	return childrenPaths
-}
-
-func newRebuiltIncrementalDiff(passthrough []repository.VersionedFileChange) *rebuiltIncrementalDiff {
-	return &rebuiltIncrementalDiff{
-		filteredDiff:   passthrough,
-		generatedPaths: make(map[string]struct{}),
-		replaced:       make([]replacedFolder, 0),
-	}
-}
-
-func (result *rebuiltIncrementalDiff) HasGeneratedPath(path string) bool {
-	_, ok := result.generatedPaths[path]
-	return ok
-}
-
-func (result *rebuiltIncrementalDiff) Append(change repository.VersionedFileChange) {
-	result.filteredDiff = append(result.filteredDiff, change)
-	result.generatedPaths[change.Path] = struct{}{}
-}
-
-func (result *rebuiltIncrementalDiff) AppendReplaced(replaced replacedFolder) {
-	result.replaced = append(result.replaced, replaced)
-}
-
+// rewriteMetadataChange dispatches each handled metadata action to the
+// specialized rewrite flow for create/update or delete semantics.
 func (d *folderMetadataIncrementalDiffBuilder) rewriteMetadataChange(
 	ctx context.Context,
 	currentRef string,
-	input versionedChanges,
+	input folderMetadataDiffSplit,
 	index managedResourceIndex,
 	result *rebuiltIncrementalDiff,
 	change repository.VersionedFileChange,
@@ -220,9 +97,12 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteMetadataChange(
 	}
 }
 
+// rewriteCreatedOrUpdatedMetadataChange turns a metadata create or update into
+// a synthetic folder update plus any direct-child updates needed to replay the
+// new folder identity through the standard incremental apply path.
 func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataChange(
 	ctx context.Context,
-	input versionedChanges,
+	input folderMetadataDiffSplit,
 	index managedResourceIndex,
 	result *rebuiltIncrementalDiff,
 	change repository.VersionedFileChange,
@@ -262,10 +142,13 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 	return nil
 }
 
+// rewriteDeletedMetadataChange handles `_folder.json` deletion by either
+// reverting the folder to its path-derived identity when the directory still
+// exists, or by scheduling direct cleanup when the whole folder is gone.
 func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	ctx context.Context,
 	currentRef string,
-	input versionedChanges,
+	input folderMetadataDiffSplit,
 	index managedResourceIndex,
 	result *rebuiltIncrementalDiff,
 	change repository.VersionedFileChange,
@@ -384,6 +267,8 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataChan
 	}, true, nil
 }
 
+// isHandledFolderMetadataChange reports whether the diff entry is a `_folder.json`
+// action that the incremental metadata builder knows how to rewrite.
 func isHandledFolderMetadataChange(change repository.VersionedFileChange) bool {
 	if !resources.IsFolderMetadataFile(change.Path) {
 		return false
@@ -394,13 +279,9 @@ func isHandledFolderMetadataChange(change repository.VersionedFileChange) bool {
 		change.Action == repository.FileActionDeleted
 }
 
+// folderPathForMetadataChange converts a `_folder.json` file path into the
+// normalized folder path used by managed-resource lookups and synthetic diff
+// entries.
 func folderPathForMetadataChange(metadataPath string) string {
 	return safepath.EnsureTrailingSlash(safepath.Dir(metadataPath))
-}
-
-func normalizeManagedResourcePath(item *provisioning.ResourceListItem) string {
-	if item.Group == resources.FolderResource.Group {
-		return safepath.EnsureTrailingSlash(item.Path)
-	}
-	return item.Path
 }
