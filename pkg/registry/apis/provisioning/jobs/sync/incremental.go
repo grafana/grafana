@@ -503,7 +503,10 @@ func planFolderMetadataChanges(
 			continue
 		}
 
-		reservedPaths[change.Path] = struct{}{}
+		addReservedPath(reservedPaths, change.Path)
+		if change.Action == repository.FileActionRenamed {
+			addReservedPath(reservedPaths, change.PreviousPath)
+		}
 	}
 
 	if len(updatedMetadata) == 0 {
@@ -575,6 +578,22 @@ func planFolderMetadataChanges(
 		replacedFolders:       replacedFolders,
 		target:                target,
 	}, nil
+}
+
+// addReservedPath records a path from the real git diff so planning does not
+// emit a synthetic change that overlaps with it.
+//
+// For renames we reserve both the new path and the old path: target state still
+// reflects the old location during planning, and reserving it prevents
+// synthetic child updates from replaying a path that is already being renamed.
+func addReservedPath(reservedPaths map[string]struct{}, path string) {
+	if path == "" {
+		return
+	}
+	if safepath.IsDir(path) {
+		path = safepath.EnsureTrailingSlash(path)
+	}
+	reservedPaths[path] = struct{}{}
 }
 
 // buildExistingFolderLookup indexes the current managed folders by normalized
