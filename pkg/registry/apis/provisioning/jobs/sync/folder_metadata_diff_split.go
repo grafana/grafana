@@ -50,7 +50,7 @@ func splitMetadataChanges(repoDiff []repository.VersionedFileChange) folderMetad
 
 // MetadataChanges returns the metadata changes.
 func (input folderMetadataDiffSplit) MetadataChanges() []repository.VersionedFileChange {
-	return input.metadataChanges 
+	return input.metadataChanges
 }
 
 // HasMetadataChanges reports whether the diff contains any handled
