@@ -92,17 +92,13 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 }
 
 func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePermission, namespace string, isInherited bool) (getResourcePermissionsResponse, error) {
-	permissions := resourcePerm.Spec.Permissions
-	if len(permissions) == 0 {
-		return getResourcePermissionsResponse{}, nil
-	}
-
 	namespaceInfo, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse namespace %q: %w", namespace, err)
 	}
 	orgID := namespaceInfo.OrgID
 
+	permissions := resourcePerm.Spec.Permissions
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
 
 	for _, perm := range permissions {
