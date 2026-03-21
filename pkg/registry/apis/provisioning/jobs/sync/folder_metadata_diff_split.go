@@ -3,6 +3,7 @@ package sync
 import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // folderMetadataDiffSplit separates raw diff entries into folder-metadata
@@ -65,4 +66,16 @@ func (input folderMetadataDiffSplit) HadChangeOriginallyAt(path string) bool {
 func (input folderMetadataDiffSplit) HasMetadataFolderAt(path string) bool {
 	_, ok := input.metadataFolderPaths[path]
 	return ok
+}
+
+// isHandledFolderMetadataChange reports whether the diff entry is a `_folder.json`
+// action that the incremental metadata builder knows how to rewrite.
+func isHandledFolderMetadataChange(change repository.VersionedFileChange) bool {
+	if !resources.IsFolderMetadataFile(change.Path) {
+		return false
+	}
+
+	return change.Action == repository.FileActionCreated ||
+		change.Action == repository.FileActionUpdated ||
+		change.Action == repository.FileActionDeleted
 }

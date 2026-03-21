@@ -267,18 +267,6 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataChan
 	}, true, nil
 }
 
-// isHandledFolderMetadataChange reports whether the diff entry is a `_folder.json`
-// action that the incremental metadata builder knows how to rewrite.
-func isHandledFolderMetadataChange(change repository.VersionedFileChange) bool {
-	if !resources.IsFolderMetadataFile(change.Path) {
-		return false
-	}
-
-	return change.Action == repository.FileActionCreated ||
-		change.Action == repository.FileActionUpdated ||
-		change.Action == repository.FileActionDeleted
-}
-
 // folderPathForMetadataChange converts a `_folder.json` file path into the
 // normalized folder path used by managed-resource lookups and synthetic diff
 // entries.
