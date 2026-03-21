@@ -298,16 +298,16 @@ func applyChanges(
 	defer applyChangesSpan.End()
 
 	// Separate changes into categories for proper ordering:
-	// 1. Folder creations (destination folders must exist first)
-	// 2. File renames (after folders exist, before old folders are deleted)
-	// 3. File deletions (must happen before folder deletions)
+	// 1. File deletions (free up folder contents early, must happen before folder deletions)
+	// 2. Folder creations (destination folders must exist before renames/creates)
+	// 3. File renames (after destination folders exist, before old folders are deleted)
 	// 4. Folder deletions (old folders are now empty)
 	// 5. File creations/updates (must happen after folder creations)
 	// 6. Old folder deletions (must happen after all children have been re-parented)
-	var fileRenames []ResourceFileChange
 	var fileDeletions []ResourceFileChange
-	var folderDeletions []ResourceFileChange
 	var folderCreations []ResourceFileChange
+	var fileRenames []ResourceFileChange
+	var folderDeletions []ResourceFileChange
 	var fileCreations []ResourceFileChange
 
 	for _, change := range changes {
@@ -335,6 +335,14 @@ func applyChanges(
 		attribute.Int("file_creations", len(fileCreations)),
 	)
 
+	if len(fileDeletions) > 0 {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileDeletions, func() error {
+			return applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
+		}, metrics); err != nil {
+			return err
+		}
+	}
+
 	if len(folderCreations) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
 			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
@@ -346,14 +354,6 @@ func applyChanges(
 	if len(fileRenames) > 0 {
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileRenames, func() error {
 			return applyResourcesInParallel(ctx, fileRenames, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
-		}, metrics); err != nil {
-			return err
-		}
-	}
-
-	if len(fileDeletions) > 0 {
-		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileDeletions, func() error {
-			return applyResourcesInParallel(ctx, fileDeletions, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
