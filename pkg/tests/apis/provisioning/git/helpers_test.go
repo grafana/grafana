@@ -326,16 +326,14 @@ func (h *gitTestHelper) syncAndWait(t *testing.T, repoName string) {
 	h.waitForJobsComplete(t, repoName)
 }
 
-// syncAndWaitSuccessfulIncremental triggers an incremental pull sync, waits
-// for completion, and asserts the job succeeded.
-func (h *gitTestHelper) syncAndWaitSuccessfulIncremental(t *testing.T, repoName string) {
-	t.Helper()
+// TriggerJobAndWaitForComplete implements common.SyncHelper.
+func (h *gitTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repoName string, spec provisioning.JobSpec) *unstructured.Unstructured {
+	return h.triggerJobAndWaitForComplete(t, repoName, spec)
+}
 
-	job := h.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
-	})
-	common.RequireJobSuccess(t, job)
+// GetRepositories implements common.SyncHelper.
+func (h *gitTestHelper) GetRepositories() *apis.K8sResourceClient {
+	return h.Repositories
 }
 
 // waitForJobsComplete waits for all active jobs for a repository to complete.
@@ -359,17 +357,6 @@ func (h *gitTestHelper) waitForJobsComplete(t *testing.T, repoName string) {
 
 		assert.False(collect, hasActiveJobs, "jobs still active for repository %s", repoName)
 	}, waitTimeoutDefault, waitIntervalDefault, "jobs should complete for repository %s", repoName)
-}
-
-func (h *gitTestHelper) syncAndWaitWithSuccess(t *testing.T, repoName string) {
-	t.Helper()
-
-	job := h.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{},
-	})
-	common.RequireJobSuccess(t, job)
-	common.WaitForRepoLastRef(t, h.Repositories, repoName)
 }
 
 // asJSON serialises v to a JSON byte slice, panicking on encoding errors

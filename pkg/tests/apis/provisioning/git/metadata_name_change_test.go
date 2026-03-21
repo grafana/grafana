@@ -80,7 +80,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 		"dashboard1.json": dashboardJSON("name-change-incr-001", "Dashboard One", 1),
 	}, "write", "branch")
 
-	helper.syncAndWaitWithSuccess(t, repoName)
+	common.SyncAndWaitWithSuccess(t, helper, repoName)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "name-change-incr-001", "Dashboard One")
 

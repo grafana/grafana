@@ -1582,11 +1582,23 @@ func WaitForRepoLastRef(t *testing.T, repositories *apis.K8sResourceClient, repo
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should have lastRef set after sync", repoName)
 }
 
+// SyncHelper abstracts the ability to trigger sync jobs and inspect repository
+// state. Both ProvisioningTestHelper and gitTestHelper satisfy this interface.
+type SyncHelper interface {
+	TriggerJobAndWaitForComplete(t *testing.T, repoName string, spec provisioning.JobSpec) *unstructured.Unstructured
+	GetRepositories() *apis.K8sResourceClient
+}
+
+// GetRepositories implements SyncHelper.
+func (h *ProvisioningTestHelper) GetRepositories() *apis.K8sResourceClient {
+	return h.Repositories
+}
+
 // SyncAndWaitWithSuccess triggers a full pull sync, asserts that it succeeds,
 // and waits for the repository's lastRef to be set. Use this as the initial
 // sync in tests that later trigger incremental syncs, so that lastRef is
 // guaranteed to be populated.
-func (h *ProvisioningTestHelper) SyncAndWaitWithSuccess(t *testing.T, repoName string) {
+func SyncAndWaitWithSuccess(t *testing.T, h SyncHelper, repoName string) {
 	t.Helper()
 
 	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
@@ -1594,12 +1606,12 @@ func (h *ProvisioningTestHelper) SyncAndWaitWithSuccess(t *testing.T, repoName s
 		Pull:   &provisioning.SyncJobOptions{},
 	})
 	RequireJobSuccess(t, job)
-	WaitForRepoLastRef(t, h.Repositories, repoName)
+	WaitForRepoLastRef(t, h.GetRepositories(), repoName)
 }
 
 // SyncAndWaitSuccessfulIncremental triggers an incremental pull sync, waits for
 // it to complete, and asserts that the job succeeded.
-func (h *ProvisioningTestHelper) SyncAndWaitSuccessfulIncremental(t *testing.T, repoName string) {
+func SyncAndWaitSuccessfulIncremental(t *testing.T, h SyncHelper, repoName string) {
 	t.Helper()
 
 	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
