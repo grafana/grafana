@@ -69,7 +69,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 		})
 
 		// Full sync (should produce a warning about missing metadata).
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		helper.syncAndWait(t, repoName)
 
 		// Trigger incremental sync with no new commits — same ref.
 		job := helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
