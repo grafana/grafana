@@ -7,7 +7,6 @@ import (
 	"slices"
 	"time"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -19,21 +18,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
-type replacedFolder struct {
-	Path   string
-	OldUID string
-}
-
-type folderMetadataPlan struct {
-	filteredDiff          []repository.VersionedFileChange
-	existingFoldersByPath map[string]*provisioning.ResourceListItem
-	replacedFolders       []replacedFolder
-	target                *provisioning.ResourceList
-}
-
-// IncrementalSync compares two git refs, rewrites any handled folder-metadata
-// diffs into synthetic folder/resource changes, applies the resulting diff, and
-// then cleans up folders that became orphaned as a consequence of the sync.
+// Convert git changes into resource file changes
 func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef, currentRef string, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, metrics jobs.JobMetrics, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) error {
 	syncStart := time.Now()
 	if previousRef == currentRef {
@@ -69,36 +54,20 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		return nil
 	}
 
-	var replacedFolders []replacedFolderRewritten
+	var replaced []replacedFolder
 	if folderMetadataEnabled {
-		repo := repo.(repository.Reader)
-		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repositoryResources)
-		diffCtx, diffSpan := tracer.Start(ctx, "provisioning.sync.incremental.build_diff")
-		diff, replacedFolders, err = diffBuilder.BuildIncrementalDiff(diffCtx, diff)
-		if err != nil {
-			diffSpan.RecordError(err)
-			diffSpan.End()
-			return tracing.Error(span, fmt.Errorf("build incremental diff: %w", err))
-		}
-		defer diffSpan.End()
-
-		for _, replaced := range replacedFolders {
-			repositoryResources.RemoveFolderFromTree(replaced.OldUID)
+		if readerRepo, ok := repo.(repository.Reader); ok {
+			diff, replaced, err = planFolderMetadataChanges(ctx, readerRepo, currentRef, diff, repositoryResources, tracer)
+			if err != nil {
+				return tracing.Error(span, fmt.Errorf("plan folder metadata changes: %w", err))
+			}
 		}
 	}
+
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
-
 	applyStart := time.Now()
-	affectedFolders, err := applyIncrementalChanges(
-		ctx,
-		diff,
-		repositoryResources,
-		progress,
-		tracer,
-		span,
-		quotaTracker,
-	)
+	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
 		return err
@@ -106,70 +75,40 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 
 	progress.SetMessage(ctx, "versioned changes replicated")
 
-	if folderMetadataEnabled {
-		safepath.SortByDepth(replacedFolders, func(replaced replacedFolder) string {
-			return replaced.Path
-		}, false)
-		span.AddEvent("checking if replaced folders should be deleted", trace.WithAttributes(attribute.Int("replaced_folders", len(replacedFolders))))
+	cleanupStart := time.Now()
+	foldersToDelete := findOrphanedFolders(ctx, repo, affectedFolders, tracer)
 
-		removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_replaced_folders")
-		for _, replaced := range replacedFolders {
-            // Skip if the replacement folder failed to be created.
-			if progress.HasDirPathFailedDeletion(replaced.Path) {
-				skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_renamed_folder_deletion")
-				progress.Record(skipCtx, jobs.NewPathOnlyResult(replaced.Path).
-					WithError(fmt.Errorf("old folder was not deleted because the replacement folder could not be created")).
-					AsSkipped().
-					Build())
-				skipSpan.End()
-				continue
-			}
-
-			resultBuilder := jobs.NewFolderResult(replaced.Path).
-				WithAction(repository.FileActionDeleted).
-				WithName(replaced.OldUID)
-			if err := repositoryResources.RemoveFolder(removeCtx, replaced.OldUID); err != nil {
-				removeSpan.RecordError(err)
-				resultBuilder.WithError(err)
-			}
-			progress.Record(removeCtx, resultBuilder.Build())
+	for _, r := range replaced {
+		if progress.HasDirPathFailedCreation(r.Path) {
+			progress.Record(ctx, jobs.NewFolderResult(r.Path).
+				WithAction(repository.FileActionIgnored).
+				WithName(r.OldUID).
+				WithWarning(fmt.Errorf("old folder %s not deleted because the replacement folder at %s could not be created", r.OldUID, r.Path)).
+				Build())
+			continue
 		}
-		removeSpan.End()
-
-		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
-			return err
+		if foldersToDelete == nil {
+			foldersToDelete = make(map[string]string)
 		}
+		foldersToDelete[r.Path] = r.OldUID
 	}
 
-	if len(affectedFolders) > 0 {
-		cleanupStart := time.Now()
-		span.AddEvent("checking if impacted folders should be deleted", trace.WithAttributes(attribute.Int("affected_folders", len(affectedFolders))))
-		err := cleanupOrphanedFolders(ctx, repo, affectedFolders, repositoryResources, tracer, progress)
-		metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCleanup, time.Since(cleanupStart))
-		if err != nil {
-			return tracing.Error(span, fmt.Errorf("cleanup orphaned folders: %w", err))
+	deleteFolders(ctx, foldersToDelete, repositoryResources, progress, tracer)
+	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCleanup, time.Since(cleanupStart))
+
+	// Run after deleteFolders so its informational warnings (e.g. missing
+	// _folder.json) don't interfere with HasChildPathFailedUpdate safety checks.
+	if folderMetadataEnabled {
+		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
 
-// applyIncrementalChanges executes the incremental diff after it has been
-// rewritten by planning.
-//
-// Most entries still flow through the generic resource create/update/delete/
-// rename path. Synthetic directory changes are handled explicitly so folder
-// reconciliation can reuse EnsureFolderPathExist, and any replaced folder UIDs
-// are deleted only after the rest of the diff has been applied.
-func applyIncrementalChanges(
-	ctx context.Context,
-	diff []repository.VersionedFileChange,
-	repositoryResources resources.RepositoryResources,
-	progress jobs.JobProgressRecorder,
-	tracer tracing.Tracer,
-	span trace.Span,
-	quotaTracker quotas.QuotaTracker,
-) (affectedFolders map[string]string, err error) {
+//nolint:gocyclo
+func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) (affectedFolders map[string]string, err error) {
 	// this will keep track of any folders that had resources deleted from it
 	// with key-value as path:grafana uid.
 	// after cleaning up all resources, we will look to see if the foldrs are
@@ -199,7 +138,7 @@ func applyIncrementalChanges(
 			continue
 		}
 
-		if err := resources.IsPathSupported(change.Path); err != nil || safepath.IsDir(change.Path) {
+		if err := resources.IsPathSupported(change.Path); err != nil {
 			ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.ensure_folder_path_exist")
 			// Maintain the safe segment for empty folders
 			safeSegment := safepath.SafeSegment(change.Path)
@@ -235,14 +174,40 @@ func applyIncrementalChanges(
 
 		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
 
-		// Created/deleted directory entries (trailing-slash paths) appear from
-		// cross-boundary renames. The individual file-level changes within the
-		// directory are emitted separately and already handle folder creation
-		// (via EnsureFolderPathExist inside WriteResourceFromFile) and deletion
-		// (via affectedFolders / orphan cleanup). Skip them to avoid routing
-		// directory paths to file-processing logic. Renamed directories must
-		// still reach RenameFolderPath below.
+		// Directory entries (trailing-slash paths) need special handling:
+		// - Renamed directories reach RenameFolderPath below.
+		// - Updated directories are emitted by planFolderMetadataChanges when a
+		//   parent folder's UID changed; re-parent them via EnsureFolderPathExist.
+		// - Created/deleted directory entries from cross-boundary renames are
+		//   skipped since individual file-level changes handle them.
 		if safepath.IsDir(change.Path) && change.Action != repository.FileActionRenamed {
+			if change.Action == repository.FileActionUpdated {
+				folderResultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
+				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.reparent_child_folder")
+				folder, fErr := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path)
+				if fErr != nil {
+					folderSpan.RecordError(fErr)
+					folderResultBuilder.WithError(fmt.Errorf("re-parenting child folder at %s: %w", change.Path, fErr))
+				}
+				folderResultBuilder.WithName(folder)
+				folderSpan.End()
+				progress.Record(ctx, folderResultBuilder.Build())
+			} else {
+				progress.Record(ctx, resultBuilder.Build())
+			}
+			continue
+		}
+
+		if folderMetadataEnabled && resources.IsFolderMetadataFile(change.Path) {
+			if change.Action == repository.FileActionCreated || change.Action == repository.FileActionUpdated {
+				name, err := applyFolderMetadataUpdate(ctx, change, repositoryResources, tracer)
+				if err != nil {
+					resultBuilder.WithError(err)
+				}
+				resultBuilder.WithName(name)
+			}
+			// Metadata files are not Grafana resources. Deletions are handled by
+			// planFolderMetadataChanges; other actions are no-ops.
 			progress.Record(ctx, resultBuilder.Build())
 			continue
 		}
@@ -317,23 +282,216 @@ func applyIncrementalChanges(
 	return affectedFolders, nil
 }
 
-// sortChangesByActionPriority keeps the incremental apply order hierarchy-safe.
+// applyFolderMetadataUpdate routes _folder.json changes through EnsureFolderPathExist
+// so the folder manager can create or update the folder with the correct title,
+// metadata hash, and annotations.
+func applyFolderMetadataUpdate(ctx context.Context, change repository.VersionedFileChange, repositoryResources resources.RepositoryResources, tracer tracing.Tracer) (string, error) {
+	folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.update_folder_metadata")
+	defer folderSpan.End()
+
+	folderDir := safepath.Dir(change.Path)
+	folder, err := repositoryResources.EnsureFolderPathExist(folderCtx, folderDir)
+	if err != nil {
+		folderSpan.RecordError(err)
+		return "", fmt.Errorf("updating folder metadata at %s: %w", folderDir, err)
+	}
+	return folder, nil
+}
+
+// replacedFolder tracks a folder whose UID changed due to a _folder.json
+// update or deletion. The old folder needs cleanup after children are re-parented.
+type replacedFolder struct {
+	Path   string // folder dir path (with trailing slash)
+	OldUID string // the previous folder UID to delete after children are re-parented
+}
+
+// planFolderMetadataChanges detects UID changes in updated or deleted _folder.json
+// files, emits synthetic FileActionUpdated for direct children so they get
+// re-parented, and returns the list of old folder UIDs to clean up.
 //
-// Changes are grouped first by action so we still preserve the existing delete ->
-// rename -> update -> create contract. Inside the same action, folder paths and
-// file paths are ordered differently:
-//   - deletes: files before folders, so child resources are removed before their parent
-//   - everything else: folders before files, so synthetic folder replay runs before children
+// For _folder.json updates: reads the new metadata to get the new UID.
+// For _folder.json deletions: computes the hash-based UID that the folder
+// reverts to when metadata is removed.
+func planFolderMetadataChanges(
+	ctx context.Context,
+	repo repository.Reader,
+	currentRef string,
+	diff []repository.VersionedFileChange,
+	repositoryResources resources.RepositoryResources,
+	tracer tracing.Tracer,
+) ([]repository.VersionedFileChange, []replacedFolder, error) {
+	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.plan_folder_metadata_changes")
+	defer span.End()
+
+	var metadataUpdateIndices []int
+	var metadataDeletionIndices []int
+	for i, change := range diff {
+		if !resources.IsFolderMetadataFile(change.Path) {
+			continue
+		}
+		switch change.Action {
+		case repository.FileActionUpdated:
+			metadataUpdateIndices = append(metadataUpdateIndices, i)
+		case repository.FileActionDeleted:
+			metadataDeletionIndices = append(metadataDeletionIndices, i)
+		default:
+		}
+	}
+	if len(metadataUpdateIndices) == 0 && len(metadataDeletionIndices) == 0 {
+		return diff, nil, nil
+	}
+
+	existingResources, err := repositoryResources.List(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("list existing resources: %w", err)
+	}
+
+	existingFoldersByPath := make(map[string]string)
+	for i := range existingResources.Items {
+		item := &existingResources.Items[i]
+		if item.Group == resources.FolderResource.Group {
+			path := safepath.EnsureTrailingSlash(item.Path)
+			existingFoldersByPath[path] = item.Name
+		}
+	}
+
+	var replaced []replacedFolder
+	oldUIDSet := make(map[string]struct{})
+
+	// Detect UID changes from _folder.json updates.
+	for _, idx := range metadataUpdateIndices {
+		change := diff[idx]
+		folderDir := safepath.Dir(change.Path)
+
+		oldUID, ok := existingFoldersByPath[folderDir]
+		if !ok {
+			continue
+		}
+
+		newFolder, err := resources.ParseFolderWithMetadata(ctx, repo, folderDir, currentRef, true)
+		if err != nil {
+			span.RecordError(err)
+			return nil, nil, fmt.Errorf("parse folder metadata for %s at ref %s: %w", folderDir, currentRef, err)
+		}
+
+		if newFolder.ID == oldUID {
+			continue
+		}
+
+		repositoryResources.RemoveFolderFromTree(oldUID)
+		replaced = append(replaced, replacedFolder{
+			Path:   folderDir,
+			OldUID: oldUID,
+		})
+		oldUIDSet[oldUID] = struct{}{}
+	}
+
+	// Detect UID transitions from _folder.json deletions.
+	// When metadata is removed the folder reverts to a hash-derived UID.
+	for _, idx := range metadataDeletionIndices {
+		change := diff[idx]
+		folderDir := safepath.Dir(change.Path)
+
+		oldUID, ok := existingFoldersByPath[folderDir]
+		if !ok {
+			continue
+		}
+
+		// Any non-NotFound error is treated as a hard failure to avoid
+		// triggering an incorrect UID transition on transient errors.
+		_, readErr := repo.Read(ctx, folderDir, currentRef)
+		if readErr != nil {
+			if errors.Is(readErr, repository.ErrFileNotFound) || apierrors.IsNotFound(readErr) {
+				// Directory gone — schedule old folder for deletion.
+				// No synthetic child updates are needed since all
+				// children should already be removed by other diff
+				// entries or previous syncs. We can't rely on
+				// findOrphanedFolders because _folder.json deletions
+				// are skipped in the apply phase and may not populate
+				// affectedFolders.
+				replaced = append(replaced, replacedFolder{
+					Path:   folderDir,
+					OldUID: oldUID,
+				})
+				continue
+			}
+			return nil, nil, fmt.Errorf("read folder directory %s at ref %s: %w", folderDir, currentRef, readErr)
+		}
+
+		newUID := resources.ParseFolder(folderDir, repo.Config().Name).ID
+
+		if newUID != oldUID {
+			repositoryResources.RemoveFolderFromTree(oldUID)
+			replaced = append(replaced, replacedFolder{
+				Path:   folderDir,
+				OldUID: oldUID,
+			})
+			oldUIDSet[oldUID] = struct{}{}
+		}
+
+		// Emit a folder directory update so the folder is recreated with the
+		// hash-based UID (or updated to clear the stale metadata hash).
+		diff = append(diff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated,
+			Path:   folderDir,
+			Ref:    currentRef,
+		})
+	}
+
+	if len(oldUIDSet) == 0 {
+		return diff, replaced, nil
+	}
+
+	actionsInDiff := make(map[string]repository.FileAction, len(diff))
+	for _, c := range diff {
+		actionsInDiff[c.Path] = c.Action
+		if c.PreviousPath != "" {
+			actionsInDiff[c.PreviousPath] = c.Action
+		}
+		// A _folder.json change already covers its parent directory — the folder
+		// will be created/updated via applyFolderMetadataUpdate, so we don't need
+		// a synthetic directory update for it.
+		if resources.IsFolderMetadataFile(c.Path) {
+			actionsInDiff[safepath.Dir(c.Path)] = repository.FileActionUpdated
+		}
+	}
+
+	for i := range existingResources.Items {
+		item := &existingResources.Items[i]
+		if _, ok := oldUIDSet[item.Folder]; !ok {
+			continue
+		}
+
+		path := item.Path
+		if item.Group == resources.FolderResource.Group {
+			path = safepath.EnsureTrailingSlash(path)
+		}
+
+		if resources.IsFolderMetadataFile(path) {
+			continue
+		}
+		if _, inDiff := actionsInDiff[path]; inDiff {
+			continue
+		}
+
+		diff = append(diff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated,
+			Path:   path,
+			Ref:    currentRef,
+		})
+		actionsInDiff[path] = repository.FileActionUpdated
+	}
+
+	return diff, replaced, nil
+}
+
+// sortChangesByActionPriority reorders changes so deletions are processed before creations.
 func sortChangesByActionPriority(diff []repository.VersionedFileChange) {
 	slices.SortStableFunc(diff, func(a, b repository.VersionedFileChange) int {
-		if cmp := actionPriority(a.Action) - actionPriority(b.Action); cmp != 0 {
-			return cmp
-		}
-		return pathPriorityWithinAction(a.Action, a.Path) - pathPriorityWithinAction(b.Action, b.Path)
+		return actionPriority(a.Action) - actionPriority(b.Action)
 	})
 }
 
-// actionPriority defines the coarse incremental ordering between git actions.
 func actionPriority(action repository.FileAction) int {
 	switch action {
 	case repository.FileActionDeleted:
@@ -349,44 +507,15 @@ func actionPriority(action repository.FileAction) int {
 	}
 }
 
-// pathPriorityWithinAction breaks ties between a folder path and a file path
-// that share the same action bucket.
-//
-// Once folder metadata changes are rewritten into synthetic directory changes,
-// plain action ordering is no longer enough. We need folder creates/updates to
-// run before child file work, but folder deletes to run after child file deletes.
-func pathPriorityWithinAction(action repository.FileAction, path string) int {
-	isDir := safepath.IsDir(path)
-	switch action {
-	case repository.FileActionDeleted:
-		if isDir {
-			return 1
-		}
-		return 0
-	default:
-		if isDir {
-			return 0
-		}
-		return 1
-	}
-}
-
-// cleanupOrphanedFolders removes target folders whose path disappeared from git
-// after the incremental apply phase completed.
-//
-// The input map is keyed by folder path and stores the Grafana folder UID that
-// should be considered for cleanup. The function skips folders whose child
-// deletions failed, then checks whether the path still exists in the repository
-// before removing the folder from Grafana.
-func cleanupOrphanedFolders(
+// findOrphanedFolders checks which affected folders no longer exist in git
+// and returns a path->UID map of folders to delete.
+func findOrphanedFolders(
 	ctx context.Context,
 	repo repository.Versioned,
 	affectedFolders map[string]string,
-	repositoryResources resources.RepositoryResources,
 	tracer tracing.Tracer,
-	progress jobs.JobProgressRecorder,
-) error {
-	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.cleanup_orphaned_folders")
+) map[string]string {
+	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.find_orphaned_folders")
 	defer span.End()
 
 	readerRepo, ok := repo.(repository.Reader)
@@ -395,31 +524,72 @@ func cleanupOrphanedFolders(
 		return nil
 	}
 
+	orphaned := make(map[string]string)
 	for path, folderName := range affectedFolders {
 		span.SetAttributes(attribute.String("folder", folderName))
 
-		// Check if any resources under this folder failed to delete
-		if progress.HasDirPathFailedDeletion(path) {
-			span.AddEvent("skipping orphaned folder cleanup: a child resource in its path failed to be deleted")
-			continue
-		}
-
-		// if we can no longer find the folder in git, then we can delete it from grafana
 		_, err := readerRepo.Read(ctx, path, "")
 		if err != nil && (errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
-			span.AddEvent("folder not found in git, removing from grafana")
-			if err := repositoryResources.RemoveFolder(ctx, folderName); err != nil {
-				span.RecordError(err)
-			} else {
-				span.AddEvent("successfully deleted")
-			}
+			span.AddEvent("folder not found in git, marking for deletion")
+			orphaned[path] = folderName
+			continue
+		}
+		if err != nil {
+			span.RecordError(err)
+			span.AddEvent("could not determine folder existence in git, skipping")
 			continue
 		}
 
 		span.AddEvent("folder still exists in git, continuing")
 	}
 
-	return nil
+	return orphaned
+}
+
+// deleteFolders removes folder K8s objects, processing deepest paths first.
+func deleteFolders(
+	ctx context.Context,
+	foldersToDelete map[string]string,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+) {
+	if len(foldersToDelete) == 0 {
+		return
+	}
+
+	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.delete_folders")
+	defer span.End()
+
+	type pathUID struct {
+		Path string
+		UID  string
+	}
+	sorted := make([]pathUID, 0, len(foldersToDelete))
+	for path, uid := range foldersToDelete {
+		sorted = append(sorted, pathUID{Path: path, UID: uid})
+	}
+	safepath.SortByDepth(sorted, func(p pathUID) string { return p.Path }, false)
+
+	for _, entry := range sorted {
+		if progress.HasDirPathFailedCreation(entry.Path) || progress.HasDirPathFailedDeletion(entry.Path) || progress.HasChildPathFailedCreation(entry.Path) || progress.HasChildPathFailedUpdate(entry.Path) {
+			progress.Record(ctx, jobs.NewFolderResult(entry.Path).
+				WithAction(repository.FileActionIgnored).
+				WithName(entry.UID).
+				WithWarning(fmt.Errorf("folder %s was not deleted because a related operation failed", entry.UID)).
+				Build())
+			continue
+		}
+
+		resultBuilder := jobs.NewFolderResult(entry.Path).
+			WithAction(repository.FileActionDeleted).
+			WithName(entry.UID)
+		if err := repositoryResources.RemoveFolder(ctx, entry.UID); err != nil {
+			span.RecordError(err)
+			resultBuilder.WithError(fmt.Errorf("delete folder %s: %w", entry.UID, err))
+		}
+		progress.Record(ctx, resultBuilder.Build())
+	}
 }
 
 // detectMissingFolderMetadata reads the full file tree and records warnings for folders
