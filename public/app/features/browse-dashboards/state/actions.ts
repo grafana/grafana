@@ -8,6 +8,15 @@ import { addTeamFolderPrefix, removeTeamFolderPrefix } from '../utils/dashboards
 
 import { findItem } from './utils';
 
+async function listTeamFoldersSafe() {
+  try {
+    return await listTeamFolders();
+  } catch (error) {
+    console.error('Failed to load team folders', error);
+    return [];
+  }
+}
+
 interface FetchNextChildrenPageArgs {
   parentUID: string | undefined;
 
@@ -58,7 +67,7 @@ export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
   async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {
     if (parentUID === TEAM_FOLDERS_UID) {
-      const children = await listTeamFolders();
+      const children = await listTeamFoldersSafe();
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 
@@ -116,7 +125,7 @@ export const fetchNextChildrenPage = createAsyncThunk(
       if (collection?.isFullyLoaded) {
         return undefined;
       }
-      const children = await listTeamFolders();
+      const children = await listTeamFoldersSafe();
       return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
     }
 

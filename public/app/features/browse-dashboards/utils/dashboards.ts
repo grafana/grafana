@@ -46,6 +46,25 @@ export function getFolderURL(uid: string) {
   return url;
 }
 
+/**
+ * Builds an owner-reference string for a team, e.g. `iam.grafana.app/Team/{uid}`.
+ */
+export function teamOwnerRef(team: { uid: string }): string {
+  return `iam.grafana.app/Team/${team.uid}`;
+}
+
+/**
+ * Parses an owner-reference string like `iam.grafana.app/Team/{uid}`.
+ * Returns `undefined` if the string doesn't match the expected format.
+ */
+export function parseOwnerRef(ref: string): { kind: string; uid: string } | undefined {
+  const parts = ref.split('/');
+  if (parts.length !== 3 || parts[0] !== 'iam.grafana.app') {
+    return undefined;
+  }
+  return { kind: parts[1], uid: parts[2] };
+}
+
 // Collect selected dashboard and folder from the DashboardTreeSelection
 // This is used to prepare the items for bulk delete operation.
 export function collectSelectedItems(selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {

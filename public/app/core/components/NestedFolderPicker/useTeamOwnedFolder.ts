@@ -4,6 +4,7 @@ import type { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1'
 import { TeamDto, useGetSignedInUserTeamListQuery } from '@grafana/api-clients/rtkq/legacy';
 import { isFetchError } from '@grafana/runtime';
 import { useSearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
+import { teamOwnerRef } from 'app/features/browse-dashboards/utils/dashboards';
 
 type FoldersByTeam = {
   team: TeamDto;
@@ -106,6 +107,3 @@ function coercedError(error: unknown, fallbackMessage = 'Failed to load teams') 
   return new Error(fallbackMessage);
 }
 
-function teamOwnerRef(team: TeamDto) {
-  return `iam.grafana.app/Team/${team.uid}`;
-}

@@ -11,7 +11,14 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { dispatch } from 'app/types/store';
 
-import { addTeamFolderPrefix, getFolderURL, isSharedWithMe, isVirtualTeamFolder } from '../utils/dashboards';
+import {
+  addTeamFolderPrefix,
+  getFolderURL,
+  isSharedWithMe,
+  isVirtualTeamFolder,
+  parseOwnerRef,
+  teamOwnerRef,
+} from '../utils/dashboards';
 
 export const PAGE_SIZE = 50;
 
@@ -60,14 +67,18 @@ async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) 
 
   // Add team folders virtual item only if the user actually has team folders
   if (!parentUID && config.featureToggles.teamFolders) {
-    const teamFolders = await listTeamFolders();
-    if (teamFolders.length > 0) {
-      const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
-      folders.splice(insertIndex, 0, {
-        ...virtualFolderBase,
-        name: t('browse-dashboards.my-team-folders', 'My team folders'),
-        uid: TEAM_FOLDERS_UID,
-      });
+    try {
+      const teamFolders = await listTeamFolders();
+      if (teamFolders.length > 0) {
+        const insertIndex = config.sharedWithMeFolderUID ? 1 : 0;
+        folders.splice(insertIndex, 0, {
+          ...virtualFolderBase,
+          name: t('browse-dashboards.my-team-folders', 'My team folders'),
+          uid: TEAM_FOLDERS_UID,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load team folders', error);
     }
   }
 
@@ -148,38 +159,42 @@ export async function listTeamFolders(): Promise<DashboardViewItem[]> {
     return [];
   }
 
-  const ownerReference = teams.map((team) => `iam.grafana.app/Team/${team.uid}`);
+  const ownerReference = teams.map(teamOwnerRef);
 
   const result = await dispatch(
     dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate({ ownerReference, type: 'folder' })
   ).unwrap();
 
+  const hits = result.hits ?? [];
+  if (hits.length === 0) {
+    return [];
+  }
+
   // Build a map of team UID → team info
-  const teamsByUid = new Map(teams.map((team) => [team.uid!, { name: team.name!, avatarUrl: team.avatarUrl }]));
+  const teamsByUid = new Map(teams.map((team) => [team.uid, { name: team.name, avatarUrl: team.avatarUrl }]));
 
   // Build a map of folder UID → owning team reference
   const folderOwners = new Map<string, { kind: string; uid: string; title: string; avatarUrl?: string }>();
-  for (const hit of result.hits ?? []) {
+  for (const hit of hits) {
     for (const ref of hit.ownerReferences ?? []) {
-      // ref format: iam.grafana.app/Team/{teamUID}
-      const parts = ref.split('/');
-      if (parts.length === 3 && parts[1] === 'Team') {
-        const teamUid = parts[2];
-        const team = teamsByUid.get(teamUid);
-        if (team) {
-          folderOwners.set(hit.name, {
-            kind: parts[1],
-            uid: teamUid,
-            title: team.name,
-            avatarUrl: team.avatarUrl,
-          });
-        }
+      const parsed = parseOwnerRef(ref);
+      if (!parsed) {
+        continue;
+      }
+      const team = teamsByUid.get(parsed.uid);
+      if (team) {
+        folderOwners.set(hit.name, {
+          kind: parsed.kind,
+          uid: parsed.uid,
+          title: team.name,
+          avatarUrl: team.avatarUrl,
+        });
       }
     }
   }
 
   // Return actual folders with owner reference info
-  return (result.hits ?? []).map((hit) => ({
+  return hits.map((hit) => ({
     kind: 'folder' as const,
     // Use prefixed UIDs so expansion state doesn't collide with the same folder elsewhere in the tree
     uid: addTeamFolderPrefix(hit.name),
