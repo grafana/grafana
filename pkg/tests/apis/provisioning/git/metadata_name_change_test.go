@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -102,9 +101,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{Incremental: true},
 	})
-	jobState, _, _ := unstructured.NestedString(job.Object, "status", "state")
-	require.Equal(t, string(provisioning.JobStateSuccess), jobState,
-		"incremental sync job should succeed")
+	common.RequireJobSuccess(t, job)
 
 	// The new dashboard should exist with the new name.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {

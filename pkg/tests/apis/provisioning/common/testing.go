@@ -1565,6 +1565,16 @@ func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx 
 		"folders for repo %q should have sourcePaths %v", repoName, expectedSourcePaths)
 }
 
+// RequireJobSuccess asserts that a completed job has state "success" and no errors.
+func RequireJobSuccess(t *testing.T, job *unstructured.Unstructured) {
+	t.Helper()
+	lastState := MustNestedString(job.Object, "status", "state")
+	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
+	require.Empty(t, lastErrors, "job %q has errors: %v", job.GetName(), lastErrors)
+	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
+		"job %q should succeed", job.GetName())
+}
+
 // GetFolderGeneration returns the current generation of the folder with the given UID.
 func GetFolderGeneration(t *testing.T, helper *ProvisioningTestHelper, folderUID string) int64 {
 	t.Helper()
