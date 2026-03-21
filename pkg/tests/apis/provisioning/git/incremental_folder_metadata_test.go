@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -763,6 +764,148 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"gr-nometa-001": {Title: "No Meta Dashboard", SourcePath: "new-team/dashboard1.json"},
+		})
+	})
+}
+
+// TestIntegrationProvisioning_IncrementalSync_FolderUIDChange verifies that
+// incremental sync handles metadata.name (UID) changes in _folder.json by
+// creating a new folder with the new UID, re-parenting all children, and
+// deleting the old folder.
+func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("simple UID change re-parents dashboard", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-uid-change-simple"
+		const oldUID = "old-folder-uid"
+		const newUID = "new-folder-uid"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"alpha/_folder.json": folderMetadataJSON(oldUID, "Alpha"),
+			"alpha/dash.json":    dashboardJSON("uid-dash-001", "Alpha Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Alpha")
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"uid-dash-001": {Title: "Alpha Dashboard", SourcePath: "alpha/dash.json", Folder: oldUID},
+		})
+
+		require.NoError(t, local.UpdateFile("alpha/_folder.json", string(folderMetadataJSON(newUID, "Alpha"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "change folder UID")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.syncAndWaitIncremental(t, repoName)
+
+		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, newUID, metav1.GetOptions{})
+		require.NoError(t, err, "folder with new UID should exist")
+		title, _, _ := unstructured.NestedString(folderAfter.Object, "spec", "title")
+		require.Equal(t, "Alpha", title)
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, oldUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old folder UID should be deleted after UID change")
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"uid-dash-001": {Title: "Alpha Dashboard", SourcePath: "alpha/dash.json", Folder: newUID},
+		})
+	})
+
+	t.Run("UID change with nested child folder", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-uid-change-nested"
+		const parentOldUID = "parent-old-uid"
+		const parentNewUID = "parent-new-uid"
+		const childUID = "child-stable-uid"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"parent/_folder.json":           folderMetadataJSON(parentOldUID, "Parent"),
+			"parent/child/_folder.json":     folderMetadataJSON(childUID, "Child"),
+			"parent/child/nested-dash.json": dashboardJSON("uid-nested-001", "Nested Dashboard", 1),
+			"parent/parent-dash.json":       dashboardJSON("uid-parent-001", "Parent Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent")
+		requireRepoFolderTitle(t, helper, ctx, repoName, "Child")
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"uid-parent-001": {Title: "Parent Dashboard", SourcePath: "parent/parent-dash.json", Folder: parentOldUID},
+			"uid-nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child/nested-dash.json", Folder: childUID},
+		})
+
+		require.NoError(t, local.UpdateFile("parent/_folder.json", string(folderMetadataJSON(parentNewUID, "Parent"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "change parent folder UID")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.syncAndWaitIncremental(t, repoName)
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, parentNewUID, metav1.GetOptions{})
+		require.NoError(t, err, "parent folder with new UID should exist")
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, parentOldUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old parent folder UID should be deleted after UID change")
+
+		childAfter, err := helper.FoldersV1.Resource.Get(ctx, childUID, metav1.GetOptions{})
+		require.NoError(t, err, "child folder should still exist")
+		childParent, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, parentNewUID, childParent, "child should be re-parented to new parent UID")
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"uid-parent-001": {Title: "Parent Dashboard", SourcePath: "parent/parent-dash.json", Folder: parentNewUID},
+			"uid-nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child/nested-dash.json", Folder: childUID},
+		})
+	})
+
+	t.Run("UID change alongside dashboard update in same commit", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-uid-change-combo"
+		const oldUID = "combo-old-uid"
+		const newUID = "combo-new-uid"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"team/_folder.json": folderMetadataJSON(oldUID, "Team"),
+			"team/dash.json":    dashboardJSON("uid-combo-001", "Original Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+
+		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON(newUID, "Team Rebranded"))))
+		require.NoError(t, local.UpdateFile("team/dash.json", string(dashboardJSON("uid-combo-001", "Updated Dashboard", 2))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "change UID and update dashboard")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.syncAndWaitIncremental(t, repoName)
+
+		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, newUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		title, _, _ := unstructured.NestedString(folderAfter.Object, "spec", "title")
+		require.Equal(t, "Team Rebranded", title)
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, oldUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old folder UID should be deleted after UID change")
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"uid-combo-001": {Title: "Updated Dashboard", SourcePath: "team/dash.json", Folder: newUID},
 		})
 	})
 }
