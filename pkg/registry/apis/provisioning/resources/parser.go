@@ -263,7 +263,6 @@ func (f *ParsedResource) ExistingFolder() string {
 	return meta.GetFolder()
 }
 
-
 func (f *ParsedResource) DryRun(ctx context.Context) error {
 	if f.DryRunResponse != nil {
 		return nil // this already ran (and helpful for testing)

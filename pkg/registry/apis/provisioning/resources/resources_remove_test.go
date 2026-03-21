@@ -406,4 +406,3 @@ func TestRenameResourceFile(t *testing.T) {
 		require.Empty(t, folderName, "folder should be empty when resource does not exist")
 	})
 }
-
