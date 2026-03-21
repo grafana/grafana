@@ -329,10 +329,12 @@ func planFolderMetadataChanges(
 		if !resources.IsFolderMetadataFile(change.Path) {
 			continue
 		}
-		if change.Action == repository.FileActionUpdated {
+		switch change.Action {
+		case repository.FileActionUpdated:
 			metadataUpdateIndices = append(metadataUpdateIndices, i)
-		} else if change.Action == repository.FileActionDeleted {
+		case repository.FileActionDeleted:
 			metadataDeletionIndices = append(metadataDeletionIndices, i)
+		default:
 		}
 	}
 	if len(metadataUpdateIndices) == 0 && len(metadataDeletionIndices) == 0 {

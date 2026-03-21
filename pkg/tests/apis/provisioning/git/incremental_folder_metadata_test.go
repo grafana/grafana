@@ -803,7 +803,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, newUID, metav1.GetOptions{})
 		require.NoError(t, err, "folder with new UID should exist")
@@ -851,7 +854,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
 
 		_, err = helper.FoldersV1.Resource.Get(ctx, parentNewUID, metav1.GetOptions{})
 		require.NoError(t, err, "parent folder with new UID should exist")
@@ -894,7 +900,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, newUID, metav1.GetOptions{})
 		require.NoError(t, err)
@@ -946,7 +955,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
 
 		// Old stable UID folder should be deleted
 		_, err = helper.FoldersV1.Resource.Get(ctx, stableUID, metav1.GetOptions{})
@@ -971,10 +983,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		const childStableUID = "child-stable-uid"
 
 		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-			"parent/_folder.json":           folderMetadataJSON(parentStableUID, "Parent"),
-			"parent/child/_folder.json":     folderMetadataJSON(childStableUID, "Child"),
-			"parent/parent-dash.json":       dashboardJSON("nested-parent-001", "Parent Dashboard", 1),
-			"parent/child/child-dash.json":  dashboardJSON("nested-child-001", "Child Dashboard", 1),
+			"parent/_folder.json":          folderMetadataJSON(parentStableUID, "Parent"),
+			"parent/child/_folder.json":    folderMetadataJSON(childStableUID, "Child"),
+			"parent/parent-dash.json":      dashboardJSON("nested-parent-001", "Parent Dashboard", 1),
+			"parent/child/child-dash.json": dashboardJSON("nested-child-001", "Child Dashboard", 1),
 		})
 
 		helper.syncAndWait(t, repoName)
@@ -992,7 +1004,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
 
 		// Old parent folder should be gone
 		_, err = helper.FoldersV1.Resource.Get(ctx, parentStableUID, metav1.GetOptions{})
@@ -1024,12 +1039,12 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		const childFolderUID = "child-folder-uid"
 
 		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-			"team/_folder.json":              folderMetadataJSON(stableUID, "Team"),
-			"team/dash-a.json":               dashboardJSON("child-dash-a", "Dashboard A", 1),
-			"team/dash-b.json":               dashboardJSON("child-dash-b", "Dashboard B", 1),
-			"team/dash-c.json":               dashboardJSON("child-dash-c", "Dashboard C", 1),
-			"team/sub/_folder.json":          folderMetadataJSON(childFolderUID, "Sub"),
-			"team/sub/nested-dash.json":      dashboardJSON("child-nested", "Nested Dashboard", 1),
+			"team/_folder.json":         folderMetadataJSON(stableUID, "Team"),
+			"team/dash-a.json":          dashboardJSON("child-dash-a", "Dashboard A", 1),
+			"team/dash-b.json":          dashboardJSON("child-dash-b", "Dashboard B", 1),
+			"team/dash-c.json":          dashboardJSON("child-dash-c", "Dashboard C", 1),
+			"team/sub/_folder.json":     folderMetadataJSON(childFolderUID, "Sub"),
+			"team/sub/nested-dash.json": dashboardJSON("child-nested", "Nested Dashboard", 1),
 		})
 
 		helper.syncAndWait(t, repoName)
@@ -1057,7 +1072,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
 
 		// Old stable UID folder should be deleted
 		_, err = helper.FoldersV1.Resource.Get(ctx, stableUID, metav1.GetOptions{})
@@ -1107,7 +1125,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
 
 		// Old folder should be gone
 		_, err = helper.FoldersV1.Resource.Get(ctx, stableUID, metav1.GetOptions{})
