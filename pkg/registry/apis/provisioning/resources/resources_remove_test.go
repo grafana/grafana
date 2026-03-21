@@ -380,29 +380,43 @@ func TestRenameResourceFile(t *testing.T) {
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old-path/dash.json"}
 		repo.On("Read", mock.Anything, "old-path/dash.json", "old-ref").Return(oldFileInfo, nil)
 
-		oldParsedObj := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "dashboard.grafana.app/v0alpha1",
-			"kind":       "Dashboard",
-			"metadata":   map[string]any{"name": "new-uid"},
-		}}
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
-			Obj:    oldParsedObj,
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "dashboard.grafana.app/v0alpha1",
+				"kind":       "Dashboard",
+				"metadata":   map[string]any{"name": "dash-uid"},
+			}},
 			GVK:    dashboardGVK,
 			Client: mockClient,
 			Repo:   testRepoInfo(),
 		}, nil)
 
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "dash-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
 		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json"}
 		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
-		mockParser.On("Parse", mock.Anything, newFileInfo).
-			Return(nil, fmt.Errorf("stub error"))
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:  newObj,
+			Meta: newMeta,
+			GVK:  dashboardGVK,
+			Repo: testRepoInfo(),
+		}, nil)
 
-		mockClient.On("Get", mock.Anything, "new-uid", metav1.GetOptions{}, mock.Anything).
-			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "new-uid"))
+		mockClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, mock.Anything).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "dash-uid"))
 
 		mgr := NewResourcesManager(repo, nil, mockParser, nil)
-		_, folderName, _, _ := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
+		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
-		require.Empty(t, folderName, "folder should be empty when resource does not exist")
+		require.Error(t, err, "write step fails (no client on newParsed)")
+		require.Contains(t, err.Error(), "failed to write resource")
+		require.Empty(t, folderName, "folder should be empty when resource does not exist in grafana")
+		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 }
