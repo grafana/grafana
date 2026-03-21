@@ -8,7 +8,8 @@ import { getFeatureToggle } from '../utils/featureToggles';
 
 import { DateTimeOptions, getTimeZone } from './common';
 import { systemDateFormats } from './formats';
-import { DateTimeInput, DateTime, dateTime, toUtc } from './grafana_datetime_wrapper';
+import { dateTime, toUtc } from './grafana_datetime_wrapper';
+import { DateTime, DateTimeInput } from './types';
 
 /**
  * Converts a Grafana DateTimeInput to a plain Javascript Date object.
@@ -183,7 +184,7 @@ const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): DateTime => {
   const date = toUtc(dateInUtc);
 
   if (timeZone !== 'browser' && IANAZone.isValidZone(timeZone)) {
-    return date.tz?.(timeZone) as DateTime;
+    return date.tz(timeZone);
   }
 
   switch (timeZone) {

@@ -1,12 +1,14 @@
-import {looseMomentParseFormat} from './loose-moment-parse-format';
-import {toLuxonFormat} from "./moment-to-luxon-format-tokens";
-import {DateTime as LuxonDateTime} from 'luxon';
-import {FormatInput, ISO_8601} from "../types";
+import { DateTime as LuxonDateTime } from 'luxon';
+
+import { FormatInput, ISO_8601 } from '../types';
+
+import { looseMomentParseFormat } from './loose-moment-parse-format';
+import { toLuxonFormat } from './moment-to-luxon-format-tokens';
 
 const inputHasZone = (value: string) => /(?:Z|[+-]\d{2}(?::?\d{2})?)$/.test(value);
 
 const parseFormatPrefix = (input: string, format: string, zone: string | undefined, locale: string) => {
-  const prefix = looseMomentParseFormat(input, format)
+  const prefix = looseMomentParseFormat(input, format);
   if (!prefix) {
     return undefined;
   }
@@ -18,7 +20,12 @@ const parseFormatPrefix = (input: string, format: string, zone: string | undefin
   });
 };
 
-export const looseMomentParseString = (input: string, formatInput: FormatInput, zone: string | undefined, locale: string) => {
+export const looseMomentParseString = (
+  input: string,
+  formatInput: FormatInput,
+  zone: string | undefined,
+  locale: string
+) => {
   if (!formatInput) {
     const iso = LuxonDateTime.fromISO(input, { zone: zone ?? undefined, setZone: true, locale });
     if (iso.isValid) {

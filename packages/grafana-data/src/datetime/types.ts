@@ -1,10 +1,10 @@
-
 export interface DateTimeBuiltinFormat {
-  __momentBuiltinFormatBrand: any;
+  __builtinFormatBrand: never;
 }
 
 const ISO_8601_TOKEN = 'ISO_8601';
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 export const ISO_8601: DateTimeBuiltinFormat = ISO_8601_TOKEN as unknown as DateTimeBuiltinFormat;
 export type DateTimeInput = Date | string | number | Array<string | number> | DateTime | null;
 export type FormatInput = string | DateTimeBuiltinFormat | undefined;
@@ -74,10 +74,10 @@ export interface DateTime extends Object {
   unix: () => number;
   utc: () => DateTime;
   utcOffset: () => number;
-  hour?: () => number;
-  minute?: () => number;
-  month?: () => number;
-  date?: () => number;
-  year?: () => number;
-  tz?: (timeZone?: string) => DateTime | string;
+  hour: () => number;
+  minute: () => number;
+  month: () => number;
+  date: () => number;
+  year: () => number;
+  tz: (timeZone?: string) => DateTime;
 }

@@ -1,5 +1,6 @@
 import { DateTime as LuxonDateTime } from 'luxon';
-import {formatWithMomentTokens} from "./luxon-format-with-moment-tokens";
+
+import { formatWithMomentTokens } from './luxon-format-with-moment-tokens';
 
 describe('formatWithMomentTokens', () => {
   it('keeps moment-compatible meridiem and zone tokens', () => {

@@ -1,11 +1,20 @@
 import { DateTime as LuxonDateTime, Duration as LuxonDuration, IANAZone, Info, Settings } from 'luxon';
 
 import { TimeZone } from '../types/time';
-import type { DurationUnit, DateTimeInput, DateTime, DateTimeDuration, DateTimeLocale, FormatInput, DurationInput } from './types';
-import { ISO_8601 } from './types';
-import {looseMomentDurationUnitsToLuxon} from "./compability-layer/loose-moment-duration-units-to-luxon";
-import {formatWithMomentTokens} from "./compability-layer/luxon-format-with-moment-tokens";
-import {looseMomentParseString} from "./compability-layer/loose-moment-parse-string";
+
+import { looseMomentDurationUnitsToLuxon } from './compability-layer/loose-moment-duration-units-to-luxon';
+import { looseMomentParseString } from './compability-layer/loose-moment-parse-string';
+import { formatWithMomentTokens } from './compability-layer/luxon-format-with-moment-tokens';
+import {
+  ISO_8601,
+  DateTime,
+  DateTimeDuration,
+  DateTimeInput,
+  DateTimeLocale,
+  DurationInput,
+  DurationUnit,
+  FormatInput,
+} from './types';
 
 let configuredWeekStart = 0;
 
@@ -79,7 +88,9 @@ class GrafanaDateTime implements DateTime {
 
   diff = (amount: DateTimeInput, unit: DurationUnit = 'milliseconds', truncate?: boolean): number => {
     const other = normalizeInput(amount, this.value.zoneName ?? undefined);
-    const result = this.value.diff(other.value, looseMomentDurationUnitsToLuxon(unit)).as(looseMomentDurationUnitsToLuxon(unit));
+    const result = this.value
+      .diff(other.value, looseMomentDurationUnitsToLuxon(unit))
+      .as(looseMomentDurationUnitsToLuxon(unit));
     return truncate ? Math.trunc(result) : result;
   };
 
@@ -125,7 +136,10 @@ class GrafanaDateTime implements DateTime {
       return this.value.toMillis() === other.value.toMillis();
     }
 
-    return adjustToBoundary(this.value, granularity, false).toMillis() === adjustToBoundary(other.value, granularity, false).toMillis();
+    return (
+      adjustToBoundary(this.value, granularity, false).toMillis() ===
+      adjustToBoundary(other.value, granularity, false).toMillis()
+    );
   };
 
   isBefore = (input?: DateTimeInput): boolean => {
@@ -194,11 +208,7 @@ class GrafanaDateTime implements DateTime {
   date = () => this.value.day;
   year = () => this.value.year;
 
-  tz = (timeZone?: string): string | DateTime => {
-    if (!timeZone) {
-      return this.value.zoneName ?? 'UTC';
-    }
-
+  tz = (timeZone?: string): DateTime => {
     this.value = this.value.setZone(timeZone);
     return this;
   };
@@ -286,7 +296,7 @@ export const setWeekStart = (weekStart?: string) => {
 
 const normalizeInput = (input?: DateTimeInput, zone?: string | null, formatInput?: FormatInput): GrafanaDateTime => {
   if (input instanceof GrafanaDateTime) {
-    return input.clone() as GrafanaDateTime;
+    return input.clone();
   }
 
   const normalizedZone = normalizeZone(zone ?? undefined);
@@ -320,10 +330,7 @@ const normalizeInput = (input?: DateTimeInput, zone?: string | null, formatInput
 
   if (Array.isArray(input)) {
     const [year, month = 0, day = 1, hour = 0, minute = 0, second = 0, millisecond = 0] = input.map(Number);
-    value = LuxonDateTime.fromObject(
-      { year, month: month + 1, day, hour, minute, second, millisecond },
-      opts
-    );
+    value = LuxonDateTime.fromObject({ year, month: month + 1, day, hour, minute, second, millisecond }, opts);
     return new GrafanaDateTime(value);
   }
 
@@ -344,10 +351,12 @@ const normalizeZone = (zone?: string) => {
 
 const getBrowserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC';
 
+// This function can return wrong values on Firefox: https://github.com/moment/luxon/issues/1563
 const getLocaleWeekStart = (locale: string): number => {
   try {
-    const firstDay = (new Intl.Locale(locale) as Intl.Locale & { weekInfo?: { firstDay?: number } }).weekInfo?.firstDay;
-    return firstDay ? firstDay % 7 : 0;
+    return LuxonDateTime.local({ locale }).startOf('week', { useLocaleWeeks: true }).localWeekday;
+    // const firstDay = (new Intl.Locale(locale) as Intl.Locale & { weekInfo?: { firstDay?: number } }).weekInfo?.firstDay;
+    // return firstDay ? firstDay % 7 : 0;
   } catch {
     return 0;
   }
@@ -394,7 +403,9 @@ const adjustToBoundary = (value: LuxonDateTime, unit: DurationUnit, roundUp: boo
   }
 
   const singularUnit = normalizedUnit.endsWith('s') ? normalizedUnit.slice(0, -1) : normalizedUnit;
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const normalized = value.startOf(singularUnit as 'year');
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   return roundUp ? normalized.endOf(singularUnit as 'year') : normalized;
 };
 

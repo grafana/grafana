@@ -1,4 +1,4 @@
-import {DurationUnit} from "../types";
+import { DurationUnit } from '../types';
 
 /**
  * Moment supports some shorthands units.

@@ -1,6 +1,7 @@
 import moment from 'moment-timezone';
 
-import { DateTimeInput, dateTime } from './grafana_datetime_wrapper';
+import { dateTime } from './grafana_datetime_wrapper';
+import { DateTimeInput } from './types';
 
 /**
  * @deprecated Prefer the Grafana DateTime wrapper. This remains as a compatibility seam
