@@ -58,7 +58,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 		"teamC/dashboard.json": teamCUID,
 	})
 
-	beforeSnapshots := snapshotDashboardsBySourcePath(t, helper, repo, []string{
+	beforeSnapshots := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
 		"teamA/dashboard.json",
 		"teamB/dashboard.json",
 		"teamC/dashboard.json",
@@ -89,13 +89,13 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 
 	// Verify dashboards were updated in place (UIDs preserved, not recreated).
 	// teamA/dashboard.json didn't move, so use same key for before and after.
-	afterSnapshots := snapshotDashboardsBySourcePath(t, helper, repo, []string{
+	afterSnapshots := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
 		"teamA/dashboard.json",
 		"teamA/teamC/teamB/dashboard.json",
 		"teamA/teamC/dashboard.json",
 	})
 	// teamA/dashboard.json stayed at the same path
-	requireDashboardsUpdatedInPlace(t, beforeSnapshots, afterSnapshots, []string{"teamA/dashboard.json"})
+	common.RequireDashboardsUpdatedInPlace(t, beforeSnapshots, afterSnapshots, []string{"teamA/dashboard.json"})
 	// teamB/dashboard.json moved to teamA/teamC/teamB/dashboard.json
 	require.Equal(t, beforeSnapshots["teamB/dashboard.json"].UID,
 		afterSnapshots["teamA/teamC/teamB/dashboard.json"].UID,
@@ -815,68 +815,6 @@ func assertNoFolderByUID(t *testing.T, helper *common.ProvisioningTestHelper, fo
 		"folder %q should be deleted", folderUID)
 }
 
-// dashboardSnapshot captures K8s identity fields for later comparison.
-type dashboardSnapshot struct {
-	UID               string
-	CreationTimestamp metav1.Time
-	Generation        int64
-}
-
-// snapshotDashboardsBySourcePath returns a map from sourcePath to dashboardSnapshot
-// for dashboards managed by the given repo.
-func snapshotDashboardsBySourcePath(t *testing.T, helper *common.ProvisioningTestHelper, repoName string, paths []string) map[string]dashboardSnapshot {
-	t.Helper()
-	wanted := make(map[string]bool, len(paths))
-	for _, p := range paths {
-		wanted[p] = true
-	}
-	result := make(map[string]dashboardSnapshot, len(paths))
-
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list dashboards") {
-			return
-		}
-		for _, d := range list.Items {
-			annotations := d.GetAnnotations()
-			if annotations["grafana.app/managerId"] != repoName {
-				continue
-			}
-			sp := annotations["grafana.app/sourcePath"]
-			if wanted[sp] {
-				result[sp] = dashboardSnapshot{
-					UID:               string(d.GetUID()),
-					CreationTimestamp: d.GetCreationTimestamp(),
-					Generation:        d.GetGeneration(),
-				}
-			}
-		}
-		for _, p := range paths {
-			assert.Contains(c, result, p, "dashboard with sourcePath %q not found", p)
-		}
-	}, 30*time.Second, 100*time.Millisecond,
-		"expected dashboards for repo %q", repoName)
-	return result
-}
-
-// requireDashboardsUpdatedInPlace verifies that the K8s UIDs are preserved
-// (i.e., the resources were updated in place, not deleted and recreated).
-func requireDashboardsUpdatedInPlace(t *testing.T, before, after map[string]dashboardSnapshot, paths []string) {
-	t.Helper()
-	for _, p := range paths {
-		b, okB := before[p]
-		a, okA := after[p]
-		require.True(t, okB, "before snapshot missing for %q", p)
-		require.True(t, okA, "after snapshot missing for %q", p)
-		require.Equal(t, b.UID, a.UID,
-			"dashboard %q: UID changed — object was recreated instead of updated", p)
-		require.Equal(t, b.CreationTimestamp, a.CreationTimestamp,
-			"dashboard %q: creationTimestamp changed — object was recreated instead of updated", p)
-		require.GreaterOrEqual(t, a.Generation, b.Generation,
-			"dashboard %q: generation decreased — object was recreated instead of updated", p)
-	}
-}
-
 // TestIntegrationProvisioning_FullSync_DashboardMovePreservesUID verifies that
 // moving a dashboard file to a different path during full sync updates the
 // resource in place (preserving K8s UID) instead of deleting and recreating it.
@@ -905,7 +843,7 @@ func TestIntegrationProvisioning_FullSync_DashboardMovePreservesUID(t *testing.T
 		"folderA/dashboard.json": "folder-a-uid",
 	})
 
-	before := snapshotDashboardsBySourcePath(t, helper, repo, []string{"folderA/dashboard.json"})
+	before := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{"folderA/dashboard.json"})
 
 	// Move the dashboard file from folderA to folderB (same metadata.name).
 	moveInProvisioningPath(t, helper, "folderA/dashboard.json", "folderB/dashboard.json")
@@ -916,16 +854,11 @@ func TestIntegrationProvisioning_FullSync_DashboardMovePreservesUID(t *testing.T
 		"folderB/dashboard.json": "folder-b-uid",
 	})
 
-	after := snapshotDashboardsBySourcePath(t, helper, repo, []string{"folderB/dashboard.json"})
+	after := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{"folderB/dashboard.json"})
 
 	// The dashboard was moved — the old sourcePath no longer exists and the new
 	// one appeared. But under the hood the metadata.name is the same, so
 	// DetectRenames should have converted the delete+create into an update.
-	// Compare using the old and new source paths (different keys, same resource).
-	beforeSnap := before["folderA/dashboard.json"]
-	afterSnap := after["folderB/dashboard.json"]
-	require.Equal(t, beforeSnap.UID, afterSnap.UID,
-		"dashboard UID changed — object was recreated instead of updated in place")
-	require.Equal(t, beforeSnap.CreationTimestamp, afterSnap.CreationTimestamp,
-		"dashboard creationTimestamp changed — object was recreated instead of updated in place")
+	common.RequireUpdatedInPlace(t, "folderA→folderB move",
+		before["folderA/dashboard.json"], after["folderB/dashboard.json"])
 }

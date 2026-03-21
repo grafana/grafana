@@ -393,12 +393,37 @@ func detectFolderUIDChanges(
 	return affectedFolders, nil
 }
 
-// resourceIdentity groups the fields that uniquely identify a Kubernetes resource
-// within a namespace: its metadata.name, API group, and plural resource name.
-type resourceIdentity struct {
-	Name     string
-	Group    string
-	Resource string
+func resolveIdentity(
+	ctx context.Context,
+	repo repository.Reader,
+	ref string,
+	clients resources.ResourceClients,
+	path string,
+) (resources.ResourceIdentity, error) {
+	fileInfo, err := repo.Read(ctx, path, ref)
+	if err != nil {
+		return resources.ResourceIdentity{}, fmt.Errorf("read: %w", err)
+	}
+	obj, gvk, _, err := resources.ParseFileResource(ctx, fileInfo)
+	if err != nil {
+		return resources.ResourceIdentity{}, fmt.Errorf("parse: %w", err)
+	}
+	if obj == nil || gvk == nil {
+		return resources.ResourceIdentity{}, fmt.Errorf("parse returned nil object or GVK")
+	}
+	name := obj.GetName()
+	if name == "" {
+		return resources.ResourceIdentity{}, fmt.Errorf("resource has empty name")
+	}
+	_, gvr, err := clients.ForKind(ctx, *gvk)
+	if err != nil {
+		return resources.ResourceIdentity{}, fmt.Errorf("resolve GVK %s: %w", gvk.String(), err)
+	}
+	return resources.ResourceIdentity{
+		Name:     name,
+		Group:    gvk.Group,
+		Resource: gvr.Resource,
+	}, nil
 }
 
 // DetectRenames finds delete+create pairs that refer to the same Kubernetes
@@ -416,7 +441,7 @@ func DetectRenames(
 	clients resources.ResourceClients,
 	changes []ResourceFileChange,
 ) []ResourceFileChange {
-	deletionsByIdentity := make(map[resourceIdentity]int)
+	deletionsByIdentity := make(map[resources.ResourceIdentity]int)
 	for i, change := range changes {
 		if change.Action != repository.FileActionDeleted || change.Existing == nil {
 			continue
@@ -424,7 +449,7 @@ func DetectRenames(
 		if safepath.IsDir(change.Path) {
 			continue
 		}
-		id := resourceIdentity{
+		id := resources.ResourceIdentity{
 			Name:     change.Existing.Name,
 			Group:    change.Existing.Group,
 			Resource: change.Existing.Resource,
@@ -436,6 +461,8 @@ func DetectRenames(
 		return changes
 	}
 
+	logger := logging.FromContext(ctx)
+
 	removedDeletions := make(map[int]bool)
 	for i, change := range changes {
 		if change.Action != repository.FileActionCreated {
@@ -445,29 +472,10 @@ func DetectRenames(
 			continue
 		}
 
-		fileInfo, err := repo.Read(ctx, change.Path, ref)
+		id, err := resolveIdentity(ctx, repo, ref, clients, change.Path)
 		if err != nil {
+			logger.Warn("DetectRenames: skipping created file", "path", change.Path, "error", err)
 			continue
-		}
-		obj, gvk, _, err := resources.ParseFileResource(ctx, fileInfo)
-		if err != nil || obj == nil || gvk == nil {
-			continue
-		}
-
-		name := obj.GetName()
-		if name == "" {
-			continue
-		}
-
-		_, gvr, err := clients.ForKind(ctx, *gvk)
-		if err != nil {
-			continue
-		}
-
-		id := resourceIdentity{
-			Name:     name,
-			Group:    gvk.Group,
-			Resource: gvr.Resource,
 		}
 
 		deletionIdx, found := deletionsByIdentity[id]

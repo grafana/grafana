@@ -91,6 +91,15 @@ func appendHashSuffix(hashKey, repositoryName string) func(string) string {
 	}
 }
 
+// ResourceIdentity groups the fields that uniquely identify a Kubernetes resource
+// within a namespace: its metadata.name, API group, and plural resource name.
+// It is suitable for use as a map key.
+type ResourceIdentity struct {
+	Name     string
+	Group    string
+	Resource string
+}
+
 // Folder contains the data for a folder we use in provisioning.
 type Folder struct {
 	// Title is the human-readable name created by a human who wrote it.
