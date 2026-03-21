@@ -80,13 +80,9 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 		"dashboard1.json": dashboardJSON("name-change-incr-001", "Dashboard One", 1),
 	}, "write", "branch")
 
-	helper.syncAndWait(t, repoName)
+	helper.syncAndWaitWithSuccess(t, repoName)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "name-change-incr-001", "Dashboard One")
-
-	// Ensure lastRef is set so the next sync actually runs incrementally
-	// rather than falling back to a full sync.
-	helper.waitForRepoLastRef(t, repoName)
 
 	// Change the metadata.name (uid) in the same file path.
 	require.NoError(t, local.UpdateFile("dashboard1.json", string(dashboardJSON("name-change-incr-002", "Dashboard One Renamed", 2))))

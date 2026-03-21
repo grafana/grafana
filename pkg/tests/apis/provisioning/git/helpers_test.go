@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/nanogit/gittest"
@@ -394,6 +395,21 @@ func (h *gitTestHelper) waitForRepoLastRef(t *testing.T, repoName string) {
 		lastRef, _, _ := unstructured.NestedString(repo.Object, "status", "sync", "lastRef")
 		assert.NotEmpty(collect, lastRef, "repository %s should have lastRef set", repoName)
 	}, waitTimeoutDefault, waitIntervalDefault, "repository %s should have lastRef set after sync", repoName)
+}
+
+// syncAndWaitWithSuccess triggers a full pull sync, asserts that it succeeds,
+// and waits for the repository's lastRef to be set. Use this as the initial
+// sync in tests that later trigger incremental syncs, so that lastRef is
+// guaranteed to be populated.
+func (h *gitTestHelper) syncAndWaitWithSuccess(t *testing.T, repoName string) {
+	t.Helper()
+
+	job := h.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+	common.RequireJobSuccess(t, job)
+	h.waitForRepoLastRef(t, repoName)
 }
 
 // asJSON serialises v to a JSON byte slice, panicking on encoding errors

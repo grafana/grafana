@@ -31,7 +31,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		})
 
 		// Initial full sync fills the quota (2/2).
-		helper.syncAndWait(t, repo)
+		helper.syncAndWaitWithSuccess(t, repo)
 		requireRepoDashboardCount(t, helper, ctx, repo, 2)
 		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
@@ -85,7 +85,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 			"dashboard1.json": dashboardJSON("incr-swap-dash-001", "Dashboard One", 1),
 		})
 
-		helper.syncAndWait(t, repo)
+		helper.syncAndWaitWithSuccess(t, repo)
 		requireRepoDashboardCount(t, helper, ctx, repo, 1)
 		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
@@ -148,7 +148,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 			"dashboard2.json": dashboardJSON("incr-rel-dash-002", "Dashboard Two", 1),
 		})
 
-		helper.syncAndWait(t, repo)
+		helper.syncAndWaitWithSuccess(t, repo)
 		requireRepoDashboardCount(t, helper, ctx, repo, 2)
 		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
@@ -198,7 +198,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		})
 
 		// Initial full sync: 2 dashboards + 1 implicit folder = 3/3 resources.
-		helper.syncAndWait(t, repo)
+		helper.syncAndWaitWithSuccess(t, repo)
 		requireRepoDashboardCount(t, helper, ctx, repo, 2)
 		requireRepoFolderCount(t, helper, ctx, repo, 1)
 		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
@@ -253,7 +253,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		})
 
 		// Initial full sync: folder1 + dash1 + dash2 = 3/3 resources.
-		helper.syncAndWait(t, repo)
+		helper.syncAndWaitWithSuccess(t, repo)
 		requireRepoDashboardCount(t, helper, ctx, repo, 2)
 		requireRepoFolderCount(t, helper, ctx, repo, 1)
 		helper.waitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
@@ -288,7 +288,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 			"dashboard1.json": dashboardJSON("incr-ulim-dash-001", "Dashboard One", 1),
 		})
 
-		helper.syncAndWait(t, repo)
+		helper.syncAndWaitWithSuccess(t, repo)
 		requireRepoDashboardCount(t, helper, ctx, repo, 1)
 
 		// Add three more dashboards as separate git commits pushed to the remote.
