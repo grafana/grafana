@@ -6022,8 +6022,8 @@
       "name": "Rows",
       "new-row-title": "New row",
       "row": {
-        "collapse": "Collapse row",
-        "expand": "Expand row",
+        "collapse": "Collapse row with title {{title}}",
+        "expand": "Expand row with title {{title}}",
         "new": "New row",
         "repeat": {
           "learn-more": "Learn more",
