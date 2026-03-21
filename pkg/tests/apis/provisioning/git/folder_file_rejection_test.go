@@ -3,10 +3,10 @@ package git
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,34 +30,22 @@ func folderJSON(uid, title string) []byte {
 	return data
 }
 
-// requireJobWarningContains asserts that at least one warning in the job status
-// contains the given substring.
-func requireJobWarningContains(t *testing.T, jobObj *provisioning.Job, substr string) {
-	t.Helper()
-	for _, w := range jobObj.Status.Warnings {
-		if strings.Contains(w, substr) {
-			return
-		}
-	}
-	t.Errorf("expected at least one warning containing %q, got warnings: %v", substr, jobObj.Status.Warnings)
-}
-
 // TestIntegrationProvisioning_FullSync_FolderFileIsWarning verifies that a
 // folder-typed JSON file produces a warning (not an error) during full sync.
 func TestIntegrationProvisioning_FullSync_FolderFileIsWarning(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t)
+	helper := gitcommon.RunGrafanaWithGitServer(t)
 	ctx := context.Background()
 
 	const repoName = "full-folder-file-warning"
 
-	helper.createGitRepo(t, repoName, map[string][]byte{
-		"dashboard.json": dashboardJSON("full-folder-dash", "Dashboard", 1),
+	helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"dashboard.json": gitcommon.DashboardJSON("full-folder-dash", "Dashboard", 1),
 		"folder.json":    folderJSON("folder-uid", "A Folder"),
 	})
 
-	job := helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},
 	})
@@ -70,9 +58,9 @@ func TestIntegrationProvisioning_FullSync_FolderFileIsWarning(t *testing.T) {
 		"full sync should finish in warning state when a folder file is present")
 	require.NotEmpty(t, jobObj.Status.Warnings,
 		"full sync should produce at least one warning for the folder file")
-	requireJobWarningContains(t, jobObj, "cannot declare folders through files")
+	gitcommon.RequireJobWarningContains(t, jobObj, "cannot declare folders through files")
 
-	requireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning
@@ -81,17 +69,17 @@ func TestIntegrationProvisioning_FullSync_FolderFileIsWarning(t *testing.T) {
 func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t)
+	helper := gitcommon.RunGrafanaWithGitServer(t)
 	ctx := context.Background()
 
 	const repoName = "incr-folder-file-create"
 
-	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-		"dashboard.json": dashboardJSON("folder-create-dash", "Dashboard", 1),
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"dashboard.json": gitcommon.DashboardJSON("folder-create-dash", "Dashboard", 1),
 	})
 
-	helper.syncAndWait(t, repoName)
-	requireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	helper.SyncAndWait(t, repoName)
+	gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
 
 	require.NoError(t, local.CreateFile("new-folder.json", string(folderJSON("new-folder", "New Folder"))))
 	_, err := local.Git("add", ".")
@@ -101,7 +89,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	job := helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{Incremental: true},
 	})
@@ -114,9 +102,9 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 		"incremental sync should finish in warning state when a folder file is created")
 	require.NotEmpty(t, jobObj.Status.Warnings,
 		"incremental sync should produce at least one warning for the folder file")
-	requireJobWarningContains(t, jobObj, "cannot declare folders through files")
+	gitcommon.RequireJobWarningContains(t, jobObj, "cannot declare folders through files")
 
-	requireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning
@@ -126,23 +114,23 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t)
+	helper := gitcommon.RunGrafanaWithGitServer(t)
 	ctx := context.Background()
 
 	const repoName = "incr-folder-file-delete"
 
 	// Seed the repo with a dashboard and a folder-typed JSON file.
-	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-		"dashboard.json": dashboardJSON("folder-test-dash", "Dashboard", 1),
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"dashboard.json": gitcommon.DashboardJSON("folder-test-dash", "Dashboard", 1),
 		"my-folder.json": folderJSON("my-folder-uid", "My Folder"),
 	})
 
 	// Full sync: the dashboard is imported; the folder file produces a warning.
-	helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},
 	})
-	requireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
 
 	// Delete the folder file from git.
 	_, err := local.Git("rm", "my-folder.json")
@@ -153,7 +141,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *t
 	require.NoError(t, err)
 
 	// Incremental sync should handle the deletion gracefully.
-	incrJob := helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+	incrJob := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{Incremental: true},
 	})
@@ -166,9 +154,9 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *t
 		"incremental sync should finish in warning state when a folder file is deleted")
 	require.NotEmpty(t, incrJobObj.Status.Warnings,
 		"incremental sync should produce at least one warning for the deleted folder file")
-	requireJobWarningContains(t, incrJobObj, "cannot declare folders through files")
+	gitcommon.RequireJobWarningContains(t, incrJobObj, "cannot declare folders through files")
 
-	requireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
 }
 
 // TestIntegrationGitFiles_CreateFolderFileRejected verifies that creating a
@@ -176,11 +164,11 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *t
 func TestIntegrationGitFiles_CreateFolderFileRejected(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t)
+	helper := gitcommon.RunGrafanaWithGitServer(t)
 	ctx := context.Background()
 
 	repoName := "test-create-folder-file"
-	_, _ = helper.createGitRepo(t, repoName, nil, "write")
+	_, _ = helper.CreateGitRepo(t, repoName, nil, "write")
 
 	result := helper.AdminREST.Post().
 		Namespace("default").
@@ -202,11 +190,11 @@ func TestIntegrationGitFiles_CreateFolderFileRejected(t *testing.T) {
 func TestIntegrationGitFiles_DeleteFolderFileRejected(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t)
+	helper := gitcommon.RunGrafanaWithGitServer(t)
 	ctx := context.Background()
 
 	repoName := "test-delete-folder-file"
-	_, _ = helper.createGitRepo(t, repoName, map[string][]byte{
+	_, _ = helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"my-folder.json": folderJSON("del-folder", "Delete Me"),
 	}, "write")
 
@@ -228,11 +216,11 @@ func TestIntegrationGitFiles_DeleteFolderFileRejected(t *testing.T) {
 func TestIntegrationGitFiles_UpdateFolderFileRejected(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t)
+	helper := gitcommon.RunGrafanaWithGitServer(t)
 	ctx := context.Background()
 
 	repoName := "test-update-folder-file"
-	_, _ = helper.createGitRepo(t, repoName, map[string][]byte{
+	_, _ = helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"my-folder.json": folderJSON("upd-folder", "Original"),
 	}, "write")
 
