@@ -1,5 +1,5 @@
 /* eslint-disable id-blacklist, no-restricted-imports */
-import moment, { Moment } from 'moment-timezone';
+import { IANAZone } from 'luxon';
 
 import { formatDate } from '@grafana/i18n';
 
@@ -8,7 +8,7 @@ import { getFeatureToggle } from '../utils/featureToggles';
 
 import { DateTimeOptions, getTimeZone } from './common';
 import { systemDateFormats } from './formats';
-import { DateTimeInput, toUtc, dateTimeAsMoment } from './moment_wrapper';
+import { DateTimeInput, DateTime, dateTime, toUtc } from './grafana_datetime_wrapper';
 
 /**
  * Converts a Grafana DateTimeInput to a plain Javascript Date object.
@@ -22,7 +22,7 @@ function toDate(dateInUtc: DateTimeInput): Date {
     return new Date(dateInUtc);
   }
 
-  return dateTimeAsMoment(dateInUtc).toDate();
+  return dateTime(dateInUtc).toDate();
 }
 
 /**
@@ -34,8 +34,7 @@ export function toIANATimezone(grafanaTimezone: string) {
     return undefined;
   }
 
-  const zone = moment.tz.zone(grafanaTimezone);
-  if (!zone) {
+  if (!IANAZone.isValidZone(grafanaTimezone)) {
     // If the timezone is invalid, we default to the browser's timezone
     return undefined;
   }
@@ -110,7 +109,7 @@ export const dateTimeFormat: DateTimeFormatter<DateTimeOptionsWithFormat> = (dat
 
   const dateAsDate = toDate(dateInUtc);
   const intlOptions = getIntlOptions(dateAsDate, options); // TODO - if invalid timezone, use browser timezone
-  return formatDate(dateAsDate, intlOptions);
+  return normalizeIntlDateOutput(dateAsDate, intlOptions);
 };
 
 /**
@@ -158,7 +157,7 @@ export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, opti
   const intlOptions = getIntlOptions(dateAsDate, options);
   intlOptions.timeZoneName = 'short';
 
-  return formatDate(dateAsDate, intlOptions);
+  return normalizeIntlDateOutput(dateAsDate, intlOptions);
 };
 
 /**
@@ -180,18 +179,30 @@ const getFormat = <T extends DateTimeOptionsWithFormat>(options?: T): string => 
   return options?.format ?? systemDateFormats.fullDate;
 };
 
-const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): Moment => {
-  const date = dateInUtc;
-  const zone = moment.tz.zone(timeZone);
+const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): DateTime => {
+  const date = toUtc(dateInUtc);
 
-  if (zone && zone.name) {
-    return dateTimeAsMoment(toUtc(date)).tz(zone.name);
+  if (timeZone !== 'browser' && IANAZone.isValidZone(timeZone)) {
+    return date.tz?.(timeZone) as DateTime;
   }
 
   switch (timeZone) {
     case 'utc':
-      return dateTimeAsMoment(toUtc(date));
+      return date;
     default:
-      return dateTimeAsMoment(toUtc(date)).local();
+      return date.local();
   }
+};
+
+const normalizeIntlDateOutput = (date: Date, options: Intl.DateTimeFormatOptions & { timeZone?: string }) => {
+  let formatted = formatDate(date, options);
+
+  if (/\b(?:AM|PM)\b/.test(formatted)) {
+    const withDayPeriod = formatDate(date, { ...options, dayPeriod: 'short' });
+    if (!/\b(?:AM|PM)\b/.test(withDayPeriod) && (/[^\x00-\x7F]/.test(withDayPeriod) || withDayPeriod.length <= formatted.length)) {
+      formatted = withDayPeriod;
+    }
+  }
+
+  return formatted.replace(/[\u2009\u202f](?=[^\x00-\x7F])/g, ' ');
 };

@@ -1,7 +1,7 @@
 // Libraries
 import { isArray, isBoolean, isNumber, isString } from 'lodash';
 
-import { isDateTime } from '../datetime/moment_wrapper';
+import { isDateTime } from '../datetime/grafana_datetime_wrapper';
 import { fieldIndexComparer } from '../field/fieldComparers';
 import { getFieldDisplayName } from '../field/fieldState';
 import { Column, LoadingState, TableData, TimeSeries, TimeSeriesValue } from '../types/data';

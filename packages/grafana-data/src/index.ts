@@ -385,12 +385,12 @@ export {
   toUtc,
   toDuration,
   dateTime,
-  dateTimeAsMoment,
   dateTimeForTimeZone,
   getWeekdayIndex,
   getWeekdayIndexByEnglishName,
   setWeekStart,
-} from './datetime/moment_wrapper';
+} from './datetime/grafana_datetime_wrapper';
+export { dateTimeAsMoment } from './datetime/moment_wrapper';
 export {
   InternalTimeZones,
   timeZoneFormatUserFriendly,

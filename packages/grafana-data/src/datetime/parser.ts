@@ -1,11 +1,10 @@
 /* eslint-disable id-blacklist, no-restricted-imports */
 import { lowerCase } from 'lodash';
-import moment from 'moment-timezone';
 
 import { DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
 import { systemDateFormats } from './formats';
-import { DateTimeInput, DateTime, isDateTime, dateTime, toUtc, dateTimeForTimeZone } from './moment_wrapper';
+import { DateTimeInput, DateTime, isDateTime, dateTime, toUtc, dateTimeForTimeZone } from './grafana_datetime_wrapper';
 
 /**
  * The type that describes options that can be passed when parsing a date and time value.
@@ -72,33 +71,26 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
     timeZone = 'utc';
   }
 
-  const zone = moment.tz.zone(timeZone);
-
-  if (zone && zone.name) {
-    return dateTimeForTimeZone(zone.name, value, format);
-  }
-
   switch (lowerCase(timeZone)) {
     case 'utc':
       return toUtc(value, format);
-    default:
+    case 'browser':
       return dateTime(value, format);
+    default:
+      return dateTimeForTimeZone(timeZone, value, format);
   }
 };
 
 const parseOthers = (value: DateTimeInput, options?: DateTimeOptionsWhenParsing): DateTime => {
   const date = value;
   const timeZone = getTimeZone(options);
-  const zone = moment.tz.zone(timeZone);
-
-  if (zone && zone.name) {
-    return dateTimeForTimeZone(zone.name, date);
-  }
 
   switch (lowerCase(timeZone)) {
     case 'utc':
       return toUtc(date);
-    default:
+    case 'browser':
       return dateTime(date);
+    default:
+      return dateTimeForTimeZone(timeZone, date);
   }
 };

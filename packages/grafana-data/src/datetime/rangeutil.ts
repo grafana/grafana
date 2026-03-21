@@ -5,7 +5,7 @@ import { getFeatureToggle } from '../utils/featureToggles';
 
 import * as dateMath from './datemath';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo, toIANATimezone } from './formatter';
-import { isDateTime, DateTime, dateTime } from './moment_wrapper';
+import { isDateTime, DateTime, dateTime } from './grafana_datetime_wrapper';
 import { dateTimeParse } from './parser';
 
 const spans: { [key: string]: { display: string; section?: number } } = {
@@ -462,12 +462,12 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
   // Could we use formatRangeToParts and replace the 'other side' with the ago formatting?
   if (isDateTime(range.from)) {
     const parsed = dateMath.parse(range.to, true, 'utc');
-    return parsed ? dateTimeFormat(range.from, options) + ' to ' + dateTimeFormatTimeAgo(parsed, options) : '';
+    return parsed ? dateTimeFormat(range.from, options) + ' to ' + dateTimeFormatTimeAgo(parsed, options) : 'Invalid date';
   }
 
   if (isDateTime(range.to)) {
     const parsed = dateMath.parse(range.from, false, 'utc');
-    return parsed ? dateTimeFormatTimeAgo(parsed, options) + ' to ' + dateTimeFormat(range.to, options) : '';
+    return parsed ? dateTimeFormatTimeAgo(parsed, options) + ' to ' + dateTimeFormat(range.to, options) : 'Invalid date';
   }
 
   if (range.to.toString() === 'now') {

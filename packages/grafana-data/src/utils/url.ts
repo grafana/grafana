@@ -2,7 +2,7 @@
  * @preserve jquery-param (c) 2015 KNOWLEDGECODE | MIT
  */
 
-import { isDateTime } from '../datetime/moment_wrapper';
+import { isDateTime } from '../datetime/grafana_datetime_wrapper';
 import { ExploreUrlState, URLRange } from '../types/explore';
 import { RawTimeRange } from '../types/time';
 

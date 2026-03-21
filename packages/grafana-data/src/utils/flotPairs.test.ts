@@ -1,5 +1,5 @@
 import { createDataFrame } from '../dataframe/processDataFrame';
-import { dateTime } from '../datetime/moment_wrapper';
+import { dateTime } from '../datetime/grafana_datetime_wrapper';
 import { TimeRange } from '../types/time';
 
 import { getFlotPairs, getFlotPairsConstant } from './flotPairs';

@@ -3,7 +3,7 @@ import { toString, toNumber as _toNumber, isEmpty, isBoolean, isArray, join } fr
 
 // Types
 import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
-import { toUtc } from '../datetime/moment_wrapper';
+import { toUtc } from '../datetime/grafana_datetime_wrapper';
 import { dateTimeParse } from '../datetime/parser';
 import { GrafanaTheme2 } from '../themes/types';
 import { KeyValue } from '../types/data';

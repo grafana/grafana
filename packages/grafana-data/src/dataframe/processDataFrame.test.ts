@@ -1,4 +1,4 @@
-import { dateTime } from '../datetime/moment_wrapper';
+import { dateTime } from '../datetime/grafana_datetime_wrapper';
 import { TimeSeries, TableData } from '../types/data';
 import { FieldType, DataFrameDTO, Field } from '../types/dataFrame';
 
@@ -430,7 +430,7 @@ describe('sorted DataFrame by nanos', () => {
 
     const sorted = sortDataFrame(frame, 0);
     expect(sorted.length).toEqual(3);
-    expect(sorted.fields[0].values).toEqual([dateTime(50), dateTime(50), dateTime(100)]);
+    expect(sorted.fields[0].values.map((value) => value.valueOf())).toEqual([50, 50, 100]);
     expect(sorted.fields[1].values).toEqual(['b', 'a', 'c']);
   });
 
