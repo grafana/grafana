@@ -90,6 +90,9 @@ func (b *QueryHistoryAPIBuilder) UpdateAPIGroupInfo(
 		return err
 	}
 
+	// TODO: Register search sub-resource once ResourceIndexClient is wired in
+	// storage[resourceInfo.StoragePath("search")] = &searchREST{searcher: ...}
+
 	apiGroupInfo.VersionedResourcesStorageMap[qhv0alpha1.APIVersion] = storage
 	return nil
 }

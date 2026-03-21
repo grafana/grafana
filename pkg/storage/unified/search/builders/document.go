@@ -83,7 +83,12 @@ func All(sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, e
 		return nil, err
 	}
 
-	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings}, nil
+	queryHistory, err := GetQueryHistoryBuilder()
+	if err != nil {
+		return nil, err
+	}
+
+	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings, queryHistory}, nil
 }
 
 // NewIndexableDocumentFromValue parses provided bytes value into object, and initializes IndexableDocument from it.

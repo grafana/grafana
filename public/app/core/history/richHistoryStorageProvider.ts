@@ -3,16 +3,27 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { SortOrder } from '../utils/richHistoryTypes';
 
+import RichHistoryAppPlatformStorage from './RichHistoryAppPlatformStorage';
 import RichHistoryLocalStorage from './RichHistoryLocalStorage';
 import RichHistoryRemoteStorage from './RichHistoryRemoteStorage';
 import RichHistoryStorage from './RichHistoryStorage';
 
 const richHistoryLocalStorage = new RichHistoryLocalStorage();
 const richHistoryRemoteStorage = new RichHistoryRemoteStorage();
+const richHistoryAppPlatformStorage = new RichHistoryAppPlatformStorage();
 
 // for query history operations
 export const getRichHistoryStorage = (): RichHistoryStorage => {
-  return config.queryHistoryEnabled ? richHistoryRemoteStorage : richHistoryLocalStorage;
+  if (!config.queryHistoryEnabled) {
+    return richHistoryLocalStorage;
+  }
+
+  // Use App Platform storage when the Kubernetes flag is enabled
+  if (config.featureToggles?.kubernetesQueryHistory) {
+    return richHistoryAppPlatformStorage;
+  }
+
+  return richHistoryRemoteStorage;
 };
 
 // for autocomplete read and write operations
