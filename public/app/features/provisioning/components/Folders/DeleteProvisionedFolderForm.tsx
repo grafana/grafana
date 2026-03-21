@@ -48,7 +48,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   const { handleSubmit, watch } = methods;
   const [ref, workflow] = watch(['ref', 'workflow']);
 
-  const showError = (error?: unknown) => {
+  const showError = (error: unknown) => {
     setError(
       getProvisionedRequestError(
         error,
@@ -61,7 +61,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
   const handleSubmitForm = async ({ repo, path, comment }: BaseProvisionedFormData) => {
     setError(undefined);
     if (!repo || !repository) {
-      showError('Missing required repository for deletion');
+      setError(t('browse-dashboards.delete-provisioned-folder-form.missing-info', 'Missing required fields'));
       return;
     }
 
@@ -107,7 +107,12 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     try {
       const result = await createBulkJob(repository, jobSpec);
       if (!result.success) {
-        showError();
+        setError(
+          t(
+            'browse-dashboards.delete-provisioned-folder-form.job-not-success-error',
+            'Failed to create delete folder job'
+          )
+        );
         return;
       }
 

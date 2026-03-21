@@ -83,7 +83,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     navigate(url);
   };
 
-  const onError = (error?: unknown) => {
+  const onError = (error: unknown) => {
     setError(
       getProvisionedRequestError(
         error,
@@ -113,7 +113,12 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     setError(undefined);
     const repoName = repository?.name;
     if (!title || !repoName) {
-      setError('Missing required repository for creation');
+      setError(
+        t(
+          'browse-dashboards.new-provisioned-folder-form.error-missing-title-or-repo',
+          'Missing folder name or repository information'
+        )
+      );
       return;
     }
 

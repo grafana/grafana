@@ -4252,6 +4252,8 @@
       "button-deleting": "Deleting...",
       "commit": "Delete folder",
       "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
+      "job-not-success-error": "Failed to create delete folder job",
+      "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
     },
     "descendant-count": {
@@ -4307,6 +4309,7 @@
       "button-creating": "Creating...",
       "cancel": "Cancel",
       "error-invalid-characters": "Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.",
+      "error-missing-title-or-repo": "Missing folder name or repository information",
       "error-required": "Folder name is required",
       "error-saving": "An error occurred while creating folder.",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
@@ -6832,6 +6835,7 @@
       "delete-error": "Failed to delete dashboard",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
+      "no-repository-selected": "Missing required repository for deletion",
       "success-message": "Dashboard deleted successfully"
     },
     "description-label": {
@@ -7308,6 +7312,7 @@
       "label-description": "Description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
+      "repo-path-required": "Missing required fields for saving",
       "save": "Save",
       "save-json-to-file": "Save JSON to file",
       "saving": "Saving...",

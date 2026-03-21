@@ -74,7 +74,12 @@ export function DeleteProvisionedDashboardForm({
   const handleSubmitForm = async ({ repo, path, comment }: ProvisionedDashboardFormData) => {
     setSubmitError(undefined);
     if (!repo || !repository) {
-      showError('Missing required repository for deletion');
+      showError(
+        t(
+          'dashboard-scene.delete-provisioned-dashboard-form.no-repository-selected',
+          'Missing required repository for deletion'
+        )
+      );
       return;
     }
 

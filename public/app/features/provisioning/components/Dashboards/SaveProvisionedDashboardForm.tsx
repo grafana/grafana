@@ -184,7 +184,9 @@ export function SaveProvisionedDashboardForm({
     setError(undefined);
     // Validate required fields
     if (!repo || !path) {
-      showError(new Error(`Missing required fields for saving: ${repo}, ${path}`));
+      setError(
+        t('dashboard-scene.save-provisioned-dashboard-form.repo-path-required', 'Missing required fields for saving')
+      );
       return;
     }
 
