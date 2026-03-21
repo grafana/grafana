@@ -95,6 +95,12 @@ func FullSync(
 		return nil
 	}
 
+	// Detect file renames: collapse delete+create pairs that share the same
+	// resource identity into a single update so K8s UIDs are preserved.
+	renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.full.detect_renames")
+	changes = DetectRenames(renameCtx, repo, currentRef, clients, changes)
+	renameSpan.End()
+
 	// Check quota before applying changes
 	if err := checkQuotaBeforeSync(ctx, repo, changes, tracer); err != nil {
 		span.SetAttributes(attribute.Bool("pre_check_quota", false))

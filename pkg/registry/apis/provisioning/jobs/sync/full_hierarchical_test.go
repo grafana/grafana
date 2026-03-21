@@ -165,6 +165,10 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, dynamicClient *dynamicfake.FakeDynamicClient) {
+				// DetectRenames will try to read the created file to check for rename.
+				repo.On("Read", mock.Anything, "folder1/file1.json", "ref").
+					Return((*repository.FileInfo)(nil), fmt.Errorf("not readable")).Maybe()
+
 				// Creation fails
 				progress.On("HasDirPathFailedCreation", "folder1/file1.json").Return(false).Once()
 				folderErr := &resources.PathCreationError{Path: "folder1/", Err: fmt.Errorf("permission denied")}

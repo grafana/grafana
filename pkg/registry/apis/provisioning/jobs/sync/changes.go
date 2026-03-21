@@ -393,6 +393,110 @@ func detectFolderUIDChanges(
 	return affectedFolders, nil
 }
 
+// resourceIdentity groups the fields that uniquely identify a Kubernetes resource
+// within a namespace: its metadata.name, API group, and plural resource name.
+type resourceIdentity struct {
+	Name     string
+	Group    string
+	Resource string
+}
+
+// DetectRenames finds delete+create pairs that refer to the same Kubernetes
+// resource (same metadata.name, API group, and resource type) and collapses
+// them into a single FileActionUpdated change. This preserves the K8s UID,
+// creationTimestamp, and generation when a file is moved/renamed in the repo
+// without changing the resource identity.
+//
+// Folder paths are skipped because folder renames are handled separately by
+// augmentChangesForFolderMetadata.
+func DetectRenames(
+	ctx context.Context,
+	repo repository.Reader,
+	ref string,
+	clients resources.ResourceClients,
+	changes []ResourceFileChange,
+) []ResourceFileChange {
+	deletionsByIdentity := make(map[resourceIdentity]int)
+	for i, change := range changes {
+		if change.Action != repository.FileActionDeleted || change.Existing == nil {
+			continue
+		}
+		if safepath.IsDir(change.Path) {
+			continue
+		}
+		id := resourceIdentity{
+			Name:     change.Existing.Name,
+			Group:    change.Existing.Group,
+			Resource: change.Existing.Resource,
+		}
+		deletionsByIdentity[id] = i
+	}
+
+	if len(deletionsByIdentity) == 0 {
+		return changes
+	}
+
+	removedDeletions := make(map[int]bool)
+	for i, change := range changes {
+		if change.Action != repository.FileActionCreated {
+			continue
+		}
+		if safepath.IsDir(change.Path) {
+			continue
+		}
+
+		fileInfo, err := repo.Read(ctx, change.Path, ref)
+		if err != nil {
+			continue
+		}
+		obj, gvk, _, err := resources.ParseFileResource(ctx, fileInfo)
+		if err != nil || obj == nil || gvk == nil {
+			continue
+		}
+
+		name := obj.GetName()
+		if name == "" {
+			continue
+		}
+
+		_, gvr, err := clients.ForKind(ctx, *gvk)
+		if err != nil {
+			continue
+		}
+
+		id := resourceIdentity{
+			Name:     name,
+			Group:    gvk.Group,
+			Resource: gvr.Resource,
+		}
+
+		deletionIdx, found := deletionsByIdentity[id]
+		if !found {
+			continue
+		}
+
+		changes[i] = ResourceFileChange{
+			Action:   repository.FileActionUpdated,
+			Path:     change.Path,
+			Existing: changes[deletionIdx].Existing,
+		}
+		removedDeletions[deletionIdx] = true
+		delete(deletionsByIdentity, id)
+	}
+
+	if len(removedDeletions) == 0 {
+		return changes
+	}
+
+	result := make([]ResourceFileChange, 0, len(changes)-len(removedDeletions))
+	for i, change := range changes {
+		if !removedDeletions[i] {
+			result = append(result, change)
+		}
+	}
+	return result
+}
+
 // emitDirectChildrenChanges iterates the source tree and emits FileActionUpdated for
 // direct children of affected folders that exist in target but aren't already in changes.
 func emitDirectChildrenChanges(
