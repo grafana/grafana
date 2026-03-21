@@ -242,22 +242,27 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 		}
 
 		switch change.Action {
-		case repository.FileActionCreated, repository.FileActionUpdated:
+		case repository.FileActionCreated:
+			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
+			name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
+			if err != nil {
+				writeSpan.RecordError(err)
+				resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
+			}
+			resultBuilder.WithName(name).WithGVK(gvk)
+			writeSpan.End()
+		case repository.FileActionUpdated:
 			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
 			var name string
 			var gvk schema.GroupVersionKind
 			var writeErr error
 
-			if change.Action == repository.FileActionUpdated {
-				if existing, ok := existingByPath[change.Path]; ok && existing.Name != "" {
-					oldGVR := schema.GroupVersionResource{
-						Group:    existing.Group,
-						Resource: existing.Resource,
-					}
-					name, gvk, writeErr = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, change.Ref, existing.Name, oldGVR)
-				} else {
-					name, gvk, writeErr = repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
+			if existing, ok := existingByPath[change.Path]; ok && existing.Name != "" {
+				oldGVR := schema.GroupVersionResource{
+					Group:    existing.Group,
+					Resource: existing.Resource,
 				}
+				name, gvk, writeErr = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, change.Ref, existing.Name, oldGVR)
 			} else {
 				name, gvk, writeErr = repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			}
