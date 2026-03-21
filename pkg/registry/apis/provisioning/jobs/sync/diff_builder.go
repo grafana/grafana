@@ -2,12 +2,14 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 //go:generate mockery --name FolderMetadataIncrementalDiffBuilder --structname MockFolderMetadataIncrementalDiffBuilder --inpackage --filename incremental_diff_builder_mock.go --with-expecter
@@ -38,6 +40,12 @@ func NewDiffBuilder(
 	}
 }
 
+// BuildIncrementalDiff rewrites handled _folder.json create/update events into
+// synthetic folder changes plus direct-child updates.
+//
+// The builder keeps all unrelated git changes intact, suppresses duplicate
+// synthetic paths that are already present in the real diff, and returns the
+// old folder UIDs that must be deleted after the rewritten diff is applied.
 func (d *repoDiffBuilder) BuildIncrementalDiff(
 	ctx context.Context,
 	repoDiff []repository.VersionedFileChange,
@@ -92,11 +100,12 @@ func (d *repoDiffBuilder) BuildIncrementalDiff(
 				Path:   parentPath,
 				Ref:    update.Ref,
 			})
-			if resourcesLookup[parentPath] != nil {
-				replacedFolders = append(replacedFolders, replacedFolder{
-					Path:   parentPath,
-					OldUID: resourcesLookup[parentPath].Name,
-				})
+			replaced, err := d.replacedFolderForMetadataUpdate(ctx, resourcesLookup, parentPath, update)
+			if err != nil {
+				return nil, nil, err
+			}
+			if replaced != nil {
+				replacedFolders = append(replacedFolders, *replaced)
 			}
 
 			childrenPaths := getChildrenPaths(resourcesLookup, parentPath)
@@ -114,6 +123,40 @@ func (d *repoDiffBuilder) BuildIncrementalDiff(
 	}
 
 	return filteredDiff, replacedFolders, nil
+}
+
+// replacedFolderForMetadataUpdate determines whether a metadata change at a
+// folder path actually replaces the current folder identity.
+//
+// A folder is only marked for later deletion when the managed folder already
+// exists at that path and the UID resolved from the new _folder.json differs
+// from the existing folder UID.
+func (d *repoDiffBuilder) replacedFolderForMetadataUpdate(
+	ctx context.Context,
+	resourcesLookup map[string]*provisioning.ResourceListItem,
+	parentPath string,
+	update repository.VersionedFileChange,
+) (*replacedFolder, error) {
+	existing := resourcesLookup[parentPath]
+	if existing == nil {
+		return nil, nil
+	}
+
+	folder, _, err := resources.ReadFolderMetadata(ctx, d.repo, parentPath, update.Ref)
+	if err != nil {
+		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("read folder metadata for %s: %w", parentPath, err)
+	}
+	if folder.GetName() == existing.Name {
+		return nil, nil
+	}
+
+	return &replacedFolder{
+		Path:   parentPath,
+		OldUID: existing.Name,
+	}, nil
 }
 
 // buildResourcesLookup indexes all managed resources by path so planning can
@@ -136,6 +179,8 @@ func buildResourcesLookup(target *provisioning.ResourceList) map[string]*provisi
 	return resourcesLookup
 }
 
+// getChildrenPaths returns the managed paths that are direct children of the
+// given folder path, excluding deeper descendants.
 func getChildrenPaths(
 	resourcesLookup map[string]*provisioning.ResourceListItem,
 	parentPath string,

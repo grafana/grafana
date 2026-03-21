@@ -77,6 +77,7 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 				},
 			},
 		}, nil).Once()
+		expectFolderMetadataRead(repo, "myfolder/", "new-ref", "stable-uid")
 
 		diffBuilder := NewDiffBuilder(repo, repoResources)
 		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), diff)
@@ -103,7 +104,7 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 		})
 	})
 
-	t.Run("replays direct children for metadata updates on existing folder", func(t *testing.T) {
+	t.Run("metadata updates with unchanged uid do not mark the folder as replaced", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
 		repoResources := resources.NewMockRepositoryResources(t)
 		diff := []repository.VersionedFileChange{
@@ -132,6 +133,7 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 				},
 			},
 		}, nil).Once()
+		expectFolderMetadataRead(repo, "myfolder/", "new-ref", "stable-uid")
 
 		diffBuilder := NewDiffBuilder(repo, repoResources)
 		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), diff)
@@ -152,10 +154,7 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 			Path:   "myfolder/dashboard.json",
 			Ref:    "new-ref",
 		})
-		require.Contains(t, replacedFolders, replacedFolder{
-			Path:   "myfolder/",
-			OldUID: "stable-uid",
-		})
+		require.Empty(t, replacedFolders)
 	})
 
 	t.Run("does not duplicate synthetic child updates when the real diff already contains them", func(t *testing.T) {
@@ -182,6 +181,7 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 				},
 			},
 		}, nil).Once()
+		expectFolderMetadataRead(repo, "myfolder/", "new-ref", "stable-uid")
 
 		diffBuilder := NewDiffBuilder(repo, repoResources)
 		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), diff)
@@ -221,6 +221,7 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 				},
 			},
 		}, nil).Once()
+		expectFolderMetadataRead(repo, "myfolder/", "new-ref", "stable-uid")
 
 		diffBuilder := NewDiffBuilder(repo, repoResources)
 		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), diff)
@@ -284,6 +285,7 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 				},
 			},
 		}, nil).Once()
+		expectFolderMetadataRead(repo, "parent/", "new-ref", "stable-uid")
 
 		diffBuilder := NewDiffBuilder(repo, repoResources)
 		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), diff)
@@ -349,4 +351,10 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 		require.Equal(t, diff, filteredDiff)
 		require.Empty(t, replacedFolders)
 	})
+}
+
+func expectFolderMetadataRead(repo *compositeRepo, folderPath, ref, uid string) {
+	repo.MockReader.On("Read", mock.Anything, folderPath+"_folder.json", ref).Return(&repository.FileInfo{
+		Data: []byte(fmt.Sprintf(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"%s"},"spec":{"title":"Title"}}`, uid)),
+	}, nil).Once()
 }
