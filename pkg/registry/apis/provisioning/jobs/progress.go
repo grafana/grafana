@@ -115,14 +115,13 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 			r.failedUpdates = append(r.failedUpdates, result.Path())
 		}
 	} else if result.Warning() != nil {
-		// Track failed deletions with warnings — a warned deletion still means the
-		// resource may remain, blocking parent folder removal.
-		// Note: we do NOT track warned updates here because benign warnings
-		// (e.g. missing _folder.json from detectMissingFolderMetadata) would
-		// incorrectly block old-folder cleanup during UID changes. Actual
-		// re-parenting failures produce real errors, not warnings.
+		// Track failed deletions/updates with warnings — these still represent
+		// operations that did not fully succeed and may block parent folder removal.
 		if result.Action() == repository.FileActionDeleted {
 			r.failedDeletions = append(r.failedDeletions, result.Path())
+		}
+		if result.Action() == repository.FileActionUpdated {
+			r.failedUpdates = append(r.failedUpdates, result.Path())
 		}
 
 		if reason := result.WarningReason(); reason != "" {

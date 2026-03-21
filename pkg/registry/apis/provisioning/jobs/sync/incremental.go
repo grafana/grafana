@@ -7,7 +7,6 @@ import (
 	"slices"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -76,12 +75,6 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 
 	progress.SetMessage(ctx, "versioned changes replicated")
 
-	if folderMetadataEnabled {
-		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
-			return err
-		}
-	}
-
 	cleanupStart := time.Now()
 	foldersToDelete := findOrphanedFolders(ctx, repo, affectedFolders, tracer)
 
@@ -102,6 +95,14 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 
 	deleteFolders(ctx, foldersToDelete, repositoryResources, progress, tracer)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCleanup, time.Since(cleanupStart))
+
+	// Run after deleteFolders so its informational warnings (e.g. missing
+	// _folder.json) don't interfere with HasChildPathFailedUpdate safety checks.
+	if folderMetadataEnabled {
+		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -352,9 +353,7 @@ func planFolderMetadataChanges(
 		newFolder, err := resources.ParseFolderWithMetadata(ctx, repo, folderDir, currentRef, true)
 		if err != nil {
 			span.RecordError(err)
-			logging.FromContext(ctx).Warn("skipping folder UID change detection",
-				"folder", folderDir, "error", err)
-			continue
+			return nil, nil, fmt.Errorf("parse folder metadata for %s at ref %s: %w", folderDir, currentRef, err)
 		}
 
 		if newFolder.ID == oldUID {
@@ -373,17 +372,17 @@ func planFolderMetadataChanges(
 		return diff, nil, nil
 	}
 
-	pathsInDiff := make(map[string]bool, len(diff))
+	actionsInDiff := make(map[string]repository.FileAction, len(diff))
 	for _, c := range diff {
-		pathsInDiff[c.Path] = true
+		actionsInDiff[c.Path] = c.Action
 		if c.PreviousPath != "" {
-			pathsInDiff[c.PreviousPath] = true
+			actionsInDiff[c.PreviousPath] = c.Action
 		}
 		// A _folder.json change already covers its parent directory — the folder
 		// will be created/updated via applyFolderMetadataUpdate, so we don't need
 		// a synthetic directory update for it.
 		if resources.IsFolderMetadataFile(c.Path) {
-			pathsInDiff[safepath.Dir(c.Path)] = true
+			actionsInDiff[safepath.Dir(c.Path)] = repository.FileActionUpdated
 		}
 	}
 
@@ -398,8 +397,16 @@ func planFolderMetadataChanges(
 			path = safepath.EnsureTrailingSlash(path)
 		}
 
-		if pathsInDiff[path] || resources.IsFolderMetadataFile(path) {
+		if resources.IsFolderMetadataFile(path) {
 			continue
+		}
+		if action, inDiff := actionsInDiff[path]; inDiff {
+			// Files: all actions are processed by WriteResourceFromFile, safe to skip.
+			// Folders: only Updated/Renamed trigger EnsureFolderPathExist re-parenting;
+			// Created/Deleted directory entries are no-ops in applyIncrementalChanges.
+			if item.Group != resources.FolderResource.Group || action == repository.FileActionUpdated || action == repository.FileActionRenamed {
+				continue
+			}
 		}
 
 		diff = append(diff, repository.VersionedFileChange{
@@ -407,7 +414,7 @@ func planFolderMetadataChanges(
 			Path:   path,
 			Ref:    currentRef,
 		})
-		pathsInDiff[path] = true
+		actionsInDiff[path] = repository.FileActionUpdated
 	}
 
 	return diff, replaced, nil
