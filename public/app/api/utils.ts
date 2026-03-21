@@ -19,24 +19,31 @@ export const handleError = (e: unknown, dispatch: ThunkDispatch, message: string
 };
 
 /**
- * Extracts the error message from an error object.
- * @param error The error object to extract the message from.
- * @returns The error message, or undefined if no proper error object is provided or the error message is not a string.
+ * Extracts a human-readable message from an unknown error value.
+ * @param error The raw error value to inspect.
+ * @param fallbackMsg Optional fallback message returned when no extractable message is found.
+ * @returns A message string if extracted; otherwise returns `fallbackMsg` when provided, or `undefined`.
+ *
+ * **Overloads:**
+ * - `extractErrorMessage(error)` returns `string | undefined`
+ * - `extractErrorMessage(error, fallbackMsg)` returns `string`
  */
-export function extractErrorMessage(error: unknown): string | undefined {
+export function extractErrorMessage(error: unknown): string | undefined;
+export function extractErrorMessage(error: unknown, fallback: string): string;
+export function extractErrorMessage(error: unknown, fallback?: string): string | undefined {
   if (typeof error === 'string') {
     return error;
   }
 
   if (isObject(error)) {
-    if ('data' in error && isObject(error.data) && 'message' in error.data) {
+    if ('data' in error && isObject(error.data) && 'message' in error.data && error.data.message != null) {
       return String(error.data.message);
     }
-    if ('message' in error) {
+    if ('message' in error && error.message != null) {
       return String(error.message);
     }
   }
-  return undefined;
+  return fallback; // when no fallback is provided, undefined is returned
 }
 
 /**

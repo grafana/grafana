@@ -1,8 +1,10 @@
 import { extractErrorMessage } from './utils';
 
 describe('extractErrorMessage', () => {
-  it('returns data.message when present', () => {
+  it('returns data.message properly', () => {
     expect(extractErrorMessage({ data: { message: 'Request failed' } })).toBe('Request failed');
+    expect(extractErrorMessage({ data: { message: undefined } })).toBe(undefined);
+    expect(extractErrorMessage({ data: { message: undefined } }, 'fallback')).toBe('fallback');
   });
 
   it('returns top-level message when present', () => {
@@ -30,6 +32,14 @@ describe('extractErrorMessage', () => {
 
   it('stringifies non-string message values', () => {
     expect(extractErrorMessage({ message: 404 })).toBe('404');
-    expect(extractErrorMessage({ data: { message: false } })).toBe('false');
+    expect(extractErrorMessage({ data: { message: false } }, 'fallback')).toBe('false');
+    expect(extractErrorMessage({ message: 0 }, 'fallback')).toBe('0');
+  });
+
+  it('returns fallback message when no error message is present', () => {
+    expect(extractErrorMessage(null, 'fallback message')).toBe('fallback message');
+    expect(extractErrorMessage({}, 'fallback message')).toBe('fallback message');
+    expect(extractErrorMessage(false, 'fallback message')).toBe('fallback message');
+    expect(extractErrorMessage(undefined, 'fallback message')).toBe('fallback message');
   });
 });
