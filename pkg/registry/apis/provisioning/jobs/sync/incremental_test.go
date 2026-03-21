@@ -1258,6 +1258,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "old-uid"},
 			},
 		}, nil)
+		repoResources.On("RemoveFolderFromTree", "old-uid").Return()
 		repo.On("Config").Return(&provisioning.Repository{})
 		repo.On("Read", mock.Anything, "alpha/_folder.json", "ref1").Return(&repository.FileInfo{
 			Data: folderJSON(t, "new-uid", "Alpha"),
@@ -1289,6 +1290,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "old-uid"},
 			},
 		}, nil)
+		repoResources.On("RemoveFolderFromTree", "old-uid").Return()
 		repo.On("Config").Return(&provisioning.Repository{})
 		repo.On("Read", mock.Anything, "alpha/_folder.json", "ref1").Return(&repository.FileInfo{
 			Data: folderJSON(t, "new-uid", "Alpha"),
@@ -1314,6 +1316,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 				{Path: "alpha/beta", Group: resources.FolderResource.Group, Name: "beta-uid", Folder: "old-uid"},
 			},
 		}, nil)
+		repoResources.On("RemoveFolderFromTree", "old-uid").Return()
 		repo.On("Config").Return(&provisioning.Repository{})
 		repo.On("Read", mock.Anything, "alpha/_folder.json", "ref1").Return(&repository.FileInfo{
 			Data: folderJSON(t, "new-uid", "Alpha"),
