@@ -308,10 +308,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 
 	// Delete the old resource when the identity changed (name or resource kind).
 	// When both match, writeResourceFromParsed will update in place.
-	identityChanged := oldParsed.Obj.GetName() != newParsed.Obj.GetName() ||
-		oldParsed.GVK.Group != newParsed.GVK.Group ||
-		oldParsed.GVK.Kind != newParsed.GVK.Kind
-	if identityChanged {
+	if !oldParsed.SameIdentity(newParsed) {
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.Run(ctx); err != nil {
 			var folderName string

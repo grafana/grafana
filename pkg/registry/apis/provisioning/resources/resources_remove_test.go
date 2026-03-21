@@ -407,6 +407,55 @@ func TestRenameResourceFile(t *testing.T) {
 	})
 }
 
+func TestSameIdentity(t *testing.T) {
+	gvk := schema.GroupVersionKind{Group: "dashboard.grafana.app", Version: "v0alpha1", Kind: "Dashboard"}
+
+	makeParsed := func(name, group, kind string) *ParsedResource {
+		return &ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": name},
+			}},
+			GVK: schema.GroupVersionKind{Group: group, Kind: kind},
+		}
+	}
+
+	t.Run("true when name, group, and kind match", func(t *testing.T) {
+		a := makeParsed("dash-1", gvk.Group, gvk.Kind)
+		b := makeParsed("dash-1", gvk.Group, gvk.Kind)
+		require.True(t, a.SameIdentity(b))
+	})
+
+	t.Run("false when name differs", func(t *testing.T) {
+		a := makeParsed("dash-1", gvk.Group, gvk.Kind)
+		b := makeParsed("dash-2", gvk.Group, gvk.Kind)
+		require.False(t, a.SameIdentity(b))
+	})
+
+	t.Run("false when group differs", func(t *testing.T) {
+		a := makeParsed("dash-1", "dashboard.grafana.app", "Dashboard")
+		b := makeParsed("dash-1", "folder.grafana.app", "Dashboard")
+		require.False(t, a.SameIdentity(b))
+	})
+
+	t.Run("false when kind differs", func(t *testing.T) {
+		a := makeParsed("dash-1", gvk.Group, "Dashboard")
+		b := makeParsed("dash-1", gvk.Group, "Folder")
+		require.False(t, a.SameIdentity(b))
+	})
+
+	t.Run("ignores version difference", func(t *testing.T) {
+		a := &ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{"metadata": map[string]any{"name": "x"}}},
+			GVK: schema.GroupVersionKind{Group: "g", Version: "v1", Kind: "K"},
+		}
+		b := &ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{"metadata": map[string]any{"name": "x"}}},
+			GVK: schema.GroupVersionKind{Group: "g", Version: "v2", Kind: "K"},
+		}
+		require.True(t, a.SameIdentity(b))
+	})
+}
+
 func TestFetchExisting(t *testing.T) {
 	t.Run("no-op when Existing is already set", func(t *testing.T) {
 		existing := &unstructured.Unstructured{Object: map[string]any{
