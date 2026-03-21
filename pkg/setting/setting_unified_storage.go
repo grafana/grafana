@@ -190,6 +190,11 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.TenantWatcherAllowInsecureTLS = section.Key("tenant_watcher_allow_insecure_tls").MustBool(false)
 	cfg.TenantWatcherCAFile = section.Key("tenant_watcher_ca_file").String()
 
+	// tenant deleter
+	cfg.EnableTenantDeleter = section.Key("tenant_deleter_enabled").MustBool(false)
+	cfg.TenantDeleterDryRun = section.Key("tenant_deleter_dry_run").MustBool(true)
+	cfg.TenantDeleterInterval = section.Key("tenant_deleter_interval").MustDuration(1 * time.Hour)
+
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
 	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(true)

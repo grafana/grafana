@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -811,12 +813,13 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
 					Return("old-dashboard", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
-				// Mock HasDirPathFailedDeletion check for cleanup
-				progress.On("HasDirPathFailedDeletion", "dashboards/").Return(false)
-
 				// if the folder is not found in git, there should be a call to remove the folder from grafana
 				repo.MockReader.On("Read", mock.Anything, "dashboards/", "").
 					Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
+				progress.On("HasDirPathFailedCreation", "dashboards/").Return(false)
+				progress.On("HasDirPathFailedDeletion", "dashboards/").Return(false)
+				progress.On("HasChildPathFailedCreation", "dashboards/").Return(false)
+				progress.On("HasChildPathFailedUpdate", "dashboards/").Return(false)
 				repoResources.On("RemoveFolder", mock.Anything, "folder-uid").Return(nil)
 
 				progress.On("Record", mock.Anything, mock.Anything).Return()
@@ -839,9 +842,6 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
 				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboards/old.json", "old-ref").
 					Return("old-dashboard", "folder-uid", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
-
-				// Mock HasDirPathFailedDeletion check for cleanup
-				progress.On("HasDirPathFailedDeletion", "dashboards/").Return(false)
 
 				// if the folder still exists in git, there should not be a call to delete it from grafana
 				repo.MockReader.On("Read", mock.Anything, "dashboards/", "").
@@ -878,9 +878,10 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 				progress.On("Record", mock.Anything, mock.Anything).Return()
 				progress.On("TooManyErrors").Return(nil)
 
-				// Mock HasDirPathFailedDeletion checks for cleanup
-				progress.On("HasDirPathFailedDeletion", "dashboards/").Return(false)
-				progress.On("HasDirPathFailedDeletion", "alerts/").Return(false)
+				progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+				progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+				progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
+				progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
 				// both not found in git, both should be deleted
 				repo.MockReader.On("Read", mock.Anything, "dashboards/", "").
@@ -1034,6 +1035,7 @@ func TestIncrementalSync_FolderMetadataRouting(t *testing.T) {
 			},
 		}
 		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 		progress.On("SetTotal", mock.Anything, 1).Return()
 		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 		progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
@@ -1160,6 +1162,7 @@ func TestIncrementalSync_FolderMetadataRouting(t *testing.T) {
 			},
 		}
 		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 		progress.On("SetTotal", mock.Anything, 1).Return()
 		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 		progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
@@ -1184,4 +1187,536 @@ func TestIncrementalSync_FolderMetadataRouting(t *testing.T) {
 		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
 		require.NoError(t, err)
 	})
+}
+
+func TestPlanFolderMetadataChanges(t *testing.T) {
+	tracer := tracing.NewNoopTracerService()
+
+	t.Run("no _folder.json updates returns diff unchanged", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionCreated, Path: "alpha/dash.json", Ref: "ref1"},
+		}
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		require.NoError(t, err)
+		require.Empty(t, replaced)
+		require.Equal(t, diff, result)
+	})
+
+	t.Run("no existing folder means no UID change", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
+		}
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
+
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		require.NoError(t, err)
+		require.Empty(t, replaced)
+		require.Equal(t, diff, result)
+	})
+
+	t.Run("same UID means no change", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
+		}
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "stable-uid"},
+			},
+		}, nil)
+		repo.On("Config").Return(&provisioning.Repository{})
+		repo.On("Read", mock.Anything, "alpha/_folder.json", "ref1").Return(&repository.FileInfo{
+			Data: folderJSON(t, "stable-uid", "Alpha"),
+			Hash: "abc",
+		}, nil)
+
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		require.NoError(t, err)
+		require.Empty(t, replaced)
+		require.Equal(t, diff, result)
+	})
+
+	t.Run("UID change emits children and tracks old UID", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
+		}
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-uid"},
+				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "old-uid"},
+			},
+		}, nil)
+		repoResources.On("RemoveFolderFromTree", "old-uid").Return()
+		repo.On("Config").Return(&provisioning.Repository{})
+		repo.On("Read", mock.Anything, "alpha/_folder.json", "ref1").Return(&repository.FileInfo{
+			Data: folderJSON(t, "new-uid", "Alpha"),
+			Hash: "abc",
+		}, nil)
+
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		require.NoError(t, err)
+		require.Len(t, replaced, 1)
+		require.Equal(t, "alpha/", replaced[0].Path)
+		require.Equal(t, "old-uid", replaced[0].OldUID)
+		require.Len(t, result, 2)
+		require.Equal(t, "alpha/_folder.json", result[0].Path)
+		require.Equal(t, "alpha/dash.json", result[1].Path)
+		require.Equal(t, repository.FileActionUpdated, result[1].Action)
+	})
+
+	t.Run("child already in diff is not duplicated", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
+			{Action: repository.FileActionUpdated, Path: "alpha/dash.json", Ref: "ref1"},
+		}
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-uid"},
+				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "old-uid"},
+			},
+		}, nil)
+		repoResources.On("RemoveFolderFromTree", "old-uid").Return()
+		repo.On("Config").Return(&provisioning.Repository{})
+		repo.On("Read", mock.Anything, "alpha/_folder.json", "ref1").Return(&repository.FileInfo{
+			Data: folderJSON(t, "new-uid", "Alpha"),
+			Hash: "abc",
+		}, nil)
+
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		require.NoError(t, err)
+		require.Len(t, replaced, 1)
+		require.Len(t, result, 2, "should not add duplicate child")
+	})
+
+	t.Run("child folder gets trailing slash", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
+		}
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-uid"},
+				{Path: "alpha/beta", Group: resources.FolderResource.Group, Name: "beta-uid", Folder: "old-uid"},
+			},
+		}, nil)
+		repoResources.On("RemoveFolderFromTree", "old-uid").Return()
+		repo.On("Config").Return(&provisioning.Repository{})
+		repo.On("Read", mock.Anything, "alpha/_folder.json", "ref1").Return(&repository.FileInfo{
+			Data: folderJSON(t, "new-uid", "Alpha"),
+			Hash: "abc",
+		}, nil)
+
+		result, _, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		require.Equal(t, "alpha/beta/", result[1].Path)
+	})
+
+	t.Run("child folder with own _folder.json in diff is not duplicated", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
+			{Action: repository.FileActionUpdated, Path: "alpha/beta/_folder.json", Ref: "ref1"},
+		}
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-uid"},
+				{Path: "alpha/beta", Group: resources.FolderResource.Group, Name: "beta-uid", Folder: "old-uid"},
+				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "old-uid"},
+			},
+		}, nil)
+		repoResources.On("RemoveFolderFromTree", "old-uid").Return()
+		repo.On("Config").Return(&provisioning.Repository{})
+		repo.On("Read", mock.Anything, "alpha/_folder.json", "ref1").Return(&repository.FileInfo{
+			Data: folderJSON(t, "new-uid", "Alpha"),
+			Hash: "abc",
+		}, nil)
+		repo.On("Read", mock.Anything, "alpha/beta/_folder.json", "ref1").Return(&repository.FileInfo{
+			Data: folderJSON(t, "beta-uid", "Beta"),
+			Hash: "def",
+		}, nil)
+
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		require.NoError(t, err)
+		require.Len(t, replaced, 1)
+		require.Len(t, result, 3, "should not add synthetic alpha/beta/ because alpha/beta/_folder.json is already in diff")
+		require.Equal(t, "alpha/_folder.json", result[0].Path)
+		require.Equal(t, "alpha/beta/_folder.json", result[1].Path)
+		require.Equal(t, "alpha/dash.json", result[2].Path)
+	})
+
+	t.Run("List error is propagated", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
+		}
+		repoResources.On("List", mock.Anything).Return((*provisioning.ResourceList)(nil), fmt.Errorf("list failed"))
+
+		_, _, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "list existing resources: list failed")
+	})
+}
+
+func TestIncrementalSync_FolderUIDChange(t *testing.T) {
+	t.Run("UID change re-parents children and deletes old folder", func(t *testing.T) {
+		mockVersioned := repository.NewMockVersioned(t)
+		mockReader := repository.NewMockReader(t)
+		repo := &compositeRepo{
+			MockVersioned: mockVersioned,
+			MockReader:    mockReader,
+		}
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		changes := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "new-ref"},
+		}
+		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-alpha-uid"},
+				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "old-alpha-uid"},
+			},
+		}, nil)
+
+		mockReader.On("Config").Return(&provisioning.Repository{})
+		mockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
+			Data: folderJSON(t, "new-alpha-uid", "Alpha Renamed"),
+			Hash: "newhash",
+		}, nil)
+
+		progress.On("SetTotal", mock.Anything, 2).Return()
+		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+		progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+		progress.On("TooManyErrors").Return(nil)
+		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+		progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
+
+		repoResources.On("RemoveFolderFromTree", "old-alpha-uid").Return()
+		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/").
+			Return("new-alpha-uid", nil)
+		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref").
+			Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
+		repoResources.On("RemoveFolder", mock.Anything, "old-alpha-uid").Return(nil)
+
+		progress.On("Record", mock.Anything, mock.Anything).Return()
+
+		mockReader.On("ReadTree", mock.Anything, "new-ref").Return([]repository.FileTreeEntry{
+			{Path: "alpha", Blob: false},
+			{Path: "alpha/_folder.json", Blob: true},
+			{Path: "alpha/dash.json", Blob: true},
+		}, nil)
+
+		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
+		require.NoError(t, err)
+
+		repoResources.AssertCalled(t, "RemoveFolderFromTree", "old-alpha-uid")
+		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/")
+		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref")
+		repoResources.AssertCalled(t, "RemoveFolder", mock.Anything, "old-alpha-uid")
+	})
+
+	t.Run("child folder re-parented via EnsureFolderPathExist", func(t *testing.T) {
+		mockVersioned := repository.NewMockVersioned(t)
+		mockReader := repository.NewMockReader(t)
+		repo := &compositeRepo{
+			MockVersioned: mockVersioned,
+			MockReader:    mockReader,
+		}
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		changes := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "new-ref"},
+		}
+		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-uid"},
+				{Path: "alpha/beta", Group: resources.FolderResource.Group, Name: "beta-uid", Folder: "old-uid"},
+			},
+		}, nil)
+
+		mockReader.On("Config").Return(&provisioning.Repository{})
+		mockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
+			Data: folderJSON(t, "new-uid", "Alpha"),
+			Hash: "h",
+		}, nil)
+
+		progress.On("SetTotal", mock.Anything, 2).Return()
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+		progress.On("TooManyErrors").Return(nil)
+		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+		progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
+
+		repoResources.On("RemoveFolderFromTree", "old-uid").Return()
+		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/").Return("new-uid", nil)
+		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/beta/").Return("beta-uid", nil)
+		repoResources.On("RemoveFolder", mock.Anything, "old-uid").Return(nil)
+
+		progress.On("Record", mock.Anything, mock.Anything).Return()
+
+		mockReader.On("ReadTree", mock.Anything, "new-ref").Return([]repository.FileTreeEntry{
+			{Path: "alpha", Blob: false},
+			{Path: "alpha/_folder.json", Blob: true},
+			{Path: "alpha/beta", Blob: false},
+		}, nil)
+
+		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
+		require.NoError(t, err)
+
+		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/beta/")
+	})
+
+	t.Run("old folder not deleted when new folder creation fails", func(t *testing.T) {
+		mockVersioned := repository.NewMockVersioned(t)
+		mockReader := repository.NewMockReader(t)
+		repo := &compositeRepo{
+			MockVersioned: mockVersioned,
+			MockReader:    mockReader,
+		}
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		changes := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "new-ref"},
+		}
+		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-uid"},
+			},
+		}, nil)
+
+		mockReader.On("Config").Return(&provisioning.Repository{})
+		mockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
+			Data: folderJSON(t, "new-uid", "Alpha"),
+			Hash: "h",
+		}, nil)
+
+		progress.On("SetTotal", mock.Anything, 1).Return()
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+		progress.On("TooManyErrors").Return(nil)
+		progress.On("HasDirPathFailedCreation", "alpha/_folder.json").Return(false)
+		progress.On("HasDirPathFailedCreation", "alpha/").Return(true)
+
+		repoResources.On("RemoveFolderFromTree", "old-uid").Return()
+		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/").
+			Return("", fmt.Errorf("creation failed"))
+
+		progress.On("Record", mock.Anything, mock.Anything).Return()
+
+		mockReader.On("ReadTree", mock.Anything, "new-ref").Return([]repository.FileTreeEntry{
+			{Path: "alpha", Blob: false},
+			{Path: "alpha/_folder.json", Blob: true},
+		}, nil)
+
+		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
+		require.NoError(t, err)
+
+		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, "old-uid")
+	})
+}
+
+func TestDeleteFolders(t *testing.T) {
+	tracer := tracing.NewNoopTracerService()
+
+	t.Run("empty map is a no-op", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		deleteFolders(context.Background(), nil, repoResources, progress, tracer)
+		deleteFolders(context.Background(), map[string]string{}, repoResources, progress, tracer)
+
+		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
+		progress.AssertNotCalled(t, "Record", mock.Anything, mock.Anything)
+	})
+
+	t.Run("deletes single folder and records result", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		progress.On("HasDirPathFailedCreation", "dashboards/").Return(false)
+		progress.On("HasDirPathFailedDeletion", "dashboards/").Return(false)
+		progress.On("HasChildPathFailedCreation", "dashboards/").Return(false)
+		progress.On("HasChildPathFailedUpdate", "dashboards/").Return(false)
+		repoResources.On("RemoveFolder", mock.Anything, "folder-uid").Return(nil)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionDeleted &&
+				r.Path() == "dashboards/" &&
+				r.Name() == "folder-uid" &&
+				r.Error() == nil
+		})).Return()
+
+		deleteFolders(context.Background(), map[string]string{
+			"dashboards/": "folder-uid",
+		}, repoResources, progress, tracer)
+
+		repoResources.AssertCalled(t, "RemoveFolder", mock.Anything, "folder-uid")
+	})
+
+	t.Run("records error when RemoveFolder fails", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
+		progress.On("HasDirPathFailedDeletion", "alpha/").Return(false)
+		progress.On("HasChildPathFailedCreation", "alpha/").Return(false)
+		progress.On("HasChildPathFailedUpdate", "alpha/").Return(false)
+		repoResources.On("RemoveFolder", mock.Anything, "bad-uid").Return(fmt.Errorf("not found"))
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionDeleted &&
+				r.Name() == "bad-uid" &&
+				r.Error() != nil &&
+				r.Error().Error() == "delete folder bad-uid: not found"
+		})).Return()
+
+		deleteFolders(context.Background(), map[string]string{
+			"alpha/": "bad-uid",
+		}, repoResources, progress, tracer)
+	})
+
+	t.Run("skips folder when creation failed", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		progress.On("HasDirPathFailedCreation", "alpha/").Return(true)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionIgnored &&
+				r.Name() == "old-uid" &&
+				r.Warning() != nil
+		})).Return()
+
+		deleteFolders(context.Background(), map[string]string{
+			"alpha/": "old-uid",
+		}, repoResources, progress, tracer)
+
+		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
+	})
+
+	t.Run("skips folder when child deletion failed", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		progress.On("HasDirPathFailedCreation", "dashboards/").Return(false)
+		progress.On("HasDirPathFailedDeletion", "dashboards/").Return(true)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionIgnored &&
+				r.Name() == "folder-uid" &&
+				r.Warning() != nil
+		})).Return()
+
+		deleteFolders(context.Background(), map[string]string{
+			"dashboards/": "folder-uid",
+		}, repoResources, progress, tracer)
+
+		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
+	})
+
+	t.Run("skips folder when child reparenting failed", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
+		progress.On("HasDirPathFailedDeletion", "alpha/").Return(false)
+		progress.On("HasChildPathFailedCreation", "alpha/").Return(true)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionIgnored &&
+				r.Name() == "old-uid" &&
+				r.Warning() != nil
+		})).Return()
+
+		deleteFolders(context.Background(), map[string]string{
+			"alpha/": "old-uid",
+		}, repoResources, progress, tracer)
+
+		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
+	})
+
+	t.Run("skips folder when child update failed", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
+		progress.On("HasDirPathFailedDeletion", "alpha/").Return(false)
+		progress.On("HasChildPathFailedCreation", "alpha/").Return(false)
+		progress.On("HasChildPathFailedUpdate", "alpha/").Return(true)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionIgnored &&
+				r.Name() == "old-uid" &&
+				r.Warning() != nil
+		})).Return()
+
+		deleteFolders(context.Background(), map[string]string{
+			"alpha/": "old-uid",
+		}, repoResources, progress, tracer)
+
+		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
+	})
+
+	t.Run("processes deepest paths first", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+		progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
+
+		var deletionOrder []string
+		repoResources.On("RemoveFolder", mock.Anything, mock.Anything).
+			Run(func(args mock.Arguments) {
+				deletionOrder = append(deletionOrder, args.Get(1).(string))
+			}).Return(nil)
+		progress.On("Record", mock.Anything, mock.Anything).Return()
+
+		deleteFolders(context.Background(), map[string]string{
+			"a/":       "shallow-uid",
+			"a/b/":     "mid-uid",
+			"a/b/c/":   "deep-uid",
+			"x/y/z/w/": "deepest-uid",
+		}, repoResources, progress, tracer)
+
+		require.Len(t, deletionOrder, 4)
+		require.Equal(t, "deepest-uid", deletionOrder[0])
+		require.Equal(t, "deep-uid", deletionOrder[1])
+		require.Equal(t, "mid-uid", deletionOrder[2])
+		require.Equal(t, "shallow-uid", deletionOrder[3])
+	})
+}
+
+func folderJSON(t *testing.T, uid, title string) []byte {
+	t.Helper()
+	manifest := resources.NewFolderManifest(uid, title)
+	data, err := json.Marshal(manifest)
+	require.NoError(t, err)
+	return data
 }

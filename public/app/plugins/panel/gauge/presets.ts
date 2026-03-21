@@ -9,7 +9,7 @@ import { t } from '@grafana/i18n';
 import { BarGaugeSizing } from '@grafana/schema';
 import { GraphFieldConfig } from '@grafana/ui';
 
-import { defaultOptions, Options } from '../panelcfg.gen';
+import { defaultOptions, Options } from './panelcfg.gen';
 
 /**
  * Standard preset - gauge shape with thresholds
