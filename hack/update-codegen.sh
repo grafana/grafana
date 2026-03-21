@@ -94,6 +94,7 @@ grafana::codegen:run apps/dashboard/pkg
 grafana::codegen:run apps/provisioning/pkg
 grafana::codegen:run apps/folder/pkg
 grafana::codegen:run apps/preferences/pkg
+grafana::codegen:run apps/queryhistory/pkg
 grafana::codegen:run apps/collections/pkg
 grafana::codegen:run apps/scope/pkg
 grafana::codegen:run apps/alerting/alertenrichment/pkg
