@@ -420,24 +420,6 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		return err
 	}
 
-	// Read-only fetch: populate Existing without any mutation.
-	if f.Action == provisioning.ResourceActionRead {
-		readCtx, readSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.read")
-		readSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
-		f.Existing, err = f.Client.Get(readCtx, f.Obj.GetName(), metav1.GetOptions{})
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				readSpan.End()
-				return nil
-			}
-			readSpan.RecordError(err)
-			readSpan.End()
-			return fmt.Errorf("failed to get existing resource: %w", err)
-		}
-		readSpan.End()
-		return nil
-	}
-
 	// If we don't have existing resource from DryRun, fetch it now
 	if f.DryRunResponse == nil {
 		f.Existing, _ = f.Client.Get(actionsCtx, f.Obj.GetName(), metav1.GetOptions{})

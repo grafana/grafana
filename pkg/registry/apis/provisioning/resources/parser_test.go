@@ -249,21 +249,22 @@ func TestExistingFolder(t *testing.T) {
 	})
 }
 
-func TestRunRead(t *testing.T) {
+func TestDryRunDeletePopulatesExisting(t *testing.T) {
 	t.Run("populates Existing when resource is found", func(t *testing.T) {
 		mockClient := &MockDynamicResourceInterface{}
 		grafanaObj := managedGrafanaObj("my-resource", "default", nil)
 		mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 
 		parsed := &ParsedResource{
-			Action: provisioning.ResourceActionRead,
+			Action: provisioning.ResourceActionDelete,
 			Obj: &unstructured.Unstructured{Object: map[string]any{
 				"metadata": map[string]any{"name": "my-resource", "namespace": "default"},
 			}},
 			Client: mockClient,
+			Repo:   testRepoInfo(),
 		}
 
-		require.NoError(t, parsed.Run(context.Background()))
+		require.NoError(t, parsed.DryRun(context.Background()))
 		require.NotNil(t, parsed.Existing)
 		require.Equal(t, "my-resource", parsed.Existing.GetName())
 	})
@@ -274,16 +275,16 @@ func TestRunRead(t *testing.T) {
 		mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 
 		parsed := &ParsedResource{
-			Action: provisioning.ResourceActionRead,
+			Action: provisioning.ResourceActionDelete,
 			Obj: &unstructured.Unstructured{Object: map[string]any{
 				"metadata": map[string]any{"name": "my-resource", "namespace": "default"},
 			}},
 			Client: mockClient,
+			Repo:   testRepoInfo(),
 		}
 
-		require.NoError(t, parsed.Run(context.Background()))
-		require.Nil(t, parsed.Upsert, "Upsert must remain nil for a read-only action")
-		require.Nil(t, parsed.DryRunResponse, "DryRunResponse must remain nil")
+		require.NoError(t, parsed.DryRun(context.Background()))
+		require.Nil(t, parsed.Upsert, "Upsert must remain nil for a dry run")
 		mockClient.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		mockClient.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
@@ -295,14 +296,15 @@ func TestRunRead(t *testing.T) {
 			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "missing"))
 
 		parsed := &ParsedResource{
-			Action: provisioning.ResourceActionRead,
+			Action: provisioning.ResourceActionDelete,
 			Obj: &unstructured.Unstructured{Object: map[string]any{
 				"metadata": map[string]any{"name": "missing", "namespace": "default"},
 			}},
 			Client: mockClient,
+			Repo:   testRepoInfo(),
 		}
 
-		require.NoError(t, parsed.Run(context.Background()))
+		require.NoError(t, parsed.DryRun(context.Background()))
 		require.Nil(t, parsed.Existing)
 	})
 
@@ -312,34 +314,35 @@ func TestRunRead(t *testing.T) {
 			Return(nil, fmt.Errorf("connection refused"))
 
 		parsed := &ParsedResource{
-			Action: provisioning.ResourceActionRead,
+			Action: provisioning.ResourceActionDelete,
 			Obj: &unstructured.Unstructured{Object: map[string]any{
 				"metadata": map[string]any{"name": "broken", "namespace": "default"},
 			}},
 			Client: mockClient,
+			Repo:   testRepoInfo(),
 		}
 
-		err := parsed.Run(context.Background())
+		err := parsed.DryRun(context.Background())
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "failed to get existing resource")
+		require.Contains(t, err.Error(), "failed to get existing resource for delete dry run")
 		require.Contains(t, err.Error(), "connection refused")
 		require.Nil(t, parsed.Existing)
 	})
 
 	t.Run("returns error when Client is nil", func(t *testing.T) {
 		parsed := &ParsedResource{
-			Action: provisioning.ResourceActionRead,
+			Action: provisioning.ResourceActionDelete,
 			Obj: &unstructured.Unstructured{Object: map[string]any{
 				"metadata": map[string]any{"name": "test", "namespace": "default"},
 			}},
 		}
 
-		err := parsed.Run(context.Background())
+		err := parsed.DryRun(context.Background())
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "unable to find client")
+		require.Contains(t, err.Error(), "no client configured")
 	})
 
-	t.Run("ExistingFolder works after Run populates Existing", func(t *testing.T) {
+	t.Run("ExistingFolder works after DryRun populates Existing", func(t *testing.T) {
 		mockClient := &MockDynamicResourceInterface{}
 		grafanaObj := managedGrafanaObj("my-resource", "default", map[string]any{
 			utils.AnnoKeyFolder: "team-a",
@@ -347,14 +350,15 @@ func TestRunRead(t *testing.T) {
 		mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 
 		parsed := &ParsedResource{
-			Action: provisioning.ResourceActionRead,
+			Action: provisioning.ResourceActionDelete,
 			Obj: &unstructured.Unstructured{Object: map[string]any{
 				"metadata": map[string]any{"name": "my-resource", "namespace": "default"},
 			}},
 			Client: mockClient,
+			Repo:   testRepoInfo(),
 		}
 
-		require.NoError(t, parsed.Run(context.Background()))
+		require.NoError(t, parsed.DryRun(context.Background()))
 		require.Equal(t, "team-a", parsed.ExistingFolder())
 	})
 }

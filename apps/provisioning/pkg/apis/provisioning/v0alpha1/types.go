@@ -515,7 +515,6 @@ const (
 	ResourceActionUpdate ResourceAction = "update"
 	ResourceActionDelete ResourceAction = "delete"
 	ResourceActionMove   ResourceAction = "move"
-	ResourceActionRead   ResourceAction = "read"
 )
 
 // This is a container type for any resource type

@@ -314,8 +314,8 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 			return oldParsed.Obj.GetName(), oldParsed.ExistingFolder(), oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
 		}
 	} else {
-		oldParsed.Action = provisioning.ResourceActionRead
-		if err := oldParsed.Run(ctx); err != nil {
+		oldParsed.Action = provisioning.ResourceActionDelete
+		if err := oldParsed.DryRun(ctx); err != nil {
 			return "", "", schema.GroupVersionKind{}, err
 		}
 	}
