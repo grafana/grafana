@@ -68,24 +68,6 @@ class DeletedDashboardsCache {
       const deletedResponse = await api.listDeletedDashboards({ limit: 1000 });
 
       if (isResourceList<DashboardDataDTO>(deletedResponse)) {
-        // Sort by deletionTimestamp descending so most-recently-deleted appear first.
-        // Items without a deletionTimestamp sort to the end.
-        deletedResponse.items.sort((a, b) => {
-          const tsA = a.metadata.deletionTimestamp;
-          const tsB = b.metadata.deletionTimestamp;
-
-          if (!tsA && !tsB) {
-            return 0;
-          }
-          if (!tsA) {
-            return 1;
-          }
-          if (!tsB) {
-            return -1;
-          }
-
-          return Date.parse(tsB) - Date.parse(tsA);
-        });
         return deletedResponse;
       }
 
