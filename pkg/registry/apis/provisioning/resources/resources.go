@@ -311,24 +311,16 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	if !oldParsed.SameIdentity(newParsed) {
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.Run(ctx); err != nil {
-			var folderName string
-			if oldParsed.Existing != nil {
-				if meta, metaErr := utils.MetaAccessor(oldParsed.Existing); metaErr == nil {
-					folderName = meta.GetFolder()
-				}
-			}
-			return oldParsed.Obj.GetName(), folderName, oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
+			return oldParsed.Obj.GetName(), oldParsed.ExistingFolder(), oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
 		}
-	} else if err := oldParsed.FetchExisting(ctx); err != nil {
-		return "", "", schema.GroupVersionKind{}, err
+	} else {
+		oldParsed.Action = provisioning.ResourceActionRead
+		if err := oldParsed.Run(ctx); err != nil {
+			return "", "", schema.GroupVersionKind{}, err
+		}
 	}
 
-	var oldFolderName string
-	if oldParsed.Existing != nil {
-		if meta, metaErr := utils.MetaAccessor(oldParsed.Existing); metaErr == nil {
-			oldFolderName = meta.GetFolder()
-		}
-	}
+	oldFolderName := oldParsed.ExistingFolder()
 
 	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newParsed)
 	if err != nil {
@@ -352,15 +344,8 @@ func (r *ResourcesManager) RemoveResourceFromFile(ctx context.Context, path stri
 
 	err = parsed.Run(ctx)
 
-	// Extract the folder annotation from the existing Grafana object (if fetched by Run).
-	// The folder annotation is not stored in the git file.
 	objName := parsed.Obj.GetName()
-	var folderName string
-	if parsed.Existing != nil {
-		if meta, metaErr := utils.MetaAccessor(parsed.Existing); metaErr == nil {
-			folderName = meta.GetFolder()
-		}
-	}
+	folderName := parsed.ExistingFolder()
 
 	if err != nil {
 		return objName, folderName, parsed.GVK, fmt.Errorf("failed to delete: %w", err)

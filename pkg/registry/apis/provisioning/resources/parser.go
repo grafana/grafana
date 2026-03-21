@@ -250,28 +250,19 @@ func (f *ParsedResource) SameIdentity(other *ParsedResource) bool {
 		f.GVK.Kind == other.GVK.Kind
 }
 
-// FetchExisting populates f.Existing by GETting the resource from the API
-// server using the provisioning identity. It is a no-op when Existing is
-// already set (e.g. from a prior DryRun or Run). NotFound is not an error;
-// f.Existing will simply remain nil.
-func (f *ParsedResource) FetchExisting(ctx context.Context) error {
-	if f.Existing != nil || f.Client == nil {
-		return nil
+// ExistingFolder returns the grafana.app/folder annotation from the existing
+// Grafana object, or "" if Existing is nil or has no folder annotation.
+func (f *ParsedResource) ExistingFolder() string {
+	if f.Existing == nil {
+		return ""
 	}
-	identityCtx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	meta, err := utils.MetaAccessor(f.Existing)
 	if err != nil {
-		return fmt.Errorf("failed to get provisioning identity: %w", err)
+		return ""
 	}
-	existing, err := f.Client.Get(identityCtx, f.Obj.GetName(), metav1.GetOptions{})
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return nil
-		}
-		return fmt.Errorf("failed to get existing resource: %w", err)
-	}
-	f.Existing = existing
-	return nil
+	return meta.GetFolder()
 }
+
 
 func (f *ParsedResource) DryRun(ctx context.Context) error {
 	if f.DryRunResponse != nil {
@@ -428,6 +419,24 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 
 		deleteSpan.End()
 		return err
+	}
+
+	// Read-only fetch: populate Existing without any mutation.
+	if f.Action == provisioning.ResourceActionRead {
+		readCtx, readSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.read")
+		readSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
+		f.Existing, err = f.Client.Get(readCtx, f.Obj.GetName(), metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				readSpan.End()
+				return nil
+			}
+			readSpan.RecordError(err)
+			readSpan.End()
+			return fmt.Errorf("failed to get existing resource: %w", err)
+		}
+		readSpan.End()
+		return nil
 	}
 
 	// If we don't have existing resource from DryRun, fetch it now
