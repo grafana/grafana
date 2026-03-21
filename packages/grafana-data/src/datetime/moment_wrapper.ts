@@ -9,5 +9,5 @@ import { DateTimeInput } from './types';
  */
 export const dateTimeAsMoment = (input?: DateTimeInput) => {
   const value = dateTime(input);
-  return moment.tz(value.toISOString(true), String(value.tz?.() ?? 'UTC'));
+  return moment.parseZone(value.toISOString(true));
 };

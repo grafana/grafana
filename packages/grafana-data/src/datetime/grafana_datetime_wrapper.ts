@@ -295,11 +295,16 @@ export const setWeekStart = (weekStart?: string) => {
 };
 
 const normalizeInput = (input?: DateTimeInput, zone?: string | null, formatInput?: FormatInput): GrafanaDateTime => {
+  const normalizedZone = normalizeZone(zone ?? undefined);
+
   if (input instanceof GrafanaDateTime) {
-    return input.clone();
+    const value = input.clone();
+    if (normalizedZone) {
+      value.tz(normalizedZone);
+    }
+    return value;
   }
 
-  const normalizedZone = normalizeZone(zone ?? undefined);
   const locale = getLocale();
   const opts = normalizedZone ? { zone: normalizedZone, locale } : { locale };
   let value: LuxonDateTime;

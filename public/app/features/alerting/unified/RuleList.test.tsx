@@ -3,7 +3,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionTypes, setTimeZoneResolver } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setAppEvents, usePluginLinks } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
@@ -137,6 +137,16 @@ const ui = {
 setupMswServer();
 
 describe('RuleList', () => {
+  const defaultTimeZoneResolver = () => 'browser';
+
+  beforeAll(() => {
+    setTimeZoneResolver(() => 'utc');
+  });
+
+  afterAll(() => {
+    setTimeZoneResolver(defaultTimeZoneResolver);
+  });
+
   beforeEach(() => {
     setAlertmanagerChoices(AlertmanagerChoice.All, 1);
     grantUserPermissions([
@@ -388,8 +398,8 @@ describe('RuleList', () => {
     const instanceRows = byTestId('row').getAll(instancesTable);
     expect(instanceRows).toHaveLength(2);
 
-    expect(instanceRows![0]).toHaveTextContent('Firingfoobarseveritywarning2021-03-18 08:47:05');
-    expect(instanceRows![1]).toHaveTextContent('Firingfoobazseverityerror2021-03-18 08:47:05');
+    expect(instanceRows![0]).toHaveTextContent('Firingfoobarseveritywarning2021-03-18 13:47:05');
+    expect(instanceRows![1]).toHaveTextContent('Firingfoobazseverityerror2021-03-18 13:47:05');
 
     // expand details of an instance
     await user.click(ui.ruleCollapseToggle.get(instanceRows![0]));

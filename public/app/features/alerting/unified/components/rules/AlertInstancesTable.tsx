@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useMemo } from 'react';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
-import { PluginExtensionPoints, dateTime } from '@grafana/data';
+import { PluginExtensionPoints, dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, CombinedRule, PaginationProps } from 'app/types/unified-alerting';
 
@@ -68,7 +68,7 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow }: 
         data: {
           alert: { activeAt },
         },
-      }) => <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>,
+      }) => <>{activeAt.startsWith('0001') ? '-' : dateTimeFormat(activeAt, { format: 'YYYY-MM-DD HH:mm:ss' })}</>,
       size: '150px',
     },
     {

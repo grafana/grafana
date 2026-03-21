@@ -1,6 +1,4 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/language_utils.test.ts
-import { Moment } from 'moment';
-
 import { AbstractLabelOperator, AbstractQuery, DateTime, dateTime, TimeRange } from '@grafana/data';
 
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from './escaping';
@@ -272,7 +270,7 @@ describe('getRangeSnapInterval', () => {
     const nowPlusOneMinute = now + 1000 * 60;
     const nowPlusTwoMinute = now + 1000 * 60 * 2;
 
-    const nowTime = dateTime(now) as Moment;
+    const nowTime = dateTime(now);
 
     const expectedFrom = nowTime.clone().startOf('minute').subtract(queryDurationMinutes, 'minute');
     const expectedTo = nowTime.clone().startOf('minute').add(1, 'minute');
@@ -326,17 +324,17 @@ describe('getRangeSnapInterval', () => {
     const nowPlusOneMinute = now + 1000 * 60;
     const nowPlusTwoMinute = now + 1000 * 60 * 2;
 
-    const nowTime = dateTime(now) as Moment;
-    const nowTimePlusOne = dateTime(nowPlusOneMinute) as Moment;
-    const nowTimePlusTwo = dateTime(nowPlusTwoMinute) as Moment;
+    const nowTime = dateTime(now);
+    const nowTimePlusOne = dateTime(nowPlusOneMinute);
+    const nowTimePlusTwo = dateTime(nowPlusTwoMinute);
 
-    const calculateClosest10 = (date: Moment): Moment => {
-      const numberOfMinutes = Math.floor(date.minutes() / 10) * 10;
-      const numberOfHours = numberOfMinutes < 60 ? date.hours() : date.hours() + 1;
-      return date
-        .clone()
-        .minutes(numberOfMinutes % 60)
-        .hours(numberOfHours);
+    const calculateClosest10 = (date: DateTime): DateTime => {
+      const numberOfMinutes = Math.floor(date.minute() / 10) * 10;
+      const numberOfHours = numberOfMinutes < 60 ? date.hour() : date.hour() + 1;
+      const rounded = date.clone();
+      rounded.set('minute', numberOfMinutes % 60);
+      rounded.set('hour', numberOfHours);
+      return rounded;
     };
 
     const expectedFromFirst = calculateClosest10(
@@ -403,17 +401,17 @@ describe('getRangeSnapInterval', () => {
     const nowPlusOneMinute = now + 1000 * 60;
     const nowPlusTwoMinute = now + 1000 * 60 * 2;
 
-    const nowTime = dateTime(now) as Moment;
-    const nowTimePlusOne = dateTime(nowPlusOneMinute) as Moment;
-    const nowTimePlusTwo = dateTime(nowPlusTwoMinute) as Moment;
+    const nowTime = dateTime(now);
+    const nowTimePlusOne = dateTime(nowPlusOneMinute);
+    const nowTimePlusTwo = dateTime(nowPlusTwoMinute);
 
-    const calculateClosest60 = (date: Moment): Moment => {
-      const numberOfMinutes = Math.floor(date.minutes() / 60) * 60;
-      const numberOfHours = numberOfMinutes < 60 ? date.hours() : date.hours() + 1;
-      return date
-        .clone()
-        .minutes(numberOfMinutes % 60)
-        .hours(numberOfHours);
+    const calculateClosest60 = (date: DateTime): DateTime => {
+      const numberOfMinutes = Math.floor(date.minute() / 60) * 60;
+      const numberOfHours = numberOfMinutes < 60 ? date.hour() : date.hour() + 1;
+      const rounded = date.clone();
+      rounded.set('minute', numberOfMinutes % 60);
+      rounded.set('hour', numberOfHours);
+      return rounded;
     };
 
     const expectedFromFirst = calculateClosest60(
