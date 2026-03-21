@@ -238,7 +238,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			var writeErr error
 
 			if change.PreviousRef != "" {
-				name, gvk, writeErr = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, change.Ref, change.PreviousRef)
+				name, gvk, writeErr = repositoryResources.ReplaceResourceFromFileByRef(writeCtx, change.Path, change.Ref, change.PreviousRef)
 			} else {
 				name, gvk, writeErr = repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			}
