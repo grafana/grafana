@@ -13,9 +13,7 @@ const createAPIConfig = (app: string, version: string): Config => {
       output: {
         target: filePath,
         client: 'fetch' as const,
-        mode: 'split' as const,
         baseUrl: '',
-        fileExtension: '.gen.ts',
         override: {
           namingConvention: { enum: 'PascalCase' },
           mutator: {
