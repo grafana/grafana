@@ -96,9 +96,9 @@ func FullSync(
 	}
 
 	// Detect file renames: collapse delete+create pairs that share the same
-	// resource identity into a single update so K8s UIDs are preserved.
-	renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.full.detect_renames")
-	changes = DetectRenames(renameCtx, repo, currentRef, clients, changes)
+	// content hash into a single update so K8s UIDs are preserved.
+	_, renameSpan := tracer.Start(ctx, "provisioning.sync.full.detect_renames")
+	changes = DetectRenames(changes)
 	renameSpan.End()
 
 	// Check quota before applying changes

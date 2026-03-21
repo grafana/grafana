@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -42,6 +41,7 @@ func TestChanges(t *testing.T) {
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "muta.json",
+			Hash:   "xyz",
 		}, changes[0])
 	})
 	t.Run("empty file path", func(t *testing.T) {
@@ -82,10 +82,12 @@ func TestChanges(t *testing.T) {
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "one/two/",
+			Hash:   "xyz",
 		}, changes[0])
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "other/",
+			Hash:   "xyz",
 		}, changes[1])
 	})
 
@@ -284,6 +286,7 @@ func TestChanges(t *testing.T) {
 			{
 				Action: repository.FileActionCreated,
 				Path:   "one/two/",
+				Hash:   "xyz",
 			},
 		}
 		changes, err := Changes(context.Background(), source, target, true)
@@ -299,6 +302,7 @@ func TestChanges(t *testing.T) {
 			{
 				Action: repository.FileActionCreated,
 				Path:   "one/two/",
+				Hash:   "xyz",
 			},
 		}
 		changes, err := Changes(context.Background(), source, target, true)
@@ -328,10 +332,12 @@ func TestChanges(t *testing.T) {
 			{
 				Action: repository.FileActionCreated,
 				Path:   "abc/nested folder/nested-dashboard.json",
+				Hash:   "xyz",
 			},
 			{
 				Action: repository.FileActionCreated,
 				Path:   "abc/dash.json",
+				Hash:   "abc",
 			},
 		}
 
@@ -440,16 +446,19 @@ func TestChanges(t *testing.T) {
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "folder1/dashboard.json",
+			Hash:   "def",
 		}, changes[0])
 
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "folder1/",
+			Hash:   "abc",
 		}, changes[1])
 
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "folder2/",
+			Hash:   "ghi",
 		}, changes[2])
 	})
 
@@ -554,16 +563,19 @@ func TestChanges(t *testing.T) {
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "folder1/dashboard.json",
+			Hash:   "def",
 		}, changes[0])
 
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "folder1/",
+			Hash:   "abc",
 		}, changes[1])
 
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "folder2/",
+			Hash:   "ghi",
 		}, changes[2])
 	})
 }
@@ -1390,67 +1402,34 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 	})
 }
 
-func dashboardJSON(name string) []byte {
-	return []byte(fmt.Sprintf(`{"apiVersion":"dashboard.grafana.app/v1beta1","kind":"Dashboard","metadata":{"name":%q},"spec":{}}`, name))
-}
-
-var (
-	testDashboardGVK = schema.GroupVersionKind{Group: "dashboard.grafana.app", Version: "v1beta1", Kind: "Dashboard"}
-	testDashboardGVR = schema.GroupVersionResource{Group: "dashboard.grafana.app", Version: "v1beta1", Resource: "dashboards"}
-)
-
 func TestDetectRenames(t *testing.T) {
-	t.Run("same identity delete+create collapses into update", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
-		repo.On("Read", mock.Anything, "new-path/dashboard.json", "main").
-			Return(&repository.FileInfo{
-				Path: "new-path/dashboard.json",
-				Data: dashboardJSON("my-dashboard"),
-			}, nil)
-
-		clients := resources.NewMockResourceClients(t)
-		clients.On("ForKind", mock.Anything, testDashboardGVK).
-			Return(nil, testDashboardGVR, nil)
-
+	t.Run("matching hash collapses delete+create into update", func(t *testing.T) {
 		existing := &provisioning.ResourceListItem{
-			Path:     "old-path/dashboard.json",
-			Name:     "my-dashboard",
-			Group:    "dashboard.grafana.app",
-			Resource: "dashboards",
+			Path: "old-path/dashboard.json", Name: "my-dashboard",
+			Group: "dashboard.grafana.app", Resource: "dashboards", Hash: "abc123",
 		}
 		changes := []ResourceFileChange{
 			{Action: repository.FileActionDeleted, Path: "old-path/dashboard.json", Existing: existing},
-			{Action: repository.FileActionCreated, Path: "new-path/dashboard.json"},
+			{Action: repository.FileActionCreated, Path: "new-path/dashboard.json", Hash: "abc123"},
 		}
 
-		result := DetectRenames(context.Background(), repo, "main", clients, changes)
+		result := DetectRenames(changes)
 
 		require.Len(t, result, 1)
-		require.Equal(t, repository.FileActionUpdated, result[0].Action)
+		require.Equal(t, repository.FileActionRenamed, result[0].Action)
 		require.Equal(t, "new-path/dashboard.json", result[0].Path)
 		require.Equal(t, existing, result[0].Existing)
 	})
 
-	t.Run("different identity keeps separate delete and create", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
-		repo.On("Read", mock.Anything, "new-path/dashboard.json", "main").
-			Return(&repository.FileInfo{
-				Path: "new-path/dashboard.json",
-				Data: dashboardJSON("different-dashboard"),
-			}, nil)
-
-		clients := resources.NewMockResourceClients(t)
-		clients.On("ForKind", mock.Anything, testDashboardGVK).
-			Return(nil, testDashboardGVR, nil)
-
+	t.Run("different hash keeps separate delete and create", func(t *testing.T) {
 		changes := []ResourceFileChange{
-			{Action: repository.FileActionDeleted, Path: "old-path/dashboard.json", Existing: &provisioning.ResourceListItem{
-				Path: "old-path/dashboard.json", Name: "old-dashboard", Group: "dashboard.grafana.app", Resource: "dashboards",
+			{Action: repository.FileActionDeleted, Path: "old.json", Existing: &provisioning.ResourceListItem{
+				Hash: "aaa",
 			}},
-			{Action: repository.FileActionCreated, Path: "new-path/dashboard.json"},
+			{Action: repository.FileActionCreated, Path: "new.json", Hash: "bbb"},
 		}
 
-		result := DetectRenames(context.Background(), repo, "main", clients, changes)
+		result := DetectRenames(changes)
 
 		require.Len(t, result, 2)
 		require.Equal(t, repository.FileActionDeleted, result[0].Action)
@@ -1458,125 +1437,76 @@ func TestDetectRenames(t *testing.T) {
 	})
 
 	t.Run("no deletions returns changes unchanged", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
-		clients := resources.NewMockResourceClients(t)
-
 		changes := []ResourceFileChange{
-			{Action: repository.FileActionCreated, Path: "a.json"},
+			{Action: repository.FileActionCreated, Path: "a.json", Hash: "abc"},
 			{Action: repository.FileActionUpdated, Path: "b.json"},
 		}
 
-		result := DetectRenames(context.Background(), repo, "main", clients, changes)
+		result := DetectRenames(changes)
 		require.Equal(t, changes, result)
 	})
 
 	t.Run("no creations returns changes unchanged", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
-		clients := resources.NewMockResourceClients(t)
-
 		changes := []ResourceFileChange{
-			{Action: repository.FileActionDeleted, Path: "a.json", Existing: &provisioning.ResourceListItem{
-				Name: "x", Group: "dashboard.grafana.app", Resource: "dashboards",
-			}},
+			{Action: repository.FileActionDeleted, Path: "a.json", Existing: &provisioning.ResourceListItem{Hash: "abc"}},
 		}
 
-		result := DetectRenames(context.Background(), repo, "main", clients, changes)
+		result := DetectRenames(changes)
 		require.Equal(t, changes, result)
 	})
 
-	t.Run("parse error on created file is gracefully skipped", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
-		repo.On("Read", mock.Anything, "new.json", "main").
-			Return(&repository.FileInfo{
-				Path: "new.json",
-				Data: []byte(`not valid json or yaml`),
-			}, nil)
-
-		clients := resources.NewMockResourceClients(t)
-
+	t.Run("empty hash on deletion is skipped", func(t *testing.T) {
 		changes := []ResourceFileChange{
-			{Action: repository.FileActionDeleted, Path: "old.json", Existing: &provisioning.ResourceListItem{
-				Name: "x", Group: "dashboard.grafana.app", Resource: "dashboards",
-			}},
-			{Action: repository.FileActionCreated, Path: "new.json"},
+			{Action: repository.FileActionDeleted, Path: "old.json", Existing: &provisioning.ResourceListItem{Hash: ""}},
+			{Action: repository.FileActionCreated, Path: "new.json", Hash: "abc"},
 		}
 
-		result := DetectRenames(context.Background(), repo, "main", clients, changes)
+		result := DetectRenames(changes)
 		require.Len(t, result, 2)
-		require.Equal(t, repository.FileActionDeleted, result[0].Action)
-		require.Equal(t, repository.FileActionCreated, result[1].Action)
 	})
 
-	t.Run("read error on created file is gracefully skipped", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
-		repo.On("Read", mock.Anything, "new.json", "main").
-			Return((*repository.FileInfo)(nil), fmt.Errorf("network error"))
-
-		clients := resources.NewMockResourceClients(t)
-
+	t.Run("empty hash on creation is skipped", func(t *testing.T) {
 		changes := []ResourceFileChange{
-			{Action: repository.FileActionDeleted, Path: "old.json", Existing: &provisioning.ResourceListItem{
-				Name: "x", Group: "dashboard.grafana.app", Resource: "dashboards",
-			}},
-			{Action: repository.FileActionCreated, Path: "new.json"},
+			{Action: repository.FileActionDeleted, Path: "old.json", Existing: &provisioning.ResourceListItem{Hash: "abc"}},
+			{Action: repository.FileActionCreated, Path: "new.json", Hash: ""},
 		}
 
-		result := DetectRenames(context.Background(), repo, "main", clients, changes)
+		result := DetectRenames(changes)
 		require.Len(t, result, 2)
 	})
 
 	t.Run("multiple rename pairs in one batch", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
-		repo.On("Read", mock.Anything, "new-a/d1.json", "main").
-			Return(&repository.FileInfo{Path: "new-a/d1.json", Data: dashboardJSON("dash-1")}, nil)
-		repo.On("Read", mock.Anything, "new-b/d2.json", "main").
-			Return(&repository.FileInfo{Path: "new-b/d2.json", Data: dashboardJSON("dash-2")}, nil)
-
-		clients := resources.NewMockResourceClients(t)
-		clients.On("ForKind", mock.Anything, testDashboardGVK).
-			Return(nil, testDashboardGVR, nil)
-
-		existingA := &provisioning.ResourceListItem{Path: "old-a/d1.json", Name: "dash-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
-		existingB := &provisioning.ResourceListItem{Path: "old-b/d2.json", Name: "dash-2", Group: "dashboard.grafana.app", Resource: "dashboards"}
+		existingA := &provisioning.ResourceListItem{Path: "old-a/d1.json", Hash: "hash-1"}
+		existingB := &provisioning.ResourceListItem{Path: "old-b/d2.json", Hash: "hash-2"}
 		changes := []ResourceFileChange{
 			{Action: repository.FileActionDeleted, Path: "old-a/d1.json", Existing: existingA},
 			{Action: repository.FileActionDeleted, Path: "old-b/d2.json", Existing: existingB},
-			{Action: repository.FileActionCreated, Path: "new-a/d1.json"},
-			{Action: repository.FileActionCreated, Path: "new-b/d2.json"},
+			{Action: repository.FileActionCreated, Path: "new-a/d1.json", Hash: "hash-1"},
+			{Action: repository.FileActionCreated, Path: "new-b/d2.json", Hash: "hash-2"},
 		}
 
-		result := DetectRenames(context.Background(), repo, "main", clients, changes)
+		result := DetectRenames(changes)
 
 		require.Len(t, result, 2)
 		for _, c := range result {
-			require.Equal(t, repository.FileActionUpdated, c.Action, "path %s should be updated", c.Path)
+			require.Equal(t, repository.FileActionRenamed, c.Action, "path %s should be renamed", c.Path)
 			require.NotNil(t, c.Existing)
 		}
 	})
 
 	t.Run("mixed renames and genuine deletes/creates", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
-		repo.On("Read", mock.Anything, "moved/dashboard.json", "main").
-			Return(&repository.FileInfo{Path: "moved/dashboard.json", Data: dashboardJSON("same-name")}, nil)
-		repo.On("Read", mock.Anything, "brand-new.json", "main").
-			Return(&repository.FileInfo{Path: "brand-new.json", Data: dashboardJSON("new-name")}, nil)
-
-		clients := resources.NewMockResourceClients(t)
-		clients.On("ForKind", mock.Anything, testDashboardGVK).
-			Return(nil, testDashboardGVR, nil)
-
-		movedExisting := &provisioning.ResourceListItem{Path: "original/dashboard.json", Name: "same-name", Group: "dashboard.grafana.app", Resource: "dashboards"}
-		deletedExisting := &provisioning.ResourceListItem{Path: "gone.json", Name: "deleted-name", Group: "dashboard.grafana.app", Resource: "dashboards"}
+		movedExisting := &provisioning.ResourceListItem{Path: "original/dashboard.json", Hash: "same-hash"}
+		deletedExisting := &provisioning.ResourceListItem{Path: "gone.json", Hash: "other-hash"}
 
 		changes := []ResourceFileChange{
 			{Action: repository.FileActionDeleted, Path: "original/dashboard.json", Existing: movedExisting},
 			{Action: repository.FileActionDeleted, Path: "gone.json", Existing: deletedExisting},
-			{Action: repository.FileActionCreated, Path: "moved/dashboard.json"},
-			{Action: repository.FileActionCreated, Path: "brand-new.json"},
+			{Action: repository.FileActionCreated, Path: "moved/dashboard.json", Hash: "same-hash"},
+			{Action: repository.FileActionCreated, Path: "brand-new.json", Hash: "brand-new-hash"},
 			{Action: repository.FileActionUpdated, Path: "unchanged/other.json"},
 		}
 
-		result := DetectRenames(context.Background(), repo, "main", clients, changes)
+		result := DetectRenames(changes)
 
 		require.Len(t, result, 4, "one deletion removed, one rename converted")
 
@@ -1585,46 +1515,23 @@ func TestDetectRenames(t *testing.T) {
 			actionsByPath[c.Path] = c.Action
 		}
 
-		require.Equal(t, repository.FileActionUpdated, actionsByPath["moved/dashboard.json"], "renamed file should be updated")
-		require.Equal(t, repository.FileActionDeleted, actionsByPath["gone.json"], "genuine delete should remain")
-		require.Equal(t, repository.FileActionCreated, actionsByPath["brand-new.json"], "genuine create should remain")
-		require.Equal(t, repository.FileActionUpdated, actionsByPath["unchanged/other.json"], "existing update should remain")
+		require.Equal(t, repository.FileActionRenamed, actionsByPath["moved/dashboard.json"])
+		require.Equal(t, repository.FileActionDeleted, actionsByPath["gone.json"])
+		require.Equal(t, repository.FileActionCreated, actionsByPath["brand-new.json"])
+		require.Equal(t, repository.FileActionUpdated, actionsByPath["unchanged/other.json"])
 	})
 
 	t.Run("folder deletions are not matched", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
-		clients := resources.NewMockResourceClients(t)
-
 		changes := []ResourceFileChange{
 			{Action: repository.FileActionDeleted, Path: "old-folder/", Existing: &provisioning.ResourceListItem{
-				Path: "old-folder/", Name: "folder-uid", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource,
+				Path: "old-folder/", Hash: "folder-hash",
 			}},
-			{Action: repository.FileActionCreated, Path: "new-folder/"},
+			{Action: repository.FileActionCreated, Path: "new-folder/", Hash: "folder-hash"},
 		}
 
-		result := DetectRenames(context.Background(), repo, "main", clients, changes)
+		result := DetectRenames(changes)
 		require.Len(t, result, 2)
 		require.Equal(t, repository.FileActionDeleted, result[0].Action)
 		require.Equal(t, repository.FileActionCreated, result[1].Action)
-	})
-
-	t.Run("ForKind error is gracefully skipped", func(t *testing.T) {
-		repo := repository.NewMockReader(t)
-		repo.On("Read", mock.Anything, "new.json", "main").
-			Return(&repository.FileInfo{Path: "new.json", Data: dashboardJSON("my-dash")}, nil)
-
-		clients := resources.NewMockResourceClients(t)
-		clients.On("ForKind", mock.Anything, testDashboardGVK).
-			Return(nil, schema.GroupVersionResource{}, fmt.Errorf("unknown kind"))
-
-		changes := []ResourceFileChange{
-			{Action: repository.FileActionDeleted, Path: "old.json", Existing: &provisioning.ResourceListItem{
-				Name: "my-dash", Group: "dashboard.grafana.app", Resource: "dashboards",
-			}},
-			{Action: repository.FileActionCreated, Path: "new.json"},
-		}
-
-		result := DetectRenames(context.Background(), repo, "main", clients, changes)
-		require.Len(t, result, 2)
 	})
 }

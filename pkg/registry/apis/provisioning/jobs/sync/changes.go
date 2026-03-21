@@ -22,6 +22,11 @@ type ResourceFileChange struct {
 	// The current value in the database -- only required for delete
 	Existing *provisioning.ResourceListItem
 
+	// Hash is the source-side content hash from the repository tree.
+	// Populated for FileActionCreated entries so DetectRenames can match
+	// them against deletions without reading file content.
+	Hash string
+
 	// FolderRenamed is set when folder metadata reconciliation changes the folder ID
 	// (for example, a UID change in _folder.json or reverting to a hash-based ID
 	// after _folder.json deletion). The old folder needs cleanup after children
@@ -175,8 +180,9 @@ func Changes(
 			}
 
 			changes = append(changes, ResourceFileChange{
-				Action: repository.FileActionCreated, // or previously ignored/failed
+				Action: repository.FileActionCreated,
 				Path:   file.Path,
+				Hash:   file.Hash,
 			})
 
 			if err := keep.Add(file.Path); err != nil {
@@ -208,8 +214,9 @@ func Changes(
 			}
 
 			changes = append(changes, ResourceFileChange{
-				Action: repository.FileActionCreated, // or previously ignored/failed
+				Action: repository.FileActionCreated,
 				Path:   safeSegment,
+				Hash:   file.Hash,
 			})
 		}
 	}
@@ -393,103 +400,56 @@ func detectFolderUIDChanges(
 	return affectedFolders, nil
 }
 
-func resolveIdentity(
-	ctx context.Context,
-	repo repository.Reader,
-	ref string,
-	clients resources.ResourceClients,
-	path string,
-) (resources.ResourceIdentity, error) {
-	fileInfo, err := repo.Read(ctx, path, ref)
-	if err != nil {
-		return resources.ResourceIdentity{}, fmt.Errorf("read: %w", err)
-	}
-	obj, gvk, _, err := resources.ParseFileResource(ctx, fileInfo)
-	if err != nil {
-		return resources.ResourceIdentity{}, fmt.Errorf("parse: %w", err)
-	}
-	if obj == nil || gvk == nil {
-		return resources.ResourceIdentity{}, fmt.Errorf("parse returned nil object or GVK")
-	}
-	name := obj.GetName()
-	if name == "" {
-		return resources.ResourceIdentity{}, fmt.Errorf("resource has empty name")
-	}
-	_, gvr, err := clients.ForKind(ctx, *gvk)
-	if err != nil {
-		return resources.ResourceIdentity{}, fmt.Errorf("resolve GVK %s: %w", gvk.String(), err)
-	}
-	return resources.ResourceIdentity{
-		Name:     name,
-		Group:    gvk.Group,
-		Resource: gvr.Resource,
-	}, nil
-}
-
-// DetectRenames finds delete+create pairs that refer to the same Kubernetes
-// resource (same metadata.name, API group, and resource type) and collapses
-// them into a single FileActionUpdated change. This preserves the K8s UID,
-// creationTimestamp, and generation when a file is moved/renamed in the repo
-// without changing the resource identity.
+// DetectRenames finds delete+create pairs whose content hash matches and
+// collapses them into a single FileActionUpdated change. This preserves the
+// K8s UID, creationTimestamp, and generation when a file is moved/renamed in
+// the repo without changing its content.
+//
+// Matching uses the source checksum stored on the existing resource
+// (Existing.Hash) and the repository tree hash carried on created entries
+// (Hash). Only simple renames (content unchanged) are detected; if the
+// content also changed the pair remains as separate delete + create.
 //
 // Folder paths are skipped because folder renames are handled separately by
 // augmentChangesForFolderMetadata.
-func DetectRenames(
-	ctx context.Context,
-	repo repository.Reader,
-	ref string,
-	clients resources.ResourceClients,
-	changes []ResourceFileChange,
-) []ResourceFileChange {
-	deletionsByIdentity := make(map[resources.ResourceIdentity]int)
+func DetectRenames(changes []ResourceFileChange) []ResourceFileChange {
+	deletionsByHash := make(map[string]int)
 	for i, change := range changes {
 		if change.Action != repository.FileActionDeleted || change.Existing == nil {
 			continue
 		}
-		if safepath.IsDir(change.Path) {
+		if safepath.IsDir(change.Path) || change.Existing.Hash == "" {
 			continue
 		}
-		id := resources.ResourceIdentity{
-			Name:     change.Existing.Name,
-			Group:    change.Existing.Group,
-			Resource: change.Existing.Resource,
-		}
-		deletionsByIdentity[id] = i
+		deletionsByHash[change.Existing.Hash] = i
 	}
 
-	if len(deletionsByIdentity) == 0 {
+	if len(deletionsByHash) == 0 {
 		return changes
 	}
 
-	logger := logging.FromContext(ctx)
-
 	removedDeletions := make(map[int]bool)
 	for i, change := range changes {
-		if change.Action != repository.FileActionCreated {
+		if change.Action != repository.FileActionCreated || change.Hash == "" {
 			continue
 		}
 		if safepath.IsDir(change.Path) {
 			continue
 		}
 
-		id, err := resolveIdentity(ctx, repo, ref, clients, change.Path)
-		if err != nil {
-			logger.Warn("DetectRenames: skipping created file", "path", change.Path, "error", err)
-			continue
-		}
-
-		deletionIdx, found := deletionsByIdentity[id]
+		deletionIdx, found := deletionsByHash[change.Hash]
 		if !found {
 			continue
 		}
 
 		changes[i] = ResourceFileChange{
-			Action:   repository.FileActionUpdated,
+			Action:   repository.FileActionRenamed,
 			Path:     change.Path,
+			Hash:     change.Hash,
 			Existing: changes[deletionIdx].Existing,
 		}
 		removedDeletions[deletionIdx] = true
-		delete(deletionsByIdentity, id)
+		delete(deletionsByHash, change.Hash)
 	}
 
 	if len(removedDeletions) == 0 {
