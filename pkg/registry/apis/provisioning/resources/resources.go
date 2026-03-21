@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -16,7 +15,6 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -324,16 +322,8 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 			}
 			return oldParsed.Obj.GetName(), folderName, oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
 		}
-	} else if oldParsed.Client != nil {
-		identityCtx, _, identityErr := identity.WithProvisioningIdentity(ctx, oldParsed.Obj.GetNamespace())
-		if identityErr != nil {
-			return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to get provisioning identity: %w", identityErr)
-		}
-		existing, getErr := oldParsed.Client.Get(identityCtx, oldParsed.Obj.GetName(), metav1.GetOptions{})
-		if getErr != nil && !apierrors.IsNotFound(getErr) {
-			return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to get existing resource: %w", getErr)
-		}
-		oldParsed.Existing = existing
+	} else if err := oldParsed.FetchExisting(ctx); err != nil {
+		return "", "", schema.GroupVersionKind{}, err
 	}
 
 	var oldFolderName string

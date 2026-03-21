@@ -242,6 +242,29 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	return parsed, nil
 }
 
+// FetchExisting populates f.Existing by GETting the resource from the API
+// server using the provisioning identity. It is a no-op when Existing is
+// already set (e.g. from a prior DryRun or Run). NotFound is not an error;
+// f.Existing will simply remain nil.
+func (f *ParsedResource) FetchExisting(ctx context.Context) error {
+	if f.Existing != nil || f.Client == nil {
+		return nil
+	}
+	identityCtx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("failed to get provisioning identity: %w", err)
+	}
+	existing, err := f.Client.Get(identityCtx, f.Obj.GetName(), metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("failed to get existing resource: %w", err)
+	}
+	f.Existing = existing
+	return nil
+}
+
 func (f *ParsedResource) DryRun(ctx context.Context) error {
 	if f.DryRunResponse != nil {
 		return nil // this already ran (and helpful for testing)
