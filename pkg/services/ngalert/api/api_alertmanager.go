@@ -77,16 +77,6 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, status)
 }
 
-func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext) response.Response {
-	err := srv.mam.SaveAndApplyDefaultConfig(c.Req.Context(), c.GetOrgID())
-	if err != nil {
-		srv.log.Error("Unable to save and apply default alertmanager configuration", "error", err)
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to save and apply default Alertmanager configuration", err)
-	}
-
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration deleted; the default is applied"})
-}
-
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) response.Response {
 	canSeeAutogen := c.HasRole(org.RoleAdmin)
 	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.GetOrgID(), canSeeAutogen, false)
@@ -96,7 +86,8 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) re
 		}
 		return ErrResp(http.StatusInternalServerError, err, err.Error())
 	}
-	return response.JSON(http.StatusOK, config)
+	return response.JSON(http.StatusOK, config).
+		SetHeader("Warning", `299 - "This endpoint is deprecated and will be removed in Grafana v14. Use the individual resource APIs instead."`)
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfigHistory(c *contextmodel.ReqContext) response.Response {
@@ -106,7 +97,8 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfigHistory(c *contextmodel.ReqCont
 		return ErrResp(http.StatusInternalServerError, err, err.Error())
 	}
 
-	return response.JSON(http.StatusOK, configs)
+	return response.JSON(http.StatusOK, configs).
+		SetHeader("Warning", `299 - "This endpoint is deprecated and will be removed in Grafana v14. Use the individual resource APIs instead."`)
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) response.Response {

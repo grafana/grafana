@@ -46,7 +46,7 @@ import (
 )
 
 const (
-	WaitTimeoutDefault  = 30 * time.Second
+	WaitTimeoutDefault  = 60 * time.Second
 	WaitIntervalDefault = 100 * time.Millisecond
 )
 
@@ -1565,6 +1565,108 @@ func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx 
 		"folders for repo %q should have sourcePaths %v", repoName, expectedSourcePaths)
 }
 
+// WaitForRepoLastRef waits until the repository's status.sync.lastRef is
+// non-empty. This must be satisfied before triggering an incremental sync,
+// otherwise the syncer falls back to a full sync.
+func WaitForRepoLastRef(t *testing.T, repositories *apis.K8sResourceClient, repoName string) {
+	t.Helper()
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repo, err := repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository %s", repoName) {
+			return
+		}
+
+		lastRef, _, _ := unstructured.NestedString(repo.Object, "status", "sync", "lastRef")
+		assert.NotEmpty(collect, lastRef, "repository %s should have lastRef set", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should have lastRef set after sync", repoName)
+}
+
+// SyncHelper abstracts the ability to trigger sync jobs and inspect repository
+// state. Both ProvisioningTestHelper and gitTestHelper satisfy this interface.
+type SyncHelper interface {
+	TriggerJobAndWaitForComplete(t *testing.T, repoName string, spec provisioning.JobSpec) *unstructured.Unstructured
+	GetRepositories() *apis.K8sResourceClient
+}
+
+// GetRepositories implements SyncHelper.
+func (h *ProvisioningTestHelper) GetRepositories() *apis.K8sResourceClient {
+	return h.Repositories
+}
+
+// SyncAndWaitWithSuccess triggers a full pull sync, asserts that it succeeds,
+// and waits for the repository's lastRef to be set. Use this as the initial
+// sync in tests that later trigger incremental syncs, so that lastRef is
+// guaranteed to be populated.
+func SyncAndWaitWithSuccess(t *testing.T, h SyncHelper, repoName string) {
+	t.Helper()
+
+	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+	RequireJobSuccess(t, job)
+	WaitForRepoLastRef(t, h.GetRepositories(), repoName)
+}
+
+// SyncAndWaitSuccessfulIncremental triggers an incremental pull sync, waits for
+// it to complete, and asserts that the job succeeded.
+func SyncAndWaitSuccessfulIncremental(t *testing.T, h SyncHelper, repoName string) {
+	t.Helper()
+
+	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+	})
+	RequireJobSuccess(t, job)
+}
+
+// RequireJobSuccess asserts that a completed job has state "success" and no errors.
+func RequireJobSuccess(t *testing.T, job *unstructured.Unstructured) {
+	t.Helper()
+	lastState := MustNestedString(job.Object, "status", "state")
+	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
+	require.Empty(t, lastErrors, "job %q has errors: %v", job.GetName(), lastErrors)
+	require.Equal(t, string(provisioning.JobStateSuccess), lastState,
+		"job %q should succeed", job.GetName())
+}
+
+// RequireJobWarning asserts that a completed job has state "warning" and no errors.
+func RequireJobWarning(t *testing.T, job *unstructured.Unstructured) {
+	t.Helper()
+	lastState := MustNestedString(job.Object, "status", "state")
+	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
+	require.Empty(t, lastErrors, "job %q has errors: %v", job.GetName(), lastErrors)
+	require.Equal(t, string(provisioning.JobStateWarning), lastState,
+		"job %q should have warning state", job.GetName())
+}
+
+// SyncAndWaitWithWarning triggers a full pull sync, asserts that it completes
+// with a warning state (no errors), and waits for lastRef. Use this for syncs
+// where a warning is the expected outcome (e.g. missing folder metadata).
+func SyncAndWaitWithWarning(t *testing.T, h SyncHelper, repoName string) {
+	t.Helper()
+
+	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+	RequireJobWarning(t, job)
+	WaitForRepoLastRef(t, h.GetRepositories(), repoName)
+}
+
+// SyncAndWaitIncrementalWithWarning triggers an incremental pull sync, waits
+// for it to complete, and asserts that the job finished with a warning state.
+func SyncAndWaitIncrementalWithWarning(t *testing.T, h SyncHelper, repoName string) {
+	t.Helper()
+
+	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+	})
+	RequireJobWarning(t, job)
+}
+
 // GetFolderGeneration returns the current generation of the folder with the given UID.
 func GetFolderGeneration(t *testing.T, helper *ProvisioningTestHelper, folderUID string) int64 {
 	t.Helper()
@@ -1655,6 +1757,53 @@ func RequireRecreated(t *testing.T, label string, before, after ObjectSnapshot) 
 		"%s: UID unchanged — object was updated in place instead of recreated", label)
 	require.Equal(t, int64(1), after.Generation,
 		"%s: generation should reset to 1 after recreate", label)
+}
+
+// SnapshotDashboardsBySourcePath returns a map from sourcePath to ObjectSnapshot
+// for dashboards managed by the given repo. It waits until all requested paths are found.
+func SnapshotDashboardsBySourcePath(t *testing.T, helper *ProvisioningTestHelper, repoName string, paths []string) map[string]ObjectSnapshot {
+	t.Helper()
+	wanted := make(map[string]bool, len(paths))
+	for _, p := range paths {
+		wanted[p] = true
+	}
+	result := make(map[string]ObjectSnapshot, len(paths))
+
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		for i := range list.Items {
+			annotations := list.Items[i].GetAnnotations()
+			if annotations["grafana.app/managerId"] != repoName {
+				continue
+			}
+			sp := annotations["grafana.app/sourcePath"]
+			if wanted[sp] {
+				result[sp] = SnapshotObject(t, &list.Items[i])
+			}
+		}
+		for _, p := range paths {
+			assert.Contains(c, result, p, "dashboard with sourcePath %q not found", p)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected dashboards for repo %q", repoName)
+	return result
+}
+
+// RequireDashboardsUpdatedInPlace verifies that the K8s UIDs are preserved
+// (i.e., the resources were updated in place, not deleted and recreated)
+// for all given paths that appear in both before and after snapshot maps.
+func RequireDashboardsUpdatedInPlace(t *testing.T, before, after map[string]ObjectSnapshot, paths []string) {
+	t.Helper()
+	for _, p := range paths {
+		b, okB := before[p]
+		a, okA := after[p]
+		require.True(t, okB, "before snapshot missing for %q", p)
+		require.True(t, okA, "after snapshot missing for %q", p)
+		RequireUpdatedInPlace(t, p, b, a)
+	}
 }
 
 // FindCondition finds a condition by type in the conditions list

@@ -35,6 +35,10 @@ type JobProgressRecorder interface {
 	HasDirPathFailedCreation(path string) bool
 	// HasDirPathFailedDeletion checks if a folderPath has any folder deletions that failed
 	HasDirPathFailedDeletion(folderPath string) bool
+	// HasChildPathFailedCreation checks if any folder creation failed inside folderPath
+	HasChildPathFailedCreation(folderPath string) bool
+	// HasChildPathFailedUpdate checks if any resource update failed inside folderPath
+	HasChildPathFailedUpdate(folderPath string) bool
 }
 
 // Worker is a worker that can process a job

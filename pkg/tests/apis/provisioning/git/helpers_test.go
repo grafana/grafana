@@ -325,35 +325,26 @@ func (h *gitTestHelper) syncAndWait(t *testing.T, repoName string) {
 	h.waitForJobsComplete(t, repoName)
 }
 
-// syncAndWaitIncremental triggers an incremental pull sync — only files changed
-// since the previous sync (LastRef) are processed — and waits for completion.
+// syncAndWaitIncremental triggers an incremental pull sync on the named
+// repository and waits for all active jobs to complete.
+//
+//nolint:unused // Called from incremental_folder_metadata_test.go
 func (h *gitTestHelper) syncAndWaitIncremental(t *testing.T, repoName string) {
 	t.Helper()
+	h.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+	})
+}
 
-	jobSpec := map[string]interface{}{
-		"action": "pull",
-		"pull":   map[string]interface{}{"incremental": true},
-	}
+// TriggerJobAndWaitForComplete implements common.SyncHelper.
+func (h *gitTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repoName string, spec provisioning.JobSpec) *unstructured.Unstructured {
+	return h.triggerJobAndWaitForComplete(t, repoName, spec)
+}
 
-	jobJSON, err := json.Marshal(jobSpec)
-	require.NoError(t, err)
-
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Name(repoName).
-		SubResource("jobs").
-		Body(jobJSON).
-		SetHeader("Content-Type", "application/json").
-		Do(context.Background())
-
-	if apierrors.IsAlreadyExists(result.Error()) {
-		h.waitForJobsComplete(t, repoName)
-		return
-	}
-
-	require.NoError(t, result.Error(), "failed to trigger incremental sync")
-	h.waitForJobsComplete(t, repoName)
+// GetRepositories implements common.SyncHelper.
+func (h *gitTestHelper) GetRepositories() *apis.K8sResourceClient {
+	return h.Repositories
 }
 
 // waitForJobsComplete waits for all active jobs for a repository to complete.
