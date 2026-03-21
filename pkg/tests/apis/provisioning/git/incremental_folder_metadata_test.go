@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -450,6 +451,51 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		requireRepoFolderCount(t, helper, ctx, repoName, 1)
 		requireRepoDashboardCount(t, helper, ctx, repoName, 1)
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/dash-renamed.json", "stable-uid")
+	})
+
+	t.Run("new nested _folder.json files transition both parent and child to stable uids", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-create-nested"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"parent/child/dash.json": dashboardJSON("nested-create-dash", "Nested Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+
+		oldParentUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "parent")
+		oldChildUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "child")
+		require.NotEqual(t, "p-new", oldParentUID, "parent should start with a hash-based UID")
+		require.NotEqual(t, "c-new", oldChildUID, "child should start with a hash-based UID")
+		common.RequireFolderState(t, helper.FoldersV1, oldParentUID, "parent", "parent", "")
+		common.RequireFolderState(t, helper.FoldersV1, oldChildUID, "child", "parent/child", oldParentUID)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "parent/child/dash.json", oldChildUID)
+
+		require.NoError(t, local.CreateFile("parent/_folder.json", string(folderMetadataJSON("p-new", "Parent"))))
+		require.NoError(t, local.CreateFile("parent/child/_folder.json", string(folderMetadataJSON("c-new", "Child"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "add nested folder metadata")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.syncAndWaitIncremental(t, repoName)
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, oldParentUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old parent folder should be deleted")
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, oldChildUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old child folder should be deleted")
+
+		common.RequireFolderState(t, helper.FoldersV1, "p-new", "Parent", "parent", "")
+		common.RequireFolderState(t, helper.FoldersV1, "c-new", "Child", "parent/child", "p-new")
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/child"})
+		requireRepoFolderCount(t, helper, ctx, repoName, 2)
+		requireRepoDashboardCount(t, helper, ctx, repoName, 1)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "parent/child/dash.json", "c-new")
 	})
 }
 

@@ -72,7 +72,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	var replacedFolders []replacedFolderRewritten
 	if folderMetadataEnabled {
 		repo := repo.(repository.Reader)
-		diffBuilder := NewDiffBuilder(repo, repositoryResources)
+		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repositoryResources)
 		diffCtx, diffSpan := tracer.Start(ctx, "provisioning.sync.incremental.build_diff")
 		diff, replacedFolders, err = diffBuilder.BuildIncrementalDiff(diffCtx, diff)
 		if err != nil {
@@ -98,7 +98,6 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		tracer,
 		span,
 		quotaTracker,
-		folderMetadataEnabled,
 	)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
@@ -108,6 +107,9 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetMessage(ctx, "versioned changes replicated")
 
 	if folderMetadataEnabled {
+		safepath.SortByDepth(replacedFolders, func(replaced replacedFolder) string {
+			return replaced.Path
+		}, false)
 		span.AddEvent("checking if replaced folders should be deleted", trace.WithAttributes(attribute.Int("replaced_folders", len(replacedFolders))))
 
 		removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_replaced_folders")
@@ -167,7 +169,6 @@ func applyIncrementalChanges(
 	tracer tracing.Tracer,
 	span trace.Span,
 	quotaTracker quotas.QuotaTracker,
-	folderMetadataEnabled bool,
 ) (affectedFolders map[string]string, err error) {
 	// this will keep track of any folders that had resources deleted from it
 	// with key-value as path:grafana uid.
