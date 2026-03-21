@@ -1856,6 +1856,91 @@ func RunGrafanaWithGitServerForExport(t *testing.T, options ...GrafanaOption) *G
 	}
 }
 
+// CreateGitRepoWithFiles creates a git repository on the test server, seeds it with
+// initialFiles, registers it with Grafana provisioning, and returns the local repository
+// so callers can push subsequent commits (e.g. to trigger incremental syncs).
+// The local repository is cleaned up automatically when t finishes.
+func (h *GitExportHelper) CreateGitRepoWithFiles(t *testing.T, repoName string, initialFiles map[string][]byte) *gittest.LocalRepo {
+	t.Helper()
+
+	ctx := context.Background()
+
+	user, err := h.gitServer.CreateUser(ctx)
+	require.NoError(t, err, "failed to create git user")
+
+	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
+	require.NoError(t, err, "failed to create remote git repository")
+
+	h.repoInfos[repoName] = &gitRepoInfo{user: user, remote: remote}
+
+	local, err := gittest.NewLocalRepo(ctx)
+	require.NoError(t, err, "failed to create local git repository")
+	t.Cleanup(func() {
+		if err := local.Cleanup(); err != nil {
+			t.Logf("failed to cleanup local repo: %v", err)
+		}
+	})
+
+	_, err = local.InitWithRemote(user, remote)
+	require.NoError(t, err, "failed to initialize local repo with remote")
+
+	for path, content := range initialFiles {
+		err = local.CreateFile(path, string(content))
+		require.NoError(t, err, "failed to create initial file %s", path)
+	}
+
+	if len(initialFiles) > 0 {
+		_, err = local.Git("add", ".")
+		require.NoError(t, err, "failed to stage initial files")
+		_, err = local.Git("commit", "-m", "Add initial files")
+		require.NoError(t, err, "failed to commit initial files")
+		_, err = local.Git("push")
+		require.NoError(t, err, "failed to push initial files")
+	}
+
+	spec := map[string]interface{}{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]interface{}{
+			"name":      repoName,
+			"namespace": "default",
+		},
+		"spec": map[string]interface{}{
+			"title": repoName,
+			"type":  "git",
+			"git": map[string]interface{}{
+				"url":       remote.URL,
+				"branch":    "main",
+				"tokenUser": user.Username,
+			},
+			"sync": map[string]interface{}{
+				"enabled": false,
+				"target":  "instance",
+			},
+			"workflows": []string{"write"},
+		},
+		"secure": map[string]interface{}{
+			"token": map[string]interface{}{
+				"create": user.Password,
+			},
+		},
+	}
+
+	body, err := json.Marshal(spec)
+	require.NoError(t, err)
+
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(ctx)
+	require.NoError(t, result.Error(), "failed to register git repository %q with Grafana", repoName)
+
+	h.WaitForHealthyRepository(t, repoName)
+	return local
+}
+
 // CreateGitRepo registers a new git repository on the test server with
 // Grafana provisioning and waits for it to become healthy.
 func (h *GitExportHelper) CreateGitRepo(t *testing.T, repoName string) {
