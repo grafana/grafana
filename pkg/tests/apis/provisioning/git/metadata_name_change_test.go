@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -93,11 +92,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	job := helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-		Action: provisioning.JobActionPull,
-		Pull:   &provisioning.SyncJobOptions{Incremental: true},
-	})
-	common.RequireJobSuccess(t, job)
+	common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 	// The new dashboard should exist with the new name.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
