@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -780,6 +781,9 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		title, _, _ := unstructured.NestedString(folderAfter.Object, "spec", "title")
 		require.Equal(t, "Alpha", title)
 
+		_, err = helper.FoldersV1.Resource.Get(ctx, oldUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old folder UID should be deleted after UID change")
+
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"uid-dash-001": {Title: "Alpha Dashboard", SourcePath: "alpha/dash.json", Folder: newUID},
 		})
@@ -823,6 +827,9 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = helper.FoldersV1.Resource.Get(ctx, parentNewUID, metav1.GetOptions{})
 		require.NoError(t, err, "parent folder with new UID should exist")
 
+		_, err = helper.FoldersV1.Resource.Get(ctx, parentOldUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old parent folder UID should be deleted after UID change")
+
 		childAfter, err := helper.FoldersV1.Resource.Get(ctx, childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child folder should still exist")
 		childParent, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/folder")
@@ -864,6 +871,9 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		require.NoError(t, err)
 		title, _, _ := unstructured.NestedString(folderAfter.Object, "spec", "title")
 		require.Equal(t, "Team Rebranded", title)
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, oldUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old folder UID should be deleted after UID change")
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"uid-combo-001": {Title: "Updated Dashboard", SourcePath: "team/dash.json", Folder: newUID},

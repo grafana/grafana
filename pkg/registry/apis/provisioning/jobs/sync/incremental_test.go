@@ -818,6 +818,7 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 					Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 				progress.On("HasDirPathFailedCreation", "dashboards/").Return(false)
 				progress.On("HasDirPathFailedDeletion", "dashboards/").Return(false)
+				progress.On("HasChildPathFailedCreation", "dashboards/").Return(false)
 				repoResources.On("RemoveFolder", mock.Anything, "folder-uid").Return(nil)
 
 				progress.On("Record", mock.Anything, mock.Anything).Return()
@@ -878,6 +879,7 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 
 				progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 				progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+				progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
 
 				// both not found in git, both should be deleted
 				repo.MockReader.On("Read", mock.Anything, "dashboards/", "").
@@ -1191,11 +1193,12 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("no _folder.json updates returns diff unchanged", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionCreated, Path: "alpha/dash.json", Ref: "ref1"},
 		}
-		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
 		require.NoError(t, err)
 		require.Empty(t, replaced)
 		require.Equal(t, diff, result)
@@ -1204,13 +1207,14 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("no existing folder means no UID change", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
 		}
 		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 
-		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
 		require.NoError(t, err)
 		require.Empty(t, replaced)
 		require.Equal(t, diff, result)
@@ -1219,6 +1223,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("same UID means no change", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
@@ -1234,7 +1239,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 			Hash: "abc",
 		}, nil)
 
-		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
 		require.NoError(t, err)
 		require.Empty(t, replaced)
 		require.Equal(t, diff, result)
@@ -1243,6 +1248,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("UID change emits children and tracks old UID", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
@@ -1260,7 +1266,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 			Hash: "abc",
 		}, nil)
 
-		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
 		require.NoError(t, err)
 		require.Len(t, replaced, 1)
 		require.Equal(t, "alpha/", replaced[0].Path)
@@ -1274,6 +1280,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("child already in diff is not duplicated", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
@@ -1292,7 +1299,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 			Hash: "abc",
 		}, nil)
 
-		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
 		require.NoError(t, err)
 		require.Len(t, replaced, 1)
 		require.Len(t, result, 2, "should not add duplicate child")
@@ -1301,6 +1308,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("child folder gets trailing slash", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
@@ -1318,7 +1326,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 			Hash: "abc",
 		}, nil)
 
-		result, _, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		result, _, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
 		require.NoError(t, err)
 		require.Len(t, result, 2)
 		require.Equal(t, "alpha/beta/", result[1].Path)
@@ -1327,13 +1335,14 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("List error is propagated", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
 		}
 		repoResources.On("List", mock.Anything).Return((*provisioning.ResourceList)(nil), fmt.Errorf("list failed"))
 
-		_, _, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		_, _, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "list existing resources: list failed")
 	})
@@ -1374,6 +1383,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 		progress.On("TooManyErrors").Return(nil)
 		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 		progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
 
 		repoResources.On("RemoveFolderFromTree", "old-alpha-uid").Return()
 		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/").
@@ -1432,6 +1442,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 		progress.On("TooManyErrors").Return(nil)
 		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 		progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
 
 		repoResources.On("RemoveFolderFromTree", "old-uid").Return()
 		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/").Return("new-uid", nil)
@@ -1523,6 +1534,7 @@ func TestDeleteFolders(t *testing.T) {
 
 		progress.On("HasDirPathFailedCreation", "dashboards/").Return(false)
 		progress.On("HasDirPathFailedDeletion", "dashboards/").Return(false)
+		progress.On("HasChildPathFailedCreation", "dashboards/").Return(false)
 		repoResources.On("RemoveFolder", mock.Anything, "folder-uid").Return(nil)
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 			return r.Action() == repository.FileActionDeleted &&
@@ -1544,6 +1556,7 @@ func TestDeleteFolders(t *testing.T) {
 
 		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
 		progress.On("HasDirPathFailedDeletion", "alpha/").Return(false)
+		progress.On("HasChildPathFailedCreation", "alpha/").Return(false)
 		repoResources.On("RemoveFolder", mock.Anything, "bad-uid").Return(fmt.Errorf("not found"))
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 			return r.Action() == repository.FileActionDeleted &&
@@ -1594,12 +1607,33 @@ func TestDeleteFolders(t *testing.T) {
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
 	})
 
+	t.Run("skips folder when child reparenting failed", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
+		progress.On("HasDirPathFailedDeletion", "alpha/").Return(false)
+		progress.On("HasChildPathFailedCreation", "alpha/").Return(true)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionIgnored &&
+				r.Name() == "old-uid" &&
+				r.Warning() != nil
+		})).Return()
+
+		deleteFolders(context.Background(), map[string]string{
+			"alpha/": "old-uid",
+		}, repoResources, progress, tracer)
+
+		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
+	})
+
 	t.Run("processes deepest paths first", func(t *testing.T) {
 		repoResources := resources.NewMockRepositoryResources(t)
 		progress := jobs.NewMockJobProgressRecorder(t)
 
 		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 		progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
 
 		var deletionOrder []string
 		repoResources.On("RemoveFolder", mock.Anything, mock.Anything).

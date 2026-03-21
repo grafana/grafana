@@ -407,3 +407,17 @@ func (r *jobProgressRecorder) HasDirPathFailedDeletion(folderPath string) bool {
 	}
 	return false
 }
+
+// HasChildPathFailedCreation checks if any folder creation failed inside folderPath.
+// This is the descendant counterpart of HasDirPathFailedCreation (which checks ancestors).
+func (r *jobProgressRecorder) HasChildPathFailedCreation(folderPath string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, failedCreation := range r.failedCreations {
+		if safepath.InDir(failedCreation, folderPath) {
+			return true
+		}
+	}
+	return false
+}

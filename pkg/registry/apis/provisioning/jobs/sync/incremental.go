@@ -57,7 +57,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	var replaced []replacedFolder
 	if folderMetadataEnabled {
 		if readerRepo, ok := repo.(repository.Reader); ok {
-			diff, replaced, err = planFolderMetadataChanges(ctx, readerRepo, currentRef, diff, repositoryResources, tracer)
+			diff, replaced, err = planFolderMetadataChanges(ctx, readerRepo, currentRef, diff, repositoryResources, progress, tracer)
 			if err != nil {
 				return tracing.Error(span, fmt.Errorf("plan folder metadata changes: %w", err))
 			}
@@ -172,16 +172,19 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 		//   skipped since individual file-level changes handle them.
 		if safepath.IsDir(change.Path) && change.Action != repository.FileActionRenamed {
 			if change.Action == repository.FileActionUpdated {
+				folderResultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
 				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.reparent_child_folder")
 				folder, fErr := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path)
 				if fErr != nil {
 					folderSpan.RecordError(fErr)
-					resultBuilder.WithError(fmt.Errorf("re-parenting child folder at %s: %w", change.Path, fErr))
+					folderResultBuilder.WithError(fmt.Errorf("re-parenting child folder at %s: %w", change.Path, fErr))
 				}
-				resultBuilder.WithName(folder)
+				folderResultBuilder.WithName(folder)
 				folderSpan.End()
+				progress.Record(ctx, folderResultBuilder.Build())
+			} else {
+				progress.Record(ctx, resultBuilder.Build())
 			}
-			progress.Record(ctx, resultBuilder.Build())
 			continue
 		}
 
@@ -297,6 +300,7 @@ func planFolderMetadataChanges(
 	currentRef string,
 	diff []repository.VersionedFileChange,
 	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
 ) ([]repository.VersionedFileChange, []replacedFolder, error) {
 	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.plan_folder_metadata_changes")
@@ -340,6 +344,11 @@ func planFolderMetadataChanges(
 		newFolder, err := resources.ParseFolderWithMetadata(ctx, repo, folderDir, currentRef, true)
 		if err != nil {
 			span.RecordError(err)
+			progress.Record(ctx, jobs.NewFolderResult(folderDir).
+				WithAction(repository.FileActionIgnored).
+				WithError(fmt.Errorf("skipping folder UID change detection for %s: %w", folderDir, err)).
+				AsSkipped().
+				Build())
 			continue
 		}
 
@@ -362,6 +371,9 @@ func planFolderMetadataChanges(
 	pathsInDiff := make(map[string]bool, len(diff))
 	for _, c := range diff {
 		pathsInDiff[c.Path] = true
+		if c.PreviousPath != "" {
+			pathsInDiff[c.PreviousPath] = true
+		}
 	}
 
 	for i := range existingResources.Items {
@@ -472,7 +484,7 @@ func deleteFolders(
 	safepath.SortByDepth(sorted, func(p pathUID) string { return p.Path }, false)
 
 	for _, entry := range sorted {
-		if progress.HasDirPathFailedCreation(entry.Path) || progress.HasDirPathFailedDeletion(entry.Path) {
+		if progress.HasDirPathFailedCreation(entry.Path) || progress.HasDirPathFailedDeletion(entry.Path) || progress.HasChildPathFailedCreation(entry.Path) {
 			progress.Record(ctx, jobs.NewFolderResult(entry.Path).
 				WithAction(repository.FileActionDeleted).
 				WithName(entry.UID).
