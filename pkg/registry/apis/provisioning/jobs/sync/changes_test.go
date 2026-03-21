@@ -1403,7 +1403,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 }
 
 func TestDetectRenames(t *testing.T) {
-	t.Run("matching hash collapses delete+create into update", func(t *testing.T) {
+	t.Run("matching hash collapses delete+create into rename", func(t *testing.T) {
 		existing := &provisioning.ResourceListItem{
 			Path: "old-path/dashboard.json", Name: "my-dashboard",
 			Group: "dashboard.grafana.app", Resource: "dashboards", Hash: "abc123",
@@ -1533,5 +1533,19 @@ func TestDetectRenames(t *testing.T) {
 		require.Len(t, result, 2)
 		require.Equal(t, repository.FileActionDeleted, result[0].Action)
 		require.Equal(t, repository.FileActionCreated, result[1].Action)
+	})
+
+	t.Run("duplicate hashes across deletions are not matched", func(t *testing.T) {
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "a.json", Existing: &provisioning.ResourceListItem{Hash: "same"}},
+			{Action: repository.FileActionDeleted, Path: "b.json", Existing: &provisioning.ResourceListItem{Hash: "same"}},
+			{Action: repository.FileActionCreated, Path: "c.json", Hash: "same"},
+		}
+
+		result := DetectRenames(changes)
+		require.Len(t, result, 3, "ambiguous hash should not be matched")
+		require.Equal(t, repository.FileActionDeleted, result[0].Action)
+		require.Equal(t, repository.FileActionDeleted, result[1].Action)
+		require.Equal(t, repository.FileActionCreated, result[2].Action)
 	})
 }

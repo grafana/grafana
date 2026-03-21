@@ -401,7 +401,7 @@ func detectFolderUIDChanges(
 }
 
 // DetectRenames finds delete+create pairs whose content hash matches and
-// collapses them into a single FileActionUpdated change. This preserves the
+// collapses them into a single FileActionRenamed change. This preserves the
 // K8s UID, creationTimestamp, and generation when a file is moved/renamed in
 // the repo without changing its content.
 //
@@ -414,6 +414,7 @@ func detectFolderUIDChanges(
 // augmentChangesForFolderMetadata.
 func DetectRenames(changes []ResourceFileChange) []ResourceFileChange {
 	deletionsByHash := make(map[string]int)
+	ambiguous := make(map[string]bool)
 	for i, change := range changes {
 		if change.Action != repository.FileActionDeleted || change.Existing == nil {
 			continue
@@ -421,7 +422,13 @@ func DetectRenames(changes []ResourceFileChange) []ResourceFileChange {
 		if safepath.IsDir(change.Path) || change.Existing.Hash == "" {
 			continue
 		}
+		if _, exists := deletionsByHash[change.Existing.Hash]; exists {
+			ambiguous[change.Existing.Hash] = true
+		}
 		deletionsByHash[change.Existing.Hash] = i
+	}
+	for h := range ambiguous {
+		delete(deletionsByHash, h)
 	}
 
 	if len(deletionsByHash) == 0 {

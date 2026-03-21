@@ -327,6 +327,8 @@ func (h *gitTestHelper) syncAndWait(t *testing.T, repoName string) {
 
 // syncAndWaitIncremental triggers an incremental pull sync on the named
 // repository and waits for all active jobs to complete.
+//
+//nolint:unused // Called from incremental_folder_metadata_test.go
 func (h *gitTestHelper) syncAndWaitIncremental(t *testing.T, repoName string) {
 	t.Helper()
 	h.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
