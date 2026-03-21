@@ -218,9 +218,9 @@ func New(ruleGetter ChannelRuleGetter) (*Pipeline, error) {
 	if os.Getenv("GF_LIVE_PIPELINE_TRACE") != "" {
 		// Traces for development only at the moment.
 		// Start local Jaeger and then run Grafana with GF_LIVE_PIPELINE_TRACE:
-		// docker run --rm -it --name jaeger -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 -p 5775:5775/udp -p 6831:6831/udp -p 6832:6832/udp -p 5778:5778 -p 16686:16686 -p 14268:14268 -p 14250:14250 -p 9411:9411 jaegertracing/all-in-one:1.26
+		// docker run --rm -it --name jaeger -p 4318:4318 -p 16686:16686 jaegertracing/all-in-one:latest
 		// Then visit http://localhost:16686/ where Jaeger UI is served.
-		tp, err := tracerProvider("http://localhost:14268/api/traces")
+		tp, err := tracerProvider("http://localhost:4318")
 		if err != nil {
 			return nil, err
 		}
