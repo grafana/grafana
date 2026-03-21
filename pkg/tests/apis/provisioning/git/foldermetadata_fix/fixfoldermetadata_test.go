@@ -1,4 +1,4 @@
-package git
+package foldermetadatafix
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -21,7 +22,7 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 
 	// FlagProvisioningFolderMetadata is required so the files API allows reading
 	// _folder.json files back for verification.
-	helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repoName = "fix-meta-git-branch"
@@ -30,13 +31,13 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 	// Seed the repo with a dashboard nested under parent/child/ so the worker
 	// sees two directories without _folder.json files. The "branch" workflow is
 	// included so the repository accepts commits to new branches.
-	helper.createGitRepo(t, repoName, map[string][]byte{
-		"parent/child/dashboard.json": dashboardJSON("git-meta-dash", "Git Meta Dashboard", 1),
+	helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"parent/child/dashboard.json": gitcommon.DashboardJSON("git-meta-dash", "Git Meta Dashboard", 1),
 	}, "write", "branch")
 
 	// Run the fix-folder-metadata job targeting a new feature branch.
 	// The job creates the branch from main and commits _folder.json files there.
-	job := helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionFixFolderMetadata,
 		FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
 			Ref: featureBranch,
@@ -68,7 +69,7 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repoName = "fix-meta-git-existing-branch"
@@ -76,8 +77,8 @@ func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 
 	// Seed the repo and capture the local git clone so we can push the branch
 	// to the remote before triggering the job.
-	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-		"parent/child/dashboard.json": dashboardJSON("git-meta-existing", "Git Meta Existing", 1),
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"parent/child/dashboard.json": gitcommon.DashboardJSON("git-meta-existing", "Git Meta Existing", 1),
 	}, "write", "branch")
 
 	// Pre-create the branch on the remote so that ensureBranchExists takes the
@@ -88,7 +89,7 @@ func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 	require.NoError(t, err, "failed to push feature branch to remote")
 
 	// Run the fix-folder-metadata job targeting the already-existing branch.
-	job := helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionFixFolderMetadata,
 		FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
 			Ref: featureBranch,
@@ -114,7 +115,7 @@ func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 // requireFolderMetadataOnRef reads the _folder.json at filePath from the given
 // branch via the repository files API and asserts it is a valid Folder resource.
 // It returns the folder UID so callers can compare across files.
-func requireFolderMetadataOnRef(t *testing.T, h *gitTestHelper, ctx context.Context, repoName, filePath, ref string) string {
+func requireFolderMetadataOnRef(t *testing.T, h *gitcommon.GitTestHelper, ctx context.Context, repoName, filePath, ref string) string {
 	t.Helper()
 
 	subresourceParts := append([]string{"files"}, strings.Split(filePath, "/")...)
@@ -150,7 +151,7 @@ func requireFolderMetadataOnRef(t *testing.T, h *gitTestHelper, ctx context.Cont
 
 // requireFileAbsentOnDefaultBranch asserts that filePath does not exist on the
 // repository's default branch (no ref param → default branch is used).
-func requireFileAbsentOnDefaultBranch(t *testing.T, h *gitTestHelper, ctx context.Context, repoName, filePath string) {
+func requireFileAbsentOnDefaultBranch(t *testing.T, h *gitcommon.GitTestHelper, ctx context.Context, repoName, filePath string) {
 	t.Helper()
 
 	subresourceParts := append([]string{"files"}, strings.Split(filePath, "/")...)

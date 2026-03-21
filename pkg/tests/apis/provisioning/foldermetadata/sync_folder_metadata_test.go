@@ -654,8 +654,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		})
 
 		helper.SyncAndWait(t, repo, nil)
-		requireFolderState(t, helper, "parent-old-uid", "Parent", "parent", repo)
-		requireFolderState(t, helper, "child-uid", "Child", "parent/child", "parent-old-uid")
+		common.RequireFolderState(t, helper.Folders, "parent-old-uid", "Parent", "parent", repo)
+		common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "parent/child", "parent-old-uid")
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"parent/child/dashboard.json": "child-uid",
 		})
@@ -669,10 +669,10 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		assertNoFolderByUID(t, helper, "parent-old-uid")
 
 		// New parent folder should exist with correct state.
-		requireFolderState(t, helper, "parent-new-uid", "Parent", "parent", repo)
+		common.RequireFolderState(t, helper.Folders, "parent-new-uid", "Parent", "parent", repo)
 
 		// Child folder should be re-parented to new parent UID.
-		requireFolderState(t, helper, "child-uid", "Child", "parent/child", "parent-new-uid")
+		common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "parent/child", "parent-new-uid")
 
 		// Dashboard should still be parented to child (unchanged).
 		requireDashboardParents(t, helper, repo, map[string]string{
@@ -699,8 +699,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		})
 
 		helper.SyncAndWait(t, repo, nil)
-		requireFolderState(t, helper, "p-old", "Parent", "parent", repo)
-		requireFolderState(t, helper, "c-old", "Child", "parent/child", "p-old")
+		common.RequireFolderState(t, helper.Folders, "p-old", "Parent", "parent", repo)
+		common.RequireFolderState(t, helper.Folders, "c-old", "Child", "parent/child", "p-old")
 
 		// Change both UIDs.
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("p-new", "Parent"))
@@ -713,8 +713,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		assertNoFolderByUID(t, helper, "c-old")
 
 		// New parent under repo root, new child under new parent.
-		requireFolderState(t, helper, "p-new", "Parent", "parent", repo)
-		requireFolderState(t, helper, "c-new", "Child", "parent/child", "p-new")
+		common.RequireFolderState(t, helper.Folders, "p-new", "Parent", "parent", repo)
+		common.RequireFolderState(t, helper.Folders, "c-new", "Child", "parent/child", "p-new")
 
 		// Dashboard re-parented to new child.
 		requireDashboardParents(t, helper, repo, map[string]string{
@@ -741,7 +741,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		})
 
 		helper.SyncAndWait(t, repo, nil)
-		requireFolderState(t, helper, "root-old-uid", "Root Folder", "root-folder", repo)
+		common.RequireFolderState(t, helper.Folders, "root-old-uid", "Root Folder", "root-folder", repo)
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"root-folder/dashboard.json": "root-old-uid",
 		})
@@ -755,7 +755,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		assertNoFolderByUID(t, helper, "root-old-uid")
 
 		// New folder should exist with repo as parent (folder-target repo).
-		requireFolderState(t, helper, "root-new-uid", "Root Folder", "root-folder", repo)
+		common.RequireFolderState(t, helper.Folders, "root-new-uid", "Root Folder", "root-folder", repo)
 
 		// Dashboard re-parented to new UID.
 		requireDashboardParents(t, helper, repo, map[string]string{
@@ -786,7 +786,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 			SkipResourceAssertions: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
-		requireFolderState(t, helper, "stable-uid", "Custom Title", "my-folder", repo)
+		common.RequireFolderState(t, helper.Folders, "stable-uid", "Custom Title", "my-folder", repo)
 
 		// Delete _folder.json (keep the directory and dashboard).
 		require.NoError(t, os.Remove(filepath.Join(helper.ProvisioningPath, "my-folder/_folder.json")))
@@ -842,8 +842,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 			SkipResourceAssertions: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
-		requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
-		requireFolderState(t, helper, "child-uid", "Child", "parent/child", "parent-uid")
+		common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
+		common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "parent/child", "parent-uid")
 
 		// Delete ONLY parent's _folder.json.
 		require.NoError(t, os.Remove(filepath.Join(helper.ProvisioningPath, "parent/_folder.json")))
@@ -879,7 +879,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 		require.NotEqual(t, "parent-uid", newParentUID)
 
 		// Child should still have its stable UID but re-parented to new parent.
-		requireFolderState(t, helper, "child-uid", "Child", "parent/child", newParentUID)
+		common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "parent/child", newParentUID)
 
 		// Dashboard still parented to child-uid.
 		requireDashboardParents(t, helper, repo, map[string]string{
@@ -903,8 +903,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 			SkipResourceAssertions: true,
 		})
 		helper.SyncAndWait(t, repo, nil)
-		requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
-		requireFolderState(t, helper, "child-old-uid", "Child", "parent/child", "parent-uid")
+		common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
+		common.RequireFolderState(t, helper.Folders, "child-old-uid", "Child", "parent/child", "parent-uid")
 
 		require.NoError(t, os.Remove(filepath.Join(helper.ProvisioningPath, "parent/_folder.json")))
 		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-new-uid", "Child"))
@@ -938,7 +938,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 		newParentUID := findFolderUIDBySourcePath(t, helper, repo, "parent")
 		require.NotEqual(t, "parent-uid", newParentUID)
 
-		requireFolderState(t, helper, "child-new-uid", "Child", "parent/child", newParentUID)
+		common.RequireFolderState(t, helper.Folders, "child-new-uid", "Child", "parent/child", newParentUID)
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"parent/child/dashboard.json": "child-new-uid",
 		})

@@ -33,8 +33,8 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesPermissions(t *test
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "team-a-uid", "Team A", "teamA", repo)
-	requireFolderState(t, helper, "team-b-uid", "Team B", "teamB", repo)
+	common.RequireFolderState(t, helper.Folders, "team-a-uid", "Team A", "teamA", repo)
+	common.RequireFolderState(t, helper.Folders, "team-b-uid", "Team B", "teamB", repo)
 
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 
@@ -80,7 +80,7 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesPermissions(t *test
 	helper.SyncAndWait(t, repo, nil)
 
 	// teamB should now live under teamA with the same stable UID.
-	requireFolderState(t, helper, "team-b-uid", "Team B", "teamA/teamB", "team-a-uid")
+	common.RequireFolderState(t, helper.Folders, "team-b-uid", "Team B", "teamA/teamB", "team-a-uid")
 
 	teamBPermsAfter := snapshotFolderPermissions(t, addr, "team-b-uid")
 
@@ -128,7 +128,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveDoesNotPreservePermissionsFo
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 	plainUID := findFolderUIDBySourcePath(t, helper, repo, "plain")
 	require.NotEmpty(t, plainUID)
 
@@ -203,9 +203,9 @@ func TestIntegrationProvisioning_FullSync_NestedFolderMovePreservesPermissions(t
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "root-uid", "Root", "root", repo)
-	requireFolderState(t, helper, "child-uid", "Child", "root/child", "root-uid")
-	requireFolderState(t, helper, "grandchild-uid", "Grandchild", "root/child/grandchild", "child-uid")
+	common.RequireFolderState(t, helper.Folders, "root-uid", "Root", "root", repo)
+	common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "root/child", "root-uid")
+	common.RequireFolderState(t, helper.Folders, "grandchild-uid", "Grandchild", "root/child/grandchild", "child-uid")
 
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 
@@ -230,8 +230,8 @@ func TestIntegrationProvisioning_FullSync_NestedFolderMovePreservesPermissions(t
 
 	destUID := findFolderUIDBySourcePath(t, helper, repo, "destination")
 	require.NotEmpty(t, destUID)
-	requireFolderState(t, helper, "child-uid", "Child", "destination/child", destUID)
-	requireFolderState(t, helper, "grandchild-uid", "Grandchild", "destination/child/grandchild", "child-uid")
+	common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "destination/child", destUID)
+	common.RequireFolderState(t, helper.Folders, "grandchild-uid", "Grandchild", "destination/child/grandchild", "child-uid")
 
 	grandchildPermsAfter := snapshotFolderPermissions(t, addr, "grandchild-uid")
 	require.Equal(t, len(grandchildPermsBefore), len(grandchildPermsAfter),
@@ -261,9 +261,9 @@ func TestIntegrationProvisioning_FullSync_RootToLeafMovePreservesPermissions(t *
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "top-uid", "Top", "top", repo)
-	requireFolderState(t, helper, "container-uid", "Container", "container", repo)
-	requireFolderState(t, helper, "inner-uid", "Inner", "container/inner", "container-uid")
+	common.RequireFolderState(t, helper.Folders, "top-uid", "Top", "top", repo)
+	common.RequireFolderState(t, helper.Folders, "container-uid", "Container", "container", repo)
+	common.RequireFolderState(t, helper.Folders, "inner-uid", "Inner", "container/inner", "container-uid")
 
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 
@@ -286,7 +286,7 @@ func TestIntegrationProvisioning_FullSync_RootToLeafMovePreservesPermissions(t *
 	moveInProvisioningPath(t, helper, "top", "container/inner/top")
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "top-uid", "Top", "container/inner/top", "inner-uid")
+	common.RequireFolderState(t, helper.Folders, "top-uid", "Top", "container/inner/top", "inner-uid")
 
 	topPermsAfter := snapshotFolderPermissions(t, addr, "top-uid")
 	require.Equal(t, len(topPermsBefore), len(topPermsAfter),
@@ -317,9 +317,9 @@ func TestIntegrationProvisioning_FullSync_LeafToRootMovePreservesPermissions(t *
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
-	requireFolderState(t, helper, "deep-uid", "Deep", "parent/deep", "parent-uid")
-	requireFolderState(t, helper, "leaf-uid", "Leaf", "parent/deep/leaf", "deep-uid")
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "deep-uid", "Deep", "parent/deep", "parent-uid")
+	common.RequireFolderState(t, helper.Folders, "leaf-uid", "Leaf", "parent/deep/leaf", "deep-uid")
 
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 
@@ -342,7 +342,7 @@ func TestIntegrationProvisioning_FullSync_LeafToRootMovePreservesPermissions(t *
 	moveInProvisioningPath(t, helper, "parent/deep/leaf", "leaf")
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "leaf-uid", "Leaf", "leaf", repo)
+	common.RequireFolderState(t, helper.Folders, "leaf-uid", "Leaf", "leaf", repo)
 
 	leafPermsAfter := snapshotFolderPermissions(t, addr, "leaf-uid")
 	require.Equal(t, len(leafPermsBefore), len(leafPermsAfter),
@@ -374,7 +374,7 @@ func TestIntegrationProvisioning_FullSync_MetadataFolderMovedUnderLegacyPreserve
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "child-meta-uid", "Child With Meta", "child-with-meta", repo)
+	common.RequireFolderState(t, helper.Folders, "child-meta-uid", "Child With Meta", "child-with-meta", repo)
 	legacyParentUID := findFolderUIDBySourcePath(t, helper, repo, "legacy-parent")
 	require.NotEmpty(t, legacyParentUID)
 
@@ -401,10 +401,10 @@ func TestIntegrationProvisioning_FullSync_MetadataFolderMovedUnderLegacyPreserve
 	helper.SyncAndWait(t, repo, nil)
 
 	// The legacy parent keeps its original hash-based UID.
-	requireFolderState(t, helper, legacyParentUID, "legacy-parent", "legacy-parent", repo)
+	common.RequireFolderState(t, helper.Folders, legacyParentUID, "legacy-parent", "legacy-parent", repo)
 
 	// The metadata child retains its stable UID and is now under the legacy parent.
-	requireFolderState(t, helper, "child-meta-uid", "Child With Meta", "legacy-parent/child-with-meta", legacyParentUID)
+	common.RequireFolderState(t, helper.Folders, "child-meta-uid", "Child With Meta", "legacy-parent/child-with-meta", legacyParentUID)
 
 	childPermsAfter := snapshotFolderPermissions(t, addr, "child-meta-uid")
 	require.Equal(t, len(childPermsBefore), len(childPermsAfter),

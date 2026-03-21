@@ -1,4 +1,4 @@
-package git
+package foldermetadataincremental
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +14,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -22,19 +22,19 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("detects missing folder metadata after adding file to folder", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 
 		const repoName = "incr-missing-meta-add"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-			"dashboard.json": dashboardJSON("root-dash", "Root Dashboard", 1),
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"dashboard.json": gitcommon.DashboardJSON("root-dash", "Root Dashboard", 1),
 		})
 
 		// Full sync the root dashboard.
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
 
 		// Add a dashboard inside a folder that has no _folder.json.
-		require.NoError(t, local.CreateFile("myfolder/dashboard2.json", string(dashboardJSON("folder-dash", "Folder Dashboard", 1))))
+		require.NoError(t, local.CreateFile("myfolder/dashboard2.json", string(gitcommon.DashboardJSON("folder-dash", "Folder Dashboard", 1))))
 		_, err := local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "add dashboard in folder without metadata")
@@ -43,7 +43,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 		require.NoError(t, err)
 
 		// Trigger incremental sync.
-		job := helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -56,23 +56,23 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 			"incremental sync should finish in warning state when folder metadata is missing")
 		require.NotEmpty(t, jobObj.Status.Warnings,
 			"incremental sync should produce at least one warning for missing folder metadata")
-		requireJobWarningContains(t, jobObj, "missing folder metadata")
+		gitcommon.RequireJobWarningContains(t, jobObj, "missing folder metadata")
 	})
 
 	t.Run("noop incremental sync still detects missing metadata", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 
 		const repoName = "incr-missing-meta-noop"
 
 		// Seed with a folder that has no _folder.json.
-		helper.createGitRepo(t, repoName, map[string][]byte{
-			"myfolder/dashboard.json": dashboardJSON("noop-dash", "Noop Dashboard", 1),
+		helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"myfolder/dashboard.json": gitcommon.DashboardJSON("noop-dash", "Noop Dashboard", 1),
 		})
 
 		common.SyncAndWaitWithWarning(t, helper, repoName)
 
 		// Trigger incremental sync with no new commits — same ref.
-		job := helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -101,19 +101,19 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t) // no withProvisioningFolderMetadata
+	helper := gitcommon.RunGrafanaWithGitServer(t) // no withProvisioningFolderMetadata
 
 	const repoName = "incr-missing-meta-disabled"
 
-	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-		"dashboard.json": dashboardJSON("disabled-dash", "Root Dashboard", 1),
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"dashboard.json": gitcommon.DashboardJSON("disabled-dash", "Root Dashboard", 1),
 	})
 
 	// Full sync.
 	common.SyncAndWaitWithSuccess(t, helper, repoName)
 
 	// Add a dashboard inside a folder with no _folder.json.
-	require.NoError(t, local.CreateFile("myfolder/dashboard2.json", string(dashboardJSON("disabled-folder-dash", "Folder Dashboard", 1))))
+	require.NoError(t, local.CreateFile("myfolder/dashboard2.json", string(gitcommon.DashboardJSON("disabled-folder-dash", "Folder Dashboard", 1))))
 	_, err := local.Git("add", ".")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "add dashboard in folder without metadata")
@@ -122,7 +122,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagDisab
 	require.NoError(t, err)
 
 	// Trigger incremental sync.
-	job := helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{Incremental: true},
 	})
@@ -157,53 +157,26 @@ func folderMetadataJSON(uid, title string) []byte {
 	return data
 }
 
-// requireRepoFolderTitle lists all folders managed by repoName and asserts that
-// exactly one has the given title, returning its K8s name (UID).
-func requireRepoFolderTitle(t *testing.T, h *gitTestHelper, ctx context.Context, repoName, expectedTitle string) string {
-	t.Helper()
-	var folderUID string
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := h.FoldersV1.Resource.List(ctx, metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list folders") {
-			return
-		}
-		for _, f := range list.Items {
-			mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
-			if mgr != repoName {
-				continue
-			}
-			title, _, _ := unstructured.NestedString(f.Object, "spec", "title")
-			if title == expectedTitle {
-				folderUID = f.GetName()
-				return
-			}
-		}
-		c.Errorf("no folder managed by %q with title %q found", repoName, expectedTitle)
-	}, waitTimeoutDefault, waitIntervalDefault,
-		"expected folder with title %q for repo %q", expectedTitle, repoName)
-	return folderUID
-}
-
 // TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle verifies that
 // incremental sync uses spec.title from _folder.json when creating folders.
 func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("folder uses spec.title from _folder.json", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title"
 
 		// Seed with a dashboard at root.
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-			"dashboard.json": dashboardJSON("root-dash", "Root Dashboard", 1),
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"dashboard.json": gitcommon.DashboardJSON("root-dash", "Root Dashboard", 1),
 		})
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
 
 		// Push a folder with _folder.json that has a custom title different from the directory name.
 		require.NoError(t, local.CreateFile("my-team/_folder.json", string(folderMetadataJSON("stable-uid-1", "My Team Display Name"))))
-		require.NoError(t, local.CreateFile("my-team/dash.json", string(dashboardJSON("team-dash", "Team Dashboard", 1))))
+		require.NoError(t, local.CreateFile("my-team/dash.json", string(gitcommon.DashboardJSON("team-dash", "Team Dashboard", 1))))
 		_, err := local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "add folder with custom metadata title")
@@ -215,23 +188,23 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		// Verify the Grafana folder was created with the metadata title, not the directory name.
-		requireRepoFolderTitle(t, helper, ctx, repoName, "My Team Display Name")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "My Team Display Name")
 	})
 
 	t.Run("folder falls back to directory name when spec.title is empty", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title-empty"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-			"dashboard.json": dashboardJSON("root-dash-2", "Root Dashboard", 1),
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"dashboard.json": gitcommon.DashboardJSON("root-dash-2", "Root Dashboard", 1),
 		})
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
 
 		// Push a folder with _folder.json that has an empty title — should fall back to dir name.
 		require.NoError(t, local.CreateFile("reports/_folder.json", string(folderMetadataJSON("stable-uid-2", ""))))
-		require.NoError(t, local.CreateFile("reports/dash.json", string(dashboardJSON("reports-dash", "Reports Dashboard", 1))))
+		require.NoError(t, local.CreateFile("reports/dash.json", string(gitcommon.DashboardJSON("reports-dash", "Reports Dashboard", 1))))
 		_, err := local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "add folder with empty metadata title")
@@ -242,22 +215,22 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		// Should use directory name "reports" as the title.
-		requireRepoFolderTitle(t, helper, ctx, repoName, "reports")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "reports")
 	})
 
 	t.Run("folder uses directory name when no _folder.json exists", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title-absent"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-			"dashboard.json": dashboardJSON("root-dash-3", "Root Dashboard", 1),
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"dashboard.json": gitcommon.DashboardJSON("root-dash-3", "Root Dashboard", 1),
 		})
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
 
 		// Push a folder without _folder.json.
-		require.NoError(t, local.CreateFile("analytics/dash.json", string(dashboardJSON("analytics-dash", "Analytics Dashboard", 1))))
+		require.NoError(t, local.CreateFile("analytics/dash.json", string(gitcommon.DashboardJSON("analytics-dash", "Analytics Dashboard", 1))))
 		_, err := local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "add folder without metadata")
@@ -268,24 +241,24 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
 
 		// Should use directory name "analytics" as the title.
-		requireRepoFolderTitle(t, helper, ctx, repoName, "analytics")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "analytics")
 	})
 
 	t.Run("nested folders use respective spec.title from _folder.json", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title-nested"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-			"dashboard.json": dashboardJSON("root-dash-4", "Root Dashboard", 1),
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"dashboard.json": gitcommon.DashboardJSON("root-dash-4", "Root Dashboard", 1),
 		})
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
 
 		// Push nested folders, each with their own _folder.json and custom titles.
 		require.NoError(t, local.CreateFile("parent/_folder.json", string(folderMetadataJSON("parent-uid", "Parent Display"))))
 		require.NoError(t, local.CreateFile("parent/child/_folder.json", string(folderMetadataJSON("child-uid", "Child Display"))))
-		require.NoError(t, local.CreateFile("parent/child/dash.json", string(dashboardJSON("nested-dash", "Nested Dashboard", 1))))
+		require.NoError(t, local.CreateFile("parent/child/dash.json", string(gitcommon.DashboardJSON("nested-dash", "Nested Dashboard", 1))))
 		_, err := local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "add nested folders with custom metadata titles")
@@ -296,8 +269,233 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		// Both folders should use their metadata titles.
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Display")
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Display")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Parent Display")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Child Display")
+	})
+}
+
+func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("adding _folder.json clears prior missing metadata warnings", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-create-clears-warning"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"myfolder/dash.json": gitcommon.DashboardJSON("warning-dash", "Warning Dashboard", 1),
+		})
+
+		helper.SyncAndWait(t, repoName)
+
+		hashUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "myfolder")
+		require.NotEqual(t, "stable-uid", hashUID, "folder should start with a hash-based UID")
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/dash.json", hashUID)
+
+		require.NoError(t, local.CreateFile("myfolder/_folder.json", string(folderMetadataJSON("stable-uid", "My Folder"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "add folder metadata to clear warning")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+
+		require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State)
+		require.Empty(t, jobObj.Status.Errors)
+		for _, w := range jobObj.Status.Warnings {
+			require.False(t, strings.Contains(w, "missing folder metadata"),
+				"expected missing-metadata warning to be cleared, got: %v", jobObj.Status.Warnings)
+		}
+
+		common.RequireRepoFolderUID(t, helper.FoldersV1, ctx, repoName, "stable-uid")
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/dash.json", "stable-uid")
+	})
+
+	t.Run("new _folder.json creates a brand-new empty folder", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-create-empty-folder"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"dashboard.json": gitcommon.DashboardJSON("root-dash", "Root Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+
+		require.NoError(t, local.CreateFile("empty-team/_folder.json", string(folderMetadataJSON("empty-team-uid", "Empty Team"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "add empty folder metadata")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		common.RequireFolderState(t, helper.FoldersV1, "empty-team-uid", "Empty Team", "empty-team", "")
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	})
+
+	t.Run("new _folder.json transitions existing folder to stable uid", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-create-existing"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"myfolder/dash.json": gitcommon.DashboardJSON("my-dash", "My Dashboard", 1),
+		})
+
+		helper.SyncAndWait(t, repoName)
+
+		oldUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "myfolder")
+		require.NotEqual(t, "stable-uid", oldUID, "folder should start with a hash-based UID")
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/dash.json", oldUID)
+
+		require.NoError(t, local.CreateFile("myfolder/_folder.json", string(folderMetadataJSON("stable-uid", "My Folder"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "add folder metadata")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		common.RequireRepoFolderUID(t, helper.FoldersV1, ctx, repoName, "stable-uid")
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/dash.json", "stable-uid")
+	})
+
+	t.Run("new _folder.json transitions existing folder to stable uid and re-parents children", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-create-existing"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"myfolder/dash.json":       gitcommon.DashboardJSON("my-dash", "My Dashboard", 1),
+			"myfolder/child/dash.json": gitcommon.DashboardJSON("child-dash", "Child Dashboard", 1),
+		})
+
+		helper.SyncAndWait(t, repoName)
+
+		oldUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "myfolder")
+		require.NotEqual(t, "stable-uid", oldUID, "folder should start with a hash-based UID")
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/dash.json", oldUID)
+
+		childUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "child")
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/child/dash.json", childUID)
+
+		require.NoError(t, local.CreateFile("myfolder/_folder.json", string(folderMetadataJSON("stable-uid", "My Folder"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "add folder metadata")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+
+		common.RequireRepoFolderUID(t, helper.FoldersV1, ctx, repoName, "stable-uid")
+		childUID = common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "child")
+		common.RequireFolderState(t, helper.FoldersV1, childUID, "child", "myfolder/child", "stable-uid")
+
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 2)
+		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 2)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/dash.json", "stable-uid")
+	})
+
+	t.Run("new _folder.json with direct child rename does not replay the old child path", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-create-child-rename"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"myfolder/dash.json": gitcommon.DashboardJSON("my-dash", "My Dashboard", 1),
+		})
+
+		helper.SyncAndWait(t, repoName)
+
+		oldUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "myfolder")
+		require.NotEqual(t, "stable-uid", oldUID, "folder should start with a hash-based UID")
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/dash.json", oldUID)
+
+		require.NoError(t, local.CreateFile("myfolder/_folder.json", string(folderMetadataJSON("stable-uid", "My Folder"))))
+		_, err := local.Git("mv", "myfolder/dash.json", "myfolder/dash-renamed.json")
+		require.NoError(t, err)
+		_, err = local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "add folder metadata and rename child dashboard")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		common.RequireRepoFolderUID(t, helper.FoldersV1, ctx, repoName, "stable-uid")
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/dash-renamed.json", "stable-uid")
+	})
+
+	t.Run("new nested _folder.json files transition both parent and child to stable uids", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-create-nested"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"parent/child/dash.json": gitcommon.DashboardJSON("nested-create-dash", "Nested Dashboard", 1),
+		})
+
+		helper.SyncAndWait(t, repoName)
+
+		oldParentUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "parent")
+		oldChildUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "child")
+		require.NotEqual(t, "p-new", oldParentUID, "parent should start with a hash-based UID")
+		require.NotEqual(t, "c-new", oldChildUID, "child should start with a hash-based UID")
+		common.RequireFolderState(t, helper.FoldersV1, oldParentUID, "parent", "parent", "")
+		common.RequireFolderState(t, helper.FoldersV1, oldChildUID, "child", "parent/child", oldParentUID)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "parent/child/dash.json", oldChildUID)
+
+		require.NoError(t, local.CreateFile("parent/_folder.json", string(folderMetadataJSON("p-new", "Parent"))))
+		require.NoError(t, local.CreateFile("parent/child/_folder.json", string(folderMetadataJSON("c-new", "Child"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "add nested folder metadata")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, oldParentUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old parent folder should be deleted")
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, oldChildUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old child folder should be deleted")
+
+		common.RequireFolderState(t, helper.FoldersV1, "p-new", "Parent", "parent", "")
+		common.RequireFolderState(t, helper.FoldersV1, "c-new", "Child", "parent/child", "p-new")
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/child"})
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 2)
+		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repoName, 1)
+		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "parent/child/dash.json", "c-new")
 	})
 }
 
@@ -307,18 +505,18 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("updates folder title when _folder.json spec.title changes", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title-update"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"alpha/_folder.json": folderMetadataJSON("alpha-uid", "Alpha"),
-			"alpha/dash.json":    dashboardJSON("alpha-dash", "Alpha Dashboard", 1),
+			"alpha/dash.json":    gitcommon.DashboardJSON("alpha-dash", "Alpha Dashboard", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Alpha")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Alpha")
 
 		require.NoError(t, local.UpdateFile("alpha/_folder.json", string(folderMetadataJSON("alpha-uid", "Alpha Renamed"))))
 		_, err := local.Git("add", ".")
@@ -330,24 +528,24 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 
 		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Alpha Renamed")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Alpha Renamed")
 	})
 
 	t.Run("updates nested folder title", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title-nested-upd"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"parent/_folder.json":       folderMetadataJSON("parent-uid-upd", "Parent Title"),
 			"parent/child/_folder.json": folderMetadataJSON("child-uid-upd", "Child Title"),
-			"parent/child/dash.json":    dashboardJSON("nested-upd-dash", "Nested Dashboard", 1),
+			"parent/child/dash.json":    gitcommon.DashboardJSON("nested-upd-dash", "Nested Dashboard", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Title")
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Title")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Parent Title")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Child Title")
 
 		require.NoError(t, local.UpdateFile("parent/child/_folder.json", string(folderMetadataJSON("child-uid-upd", "Child Title Updated"))))
 		_, err := local.Git("add", ".")
@@ -359,27 +557,27 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 
 		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent Title")
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Child Title Updated")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Parent Title")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Child Title Updated")
 	})
 
 	t.Run("updates title alongside dashboard changes", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title-with-dash"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"team/_folder.json": folderMetadataJSON("team-uid-combo", "Original Team"),
-			"team/dash.json":    dashboardJSON("combo-dash", "Original Dashboard", 1),
+			"team/dash.json":    gitcommon.DashboardJSON("combo-dash", "Original Dashboard", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Original Team")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Original Team")
 		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "combo-dash", "Original Dashboard")
 
 		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON("team-uid-combo", "Updated Team"))))
-		require.NoError(t, local.UpdateFile("team/dash.json", string(dashboardJSON("combo-dash", "Updated Dashboard", 2))))
+		require.NoError(t, local.UpdateFile("team/dash.json", string(gitcommon.DashboardJSON("combo-dash", "Updated Dashboard", 2))))
 		_, err := local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "update folder title and dashboard in same commit")
@@ -389,7 +587,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 
 		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Updated Team")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Updated Team")
 		common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "combo-dash", "Updated Dashboard")
 	})
 }
@@ -403,15 +601,15 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("root to root rename", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-rename-root-root"
 		const folderUID = "rr-folder-uid"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"old-team/_folder.json":    folderMetadataJSON(folderUID, "My Team"),
-			"old-team/dashboard1.json": dashboardJSON("rr-dash-001", "Team Dashboard", 1),
+			"old-team/dashboard1.json": gitcommon.DashboardJSON("rr-dash-001", "Team Dashboard", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
@@ -435,7 +633,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
 		// producing errors. The rename still works via fallback, so we only
 		// wait for completion without asserting success.
-		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -461,17 +659,17 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("nested to nested rename within same parent", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-rename-nested-nested"
 		const parentUID = "nn-parent-uid"
 		const childUID = "nn-child-uid"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"parent/_folder.json":              folderMetadataJSON(parentUID, "Parent"),
 			"parent/old-child/_folder.json":    folderMetadataJSON(childUID, "Child"),
-			"parent/old-child/dashboard1.json": dashboardJSON("nn-dash-001", "Child Dashboard", 1),
+			"parent/old-child/dashboard1.json": gitcommon.DashboardJSON("nn-dash-001", "Child Dashboard", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
@@ -495,7 +693,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
 		// producing errors. The rename still works via fallback, so we only
 		// wait for completion without asserting success.
-		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -521,17 +719,17 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("root to nested rename", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-rename-root-nested"
 		const parentUID = "rn-parent-uid"
 		const movedUID = "rn-moved-uid"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"parent/_folder.json":       folderMetadataJSON(parentUID, "Parent"),
 			"my-folder/_folder.json":    folderMetadataJSON(movedUID, "My Folder"),
-			"my-folder/dashboard1.json": dashboardJSON("rn-dash-001", "Moved Dashboard", 1),
+			"my-folder/dashboard1.json": gitcommon.DashboardJSON("rn-dash-001", "Moved Dashboard", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
@@ -555,7 +753,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
 		// producing errors. The rename still works via fallback, so we only
 		// wait for completion without asserting success.
-		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -582,17 +780,17 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("nested to root rename", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-rename-nested-root"
 		const parentUID = "nr-parent-uid"
 		const movedUID = "nr-moved-uid"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"parent/_folder.json":              folderMetadataJSON(parentUID, "Parent"),
 			"parent/my-folder/_folder.json":    folderMetadataJSON(movedUID, "My Folder"),
-			"parent/my-folder/dashboard1.json": dashboardJSON("nr-dash-001", "Moved Dashboard", 1),
+			"parent/my-folder/dashboard1.json": gitcommon.DashboardJSON("nr-dash-001", "Moved Dashboard", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
@@ -616,7 +814,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
 		// producing errors. The rename still works via fallback, so we only
 		// wait for completion without asserting success.
-		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -642,7 +840,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("rename folder with both resources and folder children", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-rename-mixed"
@@ -650,11 +848,11 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		const childUID = "mx-child-uid"
 
 		// Seed: parent folder with a dashboard and a child folder that also has a dashboard.
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"old-parent/_folder.json":          folderMetadataJSON(parentUID, "Parent"),
-			"old-parent/parent-dash.json":      dashboardJSON("mx-parent-dash", "Parent Dashboard", 1),
+			"old-parent/parent-dash.json":      gitcommon.DashboardJSON("mx-parent-dash", "Parent Dashboard", 1),
 			"old-parent/child/_folder.json":    folderMetadataJSON(childUID, "Child"),
-			"old-parent/child/child-dash.json": dashboardJSON("mx-child-dash", "Child Dashboard", 1),
+			"old-parent/child/child-dash.json": gitcommon.DashboardJSON("mx-child-dash", "Child Dashboard", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
@@ -687,7 +885,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
 		// producing errors. The rename still works via fallback, so we only
 		// wait for completion without asserting success.
-		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -729,13 +927,13 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("non-metadata folder rename still works via delete and create", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-graceful-rename-nometa"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
-			"old-team/dashboard1.json": dashboardJSON("gr-nometa-001", "No Meta Dashboard", 1),
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"old-team/dashboard1.json": gitcommon.DashboardJSON("gr-nometa-001", "No Meta Dashboard", 1),
 		})
 
 		common.SyncAndWaitWithWarning(t, helper, repoName)
@@ -766,20 +964,20 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("simple UID change re-parents dashboard", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-uid-change-simple"
 		const oldUID = "old-folder-uid"
 		const newUID = "new-folder-uid"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"alpha/_folder.json": folderMetadataJSON(oldUID, "Alpha"),
-			"alpha/dash.json":    dashboardJSON("uid-dash-001", "Alpha Dashboard", 1),
+			"alpha/dash.json":    gitcommon.DashboardJSON("uid-dash-001", "Alpha Dashboard", 1),
 		})
 
-		helper.syncAndWait(t, repoName)
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Alpha")
+		helper.SyncAndWait(t, repoName)
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Alpha")
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"uid-dash-001": {Title: "Alpha Dashboard", SourcePath: "alpha/dash.json", Folder: oldUID},
@@ -793,7 +991,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -812,7 +1010,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 	})
 
 	t.Run("UID change with nested child folder", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-uid-change-nested"
@@ -820,16 +1018,16 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		const parentNewUID = "parent-new-uid"
 		const childUID = "child-stable-uid"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"parent/_folder.json":           folderMetadataJSON(parentOldUID, "Parent"),
 			"parent/child/_folder.json":     folderMetadataJSON(childUID, "Child"),
-			"parent/child/nested-dash.json": dashboardJSON("uid-nested-001", "Nested Dashboard", 1),
-			"parent/parent-dash.json":       dashboardJSON("uid-parent-001", "Parent Dashboard", 1),
+			"parent/child/nested-dash.json": gitcommon.DashboardJSON("uid-nested-001", "Nested Dashboard", 1),
+			"parent/parent-dash.json":       gitcommon.DashboardJSON("uid-parent-001", "Parent Dashboard", 1),
 		})
 
-		helper.syncAndWait(t, repoName)
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Parent")
-		requireRepoFolderTitle(t, helper, ctx, repoName, "Child")
+		helper.SyncAndWait(t, repoName)
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Parent")
+		common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "Child")
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"uid-parent-001": {Title: "Parent Dashboard", SourcePath: "parent/parent-dash.json", Folder: parentOldUID},
@@ -844,7 +1042,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -867,22 +1065,22 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 	})
 
 	t.Run("UID change alongside dashboard update in same commit", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-uid-change-combo"
 		const oldUID = "combo-old-uid"
 		const newUID = "combo-new-uid"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"team/_folder.json": folderMetadataJSON(oldUID, "Team"),
-			"team/dash.json":    dashboardJSON("uid-combo-001", "Original Dashboard", 1),
+			"team/dash.json":    gitcommon.DashboardJSON("uid-combo-001", "Original Dashboard", 1),
 		})
 
-		helper.syncAndWait(t, repoName)
+		helper.SyncAndWait(t, repoName)
 
 		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON(newUID, "Team Rebranded"))))
-		require.NoError(t, local.UpdateFile("team/dash.json", string(dashboardJSON("uid-combo-001", "Updated Dashboard", 2))))
+		require.NoError(t, local.UpdateFile("team/dash.json", string(gitcommon.DashboardJSON("uid-combo-001", "Updated Dashboard", 2))))
 		_, err := local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "change UID and update dashboard")
@@ -890,7 +1088,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -916,18 +1114,18 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("simple metadata deletion re-parents dashboard", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-delete-simple"
 		const stableUID = "stable-folder-uid"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"alpha/_folder.json": folderMetadataJSON(stableUID, "Alpha"),
-			"alpha/dash.json":    dashboardJSON("meta-del-001", "Alpha Dashboard", 1),
+			"alpha/dash.json":    gitcommon.DashboardJSON("meta-del-001", "Alpha Dashboard", 1),
 		})
 
-		helper.syncAndWait(t, repoName)
+		helper.SyncAndWait(t, repoName)
 
 		// Verify folder exists with stable UID
 		_, err := helper.FoldersV1.Resource.Get(ctx, stableUID, metav1.GetOptions{})
@@ -945,7 +1143,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -955,7 +1153,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		require.True(t, apierrors.IsNotFound(err), "old stable UID folder should be deleted after metadata deletion")
 
 		// New folder should exist with hash-based UID and directory name as title
-		newFolderUID := requireRepoFolderTitle(t, helper, ctx, repoName, "alpha")
+		newFolderUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "alpha")
 		require.NotEqual(t, stableUID, newFolderUID, "new folder should have a different UID")
 
 		// Dashboard should be re-parented to the new folder
@@ -965,21 +1163,21 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 	})
 
 	t.Run("metadata deletion with nested child folder", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-delete-nested"
 		const parentStableUID = "parent-stable-uid"
 		const childStableUID = "child-stable-uid"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"parent/_folder.json":          folderMetadataJSON(parentStableUID, "Parent"),
 			"parent/child/_folder.json":    folderMetadataJSON(childStableUID, "Child"),
-			"parent/parent-dash.json":      dashboardJSON("nested-parent-001", "Parent Dashboard", 1),
-			"parent/child/child-dash.json": dashboardJSON("nested-child-001", "Child Dashboard", 1),
+			"parent/parent-dash.json":      gitcommon.DashboardJSON("nested-parent-001", "Parent Dashboard", 1),
+			"parent/child/child-dash.json": gitcommon.DashboardJSON("nested-child-001", "Child Dashboard", 1),
 		})
 
-		helper.syncAndWait(t, repoName)
+		helper.SyncAndWait(t, repoName)
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"nested-parent-001": {Title: "Parent Dashboard", SourcePath: "parent/parent-dash.json", Folder: parentStableUID},
@@ -994,7 +1192,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -1004,7 +1202,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		require.True(t, apierrors.IsNotFound(err), "old parent folder should be deleted")
 
 		// New parent folder should exist with hash-based UID
-		newParentUID := requireRepoFolderTitle(t, helper, ctx, repoName, "parent")
+		newParentUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "parent")
 		require.NotEqual(t, parentStableUID, newParentUID)
 
 		// Child folder should still exist with its stable UID, re-parented under new parent
@@ -1021,23 +1219,23 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 	})
 
 	t.Run("metadata deletion re-parents all direct children", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-delete-children"
 		const stableUID = "children-stable-uid"
 		const childFolderUID = "child-folder-uid"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"team/_folder.json":         folderMetadataJSON(stableUID, "Team"),
-			"team/dash-a.json":          dashboardJSON("child-dash-a", "Dashboard A", 1),
-			"team/dash-b.json":          dashboardJSON("child-dash-b", "Dashboard B", 1),
-			"team/dash-c.json":          dashboardJSON("child-dash-c", "Dashboard C", 1),
+			"team/dash-a.json":          gitcommon.DashboardJSON("child-dash-a", "Dashboard A", 1),
+			"team/dash-b.json":          gitcommon.DashboardJSON("child-dash-b", "Dashboard B", 1),
+			"team/dash-c.json":          gitcommon.DashboardJSON("child-dash-c", "Dashboard C", 1),
 			"team/sub/_folder.json":     folderMetadataJSON(childFolderUID, "Sub"),
-			"team/sub/nested-dash.json": dashboardJSON("child-nested", "Nested Dashboard", 1),
+			"team/sub/nested-dash.json": gitcommon.DashboardJSON("child-nested", "Nested Dashboard", 1),
 		})
 
-		helper.syncAndWait(t, repoName)
+		helper.SyncAndWait(t, repoName)
 
 		_, err := helper.FoldersV1.Resource.Get(ctx, stableUID, metav1.GetOptions{})
 		require.NoError(t, err, "folder with stable UID should exist")
@@ -1062,7 +1260,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -1072,7 +1270,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		require.True(t, apierrors.IsNotFound(err), "old stable UID folder should be deleted")
 
 		// New folder should exist with hash-based UID
-		newFolderUID := requireRepoFolderTitle(t, helper, ctx, repoName, "team")
+		newFolderUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "team")
 		require.NotEqual(t, stableUID, newFolderUID)
 
 		// All three dashboards should be re-parented to the new folder
@@ -1091,23 +1289,23 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 	})
 
 	t.Run("metadata deletion alongside dashboard update in same commit", func(t *testing.T) {
-		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-delete-combo"
 		const stableUID = "combo-stable-uid"
 
-		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"team/_folder.json": folderMetadataJSON(stableUID, "Team"),
-			"team/dash.json":    dashboardJSON("combo-del-001", "Original Dashboard", 1),
+			"team/dash.json":    gitcommon.DashboardJSON("combo-del-001", "Original Dashboard", 1),
 		})
 
-		helper.syncAndWait(t, repoName)
+		helper.SyncAndWait(t, repoName)
 
 		// Delete metadata and update dashboard in the same commit
 		_, err := local.Git("rm", "team/_folder.json")
 		require.NoError(t, err)
-		require.NoError(t, local.UpdateFile("team/dash.json", string(dashboardJSON("combo-del-001", "Updated Dashboard", 2))))
+		require.NoError(t, local.UpdateFile("team/dash.json", string(gitcommon.DashboardJSON("combo-del-001", "Updated Dashboard", 2))))
 		_, err = local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "delete metadata and update dashboard")
@@ -1115,7 +1313,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{Incremental: true},
 		})
@@ -1125,7 +1323,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		require.True(t, apierrors.IsNotFound(err), "old stable UID folder should be deleted")
 
 		// New folder with hash-based UID
-		newFolderUID := requireRepoFolderTitle(t, helper, ctx, repoName, "team")
+		newFolderUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "team")
 		require.NotEqual(t, stableUID, newFolderUID)
 
 		// Dashboard should be updated and re-parented
