@@ -1178,6 +1178,10 @@
           "description": {
             "type": "string"
           },
+          "enableGroupBy": {
+            "description": "Whether the group-by operator is enabled in the ad hoc filter combobox.",
+            "type": "boolean"
+          },
           "filters": {
             "type": "array",
             "items": {

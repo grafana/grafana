@@ -922,6 +922,10 @@ const (
 	// Enables the new colorblind-friendly themes
 	FlagColorblindThemes = "colorblindThemes"
 
+	// FlagRbacIAMClient
+	// Enables the IAM client integration for fetching remote IAM global roles
+	FlagRbacIAMClient = "rbacIAMClient"
+
 	// FlagQueryFetchConfigFromSettingsService
 	// Enables the query service to fetch the configuration from the settings service
 	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"

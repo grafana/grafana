@@ -115,6 +115,10 @@ jobs:
               workflow = 'release-build-pro.yml';
             }
 
+            if (REF == 'main' && SOURCE_EVENT == 'schedule') {
+              workflow = 'release-build-nightly.yml';
+            }
+
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
                 repo: 'grafana-enterprise',
