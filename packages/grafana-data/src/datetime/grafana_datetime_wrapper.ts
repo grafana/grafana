@@ -351,30 +351,12 @@ const normalizeZone = (zone?: string) => {
 
 const getBrowserTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC';
 
-// This function can return wrong values on Firefox: https://github.com/moment/luxon/issues/1563
 const getLocaleWeekStart = (locale: string): number => {
-  try {
-    return LuxonDateTime.local({ locale }).startOf('week', { useLocaleWeeks: true }).localWeekday;
-    // const firstDay = (new Intl.Locale(locale) as Intl.Locale & { weekInfo?: { firstDay?: number } }).weekInfo?.firstDay;
-    // return firstDay ? firstDay % 7 : 0;
-  } catch {
-    return 0;
-  }
+  return Info.getStartOfWeek({ locale });
 };
 
 const getLocalizedWeekdays = () => {
-  try {
-    const locale = getLocale();
-    return Array.from({ length: 7 }, (_, index) => {
-      const date = new Date(Date.UTC(2023, 0, 1 + index));
-      return new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' }).format(date);
-    });
-  } catch {
-    return Info.weekdays('long').map((weekday, index) => {
-      const sundayFirstIndex = (index + 1) % 7;
-      return Info.weekdays('long')[(sundayFirstIndex + 6) % 7];
-    });
-  }
+  return Info.weekdays('long', { locale: getLocale() });
 };
 
 const normalizeDuration = (amount?: DateTimeInput, unit?: DurationUnit) => {

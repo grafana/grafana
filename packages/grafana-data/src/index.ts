@@ -368,15 +368,6 @@ export * as dateMath from './datetime/datemath';
 export * as rangeUtil from './datetime/rangeutil';
 export { type DateTimeOptions, setTimeZoneResolver, type TimeZoneResolver, getTimeZone } from './datetime/common';
 export {
-  ISO_8601,
-  type DateTimeBuiltinFormat,
-  type DateTimeInput,
-  type FormatInput,
-  type DurationInput,
-  type DurationUnit,
-  type DateTimeLocale,
-  type DateTimeDuration,
-  type DateTime,
   setLocale,
   getLocale,
   getLocaleData,
@@ -390,6 +381,17 @@ export {
   getWeekdayIndexByEnglishName,
   setWeekStart,
 } from './datetime/grafana_datetime_wrapper';
+export {
+  ISO_8601,
+  type DateTimeBuiltinFormat,
+  type DateTimeInput,
+  type FormatInput,
+  type DurationInput,
+  type DurationUnit,
+  type DateTimeLocale,
+  type DateTimeDuration,
+  type DateTime,
+} from './datetime/types';
 export { dateTimeAsMoment } from './datetime/moment_wrapper';
 export {
   InternalTimeZones,
