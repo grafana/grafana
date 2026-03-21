@@ -1759,6 +1759,53 @@ func RequireRecreated(t *testing.T, label string, before, after ObjectSnapshot) 
 		"%s: generation should reset to 1 after recreate", label)
 }
 
+// SnapshotDashboardsBySourcePath returns a map from sourcePath to ObjectSnapshot
+// for dashboards managed by the given repo. It waits until all requested paths are found.
+func SnapshotDashboardsBySourcePath(t *testing.T, helper *ProvisioningTestHelper, repoName string, paths []string) map[string]ObjectSnapshot {
+	t.Helper()
+	wanted := make(map[string]bool, len(paths))
+	for _, p := range paths {
+		wanted[p] = true
+	}
+	result := make(map[string]ObjectSnapshot, len(paths))
+
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		for i := range list.Items {
+			annotations := list.Items[i].GetAnnotations()
+			if annotations["grafana.app/managerId"] != repoName {
+				continue
+			}
+			sp := annotations["grafana.app/sourcePath"]
+			if wanted[sp] {
+				result[sp] = SnapshotObject(t, &list.Items[i])
+			}
+		}
+		for _, p := range paths {
+			assert.Contains(c, result, p, "dashboard with sourcePath %q not found", p)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected dashboards for repo %q", repoName)
+	return result
+}
+
+// RequireDashboardsUpdatedInPlace verifies that the K8s UIDs are preserved
+// (i.e., the resources were updated in place, not deleted and recreated)
+// for all given paths that appear in both before and after snapshot maps.
+func RequireDashboardsUpdatedInPlace(t *testing.T, before, after map[string]ObjectSnapshot, paths []string) {
+	t.Helper()
+	for _, p := range paths {
+		b, okB := before[p]
+		a, okA := after[p]
+		require.True(t, okB, "before snapshot missing for %q", p)
+		require.True(t, okA, "after snapshot missing for %q", p)
+		RequireUpdatedInPlace(t, p, b, a)
+	}
+}
+
 // FindCondition finds a condition by type in the conditions list
 func FindCondition(conditions []metav1.Condition, conditionType string) *metav1.Condition {
 	for i := range conditions {

@@ -58,6 +58,12 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 		"teamC/dashboard.json": teamCUID,
 	})
 
+	beforeSnapshots := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
+		"teamA/dashboard.json",
+		"teamB/dashboard.json",
+		"teamC/dashboard.json",
+	})
+
 	moveInProvisioningPath(t, helper, "teamB", "teamC/teamB")
 	moveInProvisioningPath(t, helper, "teamC", "teamA/teamC")
 	moveInProvisioningPath(t, helper, "teamA/teamC/teamD", "teamA/teamD")
@@ -80,6 +86,24 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 		"teamA/teamC/teamB/dashboard.json": "team-b-uid",
 		"teamA/teamC/dashboard.json":       newTeamCUID,
 	})
+
+	// Verify dashboards were updated in place (UIDs preserved, not recreated).
+	// teamA/dashboard.json didn't move, so use same key for before and after.
+	afterSnapshots := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
+		"teamA/dashboard.json",
+		"teamA/teamC/teamB/dashboard.json",
+		"teamA/teamC/dashboard.json",
+	})
+	// teamA/dashboard.json stayed at the same path
+	common.RequireDashboardsUpdatedInPlace(t, beforeSnapshots, afterSnapshots, []string{"teamA/dashboard.json"})
+	// teamB/dashboard.json moved to teamA/teamC/teamB/dashboard.json
+	require.Equal(t, beforeSnapshots["teamB/dashboard.json"].UID,
+		afterSnapshots["teamA/teamC/teamB/dashboard.json"].UID,
+		"moved dashboard (teamB -> teamA/teamC/teamB) should preserve UID")
+	// teamC/dashboard.json moved to teamA/teamC/dashboard.json
+	require.Equal(t, beforeSnapshots["teamC/dashboard.json"].UID,
+		afterSnapshots["teamA/teamC/dashboard.json"].UID,
+		"moved dashboard (teamC -> teamA/teamC) should preserve UID")
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t *testing.T) {
@@ -789,4 +813,53 @@ func assertNoFolderByUID(t *testing.T, helper *common.ProvisioningTestHelper, fo
 			"expected NotFound error for folder %q, got: %v", folderUID, err)
 	}, 30*time.Second, 100*time.Millisecond,
 		"folder %q should be deleted", folderUID)
+}
+
+// TestIntegrationProvisioning_FullSync_DashboardMoveInPlace verifies that
+// moving a dashboard file to a different folder during full sync updates it
+// in place (preserving K8s UID and creationTimestamp) rather than deleting
+// and recreating it.
+func TestIntegrationProvisioning_FullSync_DashboardMoveInPlace(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	const repo = "dashboard-move-uid"
+
+	writeToProvisioningPath(t, helper, "folderA/_folder.json", folderMetadataJSON("folder-a-uid", "Folder A"))
+	writeToProvisioningPath(t, helper, "folderB/_folder.json", folderMetadataJSON("folder-b-uid", "Folder B"))
+
+	helper.CreateRepo(t, common.TestRepo{
+		Name:   repo,
+		Target: "folder",
+		Copies: map[string]string{
+			"../testdata/all-panels.json": "folderA/dashboard.json",
+		},
+		SkipSync:               true,
+		SkipResourceAssertions: true,
+	})
+
+	helper.SyncAndWait(t, repo, nil)
+
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"folderA/dashboard.json": "folder-a-uid",
+	})
+
+	before := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{"folderA/dashboard.json"})
+
+	// Move the dashboard file from folderA to folderB (same metadata.name).
+	moveInProvisioningPath(t, helper, "folderA/dashboard.json", "folderB/dashboard.json")
+
+	helper.SyncAndWait(t, repo, nil)
+
+	requireDashboardParents(t, helper, repo, map[string]string{
+		"folderB/dashboard.json": "folder-b-uid",
+	})
+
+	after := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{"folderB/dashboard.json"})
+
+	// The dashboard was moved — the old sourcePath no longer exists and the new
+	// one appeared. But under the hood the metadata.name is the same, so
+	// DetectRenames should have converted the delete+create into an update.
+	common.RequireUpdatedInPlace(t, "folderA→folderB move",
+		before["folderA/dashboard.json"], after["folderB/dashboard.json"])
 }

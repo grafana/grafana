@@ -22,6 +22,11 @@ type ResourceFileChange struct {
 	// The current value in the database -- only required for delete
 	Existing *provisioning.ResourceListItem
 
+	// Hash is the source-side content hash from the repository tree.
+	// Populated for FileActionCreated entries so DetectRenames can match
+	// them against deletions without reading file content.
+	Hash string
+
 	// FolderRenamed is set when folder metadata reconciliation changes the folder ID
 	// (for example, a UID change in _folder.json or reverting to a hash-based ID
 	// after _folder.json deletion). The old folder needs cleanup after children
@@ -175,8 +180,9 @@ func Changes(
 			}
 
 			changes = append(changes, ResourceFileChange{
-				Action: repository.FileActionCreated, // or previously ignored/failed
+				Action: repository.FileActionCreated,
 				Path:   file.Path,
+				Hash:   file.Hash,
 			})
 
 			if err := keep.Add(file.Path); err != nil {
@@ -208,8 +214,9 @@ func Changes(
 			}
 
 			changes = append(changes, ResourceFileChange{
-				Action: repository.FileActionCreated, // or previously ignored/failed
+				Action: repository.FileActionCreated,
 				Path:   safeSegment,
+				Hash:   file.Hash,
 			})
 		}
 	}
@@ -391,6 +398,85 @@ func detectFolderUIDChanges(
 		}
 	}
 	return affectedFolders, nil
+}
+
+// DetectRenames finds delete+create pairs whose content hash matches and
+// collapses them into a single FileActionRenamed change. This preserves the
+// K8s UID, creationTimestamp, and generation when a file is moved/renamed in
+// the repo without changing its content.
+//
+// Matching uses the source checksum stored on the existing resource
+// (Existing.Hash) and the repository tree hash carried on created entries
+// (Hash). Only simple renames (content unchanged) are detected; if the
+// content also changed the pair remains as separate delete + create.
+//
+// When multiple deleted resources share the same hash the match is ambiguous
+// (we cannot determine which deletion corresponds to the new file), so all
+// entries with that hash are left as separate delete + create operations.
+//
+// Folder paths are skipped because folder renames are handled separately by
+// augmentChangesForFolderMetadata.
+func DetectRenames(changes []ResourceFileChange) []ResourceFileChange {
+	deletionsByHash := make(map[string]int)
+	ambiguous := make(map[string]bool)
+	for i, change := range changes {
+		if change.Action != repository.FileActionDeleted || change.Existing == nil {
+			continue
+		}
+		if safepath.IsDir(change.Path) || change.Existing.Hash == "" {
+			continue
+		}
+		// Track hashes seen more than once so we can discard them below.
+		if _, exists := deletionsByHash[change.Existing.Hash]; exists {
+			ambiguous[change.Existing.Hash] = true
+		}
+		deletionsByHash[change.Existing.Hash] = i
+	}
+	// Remove ambiguous hashes: when multiple deletions share the same hash
+	// we cannot reliably pick the right one, so skip them entirely.
+	for h := range ambiguous {
+		delete(deletionsByHash, h)
+	}
+
+	if len(deletionsByHash) == 0 {
+		return changes
+	}
+
+	removedDeletions := make(map[int]bool)
+	for i, change := range changes {
+		if change.Action != repository.FileActionCreated || change.Hash == "" {
+			continue
+		}
+		if safepath.IsDir(change.Path) {
+			continue
+		}
+
+		deletionIdx, found := deletionsByHash[change.Hash]
+		if !found {
+			continue
+		}
+
+		changes[i] = ResourceFileChange{
+			Action:   repository.FileActionRenamed,
+			Path:     change.Path,
+			Hash:     change.Hash,
+			Existing: changes[deletionIdx].Existing,
+		}
+		removedDeletions[deletionIdx] = true
+		delete(deletionsByHash, change.Hash)
+	}
+
+	if len(removedDeletions) == 0 {
+		return changes
+	}
+
+	result := make([]ResourceFileChange, 0, len(changes)-len(removedDeletions))
+	for i, change := range changes {
+		if !removedDeletions[i] {
+			result = append(result, change)
+		}
+	}
+	return result
 }
 
 // emitDirectChildrenChanges iterates the source tree and emits FileActionUpdated for
