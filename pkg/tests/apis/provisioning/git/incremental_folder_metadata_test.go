@@ -803,7 +803,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, newUID, metav1.GetOptions{})
 		require.NoError(t, err, "folder with new UID should exist")
@@ -851,7 +854,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
 
 		_, err = helper.FoldersV1.Resource.Get(ctx, parentNewUID, metav1.GetOptions{})
 		require.NoError(t, err, "parent folder with new UID should exist")
@@ -894,7 +900,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.syncAndWaitIncremental(t, repoName)
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, newUID, metav1.GetOptions{})
 		require.NoError(t, err)
@@ -906,6 +915,232 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"uid-combo-001": {Title: "Updated Dashboard", SourcePath: "team/dash.json", Folder: newUID},
+		})
+	})
+}
+
+// TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion verifies that
+// deleting a _folder.json during incremental sync transitions the folder from a
+// stable UID back to a hash-derived UID, re-parents children, and deletes the old folder.
+func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("simple metadata deletion re-parents dashboard", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-delete-simple"
+		const stableUID = "stable-folder-uid"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"alpha/_folder.json": folderMetadataJSON(stableUID, "Alpha"),
+			"alpha/dash.json":    dashboardJSON("meta-del-001", "Alpha Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+
+		// Verify folder exists with stable UID
+		_, err := helper.FoldersV1.Resource.Get(ctx, stableUID, metav1.GetOptions{})
+		require.NoError(t, err, "folder with stable UID should exist after full sync")
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"meta-del-001": {Title: "Alpha Dashboard", SourcePath: "alpha/dash.json", Folder: stableUID},
+		})
+
+		// Delete _folder.json only, keeping the directory and dashboard
+		_, err = local.Git("rm", "alpha/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "delete folder metadata")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
+
+		// Old stable UID folder should be deleted
+		_, err = helper.FoldersV1.Resource.Get(ctx, stableUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old stable UID folder should be deleted after metadata deletion")
+
+		// New folder should exist with hash-based UID and directory name as title
+		newFolderUID := requireRepoFolderTitle(t, helper, ctx, repoName, "alpha")
+		require.NotEqual(t, stableUID, newFolderUID, "new folder should have a different UID")
+
+		// Dashboard should be re-parented to the new folder
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"meta-del-001": {Title: "Alpha Dashboard", SourcePath: "alpha/dash.json", Folder: newFolderUID},
+		})
+	})
+
+	t.Run("metadata deletion with nested child folder", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-delete-nested"
+		const parentStableUID = "parent-stable-uid"
+		const childStableUID = "child-stable-uid"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"parent/_folder.json":          folderMetadataJSON(parentStableUID, "Parent"),
+			"parent/child/_folder.json":    folderMetadataJSON(childStableUID, "Child"),
+			"parent/parent-dash.json":      dashboardJSON("nested-parent-001", "Parent Dashboard", 1),
+			"parent/child/child-dash.json": dashboardJSON("nested-child-001", "Child Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"nested-parent-001": {Title: "Parent Dashboard", SourcePath: "parent/parent-dash.json", Folder: parentStableUID},
+			"nested-child-001":  {Title: "Child Dashboard", SourcePath: "parent/child/child-dash.json", Folder: childStableUID},
+		})
+
+		// Delete only the parent's _folder.json
+		_, err := local.Git("rm", "parent/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "delete parent folder metadata")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
+
+		// Old parent folder should be gone
+		_, err = helper.FoldersV1.Resource.Get(ctx, parentStableUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old parent folder should be deleted")
+
+		// New parent folder should exist with hash-based UID
+		newParentUID := requireRepoFolderTitle(t, helper, ctx, repoName, "parent")
+		require.NotEqual(t, parentStableUID, newParentUID)
+
+		// Child folder should still exist with its stable UID, re-parented under new parent
+		childAfter, err := helper.FoldersV1.Resource.Get(ctx, childStableUID, metav1.GetOptions{})
+		require.NoError(t, err, "child folder should still exist")
+		childParent, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, newParentUID, childParent, "child should be re-parented to new parent UID")
+
+		// Parent dashboard re-parented; child dashboard unchanged
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"nested-parent-001": {Title: "Parent Dashboard", SourcePath: "parent/parent-dash.json", Folder: newParentUID},
+			"nested-child-001":  {Title: "Child Dashboard", SourcePath: "parent/child/child-dash.json", Folder: childStableUID},
+		})
+	})
+
+	t.Run("metadata deletion re-parents all direct children", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-delete-children"
+		const stableUID = "children-stable-uid"
+		const childFolderUID = "child-folder-uid"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"team/_folder.json":         folderMetadataJSON(stableUID, "Team"),
+			"team/dash-a.json":          dashboardJSON("child-dash-a", "Dashboard A", 1),
+			"team/dash-b.json":          dashboardJSON("child-dash-b", "Dashboard B", 1),
+			"team/dash-c.json":          dashboardJSON("child-dash-c", "Dashboard C", 1),
+			"team/sub/_folder.json":     folderMetadataJSON(childFolderUID, "Sub"),
+			"team/sub/nested-dash.json": dashboardJSON("child-nested", "Nested Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+
+		_, err := helper.FoldersV1.Resource.Get(ctx, stableUID, metav1.GetOptions{})
+		require.NoError(t, err, "folder with stable UID should exist")
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"child-dash-a": {Title: "Dashboard A", SourcePath: "team/dash-a.json", Folder: stableUID},
+			"child-dash-b": {Title: "Dashboard B", SourcePath: "team/dash-b.json", Folder: stableUID},
+			"child-dash-c": {Title: "Dashboard C", SourcePath: "team/dash-c.json", Folder: stableUID},
+			"child-nested": {Title: "Nested Dashboard", SourcePath: "team/sub/nested-dash.json", Folder: childFolderUID},
+		})
+
+		childBefore, err := helper.FoldersV1.Resource.Get(ctx, childFolderUID, metav1.GetOptions{})
+		require.NoError(t, err)
+		childParentBefore, _, _ := unstructured.NestedString(childBefore.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, stableUID, childParentBefore, "child folder should initially be parented under stable UID")
+
+		// Delete only the parent _folder.json
+		_, err = local.Git("rm", "team/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "delete parent folder metadata")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
+
+		// Old stable UID folder should be deleted
+		_, err = helper.FoldersV1.Resource.Get(ctx, stableUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old stable UID folder should be deleted")
+
+		// New folder should exist with hash-based UID
+		newFolderUID := requireRepoFolderTitle(t, helper, ctx, repoName, "team")
+		require.NotEqual(t, stableUID, newFolderUID)
+
+		// All three dashboards should be re-parented to the new folder
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"child-dash-a": {Title: "Dashboard A", SourcePath: "team/dash-a.json", Folder: newFolderUID},
+			"child-dash-b": {Title: "Dashboard B", SourcePath: "team/dash-b.json", Folder: newFolderUID},
+			"child-dash-c": {Title: "Dashboard C", SourcePath: "team/dash-c.json", Folder: newFolderUID},
+			"child-nested": {Title: "Nested Dashboard", SourcePath: "team/sub/nested-dash.json", Folder: childFolderUID},
+		})
+
+		// Child folder should be re-parented to the new parent UID
+		childAfter, err := helper.FoldersV1.Resource.Get(ctx, childFolderUID, metav1.GetOptions{})
+		require.NoError(t, err, "child folder should still exist")
+		childParentAfter, _, _ := unstructured.NestedString(childAfter.Object, "metadata", "annotations", "grafana.app/folder")
+		require.Equal(t, newFolderUID, childParentAfter, "child folder should be re-parented to new hash-based UID")
+	})
+
+	t.Run("metadata deletion alongside dashboard update in same commit", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-delete-combo"
+		const stableUID = "combo-stable-uid"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"team/_folder.json": folderMetadataJSON(stableUID, "Team"),
+			"team/dash.json":    dashboardJSON("combo-del-001", "Original Dashboard", 1),
+		})
+
+		helper.syncAndWait(t, repoName)
+
+		// Delete metadata and update dashboard in the same commit
+		_, err := local.Git("rm", "team/_folder.json")
+		require.NoError(t, err)
+		require.NoError(t, local.UpdateFile("team/dash.json", string(dashboardJSON("combo-del-001", "Updated Dashboard", 2))))
+		_, err = local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "delete metadata and update dashboard")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
+
+		// Old folder should be gone
+		_, err = helper.FoldersV1.Resource.Get(ctx, stableUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old stable UID folder should be deleted")
+
+		// New folder with hash-based UID
+		newFolderUID := requireRepoFolderTitle(t, helper, ctx, repoName, "team")
+		require.NotEqual(t, stableUID, newFolderUID)
+
+		// Dashboard should be updated and re-parented
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"combo-del-001": {Title: "Updated Dashboard", SourcePath: "team/dash.json", Folder: newFolderUID},
 		})
 	})
 }

@@ -410,6 +410,10 @@ func detectFolderUIDChanges(
 // (Hash). Only simple renames (content unchanged) are detected; if the
 // content also changed the pair remains as separate delete + create.
 //
+// When multiple deleted resources share the same hash the match is ambiguous
+// (we cannot determine which deletion corresponds to the new file), so all
+// entries with that hash are left as separate delete + create operations.
+//
 // Folder paths are skipped because folder renames are handled separately by
 // augmentChangesForFolderMetadata.
 func DetectRenames(changes []ResourceFileChange) []ResourceFileChange {
@@ -422,11 +426,14 @@ func DetectRenames(changes []ResourceFileChange) []ResourceFileChange {
 		if safepath.IsDir(change.Path) || change.Existing.Hash == "" {
 			continue
 		}
+		// Track hashes seen more than once so we can discard them below.
 		if _, exists := deletionsByHash[change.Existing.Hash]; exists {
 			ambiguous[change.Existing.Hash] = true
 		}
 		deletionsByHash[change.Existing.Hash] = i
 	}
+	// Remove ambiguous hashes: when multiple deletions share the same hash
+	// we cannot reliably pick the right one, so skip them entirely.
 	for h := range ambiguous {
 		delete(deletionsByHash, h)
 	}
