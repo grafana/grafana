@@ -252,7 +252,20 @@ func applyChange(
 	}
 
 	writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
-	name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
+	var name string
+	var gvk schema.GroupVersionKind
+	var err error
+
+	if change.Action == repository.FileActionUpdated && change.Existing != nil && change.Existing.Name != "" {
+		oldGVR := schema.GroupVersionResource{
+			Group:    change.Existing.Group,
+			Resource: change.Existing.Resource,
+		}
+		name, gvk, err = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, "", change.Existing.Name, oldGVR)
+	} else {
+		name, gvk, err = repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
+	}
+
 	resultBuilder := jobs.NewGVKResult(name, gvk).WithAction(change.Action).WithPath(change.Path)
 	if err != nil {
 		writeSpan.RecordError(err)

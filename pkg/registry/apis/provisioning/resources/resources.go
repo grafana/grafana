@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -281,6 +282,37 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	runSpan.End()
 
 	return parsed.Obj.GetName(), parsed.GVK, err
+}
+
+// ReplaceResourceFromFile writes a resource from file and, if the resource name
+// changed compared to oldName, deletes the old resource to prevent orphans.
+// When oldName is empty or matches the new name, this behaves identically to
+// WriteResourceFromFile.
+func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource) (string, schema.GroupVersionKind, error) {
+	newName, gvk, err := r.WriteResourceFromFile(ctx, path, ref)
+	if err != nil {
+		return newName, gvk, err
+	}
+
+	if oldName == "" || oldName == newName {
+		return newName, gvk, nil
+	}
+
+	deleteCtx, deleteSpan := tracing.Start(ctx, "provisioning.resources.replace_resource_from_file.delete_old")
+	defer deleteSpan.End()
+
+	client, _, clientErr := r.clients.ForResource(deleteCtx, oldGVR)
+	if clientErr != nil {
+		deleteSpan.RecordError(clientErr)
+		return newName, gvk, nil
+	}
+
+	if delErr := client.Delete(deleteCtx, oldName, metav1.DeleteOptions{}); delErr != nil && !apierrors.IsNotFound(delErr) {
+		deleteSpan.RecordError(delErr)
+		return newName, gvk, fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, delErr)
+	}
+
+	return newName, gvk, nil
 }
 
 func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, string, schema.GroupVersionKind, error) {
