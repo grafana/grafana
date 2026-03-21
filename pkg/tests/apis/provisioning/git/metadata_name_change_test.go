@@ -68,7 +68,6 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 // path, incremental sync creates a new resource with the new name while the old
 // resource remains orphaned.
 func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testing.T) {
-	t.Skip("Skipping incremental sync test (flaky)")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafanaWithGitServer(t)
@@ -80,7 +79,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 		"dashboard1.json": dashboardJSON("name-change-incr-001", "Dashboard One", 1),
 	}, "write", "branch")
 
-	helper.syncAndWait(t, repoName)
+	common.SyncAndWaitWithSuccess(t, helper, repoName)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "name-change-incr-001", "Dashboard One")
 
@@ -93,7 +92,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	helper.syncAndWaitIncremental(t, repoName)
+	common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 	// The new dashboard should exist with the new name.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
