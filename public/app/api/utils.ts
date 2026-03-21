@@ -21,7 +21,7 @@ export const handleError = (e: unknown, dispatch: ThunkDispatch, message: string
 /**
  * Extracts a human-readable message from an unknown error value.
  * @param error The raw error value to inspect.
- * @param fallbackMsg Optional fallback message returned when no extractable message is found.
+ * @param fallback Optional fallback message returned when no extractable message is found.
  * @returns A message string if extracted; otherwise returns `fallbackMsg` when provided, or `undefined`.
  *
  * **Overloads:**
