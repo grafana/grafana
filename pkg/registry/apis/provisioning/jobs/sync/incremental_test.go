@@ -1328,6 +1328,41 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 		require.Equal(t, "alpha/beta/", result[1].Path)
 	})
 
+	t.Run("child folder with own _folder.json in diff is not duplicated", func(t *testing.T) {
+		repo := repository.NewMockReader(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
+			{Action: repository.FileActionUpdated, Path: "alpha/beta/_folder.json", Ref: "ref1"},
+		}
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-uid"},
+				{Path: "alpha/beta", Group: resources.FolderResource.Group, Name: "beta-uid", Folder: "old-uid"},
+				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "old-uid"},
+			},
+		}, nil)
+		repoResources.On("RemoveFolderFromTree", "old-uid").Return()
+		repo.On("Config").Return(&provisioning.Repository{})
+		repo.On("Read", mock.Anything, "alpha/_folder.json", "ref1").Return(&repository.FileInfo{
+			Data: folderJSON(t, "new-uid", "Alpha"),
+			Hash: "abc",
+		}, nil)
+		repo.On("Read", mock.Anything, "alpha/beta/_folder.json", "ref1").Return(&repository.FileInfo{
+			Data: folderJSON(t, "beta-uid", "Beta"),
+			Hash: "def",
+		}, nil)
+
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
+		require.NoError(t, err)
+		require.Len(t, replaced, 1)
+		require.Len(t, result, 3, "should not add synthetic alpha/beta/ because alpha/beta/_folder.json is already in diff")
+		require.Equal(t, "alpha/_folder.json", result[0].Path)
+		require.Equal(t, "alpha/beta/_folder.json", result[1].Path)
+		require.Equal(t, "alpha/dash.json", result[2].Path)
+	})
+
 	t.Run("List error is propagated", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)

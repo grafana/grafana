@@ -86,6 +86,14 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	foldersToDelete := findOrphanedFolders(ctx, repo, affectedFolders, tracer)
 
 	for _, r := range replaced {
+		if progress.HasDirPathFailedCreation(r.Path) {
+			progress.Record(ctx, jobs.NewFolderResult(r.Path).
+				WithAction(repository.FileActionIgnored).
+				WithName(r.OldUID).
+				WithWarning(fmt.Errorf("old folder %s not deleted because the replacement folder at %s could not be created", r.OldUID, r.Path)).
+				Build())
+			continue
+		}
 		if foldersToDelete == nil {
 			foldersToDelete = make(map[string]string)
 		}
@@ -371,6 +379,12 @@ func planFolderMetadataChanges(
 		if c.PreviousPath != "" {
 			pathsInDiff[c.PreviousPath] = true
 		}
+		// A _folder.json change already covers its parent directory — the folder
+		// will be created/updated via applyFolderMetadataUpdate, so we don't need
+		// a synthetic directory update for it.
+		if resources.IsFolderMetadataFile(c.Path) {
+			pathsInDiff[safepath.Dir(c.Path)] = true
+		}
 	}
 
 	for i := range existingResources.Items {
@@ -446,6 +460,11 @@ func findOrphanedFolders(
 		if err != nil && (errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			span.AddEvent("folder not found in git, marking for deletion")
 			orphaned[path] = folderName
+			continue
+		}
+		if err != nil {
+			span.RecordError(err)
+			span.AddEvent("could not determine folder existence in git, skipping")
 			continue
 		}
 

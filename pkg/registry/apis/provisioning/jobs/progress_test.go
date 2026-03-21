@@ -590,22 +590,23 @@ func TestJobProgressRecorderHasChildPathFailedUpdate(t *testing.T) {
 		Build())
 	assert.False(t, recorder.HasChildPathFailedUpdate("created/"), "creation failures are not tracked as update failures")
 
-	// Warning-level update failures ARE tracked (e.g. validation errors routed to warning)
+	// Warning-level updates are NOT tracked — benign warnings (e.g. missing
+	// _folder.json from detectMissingFolderMetadata) would incorrectly block
+	// old-folder cleanup. Actual re-parenting failures produce real errors.
 	validationErr := resources.NewResourceValidationError(errors.New("invalid content"))
 	recorder.Record(ctx, NewResourceResult().
 		WithPath("warned/dash.json").
 		WithAction(repository.FileActionUpdated).
 		WithError(validationErr).
 		Build())
-	assert.True(t, recorder.HasChildPathFailedUpdate("warned/"), "warning-level update failures must be tracked")
+	assert.False(t, recorder.HasChildPathFailedUpdate("warned/"), "warning-level updates must not block cleanup")
 
-	// Explicit WithWarning also tracked
 	recorder.Record(ctx, NewResourceResult().
 		WithPath("explicit-warn/panel.json").
 		WithAction(repository.FileActionUpdated).
 		WithWarning(errors.New("ownership conflict")).
 		Build())
-	assert.True(t, recorder.HasChildPathFailedUpdate("explicit-warn/"), "explicit WithWarning updates must be tracked")
+	assert.False(t, recorder.HasChildPathFailedUpdate("explicit-warn/"), "explicit WithWarning updates must not block cleanup")
 
 	// Empty recorder should always return false
 	emptyRecorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
