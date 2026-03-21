@@ -159,8 +159,6 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 // rename path. Synthetic directory changes are handled explicitly so folder
 // reconciliation can reuse EnsureFolderPathExist, and any replaced folder UIDs
 // are deleted only after the rest of the diff has been applied.
-//
-//nolint:gocyclo // TODO(ferruvich): simplify this function
 func applyIncrementalChanges(
 	ctx context.Context,
 	diff []repository.VersionedFileChange,
@@ -248,17 +246,6 @@ func applyIncrementalChanges(
 			continue
 		}
 
-		if folderMetadataEnabled && resources.IsFolderMetadataFile(change.Path) &&
-			(change.Action == repository.FileActionCreated || change.Action == repository.FileActionUpdated) {
-			name, err := applyFolderMetadataUpdate(ctx, change, repositoryResources, tracer)
-			if err != nil {
-				resultBuilder.WithError(err)
-			}
-			resultBuilder.WithName(name)
-			progress.Record(ctx, resultBuilder.Build())
-			continue
-		}
-
 		if change.Action == repository.FileActionCreated && !quotaTracker.TryAcquire() {
 			progress.Record(ctx, resultBuilder.
 				WithError(quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping creation of %s", change.Path))).
@@ -327,22 +314,6 @@ func applyIncrementalChanges(
 	}
 
 	return affectedFolders, nil
-}
-
-// applyFolderMetadataUpdate routes _folder.json changes through EnsureFolderPathExist
-// so the folder manager can create or update the folder with the correct title,
-// metadata hash, and annotations.
-func applyFolderMetadataUpdate(ctx context.Context, change repository.VersionedFileChange, repositoryResources resources.RepositoryResources, tracer tracing.Tracer) (string, error) {
-	folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.update_folder_metadata")
-	defer folderSpan.End()
-
-	folderDir := safepath.Dir(change.Path)
-	folder, err := repositoryResources.EnsureFolderPathExist(folderCtx, folderDir)
-	if err != nil {
-		folderSpan.RecordError(err)
-		return "", fmt.Errorf("updating folder metadata at %s: %w", folderDir, err)
-	}
-	return folder, nil
 }
 
 // sortChangesByActionPriority keeps the incremental apply order hierarchy-safe.
