@@ -1565,6 +1565,38 @@ func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx 
 		"folders for repo %q should have sourcePaths %v", repoName, expectedSourcePaths)
 }
 
+// WaitForRepoLastRef waits until the repository's status.sync.lastRef is
+// non-empty. This must be satisfied before triggering an incremental sync,
+// otherwise the syncer falls back to a full sync.
+func WaitForRepoLastRef(t *testing.T, repositories *apis.K8sResourceClient, repoName string) {
+	t.Helper()
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		repo, err := repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository %s", repoName) {
+			return
+		}
+
+		lastRef, _, _ := unstructured.NestedString(repo.Object, "status", "sync", "lastRef")
+		assert.NotEmpty(collect, lastRef, "repository %s should have lastRef set", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should have lastRef set after sync", repoName)
+}
+
+// SyncAndWaitWithSuccess triggers a full pull sync, asserts that it succeeds,
+// and waits for the repository's lastRef to be set. Use this as the initial
+// sync in tests that later trigger incremental syncs, so that lastRef is
+// guaranteed to be populated.
+func (h *ProvisioningTestHelper) SyncAndWaitWithSuccess(t *testing.T, repoName string) {
+	t.Helper()
+
+	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+	RequireJobSuccess(t, job)
+	WaitForRepoLastRef(t, h.Repositories, repoName)
+}
+
 // RequireJobSuccess asserts that a completed job has state "success" and no errors.
 func RequireJobSuccess(t *testing.T, job *unstructured.Unstructured) {
 	t.Helper()

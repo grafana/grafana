@@ -380,27 +380,6 @@ func (h *gitTestHelper) waitForJobsComplete(t *testing.T, repoName string) {
 	}, waitTimeoutDefault, waitIntervalDefault, "jobs should complete for repository %s", repoName)
 }
 
-// waitForRepoLastRef waits until the repository's status.sync.lastRef is
-// non-empty. This must be satisfied before triggering an incremental sync,
-// otherwise the syncer falls back to a full sync.
-func (h *gitTestHelper) waitForRepoLastRef(t *testing.T, repoName string) {
-	t.Helper()
-
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		repo, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{})
-		if !assert.NoError(collect, err, "failed to get repository %s", repoName) {
-			return
-		}
-
-		lastRef, _, _ := unstructured.NestedString(repo.Object, "status", "sync", "lastRef")
-		assert.NotEmpty(collect, lastRef, "repository %s should have lastRef set", repoName)
-	}, waitTimeoutDefault, waitIntervalDefault, "repository %s should have lastRef set after sync", repoName)
-}
-
-// syncAndWaitWithSuccess triggers a full pull sync, asserts that it succeeds,
-// and waits for the repository's lastRef to be set. Use this as the initial
-// sync in tests that later trigger incremental syncs, so that lastRef is
-// guaranteed to be populated.
 func (h *gitTestHelper) syncAndWaitWithSuccess(t *testing.T, repoName string) {
 	t.Helper()
 
@@ -409,7 +388,7 @@ func (h *gitTestHelper) syncAndWaitWithSuccess(t *testing.T, repoName string) {
 		Pull:   &provisioning.SyncJobOptions{},
 	})
 	common.RequireJobSuccess(t, job)
-	h.waitForRepoLastRef(t, repoName)
+	common.WaitForRepoLastRef(t, h.Repositories, repoName)
 }
 
 // asJSON serialises v to a JSON byte slice, panicking on encoding errors
