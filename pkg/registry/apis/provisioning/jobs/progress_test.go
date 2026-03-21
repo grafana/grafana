@@ -749,3 +749,32 @@ func TestJobProgressRecorderResultReasons(t *testing.T) {
 		recorder.mu.RUnlock()
 	})
 }
+
+func TestJobProgressRecorderTooManyErrorsConcurrency(t *testing.T) {
+	ctx := context.Background()
+
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error { return nil }
+	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+	const maxErrors = 5
+	const goroutines = 20
+	recorder.StrictMaxErrors(maxErrors)
+
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for i := 0; i < goroutines; i++ {
+		go func() {
+			defer wg.Done()
+			recorder.Record(ctx, NewPathOnlyResult("file.json").
+				WithError(assert.AnError).
+				WithAction(repository.FileActionCreated).
+				Build())
+			_ = recorder.TooManyErrors()
+		}()
+	}
+	wg.Wait()
+
+	err := recorder.TooManyErrors()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "too many errors")
+}

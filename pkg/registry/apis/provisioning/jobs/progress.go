@@ -211,8 +211,13 @@ func (r *jobProgressRecorder) StrictMaxErrors(maxErrors int) {
 }
 
 func (r *jobProgressRecorder) TooManyErrors() error {
-	if r.maxErrors > 0 && r.errorCount >= r.maxErrors {
-		return fmt.Errorf("too many errors: %d", r.errorCount)
+	r.mu.RLock()
+	maxErrors := r.maxErrors
+	errorCount := r.errorCount
+	r.mu.RUnlock()
+
+	if maxErrors > 0 && errorCount >= maxErrors {
+		return fmt.Errorf("too many errors: %d", errorCount)
 	}
 
 	return nil
