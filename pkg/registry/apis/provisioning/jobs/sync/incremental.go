@@ -400,13 +400,8 @@ func planFolderMetadataChanges(
 		if resources.IsFolderMetadataFile(path) {
 			continue
 		}
-		if action, inDiff := actionsInDiff[path]; inDiff {
-			// Files: all actions are processed by WriteResourceFromFile, safe to skip.
-			// Folders: only Updated/Renamed trigger EnsureFolderPathExist re-parenting;
-			// Created/Deleted directory entries are no-ops in applyIncrementalChanges.
-			if item.Group != resources.FolderResource.Group || action == repository.FileActionUpdated || action == repository.FileActionRenamed {
-				continue
-			}
+		if _, inDiff := actionsInDiff[path]; inDiff {
+			continue
 		}
 
 		diff = append(diff, repository.VersionedFileChange{
@@ -509,10 +504,9 @@ func deleteFolders(
 	for _, entry := range sorted {
 		if progress.HasDirPathFailedCreation(entry.Path) || progress.HasDirPathFailedDeletion(entry.Path) || progress.HasChildPathFailedCreation(entry.Path) || progress.HasChildPathFailedUpdate(entry.Path) {
 			progress.Record(ctx, jobs.NewFolderResult(entry.Path).
-				WithAction(repository.FileActionDeleted).
+				WithAction(repository.FileActionIgnored).
 				WithName(entry.UID).
-				WithError(fmt.Errorf("folder %s was not deleted because a related operation failed", entry.UID)).
-				AsSkipped().
+				WithWarning(fmt.Errorf("folder %s was not deleted because a related operation failed", entry.UID)).
 				Build())
 			continue
 		}
