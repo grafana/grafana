@@ -198,13 +198,16 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			continue
 		}
 
-		if folderMetadataEnabled && resources.IsFolderMetadataFile(change.Path) &&
-			(change.Action == repository.FileActionCreated || change.Action == repository.FileActionUpdated) {
-			name, err := applyFolderMetadataUpdate(ctx, change, repositoryResources, tracer)
-			if err != nil {
-				resultBuilder.WithError(err)
+		if folderMetadataEnabled && resources.IsFolderMetadataFile(change.Path) {
+			if change.Action == repository.FileActionCreated || change.Action == repository.FileActionUpdated {
+				name, err := applyFolderMetadataUpdate(ctx, change, repositoryResources, tracer)
+				if err != nil {
+					resultBuilder.WithError(err)
+				}
+				resultBuilder.WithName(name)
 			}
-			resultBuilder.WithName(name)
+			// Metadata files are not Grafana resources. Deletions are handled by
+			// planFolderMetadataChanges; other actions are no-ops.
 			progress.Record(ctx, resultBuilder.Build())
 			continue
 		}
@@ -295,15 +298,20 @@ func applyFolderMetadataUpdate(ctx context.Context, change repository.VersionedF
 	return folder, nil
 }
 
-// replacedFolder tracks a folder whose UID changed in a _folder.json update.
+// replacedFolder tracks a folder whose UID changed due to a _folder.json
+// update or deletion. The old folder needs cleanup after children are re-parented.
 type replacedFolder struct {
 	Path   string // folder dir path (with trailing slash)
 	OldUID string // the previous folder UID to delete after children are re-parented
 }
 
-// planFolderMetadataChanges detects UID changes in updated _folder.json files,
-// emits synthetic FileActionUpdated for direct children so they get re-parented,
-// and returns the list of old folder UIDs to clean up after children are moved.
+// planFolderMetadataChanges detects UID changes in updated or deleted _folder.json
+// files, emits synthetic FileActionUpdated for direct children so they get
+// re-parented, and returns the list of old folder UIDs to clean up.
+//
+// For _folder.json updates: reads the new metadata to get the new UID.
+// For _folder.json deletions: computes the hash-based UID that the folder
+// reverts to when metadata is removed.
 func planFolderMetadataChanges(
 	ctx context.Context,
 	repo repository.Reader,
@@ -316,12 +324,20 @@ func planFolderMetadataChanges(
 	defer span.End()
 
 	var metadataUpdateIndices []int
+	var metadataDeletionIndices []int
 	for i, change := range diff {
-		if resources.IsFolderMetadataFile(change.Path) && change.Action == repository.FileActionUpdated {
+		if !resources.IsFolderMetadataFile(change.Path) {
+			continue
+		}
+		switch change.Action {
+		case repository.FileActionUpdated:
 			metadataUpdateIndices = append(metadataUpdateIndices, i)
+		case repository.FileActionDeleted:
+			metadataDeletionIndices = append(metadataDeletionIndices, i)
+		default:
 		}
 	}
-	if len(metadataUpdateIndices) == 0 {
+	if len(metadataUpdateIndices) == 0 && len(metadataDeletionIndices) == 0 {
 		return diff, nil, nil
 	}
 
@@ -341,6 +357,8 @@ func planFolderMetadataChanges(
 
 	var replaced []replacedFolder
 	oldUIDSet := make(map[string]struct{})
+
+	// Detect UID changes from _folder.json updates.
 	for _, idx := range metadataUpdateIndices {
 		change := diff[idx]
 		folderDir := safepath.Dir(change.Path)
@@ -368,8 +386,60 @@ func planFolderMetadataChanges(
 		oldUIDSet[oldUID] = struct{}{}
 	}
 
+	// Detect UID transitions from _folder.json deletions.
+	// When metadata is removed the folder reverts to a hash-derived UID.
+	for _, idx := range metadataDeletionIndices {
+		change := diff[idx]
+		folderDir := safepath.Dir(change.Path)
+
+		oldUID, ok := existingFoldersByPath[folderDir]
+		if !ok {
+			continue
+		}
+
+		// Any non-NotFound error is treated as a hard failure to avoid
+		// triggering an incorrect UID transition on transient errors.
+		_, readErr := repo.Read(ctx, folderDir, currentRef)
+		if readErr != nil {
+			if errors.Is(readErr, repository.ErrFileNotFound) || apierrors.IsNotFound(readErr) {
+				// Directory gone — schedule old folder for deletion.
+				// No synthetic child updates are needed since all
+				// children should already be removed by other diff
+				// entries or previous syncs. We can't rely on
+				// findOrphanedFolders because _folder.json deletions
+				// are skipped in the apply phase and may not populate
+				// affectedFolders.
+				replaced = append(replaced, replacedFolder{
+					Path:   folderDir,
+					OldUID: oldUID,
+				})
+				continue
+			}
+			return nil, nil, fmt.Errorf("read folder directory %s at ref %s: %w", folderDir, currentRef, readErr)
+		}
+
+		newUID := resources.ParseFolder(folderDir, repo.Config().Name).ID
+
+		if newUID != oldUID {
+			repositoryResources.RemoveFolderFromTree(oldUID)
+			replaced = append(replaced, replacedFolder{
+				Path:   folderDir,
+				OldUID: oldUID,
+			})
+			oldUIDSet[oldUID] = struct{}{}
+		}
+
+		// Emit a folder directory update so the folder is recreated with the
+		// hash-based UID (or updated to clear the stale metadata hash).
+		diff = append(diff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated,
+			Path:   folderDir,
+			Ref:    currentRef,
+		})
+	}
+
 	if len(oldUIDSet) == 0 {
-		return diff, nil, nil
+		return diff, replaced, nil
 	}
 
 	actionsInDiff := make(map[string]repository.FileAction, len(diff))
