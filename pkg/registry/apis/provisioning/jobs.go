@@ -119,13 +119,15 @@ func (c *jobsConnector) Connect(
 
 // handleGetJob serves GET requests for job history — either a single job by
 // UID or the recent jobs list for a repository.
+// The namespace is resolved from the request context so that callers can
+// retrieve job results even when the repository has been deleted (e.g. orphan
+// cleanup jobs).
 func (c *jobsConnector) handleGetJob(ctx context.Context, urlPath, name, prefix string, idx int, responder rest.Responder) {
-	repo, err := c.repoGetter.GetRepository(ctx, name)
-	if err != nil {
-		responder.Error(err)
+	ns, ok := request.NamespaceFrom(ctx)
+	if !ok {
+		responder.Error(apierrors.NewBadRequest("missing namespace"))
 		return
 	}
-	cfg := repo.Config()
 
 	if idx > 0 {
 		jobUID := urlPath[idx+len(prefix):]
@@ -133,7 +135,7 @@ func (c *jobsConnector) handleGetJob(ctx context.Context, urlPath, name, prefix 
 			responder.Error(apierrors.NewBadRequest(fmt.Sprintf("invalid job uid: %s", jobUID)))
 			return
 		}
-		job, err := c.historic.GetJob(ctx, cfg.Namespace, name, jobUID)
+		job, err := c.historic.GetJob(ctx, ns, name, jobUID)
 		if err != nil {
 			responder.Error(err)
 			return
@@ -142,7 +144,7 @@ func (c *jobsConnector) handleGetJob(ctx context.Context, urlPath, name, prefix 
 		return
 	}
 
-	recent, err := c.historic.RecentJobs(ctx, cfg.Namespace, name)
+	recent, err := c.historic.RecentJobs(ctx, ns, name)
 	if err != nil {
 		responder.Error(err)
 		return

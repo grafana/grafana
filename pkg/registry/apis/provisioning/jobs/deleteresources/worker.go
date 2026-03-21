@@ -123,13 +123,18 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 
 func (w *Worker) deleteItem(ctx context.Context, clients resources.ResourceClients, item *provisioning.ResourceListItem, progress jobs.JobProgressRecorder) error {
 	logger := logging.FromContext(ctx)
-	result := jobs.NewPathOnlyResult(item.Name)
-	result.WithAction(repository.FileActionDeleted)
+	result := jobs.NewResourceResult().
+		WithName(item.Name).
+		WithPath(item.Path).
+		WithAction(repository.FileActionDeleted)
 
-	res, _, err := clients.ForResource(ctx, schema.GroupVersionResource{
+	res, gvk, err := clients.ForResource(ctx, schema.GroupVersionResource{
 		Group:    item.Group,
 		Resource: item.Resource,
 	})
+	if err == nil {
+		result.WithGVK(gvk)
+	}
 	if err != nil {
 		result.WithError(fmt.Errorf("get client for %s/%s: %w", item.Group, item.Resource, err))
 		progress.Record(ctx, result.Build())

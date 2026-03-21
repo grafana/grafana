@@ -93,7 +93,7 @@ func SplitItems(items *provisioning.ResourceList) (folderItems, resourceItems []
 // first (safe to delete in any order) followed by folders sorted deepest-first,
 // ensuring child folders are emptied before their parents.
 func SortResourceListForDeletion(list *provisioning.ResourceList) {
-	sort.Slice(list.Items, func(i, j int) bool {
+	sort.SliceStable(list.Items, func(i, j int) bool {
 		isFolderI := list.Items[i].Group == folders.GroupVersion.Group
 		isFolderJ := list.Items[j].Group == folders.GroupVersion.Group
 
