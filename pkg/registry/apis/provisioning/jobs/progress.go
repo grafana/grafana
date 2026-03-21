@@ -110,17 +110,18 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 			r.failedDeletions = append(r.failedDeletions, result.Path())
 		}
 
-		// Track failed updates so we can block folder cleanup when child re-parenting fails
-		if result.Action() == repository.FileActionUpdated {
+		// Track failed updates/renames so we can block folder cleanup when child re-parenting fails.
+		// A rename is a move operation; if it fails the child stays under the old folder.
+		if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
 			r.failedUpdates = append(r.failedUpdates, result.Path())
 		}
 	} else if result.Warning() != nil {
-		// Track failed deletions/updates with warnings — these still represent
+		// Track failed deletions/updates/renames with warnings — these still represent
 		// operations that did not fully succeed and may block parent folder removal.
 		if result.Action() == repository.FileActionDeleted {
 			r.failedDeletions = append(r.failedDeletions, result.Path())
 		}
-		if result.Action() == repository.FileActionUpdated {
+		if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
 			r.failedUpdates = append(r.failedUpdates, result.Path())
 		}
 

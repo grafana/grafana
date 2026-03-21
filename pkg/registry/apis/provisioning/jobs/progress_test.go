@@ -608,6 +608,22 @@ func TestJobProgressRecorderHasChildPathFailedUpdate(t *testing.T) {
 		Build())
 	assert.True(t, recorder.HasChildPathFailedUpdate("explicit-warn/"), "explicit WithWarning updates must be tracked")
 
+	// Failed renames are tracked as update failures — a rename moves a child,
+	// so if it fails the child stays under the old folder.
+	recorder.Record(ctx, NewResourceResult().
+		WithPath("renamed/old-dash.json").
+		WithAction(repository.FileActionRenamed).
+		WithError(assert.AnError).
+		Build())
+	assert.True(t, recorder.HasChildPathFailedUpdate("renamed/"), "failed renames must be tracked as update failures")
+
+	recorder.Record(ctx, NewResourceResult().
+		WithPath("rename-warn/panel.json").
+		WithAction(repository.FileActionRenamed).
+		WithWarning(errors.New("rename conflict")).
+		Build())
+	assert.True(t, recorder.HasChildPathFailedUpdate("rename-warn/"), "warning-level rename failures must be tracked")
+
 	// Empty recorder should always return false
 	emptyRecorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
 	assert.False(t, emptyRecorder.HasChildPathFailedUpdate("alpha/"))
