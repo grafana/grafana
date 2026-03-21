@@ -11431,7 +11431,8 @@
     "save-owner": "Save owner",
     "select-owner": "Select an owner",
     "selected-team-not-found": "Selected team not found, or you do not have the necessary permissions to view it.",
-    "team-not-found": "[Unknown team]"
+    "team-not-found": "[Unknown team]",
+    "unknown-error": "Unknown error"
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
