@@ -234,23 +234,25 @@ func TestRenameResourceFile(t *testing.T) {
 			Repo:   testRepoInfo(),
 		}, nil)
 
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "same-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
 		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json"}
 		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
 
-		// 1st call (from RenameResourceFile): returns successfully for name comparison.
-		// 2nd call (from WriteResourceFromFile): returns error to isolate rename logic.
+		// writeResourceFromParsed reuses newParsed directly — no second parse.
+		// Client is nil so Run returns an error, isolating the rename logic.
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
-			Obj: &unstructured.Unstructured{Object: map[string]any{
-				"apiVersion": "dashboard.grafana.app/v0alpha1",
-				"kind":       "Dashboard",
-				"metadata":   map[string]any{"name": "same-uid"},
-			}},
-			GVK:    dashboardGVK,
-			Client: mockClient,
-			Repo:   testRepoInfo(),
-		}, nil).Once()
-		mockParser.On("Parse", mock.Anything, newFileInfo).
-			Return(nil, fmt.Errorf("stub write error")).Once()
+			Obj:  newObj,
+			Meta: newMeta,
+			GVK:  dashboardGVK,
+			Repo: testRepoInfo(),
+		}, nil)
 
 		grafanaObj := managedGrafanaObj("same-uid", "default", map[string]any{
 			utils.AnnoKeyFolder: "old-folder",
@@ -260,7 +262,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mgr := NewResourcesManager(repo, nil, mockParser, nil)
 		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
-		require.Error(t, err, "write step is expected to fail (stubbed)")
+		require.Error(t, err, "write step is expected to fail (no client)")
 		require.Contains(t, err.Error(), "failed to write resource")
 		require.Equal(t, "old-folder", folderName, "should return the previous folder for cleanup")
 
@@ -286,23 +288,25 @@ func TestRenameResourceFile(t *testing.T) {
 			Repo:   testRepoInfo(),
 		}, nil)
 
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "new-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
 		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json"}
 		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
 
-		// 1st call (from RenameResourceFile): returns successfully with a different name.
-		// 2nd call (from WriteResourceFromFile): returns error to isolate delete behaviour.
+		// writeResourceFromParsed reuses newParsed directly — no second parse.
+		// Client is nil so Run returns an error, isolating the delete behaviour.
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
-			Obj: &unstructured.Unstructured{Object: map[string]any{
-				"apiVersion": "dashboard.grafana.app/v0alpha1",
-				"kind":       "Dashboard",
-				"metadata":   map[string]any{"name": "new-uid"},
-			}},
-			GVK:    dashboardGVK,
-			Client: mockClient,
-			Repo:   testRepoInfo(),
-		}, nil).Once()
-		mockParser.On("Parse", mock.Anything, newFileInfo).
-			Return(nil, fmt.Errorf("stub write error")).Once()
+			Obj:  newObj,
+			Meta: newMeta,
+			GVK:  dashboardGVK,
+			Repo: testRepoInfo(),
+		}, nil)
 
 		grafanaObj := managedGrafanaObj("old-uid", "default", map[string]any{
 			utils.AnnoKeyFolder: "src-folder",
@@ -313,7 +317,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mgr := NewResourcesManager(repo, nil, mockParser, nil)
 		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
 
-		require.Error(t, err, "write step is stubbed to fail")
+		require.Error(t, err, "write step fails (no client)")
 		require.Contains(t, err.Error(), "failed to write resource")
 		require.Equal(t, "src-folder", folderName, "should return the previous folder for cleanup")
 

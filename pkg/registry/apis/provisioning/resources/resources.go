@@ -232,6 +232,10 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 	parseSpan.End()
 
+	return r.writeResourceFromParsed(ctx, path, parsed)
+}
+
+func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path string, parsed *ParsedResource) (string, schema.GroupVersionKind, error) {
 	if parsed.Obj.GetName() == "" {
 		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
@@ -274,7 +278,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	parsed.Meta.SetResourceVersion("")
 
 	runCtx, runSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.run_resource")
-	err = parsed.Run(runCtx)
+	err := parsed.Run(runCtx)
 	if err != nil {
 		runSpan.RecordError(err)
 		// Wrap resource validation errors (like dashboard refresh interval) as warnings
@@ -305,7 +309,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	}
 
 	// Delete the old resource when the identity changed (name or resource kind).
-	// When both match, WriteResourceFromFile will update in place.
+	// When both match, writeResourceFromParsed will update in place.
 	identityChanged := oldParsed.Obj.GetName() != newParsed.Obj.GetName() ||
 		oldParsed.GVK.Group != newParsed.GVK.Group ||
 		oldParsed.GVK.Kind != newParsed.GVK.Kind
@@ -325,7 +329,11 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		if identityErr != nil {
 			return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to get provisioning identity: %w", identityErr)
 		}
-		oldParsed.Existing, _ = oldParsed.Client.Get(identityCtx, oldParsed.Obj.GetName(), metav1.GetOptions{})
+		existing, getErr := oldParsed.Client.Get(identityCtx, oldParsed.Obj.GetName(), metav1.GetOptions{})
+		if getErr != nil && !apierrors.IsNotFound(getErr) {
+			return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to get existing resource: %w", getErr)
+		}
+		oldParsed.Existing = existing
 	}
 
 	var oldFolderName string
@@ -335,7 +343,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		}
 	}
 
-	newName, gvk, err := r.WriteResourceFromFile(ctx, newPath, newRef)
+	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newParsed)
 	if err != nil {
 		return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
 	}
