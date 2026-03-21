@@ -82,17 +82,9 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	}
 
 	cleanupStart := time.Now()
-	foldersToDelete := findOrphanedFolders(ctx, repo, affectedFolders, progress, tracer)
+	foldersToDelete := findOrphanedFolders(ctx, repo, affectedFolders, tracer)
 
 	for _, r := range replaced {
-		if progress.HasDirPathFailedCreation(r.Path) {
-			progress.Record(ctx, jobs.NewPathOnlyResult(r.Path).
-				WithAction(repository.FileActionDeleted).
-				WithError(fmt.Errorf("old folder %s was not deleted because the replacement folder could not be created", r.OldUID)).
-				AsSkipped().
-				Build())
-			continue
-		}
 		if foldersToDelete == nil {
 			foldersToDelete = make(map[string]string)
 		}
@@ -426,7 +418,6 @@ func findOrphanedFolders(
 	ctx context.Context,
 	repo repository.Versioned,
 	affectedFolders map[string]string,
-	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
 ) map[string]string {
 	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.find_orphaned_folders")
@@ -441,11 +432,6 @@ func findOrphanedFolders(
 	orphaned := make(map[string]string)
 	for path, folderName := range affectedFolders {
 		span.SetAttributes(attribute.String("folder", folderName))
-
-		if progress.HasDirPathFailedDeletion(path) {
-			span.AddEvent("skipping orphaned folder cleanup: a child resource in its path failed to be deleted")
-			continue
-		}
 
 		_, err := readerRepo.Read(ctx, path, "")
 		if err != nil && (errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
@@ -486,6 +472,16 @@ func deleteFolders(
 	safepath.SortByDepth(sorted, func(p pathUID) string { return p.Path }, false)
 
 	for _, entry := range sorted {
+		if progress.HasDirPathFailedCreation(entry.Path) || progress.HasDirPathFailedDeletion(entry.Path) {
+			progress.Record(ctx, jobs.NewFolderResult(entry.Path).
+				WithAction(repository.FileActionDeleted).
+				WithName(entry.UID).
+				WithError(fmt.Errorf("folder %s was not deleted because a related operation failed", entry.UID)).
+				AsSkipped().
+				Build())
+			continue
+		}
+
 		resultBuilder := jobs.NewFolderResult(entry.Path).
 			WithAction(repository.FileActionDeleted).
 			WithName(entry.UID)
