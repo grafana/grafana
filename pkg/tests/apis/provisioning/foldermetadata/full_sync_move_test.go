@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -713,17 +714,25 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_DuplicateUID(t 
 	// Update folderB's metadata to claim the same UID as folderA — a conflict.
 	writeToProvisioningPath(t, helper, "folderB/_folder.json", folderMetadataJSON("uid-a", "Folder B Renamed"))
 
-	// The sync must fail: folderB cannot take over uid-a which is already owned by folderA.
+	// The sync must warn: folderB cannot take over uid-a which is already owned by folderA.
+	// UID conflicts are ResourceValidationErrors and are treated as warnings, not hard errors.
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},
 	})
-	require.Equal(t, string(provisioning.JobStateError), common.MustNestedString(job.Object, "status", "state"),
-		"sync must fail when a folder metadata file claims a UID already owned by another folder")
+	require.Equal(t, string(provisioning.JobStateWarning), common.MustNestedString(job.Object, "status", "state"),
+		"sync must warn when a folder metadata file claims a UID already owned by another folder")
 
-	jobErrors := common.MustNestedStringSlice(job.Object, "status", "errors")
-	require.NotEmpty(t, jobErrors, "sync job must report the UID conflict")
-	require.Contains(t, jobErrors[0], "uid-a", "error should mention the conflicting UID")
+	jobWarnings := common.MustNestedStringSlice(job.Object, "status", "warnings")
+	require.NotEmpty(t, jobWarnings, "sync job must report the UID conflict as a warning")
+	uidAMentioned := false
+	for _, w := range jobWarnings {
+		if strings.Contains(w, "uid-a") {
+			uidAMentioned = true
+			break
+		}
+	}
+	require.True(t, uidAMentioned, "at least one warning should mention the conflicting UID uid-a")
 
 	// Folder A must remain intact and unchanged.
 	requireFolderState(t, helper, "uid-a", "Folder A", "folderA", repo)

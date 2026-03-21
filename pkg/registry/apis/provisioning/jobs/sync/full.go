@@ -399,8 +399,8 @@ func applyChanges(
 					return err
 				}
 
-				// Skip if the replacement folder failed to be created.
-				if progress.HasDirPathFailedCreation(old.Path) {
+				// Skip if the replacement folder failed to be created or updated (e.g. UID conflict warning).
+				if progress.HasDirPathFailedCreation(old.Path) || progress.HasChildPathFailedUpdate(old.Path) {
 					skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_renamed_folder_deletion")
 					progress.Record(skipCtx, jobs.NewPathOnlyResult(old.Path).
 						WithError(fmt.Errorf("old folder was not deleted because the replacement folder could not be created")).
