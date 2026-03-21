@@ -499,6 +499,51 @@ func TestJobProgressRecorderHasDirPathFailedDeletion(t *testing.T) {
 	assert.False(t, recorder.HasDirPathFailedDeletion("folder3/nested/deep/insidedeep/"))
 }
 
+func TestJobProgressRecorderHasChildPathFailedCreation(t *testing.T) {
+	ctx := context.Background()
+
+	mockProgressFn := func(ctx context.Context, status provisioning.JobStatus) error {
+		return nil
+	}
+	recorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+
+	pathErr1 := &resources.PathCreationError{
+		Path: "alpha/beta/",
+		Err:  assert.AnError,
+	}
+	recorder.Record(ctx, NewPathOnlyResult("alpha/beta/file.json").
+		WithError(pathErr1).
+		WithAction(repository.FileActionCreated).
+		Build())
+
+	pathErr2 := &resources.PathCreationError{
+		Path: "x/y/z/",
+		Err:  assert.AnError,
+	}
+	recorder.Record(ctx, NewPathOnlyResult("x/y/z/file.json").
+		WithError(pathErr2).
+		WithAction(repository.FileActionCreated).
+		Build())
+
+	// Ancestor folders of a failed child should return true
+	assert.True(t, recorder.HasChildPathFailedCreation("alpha/"), "alpha/ contains failing child alpha/beta/")
+	assert.True(t, recorder.HasChildPathFailedCreation("x/"), "x/ contains failing child x/y/z/")
+	assert.True(t, recorder.HasChildPathFailedCreation("x/y/"), "x/y/ contains failing child x/y/z/")
+
+	// The exact failing path itself should also match
+	assert.True(t, recorder.HasChildPathFailedCreation("alpha/beta/"), "exact path should match itself")
+	assert.True(t, recorder.HasChildPathFailedCreation("x/y/z/"), "exact path should match itself")
+
+	// Sibling or unrelated paths should return false
+	assert.False(t, recorder.HasChildPathFailedCreation("alpha/gamma/"), "no failures under alpha/gamma/")
+	assert.False(t, recorder.HasChildPathFailedCreation("other/"), "no failures under other/")
+	assert.False(t, recorder.HasChildPathFailedCreation("x/y/z/deeper/"), "nothing nested deeper than x/y/z/")
+
+	// Empty recorder should always return false
+	emptyRecorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
+	assert.False(t, emptyRecorder.HasChildPathFailedCreation("alpha/"))
+}
+
 func TestJobProgressRecorderResetResults(t *testing.T) {
 	ctx := context.Background()
 
