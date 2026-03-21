@@ -16,6 +16,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -303,9 +304,12 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse new file: %w", err)
 	}
 
-	// Only delete the old resource when the identity (metadata.name) changed.
-	// When the name stays the same, WriteResourceFromFile will update in place.
-	if oldParsed.Obj.GetName() != newParsed.Obj.GetName() {
+	// Delete the old resource when the identity changed (name or resource kind).
+	// When both match, WriteResourceFromFile will update in place.
+	identityChanged := oldParsed.Obj.GetName() != newParsed.Obj.GetName() ||
+		oldParsed.GVK.Group != newParsed.GVK.Group ||
+		oldParsed.GVK.Kind != newParsed.GVK.Kind
+	if identityChanged {
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.Run(ctx); err != nil {
 			var folderName string
@@ -317,7 +321,11 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 			return oldParsed.Obj.GetName(), folderName, oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
 		}
 	} else if oldParsed.Client != nil {
-		oldParsed.Existing, _ = oldParsed.Client.Get(ctx, oldParsed.Obj.GetName(), metav1.GetOptions{})
+		identityCtx, _, identityErr := identity.WithProvisioningIdentity(ctx, oldParsed.Obj.GetNamespace())
+		if identityErr != nil {
+			return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to get provisioning identity: %w", identityErr)
+		}
+		oldParsed.Existing, _ = oldParsed.Client.Get(identityCtx, oldParsed.Obj.GetName(), metav1.GetOptions{})
 	}
 
 	var oldFolderName string
