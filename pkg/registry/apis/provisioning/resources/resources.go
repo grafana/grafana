@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -286,6 +285,8 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 
 // ReplaceResourceFromFile writes a resource from file and, if the resource name
 // changed compared to oldName, deletes the old resource to prevent orphans.
+// The delete goes through ParsedResource.Run() so it gets provisioning identity,
+// ownership checks, and proper tracing — matching the pattern in RemoveResourceFromFile.
 // When oldName is empty or matches the new name, this behaves identically to
 // WriteResourceFromFile.
 func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource) (string, schema.GroupVersionKind, error) {
@@ -298,17 +299,32 @@ func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, re
 		return newName, gvk, nil
 	}
 
-	deleteCtx, deleteSpan := tracing.Start(ctx, "provisioning.resources.replace_resource_from_file.delete_old")
-	defer deleteSpan.End()
-
-	client, _, clientErr := r.clients.ForResource(deleteCtx, oldGVR)
+	client, oldGVK, clientErr := r.clients.ForResource(ctx, oldGVR)
 	if clientErr != nil {
-		deleteSpan.RecordError(clientErr)
 		return newName, gvk, nil
 	}
 
-	if delErr := client.Delete(deleteCtx, oldName, metav1.DeleteOptions{}); delErr != nil && !apierrors.IsNotFound(delErr) {
-		deleteSpan.RecordError(delErr)
+	cfg := r.repo.Config()
+	oldObj := &unstructured.Unstructured{}
+	oldObj.SetName(oldName)
+	oldObj.SetNamespace(cfg.GetNamespace())
+	oldObj.SetGroupVersionKind(oldGVK)
+
+	oldParsed := &ParsedResource{
+		Obj:    oldObj,
+		GVR:    oldGVR,
+		GVK:    oldGVK,
+		Client: client,
+		Action: provisioning.ResourceActionDelete,
+		Repo: provisioning.ResourceRepositoryInfo{
+			Name:      cfg.Name,
+			Namespace: cfg.Namespace,
+			Type:      cfg.Spec.Type,
+			Title:     cfg.Spec.Title,
+		},
+	}
+
+	if delErr := oldParsed.Run(ctx); delErr != nil {
 		return newName, gvk, fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, delErr)
 	}
 
