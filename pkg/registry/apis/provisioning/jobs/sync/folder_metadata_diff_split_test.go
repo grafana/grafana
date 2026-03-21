@@ -21,7 +21,7 @@ func TestFolderMetadataDiffSplit(t *testing.T) {
 		},
 	}
 
-	split := newFolderMetadataDiffSplit(diff)
+	split := splitMetadataChanges(diff)
 
 	require.True(t, split.HasMetadataChanges())
 	require.Equal(t, []repository.VersionedFileChange{
@@ -33,16 +33,16 @@ func TestFolderMetadataDiffSplit(t *testing.T) {
 			PreviousRef:  "old-ref",
 			Ref:          "new-ref",
 		},
-	}, split.OtherChanges())
+	}, split.otherChanges)
 	require.Equal(t, []repository.VersionedFileChange{
 		{Action: repository.FileActionUpdated, Path: "parent/child/_folder.json", Ref: "new-ref"},
 		{Action: repository.FileActionUpdated, Path: "parent/_folder.json", Ref: "new-ref"},
-	}, split.MetadataChanges())
+	}, split.metadataChanges)
 
-	require.True(t, split.HasRealChangeAt("parent/dashboard.json"))
-	require.True(t, split.HasRealChangeAt("parent/renamed.json"))
-	require.True(t, split.HasRealChangeAt("parent/original.json"))
-	require.False(t, split.HasRealChangeAt("parent/_folder.json"))
+	require.True(t, split.HadChangeOriginallyAt("parent/dashboard.json"))
+	require.True(t, split.HadChangeOriginallyAt("parent/renamed.json"))
+	require.True(t, split.HadChangeOriginallyAt("parent/original.json"))
+	require.False(t, split.HadChangeOriginallyAt("parent/_folder.json"))
 
 	require.True(t, split.HasMetadataFolderAt("parent/"))
 	require.True(t, split.HasMetadataFolderAt("parent/child/"))
@@ -50,16 +50,16 @@ func TestFolderMetadataDiffSplit(t *testing.T) {
 }
 
 func TestFolderMetadataDiffSplitReturnsClones(t *testing.T) {
-	split := newFolderMetadataDiffSplit([]repository.VersionedFileChange{
+	split := splitMetadataChanges([]repository.VersionedFileChange{
 		{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "new-ref"},
 		{Action: repository.FileActionUpdated, Path: "alpha/dashboard.json", Ref: "new-ref"},
 	})
 
-	other := split.OtherChanges()
+	other := split.otherChanges
 	other[0].Path = "mutated.json"
-	require.Equal(t, "alpha/dashboard.json", split.OtherChanges()[0].Path)
+	require.Equal(t, "alpha/dashboard.json", split.otherChanges[0].Path)
 
-	metadata := split.MetadataChanges()
+	metadata := split.metadataChanges
 	metadata[0].Path = "mutated/_folder.json"
-	require.Equal(t, "alpha/_folder.json", split.MetadataChanges()[0].Path)
+	require.Equal(t, "alpha/_folder.json", split.metadataChanges[0].Path)
 }

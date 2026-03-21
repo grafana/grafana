@@ -55,7 +55,7 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	currentRef string,
 	repoDiff []repository.VersionedFileChange,
 ) ([]repository.VersionedFileChange, []replacedFolder, error) {
-	input := newFolderMetadataDiffSplit(repoDiff)
+	input := splitMetadataChanges(repoDiff)
 	if !input.HasMetadataChanges() {
 		return repoDiff, nil, nil
 	}
@@ -66,9 +66,9 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	}
 
 	index := newManagedResourceIndex(target)
-	result := newRebuiltIncrementalDiff(input.OtherChanges())
+	result := newRebuiltIncrementalDiffTracker(input.otherChanges)
 
-	for _, change := range input.MetadataChanges() {
+	for _, change := range input.metadataChanges {
 		if err := d.rewriteMetadataChange(ctx, currentRef, input, index, result, change); err != nil {
 			return nil, nil, err
 		}
@@ -84,7 +84,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteMetadataChange(
 	currentRef string,
 	input folderMetadataDiffSplit,
 	index managedResourceIndex,
-	result *rebuiltIncrementalDiff,
+	result *rebuiltIncrementalDiffTracker,
 	change repository.VersionedFileChange,
 ) error {
 	switch change.Action {
@@ -104,12 +104,12 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 	ctx context.Context,
 	input folderMetadataDiffSplit,
 	index managedResourceIndex,
-	result *rebuiltIncrementalDiff,
+	result *rebuiltIncrementalDiffTracker,
 	change repository.VersionedFileChange,
 ) error {
 	folderPath := folderPathForMetadataChange(change.Path)
 
-	if !input.HasRealChangeAt(folderPath) && !result.HasGeneratedPath(folderPath) {
+	if !input.HadChangeOriginallyAt(folderPath) && !result.HasGeneratedPath(folderPath) {
 		// Synthetic folder replays always use Updated so applyIncrementalChanges
 		// routes the directory entry through EnsureFolderPathExist.
 		result.Append(repository.VersionedFileChange{
@@ -128,7 +128,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 	}
 
 	for _, childPath := range index.DirectChildrenOf(folderPath) {
-		if input.HasRealChangeAt(childPath) || input.HasMetadataFolderAt(childPath) || result.HasGeneratedPath(childPath) {
+		if input.HadChangeOriginallyAt(childPath) || input.HasMetadataFolderAt(childPath) || result.HasGeneratedPath(childPath) {
 			continue
 		}
 
@@ -150,7 +150,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	currentRef string,
 	input folderMetadataDiffSplit,
 	index managedResourceIndex,
-	result *rebuiltIncrementalDiff,
+	result *rebuiltIncrementalDiffTracker,
 	change repository.VersionedFileChange,
 ) error {
 	folderPath := folderPathForMetadataChange(change.Path)
@@ -172,7 +172,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 		return nil
 	}
 
-	if !input.HasRealChangeAt(folderPath) && !result.HasGeneratedPath(folderPath) {
+	if !input.HadChangeOriginallyAt(folderPath) && !result.HasGeneratedPath(folderPath) {
 		result.Append(repository.VersionedFileChange{
 			Action: repository.FileActionUpdated,
 			Path:   folderPath,
@@ -185,7 +185,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	}
 
 	for _, childPath := range index.DirectChildrenOf(folderPath) {
-		if input.HasRealChangeAt(childPath) || input.HasMetadataFolderAt(childPath) || result.HasGeneratedPath(childPath) {
+		if input.HadChangeOriginallyAt(childPath) || input.HasMetadataFolderAt(childPath) || result.HasGeneratedPath(childPath) {
 			continue
 		}
 

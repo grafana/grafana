@@ -1,8 +1,6 @@
 package sync
 
 import (
-	"slices"
-
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 )
@@ -17,10 +15,10 @@ type folderMetadataDiffSplit struct {
 	metadataFolderPaths map[string]struct{}
 }
 
-// newFolderMetadataDiffSplit partitions the raw incremental diff into metadata
+// splitMetadataChanges partitions the raw incremental diff into metadata
 // changes and other changes, then sorts the metadata side deepest-first so
 // nested folder metadata is expanded deterministically.
-func newFolderMetadataDiffSplit(repoDiff []repository.VersionedFileChange) folderMetadataDiffSplit {
+func splitMetadataChanges(repoDiff []repository.VersionedFileChange) folderMetadataDiffSplit {
 	input := folderMetadataDiffSplit{
 		otherChanges:        make([]repository.VersionedFileChange, 0, len(repoDiff)),
 		metadataChanges:     make([]repository.VersionedFileChange, 0),
@@ -55,21 +53,9 @@ func (input folderMetadataDiffSplit) HasMetadataChanges() bool {
 	return len(input.metadataChanges) > 0
 }
 
-// OtherChanges returns a defensive copy of the passthrough diff entries so the
-// caller can append or reorder them without mutating the split state.
-func (input folderMetadataDiffSplit) OtherChanges() []repository.VersionedFileChange {
-	return slices.Clone(input.otherChanges)
-}
-
-// MetadataChanges returns the handled metadata changes in deepest-first order
-// so nested folders are expanded deterministically.
-func (input folderMetadataDiffSplit) MetadataChanges() []repository.VersionedFileChange {
-	return slices.Clone(input.metadataChanges)
-}
-
-// HasRealChangeAt reports whether the original git diff already contains a
+// HadChangeOriginallyAt reports whether the original git diff already contains a
 // non-metadata change for the provided path, including rename previous paths.
-func (input folderMetadataDiffSplit) HasRealChangeAt(path string) bool {
+func (input folderMetadataDiffSplit) HadChangeOriginallyAt(path string) bool {
 	_, ok := input.changedPaths[path]
 	return ok
 }

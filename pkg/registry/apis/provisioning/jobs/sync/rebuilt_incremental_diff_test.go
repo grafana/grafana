@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRebuiltIncrementalDiff(t *testing.T) {
-	result := newRebuiltIncrementalDiff([]repository.VersionedFileChange{
+func TestRebuiltIncrementalDiffTRacker(t *testing.T) {
+	result := newRebuiltIncrementalDiffTracker([]repository.VersionedFileChange{
 		{Action: repository.FileActionUpdated, Path: "kept.json", Ref: "new-ref"},
 	})
 
