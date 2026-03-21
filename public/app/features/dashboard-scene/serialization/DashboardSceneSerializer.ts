@@ -195,8 +195,9 @@ export class V1DashboardSerializer
   ) {
     const changedSaveModel =
       options.rawJson && !isDashboardV2Spec(options.rawJson) ? options.rawJson : this.getSaveModel(scene);
+    const { id: _id, ...initialWithoutId } = (this.initialSaveModel ?? {}) as Dashboard;
     const changeInfo = getRawDashboardChanges(
-      this.initialSaveModel!,
+      initialWithoutId as Dashboard,
       changedSaveModel,
       options.saveTimeRange,
       options.saveVariables,
