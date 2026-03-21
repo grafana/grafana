@@ -325,6 +325,11 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 		return "", fmt.Errorf("parse old folder: %w", err)
 	}
 
+	// Remove the old folder from the tree before ensuring the new path so that
+	// CheckIDConflict does not reject the same stable UID appearing at a new path.
+	// This is safe because the rename makes the old registration stale.
+	fm.tree.Remove(oldFolder.ID)
+
 	if _, err := fm.EnsureFolderPathExist(ctx, newPath); err != nil {
 		return "", fmt.Errorf("ensure new folder path: %w", err)
 	}
