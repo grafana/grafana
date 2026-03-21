@@ -7655,8 +7655,7 @@
     },
     "versions-history-buttons": {
       "compare-versions": "Compare versions",
-      "content-select-two-versions-to-start-comparing": "Select two versions to start comparing",
-      "show-more-versions": "Show more versions"
+      "content-select-two-versions-to-start-comparing": "Select two versions to start comparing"
     },
     "visualization-button": {
       "aria-label-change-visualization": "Change visualization",
