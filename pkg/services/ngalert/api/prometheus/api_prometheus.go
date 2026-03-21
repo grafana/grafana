@@ -63,7 +63,7 @@ type ProvenanceStore interface {
 type PrometheusSrv struct {
 	log             log.Logger
 	manager         state.AlertInstanceManager
-	status          StatusReader
+	ruleMutator     RuleMutator
 	store           RuleStoreReader
 	authz           RuleGroupAccessControlService
 	provenanceStore ProvenanceStore
@@ -86,11 +86,11 @@ func badRequestError(err error) apimodels.RuleResponse {
 	}
 }
 
-func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, status StatusReader, store RuleStoreReader, authz RuleGroupAccessControlService, provenanceStore ProvenanceStore) *PrometheusSrv {
+func NewPrometheusSrv(log log.Logger, manager state.AlertInstanceManager, ruleMutator RuleMutator, store RuleStoreReader, authz RuleGroupAccessControlService, provenanceStore ProvenanceStore) *PrometheusSrv {
 	return &PrometheusSrv{
 		log:             log,
 		manager:         manager,
-		status:          status,
+		ruleMutator:     ruleMutator,
 		store:           store,
 		authz:           authz,
 		provenanceStore: provenanceStore,
@@ -343,34 +343,55 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 			AllowedNamespaces: allowedNamespaces,
 			SortByFullpath:    openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagAlertingRuleGroupSortByFolderFullpath, false, openfeature.TransactionContext(c.Req.Context())),
 		},
-		RuleStatusMutatorGenerator(srv.status),
-		RuleAlertStateMutatorGenerator(srv.manager),
+		srv.ruleMutator,
 		srv.provenanceStore,
 	)
 
 	return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
 }
 
-// mutator function used to attach status to the rule
-type RuleStatusMutator func(ctx context.Context, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule)
+// RuleMutator enriches an AlertingRule with status fields (Health, LastError, EvaluationTime,
+// LastEvaluation) and alert-state fields (State, ActiveAt, Alerts). It returns per-state totals
+// and filtered totals.
+type RuleMutator func(ctx context.Context, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (total map[string]int64, filteredTotal map[string]int64)
 
-// mutator function used to attach alert states to the rule and returns the totals and filtered totals
-type RuleAlertStateMutator func(ctx context.Context, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (total map[string]int64, filteredTotal map[string]int64)
+func applyRuleStatus(status ngmodels.RuleStatus, toMutate *apimodels.AlertingRule) {
+	toMutate.Health = status.Health
+	toMutate.LastError = errorOrEmpty(status.LastError)
+	toMutate.LastEvaluation = status.EvaluationTimestamp
+	toMutate.EvaluationTime = status.EvaluationDuration.Seconds()
+}
 
-func RuleStatusMutatorGenerator(statusReader StatusReader) RuleStatusMutator {
-	return func(ctx context.Context, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule) {
+// NewInMemoryRuleMutator creates a RuleMutator that reads status from the scheduler and
+// alert states from the state manager. Used in non-HA mode where these are different systems.
+func NewInMemoryRuleMutator(statusReader StatusReader, manager state.AlertInstanceManager) RuleMutator {
+	return func(ctx context.Context, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (map[string]int64, map[string]int64) {
 		status, ok := statusReader.Status(ctx, source.GetKey())
-		// Grafana by design return "ok" health and default other fields for unscheduled rules.
-		// This differs from Prometheus.
+		// Grafana by design returns "ok" health and default other fields for unscheduled rules.
 		if !ok {
-			status = ngmodels.RuleStatus{
-				Health: "ok",
-			}
+			status = ngmodels.RuleStatus{Health: "ok"}
 		}
-		toMutate.Health = status.Health
-		toMutate.LastError = errorOrEmpty(status.LastError)
-		toMutate.LastEvaluation = status.EvaluationTimestamp
-		toMutate.EvaluationTime = status.EvaluationDuration.Seconds()
+		applyRuleStatus(status, toMutate)
+
+		states := manager.GetStatesForRuleUID(ctx, source.OrgID, source.UID)
+		return computeAlertStates(states, source, toMutate, stateFilterSet, matchers, labelOptions, limitAlerts)
+	}
+}
+
+// NewDBRuleMutator creates a RuleMutator that performs a single GetStatesForRuleUID
+// call and derives both status and alert state from the result. Used in HA single-node eval
+// mode, avoiding the separate StatusReader query that NewInMemoryRuleMutator uses.
+func NewDBRuleMutator(manager state.AlertInstanceManager) RuleMutator {
+	return func(ctx context.Context, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (map[string]int64, map[string]int64) {
+		states := manager.GetStatesForRuleUID(ctx, source.OrgID, source.UID)
+
+		status := state.StatesToRuleStatus(states)
+		if len(states) == 0 {
+			status = ngmodels.RuleStatus{Health: "ok"}
+		}
+		applyRuleStatus(status, toMutate)
+
+		return computeAlertStates(states, source, toMutate, stateFilterSet, matchers, labelOptions, limitAlerts)
 	}
 }
 
@@ -411,64 +432,63 @@ func RuleStateToAPIString(s eval.State) string {
 	}
 }
 
-func RuleAlertStateMutatorGenerator(manager state.AlertInstanceManager) RuleAlertStateMutator {
-	return func(ctx context.Context, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (map[string]int64, map[string]int64) {
-		states := manager.GetStatesForRuleUID(ctx, source.OrgID, source.UID)
-		toMutate.State = RuleStateToAPIString(ComputeRuleState(states))
-		totals := make(map[string]int64)
-		totalsFiltered := make(map[string]int64)
-		for _, alertState := range states {
-			activeAt := alertState.StartsAt
-			stateKey := strings.ToLower(alertState.State.String())
-			totals[stateKey] += 1
-			// Do not add error twice when execution error state is Error
-			if alertState.Error != nil && source.ExecErrState != ngmodels.ErrorErrState {
-				totals["error"] += 1
-			}
+// computeAlertStates computes rule state, totals, and alert details from the given states.
+// It mutates toMutate in place (State, ActiveAt, Alerts) and returns total and filtered-total counts.
+func computeAlertStates(states []*state.State, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (map[string]int64, map[string]int64) {
+	toMutate.State = RuleStateToAPIString(ComputeRuleState(states))
+	totals := make(map[string]int64)
+	totalsFiltered := make(map[string]int64)
+	for _, alertState := range states {
+		activeAt := alertState.StartsAt
+		stateKey := strings.ToLower(alertState.State.String())
+		totals[stateKey] += 1
+		// Do not add error twice when execution error state is Error
+		if alertState.Error != nil && source.ExecErrState != ngmodels.ErrorErrState {
+			totals["error"] += 1
+		}
 
-			// Track earliest ActiveAt for firing alerts
-			if alertState.State == eval.Alerting {
-				if toMutate.ActiveAt == nil || toMutate.ActiveAt.After(activeAt) {
-					toMutate.ActiveAt = &activeAt
-				}
-			}
-
-			if len(stateFilterSet) > 0 {
-				if _, ok := stateFilterSet[alertState.State]; !ok {
-					continue
-				}
-			}
-
-			if !matchersMatch(matchers, alertState.Labels) {
-				continue
-			}
-
-			totalsFiltered[stateKey] += 1
-			// Do not add error twice when execution error state is Error
-			if alertState.Error != nil && source.ExecErrState != ngmodels.ErrorErrState {
-				totalsFiltered["error"] += 1
-			}
-
-			if limitAlerts != 0 {
-				valString := ""
-				if alertState.State == eval.Alerting || alertState.State == eval.Pending || alertState.State == eval.Recovering {
-					valString = FormatValues(alertState)
-				}
-
-				toMutate.Alerts = append(toMutate.Alerts, apimodels.Alert{
-					Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
-					Annotations: apimodels.LabelsFromMap(alertState.Annotations),
-
-					// TODO: or should we make this two fields? Using one field lets the
-					// frontend use the same logic for parsing text on annotations and this.
-					State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
-					ActiveAt: &activeAt,
-					Value:    valString,
-				})
+		// Track earliest ActiveAt for firing alerts
+		if alertState.State == eval.Alerting {
+			if toMutate.ActiveAt == nil || toMutate.ActiveAt.After(activeAt) {
+				toMutate.ActiveAt = &activeAt
 			}
 		}
-		return totals, totalsFiltered
+
+		if len(stateFilterSet) > 0 {
+			if _, ok := stateFilterSet[alertState.State]; !ok {
+				continue
+			}
+		}
+
+		if !matchersMatch(matchers, alertState.Labels) {
+			continue
+		}
+
+		totalsFiltered[stateKey] += 1
+		// Do not add error twice when execution error state is Error
+		if alertState.Error != nil && source.ExecErrState != ngmodels.ErrorErrState {
+			totalsFiltered["error"] += 1
+		}
+
+		if limitAlerts != 0 {
+			valString := ""
+			if alertState.State == eval.Alerting || alertState.State == eval.Pending || alertState.State == eval.Recovering {
+				valString = FormatValues(alertState)
+			}
+
+			toMutate.Alerts = append(toMutate.Alerts, apimodels.Alert{
+				Labels:      apimodels.LabelsFromMap(alertState.GetLabels(labelOptions...)),
+				Annotations: apimodels.LabelsFromMap(alertState.Annotations),
+
+				// TODO: or should we make this two fields? Using one field lets the
+				// frontend use the same logic for parsing text on annotations and this.
+				State:    state.FormatStateAndReason(alertState.State, alertState.StateReason),
+				ActiveAt: &activeAt,
+				Value:    valString,
+			})
+		}
 	}
+	return totals, totalsFiltered
 }
 
 // paginationContext holds limits and filters for filter-aware pagination
@@ -476,8 +496,7 @@ type paginationContext struct {
 	opts              RuleGroupStatusesOptions
 	provenanceRecords map[string]ngmodels.Provenance
 	provenanceStore   ProvenanceStore
-	ruleStatusMutator RuleStatusMutator
-	alertStateMutator RuleAlertStateMutator
+	ruleMutator       RuleMutator
 
 	// Query parameters
 	namespaceUIDs      []string
@@ -602,7 +621,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 			ctx.opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules,
 			ctx.provenanceRecords, ctx.limitAlertsPerRule,
 			ctx.stateFilterSet, ctx.matchers, ctx.labelOptions,
-			ctx.ruleStatusMutator, ctx.alertStateMutator, ctx.compact,
+			ctx.ruleMutator, ctx.compact,
 		)
 		ruleGroup.Totals = totals
 		accumulateTotals(result.totalsDelta, totals)
@@ -700,7 +719,7 @@ func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *pagina
 }
 
 // nolint:gocyclo
-func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
+func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
 	ctx, span := tracer.Start(opts.Ctx, "api.prometheus.PrepareRuleGroupStatusesV2")
 	defer span.End()
 	opts.Ctx = ctx
@@ -906,8 +925,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 		opts:               opts,
 		provenanceRecords:  nil,
 		provenanceStore:    provenanceStore,
-		ruleStatusMutator:  ruleStatusMutator,
-		alertStateMutator:  alertStateMutator,
+		ruleMutator:        ruleMutator,
 		namespaceUIDs:      namespaceUIDs,
 		ruleUIDs:           ruleUIDs,
 		dashboardUID:       dashboardUID,
@@ -950,7 +968,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 }
 
 // nolint:gocyclo
-func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts RuleGroupStatusesOptions, ruleStatusMutator RuleStatusMutator, alertStateMutator RuleAlertStateMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
+func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -1074,7 +1092,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 			break
 		}
 
-		ruleGroup, totals := toRuleGroup(opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleStatusMutator, alertStateMutator, false)
+		ruleGroup, totals := toRuleGroup(opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleMutator, false)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
@@ -1253,7 +1271,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleStatusMutator RuleStatusMutator, ruleAlertStateMutator RuleAlertStateMutator, compact bool) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleMutator RuleMutator, compact bool) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -1292,15 +1310,12 @@ func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRul
 			},
 		}
 
-		// mutate rule to apply status fields
-		ruleStatusMutator(ctx, rule, &alertingRule)
-
 		if rule.NotificationSettings != nil {
 			alertingRule.NotificationSettings = apicompat.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings)
 		}
 
-		// mutate rule for alert states
-		totals, totalsFiltered := ruleAlertStateMutator(ctx, rule, &alertingRule, stateFilterSet, matchers, labelOptions, limitAlerts)
+		// mutate rule to apply status fields and alert states
+		totals, totalsFiltered := ruleMutator(ctx, rule, &alertingRule, stateFilterSet, matchers, labelOptions, limitAlerts)
 
 		if alertingRule.State != "" {
 			rulesTotals[alertingRule.State] += 1
