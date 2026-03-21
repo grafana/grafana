@@ -1195,12 +1195,11 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("no _folder.json updates returns diff unchanged", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionCreated, Path: "alpha/dash.json", Ref: "ref1"},
 		}
-		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
 		require.NoError(t, err)
 		require.Empty(t, replaced)
 		require.Equal(t, diff, result)
@@ -1209,14 +1208,13 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("no existing folder means no UID change", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
 		}
 		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 
-		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
 		require.NoError(t, err)
 		require.Empty(t, replaced)
 		require.Equal(t, diff, result)
@@ -1225,7 +1223,6 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("same UID means no change", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
@@ -1241,7 +1238,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 			Hash: "abc",
 		}, nil)
 
-		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
 		require.NoError(t, err)
 		require.Empty(t, replaced)
 		require.Equal(t, diff, result)
@@ -1250,7 +1247,6 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("UID change emits children and tracks old UID", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
@@ -1268,7 +1264,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 			Hash: "abc",
 		}, nil)
 
-		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
 		require.NoError(t, err)
 		require.Len(t, replaced, 1)
 		require.Equal(t, "alpha/", replaced[0].Path)
@@ -1282,7 +1278,6 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("child already in diff is not duplicated", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
@@ -1301,7 +1296,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 			Hash: "abc",
 		}, nil)
 
-		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
+		result, replaced, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
 		require.NoError(t, err)
 		require.Len(t, replaced, 1)
 		require.Len(t, result, 2, "should not add duplicate child")
@@ -1310,7 +1305,6 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("child folder gets trailing slash", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
@@ -1328,7 +1322,7 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 			Hash: "abc",
 		}, nil)
 
-		result, _, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
+		result, _, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
 		require.NoError(t, err)
 		require.Len(t, result, 2)
 		require.Equal(t, "alpha/beta/", result[1].Path)
@@ -1337,14 +1331,13 @@ func TestPlanFolderMetadataChanges(t *testing.T) {
 	t.Run("List error is propagated", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repoResources := resources.NewMockRepositoryResources(t)
-		progress := jobs.NewMockJobProgressRecorder(t)
 
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "ref1"},
 		}
 		repoResources.On("List", mock.Anything).Return((*provisioning.ResourceList)(nil), fmt.Errorf("list failed"))
 
-		_, _, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, progress, tracer)
+		_, _, err := planFolderMetadataChanges(context.Background(), repo, "ref1", diff, repoResources, tracer)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "list existing resources: list failed")
 	})

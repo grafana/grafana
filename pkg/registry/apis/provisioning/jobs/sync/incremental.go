@@ -7,6 +7,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -57,7 +58,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	var replaced []replacedFolder
 	if folderMetadataEnabled {
 		if readerRepo, ok := repo.(repository.Reader); ok {
-			diff, replaced, err = planFolderMetadataChanges(ctx, readerRepo, currentRef, diff, repositoryResources, progress, tracer)
+			diff, replaced, err = planFolderMetadataChanges(ctx, readerRepo, currentRef, diff, repositoryResources, tracer)
 			if err != nil {
 				return tracing.Error(span, fmt.Errorf("plan folder metadata changes: %w", err))
 			}
@@ -300,7 +301,6 @@ func planFolderMetadataChanges(
 	currentRef string,
 	diff []repository.VersionedFileChange,
 	repositoryResources resources.RepositoryResources,
-	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
 ) ([]repository.VersionedFileChange, []replacedFolder, error) {
 	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.plan_folder_metadata_changes")
@@ -331,7 +331,7 @@ func planFolderMetadataChanges(
 	}
 
 	var replaced []replacedFolder
-	oldUIDSet := make(map[string]string) // old UID → folder dir path
+	oldUIDSet := make(map[string]struct{})
 	for _, idx := range metadataUpdateIndices {
 		change := diff[idx]
 		folderDir := safepath.Dir(change.Path)
@@ -344,11 +344,8 @@ func planFolderMetadataChanges(
 		newFolder, err := resources.ParseFolderWithMetadata(ctx, repo, folderDir, currentRef, true)
 		if err != nil {
 			span.RecordError(err)
-			progress.Record(ctx, jobs.NewFolderResult(folderDir).
-				WithAction(repository.FileActionIgnored).
-				WithError(fmt.Errorf("skipping folder UID change detection for %s: %w", folderDir, err)).
-				AsSkipped().
-				Build())
+			logging.FromContext(ctx).Warn("skipping folder UID change detection",
+				"folder", folderDir, "error", err)
 			continue
 		}
 
@@ -361,7 +358,7 @@ func planFolderMetadataChanges(
 			Path:   folderDir,
 			OldUID: oldUID,
 		})
-		oldUIDSet[oldUID] = folderDir
+		oldUIDSet[oldUID] = struct{}{}
 	}
 
 	if len(oldUIDSet) == 0 {
@@ -378,7 +375,7 @@ func planFolderMetadataChanges(
 
 	for i := range existingResources.Items {
 		item := &existingResources.Items[i]
-		if _, affected := oldUIDSet[item.Folder]; !affected {
+		if _, ok := oldUIDSet[item.Folder]; !ok {
 			continue
 		}
 
