@@ -815,10 +815,11 @@ func assertNoFolderByUID(t *testing.T, helper *common.ProvisioningTestHelper, fo
 		"folder %q should be deleted", folderUID)
 }
 
-// TestIntegrationProvisioning_FullSync_DashboardMovePreservesUID verifies that
-// moving a dashboard file to a different path during full sync updates the
-// resource in place (preserving K8s UID) instead of deleting and recreating it.
-func TestIntegrationProvisioning_FullSync_DashboardMovePreservesUID(t *testing.T) {
+// TestIntegrationProvisioning_FullSync_DashboardMoveInPlace verifies that
+// moving a dashboard file to a different folder during full sync updates it
+// in place (preserving K8s UID and creationTimestamp) rather than deleting
+// and recreating it.
+func TestIntegrationProvisioning_FullSync_DashboardMoveInPlace(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
