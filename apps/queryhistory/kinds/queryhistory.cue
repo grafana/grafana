@@ -23,4 +23,15 @@ queryhistory: {
 	selectableFields: [
 		"spec.datasourceUid",
 	]
+	routes: {
+		"/search": {
+			"GET": {
+				name: "getSearch"
+				response: {
+					items: [..._]
+					totalCount?: int64
+				}
+			}
+		}
+	}
 }

@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
@@ -23,17 +21,35 @@ const (
 	DefaultTTL         = 14 * 24 * time.Hour
 )
 
+// QueryHistoryConfig is the SpecificConfig for the query history app.
+type QueryHistoryConfig struct {
+	SearchHandler simple.AppCustomRouteHandler
+	Runnables     []app.Runnable
+}
+
 func New(cfg app.Config) (app.App, error) {
+	var qhConfig *QueryHistoryConfig
+	if cfg.SpecificConfig != nil {
+		qhConfig, _ = cfg.SpecificConfig.(*QueryHistoryConfig)
+	}
+
+	managedKind := simple.AppManagedKind{
+		Kind:      v0alpha1.QueryHistoryKind(),
+		Mutator:   &queryHistoryMutator{},
+		Validator: &queryHistoryValidator{},
+	}
+
+	// Register search as a kind-scoped custom route
+	if qhConfig != nil && qhConfig.SearchHandler != nil {
+		managedKind.CustomRoutes = simple.AppCustomRouteHandlers{
+			simple.AppCustomRoute{Method: simple.AppCustomRouteMethodGet, Path: "search"}: qhConfig.SearchHandler,
+		}
+	}
+
 	simpleConfig := simple.AppConfig{
-		Name:       "queryhistory",
-		KubeConfig: cfg.KubeConfig,
-		ManagedKinds: []simple.AppManagedKind{
-			{
-				Kind:      v0alpha1.QueryHistoryKind(),
-				Mutator:   &queryHistoryMutator{},
-				Validator: &queryHistoryValidator{},
-			},
-		},
+		Name:         "queryhistory",
+		KubeConfig:   cfg.KubeConfig,
+		ManagedKinds: []simple.AppManagedKind{managedKind},
 	}
 
 	a, err := simple.NewApp(simpleConfig)
@@ -45,17 +61,14 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, err
 	}
 
-	return a, nil
-}
+	// Add background jobs as runnables
+	if qhConfig != nil {
+		for _, r := range qhConfig.Runnables {
+			a.AddRunnable(r)
+		}
+	}
 
-func GetKinds() map[schema.GroupVersion][]resource.Kind {
-	gv := schema.GroupVersion{
-		Group:   v0alpha1.QueryHistoryKind().Group(),
-		Version: v0alpha1.QueryHistoryKind().Version(),
-	}
-	return map[schema.GroupVersion][]resource.Kind{
-		gv: {v0alpha1.QueryHistoryKind()},
-	}
+	return a, nil
 }
 
 // queryHistoryMutator sets system labels on create.

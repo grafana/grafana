@@ -19,38 +19,45 @@ import (
 )
 
 var (
-	_ rest.Storage              = (*legacyStorage)(nil)
-	_ rest.Scoper               = (*legacyStorage)(nil)
-	_ rest.SingularNameProvider = (*legacyStorage)(nil)
-	_ rest.Getter               = (*legacyStorage)(nil)
-	_ rest.Lister               = (*legacyStorage)(nil)
-	_ rest.Creater              = (*legacyStorage)(nil)
-	_ rest.Updater              = (*legacyStorage)(nil)
-	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
-	_ rest.CollectionDeleter    = (*legacyStorage)(nil)
-	_ rest.TableConvertor       = (*legacyStorage)(nil)
+	_ rest.Storage              = (*LegacyStorage)(nil)
+	_ rest.Scoper               = (*LegacyStorage)(nil)
+	_ rest.SingularNameProvider = (*LegacyStorage)(nil)
+	_ rest.Getter               = (*LegacyStorage)(nil)
+	_ rest.Lister               = (*LegacyStorage)(nil)
+	_ rest.Creater              = (*LegacyStorage)(nil)
+	_ rest.Updater              = (*LegacyStorage)(nil)
+	_ rest.GracefulDeleter      = (*LegacyStorage)(nil)
+	_ rest.CollectionDeleter    = (*LegacyStorage)(nil)
+	_ rest.TableConvertor       = (*LegacyStorage)(nil)
 )
 
-type legacyStorage struct {
+type LegacyStorage struct {
 	service        queryhistorysvc.Service
 	tableConverter rest.TableConvertor
 }
 
-func (s *legacyStorage) New() runtime.Object {
+func NewLegacyStorage(service queryhistorysvc.Service) *LegacyStorage {
+	return &LegacyStorage{
+		service:        service,
+		tableConverter: qhv0alpha1.QueryHistoryResourceInfo.TableConverter(),
+	}
+}
+
+func (s *LegacyStorage) New() runtime.Object {
 	return qhv0alpha1.QueryHistoryResourceInfo.NewFunc()
 }
 
-func (s *legacyStorage) NewList() runtime.Object {
+func (s *LegacyStorage) NewList() runtime.Object {
 	return qhv0alpha1.QueryHistoryResourceInfo.NewListFunc()
 }
 
-func (s *legacyStorage) Destroy() {}
+func (s *LegacyStorage) Destroy() {}
 
-func (s *legacyStorage) NamespaceScoped() bool {
+func (s *LegacyStorage) NamespaceScoped() bool {
 	return true
 }
 
-func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
+func (s *LegacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
@@ -94,11 +101,11 @@ func dtoToResource(dto *queryhistorysvc.QueryHistoryDTO, namespace string) (*qhv
 	return obj, nil
 }
 
-func (s *legacyStorage) GetSingularName() string {
+func (s *LegacyStorage) GetSingularName() string {
 	return qhv0alpha1.QueryHistoryResourceInfo.GetSingularName()
 }
 
-func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *LegacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	// The legacy service doesn't have a direct Get-by-UID method.
 	// Search with a broad query and filter by UID.
 	u, err := getSignedInUser(ctx)
@@ -125,11 +132,11 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	return nil, fmt.Errorf("query history item %q not found", name)
 }
 
-func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+func (s *LegacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
 	return nil, fmt.Errorf("delete collection not supported for query history")
 }
 
-func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+func (s *LegacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	u, err := getSignedInUser(ctx)
 	if err != nil {
 		return nil, err
@@ -158,7 +165,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	return dtoToResource(&dto, qh.Namespace)
 }
 
-func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (s *LegacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	u, err := getSignedInUser(ctx)
 	if err != nil {
 		return nil, false, err
@@ -172,7 +179,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	return nil, true, nil
 }
 
-func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (s *LegacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	u, err := getSignedInUser(ctx)
 	if err != nil {
 		return nil, false, err
@@ -209,7 +216,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 	return result, false, nil
 }
 
-func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+func (s *LegacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	u, err := getSignedInUser(ctx)
 	if err != nil {
 		return nil, err

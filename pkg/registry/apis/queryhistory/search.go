@@ -6,12 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -72,7 +75,7 @@ func (s *searchREST) Connect(ctx context.Context, name string, opts runtime.Obje
 			return
 		}
 
-		searchReq, err := convertSearchParams(req, user.GetUID())
+		searchReq, err := convertSearchParamsFromURL(req.URL, user.GetUID())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -91,8 +94,8 @@ func (s *searchREST) Connect(ctx context.Context, name string, opts runtime.Obje
 	}), nil
 }
 
-func convertSearchParams(req *http.Request, userUID string) (*resourcepb.ResourceSearchRequest, error) {
-	q := req.URL.Query()
+func convertSearchParamsFromURL(u *url.URL, userUID string) (*resourcepb.ResourceSearchRequest, error) {
+	q := u.Query()
 
 	searchReq := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{},
@@ -194,6 +197,33 @@ func convertSearchParams(req *http.Request, userUID string) (*resourcepb.Resourc
 	// and add a "name in [uid1, uid2, ...]" field requirement.
 
 	return searchReq, nil
+}
+
+// NewSearchHandler returns an App SDK custom route handler for the search sub-resource.
+func NewSearchHandler(searcher resourcepb.ResourceIndexClient) simple.AppCustomRouteHandler {
+	return func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
+		user, err := identity.GetRequester(ctx)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil
+		}
+
+		searchReq, err := convertSearchParamsFromURL(req.URL, user.GetUID())
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return nil
+		}
+
+		result, err := searcher.Search(ctx, searchReq)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return nil
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(convertSearchResults(result))
+		return nil
+	}
 }
 
 // convertSearchResults maps the ResourceSearchResponse table format into our SearchResultItem slice.

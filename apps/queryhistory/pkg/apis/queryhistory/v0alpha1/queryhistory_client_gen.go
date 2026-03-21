@@ -2,6 +2,9 @@ package v0alpha1
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -96,4 +99,25 @@ func (c *QueryHistoryClient) UpdateStatus(ctx context.Context, identifier resour
 
 func (c *QueryHistoryClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {
 	return c.client.Delete(ctx, identifier, opts)
+}
+
+type GetSearchRequest struct {
+	Headers http.Header
+}
+
+func (c *QueryHistoryClient) GetSearch(ctx context.Context, identifier resource.Identifier, request GetSearchRequest) (*GetSearchResponse, error) {
+	resp, err := c.client.SubresourceRequest(ctx, identifier, resource.CustomRouteRequestOptions{
+		Path:    "/search",
+		Verb:    "GET",
+		Headers: request.Headers,
+	})
+	if err != nil {
+		return nil, err
+	}
+	cast := GetSearchResponse{}
+	err = json.Unmarshal(resp, &cast)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetSearchResponse: %w", err)
+	}
+	return &cast, nil
 }

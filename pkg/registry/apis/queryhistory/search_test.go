@@ -24,7 +24,7 @@ func TestConvertSearchParams(t *testing.T) {
 	}
 
 	req, _ := http.NewRequest("GET", "/search?"+params.Encode(), nil)
-	searchReq, err := convertSearchParams(req, "user-abc")
+	searchReq, err := convertSearchParamsFromURL(req.URL, "user-abc")
 	require.NoError(t, err)
 	require.NotNil(t, searchReq)
 
@@ -54,7 +54,7 @@ func TestConvertSearchParams(t *testing.T) {
 
 func TestConvertSearchParamsDefaults(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/search", nil)
-	searchReq, err := convertSearchParams(req, "user-abc")
+	searchReq, err := convertSearchParamsFromURL(req.URL, "user-abc")
 	require.NoError(t, err)
 	require.NotNil(t, searchReq)
 
@@ -76,7 +76,7 @@ func TestConvertSearchParamsTimeRange(t *testing.T) {
 	}
 
 	req, _ := http.NewRequest("GET", "/search?"+params.Encode(), nil)
-	searchReq, err := convertSearchParams(req, "user-abc")
+	searchReq, err := convertSearchParamsFromURL(req.URL, "user-abc")
 	require.NoError(t, err)
 
 	// Privacy filter + from + to = 3 field requirements
