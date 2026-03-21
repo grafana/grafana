@@ -1,9 +1,10 @@
-package git
+package common
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -30,8 +31,8 @@ import (
 type GrafanaOpt func(*testinfra.GrafanaOpts)
 
 const (
-	waitTimeoutDefault  = 60 * time.Second
-	waitIntervalDefault = 100 * time.Millisecond
+	WaitTimeoutDefault  = 60 * time.Second
+	WaitIntervalDefault = 100 * time.Millisecond
 )
 
 func TestMain(m *testing.M) {
@@ -39,7 +40,7 @@ func TestMain(m *testing.M) {
 }
 
 // dashboardJSON generates a valid dashboard JSON for testing
-func dashboardJSON(uid, title string, version int) []byte {
+func DashboardJSON(uid, title string, version int) []byte {
 	dashboard := map[string]interface{}{
 		"uid":           uid,
 		"title":         title,
@@ -54,8 +55,8 @@ func dashboardJSON(uid, title string, version int) []byte {
 	return data
 }
 
-// gitTestHelper wraps the standard test helper with git-specific functionality
-type gitTestHelper struct {
+// GitTestHelper wraps the standard test helper with git-specific functionality
+type GitTestHelper struct {
 	*apis.K8sTestHelper
 	gitServer    *gittest.Server
 	Repositories *apis.K8sResourceClient
@@ -70,7 +71,7 @@ type gitTestHelper struct {
 // runGrafanaWithGitServer starts both a Grafana test instance and a git server.
 // Pass functional options to override any GrafanaOpts defaults before startup,
 // e.g. to set ProvisioningMaxResourcesPerRepository for quota tests.
-func runGrafanaWithGitServer(t *testing.T, options ...GrafanaOpt) *gitTestHelper {
+func RunGrafanaWithGitServer(t *testing.T, options ...GrafanaOpt) *GitTestHelper {
 	t.Helper()
 
 	ctx := context.Background()
@@ -140,7 +141,7 @@ func runGrafanaWithGitServer(t *testing.T, options ...GrafanaOpt) *gitTestHelper
 	editorClient := k8s.Org1.Editor.RESTClient(t, gv)
 	viewerClient := k8s.Org1.Viewer.RESTClient(t, gv)
 
-	helper := &gitTestHelper{
+	helper := &GitTestHelper{
 		K8sTestHelper: k8s,
 		gitServer:     gitServer,
 		Repositories:  repositories,
@@ -155,9 +156,13 @@ func runGrafanaWithGitServer(t *testing.T, options ...GrafanaOpt) *gitTestHelper
 	return helper
 }
 
+func (h *GitTestHelper) GitServer() *gittest.Server {
+	return h.gitServer
+}
+
 // createGitRepo creates a git repository using gittest and registers it with Grafana provisioning.
 // workflows parameter is optional - if not provided, defaults to ["write"].
-func (h *gitTestHelper) createGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+func (h *GitTestHelper) CreateGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	t.Helper()
 
 	ctx := context.Background()
@@ -252,7 +257,7 @@ func (h *gitTestHelper) createGitRepo(t *testing.T, repoName string, initialFile
 }
 
 // waitForReadyRepository waits for a repository to have Ready=True condition
-func (h *gitTestHelper) waitForReadyRepository(t *testing.T, repoName string) {
+func (h *GitTestHelper) waitForReadyRepository(t *testing.T, repoName string) {
 	t.Helper()
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -291,12 +296,12 @@ func (h *gitTestHelper) waitForReadyRepository(t *testing.T, repoName string) {
 		}
 
 		assert.True(collect, ready, "repository not ready")
-	}, waitTimeoutDefault, waitIntervalDefault, "repository %s should become ready", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become ready", repoName)
 }
 
 // syncAndWait triggers a full pull sync on the named repository and waits for
 // all active jobs to complete.
-func (h *gitTestHelper) syncAndWait(t *testing.T, repoName string) {
+func (h *GitTestHelper) SyncAndWait(t *testing.T, repoName string) {
 	t.Helper()
 
 	jobSpec := map[string]interface{}{
@@ -329,7 +334,7 @@ func (h *gitTestHelper) syncAndWait(t *testing.T, repoName string) {
 // repository and waits for all active jobs to complete.
 //
 //nolint:unused // Called from incremental_folder_metadata_test.go
-func (h *gitTestHelper) syncAndWaitIncremental(t *testing.T, repoName string) {
+func (h *GitTestHelper) SyncAndWaitIncremental(t *testing.T, repoName string) {
 	t.Helper()
 	h.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
@@ -338,17 +343,17 @@ func (h *gitTestHelper) syncAndWaitIncremental(t *testing.T, repoName string) {
 }
 
 // TriggerJobAndWaitForComplete implements common.SyncHelper.
-func (h *gitTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repoName string, spec provisioning.JobSpec) *unstructured.Unstructured {
+func (h *GitTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repoName string, spec provisioning.JobSpec) *unstructured.Unstructured {
 	return h.triggerJobAndWaitForComplete(t, repoName, spec)
 }
 
 // GetRepositories implements common.SyncHelper.
-func (h *gitTestHelper) GetRepositories() *apis.K8sResourceClient {
+func (h *GitTestHelper) GetRepositories() *apis.K8sResourceClient {
 	return h.Repositories
 }
 
 // waitForJobsComplete waits for all active jobs for a repository to complete.
-func (h *gitTestHelper) waitForJobsComplete(t *testing.T, repoName string) {
+func (h *GitTestHelper) waitForJobsComplete(t *testing.T, repoName string) {
 	t.Helper()
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -367,7 +372,7 @@ func (h *gitTestHelper) waitForJobsComplete(t *testing.T, repoName string) {
 		}
 
 		assert.False(collect, hasActiveJobs, "jobs still active for repository %s", repoName)
-	}, waitTimeoutDefault, waitIntervalDefault, "jobs should complete for repository %s", repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "jobs should complete for repository %s", repoName)
 }
 
 // asJSON serialises v to a JSON byte slice, panicking on encoding errors
@@ -383,7 +388,7 @@ func asJSON(v interface{}) []byte {
 // triggerJobAndWaitForComplete posts a sync job and blocks until the job
 // finishes (appears in the repository's historic job list). The completed job
 // object is returned so callers can inspect its state and warnings.
-func (h *gitTestHelper) triggerJobAndWaitForComplete(t *testing.T, repoName string, spec provisioning.JobSpec) *unstructured.Unstructured {
+func (h *GitTestHelper) triggerJobAndWaitForComplete(t *testing.T, repoName string, spec provisioning.JobSpec) *unstructured.Unstructured {
 	t.Helper()
 
 	result := h.AdminREST.Post().
@@ -413,7 +418,7 @@ func (h *gitTestHelper) triggerJobAndWaitForComplete(t *testing.T, repoName stri
 
 // awaitJob polls repositories/{repo}/jobs/{uid} until the job appears in the
 // historic job list (i.e. has completed), then returns the result.
-func (h *gitTestHelper) awaitJob(t *testing.T, repoName string, job *unstructured.Unstructured) *unstructured.Unstructured {
+func (h *GitTestHelper) awaitJob(t *testing.T, repoName string, job *unstructured.Unstructured) *unstructured.Unstructured {
 	t.Helper()
 
 	var lastResult *unstructured.Unstructured
@@ -426,7 +431,7 @@ func (h *gitTestHelper) awaitJob(t *testing.T, repoName string, job *unstructure
 			return
 		}
 		lastResult = result
-	}, waitTimeoutDefault, waitIntervalDefault, "job %q should complete", job.GetName())
+	}, WaitTimeoutDefault, WaitIntervalDefault, "job %q should complete", job.GetName())
 
 	require.NotNil(t, lastResult)
 	return lastResult
@@ -434,7 +439,7 @@ func (h *gitTestHelper) awaitJob(t *testing.T, repoName string, job *unstructure
 
 // awaitLatestHistoricJob waits for the active job queue to drain, then returns
 // the most recently created historic job for the repository.
-func (h *gitTestHelper) awaitLatestHistoricJob(t *testing.T, repoName string) *unstructured.Unstructured {
+func (h *GitTestHelper) awaitLatestHistoricJob(t *testing.T, repoName string) *unstructured.Unstructured {
 	t.Helper()
 
 	h.waitForJobsComplete(t, repoName)
@@ -454,9 +459,9 @@ func (h *gitTestHelper) awaitLatestHistoricJob(t *testing.T, repoName string) *u
 	return latest.DeepCopy()
 }
 
-// waitForQuotaReconciliation polls until the repository's ResourceQuota
+// WaitForQuotaReconciliation polls until the repository's ResourceQuota
 // condition reaches the expected reason (e.g. provisioning.ReasonQuotaReached).
-func (h *gitTestHelper) waitForQuotaReconciliation(t *testing.T, repoName, expectedReason string) {
+func (h *GitTestHelper) WaitForQuotaReconciliation(t *testing.T, repoName, expectedReason string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		repoObj, err := h.Repositories.Resource.Get(context.Background(), repoName, metav1.GetOptions{})
@@ -470,13 +475,13 @@ func (h *gitTestHelper) waitForQuotaReconciliation(t *testing.T, repoName, expec
 		}
 		assert.Equal(c, expectedReason, cond.Reason,
 			"quota condition reason mismatch for repo %q", repoName)
-	}, waitTimeoutDefault, waitIntervalDefault,
+	}, WaitTimeoutDefault, WaitIntervalDefault,
 		"quota condition on repo %q should reach reason %q", repoName, expectedReason)
 }
 
-// requireRepoDashboardCount asserts the number of dashboards whose
+// RequireRepoDashboardCount asserts the number of dashboards whose
 // grafana.app/managerId annotation matches repoName.
-func requireRepoDashboardCount(t *testing.T, h *gitTestHelper, ctx context.Context, repoName string, expected int) {
+func RequireRepoDashboardCount(t *testing.T, h *GitTestHelper, ctx context.Context, repoName string, expected int) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		list, err := h.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
@@ -490,13 +495,13 @@ func requireRepoDashboardCount(t *testing.T, h *gitTestHelper, ctx context.Conte
 			}
 		}
 		assert.Equal(c, expected, count, "unexpected dashboard count for repo %q", repoName)
-	}, waitTimeoutDefault, waitIntervalDefault,
+	}, WaitTimeoutDefault, WaitIntervalDefault,
 		"expected %d dashboard(s) for repo %q", expected, repoName)
 }
 
-// requireRepoFolderCount asserts the number of folders whose
+// RequireRepoFolderCount asserts the number of folders whose
 // grafana.app/managerId annotation matches repoName.
-func requireRepoFolderCount(t *testing.T, h *gitTestHelper, ctx context.Context, repoName string, expected int) {
+func RequireRepoFolderCount(t *testing.T, h *GitTestHelper, ctx context.Context, repoName string, expected int) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		list, err := h.FoldersV1.Resource.List(ctx, metav1.ListOptions{})
@@ -510,7 +515,7 @@ func requireRepoFolderCount(t *testing.T, h *gitTestHelper, ctx context.Context,
 			}
 		}
 		assert.Equal(c, expected, count, "unexpected folder count for repo %q", repoName)
-	}, waitTimeoutDefault, waitIntervalDefault,
+	}, WaitTimeoutDefault, WaitIntervalDefault,
 		"expected %d folder(s) for repo %q", expected, repoName)
 }
 
@@ -532,4 +537,16 @@ func findCondition(conditions []metav1.Condition, conditionType string) *metav1.
 		}
 	}
 	return nil
+}
+
+// requireJobWarningContains asserts that at least one warning in the job status
+// contains the given substring.
+func RequireJobWarningContains(t *testing.T, jobObj *provisioning.Job, substr string) {
+	t.Helper()
+	for _, w := range jobObj.Status.Warnings {
+		if strings.Contains(w, substr) {
+			return
+		}
+	}
+	t.Errorf("expected at least one warning containing %q, got warnings: %v", substr, jobObj.Status.Warnings)
 }
