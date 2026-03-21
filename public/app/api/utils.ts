@@ -18,7 +18,16 @@ export const handleError = (e: unknown, dispatch: ThunkDispatch, message: string
   dispatch(notifyApp(createErrorNotification(message, errorMessage)));
 };
 
-export function extractErrorMessage(error: unknown): string {
+/**
+ * Extracts the error message from an error object.
+ * @param error The error object to extract the message from.
+ * @returns The error message, or undefined if no proper error object is provided or the error message is not a string.
+ */
+export function extractErrorMessage(error: unknown): string | undefined {
+  if (typeof error === 'string') {
+    return error;
+  }
+
   if (isObject(error)) {
     if ('data' in error && isObject(error.data) && 'message' in error.data) {
       return String(error.data.message);
@@ -27,7 +36,7 @@ export function extractErrorMessage(error: unknown): string {
       return String(error.message);
     }
   }
-  return String(error);
+  return undefined;
 }
 
 /**
