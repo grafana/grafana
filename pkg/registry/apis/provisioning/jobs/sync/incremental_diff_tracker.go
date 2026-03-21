@@ -39,3 +39,11 @@ func (result *rebuiltIncrementalDiffTracker) Append(change repository.VersionedF
 func (result *rebuiltIncrementalDiffTracker) AppendReplaced(replaced replacedFolder) {
 	result.replaced = append(result.replaced, replaced)
 }
+
+func (result *rebuiltIncrementalDiffTracker) IncrementalDiff() []repository.VersionedFileChange {
+	return result.filteredDiff
+}
+
+func (result *rebuiltIncrementalDiffTracker) ReplacedFolders() []replacedFolder {
+	return result.replaced
+}

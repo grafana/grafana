@@ -49,17 +49,16 @@ func TestFolderMetadataDiffSplit(t *testing.T) {
 	require.False(t, split.HasMetadataFolderAt("other/"))
 }
 
-func TestFolderMetadataDiffSplitReturnsClones(t *testing.T) {
+func TestFolderMetadataDiffSplitWithoutMetadataChanges(t *testing.T) {
 	split := splitMetadataChanges([]repository.VersionedFileChange{
-		{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "new-ref"},
 		{Action: repository.FileActionUpdated, Path: "alpha/dashboard.json", Ref: "new-ref"},
 	})
 
-	other := split.otherChanges
-	other[0].Path = "mutated.json"
-	require.Equal(t, "alpha/dashboard.json", split.otherChanges[0].Path)
-
-	metadata := split.metadataChanges
-	metadata[0].Path = "mutated/_folder.json"
-	require.Equal(t, "alpha/_folder.json", split.metadataChanges[0].Path)
+	require.False(t, split.HasMetadataChanges())
+	require.Equal(t, []repository.VersionedFileChange{
+		{Action: repository.FileActionUpdated, Path: "alpha/dashboard.json", Ref: "new-ref"},
+	}, split.otherChanges)
+	require.Empty(t, split.metadataChanges)
+	require.True(t, split.HadChangeOriginallyAt("alpha/dashboard.json"))
+	require.False(t, split.HasMetadataFolderAt("alpha/"))
 }

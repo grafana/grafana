@@ -66,15 +66,15 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	}
 
 	index := newManagedResourceIndex(target)
-	result := newRebuiltIncrementalDiffTracker(input.otherChanges)
+	diffTracker := newRebuiltIncrementalDiffTracker(input.otherChanges)
 
-	for _, change := range input.metadataChanges {
-		if err := d.rewriteMetadataChange(ctx, currentRef, input, index, result, change); err != nil {
+	for _, change := range input.MetadataChanges() {
+		if err := d.rewriteMetadataChange(ctx, currentRef, input, index, diffTracker, change); err != nil {
 			return nil, nil, err
 		}
 	}
 
-	return result.filteredDiff, result.replaced, nil
+	return diffTracker.IncrementalDiff(), diffTracker.ReplacedFolders(), nil
 }
 
 // rewriteMetadataChange dispatches each handled metadata action to the
@@ -84,14 +84,14 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteMetadataChange(
 	currentRef string,
 	input folderMetadataDiffSplit,
 	index managedResourceIndex,
-	result *rebuiltIncrementalDiffTracker,
+	diffTracker *rebuiltIncrementalDiffTracker,
 	change repository.VersionedFileChange,
 ) error {
 	switch change.Action {
 	case repository.FileActionCreated, repository.FileActionUpdated:
-		return d.rewriteCreatedOrUpdatedMetadataChange(ctx, input, index, result, change)
+		return d.rewriteCreatedOrUpdatedMetadataChange(ctx, input, index, diffTracker, change)
 	case repository.FileActionDeleted:
-		return d.rewriteDeletedMetadataChange(ctx, currentRef, input, index, result, change)
+		return d.rewriteDeletedMetadataChange(ctx, currentRef, input, index, diffTracker, change)
 	default:
 		return nil
 	}
@@ -104,15 +104,15 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 	ctx context.Context,
 	input folderMetadataDiffSplit,
 	index managedResourceIndex,
-	result *rebuiltIncrementalDiffTracker,
+	diffTracker *rebuiltIncrementalDiffTracker,
 	change repository.VersionedFileChange,
 ) error {
 	folderPath := folderPathForMetadataChange(change.Path)
 
-	if !input.HadChangeOriginallyAt(folderPath) && !result.HasGeneratedPath(folderPath) {
-		// Synthetic folder replays always use Updated so applyIncrementalChanges
-		// routes the directory entry through EnsureFolderPathExist.
-		result.Append(repository.VersionedFileChange{
+	// In case the folder path is not in the original diff, and we didn't generate a change yet,
+	// we append an update change for it.
+	if !input.HadChangeOriginallyAt(folderPath) && !diffTracker.HasGeneratedPath(folderPath) {
+		diffTracker.Append(repository.VersionedFileChange{
 			Action: repository.FileActionUpdated,
 			Path:   folderPath,
 			Ref:    change.Ref,
@@ -124,15 +124,19 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 		return err
 	}
 	if replaced != nil {
-		result.AppendReplaced(*replaced)
+		diffTracker.AppendReplaced(*replaced)
 	}
 
 	for _, childPath := range index.DirectChildrenOf(folderPath) {
-		if input.HadChangeOriginallyAt(childPath) || input.HasMetadataFolderAt(childPath) || result.HasGeneratedPath(childPath) {
+		// Skip children that already have a real diff entry, are going to be
+		// handled by their own metadata rewrite (e.g. folders with metadata changes), 
+		// or were already emitted while expanding a deeper metadata change. 
+		// That keeps the rewritten diff stable and avoids replaying the same child more than once.
+		if input.HadChangeOriginallyAt(childPath) || input.HasMetadataFolderAt(childPath) || diffTracker.HasGeneratedPath(childPath) {
 			continue
 		}
 
-		result.Append(repository.VersionedFileChange{
+		diffTracker.Append(repository.VersionedFileChange{
 			Action: repository.FileActionUpdated,
 			Path:   childPath,
 			Ref:    change.Ref,
@@ -185,6 +189,10 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	}
 
 	for _, childPath := range index.DirectChildrenOf(folderPath) {
+		// Skip children that already have a real diff entry, are going to be
+		// handled by their own metadata rewrite (e.g. folders with metadata changes), 
+		// or were already emitted while expanding a deeper metadata change. 
+		// That keeps the rewritten diff stable and avoids replaying the same child more than once.
 		if input.HadChangeOriginallyAt(childPath) || input.HasMetadataFolderAt(childPath) || diffTracker.HasGeneratedPath(childPath) {
 			continue
 		}
