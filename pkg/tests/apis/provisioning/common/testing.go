@@ -1631,6 +1631,42 @@ func RequireJobSuccess(t *testing.T, job *unstructured.Unstructured) {
 		"job %q should succeed", job.GetName())
 }
 
+// RequireJobWarning asserts that a completed job has state "warning" and no errors.
+func RequireJobWarning(t *testing.T, job *unstructured.Unstructured) {
+	t.Helper()
+	lastState := MustNestedString(job.Object, "status", "state")
+	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
+	require.Empty(t, lastErrors, "job %q has errors: %v", job.GetName(), lastErrors)
+	require.Equal(t, string(provisioning.JobStateWarning), lastState,
+		"job %q should have warning state", job.GetName())
+}
+
+// SyncAndWaitWithWarning triggers a full pull sync, asserts that it completes
+// with a warning state (no errors), and waits for lastRef. Use this for syncs
+// where a warning is the expected outcome (e.g. missing folder metadata).
+func SyncAndWaitWithWarning(t *testing.T, h SyncHelper, repoName string) {
+	t.Helper()
+
+	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
+	RequireJobWarning(t, job)
+	WaitForRepoLastRef(t, h.GetRepositories(), repoName)
+}
+
+// SyncAndWaitIncrementalWithWarning triggers an incremental pull sync, waits
+// for it to complete, and asserts that the job finished with a warning state.
+func SyncAndWaitIncrementalWithWarning(t *testing.T, h SyncHelper, repoName string) {
+	t.Helper()
+
+	job := h.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+	})
+	RequireJobWarning(t, job)
+}
+
 // GetFolderGeneration returns the current generation of the folder with the given UID.
 func GetFolderGeneration(t *testing.T, helper *ProvisioningTestHelper, folderUID string) int64 {
 	t.Helper()
