@@ -819,6 +819,7 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", "dashboards/").Return(false)
 				progress.On("HasDirPathFailedDeletion", "dashboards/").Return(false)
 				progress.On("HasChildPathFailedCreation", "dashboards/").Return(false)
+				progress.On("HasChildPathFailedUpdate", "dashboards/").Return(false)
 				repoResources.On("RemoveFolder", mock.Anything, "folder-uid").Return(nil)
 
 				progress.On("Record", mock.Anything, mock.Anything).Return()
@@ -880,6 +881,7 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 				progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 				progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
 				progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
+				progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
 				// both not found in git, both should be deleted
 				repo.MockReader.On("Read", mock.Anything, "dashboards/", "").
@@ -1384,6 +1386,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 		progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
 		progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
 		repoResources.On("RemoveFolderFromTree", "old-alpha-uid").Return()
 		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/").
@@ -1443,6 +1446,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 		progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
 		progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
 		repoResources.On("RemoveFolderFromTree", "old-uid").Return()
 		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/").Return("new-uid", nil)
@@ -1535,6 +1539,7 @@ func TestDeleteFolders(t *testing.T) {
 		progress.On("HasDirPathFailedCreation", "dashboards/").Return(false)
 		progress.On("HasDirPathFailedDeletion", "dashboards/").Return(false)
 		progress.On("HasChildPathFailedCreation", "dashboards/").Return(false)
+		progress.On("HasChildPathFailedUpdate", "dashboards/").Return(false)
 		repoResources.On("RemoveFolder", mock.Anything, "folder-uid").Return(nil)
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 			return r.Action() == repository.FileActionDeleted &&
@@ -1557,6 +1562,7 @@ func TestDeleteFolders(t *testing.T) {
 		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
 		progress.On("HasDirPathFailedDeletion", "alpha/").Return(false)
 		progress.On("HasChildPathFailedCreation", "alpha/").Return(false)
+		progress.On("HasChildPathFailedUpdate", "alpha/").Return(false)
 		repoResources.On("RemoveFolder", mock.Anything, "bad-uid").Return(fmt.Errorf("not found"))
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 			return r.Action() == repository.FileActionDeleted &&
@@ -1627,6 +1633,27 @@ func TestDeleteFolders(t *testing.T) {
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
 	})
 
+	t.Run("skips folder when child update failed", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
+		progress.On("HasDirPathFailedDeletion", "alpha/").Return(false)
+		progress.On("HasChildPathFailedCreation", "alpha/").Return(false)
+		progress.On("HasChildPathFailedUpdate", "alpha/").Return(true)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionIgnored &&
+				r.Name() == "old-uid" &&
+				r.Warning() != nil
+		})).Return()
+
+		deleteFolders(context.Background(), map[string]string{
+			"alpha/": "old-uid",
+		}, repoResources, progress, tracer)
+
+		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
+	})
+
 	t.Run("processes deepest paths first", func(t *testing.T) {
 		repoResources := resources.NewMockRepositoryResources(t)
 		progress := jobs.NewMockJobProgressRecorder(t)
@@ -1634,6 +1661,7 @@ func TestDeleteFolders(t *testing.T) {
 		progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 		progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false)
 		progress.On("HasChildPathFailedCreation", mock.Anything).Return(false)
+		progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
 		var deletionOrder []string
 		repoResources.On("RemoveFolder", mock.Anything, mock.Anything).

@@ -209,6 +209,52 @@ func (_c *MockJobProgressRecorder_HasChildPathFailedCreation_Call) RunAndReturn(
 	return _c
 }
 
+// HasChildPathFailedUpdate provides a mock function with given fields: folderPath
+func (_m *MockJobProgressRecorder) HasChildPathFailedUpdate(folderPath string) bool {
+	ret := _m.Called(folderPath)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasChildPathFailedUpdate")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(string) bool); ok {
+		r0 = rf(folderPath)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// MockJobProgressRecorder_HasChildPathFailedUpdate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasChildPathFailedUpdate'
+type MockJobProgressRecorder_HasChildPathFailedUpdate_Call struct {
+	*mock.Call
+}
+
+// HasChildPathFailedUpdate is a helper method to define mock.On call
+//   - folderPath string
+func (_e *MockJobProgressRecorder_Expecter) HasChildPathFailedUpdate(folderPath interface{}) *MockJobProgressRecorder_HasChildPathFailedUpdate_Call {
+	return &MockJobProgressRecorder_HasChildPathFailedUpdate_Call{Call: _e.mock.On("HasChildPathFailedUpdate", folderPath)}
+}
+
+func (_c *MockJobProgressRecorder_HasChildPathFailedUpdate_Call) Run(run func(folderPath string)) *MockJobProgressRecorder_HasChildPathFailedUpdate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_HasChildPathFailedUpdate_Call) Return(_a0 bool) *MockJobProgressRecorder_HasChildPathFailedUpdate_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_HasChildPathFailedUpdate_Call) RunAndReturn(run func(string) bool) *MockJobProgressRecorder_HasChildPathFailedUpdate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Record provides a mock function with given fields: ctx, result
 func (_m *MockJobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
 	_m.Called(ctx, result)

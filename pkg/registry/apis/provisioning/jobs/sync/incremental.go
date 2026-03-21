@@ -484,7 +484,7 @@ func deleteFolders(
 	safepath.SortByDepth(sorted, func(p pathUID) string { return p.Path }, false)
 
 	for _, entry := range sorted {
-		if progress.HasDirPathFailedCreation(entry.Path) || progress.HasDirPathFailedDeletion(entry.Path) || progress.HasChildPathFailedCreation(entry.Path) {
+		if progress.HasDirPathFailedCreation(entry.Path) || progress.HasDirPathFailedDeletion(entry.Path) || progress.HasChildPathFailedCreation(entry.Path) || progress.HasChildPathFailedUpdate(entry.Path) {
 			progress.Record(ctx, jobs.NewFolderResult(entry.Path).
 				WithAction(repository.FileActionDeleted).
 				WithName(entry.UID).

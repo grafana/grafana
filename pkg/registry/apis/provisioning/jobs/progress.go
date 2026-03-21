@@ -53,6 +53,7 @@ type jobProgressRecorder struct {
 	summaries           map[string]*provisioning.JobResourceSummary
 	failedCreations     []string // Tracks folder paths that failed to be created
 	failedDeletions     []string // Tracks resource paths that failed to be deleted
+	failedUpdates       []string // Tracks resource paths that failed to be updated
 	resultReasons       map[string]struct{}
 	metrics             *JobMetrics
 	action              provisioning.JobAction
@@ -105,9 +106,13 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 		}
 
 		// Track failed deletions, any deletion will stop the deletion of the parent folder (as it won't be empty)
-
 		if result.Action() == repository.FileActionDeleted {
 			r.failedDeletions = append(r.failedDeletions, result.Path())
+		}
+
+		// Track failed updates so we can block folder cleanup when child re-parenting fails
+		if result.Action() == repository.FileActionUpdated {
+			r.failedUpdates = append(r.failedUpdates, result.Path())
 		}
 	} else if result.Warning() != nil {
 		// Still track failed deletions in case we get a warning
@@ -153,6 +158,7 @@ func (r *jobProgressRecorder) ResetResults(keepWarnings bool) {
 	r.errors = nil
 	r.failedCreations = nil
 	r.failedDeletions = nil
+	r.failedUpdates = nil
 
 	summaries := make(map[string]*provisioning.JobResourceSummary)
 	for k, summary := range r.summaries {
@@ -416,6 +422,20 @@ func (r *jobProgressRecorder) HasChildPathFailedCreation(folderPath string) bool
 
 	for _, failedCreation := range r.failedCreations {
 		if safepath.InDir(failedCreation, folderPath) {
+			return true
+		}
+	}
+	return false
+}
+
+// HasChildPathFailedUpdate checks if any resource update failed inside folderPath.
+// Used to block old-folder deletion when child re-parenting (synthetic updates) fails.
+func (r *jobProgressRecorder) HasChildPathFailedUpdate(folderPath string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, failedUpdate := range r.failedUpdates {
+		if safepath.InDir(failedUpdate, folderPath) {
 			return true
 		}
 	}
