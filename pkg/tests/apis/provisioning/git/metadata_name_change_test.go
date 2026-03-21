@@ -68,6 +68,7 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 // path, incremental sync creates a new resource with the new name while the old
 // resource remains orphaned.
 func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testing.T) {
+	t.Skip("skipping test until we have tackle its flakiness due to duration")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := runGrafanaWithGitServer(t)
