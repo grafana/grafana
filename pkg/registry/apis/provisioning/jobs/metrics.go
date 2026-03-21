@@ -225,6 +225,7 @@ type FullSyncPhase int
 const (
 	FullSyncPhaseUnknown FullSyncPhase = iota // to prevent zero value being valid
 	FullSyncPhaseCompare
+	FullSyncPhaseFileRenames
 	FullSyncPhaseFileDeletions
 	FullSyncPhaseFolderDeletions
 	FullSyncPhaseFolderCreations
@@ -236,6 +237,8 @@ func (p FullSyncPhase) String() string {
 	switch p {
 	case FullSyncPhaseCompare:
 		return "compare"
+	case FullSyncPhaseFileRenames:
+		return "file_renames"
 	case FullSyncPhaseFileDeletions:
 		return "file_deletions"
 	case FullSyncPhaseFolderDeletions:

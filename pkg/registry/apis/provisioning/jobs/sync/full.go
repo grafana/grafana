@@ -95,6 +95,12 @@ func FullSync(
 		return nil
 	}
 
+	// Detect file renames: collapse delete+create pairs that share the same
+	// content hash into a single update so K8s UIDs are preserved.
+	_, renameSpan := tracer.Start(ctx, "provisioning.sync.full.detect_renames")
+	changes = DetectRenames(changes)
+	renameSpan.End()
+
 	// Check quota before applying changes
 	if err := checkQuotaBeforeSync(ctx, repo, changes, tracer); err != nil {
 		span.SetAttributes(attribute.Bool("pre_check_quota", false))
@@ -291,37 +297,38 @@ func applyChanges(
 	)
 	defer applyChangesSpan.End()
 
-	// Separate changes into four categories for proper ordering:
-	// 1. File deletions (must happen before folder deletions)
-	// 2. Folder deletions
-	// 3. Folder creations (must happen before file creations)
-	// 4. File creations (must happen after folder creations)
-	// 5. Old folder deletions (must happen after all children have been re-parented)
+	// Separate changes into categories for proper ordering:
+	// 1. File deletions (free up folder contents early, must happen before folder deletions)
+	// 2. Folder creations (destination folders must exist before renames/creates)
+	// 3. File renames (after destination folders exist, before old folders are deleted)
+	// 4. Folder deletions (old folders are now empty)
+	// 5. File creations/updates (must happen after folder creations)
+	// 6. Old folder deletions (must happen after all children have been re-parented)
 	var fileDeletions []ResourceFileChange
-	var folderDeletions []ResourceFileChange
 	var folderCreations []ResourceFileChange
+	var fileRenames []ResourceFileChange
+	var folderDeletions []ResourceFileChange
 	var fileCreations []ResourceFileChange
 
 	for _, change := range changes {
 		isFolder := safepath.IsDir(change.Path)
-		isDeleted := change.Action == repository.FileActionDeleted
 
-		if isDeleted {
-			if isFolder {
-				folderDeletions = append(folderDeletions, change)
-			} else {
-				fileDeletions = append(fileDeletions, change)
-			}
-		} else {
-			if isFolder {
-				folderCreations = append(folderCreations, change)
-			} else {
-				fileCreations = append(fileCreations, change)
-			}
+		switch {
+		case change.Action == repository.FileActionRenamed && !isFolder:
+			fileRenames = append(fileRenames, change)
+		case change.Action == repository.FileActionDeleted && !isFolder:
+			fileDeletions = append(fileDeletions, change)
+		case change.Action == repository.FileActionDeleted && isFolder:
+			folderDeletions = append(folderDeletions, change)
+		case isFolder:
+			folderCreations = append(folderCreations, change)
+		default:
+			fileCreations = append(fileCreations, change)
 		}
 	}
 
 	applyChangesSpan.SetAttributes(
+		attribute.Int("file_renames", len(fileRenames)),
 		attribute.Int("file_deletions", len(fileDeletions)),
 		attribute.Int("folder_deletions", len(folderDeletions)),
 		attribute.Int("folder_creations", len(folderCreations)),
@@ -336,17 +343,25 @@ func applyChanges(
 		}
 	}
 
-	if len(folderDeletions) > 0 {
-		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
-			return applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+	if len(folderCreations) > 0 {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
+			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
 	}
 
-	if len(folderCreations) > 0 {
-		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
-			return applyFoldersSerially(ctx, folderCreations, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
+	if len(fileRenames) > 0 {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFileRenames, func() error {
+			return applyResourcesInParallel(ctx, fileRenames, clients, repositoryResources, progress, tracer, maxSyncWorkers, quotaTracker, folderMetadataEnabled)
+		}, metrics); err != nil {
+			return err
+		}
+	}
+
+	if len(folderDeletions) > 0 {
+		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderDeletions, func() error {
+			return applyFoldersSerially(ctx, folderDeletions, clients, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
 			return err
 		}
