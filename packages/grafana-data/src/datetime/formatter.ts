@@ -109,7 +109,7 @@ export const dateTimeFormat: DateTimeFormatter<DateTimeOptionsWithFormat> = (dat
 
   const dateAsDate = toDate(dateInUtc);
   const intlOptions = getIntlOptions(dateAsDate, options); // TODO - if invalid timezone, use browser timezone
-  return normalizeIntlDateOutput(dateAsDate, intlOptions);
+  return formatDate(dateAsDate, intlOptions);
 };
 
 /**
@@ -157,7 +157,7 @@ export const dateTimeFormatWithAbbrevation: DateTimeFormatter = (dateInUtc, opti
   const intlOptions = getIntlOptions(dateAsDate, options);
   intlOptions.timeZoneName = 'short';
 
-  return normalizeIntlDateOutput(dateAsDate, intlOptions);
+  return formatDate(dateAsDate, intlOptions);
 };
 
 /**
@@ -192,17 +192,4 @@ const toTz = (dateInUtc: DateTimeInput, timeZone: TimeZone): DateTime => {
     default:
       return date.local();
   }
-};
-
-const normalizeIntlDateOutput = (date: Date, options: Intl.DateTimeFormatOptions & { timeZone?: string }) => {
-  let formatted = formatDate(date, options);
-
-  if (/\b(?:AM|PM)\b/.test(formatted)) {
-    const withDayPeriod = formatDate(date, { ...options, dayPeriod: 'short' });
-    if (!/\b(?:AM|PM)\b/.test(withDayPeriod) && (/[^\x00-\x7F]/.test(withDayPeriod) || withDayPeriod.length <= formatted.length)) {
-      formatted = withDayPeriod;
-    }
-  }
-
-  return formatted.replace(/[\u2009\u202f](?=[^\x00-\x7F])/g, ' ');
 };
