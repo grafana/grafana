@@ -277,9 +277,10 @@ func actionPriority(action repository.FileAction) int {
 		return 2
 	case repository.FileActionCreated:
 		return 3
-	default:
+	case repository.FileActionIgnored:
 		return 4
 	}
+	return 4
 }
 
 // cleanupOrphanedFolders removes folders that no longer contain any resources in git after deletions have occurred.
