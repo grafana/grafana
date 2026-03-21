@@ -126,7 +126,6 @@ func TestIncrementalSync(t *testing.T) {
 					},
 				}
 				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
-				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 				progress.On("SetTotal", mock.Anything, 2).Return()
 				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
@@ -632,7 +631,6 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 					},
 				}
 				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
-				repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 				progress.On("SetTotal", mock.Anything, 1).Return()
 				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
@@ -1125,7 +1123,6 @@ func TestIncrementalSync_FolderMetadataRouting(t *testing.T) {
 			},
 		}
 		repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
-		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
 		progress.On("SetTotal", mock.Anything, 1).Return()
 		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 		progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
@@ -1601,8 +1598,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 		repoResources.On("RemoveFolderFromTree", "stable-uid").Return()
 		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/").
 			Return("hash-uid", nil)
-		repoResources.On("ReplaceResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref", "dash1",
-			schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards"}).
+		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref").
 			Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
 		repoResources.On("RemoveFolder", mock.Anything, "stable-uid").Return(nil)
 
@@ -1618,8 +1614,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 
 		repoResources.AssertCalled(t, "RemoveFolderFromTree", "stable-uid")
 		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/")
-		repoResources.AssertCalled(t, "ReplaceResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref", "dash1",
-			schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards"})
+		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref")
 		repoResources.AssertCalled(t, "RemoveFolder", mock.Anything, "stable-uid")
 	})
 
@@ -1708,8 +1703,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 		repoResources.On("RemoveFolderFromTree", "old-alpha-uid").Return()
 		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/").
 			Return("new-alpha-uid", nil)
-		repoResources.On("ReplaceResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref", "dash1",
-			schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards"}).
+		repoResources.On("WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref").
 			Return("dash1", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, nil)
 		repoResources.On("RemoveFolder", mock.Anything, "old-alpha-uid").Return(nil)
 
@@ -1726,8 +1720,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 
 		repoResources.AssertCalled(t, "RemoveFolderFromTree", "old-alpha-uid")
 		repoResources.AssertCalled(t, "EnsureFolderPathExist", mock.Anything, "alpha/")
-		repoResources.AssertCalled(t, "ReplaceResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref", "dash1",
-			schema.GroupVersionResource{Group: "dashboard.grafana.app", Resource: "dashboards"})
+		repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "alpha/dash.json", "new-ref")
 		repoResources.AssertCalled(t, "RemoveFolder", mock.Anything, "old-alpha-uid")
 	})
 

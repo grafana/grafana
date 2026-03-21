@@ -252,28 +252,36 @@ func applyChange(
 	}
 
 	writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.write_resource_from_file")
-	var name string
-	var gvk schema.GroupVersionKind
-	var err error
-
-	if change.Action == repository.FileActionUpdated && change.Existing != nil && change.Existing.Name != "" {
-		oldGVR := schema.GroupVersionResource{
-			Group:    change.Existing.Group,
-			Resource: change.Existing.Resource,
-		}
-		name, gvk, err = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, "", change.Existing.Name, oldGVR)
-	} else {
-		name, gvk, err = repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
-	}
-
+	name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, "")
 	resultBuilder := jobs.NewGVKResult(name, gvk).WithAction(change.Action).WithPath(change.Path)
 	if err != nil {
 		writeSpan.RecordError(err)
 		resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 	}
+	writeSpan.End()
+
+	// If the resource name changed at this path, delete the old resource to
+	// prevent orphans. Full sync has no previousRef so we use Existing directly.
+	if err == nil && change.Action == repository.FileActionUpdated &&
+		change.Existing != nil && change.Existing.Name != "" &&
+		change.Existing.Name != name {
+		deleteCtx, deleteSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.delete_old_resource")
+		oldGVR := schema.GroupVersionResource{
+			Group:    change.Existing.Group,
+			Resource: change.Existing.Resource,
+		}
+		if client, _, clientErr := clients.ForResource(deleteCtx, oldGVR); clientErr == nil {
+			if delErr := client.Delete(deleteCtx, change.Existing.Name, metav1.DeleteOptions{}); delErr != nil {
+				deleteSpan.RecordError(delErr)
+				resultBuilder.WithError(fmt.Errorf("wrote %s but failed to delete old resource %s: %w", name, change.Existing.Name, delErr))
+			} else {
+				quotaTracker.Release()
+			}
+		}
+		deleteSpan.End()
+	}
 
 	progress.Record(writeCtx, resultBuilder.Build())
-	writeSpan.End()
 }
 
 // instrumentedFullSyncPhase records timing metrics around a full-sync phase.

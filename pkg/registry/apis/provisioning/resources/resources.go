@@ -283,47 +283,33 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	return parsed.Obj.GetName(), parsed.GVK, err
 }
 
-// ReplaceResourceFromFile writes a resource from file and, if the resource name
-// changed compared to oldName, deletes the old resource to prevent orphans.
-// The delete goes through ParsedResource.Run() so it gets provisioning identity,
-// ownership checks, and proper tracing — matching the pattern in RemoveResourceFromFile.
-// When oldName is empty or matches the new name, this behaves identically to
-// WriteResourceFromFile.
-func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource) (string, schema.GroupVersionKind, error) {
-	newName, gvk, err := r.WriteResourceFromFile(ctx, path, ref)
+// ReplaceResourceFromFile writes a resource from the file at path/ref and, if
+// the resource identity changed compared to the previous version at
+// path/previousRef, deletes the old resource to prevent orphans.
+// The delete uses ParsedResource.Run() for provisioning identity, ownership
+// checks, and tracing — matching the pattern in RemoveResourceFromFile.
+func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref, previousRef string) (string, schema.GroupVersionKind, error) {
+	oldInfo, err := r.repo.Read(ctx, path, previousRef)
 	if err != nil {
-		return newName, gvk, err
+		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to read previous file: %w", err)
 	}
 
+	oldParsed, err := r.parser.Parse(ctx, oldInfo)
+	if err != nil {
+		return "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse previous file: %w", err)
+	}
+
+	newName, gvk, writeErr := r.WriteResourceFromFile(ctx, path, ref)
+	if writeErr != nil {
+		return newName, gvk, writeErr
+	}
+
+	oldName := oldParsed.Obj.GetName()
 	if oldName == "" || oldName == newName {
 		return newName, gvk, nil
 	}
 
-	client, oldGVK, clientErr := r.clients.ForResource(ctx, oldGVR)
-	if clientErr != nil {
-		return newName, gvk, nil
-	}
-
-	cfg := r.repo.Config()
-	oldObj := &unstructured.Unstructured{}
-	oldObj.SetName(oldName)
-	oldObj.SetNamespace(cfg.GetNamespace())
-	oldObj.SetGroupVersionKind(oldGVK)
-
-	oldParsed := &ParsedResource{
-		Obj:    oldObj,
-		GVR:    oldGVR,
-		GVK:    oldGVK,
-		Client: client,
-		Action: provisioning.ResourceActionDelete,
-		Repo: provisioning.ResourceRepositoryInfo{
-			Name:      cfg.Name,
-			Namespace: cfg.Namespace,
-			Type:      cfg.Spec.Type,
-			Title:     cfg.Spec.Title,
-		},
-	}
-
+	oldParsed.Action = provisioning.ResourceActionDelete
 	if delErr := oldParsed.Run(ctx); delErr != nil {
 		return newName, gvk, fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, delErr)
 	}

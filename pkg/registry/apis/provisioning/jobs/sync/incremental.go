@@ -7,7 +7,6 @@ import (
 	"slices"
 	"time"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -66,29 +65,10 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		}
 	}
 
-	// Build a path→ResourceListItem lookup so applyIncrementalChanges can detect
-	// metadata.name changes (old name differs from new file content) and delete
-	// the old resource to prevent orphans. Only fetch when there are file updates.
-	var existingByPath map[string]*provisioning.ResourceListItem
-	for _, change := range diff {
-		if change.Action == repository.FileActionUpdated && !safepath.IsDir(change.Path) {
-			listCtx, listSpan := tracer.Start(ctx, "provisioning.sync.incremental.list_existing")
-			existingByPath = make(map[string]*provisioning.ResourceListItem)
-			if existingList, listErr := repositoryResources.List(listCtx); listErr == nil {
-				for i := range existingList.Items {
-					item := &existingList.Items[i]
-					existingByPath[item.Path] = item
-				}
-			}
-			listSpan.End()
-			break
-		}
-	}
-
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
-	affectedFolders, err := applyIncrementalChanges(ctx, diff, existingByPath, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled)
+	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
 		return err
@@ -129,7 +109,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 }
 
 //nolint:gocyclo
-func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, existingByPath map[string]*provisioning.ResourceListItem, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) (affectedFolders map[string]string, err error) {
+func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) (affectedFolders map[string]string, err error) {
 	// this will keep track of any folders that had resources deleted from it
 	// with key-value as path:grafana uid.
 	// after cleaning up all resources, we will look to see if the foldrs are
@@ -257,12 +237,8 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			var gvk schema.GroupVersionKind
 			var writeErr error
 
-			if existing, ok := existingByPath[change.Path]; ok && existing.Name != "" {
-				oldGVR := schema.GroupVersionResource{
-					Group:    existing.Group,
-					Resource: existing.Resource,
-				}
-				name, gvk, writeErr = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, change.Ref, existing.Name, oldGVR)
+			if change.PreviousRef != "" {
+				name, gvk, writeErr = repositoryResources.ReplaceResourceFromFile(writeCtx, change.Path, change.Ref, change.PreviousRef)
 			} else {
 				name, gvk, writeErr = repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			}
