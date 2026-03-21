@@ -115,9 +115,12 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 			r.failedUpdates = append(r.failedUpdates, result.Path())
 		}
 	} else if result.Warning() != nil {
-		// Still track failed deletions in case we get a warning
+		// Still track failed deletions/updates in case we get a warning
 		if result.Action() == repository.FileActionDeleted {
 			r.failedDeletions = append(r.failedDeletions, result.Path())
+		}
+		if result.Action() == repository.FileActionUpdated {
+			r.failedUpdates = append(r.failedUpdates, result.Path())
 		}
 
 		if reason := result.WarningReason(); reason != "" {
