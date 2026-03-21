@@ -150,7 +150,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	currentRef string,
 	input folderMetadataDiffSplit,
 	index managedResourceIndex,
-	result *rebuiltIncrementalDiffTracker,
+	diffTracker *rebuiltIncrementalDiffTracker,
 	change repository.VersionedFileChange,
 ) error {
 	folderPath := folderPathForMetadataChange(change.Path)
@@ -165,15 +165,15 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	}
 
 	if replacement != nil {
-		result.AppendReplaced(*replacement)
+		diffTracker.AppendReplaced(*replacement)
 	}
 
 	if !directoryExists {
 		return nil
 	}
 
-	if !input.HadChangeOriginallyAt(folderPath) && !result.HasGeneratedPath(folderPath) {
-		result.Append(repository.VersionedFileChange{
+	if !input.HadChangeOriginallyAt(folderPath) && !diffTracker.HasGeneratedPath(folderPath) {
+		diffTracker.Append(repository.VersionedFileChange{
 			Action: repository.FileActionUpdated,
 			Path:   folderPath,
 			Ref:    currentRef,
@@ -185,11 +185,11 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	}
 
 	for _, childPath := range index.DirectChildrenOf(folderPath) {
-		if input.HadChangeOriginallyAt(childPath) || input.HasMetadataFolderAt(childPath) || result.HasGeneratedPath(childPath) {
+		if input.HadChangeOriginallyAt(childPath) || input.HasMetadataFolderAt(childPath) || diffTracker.HasGeneratedPath(childPath) {
 			continue
 		}
 
-		result.Append(repository.VersionedFileChange{
+		diffTracker.Append(repository.VersionedFileChange{
 			Action: repository.FileActionUpdated,
 			Path:   childPath,
 			Ref:    currentRef,
