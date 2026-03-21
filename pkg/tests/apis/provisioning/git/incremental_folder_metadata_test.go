@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -155,33 +154,6 @@ func folderMetadataJSON(uid, title string) []byte {
 	}
 	data, _ := json.MarshalIndent(folder, "", "\t")
 	return data
-}
-
-// requireRepoFolderTitle lists all folders managed by repoName and asserts that
-// exactly one has the given title, returning its K8s name (UID).
-func requireRepoFolderTitle(t *testing.T, h *gitTestHelper, ctx context.Context, repoName, expectedTitle string) string {
-	t.Helper()
-	var folderUID string
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := h.FoldersV1.Resource.List(ctx, metav1.ListOptions{})
-		if !assert.NoError(c, err, "failed to list folders") {
-			return
-		}
-		for _, f := range list.Items {
-			mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
-			if mgr != repoName {
-				continue
-			}
-			title, _, _ := unstructured.NestedString(f.Object, "spec", "title")
-			if title == expectedTitle {
-				folderUID = f.GetName()
-				return
-			}
-		}
-		c.Errorf("no folder managed by %q with title %q found", repoName, expectedTitle)
-	}, waitTimeoutDefault, waitIntervalDefault,
-		"expected folder with title %q for repo %q", expectedTitle, repoName)
-	return folderUID
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle verifies that
