@@ -2,12 +2,14 @@ package prometheus
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana-prometheus-datasource/pkg/promlib"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/azureauth"
@@ -26,7 +28,67 @@ func ProvideService(httpClientProvider *sdkhttpclient.Provider) *Service {
 }
 
 func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return s.lib.QueryData(ctx, req)
+	resp, err := s.lib.QueryData(ctx, req)
+	if err != nil {
+		return resp, err
+	}
+
+	// Check if query warnings should be hidden based on datasource configuration
+	if shouldDisableQueryWarnings(req.PluginContext.DataSourceInstanceSettings) {
+		stripWarningNotices(resp)
+	}
+
+	return resp, nil
+}
+
+// shouldDisableQueryWarnings checks the datasource jsonData for the disableQueryWarnings setting.
+func shouldDisableQueryWarnings(settings *backend.DataSourceInstanceSettings) bool {
+	if settings == nil {
+		return false
+	}
+
+	var jsonData struct {
+		DisableQueryWarnings bool `json:"disableQueryWarnings"`
+	}
+
+	if err := json.Unmarshal(settings.JSONData, &jsonData); err != nil {
+		return false
+	}
+
+	return jsonData.DisableQueryWarnings
+}
+
+// stripWarningNotices removes warning-severity notices from all frames in the response.
+// This reduces the response size and hides non-actionable warnings from the panel UI.
+func stripWarningNotices(resp *backend.QueryDataResponse) {
+	if resp == nil {
+		return
+	}
+
+	for refID, dr := range resp.Responses {
+		changed := false
+		for _, frame := range dr.Frames {
+			if frame.Meta == nil || len(frame.Meta.Notices) == 0 {
+				continue
+			}
+
+			filtered := make([]data.Notice, 0, len(frame.Meta.Notices))
+			for _, notice := range frame.Meta.Notices {
+				if notice.Severity != data.NoticeSeverityWarning {
+					filtered = append(filtered, notice)
+				}
+			}
+
+			if len(filtered) != len(frame.Meta.Notices) {
+				frame.Meta.Notices = filtered
+				changed = true
+			}
+		}
+
+		if changed {
+			resp.Responses[refID] = dr
+		}
+	}
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {

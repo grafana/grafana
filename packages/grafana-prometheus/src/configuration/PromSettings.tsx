@@ -624,6 +624,31 @@ export const PromSettings = (props: Props) => {
                 onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'seriesEndpoint')}
               />
             </InlineField>
+            <InlineField
+              labelWidth={PROM_CONFIG_LABEL_WIDTH}
+              label={t(
+                'grafana-prometheus.configuration.prom-settings.label-disable-query-warnings',
+                'Hide query warnings'
+              )}
+              tooltip={
+                <>
+                  <Trans i18nKey="grafana-prometheus.configuration.prom-settings.tooltip-disable-query-warnings">
+                    When enabled, warnings returned by Prometheus in query responses will be hidden from the panel UI.
+                    This removes warning notices from the data response in the backend, which also reduces the overall
+                    response size. Useful when Prometheus returns warnings that are not actionable for end users.
+                  </Trans>
+                </>
+              }
+              interactive={true}
+              disabled={optionsWithDefaults.readOnly}
+              className={styles.switchField}
+            >
+              <Switch
+                value={optionsWithDefaults.jsonData.disableQueryWarnings ?? false}
+                onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableQueryWarnings')}
+                id="disableQueryWarnings"
+              />
+            </InlineField>
           </Stack>
         </Box>
       </ConfigSubSection>
