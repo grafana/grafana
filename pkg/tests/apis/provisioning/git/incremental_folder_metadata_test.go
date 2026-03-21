@@ -265,7 +265,12 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		// Incremental sync — folder without _folder.json produces a warning
+		// (missing folder metadata), so we don't assert success.
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
 
 		// Should use directory name "analytics" as the title.
 		requireRepoFolderTitle(t, helper, ctx, repoName, "analytics")
@@ -718,7 +723,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 			"old-team/dashboard1.json": dashboardJSON("gr-nometa-001", "No Meta Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		// Full sync — folder without _folder.json produces a warning
+		// (missing folder metadata), so we don't assert success.
+		helper.syncAndWait(t, repoName)
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"old-team"})
 
 		_, err := local.Git("mv", "old-team", "new-team")
@@ -728,7 +735,12 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		// Incremental sync — folder without _folder.json produces a warning
+		// (missing folder metadata), so we don't assert success.
+		helper.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-team"})
 
