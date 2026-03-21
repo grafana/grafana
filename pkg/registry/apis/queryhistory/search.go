@@ -2,6 +2,7 @@ package queryhistory
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
@@ -92,7 +94,22 @@ func (s *searchREST) Connect(ctx context.Context, name string, opts runtime.Obje
 func convertSearchParams(req *http.Request, userUID string) (*resourcepb.ResourceSearchRequest, error) {
 	q := req.URL.Query()
 
-	searchReq := &resourcepb.ResourceSearchRequest{}
+	searchReq := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{},
+		// Request the custom fields we need in the response
+		Fields: []string{
+			resource.SEARCH_FIELD_PREFIX + builders.QH_COMMENT,
+			resource.SEARCH_FIELD_PREFIX + builders.QH_DATASOURCE_UID,
+			resource.SEARCH_FIELD_PREFIX + builders.QH_CREATED_BY,
+		},
+	}
+
+	// Privacy filter: only return results owned by the requesting user
+	searchReq.Options.Fields = append(searchReq.Options.Fields, &resourcepb.Requirement{
+		Key:      resource.SEARCH_FIELD_PREFIX + builders.QH_CREATED_BY,
+		Operator: "=",
+		Values:   []string{userUID},
+	})
 
 	// Parse limit
 	if limitStr := q.Get("limit"); limitStr != "" {
@@ -126,43 +143,107 @@ func convertSearchParams(req *http.Request, userUID string) (*resourcepb.Resourc
 		searchReq.Query = queryStr
 	}
 
-	// Parse sort
+	// Parse sort (use the built-in created timestamp field)
 	if sortStr := q.Get("sort"); sortStr != "" {
 		switch sortStr {
 		case "time-asc":
 			searchReq.SortBy = append(searchReq.SortBy, &resourcepb.ResourceSearchRequest_Sort{
-				Field: builders.QH_CREATED_BY,
+				Field: resource.SEARCH_FIELD_CREATED,
 				Desc:  false,
 			})
 		case "time-desc":
 			searchReq.SortBy = append(searchReq.SortBy, &resourcepb.ResourceSearchRequest_Sort{
-				Field: builders.QH_CREATED_BY,
+				Field: resource.SEARCH_FIELD_CREATED,
 				Desc:  true,
 			})
 		}
 	}
 
-	// TODO: Parse datasourceUid[] filter and map to field requirements
-	// TODO: Parse from/to time range filters
-	// TODO: Handle onlyStarred via Collections API lookup
-	// TODO: Add user privacy filter (created_by == userUID)
+	// Parse datasource UID filters
+	if dsUIDs := q["datasourceUid"]; len(dsUIDs) > 0 {
+		operator := "="
+		if len(dsUIDs) > 1 {
+			operator = "in"
+		}
+		searchReq.Options.Fields = append(searchReq.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_PREFIX + builders.QH_DATASOURCE_UID,
+			Operator: operator,
+			Values:   dsUIDs,
+		})
+	}
+
+	// Parse time range filters (from/to are unix timestamps in seconds)
+	if fromStr := q.Get("from"); fromStr != "" {
+		searchReq.Options.Fields = append(searchReq.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_CREATED,
+			Operator: ">=",
+			Values:   []string{fromStr},
+		})
+	}
+	if toStr := q.Get("to"); toStr != "" {
+		searchReq.Options.Fields = append(searchReq.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_CREATED,
+			Operator: "<=",
+			Values:   []string{toStr},
+		})
+	}
+
+	// onlyStarred requires a Collections API lookup to get starred UIDs,
+	// then filter by name. This is a placeholder until Collections integration is done.
+	// TODO: query Collections Stars API for the user's starred query history UIDs
+	// and add a "name in [uid1, uid2, ...]" field requirement.
 
 	return searchReq, nil
 }
 
+// convertSearchResults maps the ResourceSearchResponse table format into our SearchResultItem slice.
 func convertSearchResults(result *resourcepb.ResourceSearchResponse) *SearchResponse {
 	response := &SearchResponse{
 		Items: make([]SearchResultItem, 0),
 	}
 
-	if result == nil {
+	if result == nil || result.Results == nil {
 		return response
 	}
 
 	totalCount := result.TotalHits
 	response.TotalCount = &totalCount
 
-	// TODO: Map result rows to SearchResultItems using result.Results columns/frames
+	// Build column index map for lookup
+	colIdx := make(map[string]int, len(result.Results.Columns))
+	for i, col := range result.Results.Columns {
+		colIdx[col.Name] = i
+	}
+
+	commentIdx, hasComment := colIdx[resource.SEARCH_FIELD_PREFIX+builders.QH_COMMENT]
+	dsUIDIdx, hasDsUID := colIdx[resource.SEARCH_FIELD_PREFIX+builders.QH_DATASOURCE_UID]
+	createdIdx, hasCreated := colIdx[resource.SEARCH_FIELD_CREATED]
+
+	for _, row := range result.Results.Rows {
+		item := SearchResultItem{}
+
+		if row.Key != nil {
+			item.UID = row.Key.Name
+		}
+
+		if hasComment && commentIdx < len(row.Cells) {
+			item.Comment = string(row.Cells[commentIdx])
+		}
+
+		if hasDsUID && dsUIDIdx < len(row.Cells) {
+			item.DatasourceUID = string(row.Cells[dsUIDIdx])
+		}
+
+		if hasCreated && createdIdx < len(row.Cells) {
+			cell := row.Cells[createdIdx]
+			// Numeric values are encoded as big-endian bytes
+			if len(cell) == 8 {
+				item.CreatedAt = int64(binary.BigEndian.Uint64(cell))
+			}
+		}
+
+		response.Items = append(response.Items, item)
+	}
 
 	return response
 }

@@ -931,7 +931,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
 	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, userimplService, apiserverService)
-	queryHistoryAPIBuilder := queryhistory2.RegisterAPIService(featureToggles, apiserverService, queryHistoryService)
+	queryHistoryAPIBuilder := queryhistory2.RegisterAPIService(featureToggles, apiserverService, queryHistoryService, resourceClient, dualwriteService)
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userimplService, apiserverService)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
 	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
@@ -1635,7 +1635,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	userStorageAPIBuilder := userstorage.RegisterAPIService(featureToggles, apiserverService, registerer)
 	apiBuilder := preferences.RegisterAPIService(cfg, featureToggles, sqlStore, prefService, userimplService, apiserverService)
-	queryHistoryAPIBuilder := queryhistory2.RegisterAPIService(featureToggles, apiserverService, queryHistoryService)
+	queryHistoryAPIBuilder := queryhistory2.RegisterAPIService(featureToggles, apiserverService, queryHistoryService, resourceClient, dualwriteService)
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userimplService, apiserverService)
 	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, resourceClient, eventualRestConfigProvider, registerer)
 	v3 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)

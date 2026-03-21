@@ -1,6 +1,8 @@
 package queryhistory
 
 import (
+	"log/slog"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -15,23 +17,30 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	queryhistorysvc "github.com/grafana/grafana/pkg/services/queryhistory"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
-	_ builder.APIGroupBuilder         = (*QueryHistoryAPIBuilder)(nil)
-	_ builder.APIGroupVersionProvider = (*QueryHistoryAPIBuilder)(nil)
-	_ builder.APIGroupAuthorizer      = (*QueryHistoryAPIBuilder)(nil)
+	_ builder.APIGroupBuilder               = (*QueryHistoryAPIBuilder)(nil)
+	_ builder.APIGroupVersionProvider       = (*QueryHistoryAPIBuilder)(nil)
+	_ builder.APIGroupAuthorizer            = (*QueryHistoryAPIBuilder)(nil)
+	_ builder.APIGroupPostStartHookProvider = (*QueryHistoryAPIBuilder)(nil)
 )
 
 type QueryHistoryAPIBuilder struct {
 	service  queryhistorysvc.Service
 	features featuremgmt.FeatureToggles
+	searcher resource.ResourceClient
+	dual     dualwrite.Service
 }
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	qhService *queryhistorysvc.QueryHistoryService,
+	unified resource.ResourceClient,
+	dual dualwrite.Service,
 ) *QueryHistoryAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesQueryHistory) {
 		return &QueryHistoryAPIBuilder{}
@@ -40,6 +49,8 @@ func RegisterAPIService(
 	b := &QueryHistoryAPIBuilder{
 		service:  qhService,
 		features: features,
+		searcher: unified,
+		dual:     dual,
 	}
 
 	apiregistration.RegisterAPI(b)
@@ -90,8 +101,17 @@ func (b *QueryHistoryAPIBuilder) UpdateAPIGroupInfo(
 		return err
 	}
 
-	// TODO: Register search sub-resource once ResourceIndexClient is wired in
-	// storage[resourceInfo.StoragePath("search")] = &searchREST{searcher: ...}
+	// Register search sub-resource using the unified ResourceClient as the index client.
+	// NewSearchClient routes between legacy and unified based on dual-write mode.
+	// Query history has no legacy search backend, so we pass the unified client for both.
+	searchClient := resource.NewSearchClient(
+		dualwrite.NewSearchAdapter(b.dual),
+		resourceInfo.GroupResource(),
+		b.searcher,
+		b.searcher, // no legacy searcher — use unified for both
+		b.features,
+	)
+	storage[resourceInfo.StoragePath("search")] = &searchREST{searcher: searchClient}
 
 	apiGroupInfo.VersionedResourcesStorageMap[qhv0alpha1.APIVersion] = storage
 	return nil
@@ -103,4 +123,24 @@ func (b *QueryHistoryAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			"queryhistories": {utils.UserResourceOwner},
 		},
 	}
+}
+
+func (b *QueryHistoryAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
+	hooks := map[string]genericapiserver.PostStartHookFunc{
+		"grafana-queryhistory-ttl-cleanup": func(ctx genericapiserver.PostStartHookContext) error {
+			cleanup := &CleanupJob{
+				logger: slog.Default().With("component", "queryhistory-cleanup"),
+			}
+			go cleanup.Run(ctx.Context)
+			return nil
+		},
+		"grafana-queryhistory-stars-reconciler": func(ctx genericapiserver.PostStartHookContext) error {
+			reconciler := &StarsTTLReconciler{
+				logger: slog.Default().With("component", "queryhistory-stars-reconciler"),
+			}
+			go func() { _ = reconciler.Start(ctx.Context) }()
+			return nil
+		},
+	}
+	return hooks, nil
 }
