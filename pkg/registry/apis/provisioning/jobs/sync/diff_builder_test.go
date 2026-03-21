@@ -97,7 +97,7 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 			Path:   "myfolder/dashboard.json",
 			Ref:    "new-ref",
 		})
-		require.Contains(t, replacedFolders, replacedFolderRewritten{
+		require.Contains(t, replacedFolders, replacedFolder{
 			Path:   "myfolder/",
 			OldUID: "hash-uid",
 		})
@@ -152,7 +152,7 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 			Path:   "myfolder/dashboard.json",
 			Ref:    "new-ref",
 		})
-		require.Contains(t, replacedFolders, replacedFolderRewritten{
+		require.Contains(t, replacedFolders, replacedFolder{
 			Path:   "myfolder/",
 			OldUID: "stable-uid",
 		})
@@ -191,7 +191,7 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 			{Action: repository.FileActionUpdated, Path: "myfolder/dashboard.json", Ref: "new-ref"},
 			{Action: repository.FileActionCreated, Path: "myfolder/", Ref: "new-ref"},
 		}, filteredDiff)
-		require.Equal(t, []replacedFolderRewritten{{
+		require.Equal(t, []replacedFolder{{
 			Path:   "myfolder/",
 			OldUID: "hash-uid",
 		}}, replacedFolders)
@@ -243,7 +243,7 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 			Path:   "myfolder/dashboard.json",
 			Ref:    "new-ref",
 		})
-		require.Contains(t, replacedFolders, replacedFolderRewritten{
+		require.Contains(t, replacedFolders, replacedFolder{
 			Path:   "myfolder/",
 			OldUID: "hash-uid",
 		})
@@ -309,7 +309,7 @@ func TestRepoDiffBuilder_BuildIncrementalDiff(t *testing.T) {
 			Path:   "parent/child/dash.json",
 			Ref:    "new-ref",
 		})
-		require.Contains(t, replacedFolders, replacedFolderRewritten{
+		require.Contains(t, replacedFolders, replacedFolder{
 			Path:   "parent/",
 			OldUID: "hash-uid",
 		})

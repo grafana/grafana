@@ -19,11 +19,11 @@ type FolderMetadataIncrementalDiffBuilder interface {
 }
 
 type repoDiffBuilder struct {
-	repo repository.Reader
+	repo                repository.Reader
 	repositoryResources resources.RepositoryResources
 }
 
-type replacedFolderRewritten struct {
+type replacedFolder struct {
 	Path   string
 	OldUID string
 }
@@ -33,7 +33,7 @@ func NewDiffBuilder(
 	repositoryResources resources.RepositoryResources,
 ) *repoDiffBuilder {
 	return &repoDiffBuilder{
-		repo: repo,	
+		repo:                repo,
 		repositoryResources: repositoryResources,
 	}
 }
@@ -41,7 +41,7 @@ func NewDiffBuilder(
 func (d *repoDiffBuilder) BuildIncrementalDiff(
 	ctx context.Context,
 	repoDiff []repository.VersionedFileChange,
-) ([]repository.VersionedFileChange, []replacedFolderRewritten, error) {
+) ([]repository.VersionedFileChange, []replacedFolder, error) {
 	var filteredDiff []repository.VersionedFileChange
 	metadataUpdates := make(map[string]repository.VersionedFileChange)
 	// pathWithChanges contains paths that already have changes in the current diff
@@ -49,12 +49,11 @@ func (d *repoDiffBuilder) BuildIncrementalDiff(
 	pathWithChanges := make(map[string]struct{})
 	for _, change := range repoDiff {
 		// Collect all metadata updates for adding new folder changes.
-		if resources.IsFolderMetadataFile(change.Path) && (
-			change.Action == repository.FileActionCreated ||
+		if resources.IsFolderMetadataFile(change.Path) && (change.Action == repository.FileActionCreated ||
 			change.Action == repository.FileActionUpdated) {
 			metadataUpdates[change.Path] = change
 			continue
-		} 
+		}
 
 		// If the change is not related to metadata, add it to the result diff
 		filteredDiff = append(filteredDiff, change)
@@ -82,7 +81,7 @@ func (d *repoDiffBuilder) BuildIncrementalDiff(
 		return nil, nil, fmt.Errorf("list managed resources: %w", err)
 	}
 
-	var replacedFolders []replacedFolderRewritten
+	var replacedFolders []replacedFolder
 	resourcesLookup := buildResourcesLookup(target)
 
 	for _, update := range metadataUpdates {
@@ -94,7 +93,7 @@ func (d *repoDiffBuilder) BuildIncrementalDiff(
 				Ref:    update.Ref,
 			})
 			if resourcesLookup[parentPath] != nil {
-				replacedFolders = append(replacedFolders, replacedFolderRewritten{
+				replacedFolders = append(replacedFolders, replacedFolder{
 					Path:   parentPath,
 					OldUID: resourcesLookup[parentPath].Name,
 				})
@@ -124,7 +123,7 @@ func buildResourcesLookup(target *provisioning.ResourceList) map[string]*provisi
 	if target == nil {
 		return resourcesLookup
 	}
-	
+
 	for i := range target.Items {
 		item := &target.Items[i]
 		path := item.Path

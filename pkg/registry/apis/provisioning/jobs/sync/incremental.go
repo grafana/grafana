@@ -69,19 +69,23 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		return nil
 	}
 
-	var metadataPlan folderMetadataPlan
-
+	var replacedFolders []replacedFolderRewritten
 	if folderMetadataEnabled {
-		metadataPlan, err = planFolderMetadataChanges(ctx, diff, repo, repositoryResources, currentRef, tracer, folderMetadataEnabled)
+		repo := repo.(repository.Reader)
+		diffBuilder := NewDiffBuilder(repo, repositoryResources)
+		diffCtx, diffSpan := tracer.Start(ctx, "provisioning.sync.incremental.build_diff")
+		diff, replacedFolders, err = diffBuilder.BuildIncrementalDiff(diffCtx, diff)
 		if err != nil {
-			return tracing.Error(span, fmt.Errorf("plan folder metadata: %w", err))
+			diffSpan.RecordError(err)
+			diffSpan.End()
+			return tracing.Error(span, fmt.Errorf("build incremental diff: %w", err))
 		}
-		diff = metadataPlan.filteredDiff
-		if metadataPlan.target != nil {
-			repositoryResources.SetTree(resources.NewFolderTreeFromResourceList(metadataPlan.target))
+		defer diffSpan.End()
+
+		for _, replaced := range replacedFolders {
+			repositoryResources.RemoveFolderFromTree(replaced.OldUID)
 		}
 	}
-
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 
@@ -89,8 +93,6 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	affectedFolders, err := applyIncrementalChanges(
 		ctx,
 		diff,
-		metadataPlan.existingFoldersByPath,
-		metadataPlan.replacedFolders,
 		repositoryResources,
 		progress,
 		tracer,
@@ -106,6 +108,32 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetMessage(ctx, "versioned changes replicated")
 
 	if folderMetadataEnabled {
+		span.AddEvent("checking if replaced folders should be deleted", trace.WithAttributes(attribute.Int("replaced_folders", len(replacedFolders))))
+
+		removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_replaced_folders")
+		for _, replaced := range replacedFolders {
+            // Skip if the replacement folder failed to be created.
+			if progress.HasDirPathFailedDeletion(replaced.Path) {
+				skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.skip_renamed_folder_deletion")
+				progress.Record(skipCtx, jobs.NewPathOnlyResult(replaced.Path).
+					WithError(fmt.Errorf("old folder was not deleted because the replacement folder could not be created")).
+					AsSkipped().
+					Build())
+				skipSpan.End()
+				continue
+			}
+
+			resultBuilder := jobs.NewFolderResult(replaced.Path).
+				WithAction(repository.FileActionDeleted).
+				WithName(replaced.OldUID)
+			if err := repositoryResources.RemoveFolder(removeCtx, replaced.OldUID); err != nil {
+				removeSpan.RecordError(err)
+				resultBuilder.WithError(err)
+			}
+			progress.Record(removeCtx, resultBuilder.Build())
+		}
+		removeSpan.End()
+
 		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
 			return err
 		}
@@ -136,8 +164,6 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 func applyIncrementalChanges(
 	ctx context.Context,
 	diff []repository.VersionedFileChange,
-	existingFoldersByPath map[string]*provisioning.ResourceListItem,
-	replacedFolders []replacedFolder,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
@@ -161,29 +187,6 @@ func applyIncrementalChanges(
 			return nil, tracing.Error(span, err)
 		}
 
-		if safepath.IsDir(change.Path) && (change.Action == repository.FileActionCreated || change.Action == repository.FileActionUpdated) {
-			ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.ensure_folder_exists")
-			resultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
-
-			if change.Action == repository.FileActionUpdated {
-				if existing, ok := existingFoldersByPath[safepath.EnsureTrailingSlash(change.Path)]; ok {
-					repositoryResources.RemoveFolderFromTree(existing.Name)
-				}
-			}
-
-			folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path)
-			if err != nil {
-				ensureFolderSpan.RecordError(err)
-				progress.Record(ensureFolderCtx, resultBuilder.WithError(err).Build())
-				ensureFolderSpan.End()
-				continue
-			}
-
-			progress.Record(ensureFolderCtx, resultBuilder.WithName(folder).Build())
-			ensureFolderSpan.End()
-			continue
-		}
-
 		// Check if this resource is nested under a failed folder creation
 		// This only applies to creation/update/rename operations, not deletions
 		if change.Action != repository.FileActionDeleted && progress.HasDirPathFailedCreation(change.Path) {
@@ -197,7 +200,7 @@ func applyIncrementalChanges(
 			continue
 		}
 
-		if err := resources.IsPathSupported(change.Path); err != nil {
+		if err := resources.IsPathSupported(change.Path); err != nil || safepath.IsDir(change.Path) {
 			ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.ensure_folder_path_exist")
 			// Maintain the safe segment for empty folders
 			safeSegment := safepath.SafeSegment(change.Path)
@@ -323,26 +326,6 @@ func applyIncrementalChanges(
 		progress.Record(ctx, resultBuilder.Build())
 	}
 
-	for _, replaced := range replacedFolders {
-		if ctx.Err() != nil {
-			return nil, ctx.Err()
-		}
-		if err := progress.TooManyErrors(); err != nil {
-			return nil, tracing.Error(span, err)
-		}
-
-		removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_replaced_folder")
-		resultBuilder := jobs.NewFolderResult(replaced.Path).
-			WithAction(repository.FileActionDeleted).
-			WithName(replaced.OldUID)
-		if err := repositoryResources.RemoveFolder(removeCtx, replaced.OldUID); err != nil {
-			removeSpan.RecordError(err)
-			resultBuilder.WithError(err)
-		}
-		progress.Record(removeCtx, resultBuilder.Build())
-		removeSpan.End()
-	}
-
 	return affectedFolders, nil
 }
 
@@ -465,235 +448,6 @@ func cleanupOrphanedFolders(
 	}
 
 	return nil
-}
-
-// planFolderMetadataChanges rewrites handled _folder.json diffs into the
-// folder and child changes that incremental apply already knows how
-// to process.
-//
-// For the currently supported metadata actions, the planner removes the
-// metadata-file change from the diff, appends a synthetic directory change for
-// the folder itself, appends direct-child updates when the folder UID changes,
-// and records any old folder UID that must be deleted after the diff is
-// applied. Unhandled metadata actions are left untouched in the diff.
-func planFolderMetadataChanges(
-	ctx context.Context,
-	diff []repository.VersionedFileChange,
-	repo repository.Versioned,
-	repositoryResources resources.RepositoryResources,
-	currentRef string,
-	tracer tracing.Tracer,
-	folderMetadataEnabled bool,
-) (folderMetadataPlan, error) {
-	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.plan_folder_metadata")
-	defer span.End()
-
-	plan := folderMetadataPlan{filteredDiff: diff}
-
-	readerRepo, ok := repo.(repository.Reader)
-	if !ok {
-		return plan, nil
-	}
-
-	updatedMetadata := make(map[int]repository.VersionedFileChange)
-	reservedPaths := make(map[string]struct{}, len(diff))
-	for i, change := range diff {
-		if resources.IsFolderMetadataFile(change.Path) && change.Action == repository.FileActionCreated {
-			updatedMetadata[i] = change
-			continue
-		}
-
-		addReservedPath(reservedPaths, change.Path)
-		if change.Action == repository.FileActionRenamed {
-			addReservedPath(reservedPaths, change.PreviousPath)
-		}
-	}
-
-	if len(updatedMetadata) == 0 {
-		return plan, nil
-	}
-
-	target, err := repositoryResources.List(ctx)
-	if err != nil {
-		return folderMetadataPlan{}, fmt.Errorf("list managed resources: %w", err)
-	}
-
-	existingFoldersByPath := buildExistingFolderLookup(target)
-	existingByPath := buildExistingPathLookup(target)
-	replacedFolders := make([]replacedFolder, 0)
-	replacedFolderUIDs := make(map[string]struct{})
-	emittedPaths := make(map[string]struct{}, len(updatedMetadata))
-	filteredDiff := make([]repository.VersionedFileChange, 0, len(diff)+len(updatedMetadata))
-
-	for i, change := range diff {
-		updatedChange, isUpdated := updatedMetadata[i]
-		if !isUpdated {
-			filteredDiff = append(filteredDiff, change)
-			continue
-		}
-
-		folderPath := safepath.EnsureTrailingSlash(safepath.Dir(updatedChange.Path))
-		folder, folderErr := resources.ParseFolderWithMetadata(ctx, readerRepo, folderPath, updatedChange.Ref, folderMetadataEnabled)
-		if folderErr != nil {
-			filteredDiff = append(filteredDiff, updatedChange)
-			continue
-		}
-
-		existingFolder, exists := existingFoldersByPath[folderPath]
-		folderAction := repository.FileActionUpdated
-		if updatedChange.Action == repository.FileActionCreated && !exists {
-			folderAction = repository.FileActionCreated
-		}
-
-		folderChange := buildMetadataFolderChange(reservedPaths, emittedPaths, folderPath, folderAction, currentRef)
-		if folderChange != nil {
-			filteredDiff = append(filteredDiff, *folderChange)
-			emittedPaths[folderChange.Path] = struct{}{}
-		}
-
-		if !exists || existingFolder.Name == folder.ID {
-			continue
-		}
-
-		if _, seen := replacedFolderUIDs[existingFolder.Name]; !seen {
-			replacedFolders = append(replacedFolders, replacedFolder{
-				Path:   folderPath,
-				OldUID: existingFolder.Name,
-			})
-			replacedFolderUIDs[existingFolder.Name] = struct{}{}
-		}
-
-		directChildUpdates := buildDirectChildUpdates(reservedPaths, emittedPaths, existingByPath, folderPath, currentRef)
-		if len(directChildUpdates) > 0 {
-			filteredDiff = append(filteredDiff, directChildUpdates...)
-			for _, update := range directChildUpdates {
-				emittedPaths[update.Path] = struct{}{}
-			}
-		}
-	}
-
-	return folderMetadataPlan{
-		filteredDiff:          filteredDiff,
-		existingFoldersByPath: existingFoldersByPath,
-		replacedFolders:       replacedFolders,
-		target:                target,
-	}, nil
-}
-
-// addReservedPath records a path from the real git diff so planning does not
-// emit a synthetic change that overlaps with it.
-//
-// For renames we reserve both the new path and the old path: target state still
-// reflects the old location during planning, and reserving it prevents
-// synthetic child updates from replaying a path that is already being renamed.
-func addReservedPath(reservedPaths map[string]struct{}, path string) {
-	if path == "" {
-		return
-	}
-	if safepath.IsDir(path) {
-		path = safepath.EnsureTrailingSlash(path)
-	}
-	reservedPaths[path] = struct{}{}
-}
-
-// buildExistingFolderLookup indexes the current managed folders by normalized
-// source path so planning can answer "which folder currently owns this path?"
-func buildExistingFolderLookup(target *provisioning.ResourceList) map[string]*provisioning.ResourceListItem {
-	foldersByPath := make(map[string]*provisioning.ResourceListItem)
-	if target == nil {
-		return foldersByPath
-	}
-	for i := range target.Items {
-		item := &target.Items[i]
-		if item.Group != resources.FolderResource.Group {
-			continue
-		}
-		foldersByPath[safepath.EnsureTrailingSlash(item.Path)] = item
-	}
-	return foldersByPath
-}
-
-// buildExistingPathLookup indexes all managed resources by path so planning can
-// emit synthetic direct-child updates only for resources that already exist in
-// Grafana.
-func buildExistingPathLookup(target *provisioning.ResourceList) map[string]*provisioning.ResourceListItem {
-	existingByPath := make(map[string]*provisioning.ResourceListItem)
-	if target == nil {
-		return existingByPath
-	}
-	for i := range target.Items {
-		item := &target.Items[i]
-		path := item.Path
-		if item.Group == resources.FolderResource.Group {
-			path = safepath.EnsureTrailingSlash(path)
-		}
-		existingByPath[path] = item
-	}
-	return existingByPath
-}
-
-// buildMetadataFolderChange returns the directory change for a
-// metadata-backed folder unless that path is already covered by the real diff
-// or was already emitted by the planner.
-func buildMetadataFolderChange(
-	reservedPaths, emittedPaths map[string]struct{},
-	folderPath string,
-	action repository.FileAction,
-	ref string,
-) *repository.VersionedFileChange {
-	path := safepath.EnsureTrailingSlash(folderPath)
-	if _, ok := reservedPaths[path]; ok {
-		return nil
-	}
-	if _, ok := emittedPaths[path]; ok {
-		return nil
-	}
-	return &repository.VersionedFileChange{
-		Action: action,
-		Path:   path,
-		Ref:    ref,
-	}
-}
-
-// buildDirectChildUpdates emits synthetic Updated changes for the
-// direct children of a folder whose UID is being replaced.
-//
-// Only existing target resources are considered, and any path that already
-// appears in the real diff or was already emitted by planning is skipped. The
-// emitted paths are sorted to keep the rewritten diff deterministic.
-func buildDirectChildUpdates(
-	reservedPaths, emittedPaths map[string]struct{},
-	existingByPath map[string]*provisioning.ResourceListItem,
-	folderPath, ref string,
-) []repository.VersionedFileChange {
-	var updates []repository.VersionedFileChange
-	parentPath := safepath.EnsureTrailingSlash(folderPath)
-	childPaths := make([]string, 0, len(existingByPath))
-	for path := range existingByPath {
-		if path == parentPath {
-			continue
-		}
-		if safepath.Dir(path) != parentPath {
-			continue
-		}
-		childPaths = append(childPaths, path)
-	}
-	slices.Sort(childPaths)
-
-	for _, path := range childPaths {
-		if _, ok := reservedPaths[path]; ok {
-			continue
-		}
-		if _, ok := emittedPaths[path]; ok {
-			continue
-		}
-		updates = append(updates, repository.VersionedFileChange{
-			Action: repository.FileActionUpdated,
-			Path:   path,
-			Ref:    ref,
-		})
-	}
-	return updates
 }
 
 // detectMissingFolderMetadata reads the full file tree and records warnings for folders
