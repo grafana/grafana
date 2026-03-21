@@ -325,6 +325,16 @@ func (h *gitTestHelper) syncAndWait(t *testing.T, repoName string) {
 	h.waitForJobsComplete(t, repoName)
 }
 
+// syncAndWaitIncremental triggers an incremental pull sync on the named
+// repository and waits for all active jobs to complete.
+func (h *gitTestHelper) syncAndWaitIncremental(t *testing.T, repoName string) {
+	t.Helper()
+	h.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+	})
+}
+
 // TriggerJobAndWaitForComplete implements common.SyncHelper.
 func (h *gitTestHelper) TriggerJobAndWaitForComplete(t *testing.T, repoName string, spec provisioning.JobSpec) *unstructured.Unstructured {
 	return h.triggerJobAndWaitForComplete(t, repoName, spec)
