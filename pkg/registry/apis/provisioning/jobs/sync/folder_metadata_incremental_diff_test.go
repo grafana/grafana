@@ -84,7 +84,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 
 		require.NoError(t, err)
 		require.Contains(t, filteredDiff, repository.VersionedFileChange{
-			Action: repository.FileActionCreated,
+			Action: repository.FileActionUpdated,
 			Path:   "myfolder/",
 			Ref:    "new-ref",
 		})
@@ -245,7 +245,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.NoError(t, err)
 		require.Equal(t, []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "myfolder/dashboard.json", Ref: "new-ref"},
-			{Action: repository.FileActionCreated, Path: "myfolder/", Ref: "new-ref"},
+			{Action: repository.FileActionUpdated, Path: "myfolder/", Ref: "new-ref"},
 		}, filteredDiff)
 		require.Equal(t, []replacedFolder{{
 			Path:   "myfolder/",
@@ -284,7 +284,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 
 		require.NoError(t, err)
 		require.Contains(t, filteredDiff, repository.VersionedFileChange{
-			Action: repository.FileActionCreated,
+			Action: repository.FileActionUpdated,
 			Path:   "myfolder/",
 			Ref:    "new-ref",
 		})
@@ -348,7 +348,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 
 		require.NoError(t, err)
 		require.Contains(t, filteredDiff, repository.VersionedFileChange{
-			Action: repository.FileActionCreated,
+			Action: repository.FileActionUpdated,
 			Path:   "parent/",
 			Ref:    "new-ref",
 		})
@@ -373,7 +373,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		})
 	})
 
-	t.Run("creates folder create when metadata is added for a brand-new folder", func(t *testing.T) {
+	t.Run("creates folder update replay when metadata is added for a brand-new folder", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
 		repoResources := resources.NewMockRepositoryResources(t)
 		diff := []repository.VersionedFileChange{
@@ -387,7 +387,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 
 		require.NoError(t, err)
 		require.Equal(t, []repository.VersionedFileChange{
-			{Action: repository.FileActionCreated, Path: "myfolder/", Ref: "new-ref"},
+			{Action: repository.FileActionUpdated, Path: "myfolder/", Ref: "new-ref"},
 		}, filteredDiff)
 		require.Empty(t, replacedFolders)
 	})
@@ -573,12 +573,12 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 
 		require.NoError(t, err)
 		require.Contains(t, filteredDiff, repository.VersionedFileChange{
-			Action: repository.FileActionCreated,
+			Action: repository.FileActionUpdated,
 			Path:   "parent/",
 			Ref:    "new-ref",
 		})
 		require.Contains(t, filteredDiff, repository.VersionedFileChange{
-			Action: repository.FileActionCreated,
+			Action: repository.FileActionUpdated,
 			Path:   "parent/child/",
 			Ref:    "new-ref",
 		})
@@ -592,11 +592,13 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 			Path:   "parent/child/dashboard.json",
 			Ref:    "new-ref",
 		})
-		require.NotContains(t, filteredDiff, repository.VersionedFileChange{
-			Action: repository.FileActionUpdated,
-			Path:   "parent/child/",
-			Ref:    "new-ref",
-		})
+		childFolderReplayCount := 0
+		for _, change := range filteredDiff {
+			if change.Action == repository.FileActionUpdated && change.Path == "parent/child/" && change.Ref == "new-ref" {
+				childFolderReplayCount++
+			}
+		}
+		require.Equal(t, 1, childFolderReplayCount)
 		require.Equal(t, []replacedFolder{
 			{Path: "parent/child/", OldUID: "child-hash-uid"},
 			{Path: "parent/", OldUID: "parent-hash-uid"},

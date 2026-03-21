@@ -320,6 +320,33 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 		common.RequireRepoDashboardParent(t, helper.DashboardsV1, ctx, repoName, "myfolder/dash.json", "stable-uid")
 	})
 
+	t.Run("new _folder.json creates a brand-new empty folder", func(t *testing.T) {
+		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-create-empty-folder"
+
+		_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+			"dashboard.json": dashboardJSON("root-dash", "Root Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+
+		require.NoError(t, local.CreateFile("empty-team/_folder.json", string(folderMetadataJSON("empty-team-uid", "Empty Team"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "add empty folder metadata")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		common.RequireFolderState(t, helper.FoldersV1, "empty-team-uid", "Empty Team", "empty-team", "")
+		requireRepoFolderCount(t, helper, ctx, repoName, 1)
+		requireRepoDashboardCount(t, helper, ctx, repoName, 1)
+	})
+
 	t.Run("new _folder.json transitions existing folder to stable uid", func(t *testing.T) {
 		helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()

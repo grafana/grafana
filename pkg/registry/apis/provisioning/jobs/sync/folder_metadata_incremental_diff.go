@@ -47,11 +47,11 @@ type managedResourceIndex struct {
 	byPath map[string]*provisioning.ResourceListItem
 }
 
-// rebuiltIncrementalDiff accumulates the rewritten diff and tracks synthetic
-// paths so we do not emit duplicate synthetic changes.
+// rebuiltIncrementalDiff accumulates the rewritten diff and tracks
+// paths gerenated due to folder metadata changes so we do not emit duplicate changes.
 type rebuiltIncrementalDiff struct {
 	filteredDiff   []repository.VersionedFileChange
-	syntheticPaths map[string]struct{}
+	generatedPaths map[string]struct{}
 	replaced       []replacedFolder
 }
 
@@ -183,19 +183,19 @@ func (index managedResourceIndex) DirectChildrenOf(parentPath string) []string {
 func newRebuiltIncrementalDiff(passthrough []repository.VersionedFileChange) *rebuiltIncrementalDiff {
 	return &rebuiltIncrementalDiff{
 		filteredDiff:   passthrough,
-		syntheticPaths: make(map[string]struct{}),
+		generatedPaths: make(map[string]struct{}),
 		replaced:       make([]replacedFolder, 0),
 	}
 }
 
-func (result *rebuiltIncrementalDiff) HasSyntheticPath(path string) bool {
-	_, ok := result.syntheticPaths[path]
+func (result *rebuiltIncrementalDiff) HasGeneratedPath(path string) bool {
+	_, ok := result.generatedPaths[path]
 	return ok
 }
 
 func (result *rebuiltIncrementalDiff) Append(change repository.VersionedFileChange) {
 	result.filteredDiff = append(result.filteredDiff, change)
-	result.syntheticPaths[change.Path] = struct{}{}
+	result.generatedPaths[change.Path] = struct{}{}
 }
 
 func (result *rebuiltIncrementalDiff) AppendReplaced(replaced replacedFolder) {
@@ -229,9 +229,11 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 ) error {
 	folderPath := folderPathForMetadataChange(change.Path)
 
-	if !input.HasRealChangeAt(folderPath) && !result.HasSyntheticPath(folderPath) {
+	if !input.HasRealChangeAt(folderPath) && !result.HasGeneratedPath(folderPath) {
+		// Synthetic folder replays always use Updated so applyIncrementalChanges
+		// routes the directory entry through EnsureFolderPathExist.
 		result.Append(repository.VersionedFileChange{
-			Action: change.Action,
+			Action: repository.FileActionUpdated,
 			Path:   folderPath,
 			Ref:    change.Ref,
 		})
@@ -246,7 +248,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 	}
 
 	for _, childPath := range index.DirectChildrenOf(folderPath) {
-		if input.HasRealChangeAt(childPath) || input.HasMetadataFolderAt(childPath) || result.HasSyntheticPath(childPath) {
+		if input.HasRealChangeAt(childPath) || input.HasMetadataFolderAt(childPath) || result.HasGeneratedPath(childPath) {
 			continue
 		}
 
@@ -287,7 +289,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 		return nil
 	}
 
-	if !input.HasRealChangeAt(folderPath) && !result.HasSyntheticPath(folderPath) {
+	if !input.HasRealChangeAt(folderPath) && !result.HasGeneratedPath(folderPath) {
 		result.Append(repository.VersionedFileChange{
 			Action: repository.FileActionUpdated,
 			Path:   folderPath,
@@ -300,7 +302,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	}
 
 	for _, childPath := range index.DirectChildrenOf(folderPath) {
-		if input.HasRealChangeAt(childPath) || input.HasMetadataFolderAt(childPath) || result.HasSyntheticPath(childPath) {
+		if input.HasRealChangeAt(childPath) || input.HasMetadataFolderAt(childPath) || result.HasGeneratedPath(childPath) {
 			continue
 		}
 
@@ -353,7 +355,7 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForMetadataChange(
 //
 // When the directory still exists at currentRef, the folder falls back to its
 // path-derived UID. When the directory is gone, the existing folder can be
-// cleaned up directly without emitting synthetic replay work.
+// cleaned up directly without emitting any other changes.
 func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataChange(
 	ctx context.Context,
 	currentRef string,
