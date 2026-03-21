@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/infra/log"	
 )
 
 func TestInitSampler(t *testing.T) {
@@ -76,4 +78,67 @@ func TestStart(t *testing.T) {
 		require.Equal(t, spanCtx.TraceID(), childSpan.SpanContext().TraceID())
 		require.True(t, childSpan.SpanContext().IsValid())
 	})
+}
+
+func TestInitJaegerTracerProvider_AddressParsing(t *testing.T) {
+	tests := []struct {
+		name        string
+		address     string
+		expectError bool
+	}{
+		{
+			name:        "valid http URL",
+			address:     "http://localhost:4318",
+			expectError: false,
+		},
+		{
+			name:        "valid https URL",
+			address:     "https://jaeger.example.com:4318",
+			expectError: false,
+		},
+		{
+			name:        "valid http URL with path",
+			address:     "http://localhost:4318/v1/traces",
+			expectError: false,
+		},
+		{
+			name:        "valid host:port",
+			address:     "localhost:4318",
+			expectError: false,
+		},
+		{
+			name:        "invalid address",
+			address:     "not-a-valid-address",
+			expectError: true,
+		},
+		{
+			name:        "empty address",
+			address:     "",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ots := &TracingService{
+				cfg: &TracingConfig{
+					Address:      tt.address,
+					Sampler:      "const",
+					SamplerParam: 1.0,
+				},
+				log: log.New("test"),
+			}
+			_, err := ots.initJaegerTracerProvider()
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), "invalid tracer address")
+			} else {
+				// Provider creation may fail due to no real endpoint,
+				// but address parsing should succeed
+				if err != nil {
+					assert.NotContains(t, err.Error(), "invalid tracer address")
+				}
+			}
+		})
+	}
 }

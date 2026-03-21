@@ -7,10 +7,10 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
-	"net/url"
 
 	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
 	"go.opentelemetry.io/contrib/samplers/jaegerremote"
@@ -132,25 +132,28 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 	// Jaeger exporter is deprecated, use OTLP HTTP exporter to send traces to Jaeger collector
 	// Jaeger supports OTLP natively: https://www.jaegertracing.io/docs/latest/apis/#opentelemetry-protocol-stable
 	var opts []otlptracehttp.Option
-	
+
 	// Parse address: can be either collector URL or host:port
 	if strings.HasPrefix(ots.cfg.Address, "http://") || strings.HasPrefix(ots.cfg.Address, "https://") {
 		ots.log.Debug("using OTLP HTTP exporter for Jaeger", "address", ots.cfg.Address)
 		u, err := url.Parse(ots.cfg.Address)
 		if err != nil {
-			return nil, fmt.Errorf("invalid tracer address: %s", ots.cfg.Address)
+			return nil, fmt.Errorf("invalid tracer address %q: %w", ots.cfg.Address, err)
 		}
 		opts = append(opts, otlptracehttp.WithEndpoint(u.Host))
-		if strings.HasPrefix(ots.cfg.Address, "http://") {
+		if u.Path != "" && u.Path != "/" {
+			opts = append(opts, otlptracehttp.WithURLPath(u.Path))
+		}
+		if u.Scheme == "http" {
 			opts = append(opts, otlptracehttp.WithInsecure())
 		}
 	} else if _, _, err := net.SplitHostPort(ots.cfg.Address); err == nil {
 		ots.log.Debug("using OTLP HTTP exporter for Jaeger", "address", ots.cfg.Address)
 		opts = append(opts, otlptracehttp.WithEndpoint(ots.cfg.Address), otlptracehttp.WithInsecure())
 	} else {
-		return nil, fmt.Errorf("invalid tracer address: %s", ots.cfg.Address)
+		return nil, fmt.Errorf("invalid tracer address %q", ots.cfg.Address)
 	}
-	
+
 	client := otlptracehttp.NewClient(opts...)
 	exp, err := otlptrace.New(context.Background(), client)
 	if err != nil {
