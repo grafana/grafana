@@ -41,7 +41,7 @@ export {
   frameHasName,
   getFrameFieldsDisplayNames,
   useFieldDisplayNames,
-  useSelectOptions,
+  useMatcherSelectOptions,
 } from '../components/MatchersUI/utils';
 export type { FieldMatcherUIRegistryItem } from '../components/MatchersUI/types';
 export { RefIDMultiPicker, RefIDPicker, stringsToRegexp } from '../components/MatchersUI/FieldsByFrameRefIdMatcher';
@@ -109,3 +109,5 @@ export { closePopover } from '../utils/closePopover';
 
 export { flattenTokens } from '../slate-plugins/slate-prism';
 export { RadialGauge } from '../components/RadialGauge/RadialGauge';
+
+export { MaybeWrapWithLink } from '../components/Table/TableNG/components/MaybeWrapWithLink';

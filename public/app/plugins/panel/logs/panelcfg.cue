@@ -29,11 +29,13 @@ composableKinds: PanelCfg: {
 					showLabels:               bool
 					showCommonLabels:         bool
 					showFieldSelector?:       bool
+					showLevel?:               bool
 					showTime:                 bool
 					showLogContextToggle:     bool
 					showControls?:            bool
 					controlsStorageKey?:      string
 					wrapLogMessage:           bool
+					unwrappedColumns?:        bool
 					prettifyLogMessage:       bool
 					enableLogDetails:         bool
 					syntaxHighlighting?:      bool
@@ -60,6 +62,7 @@ composableKinds: PanelCfg: {
 					onNewLogsReceived?:      _
 					displayedFields?: [...string]
 					setDisplayedFields?:     _
+					grammar?: 			     _
 				} @cuetsy(kind="interface")
 			}
 		}]

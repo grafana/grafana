@@ -175,6 +175,10 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
     );
   }
 
+  applyTemplateVariables(query: OpenTsdbQuery, scopedVars: ScopedVars): OpenTsdbQuery {
+    return this.interpolateVariablesInQuery(query, scopedVars);
+  }
+
   annotationEvent(options: DataQueryRequest, annotation: OpenTsdbQuery): Promise<AnnotationEvent[]> {
     if (config.featureToggles.opentsdbBackendMigration) {
       const query: OpenTsdbQuery = {
@@ -705,6 +709,30 @@ export default class OpenTsDatasource extends DataSourceWithBackend<OpenTsdbQuer
           query.tags[tagKey] = this.templateSrv.replace(query.tags[tagKey], scopedVars, 'pipe');
         }
       }
+    }
+
+    if (target.downsampleInterval) {
+      query.downsampleInterval = this.templateSrv.replace(target.downsampleInterval, scopedVars);
+    }
+
+    if (target.alias) {
+      query.alias = this.templateSrv.replace(target.alias, scopedVars);
+    }
+
+    if (target.downsampleAggregator) {
+      query.downsampleAggregator = this.templateSrv.replace(target.downsampleAggregator, scopedVars);
+    }
+
+    if (target.downsampleFillPolicy) {
+      query.downsampleFillPolicy = this.templateSrv.replace(target.downsampleFillPolicy, scopedVars);
+    }
+
+    if (target.counterMax) {
+      query.counterMax = this.templateSrv.replace(target.counterMax, scopedVars);
+    }
+
+    if (target.counterResetValue) {
+      query.counterResetValue = this.templateSrv.replace(target.counterResetValue, scopedVars);
     }
 
     return query;

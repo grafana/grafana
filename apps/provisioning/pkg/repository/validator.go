@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"slices"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,7 +39,7 @@ func NewValidator(allowImageRendering bool, repoFactory Factory) Validator {
 	}
 }
 
-// ValidateRepository does structural validation (via Factory.Validate) and configuration checks on the repository object.
+// Validate does structural validation (via Factory.Validate) and configuration checks on the repository object.
 // It does not run a health check or compare against existing repositories.
 func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Repository) field.ErrorList {
 	var list field.ErrorList
@@ -90,6 +92,19 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 		}
 	}
 
+	// Validating the presence of finalizers in resources not marked for deletion.
+	if cfg.DeletionTimestamp != nil || cfg.DeletionTimestamp.IsZero() {
+		if len(cfg.Finalizers) == 0 {
+			list = append(list,
+				field.Invalid(
+					field.NewPath("medatada", "finalizers"),
+					cfg.Finalizers,
+					"cannot have no finalizers set on resources not marked for deletion",
+				),
+			)
+		}
+	}
+
 	if slices.Contains(cfg.Finalizers, RemoveOrphanResourcesFinalizer) &&
 		slices.Contains(cfg.Finalizers, ReleaseOrphanResourcesFinalizer) {
 		list = append(list,
@@ -118,6 +133,32 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 			field.Invalid(field.NewPath("spec", "generateDashboardPreviews"),
 				cfg.Spec.GitHub.GenerateDashboardPreviews,
 				"image rendering is not enabled"))
+	}
+
+	if cfg.Spec.Webhook != nil && cfg.Spec.Webhook.BaseURL != "" {
+		list = append(list, validateWebhookBaseURL(cfg.Spec.Webhook.BaseURL)...)
+	}
+
+	return list
+}
+
+func validateWebhookBaseURL(baseURL string) field.ErrorList {
+	var list field.ErrorList
+	fld := field.NewPath("spec", "webhook", "baseUrl")
+
+	parsed, err := url.Parse(baseURL)
+	if err != nil {
+		list = append(list, field.Invalid(fld, baseURL, "must be a valid URL"))
+		return list
+	}
+
+	scheme := strings.ToLower(parsed.Scheme)
+	if scheme != "http" && scheme != "https" {
+		list = append(list, field.Invalid(fld, baseURL, "must use HTTP or HTTPS scheme"))
+	}
+
+	if parsed.Host == "" {
+		list = append(list, field.Invalid(fld, baseURL, "must include a host"))
 	}
 
 	return list

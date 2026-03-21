@@ -1,12 +1,15 @@
 package conversion
 
 import (
+	"context"
 	"fmt"
+
+	"go.opentelemetry.io/otel/attribute"
+	"k8s.io/apimachinery/pkg/conversion"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	"k8s.io/apimachinery/pkg/conversion"
 )
 
 // ConvertDashboard_V2alpha1_to_V1beta1 converts a v2alpha1 dashboard to v1beta1 format.
@@ -15,12 +18,25 @@ import (
 // The dsIndexProvider is used to resolve default datasources when queries/variables/annotations
 // don't have explicit datasource references.
 func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
+	// if available, use parent context from scope so tracing works
+	ctx := context.Background()
+	if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
+		if scopeCtx, ok := scope.Meta().Context.(context.Context); ok {
+			ctx = scopeCtx
+		}
+	}
+	ctx, span := TracingStart(ctx, "dashboard.conversion.v2alpha1_to_v1beta1",
+		attribute.String("dashboard.uid", in.Name),
+		attribute.String("dashboard.namespace", in.Namespace),
+	)
+	defer span.End()
+
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv1.APIVERSION
 	out.Kind = in.Kind // Preserve the Kind from input (should be "Dashboard")
 
 	// Convert the spec to v1beta1 unstructured format
-	dashboardJSON, err := convertDashboardSpec_V2alpha1_to_V1beta1(&in.Spec)
+	dashboardJSON, err := convertDashboardSpec_V2alpha1_to_V1beta1(ctx, &in.Spec)
 	if err != nil {
 		return fmt.Errorf("failed to convert dashboard spec: %w", err)
 	}
@@ -28,10 +44,19 @@ func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv
 	// Set the dashboard JSON directly at the Spec.Object level
 	out.Spec.Object = dashboardJSON
 
+	if schemaVer, ok := dashboardJSON["schemaVersion"]; ok {
+		if schemaVerInt, ok := schemaVer.(int); ok {
+			span.SetAttributes(attribute.Int("target.schema_version", schemaVerInt))
+		}
+	}
+
 	return nil
 }
 
-func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (map[string]interface{}, error) {
+func convertDashboardSpec_V2alpha1_to_V1beta1(ctx context.Context, in *dashv2alpha1.DashboardSpec) (map[string]interface{}, error) {
+	_, span := TracingStart(ctx, "dashboard.conversion.spec_v2alpha1_to_v1beta1")
+	defer span.End()
+
 	dashboard := make(map[string]interface{})
 
 	// Convert basic fields
@@ -89,6 +114,13 @@ func convertDashboardSpec_V2alpha1_to_V1beta1(in *dashv2alpha1.DashboardSpec) (m
 	dashboard["annotations"] = map[string]interface{}{
 		"list": annotations,
 	}
+
+	span.SetAttributes(
+		attribute.Int("conversion.panels_count", len(panels)),
+		attribute.Int("conversion.variables_count", len(variables)),
+		attribute.Int("conversion.annotations_count", len(annotations)),
+		attribute.Int("conversion.links_count", len(in.Links)),
+	)
 
 	return dashboard, nil
 }
@@ -1122,10 +1154,7 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 			}
 			// Add filter if set
 			if t.Spec.Filter != nil {
-				transformation["filter"] = map[string]interface{}{
-					"id":      t.Spec.Filter.Id,
-					"options": t.Spec.Filter.Options,
-				}
+				transformation["filter"] = matcherConfigToMap(*t.Spec.Filter)
 			}
 			transformations = append(transformations, transformation)
 		}
@@ -1608,6 +1637,14 @@ func convertGroupByVariableToV1(variable *dashv2alpha1.DashboardGroupByVariableK
 		varMap["datasource"] = datasource
 	}
 
+	// Handle defaultValue if present
+	if spec.DefaultValue != nil {
+		varMap["defaultValue"] = map[string]interface{}{
+			"text":  convertStringOrArrayOfStringToV1(spec.DefaultValue.Text),
+			"value": convertStringOrArrayOfStringToV1(spec.DefaultValue.Value),
+		}
+	}
+
 	return varMap, nil
 }
 
@@ -1656,6 +1693,9 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 			if len(filter.ValueLabels) > 0 {
 				filterMap["valueLabels"] = filter.ValueLabels
 			}
+			if filter.Origin != nil {
+				filterMap["origin"] = *filter.Origin
+			}
 			filters = append(filters, filterMap)
 		}
 		varMap["filters"] = filters
@@ -1681,6 +1721,9 @@ func convertAdhocVariableToV1(variable *dashv2alpha1.DashboardAdhocVariableKind)
 			}
 			if len(filter.ValueLabels) > 0 {
 				filterMap["valueLabels"] = filter.ValueLabels
+			}
+			if filter.Origin != nil {
+				filterMap["origin"] = *filter.Origin
 			}
 			baseFilters = append(baseFilters, filterMap)
 		}
@@ -2057,6 +2100,17 @@ func convertFieldConfigDefaultsToV1(defaults *dashv2alpha1.DashboardFieldConfig)
 	return result
 }
 
+func matcherConfigToMap(mc dashv2alpha1.DashboardMatcherConfig) map[string]interface{} {
+	m := map[string]interface{}{
+		"id":      mc.Id,
+		"options": mc.Options,
+	}
+	if mc.Scope != nil {
+		m["scope"] = string(*mc.Scope)
+	}
+	return m
+}
+
 func convertFieldConfigOverridesToV1(overrides []dashv2alpha1.DashboardV2alpha1FieldConfigSourceOverrides) []map[string]interface{} {
 	if len(overrides) == 0 {
 		return nil
@@ -2070,10 +2124,7 @@ func convertFieldConfigOverridesToV1(overrides []dashv2alpha1.DashboardV2alpha1F
 			overrideMap["__systemRef"] = *override.SystemRef
 		}
 
-		overrideMap["matcher"] = map[string]interface{}{
-			"id":      override.Matcher.Id,
-			"options": override.Matcher.Options,
-		}
+		overrideMap["matcher"] = matcherConfigToMap(override.Matcher)
 
 		properties := make([]map[string]interface{}, 0, len(override.Properties))
 		if len(override.Properties) > 0 {

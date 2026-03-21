@@ -1,9 +1,7 @@
-import { cloneDeep } from 'lodash';
-
 import type { AppPluginConfig } from '@grafana/data';
 
 import { config } from '../../config';
-import { evaluateBooleanFlag } from '../../internal/openFeature';
+import { getFeatureFlagClient } from '../../internal/openFeature';
 
 import { getAppPluginMapper } from './mappers/mappers';
 import { initPluginMetas } from './plugins';
@@ -16,7 +14,7 @@ function initialized(): boolean {
 }
 
 async function initAppPluginMetas(): Promise<void> {
-  if (!evaluateBooleanFlag('useMTPlugins', false)) {
+  if (!getFeatureFlagClient().getBooleanValue('useMTPlugins', false)) {
     // eslint-disable-next-line no-restricted-syntax
     apps = config.apps;
     return;
@@ -32,7 +30,7 @@ export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
     await initAppPluginMetas();
   }
 
-  return Object.values(cloneDeep(apps));
+  return Object.values(structuredClone(apps));
 }
 
 export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfig | null> {
@@ -41,7 +39,7 @@ export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfi
   }
 
   const app = apps[pluginId];
-  return app ? cloneDeep(app) : null;
+  return app ? structuredClone(app) : null;
 }
 
 /**
@@ -69,5 +67,5 @@ export function setAppPluginMetas(override: AppPluginMetas): void {
     throw new Error('setAppPluginMetas() function can only be called from tests.');
   }
 
-  apps = cloneDeep(override);
+  apps = structuredClone(override);
 }

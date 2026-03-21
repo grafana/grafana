@@ -7,24 +7,15 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func setupTestEventStore(t *testing.T) *eventStore {
-	db := setupTestBadgerDB(t)
-	t.Cleanup(func() {
-		err := db.Close()
-		require.NoError(t, err)
-	})
-	kv := NewBadgerKV(db)
-	return newEventStore(kv)
+	return newEventStore(setupBadgerKV(t))
 }
 
 func TestMain(m *testing.M) {
@@ -32,14 +23,7 @@ func TestMain(m *testing.M) {
 }
 
 func setupTestEventStoreSqlKv(t *testing.T) *eventStore {
-	dbstore := db.InitTestDB(t)
-	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
-	require.NoError(t, err)
-	dbConn, err := eDB.Init(context.Background())
-	require.NoError(t, err)
-	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
-	require.NoError(t, err)
-	return newEventStore(kv)
+	return newEventStore(setupSqlKV(t))
 }
 
 func TestNewEventStore(t *testing.T) {
@@ -477,7 +461,7 @@ func TestIntegrationEventStore_ListSince_Empty(t *testing.T) {
 func testEventStoreListSinceEmpty(t *testing.T, ctx context.Context, store *eventStore) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	// List events when store is empty
-	retrievedEvents := make([]Event, 0)
+	retrievedEvents := make([]Event, 0) //nolint:prealloc
 	for event, err := range store.ListSince(ctx, 0, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, event)
@@ -849,7 +833,7 @@ func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store
 
 	// List events since 90 minutes ago using subtractDurationFromSnowflake
 	sinceRV := subtractDurationFromSnowflake(snowflakeFromTime(now), 90*time.Minute)
-	retrievedEvents := make([]string, 0)
+	retrievedEvents := make([]string, 0) //nolint:prealloc
 	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)
@@ -866,7 +850,7 @@ func testListKeysSinceWithSnowflakeTime(t *testing.T, ctx context.Context, store
 
 	// List events since 30 minutes ago using subtractDurationFromSnowflake
 	sinceRV = subtractDurationFromSnowflake(snowflakeFromTime(now), 30*time.Minute)
-	retrievedEvents = make([]string, 0)
+	retrievedEvents = make([]string, 0) //nolint:prealloc
 	for eventKey, err := range store.ListKeysSince(ctx, sinceRV, SortOrderAsc) {
 		require.NoError(t, err)
 		retrievedEvents = append(retrievedEvents, eventKey)

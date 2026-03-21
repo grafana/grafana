@@ -75,6 +75,7 @@ export const createShortLink = memoizeOne(async (path: string): Promise<string> 
   } catch (err) {
     console.error('Error when creating shortened link: ', err);
     dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    createShortLink.clear();
     throw err; // Re-throw so callers know it failed
   }
 });
@@ -85,7 +86,7 @@ export const createShortLink = memoizeOne(async (path: string): Promise<string> 
  * @param path - The long path to share.
  * @returns A ClipboardItem for the shortened link.
  */
-const createShortLinkClipboardItem = (path: string) => {
+export const createShortLinkClipboardItem = (path: string) => {
   return new ClipboardItem({
     'text/plain': createShortLink(path),
   });

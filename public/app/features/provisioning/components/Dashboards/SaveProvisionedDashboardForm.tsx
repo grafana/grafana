@@ -14,7 +14,7 @@ import { SaveDashboardFormCommonOptions } from 'app/features/dashboard-scene/sav
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
-import { PROVISIONING_URL } from 'app/features/provisioning/constants';
+import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { useCreateOrUpdateRepositoryFile } from 'app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile';
 import {
   ProvisionedOperationInfo,
@@ -34,7 +34,7 @@ import { SaveProvisionedDashboardProps } from './SaveProvisionedDashboard';
 export interface Props extends SaveProvisionedDashboardProps {
   isNew: boolean;
   defaultValues: ProvisionedDashboardFormData;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
   readOnly: boolean;
   repository?: RepositoryView;
 }
@@ -45,7 +45,7 @@ export function SaveProvisionedDashboardForm({
   drawer,
   changeInfo,
   isNew,
-  workflowOptions,
+  canPushToConfiguredBranch,
   readOnly,
   repository,
   saveAsCopy,
@@ -100,7 +100,7 @@ export function SaveProvisionedDashboardForm({
   const navigateToPreview = useCallback(
     (ref: string, path: string, repoType?: string) => {
       const url = buildResourceBranchRedirectUrl({
-        baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
+        baseUrl: `${PROVISIONING_PREVIEW_URL}/${defaultValues.repo}/preview/${path}`,
         paramName: 'ref',
         paramValue: ref,
         repoType,
@@ -296,8 +296,7 @@ export function SaveProvisionedDashboardForm({
           <ResourceEditFormSharedFields
             resourceType="dashboard"
             readOnly={readOnly}
-            workflow={workflow}
-            workflowOptions={workflowOptions}
+            canPushToConfiguredBranch={canPushToConfiguredBranch}
             repository={repository}
             isNew={isNew}
           />
@@ -372,7 +371,6 @@ function createSaveResponseFromResource(resource?: Unstructured): SaveDashboardR
     uid,
     // Use the current dashboard state version to maintain consistency
     version: resource?.metadata?.generation,
-    id: resource?.spec?.id || 0,
     status: 'success',
     url: locationUtil.assureBaseUrl(
       getDashboardUrl({

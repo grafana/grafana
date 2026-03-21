@@ -20,6 +20,7 @@ export interface Options {
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
   fontSize?: ('default' | 'small');
+  grammar?: unknown;
   isFilterLabelActive?: unknown;
   logLineMenuCustomItems?: unknown;
   logRowMenuIconsAfter?: unknown;
@@ -42,12 +43,14 @@ export interface Options {
   showControls?: boolean;
   showFieldSelector?: boolean;
   showLabels: boolean;
+  showLevel?: boolean;
   showLogAttributes?: boolean;
   showLogContextToggle: boolean;
   showTime: boolean;
   sortOrder: common.LogsSortOrder;
   syntaxHighlighting?: boolean;
   timestampResolution?: ('ms' | 'ns');
+  unwrappedColumns?: boolean;
   wrapLogMessage: boolean;
 }
 

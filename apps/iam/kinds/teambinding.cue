@@ -17,8 +17,9 @@ teambindingv0alpha1: teambindingKind & {
 	schema: {
 		spec: v0alpha1.TeamBindingSpec
 	}
-	SelectableFields: [
+	selectableFields: [
 		"spec.teamRef.name",
 		"spec.subject.name",
-	],
+		"spec.external",
+	]
 }

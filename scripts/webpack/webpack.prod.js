@@ -28,9 +28,9 @@ const esbuildOptions = {
 const envConfig = getEnvConfig();
 
 module.exports = (env = {}) =>
-  merge(common, {
+  merge(common(env), {
     mode: 'production',
-    devtool: 'source-map',
+    devtool: process.env.NO_SOURCEMAP === '1' ? false : 'source-map',
 
     entry: {
       dark: './public/sass/grafana.dark.scss',
@@ -76,7 +76,7 @@ module.exports = (env = {}) =>
 
     plugins: [
       new MiniCssExtractPlugin({
-        filename: 'grafana.[name].[contenthash].css',
+        filename: env.react19 ? 'grafana.[name]-react19.[contenthash].css' : 'grafana.[name].[contenthash].css',
       }),
       new SubresourceIntegrityPlugin(),
       new FeatureFlaggedSRIPlugin(),
@@ -104,9 +104,10 @@ module.exports = (env = {}) =>
 
           return result;
         },
+        output: env.react19 ? 'assets-manifest-react19.json' : 'assets-manifest.json',
       }),
       new WebpackManifestPlugin({
-        fileName: path.join(process.cwd(), 'manifest.json'),
+        fileName: path.join(process.cwd(), env.react19 ? 'manifest-react19.json' : 'manifest.json'),
         filter: (file) => !file.name.endsWith('.map'),
       }),
       function () {

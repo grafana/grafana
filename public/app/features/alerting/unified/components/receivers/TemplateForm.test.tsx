@@ -98,4 +98,32 @@ describe('TemplateForm', () => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
   });
+
+  describe('legacy alerts', () => {
+    it('should show legacy alert when template has mimir kind', async () => {
+      const template = createMockTemplate({ kind: 'mimir' });
+      renderTemplateForm(template);
+
+      expect(await screen.findByRole('alert', { name: /uses a legacy format/ })).toBeInTheDocument();
+    });
+
+    it('should show both imported and legacy alerts when template is mimir kind with ConvertedPrometheus provenance', async () => {
+      const template = createMockTemplate({ kind: 'mimir', provenance: KnownProvenance.ConvertedPrometheus });
+      renderTemplateForm(template);
+
+      expect(await screen.findByText(/imported from an external Alertmanager/)).toBeInTheDocument();
+      expect(screen.getByRole('alert', { name: /uses a legacy format/ })).toBeInTheDocument();
+    });
+
+    it('should not show legacy alert for grafana kind templates', async () => {
+      const template = createMockTemplate({ kind: 'grafana' });
+      renderTemplateForm(template);
+
+      await waitFor(() => {
+        expect(screen.getByRole('form', { name: /template form/i })).toBeInTheDocument();
+      });
+
+      expect(screen.queryByRole('alert', { name: /uses a legacy format/ })).not.toBeInTheDocument();
+    });
+  });
 });

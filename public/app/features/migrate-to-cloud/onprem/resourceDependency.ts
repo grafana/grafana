@@ -1,6 +1,5 @@
+import { ResourceDependencyDto } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
 import { IconName } from '@grafana/ui';
-
-import { ResourceDependencyDto } from '../api';
 
 import { ResourceTableItem } from './types';
 

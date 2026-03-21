@@ -1,7 +1,7 @@
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -49,6 +49,9 @@ describe('validateUid', () => {
         saveDashboard: jest.fn(),
         listDeletedDashboards: jest.fn(),
         restoreDashboard: jest.fn(),
+        listDashboardHistory: jest.fn(),
+        getDashboardHistoryVersions: jest.fn(),
+        restoreDashboardVersion: jest.fn(),
       },
       v2: {
         getDashboardDTO: jest.fn().mockResolvedValue(v2Dashboard),
@@ -56,6 +59,9 @@ describe('validateUid', () => {
         saveDashboard: jest.fn(),
         listDeletedDashboards: jest.fn(),
         restoreDashboard: jest.fn(),
+        listDashboardHistory: jest.fn(),
+        getDashboardHistoryVersions: jest.fn(),
+        restoreDashboardVersion: jest.fn(),
       },
     });
   });

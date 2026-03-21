@@ -12,7 +12,7 @@ import {
 import {
   ConditionalRenderingVariableKind,
   ConditionalRenderingVariableSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Box, Combobox, ComboboxOption, Field, Input, Stack } from '@grafana/ui';
 import { ALL_VARIABLE_TEXT } from 'app/features/variables/constants';
 

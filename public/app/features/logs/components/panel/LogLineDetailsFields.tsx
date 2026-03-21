@@ -6,15 +6,16 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { CoreApp, Field, fuzzySearch, GrafanaTheme2, IconName, LinkModel, LogLabelStatsModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton, IconSize, useStyles2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
 import { LogLabelStats } from '../LogLabelStats';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { FieldDef } from '../logParser';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { useLogDetailsContext } from './LogDetailsContext';
+import { LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { LogListModel, getNormalizedFieldName } from './processing';
 
@@ -27,7 +28,8 @@ interface LogLineDetailsFieldsProps {
 }
 
 export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
-  const styles = useStyles2(getFieldsStyles);
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
@@ -74,7 +76,8 @@ interface LogLineDetailsLabelFieldsProps {
 }
 
 export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
-  const styles = useStyles2(getFieldsStyles);
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
 
@@ -101,11 +104,11 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
   );
 };
 
-const getFieldsStyles = (theme: GrafanaTheme2) => ({
+const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   fieldsTable: css({
     display: 'grid',
     gap: theme.spacing(1),
-    gridTemplateColumns: `${theme.spacing(11.5)} fit-content(30%) 1fr`,
+    gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(10) : theme.spacing(11.5)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
@@ -138,6 +141,7 @@ export const LogLineDetailsField = ({
   const [showFieldsStats, setShowFieldStats] = useState(false);
   const [fieldCount, setFieldCount] = useState(0);
   const [fieldStats, setFieldStats] = useState<LogLabelStatsModel[] | null>(null);
+  const { fontSize } = useLogListContext();
   const {
     app,
     displayedFields,
@@ -271,6 +275,7 @@ export const LogLineDetailsField = ({
               {onClickFilterLabel && fieldSupportsFilters && (
                 <AsyncIconButton
                   name="search-plus"
+                  size={fontSize === 'small' ? 'sm' : undefined}
                   onClick={filterLabel}
                   // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
                   isActive={labelFilterActive}
@@ -280,6 +285,7 @@ export const LogLineDetailsField = ({
               {onClickFilterOutLabel && fieldSupportsFilters && (
                 <IconButton
                   name="search-minus"
+                  size={fontSize === 'small' ? 'sm' : undefined}
                   tooltip={
                     app === CoreApp.Explore && log.dataFrame?.refId
                       ? t('logs.log-line-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
@@ -293,6 +299,7 @@ export const LogLineDetailsField = ({
               {singleKey && displayedFields.includes(keys[0]) && (
                 <IconButton
                   variant="primary"
+                  size={fontSize === 'small' ? 'sm' : undefined}
                   tooltip={t('logs.log-line-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
                   name="eye"
                   onClick={hideField}
@@ -305,12 +312,14 @@ export const LogLineDetailsField = ({
                     'Show this field instead of the message'
                   )}
                   name="eye"
+                  size={fontSize === 'small' ? 'sm' : undefined}
                   onClick={showField}
                 />
               )}
               <IconButton
                 variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
+                size={fontSize === 'small' ? 'sm' : undefined}
                 tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
                 className={styles.statsIcon}
                 disabled={!singleKey}
@@ -527,6 +536,7 @@ export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: str
 interface AsyncIconButtonProps extends Pick<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> {
   name: IconName;
   isActive(): Promise<boolean>;
+  size?: IconSize;
   tooltipSuffix: string;
 }
 

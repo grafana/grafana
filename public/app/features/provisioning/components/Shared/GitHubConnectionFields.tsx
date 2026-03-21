@@ -12,10 +12,12 @@ export interface GitHubConnectionFieldsProps {
   /** Initial value for whether private key is configured (edit mode) */
   privateKeyConfigured?: boolean;
   onNewConnectionCreation?: () => void;
+  /** Whether the connection is currently being created */
+  isCreating?: boolean;
 }
 
 export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
-  ({ required = true, privateKeyConfigured = false, onNewConnectionCreation }) => {
+  ({ required = true, privateKeyConfigured = false, onNewConnectionCreation, isCreating = false }) => {
     const [isPrivateKeyConfigured, setIsPrivateKeyConfigured] = useState(privateKeyConfigured);
     const {
       register,
@@ -140,8 +142,12 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
 
         {onNewConnectionCreation && (
           <Stack>
-            <Button onClick={onNewConnectionCreation}>
-              <Trans i18nKey="provisioning.connection-form.create-new-connection-button">Create connection</Trans>
+            <Button onClick={onNewConnectionCreation} disabled={isCreating}>
+              {isCreating ? (
+                <Trans i18nKey="provisioning.connection-form.creating-connection-button">Creating connection...</Trans>
+              ) : (
+                <Trans i18nKey="provisioning.connection-form.create-new-connection-button">Create connection</Trans>
+              )}
             </Button>
           </Stack>
         )}

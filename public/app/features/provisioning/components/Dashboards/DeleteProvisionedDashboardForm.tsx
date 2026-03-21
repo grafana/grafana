@@ -10,7 +10,6 @@ import { Job, RepositoryView, useDeleteRepositoryFilesWithPathMutation } from 'a
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { StepStatusInfo } from 'app/features/provisioning/Wizard/types';
-import { PROVISIONING_URL } from 'app/features/provisioning/constants';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
@@ -22,11 +21,11 @@ import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 
 export interface Props {
+  canPushToConfiguredBranch: boolean;
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
   isNew?: boolean;
-  workflowOptions: Array<{ label: string; value: string }>;
   loadedFromRef?: string;
   repository?: RepositoryView;
   onDismiss: () => void;
@@ -37,12 +36,12 @@ export interface Props {
  * Drawer component for deleting a git provisioned dashboard.
  */
 export function DeleteProvisionedDashboardForm({
+  canPushToConfiguredBranch,
   dashboard,
   defaultValues,
   loadedFromRef,
   readOnly,
   isNew,
-  workflowOptions,
   repository,
   onDismiss,
 }: Props) {
@@ -136,14 +135,14 @@ export function DeleteProvisionedDashboardForm({
     }
   };
 
-  // Branch success handler for /files API
-  const onBranchSuccess = (path: string, info: { repoType: string }, urls?: Record<string, string>) => {
+  // Branch success handler for /files API — redirects to /dashboards (not the deleted dashboard's preview URL)
+  const onBranchSuccess = (_path: string, info: { repoType: string }, urls?: Record<string, string>) => {
     panelEditor?.onDiscard();
     const url = buildResourceBranchRedirectUrl({
-      baseUrl: `${PROVISIONING_URL}/${defaultValues.repo}/dashboard/preview/${path}`,
-      paramName: 'pull_request_url',
+      paramName: 'new_pull_request_url',
       paramValue: urls?.newPullRequestURL,
       repoType: info.repoType,
+      action: 'delete',
     });
     navigate(url);
   };
@@ -206,8 +205,7 @@ export function DeleteProvisionedDashboardForm({
                 resourceType="dashboard"
                 isNew={isNew}
                 readOnly={readOnly}
-                workflow={workflow}
-                workflowOptions={workflowOptions}
+                canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
               />
 

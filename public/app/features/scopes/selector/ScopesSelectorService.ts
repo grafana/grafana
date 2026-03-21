@@ -51,6 +51,12 @@ export interface ScopesSelectorServiceState {
 }
 
 export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServiceState> {
+  private redirectEnabled = true;
+
+  public setRedirectEnabled(enabled: boolean) {
+    this.redirectEnabled = enabled;
+  }
+
   constructor(
     private apiClient: ScopesApiClient,
     private dashboardsService: ScopesDashboardsService,
@@ -341,7 +347,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // something selected without knowing the parent so we default to assuming it's not the same parent.
     const sameParent =
       this.state.selectedScopes[0]?.scopeNodeId &&
-      this.state.nodes[this.state.selectedScopes[0].scopeNodeId].spec.parentName === scopeNode.spec.parentName;
+      this.state.nodes[this.state.selectedScopes[0].scopeNodeId]?.spec.parentName === scopeNode.spec.parentName;
 
     if (
       !sameParent ||
@@ -486,8 +492,14 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   // Redirect to the scope node's redirect URL if it exists, otherwise redirect to the first scope navigation.
   private redirectAfterApply = (scopeNode: ScopeNode | undefined) => {
+    if (!this.redirectEnabled) {
+      return;
+    }
+
     // Check if we are currently on an active scope navigation
-    const currentPath = locationService.getLocation().pathname;
+    const location = locationService.getLocation();
+    const currentPath = location.pathname;
+
     const activeScopeNavigation = this.dashboardsService.state.scopeNavigations.find((s) => {
       if (!('url' in s.spec)) {
         return false;

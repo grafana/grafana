@@ -160,6 +160,11 @@
       [[if .Assets.ContentDeliveryURL]]
         window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
       [[end]]
+
+      [[if .RenderBindingSupported]]
+        // For the image-renderer to check support for render binding calls
+        window.__grafanaRenderBindingSupported = true;
+      [[end]]
     </script>
 
     <script nonce="[[.Nonce]]">
@@ -374,7 +379,7 @@
           document.head.appendChild(cssLink);
 
           // Set custom fav icon if set in whitelabeling settings
-          const customFavIcon = window.grafanaBootData.settings.whitelabeling.favIcon;
+          const customFavIcon = window.grafanaBootData.settings.whitelabeling?.favIcon;
           if (customFavIcon) {
             let favicon = document.getElementById('grafana_favicon');
 

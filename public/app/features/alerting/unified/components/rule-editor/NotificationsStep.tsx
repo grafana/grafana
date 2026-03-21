@@ -20,6 +20,7 @@ import { SimplifiedRouting } from './alert-rule-form/simplifiedRouting/Simplifie
 import { LabelsEditorModal } from './labels/LabelsEditorModal';
 import { LabelsFieldInForm } from './labels/LabelsFieldInForm';
 import { NotificationPreview } from './notificaton-preview/NotificationPreview';
+import { PolicyTreeSelector } from './notificaton-preview/PolicyTreeSelector';
 
 type NotificationsStepProps = {
   alertUid?: string;
@@ -238,20 +239,29 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
     'name',
     'manualRouting',
   ]);
+  const selectedPolicy = watch('selectedPolicy');
+
+  const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
+  const policyRoutingSettingsEnabled = config.featureToggles.alertingPolicyRoutingSettings ?? false;
+
   return (
-    <NotificationPreview
-      alertQueries={queries}
-      customLabels={labels}
-      condition={condition}
-      folder={folder}
-      alertName={alertName}
-      alertUid={alertUid}
-    />
+    <Stack direction="column" gap={2}>
+      {multiplePoliciesEnabled && <PolicyTreeSelector />}
+      <NotificationPreview
+        alertQueries={queries}
+        customLabels={labels}
+        condition={condition}
+        folder={folder}
+        alertName={alertName}
+        alertUid={alertUid}
+        policyName={policyRoutingSettingsEnabled ? selectedPolicy : undefined}
+      />
+    </Stack>
   );
 }
 
 // Auxiliar components to build the texts and descriptions in the NotificationsStep
-function NeedHelpInfoForNotificationPolicy() {
+export function NeedHelpInfoForNotificationPolicy() {
   return (
     <NeedHelpInfo
       contentText={

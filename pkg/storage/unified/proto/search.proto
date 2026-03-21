@@ -190,6 +190,12 @@ message RebuildIndexesRequest {
 }
 
 message RebuildIndexesResponse {
+  message IndexBuildTime {
+    string group = 1;
+    string resource = 2;
+    int64 buildTimeUnix = 3; // Unix timestamp in seconds when the index was originally built
+  }
+
   // Total count of rebuilt indexes
   int64 rebuildCount = 1;
 
@@ -198,5 +204,11 @@ message RebuildIndexesResponse {
 
   // Error details
   ErrorResult error = 3;
+
+  // Build times for indexes (set by search pods, aggregated as MIN by distributor)
+  repeated IndexBuildTime buildTimes = 4;
+
+  // Whether all pods in the ring were contacted (only set by distributor)
+  bool ContactedAllInstances = 5;
 }
 

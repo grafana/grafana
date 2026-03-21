@@ -127,7 +127,10 @@ export default function GettingStarted({ items }: Props) {
   const settingsQuery = useGetFrontendSettingsQuery(settingsArg, {
     refetchOnMountOrArgChange: true,
   });
-  const hasItems = Boolean(settingsQuery.data?.items?.length);
+  const connectionCount = settingsQuery.data?.items?.length ?? 0;
+  const hasItems = connectionCount > 0;
+  const maxRepositories = settingsQuery.data?.maxRepositories;
+  const isConnectionLimitExceeded = !!maxRepositories && connectionCount >= maxRepositories;
   const { hasPublicAccess, hasImageRenderer, hasRequiredFeatures } = getConfigurationStatus();
   const [showInstructionsModal, setShowModal] = useState(false);
   const [setupType, setSetupType] = useState<SetupType>(null);
@@ -142,6 +145,8 @@ export default function GettingStarted({ items }: Props) {
           </div>
           <FeaturesList
             hasRequiredFeatures={hasRequiredFeatures}
+            isConnectionLimitExceeded={isConnectionLimitExceeded}
+            maxRepositories={maxRepositories}
             onSetupFeatures={() => {
               setSetupType('required-features');
               setShowModal(true);

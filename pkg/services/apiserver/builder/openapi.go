@@ -17,7 +17,7 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	secret "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -52,18 +52,6 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder, additionalGetters ...open
 				maps.Copy(defs, getter(ref))
 			}
 		}
-
-		// TODO: add timerange to upstream SDK setup
-		maps.Copy(defs, map[string]openapi.OpenAPIDefinition{
-			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.TimeRange": {
-				Schema: spec.Schema{
-					SchemaProps: spec.SchemaProps{
-						Type:                 []string{"object"},
-						AdditionalProperties: &spec.SchemaOrBool{Allows: true},
-					},
-				},
-			},
-		})
 		for _, b := range builders {
 			g := b.GetOpenAPIDefinitions()
 			if g != nil {

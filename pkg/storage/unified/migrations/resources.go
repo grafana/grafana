@@ -8,24 +8,19 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func registerMigrations(ctx context.Context,
-	cfg *setting.Cfg,
+func registerMigrations(cfg *setting.Cfg,
 	mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
-	client resource.ResourceClient,
-	sqlStore db.DB,
+	tableLocker MigrationTableLocker,
+	tableRenamer MigrationTableRenamer,
+	client resourcepb.ResourceIndexClient,
+	registry *MigrationRegistry,
 ) error {
-	for _, def := range Registry.All() {
-		if shouldAutoMigrate(ctx, def, cfg, sqlStore) {
-			registerMigration(mg, migrator, client, def, WithAutoMigrate(cfg))
-			continue
-		}
-
+	for _, def := range registry.All() {
 		enabled, err := isMigrationEnabled(def, cfg)
 		if err != nil {
 			return err
@@ -34,85 +29,23 @@ func registerMigrations(ctx context.Context,
 			logger.Info("Migration is disabled in config, skipping", "migration", def.ID)
 			continue
 		}
-		registerMigration(mg, migrator, client, def)
+		registerMigration(mg, migrator, tableLocker, tableRenamer, cfg, client, def)
 	}
 	return nil
 }
 
 func registerMigration(mg *sqlstoremigrator.Migrator,
 	migrator UnifiedMigrator,
-	client resource.ResourceClient,
+	tableLocker MigrationTableLocker,
+	tableRenamer MigrationTableRenamer,
+	cfg *setting.Cfg,
+	client resourcepb.ResourceIndexClient,
 	def MigrationDefinition,
 	opts ...ResourceMigrationOption,
 ) {
 	validators := def.CreateValidators(client, mg.Dialect.DriverName())
-	migration := NewResourceMigration(migrator, def.GetGroupResources(), def.ID, validators, opts...)
+	migration := NewResourceMigration(migrator, tableLocker, tableRenamer, cfg, def, validators, opts...)
 	mg.AddMigration(def.MigrationID, migration)
-}
-
-// TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
-func shouldAutoMigrate(ctx context.Context, def MigrationDefinition, cfg *setting.Cfg, sqlStore db.DB) bool {
-	autoMigrate := false
-	configResources := def.ConfigResources()
-
-	for _, res := range configResources {
-		config := cfg.UnifiedStorageConfig(res)
-
-		if config.DualWriterMode == 5 {
-			return false
-		}
-
-		if !setting.AutoMigratedUnifiedResources[res] {
-			continue
-		}
-
-		if checkIfAlreadyMigrated(ctx, def, sqlStore) {
-			for _, res := range configResources {
-				cfg.EnableMode5(res)
-			}
-			logger.Info("Auto-migration already completed, enabling mode 5 for resources", "migration", def.ID)
-			return true
-		}
-
-		autoMigrate = true
-		threshold := int64(setting.DefaultAutoMigrationThreshold)
-		if config.AutoMigrationThreshold > 0 {
-			threshold = int64(config.AutoMigrationThreshold)
-		}
-
-		count, err := countResource(ctx, sqlStore, res)
-		if err != nil {
-			logger.Warn("Failed to count resource for auto migration check", "resource", res, "error", err)
-			return false
-		}
-
-		logger.Info("Resource count for auto migration check", "resource", res, "count", count, "threshold", threshold)
-
-		if count > threshold {
-			return false
-		}
-	}
-
-	if !autoMigrate {
-		return false
-	}
-
-	logger.Info("Auto-migration enabled for migration", "migration", def.ID)
-	return true
-}
-
-func checkIfAlreadyMigrated(ctx context.Context, def MigrationDefinition, sqlStore db.DB) bool {
-	if def.MigrationID == "" {
-		return false
-	}
-
-	exists, err := migrationExists(ctx, sqlStore, def.MigrationID)
-	if err != nil {
-		logger.Warn("Failed to check if migration exists", "migration", def.ID, "error", err)
-		return false
-	}
-
-	return exists
 }
 
 func isMigrationEnabled(def MigrationDefinition, cfg *setting.Cfg) (bool, error) {
@@ -137,31 +70,15 @@ func isMigrationEnabled(def MigrationDefinition, cfg *setting.Cfg) (bool, error)
 	return allEnabled, nil
 }
 
-// TODO: remove this before Grafana 13 GA: https://github.com/grafana/search-and-storage-team/issues/613
-func countResource(ctx context.Context, sqlStore db.DB, resourceName string) (int64, error) {
-	var count int64
-	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var err error
-		switch resourceName {
-		case setting.DashboardResource:
-			count, err = sess.Table("dashboard").Where("is_folder = ? AND deleted IS NULL", false).Count()
-		case setting.FolderResource:
-			count, err = sess.Table("dashboard").Where("is_folder = ? AND deleted IS NULL", true).Count()
-		default:
-			return fmt.Errorf("unknown resource: %s", resourceName)
-		}
-		return err
-	})
-	return count, err
-}
-
 const migrationLogTableName = "unifiedstorage_migration_log"
 
-func migrationExists(ctx context.Context, sqlStore db.DB, migrationID string) (bool, error) {
+func successfulMigrationExists(ctx context.Context, sqlStore db.DB, migrationID string) (bool, error) {
 	var count int64
 	err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		count, err = sess.Table(migrationLogTableName).Where("migration_id = ?", migrationID).Count()
+		count, err = sess.Table(migrationLogTableName).
+			Where("migration_id = ? AND success = ?", migrationID, true).
+			Count()
 		return err
 	})
 	if err != nil {
@@ -170,10 +87,12 @@ func migrationExists(ctx context.Context, sqlStore db.DB, migrationID string) (b
 	return count > 0, nil
 }
 
-func buildResourceKey(gr schema.GroupResource, namespace string) *resourcepb.ResourceKey {
-	if !Registry.HasResource(gr) {
-		return nil
-	}
+func buildResourceKey(gr schema.GroupResource, namespace string, registry *MigrationRegistry) *resourcepb.ResourceKey {
+	// TODO: commenting this out so migrations can handle
+	// dynamically registered group names
+	//if !registry.HasResource(gr) {
+	//	return nil
+	//}
 	return &resourcepb.ResourceKey{
 		Namespace: namespace,
 		Group:     gr.Group,
@@ -181,12 +100,11 @@ func buildResourceKey(gr schema.GroupResource, namespace string) *resourcepb.Res
 	}
 }
 
-func validateRegisteredResources() error {
+func validateRegisteredResources(registry *MigrationRegistry) error {
 	var missing []string
 	for expected := range setting.MigratedUnifiedResources {
-		// Parse the expected format "resource.group" into a GroupResource
 		gr := parseConfigResource(expected)
-		if !Registry.HasResource(gr) {
+		if !registry.HasResource(gr) {
 			missing = append(missing, expected)
 		}
 	}

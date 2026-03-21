@@ -78,14 +78,12 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
     <div className={cx(styles.toolbar, context.compact && styles.toolbarIconsOnly)}>
       {children}
       <div className={styles.flexGrow} />
-      {context.hasOpenPane && (
-        <SidebarButton
-          icon={'web-section-alt'}
-          onClick={context.onToggleDock}
-          title={context.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')}
-          data-testid={selectors.components.Sidebar.dockToggle}
-        />
-      )}
+      <SidebarButton
+        icon={'web-section-alt'}
+        onClick={context.onToggleDock}
+        title={context.isDocked ? t('grafana-ui.sidebar.undock', 'Undock') : t('grafana-ui.sidebar.dock', 'Dock')}
+        data-testid={selectors.components.Sidebar.dockToggle}
+      />
     </div>
   );
 }
@@ -162,7 +160,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       padding: theme.spacing(1, 0),
       flexGrow: 0,
-      gap: theme.spacing(1),
+      gap: theme.spacing(2),
       overflow: 'hidden',
       width: theme.spacing(SIDE_BAR_WIDTH_WITH_TEXT),
     }),
@@ -172,7 +170,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     divider: css({
       height: '1px',
       background: theme.colors.border.weak,
-      width: '100%',
+      width: '70%',
     }),
     flexGrow: css({
       flexGrow: 1,

@@ -1,5 +1,5 @@
 import { noop } from 'lodash';
-import { render } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { Button } from '@grafana/ui';
@@ -18,9 +18,11 @@ const ui = {
   error: byRole('alert'),
   timingOptionsBtn: byRole('button', { name: /Timing options/ }),
   submitBtn: byRole('button', { name: /Update default policy/ }),
+  createBtn: byRole('button', { name: /Create/ }),
   groupWaitInput: byRole('textbox', { name: /Group wait/ }),
   groupIntervalInput: byRole('textbox', { name: /Group interval/ }),
   repeatIntervalInput: byRole('textbox', { name: /Repeat interval/ }),
+  routeNameInput: byRole('textbox', { name: /Name/ }),
 };
 setupMswServer();
 // TODO Default and Notification policy form should be unified so we don't need to maintain two almost identical forms
@@ -128,16 +130,76 @@ describe('EditDefaultPolicyForm', function () {
       expect.anything()
     );
   });
+
+  describe('Create Policy', function () {
+    it('should render policy name in form inputs if showNameField=true', async function () {
+      const onSubmit = jest.fn();
+      renderRouteForm(
+        {
+          id: '0',
+          name: 'custom policy name',
+        },
+        onSubmit,
+        true
+      );
+
+      expect(ui.routeNameInput.get()).toHaveValue('custom policy name');
+    });
+    it('should not render policy name in form inputs if showNameField omitted', async function () {
+      renderRouteForm({
+        id: '0',
+        name: 'custom policy name',
+      });
+
+      expect(ui.routeNameInput.query()).not.toBeInTheDocument();
+    });
+    it('should show inline error when name matches an existing policy', async function () {
+      const onSubmit = jest.fn();
+      const { user } = renderRouteForm({ id: '0', name: '', receiver: 'grafana-default-email' }, onSubmit, true, {
+        existingPolicyNames: ['existing-policy'],
+      });
+
+      await user.type(ui.routeNameInput.get(), 'existing-policy');
+      await user.click(ui.createBtn.get());
+
+      expect(screen.getByText('A notification policy with this name already exists')).toBeInTheDocument();
+      expect(onSubmit).not.toHaveBeenCalled();
+    });
+    it('should allow submitting a unique name', async function () {
+      const onSubmit = jest.fn();
+      const { user } = renderRouteForm({ id: '0', name: '', receiver: 'grafana-default-email' }, onSubmit, true, {
+        existingPolicyNames: ['existing-policy'],
+      });
+
+      await user.type(ui.routeNameInput.get(), 'unique-policy-name');
+      await user.click(ui.createBtn.get());
+
+      expect(screen.queryByText('A notification policy with this name already exists')).not.toBeInTheDocument();
+      expect(onSubmit).toHaveBeenCalled();
+    });
+  });
 });
 
-function renderRouteForm(route: RouteWithID, onSubmit: (route: Partial<FormAmRoute>) => void = noop) {
+interface RenderRouteFormOptions {
+  existingPolicyNames?: string[];
+}
+
+function renderRouteForm(
+  route: RouteWithID,
+  onSubmit: (route: Partial<FormAmRoute>) => void = noop,
+  showNameField?: boolean,
+  options?: RenderRouteFormOptions
+) {
+  const isCreateMode = options?.existingPolicyNames !== undefined && showNameField;
   return render(
     <AlertmanagerProvider accessType="instance">
       <AmRootRouteForm
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
-        actionButtons={<Button type="submit">Update default policy</Button>}
+        actionButtons={<Button type="submit">{isCreateMode ? 'Create' : 'Update default policy'}</Button>}
+        existingPolicyNames={options?.existingPolicyNames}
         onSubmit={onSubmit}
         route={route}
+        showNameField={showNameField}
       />
     </AlertmanagerProvider>
   );

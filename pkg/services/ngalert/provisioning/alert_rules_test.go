@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
@@ -983,6 +984,20 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 			})
 		})
 	})
+	t.Run("returns error when folder does not exist", func(t *testing.T) {
+		rule := gen.With(gen.WithOrgID(orgID)).Generate()
+		service, _, _, ac := initServiceWithData(t)
+		ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+			return true, nil
+		}
+		fs := foldertest.NewFakeService()
+		fs.ExpectedError = dashboards.ErrFolderNotFound
+		service.folderService = fs
+
+		_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceFile)
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "folder does not exist")
+	})
 	t.Run("when user cannot write all rules", func(t *testing.T) {
 		t.Run("and it creates a new group", func(t *testing.T) {
 			rule := gen.With(gen.WithOrgID(orgID)).Generate()
@@ -1540,6 +1555,75 @@ func TestDeleteAlertRule(t *testing.T) {
 		require.Len(t, deletes, 1)
 		uids := deletes[0].Params[3].([]string)
 		require.Contains(t, uids, r.UID)
+	})
+
+	t.Run("provenance validation", func(t *testing.T) {
+		testCases := []struct {
+			name              string
+			storedProvenance  models.Provenance
+			requestProvenance models.Provenance
+			expectError       bool
+		}{
+			{
+				name:              "can delete converted_prometheus rule with ProvenanceNone",
+				storedProvenance:  models.ProvenanceConvertedPrometheus,
+				requestProvenance: models.ProvenanceNone,
+				expectError:       false,
+			},
+			{
+				name:              "can delete api rule with ProvenanceNone",
+				storedProvenance:  models.ProvenanceAPI,
+				requestProvenance: models.ProvenanceNone,
+				expectError:       false,
+			},
+			{
+				name:              "cannot delete file rule with ProvenanceNone",
+				storedProvenance:  models.ProvenanceFile,
+				requestProvenance: models.ProvenanceNone,
+				expectError:       true,
+			},
+			{
+				name:              "cannot delete api rule with converted_prometheus provenance",
+				storedProvenance:  models.ProvenanceAPI,
+				requestProvenance: models.ProvenanceConvertedPrometheus,
+				expectError:       true,
+			},
+			{
+				name:              "can delete rule with matching provenance",
+				storedProvenance:  models.ProvenanceAPI,
+				requestProvenance: models.ProvenanceAPI,
+				expectError:       false,
+			},
+			{
+				name:              "can delete none provenance rule with any provenance",
+				storedProvenance:  models.ProvenanceNone,
+				requestProvenance: models.ProvenanceAPI,
+				expectError:       false,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				service, ruleStore, provenanceStore, ac := initService(t)
+				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
+					return true, nil
+				}
+
+				rule := gen.With(gen.WithOrgID(orgID)).GenerateRef()
+				_, err := ruleStore.InsertAlertRules(context.Background(), models.NewUserUID(u), []models.InsertRule{{AlertRule: *rule}})
+				require.NoError(t, err)
+				require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, tc.storedProvenance))
+
+				err = service.DeleteAlertRule(context.Background(), u, rule.UID, tc.requestProvenance)
+
+				if tc.expectError {
+					require.Error(t, err)
+					require.Truef(t, errProvenanceMismatch.Base.Is(err), "expected errProvenanceMismatch but got %s", err)
+				} else {
+					require.NoError(t, err)
+				}
+			})
+		}
 	})
 }
 
@@ -2537,7 +2621,9 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 	quotas.EXPECT().LimitOK()
 
 	if folderService == nil {
-		folderService = foldertest.NewFakeService()
+		fs := foldertest.NewFakeService()
+		fs.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
+		folderService = fs
 	}
 
 	return AlertRuleService{
@@ -2652,6 +2738,7 @@ func initService(t *testing.T) (*AlertRuleService, *fakes.RuleStore, *fakes.Fake
 	ruleStore := fakes.NewRuleStore(t)
 	provenanceStore := fakes.NewFakeProvisioningStore()
 	folderService := foldertest.NewFakeService()
+	folderService.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
 
 	quotas := MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()

@@ -1,17 +1,18 @@
+import { useEffect } from 'react';
 import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Combobox, Field, IconButton, RadioButtonGroup, Stack } from '@grafana/ui';
+import { Alert, Combobox, Field, RadioButtonGroup, Stack } from '@grafana/ui';
 import { ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
+import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { ConnectionFormData } from '../types';
-import { isConnectionReady } from '../utils/connectionStatus';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
 
 import { useStepStatus } from './StepStatusContext';
@@ -26,6 +27,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
   const {
     control,
     watch,
+    setValue,
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
@@ -43,17 +45,25 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     },
   });
 
-  const [createConnection] = useCreateOrUpdateConnection();
+  const [createConnection, connectionRequest] = useCreateOrUpdateConnection();
   const {
     options: connectionOptions,
     isLoading,
     connections: githubConnections,
     error: connectionListError,
-    refetch: refetchConnections,
   } = useConnectionOptions(true);
 
+  const hasNoConnections = !isLoading && !connectionListError && githubConnections.length === 0;
+
+  useEffect(() => {
+    if (hasNoConnections) {
+      setValue('githubAppMode', 'new');
+    }
+  }, [hasNoConnections, setValue]);
+
   const [githubAppMode, githubAppConnectionName] = watch(['githubAppMode', 'githubApp.connectionName']);
-  const selectedConnection = githubConnections.find((c) => c.metadata?.name === githubAppConnectionName);
+  const { connection: selectedConnection } = useConnectionStatus(githubAppConnectionName);
+
   const handleCreateConnection = async () => {
     // Reset any existing step errors
     setStepStatusInfo({ status: 'idle' });
@@ -191,15 +201,6 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
                     <Stack>
                       <Trans i18nKey="provisioning.wizard.github-app-connection-status">Connection status:</Trans>
                       <ConnectionStatusBadge status={selectedConnection.status} />
-                      {!isConnectionReady(selectedConnection?.status) && (
-                        <IconButton
-                          aria-label={t('provisioning.wizard.github-app-sync-connection', 'Sync Connection')}
-                          key="syncConnection"
-                          name="sync"
-                          onClick={refetchConnections}
-                          disabled={isLoading}
-                        />
-                      )}
                     </Stack>
                   )}
                 </Stack>
@@ -211,7 +212,11 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
 
       {githubAppMode === 'new' && (
         <FormProvider {...credentialForm}>
-          <GitHubConnectionFields required onNewConnectionCreation={handleCreateConnection} />
+          <GitHubConnectionFields
+            required
+            onNewConnectionCreation={handleCreateConnection}
+            isCreating={connectionRequest.isLoading}
+          />
         </FormProvider>
       )}
     </Stack>

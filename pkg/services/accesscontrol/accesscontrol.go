@@ -29,6 +29,8 @@ type AccessControl interface {
 	// This is useful when we don't want to reuse any pre-configured resolvers
 	// for a authorization call.
 	WithoutResolvers() AccessControl
+	// InvalidateResolverCache removes a scope resolution from the cache
+	InvalidateResolverCache(orgID int64, scope string)
 }
 
 type Service interface {
@@ -143,6 +145,11 @@ type ReceiverPermissionsService interface {
 	PermissionsService
 	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string)
 	CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error)
+}
+
+type RoutePermissionsService interface {
+	PermissionsService
+	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, name string) error
 }
 
 type PermissionsService interface {

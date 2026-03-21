@@ -23,7 +23,6 @@ export function DashboardLinkList({
   onDelete,
 }: DashboardLinkListProps) {
   const styles = useStyles2(getStyles);
-
   const isEmptyList = links.length === 0;
 
   if (isEmptyList) {
@@ -53,6 +52,13 @@ export function DashboardLinkList({
     );
   }
 
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTableRowElement>, idx: number) {
+    if (e.target === e.currentTarget && (e.key === ' ' || e.key === 'Enter')) {
+      e.preventDefault();
+      onEdit(idx);
+    }
+  }
+
   return (
     <>
       <table role="grid" className="filter-table filter-table--hover">
@@ -69,7 +75,7 @@ export function DashboardLinkList({
         </thead>
         <tbody>
           {links.map((link, idx) => (
-            <tr key={`${link.title}-${idx}`}>
+            <tr key={`${link.title}-${idx}`} onKeyDown={(e) => handleKeyDown(e, idx)} tabIndex={0}>
               <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
                 <Icon name="external-link-alt" /> &nbsp; {link.type}
               </td>

@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1.7-labs
 
 # to maintain formatting of multiline commands in vscode, add the following to settings.json:
 # "docker.languageserver.formatter.ignoreMultilineInstructions": true
@@ -14,9 +14,9 @@ ARG JS_SRC=js-builder
 
 # Dependabot cannot update dependencies listed in ARGs
 # By using FROM instructions we can delegate dependency updates to dependabot
-FROM alpine:3.23.2 AS alpine-base
-FROM ubuntu:22.04 AS ubuntu-base
-FROM golang:1.25.6-alpine AS go-builder-base
+FROM alpine:3.23.3 AS alpine-base
+FROM ubuntu:24.04 AS ubuntu-base
+FROM golang:1.26.1-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
@@ -67,70 +67,36 @@ ARG WIRE_TAGS="oss"
 
 RUN if grep -i -q alpine /etc/issue; then \
   apk add --no-cache \
-  # This is required to allow building on arm64 due to https://github.com/golang/go/issues/22040
-  binutils-gold \
   bash \
   # Install build dependencies
-  gcc g++ make git; \
+  make git; \
   fi
 
 WORKDIR /tmp/grafana
 
-COPY go.* ./
+COPY go.mod go.sum go.work go.work.sum ./
 COPY .citools .citools
 
-# Copy go dependencies first
-# If updating this, please also update devenv/frontend-service/backend.dockerfile
-COPY pkg/util/xorm pkg/util/xorm
-COPY pkg/apiserver pkg/apiserver
-COPY pkg/apimachinery pkg/apimachinery
-COPY pkg/build pkg/build
-COPY pkg/build/wire pkg/build/wire
-COPY pkg/promlib pkg/promlib
-COPY pkg/storage/unified/resource pkg/storage/unified/resource
-COPY pkg/storage/unified/resource/kv/go.* pkg/storage/unified/resource/kv
-COPY pkg/storage/unified/resourcepb pkg/storage/unified/resourcepb
-COPY pkg/storage/unified/apistore pkg/storage/unified/apistore
-COPY pkg/semconv pkg/semconv
-COPY pkg/plugins pkg/plugins
-COPY pkg/aggregator pkg/aggregator
-COPY apps/playlist apps/playlist
-COPY apps/quotas apps/quotas
-COPY apps/plugins apps/plugins
-COPY apps/shorturl apps/shorturl
-COPY apps/annotation apps/annotation
-COPY apps/correlations apps/correlations
-COPY apps/preferences apps/preferences
-COPY apps/collections apps/collections
-COPY apps/provisioning apps/provisioning
-COPY apps/secret apps/secret
-COPY apps/scope apps/scope
-COPY apps/logsdrilldown apps/logsdrilldown
-COPY apps/advisor apps/advisor
-COPY apps/dashboard apps/dashboard
-COPY apps/dashvalidator apps/dashvalidator
-COPY apps/folder apps/folder
-COPY apps/iam apps/iam
-COPY apps apps
-COPY kindsv2 kindsv2
-COPY apps/alerting/alertenrichment apps/alerting/alertenrichment
-COPY apps/alerting/historian apps/alerting/historian
-COPY apps/alerting/notifications apps/alerting/notifications
-COPY apps/alerting/rules apps/alerting/rules
-COPY pkg/codegen pkg/codegen
-COPY pkg/plugins/codegen pkg/plugins/codegen
-COPY apps/example apps/example
+# Copy go.mod/go.sum from each workspace module for dependency caching.
+# Only dependency file changes invalidate the go mod download cache layer.
+# Uses --parents to preserve directory structure with fewer COPY directives.
+COPY --parents **/go.mod **/go.sum ./
 
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
-COPY embed.go Makefile build.go package.json ./
+# Copy full source
+COPY embed.go Makefile package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
+COPY kindsv2 kindsv2
 COPY local local
 COPY packages/grafana-schema packages/grafana-schema
+COPY packages/grafana-data/src/themes/themeDefinitions packages/grafana-data/src/themes/themeDefinitions
 COPY public/app/plugins public/app/plugins
 COPY public/api-merged.json public/api-merged.json
 COPY pkg pkg
+COPY apps apps
 COPY scripts scripts
 COPY conf conf
 COPY .github .github
@@ -138,7 +104,11 @@ COPY .github .github
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV BUILD_BRANCH=${BUILD_BRANCH}
 
-RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
+
+RUN mkdir -p data/plugins-bundled
 
 # From-tarball build stage
 FROM ${BASE_IMAGE} AS tgz-builder
@@ -151,6 +121,8 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 # add -v to make tar print every file it extracts
 RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
+
+RUN mkdir -p data/plugins-bundled
 
 # helpers for COPY --from
 FROM ${GO_SRC} AS go-src
@@ -177,7 +149,7 @@ WORKDIR $GF_PATHS_HOME
 
 # Install dependencies
 RUN if grep -i -q alpine /etc/issue; then \
-  apk add --no-cache ca-certificates bash curl tzdata musl-utils && \
+  apk add --no-cache ca-certificates bash bubblewrap curl tzdata musl-utils && \
   apk info -vv | sort; \
   elif grep -i -q ubuntu /etc/issue; then \
   DEBIAN_FRONTEND=noninteractive && \
@@ -212,7 +184,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
   if grep -i -q alpine /etc/issue; then \
   addgroup -S -g $GF_GID grafana; \
   else \
-  addgroup --system --gid $GF_GID grafana; \
+  groupadd --system --gid $GF_GID grafana; \
   fi; \
   fi && \
   GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
@@ -220,7 +192,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
   if grep -i -q alpine /etc/issue; then \
   adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana; \
   else \
-  adduser --system --uid $GF_UID --ingroup "$GF_GID_NAME" grafana; \
+  useradd --system --uid $GF_UID --gid "$GF_GID_NAME" --no-create-home grafana; \
   fi && \
   mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
   "$GF_PATHS_PROVISIONING/dashboards" \
@@ -239,6 +211,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
+COPY --from=go-src /tmp/grafana/data/plugins-bundled ./data/plugins-bundled
 
 RUN grafana server -v | sed -e 's/Version //' > /.grafana-version
 RUN chmod 644 /.grafana-version

@@ -56,5 +56,5 @@ type Options struct {
 	// LicenseMV if configured is applied to endpoints that can modify permissions
 	LicenseMW web.Handler
 	// RestConfigProvider if configured enables K8s API redirect for resource permissions
-	RestConfigProvider apiserver.RestConfigProvider
+	RestConfigProvider apiserver.DirectRestConfigProvider
 }

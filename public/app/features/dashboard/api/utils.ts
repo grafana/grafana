@@ -1,7 +1,6 @@
 import { config, locationService } from '@grafana/runtime';
-import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2';
+import { Dashboard } from '@grafana/schema';
+import { Status, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
 import { Resource } from 'app/features/apiserver/types';
 import { isDashboardSceneEnabled } from 'app/features/dashboard-scene/utils/utils';
@@ -12,11 +11,11 @@ import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 import { DashboardWithAccessInfo } from './types';
 
 export function isV2StoredVersion(version: string | undefined): boolean {
-  return version === 'v2alpha1' || version === 'v2beta1';
+  return version === 'v2alpha1' || version === 'v2beta1' || version === 'v2beta2' || version === 'v2';
 }
 
 export function isV0V1StoredVersion(version: string | undefined): boolean {
-  return version === 'v0alpha1' || version === 'v1alpha1' || version === 'v1beta1';
+  return version === 'v0alpha1' || version === 'v1alpha1' || version === 'v1beta1' || version === 'v1';
 }
 
 export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {

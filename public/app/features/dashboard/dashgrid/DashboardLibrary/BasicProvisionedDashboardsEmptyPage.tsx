@@ -11,14 +11,8 @@ import { PluginDashboard } from 'app/types/plugins';
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
-import {
-  CONTENT_KINDS,
-  CREATION_ORIGINS,
-  DashboardLibraryInteractions,
-  DISCOVERY_METHODS,
-  EVENT_LOCATIONS,
-  SOURCE_ENTRY_POINTS,
-} from './interactions';
+import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
+import { BasicProvisionedDashboardInteractions } from './interactions';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
 
 interface Props {
@@ -41,7 +35,7 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
     const dashboards = await fetchProvisionedDashboards(ds.type);
 
     if (dashboards.length > 0) {
-      DashboardLibraryInteractions.loaded({
+      BasicProvisionedDashboardInteractions.loaded({
         numberOfItems: dashboards.length,
         contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
         datasourceTypes: [ds.type],
@@ -59,7 +53,7 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
   const styles = useStyles2(getStyles);
 
   const onImportDashboardClick = async (dashboard: PluginDashboard) => {
-    DashboardLibraryInteractions.itemClicked({
+    BasicProvisionedDashboardInteractions.itemClicked({
       contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
       datasourceTypes: [dashboard.pluginId],
       libraryItemId: dashboard.uid,

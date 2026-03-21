@@ -4,8 +4,8 @@ import { useCallback, useId, useMemo } from 'react';
 import { GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ScaleDimensionConfig } from '@grafana/schema';
-import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
-import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
+import { Combobox, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
+import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
 import { validateScaleOptions, validateScaleConfig } from '../scale';
@@ -16,7 +16,7 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
   const { settings } = item;
   const styles = useStyles2(getStyles);
 
-  const fixedValueOption: SelectableValue<string> = useMemo(
+  const fixedValueOption = useMemo(
     () => ({
       label: t('dimensions.scale-dimension-editor.fixed-value-option.label.fixed-value', 'Fixed value'),
       value: '_____fixed_____',
@@ -27,7 +27,10 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
   const fieldName = value?.field;
   const isFixed = Boolean(!fieldName);
   const names = useFieldDisplayNames(context.data);
-  const selectOptions = useSelectOptions(names, fieldName, fixedValueOption, settings?.filteredFieldType);
+  const selectOptions = useMatcherSelectOptions(names, fieldName, {
+    firstItem: fixedValueOption,
+    fieldType: settings?.filteredFieldType,
+  });
   const minMaxStep = useMemo(() => {
     return validateScaleOptions(settings);
   }, [settings]);
@@ -104,8 +107,8 @@ export const ScaleDimensionEditor = (props: StandardEditorProps<ScaleDimensionCo
   return (
     <>
       <div>
-        <Select
-          inputId={id}
+        <Combobox
+          id={id}
           value={selectedOption}
           options={selectOptions}
           onChange={onSelectChange}

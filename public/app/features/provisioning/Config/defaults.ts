@@ -21,17 +21,17 @@ export function getDefaultValues({
       title: t('provisioning.get-default-values.title.repository', 'Repository'),
       token: '',
       url: '',
-      branch: 'main',
+      branch: '',
       generateDashboardPreviews: false,
       readOnly: false,
       prWorkflow: true,
-      path: 'grafana/',
+      path: '',
       sync: {
         enabled: false,
         target: defaultTarget,
         intervalSeconds: 60,
       },
-      enablePushToConfiguredBranch: true,
+      enablePushToConfiguredBranch: false,
     };
   }
   return specToData(repository);

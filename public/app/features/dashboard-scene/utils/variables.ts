@@ -14,15 +14,17 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
+import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
 
 const DEFAULT_DATASOURCE = 'default';
 
-export function createVariablesForDashboard(oldModel: DashboardModel) {
+export function createVariablesForDashboard(oldModel: DashboardModel, defaultVariables: VariableKind[] = []) {
   const variableObjects = oldModel.templating.list
     .map((v) => {
       try {
@@ -36,13 +38,24 @@ export function createVariablesForDashboard(oldModel: DashboardModel) {
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
 
+  const defaultVariableObjects = defaultVariables
+    .map((v) => {
+      try {
+        return createSceneVariableFromVariableModelV2(v);
+      } catch (err) {
+        console.error(err);
+        return null;
+      }
+    })
+    .filter((v): v is SceneVariable => Boolean(v));
+
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 
   return new SceneVariableSet({
-    variables: variableObjects,
+    variables: [...defaultVariableObjects, ...variableObjects],
   });
 }
 
@@ -65,7 +78,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             baseFilters: v.baseFilters ?? [],
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
-            layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+            layout: 'combobox',
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: v.datasource?.type })?.meta.multiValueFilterOperators
             ),
@@ -143,6 +156,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     name: variable.name,
     label: variable.label,
     description: variable.description,
+    origin: variable.origin,
   };
   if (variable.type === 'adhoc') {
     const originFilters: AdHocVariableFilter[] = [];
@@ -163,7 +177,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
       drilldownRecommendationsEnabled: config.featureToggles.drilldownRecommendations,
-      layout: config.featureToggles.newFiltersUI ? 'combobox' : undefined,
+      layout: 'combobox',
       collapsible: config.featureToggles.dashboardAdHocAndGroupByWrapper,
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: variable.datasource?.type })?.meta.multiValueFilterOperators
