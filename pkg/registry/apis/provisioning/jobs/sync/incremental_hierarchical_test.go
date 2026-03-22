@@ -144,8 +144,14 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 						r.Error() != nil
 				})).Return().Once()
 
-				// During cleanup, folder deletion is skipped
+				// During cleanup, folder deletion is skipped because child deletion failed
+				progress.On("HasDirPathFailedCreation", "dashboards/").Return(false).Once()
 				progress.On("HasDirPathFailedDeletion", "dashboards/").Return(true).Once()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+					return r.Path() == "dashboards/" &&
+						r.Action() == repository.FileActionIgnored &&
+						r.Warning() != nil
+				})).Return().Once()
 
 				// Note: RemoveFolder should NOT be called (verified via AssertNotCalled in test)
 			},
@@ -337,6 +343,8 @@ func runHierarchicalErrorHandlingTest(t *testing.T, tt struct {
 	// For tests that need cleanup (folder deletion), use composite repo
 	if tt.name == "file deletion fails, folder cleanup skipped" {
 		mockReader := repository.NewMockReader(t)
+		mockReader.On("Read", mock.Anything, "dashboards/", "").
+			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
 		repo = &compositeRepoForTest{
 			MockVersioned: mockVersioned,
 			MockReader:    mockReader,
@@ -451,7 +459,18 @@ func TestIncrementalSync_HierarchicalErrorHandling_FailedFileDeletion(t *testing
 			r.Error() != nil && r.Error().Error() == "removing resource from file dashboards/file1.json: permission denied"
 	})).Return().Once()
 
+	// findOrphanedFolders will look up the folder in git
+	mockReader.On("Read", mock.Anything, "dashboards/", "").
+		Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
+
+	// deleteFolders checks both safety conditions before deleting
+	progress.On("HasDirPathFailedCreation", "dashboards/").Return(false).Once()
 	progress.On("HasDirPathFailedDeletion", "dashboards/").Return(true).Once()
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Path() == "dashboards/" &&
+			r.Action() == repository.FileActionIgnored &&
+			r.Warning() != nil
+	})).Return().Once()
 
 	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), false)
 	require.NoError(t, err)

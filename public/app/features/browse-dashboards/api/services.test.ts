@@ -245,6 +245,16 @@ describe('browse-dashboards services', () => {
         });
       });
 
+      it('does not add shared with me folder on subsequent pages', async () => {
+        const mockFolders = [{ uid: 'folder-1', name: 'Folder 1' }];
+        searchMock.mockResolvedValue(createSearchData(mockFolders));
+
+        const result = await listFolders(undefined, undefined, 2, PAGE_SIZE);
+
+        expect(result).toHaveLength(1);
+        expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
+      });
+
       it('does not add shared with me folder when parentUID is provided', async () => {
         const mockFolders = [{ uid: 'folder-1', name: 'Folder 1' }];
         searchMock.mockResolvedValue(createSearchData(mockFolders));

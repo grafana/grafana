@@ -51,9 +51,9 @@ export class DashboardSrv {
     }
   };
 
-  saveJSONDashboard(json: string) {
+  async saveJSONDashboard(json: string) {
     const parsedJson = JSON.parse(json);
-    return getDashboardAPI().saveDashboard({
+    return (await getDashboardAPI()).saveDashboard({
       dashboard: parsedJson,
       folderUid: this.dashboard?.meta.folderUid || parsedJson.folderUid,
       message: t('dashboard.dashboard-srv.message.edit-dashboard-json', 'Edit Dashboard JSON'),
@@ -61,11 +61,11 @@ export class DashboardSrv {
     });
   }
 
-  saveDashboard(
+  async saveDashboard(
     data: SaveDashboardOptions,
     requestOptions?: Pick<BackendSrvRequest, 'showErrorAlert' | 'showSuccessAlert'>
   ) {
-    return getDashboardAPI().saveDashboard({
+    return (await getDashboardAPI()).saveDashboard({
       message: data.message,
       folderUid: data.folderUid,
       dashboard: data.dashboard.getSaveModelClone(),

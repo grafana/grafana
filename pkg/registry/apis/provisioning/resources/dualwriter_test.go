@@ -3,7 +3,6 @@ package resources
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"testing"
 
@@ -461,7 +460,6 @@ func TestCreateFolder(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
 				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
-				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, errors.New("not found"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -490,7 +488,6 @@ func TestCreateFolder(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
 				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
-				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, errors.New("not found"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -519,7 +516,6 @@ func TestCreateFolder(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
 				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
-				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, errors.New("not found"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
@@ -597,7 +593,6 @@ func TestCreateFolder(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config)
 				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
-				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, errors.New("not found"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 

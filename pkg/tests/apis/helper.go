@@ -158,7 +158,7 @@ func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelp
 	userSvc, err := userimpl.ProvideService(
 		c.env.SQLStore, orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
-		supportbundlestest.NewFakeBundleService())
+		supportbundlestest.NewFakeBundleService(), nil)
 	require.NoError(c.t, err)
 	c.userSvc = userSvc
 

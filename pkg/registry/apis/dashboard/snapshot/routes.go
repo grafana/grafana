@@ -17,6 +17,7 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -27,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService) *builder.APIRoutes {
+func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
 	tags := []string{dashv0.SnapshotResourceInfo.GroupVersionKind().Kind}
 
@@ -113,6 +114,12 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 							Req:  r,
 							Resp: web.NewResponseWriter(r.Method, w),
 						},
+					}
+
+					// RBAC check for snapshot creation
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsCreate)); !ok || err != nil {
+						wrap.JsonApiErr(http.StatusForbidden, "access denied", err)
+						return
 					}
 
 					if !options.SnapshotsEnabled {
@@ -249,10 +256,23 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
 					ctx := r.Context()
+
+					// RBAC check for snapshot deletion
+					user, err := identity.GetRequester(ctx)
+					if err != nil {
+						errhttp.Write(ctx, err, w)
+						return
+					}
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsDelete)); !ok || err != nil {
+						w.WriteHeader(http.StatusForbidden)
+						_ = json.NewEncoder(w).Encode(&util.DynMap{"message": "access denied"})
+						return
+					}
+
 					vars := mux.Vars(r)
 					key := vars["deleteKey"]
 
-					err := dashboardsnapshots.DeleteWithKey(ctx, key, service)
+					err = dashboardsnapshots.DeleteWithKey(ctx, key, service)
 					if err != nil {
 						errhttp.Write(ctx, fmt.Errorf("failed to delete external dashboard (%w)", err), w)
 						return
@@ -314,9 +334,10 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 					},
 				},
 				Handler: func(w http.ResponseWriter, r *http.Request) {
-					user, err := identity.GetRequester(r.Context())
+					ctx := r.Context()
+					user, err := identity.GetRequester(ctx)
 					if err != nil {
-						errhttp.Write(r.Context(), err, w)
+						errhttp.Write(ctx, err, w)
 						return
 					}
 					wrap := &contextmodel.ReqContext{
@@ -324,6 +345,12 @@ func GetRoutes(service dashboardsnapshots.Service, options dashv0.SnapshotSharin
 							Req:  r,
 							Resp: web.NewResponseWriter(r.Method, w),
 						},
+					}
+
+					// RBAC check for reading snapshot settings
+					if ok, err := accessControl.Evaluate(ctx, user, ac.EvalPermission(dashboards.ActionSnapshotsRead)); !ok || err != nil {
+						wrap.JsonApiErr(http.StatusForbidden, "access denied", err)
+						return
 					}
 
 					vars := mux.Vars(r)
