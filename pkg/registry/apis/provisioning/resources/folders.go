@@ -163,7 +163,6 @@ func (fm *FolderManager) resolveFolderForPath(ctx context.Context, path string) 
 		return existing, nil
 	}
 
-
 	return ParseFolder(path, fm.repo.Config().Name), nil
 }
 
