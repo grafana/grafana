@@ -143,7 +143,7 @@ export async function loadAndInitDatasource(
   }
 
   if (history.length < MAX_HISTORY_AUTOCOMPLETE_ITEMS) {
-    // check the last 100 mixed history results seperately
+    // check the last 100 mixed history results separately
     const historyMixedResults = await localStorageHistory.getRichHistory({
       search: '',
       sortOrder: SortOrder.Ascending,

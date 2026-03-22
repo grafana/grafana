@@ -110,7 +110,7 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     menuButton: css({
-      // Background and border are overriden when topnav toggle is disabled
+      // Background and border are overridden when topnav toggle is disabled
       background: 'inherit',
       border: 'none',
     }),

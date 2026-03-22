@@ -19,7 +19,7 @@ const transformRolesError = (error: FetchBaseQueryError) => {
   return error;
 };
 
-// rolesAPI is needed to be overriden to add transformResponse and transformErrorResponse for some endpoints.
+// rolesAPI is needed to be overridden to add transformResponse and transformErrorResponse for some endpoints.
 export const rolesAPI = generatedAPI.injectEndpoints({
   overrideExisting: true,
   endpoints: (build) => ({

@@ -294,7 +294,7 @@ export class StreamingDataFrame implements DataFrame {
         // augment and transform data to match current schema for standard circPush() path
         const labeledTables = transpose(values);
 
-        // make sure fields are initalized for each label
+        // make sure fields are initialized for each label
         for (const label of labeledTables.keys()) {
           if (!this.labels.has(label)) {
             this.packetInfo.schemaChanged = true;

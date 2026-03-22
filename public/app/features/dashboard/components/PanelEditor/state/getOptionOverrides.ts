@@ -15,7 +15,7 @@ export function getOptionOverrides(
 ): OptionPaneItemOverrideInfo[] {
   const infoDots: OptionPaneItemOverrideInfo[] = [];
 
-  // Look for options overriden in data field config
+  // Look for options overridden in data field config
   if (frames) {
     for (const frame of frames) {
       for (const field of frame.fields) {
