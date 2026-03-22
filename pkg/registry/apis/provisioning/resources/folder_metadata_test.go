@@ -685,7 +685,7 @@ func TestGetFolderID(t *testing.T) {
 			description: "When metadata read fails with non-NotFound error, propagate the error",
 		},
 		{
-			name:                  "metadata enabled but empty UID - returns hash-based ID",
+			name:                  "metadata enabled but empty UID - returns invalid folder metadata error",
 			folderMetadataEnabled: true,
 			setupMock: func(reader *repository.MockReader) {
 				reader.On("Config").Return(testRepoConfig)
@@ -697,9 +697,9 @@ func TestGetFolderID(t *testing.T) {
 						Path: "team-a/project-x/_folder.json",
 					}, nil)
 			},
-			expectedID:  ParseFolder(testPath, testRepoConfig.Name).ID,
-			expectedErr: false,
-			description: "When metadata exists but UID is empty, fall back to hash-based ID",
+			expectedID:  "",
+			expectedErr: true,
+			description: "When metadata exists but UID is empty, return invalid folder metadata error",
 		},
 		{
 			name:                  "metadata disabled - returns hash-based ID",
