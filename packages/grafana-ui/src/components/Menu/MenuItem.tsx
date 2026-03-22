@@ -190,8 +190,7 @@ export const MenuItem = React.memo(
           {icon && (
             <Icon
               name={icon}
-              className={styles.icon}
-              style={resolvedIconColor ? { color: resolvedIconColor } : undefined}
+              className={cx(styles.icon, resolvedIconColor && css({ color: resolvedIconColor }))}
               aria-hidden
             />
           )}
