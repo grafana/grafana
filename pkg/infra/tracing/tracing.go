@@ -142,12 +142,28 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 		}
 		opts = append(opts, otlptracehttp.WithEndpoint(u.Host))
 		if u.Path != "" && u.Path != "/" {
+			// Warn if legacy Jaeger Thrift collector path is detected
+			if u.Path == "/api/traces" {
+				ots.log.Warn("detected legacy Jaeger collector path '/api/traces' - "+
+					"OTLP HTTP typically uses '/v1/traces'; please verify your Jaeger deployment supports OTLP",
+					"address", ots.cfg.Address,
+					"detected_path", u.Path,
+					"suggested_path", "/v1/traces")
+			}
 			opts = append(opts, otlptracehttp.WithURLPath(u.Path))
 		}
 		if u.Scheme == "http" {
 			opts = append(opts, otlptracehttp.WithInsecure())
 		}
-	} else if _, _, err := net.SplitHostPort(ots.cfg.Address); err == nil {
+	} else if host, port, err := net.SplitHostPort(ots.cfg.Address); err == nil {
+		// Warn if common Jaeger agent UDP ports are detected - these won't work with OTLP HTTP
+		switch port {
+		case "6831", "6832", "5775":
+			ots.log.Warn("detected legacy Jaeger agent port which used UDP - OTLP HTTP requires the Jaeger OTLP receiver (typically port 4318)",
+				"address", ots.cfg.Address,
+				"detected_port", port,
+				"suggested_address", fmt.Sprintf("%s:4318", host))
+		}
 		ots.log.Debug("using OTLP HTTP exporter for Jaeger", "address", ots.cfg.Address)
 		opts = append(opts, otlptracehttp.WithEndpoint(ots.cfg.Address), otlptracehttp.WithInsecure())
 	} else {
