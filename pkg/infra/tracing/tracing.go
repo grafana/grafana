@@ -140,29 +140,47 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 		if err != nil {
 			return nil, fmt.Errorf("invalid tracer address %q: %w", ots.cfg.Address, err)
 		}
-		opts = append(opts, otlptracehttp.WithEndpoint(u.Host))
-		if u.Path != "" && u.Path != "/" {
-			// Warn if legacy Jaeger Thrift collector path is detected
-			if u.Path == "/api/traces" {
-				ots.log.Warn("detected legacy Jaeger collector path '/api/traces' - "+
-					"OTLP HTTP typically uses '/v1/traces'; please verify your Jaeger deployment supports OTLP",
-					"address", ots.cfg.Address,
-					"detected_path", u.Path,
-					"suggested_path", "/v1/traces")
-			}
-			opts = append(opts, otlptracehttp.WithURLPath(u.Path))
+
+		endpoint := u.Host
+		urlPath := u.Path
+
+		// Legacy Jaeger Thrift HTTP collector migration:
+		// - Old endpoint: http://host:14268/api/traces (Thrift protocol)
+		// - New endpoint: http://host:4318/v1/traces (OTLP protocol)
+		// These are incompatible protocols, so we auto-correct both port and path
+		// to ensure existing configurations continue to work after this migration.
+		if u.Path == "/api/traces" {
+			host := u.Hostname()
+			endpoint = fmt.Sprintf("%s:4318", host)
+			urlPath = "/v1/traces"
+			ots.log.Warn("detected legacy Jaeger collector URL - "+
+				"automatically correcting to OTLP endpoint; "+
+				"please update your configuration",
+				"original_address", ots.cfg.Address,
+				"corrected_endpoint", endpoint,
+				"corrected_path", urlPath)
+		}
+
+		opts = append(opts, otlptracehttp.WithEndpoint(endpoint))
+		if urlPath != "" && urlPath != "/" {
+			opts = append(opts, otlptracehttp.WithURLPath(urlPath))
 		}
 		if u.Scheme == "http" {
 			opts = append(opts, otlptracehttp.WithInsecure())
 		}
 	} else if host, port, err := net.SplitHostPort(ots.cfg.Address); err == nil {
-		// Warn if common Jaeger agent UDP ports are detected - these won't work with OTLP HTTP
+		// Legacy Jaeger agent migration warning:
+		// Old Jaeger agent used UDP on ports 6831/6832/5775, but OTLP HTTP requires TCP on port 4318.
+		// We cannot auto-correct this because UDP→HTTP is a protocol change that requires
+		// the user to ensure their Jaeger deployment has OTLP enabled.
+		suggestedAddress := fmt.Sprintf("%s:4318", host)
 		switch port {
 		case "6831", "6832", "5775":
-			ots.log.Warn("detected legacy Jaeger agent port which used UDP - OTLP HTTP requires the Jaeger OTLP receiver (typically port 4318)",
-				"address", ots.cfg.Address,
+			ots.log.Warn("detected legacy Jaeger agent port which used UDP - "+
+				"OTLP HTTP requires the Jaeger OTLP receiver (typically port 4318)",
+				"original_address", ots.cfg.Address,
 				"detected_port", port,
-				"suggested_address", fmt.Sprintf("%s:4318", host))
+				"suggested_address", suggestedAddress)
 		}
 		ots.log.Debug("using OTLP HTTP exporter for Jaeger", "address", ots.cfg.Address)
 		opts = append(opts, otlptracehttp.WithEndpoint(ots.cfg.Address), otlptracehttp.WithInsecure())
