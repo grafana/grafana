@@ -54,8 +54,9 @@ var ErrInvalidFolderMetadata = errors.New("invalid folder metadata")
 // InvalidFolderMetadata is returned when a folder metadata file exists but
 // cannot be used to resolve folder identity.
 type InvalidFolderMetadata struct {
-	Path string
-	Err  error
+	Path   string
+	Action repository.FileAction
+	Err    error
 }
 
 func (e *InvalidFolderMetadata) Error() string {
@@ -77,6 +78,12 @@ func (e *InvalidFolderMetadata) Unwrap() []error {
 // NewInvalidFolderMetadata creates an InvalidFolderMetadata error for the given path.
 func NewInvalidFolderMetadata(path string, err error) *InvalidFolderMetadata {
 	return &InvalidFolderMetadata{Path: path, Err: err}
+}
+
+// WithAction records the intended file action for this invalid metadata warning.
+func (e *InvalidFolderMetadata) WithAction(action repository.FileAction) *InvalidFolderMetadata {
+	e.Action = action
+	return e
 }
 
 // ErrFolderMetadataConflict is a sentinel error for folder metadata conflicts.

@@ -251,6 +251,7 @@ func TestNewInvalidFolderMetadata(t *testing.T) {
 	err := NewInvalidFolderMetadata("team-a/dashboards/", errors.New("missing metadata.name"))
 	require.NotNil(t, err)
 	assert.Equal(t, "team-a/dashboards/", err.Path)
+	assert.Empty(t, err.Action)
 	assert.EqualError(t, err.Err, "missing metadata.name")
 }
 
@@ -259,6 +260,17 @@ func TestInvalidFolderMetadata_Error(t *testing.T) {
 	assert.Contains(t, err.Error(), "team-a/dashboards/")
 	assert.Contains(t, err.Error(), "invalid folder metadata")
 	assert.Contains(t, err.Error(), "missing metadata.name")
+}
+
+func TestInvalidFolderMetadata_WithAction(t *testing.T) {
+	err := NewInvalidFolderMetadata("team-a/dashboards/", errors.New("missing metadata.name"))
+
+	got := err.WithAction(repository.FileActionCreated)
+
+	require.Same(t, err, got)
+	assert.Equal(t, "team-a/dashboards/", err.Path)
+	assert.Equal(t, repository.FileActionCreated, err.Action)
+	assert.EqualError(t, err.Err, "missing metadata.name")
 }
 
 func TestFolderMetadataConflict_Error(t *testing.T) {

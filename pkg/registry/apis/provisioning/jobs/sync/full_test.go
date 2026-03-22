@@ -1286,6 +1286,54 @@ func TestFullSync_InvalidFolderMetadataWarning(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestFullSync_InvalidFolderMetadataWarning_ActionAware(t *testing.T) {
+	tests := []struct {
+		name         string
+		action       repository.FileAction
+		resultAction repository.FileAction
+	}{
+		{
+			name:         "created folder metadata keeps created action",
+			action:       repository.FileActionCreated,
+			resultAction: repository.FileActionCreated,
+		},
+		{
+			name:         "updated folder metadata keeps updated action",
+			action:       repository.FileActionUpdated,
+			resultAction: repository.FileActionUpdated,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockRepository(t)
+			repoResources := resources.NewMockRepositoryResources(t)
+			clients := resources.NewMockResourceClients(t)
+			progress := jobs.NewMockJobProgressRecorder(t)
+			compareFn := NewMockCompareFn(t)
+
+			repo.On("Config").Return(&provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			})
+
+			invalidWarning := resources.NewInvalidFolderMetadata("myfolder/", errors.New("missing metadata.name")).WithAction(tt.action)
+			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+				Return([]ResourceFileChange{}, nil, []*resources.InvalidFolderMetadata{invalidWarning}, nil)
+
+			progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+				return r.Path() == "myfolder/" &&
+					r.Action() == tt.resultAction &&
+					r.Warning() != nil &&
+					errors.Is(r.Warning(), resources.ErrInvalidFolderMetadata)
+			})).Return()
+			progress.On("SetFinalMessage", mock.Anything, "no changes to sync").Return()
+
+			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), true)
+			require.NoError(t, err)
+		})
+	}
+}
+
 func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 	// Verify that old folder UIDs are deleted AFTER folder creations and file creations.
 	// The ordering must be: folder phase -> file phase -> old folder deletion.

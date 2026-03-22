@@ -93,8 +93,12 @@ func FullSync(
 
 	if folderMetadataEnabled && len(invalidFolderMetadata) > 0 {
 		for _, invalid := range invalidFolderMetadata {
+			action := invalid.Action
+			if action == "" {
+				action = repository.FileActionIgnored
+			}
 			progress.Record(ctx, jobs.NewFolderResult(invalid.Path).
-				WithAction(repository.FileActionIgnored).
+				WithAction(action).
 				WithWarning(invalid).
 				Build())
 		}

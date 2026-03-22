@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -48,8 +49,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			Pull:   &provisioning.SyncJobOptions{},
 		})
 		common.RequireJobWarning(t, job)
-		requireWarningContains(t, job.Object, "invalid folder metadata")
-		requireWarningContains(t, job.Object, "myfolder")
+		requireInvalidFolderMetadataWarning(t, job.Object, "myfolder", repository.FileActionUpdated)
 
 		require.Equal(t, parentUID, findFolderUIDBySourcePath(t, helper, repo, "myfolder"))
 		require.Equal(t, childUID, findFolderUIDBySourcePath(t, helper, repo, "myfolder/child"))
@@ -80,8 +80,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			Pull:   &provisioning.SyncJobOptions{},
 		})
 		common.RequireJobWarning(t, job)
-		requireWarningContains(t, job.Object, "invalid folder metadata")
-		requireWarningContains(t, job.Object, "myfolder")
+		requireInvalidFolderMetadataWarning(t, job.Object, "myfolder", repository.FileActionCreated)
 
 		parentUID := findFolderUIDBySourcePath(t, helper, repo, "myfolder")
 		childUID := findFolderUIDBySourcePath(t, helper, repo, "myfolder/child")
@@ -120,7 +119,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			Pull:   &provisioning.SyncJobOptions{},
 		})
 		common.RequireJobWarning(t, initialWarningJob)
-		requireWarningContains(t, initialWarningJob.Object, "invalid folder metadata")
+		requireInvalidFolderMetadataWarning(t, initialWarningJob.Object, "broken", repository.FileActionUpdated)
 		require.Equal(t, brokenUID, findFolderUIDBySourcePath(t, helper, repo, "broken"))
 
 		moveInProvisioningPath(t, helper, "dashboard.json", "broken/moved-dashboard.json")
@@ -130,8 +129,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			Pull:   &provisioning.SyncJobOptions{},
 		})
 		common.RequireJobWarning(t, job)
-		requireWarningContains(t, job.Object, "invalid folder metadata")
-		requireWarningContains(t, job.Object, "broken")
+		requireInvalidFolderMetadataWarning(t, job.Object, "broken", repository.FileActionUpdated)
 
 		require.Equal(t, brokenUID, findFolderUIDBySourcePath(t, helper, repo, "broken"))
 		requireDashboardParents(t, helper, repo, map[string]string{
@@ -162,8 +160,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			Pull:   &provisioning.SyncJobOptions{},
 		})
 		common.RequireJobWarning(t, job)
-		requireWarningContains(t, job.Object, "invalid folder metadata")
-		requireWarningContains(t, job.Object, "broken")
+		requireInvalidFolderMetadataWarning(t, job.Object, "broken", repository.FileActionCreated)
 
 		brokenUID := findFolderUIDBySourcePath(t, helper, repo, "broken")
 		require.NotEmpty(t, brokenUID)
@@ -190,6 +187,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			Pull:   &provisioning.SyncJobOptions{},
 		})
 		common.RequireJobWarning(t, initialJob)
+		requireInvalidFolderMetadataWarning(t, initialJob.Object, "broken", repository.FileActionCreated)
 
 		oldUID := findFolderUIDBySourcePath(t, helper, repo, "broken")
 		require.NotEmpty(t, oldUID)
@@ -201,8 +199,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 			Pull:   &provisioning.SyncJobOptions{},
 		})
 		common.RequireJobWarning(t, job)
-		requireWarningContains(t, job.Object, "invalid folder metadata")
-		requireWarningContains(t, job.Object, "moved")
+		requireInvalidFolderMetadataWarning(t, job.Object, "moved", repository.FileActionCreated)
 
 		newUID := findFolderUIDBySourcePath(t, helper, repo, "moved")
 		require.NotEmpty(t, newUID)
@@ -228,13 +225,15 @@ func invalidFolderMetadataMissingNameJSON(title string) []byte {
 	}`)
 }
 
-func requireWarningContains(t *testing.T, job map[string]any, needle string) {
+func requireInvalidFolderMetadataWarning(t *testing.T, job map[string]any, path string, action repository.FileAction) {
 	t.Helper()
 	warnings := common.MustNestedStringSlice(job, "status", "warnings")
 	for _, warning := range warnings {
-		if strings.Contains(warning, needle) {
+		if strings.Contains(warning, "invalid folder metadata") &&
+			strings.Contains(warning, path) &&
+			strings.Contains(warning, "action: "+string(action)) {
 			return
 		}
 	}
-	require.Failf(t, "warning not found", "expected warning containing %q, got %v", needle, warnings)
+	require.Failf(t, "warning not found", "expected invalid folder metadata warning for %q with action %q, got %v", path, action, warnings)
 }

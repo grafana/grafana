@@ -801,6 +801,7 @@ func TestCompare_InvalidFolderMetadataWarning(t *testing.T) {
 			require.Len(t, invalid, 1)
 			require.ErrorIs(t, invalid[0], resources.ErrInvalidFolderMetadata)
 			require.Equal(t, "my-folder/", invalid[0].Path)
+			require.Equal(t, repository.FileActionUpdated, invalid[0].Action)
 		})
 	}
 }
@@ -831,6 +832,7 @@ func TestCompare_InvalidCreatedFolderMetadataWarningPreservesFolderCreate(t *tes
 	require.Empty(t, missing)
 	require.Len(t, invalid, 1)
 	require.ErrorIs(t, invalid[0], resources.ErrInvalidFolderMetadata)
+	require.Equal(t, repository.FileActionCreated, invalid[0].Action)
 
 	actionsByPath := make(map[string]repository.FileAction, len(changes))
 	for _, change := range changes {
