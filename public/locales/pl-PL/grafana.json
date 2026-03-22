@@ -385,6 +385,7 @@
         "group-by": "Grupowanie wg:",
         "group-title": "Konfiguracja powiadomień",
         "mute-timings": "Harmonogramy wyciszenia",
+        "notification-policy": "",
         "timing-options": "Harmonogramy"
       },
       "pending-period": "Okres oczekiwania",
@@ -503,6 +504,15 @@
     },
     "alert-rule": {
       "term": "Reguła alertu"
+    },
+    "alert-rule-drawer": {
+      "error-title": "",
+      "error-unexpected": "",
+      "error-unknown": "",
+      "success-message": "",
+      "success-title": "",
+      "validation-error-message": "",
+      "validation-error-title": ""
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -886,6 +896,8 @@
       "export-all": "Eksportuj wszystkie",
       "learn-more": "Dowiedz się więcej",
       "loading": "Ładowanie…",
+      "optional": "",
+      "refresh": "",
       "search-by-matchers": "Wyszukaj według dopasowań",
       "titles": {
         "notification-templates": "Szablony powiadomień"
@@ -1865,7 +1877,7 @@
       },
       "history-error": "Nie udało się wczytać historii stanu",
       "history-error-desc": "Nie można pobrać historii zmian stanu dla tej instancji.",
-      "instance-timeline": "",
+      "instance-history-heading": "",
       "no-history": "Brak niedawnych zmian stanu",
       "notifications-error": "",
       "notifications-error-desc": "",
@@ -1877,6 +1889,8 @@
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
+      "timeline-dot-all-failed": "",
+      "timeline-dot-some-failed": "",
       "timeline-empty": "",
       "timeline-failed": "",
       "timeline-filter-all": "",
@@ -1884,21 +1898,17 @@
       "timeline-filter-notifications": "",
       "timeline-filter-states": "",
       "timeline-loading": "",
-      "timeline-mixed-outcome": "",
-      "timeline-one-notification": "",
+      "timeline-notification-label": "",
+      "timeline-partial-failure": "",
       "timeline-status-firing": "",
       "timeline-status-resolved": "",
       "timeline-toggle-notifications": "",
       "view-notification-detail": "",
       "view-notification-tooltip": "",
-      "timeline-n-notifications_one": "",
-      "timeline-n-notifications_few": "",
-      "timeline-n-notifications_many": "",
-      "timeline-n-notifications_other": "",
-      "timeline-n-receivers_one": "",
-      "timeline-n-receivers_few": "",
-      "timeline-n-receivers_many": "",
-      "timeline-n-receivers_other": ""
+      "timeline-n-uniqueReceivers_one": "",
+      "timeline-n-uniqueReceivers_few": "",
+      "timeline-n-uniqueReceivers_many": "",
+      "timeline-n-uniqueReceivers_other": ""
     },
     "instance-match": {
       "non-matching-labels": "Niedopasowane etykiety",
@@ -2043,6 +2053,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "",
+          "notification-policy": "",
           "select-contact-point": "Wybierz punkt kontaktu",
           "use-notification-policy": "Używaj zasad dotyczących powiadomień"
         }
@@ -3316,12 +3328,57 @@
       "title-the-selected-alertmanager-has-no-configuration": "Wybrany menedżer alertów nie ma konfiguracji"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "",
+      "aria-label-threshold": "",
+      "aria-label-threshold-from": "",
+      "aria-label-threshold-to": "",
       "label-of-query": "ZAPYTANIE OF",
       "label-when": "KIEDY",
       "label-when-query": "ZAPYTANIE WHEN"
     },
     "simpleCondition": {
       "alertCondition": "Stan alertu"
+    },
+    "simplified": {
+      "condition": {
+        "title": ""
+      },
+      "continue-in-alerting": "",
+      "create": "",
+      "evaluation": {
+        "immediate-warning": ""
+      },
+      "notification": {
+        "contact-point-selected": "",
+        "description": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "manual-routing": {
+          "aria": ""
+        },
+        "policy-selected": "",
+        "recipient": {
+          "label": ""
+        },
+        "refresh-error": "",
+        "runbook-url": {
+          "aria-label": "",
+          "invalid-format": "",
+          "invalid-protocol": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "select-contact-point": "",
+        "summary": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "title": ""
+      },
+      "rule-definition": ""
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Zarządzane przez źródło danych",
@@ -3532,7 +3589,9 @@
       "error-loading-rule": "Błąd podczas wczytywania reguły",
       "high-activity-labels": "",
       "instance-details-drawer": {
-        "instance-details": "Szczegóły instancji"
+        "declare-incident": "",
+        "instance-details": "Szczegóły instancji",
+        "silence-button": ""
       },
       "no-firing-or-pending-instances": "W wybranym zakresie czasu nie ma żadnych instancji alertów w stanie uruchomienia lub oczekiwania.",
       "no-instances-found": "Nie znaleziono instancji alertów dla reguły: {{ruleUID}}",
@@ -5284,6 +5343,12 @@
       "ungroup-rows": "Rozłącz grupę wierszy",
       "ungroup-tabs": "Rozłącz grupę kart"
     },
+    "code-pane": {
+      "collapse": "",
+      "expand": "",
+      "header": "",
+      "modal-title": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -6168,6 +6233,13 @@
       "save-json-to-file": "Zapisz JSON w pliku",
       "see-docs": "Więcej informacji na temat konfiguracji można znaleźć w <2>dokumentacji</2>."
     },
+    "schema-editor": {
+      "apply-button": "",
+      "apply-button-disabled-tooltip": "",
+      "apply-button-disabled-tooltip-yaml": "",
+      "apply-error-title": "",
+      "undo-title": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6182,6 +6254,10 @@
       "dashboard-options": {
         "title": "Opcje",
         "tooltip": "Opcje pulpitu"
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
       },
       "export": {
         "title": "Eksportuj"
@@ -6525,11 +6601,14 @@
     "browse-plugins": "Przeglądaj wtyczki",
     "card": {
       "customize-with-assistant-button": "",
+      "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Dostarczono źródło danych",
       "details-tooltip": "Szczegóły",
       "no-preview": "",
-      "use-dashboard-button": "Użyj pulpitu",
-      "view-template-button": ""
+      "view-dashboard-button": "",
+      "view-dashboard-button-label": "",
+      "view-template-button": "",
+      "view-template-button-label": ""
     },
     "community-empty-title": "Nie znaleziono pulpitów społeczności",
     "community-empty-title-with-datasource": "Nie znaleziono pulpitów społeczności {{datasourceType}}",
@@ -6615,6 +6694,9 @@
       "label-data-source": "Źródło danych",
       "label-use-static-key-dimensions": "Użyj statycznych wymiarów klucza",
       "name-allow-custom-values": "Zezwalaj na wartości niestandardowe"
+    },
+    "add-filters": {
+      "label": ""
     },
     "add-link": {
       "inline-instance-name": "",
@@ -7679,6 +7761,11 @@
   "dashboard-scene-help-wizard": {
     "support-bundle": "Pakiet wsparcia zawierający informacje dotyczące instancji Grafana i skonfigurowanych źródeł danych można również pobrać w <1>sekcji pakietów wsparcia </1>."
   },
+  "dashboard-schema-editor": {
+    "format-label": "",
+    "json-disabled-tooltip": "",
+    "yaml-disabled-tooltip": ""
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Komentarze"
@@ -7709,6 +7796,8 @@
     },
     "json-editor": {
       "save-button": "Zapisz zmiany",
+      "save-button-disabled-tooltip": "",
+      "save-button-disabled-tooltip-yaml": "",
       "subtitle": "Poniższy model JSON to struktura danych definiująca pulpit. Zawiera między innymi ustawienia pulpitu, ustawienia panelu, układ i zapytania.",
       "title": "Model JSON"
     },
@@ -8992,9 +9081,6 @@
     "data-links-actions-menu": "",
     "description-min-height": "Minimalna wysokość wiersza (orientacja pozioma)",
     "description-min-width": "Minimalna szerokość kolumny (orientacja pionowa)",
-    "description-neutral": "Pozostaw puste, aby użyć wartości minimalnej jako punktu neutralnego",
-    "description-show-threshold-labels": "Renderuj wartości progowe wokół paska wskaźnika",
-    "description-show-threshold-markers": "Renderuje progi jako pasek zewnętrzny",
     "gauge-size-options": {
       "label-auto": "Automatycznie",
       "label-manual": "Ręcznie"
@@ -9002,11 +9088,7 @@
     "name-gauge-size": "Rozmiar wskaźnika",
     "name-min-height": "Min. wysokość",
     "name-min-width": "Min. szerokość",
-    "name-neutral": "Neutralne",
-    "name-show-threshold-labels": "Pokaż etykiety progów",
-    "name-show-threshold-markers": "Pokaż znaczniki progów",
     "neutral": "Neutralna wartość {{value}}",
-    "placeholder-neutral": "automatycznie",
     "presets": {
       "circle": "",
       "circle_desc": "",
@@ -9023,8 +9105,7 @@
     },
     "suggestions": {
       "arc": "Wskaźnik",
-      "circular": "Wskaźnik kołowy",
-      "no-thresholds": "Wskaźnik – brak progów"
+      "circular": "Wskaźnik kołowy"
     },
     "threshold": "Próg {{value}}"
   },
@@ -10443,11 +10524,14 @@
       "remove-button": "Usuń podrzędne: {{children}}"
     },
     "viz-legend": {
+      "all-series-selected": "",
       "clear-filters": "",
+      "color-picker": "",
       "faceted-by-labels": "",
       "faceted-by-name": "",
       "faceted-deselect-all": "",
       "faceted-select-all": "",
+      "only-this-series-selected": "",
       "pin-filter": "",
       "right-axis-indicator": "(prawa półoś OY)",
       "series-visibility": "",
@@ -11057,6 +11141,7 @@
       "collapse": "Zwiń pasek boczny",
       "expand": "Rozwiń pasek boczny",
       "label-title": "Pole {{fieldName}} pojawia się w {{percentage}}% wierszy logów",
+      "log-level": "",
       "placeholder-search-fields-by-name": "Wyszukaj pola według nazwy",
       "title-drag-and-drop-to-reorder": "Przeciągnij i upuść, aby zmienić kolejność"
     },
@@ -12098,8 +12183,9 @@
       "upgrade-tooltip": "Przejdź na wyższą wersję, aby dodać więcej użytkowników"
     },
     "item": {
-      "add-bookmark": "",
-      "remove-bookmark": ""
+      "bookmark": {
+        "tooltip": ""
+      }
     },
     "kiosk": {
       "tv-alert": "Naciśnij ESC, aby wyjść z trybu kiosku"
@@ -13996,6 +14082,7 @@
     "sidebar": {
       "add-below": "",
       "add-expression": "",
+      "add-expression-disabled": "",
       "add-query": "",
       "add-query-or-expression": "",
       "add-saved-query": "",
