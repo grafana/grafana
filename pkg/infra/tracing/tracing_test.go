@@ -116,6 +116,16 @@ func TestInitJaegerTracerProvider_AddressParsing(t *testing.T) {
 			address:     "",
 			expectError: true,
 		},
+		{
+			name:        "legacy jaeger agent port 6831",
+			address:     "localhost:6831",
+			expectError: false, // Address is valid, but should log a warning
+		},
+		{
+			name:        "legacy jaeger collector path",
+			address:     "http://localhost:14268/api/traces",
+			expectError: false, // Address is valid, but should log a warning
+		},
 	}
 
 	for _, tt := range tests {
