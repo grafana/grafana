@@ -149,7 +149,7 @@ func TestContactPointService(t *testing.T) {
 		require.NoError(t, err)
 		newCp.Settings = nil
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 
 		require.ErrorIs(t, err, ErrValidation)
 	})
@@ -161,7 +161,7 @@ func TestContactPointService(t *testing.T) {
 		require.NoError(t, err)
 		newCp.Type = ""
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 
 		require.ErrorIs(t, err, ErrValidation)
 	})
@@ -173,7 +173,7 @@ func TestContactPointService(t *testing.T) {
 		require.NoError(t, err)
 		newCp.Settings, _ = simplejson.NewJson([]byte(`{}`))
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 
 		require.ErrorIs(t, err, ErrValidation)
 	})
@@ -200,7 +200,7 @@ func TestContactPointService(t *testing.T) {
 			return nil
 		}
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(context.Background(), 1, redactedUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		parsed, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(store.LastSaveCommand.AlertmanagerConfiguration))
@@ -282,7 +282,7 @@ func TestContactPointService(t *testing.T) {
 				require.Equal(t, newCp.UID, cps[0].UID)
 				require.Equal(t, test.from, models.Provenance(cps[0].Provenance))
 
-				err = sut.UpdateContactPoint(context.Background(), 1, newCp, test.to)
+				err = sut.UpdateContactPoint(context.Background(), 1, redactedUser, newCp, test.to)
 				if test.errNil {
 					require.NoError(t, err)
 
@@ -501,6 +501,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 	)
 
 	return NewContactPointService(
+		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true),
 		legacy_storage.NewAlertmanagerConfigStore(configStore),
 		secretService,
 		provisioningStore,
