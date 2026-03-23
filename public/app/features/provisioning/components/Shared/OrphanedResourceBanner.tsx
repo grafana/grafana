@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
@@ -24,6 +25,7 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
   const [pendingAction, setPendingAction] = useState<OrphanedResourceModalAction | null>(null);
   const [job, setJob] = useState<Job | null>(null);
   const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+  const navigate = useNavigate();
 
   const { submitRelease, submitDelete, isSubmitting, clearError } = useOrphanedResourceActions({
     repositoryName,
@@ -35,24 +37,33 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
   };
 
   const handleRelease = useCallback(async () => {
-    const j = await submitRelease();
-    setJob(j);
+    const job = await submitRelease();
+    setJob(job);
     setPendingAction(null);
-    return j;
+    return job;
   }, [submitRelease]);
 
   const handleDelete = useCallback(async () => {
-    const j = await submitDelete();
-    setJob(j);
+    const job = await submitDelete();
+    setJob(job);
     setPendingAction(null);
-    return j;
+    return job;
   }, [submitDelete]);
 
-  const handleJobStatusChange = useCallback((statusInfo: StepStatusInfo) => {
-    if (statusInfo.status === 'success') {
-      window.location.reload();
-    }
-  }, []);
+  const handleJobStatusChange = useCallback(
+    (statusInfo: StepStatusInfo) => {
+      if (statusInfo.status === 'success') {
+        navigate('/dashboards');
+      } else if (statusInfo.status === 'error') {
+        // handle error
+        // don't navigate away, show alert tell user job failed
+      } else if (statusInfo.status === 'warning') {
+        // handle warning
+        // navigate away, show alert tell user partially completed job
+      }
+    },
+    [navigate]
+  );
 
   if (job) {
     return <JobStatus watch={job} jobType="delete" onStatusChange={handleJobStatusChange} />;

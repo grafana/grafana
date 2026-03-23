@@ -55,15 +55,10 @@ export function OrphanedResourceActionConfirmModal({
   const { title, body, confirmText } = getModalConfig(action);
 
   const handleConfirm = async () => {
-    try {
-      if (action === 'release') {
-        await submitRelease();
-      } else {
-        await submitDelete();
-      }
-      onSuccess();
-    } catch {
-      // Caller (hook) stores error; banner shows inline alert.
+    if (action === 'release') {
+      await submitRelease();
+    } else {
+      await submitDelete();
     }
   };
 
