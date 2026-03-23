@@ -36,14 +36,11 @@ func newManagedResourceIndex(target *provisioning.ResourceList) managedResourceI
 	return index
 }
 
-// ExistingAt returns the first managed resource currently tracked at the given
-// normalized repository path, or nil if none exists.
-func (index managedResourceIndex) ExistingAt(path string) *provisioning.ResourceListItem {
-	items := index.byPath[path]
-	if len(items) == 0 {
-		return nil
-	}
-	return items[0]
+// ExistingAt returns all managed resources currently tracked at the given
+// normalized repository path. Multiple items at the same path indicate
+// orphaned duplicates (e.g. from previous metadata.name changes).
+func (index managedResourceIndex) ExistingAt(path string) []*provisioning.ResourceListItem {
+	return index.byPath[path]
 }
 
 // DirectChildrenOf lists the managed resources whose direct parent is the

@@ -119,12 +119,12 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 		})
 	}
 
-	replaced, err := d.replacementForMetadataChange(ctx, index, folderPath, change)
+	replaced, err := d.replacementsForMetadataChange(ctx, index, folderPath, change)
 	if err != nil {
 		return err
 	}
-	if replaced != nil {
-		diffTracker.AppendReplaced(*replaced)
+	for _, r := range replaced {
+		diffTracker.AppendReplaced(r)
 	}
 
 	for _, childPath := range index.DirectChildrenOf(folderPath) {
@@ -149,6 +149,9 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 // rewriteDeletedMetadataChange handles `_folder.json` deletion by either
 // reverting the folder to its path-derived identity when the directory still
 // exists, or by scheduling direct cleanup when the whole folder is gone.
+//
+// When multiple managed folders share the same path (orphans from prior name
+// changes), all of them are evaluated for replacement.
 func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	ctx context.Context,
 	currentRef string,
@@ -158,18 +161,23 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	change repository.VersionedFileChange,
 ) error {
 	folderPath := folderPathForMetadataChange(change.Path)
-	existing := index.ExistingAt(folderPath)
-	if existing == nil {
+	items := index.ExistingAt(folderPath)
+	if len(items) == 0 {
 		return nil
 	}
 
-	replacement, directoryExists, err := d.replacementForDeletedMetadataChange(ctx, currentRef, folderPath, existing)
+	directoryExists, err := d.folderDirectoryExists(ctx, currentRef, folderPath)
 	if err != nil {
 		return err
 	}
 
-	if replacement != nil {
-		diffTracker.AppendReplaced(*replacement)
+	hasReplacement := false
+	for _, existing := range items {
+		replacement := d.replacementForDeletedMetadataItem(folderPath, existing, directoryExists)
+		if replacement != nil {
+			diffTracker.AppendReplaced(*replacement)
+			hasReplacement = true
+		}
 	}
 
 	if !directoryExists {
@@ -184,15 +192,11 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 		})
 	}
 
-	if replacement == nil {
+	if !hasReplacement {
 		return nil
 	}
 
 	for _, childPath := range index.DirectChildrenOf(folderPath) {
-		// Skip children that already have a real diff entry, are going to be
-		// handled by their own metadata rewrite (e.g. folders with metadata changes),
-		// or were already emitted while expanding a deeper metadata change.
-		// That keeps the rewritten diff stable and avoids replaying the same child more than once.
 		if input.HadChangeOriginallyAt(childPath) || input.HasMetadataFolderAt(childPath) || diffTracker.HasGeneratedPath(childPath) {
 			continue
 		}
@@ -207,20 +211,20 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	return nil
 }
 
-// replacementForMetadataChange determines whether a metadata change at a folder
-// path actually replaces the current folder identity.
+// replacementsForMetadataChange determines which existing folder identities at
+// a path are superseded by the new metadata.
 //
-// A folder is only marked for later deletion when the managed folder already
-// exists at that path and the UID resolved from the new `_folder.json` differs
-// from the existing folder UID.
-func (d *folderMetadataIncrementalDiffBuilder) replacementForMetadataChange(
+// Every managed folder whose UID differs from the UID resolved from
+// `_folder.json` is scheduled for deletion. When multiple orphans share the
+// same path (from prior metadata.name changes) all of them are returned.
+func (d *folderMetadataIncrementalDiffBuilder) replacementsForMetadataChange(
 	ctx context.Context,
 	index managedResourceIndex,
 	folderPath string,
 	change repository.VersionedFileChange,
-) (*replacedFolder, error) {
-	existing := index.ExistingAt(folderPath)
-	if existing == nil {
+) ([]replacedFolder, error) {
+	items := index.ExistingAt(folderPath)
+	if len(items) == 0 {
 		return nil, nil
 	}
 
@@ -231,48 +235,67 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForMetadataChange(
 		}
 		return nil, fmt.Errorf("read folder metadata for %s: %w", folderPath, err)
 	}
-	if folder.GetName() == existing.Name {
-		return nil, nil
-	}
 
-	return &replacedFolder{
-		Path:   folderPath,
-		OldUID: existing.Name,
-	}, nil
+	var replaced []replacedFolder
+	for _, item := range items {
+		if folder.GetName() == item.Name {
+			continue
+		}
+		replaced = append(replaced, replacedFolder{
+			Path:   folderPath,
+			OldUID: item.Name,
+		})
+	}
+	return replaced, nil
 }
 
-// replacementForDeletedMetadataChange determines whether deleting _folder.json
-// changes the current folder identity.
-//
-// When the directory still exists at currentRef, the folder falls back to its
-// path-derived UID. When the directory is gone, the existing folder can be
-// cleaned up directly without emitting any other changes.
-func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataChange(
+// folderDirectoryExists checks whether the folder directory still exists in
+// the repository at the given ref. The result is independent of any particular
+// managed resource, so callers can invoke it once and reuse the answer across
+// multiple items at the same path.
+func (d *folderMetadataIncrementalDiffBuilder) folderDirectoryExists(
 	ctx context.Context,
 	currentRef string,
 	folderPath string,
-	existing *provisioning.ResourceListItem,
-) (*replacedFolder, bool, error) {
+) (bool, error) {
 	_, err := d.repo.Read(ctx, folderPath, currentRef)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
-			return &replacedFolder{
-				Path:   folderPath,
-				OldUID: existing.Name,
-			}, false, nil
+			return false, nil
 		}
-		return nil, false, fmt.Errorf("read folder directory %s at ref %s: %w", folderPath, currentRef, err)
+		return false, fmt.Errorf("read folder directory %s at ref %s: %w", folderPath, currentRef, err)
+	}
+	return true, nil
+}
+
+// replacementForDeletedMetadataItem determines whether a single managed folder
+// should be scheduled for deletion after its `_folder.json` is removed.
+//
+// When the directory is gone, the folder is always replaced (cleanup).
+// When the directory still exists, the folder falls back to its path-derived
+// UID; a replacement is only emitted when the existing UID differs from that
+// fallback.
+func (d *folderMetadataIncrementalDiffBuilder) replacementForDeletedMetadataItem(
+	folderPath string,
+	existing *provisioning.ResourceListItem,
+	directoryExists bool,
+) *replacedFolder {
+	if !directoryExists {
+		return &replacedFolder{
+			Path:   folderPath,
+			OldUID: existing.Name,
+		}
 	}
 
-	folder := resources.ParseFolder(folderPath, d.repo.Config().Name)
-	if folder.ID == existing.Name {
-		return nil, true, nil
+	fallbackUID := resources.ParseFolder(folderPath, d.repo.Config().Name).ID
+	if fallbackUID == existing.Name {
+		return nil
 	}
 
 	return &replacedFolder{
 		Path:   folderPath,
 		OldUID: existing.Name,
-	}, true, nil
+	}
 }
 
 // folderPathForMetadataChange converts a `_folder.json` file path into the

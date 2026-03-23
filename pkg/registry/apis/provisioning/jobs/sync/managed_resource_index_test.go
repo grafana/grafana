@@ -38,8 +38,8 @@ func TestManagedResourceIndex(t *testing.T) {
 		},
 	})
 
-	require.NotNil(t, index.ExistingAt("parent/"))
-	require.Nil(t, index.ExistingAt("parent"))
+	require.Len(t, index.ExistingAt("parent/"), 1)
+	require.Empty(t, index.ExistingAt("parent"))
 	require.Equal(t, []string{
 		"parent/child/",
 		"parent/dashboard.json",
@@ -47,7 +47,7 @@ func TestManagedResourceIndex(t *testing.T) {
 }
 
 func TestManagedResourceIndex_DuplicatePaths(t *testing.T) {
-	t.Run("ExistingAt returns first item when multiple items share a path", func(t *testing.T) {
+	t.Run("ExistingAt returns all items when multiple items share a path", func(t *testing.T) {
 		index := newManagedResourceIndex(&provisioning.ResourceList{
 			Items: []provisioning.ResourceListItem{
 				{Name: "dash-first", Group: "dashboards", Resource: "dashboards", Path: "folder/dashboard.json"},
@@ -55,9 +55,10 @@ func TestManagedResourceIndex_DuplicatePaths(t *testing.T) {
 			},
 		})
 
-		existing := index.ExistingAt("folder/dashboard.json")
-		require.NotNil(t, existing)
-		require.Equal(t, "dash-first", existing.Name)
+		items := index.ExistingAt("folder/dashboard.json")
+		require.Len(t, items, 2)
+		require.Equal(t, "dash-first", items[0].Name)
+		require.Equal(t, "dash-second", items[1].Name)
 	})
 
 	t.Run("DirectChildrenOf lists path once even with duplicates", func(t *testing.T) {
@@ -79,7 +80,7 @@ func TestManagedResourceIndex_DuplicatePaths(t *testing.T) {
 
 	t.Run("nil target produces empty index", func(t *testing.T) {
 		index := newManagedResourceIndex(nil)
-		require.Nil(t, index.ExistingAt("anything"))
+		require.Empty(t, index.ExistingAt("anything"))
 		require.Empty(t, index.DirectChildrenOf("anything/"))
 	})
 }
