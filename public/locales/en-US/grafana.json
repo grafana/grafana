@@ -7142,7 +7142,6 @@
       "kubectl": "Managed by: Kubectl",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
-      "repository-not-found": "Repository not found: {{id}}",
       "terraform": "Managed by: Terraform"
     },
     "move-provisioned-dashboard-form": {
@@ -13309,9 +13308,10 @@
     },
     "orphaned-drawer-notice": {
       "body": "Save, move, and delete through the Git workflow are not available. Use the warning at the top of the dashboard to release or delete this dashboard if you are an administrator, or contact your Grafana administrator.",
-      "close": "Close",
       "title": "Provisioning repository no longer exists"
     },
+    "orphaned-repository-tooltip": "Repository not found",
+    "orphaned-repository-tooltip-with-title": "Repository not found: {{title}}",
     "orphaned-resource-banner": {
       "confirm-delete-body": "This will permanently delete all dashboards and folders managed by the missing repository. This action cannot be undone.",
       "confirm-delete-button": "Delete",
@@ -13321,8 +13321,12 @@
       "confirm-release-title": "Release all resources from this repository?",
       "contact-admin": "Contact your Grafana administrator to release or delete all resources from the missing repository.",
       "delete-button": "Delete",
+      "job-error": "An error occurred while processing orphaned resources",
+      "job-success": "Orphaned resources processed successfully",
+      "job-warning": "Some resources were processed with warnings. Please review the results.",
       "message": "The repository that managed this resource has been deleted. This resource cannot be saved or modified until it is released or removed. Releasing or deleting will affect all resources managed by that repository.",
       "release-button": "Release",
+      "success-back-to-dashboards": "Back to dashboards",
       "title": "This resource is managed by a repository that no longer exists"
     },
     "provisioning-wizard": {

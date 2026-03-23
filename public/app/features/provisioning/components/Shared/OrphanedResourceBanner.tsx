@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Stack } from '@grafana/ui';
 import { Job } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -11,7 +10,7 @@ import { JobStatus } from '../../Job/JobStatus';
 import { StepStatusInfo } from '../../Wizard/types';
 import { useOrphanedResourceActions } from '../../hooks/useOrphanedResourceActions';
 
-import { OrphanedResourceActionConfirmModal, OrphanedResourceModalAction } from './OrphanedResourceActionConfirmModal';
+import { OrphanedResourceActionConfirmModal, OrphanedResourceAction } from './OrphanedResourceActionConfirmModal';
 
 interface Props {
   repositoryName: string;
@@ -23,73 +22,81 @@ interface Props {
  * admins can release or delete all resources from the missing repository.
  */
 export function OrphanedResourceBanner({ repositoryName }: Props) {
-  const [pendingAction, setPendingAction] = useState<OrphanedResourceModalAction | null>(null);
+  const [actionType, setActionType] = useState<OrphanedResourceAction | null>(null);
   const [job, setJob] = useState<Job | null>(null);
-  const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+  const [jobResult, setJobResult] = useState<StepStatusInfo | null>(null);
+
   const navigate = useNavigate();
+
+  const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
   const { submitRelease, submitDelete, isSubmitting, clearError } = useOrphanedResourceActions({
     repositoryName,
   });
 
-  const openConfirm = (nextAction: OrphanedResourceModalAction) => {
+  const openConfirm = (nextAction: OrphanedResourceAction) => {
     clearError();
-    setPendingAction(nextAction);
+    setActionType(nextAction);
   };
 
   const handleRelease = useCallback(async () => {
     const job = await submitRelease();
     setJob(job);
-    setPendingAction(null);
     return job;
   }, [submitRelease]);
 
   const handleDelete = useCallback(async () => {
     const job = await submitDelete();
     setJob(job);
-    setPendingAction(null);
     return job;
   }, [submitDelete]);
 
-  const handleJobStatusChange = useCallback(
-    (statusInfo: StepStatusInfo) => {
-      if (statusInfo.status === 'success') {
-        getAppEvents().publish({
-          type: 'alertSuccess',
-          payload: [
-            t('provisioning.orphaned-resource-banner.job-success', 'Orphaned resources processed successfully'),
-          ],
-        });
-        navigate('/dashboards');
-      } else if (statusInfo.status === 'error') {
-        // show alert message, error details will be in the JobStatus component below
-        getAppEvents().publish({
-          type: 'alertError',
-          payload: [
-            t(
-              'provisioning.orphaned-resource-banner.job-error',
-              'An error occurred while processing orphaned resources'
-            ),
-          ],
-        });
-      } else if (statusInfo.status === 'warning') {
-        // show alert message, warning details will be in the JobStatus component below
-        getAppEvents().publish({
-          type: 'alertWarning',
-          payload: [
-            t(
+  const handleJobStatusChange = useCallback((statusInfo: StepStatusInfo) => {
+    // store job result
+    setJobResult(statusInfo);
+  }, []);
+
+  const handleSuccess = () => {
+    navigate('/dashboards');
+  };
+
+  if (job && actionType) {
+    return (
+      <>
+        <JobStatus watch={job} jobType={actionType} onStatusChange={handleJobStatusChange} />
+        {jobResult?.status === 'success' && (
+          <Alert
+            severity="success"
+            title={t('provisioning.orphaned-resource-banner.job-success', 'Orphaned resources processed successfully')}
+            action={
+              <Button onClick={handleSuccess}>
+                <Trans i18nKey="provisioning.orphaned-resource-banner.success-back-to-dashboards">
+                  Back to dashboards
+                </Trans>
+              </Button>
+            }
+          />
+        )}
+        {jobResult?.status === 'warning' && (
+          <Alert
+            severity="warning"
+            title={t(
               'provisioning.orphaned-resource-banner.job-warning',
               'Some resources were processed with warnings. Please review the results.'
-            ),
-          ],
-        });
-      }
-    },
-    [navigate]
-  );
-
-  if (job) {
-    return <JobStatus watch={job} jobType="delete" onStatusChange={handleJobStatusChange} />;
+            )}
+          />
+        )}
+        {jobResult?.status === 'error' && (
+          <Alert
+            severity="error"
+            title={t(
+              'provisioning.orphaned-resource-banner.job-error',
+              'An error occurred while processing orphaned resources'
+            )}
+          />
+        )}
+      </>
+    );
   }
 
   return (
@@ -103,10 +110,10 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
         action={
           isAdmin ? (
             <Stack direction="row" gap={1} alignItems="center">
-              <Button variant="secondary" disabled={isSubmitting} onClick={() => openConfirm('release')}>
+              <Button variant="secondary" disabled={isSubmitting} onClick={() => openConfirm('releaseResources')}>
                 {t('provisioning.orphaned-resource-banner.release-button', 'Release')}
               </Button>
-              <Button variant="destructive" disabled={isSubmitting} onClick={() => openConfirm('delete')}>
+              <Button variant="destructive" disabled={isSubmitting} onClick={() => openConfirm('deleteResources')}>
                 {t('provisioning.orphaned-resource-banner.delete-button', 'Delete')}
               </Button>
             </Stack>
@@ -126,9 +133,9 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
         </Stack>
       </Alert>
       <OrphanedResourceActionConfirmModal
-        action={pendingAction}
+        action={actionType}
         isSubmitting={isSubmitting}
-        onDismiss={() => setPendingAction(null)}
+        onDismiss={() => setActionType(null)}
         submitRelease={handleRelease}
         submitDelete={handleDelete}
       />

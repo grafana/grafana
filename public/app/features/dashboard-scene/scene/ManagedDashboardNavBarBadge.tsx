@@ -1,11 +1,11 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Badge } from '@grafana/ui';
+import { config, isFetchError } from '@grafana/runtime';
+import { Badge, BadgeColor } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { getManagedByRepositoryTooltip } from 'app/features/provisioning/utils/tooltip';
+import { getManagedByRepositoryTooltip, getOrphanedRepositoryTooltip } from 'app/features/provisioning/utils/tooltip';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -14,28 +14,14 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
   const id = dashboard.getManagerIdentity();
 
   const shouldSkipQuery = !config.featureToggles.provisioning || kind !== ManagerKind.Repo || !id;
-  const { data: repoData, isError } = useGetRepositoryQuery(shouldSkipQuery ? skipToken : { name: id });
+  const { data: repoData, isError, error } = useGetRepositoryQuery(shouldSkipQuery ? skipToken : { name: id });
 
   if (!kind) {
     return null;
   }
 
-  // Repository-managed dashboard where the repo no longer exists
-  if (kind === ManagerKind.Repo && !shouldSkipQuery && (isError || (!repoData && id))) {
-    const orphanedText = t('dashboard-scene.managed-badge.repository-not-found', 'Repository not found: {{id}}', {
-      id,
-    });
-    return (
-      <Badge
-        color="orange"
-        icon="exclamation-triangle"
-        tooltip={orphanedText}
-        key="provisioned-dashboard-button-badge"
-      />
-    );
-  }
-
   let text;
+  let color: BadgeColor = 'purple';
 
   switch (kind) {
     case ManagerKind.Terraform:
@@ -48,11 +34,16 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
       text = t('dashboard-scene.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id });
       break;
     case ManagerKind.Repo:
-      text = getManagedByRepositoryTooltip(repoData?.spec?.title || id);
+      // Repository-managed dashboard where the repo no longer exists
+      const isOrphaned = isError && isFetchError(error) && error.status === 404;
+      text = isOrphaned
+        ? getOrphanedRepositoryTooltip(repoData?.spec?.title || id)
+        : getManagedByRepositoryTooltip(repoData?.spec?.title || id);
+      color = isOrphaned ? 'orange' : 'purple';
       break;
     default:
       text = t('dashboard-scene.managed-badge.provisioned', 'Provisioned');
   }
 
-  return <Badge color="purple" icon="exchange-alt" tooltip={text} key="provisioned-dashboard-button-badge" />;
+  return <Badge color={color} icon="exchange-alt" tooltip={text} key="provisioned-dashboard-button-badge" />;
 };

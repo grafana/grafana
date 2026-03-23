@@ -26,3 +26,13 @@ export const getReadOnlyTooltipText = ({ isLocal = false }) => {
         'This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.'
       );
 };
+
+export function getOrphanedRepositoryTooltip(title?: string): string {
+  if (!title) {
+    return t('provisioning.orphaned-repository-tooltip', 'Repository not found');
+  }
+  return t('provisioning.orphaned-repository-tooltip-with-title', 'Repository not found: {{title}}', {
+    title,
+    interpolation: { escapeValue: false },
+  });
+}

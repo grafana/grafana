@@ -49,6 +49,37 @@ func TestFolderMetadataDiffSplit(t *testing.T) {
 	require.False(t, split.HasMetadataFolderAt("other/"))
 }
 
+func TestFolderMetadataDiffSplit_RenamedFolderMetadataIsSplit(t *testing.T) {
+	diff := []repository.VersionedFileChange{
+		{
+			Action:       repository.FileActionRenamed,
+			Path:         "new-parent/_folder.json",
+			PreviousPath: "old-parent/_folder.json",
+			PreviousRef:  "old-ref",
+			Ref:          "new-ref",
+		},
+		{Action: repository.FileActionUpdated, Path: "other/dashboard.json", Ref: "new-ref"},
+	}
+
+	split := splitMetadataChanges(diff)
+
+	require.True(t, split.HasMetadataChanges())
+	require.Equal(t, []repository.VersionedFileChange{
+		{Action: repository.FileActionUpdated, Path: "other/dashboard.json", Ref: "new-ref"},
+	}, split.otherChanges)
+	require.Equal(t, []repository.VersionedFileChange{
+		{
+			Action:       repository.FileActionRenamed,
+			Path:         "new-parent/_folder.json",
+			PreviousPath: "old-parent/_folder.json",
+			PreviousRef:  "old-ref",
+			Ref:          "new-ref",
+		},
+	}, split.metadataChanges)
+	require.True(t, split.HasMetadataFolderAt("new-parent/"))
+	require.False(t, split.HadChangeOriginallyAt("new-parent/_folder.json"))
+}
+
 func TestFolderMetadataDiffSplitWithoutMetadataChanges(t *testing.T) {
 	split := splitMetadataChanges([]repository.VersionedFileChange{
 		{Action: repository.FileActionUpdated, Path: "alpha/dashboard.json", Ref: "new-ref"},
