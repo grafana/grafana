@@ -1149,19 +1149,14 @@ func (e *SharedEnv) GetCleanHelper(t *testing.T) *ProvisioningTestHelper {
 
 // RunTestMain replaces testsuite.Run(m) for packages that share a Grafana
 // server. It handles DB setup, runs all tests, shuts down the shared server,
-// cleans up the DB, and exits. In short mode the DB setup is skipped because
-// GetHelper will skip all integration tests anyway.
+// cleans up the DB, and exits.
 func (e *SharedEnv) RunTestMain(m *testing.M) {
-	if !testing.Short() {
-		db.SetupTestDB()
-	}
+	db.SetupTestDB()
 	code := m.Run()
 	if e.shutdownFunc != nil {
 		e.shutdownFunc()
 	}
-	if !testing.Short() {
-		db.CleanupTestDB()
-	}
+	db.CleanupTestDB()
 	os.Exit(code)
 }
 
