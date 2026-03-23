@@ -139,7 +139,13 @@ func Changes(
 				}
 			}
 
-			// Emit deletions for orphan duplicates at this path.
+		// Emit deletions for orphan duplicates at this path.
+		// Skip folder resources: directory tree hashes don't match the
+		// _folder.json blob hash stored on managed folders, so the
+		// primary selection above is unreliable for folders. Folder
+		// orphan cleanup is handled by augmentChangesForFolderMetadata
+		// (full sync) and the incremental diff builder.
+		if primary.Resource != resources.FolderResource.Resource {
 			for _, item := range items {
 				if item == primary {
 					continue
@@ -151,6 +157,7 @@ func Changes(
 					Existing: item,
 				})
 			}
+		}
 
 			if primary.Hash != file.Hash && primary.Resource != resources.FolderResource.Resource {
 				changes = append(changes, ResourceFileChange{
@@ -188,19 +195,31 @@ func Changes(
 				if err := keep.Add(file.Path); err != nil {
 					return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
 				}
-				// If the parent directory already exists in Grafana and the hash changed,
-				// record an update to reconcile metadata (e.g. folder title).
-				parentDir := safepath.Dir(file.Path)
-				if !strings.HasSuffix(parentDir, "/") {
-					parentDir += "/"
+			// If the parent directory already exists in Grafana and the hash changed,
+			// record an update to reconcile metadata (e.g. folder title).
+			// When multiple managed folders share the path (orphans), pick the
+			// one whose metadata hash matches the new _folder.json content so
+			// we target the correct UID.
+			parentDir := safepath.Dir(file.Path)
+			if !strings.HasSuffix(parentDir, "/") {
+				parentDir += "/"
+			}
+			if parentItems, ok := lookup[parentDir]; ok && len(parentItems) > 0 {
+				best := parentItems[0]
+				for _, p := range parentItems {
+					if p.Hash == file.Hash {
+						best = p
+						break
+					}
 				}
-				if parentItems, ok := lookup[parentDir]; ok && len(parentItems) > 0 && parentItems[0].Hash != file.Hash {
+				if best.Hash != file.Hash {
 					changes = append(changes, ResourceFileChange{
 						Action:   repository.FileActionUpdated,
 						Path:     parentDir,
-						Existing: parentItems[0],
+						Existing: best,
 					})
 				}
+			}
 				continue
 			}
 

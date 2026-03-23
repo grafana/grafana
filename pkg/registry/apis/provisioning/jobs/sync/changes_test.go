@@ -683,6 +683,75 @@ func TestChanges_DuplicatePaths(t *testing.T) {
 		require.Equal(t, "orphan", changes[0].Existing.Name)
 		require.Equal(t, repository.FileActionDeleted, changes[0].Action)
 	})
+
+	t.Run("duplicate folder paths are not cleaned up by Changes (handled downstream)", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "myfolder", Hash: "tree-hash", Blob: false},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "myfolder/", Hash: "meta-hash-1", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "folder-uid-1"},
+				{Path: "myfolder/", Hash: "meta-hash-2", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "folder-uid-2"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		for _, c := range changes {
+			require.NotEqual(t, repository.FileActionDeleted, c.Action,
+				"folder duplicates should not be deleted by Changes(); orphan cleanup is deferred to augmentChangesForFolderMetadata")
+		}
+	})
+
+	t.Run("_folder.json with multiple parent folders selects best-match by hash", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "myfolder", Hash: "tree-hash", Blob: false},
+			{Path: "myfolder/_folder.json", Hash: "new-meta-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "myfolder/", Hash: "old-meta-hash", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "orphan-uid"},
+				{Path: "myfolder/", Hash: "new-meta-hash", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "current-uid"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+
+		// The best-match parent (current-uid) has a hash that matches the
+		// _folder.json, so no update should be emitted for the metadata change.
+		for _, c := range changes {
+			if c.Path == "myfolder/" && c.Action == repository.FileActionUpdated {
+				t.Fatalf("should not emit folder update when best-match hash equals _folder.json hash, got Existing=%s", c.Existing.Name)
+			}
+		}
+	})
+
+	t.Run("_folder.json with multiple parent folders emits update targeting best-match", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "myfolder", Hash: "tree-hash", Blob: false},
+			{Path: "myfolder/_folder.json", Hash: "brand-new-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "myfolder/", Hash: "old-hash-a", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "folder-a"},
+				{Path: "myfolder/", Hash: "old-hash-b", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "folder-b"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+
+		var folderUpdate *ResourceFileChange
+		for i := range changes {
+			if changes[i].Path == "myfolder/" && changes[i].Action == repository.FileActionUpdated {
+				folderUpdate = &changes[i]
+				break
+			}
+		}
+		require.NotNil(t, folderUpdate, "should emit folder update when no parent hash matches")
+		require.Equal(t, "folder-a", folderUpdate.Existing.Name, "should fall back to first item when no hash matches")
+	})
 }
 
 func TestChanges_FolderMetadataFlagDisabled(t *testing.T) {
