@@ -102,30 +102,17 @@ func (s *LegacyStorage) GetSingularName() string {
 }
 
 func (s *LegacyStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	// The legacy service doesn't have a direct Get-by-UID method.
-	// Search with a broad query and filter by UID.
 	u, err := getSignedInUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	query := queryhistorysvc.SearchInQueryHistoryQuery{
-		Limit: 1000,
-		Page:  1,
-	}
-
-	result, err := s.service.SearchInQueryHistory(ctx, u, query)
+	dto, err := s.service.GetQueryByUID(ctx, u, name)
 	if err != nil {
 		return nil, err
 	}
 
-	for i := range result.QueryHistory {
-		if result.QueryHistory[i].UID == name {
-			return dtoToResource(&result.QueryHistory[i], "")
-		}
-	}
-
-	return nil, fmt.Errorf("query history item %q not found", name)
+	return dtoToResource(&dto, "")
 }
 
 func (s *LegacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
@@ -218,8 +205,16 @@ func (s *LegacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
+	limit := 100
+	if options != nil && options.Limit > 0 {
+		limit = int(options.Limit)
+	}
+	if limit > 1000 {
+		limit = 1000
+	}
+
 	query := queryhistorysvc.SearchInQueryHistoryQuery{
-		Limit: 100,
+		Limit: limit,
 		Page:  1,
 	}
 

@@ -23,12 +23,11 @@ type SearchResponse struct {
 }
 
 type SearchResultItem struct {
-	UID           string      `json:"uid"`
-	DatasourceUID string      `json:"datasourceUid"`
-	CreatedAt     int64       `json:"createdAt"`
-	Comment       string      `json:"comment"`
-	Queries       interface{} `json:"queries"`
-	Starred       bool        `json:"starred"`
+	UID           string `json:"uid"`
+	DatasourceUID string `json:"datasourceUid"`
+	CreatedAt     int64  `json:"createdAt"`
+	Comment       string `json:"comment"`
+	Starred       bool   `json:"starred"`
 }
 
 func convertSearchParamsFromURL(u *url.URL, namespace, userUID string) (*resourcepb.ResourceSearchRequest, error) {
@@ -47,6 +46,7 @@ func convertSearchParamsFromURL(u *url.URL, namespace, userUID string) (*resourc
 			resource.SEARCH_FIELD_PREFIX + builders.QH_COMMENT,
 			resource.SEARCH_FIELD_PREFIX + builders.QH_DATASOURCE_UID,
 			resource.SEARCH_FIELD_PREFIX + builders.QH_CREATED_BY,
+			resource.SEARCH_FIELD_PREFIX + builders.QH_STAR_COUNT,
 		},
 	}
 
@@ -57,11 +57,17 @@ func convertSearchParamsFromURL(u *url.URL, namespace, userUID string) (*resourc
 		Values:   []string{userUID},
 	})
 
-	// Parse limit
+	// Parse limit (clamp to [1, 500])
 	if limitStr := q.Get("limit"); limitStr != "" {
 		limit, err := strconv.ParseInt(limitStr, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("invalid limit: %w", err)
+		}
+		if limit < 1 {
+			limit = 1
+		}
+		if limit > 500 {
+			limit = 500
 		}
 		searchReq.Limit = limit
 	}
@@ -134,10 +140,14 @@ func convertSearchParamsFromURL(u *url.URL, namespace, userUID string) (*resourc
 		})
 	}
 
-	// onlyStarred requires a Collections API lookup to get starred UIDs,
-	// then filter by name. This is a placeholder until Collections integration is done.
-	// TODO: query Collections Stars API for the user's starred query history UIDs
-	// and add a "name in [uid1, uid2, ...]" field requirement.
+	// Filter to only starred items by requiring star_count >= 1
+	if q.Get("onlyStarred") == "true" {
+		searchReq.Options.Fields = append(searchReq.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_PREFIX + builders.QH_STAR_COUNT,
+			Operator: ">=",
+			Values:   []string{"1"},
+		})
+	}
 
 	return searchReq, nil
 }
@@ -147,8 +157,8 @@ func NewSearchHandler(searcher resourcepb.ResourceIndexClient) simple.AppCustomR
 	return func(ctx context.Context, w app.CustomRouteResponseWriter, req *app.CustomRouteRequest) error {
 		user, err := identity.GetRequester(ctx)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return nil
+			http.Error(w, "authentication required", http.StatusUnauthorized)
+			return err
 		}
 
 		namespace := req.ResourceIdentifier.Namespace
@@ -158,14 +168,14 @@ func NewSearchHandler(searcher resourcepb.ResourceIndexClient) simple.AppCustomR
 
 		searchReq, err := convertSearchParamsFromURL(req.URL, namespace, user.GetIdentifier())
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return nil
+			http.Error(w, "invalid search parameters", http.StatusBadRequest)
+			return err
 		}
 
 		result, err := searcher.Search(ctx, searchReq)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return nil
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return err
 		}
 
 		w.Header().Set("Content-Type", "application/json")
@@ -196,6 +206,7 @@ func convertSearchResults(result *resourcepb.ResourceSearchResponse) *SearchResp
 	commentIdx, hasComment := colIdx[resource.SEARCH_FIELD_PREFIX+builders.QH_COMMENT]
 	dsUIDIdx, hasDsUID := colIdx[resource.SEARCH_FIELD_PREFIX+builders.QH_DATASOURCE_UID]
 	createdIdx, hasCreated := colIdx[resource.SEARCH_FIELD_CREATED]
+	starCountIdx, hasStarCount := colIdx[resource.SEARCH_FIELD_PREFIX+builders.QH_STAR_COUNT]
 
 	for _, row := range result.Results.Rows {
 		item := SearchResultItem{}
@@ -217,6 +228,13 @@ func convertSearchResults(result *resourcepb.ResourceSearchResponse) *SearchResp
 			// Numeric values are encoded as big-endian bytes
 			if len(cell) == 8 {
 				item.CreatedAt = int64(binary.BigEndian.Uint64(cell))
+			}
+		}
+
+		if hasStarCount && starCountIdx < len(row.Cells) {
+			cell := row.Cells[starCountIdx]
+			if len(cell) == 8 {
+				item.Starred = int64(binary.BigEndian.Uint64(cell)) > 0
 			}
 		}
 

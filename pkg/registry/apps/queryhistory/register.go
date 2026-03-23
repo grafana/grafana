@@ -2,8 +2,11 @@ package queryhistory
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
@@ -20,23 +23,27 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	qhregistry "github.com/grafana/grafana/pkg/registry/apis/queryhistory"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	queryhistorysvc "github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var (
-	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
-	_ appinstaller.LegacyStorageProvider = (*AppInstaller)(nil)
-	_ appinstaller.AuthorizerProvider    = (*AppInstaller)(nil)
+	_ appsdkapiserver.AppInstaller                          = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStorageProvider                    = (*AppInstaller)(nil)
+	_ appinstaller.AuthorizerProvider                       = (*AppInstaller)(nil)
+	_ appinstaller.NamespaceScopedStorageAuthorizerProvider = (*AppInstaller)(nil)
 )
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
 	legacyService queryhistorysvc.Service
+	storageClient resourcepb.ResourceStoreClient
 	runnables     []app.Runnable
 }
 
@@ -51,6 +58,7 @@ func RegisterAppInstaller(
 ) (*AppInstaller, error) {
 	installer := &AppInstaller{
 		legacyService: qhService,
+		storageClient: unified,
 	}
 
 	resourceInfo := qhv0alpha1.QueryHistoryResourceInfo
@@ -103,14 +111,16 @@ func (a *AppInstaller) InitializeApp(cfg restclient.Config) error {
 
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	// Query history is personal user data: any authenticated user can CRUD their own items.
-	// Per-user isolation is enforced at the storage layer via the "created-by" label,
-	// not at the authorizer level. This differs from AuthorizeFromName (used by preferences/stars)
-	// because query history items have auto-generated names, not owner-encoded names.
-	return &queryHistoryAuthorizer{}
+	// Per-user isolation is enforced via ownership checks on the "created-by" label.
+	// For operations on specific resources (get, update, delete), we read the resource
+	// from unified storage and verify the requesting user matches the creator.
+	return &queryHistoryAuthorizer{storageClient: a.storageClient}
 }
 
-// queryHistoryAuthorizer allows all authenticated users full CRUD access to query history.
-type queryHistoryAuthorizer struct{}
+// queryHistoryAuthorizer allows authenticated users CRUD access to their own query history.
+type queryHistoryAuthorizer struct {
+	storageClient resourcepb.ResourceStoreClient
+}
 
 func (a *queryHistoryAuthorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 	user, err := identity.GetRequester(ctx)
@@ -128,13 +138,132 @@ func (a *queryHistoryAuthorizer) Authorize(ctx context.Context, attr authorizer.
 		return authorizer.DecisionDeny, "calling service lacks required permissions", nil
 	}
 
-	// Any authenticated user can perform any operation on query history.
 	switch attr.GetVerb() {
-	case "get", "list", "watch", "create", "update", "patch", "delete", "deletecollection":
+	case "list", "watch", "create", "deletecollection":
+		return authorizer.DecisionAllow, "", nil
+	case "get", "update", "patch", "delete":
+		// For operations on a specific resource, verify ownership
+		if name := attr.GetName(); name != "" {
+			return a.checkOwnership(ctx, attr, user)
+		}
 		return authorizer.DecisionAllow, "", nil
 	default:
 		return authorizer.DecisionDeny, fmt.Sprintf("verb %q not supported", attr.GetVerb()), nil
 	}
+}
+
+// checkOwnership reads the resource from unified storage and verifies the requesting user
+// is the creator. This uses the direct storage client (not the k8s API) to avoid auth recursion.
+func (a *queryHistoryAuthorizer) checkOwnership(ctx context.Context, attr authorizer.Attributes, user identity.Requester) (authorizer.Decision, string, error) {
+	if a.storageClient == nil {
+		// Storage client not available (e.g., Mode0 with legacy-only storage).
+		// The legacy storage layer enforces ownership via SQL WHERE clauses.
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	resp, err := a.storageClient.Read(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: attr.GetNamespace(),
+			Group:     attr.GetAPIGroup(),
+			Resource:  attr.GetResource(),
+			Name:      attr.GetName(),
+		},
+	})
+	if err != nil {
+		// Transient storage error — deny to avoid silently bypassing ownership checks.
+		return authorizer.DecisionDeny, "unable to verify resource ownership", err
+	}
+	if resp.Error != nil {
+		// Resource not found or similar — allow through so the handler returns the proper 404.
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	// Extract labels from the stored object to check ownership
+	createdBy, err := extractCreatedByLabel(resp.Value)
+	if err != nil || createdBy == "" {
+		// Can't determine ownership — allow through for backwards compatibility
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	if createdBy != user.GetIdentifier() {
+		return authorizer.DecisionDeny, "access denied: resource belongs to another user", nil
+	}
+
+	return authorizer.DecisionAllow, "", nil
+}
+
+// extractCreatedByLabel extracts the created-by label from raw resource JSON.
+func extractCreatedByLabel(value []byte) (string, error) {
+	var partial struct {
+		Metadata metav1.ObjectMeta `json:"metadata"`
+	}
+	if err := json.Unmarshal(value, &partial); err != nil {
+		return "", err
+	}
+	return partial.Metadata.Labels[queryhistoryapp.LabelCreatedBy], nil
+}
+
+func (a *AppInstaller) GetNamespaceScopedStorageAuthorizer(gr schema.GroupResource) storewrapper.ResourceStorageAuthorizer {
+	kind := qhv0alpha1.QueryHistoryKind()
+	if gr.Group != kind.Group() || gr.Resource != kind.Plural() {
+		return nil
+	}
+	return &queryHistoryStorageAuthorizer{}
+}
+
+// queryHistoryStorageAuthorizer filters storage-level operations by ownership.
+// This ensures list/get in Mode5 (unified storage) only returns the requesting user's items.
+type queryHistoryStorageAuthorizer struct{}
+
+func (s *queryHistoryStorageAuthorizer) BeforeCreate(_ context.Context, _ runtime.Object) error {
+	return nil // Ownership set by mutator
+}
+
+func (s *queryHistoryStorageAuthorizer) BeforeUpdate(_ context.Context, _, _ runtime.Object) error {
+	return nil // Ownership checked by API-level authorizer
+}
+
+func (s *queryHistoryStorageAuthorizer) BeforeDelete(_ context.Context, _ runtime.Object) error {
+	return nil // Ownership checked by API-level authorizer
+}
+
+func (s *queryHistoryStorageAuthorizer) AfterGet(ctx context.Context, obj runtime.Object) error {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return fmt.Errorf("access denied: unable to identify user")
+	}
+
+	accessor, ok := obj.(metav1.ObjectMetaAccessor)
+	if !ok {
+		return nil
+	}
+	createdBy := accessor.GetObjectMeta().GetLabels()[queryhistoryapp.LabelCreatedBy]
+	if createdBy != "" && createdBy != user.GetIdentifier() {
+		return fmt.Errorf("access denied: resource belongs to another user")
+	}
+	return nil
+}
+
+func (s *queryHistoryStorageAuthorizer) FilterList(ctx context.Context, list runtime.Object) (runtime.Object, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("access denied: unable to identify user")
+	}
+
+	qhList, ok := list.(*qhv0alpha1.QueryHistoryList)
+	if !ok {
+		return list, nil
+	}
+
+	userID := user.GetIdentifier()
+	filtered := make([]qhv0alpha1.QueryHistory, 0, len(qhList.Items))
+	for _, item := range qhList.Items {
+		if createdBy := item.GetLabels()[queryhistoryapp.LabelCreatedBy]; createdBy == "" || createdBy == userID {
+			filtered = append(filtered, item)
+		}
+	}
+	qhList.Items = filtered
+	return qhList, nil
 }
 
 func (a *AppInstaller) GetLegacyStorage(requested schema.GroupVersionResource) grafanarest.Storage {

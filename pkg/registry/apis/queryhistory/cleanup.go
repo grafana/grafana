@@ -69,7 +69,7 @@ func (c *CleanupJob) Run(ctx context.Context) error {
 }
 
 func (c *CleanupJob) cleanup(ctx context.Context) {
-	c.logger.Info("running query history TTL cleanup")
+	c.logger.Debug("running query history TTL cleanup")
 
 	deleted := 0
 	continueToken := ""
@@ -118,5 +118,9 @@ func (c *CleanupJob) cleanup(ctx context.Context) {
 		}
 	}
 
-	c.logger.Info("query history TTL cleanup complete", "deleted", deleted)
+	if deleted > 0 {
+		c.logger.Info("query history TTL cleanup complete", "deleted", deleted)
+	} else {
+		c.logger.Debug("query history TTL cleanup complete", "deleted", 0)
+	}
 }

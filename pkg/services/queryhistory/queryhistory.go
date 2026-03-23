@@ -41,6 +41,7 @@ func ProvideService(cfg *setting.Cfg,
 type Service interface {
 	CreateQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, cmd CreateQueryInQueryHistoryCommand) (QueryHistoryDTO, error)
 	SearchInQueryHistory(ctx context.Context, user *user.SignedInUser, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error)
+	GetQueryByUID(ctx context.Context, user *user.SignedInUser, uid string) (QueryHistoryDTO, error)
 	DeleteQueryFromQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (int64, error)
 	PatchQueryCommentInQueryHistory(ctx context.Context, user *user.SignedInUser, UID string, cmd PatchQueryCommentInQueryHistoryCommand) (QueryHistoryDTO, error)
 	StarQueryInQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (QueryHistoryDTO, error)
@@ -64,6 +65,10 @@ func (s QueryHistoryService) CreateQueryInQueryHistory(ctx context.Context, user
 
 func (s QueryHistoryService) SearchInQueryHistory(ctx context.Context, user *user.SignedInUser, query SearchInQueryHistoryQuery) (QueryHistorySearchResult, error) {
 	return s.searchQueries(ctx, user, query)
+}
+
+func (s QueryHistoryService) GetQueryByUID(ctx context.Context, user *user.SignedInUser, uid string) (QueryHistoryDTO, error) {
+	return s.getQueryByUID(ctx, user, uid)
 }
 
 func (s QueryHistoryService) DeleteQueryFromQueryHistory(ctx context.Context, user *user.SignedInUser, UID string) (int64, error) {

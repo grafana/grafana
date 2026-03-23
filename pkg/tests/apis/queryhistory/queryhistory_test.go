@@ -215,29 +215,22 @@ func TestIntegrationQueryHistoryAuthorization(t *testing.T) {
 		viewerCreated, err := viewerClient.Resource.Create(ctx, viewerObj, metav1.CreateOptions{})
 		require.NoError(t, err)
 
-		// Admin tries to get the viewer's item — in unified storage, the item exists
-		// but per-user isolation should prevent access. Whether this is enforced depends
-		// on the storage layer implementation.
+		// Admin tries to get the viewer's item — ownership check should deny access
 		_, err = adminClient.Resource.Get(ctx, viewerCreated.GetName(), metav1.GetOptions{})
-		// For now, just verify both users can list without errors.
-		// Isolation enforcement at the storage layer is tested separately.
-		adminList, listErr := adminClient.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, listErr)
+		require.Error(t, err, "admin should not be able to get viewer's query history item")
 
-		viewerList, listErr := viewerClient.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, listErr)
+		// Admin tries to update the viewer's item — should be denied
+		viewerCreated.SetAnnotations(map[string]string{"test": "hack"})
+		_, err = adminClient.Resource.Update(ctx, viewerCreated, metav1.UpdateOptions{})
+		require.Error(t, err, "admin should not be able to update viewer's query history item")
 
-		// Viewer should see at least the items they created
-		require.GreaterOrEqual(t, len(viewerList.Items), 1)
+		// Admin tries to delete the viewer's item — should be denied
+		err = adminClient.Resource.Delete(ctx, viewerCreated.GetName(), metav1.DeleteOptions{})
+		require.Error(t, err, "admin should not be able to delete viewer's query history item")
 
-		// Verify items have created-by labels
-		for _, item := range adminList.Items {
-			require.Contains(t, item.GetLabels(), "grafana.app/created-by")
-		}
-		for _, item := range viewerList.Items {
-			require.Contains(t, item.GetLabels(), "grafana.app/created-by")
-		}
-		_ = err // admin Get result depends on storage-layer isolation
+		// Viewer can still access their own item
+		_, err = viewerClient.Resource.Get(ctx, viewerCreated.GetName(), metav1.GetOptions{})
+		require.NoError(t, err, "viewer should be able to get their own query history item")
 	})
 }
 

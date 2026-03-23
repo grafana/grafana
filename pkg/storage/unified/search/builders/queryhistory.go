@@ -2,8 +2,10 @@ package builders
 
 import (
 	"context"
+	"strconv"
 
 	qhv0alpha1 "github.com/grafana/grafana/apps/queryhistory/pkg/apis/queryhistory/v0alpha1"
+	queryhistoryapp "github.com/grafana/grafana/apps/queryhistory/pkg/app"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -12,6 +14,7 @@ const (
 	QH_COMMENT        = "comment"
 	QH_DATASOURCE_UID = "datasource_uid"
 	QH_CREATED_BY     = "created_by"
+	QH_STAR_COUNT     = "star_count"
 )
 
 var QueryHistoryTableColumnDefinitions = map[string]*resourcepb.ResourceTableColumnDefinition{
@@ -35,6 +38,14 @@ var QueryHistoryTableColumnDefinitions = map[string]*resourcepb.ResourceTableCol
 		Name:        QH_CREATED_BY,
 		Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 		Description: "User UID who created this query",
+		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
+			Filterable: true,
+		},
+	},
+	QH_STAR_COUNT: {
+		Name:        QH_STAR_COUNT,
+		Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+		Description: "Number of stars on this query history item",
 		Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
 			Filterable: true,
 		},
@@ -71,8 +82,13 @@ func (b *queryHistoryDocumentBuilder) BuildDocument(ctx context.Context, key *re
 	doc.Fields[QH_DATASOURCE_UID] = qh.Spec.DatasourceUid
 
 	if labels := qh.GetLabels(); labels != nil {
-		if createdBy, ok := labels["grafana.app/created-by"]; ok {
+		if createdBy, ok := labels[queryhistoryapp.LabelCreatedBy]; ok {
 			doc.Fields[QH_CREATED_BY] = createdBy
+		}
+		if starCount, ok := labels[queryhistoryapp.LabelStarCount]; ok {
+			if n, err := strconv.ParseInt(starCount, 10, 64); err == nil {
+				doc.Fields[QH_STAR_COUNT] = n
+			}
 		}
 	}
 

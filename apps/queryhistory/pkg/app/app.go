@@ -140,6 +140,7 @@ func (v *queryHistoryValidator) Validate(ctx context.Context, req *app.Admission
 	if req.Action == resource.AdmissionActionUpdate && req.OldObject != nil {
 		oldLabels := req.OldObject.GetLabels()
 		newLabels := req.Object.GetLabels()
+
 		if oldLabels[LabelCreatedBy] != newLabels[LabelCreatedBy] {
 			return fmt.Errorf("label %s is immutable", LabelCreatedBy)
 		}

@@ -135,6 +135,42 @@ func (s QueryHistoryService) searchQueries(ctx context.Context, user *user.Signe
 	return response, nil
 }
 
+func (s QueryHistoryService) getQueryByUID(ctx context.Context, user *user.SignedInUser, uid string) (QueryHistoryDTO, error) {
+	var queryHistory QueryHistory
+	var isStarred bool
+
+	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
+		exists, err := session.Where("org_id = ? AND created_by = ? AND uid = ?", user.OrgID, user.UserID, uid).Get(&queryHistory)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return ErrQueryNotFound
+		}
+
+		starred, err := session.Table("query_history_star").Where("user_id = ? AND query_uid = ?", user.UserID, uid).Exist()
+		if err != nil {
+			return err
+		}
+		isStarred = starred
+		return nil
+	})
+
+	if err != nil {
+		return QueryHistoryDTO{}, err
+	}
+
+	return QueryHistoryDTO{
+		UID:           queryHistory.UID,
+		DatasourceUID: queryHistory.DatasourceUID,
+		CreatedBy:     queryHistory.CreatedBy,
+		CreatedAt:     queryHistory.CreatedAt,
+		Comment:       queryHistory.Comment,
+		Queries:       queryHistory.Queries,
+		Starred:       isStarred,
+	}, nil
+}
+
 func (s QueryHistoryService) deleteQuery(ctx context.Context, user *user.SignedInUser, UID string) (int64, error) {
 	var queryID int64
 	err := s.store.WithTransactionalDbSession(ctx, func(session *db.Session) error {

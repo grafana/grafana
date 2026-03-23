@@ -223,11 +223,11 @@ func (b *BackfillJob) createResource(ctx context.Context, row queryhistorysvc.Qu
 
 	var queriesRaw json.RawMessage
 	if row.Queries != nil {
-		b, err := row.Queries.MarshalJSON()
+		rawBytes, err := row.Queries.MarshalJSON()
 		if err != nil {
 			return false, fmt.Errorf("failed to marshal queries: %w", err)
 		}
-		queriesRaw = b
+		queriesRaw = rawBytes
 	}
 
 	comment := row.Comment
