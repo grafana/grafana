@@ -66,7 +66,6 @@ func newWritableParsedResource(name string) (*ParsedResource, *MockDynamicResour
 	return mustBuildParsedResource(name, client), client
 }
 
-
 func TestReplaceResourceFromFile(t *testing.T) {
 	t.Run("name unchanged skips delete", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
