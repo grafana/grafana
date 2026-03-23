@@ -4,7 +4,7 @@ This repository fork uses a **minimal GitHub Actions workflow** ([`.github/workf
 
 ## What runs in CI
 
-- **Backend:** `CGO_ENABLED=0 go test -short -timeout=40m ./...` from the repo root (Go workspace).
+- **Backend:** Four **parallel** shards (`./scripts/ci/backend-tests/shard.sh -N1/4` … `-N4/4`), each running `CGO_ENABLED=0 go test -short` on its package subset (~quarter of the tree), so wall time is roughly the slowest shard instead of one long `./...` run. A final job **Backend unit tests (short)** fails the workflow if any shard fails (single check name for branch protection).
 - **Frontend:** `yarn run prettier:check`, `yarn run lint`, then `yarn workspace @grafana/data themes-schema` (generates `schema.generated.json`, which is gitignored but required by `tsc`), then `yarn run typecheck`. Typecheck uses `NODE_OPTIONS=--max-old-space-size=6144` so `tsc` / Nx do not hit the default heap limit on standard runners.
 
 Fork-local paths (`.cursor/`, `.vscode/`, and root `manifest.json`) are listed in [`.prettierignore`](../.prettierignore) so `prettier:check` matches upstream expectations without formatting IDE tooling.

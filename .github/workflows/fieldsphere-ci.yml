@@ -19,10 +19,15 @@ permissions:
   contents: read
 
 jobs:
-  backend:
-    name: Backend unit tests (short)
+  # Four parallel shards (~1/4 of packages each) so wall time is ~max(shard) instead of full ./...
+  backend-shard:
+    name: Backend shard ${{ matrix.shard }}
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['1/4', '2/4', '3/4', '4/4']
     steps:
       - uses: actions/checkout@v5
         with:
@@ -35,7 +40,24 @@ jobs:
             go.sum
             **/*.sum
       - name: Run Go unit tests
-        run: CGO_ENABLED=0 go test -short -timeout=50m ./...
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"${{ matrix.shard }}")"
+          CGO_ENABLED=0 go test -short -timeout=22m "${PACKAGES[@]}"
+
+  backend:
+    name: Backend unit tests (short)
+    needs: backend-shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require all backend shards
+        run: |
+          if [ "${{ needs.backend-shard.result }}" != "success" ]; then
+            echo "One or more backend shards failed or were cancelled"
+            exit 1
+          fi
 
   frontend:
     name: Frontend lint and typecheck
