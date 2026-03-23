@@ -221,15 +221,13 @@ func (b *BackfillJob) createResource(ctx context.Context, row queryhistorysvc.Qu
 		labels[queryhistoryapp.LabelExpiresAt] = strconv.FormatInt(expiresAt, 10)
 	}
 
-	var queriesRaw interface{}
+	var queriesRaw json.RawMessage
 	if row.Queries != nil {
 		b, err := row.Queries.MarshalJSON()
 		if err != nil {
 			return false, fmt.Errorf("failed to marshal queries: %w", err)
 		}
-		if err := json.Unmarshal(b, &queriesRaw); err != nil {
-			return false, fmt.Errorf("failed to unmarshal queries: %w", err)
-		}
+		queriesRaw = b
 	}
 
 	comment := row.Comment

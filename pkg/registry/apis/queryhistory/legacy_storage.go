@@ -87,15 +87,11 @@ func dtoToResource(dto *queryhistorysvc.QueryHistoryDTO, namespace string) (*qhv
 	obj.Spec.Comment = &dto.Comment
 
 	if dto.Queries != nil {
-		var raw interface{}
 		b, err := dto.Queries.MarshalJSON()
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal queries: %w", err)
 		}
-		if err := json.Unmarshal(b, &raw); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal queries: %w", err)
-		}
-		obj.Spec.Queries = raw
+		obj.Spec.Queries = json.RawMessage(b)
 	}
 
 	return obj, nil
