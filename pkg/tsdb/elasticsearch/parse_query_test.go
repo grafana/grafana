@@ -102,5 +102,34 @@ func TestParseQuery(t *testing.T) {
 			require.Equal(t, q.BucketAggs[1].Settings.Get("min_doc_count").MustInt(), 0)
 			require.Equal(t, q.BucketAggs[1].Settings.Get("trimEdges").MustInt(), 0)
 		})
+
+		t.Run("Should parse includeRuntimeFields when true", func(t *testing.T) {
+			body := `{
+				"query": "*",
+				"includeRuntimeFields": true,
+				"metrics": [{"type": "logs", "id": "1"}],
+				"bucketAggs": []
+			}`
+			dataQuery, err := newDataQuery(body)
+			require.NoError(t, err)
+			queries, err := parseQuery(dataQuery.Queries, log.New())
+			require.NoError(t, err)
+			require.Len(t, queries, 1)
+			require.True(t, queries[0].IncludeRuntimeFields)
+		})
+
+		t.Run("Should default includeRuntimeFields to false when absent", func(t *testing.T) {
+			body := `{
+				"query": "*",
+				"metrics": [{"type": "logs", "id": "1"}],
+				"bucketAggs": []
+			}`
+			dataQuery, err := newDataQuery(body)
+			require.NoError(t, err)
+			queries, err := parseQuery(dataQuery.Queries, log.New())
+			require.NoError(t, err)
+			require.Len(t, queries, 1)
+			require.False(t, queries[0].IncludeRuntimeFields)
+		})
 	})
 }

@@ -66,7 +66,7 @@ export const QueryEditor = ({ query, onChange, onRunQuery, datasource, range }: 
       range={range || getDefaultTimeRange()}
     >
       {showUnsupportedMessage && <Alert title={unsupportedVersionMessage} />}
-      <QueryEditorForm value={query} onRunQuery={onRunQuery} />
+      <QueryEditorForm value={query} onChange={onChange} onRunQuery={onRunQuery} />
     </ElasticsearchProvider>
   );
 };
@@ -95,7 +95,11 @@ export const ElasticSearchQueryField = ({ value, onChange }: { value?: string; o
   );
 };
 
-const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void }) => {
+const QueryEditorForm = ({
+  value,
+  onChange,
+  onRunQuery,
+}: Props & { onChange: (query: ElasticsearchDataQuery) => void; onRunQuery: () => void }) => {
   const dispatch = useDispatch();
   const nextId = useNextId();
   const inputId = useId();
@@ -216,7 +220,11 @@ const QueryEditorForm = ({ value, onRunQuery }: Props & { onRunQuery: () => void
           {showBucketAggregationsEditor && <BucketAggregationsEditor nextId={nextId} />}
         </>
       )}
-      <ElasticsearchQueryOptions onFormat={isCodeEditor && rawDSLFeatureEnabled ? handleFormat : undefined} />
+      <ElasticsearchQueryOptions
+        onFormat={isCodeEditor && rawDSLFeatureEnabled ? handleFormat : undefined}
+        onChange={onChange}
+        onRunQuery={onRunQuery}
+      />
       {isRawDocumentEditor && <Alert severity="warning" title="The 'Raw Document' query type is deprecated." />}
     </>
   );

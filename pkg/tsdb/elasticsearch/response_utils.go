@@ -35,6 +35,16 @@ func step(currentDepth, maxDepth int, target map[string]interface{}, prev string
 	}
 }
 
+// unwrapFieldValue unwraps single-element arrays returned by Elasticsearch's
+// "fields" response into scalar values so that processDocsToDataFrameFields
+// can assign them a proper typed column instead of a JSON blob.
+func unwrapFieldValue(v interface{}) interface{} {
+	if arr, ok := v.([]interface{}); ok && len(arr) == 1 {
+		return arr[0]
+	}
+	return v
+}
+
 // sortPropNames orders propNames so that timeField is first (if it exists), log message field is second
 // if shouldSortLogMessageField is true, and rest of propNames are ordered alphabetically
 func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFields, shouldSortLogMessageField bool) []string {

@@ -396,6 +396,10 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    */
   editorType?: string;
   /**
+   * Whether to include runtime fields in the response
+   */
+  includeRuntimeFields?: boolean;
+  /**
    * Metadata for variable queries
    */
   meta?: {

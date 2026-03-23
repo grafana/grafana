@@ -1467,6 +1467,66 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 			require.Equal(t, secondSearchAfter, "2")
 		})
 
+		t.Run("With log query and includeRuntimeFields enabled should add fields wildcard", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"includeRuntimeFields": true,
+				"metrics": [{ "type": "logs", "id": "1"}]
+			}`, from, to)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			fields, ok := sr.CustomProps["fields"].([]map[string]string)
+			require.True(t, ok)
+			require.Equal(t, 2, len(fields))
+			require.Equal(t, "@timestamp", fields[0]["field"])
+			require.Equal(t, "strict_date_optional_time_nanos", fields[0]["format"])
+			require.Equal(t, "*", fields[1]["field"])
+		})
+
+		t.Run("With log query and includeRuntimeFields disabled should not add fields wildcard", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"includeRuntimeFields": false,
+				"metrics": [{ "type": "logs", "id": "1"}]
+			}`, from, to)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			fields, ok := sr.CustomProps["fields"].([]map[string]string)
+			require.True(t, ok)
+			require.Equal(t, 1, len(fields))
+			require.Equal(t, "@timestamp", fields[0]["field"])
+		})
+
+		t.Run("With raw_data query and includeRuntimeFields enabled should add fields wildcard", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"includeRuntimeFields": true,
+				"bucketAggs": [],
+				"metrics": [{ "id": "1", "type": "raw_data", "settings": {} }]
+			}`, from, to)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			fields, ok := sr.CustomProps["fields"].([]map[string]string)
+			require.True(t, ok)
+			require.Equal(t, 2, len(fields))
+			require.Equal(t, "*", fields[1]["field"])
+		})
+
+		t.Run("With raw_document query and includeRuntimeFields enabled should add fields wildcard", func(t *testing.T) {
+			c := newFakeClient()
+			_, err := executeElasticsearchDataQuery(c, `{
+				"includeRuntimeFields": true,
+				"bucketAggs": [],
+				"metrics": [{ "id": "1", "type": "raw_document", "settings": {} }]
+			}`, from, to)
+			require.NoError(t, err)
+			sr := c.multisearchRequests[0].Requests[0]
+			fields, ok := sr.CustomProps["fields"].([]map[string]string)
+			require.True(t, ok)
+			require.Equal(t, 1, len(fields))
+			require.Equal(t, "*", fields[0]["field"])
+		})
+
 		t.Run("With invalid query should return error", (func(t *testing.T) {
 			c := newFakeClient()
 			res, err := executeElasticsearchDataQuery(c, `{

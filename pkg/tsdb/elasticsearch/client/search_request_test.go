@@ -152,6 +152,46 @@ func TestSearchRequest(t *testing.T) {
 		})
 	})
 
+	t.Run("When enabling runtime fields without existing fields", func(t *testing.T) {
+		b := setup()
+		b.EnableRuntimeFields()
+
+		t.Run("should set fields with wildcard", func(t *testing.T) {
+			fields, ok := b.customProps["fields"].([]map[string]string)
+			require.True(t, ok)
+			require.Equal(t, 1, len(fields))
+			require.Equal(t, "*", fields[0]["field"])
+		})
+
+		t.Run("When building search request and marshal to JSON", func(t *testing.T) {
+			sr, err := b.Build()
+			require.Nil(t, err)
+			body, err := json.Marshal(sr)
+			require.Nil(t, err)
+			j, err := simplejson.NewJson(body)
+			require.Nil(t, err)
+			fieldsArr := j.Get("fields").MustArray()
+			require.Equal(t, 1, len(fieldsArr))
+			fieldEntry := fieldsArr[0].(map[string]interface{})
+			require.Equal(t, "*", fieldEntry["field"])
+		})
+	})
+
+	t.Run("When enabling runtime fields with existing time field", func(t *testing.T) {
+		b := setup()
+		b.AddTimeFieldWithStandardizedFormat(timeField)
+		b.EnableRuntimeFields()
+
+		t.Run("should append wildcard to existing fields", func(t *testing.T) {
+			fields, ok := b.customProps["fields"].([]map[string]string)
+			require.True(t, ok)
+			require.Equal(t, 2, len(fields))
+			require.Equal(t, timeField, fields[0]["field"])
+			require.Equal(t, "strict_date_optional_time_nanos", fields[0]["format"])
+			require.Equal(t, "*", fields[1]["field"])
+		})
+	})
+
 	t.Run("and adding multiple top level aggs", func(t *testing.T) {
 		b := setup()
 		aggBuilder := b.Agg()

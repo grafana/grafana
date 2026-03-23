@@ -66,6 +66,10 @@ func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defa
 	b.Size(stringToIntWithDefaultValue(metric.Settings.Get("limit").MustString(), defaultSize))
 	b.AddHighlight()
 
+	if q.IncludeRuntimeFields {
+		b.EnableRuntimeFields()
+	}
+
 	// This is currently used only for log context query to get
 	// log lines before and after the selected log line
 	searchAfter := metric.Settings.Get("searchAfter").MustArray()
@@ -102,6 +106,10 @@ func processDocumentQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, 
 		b.AddTimeFieldWithStandardizedFormat(defaultTimeField)
 	}
 	b.Size(stringToIntWithDefaultValue(metric.Settings.Get("size").MustString(), defaultSize))
+
+	if q.IncludeRuntimeFields {
+		b.EnableRuntimeFields()
+	}
 }
 
 // processTimeSeriesQuery processes a time series query with aggregations and metrics

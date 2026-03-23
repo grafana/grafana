@@ -41,6 +41,8 @@ composableKinds: DataQuery: {
 				bucketAggs?: [...#BucketAggregation]
 				// List of metric aggregations
 				metrics?: [...#MetricAggregation]
+				// Whether to include runtime fields in the response
+				includeRuntimeFields?: bool
 				// Metadata for variable queries
 				meta?: {
 					textField?:  string

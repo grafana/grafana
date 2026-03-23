@@ -49,7 +49,7 @@ func (p *rawResponseProcessor) processRawDataResponse(res *es.SearchResponse, ta
 			source, ok := hit["fields"].(map[string]interface{})
 			if ok {
 				for k, v := range source {
-					doc[k] = v
+					doc[k] = unwrapFieldValue(v)
 				}
 			}
 		}
@@ -99,7 +99,7 @@ func (p *rawResponseProcessor) processRawDocumentResponse(res *es.SearchResponse
 			source, ok := hit["fields"].(map[string]interface{})
 			if ok {
 				for k, v := range source {
-					doc[k] = v
+					doc[k] = unwrapFieldValue(v)
 				}
 			}
 		}

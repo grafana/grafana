@@ -64,7 +64,7 @@ func (p *logsResponseProcessor) processLogsResponse(res *es.SearchResponse, targ
 			source, ok := hit["fields"].(map[string]interface{})
 			if ok {
 				for k, v := range source {
-					doc[k] = v
+					doc[k] = unwrapFieldValue(v)
 				}
 			}
 		}

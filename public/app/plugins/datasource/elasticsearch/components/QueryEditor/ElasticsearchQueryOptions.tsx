@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 
 import { QueryOptionGroup } from '@grafana/plugin-ui';
-import { Box, Button, InlineField, Input } from '@grafana/ui';
+import { Box, Button, InlineField, InlineSwitch, Input } from '@grafana/ui';
 
+import { ElasticsearchDataQuery } from '../../dataquery.gen';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 
 import { useQuery } from './ElasticsearchQueryContext';
@@ -11,9 +12,11 @@ import { changeMetricSetting } from './MetricAggregationsEditor/state/actions';
 
 interface Props {
   onFormat?: () => void;
+  onChange?: (query: ElasticsearchDataQuery) => void;
+  onRunQuery?: () => void;
 }
 
-export function ElasticsearchQueryOptions({ onFormat }: Props) {
+export function ElasticsearchQueryOptions({ onFormat, onChange, onRunQuery }: Props) {
   const query = useQuery();
   const dispatch = useDispatch();
 
@@ -31,13 +34,18 @@ export function ElasticsearchQueryOptions({ onFormat }: Props) {
     ? String((isLogs ? firstMetricWithSettings!.settings?.limit : firstMetricWithSettings!.settings?.size) ?? '')
     : '';
 
+  const includeRuntimeFields = query.includeRuntimeFields ?? false;
+
   const collapsedInfo = useMemo(() => {
     const infoArray = [];
     if (showSizeField && currentValue) {
       infoArray.push(`${label}: ${currentValue}`);
     }
+    if (!isCodeEditor && includeRuntimeFields) {
+      infoArray.push('Runtime fields: enabled');
+    }
     return infoArray;
-  }, [showSizeField, currentValue, label]);
+  }, [showSizeField, currentValue, label, isCodeEditor, includeRuntimeFields]);
 
   let sizeField: React.ReactElement | null = null;
 
@@ -72,14 +80,29 @@ export function ElasticsearchQueryOptions({ onFormat }: Props) {
     );
   }
 
-  if (sizeField === null && onFormat == null) {
-    return null;
-  }
-
   return (
     <Box backgroundColor="secondary" borderRadius="default">
       <QueryOptionGroup title="Options" collapsedInfo={collapsedInfo}>
         {sizeField}
+        {!isCodeEditor && (
+          <InlineField
+            label="Include runtime fields"
+            labelWidth={22}
+            tooltip="When enabled, runtime fields defined in the index mapping will be included in the response"
+            htmlFor="es-include-runtime-fields"
+          >
+            <InlineSwitch
+              id="es-include-runtime-fields"
+              value={includeRuntimeFields}
+              onChange={(e) => {
+                if (onChange) {
+                  onChange({ ...query, includeRuntimeFields: e.currentTarget.checked });
+                  onRunQuery?.();
+                }
+              }}
+            />
+          </InlineField>
+        )}
         {onFormat != null && (
           <Button
             size="sm"

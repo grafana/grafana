@@ -128,4 +128,43 @@ describe('QueryEditor', () => {
 
     expect(screen.getByText('Group By')).toBeInTheDocument();
   });
+
+  describe('Include runtime fields toggle', () => {
+    it('Should render the toggle and trigger onChange when clicked', () => {
+      const query: ElasticsearchDataQuery = {
+        refId: 'A',
+        query: '',
+        metrics: [{ id: '1', type: 'logs' }],
+        bucketAggs: [],
+      };
+
+      const onChange = jest.fn<void, [ElasticsearchDataQuery]>();
+      const onRunQuery = jest.fn();
+
+      render(<QueryEditor query={query} datasource={datasourceMock} onChange={onChange} onRunQuery={onRunQuery} />);
+
+      fireEvent.click(screen.getByText('Options'));
+
+      const toggle = screen.getByLabelText('Include runtime fields');
+      expect(toggle).toBeInTheDocument();
+
+      fireEvent.click(toggle);
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ includeRuntimeFields: true }));
+    });
+
+    it('Should show the toggle even for non-logs queries', () => {
+      const query: ElasticsearchDataQuery = {
+        refId: 'A',
+        query: '',
+        metrics: [{ id: '1', type: 'count' }],
+        bucketAggs: [{ id: '2', type: 'date_histogram' }],
+      };
+
+      render(<QueryEditor query={query} datasource={datasourceMock} onChange={noop} onRunQuery={noop} />);
+
+      fireEvent.click(screen.getByText('Options'));
+
+      expect(screen.getByLabelText('Include runtime fields')).toBeInTheDocument();
+    });
+  });
 });

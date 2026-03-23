@@ -45,19 +45,21 @@ func parseQuery(tsdbQuery []backend.DataQuery, logger log.Logger) ([]*Query, err
 		alias := model.Get("alias").MustString("")
 		intervalMs := model.Get("intervalMs").MustInt64(0)
 		interval := q.Interval
+		includeRuntimeFields := model.Get("includeRuntimeFields").MustBool(false)
 
 		queries = append(queries, &Query{
-			RawQuery:      rawQuery,
-			QueryType:     queryType,
-			BucketAggs:    bucketAggs,
-			Metrics:       metrics,
-			Alias:         alias,
-			Interval:      interval,
-			IntervalMs:    intervalMs,
-			RefID:         q.RefID,
-			MaxDataPoints: q.MaxDataPoints,
-			TimeRange:     q.TimeRange,
-			EditorType:    editorType,
+			RawQuery:             rawQuery,
+			QueryType:            queryType,
+			BucketAggs:           bucketAggs,
+			Metrics:              metrics,
+			Alias:                alias,
+			Interval:             interval,
+			IntervalMs:           intervalMs,
+			RefID:                q.RefID,
+			MaxDataPoints:        q.MaxDataPoints,
+			TimeRange:            q.TimeRange,
+			EditorType:           editorType,
+			IncludeRuntimeFields: includeRuntimeFields,
 		})
 	}
 

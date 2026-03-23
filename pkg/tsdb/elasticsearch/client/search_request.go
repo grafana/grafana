@@ -117,6 +117,18 @@ func (b *SearchRequestBuilder) AddTimeFieldWithStandardizedFormat(timeField stri
 	return b
 }
 
+// EnableRuntimeFields adds a wildcard to the fields list so that
+// Elasticsearch returns runtime field values in each hit's "fields" map.
+func (b *SearchRequestBuilder) EnableRuntimeFields() *SearchRequestBuilder {
+	if existing, ok := b.customProps["fields"]; ok {
+		existingFields := existing.([]map[string]string)
+		b.customProps["fields"] = append(existingFields, map[string]string{"field": "*"})
+	} else {
+		b.customProps["fields"] = []map[string]string{{"field": "*"}}
+	}
+	return b
+}
+
 // AddDocValueField adds a doc value field to the search request
 func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuilder {
 	b.customProps["docvalue_fields"] = []string{field}

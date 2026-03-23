@@ -801,6 +801,8 @@ type ElasticsearchDataQuery struct {
 	BucketAggs []BucketAggregation `json:"bucketAggs,omitempty"`
 	// List of metric aggregations
 	Metrics []MetricAggregation `json:"metrics,omitempty"`
+	// Whether to include runtime fields in the response
+	IncludeRuntimeFields *bool `json:"includeRuntimeFields,omitempty"`
 	// Metadata for variable queries
 	Meta *DataqueryElasticsearchDataQueryMeta `json:"meta,omitempty"`
 	// For mixed data sources the selected datasource is on the query level.
