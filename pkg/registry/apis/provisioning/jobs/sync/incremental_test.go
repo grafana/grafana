@@ -1174,7 +1174,7 @@ func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 		progress.On("TooManyErrors").Return(nil)
 		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
 
-		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/").Return("hash-uid", nil)
+		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref").Return("hash-uid", nil)
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 			return result.Action() == repository.FileActionUpdated && result.Path() == "alpha/" && result.Name() == "hash-uid"
 		})).Return().Once()
@@ -1219,7 +1219,7 @@ func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 		progress.On("TooManyErrors").Return(nil)
 		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
 
-		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/").Return("stable-uid", nil)
+		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref").Return("stable-uid", nil)
 		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 			return result.Action() == repository.FileActionUpdated && result.Path() == "alpha/" && result.Name() == "stable-uid"
 		})).Return().Once()
@@ -1259,7 +1259,7 @@ func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 		repo.MockReader.On("Read", mock.Anything, "moved/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"Broken"}}`),
 		}, nil).Once()
-		repo.MockReader.On("Read", mock.Anything, "team/", "").Return((*repository.FileInfo)(nil), repository.ErrFileNotFound).Once()
+		repo.MockReader.On("Read", mock.Anything, "team/", "new-ref").Return((*repository.FileInfo)(nil), repository.ErrFileNotFound).Once()
 
 		progress.On("SetTotal", mock.Anything, 1).Return()
 		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()

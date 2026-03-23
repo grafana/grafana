@@ -18,7 +18,7 @@ type FolderMetadataIncrementalDiffBuilder interface {
 		ctx context.Context,
 		currentRef string,
 		repoDiff []repository.VersionedFileChange,
-	) ([]repository.VersionedFileChange, []replacedFolder, error)
+	) ([]repository.VersionedFileChange, []replacedFolder, []*resources.InvalidFolderMetadata, error)
 }
 
 type folderMetadataIncrementalDiffBuilder struct {
@@ -54,27 +54,30 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	ctx context.Context,
 	currentRef string,
 	repoDiff []repository.VersionedFileChange,
-) ([]repository.VersionedFileChange, []replacedFolder, error) {
+) ([]repository.VersionedFileChange, []replacedFolder, []*resources.InvalidFolderMetadata, error) {
 	input := splitMetadataChanges(repoDiff)
 	if !input.HasMetadataChanges() {
-		return repoDiff, nil, nil
+		return repoDiff, nil, nil, nil
 	}
 
 	target, err := d.repositoryResources.List(ctx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("list managed resources: %w", err)
+		return nil, nil, nil, fmt.Errorf("list managed resources: %w", err)
 	}
 
 	index := newManagedResourceIndex(target)
 	diffTracker := newRebuiltIncrementalDiffTracker(input.otherChanges)
+	invalid := make([]*resources.InvalidFolderMetadata, 0)
 
 	for _, change := range input.MetadataChanges() {
-		if err := d.rewriteMetadataChange(ctx, currentRef, input, index, diffTracker, change); err != nil {
-			return nil, nil, err
+		warnings, err := d.rewriteMetadataChange(ctx, currentRef, input, index, diffTracker, change)
+		if err != nil {
+			return nil, nil, nil, err
 		}
+		invalid = append(invalid, warnings...)
 	}
 
-	return diffTracker.IncrementalDiff(), diffTracker.ReplacedFolders(), nil
+	return diffTracker.IncrementalDiff(), diffTracker.ReplacedFolders(), invalid, nil
 }
 
 // rewriteMetadataChange dispatches each handled metadata action to the
@@ -89,7 +92,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteMetadataChange(
 	index managedResourceIndex,
 	diffTracker *rebuiltIncrementalDiffTracker,
 	change repository.VersionedFileChange,
-) error {
+) ([]*resources.InvalidFolderMetadata, error) {
 	switch change.Action {
 	case repository.FileActionCreated, repository.FileActionUpdated:
 		return d.rewriteCreatedOrUpdatedMetadataChange(ctx, input, index, diffTracker, change)
@@ -97,8 +100,9 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteMetadataChange(
 		return d.rewriteDeletedMetadataChange(ctx, currentRef, input, index, diffTracker, change)
 	case repository.FileActionRenamed:
 		return d.rewriteRenamedMetadataChange(ctx, currentRef, input, index, diffTracker, change)
+		return d.collectInvalidRenamedMetadataChange(ctx, currentRef, change)
 	default:
-		return nil
+		return nil, nil
 	}
 }
 
@@ -111,8 +115,12 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 	index managedResourceIndex,
 	diffTracker *rebuiltIncrementalDiffTracker,
 	change repository.VersionedFileChange,
-) error {
+) ([]*resources.InvalidFolderMetadata, error) {
 	folderPath := folderPathForMetadataChange(change.Path)
+	invalidMetaErrors, err := d.collectInvalidMetadataErrors(ctx, folderPath, change.Ref, change.Action)
+	if err != nil {
+		return nil, err
+	}
 
 	// In case the folder path is not in the original diff, and we didn't generate a change yet,
 	// we append an update change for it.
@@ -126,7 +134,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 
 	replaced, newUID, err := d.replacementsForMetadataChange(ctx, index, folderPath, change)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if newUID != "" {
 		diffTracker.TrackActiveUID(newUID)
@@ -151,7 +159,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 		})
 	}
 
-	return nil
+	return invalidMetaErrors, nil
 }
 
 // rewriteDeletedMetadataChange handles `_folder.json` deletion by either
@@ -167,16 +175,16 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	index managedResourceIndex,
 	diffTracker *rebuiltIncrementalDiffTracker,
 	change repository.VersionedFileChange,
-) error {
+) ([]*resources.InvalidFolderMetadata, error) {
 	folderPath := folderPathForMetadataChange(change.Path)
 	items := index.ExistingAt(folderPath)
 	if len(items) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	directoryExists, err := d.folderDirectoryExists(ctx, currentRef, folderPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	hasReplacement := false
@@ -189,7 +197,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	}
 
 	if !directoryExists {
-		return nil
+		return nil, nil
 	}
 
 	if !input.HadChangeOriginallyAt(folderPath) && !diffTracker.HasGeneratedPath(folderPath) {
@@ -201,7 +209,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	}
 
 	if !hasReplacement {
-		return nil
+		return nil, nil
 	}
 
 	for _, childPath := range index.DirectChildrenOf(folderPath) {
@@ -220,7 +228,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 		})
 	}
 
-	return nil
+	return nil, nil
 }
 
 // rewriteRenamedMetadataChange handles file-only renames of _folder.json
@@ -322,6 +330,33 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 	}
 
 	return nil
+}
+
+func (d *folderMetadataIncrementalDiffBuilder) collectInvalidRenamedMetadataChange(
+	ctx context.Context,
+	currentRef string,
+	change repository.VersionedFileChange,
+) ([]*resources.InvalidFolderMetadata, error) {
+	return d.collectInvalidMetadataErrors(ctx, folderPathForMetadataChange(change.Path), currentRef, change.Action)
+}
+
+func (d *folderMetadataIncrementalDiffBuilder) collectInvalidMetadataErrors(
+	ctx context.Context,
+	folderPath string,
+	ref string,
+	action repository.FileAction,
+) ([]*resources.InvalidFolderMetadata, error) {
+	_, _, err := resources.ReadFolderMetadata(ctx, d.repo, folderPath, ref)
+	if err == nil || errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+		return nil, nil
+	}
+
+	var invalidErr *resources.InvalidFolderMetadata
+	if errors.As(err, &invalidErr) {
+		return []*resources.InvalidFolderMetadata{invalidErr.WithAction(action)}, nil
+	}
+
+	return nil, fmt.Errorf("read folder metadata for %s: %w", folderPath, err)
 }
 
 // replacementsForMetadataChange determines which existing folder identities at
