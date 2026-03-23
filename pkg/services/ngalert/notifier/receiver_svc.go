@@ -451,14 +451,14 @@ func (rs *ReceiverService) UpdateReceiver(ctx context.Context, r *models.Receive
 		return nil, err
 	}
 
-	// if user does not have permissions to update protected, check the diff and return error if there is a change in protected fields
+	// If user does not have permissions to update protected, check the diff and return error if there is a change in protected fields
 	canUpdateProtected, _ := rs.authz.HasUpdateProtected(ctx, user, r)
 	if !canUpdateProtected {
 		diff := models.HasReceiversDifferentProtectedFields(existing, r)
 		if len(diff) > 0 {
 			err = rs.authz.AuthorizeUpdateProtected(ctx, user, r)
 			if err != nil {
-				return nil, makeProtectedFieldsAuthzError(err, diff)
+				return nil, MakeProtectedFieldsAuthzError(err, diff)
 			}
 		}
 	}
