@@ -32,6 +32,10 @@ type ResourceFileChange struct {
 	// after _folder.json deletion). The old folder needs cleanup after children
 	// have been re-parented.
 	FolderRenamed bool
+
+	// OrphanCleanup marks deletions emitted to clean up duplicate-path orphans.
+	// DetectRenames must skip these so orphan removal is not consumed as a rename.
+	OrphanCleanup bool
 }
 
 // IsUpdatedFolder reports whether this change is an update to an existing folder.
@@ -153,9 +157,10 @@ func Changes(
 					}
 					logger.Warn("deleting orphan resource at duplicate path", "path", item.Path, "name", item.Name)
 					changes = append(changes, ResourceFileChange{
-						Action:   repository.FileActionDeleted,
-						Path:     item.Path,
-						Existing: item,
+						Action:        repository.FileActionDeleted,
+						Path:          item.Path,
+						Existing:      item,
+						OrphanCleanup: true,
 					})
 				}
 			}
@@ -222,9 +227,10 @@ func Changes(
 						}
 						logger.Warn("deleting orphan folder at duplicate path", "path", p.Path, "name", p.Name)
 						changes = append(changes, ResourceFileChange{
-							Action:   repository.FileActionDeleted,
-							Path:     parentDir,
-							Existing: p,
+							Action:        repository.FileActionDeleted,
+							Path:          parentDir,
+							Existing:      p,
+							OrphanCleanup: true,
 						})
 					}
 					if best.Hash != file.Hash {
@@ -546,6 +552,9 @@ func DetectRenames(changes []ResourceFileChange) []ResourceFileChange {
 		if change.Action != repository.FileActionDeleted || change.Existing == nil {
 			continue
 		}
+		if change.OrphanCleanup {
+			continue
+		}
 		if safepath.IsDir(change.Path) || change.Existing.Hash == "" {
 			continue
 		}
@@ -622,6 +631,15 @@ func emitDirectChildrenChanges(
 		existingByPath[path] = append(existingByPath[path], item)
 	}
 
+	// Collect items already targeted by a DELETE so we can skip them when
+	// selecting the best match for reparent updates.
+	deletedItems := make(map[string]bool, len(changes))
+	for _, c := range changes {
+		if c.Action == repository.FileActionDeleted && c.Existing != nil {
+			deletedItems[c.Existing.Name] = true
+		}
+	}
+
 	for _, file := range source {
 		path := file.Path
 		if !file.Blob {
@@ -652,9 +670,15 @@ func emitDirectChildrenChanges(
 		}
 		best := items[0]
 		for _, it := range items {
+			if deletedItems[it.Name] {
+				continue
+			}
 			if it.Hash == file.Hash {
 				best = it
 				break
+			}
+			if deletedItems[best.Name] {
+				best = it
 			}
 		}
 		changes = append(changes, ResourceFileChange{

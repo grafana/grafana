@@ -1829,4 +1829,19 @@ func TestDetectRenames(t *testing.T) {
 		require.Equal(t, repository.FileActionDeleted, result[1].Action)
 		require.Equal(t, repository.FileActionCreated, result[2].Action)
 	})
+
+	t.Run("orphan cleanup deletions are excluded from rename detection", func(t *testing.T) {
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "dashboard.json",
+				Existing:      &provisioning.ResourceListItem{Hash: "abc123"},
+				OrphanCleanup: true},
+			{Action: repository.FileActionCreated, Path: "new-location/dashboard.json", Hash: "abc123"},
+		}
+
+		result := DetectRenames(changes)
+		require.Len(t, result, 2, "orphan delete should not be consumed as rename")
+		require.Equal(t, repository.FileActionDeleted, result[0].Action)
+		require.True(t, result[0].OrphanCleanup)
+		require.Equal(t, repository.FileActionCreated, result[1].Action)
+	})
 }
