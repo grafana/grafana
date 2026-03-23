@@ -4,12 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // TestIntegrationProvisioning_FullSync_MetadataNameChange verifies that when a
@@ -54,8 +56,8 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 	// The old dashboard should be deleted — no orphan left behind.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "name-change-full-001", metav1.GetOptions{})
-		assert.Error(c, err, "old dashboard should have been deleted")
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "old dashboard should be cleaned up")
+		assert.True(c, apierrors.IsNotFound(err), "old dashboard should be NotFound, got: %v", err)
+	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "old dashboard should be deleted after name change")
 
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 }
@@ -94,7 +96,7 @@ func TestIntegrationProvisioning_FullSync_ChainedNameChanges(t *testing.T) {
 	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "chained-v1", metav1.GetOptions{})
-		assert.Error(c, err, "v1 should be deleted")
+		assert.True(c, apierrors.IsNotFound(err), "v1 should be NotFound, got: %v", err)
 	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 
@@ -115,7 +117,7 @@ func TestIntegrationProvisioning_FullSync_ChainedNameChanges(t *testing.T) {
 	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "chained-v2", metav1.GetOptions{})
-		assert.Error(c, err, "v2 should be deleted")
+		assert.True(c, apierrors.IsNotFound(err), "v2 should be NotFound, got: %v", err)
 	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 }
@@ -161,9 +163,9 @@ func TestIntegrationProvisioning_FullSync_MultipleFilesNameChange(t *testing.T) 
 	// Old dashboards should be deleted.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "multi-a", metav1.GetOptions{})
-		assert.Error(c, err, "dashboard A should be deleted")
+		assert.True(c, apierrors.IsNotFound(err), "dashboard A should be NotFound, got: %v", err)
 		_, err = helper.DashboardsV1.Resource.Get(ctx, "multi-b", metav1.GetOptions{})
-		assert.Error(c, err, "dashboard B should be deleted")
+		assert.True(c, apierrors.IsNotFound(err), "dashboard B should be NotFound, got: %v", err)
 	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
 
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)

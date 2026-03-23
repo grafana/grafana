@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -56,8 +57,8 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 	// The old dashboard should be deleted — no orphan left behind.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "name-change-incr-001", metav1.GetOptions{})
-		assert.Error(c, err, "old dashboard should have been deleted")
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "old dashboard should be cleaned up")
+		assert.True(c, apierrors.IsNotFound(err), "old dashboard should be NotFound, got: %v", err)
+	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "old dashboard should be deleted after name change")
 
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 }
