@@ -237,6 +237,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 			removeSpan.End()
 		case repository.FileActionRenamed:
+			resultBuilder.WithPreviousPath(change.PreviousPath)
 			if safepath.IsDir(change.Path) {
 				renameFolderCtx, renameFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_folder_path")
 				oldFolderID, err := repositoryResources.RenameFolderPath(renameFolderCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)

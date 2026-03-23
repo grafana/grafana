@@ -268,13 +268,14 @@ func TestIncrementalSync(t *testing.T) {
 				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old.json", "old-ref", "dashboards/new.json", "new-ref").
 					Return("renamed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
-				progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
-					"renamed-dashboard",
-					"dashboards",
-					"Dashboard",
-				).WithPath("dashboards/new.json").
-					WithAction(repository.FileActionRenamed).
-					Build()).Return()
+			progress.On("Record", mock.Anything, jobs.NewGroupKindResult(
+				"renamed-dashboard",
+				"dashboards",
+				"Dashboard",
+			).WithPath("dashboards/new.json").
+				WithPreviousPath("dashboards/old.json").
+				WithAction(repository.FileActionRenamed).
+				Build()).Return()
 
 				progress.On("TooManyErrors").Return(nil)
 			},

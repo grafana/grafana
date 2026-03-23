@@ -610,19 +610,25 @@ func TestJobProgressRecorderHasChildPathFailedUpdate(t *testing.T) {
 
 	// Failed renames are tracked as update failures — a rename moves a child,
 	// so if it fails the child stays under the old folder.
+	// Cross-folder rename: source is oldfolder/, destination is newfolder/.
+	// Both paths must be tracked so the old folder is not deleted prematurely.
 	recorder.Record(ctx, NewResourceResult().
-		WithPath("renamed/old-dash.json").
+		WithPath("newfolder/old-dash.json").
+		WithPreviousPath("oldfolder/old-dash.json").
 		WithAction(repository.FileActionRenamed).
 		WithError(assert.AnError).
 		Build())
-	assert.True(t, recorder.HasChildPathFailedUpdate("renamed/"), "failed renames must be tracked as update failures")
+	assert.True(t, recorder.HasChildPathFailedUpdate("oldfolder/"), "failed renames must protect the source folder")
+	assert.True(t, recorder.HasChildPathFailedUpdate("newfolder/"), "failed renames must also protect the destination folder")
 
 	recorder.Record(ctx, NewResourceResult().
-		WithPath("rename-warn/panel.json").
+		WithPath("new-warn/panel.json").
+		WithPreviousPath("old-warn/panel.json").
 		WithAction(repository.FileActionRenamed).
 		WithWarning(errors.New("rename conflict")).
 		Build())
-	assert.True(t, recorder.HasChildPathFailedUpdate("rename-warn/"), "warning-level rename failures must be tracked")
+	assert.True(t, recorder.HasChildPathFailedUpdate("old-warn/"), "warning-level rename failures must protect the source folder")
+	assert.True(t, recorder.HasChildPathFailedUpdate("new-warn/"), "warning-level rename failures must protect the destination folder")
 
 	// Empty recorder should always return false
 	emptyRecorder := newJobProgressRecorder(mockProgressFn, nil, "").(*jobProgressRecorder)
