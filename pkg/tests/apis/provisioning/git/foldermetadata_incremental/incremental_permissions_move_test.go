@@ -1,4 +1,4 @@
-package git
+package foldermetadataincremental
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -23,12 +24,12 @@ import (
 func TestIntegrationProvisioning_IncrementalSync_FolderMovePreservesPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repoName = "incr-move-perms"
 
-	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"teamA/_folder.json": folderMetadataJSON("team-a-uid", "Team A"),
 		"teamB/_folder.json": folderMetadataJSON("team-b-uid", "Team B"),
 	})
@@ -114,14 +115,14 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePreservesPermissions(
 func TestIntegrationProvisioning_IncrementalSync_FolderMoveDoesNotPreservePermissionsForLegacyFolder(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repoName = "incr-move-legacy-perms"
 
 	// Parent has stable metadata; the folder being moved does not.
 	// plain has no _folder.json, so syncs will warn about missing metadata.
-	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"parent/_folder.json": folderMetadataJSON("parent-uid", "Parent"),
 		"plain/.keep":         {},
 	})
@@ -191,14 +192,14 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMoveDoesNotPreservePermis
 func TestIntegrationProvisioning_IncrementalSync_NestedFolderMovePreservesPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repoName = "incr-move-nested-perms"
 
 	// Build root → child → grandchild; all have metadata so UIDs are stable.
 	// destination also carries _folder.json so it doesn't trigger a missing-metadata warning.
-	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"root/_folder.json":                  folderMetadataJSON("root-uid", "Root"),
 		"root/child/_folder.json":            folderMetadataJSON("child-uid", "Child"),
 		"root/child/grandchild/_folder.json": folderMetadataJSON("grandchild-uid", "Grandchild"),
@@ -255,12 +256,12 @@ func TestIntegrationProvisioning_IncrementalSync_NestedFolderMovePreservesPermis
 func TestIntegrationProvisioning_IncrementalSync_RootToLeafMovePreservesPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repoName = "incr-move-root-to-leaf"
 
-	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"top/_folder.json":             folderMetadataJSON("top-uid", "Top"),
 		"container/_folder.json":       folderMetadataJSON("container-uid", "Container"),
 		"container/inner/_folder.json": folderMetadataJSON("inner-uid", "Inner"),
@@ -314,12 +315,12 @@ func TestIntegrationProvisioning_IncrementalSync_RootToLeafMovePreservesPermissi
 func TestIntegrationProvisioning_IncrementalSync_LeafToRootMovePreservesPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repoName = "incr-move-leaf-to-root"
 
-	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"parent/_folder.json":           folderMetadataJSON("parent-uid", "Parent"),
 		"parent/deep/_folder.json":      folderMetadataJSON("deep-uid", "Deep"),
 		"parent/deep/leaf/_folder.json": folderMetadataJSON("leaf-uid", "Leaf"),
@@ -373,12 +374,12 @@ func TestIntegrationProvisioning_IncrementalSync_LeafToRootMovePreservesPermissi
 func TestIntegrationProvisioning_IncrementalSync_MetadataFolderMovedUnderLegacyPreservesPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 	ctx := context.Background()
 
 	const repoName = "incr-move-meta-under-legacy"
 
-	_, local := helper.createGitRepo(t, repoName, map[string][]byte{
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"child-with-meta/_folder.json": folderMetadataJSON("child-meta-uid", "Child With Meta"),
 		"legacy-parent/.keep":          {},
 	})
@@ -436,7 +437,7 @@ func TestIntegrationProvisioning_IncrementalSync_MetadataFolderMovedUnderLegacyP
 // requireGitFolderState asserts that a folder tracked by the gitTestHelper has the expected
 // title, sourcePath annotation, and parent annotation. It polls until the state matches or the
 // timeout expires, so it is safe to call immediately after triggering an incremental sync.
-func requireGitFolderState(t *testing.T, h *gitTestHelper, ctx context.Context, folderUID, expectedTitle, expectedSourcePath, expectedParent string) {
+func requireGitFolderState(t *testing.T, h *gitcommon.GitTestHelper, ctx context.Context, folderUID, expectedTitle, expectedSourcePath, expectedParent string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		obj, err := h.FoldersV1.Resource.Get(ctx, folderUID, metav1.GetOptions{})
@@ -452,14 +453,14 @@ func requireGitFolderState(t *testing.T, h *gitTestHelper, ctx context.Context, 
 			"folder %s sourcePath", folderUID)
 		assert.Equal(c, expectedParent, annotations["grafana.app/folder"],
 			"folder %s parent", folderUID)
-	}, waitTimeoutDefault, waitIntervalDefault,
+	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault,
 		"folder %q should reach state: title=%q sourcePath=%q parent=%q",
 		folderUID, expectedTitle, expectedSourcePath, expectedParent)
 }
 
 // findGitFolderUIDBySourcePath returns the UID of the folder managed by repoName at sourcePath.
 // It polls until the folder appears or the timeout expires.
-func findGitFolderUIDBySourcePath(t *testing.T, h *gitTestHelper, ctx context.Context, repoName, sourcePath string) string {
+func findGitFolderUIDBySourcePath(t *testing.T, h *gitcommon.GitTestHelper, ctx context.Context, repoName, sourcePath string) string {
 	t.Helper()
 	var uid string
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -478,13 +479,13 @@ func findGitFolderUIDBySourcePath(t *testing.T, h *gitTestHelper, ctx context.Co
 			}
 		}
 		c.Errorf("no folder managed by %q with sourcePath %q found", repoName, sourcePath)
-	}, waitTimeoutDefault, waitIntervalDefault,
+	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault,
 		"expected folder with sourcePath %q for repo %q", sourcePath, repoName)
 	return uid
 }
 
 // assertGitFolderAbsent asserts that the folder with the given UID no longer exists.
-func assertGitFolderAbsent(t *testing.T, h *gitTestHelper, ctx context.Context, folderUID string) {
+func assertGitFolderAbsent(t *testing.T, h *gitcommon.GitTestHelper, ctx context.Context, folderUID string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := h.FoldersV1.Resource.Get(ctx, folderUID, metav1.GetOptions{})
@@ -494,7 +495,7 @@ func assertGitFolderAbsent(t *testing.T, h *gitTestHelper, ctx context.Context, 
 		}
 		assert.True(c, apierrors.IsNotFound(err),
 			"expected NotFound error for folder %q, got: %v", folderUID, err)
-	}, waitTimeoutDefault, waitIntervalDefault, "folder %q should be deleted", folderUID)
+	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "folder %q should be deleted", folderUID)
 }
 
 // snapshotFolderPermissions performs a single GET to /api/folders/{uid}/permissions and
