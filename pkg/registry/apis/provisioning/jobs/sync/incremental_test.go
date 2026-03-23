@@ -590,7 +590,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 						result.Kind() == "Dashboard" &&
 						result.Group() == "dashboards" &&
 						result.Error() != nil &&
-						result.Error().Error() == "writing resource from file dashboards/dash.json: replace failed"
+						result.Error().Error() == "replacing resource from file dashboards/dash.json: replace failed"
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
