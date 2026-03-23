@@ -385,6 +385,7 @@
         "group-by": "그룹화 기준",
         "group-title": "알림 설정",
         "mute-timings": "알림 비활성화 타이밍",
+        "notification-policy": "",
         "timing-options": "타이밍"
       },
       "pending-period": "보류 기간",
@@ -494,6 +495,15 @@
     },
     "alert-rule": {
       "term": "경고 규칙"
+    },
+    "alert-rule-drawer": {
+      "error-title": "",
+      "error-unexpected": "",
+      "error-unknown": "",
+      "success-message": "",
+      "success-title": "",
+      "validation-error-message": "",
+      "validation-error-title": ""
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -877,6 +887,8 @@
       "export-all": "모두 내보내기",
       "learn-more": "자세히 알아보기",
       "loading": "로딩 중...",
+      "optional": "",
+      "refresh": "",
       "search-by-matchers": "일치 조건으로 검색",
       "titles": {
         "notification-templates": "알림 템플릿"
@@ -1841,7 +1853,7 @@
       },
       "history-error": "상태 이력 불러오기 실패",
       "history-error-desc": "해당 인스턴스의 상태 전환 이력을 불러오지 못했습니다.",
-      "instance-timeline": "",
+      "instance-history-heading": "",
       "no-history": "최근 상태 변경 없음",
       "notifications-error": "",
       "notifications-error-desc": "",
@@ -1853,6 +1865,8 @@
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
+      "timeline-dot-all-failed": "",
+      "timeline-dot-some-failed": "",
       "timeline-empty": "",
       "timeline-failed": "",
       "timeline-filter-all": "",
@@ -1860,15 +1874,14 @@
       "timeline-filter-notifications": "",
       "timeline-filter-states": "",
       "timeline-loading": "",
-      "timeline-mixed-outcome": "",
-      "timeline-one-notification": "",
+      "timeline-notification-label": "",
+      "timeline-partial-failure": "",
       "timeline-status-firing": "",
       "timeline-status-resolved": "",
       "timeline-toggle-notifications": "",
       "view-notification-detail": "",
       "view-notification-tooltip": "",
-      "timeline-n-notifications_other": "",
-      "timeline-n-receivers_other": ""
+      "timeline-n-uniqueReceivers_other": ""
     },
     "instance-match": {
       "non-matching-labels": "일치하지 않는 레이블",
@@ -2010,6 +2023,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "",
+          "notification-policy": "",
           "select-contact-point": "연락처 선택",
           "use-notification-policy": "알림 정책 사용"
         }
@@ -3256,12 +3271,57 @@
       "title-the-selected-alertmanager-has-no-configuration": "선택한 Alertmanager에 대한 구성이 없습니다"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "",
+      "aria-label-threshold": "",
+      "aria-label-threshold-from": "",
+      "aria-label-threshold-to": "",
       "label-of-query": "쿼리의",
       "label-when": "다음과 같은 때",
       "label-when-query": "쿼리 시점"
     },
     "simpleCondition": {
       "alertCondition": "경고 조건"
+    },
+    "simplified": {
+      "condition": {
+        "title": ""
+      },
+      "continue-in-alerting": "",
+      "create": "",
+      "evaluation": {
+        "immediate-warning": ""
+      },
+      "notification": {
+        "contact-point-selected": "",
+        "description": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "manual-routing": {
+          "aria": ""
+        },
+        "policy-selected": "",
+        "recipient": {
+          "label": ""
+        },
+        "refresh-error": "",
+        "runbook-url": {
+          "aria-label": "",
+          "invalid-format": "",
+          "invalid-protocol": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "select-contact-point": "",
+        "summary": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "title": ""
+      },
+      "rule-definition": ""
     },
     "smart-alert-type-detector": {
       "data-source-managed": "관리되는 데이터 소스",
@@ -3472,7 +3532,9 @@
       "error-loading-rule": "규칙 로딩 중 오류 발생",
       "high-activity-labels": "",
       "instance-details-drawer": {
-        "instance-details": "인스턴스 세부 정보"
+        "declare-incident": "",
+        "instance-details": "인스턴스 세부 정보",
+        "silence-button": ""
       },
       "no-firing-or-pending-instances": "선택한 시간 범위에서 발생 또는 보류 중인 알림 인스턴스가 없습니다.",
       "no-instances-found": "규칙에 대한 알림 인스턴스를 찾을 수 없음: {{ruleUID}}",
@@ -5188,6 +5250,12 @@
       "ungroup-rows": "행 그룹 해제",
       "ungroup-tabs": "탭 그룹 해제"
     },
+    "code-pane": {
+      "collapse": "",
+      "expand": "",
+      "header": "",
+      "modal-title": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -6069,6 +6137,13 @@
       "save-json-to-file": "JSON을 파일에 저장",
       "see-docs": "프로비저닝에 대한 자세한 내용은 <2>문서</2>를 참고하세요."
     },
+    "schema-editor": {
+      "apply-button": "",
+      "apply-button-disabled-tooltip": "",
+      "apply-button-disabled-tooltip-yaml": "",
+      "apply-error-title": "",
+      "undo-title": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6083,6 +6158,10 @@
       "dashboard-options": {
         "title": "옵션",
         "tooltip": "대시보드 옵션"
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
       },
       "export": {
         "title": "내보내기"
@@ -6426,11 +6505,14 @@
     "browse-plugins": "플러그인 찾아보기",
     "card": {
       "customize-with-assistant-button": "",
+      "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "데이터 소스 제공됨",
       "details-tooltip": "세부 정보",
       "no-preview": "",
-      "use-dashboard-button": "대시보드 사용",
-      "view-template-button": ""
+      "view-dashboard-button": "",
+      "view-dashboard-button-label": "",
+      "view-template-button": "",
+      "view-template-button-label": ""
     },
     "community-empty-title": "커뮤니티 대시보드를 찾을 수 없습니다",
     "community-empty-title-with-datasource": "{{datasourceType}} 커뮤니티 대시보드를 찾을 수 없습니다",
@@ -6513,6 +6595,9 @@
       "label-data-source": "데이터 소스",
       "label-use-static-key-dimensions": "고정 키 차원 사용",
       "name-allow-custom-values": "사용자 지정 값 허용"
+    },
+    "add-filters": {
+      "label": ""
     },
     "add-link": {
       "inline-instance-name": "",
@@ -7544,6 +7629,11 @@
   "dashboard-scene-help-wizard": {
     "support-bundle": "<1>지원 번들 섹션</1>에서 Grafana 인스턴스 및 구성된 데이터 소스에 대한 정보가 포함된 지원 번들을 검색할 수도 있습니다."
   },
+  "dashboard-schema-editor": {
+    "format-label": "",
+    "json-disabled-tooltip": "",
+    "yaml-disabled-tooltip": ""
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "주석"
@@ -7574,6 +7664,8 @@
     },
     "json-editor": {
       "save-button": "변경 사항 저장",
+      "save-button-disabled-tooltip": "",
+      "save-button-disabled-tooltip-yaml": "",
       "subtitle": "아래의 JSON 모델은 대시보드를 정의하는 데이터 구조입니다. 여기에는 대시보드 설정, 패널 설정, 레이아웃, 쿼리 등이 포함됩니다.",
       "title": "JSON 모델"
     },
@@ -8851,9 +8943,6 @@
     "data-links-actions-menu": "",
     "description-min-height": "행 최소 높이(가로 방향)",
     "description-min-width": "열 최소 너비(세로 방향)",
-    "description-neutral": "'최소'를 중립점으로 사용하려면 비워둡니다",
-    "description-show-threshold-labels": "게이지 막대 주변에 임계값 렌더링",
-    "description-show-threshold-markers": "임계값을 바깥쪽 막대로 렌더링",
     "gauge-size-options": {
       "label-auto": "자동",
       "label-manual": "수동"
@@ -8861,11 +8950,7 @@
     "name-gauge-size": "게이지 크기",
     "name-min-height": "최소 높이",
     "name-min-width": "최소 너비",
-    "name-neutral": "중간임",
-    "name-show-threshold-labels": "임계값 레이블 표시",
-    "name-show-threshold-markers": "임계값 마커 표시",
     "neutral": "중간 {{value}}",
-    "placeholder-neutral": "자동",
     "presets": {
       "circle": "",
       "circle_desc": "",
@@ -8882,8 +8967,7 @@
     },
     "suggestions": {
       "arc": "게이지",
-      "circular": "원형 게이지",
-      "no-thresholds": "게이지 - 임계값 없음"
+      "circular": "원형 게이지"
     },
     "threshold": "임계값 {{value}}"
   },
@@ -10272,11 +10356,14 @@
       "remove-button": "{{children}} 제거"
     },
     "viz-legend": {
+      "all-series-selected": "",
       "clear-filters": "",
+      "color-picker": "",
       "faceted-by-labels": "",
       "faceted-by-name": "",
       "faceted-deselect-all": "",
       "faceted-select-all": "",
+      "only-this-series-selected": "",
       "pin-filter": "",
       "right-axis-indicator": "(오른쪽 y축)",
       "series-visibility": "",
@@ -10871,6 +10958,7 @@
       "collapse": "사이드바 접기",
       "expand": "사이드바 펼치기",
       "label-title": "로그 줄의 {{percentage}}%에서 {{fieldName}} 필드가 표시됩니다",
+      "log-level": "",
       "placeholder-search-fields-by-name": "이름으로 필드 검색",
       "title-drag-and-drop-to-reorder": "드래그 앤 드롭으로 순서 변경"
     },
@@ -11903,8 +11991,9 @@
       "upgrade-tooltip": "업그레이드하여 더 많은 사용자 추가"
     },
     "item": {
-      "add-bookmark": "",
-      "remove-bookmark": ""
+      "bookmark": {
+        "tooltip": ""
+      }
     },
     "kiosk": {
       "tv-alert": "키오스크 모드를 종료하려면 ESC 키를 누르세요."
@@ -13747,6 +13836,7 @@
     "sidebar": {
       "add-below": "",
       "add-expression": "",
+      "add-expression-disabled": "",
       "add-query": "",
       "add-query-or-expression": "",
       "add-saved-query": "",

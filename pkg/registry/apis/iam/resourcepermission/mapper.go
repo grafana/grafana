@@ -112,23 +112,59 @@ func (m *MappersRegistry) RegisterMapper(gr schema.GroupResource, mapper Mapper,
 	m.reverse[prefix] = gr
 }
 
+// findGroupKey returns the registry key for gr.Group using exact match first,
+// then wildcard (*.<suffix>) match. A group starting with "*" is never a valid
+// input (prevents matching a wildcard key as-is). Multi-segment prefixes
+// (e.g. "foo.loki.datasource.grafana.app") do not match "*.datasource.grafana.app".
+func (m *MappersRegistry) findGroupKey(gr schema.GroupResource) (schema.GroupResource, bool) {
+	if strings.HasPrefix(gr.Group, "*") {
+		return schema.GroupResource{}, false
+	}
+	// Exact match
+	key := schema.GroupResource{Group: gr.Group, Resource: gr.Resource}
+	if _, ok := m.entries[key]; ok {
+		return key, true
+	}
+	// Wildcard match: find a registered key of the form *.<suffix>/<resource>
+	for k := range m.entries {
+		if k.Resource != gr.Resource {
+			continue
+		}
+		if !strings.HasPrefix(k.Group, "*.") {
+			continue
+		}
+		prefix, ok := strings.CutSuffix(gr.Group, k.Group[1:]) // e.g. "loki.datasource.grafana.app" -> "loki"
+		if !ok || prefix == "" || strings.Contains(prefix, ".") {
+			continue
+		}
+		return k, true
+	}
+	return schema.GroupResource{}, false
+}
+
 // Get returns the mapper for the given GroupResource regardless of enabled state.
 // Use this when reading or writing existing data - the mapper provides the RBAC translation
 // even if the feature is currently disabled (to preserve existing permissions).
+// Wildcard group keys (e.g. "*.datasource.grafana.app") are resolved transparently.
 func (m *MappersRegistry) Get(gr schema.GroupResource) (Mapper, bool) {
-	e, ok := m.entries[gr]
+	key, ok := m.findGroupKey(gr)
 	if !ok {
 		return nil, false
 	}
-	return e.mapper, true
+	return m.entries[key].mapper, true
 }
 
 // IsEnabled reports whether the mapper for the given GroupResource is registered and enabled.
 // Use this for admission control (create/update validation) to gate whether new permissions
 // can be created for this resource type based on feature flags or licensing.
+// Wildcard group keys (e.g. "*.datasource.grafana.app") are resolved transparently.
 func (m *MappersRegistry) IsEnabled(gr schema.GroupResource) bool {
-	e, ok := m.entries[gr]
-	return ok && (e.enabled == nil || e.enabled())
+	key, ok := m.findGroupKey(gr)
+	if !ok {
+		return false
+	}
+	e := m.entries[key]
+	return e.enabled == nil || e.enabled()
 }
 
 // ParseScope parses an RBAC scope string (e.g., "folders:uid:abc") into a groupResourceName.
@@ -144,7 +180,16 @@ func (m *MappersRegistry) ParseScope(scope string) (*groupResourceName, error) {
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", errUnknownGroupResource, parts[0])
 	}
-	return &groupResourceName{Group: gr.Group, Resource: gr.Resource, Name: parts[2]}, nil
+	group := gr.Group
+
+	// FIXME: This is a hack to support wildcard entries, since we have no way to know
+	// the exact concrete group from just the RBAC scope prefix
+	// (e.g., "datasources" -> could be loki, tempo, etc.).
+	// Return "unknown.<suffix>" as a placeholder.
+	if strings.HasPrefix(group, "*.") {
+		group = "unknown" + group[1:] // e.g., "unknown.datasource.grafana.app"
+	}
+	return &groupResourceName{Group: group, Resource: gr.Resource, Name: parts[2]}, nil
 }
 
 // EnabledActionSets returns the action sets for all currently-enabled mappers.
