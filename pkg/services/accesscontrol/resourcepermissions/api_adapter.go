@@ -20,6 +20,7 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -86,6 +87,23 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 		a.logger.Warn("Failed to get provisioned permissions from legacy API", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
 	} else {
 		dto = append(dto, provisionedDTO...)
+	}
+
+	// Add default Admin role when access control enforcement is disabled
+	// This maintains parity with the legacy API behavior
+	if a.service.options.Assignments.BuiltInRoles && !a.service.license.FeatureEnabled("accesscontrol.enforcement") {
+		permission := a.service.MapActions(accesscontrol.ResourcePermission{
+			Actions: a.service.actions,
+		})
+		if permission != "" {
+			dto = append(dto, resourcePermissionDTO{
+				BuiltInRole: string(org.RoleAdmin),
+				Actions:     a.service.actions,
+				Permission:  permission,
+				IsManaged:   false,
+				IsInherited: false,
+			})
+		}
 	}
 
 	return dto, nil
@@ -164,23 +182,6 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePerm
 		}
 
 		dto = append(dto, permDTO)
-	}
-
-	// Add default Admin role when access control enforcement is disabled
-	// This maintains parity with the legacy API behavior
-	if a.service.options.Assignments.BuiltInRoles && !a.service.license.FeatureEnabled("accesscontrol.enforcement") {
-		permission := a.service.MapActions(accesscontrol.ResourcePermission{
-			Actions: a.service.actions,
-		})
-		if permission != "" {
-			dto = append(dto, resourcePermissionDTO{
-				BuiltInRole: string(org.RoleAdmin),
-				Actions:     a.service.actions,
-				Permission:  permission,
-				IsManaged:   false,
-				IsInherited: isInherited,
-			})
-		}
 	}
 
 	return dto, nil
@@ -312,6 +313,22 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 	}
 	orgID := namespaceInfo.OrgID
 
+	var inheritedScopes []string
+	if a.service.options.InheritedScopesSolver != nil {
+		var err error
+		inheritedScopes, err = a.service.options.InheritedScopesSolver(ctx, orgID, resourceID)
+		if err != nil {
+			a.logger.Warn("Failed to get inherited scopes for provisioned permissions", "error", err, "resourceID", resourceID)
+			inheritedScopes = nil
+		}
+	}
+
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		a.logger.Warn("Failed to get requester for provisioned permissions", "error", err)
+		requester = nil
+	}
+
 	legacyPermissions, err := a.service.store.GetResourcePermissions(ctx, orgID, GetResourcePermissionsQuery{
 		Actions:              a.service.actions,
 		Resource:             a.service.options.Resource,
@@ -319,23 +336,17 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 		ResourceAttribute:    a.service.options.ResourceAttribute,
 		OnlyManaged:          false,
 		ExcludeManaged:       true, // SQL-level filter: exclude "managed:" roles to get only provisioned
+		InheritedScopes:      inheritedScopes,
 		EnforceAccessControl: false,
-		User:                 nil,
+		User:                 requester,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get legacy permissions: %w", err)
 	}
 
-	var provisionedPermissions []accesscontrol.ResourcePermission
-	for _, perm := range legacyPermissions {
-		if !perm.IsInherited {
-			provisionedPermissions = append(provisionedPermissions, perm)
-		}
-	}
-
 	// Convert to DTOs
-	dto := make(getResourcePermissionsResponse, 0, len(provisionedPermissions))
-	for _, p := range provisionedPermissions {
+	dto := make(getResourcePermissionsResponse, 0, len(legacyPermissions))
+	for _, p := range legacyPermissions {
 		if permission := a.service.MapActions(p); permission != "" {
 			teamAvatarUrl := ""
 			if p.TeamID != 0 {
@@ -357,7 +368,7 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 				Actions:          p.Actions,
 				Permission:       permission,
 				IsManaged:        false,
-				IsInherited:      false,
+				IsInherited:      p.IsInherited,
 				IsServiceAccount: p.IsServiceAccount,
 			})
 		}
