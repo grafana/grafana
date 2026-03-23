@@ -703,7 +703,7 @@ func TestChanges_DuplicatePaths(t *testing.T) {
 		}
 	})
 
-	t.Run("_folder.json with multiple parent folders selects best-match by hash", func(t *testing.T) {
+	t.Run("_folder.json with multiple parent folders keeps best-match and deletes orphan", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "myfolder", Hash: "tree-hash", Blob: false},
 			{Path: "myfolder/_folder.json", Hash: "new-meta-hash", Blob: true},
@@ -718,16 +718,23 @@ func TestChanges_DuplicatePaths(t *testing.T) {
 		changes, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
 
-		// The best-match parent (current-uid) has a hash that matches the
-		// _folder.json, so no update should be emitted for the metadata change.
+		// No update for the best-match (hash matches _folder.json).
 		for _, c := range changes {
 			if c.Path == "myfolder/" && c.Action == repository.FileActionUpdated {
 				t.Fatalf("should not emit folder update when best-match hash equals _folder.json hash, got Existing=%s", c.Existing.Name)
 			}
 		}
+		// The orphan should be deleted.
+		var deleted []string
+		for _, c := range changes {
+			if c.Path == "myfolder/" && c.Action == repository.FileActionDeleted {
+				deleted = append(deleted, c.Existing.Name)
+			}
+		}
+		require.Equal(t, []string{"orphan-uid"}, deleted, "orphan folder should be deleted")
 	})
 
-	t.Run("_folder.json with multiple parent folders emits update targeting best-match", func(t *testing.T) {
+	t.Run("_folder.json with multiple parent folders emits update and deletes orphan", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "myfolder", Hash: "tree-hash", Blob: false},
 			{Path: "myfolder/_folder.json", Hash: "brand-new-hash", Blob: true},
@@ -743,14 +750,18 @@ func TestChanges_DuplicatePaths(t *testing.T) {
 		require.NoError(t, err)
 
 		var folderUpdate *ResourceFileChange
+		var deletedNames []string
 		for i := range changes {
 			if changes[i].Path == "myfolder/" && changes[i].Action == repository.FileActionUpdated {
 				folderUpdate = &changes[i]
-				break
+			}
+			if changes[i].Path == "myfolder/" && changes[i].Action == repository.FileActionDeleted {
+				deletedNames = append(deletedNames, changes[i].Existing.Name)
 			}
 		}
 		require.NotNil(t, folderUpdate, "should emit folder update when no parent hash matches")
 		require.Equal(t, "folder-a", folderUpdate.Existing.Name, "should fall back to first item when no hash matches")
+		require.Equal(t, []string{"folder-b"}, deletedNames, "non-primary folder should be deleted as orphan")
 	})
 }
 

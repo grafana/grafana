@@ -1682,3 +1682,32 @@ func newCompositeRepoWithConfig(t *testing.T) *compositeRepo {
 		MockReader:    mockReader,
 	}
 }
+
+func TestDeduplicateFolderDeletions(t *testing.T) {
+	t.Run("removes exact duplicates", func(t *testing.T) {
+		input := []folderDeletion{
+			{Path: "a/", UID: "uid-1"},
+			{Path: "b/", UID: "uid-2"},
+			{Path: "a/", UID: "uid-1"},
+		}
+		result := deduplicateFolderDeletions(input)
+		require.Equal(t, []folderDeletion{
+			{Path: "a/", UID: "uid-1"},
+			{Path: "b/", UID: "uid-2"},
+		}, result)
+	})
+
+	t.Run("keeps entries with same path but different UIDs", func(t *testing.T) {
+		input := []folderDeletion{
+			{Path: "a/", UID: "uid-1"},
+			{Path: "a/", UID: "uid-2"},
+		}
+		result := deduplicateFolderDeletions(input)
+		require.Equal(t, input, result)
+	})
+
+	t.Run("returns empty for empty input", func(t *testing.T) {
+		result := deduplicateFolderDeletions(nil)
+		require.Empty(t, result)
+	})
+}

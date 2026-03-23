@@ -94,6 +94,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		foldersToDelete = append(foldersToDelete, folderDeletion{Path: r.Path, UID: r.OldUID})
 	}
 
+	foldersToDelete = deduplicateFolderDeletions(foldersToDelete)
 	deleteFolders(ctx, foldersToDelete, repositoryResources, progress, tracer)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCleanup, time.Since(cleanupStart))
 
@@ -320,6 +321,24 @@ func actionPriority(action repository.FileAction) int {
 type folderDeletion struct {
 	Path string
 	UID  string
+}
+
+// deduplicateFolderDeletions removes duplicate (Path, UID) pairs from the
+// deletion list. Duplicates can occur when both findOrphanedFolders and
+// replaced-folder metadata cleanup produce entries for the same folder.
+func deduplicateFolderDeletions(deletions []folderDeletion) []folderDeletion {
+	type key struct{ path, uid string }
+	seen := make(map[key]bool, len(deletions))
+	result := make([]folderDeletion, 0, len(deletions))
+	for _, d := range deletions {
+		k := key{d.Path, d.UID}
+		if seen[k] {
+			continue
+		}
+		seen[k] = true
+		result = append(result, d)
+	}
+	return result
 }
 
 // findOrphanedFolders checks which affected folders no longer exist in git

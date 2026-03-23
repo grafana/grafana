@@ -200,7 +200,10 @@ func Changes(
 				// record an update to reconcile metadata (e.g. folder title).
 				// When multiple managed folders share the path (orphans), pick the
 				// one whose metadata hash matches the new _folder.json content so
-				// we target the correct UID.
+				// we target the correct UID, and delete the rest as orphans.
+				// This is the correct place for folder orphan cleanup because
+				// file.Hash (_folder.json blob hash) is directly comparable to
+				// managed folder hashes (sourceChecksum derived from MetadataHash).
 				parentDir := safepath.Dir(file.Path)
 				if !strings.HasSuffix(parentDir, "/") {
 					parentDir += "/"
@@ -212,6 +215,17 @@ func Changes(
 							best = p
 							break
 						}
+					}
+					for _, p := range parentItems {
+						if p == best {
+							continue
+						}
+						logger.Warn("deleting orphan folder at duplicate path", "path", p.Path, "name", p.Name)
+						changes = append(changes, ResourceFileChange{
+							Action:   repository.FileActionDeleted,
+							Path:     parentDir,
+							Existing: p,
+						})
 					}
 					if best.Hash != file.Hash {
 						changes = append(changes, ResourceFileChange{
@@ -306,6 +320,14 @@ func augmentChangesForFolderMetadata(
 
 	pathsWithChanges := make(map[string]bool, len(changes))
 	for _, c := range changes {
+		// Exclude DELETE actions: emitDirectChildrenChanges iterates source
+		// tree entries, so files deleted from source won't appear there.
+		// Only orphan-cleanup deletes (where the source file still exists)
+		// would land here, and those must not suppress the reparent UPDATE
+		// that the surviving primary needs when a parent folder UID changes.
+		if c.Action == repository.FileActionDeleted {
+			continue
+		}
 		pathsWithChanges[c.Path] = true
 	}
 
