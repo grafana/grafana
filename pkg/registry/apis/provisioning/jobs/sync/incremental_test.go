@@ -172,7 +172,7 @@ func TestIncrementalSync(t *testing.T) {
 
 				progress.On("HasDirPathFailedCreation", "unsupported/path/file.txt").Return(false)
 
-				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/path/", mock.Anything).
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/path/", "new-ref").
 					Return("test-folder", nil)
 
 				progress.On("Record", mock.Anything, jobs.NewFolderResult("unsupported/path/").
@@ -443,7 +443,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 
 				progress.On("HasDirPathFailedCreation", "unsupported/path/file.txt").Return(false)
 
-				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/path/", mock.Anything).
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/path/", "new-ref").
 					Return("", fmt.Errorf("failed to create folder"))
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
