@@ -19,7 +19,7 @@ import { getServiceDisplayName } from '../utils/service-name';
 
 export function _getTraceNameImpl(spans: TraceSpan[]) {
   // Use a span with no references to another span in given array
-  // prefering the span with the fewest references
+  // preferring the span with the fewest references
   // using start time as a tie breaker
   let candidateSpan: TraceSpan | undefined;
   const allIDs: Set<string> = new Set(spans.map(({ spanID }) => spanID));
