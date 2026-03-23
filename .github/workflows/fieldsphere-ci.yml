@@ -35,10 +35,7 @@ jobs:
             go.sum
             **/*.sum
       - name: Run Go unit tests
-        run: |
-          set -euo pipefail
-          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N1/1)"
-          CGO_ENABLED=0 go test -short -timeout=30m "${PACKAGES[@]}"
+        run: CGO_ENABLED=0 go test -short -timeout=40m ./...
 
   frontend:
     name: Frontend lint and typecheck
