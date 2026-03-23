@@ -793,6 +793,8 @@ type ElasticsearchDataQuery struct {
 	// TODO make this required and give it a default
 	// Query type - determines how the query field is interpreted
 	QueryType *string `json:"queryType,omitempty"`
+	// Raw DSL query
+	RawDSLQuery *string `json:"rawDSLQuery,omitempty"`
 	// Name of time field
 	TimeField *string `json:"timeField,omitempty"`
 	// Editor type

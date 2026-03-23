@@ -419,6 +419,10 @@ export interface ElasticsearchDataQuery extends common.DataQuery {
    */
   queryType?: string;
   /**
+   * Raw DSL query
+   */
+  rawDSLQuery?: string;
+  /**
    * Name of time field
    */
   timeField?: string;

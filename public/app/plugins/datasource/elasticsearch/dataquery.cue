@@ -33,6 +33,8 @@ composableKinds: DataQuery: {
 				query?: string
 				// Query type - determines how the query field is interpreted
 				queryType?: #QueryType
+				// Raw DSL query
+				rawDSLQuery?: string
 				// Name of time field
 				timeField?: string
 				// Editor type

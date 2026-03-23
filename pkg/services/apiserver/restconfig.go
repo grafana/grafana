@@ -50,6 +50,10 @@ func ProvideEventualRestConfigProvider() *eventualRestConfigProvider {
 	}
 }
 
+func ProvideDirectRestConfigProvider(p *eventualRestConfigProvider) DirectRestConfigProvider {
+	return p
+}
+
 var (
 	_ RestConfigProvider       = (*eventualRestConfigProvider)(nil)
 	_ DirectRestConfigProvider = (*eventualRestConfigProvider)(nil)
