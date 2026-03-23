@@ -197,6 +197,10 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	}
 
 	for _, childPath := range index.DirectChildrenOf(folderPath) {
+		// Skip children that already have a real diff entry, are going to be
+		// handled by their own metadata rewrite (e.g. folders with metadata changes),
+		// or were already emitted while expanding a deeper metadata change.
+		// That keeps the rewritten diff stable and avoids replaying the same child more than once.
 		if input.HadChangeOriginallyAt(childPath) || input.HasMetadataFolderAt(childPath) || diffTracker.HasGeneratedPath(childPath) {
 			continue
 		}
