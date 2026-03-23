@@ -3564,66 +3564,64 @@ func TestGitRepository_CompareFiles_Renamed(t *testing.T) {
 			wantChanges: []repository.VersionedFileChange{},
 		},
 		{
-			name: "tree entry rename decomposes into delete + create",
+			name: "tree entry rename emits FileActionRenamed with trailing slashes",
 			files: []nanogit.CommitFile{
 				{
 					Path:    "configs/new-dir",
 					OldPath: "configs/old-dir",
 					Status:  protocol.FileStatusRenamed,
 					Mode:    0o40000,
+					Type:    protocol.ObjectTypeTree,
 				},
 			},
 			gitPath: "configs",
 			wantChanges: []repository.VersionedFileChange{
 				{
-					Action:       repository.FileActionDeleted,
-					Path:         "old-dir",
-					PreviousPath: "old-dir",
+					Action:       repository.FileActionRenamed,
+					Path:         "new-dir/",
+					PreviousPath: "old-dir/",
 					Ref:          "feature",
 					PreviousRef:  "main",
-				},
-				{
-					Action: repository.FileActionCreated,
-					Path:   "new-dir",
-					Ref:    "feature",
 				},
 			},
 		},
 		{
-			name: "tree entry rename from outside to inside emits only create",
+			name: "tree entry rename from outside to inside emits only create with trailing slash",
 			files: []nanogit.CommitFile{
 				{
 					Path:    "configs/new-dir",
 					OldPath: "other/old-dir",
 					Status:  protocol.FileStatusRenamed,
 					Mode:    0o40000,
+					Type:    protocol.ObjectTypeTree,
 				},
 			},
 			gitPath: "configs",
 			wantChanges: []repository.VersionedFileChange{
 				{
 					Action: repository.FileActionCreated,
-					Path:   "new-dir",
+					Path:   "new-dir/",
 					Ref:    "feature",
 				},
 			},
 		},
 		{
-			name: "tree entry rename from inside to outside emits only delete",
+			name: "tree entry rename from inside to outside emits only delete with trailing slash",
 			files: []nanogit.CommitFile{
 				{
 					Path:    "other/new-dir",
 					OldPath: "configs/old-dir",
 					Status:  protocol.FileStatusRenamed,
 					Mode:    0o40000,
+					Type:    protocol.ObjectTypeTree,
 				},
 			},
 			gitPath: "configs",
 			wantChanges: []repository.VersionedFileChange{
 				{
 					Action:       repository.FileActionDeleted,
-					Path:         "old-dir",
-					PreviousPath: "old-dir",
+					Path:         "old-dir/",
+					PreviousPath: "old-dir/",
 					Ref:          "feature",
 					PreviousRef:  "main",
 				},
@@ -3637,6 +3635,7 @@ func TestGitRepository_CompareFiles_Renamed(t *testing.T) {
 					OldPath: "other/old-dir",
 					Status:  protocol.FileStatusRenamed,
 					Mode:    0o40000,
+					Type:    protocol.ObjectTypeTree,
 				},
 			},
 			gitPath:     "configs",

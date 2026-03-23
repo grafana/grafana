@@ -385,6 +385,7 @@
         "group-by": "Grouped by",
         "group-title": "Notification configuration",
         "mute-timings": "Mute timings",
+        "notification-policy": "Notification policy",
         "timing-options": "Timings"
       },
       "pending-period": "Pending period",
@@ -497,6 +498,15 @@
     },
     "alert-rule": {
       "term": "Alert rule"
+    },
+    "alert-rule-drawer": {
+      "error-title": "Failed to create alert rule",
+      "error-unexpected": "Received an unexpected response. Please try again.",
+      "error-unknown": "An unexpected error occurred.",
+      "success-message": "Your alert rule has been created successfully.",
+      "success-title": "Alert rule created",
+      "validation-error-message": "Please correct the errors in the form and try again.",
+      "validation-error-title": "Validation error"
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -880,6 +890,8 @@
       "export-all": "Export all",
       "learn-more": "Learn more",
       "loading": "Loading...",
+      "optional": "(optional)",
+      "refresh": "Refresh",
       "search-by-matchers": "Search by matchers",
       "titles": {
         "notification-templates": "Notification Templates"
@@ -2021,6 +2033,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "Contact point",
+          "notification-policy": "Notification policy",
           "select-contact-point": "Select contact point",
           "use-notification-policy": "Use notification policy"
         }
@@ -3276,12 +3290,57 @@
       "title-the-selected-alertmanager-has-no-configuration": "The selected Alertmanager has no configuration"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "Select reducer function",
+      "aria-label-threshold": "Threshold value",
+      "aria-label-threshold-from": "Threshold from value",
+      "aria-label-threshold-to": "Threshold to value",
       "label-of-query": "OF QUERY",
       "label-when": "WHEN",
       "label-when-query": "WHEN QUERY"
     },
     "simpleCondition": {
       "alertCondition": "Alert condition"
+    },
+    "simplified": {
+      "condition": {
+        "title": "Condition"
+      },
+      "continue-in-alerting": "Continue in Alerting",
+      "create": "Create",
+      "evaluation": {
+        "immediate-warning": "Immediate firing might lead to unnecessary alerts being sent for temporary issues"
+      },
+      "notification": {
+        "contact-point-selected": "Notifications for firing alerts are routed to a selected contact point.",
+        "description": {
+          "aria-label": "Description",
+          "label": "Description (optional)",
+          "placeholder": "Enter a description of what the alert rule does…"
+        },
+        "manual-routing": {
+          "aria": "Toggle manual routing"
+        },
+        "policy-selected": "Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.",
+        "recipient": {
+          "label": "Recipient"
+        },
+        "refresh-error": "Failed to refresh contact points",
+        "runbook-url": {
+          "aria-label": "Runbook URL",
+          "invalid-format": "Invalid URL format. Please enter a valid URL.",
+          "invalid-protocol": "Invalid URL protocol. Please use http or https.",
+          "label": "Runbook URL (optional)",
+          "placeholder": "Enter the webpage where you keep your runbook for the alert…"
+        },
+        "select-contact-point": "Select a contact point...",
+        "summary": {
+          "aria-label": "Summary",
+          "label": "Summary (optional)",
+          "placeholder": "Enter a summary of what happened and why…"
+        },
+        "title": "Notification"
+      },
+      "rule-definition": "Rule Definition"
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Data source-managed",
@@ -6570,6 +6629,9 @@
       "label-use-static-key-dimensions": "Use static key dimensions",
       "name-allow-custom-values": "Allow custom values"
     },
+    "add-filters": {
+      "label": "Filter and Group by"
+    },
     "add-link": {
       "inline-instance-name": "New link",
       "label-link": "Link",
@@ -8927,9 +8989,6 @@
     "data-links-actions-menu": "Open data links and actions menu",
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
-    "description-neutral": "Leave empty to use Min as neutral point",
-    "description-show-threshold-labels": "Render the threshold values around the gauge bar",
-    "description-show-threshold-markers": "Renders the thresholds as an outer bar",
     "gauge-size-options": {
       "label-auto": "Auto",
       "label-manual": "Manual"
@@ -8937,11 +8996,7 @@
     "name-gauge-size": "Gauge size",
     "name-min-height": "Min height",
     "name-min-width": "Min width",
-    "name-neutral": "Neutral",
-    "name-show-threshold-labels": "Show threshold labels",
-    "name-show-threshold-markers": "Show threshold markers",
     "neutral": "Neutral {{value}}",
-    "placeholder-neutral": "auto",
     "presets": {
       "circle": "Circle",
       "circle_desc": "plain round, from thresholds",
@@ -8958,8 +9013,7 @@
     },
     "suggestions": {
       "arc": "Gauge",
-      "circular": "Circular gauge",
-      "no-thresholds": "Gauge - no thresholds"
+      "circular": "Circular gauge"
     },
     "threshold": "Threshold {{value}}"
   },
@@ -10358,11 +10412,14 @@
       "remove-button": "Remove {{children}}"
     },
     "viz-legend": {
+      "all-series-selected": "All series selected",
       "clear-filters": "Clear all",
+      "color-picker": "Edit color for {{seriesName}}",
       "faceted-by-labels": "By labels",
       "faceted-by-name": "By name",
       "faceted-deselect-all": "Deselect all",
       "faceted-select-all": "Select all",
+      "only-this-series-selected": "Only {{label}} selected",
       "pin-filter": "Pin to sidebar",
       "right-axis-indicator": "(right y-axis)",
       "series-visibility": "Series visibility",
@@ -10962,6 +11019,7 @@
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
       "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
+      "log-level": "Log level",
       "placeholder-search-fields-by-name": "Search fields by name",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },
@@ -11997,8 +12055,9 @@
       "upgrade-tooltip": "Upgrade to add more users"
     },
     "item": {
-      "add-bookmark": "Add {{itemName}} to Bookmarks",
-      "remove-bookmark": "Remove {{itemName}} from Bookmarks"
+      "bookmark": {
+        "tooltip": "Bookmark {{itemName}}"
+      }
     },
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
@@ -13859,6 +13918,7 @@
     "sidebar": {
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
+      "add-expression-disabled": "Expressions are not supported with the Dashboard data source",
       "add-query": "Add query",
       "add-query-or-expression": "Add query or expression",
       "add-saved-query": "Add saved query",
