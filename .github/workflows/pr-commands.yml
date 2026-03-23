@@ -1,0 +1,22 @@
+# Fieldsphere fork: upstream PR automation used Vault and grafana/grafana-github-actions.
+# The real workflow lives in .github/workflows-upstream-archive/pr-commands.yml.
+# This stub preserves the same workflow name for branch protection and always succeeds.
+name: PR automation
+
+on:
+  pull_request_target:
+    types:
+      - labeled
+      - opened
+      - synchronize
+
+permissions: {}
+
+concurrency:
+  group: pr-commands-${{ github.event.number }}
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'PR automation is a no-op on this fork; see contribute/fieldsphere-fork-ci.md'

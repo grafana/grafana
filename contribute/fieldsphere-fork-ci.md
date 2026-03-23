@@ -15,8 +15,12 @@ GitHub runs `pull_request_target` workflows from the **target branch** (`main`),
 
 **Ways to get green:**
 
-1. **Preferred:** Merge the minimal-CI PR using an **admin bypass** of required checks (one-time). After that, `main` only loads [`.github/workflows/fieldsphere-ci.yml`](../.github/workflows/fieldsphere-ci.yml) and those legacy checks stop.
+1. **Preferred:** Merge the minimal-CI PR using an **admin bypass** of required checks (one-time). After that, `main` loads this fork’s files under [`.github/workflows/`](../.github/workflows/), including the no-op [`.github/workflows/pr-commands.yml`](../.github/workflows/pr-commands.yml) (replaces Grafana **PR automation**) and [`.github/workflows/fieldsphere-ci.yml`](../.github/workflows/fieldsphere-ci.yml).
 2. **Temporary:** In **Settings → Actions**, disable the specific legacy workflows you do not want, or remove them as required checks in branch protection until the merge lands.
+
+### PR automation (`pull_request_target`)
+
+Upstream **PR automation** calls internal Grafana Actions and fails on this fork. The real YAML is kept in [`.github/workflows-upstream-archive/pr-commands.yml`](../.github/workflows-upstream-archive/pr-commands.yml). Active [`.github/workflows/pr-commands.yml`](../.github/workflows/pr-commands.yml) is a **stub** with the same workflow name and triggers so the check succeeds once that file is on `main` (after merge). Until merge, `main` still runs the old workflow definition.
 
 ## Where the old workflows went
 
