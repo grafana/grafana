@@ -728,8 +728,8 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_DuplicateUID(t 
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "uid-a", "Folder A", "folderA", repo)
-	requireFolderState(t, helper, "uid-b", "Folder B", "folderB", repo)
+	common.RequireFolderState(t, helper.Folders, "uid-a", "Folder A", "folderA", repo)
+	common.RequireFolderState(t, helper.Folders, "uid-b", "Folder B", "folderB", repo)
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"folderA/dashboard.json": "uid-a",
 		"folderB/dashboard.json": "uid-b",
@@ -759,10 +759,10 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_DuplicateUID(t 
 	require.True(t, uidAMentioned, "at least one warning should mention the conflicting UID uid-a")
 
 	// Folder A must remain intact and unchanged.
-	requireFolderState(t, helper, "uid-a", "Folder A", "folderA", repo)
+	common.RequireFolderState(t, helper.Folders, "uid-a", "Folder A", "folderA", repo)
 
 	// Folder B must remain exactly as it was before the conflicting sync — still on uid-b and not renamed.
-	requireFolderState(t, helper, "uid-b", "Folder B", "folderB", repo)
+	common.RequireFolderState(t, helper.Folders, "uid-b", "Folder B", "folderB", repo)
 
 	// Both dashboards must remain parented under their original folders.
 	requireDashboardParents(t, helper, repo, map[string]string{
