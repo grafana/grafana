@@ -556,7 +556,6 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		repo.MockReader.On("Read", mock.Anything, "old/", "new-ref").
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound).Once()
 		expectFolderMetadataRead(repo, "new/", "new-ref", "new-uid")
-		expectFolderMetadataRead(repo, "new/", "new-ref", "new-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repoResources)
 		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff)
@@ -598,7 +597,6 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		}, nil).Once()
 		repo.MockReader.On("Read", mock.Anything, "old/", "new-ref").
 			Return(&repository.FileInfo{Path: "old/"}, nil).Once()
-		expectFolderMetadataRead(repo, "new/", "new-ref", "new-uid")
 		expectFolderMetadataRead(repo, "new/", "new-ref", "new-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repoResources)
@@ -692,8 +690,6 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		repo.MockReader.On("Read", mock.Anything, "old/", "new-ref").
 			Return(&repository.FileInfo{Path: "old/"}, nil).Once()
 		expectFolderMetadataRead(repo, "new/child/", "new-ref", "new-child-uid")
-		expectFolderMetadataRead(repo, "new/child/", "new-ref", "new-child-uid")
-		expectFolderMetadataRead(repo, "new/", "new-ref", "new-parent-uid")
 		expectFolderMetadataRead(repo, "new/", "new-ref", "new-parent-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repoResources)
@@ -764,7 +760,6 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		}, nil).Once()
 		repo.MockReader.On("Read", mock.Anything, "old/", "new-ref").
 			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound).Once()
-		expectFolderMetadataRead(repo, "new/", "new-ref", "stable-uid")
 		expectFolderMetadataRead(repo, "new/", "new-ref", "stable-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repoResources)

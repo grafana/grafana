@@ -263,18 +263,12 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 		return err
 	}
 
-	// Only schedule the old UID for deletion when the folder identity
-	// actually changes. An identity-preserving move (same UID at both
-	// paths) must not delete the UID — it still belongs to the
-	// destination folder.
+	// Schedule the old UID for potential deletion. ReplacedFolders()
+	// filters out UIDs that are still actively in use at the destination
+	// path (tracked via TrackActiveUID in rewriteCreatedOrUpdatedMetadataChange),
+	// so identity-preserving moves are safely excluded without a redundant read.
 	if replacement != nil {
-		newUID, err := d.resolveNewMetadataUID(ctx, change)
-		if err != nil {
-			return err
-		}
-		if newUID != existing.Name {
-			diffTracker.AppendReplaced(*replacement)
-		}
+		diffTracker.AppendReplaced(*replacement)
 	}
 
 	// Old directory is gone — no folder or child entries to re-sync.
@@ -313,20 +307,6 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 	}
 
 	return nil
-}
-
-// resolveNewMetadataUID reads the UID from the _folder.json at the rename's
-// destination path. Returns an error if the metadata cannot be read.
-func (d *folderMetadataIncrementalDiffBuilder) resolveNewMetadataUID(
-	ctx context.Context,
-	change repository.VersionedFileChange,
-) (string, error) {
-	folderPath := folderPathForMetadataChange(change.Path)
-	folder, _, err := resources.ReadFolderMetadata(ctx, d.repo, folderPath, change.Ref)
-	if err != nil {
-		return "", fmt.Errorf("read new folder metadata for identity check at %s: %w", folderPath, err)
-	}
-	return folder.GetName(), nil
 }
 
 // replacementForMetadataChange determines whether a metadata change at a folder
