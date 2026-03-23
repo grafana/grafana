@@ -186,13 +186,13 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
 		if err := env.Server.Run(); err != nil {
-			t.Log("Server exited uncleanly", "error", err)
+			fmt.Fprintf(os.Stderr, "Server exited uncleanly: %v\n", err)
 		}
 	}()
 
 	cleanup := func() {
 		if err := env.Server.Shutdown(ctx, "test cleanup"); err != nil {
-			t.Log("Timed out waiting on server to shut down")
+			fmt.Fprintf(os.Stderr, "Timed out waiting on server to shut down: %v\n", err)
 		}
 		if storage != nil {
 			storage.StopAsync()
@@ -237,8 +237,21 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 //nolint:gocyclo
 func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	t.Helper()
+	return createGrafDir(t, t.TempDir(), opts)
+}
 
-	tmpDir := t.TempDir()
+// CreateGrafDirShared is like CreateGrafDir but uses os.MkdirTemp instead of
+// t.TempDir() so the directory outlives the initializing test. The caller is
+// responsible for removing the returned directory.
+func CreateGrafDirShared(t *testing.T, opts GrafanaOpts) (string, string) {
+	t.Helper()
+	tmpDir, err := os.MkdirTemp("", "grafana-shared-*")
+	require.NoError(t, err)
+	return createGrafDir(t, tmpDir, opts)
+}
+
+func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, string) {
+	t.Helper()
 
 	// Search upwards in directory tree for project root
 	var rootDir string

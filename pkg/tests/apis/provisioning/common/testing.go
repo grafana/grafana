@@ -986,7 +986,7 @@ func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provis
 		DashboardsV2beta1:  dashboardsV2beta1Client,
 	}
 
-	h.CleanupAllResources(context.Background())
+	h.CleanupAllResources(t, context.Background())
 
 	return h
 }
@@ -1053,7 +1053,7 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 			return fmt.Errorf("deleteAndWait: list while polling: %w", err)
 		}
 		if len(remaining.Items) == 0 {
-			return firstErr
+			return nil
 		}
 		for _, item := range remaining.Items {
 			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
@@ -1072,41 +1072,24 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 	}
 }
 
-// CleanupConnections deletes all connections and waits until they are gone.
-func (h *ProvisioningTestHelper) CleanupConnections(ctx context.Context) {
-	if err := deleteAndWait(ctx, h.Connections.Resource, 10*time.Second); err != nil {
-		fmt.Fprintf(os.Stderr, "CleanupConnections: %v\n", err)
-	}
-}
-
-// CleanupRepositories deletes all repositories and waits until they are gone.
-func (h *ProvisioningTestHelper) CleanupRepositories(ctx context.Context) {
-	if err := deleteAndWait(ctx, h.Repositories.Resource, 10*time.Second); err != nil {
-		fmt.Fprintf(os.Stderr, "CleanupRepositories: %v\n", err)
-	}
-}
-
-// CleanupFolders deletes all folders and waits until they are gone.
-func (h *ProvisioningTestHelper) CleanupFolders(ctx context.Context) {
-	if err := deleteAndWait(ctx, h.Folders.Resource, 10*time.Second); err != nil {
-		fmt.Fprintf(os.Stderr, "CleanupFolders: %v\n", err)
-	}
-}
-
-// CleanupDashboards deletes all dashboards (via the v1 client, which covers v0+v1+v2).
-func (h *ProvisioningTestHelper) CleanupDashboards(ctx context.Context) {
-	if err := deleteAndWait(ctx, h.DashboardsV1.Resource, 10*time.Second); err != nil {
-		fmt.Fprintf(os.Stderr, "CleanupDashboards: %v\n", err)
-	}
-}
-
 // CleanupAllResources deletes resources in dependency order: repositories
 // reference connections, so they go first; dashboards/folders are cleaned last.
-func (h *ProvisioningTestHelper) CleanupAllResources(ctx context.Context) {
-	h.CleanupRepositories(ctx)
-	h.CleanupConnections(ctx)
-	h.CleanupDashboards(ctx)
-	h.CleanupFolders(ctx)
+// Failures are fatal because cleanup is the primary test-isolation mechanism.
+func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
+	t.Helper()
+	for _, c := range []struct {
+		name   string
+		client dynamic.ResourceInterface
+	}{
+		{"repositories", h.Repositories.Resource},
+		{"connections", h.Connections.Resource},
+		{"dashboards", h.DashboardsV1.Resource},
+		{"folders", h.Folders.Resource},
+	} {
+		if err := deleteAndWait(ctx, c.client, 10*time.Second); err != nil {
+			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
+		}
+	}
 }
 
 // SharedEnv manages a single shared Grafana server for a test package.
@@ -1144,7 +1127,7 @@ func (e *SharedEnv) GetHelper(t *testing.T) *ProvisioningTestHelper {
 func (e *SharedEnv) GetCleanHelper(t *testing.T) *ProvisioningTestHelper {
 	t.Helper()
 	h := e.GetHelper(t)
-	h.CleanupAllResources(context.Background())
+	h.CleanupAllResources(t, context.Background())
 	return h
 }
 

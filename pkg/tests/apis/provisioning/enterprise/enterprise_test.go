@@ -419,10 +419,9 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 
 		connectionName := created.GetName()
 		require.NotEmpty(t, connectionName, "connection name should not be empty")
-
-		defer func() {
+		t.Cleanup(func() {
 			_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
-		}()
+		})
 
 		output, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
 		require.NoError(t, err, "failed to read back GitLab connection")
@@ -490,10 +489,9 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 
 		connectionName := created.GetName()
 		require.NotEmpty(t, connectionName, "connection name should not be empty")
-
-		defer func() {
+		t.Cleanup(func() {
 			_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
-		}()
+		})
 
 		output, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
 		require.NoError(t, err, "failed to read back Bitbucket connection")

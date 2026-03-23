@@ -128,25 +128,37 @@ func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelp
 // (typically in TestMain after m.Run).
 func NewK8sTestHelperShared(t *testing.T, opts K8sTestHelperOpts) (*K8sTestHelper, func()) {
 	t.Helper()
-	opts = prepareK8sOpts(t, opts)
+	opts = prepareK8sOptsShared(t, opts)
+	grafDir := opts.Dir
 	listenerAddress, env, testDB, serverShutdown := testinfra.StartGrafanaEnvWithManualCleanup(t, opts.Dir, opts.DirPath)
 	shutdownFunc := func() {
 		serverShutdown()
 		if !opts.DisableDBCleanup {
 			testDB.Cleanup()
 		}
+		_ = os.RemoveAll(grafDir)
 	}
 	return buildK8sTestHelper(t, opts, listenerAddress, env), shutdownFunc
 }
 
 func prepareK8sOpts(t *testing.T, opts K8sTestHelperOpts) K8sTestHelperOpts {
 	t.Helper()
+	return fillK8sOpts(t, opts, testinfra.CreateGrafDir)
+}
+
+func prepareK8sOptsShared(t *testing.T, opts K8sTestHelperOpts) K8sTestHelperOpts {
+	t.Helper()
+	return fillK8sOpts(t, opts, testinfra.CreateGrafDirShared)
+}
+
+func fillK8sOpts(t *testing.T, opts K8sTestHelperOpts, createDir func(*testing.T, testinfra.GrafanaOpts) (string, string)) K8sTestHelperOpts {
+	t.Helper()
 	if opts.APIServerStorageType == "" && opts.GRPCServerAddress == "" {
 		opts.APIServerStorageType = options.StorageTypeUnified
 	}
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
 	if opts.Dir == "" && opts.DirPath == "" {
-		opts.Dir, opts.DirPath = testinfra.CreateGrafDir(t, opts.GrafanaOpts)
+		opts.Dir, opts.DirPath = createDir(t, opts.GrafanaOpts)
 	}
 	return opts
 }

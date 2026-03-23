@@ -23,7 +23,7 @@ where every test started its own server, which was the main source of slowness.
 |------|---------|
 | `testinfra/testinfra.go` | `StartGrafanaEnvWithManualCleanup` — returns a cleanup func instead of registering on `t.Cleanup` |
 | `apis/helper.go` | `NewK8sTestHelperShared` — wraps the manual-cleanup variant |
-| `common/testing.go` | `SharedEnv`, `RunGrafanaShared`, cleanup helpers (`CleanupConnections`, `CleanupAllResources`, etc.) |
+| `common/testing.go` | `SharedEnv`, `RunGrafanaShared`, `CleanupAllResources` |
 | `<pkg>/helpers_test.go` | Package-level `env` + `sharedHelper(t)` + `TestMain` |
 
 ### Pattern for `helpers_test.go`
@@ -33,10 +33,7 @@ var env = common.NewSharedEnv()  // pass GrafanaOptions here if needed
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
     t.Helper()
-    helper := env.GetHelper(t)
-
-    // Per-test cleanup — reset state so tests don't interfere
-    helper.CleanupConnections(context.Background())
+    helper := env.GetCleanHelper(t)  // cleans all resources, fails test on cleanup error
     helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
     return helper
 }
@@ -62,16 +59,11 @@ Each test function changes one line:
 
 ### Test Isolation
 
-`sharedHelper(t)` runs at the start of every test and performs cleanup.
-Available cleanup methods on `ProvisioningTestHelper`:
-
-- `CleanupConnections(ctx)` — deletes all connections
-- `CleanupRepositories(ctx)` — deletes all repositories
-- `CleanupFolders(ctx)` — deletes all folders
-- `CleanupDashboards(ctx)` — deletes all dashboards
-- `CleanupAllResources(ctx)` — all of the above in dependency order
-
-Pick the ones relevant to your package's resource types.
+`GetCleanHelper(t)` runs `CleanupAllResources(t, ctx)` at the start of every
+test, deleting resources in dependency order (repositories → connections →
+dashboards → folders). Cleanup failures are **fatal** to prevent cross-test
+contamination — if resources from a prior test can't be cleaned, the current
+test fails immediately rather than running against dirty state.
 
 ### Enterprise Tests
 
@@ -90,9 +82,7 @@ func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
     if !extensions.IsEnterprise {
         t.Skip("Skipping enterprise integration test")
     }
-    helper := env.GetHelper(t)
-    helper.CleanupConnections(context.Background())
-    return helper
+    return env.GetCleanHelper(t)
 }
 
 func TestMain(m *testing.M) {
