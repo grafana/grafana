@@ -25,7 +25,7 @@ type RepositoryResourcesFactory interface {
 type RepositoryResources interface {
 	// Folders
 	SetTree(tree FolderTree)
-	EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error)
+	EnsureFolderPathExist(ctx context.Context, filePath, ref string) (parent string, err error)
 	EnsureFolderExists(ctx context.Context, folder Folder, parentID string) error
 	EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error
 	RemoveFolderFromTree(folderID string)
