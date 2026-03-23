@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -43,16 +42,16 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "team-a-uid", "Team A Display", "teamA", repo)
-	requireFolderState(t, helper, "team-b-uid", "Team B Display", "teamB", repo)
+	common.RequireFolderState(t, helper.Folders, "team-a-uid", "Team A Display", "teamA", repo)
+	common.RequireFolderState(t, helper.Folders, "team-b-uid", "Team B Display", "teamB", repo)
 
 	teamCUID := findFolderUIDBySourcePath(t, helper, repo, "teamC")
 	teamDUID := findFolderUIDBySourcePath(t, helper, repo, "teamC/teamD")
 	require.NotEmpty(t, teamCUID)
 	require.NotEmpty(t, teamDUID)
 
-	requireFolderState(t, helper, teamCUID, "teamC", "teamC", repo)
-	requireFolderState(t, helper, teamDUID, "teamD", "teamC/teamD", teamCUID)
+	common.RequireFolderState(t, helper.Folders, teamCUID, "teamC", "teamC", repo)
+	common.RequireFolderState(t, helper.Folders, teamDUID, "teamD", "teamC/teamD", teamCUID)
 
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"teamA/dashboard.json": "team-a-uid",
@@ -72,16 +71,16 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "team-a-uid", "Team A Display", "teamA", repo)
+	// common.RequireFolderState(t, helper.Folders, "team-a-uid", "Team A Display", "teamA", repo)
 
 	newTeamCUID := findFolderUIDBySourcePath(t, helper, repo, "teamA/teamC")
 	require.NotEmpty(t, newTeamCUID)
-	requireFolderState(t, helper, "team-b-uid", "Team B Display", "teamA/teamC/teamB", newTeamCUID)
-	requireFolderState(t, helper, newTeamCUID, "teamC", "teamA/teamC", "team-a-uid")
+	common.RequireFolderState(t, helper.Folders, "team-b-uid", "Team B Display", "teamA/teamC/teamB", newTeamCUID)
+	common.RequireFolderState(t, helper.Folders, newTeamCUID, "teamC", "teamA/teamC", "team-a-uid")
 
 	newTeamDUID := findFolderUIDBySourcePath(t, helper, repo, "teamA/teamD")
 	require.NotEmpty(t, newTeamDUID)
-	requireFolderState(t, helper, newTeamDUID, "teamD", "teamA/teamD", "team-a-uid")
+	common.RequireFolderState(t, helper.Folders, newTeamDUID, "teamD", "teamA/teamD", "team-a-uid")
 
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"teamA/dashboard.json":             "team-a-uid",
@@ -89,20 +88,22 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 		"teamA/teamC/dashboard.json":       newTeamCUID,
 	})
 
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "teamA/dashboard.json"},
+		"WZ7AhQiVz": {Title: "Text options", SourcePath: "teamA/teamC/teamB/dashboard.json"},
+		"mIJjFy8Kz": {Title: "Timeline Demo", SourcePath: "teamA/teamC/dashboard.json"},
+	})
+
 	// Verify dashboards were updated in place (UIDs preserved, not recreated).
-	// teamA/dashboard.json didn't move, so use same key for before and after.
 	afterSnapshots := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
 		"teamA/dashboard.json",
 		"teamA/teamC/teamB/dashboard.json",
 		"teamA/teamC/dashboard.json",
 	})
-	// teamA/dashboard.json stayed at the same path
 	common.RequireDashboardsUpdatedInPlace(t, beforeSnapshots, afterSnapshots, []string{"teamA/dashboard.json"})
-	// teamB/dashboard.json moved to teamA/teamC/teamB/dashboard.json
 	require.Equal(t, beforeSnapshots["teamB/dashboard.json"].UID,
 		afterSnapshots["teamA/teamC/teamB/dashboard.json"].UID,
 		"moved dashboard (teamB -> teamA/teamC/teamB) should preserve UID")
-	// teamC/dashboard.json moved to teamA/teamC/dashboard.json
 	require.Equal(t, beforeSnapshots["teamC/dashboard.json"].UID,
 		afterSnapshots["teamA/teamC/dashboard.json"].UID,
 		"moved dashboard (teamC -> teamA/teamC) should preserve UID")
@@ -133,27 +134,33 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "root-uid", "Root", "root", repo)
-	requireFolderState(t, helper, "child-uid", "Child", "root/child", "root-uid")
+	common.RequireFolderState(t, helper.Folders, "root-uid", "Root", "root", repo)
+	common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "root/child", "root-uid")
 	grandUID := findFolderUIDBySourcePath(t, helper, repo, "root/child/grand")
 	require.NotEmpty(t, grandUID)
-	requireFolderState(t, helper, grandUID, "grand", "root/child/grand", "child-uid")
+	common.RequireFolderState(t, helper.Folders, grandUID, "grand", "root/child/grand", "child-uid")
 
 	moveInProvisioningPath(t, helper, "root/child", "other/child")
 	helper.SyncAndWait(t, repo, nil)
 
 	otherUID := findFolderUIDBySourcePath(t, helper, repo, "other")
 	require.NotEmpty(t, otherUID)
-	requireFolderState(t, helper, "root-uid", "Root", "root", repo)
-	requireFolderState(t, helper, "child-uid", "Child", "other/child", otherUID)
+	common.RequireFolderState(t, helper.Folders, "root-uid", "Root", "root", repo)
+	common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "other/child", otherUID)
 	newGrandUID := findFolderUIDBySourcePath(t, helper, repo, "other/child/grand")
 	require.NotEmpty(t, newGrandUID)
-	requireFolderState(t, helper, newGrandUID, "grand", "other/child/grand", "child-uid")
+	common.RequireFolderState(t, helper.Folders, newGrandUID, "grand", "other/child/grand", "child-uid")
 
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"root/dashboard.json":              "root-uid",
 		"other/child/dashboard.json":       "child-uid",
 		"other/child/grand/dashboard.json": newGrandUID,
+	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "root/dashboard.json"},
+		"WZ7AhQiVz": {Title: "Text options", SourcePath: "other/child/dashboard.json"},
+		"mIJjFy8Kz": {Title: "Timeline Demo", SourcePath: "other/child/grand/dashboard.json"},
 	})
 }
 
@@ -179,14 +186,14 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "meta-a-uid", "Meta A", "metaA", repo)
+	common.RequireFolderState(t, helper.Folders, "meta-a-uid", "Meta A", "metaA", repo)
 	plainBUID := findFolderUIDBySourcePath(t, helper, repo, "plainB")
 	require.NotEmpty(t, plainBUID)
 
 	moveInProvisioningPath(t, helper, "plainB", "metaA/plainB")
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "meta-a-uid", "Meta A", "metaA", repo)
+	common.RequireFolderState(t, helper.Folders, "meta-a-uid", "Meta A", "metaA", repo)
 	newPlainBUID := findFolderUIDBySourcePath(t, helper, repo, "metaA/plainB")
 	require.NotEmpty(t, newPlainBUID)
 	require.NotEqual(t, plainBUID, newPlainBUID, "plainB should get new UID without metadata")
@@ -195,6 +202,11 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"metaA/dashboard.json":        "meta-a-uid",
 		"metaA/plainB/dashboard.json": newPlainBUID,
+	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "metaA/dashboard.json"},
+		"WZ7AhQiVz": {Title: "Text options", SourcePath: "metaA/plainB/dashboard.json"},
 	})
 }
 
@@ -219,17 +231,21 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainPare
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
-	requireFolderState(t, helper, "child-uid", "Child", "parent/child", "parent-uid")
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "parent/child", "parent-uid")
 
 	moveInProvisioningPath(t, helper, "parent/child", "child")
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "child-uid", "Child", "child", repo)
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "child", repo)
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 	assertNoFolderAtPath(t, helper, repo, "parent/child")
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"child/dashboard.json": "child-uid",
+	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "child/dashboard.json"},
 	})
 }
 
@@ -255,8 +271,8 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t 
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "my-uid", "My Folder", "myfolder", repo)
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "myfolder", repo)
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"myfolder/dashboard.json": "my-uid",
 	})
@@ -266,11 +282,15 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t 
 	helper.SyncAndWait(t, repo, nil)
 
 	// Folder should preserve UID but now be nested under parent.
-	requireFolderState(t, helper, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 	assertNoFolderAtPath(t, helper, repo, "myfolder")
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"parent/myfolder/dashboard.json": "my-uid",
+	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "parent/myfolder/dashboard.json"},
 	})
 }
 
@@ -296,8 +316,8 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
-	requireFolderState(t, helper, "child-uid", "Child", "parent/child", "parent-uid")
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "parent/child", "parent-uid")
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"parent/child/dashboard.json": "child-uid",
 	})
@@ -307,11 +327,15 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 	helper.SyncAndWait(t, repo, nil)
 
 	// Child should preserve UID but now be at root (parent = repo).
-	requireFolderState(t, helper, "child-uid", "Child", "child", repo)
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "child", repo)
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 	assertNoFolderAtPath(t, helper, repo, "parent/child")
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"child/dashboard.json": "child-uid",
+	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "child/dashboard.json"},
 	})
 }
 
@@ -338,8 +362,8 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testi
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "my-uid", "My Folder", "myfolder", repo)
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "myfolder", repo)
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 
 	plainUID := findFolderUIDBySourcePath(t, helper, repo, "plain")
 	require.NotEmpty(t, plainUID)
@@ -364,7 +388,7 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testi
 	helper.SyncAndWait(t, repo, nil)
 
 	// Metadata-backed folder: UID preserved, generation proves in-place update.
-	requireFolderState(t, helper, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
 	newGen := common.GetFolderGeneration(t, helper, "my-uid")
 	require.Equal(t, initialGen+1, newGen, "generation should increment by exactly 1 (in-place update, not delete+create)")
 
@@ -428,9 +452,9 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToNested_PreservesGen
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "parent-a-uid", "Parent A", "parentA", repo)
-	requireFolderState(t, helper, "parent-b-uid", "Parent B", "parentB", repo)
-	requireFolderState(t, helper, "my-uid", "My Folder", "parentA/myfolder", "parent-a-uid")
+	common.RequireFolderState(t, helper.Folders, "parent-a-uid", "Parent A", "parentA", repo)
+	common.RequireFolderState(t, helper.Folders, "parent-b-uid", "Parent B", "parentB", repo)
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "parentA/myfolder", "parent-a-uid")
 
 	initialGen := common.GetFolderGeneration(t, helper, "my-uid")
 	require.Equal(t, int64(1), initialGen, "initial generation should be 1")
@@ -446,7 +470,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToNested_PreservesGen
 	moveInProvisioningPath(t, helper, "parentA/myfolder", "parentB/myfolder")
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "my-uid", "My Folder", "parentB/myfolder", "parent-b-uid")
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "parentB/myfolder", "parent-b-uid")
 	assertNoFolderAtPath(t, helper, repo, "parentA/myfolder")
 
 	newGen := common.GetFolderGeneration(t, helper, "my-uid")
@@ -489,8 +513,8 @@ func TestIntegrationProvisioning_FullSync_FolderMove_RootToNested_PreservesGener
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "my-uid", "My Folder", "myfolder", repo)
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "myfolder", repo)
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 
 	initialGen := common.GetFolderGeneration(t, helper, "my-uid")
 	require.Equal(t, int64(1), initialGen, "initial generation should be 1")
@@ -506,7 +530,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_RootToNested_PreservesGener
 	moveInProvisioningPath(t, helper, "myfolder", "parent/myfolder")
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
 	assertNoFolderAtPath(t, helper, repo, "myfolder")
 
 	newGen := common.GetFolderGeneration(t, helper, "my-uid")
@@ -549,8 +573,8 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToRoot_PreservesGener
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
-	requireFolderState(t, helper, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "parent/myfolder", "parent-uid")
 
 	initialGen := common.GetFolderGeneration(t, helper, "my-uid")
 	require.Equal(t, int64(1), initialGen, "initial generation should be 1")
@@ -566,8 +590,8 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToRoot_PreservesGener
 	moveInProvisioningPath(t, helper, "parent/myfolder", "myfolder")
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "my-uid", "My Folder", "myfolder", repo)
-	requireFolderState(t, helper, "parent-uid", "Parent", "parent", repo)
+	common.RequireFolderState(t, helper.Folders, "my-uid", "My Folder", "myfolder", repo)
+	common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
 	assertNoFolderAtPath(t, helper, repo, "parent/myfolder")
 
 	newGen := common.GetFolderGeneration(t, helper, "my-uid")
@@ -615,24 +639,24 @@ func TestIntegrationProvisioning_FullSync_FolderMoveUpdatesChildrenFolders(t *te
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "a-uid", "Folder A", "folderA", repo)
-	requireFolderState(t, helper, "b-uid", "Folder B", "folderA/folderB", "a-uid")
-	requireFolderState(t, helper, "c-uid", "Folder C", "folderA/folderB/folderC", "b-uid")
-	requireFolderState(t, helper, "target-uid", "Target", "target", repo)
+	common.RequireFolderState(t, helper.Folders, "a-uid", "Folder A", "folderA", repo)
+	common.RequireFolderState(t, helper.Folders, "b-uid", "Folder B", "folderA/folderB", "a-uid")
+	common.RequireFolderState(t, helper.Folders, "c-uid", "Folder C", "folderA/folderB/folderC", "b-uid")
+	common.RequireFolderState(t, helper.Folders, "target-uid", "Target", "target", repo)
 
 	// Move the intermediate folder B (with its subtree) out of A and into target.
 	moveInProvisioningPath(t, helper, "folderA/folderB", "target/folderB")
 	helper.SyncAndWait(t, repo, nil)
 
 	// Folder A stays in place, unaffected.
-	requireFolderState(t, helper, "a-uid", "Folder A", "folderA", repo)
+	common.RequireFolderState(t, helper.Folders, "a-uid", "Folder A", "folderA", repo)
 
 	// Folder B moved: sourcePath and parent annotation must reflect the new location.
-	requireFolderState(t, helper, "b-uid", "Folder B", "target/folderB", "target-uid")
+	common.RequireFolderState(t, helper.Folders, "b-uid", "Folder B", "target/folderB", "target-uid")
 
 	// Folder C (child of B): sourcePath must be updated, but parent annotation stays as b-uid
 	// because B kept its UID — no pointer is broken.
-	requireFolderState(t, helper, "c-uid", "Folder C", "target/folderB/folderC", "b-uid")
+	common.RequireFolderState(t, helper.Folders, "c-uid", "Folder C", "target/folderB/folderC", "b-uid")
 
 	// Old paths must be gone.
 	assertNoFolderAtPath(t, helper, repo, "folderA/folderB")
@@ -661,7 +685,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithUIDChange_NoGenerationPr
 
 	helper.SyncAndWait(t, repo, nil)
 
-	requireFolderState(t, helper, "original-uid", "My Folder", "myfolder", repo)
+	common.RequireFolderState(t, helper.Folders, "original-uid", "My Folder", "myfolder", repo)
 	require.Equal(t, int64(1), common.GetFolderGeneration(t, helper, "original-uid"), "initial generation should be 1")
 
 	// Move the folder directory to a new path AND replace the _folder.json with a different UID.
@@ -676,7 +700,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithUIDChange_NoGenerationPr
 	assertNoFolderByUID(t, helper, "original-uid")
 
 	// The new folder at the moved path must exist with the new UID, freshly created.
-	requireFolderState(t, helper, "new-uid", "My Folder", "newlocation", repo)
+	common.RequireFolderState(t, helper.Folders, "new-uid", "My Folder", "newlocation", repo)
 	require.Equal(t, int64(1), common.GetFolderGeneration(t, helper, "new-uid"),
 		"generation must be 1: folder was deleted and recreated, not updated in-place")
 }
@@ -775,24 +799,6 @@ func moveInProvisioningPath(t *testing.T, helper *common.ProvisioningTestHelper,
 	toPath := filepath.Join(helper.ProvisioningPath, to)
 	require.NoError(t, os.MkdirAll(filepath.Dir(toPath), 0o750), "create parent for move destination")
 	require.NoError(t, os.Rename(fromPath, toPath), "move %s to %s", from, to)
-}
-
-func requireFolderState(t *testing.T, helper *common.ProvisioningTestHelper, folderUID, expectedTitle, expectedSourcePath, expectedParent string) {
-	t.Helper()
-	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		obj, err := helper.Folders.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
-		if !assert.NoError(c, err, "failed to get folder %s", folderUID) {
-			return
-		}
-
-		title, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
-		assert.Equal(c, expectedTitle, title, "folder title")
-
-		annotations := obj.GetAnnotations()
-		assert.Equal(c, expectedSourcePath, annotations["grafana.app/sourcePath"], "source path")
-		assert.Equal(c, expectedParent, annotations["grafana.app/folder"], "parent folder")
-	}, 30*time.Second, 100*time.Millisecond,
-		"expected folder %q with title=%q sourcePath=%q parent=%q", folderUID, expectedTitle, expectedSourcePath, expectedParent)
 }
 
 func findFolderUIDBySourcePath(t *testing.T, helper *common.ProvisioningTestHelper, repoName, sourcePath string) string {

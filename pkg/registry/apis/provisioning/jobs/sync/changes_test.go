@@ -700,16 +700,18 @@ func TestCompare(t *testing.T) {
 
 			tt.setupMocks(repo, repoResources)
 
-			changes, missing, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
+			changes, missing, invalid, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
 				require.Nil(t, changes)
 				require.Nil(t, missing)
+				require.Nil(t, invalid)
 			} else {
 				require.NoError(t, err, tt.description)
 				require.Equal(t, tt.expectedChanges, changes, tt.description)
 				require.Equal(t, tt.expectedMissing, missing, tt.description)
+				require.Nil(t, invalid, tt.description)
 			}
 		})
 	}
@@ -737,8 +739,9 @@ func TestCompare_FolderMetadataFlagDisabled(t *testing.T) {
 		// it would call ReadFolderMetadata which calls repo.Read, and
 		// the mock would panic on unexpected call.
 
-		changes, _, err := Compare(context.Background(), repo, repoResources, "ref", false)
+		changes, _, invalid, err := Compare(context.Background(), repo, repoResources, "ref", false)
 		require.NoError(t, err)
+		require.Nil(t, invalid)
 
 		// No folder update should be emitted — the metadata processing is skipped.
 		for _, c := range changes {
@@ -747,6 +750,96 @@ func TestCompare_FolderMetadataFlagDisabled(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestCompare_InvalidFolderMetadataWarning(t *testing.T) {
+	tests := []struct {
+		name         string
+		metadataData []byte
+	}{
+		{
+			name:         "malformed json",
+			metadataData: []byte("not-json"),
+		},
+		{
+			name:         "missing metadata name",
+			metadataData: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"My Folder"}}`),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockRepository(t)
+			repoResources := resources.NewMockRepositoryResources(t)
+
+			source := []repository.FileTreeEntry{
+				{Path: "my-folder/", Hash: "folder-hash", Blob: false},
+				{Path: "my-folder/_folder.json", Hash: "new-metadata-hash", Blob: true},
+			}
+			target := &provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{
+						Path:     "my-folder/",
+						Hash:     "old-metadata-hash",
+						Resource: resources.FolderResource.Resource,
+						Group:    resources.FolderResource.Group,
+						Name:     "existing-uid",
+					},
+				},
+			}
+
+			repoResources.On("List", mock.Anything).Return(target, nil)
+			repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
+			repo.On("Read", mock.Anything, "my-folder/_folder.json", "current-ref").
+				Return(&repository.FileInfo{Data: tt.metadataData, Hash: "new-metadata-hash"}, nil)
+
+			changes, missing, invalid, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
+
+			require.NoError(t, err)
+			require.Empty(t, changes)
+			require.Empty(t, missing)
+			require.Len(t, invalid, 1)
+			require.ErrorIs(t, invalid[0], resources.ErrInvalidFolderMetadata)
+			require.Equal(t, "my-folder/", invalid[0].Path)
+			require.Equal(t, repository.FileActionUpdated, invalid[0].Action)
+		})
+	}
+}
+
+func TestCompare_InvalidCreatedFolderMetadataWarningPreservesFolderCreate(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+
+	source := []repository.FileTreeEntry{
+		{Path: "my-folder/", Hash: "folder-hash", Blob: false},
+		{Path: "my-folder/_folder.json", Hash: "new-metadata-hash", Blob: true},
+		{Path: "my-folder/dashboard.json", Hash: "dashboard-hash", Blob: true},
+	}
+	target := &provisioning.ResourceList{}
+
+	repoResources.On("List", mock.Anything).Return(target, nil)
+	repoResources.On("SetTree", mock.Anything).Return().Maybe()
+	repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
+	repo.On("Read", mock.Anything, "my-folder/_folder.json", "current-ref").
+		Return(&repository.FileInfo{
+			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"Broken Folder"}}`),
+			Hash: "new-metadata-hash",
+		}, nil)
+
+	changes, missing, invalid, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
+
+	require.NoError(t, err)
+	require.Empty(t, missing)
+	require.Len(t, invalid, 1)
+	require.ErrorIs(t, invalid[0], resources.ErrInvalidFolderMetadata)
+	require.Equal(t, repository.FileActionCreated, invalid[0].Action)
+
+	actionsByPath := make(map[string]repository.FileAction, len(changes))
+	for _, change := range changes {
+		actionsByPath[change.Path] = change.Action
+	}
+	require.Equal(t, repository.FileActionCreated, actionsByPath["my-folder/"])
+	require.Equal(t, repository.FileActionCreated, actionsByPath["my-folder/dashboard.json"])
 }
 
 func TestAugmentChangesForFolderMoves(t *testing.T) {
@@ -877,7 +970,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 		require.Len(t, result, 2)
 	})
 
-	t.Run("empty UID in metadata is skipped", func(t *testing.T) {
+	t.Run("invalid metadata leaves folder move as delete plus create", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"No UID"}}`)}, nil)
@@ -891,9 +984,12 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, result, 2)
 
+		paths := map[string]repository.FileAction{}
 		for _, c := range result {
-			require.NotEqual(t, repository.FileActionUpdated, c.Action, "no UPDATE should be emitted")
+			paths[c.Path] = c.Action
 		}
+		require.Equal(t, repository.FileActionDeleted, paths["old-folder/"])
+		require.Equal(t, repository.FileActionCreated, paths["new-folder/"])
 	})
 
 	t.Run("non-folder paths are ignored", func(t *testing.T) {
@@ -1010,7 +1106,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
@@ -1050,7 +1146,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Len(t, result, 1, "only the original folder update — no children emitted")
 		require.Equal(t, "my-folder/", result[0].Path)
@@ -1087,7 +1183,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
@@ -1133,7 +1229,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		count := 0
@@ -1160,7 +1256,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			{Action: repository.FileActionCreated, Path: "my-folder/dashboard.json"},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Equal(t, changes, result, "should return changes unchanged")
 	})
@@ -1184,7 +1280,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{} // no changes from Changes()
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		require.Len(t, result, 1)
@@ -1214,7 +1310,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{} // empty
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		require.Len(t, result, 3, "folder update + dashboard + child folder")
@@ -1246,7 +1342,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, nil)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, nil)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
@@ -1274,7 +1370,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Empty(t, result, "no changes expected when folder never had metadata")
 	})
@@ -1296,7 +1392,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Empty(t, result, "no changes expected when _folder.json still exists")
 	})
@@ -1320,7 +1416,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			}},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Equal(t, changes, result, "no additional changes expected when folder is entirely deleted")
 	})
@@ -1350,7 +1446,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		folderCount := 0
@@ -1389,7 +1485,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
