@@ -864,11 +864,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	queryHistoryAppInstaller, err := queryhistory2.RegisterAppInstaller(featureToggles, queryHistoryService, resourceClient, dualwriteService, sqlStore, userimplService, orgService)
+	queryhistoryAppInstaller, err := queryhistory2.RegisterAppInstaller(featureToggles, queryHistoryService, resourceClient, dualwriteService, sqlStore, userimplService, orgService)
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller, queryHistoryAppInstaller)
+	v2 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller, queryhistoryAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
@@ -1571,11 +1571,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	queryHistoryAppInstaller, err := queryhistory2.RegisterAppInstaller(featureToggles, queryHistoryService, resourceClient, dualwriteService, sqlStore, userimplService, orgService)
+	queryhistoryAppInstaller, err := queryhistory2.RegisterAppInstaller(featureToggles, queryHistoryService, resourceClient, dualwriteService, sqlStore, userimplService, orgService)
 	if err != nil {
 		return nil, err
 	}
-	v2 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller, queryHistoryAppInstaller)
+	v2 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller, queryhistoryAppInstaller)
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()

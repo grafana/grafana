@@ -67,108 +67,122 @@ func newQueryHistory(name, datasourceUID string, queries any) *unstructured.Unst
 func TestIntegrationQueryHistoryCRUD(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := newHelper(t, grafanarest.Mode5)
-	ctx := context.Background()
+	for _, mode := range []grafanarest.DualWriterMode{
+		grafanarest.Mode0,
+		grafanarest.Mode1,
+		grafanarest.Mode5,
+	} {
+		t.Run(fmt.Sprintf("mode:%d", mode), func(t *testing.T) {
+			helper := newHelper(t, mode)
+			ctx := context.Background()
 
-	adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User: helper.Org1.Admin,
-		GVR:  qhv0alpha1.QueryHistoryResourceInfo.GroupVersionResource(),
-	})
+			adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  qhv0alpha1.QueryHistoryResourceInfo.GroupVersionResource(),
+			})
 
-	t.Run("list is empty initially", func(t *testing.T) {
-		rsp, err := adminClient.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		require.Empty(t, rsp.Items)
-	})
+			t.Run("list is empty initially", func(t *testing.T) {
+				rsp, err := adminClient.Resource.List(ctx, metav1.ListOptions{})
+				require.NoError(t, err)
+				require.Empty(t, rsp.Items)
+			})
 
-	t.Run("create and get", func(t *testing.T) {
-		obj := newQueryHistory("", "ds-abc", []any{map[string]any{"refId": "A", "expr": "up"}})
-		created, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
-		require.NoError(t, err)
-		require.NotEmpty(t, created.GetName())
-		require.Equal(t, qhv0alpha1.GroupVersion.String(), created.GetAPIVersion())
+			t.Run("create and get", func(t *testing.T) {
+				obj := newQueryHistory("", "ds-abc", []any{map[string]any{"refId": "A", "expr": "up"}})
+				created, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+				require.NoError(t, err)
+				require.NotEmpty(t, created.GetName())
+				require.Equal(t, qhv0alpha1.GroupVersion.String(), created.GetAPIVersion())
 
-		// Verify labels set by mutator
-		labels := created.GetLabels()
-		require.NotEmpty(t, labels["grafana.app/created-by"], "created-by label should be set")
-		require.Equal(t, "ds-abc", labels["grafana.app/datasource-uid"])
-		require.NotEmpty(t, labels["grafana.app/expires-at"], "expires-at label should be set")
+				// Labels are set by the App SDK mutator which only runs in unified (Mode5)
+				if mode >= grafanarest.Mode5 {
+					labels := created.GetLabels()
+					require.NotEmpty(t, labels["grafana.app/created-by"], "created-by label should be set")
+					require.Equal(t, "ds-abc", labels["grafana.app/datasource-uid"])
+					require.NotEmpty(t, labels["grafana.app/expires-at"], "expires-at label should be set")
+				}
 
-		// Get by name
-		found, err := adminClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
-		require.NoError(t, err)
-		require.Equal(t, created.GetName(), found.GetName())
+				// Get by name
+				found, err := adminClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+				require.NoError(t, err)
+				require.Equal(t, created.GetName(), found.GetName())
 
-		spec, ok := found.Object["spec"].(map[string]any)
-		require.True(t, ok)
-		require.Equal(t, "ds-abc", spec["datasourceUid"])
-	})
+				spec, ok := found.Object["spec"].(map[string]any)
+				require.True(t, ok)
+				require.Equal(t, "ds-abc", spec["datasourceUid"])
+			})
 
-	t.Run("update comment", func(t *testing.T) {
-		obj := newQueryHistory("", "ds-update", []any{map[string]any{"refId": "B", "expr": "rate(http_requests_total[5m])"}})
-		created, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
-		require.NoError(t, err)
+			t.Run("update comment", func(t *testing.T) {
+				obj := newQueryHistory("", "ds-update", []any{map[string]any{"refId": "B", "expr": "rate(http_requests_total[5m])"}})
+				created, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+				require.NoError(t, err)
 
-		// Update the comment field (the only mutable spec field)
-		comment := "my saved query"
-		spec := created.Object["spec"].(map[string]any)
-		spec["comment"] = comment
-		updated, err := adminClient.Resource.Update(ctx, created, metav1.UpdateOptions{})
-		require.NoError(t, err)
+				// Update the comment field (the only mutable spec field)
+				comment := "my saved query"
+				spec := created.Object["spec"].(map[string]any)
+				spec["comment"] = comment
+				updated, err := adminClient.Resource.Update(ctx, created, metav1.UpdateOptions{})
+				require.NoError(t, err)
 
-		updatedSpec := updated.Object["spec"].(map[string]any)
-		require.Equal(t, comment, updatedSpec["comment"])
-	})
+				updatedSpec := updated.Object["spec"].(map[string]any)
+				require.Equal(t, comment, updatedSpec["comment"])
+			})
 
-	t.Run("validation rejects missing datasourceUid", func(t *testing.T) {
-		obj := newQueryHistory("", "", []any{map[string]any{"refId": "A"}})
-		_, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
-		require.Error(t, err)
-	})
+			// Validation is enforced by the App SDK validator which only runs in unified (Mode5).
+			// In Mode0/Mode1, the legacy storage handles writes directly.
+			if mode >= grafanarest.Mode5 {
+				t.Run("validation rejects missing datasourceUid", func(t *testing.T) {
+					obj := newQueryHistory("", "", []any{map[string]any{"refId": "A"}})
+					_, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+					require.Error(t, err)
+				})
 
-	t.Run("validation rejects empty queries", func(t *testing.T) {
-		obj := newQueryHistory("", "ds-abc", []any{})
-		_, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
-		require.Error(t, err)
-	})
+				t.Run("validation rejects empty queries", func(t *testing.T) {
+					obj := newQueryHistory("", "ds-abc", []any{})
+					_, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+					require.Error(t, err)
+				})
 
-	t.Run("validation rejects immutable field change", func(t *testing.T) {
-		obj := newQueryHistory("", "ds-immutable", []any{map[string]any{"refId": "C", "expr": "1+1"}})
-		created, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
-		require.NoError(t, err)
+				t.Run("validation rejects immutable field change", func(t *testing.T) {
+					obj := newQueryHistory("", "ds-immutable", []any{map[string]any{"refId": "C", "expr": "1+1"}})
+					created, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+					require.NoError(t, err)
 
-		// Try to change datasourceUid (immutable)
-		spec := created.Object["spec"].(map[string]any)
-		spec["datasourceUid"] = "ds-other"
-		_, err = adminClient.Resource.Update(ctx, created, metav1.UpdateOptions{})
-		require.Error(t, err)
-	})
+					// Try to change datasourceUid (immutable)
+					spec := created.Object["spec"].(map[string]any)
+					spec["datasourceUid"] = "ds-other"
+					_, err = adminClient.Resource.Update(ctx, created, metav1.UpdateOptions{})
+					require.Error(t, err)
+				})
+			}
 
-	t.Run("delete", func(t *testing.T) {
-		obj := newQueryHistory("", "ds-delete", []any{map[string]any{"refId": "D", "expr": "vector(1)"}})
-		created, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
-		require.NoError(t, err)
+			t.Run("delete", func(t *testing.T) {
+				obj := newQueryHistory("", "ds-delete", []any{map[string]any{"refId": "D", "expr": "vector(1)"}})
+				created, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+				require.NoError(t, err)
 
-		err = adminClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
-		require.NoError(t, err)
+				err = adminClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+				require.NoError(t, err)
 
-		_, err = adminClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
-		require.Error(t, err)
-	})
+				_, err = adminClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+				require.Error(t, err)
+			})
 
-	t.Run("list returns created items", func(t *testing.T) {
-		// Create a few items
-		for i := range 3 {
-			obj := newQueryHistory("", "ds-list", []any{map[string]any{"refId": fmt.Sprintf("L%d", i), "expr": "up"}})
-			_, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
-			require.NoError(t, err)
-		}
+			t.Run("list returns created items", func(t *testing.T) {
+				// Create a few items
+				for i := range 3 {
+					obj := newQueryHistory("", "ds-list", []any{map[string]any{"refId": fmt.Sprintf("L%d", i), "expr": "up"}})
+					_, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+					require.NoError(t, err)
+				}
 
-		rsp, err := adminClient.Resource.List(ctx, metav1.ListOptions{})
-		require.NoError(t, err)
-		// At least the 3 we just created (plus any from earlier subtests that weren't deleted)
-		require.GreaterOrEqual(t, len(rsp.Items), 3)
-	})
+				rsp, err := adminClient.Resource.List(ctx, metav1.ListOptions{})
+				require.NoError(t, err)
+				// At least the 3 we just created (plus any from earlier subtests that weren't deleted)
+				require.GreaterOrEqual(t, len(rsp.Items), 3)
+			})
+		})
+	}
 }
 
 func TestIntegrationQueryHistoryAuthorization(t *testing.T) {

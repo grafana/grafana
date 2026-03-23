@@ -9,10 +9,6 @@ import (
 	"net/url"
 	"strconv"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/rest"
-
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -20,38 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
-
-type searchREST struct {
-	searcher resourcepb.ResourceIndexClient
-}
-
-var (
-	_ rest.Connecter       = (*searchREST)(nil)
-	_ rest.StorageMetadata = (*searchREST)(nil)
-	_ rest.Storage         = (*searchREST)(nil)
-)
-
-func (s *searchREST) New() runtime.Object {
-	return &metav1.Status{}
-}
-
-func (s *searchREST) Destroy() {}
-
-func (s *searchREST) ConnectMethods() []string {
-	return []string{"GET"}
-}
-
-func (s *searchREST) NewConnectOptions() (runtime.Object, bool, string) {
-	return nil, false, ""
-}
-
-func (s *searchREST) ProducesMIMETypes(_ string) []string {
-	return []string{"application/json"}
-}
-
-func (s *searchREST) ProducesObject(_ string) interface{} {
-	return &SearchResponse{}
-}
 
 type SearchResponse struct {
 	Items      []SearchResultItem `json:"items"`
@@ -65,33 +29,6 @@ type SearchResultItem struct {
 	Comment       string      `json:"comment"`
 	Queries       interface{} `json:"queries"`
 	Starred       bool        `json:"starred"`
-}
-
-func (s *searchREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		user, err := identity.GetRequester(ctx)
-		if err != nil {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
-
-		searchReq, err := convertSearchParamsFromURL(req.URL, user.GetNamespace(), user.GetIdentifier())
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		result, err := s.searcher.Search(ctx, searchReq)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		response := convertSearchResults(result)
-
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(response)
-	}), nil
 }
 
 func convertSearchParamsFromURL(u *url.URL, namespace, userUID string) (*resourcepb.ResourceSearchRequest, error) {
