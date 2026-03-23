@@ -1,5 +1,12 @@
 .git
 .github
+
+# Fieldsphere fork: local IDE / agent tooling (not part of upstream formatting gates)
+.cursor
+.vscode
+
+# Frontend build manifest (generated / local; see .gitignore)
+manifest.json
 .yarn
 build
 compiled

@@ -1,0 +1,80 @@
+# Fieldsphere fork: minimal CI on standard GitHub-hosted runners (no Vault, no org runners).
+name: Fieldsphere CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release-*.*.*'
+  push:
+    branches:
+      - main
+      - 'release-*.*.*'
+
+concurrency:
+  group: fieldsphere-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Four parallel shards (~1/4 of packages each) so wall time is ~max(shard) instead of full ./...
+  backend-shard:
+    name: Backend shard ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['1/4', '2/4', '3/4', '4/4']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: |
+            go.sum
+            **/*.sum
+      - name: Run Go unit tests
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"${{ matrix.shard }}")"
+          CGO_ENABLED=0 go test -short -timeout=22m "${PACKAGES[@]}"
+
+  backend:
+    name: Backend unit tests (short)
+    needs: backend-shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require all backend shards
+        run: |
+          if [ "${{ needs.backend-shard.result }}" != "success" ]; then
+            echo "One or more backend shards failed or were cancelled"
+            exit 1
+          fi
+
+  frontend:
+    name: Frontend lint and typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/yarn-install
+      - run: yarn run prettier:check
+      - run: yarn run lint
+      - name: Generate @grafana/data theme schema (required for tsc)
+        run: yarn workspace @grafana/data themes-schema
+      - name: Typecheck
+        run: yarn run typecheck
+        env:
+          # Root tsc + Nx package graphs are memory-heavy; default heap can OOM on ubuntu-latest.
+          NODE_OPTIONS: --max-old-space-size=6144
