@@ -331,7 +331,8 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.resourcePermissions,
 		ps.tracer,
 	)
-	contactPointService := provisioning.NewContactPointService(configStore, ps.secretService,
+	receiverAuthz := alertingauthz.NewReceiverAccess[*ngmodels.Receiver](ps.ac, true)
+	contactPointService := provisioning.NewContactPointService(receiverAuthz, configStore, ps.secretService,
 		ps.alertingStore, ps.SQLStore, receiverSvc, ps.log, ps.alertingStore, ps.resourcePermissions)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(configStore,
 		ps.alertingStore, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)

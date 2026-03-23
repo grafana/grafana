@@ -52,6 +52,16 @@ func TestIntegrationContactPointService(t *testing.T) {
 			accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
 		},
 	}}
+	// adminUser has all permissions including updating protected fields
+	adminUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+		1: {
+			accesscontrol.ActionAlertingProvisioningRead:         nil,
+			accesscontrol.ActionAlertingProvisioningReadSecrets:  nil,
+			accesscontrol.ActionAlertingNotificationsWrite:       nil,
+			accesscontrol.ActionAlertingReceiversUpdate:          {ac.ScopeReceiversAll},
+			accesscontrol.ActionAlertingReceiversUpdateProtected: {ac.ScopeReceiversAll},
+		},
+	}}
 
 	t.Run("service gets contact points from AM config", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
@@ -152,7 +162,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		require.NoError(t, err)
 		newCp.Settings = nil
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
 
 		require.ErrorIs(t, err, ErrValidation)
 	})
@@ -164,7 +174,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		require.NoError(t, err)
 		newCp.Type = ""
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
 
 		require.ErrorIs(t, err, ErrValidation)
 	})
@@ -176,7 +186,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		require.NoError(t, err)
 		newCp.Settings, _ = simplejson.NewJson([]byte(`{}`))
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
 
 		require.ErrorIs(t, err, ErrValidation)
 	})
@@ -203,7 +213,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 			return nil
 		}
 
-		err = sut.UpdateContactPoint(context.Background(), 1, newCp, models.ProvenanceAPI)
+		err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, models.ProvenanceAPI)
 		require.NoError(t, err)
 
 		parsed, err := legacy_storage.DeserializeAlertmanagerConfig([]byte(store.LastSaveCommand.AlertmanagerConfiguration))
@@ -286,7 +296,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 				require.Equal(t, newCp.UID, cps[0].UID)
 				require.Equal(t, test.from, models.Provenance(cps[0].Provenance))
 
-				err = sut.UpdateContactPoint(context.Background(), 1, newCp, test.to)
+				err = sut.UpdateContactPoint(context.Background(), 1, adminUser, newCp, test.to)
 				if test.errNil {
 					require.NoError(t, err)
 
@@ -361,6 +371,46 @@ func TestIntegrationContactPointService(t *testing.T) {
 				require.Equal(t, tc.expectedValue, cps[0].Settings.Get("token").MustString())
 			})
 		}
+	})
+
+	t.Run("file provisioner user can modify protected fields", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		// Simulate the file provisioner user with the same permissions as defined in rules_provisioner.go
+		// This ensures that file provisioning can update protected fields in contact points
+		fileProvisionerUser := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
+			1: {
+				accesscontrol.ActionAlertingProvisioningReadSecrets:  nil,
+				accesscontrol.ActionAlertingProvisioningWrite:        nil,
+				accesscontrol.ActionAlertingReceiversRead:            {ac.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversUpdate:          {ac.ScopeReceiversAll},
+				accesscontrol.ActionAlertingReceiversUpdateProtected: {ac.ScopeReceiversAll},
+			},
+		}}
+
+		// Create a webhook contact point with file provenance
+		settings, _ := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+		newCp := definitions.EmbeddedContactPoint{
+			Name:     "test-webhook-file-provisioner",
+			Type:     "webhook",
+			Settings: settings,
+		}
+
+		created, err := sut.CreateContactPoint(context.Background(), 1, fileProvisionerUser, newCp, models.ProvenanceFile)
+		require.NoError(t, err)
+
+		// Update the protected field 'url' - this simulates reprovisioning with a changed webhook URL
+		updatedSettings, _ := simplejson.NewJson([]byte(`{"url":"https://new-webhook-url.com/webhook"}`))
+		created.Settings = updatedSettings
+
+		err = sut.UpdateContactPoint(context.Background(), 1, fileProvisionerUser, created, models.ProvenanceFile)
+		require.NoError(t, err, "file provisioner user should be able to update protected fields")
+
+		// Verify the change was applied
+		cps, err := sut.GetContactPoints(context.Background(), ContactPointQuery{OrgID: 1, Name: created.Name}, fileProvisionerUser)
+		require.NoError(t, err)
+		require.Len(t, cps, 1)
+		// The URL should be redacted in the response, but we verified the update succeeded
 	})
 }
 
@@ -495,8 +545,9 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 	xact := newNopTransactionManager()
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
+	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true)
 	receiverService := notifier.NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), true),
+		receiverAuthz,
 		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService)),
 		provisioningStore,
 		&fakeAlertRuleNotificationStore{},
@@ -508,6 +559,7 @@ func createContactPointServiceSutWithConfigStore(t *testing.T, secretService sec
 	)
 
 	return NewContactPointService(
+		receiverAuthz,
 		legacy_storage.NewAlertmanagerConfigStore(configStore, notifier.NewExtraConfigsCrypto(secretService)),
 		secretService,
 		provisioningStore,
