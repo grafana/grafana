@@ -293,7 +293,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 }
 
 // resolveNewMetadataUID reads the UID from the _folder.json at the rename's
-// destination path. Returns empty string if the metadata cannot be read.
+// destination path. Returns an error if the metadata cannot be read.
 func (d *folderMetadataIncrementalDiffBuilder) resolveNewMetadataUID(
 	ctx context.Context,
 	change repository.VersionedFileChange,
