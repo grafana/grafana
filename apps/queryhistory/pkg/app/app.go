@@ -18,6 +18,7 @@ const (
 	LabelCreatedBy     = "grafana.app/created-by"
 	LabelDatasourceUID = "grafana.app/datasource-uid"
 	LabelExpiresAt     = "grafana.app/expires-at"
+	LabelStarCount     = "grafana.app/star-count"
 	DefaultTTL         = 14 * 24 * time.Hour
 )
 

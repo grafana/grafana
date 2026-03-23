@@ -11,16 +11,11 @@ import (
 	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	collectionsv1alpha1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	qhv0alpha1 "github.com/grafana/grafana/apps/queryhistory/pkg/apis/queryhistory/v0alpha1"
+	queryhistoryapp "github.com/grafana/grafana/apps/queryhistory/pkg/app"
 	restclient "k8s.io/client-go/rest"
 )
 
 const (
-	LabelCreatedBy     = "grafana.app/created-by"
-	LabelDatasourceUID = "grafana.app/datasource-uid"
-	LabelExpiresAt     = "grafana.app/expires-at"
-	LabelStarCount     = "grafana.app/star-count"
-	DefaultTTL         = 14 * 24 * time.Hour
-
 	defaultReconcileInterval = 5 * time.Minute
 
 	queryHistoryGroup = "queryhistory.grafana.app"
@@ -150,7 +145,7 @@ func (r *StarsTTLReconciler) reconcileLabels(ctx context.Context, starCounts map
 
 	for {
 		list, err := r.qhClient.List(ctx, "", sdkresource.ListOptions{
-			LabelFilters: []string{LabelStarCount},
+			LabelFilters: []string{queryhistoryapp.LabelStarCount},
 			Limit:        100,
 			Continue:     continueToken,
 		})
@@ -168,7 +163,7 @@ func (r *StarsTTLReconciler) reconcileLabels(ctx context.Context, starCounts map
 			}
 
 			currentCount := 0
-			if v, ok := labels[LabelStarCount]; ok {
+			if v, ok := labels[queryhistoryapp.LabelStarCount]; ok {
 				currentCount, _ = strconv.Atoi(v)
 			}
 
@@ -185,7 +180,7 @@ func (r *StarsTTLReconciler) reconcileLabels(ctx context.Context, starCounts map
 				if targetCount > 0 {
 					labels = removeExpiresAt(labels)
 				} else {
-					labels = setExpiresAt(labels, DefaultTTL)
+					labels = setExpiresAt(labels, queryhistoryapp.DefaultTTL)
 				}
 			}
 
@@ -218,7 +213,7 @@ func (r *StarsTTLReconciler) reconcileLabels(ctx context.Context, starCounts map
 		if labels == nil {
 			labels = make(map[string]string)
 		}
-		labels[LabelStarCount] = strconv.Itoa(count)
+		labels[queryhistoryapp.LabelStarCount] = strconv.Itoa(count)
 		labels = removeExpiresAt(labels)
 		item.SetLabels(labels)
 
@@ -239,13 +234,13 @@ func setExpiresAt(labels map[string]string, duration time.Duration) map[string]s
 	if labels == nil {
 		labels = make(map[string]string)
 	}
-	labels[LabelExpiresAt] = strconv.FormatInt(time.Now().Add(duration).Unix(), 10)
+	labels[queryhistoryapp.LabelExpiresAt] = strconv.FormatInt(time.Now().Add(duration).Unix(), 10)
 	return labels
 }
 
 // removeExpiresAt removes the grafana.app/expires-at label.
 func removeExpiresAt(labels map[string]string) map[string]string {
-	delete(labels, LabelExpiresAt)
+	delete(labels, queryhistoryapp.LabelExpiresAt)
 	return labels
 }
 
@@ -257,7 +252,7 @@ func updateStarCount(labels map[string]string, delta int) (newLabels map[string]
 	}
 
 	count := 0
-	if v, ok := labels[LabelStarCount]; ok {
+	if v, ok := labels[queryhistoryapp.LabelStarCount]; ok {
 		count, _ = strconv.Atoi(v)
 	}
 
@@ -267,7 +262,7 @@ func updateStarCount(labels map[string]string, delta int) (newLabels map[string]
 		count = 0
 	}
 
-	labels[LabelStarCount] = strconv.Itoa(count)
+	labels[queryhistoryapp.LabelStarCount] = strconv.Itoa(count)
 
 	// Transition across the 0 boundary means TTL state should change
 	ttlChanged = (oldCount == 0 && count > 0) || (oldCount > 0 && count == 0)

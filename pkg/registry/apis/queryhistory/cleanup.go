@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
 	qhv0alpha1 "github.com/grafana/grafana/apps/queryhistory/pkg/apis/queryhistory/v0alpha1"
+	queryhistoryapp "github.com/grafana/grafana/apps/queryhistory/pkg/app"
 	restclient "k8s.io/client-go/rest"
 )
 
@@ -75,7 +76,7 @@ func (c *CleanupJob) cleanup(ctx context.Context) {
 
 	for {
 		list, err := c.client.List(ctx, "", resource.ListOptions{
-			LabelFilters: []string{LabelExpiresAt},
+			LabelFilters: []string{queryhistoryapp.LabelExpiresAt},
 			Limit:        100,
 			Continue:     continueToken,
 		})
@@ -87,7 +88,7 @@ func (c *CleanupJob) cleanup(ctx context.Context) {
 		for i := range list.Items {
 			item := &list.Items[i]
 			labels := item.GetLabels()
-			expiresAtStr, ok := labels[LabelExpiresAt]
+			expiresAtStr, ok := labels[queryhistoryapp.LabelExpiresAt]
 			if !ok {
 				continue
 			}

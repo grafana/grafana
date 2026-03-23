@@ -12,6 +12,7 @@ import (
 	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	collectionsv1alpha1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	qhv0alpha1 "github.com/grafana/grafana/apps/queryhistory/pkg/apis/queryhistory/v0alpha1"
+	queryhistoryapp "github.com/grafana/grafana/apps/queryhistory/pkg/app"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/org"
 	queryhistorysvc "github.com/grafana/grafana/pkg/services/queryhistory"
@@ -208,16 +209,16 @@ func (b *BackfillJob) loadStars(ctx context.Context, rows []queryhistorysvc.Quer
 
 func (b *BackfillJob) createResource(ctx context.Context, row queryhistorysvc.QueryHistory, namespace, userUID string, starred bool) (bool, error) {
 	labels := map[string]string{
-		LabelCreatedBy:     userUID,
-		LabelDatasourceUID: row.DatasourceUID,
+		queryhistoryapp.LabelCreatedBy:     userUID,
+		queryhistoryapp.LabelDatasourceUID: row.DatasourceUID,
 	}
 
 	if starred {
-		labels[LabelStarCount] = "1"
+		labels[queryhistoryapp.LabelStarCount] = "1"
 	} else {
 		// Set TTL based on original creation time.
-		expiresAt := row.CreatedAt + int64(DefaultTTL.Seconds())
-		labels[LabelExpiresAt] = strconv.FormatInt(expiresAt, 10)
+		expiresAt := row.CreatedAt + int64(queryhistoryapp.DefaultTTL.Seconds())
+		labels[queryhistoryapp.LabelExpiresAt] = strconv.FormatInt(expiresAt, 10)
 	}
 
 	var queriesRaw interface{}
