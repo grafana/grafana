@@ -156,8 +156,11 @@ func prepareK8sOptsShared(t *testing.T, opts K8sTestHelperOpts) K8sTestHelperOpt
 
 func fillK8sOpts(t *testing.T, opts K8sTestHelperOpts, createDir func(*testing.T, testinfra.GrafanaOpts) (string, string)) K8sTestHelperOpts {
 	t.Helper()
+	// Use GRPC server when not configured
 	if opts.APIServerStorageType == "" && opts.GRPCServerAddress == "" {
-		opts.APIServerStorageType = options.StorageTypeUnified
+		// TODO, this really should be gRPC, but sometimes fails in drone
+		// the two *should* be identical, but we have seen issues when using real gRPC vs channel
+		opts.APIServerStorageType = options.StorageTypeUnified // TODO, should be GRPC
 	}
 	// Always enable `FlagAppPlatformGrpcClientAuth` for k8s integration tests, as this is the desired behavior.
 	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
