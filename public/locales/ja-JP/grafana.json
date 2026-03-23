@@ -385,6 +385,7 @@
         "group-by": "次でグループ化：",
         "group-title": "通知設定",
         "mute-timings": "ミュート期間",
+        "notification-policy": "",
         "timing-options": "タイミング"
       },
       "pending-period": "保留期間",
@@ -494,6 +495,15 @@
     },
     "alert-rule": {
       "term": "アラートルール"
+    },
+    "alert-rule-drawer": {
+      "error-title": "",
+      "error-unexpected": "",
+      "error-unknown": "",
+      "success-message": "",
+      "success-title": "",
+      "validation-error-message": "",
+      "validation-error-title": ""
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -877,6 +887,8 @@
       "export-all": "すべてをエクスポート",
       "learn-more": "詳細を見る",
       "loading": "読み込み中...",
+      "optional": "",
+      "refresh": "",
       "search-by-matchers": "マッチャーで検索",
       "titles": {
         "notification-templates": "通知テンプレート"
@@ -1841,7 +1853,7 @@
       },
       "history-error": "状態履歴の読み込みに失敗しました",
       "history-error-desc": "このインスタンスの状態遷移履歴を取得できません。",
-      "instance-timeline": "",
+      "instance-history-heading": "",
       "no-history": "最近の状態変更はありません",
       "notifications-error": "",
       "notifications-error-desc": "",
@@ -1853,6 +1865,8 @@
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
+      "timeline-dot-all-failed": "",
+      "timeline-dot-some-failed": "",
       "timeline-empty": "",
       "timeline-failed": "",
       "timeline-filter-all": "",
@@ -1860,15 +1874,14 @@
       "timeline-filter-notifications": "",
       "timeline-filter-states": "",
       "timeline-loading": "",
-      "timeline-mixed-outcome": "",
-      "timeline-one-notification": "",
+      "timeline-notification-label": "",
+      "timeline-partial-failure": "",
       "timeline-status-firing": "",
       "timeline-status-resolved": "",
       "timeline-toggle-notifications": "",
       "view-notification-detail": "",
       "view-notification-tooltip": "",
-      "timeline-n-notifications_other": "",
-      "timeline-n-receivers_other": ""
+      "timeline-n-uniqueReceivers_other": ""
     },
     "instance-match": {
       "non-matching-labels": "一致しないラベル",
@@ -2010,6 +2023,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "",
+          "notification-policy": "",
           "select-contact-point": "コンタクトポイントを選択",
           "use-notification-policy": "通知ポリシーを使用"
         }
@@ -3256,12 +3271,57 @@
       "title-the-selected-alertmanager-has-no-configuration": "選択したAlertmanagerには設定がありません"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "",
+      "aria-label-threshold": "",
+      "aria-label-threshold-from": "",
+      "aria-label-threshold-to": "",
       "label-of-query": "クエリの",
       "label-when": "条件",
       "label-when-query": "クエリの条件"
     },
     "simpleCondition": {
       "alertCondition": "アラート条件"
+    },
+    "simplified": {
+      "condition": {
+        "title": ""
+      },
+      "continue-in-alerting": "",
+      "create": "",
+      "evaluation": {
+        "immediate-warning": ""
+      },
+      "notification": {
+        "contact-point-selected": "",
+        "description": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "manual-routing": {
+          "aria": ""
+        },
+        "policy-selected": "",
+        "recipient": {
+          "label": ""
+        },
+        "refresh-error": "",
+        "runbook-url": {
+          "aria-label": "",
+          "invalid-format": "",
+          "invalid-protocol": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "select-contact-point": "",
+        "summary": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "title": ""
+      },
+      "rule-definition": ""
     },
     "smart-alert-type-detector": {
       "data-source-managed": "データソース管理",
@@ -3472,7 +3532,9 @@
       "error-loading-rule": "ルールの読み込みエラー",
       "high-activity-labels": "",
       "instance-details-drawer": {
-        "instance-details": "インスタンスの詳細"
+        "declare-incident": "",
+        "instance-details": "インスタンスの詳細",
+        "silence-button": ""
       },
       "no-firing-or-pending-instances": "選択した時間範囲に、発生中または保留状態のアラートインスタンスはありません。",
       "no-instances-found": "ルールに対するアラートインスタンスが見つかりません：{{ruleUID}}",
@@ -5188,6 +5250,12 @@
       "ungroup-rows": "行のグループ化を解除",
       "ungroup-tabs": "タブのグループ化を解除"
     },
+    "code-pane": {
+      "collapse": "",
+      "expand": "",
+      "header": "",
+      "modal-title": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -6069,6 +6137,13 @@
       "save-json-to-file": "JSONをファイルに保存",
       "see-docs": "プロビジョニングについての詳細は<2>ドキュメント</2>をご覧ください。"
     },
+    "schema-editor": {
+      "apply-button": "",
+      "apply-button-disabled-tooltip": "",
+      "apply-button-disabled-tooltip-yaml": "",
+      "apply-error-title": "",
+      "undo-title": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6083,6 +6158,10 @@
       "dashboard-options": {
         "title": "オプション",
         "tooltip": "ダッシュボードオプション"
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
       },
       "export": {
         "title": "エクスポート"
@@ -6426,11 +6505,14 @@
     "browse-plugins": "プラグインを参照",
     "card": {
       "customize-with-assistant-button": "",
+      "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "データソースが提供されました",
       "details-tooltip": "詳細",
       "no-preview": "",
-      "use-dashboard-button": "ダッシュボードを使用",
-      "view-template-button": ""
+      "view-dashboard-button": "",
+      "view-dashboard-button-label": "",
+      "view-template-button": "",
+      "view-template-button-label": ""
     },
     "community-empty-title": "コミュニティダッシュボードが見つかりません",
     "community-empty-title-with-datasource": "{{datasourceType}}コミュニティダッシュボードが見つかりません",
@@ -6513,6 +6595,9 @@
       "label-data-source": "データソース",
       "label-use-static-key-dimensions": "静的キー次元を使用",
       "name-allow-custom-values": "カスタム値の入力を許可"
+    },
+    "add-filters": {
+      "label": ""
     },
     "add-link": {
       "inline-instance-name": "",
@@ -7544,6 +7629,11 @@
   "dashboard-scene-help-wizard": {
     "support-bundle": "<1>サポートバンドルセクション</1>で、Grafanaインスタンスと構成されたデータソースに関する情報を含むサポートバンドルを取得することもできます。"
   },
+  "dashboard-schema-editor": {
+    "format-label": "",
+    "json-disabled-tooltip": "",
+    "yaml-disabled-tooltip": ""
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "注釈"
@@ -7574,6 +7664,8 @@
     },
     "json-editor": {
       "save-button": "変更を保存",
+      "save-button-disabled-tooltip": "",
+      "save-button-disabled-tooltip-yaml": "",
       "subtitle": "以下のJSONモデルは、ダッシュボードを定義するデータ構造です。これには、ダッシュボード設定、パネル設定、レイアウト、クエリなどが含まれます。",
       "title": "JSONモデル"
     },
@@ -8851,9 +8943,6 @@
     "data-links-actions-menu": "",
     "description-min-height": "最小行の高さ（水平方向）",
     "description-min-width": "最小列幅（垂直方向）",
-    "description-neutral": "中立点として最小値を使用するには、空のままにします",
-    "description-show-threshold-labels": "ゲージバーの周りのしきい値をレンダリングします",
-    "description-show-threshold-markers": "しきい値を外側のバーとしてレンダリングします",
     "gauge-size-options": {
       "label-auto": "自動",
       "label-manual": "手動"
@@ -8861,11 +8950,7 @@
     "name-gauge-size": "ゲージサイズ",
     "name-min-height": "最小の高さ",
     "name-min-width": "最小幅",
-    "name-neutral": "中立",
-    "name-show-threshold-labels": "しきい値ラベルを表示",
-    "name-show-threshold-markers": "しきい値マーカーを表示",
     "neutral": "ニュートラル値{{value}}",
-    "placeholder-neutral": "自動",
     "presets": {
       "circle": "",
       "circle_desc": "",
@@ -8882,8 +8967,7 @@
     },
     "suggestions": {
       "arc": "ゲージ",
-      "circular": "円形ゲージ",
-      "no-thresholds": "ゲージ - しきい値なし"
+      "circular": "円形ゲージ"
     },
     "threshold": "しきい値：{{value}}"
   },
@@ -10272,11 +10356,14 @@
       "remove-button": "{{children}}を削除"
     },
     "viz-legend": {
+      "all-series-selected": "",
       "clear-filters": "",
+      "color-picker": "",
       "faceted-by-labels": "",
       "faceted-by-name": "",
       "faceted-deselect-all": "",
       "faceted-select-all": "",
+      "only-this-series-selected": "",
       "pin-filter": "",
       "right-axis-indicator": "（右y軸）",
       "series-visibility": "",
@@ -10871,6 +10958,7 @@
       "collapse": "サイドバーを折りたたむ",
       "expand": "サイドバーを展開",
       "label-title": "{{fieldName}}はログ行の{{percentage}}%に表示されます",
+      "log-level": "",
       "placeholder-search-fields-by-name": "名前でフィールドを検索",
       "title-drag-and-drop-to-reorder": "ドラッグ＆ドロップで並べ替え"
     },
@@ -11903,8 +11991,9 @@
       "upgrade-tooltip": "ユーザーを追加するにはアップグレードしてください"
     },
     "item": {
-      "add-bookmark": "",
-      "remove-bookmark": ""
+      "bookmark": {
+        "tooltip": ""
+      }
     },
     "kiosk": {
       "tv-alert": "ESCを押してキオスクモードを終了します"
@@ -13747,6 +13836,7 @@
     "sidebar": {
       "add-below": "",
       "add-expression": "",
+      "add-expression-disabled": "",
       "add-query": "",
       "add-query-or-expression": "",
       "add-saved-query": "",

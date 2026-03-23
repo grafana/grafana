@@ -3564,66 +3564,64 @@ func TestGitRepository_CompareFiles_Renamed(t *testing.T) {
 			wantChanges: []repository.VersionedFileChange{},
 		},
 		{
-			name: "tree entry rename decomposes into delete + create",
+			name: "tree entry rename emits FileActionRenamed with trailing slashes",
 			files: []nanogit.CommitFile{
 				{
 					Path:    "configs/new-dir",
 					OldPath: "configs/old-dir",
 					Status:  protocol.FileStatusRenamed,
 					Mode:    0o40000,
+					Type:    protocol.ObjectTypeTree,
 				},
 			},
 			gitPath: "configs",
 			wantChanges: []repository.VersionedFileChange{
 				{
-					Action:       repository.FileActionDeleted,
-					Path:         "old-dir",
-					PreviousPath: "old-dir",
+					Action:       repository.FileActionRenamed,
+					Path:         "new-dir/",
+					PreviousPath: "old-dir/",
 					Ref:          "feature",
 					PreviousRef:  "main",
-				},
-				{
-					Action: repository.FileActionCreated,
-					Path:   "new-dir",
-					Ref:    "feature",
 				},
 			},
 		},
 		{
-			name: "tree entry rename from outside to inside emits only create",
+			name: "tree entry rename from outside to inside emits only create with trailing slash",
 			files: []nanogit.CommitFile{
 				{
 					Path:    "configs/new-dir",
 					OldPath: "other/old-dir",
 					Status:  protocol.FileStatusRenamed,
 					Mode:    0o40000,
+					Type:    protocol.ObjectTypeTree,
 				},
 			},
 			gitPath: "configs",
 			wantChanges: []repository.VersionedFileChange{
 				{
 					Action: repository.FileActionCreated,
-					Path:   "new-dir",
+					Path:   "new-dir/",
 					Ref:    "feature",
 				},
 			},
 		},
 		{
-			name: "tree entry rename from inside to outside emits only delete",
+			name: "tree entry rename from inside to outside emits only delete with trailing slash",
 			files: []nanogit.CommitFile{
 				{
 					Path:    "other/new-dir",
 					OldPath: "configs/old-dir",
 					Status:  protocol.FileStatusRenamed,
 					Mode:    0o40000,
+					Type:    protocol.ObjectTypeTree,
 				},
 			},
 			gitPath: "configs",
 			wantChanges: []repository.VersionedFileChange{
 				{
 					Action:       repository.FileActionDeleted,
-					Path:         "old-dir",
-					PreviousPath: "old-dir",
+					Path:         "old-dir/",
+					PreviousPath: "old-dir/",
 					Ref:          "feature",
 					PreviousRef:  "main",
 				},
@@ -3637,6 +3635,7 @@ func TestGitRepository_CompareFiles_Renamed(t *testing.T) {
 					OldPath: "other/old-dir",
 					Status:  protocol.FileStatusRenamed,
 					Mode:    0o40000,
+					Type:    protocol.ObjectTypeTree,
 				},
 			},
 			gitPath:     "configs",
@@ -3660,6 +3659,129 @@ func TestGitRepository_CompareFiles_Renamed(t *testing.T) {
 					PreviousPath: "old-name.yaml",
 					Ref:          "feature",
 					PreviousRef:  "main",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+			}, nil)
+			mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+				Name: "refs/heads/feature",
+				Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+			}, nil)
+			mockClient.CompareCommitsReturns(tt.files, nil)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+					Path:   tt.gitPath,
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			changes, err := gitRepo.CompareFiles(context.Background(), "main", "feature")
+
+			require.NoError(t, err)
+			require.NotNil(t, changes)
+			require.Equal(t, tt.wantChanges, changes)
+		})
+	}
+}
+
+func TestGitRepository_CompareFiles_Modified_PreviousRef(t *testing.T) {
+	tests := []struct {
+		name        string
+		files       []nanogit.CommitFile
+		gitPath     string
+		wantChanges []repository.VersionedFileChange
+	}{
+		{
+			name: "modified file has PreviousRef set to base",
+			files: []nanogit.CommitFile{
+				{
+					Path:   "configs/dashboard.json",
+					Status: protocol.FileStatusModified,
+					Mode:   0o100644,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:      repository.FileActionUpdated,
+					Path:        "dashboard.json",
+					Ref:         "feature",
+					PreviousRef: "main",
+				},
+			},
+		},
+		{
+			name: "modified file outside configured path is skipped",
+			files: []nanogit.CommitFile{
+				{
+					Path:   "other/dashboard.json",
+					Status: protocol.FileStatusModified,
+					Mode:   0o100644,
+				},
+			},
+			gitPath:     "configs",
+			wantChanges: []repository.VersionedFileChange{},
+		},
+		{
+			name: "modified file with no configured path has PreviousRef set",
+			files: []nanogit.CommitFile{
+				{
+					Path:   "dashboard.json",
+					Status: protocol.FileStatusModified,
+					Mode:   0o100644,
+				},
+			},
+			gitPath: "",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:      repository.FileActionUpdated,
+					Path:        "dashboard.json",
+					Ref:         "feature",
+					PreviousRef: "main",
+				},
+			},
+		},
+		{
+			name: "mix of added and modified: only modified has PreviousRef",
+			files: []nanogit.CommitFile{
+				{
+					Path:   "configs/new.json",
+					Status: protocol.FileStatusAdded,
+					Mode:   0o100644,
+				},
+				{
+					Path:   "configs/existing.json",
+					Status: protocol.FileStatusModified,
+					Mode:   0o100644,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "new.json",
+					Ref:    "feature",
+				},
+				{
+					Action:      repository.FileActionUpdated,
+					Path:        "existing.json",
+					Ref:         "feature",
+					PreviousRef: "main",
 				},
 			},
 		},
