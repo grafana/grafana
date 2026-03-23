@@ -515,7 +515,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Empty(t, replacedFolders)
 	})
 
-	t.Run("renamed metadata file is split out and produces empty diff", func(t *testing.T) {
+	t.Run("renamed metadata file with no existing resources emits folder update for new path", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
 		repoResources := resources.NewMockRepositoryResources(t)
 		diff := []repository.VersionedFileChange{
@@ -528,8 +528,133 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff)
 
 		require.NoError(t, err)
-		require.Empty(t, filteredDiff)
+		require.Equal(t, []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "renamed/", Ref: "new-ref"},
+		}, filteredDiff)
 		require.Empty(t, replacedFolders)
+	})
+
+	t.Run("renamed metadata file tracks old folder for orphan cleanup when old directory is gone", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionRenamed, Path: "new/_folder.json", PreviousPath: "old/_folder.json", PreviousRef: "old-ref", Ref: "new-ref"},
+		}
+
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{
+					Name:     "old-uid",
+					Group:    resources.FolderResource.Group,
+					Resource: resources.FolderResource.Resource,
+					Path:     "old/",
+				},
+			},
+		}, nil).Once()
+		repo.MockReader.On("Read", mock.Anything, "old/", "new-ref").
+			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound).Once()
+
+		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repoResources)
+		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff)
+
+		require.NoError(t, err)
+		require.Contains(t, filteredDiff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated,
+			Path:   "new/",
+			Ref:    "new-ref",
+		})
+		require.Equal(t, []replacedFolder{{
+			Path:   "old/",
+			OldUID: "old-uid",
+		}}, replacedFolders)
+	})
+
+	t.Run("renamed metadata file re-parents children and tracks replacement when old directory still exists", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionRenamed, Path: "new/_folder.json", PreviousPath: "old/_folder.json", PreviousRef: "old-ref", Ref: "new-ref"},
+		}
+
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{
+					Name:     "old-uid",
+					Group:    resources.FolderResource.Group,
+					Resource: resources.FolderResource.Resource,
+					Path:     "old/",
+				},
+				{
+					Name:     "dash-uid",
+					Group:    "dashboards",
+					Resource: "dashboards",
+					Path:     "old/dashboard.json",
+				},
+			},
+		}, nil).Once()
+		repo.MockReader.On("Read", mock.Anything, "old/", "new-ref").
+			Return(&repository.FileInfo{Path: "old/"}, nil).Once()
+
+		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repoResources)
+		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff)
+
+		require.NoError(t, err)
+		require.Contains(t, filteredDiff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated,
+			Path:   "new/",
+			Ref:    "new-ref",
+		})
+		require.Contains(t, filteredDiff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated,
+			Path:   "old/",
+			Ref:    "new-ref",
+		})
+		require.Contains(t, filteredDiff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated,
+			Path:   "old/dashboard.json",
+			Ref:    "new-ref",
+		})
+		require.Equal(t, []replacedFolder{{
+			Path:   "old/",
+			OldUID: "old-uid",
+		}}, replacedFolders)
+	})
+
+	t.Run("renamed metadata file skips old path cleanup when directory rename already in diff", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionRenamed, Path: "new/", PreviousPath: "old/", PreviousRef: "old-ref", Ref: "new-ref"},
+			{Action: repository.FileActionRenamed, Path: "new/_folder.json", PreviousPath: "old/_folder.json", PreviousRef: "old-ref", Ref: "new-ref"},
+		}
+
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{
+					Name:     "old-uid",
+					Group:    resources.FolderResource.Group,
+					Resource: resources.FolderResource.Resource,
+					Path:     "old/",
+				},
+			},
+		}, nil).Once()
+
+		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repoResources)
+		filteredDiff, _, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff)
+
+		require.NoError(t, err)
+		require.Contains(t, filteredDiff, repository.VersionedFileChange{
+			Action:       repository.FileActionRenamed,
+			Path:         "new/",
+			PreviousPath: "old/",
+			PreviousRef:  "old-ref",
+			Ref:          "new-ref",
+		})
+		require.NotContains(t, filteredDiff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated,
+			Path:   "old/",
+			Ref:    "new-ref",
+		})
 	})
 	t.Run("nested metadata changes are both expanded deterministically", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)

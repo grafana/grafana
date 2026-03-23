@@ -92,6 +92,8 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteMetadataChange(
 		return d.rewriteCreatedOrUpdatedMetadataChange(ctx, input, index, diffTracker, change)
 	case repository.FileActionDeleted:
 		return d.rewriteDeletedMetadataChange(ctx, currentRef, input, index, diffTracker, change)
+	case repository.FileActionRenamed:
+		return d.rewriteRenamedMetadataChange(ctx, currentRef, input, index, diffTracker, change)
 	default:
 		return nil
 	}
@@ -205,6 +207,35 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 	}
 
 	return nil
+}
+
+// rewriteRenamedMetadataChange handles file-only renames of _folder.json
+// (e.g. old/_folder.json -> new/_folder.json) where no separate directory
+// rename event exists in the diff. It treats the new path as a create/update
+// and the old path as a delete so the old folder is tracked for orphan cleanup.
+func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
+	ctx context.Context,
+	currentRef string,
+	input folderMetadataDiffSplit,
+	index managedResourceIndex,
+	diffTracker *rebuiltIncrementalDiffTracker,
+	change repository.VersionedFileChange,
+) error {
+	if err := d.rewriteCreatedOrUpdatedMetadataChange(ctx, input, index, diffTracker, change); err != nil {
+		return err
+	}
+
+	oldFolderPath := folderPathForMetadataChange(change.PreviousPath)
+	if input.HadChangeOriginallyAt(oldFolderPath) {
+		return nil
+	}
+
+	syntheticDelete := repository.VersionedFileChange{
+		Action: repository.FileActionDeleted,
+		Path:   change.PreviousPath,
+		Ref:    change.PreviousRef,
+	}
+	return d.rewriteDeletedMetadataChange(ctx, currentRef, input, index, diffTracker, syntheticDelete)
 }
 
 // replacementForMetadataChange determines whether a metadata change at a folder
