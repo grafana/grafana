@@ -649,11 +649,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-team"})
 
-		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
-		// folders are recreated with new UIDs. They should be updated in place instead.
 		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "rr-dash-001", metav1.GetOptions{})
 		require.NoError(t, err)
-		common.RequireRecreated(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
+		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"rr-dash-001": {Title: "Team Dashboard", SourcePath: "new-team/dashboard1.json", Folder: folderUID},
@@ -711,11 +709,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/new-child"})
 
-		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
-		// folders are recreated with new UIDs. They should be updated in place instead.
 		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "nn-dash-001", metav1.GetOptions{})
 		require.NoError(t, err)
-		common.RequireRecreated(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
+		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"nn-dash-001": {Title: "Child Dashboard", SourcePath: "parent/new-child/dashboard1.json", Folder: childUID},
@@ -774,11 +770,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/my-folder"})
 
-		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
-		// folders are recreated with new UIDs. They should be updated in place instead.
 		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "rn-dash-001", metav1.GetOptions{})
 		require.NoError(t, err)
-		common.RequireRecreated(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
+		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"rn-dash-001": {Title: "Moved Dashboard", SourcePath: "parent/my-folder/dashboard1.json", Folder: movedUID},
@@ -836,11 +830,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "my-folder"})
 
-		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
-		// folders are recreated with new UIDs. They should be updated in place instead.
 		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "nr-dash-001", metav1.GetOptions{})
 		require.NoError(t, err)
-		common.RequireRecreated(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
+		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"nr-dash-001": {Title: "Moved Dashboard", SourcePath: "my-folder/dashboard1.json", Folder: movedUID},
@@ -920,15 +912,13 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-parent", "new-parent/child"})
 
-		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
-		// folders are recreated with new UIDs. They should be updated in place instead.
 		parentDashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "mx-parent-dash", metav1.GetOptions{})
 		require.NoError(t, err)
-		common.RequireRecreated(t, "parent dashboard", parentDashSnap, common.SnapshotObject(t, parentDashAfter))
+		common.RequireUpdatedInPlace(t, "parent dashboard", parentDashSnap, common.SnapshotObject(t, parentDashAfter))
 
 		childDashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "mx-child-dash", metav1.GetOptions{})
 		require.NoError(t, err)
-		common.RequireRecreated(t, "child dashboard", childDashSnap, common.SnapshotObject(t, childDashAfter))
+		common.RequireUpdatedInPlace(t, "child dashboard", childDashSnap, common.SnapshotObject(t, childDashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"mx-parent-dash": {Title: "Parent Dashboard", SourcePath: "new-parent/parent-dash.json", Folder: parentUID},
