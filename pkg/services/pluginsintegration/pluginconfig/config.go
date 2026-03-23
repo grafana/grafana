@@ -35,6 +35,7 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 		},
 		cfg.GrafanaComAPIURL,
 		cfg.DisablePlugins,
+		cfg.DisableBundledPlugins,
 		cfg.ForwardHostEnvVars,
 		cfg.GrafanaComSSOAPIToken,
 	), nil

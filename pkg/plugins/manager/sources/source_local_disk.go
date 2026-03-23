@@ -270,9 +270,18 @@ func DirAsLocalSources(cfg *config.PluginManagementCfg, pluginsPaths []string, c
 			return []*LocalSource{}, fmt.Errorf("failed to open plugins path: %w", err)
 		}
 
+		isBundledPath := len(cfg.PluginsPaths) > 0 && pluginsPath != cfg.PluginsPaths[0]
+		disabledBundled := make(map[string]bool, len(cfg.DisableBundledPlugins))
+		for _, id := range cfg.DisableBundledPlugins {
+			disabledBundled[id] = true
+		}
+
 		var pluginDirs []string
 		for _, dir := range d {
 			if dir.IsDir() || dir.Type()&os.ModeSymlink == os.ModeSymlink {
+				if isBundledPath && disabledBundled[dir.Name()] {
+					continue
+				}
 				pluginDirs = append(pluginDirs, filepath.Join(pluginsPath, dir.Name()))
 			}
 		}

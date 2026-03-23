@@ -226,6 +226,7 @@ type Cfg struct {
 	PluginForcePublicKeyDownload     bool
 	PluginSkipPublicKeyDownload      bool
 	DisablePlugins                   []string
+	DisableBundledPlugins            []string
 	ForwardHostEnvVars               []string
 	PreinstallPluginsAsync           []InstallPlugin
 	PreinstallPluginsSync            []InstallPlugin
@@ -1366,6 +1367,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	bundledPlugins := valueAsString(iniFile.Section("paths"), "bundled_plugins", "data/plugins-bundled")
+	// PluginsPaths order is significant: [0] is the installed plugins dir, [1] is the bundled plugins dir.
+	// See PluginManagementCfg.PluginsPaths for details.
 	cfg.PluginsPaths = []string{makeAbsolute(plugins, cfg.HomePath), makeAbsolute(bundledPlugins, cfg.HomePath)}
 	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
 	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
