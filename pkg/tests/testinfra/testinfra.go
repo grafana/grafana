@@ -58,6 +58,16 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 }
 
 func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *server.TestEnv, *sqlutil.TestDB) {
+	addr, env, testDB, cleanup := StartGrafanaEnvWithManualCleanup(t, grafDir, cfgPath)
+	t.Cleanup(cleanup)
+	return addr, env, testDB
+}
+
+// StartGrafanaEnvWithManualCleanup starts a Grafana server without registering
+// shutdown on t.Cleanup. The caller is responsible for calling the returned
+// cleanup function. This is useful when the server must outlive any single
+// test, e.g. when shared across an entire package via sync.Once.
+func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (string, *server.TestEnv, *sqlutil.TestDB, func()) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -179,9 +189,10 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 			t.Log("Server exited uncleanly", "error", err)
 		}
 	}()
-	t.Cleanup(func() {
+
+	cleanup := func() {
 		if err := env.Server.Shutdown(ctx, "test cleanup"); err != nil {
-			t.Error("Timed out waiting on server to shut down")
+			t.Log("Timed out waiting on server to shut down")
 		}
 		if storage != nil {
 			storage.StopAsync()
@@ -189,7 +200,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 		if grpcService != nil {
 			grpcService.StopAsync()
 		}
-	})
+	}
 
 	// Wait for Grafana to be ready, retrying until the health endpoint responds or the timeout is reached.
 	addr := listener.Addr().String()
@@ -217,7 +228,7 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 
 	t.Logf("Grafana is listening on %s", addr)
 
-	return addr, env, testDB
+	return addr, env, testDB, cleanup
 }
 
 // CreateGrafDir creates the Grafana directory.

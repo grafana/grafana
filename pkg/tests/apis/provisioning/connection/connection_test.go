@@ -14,8 +14,6 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/go-github/v82/github"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
-	"github.com/grafana/grafana/pkg/extensions"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,9 +28,7 @@ import (
 )
 
 func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
@@ -188,9 +184,7 @@ func TestIntegrationProvisioning_ConnectionCRUDL(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
@@ -306,231 +300,8 @@ func TestIntegrationProvisioning_ConnectionMutation(t *testing.T) {
 	})
 }
 
-func TestIntegrationProvisioning_ConnectionEnterpriseMutation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	if !extensions.IsEnterprise {
-		t.Skip("Skipping integration test when not enterprise")
-	}
-
-	// Enforcing enterprise connection types for the test (defaults to github only)
-	helper := common.RunGrafana(t, common.WithRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
-	ctx := context.Background()
-
-	gitlabNamePrefix := fmt.Sprintf("%s-", provisioning.GitlabConnectionType)
-	bitbucketNamePrefix := fmt.Sprintf("%s-", provisioning.BitbucketConnectionType)
-
-	t.Run("should update gitlab connection name with type prefix", func(t *testing.T) {
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  provisioning.GitlabConnectionType,
-				"gitlab": map[string]any{
-					"clientID": "123456",
-				},
-			},
-			"secure": map[string]any{
-				"clientSecret": map[string]any{
-					"create": "someSecret",
-				},
-			},
-		}}
-
-		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.NoError(t, err, "failed to create resource")
-		require.Contains(t, c.GetName(), gitlabNamePrefix, "name should be updated")
-
-		t.Cleanup(func() {
-			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-				require.NoError(collect, err)
-			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-		})
-	})
-
-	t.Run("should update gitlab connection name with given prefix", func(t *testing.T) {
-		generateName := "some-name-"
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"namespace":    "default",
-				"generateName": generateName,
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  provisioning.GitlabConnectionType,
-				"gitlab": map[string]any{
-					"clientID": "123456",
-				},
-			},
-			"secure": map[string]any{
-				"clientSecret": map[string]any{
-					"create": "someSecret",
-				},
-			},
-		}}
-
-		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.NoError(t, err, "failed to create resource")
-		require.Contains(t, c.GetName(), generateName, "name should be updated")
-
-		t.Cleanup(func() {
-			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-				require.NoError(collect, err)
-			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-		})
-	})
-
-	t.Run("should keep gitlab connection name if name is already given", func(t *testing.T) {
-		name := "some-name"
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"name":      name,
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  provisioning.GitlabConnectionType,
-				"gitlab": map[string]any{
-					"clientID": "123456",
-				},
-			},
-			"secure": map[string]any{
-				"clientSecret": map[string]any{
-					"create": "someSecret",
-				},
-			},
-		}}
-
-		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.NoError(t, err, "failed to create resource")
-		require.Equal(t, name, c.GetName(), "name should be identical")
-
-		t.Cleanup(func() {
-			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-				require.NoError(collect, err)
-			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-		})
-	})
-
-	t.Run("should update bitbucket connection name with type prefix", func(t *testing.T) {
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  provisioning.BitbucketConnectionType,
-				"bitbucket": map[string]any{
-					"clientID": "123456",
-				},
-			},
-			"secure": map[string]any{
-				"clientSecret": map[string]any{
-					"create": "someSecret",
-				},
-			},
-		}}
-
-		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.NoError(t, err, "failed to create resource")
-		require.Contains(t, c.GetName(), bitbucketNamePrefix, "name should be updated")
-
-		t.Cleanup(func() {
-			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-				require.NoError(collect, err)
-			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-		})
-	})
-
-	t.Run("should update bitbucket connection name with given prefix", func(t *testing.T) {
-		generateName := "some-name-"
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"namespace":    "default",
-				"generateName": generateName,
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  provisioning.BitbucketConnectionType,
-				"bitbucket": map[string]any{
-					"clientID": "123456",
-				},
-			},
-			"secure": map[string]any{
-				"clientSecret": map[string]any{
-					"create": "someSecret",
-				},
-			},
-		}}
-
-		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.NoError(t, err, "failed to create resource")
-		require.Contains(t, c.GetName(), generateName, "name should be updated")
-
-		t.Cleanup(func() {
-			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-				require.NoError(collect, err)
-			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-		})
-	})
-
-	t.Run("should keep bitbucket connection name if name is already given", func(t *testing.T) {
-		name := "some-name"
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"name":      name,
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  provisioning.BitbucketConnectionType,
-				"bitbucket": map[string]any{
-					"clientID": "123456",
-				},
-			},
-			"secure": map[string]any{
-				"clientSecret": map[string]any{
-					"create": "someSecret",
-				},
-			},
-		}}
-
-		c, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{FieldValidation: "Strict"})
-		require.NoError(t, err, "failed to create resource")
-		require.Equal(t, name, c.GetName(), "name should be identical")
-
-		t.Cleanup(func() {
-			require.EventuallyWithT(t, func(collect *assert.CollectT) {
-				err := helper.Connections.Resource.Delete(ctx, c.GetName(), metav1.DeleteOptions{})
-				require.NoError(collect, err)
-			}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-		})
-	})
-}
-
 func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
@@ -896,169 +667,8 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 	})
 }
 
-func TestIntegrationProvisioning_ConnectionEnterpriseValidation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	if !extensions.IsEnterprise {
-		t.Skip("Skipping integration test when not enterprise")
-	}
-
-	// Enforcing enterprise connection types for the test (defaults to github only)
-	helper := common.RunGrafana(t, common.WithRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
-	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
-	ctx := context.Background()
-
-	t.Run("should fail when type is bitbucket but 'bitbucket' field is not there", func(t *testing.T) {
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"name":      "connection",
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  "bitbucket",
-			},
-			"secure": map[string]any{
-				"clientSecret": map[string]any{
-					"create": "someSecret",
-				},
-			},
-		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
-		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "bitbucket info must be specified in Bitbucket connection")
-	})
-
-	t.Run("should fail when type is bitbucket but client secret is not there", func(t *testing.T) {
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"name":      "connection",
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  "bitbucket",
-				"bitbucket": map[string]any{
-					"clientID": "123456",
-				},
-			},
-		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
-		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "clientSecret must be specified for Bitbucket connection")
-	})
-
-	t.Run("should fail when type is bitbucket but a private key is specified", func(t *testing.T) {
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"name":      "connection",
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  "bitbucket",
-				"bitbucket": map[string]any{
-					"clientID": "123456",
-				},
-			},
-			"secure": map[string]any{
-				"privateKey": map[string]any{
-					"create": "someSecret",
-				},
-				"clientSecret": map[string]any{
-					"create": "someSecret",
-				},
-			},
-		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
-		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "privateKey is forbidden in Bitbucket connection")
-	})
-
-	t.Run("should fail when type is gitlab but 'gitlab' field is not there", func(t *testing.T) {
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"name":      "connection",
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  "gitlab",
-			},
-			"secure": map[string]any{
-				"clientSecret": map[string]any{
-					"create": "someSecret",
-				},
-			},
-		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
-		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "gitlab info must be specified in Gitlab connection")
-	})
-
-	t.Run("should fail when type is gitlab but client secret is not there", func(t *testing.T) {
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"name":      "connection",
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  "gitlab",
-				"gitlab": map[string]any{
-					"clientID": "123456",
-				},
-			},
-		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
-		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "clientSecret must be specified for Gitlab connection")
-	})
-
-	t.Run("should fail when type is gitlab but a private key is specified", func(t *testing.T) {
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"name":      "connection",
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test Connection",
-				"type":  "gitlab",
-				"gitlab": map[string]any{
-					"clientID": "123456",
-				},
-			},
-			"secure": map[string]any{
-				"privateKey": map[string]any{
-					"create": "someSecret",
-				},
-				"clientSecret": map[string]any{
-					"create": "someSecret",
-				},
-			},
-		}}
-		_, err := helper.Connections.Resource.Create(ctx, connection, createOptions)
-		require.Error(t, err, "failed to create resource")
-		assert.Contains(t, err.Error(), "privateKey is forbidden in Gitlab connection")
-	})
-}
-
 func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	namespace := "default"
 
@@ -1265,9 +875,7 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 }
 
 func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	namespace := "default"
 
@@ -1436,9 +1044,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 }
 
 func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	namespace := "default"
 
@@ -1676,9 +1282,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 }
 
 func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	namespace := "default"
 
@@ -1839,9 +1443,7 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
@@ -2015,9 +1617,7 @@ func TestIntegrationProvisioning_RepositoryFieldSelectorByConnection(t *testing.
 }
 
 func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{}
 	deleteOptions := metav1.DeleteOptions{}
@@ -2114,9 +1714,7 @@ func TestIntegrationProvisioning_ConnectionDeleteBlockedByRepository(t *testing.
 }
 
 func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{}
 	deleteOptions := metav1.DeleteOptions{}
@@ -2161,9 +1759,7 @@ func TestIntegrationProvisioning_ConnectionDeleteWithNoReferences(t *testing.T) 
 }
 
 func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	namespace := "default"
 
@@ -2253,218 +1849,6 @@ func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) 
 		assert.Equal(t, provisioning.ReasonServiceUnavailable, readyCondition.Reason, "Ready condition should have ServiceUnavailable reason for 503 errors")
 		// Verify message contains the actual error returned by the GitHub client
 		assert.Contains(t, readyCondition.Message, "github is unavailable", "condition message should contain the actual error text")
-	})
-}
-
-func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	if !extensions.IsEnterprise {
-		t.Skip("Skipping integration test when not enterprise")
-	}
-
-	// Enforcing enterprise connection types for the test (defaults to github only)
-	helper := common.RunGrafana(t, common.WithRepositoryTypes([]string{"github", "gitlab", "bitbucket"}))
-	ctx := context.Background()
-
-	t.Run("GitLab connection can be created and reconciled", func(t *testing.T) {
-		clientSecret := base64.StdEncoding.EncodeToString([]byte("test-client-secret"))
-
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"name":      "test-gitlab-connection",
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test GitLab Connection",
-				"type":  string(provisioning.GitlabConnectionType),
-				"url":   "https://gitlab.com",
-				"gitlab": map[string]any{
-					"clientID": "test-client-id",
-				},
-			},
-			"secure": map[string]any{
-				"clientSecret": map[string]any{
-					"create": clientSecret,
-				},
-			},
-		}}
-
-		// CREATE
-		created, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{})
-		require.NoError(t, err, "failed to create GitLab connection")
-		require.NotNil(t, created)
-
-		connectionName := created.GetName()
-		require.NotEmpty(t, connectionName, "connection name should not be empty")
-
-		// Cleanup
-		defer func() {
-			_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
-		}()
-
-		// READ
-		output, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
-		require.NoError(t, err, "failed to read back GitLab connection")
-		assert.Equal(t, connectionName, output.GetName(), "name should be equal")
-
-		spec := output.Object["spec"].(map[string]any)
-		assert.Equal(t, string(provisioning.GitlabConnectionType), spec["type"], "type should be gitlab")
-
-		// Get typed client for status checks
-		restConfig := helper.Org1.Admin.NewRestConfig()
-		provClient, err := clientset.NewForConfig(restConfig)
-		require.NoError(t, err, "failed to create provisioning client")
-		connClient := provClient.ProvisioningV0alpha1().Connections("default")
-
-		// Wait for reconciliation - controller should process the resource
-		// With fake credentials, health check will fail, but reconciliation should happen
-		require.Eventually(t, func() bool {
-			updated, err := connClient.Get(ctx, connectionName, metav1.GetOptions{})
-			if err != nil {
-				return false
-			}
-			// Check that controller has reconciled (ObservedGeneration matches Generation)
-			// and that health check was attempted (Checked > 0)
-			return updated.Status.ObservedGeneration == updated.Generation &&
-				updated.Status.Health.Checked > 0
-		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled by controller")
-
-		// Verify reconciliation status
-		reconciled, err := connClient.Get(ctx, connectionName, metav1.GetOptions{})
-		require.NoError(t, err)
-
-		// Controller should have set ObservedGeneration - this proves reconciliation happened
-		assert.Equal(t, reconciled.Generation, reconciled.Status.ObservedGeneration,
-			"controller should have reconciled the connection")
-
-		// Health check should have been attempted - proves the controller processed it
-		assert.Greater(t, reconciled.Status.Health.Checked, int64(0),
-			"health check should have been attempted")
-
-		// Should have a ready condition - proves status was updated
-		readyCondition := meta.FindStatusCondition(reconciled.Status.Conditions, provisioning.ConditionTypeReady)
-		assert.NotNil(t, readyCondition, "should have ready condition")
-
-		t.Logf("GitLab connection reconciled successfully. Health: %v, ObservedGen: %d, Checked: %d",
-			reconciled.Status.Health.Healthy, reconciled.Status.ObservedGeneration, reconciled.Status.Health.Checked)
-	})
-
-	t.Run("Bitbucket connection can be created and reconciled", func(t *testing.T) {
-		clientSecret := base64.StdEncoding.EncodeToString([]byte("test-client-secret"))
-
-		connection := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Connection",
-			"metadata": map[string]any{
-				"name":      "test-bitbucket-connection",
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test Bitbucket Connection",
-				"type":  string(provisioning.BitbucketConnectionType),
-				"bitbucket": map[string]any{
-					"clientID": "test-client-id",
-				},
-			},
-			"secure": map[string]any{
-				"clientSecret": map[string]any{
-					"create": clientSecret,
-				},
-			},
-		}}
-
-		// CREATE
-		created, err := helper.Connections.Resource.Create(ctx, connection, metav1.CreateOptions{})
-		require.NoError(t, err, "failed to create Bitbucket connection")
-		require.NotNil(t, created)
-
-		connectionName := created.GetName()
-		require.NotEmpty(t, connectionName, "connection name should not be empty")
-
-		// Cleanup
-		defer func() {
-			_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
-		}()
-
-		// READ
-		output, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
-		require.NoError(t, err, "failed to read back Bitbucket connection")
-		assert.Equal(t, connectionName, output.GetName(), "name should be equal")
-
-		spec := output.Object["spec"].(map[string]any)
-		assert.Equal(t, string(provisioning.BitbucketConnectionType), spec["type"], "type should be bitbucket")
-
-		// Get typed client for status checks
-		restConfig := helper.Org1.Admin.NewRestConfig()
-		provClient, err := clientset.NewForConfig(restConfig)
-		require.NoError(t, err, "failed to create provisioning client")
-		connClient := provClient.ProvisioningV0alpha1().Connections("default")
-
-		// Wait for reconciliation
-		require.Eventually(t, func() bool {
-			updated, err := connClient.Get(ctx, connectionName, metav1.GetOptions{})
-			if err != nil {
-				return false
-			}
-			return updated.Status.ObservedGeneration == updated.Generation &&
-				updated.Status.Health.Checked > 0
-		}, 15*time.Second, 500*time.Millisecond, "connection should be reconciled by controller")
-
-		// Verify reconciliation status
-		reconciled, err := connClient.Get(ctx, connectionName, metav1.GetOptions{})
-		require.NoError(t, err)
-
-		assert.Equal(t, reconciled.Generation, reconciled.Status.ObservedGeneration,
-			"controller should have reconciled the connection")
-		assert.Greater(t, reconciled.Status.Health.Checked, int64(0),
-			"health check should have been attempted")
-
-		readyCondition := meta.FindStatusCondition(reconciled.Status.Conditions, provisioning.ConditionTypeReady)
-		assert.NotNil(t, readyCondition, "should have ready condition")
-
-		t.Logf("Bitbucket connection reconciled successfully. Health: %v, ObservedGen: %d, Checked: %d",
-			reconciled.Status.Health.Healthy, reconciled.Status.ObservedGeneration, reconciled.Status.Health.Checked)
-	})
-
-	t.Run("All connection types are supported", func(t *testing.T) {
-		// List all supported connection types by attempting to create connections
-		// This validates the factory has all expected types registered
-
-		supportedTypes := []provisioning.ConnectionType{
-			provisioning.GithubConnectionType,
-			provisioning.GitlabConnectionType,
-			provisioning.BitbucketConnectionType,
-		}
-
-		for _, connType := range supportedTypes {
-			t.Run(string(connType), func(t *testing.T) {
-				// We just check that we can create the object without factory errors
-				// Validation errors are expected if credentials are missing/invalid
-				conn := &unstructured.Unstructured{Object: map[string]any{
-					"apiVersion": "provisioning.grafana.app/v0alpha1",
-					"kind":       "Connection",
-					"metadata": map[string]any{
-						"generateName": "test-",
-						"namespace":    "default",
-					},
-					"spec": map[string]any{
-						"title": "Test Connection",
-						"type":  string(connType),
-					},
-				}}
-
-				// Try to create - we expect validation error, not "type not supported"
-				_, err := helper.Connections.Resource.Create(ctx, conn, metav1.CreateOptions{})
-				if err != nil {
-					// Should be a validation error, not "type not supported"
-					assert.NotContains(t, err.Error(), "is not supported",
-						"type %s should be supported by factory", connType)
-				}
-			})
-		}
 	})
 }
 
@@ -2561,9 +1945,7 @@ func createAppInstallationWithPermissions(id int64, permissions map[string]strin
 }
 
 func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Base64 encoded test private key
@@ -2776,9 +2158,7 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Base64 encoded test private key

@@ -114,28 +114,45 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 
 func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelper {
 	t.Helper()
-
-	// Use GRPC server when not configured
-	if opts.APIServerStorageType == "" && opts.GRPCServerAddress == "" {
-		// TODO, this really should be gRPC, but sometimes fails in drone
-		// the two *should* be identical, but we have seen issues when using real gRPC vs channel
-		opts.APIServerStorageType = options.StorageTypeUnified // TODO, should be GRPC
-	}
-
-	// Always enable `FlagAppPlatformGrpcClientAuth` for k8s integration tests, as this is the desired behavior.
-	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
-	var (
-		dir  = opts.Dir
-		path = opts.DirPath
-	)
-	if opts.Dir == "" && opts.DirPath == "" {
-		dir, path = testinfra.CreateGrafDir(t, opts.GrafanaOpts)
-	}
-	listenerAddress, env, testDB := testinfra.StartGrafanaEnvWithDB(t, dir, path)
+	opts = prepareK8sOpts(t, opts)
+	listenerAddress, env, testDB := testinfra.StartGrafanaEnvWithDB(t, opts.Dir, opts.DirPath)
 	if !opts.DisableDBCleanup {
 		t.Cleanup(testDB.Cleanup)
 	}
+	return buildK8sTestHelper(t, opts, listenerAddress, env)
+}
+
+// NewK8sTestHelperShared is like NewK8sTestHelperWithOpts but uses
+// StartGrafanaEnvWithManualCleanup so the server is not tied to t.Cleanup.
+// The caller is responsible for invoking the returned shutdown function
+// (typically in TestMain after m.Run).
+func NewK8sTestHelperShared(t *testing.T, opts K8sTestHelperOpts) (*K8sTestHelper, func()) {
+	t.Helper()
+	opts = prepareK8sOpts(t, opts)
+	listenerAddress, env, testDB, serverShutdown := testinfra.StartGrafanaEnvWithManualCleanup(t, opts.Dir, opts.DirPath)
+	shutdownFunc := func() {
+		serverShutdown()
+		if !opts.DisableDBCleanup {
+			testDB.Cleanup()
+		}
+	}
+	return buildK8sTestHelper(t, opts, listenerAddress, env), shutdownFunc
+}
+
+func prepareK8sOpts(t *testing.T, opts K8sTestHelperOpts) K8sTestHelperOpts {
+	t.Helper()
+	if opts.APIServerStorageType == "" && opts.GRPCServerAddress == "" {
+		opts.APIServerStorageType = options.StorageTypeUnified
+	}
+	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
+	if opts.Dir == "" && opts.DirPath == "" {
+		opts.Dir, opts.DirPath = testinfra.CreateGrafDir(t, opts.GrafanaOpts)
+	}
+	return opts
+}
+
+func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress string, env *server.TestEnv) *K8sTestHelper {
+	t.Helper()
 
 	c := &K8sTestHelper{
 		env:             *env,
@@ -186,7 +203,6 @@ func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelp
 
 	c.loadAPIGroups()
 
-	// ensure unified storage is alive and running
 	ctx := identity.WithRequester(context.Background(), c.Org1.Admin.Identity)
 	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 	require.NoError(t, err, "unable to read resource client health check")
