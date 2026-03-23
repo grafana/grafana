@@ -102,7 +102,8 @@ func Changes(
 ) ([]ResourceFileChange, error) {
 	logger := logging.FromContext(ctx)
 	lookup := make(map[string][]*provisioning.ResourceListItem, len(target.Items))
-	for _, item := range target.Items {
+	for i := range target.Items {
+		item := &target.Items[i]
 		if item.Path == "" {
 			if item.Group != resources.FolderResource.Group {
 				return nil, fmt.Errorf("empty path on a non folder")
@@ -115,7 +116,7 @@ func Changes(
 			item.Path = item.Path + "/"
 		}
 
-		lookup[item.Path] = append(lookup[item.Path], &item)
+		lookup[item.Path] = append(lookup[item.Path], item)
 	}
 
 	keep := safepath.NewTrie()
@@ -627,10 +628,17 @@ func emitDirectChildrenChanges(
 		if !ok || len(items) == 0 {
 			continue
 		}
+		best := items[0]
+		for _, it := range items {
+			if it.Hash == file.Hash {
+				best = it
+				break
+			}
+		}
 		changes = append(changes, ResourceFileChange{
 			Action:   repository.FileActionUpdated,
 			Path:     path,
-			Existing: items[0],
+			Existing: best,
 		})
 		pathsWithChanges[path] = true
 	}
