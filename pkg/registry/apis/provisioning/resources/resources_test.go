@@ -66,16 +66,6 @@ func newWritableParsedResource(name string) (*ParsedResource, *MockDynamicResour
 	return mustBuildParsedResource(name, client), client
 }
 
-// newDeletableParsedResource builds a ParsedResource whose client is set up to
-// handle the Get+Delete that Run() performs for the delete action.
-func newDeletableParsedResource(name string) (*ParsedResource, *MockDynamicResourceInterface) {
-	client := &MockDynamicResourceInterface{}
-	grafanaObj := managedGrafanaObj(name, "default", nil)
-	client.On("Get", mock.Anything, name, metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
-	client.On("Delete", mock.Anything, name, metav1.DeleteOptions{}, mock.Anything).Return(nil)
-
-	return mustBuildParsedResource(name, client), client
-}
 
 func TestReplaceResourceFromFile(t *testing.T) {
 	t.Run("name unchanged skips delete", func(t *testing.T) {
@@ -209,7 +199,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		repo.On("Read", mock.Anything, "alerts/rule.json", "old-ref").Return(oldFileInfo, nil)
 		repo.On("Read", mock.Anything, "alerts/rule.json", "new-ref").Return(newFileInfo, nil)
 
-		oldParsed, _ := newDeletableParsedResource("same-uid")
+		oldParsed := mustBuildParsedResource("same-uid", nil)
 		newParsed, _ := newWritableParsedResource("same-uid")
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(oldParsed, nil)
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(newParsed, nil)
@@ -222,27 +212,35 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		require.Equal(t, replaceTestGVK, gvk)
 	})
 
-	t.Run("name changed deletes old via ParsedResource.Run", func(t *testing.T) {
+	t.Run("name changed deletes old resource", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
+		mockClients := NewMockResourceClients(t)
+		deleteClient := &MockDynamicResourceInterface{}
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{"old": true}`), Path: "alerts/rule.json"}
 		newFileInfo := &repository.FileInfo{Data: []byte(`{"new": true}`), Path: "alerts/rule.json"}
 		repo.On("Read", mock.Anything, "alerts/rule.json", "old-ref").Return(oldFileInfo, nil)
 		repo.On("Read", mock.Anything, "alerts/rule.json", "new-ref").Return(newFileInfo, nil)
+		repo.On("Config").Return(replaceRepoConfig())
 
-		oldParsed, oldClient := newDeletableParsedResource("old-uid")
+		oldParsed := mustBuildParsedResource("old-uid", nil)
 		newParsed, _ := newWritableParsedResource("new-uid")
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(oldParsed, nil)
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(newParsed, nil)
+		mockClients.On("ForResource", mock.Anything, replaceTestGVR).Return(deleteClient, replaceTestGVK, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		grafanaObj := managedGrafanaObj("old-uid", "default", nil)
+		deleteClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		deleteClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
 		name, gvk, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "new-uid", name)
 		require.Equal(t, replaceTestGVK, gvk)
-		oldClient.AssertCalled(t, "Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything)
+		deleteClient.AssertCalled(t, "Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything)
 	})
 
 	t.Run("previous file read error is propagated", func(t *testing.T) {
@@ -284,7 +282,7 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 		repo.On("Read", mock.Anything, "alerts/rule.json", "new-ref").
 			Return((*repository.FileInfo)(nil), fmt.Errorf("file not found"))
 
-		oldParsed, _ := newDeletableParsedResource("old-uid")
+		oldParsed := mustBuildParsedResource("old-uid", nil)
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(oldParsed, nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, nil)
@@ -297,24 +295,27 @@ func TestReplaceResourceFromFileByRef(t *testing.T) {
 	t.Run("delete failure returns error with new name", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
+		mockClients := NewMockResourceClients(t)
+		deleteClient := &MockDynamicResourceInterface{}
 
 		oldFileInfo := &repository.FileInfo{Data: []byte(`{"old": true}`), Path: "alerts/rule.json"}
 		newFileInfo := &repository.FileInfo{Data: []byte(`{"new": true}`), Path: "alerts/rule.json"}
 		repo.On("Read", mock.Anything, "alerts/rule.json", "old-ref").Return(oldFileInfo, nil)
 		repo.On("Read", mock.Anything, "alerts/rule.json", "new-ref").Return(newFileInfo, nil)
+		repo.On("Config").Return(replaceRepoConfig())
 
-		oldClient := &MockDynamicResourceInterface{}
-		grafanaObj := managedGrafanaObj("old-uid", "default", nil)
-		oldClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
-		oldClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).
-			Return(fmt.Errorf("forbidden"))
-		oldParsed := mustBuildParsedResource("old-uid", oldClient)
-
+		oldParsed := mustBuildParsedResource("old-uid", nil)
 		newParsed, _ := newWritableParsedResource("new-uid")
 		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(oldParsed, nil)
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(newParsed, nil)
+		mockClients.On("ForResource", mock.Anything, replaceTestGVR).Return(deleteClient, replaceTestGVK, nil)
 
-		mgr := NewResourcesManager(repo, nil, mockParser, nil)
+		grafanaObj := managedGrafanaObj("old-uid", "default", nil)
+		deleteClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		deleteClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).
+			Return(fmt.Errorf("forbidden"))
+
+		mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
 		name, gvk, err := mgr.ReplaceResourceFromFileByRef(context.Background(), "alerts/rule.json", "new-ref", "old-ref")
 
 		require.Error(t, err)

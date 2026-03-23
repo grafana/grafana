@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -15,6 +16,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -320,45 +322,43 @@ func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, pat
 		return newName, gvk, nil
 	}
 
-	oldParsed.Action = provisioning.ResourceActionDelete
-	if delErr := oldParsed.Run(ctx); delErr != nil {
-		return newName, gvk, fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, delErr)
-	}
-
-	return newName, gvk, nil
+	return newName, gvk, r.deleteOldResource(ctx, oldName, oldParsed.GVR, newName)
 }
 
-// deleteOldResource constructs a ParsedResource for the old identity and
-// deletes it via Run(), getting provisioning identity, ownership checks,
-// and tracing — matching the pattern in RemoveResourceFromFile.
+// deleteOldResource deletes the previous resource when a name change is
+// detected. It sets the provisioning identity, checks ownership, and
+// calls the client directly.
 func (r *ResourcesManager) deleteOldResource(ctx context.Context, oldName string, oldGVR schema.GroupVersionResource, newName string) error {
-	client, oldGVK, err := r.clients.ForResource(ctx, oldGVR)
+	client, _, err := r.clients.ForResource(ctx, oldGVR)
 	if err != nil {
 		return nil
 	}
 
 	cfg := r.repo.Config()
-	oldObj := &unstructured.Unstructured{}
-	oldObj.SetName(oldName)
-	oldObj.SetNamespace(cfg.GetNamespace())
-	oldObj.SetGroupVersionKind(oldGVK)
 
-	oldParsed := &ParsedResource{
-		Obj:    oldObj,
-		GVR:    oldGVR,
-		GVK:    oldGVK,
-		Client: client,
-		Action: provisioning.ResourceActionDelete,
-		Repo: provisioning.ResourceRepositoryInfo{
-			Name:      cfg.Name,
-			Namespace: cfg.Namespace,
-			Type:      cfg.Spec.Type,
-			Title:     cfg.Spec.Title,
-		},
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("unable to use provisioning identity: %w", err)
 	}
 
-	if delErr := oldParsed.Run(ctx); delErr != nil {
-		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, delErr)
+	existing, err := client.Get(ctx, oldName, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
+	}
+
+	requestingManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: cfg.Name,
+	}
+	if err := CheckResourceOwnership(ctx, existing, oldName, requestingManager); err != nil {
+		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
+	}
+
+	if err := client.Delete(ctx, oldName, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
 	}
 	return nil
 }
