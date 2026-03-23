@@ -419,4 +419,130 @@ func TestRenameResourceFile(t *testing.T) {
 		require.Empty(t, folderName, "folder should be empty when resource does not exist in grafana")
 		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
+
+	t.Run("same parent folder after rename suppresses old folder signal", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		dashClient := &MockDynamicResourceInterface{}
+
+		config := newTestRepoConfig(testRepoName)
+		repo.On("Config").Return(config)
+
+		expectedFolderID := ParseFolder("team/", testRepoName).ID
+
+		tree := NewEmptyFolderTree()
+		tree.Add(ParseFolder("team/", testRepoName), "")
+		folderMgr := NewFolderManager(repo, nil, tree)
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "team/old-dash.json"}
+		repo.On("Read", mock.Anything, "team/old-dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "dashboard.grafana.app/v0alpha1",
+				"kind":       "Dashboard",
+				"metadata":   map[string]any{"name": "dash-uid", "namespace": "default"},
+			}},
+			GVK:    dashboardGVK,
+			GVR:    DashboardResource,
+			Client: dashClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "dash-uid", "namespace": "default"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "team/new-dash.json"}
+		repo.On("Read", mock.Anything, "team/new-dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			GVR:    DashboardResource,
+			Client: dashClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		grafanaObj := managedGrafanaObj("dash-uid", "default", map[string]any{
+			utils.AnnoKeyFolder: expectedFolderID,
+		})
+		dashClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		dashClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, folderMgr, mockParser, nil)
+		name, folderName, gvk, err := mgr.RenameResourceFile(context.Background(), "team/old-dash.json", "old-ref", "team/new-dash.json", "new-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "dash-uid", name)
+		require.Empty(t, folderName, "should suppress old folder signal when parent folder didn't change")
+		require.Equal(t, dashboardGVK, gvk)
+	})
+
+	t.Run("different parent folder after rename returns old folder for cleanup", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		dashClient := &MockDynamicResourceInterface{}
+
+		config := newTestRepoConfig(testRepoName)
+		repo.On("Config").Return(config)
+
+		oldFolderID := ParseFolder("a-team/", testRepoName).ID
+		newFolderID := ParseFolder("b-team/", testRepoName).ID
+
+		tree := NewEmptyFolderTree()
+		tree.Add(ParseFolder("b-team/", testRepoName), "")
+		folderMgr := NewFolderManager(repo, nil, tree)
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "a-team/dash.json"}
+		repo.On("Read", mock.Anything, "a-team/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "dashboard.grafana.app/v0alpha1",
+				"kind":       "Dashboard",
+				"metadata":   map[string]any{"name": "dash-uid", "namespace": "default"},
+			}},
+			GVK:    dashboardGVK,
+			GVR:    DashboardResource,
+			Client: dashClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "dash-uid", "namespace": "default"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "b-team/dash.json"}
+		repo.On("Read", mock.Anything, "b-team/dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			GVR:    DashboardResource,
+			Client: dashClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		grafanaObj := managedGrafanaObj("dash-uid", "default", map[string]any{
+			utils.AnnoKeyFolder: oldFolderID,
+		})
+		dashClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		dashClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(newObj, nil)
+
+		mgr := NewResourcesManager(repo, folderMgr, mockParser, nil)
+		name, folderName, gvk, err := mgr.RenameResourceFile(context.Background(), "a-team/dash.json", "old-ref", "b-team/dash.json", "new-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "dash-uid", name)
+		require.Equal(t, oldFolderID, folderName, "should return old folder for cleanup when parent folder changed")
+		require.NotEqual(t, newFolderID, folderName)
+		require.Equal(t, dashboardGVK, gvk)
+	})
 }
