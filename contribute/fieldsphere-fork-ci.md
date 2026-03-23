@@ -9,7 +9,7 @@ This repository fork uses a **minimal GitHub Actions workflow** ([`.github/workf
 
 Fork-local paths (`.cursor/`, `.vscode/`, and root `manifest.json`) are listed in [`.prettierignore`](../.prettierignore) so `prettier:check` matches upstream expectations without formatting IDE tooling.
 
-## Red checks on the *first* minimal-CI pull request
+## Red checks on the _first_ minimal-CI pull request
 
 GitHub runs `pull_request_target` workflows from the **target branch** (`main`), not from the PR branch. Until `main` contains this fork’s slim workflow set, **old** workflows on `main` can still run (changelog policy, external PR labelling, auto-milestone, and similar) and may fail or be irrelevant.
 
