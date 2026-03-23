@@ -49,6 +49,8 @@ jobs:
       - uses: ./.github/actions/yarn-install
       - run: yarn run prettier:check
       - run: yarn run lint
+      - name: Generate @grafana/data theme schema (required for tsc)
+        run: yarn workspace @grafana/data themes-schema
       - name: Typecheck
         run: yarn run typecheck
         env:
