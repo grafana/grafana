@@ -99,7 +99,7 @@ func Changes(
 	folderMetadataEnabled bool,
 ) ([]ResourceFileChange, error) {
 	logger := logging.FromContext(ctx)
-	lookup := make(map[string]*provisioning.ResourceListItem, len(target.Items))
+	lookup := make(map[string][]*provisioning.ResourceListItem, len(target.Items))
 	for _, item := range target.Items {
 		if item.Path == "" {
 			if item.Group != resources.FolderResource.Group {
@@ -113,7 +113,7 @@ func Changes(
 			item.Path = item.Path + "/"
 		}
 
-		lookup[item.Path] = &item
+		lookup[item.Path] = append(lookup[item.Path], &item)
 	}
 
 	keep := safepath.NewTrie()
@@ -125,13 +125,36 @@ func Changes(
 			file.Path = file.Path + "/"
 		}
 
-		check, ok := lookup[file.Path]
+		items, ok := lookup[file.Path]
 		if ok {
-			if check.Hash != file.Hash && check.Resource != resources.FolderResource.Resource {
+			// Pick the best match: prefer the item whose hash matches the
+			// source file (preserves K8s UID). Fall back to the first item.
+			primary := items[0]
+			for _, item := range items {
+				if item.Hash == file.Hash {
+					primary = item
+					break
+				}
+			}
+
+			// Emit deletions for orphan duplicates at this path.
+			for _, item := range items {
+				if item == primary {
+					continue
+				}
+				logger.Warn("deleting orphan resource at duplicate path", "path", item.Path, "name", item.Name)
+				changes = append(changes, ResourceFileChange{
+					Action:   repository.FileActionDeleted,
+					Path:     item.Path,
+					Existing: item,
+				})
+			}
+
+			if primary.Hash != file.Hash && primary.Resource != resources.FolderResource.Resource {
 				changes = append(changes, ResourceFileChange{
 					Action:   repository.FileActionUpdated,
-					Path:     check.Path,
-					Existing: check,
+					Path:     primary.Path,
+					Existing: primary,
 				})
 			}
 
@@ -139,7 +162,7 @@ func Changes(
 				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
-			if check.Resource != resources.FolderResource.Resource {
+			if primary.Resource != resources.FolderResource.Resource {
 				delete(lookup, file.Path)
 			}
 
@@ -169,11 +192,11 @@ func Changes(
 				if !strings.HasSuffix(parentDir, "/") {
 					parentDir += "/"
 				}
-				if existing, ok := lookup[parentDir]; ok && existing.Hash != file.Hash {
+				if parentItems, ok := lookup[parentDir]; ok && len(parentItems) > 0 && parentItems[0].Hash != file.Hash {
 					changes = append(changes, ResourceFileChange{
 						Action:   repository.FileActionUpdated,
 						Path:     parentDir,
-						Existing: existing,
+						Existing: parentItems[0],
 					})
 				}
 				continue
@@ -203,8 +226,7 @@ func Changes(
 				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
-			_, ok := lookup[safeSegment]
-			if ok {
+			if _, ok := lookup[safeSegment]; ok {
 				continue
 			}
 
@@ -222,16 +244,18 @@ func Changes(
 	}
 
 	// Paths found in grafana, without a matching path in the repository
-	for _, v := range lookup {
-		if v.Resource == resources.FolderResource.Resource && keep.Exists(v.Path) {
-			continue
-		}
+	for _, items := range lookup {
+		for _, v := range items {
+			if v.Resource == resources.FolderResource.Resource && keep.Exists(v.Path) {
+				continue
+			}
 
-		changes = append(changes, ResourceFileChange{
-			Action:   repository.FileActionDeleted,
-			Path:     v.Path,
-			Existing: v,
-		})
+			changes = append(changes, ResourceFileChange{
+				Action:   repository.FileActionDeleted,
+				Path:     v.Path,
+				Existing: v,
+			})
+		}
 	}
 
 	// Deepest first (stable sort order)
@@ -487,7 +511,7 @@ func emitDirectChildrenChanges(
 	pathsWithChanges, affectedFolders map[string]bool,
 	changes []ResourceFileChange,
 ) []ResourceFileChange {
-	existingByPath := make(map[string]*provisioning.ResourceListItem, len(target.Items))
+	existingByPath := make(map[string][]*provisioning.ResourceListItem, len(target.Items))
 	for i := range target.Items {
 		item := &target.Items[i]
 
@@ -496,7 +520,7 @@ func emitDirectChildrenChanges(
 			path = safepath.EnsureTrailingSlash(path)
 		}
 
-		existingByPath[path] = item
+		existingByPath[path] = append(existingByPath[path], item)
 	}
 
 	for _, file := range source {
@@ -521,16 +545,16 @@ func emitDirectChildrenChanges(
 			continue
 		}
 
-		existing, ok := existingByPath[path]
+		items, ok := existingByPath[path]
 		// If the resource path doesn't exist in Grafana, it means it's new
 		// therefore it doesn't need to be updated.
-		if !ok {
+		if !ok || len(items) == 0 {
 			continue
 		}
 		changes = append(changes, ResourceFileChange{
 			Action:   repository.FileActionUpdated,
 			Path:     path,
-			Existing: existing,
+			Existing: items[0],
 		})
 		pathsWithChanges[path] = true
 	}
