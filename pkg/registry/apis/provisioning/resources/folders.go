@@ -335,6 +335,12 @@ func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 // updated in place and an empty string is returned (no cleanup needed).
 // For non-metadata folders the UID changes, so a new folder is created
 // at newPath and the old folder ID is returned for cleanup.
+//
+// Invalid `_folder.json` does not abort the rename. For the old path we fall
+// back to the existing folder in the seeded tree (or to the path-derived UID if
+// there is no tree entry), and for the new path we fall back to the
+// path-derived UID. That gives delete+recreate semantics instead of preserving
+// a metadata-backed identity we can no longer trust.
 func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, error) {
 	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef, fm.folderMetadataEnabled)
 	if err != nil {
@@ -343,6 +349,9 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 			return "", fmt.Errorf("parse old folder: %w", err)
 		}
 
+		// Invalid old metadata means we cannot trust a metadata-backed identity for
+		// the source path. Reuse the seeded-tree entry when available so follow-up
+		// child reconciliation keeps pointing at the currently managed folder.
 		if existing, ok := fm.tree.GetByPath(previousPath); ok {
 			oldFolder = existing
 		} else {
@@ -360,6 +369,10 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 		if !errors.As(err, &invalidErr) {
 			return "", fmt.Errorf("parse new folder: %w", err)
 		}
+
+		// Invalid new metadata means the destination cannot claim a stable
+		// metadata-defined UID, so the rename degrades to the normal path-derived
+		// folder identity at newPath.
 		newFolder = ParseFolder(newPath, fm.repo.Config().Name)
 	}
 

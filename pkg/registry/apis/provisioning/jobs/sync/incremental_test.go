@@ -1162,11 +1162,11 @@ func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 			{Action: repository.FileActionCreated, Path: "alpha/_folder.json", Ref: "new-ref"},
 		}
 		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
-		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil).Twice()
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil).Once()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
 		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"Broken"}}`),
-		}, nil).Twice()
+		}, nil).Once()
 
 		progress.On("SetTotal", mock.Anything, 1).Return()
 		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
@@ -1207,11 +1207,11 @@ func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 			Items: []provisioning.ResourceListItem{
 				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "stable-uid"},
 			},
-		}, nil).Twice()
+		}, nil).Once()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
 		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"Broken"}}`),
-		}, nil).Twice()
+		}, nil).Once()
 
 		progress.On("SetTotal", mock.Anything, 1).Return()
 		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
@@ -1254,7 +1254,7 @@ func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
 			Items: []provisioning.ResourceListItem{
 				{Path: "team/", Group: resources.FolderResource.Group, Name: "stable-uid"},
 			},
-		}, nil).Twice()
+		}, nil).Once()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
 		repo.MockReader.On("Read", mock.Anything, "moved/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"Broken"}}`),
@@ -1421,9 +1421,8 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "stable-uid"},
 				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "stable-uid"},
 			},
-		}, nil).Twice()
+		}, nil).Once()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
-		repoResources.On("RemoveFolderFromTree", "stable-uid").Return().Once()
 
 		repo.MockReader.On("Read", mock.Anything, "alpha/", "new-ref").Return(&repository.FileInfo{}, nil)
 
@@ -1469,7 +1468,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
 
 		// No existing folder — just ensure the deletion is skipped gracefully
-		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil).Twice()
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil).Once()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
 
 		progress.On("SetTotal", mock.Anything, mock.Anything).Return()
@@ -1517,9 +1516,8 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-alpha-uid"},
 				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "old-alpha-uid"},
 			},
-		}, nil).Twice()
+		}, nil).Once()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
-		repoResources.On("RemoveFolderFromTree", "old-alpha-uid").Return().Once()
 
 		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: folderJSON(t, "new-alpha-uid", "Alpha Renamed"),
@@ -1572,9 +1570,8 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-uid"},
 				{Path: "alpha/beta", Group: resources.FolderResource.Group, Name: "beta-uid", Folder: "old-uid"},
 			},
-		}, nil).Twice()
+		}, nil).Once()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
-		repoResources.On("RemoveFolderFromTree", "old-uid").Return().Once()
 
 		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: folderJSON(t, "new-uid", "Alpha"),
@@ -1621,9 +1618,8 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 			Items: []provisioning.ResourceListItem{
 				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-uid"},
 			},
-		}, nil).Twice()
+		}, nil).Once()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
-		repoResources.On("RemoveFolderFromTree", "old-uid").Return().Once()
 
 		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: folderJSON(t, "new-uid", "Alpha"),

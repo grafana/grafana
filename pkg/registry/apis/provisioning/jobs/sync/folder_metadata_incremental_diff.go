@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -18,12 +19,12 @@ type FolderMetadataIncrementalDiffBuilder interface {
 		ctx context.Context,
 		currentRef string,
 		repoDiff []repository.VersionedFileChange,
+		resourcesList *provisioning.ResourceList,
 	) ([]repository.VersionedFileChange, []replacedFolder, []*resources.InvalidFolderMetadata, error)
 }
 
 type folderMetadataIncrementalDiffBuilder struct {
-	repo                repository.Reader
-	repositoryResources resources.RepositoryResources
+	repo repository.Reader
 }
 
 type replacedFolder struct {
@@ -31,16 +32,14 @@ type replacedFolder struct {
 	OldUID string
 }
 
-// NewFolderMetadataIncrementalDiffBuilder wires the repository reader and
-// managed-resource lister used to rewrite `_folder.json` changes into the
-// directory/resource diff entries consumed by incremental apply.
+// NewFolderMetadataIncrementalDiffBuilder wires the repository reader used to
+// rewrite `_folder.json` changes into the directory/resource diff entries
+// consumed by incremental apply.
 func NewFolderMetadataIncrementalDiffBuilder(
 	repo repository.Reader,
-	repositoryResources resources.RepositoryResources,
 ) *folderMetadataIncrementalDiffBuilder {
 	return &folderMetadataIncrementalDiffBuilder{
-		repo:                repo,
-		repositoryResources: repositoryResources,
+		repo: repo,
 	}
 }
 
@@ -54,18 +53,14 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	ctx context.Context,
 	currentRef string,
 	repoDiff []repository.VersionedFileChange,
+	resourcesList *provisioning.ResourceList,
 ) ([]repository.VersionedFileChange, []replacedFolder, []*resources.InvalidFolderMetadata, error) {
 	input := splitMetadataChanges(repoDiff)
 	if !input.HasMetadataChanges() {
 		return repoDiff, nil, nil, nil
 	}
 
-	target, err := d.repositoryResources.List(ctx)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("list managed resources: %w", err)
-	}
-
-	index := newManagedResourceIndex(target)
+	index := newManagedResourceIndex(resourcesList)
 	diffTracker := newRebuiltIncrementalDiffTracker(input.otherChanges)
 	invalid := make([]*resources.InvalidFolderMetadata, 0)
 
@@ -117,7 +112,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 	change repository.VersionedFileChange,
 ) ([]*resources.InvalidFolderMetadata, error) {
 	folderPath := folderPathForMetadataChange(change.Path)
-	invalidMetaErrors, err := d.collectInvalidMetadataErrors(ctx, folderPath, change.Ref, change.Action)
+	folder, invalidMetaErrors, err := d.readMetadata(ctx, folderPath, change.Ref, change.Action)
 	if err != nil {
 		return nil, err
 	}
@@ -337,30 +332,38 @@ func (d *folderMetadataIncrementalDiffBuilder) collectInvalidRenamedMetadataChan
 	currentRef string,
 	change repository.VersionedFileChange,
 ) ([]*resources.InvalidFolderMetadata, error) {
-	return d.collectInvalidMetadataErrors(ctx, folderPathForMetadataChange(change.Path), currentRef, change.Action)
+	_, invalid, err := d.readMetadata(ctx, folderPathForMetadataChange(change.Path), currentRef, change.Action)
+	return invalid, err
 }
 
-// collectInvalidMetadataErrors reads `_folder.json` for the given folder path
-// and returns a warning only for invalid metadata. Missing metadata is ignored
-// here because callers decide separately whether that action should be replayed
-// or left to the normal folder fallback logic.
-func (d *folderMetadataIncrementalDiffBuilder) collectInvalidMetadataErrors(
+// readMetadata reads `_folder.json` once and returns either the parsed folder
+// metadata or an action-aware invalid metadata warning.
+//
+// Invalid or missing metadata intentionally returns a nil folder with no hard
+// error. Callers still replay the folder path so apply can fall back to the
+// existing folder at that path or to the path-derived unstable UID, but they do
+// not treat that case as a confirmed identity replacement because there is no
+// trustworthy metadata-defined UID to compare against.
+func (d *folderMetadataIncrementalDiffBuilder) readMetadata(
 	ctx context.Context,
 	folderPath string,
 	ref string,
 	action repository.FileAction,
-) ([]*resources.InvalidFolderMetadata, error) {
-	_, _, err := resources.ReadFolderMetadata(ctx, d.repo, folderPath, ref)
-	if err == nil || errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
-		return nil, nil
+) (*folders.Folder, []*resources.InvalidFolderMetadata, error) {
+	folder, _, err := resources.ReadFolderMetadata(ctx, d.repo, folderPath, ref)
+	if err == nil {
+		return folder, nil, nil
+	}
+	if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+		return nil, nil, nil
 	}
 
 	var invalidErr *resources.InvalidFolderMetadata
 	if errors.As(err, &invalidErr) {
-		return []*resources.InvalidFolderMetadata{invalidErr.WithAction(action)}, nil
+		return nil, []*resources.InvalidFolderMetadata{invalidErr.WithAction(action)}, nil
 	}
 
-	return nil, fmt.Errorf("read folder metadata for %s: %w", folderPath, err)
+	return nil, nil, fmt.Errorf("read folder metadata for %s: %w", folderPath, err)
 }
 
 // replacementsForMetadataChange determines which existing folder identities at
@@ -374,7 +377,7 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementsForMetadataChange(
 	ctx context.Context,
 	index managedResourceIndex,
 	folderPath string,
-	change repository.VersionedFileChange,
+	folder *folders.Folder,
 ) ([]replacedFolder, string, error) {
 	folder, _, err := resources.ReadFolderMetadata(ctx, d.repo, folderPath, change.Ref)
 	if err != nil {
