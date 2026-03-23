@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -15,6 +16,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -285,6 +287,94 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 	runSpan.End()
 
 	return parsed.Obj.GetName(), parsed.GVK, err
+}
+
+// ReplaceResourceFromFile writes a resource from file and, if the resource name
+// changed compared to oldName, deletes the old resource to prevent orphans.
+// Used by full sync where the old identity is known from Changes().Existing.
+func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource) (string, schema.GroupVersionKind, error) {
+	newName, gvk, err := r.WriteResourceFromFile(ctx, path, ref)
+	if err != nil || oldName == "" || oldName == newName {
+		return newName, gvk, err
+	}
+
+	return newName, gvk, r.deleteOldResource(ctx, path, oldName, oldGVR, newName)
+}
+
+// ReplaceResourceFromFileByRef writes a resource from the file at path/ref and,
+// if the resource identity changed compared to the previous version at
+// path/previousRef, deletes the old resource to prevent orphans.
+// Used by incremental sync where the previous git ref is available.
+func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string) (string, schema.GroupVersionKind, error) {
+	oldInfo, err := r.repo.Read(ctx, path, previousRef)
+	if err != nil {
+		return "", schema.GroupVersionKind{}, fmt.Errorf("reading previous file: %w", err)
+	}
+
+	oldParsed, err := r.parser.Parse(ctx, oldInfo)
+	if err != nil {
+		return "", schema.GroupVersionKind{}, fmt.Errorf("parsing previous file: %w", err)
+	}
+
+	newName, gvk, writeErr := r.WriteResourceFromFile(ctx, path, ref)
+	if writeErr != nil {
+		return newName, gvk, writeErr
+	}
+
+	oldName := oldParsed.Obj.GetName()
+	if oldName == "" || oldName == newName {
+		return newName, gvk, nil
+	}
+
+	return newName, gvk, r.deleteOldResource(ctx, path, oldName, oldParsed.GVR, newName)
+}
+
+// deleteOldResource deletes the previous resource when a name change is
+// detected. It sets the provisioning identity, checks ownership, and
+// calls the client directly.
+//
+// The sourcePath parameter is the file path that triggered the replacement.
+// Before deleting, we verify that the existing resource's sourcePath annotation
+// still points to this file. If another file in the same sync has already
+// written a resource with the same UID (e.g. a multi-file UID swap), the
+// annotation will reference the other file and we skip the delete.
+func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, oldName string, oldGVR schema.GroupVersionResource, newName string) error {
+	client, _, err := r.clients.ForResource(ctx, oldGVR)
+	if err != nil {
+		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
+	}
+
+	cfg := r.repo.Config()
+
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("unable to use provisioning identity: %w", err)
+	}
+
+	existing, err := client.Get(ctx, oldName, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
+	}
+
+	if currentPath := existing.GetAnnotations()[utils.AnnoKeySourcePath]; currentPath != "" && currentPath != sourcePath {
+		return fmt.Errorf("skipping delete of old resource %s: now managed by %s, not %s", oldName, currentPath, sourcePath)
+	}
+
+	requestingManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: cfg.GetName(),
+	}
+	if err := CheckResourceOwnership(ctx, existing, oldName, requestingManager); err != nil {
+		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
+	}
+
+	if err := client.Delete(ctx, oldName, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
+	}
+	return nil
 }
 
 func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, string, schema.GroupVersionKind, error) {

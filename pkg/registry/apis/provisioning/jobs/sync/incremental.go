@@ -211,7 +211,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 		}
 
 		switch change.Action {
-		case repository.FileActionCreated, repository.FileActionUpdated:
+		case repository.FileActionCreated:
 			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
 			name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
@@ -220,6 +220,26 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			}
 			resultBuilder.WithName(name).WithGVK(gvk)
 			writeSpan.End()
+		case repository.FileActionUpdated:
+			if change.PreviousRef != "" {
+				writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.replace_resource_from_file")
+				name, gvk, err := repositoryResources.ReplaceResourceFromFileByRef(writeCtx, change.Path, change.Ref, change.PreviousRef)
+				if err != nil {
+					writeSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("replacing resource from file %s: %w", change.Path, err))
+				}
+				resultBuilder.WithName(name).WithGVK(gvk)
+				writeSpan.End()
+			} else {
+				writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
+				name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
+				if err != nil {
+					writeSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
+				}
+				resultBuilder.WithName(name).WithGVK(gvk)
+				writeSpan.End()
+			}
 		case repository.FileActionDeleted:
 			removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file")
 			name, folderName, gvk, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
