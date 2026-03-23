@@ -12,30 +12,31 @@ const (
 
 type AuthJWTSettings struct {
 	// JWT Auth
-	Enabled                 bool
-	HeaderName              string
-	URLLogin                bool
-	EmailClaim              string
-	UsernameClaim           string
-	ExpectClaims            string
-	JWKSetURL               string
-	JWKSetBearerTokenFile   string
-	CacheTTL                time.Duration
-	KeyFile                 string
-	KeyID                   string
-	JWKSetFile              string
-	AutoSignUp              bool
-	RoleAttributePath       string
-	RoleAttributeStrict     bool
-	OrgMapping              []string
-	OrgAttributePath        string
-	AllowAssignGrafanaAdmin bool
-	SkipOrgRoleSync         bool
-	GroupsAttributePath     string
-	EmailAttributePath      string
-	UsernameAttributePath   string
-	TlsClientCa             string
-	TlsSkipVerify           bool
+	Enabled                   bool
+	HeaderName                string
+	URLLogin                  bool
+	EmailClaim                string
+	UsernameClaim             string
+	ExpectClaims              string
+	JWKSetURL                 string
+	JWKSetBearerTokenFile     string
+	CacheTTL                  time.Duration
+	KeyFile                   string
+	KeyID                     string
+	JWKSetFile                string
+	AutoSignUp                bool
+	RoleAttributePath         string
+	RoleAttributeStrict       bool
+	OrgMapping                []string
+	OrgAttributePath          string
+	AllowWildcardInOrgMapping bool
+	AllowAssignGrafanaAdmin   bool
+	SkipOrgRoleSync           bool
+	GroupsAttributePath       string
+	EmailAttributePath        string
+	UsernameAttributePath     string
+	TlsClientCa               string
+	TlsSkipVerify             bool
 }
 
 type ExtJWTSettings struct {
@@ -82,6 +83,7 @@ func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings.TlsClientCa = valueAsString(authJWT, "tls_client_ca", "")
 	jwtSettings.TlsSkipVerify = authJWT.Key("tls_skip_verify_insecure").MustBool(false)
 	jwtSettings.OrgAttributePath = valueAsString(authJWT, "org_attribute_path", "")
+	jwtSettings.AllowWildcardInOrgMapping = authJWT.Key("allow_wildcard_in_org_mapping").MustBool(false)
 	jwtSettings.OrgMapping = util.SplitString(valueAsString(authJWT, "org_mapping", ""))
 
 	cfg.JWTAuth = jwtSettings
