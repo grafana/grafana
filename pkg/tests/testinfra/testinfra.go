@@ -233,8 +233,6 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 
 // CreateGrafDir creates the Grafana directory.
 // The log by default is muted in the regression test, to activate it, pass option EnableLog = true
-//
-//nolint:gocyclo
 func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 	t.Helper()
 	return createGrafDir(t, t.TempDir(), opts)
@@ -250,6 +248,7 @@ func CreateGrafDirShared(t *testing.T, opts GrafanaOpts) (string, string) {
 	return createGrafDir(t, tmpDir, opts)
 }
 
+//nolint:gocyclo
 func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, string) {
 	t.Helper()
 

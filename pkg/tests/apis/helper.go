@@ -128,6 +128,7 @@ func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelp
 // (typically in TestMain after m.Run).
 func NewK8sTestHelperShared(t *testing.T, opts K8sTestHelperOpts) (*K8sTestHelper, func()) {
 	t.Helper()
+	ownsGrafDir := opts.Dir == "" && opts.DirPath == ""
 	opts = prepareK8sOptsShared(t, opts)
 	grafDir := opts.Dir
 	listenerAddress, env, testDB, serverShutdown := testinfra.StartGrafanaEnvWithManualCleanup(t, opts.Dir, opts.DirPath)
@@ -136,7 +137,9 @@ func NewK8sTestHelperShared(t *testing.T, opts K8sTestHelperOpts) (*K8sTestHelpe
 		if !opts.DisableDBCleanup {
 			testDB.Cleanup()
 		}
-		_ = os.RemoveAll(grafDir)
+		if ownsGrafDir {
+			_ = os.RemoveAll(grafDir)
+		}
 	}
 	return buildK8sTestHelper(t, opts, listenerAddress, env), shutdownFunc
 }

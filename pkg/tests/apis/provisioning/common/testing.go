@@ -1064,8 +1064,14 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 		}
 		select {
 		case <-ctx.Done():
+			if firstErr != nil {
+				return fmt.Errorf("deleteAndWait: context cancelled (first delete error: %v): %w", firstErr, ctx.Err())
+			}
 			return fmt.Errorf("deleteAndWait: context cancelled: %w", ctx.Err())
 		case <-timer.C:
+			if firstErr != nil {
+				return fmt.Errorf("deleteAndWait: timed out with %d items remaining (first delete error: %v)", len(remaining.Items), firstErr)
+			}
 			return fmt.Errorf("deleteAndWait: timed out with %d items remaining", len(remaining.Items))
 		case <-ticker.C:
 		}
@@ -1099,6 +1105,7 @@ type SharedEnv struct {
 	Helper       *ProvisioningTestHelper
 	shutdownFunc func()
 	once         sync.Once
+	initErr      string // non-empty if initialization failed
 	options      []GrafanaOption
 }
 
@@ -1116,8 +1123,17 @@ func (e *SharedEnv) GetHelper(t *testing.T) *ProvisioningTestHelper {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	e.once.Do(func() {
+		defer func() {
+			if r := recover(); r != nil {
+				e.initErr = fmt.Sprintf("shared server init panicked: %v", r)
+			}
+		}()
 		e.Helper, e.shutdownFunc = RunGrafanaShared(t, e.options...)
 	})
+
+	if e.initErr != "" {
+		t.Fatalf("SharedEnv: %s", e.initErr)
+	}
 
 	return e.Helper
 }
@@ -1133,14 +1149,19 @@ func (e *SharedEnv) GetCleanHelper(t *testing.T) *ProvisioningTestHelper {
 
 // RunTestMain replaces testsuite.Run(m) for packages that share a Grafana
 // server. It handles DB setup, runs all tests, shuts down the shared server,
-// cleans up the DB, and exits.
+// cleans up the DB, and exits. In short mode the DB setup is skipped because
+// GetHelper will skip all integration tests anyway.
 func (e *SharedEnv) RunTestMain(m *testing.M) {
-	db.SetupTestDB()
+	if !testing.Short() {
+		db.SetupTestDB()
+	}
 	code := m.Run()
 	if e.shutdownFunc != nil {
 		e.shutdownFunc()
 	}
-	db.CleanupTestDB()
+	if !testing.Short() {
+		db.CleanupTestDB()
+	}
 	os.Exit(code)
 }
 
