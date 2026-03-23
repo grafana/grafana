@@ -9,6 +9,11 @@ interface Props {
   dashboard: DashboardScene;
 }
 
+/**
+ * Adapter between DashboardScene and OrphanedResourceBanner.
+ * Reads the dashboard's provisioning manager identity, checks whether its
+ * repository still exists, and renders the banner only when the resource is orphaned.
+ */
 export function OrphanedDashboardBanner({ dashboard }: Props) {
   const kind = dashboard.getManagerKind();
   const id = dashboard.getManagerIdentity();

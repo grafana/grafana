@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
+import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Stack } from '@grafana/ui';
 import { Job } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -53,13 +54,35 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
   const handleJobStatusChange = useCallback(
     (statusInfo: StepStatusInfo) => {
       if (statusInfo.status === 'success') {
+        getAppEvents().publish({
+          type: 'alertSuccess',
+          payload: [
+            t('provisioning.orphaned-resource-banner.job-success', 'Orphaned resources processed successfully'),
+          ],
+        });
         navigate('/dashboards');
       } else if (statusInfo.status === 'error') {
-        // handle error
-        // don't navigate away, show alert tell user job failed
+        // show alert message, error details will be in the JobStatus component below
+        getAppEvents().publish({
+          type: 'alertError',
+          payload: [
+            t(
+              'provisioning.orphaned-resource-banner.job-error',
+              'An error occurred while processing orphaned resources'
+            ),
+          ],
+        });
       } else if (statusInfo.status === 'warning') {
-        // handle warning
-        // navigate away, show alert tell user partially completed job
+        // show alert message, warning details will be in the JobStatus component below
+        getAppEvents().publish({
+          type: 'alertWarning',
+          payload: [
+            t(
+              'provisioning.orphaned-resource-banner.job-warning',
+              'Some resources were processed with warnings. Please review the results.'
+            ),
+          ],
+        });
       }
     },
     [navigate]
@@ -108,7 +131,6 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
         onDismiss={() => setPendingAction(null)}
         submitRelease={handleRelease}
         submitDelete={handleDelete}
-        onSuccess={() => setPendingAction(null)}
       />
     </>
   );

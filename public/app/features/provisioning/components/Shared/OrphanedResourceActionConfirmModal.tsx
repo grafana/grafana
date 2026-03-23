@@ -9,7 +9,6 @@ interface Props {
   onDismiss: () => void;
   submitRelease: () => Promise<unknown>;
   submitDelete: () => Promise<unknown>;
-  onSuccess: () => void;
 }
 
 function getModalConfig(action: OrphanedResourceModalAction) {
@@ -46,7 +45,6 @@ export function OrphanedResourceActionConfirmModal({
   onDismiss,
   submitRelease,
   submitDelete,
-  onSuccess,
 }: Props) {
   if (action === null) {
     return null;
