@@ -2,6 +2,7 @@ package foldermetadatafull
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +11,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -178,10 +181,9 @@ func TestIntegrationProvisioning_FullSync_MultipleFilesNameChange(t *testing.T) 
 // previous Grafana version without the cleanup fix), a subsequent full sync
 // detects the duplicates and removes them.
 //
-// The orphan state is simulated by creating the real dashboard via sync, then
-// injecting a second dashboard through the K8s API. The orphan is first created
-// unmanaged (to bypass admission control), then updated to add the manager and
-// sourcePath annotations — producing two resources at the same path.
+// The orphan is injected directly into unified storage (via the gRPC resource
+// client) to bypass the K8s API layer's managed-resource routing, which would
+// otherwise refuse to create a second resource at the same sourcePath.
 func TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -197,13 +199,23 @@ func TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync(t *testi
 	helper.SyncAndWait(t, repoName)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 
-	// Step 1: Create an unmanaged dashboard (no provisioning annotations).
-	orphan := &unstructured.Unstructured{
+	// Inject an orphan directly into unified storage, bypassing the K8s API
+	// admission hooks that prevent creating a second managed resource at the
+	// same sourcePath. This simulates a corrupt state left by a previous
+	// Grafana version.
+	orphanObj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"apiVersion": "dashboard.grafana.app/v1beta1",
 			"kind":       "Dashboard",
 			"metadata": map[string]interface{}{
-				"name": "orphan-dash",
+				"name":      "orphan-dash",
+				"namespace": "default",
+				"annotations": map[string]interface{}{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: repoName,
+					utils.AnnoKeySourcePath:      "dashboard.json",
+					utils.AnnoKeySourceChecksum:  "stale-checksum",
+				},
 			},
 			"spec": map[string]interface{}{
 				"title":         "Orphan Dashboard",
@@ -211,23 +223,23 @@ func TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync(t *testi
 			},
 		},
 	}
-	created, err := helper.DashboardsV1.Resource.Create(ctx, orphan, metav1.CreateOptions{})
-	require.NoError(t, err, "should be able to create unmanaged dashboard")
+	orphanBytes, err := json.Marshal(orphanObj.Object)
+	require.NoError(t, err)
 
-	// Step 2: Update the orphan to add manager + sourcePath annotations,
-	// simulating a resource that was left behind by a previous Grafana version.
-	annotations := created.GetAnnotations()
-	if annotations == nil {
-		annotations = make(map[string]string)
-	}
-	annotations[utils.AnnoKeyManagerKind] = string(utils.ManagerKindRepo)
-	annotations[utils.AnnoKeyManagerIdentity] = repoName
-	annotations[utils.AnnoKeySourcePath] = "dashboard.json"
-	annotations[utils.AnnoKeySourceChecksum] = "stale-checksum"
-	created.SetAnnotations(annotations)
+	provCtx, _, err := identity.WithProvisioningIdentity(ctx, "default")
+	require.NoError(t, err)
 
-	_, err = helper.DashboardsV1.Resource.Update(ctx, created, metav1.UpdateOptions{})
-	require.NoError(t, err, "should be able to add provisioning annotations to orphan")
+	rsp, err := helper.GetEnv().ResourceClient.Create(provCtx, &resourcepb.CreateRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: "default",
+			Group:     "dashboard.grafana.app",
+			Resource:  "dashboards",
+			Name:      "orphan-dash",
+		},
+		Value: orphanBytes,
+	})
+	require.NoError(t, err, "gRPC create should succeed")
+	require.Nil(t, rsp.GetError(), "resource create should not return error: %v", rsp.GetError())
 
 	// Confirm two dashboards exist before cleanup.
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
