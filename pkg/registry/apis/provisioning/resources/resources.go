@@ -230,10 +230,10 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	}
 	parseSpan.End()
 
-	return r.writeResourceFromParsed(ctx, path, parsed)
+	return r.writeResourceFromParsed(ctx, path, ref, parsed)
 }
 
-func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path string, parsed *ParsedResource) (string, schema.GroupVersionKind, error) {
+func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, ref string, parsed *ParsedResource) (string, schema.GroupVersionKind, error) {
 	if parsed.Obj.GetName() == "" {
 		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
@@ -324,7 +324,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 
 	oldFolderName := oldParsed.ExistingFolder()
 
-	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newParsed)
+	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed)
 	if err != nil {
 		return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
 	}
