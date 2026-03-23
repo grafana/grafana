@@ -279,12 +279,12 @@ func TestIncrementalSync_HierarchicalErrorHandling(t *testing.T) { // nolint:goc
 				repoResources.On("RenameResourceFile", mock.Anything, "oldfolder/file.json", "old-ref", "newfolder/file.json", "new-ref").
 					Return("", "", schema.GroupVersionKind{}, folderErr).Once()
 
-			progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-				return r.Path() == "newfolder/file.json" &&
-					r.PreviousPath() == "oldfolder/file.json" &&
-					r.Action() == repository.FileActionRenamed &&
-					r.Error() != nil
-			})).Return().Once()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+					return r.Path() == "newfolder/file.json" &&
+						r.PreviousPath() == "oldfolder/file.json" &&
+						r.Action() == repository.FileActionRenamed &&
+						r.Error() != nil
+				})).Return().Once()
 			},
 		},
 		{
