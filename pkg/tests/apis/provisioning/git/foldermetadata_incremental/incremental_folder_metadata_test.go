@@ -1075,6 +1075,101 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 			"uid-combo-001": {Title: "Updated Dashboard", SourcePath: "team/dash.json", Folder: newUID},
 		})
 	})
+
+	t.Run("chained UID changes never accumulate orphans", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-uid-chained"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"team/_folder.json": folderMetadataJSON("uid-v1", "Team"),
+			"team/dash.json":    gitcommon.DashboardJSON("chain-dash", "Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+
+		// v1 -> v2
+		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON("uid-v2", "Team v2"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "uid v1 to v2")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, "uid-v2", metav1.GetOptions{})
+		require.NoError(t, err, "v2 folder should exist")
+		_, err = helper.FoldersV1.Resource.Get(ctx, "uid-v1", metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "v1 folder should be deleted")
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+
+		// v2 -> v3
+		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON("uid-v3", "Team v3"))))
+		_, err = local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "uid v2 to v3")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, "uid-v3", metav1.GetOptions{})
+		require.NoError(t, err, "v3 folder should exist")
+		_, err = helper.FoldersV1.Resource.Get(ctx, "uid-v2", metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "v2 folder should be deleted")
+		_, err = helper.FoldersV1.Resource.Get(ctx, "uid-v1", metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "v1 folder should still be deleted")
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"chain-dash": {Title: "Dashboard", SourcePath: "team/dash.json", Folder: "uid-v3"},
+		})
+	})
+
+	t.Run("full sync after incremental UID changes cleans up any remaining orphans", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-uid-full-cleanup"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"team/_folder.json": folderMetadataJSON("cleanup-v1", "Team"),
+			"team/dash.json":    gitcommon.DashboardJSON("cleanup-dash", "Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+
+		// Change UID via incremental sync
+		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON("cleanup-v2", "Team v2"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "uid change for cleanup test")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+
+		// A subsequent full sync should be idempotent — still exactly 1 folder
+		helper.SyncAndWait(t, repoName)
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, "cleanup-v2", metav1.GetOptions{})
+		require.NoError(t, err, "current folder should still exist")
+		_, err = helper.FoldersV1.Resource.Get(ctx, "cleanup-v1", metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old folder should not reappear")
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"cleanup-dash": {Title: "Dashboard", SourcePath: "team/dash.json", Folder: "cleanup-v2"},
+		})
+	})
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion verifies that
