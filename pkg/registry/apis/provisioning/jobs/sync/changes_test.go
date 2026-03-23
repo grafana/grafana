@@ -41,6 +41,7 @@ func TestChanges(t *testing.T) {
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "muta.json",
+			Hash:   "xyz",
 		}, changes[0])
 	})
 	t.Run("empty file path", func(t *testing.T) {
@@ -81,10 +82,12 @@ func TestChanges(t *testing.T) {
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "one/two/",
+			Hash:   "xyz",
 		}, changes[0])
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "other/",
+			Hash:   "xyz",
 		}, changes[1])
 	})
 
@@ -283,6 +286,7 @@ func TestChanges(t *testing.T) {
 			{
 				Action: repository.FileActionCreated,
 				Path:   "one/two/",
+				Hash:   "xyz",
 			},
 		}
 		changes, err := Changes(context.Background(), source, target, true)
@@ -298,6 +302,7 @@ func TestChanges(t *testing.T) {
 			{
 				Action: repository.FileActionCreated,
 				Path:   "one/two/",
+				Hash:   "xyz",
 			},
 		}
 		changes, err := Changes(context.Background(), source, target, true)
@@ -327,10 +332,12 @@ func TestChanges(t *testing.T) {
 			{
 				Action: repository.FileActionCreated,
 				Path:   "abc/nested folder/nested-dashboard.json",
+				Hash:   "xyz",
 			},
 			{
 				Action: repository.FileActionCreated,
 				Path:   "abc/dash.json",
+				Hash:   "abc",
 			},
 		}
 
@@ -439,16 +446,19 @@ func TestChanges(t *testing.T) {
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "folder1/dashboard.json",
+			Hash:   "def",
 		}, changes[0])
 
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "folder1/",
+			Hash:   "abc",
 		}, changes[1])
 
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "folder2/",
+			Hash:   "ghi",
 		}, changes[2])
 	})
 
@@ -553,16 +563,19 @@ func TestChanges(t *testing.T) {
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "folder1/dashboard.json",
+			Hash:   "def",
 		}, changes[0])
 
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "folder1/",
+			Hash:   "abc",
 		}, changes[1])
 
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionCreated,
 			Path:   "folder2/",
+			Hash:   "ghi",
 		}, changes[2])
 	})
 }
@@ -687,16 +700,18 @@ func TestCompare(t *testing.T) {
 
 			tt.setupMocks(repo, repoResources)
 
-			changes, missing, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
+			changes, missing, invalid, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError, tt.description)
 				require.Nil(t, changes)
 				require.Nil(t, missing)
+				require.Nil(t, invalid)
 			} else {
 				require.NoError(t, err, tt.description)
 				require.Equal(t, tt.expectedChanges, changes, tt.description)
 				require.Equal(t, tt.expectedMissing, missing, tt.description)
+				require.Nil(t, invalid, tt.description)
 			}
 		})
 	}
@@ -724,8 +739,9 @@ func TestCompare_FolderMetadataFlagDisabled(t *testing.T) {
 		// it would call ReadFolderMetadata which calls repo.Read, and
 		// the mock would panic on unexpected call.
 
-		changes, _, err := Compare(context.Background(), repo, repoResources, "ref", false)
+		changes, _, invalid, err := Compare(context.Background(), repo, repoResources, "ref", false)
 		require.NoError(t, err)
+		require.Nil(t, invalid)
 
 		// No folder update should be emitted — the metadata processing is skipped.
 		for _, c := range changes {
@@ -734,6 +750,96 @@ func TestCompare_FolderMetadataFlagDisabled(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestCompare_InvalidFolderMetadataWarning(t *testing.T) {
+	tests := []struct {
+		name         string
+		metadataData []byte
+	}{
+		{
+			name:         "malformed json",
+			metadataData: []byte("not-json"),
+		},
+		{
+			name:         "missing metadata name",
+			metadataData: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"My Folder"}}`),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockRepository(t)
+			repoResources := resources.NewMockRepositoryResources(t)
+
+			source := []repository.FileTreeEntry{
+				{Path: "my-folder/", Hash: "folder-hash", Blob: false},
+				{Path: "my-folder/_folder.json", Hash: "new-metadata-hash", Blob: true},
+			}
+			target := &provisioning.ResourceList{
+				Items: []provisioning.ResourceListItem{
+					{
+						Path:     "my-folder/",
+						Hash:     "old-metadata-hash",
+						Resource: resources.FolderResource.Resource,
+						Group:    resources.FolderResource.Group,
+						Name:     "existing-uid",
+					},
+				},
+			}
+
+			repoResources.On("List", mock.Anything).Return(target, nil)
+			repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
+			repo.On("Read", mock.Anything, "my-folder/_folder.json", "current-ref").
+				Return(&repository.FileInfo{Data: tt.metadataData, Hash: "new-metadata-hash"}, nil)
+
+			changes, missing, invalid, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
+
+			require.NoError(t, err)
+			require.Empty(t, changes)
+			require.Empty(t, missing)
+			require.Len(t, invalid, 1)
+			require.ErrorIs(t, invalid[0], resources.ErrInvalidFolderMetadata)
+			require.Equal(t, "my-folder/", invalid[0].Path)
+			require.Equal(t, repository.FileActionUpdated, invalid[0].Action)
+		})
+	}
+}
+
+func TestCompare_InvalidCreatedFolderMetadataWarningPreservesFolderCreate(t *testing.T) {
+	repo := repository.NewMockRepository(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+
+	source := []repository.FileTreeEntry{
+		{Path: "my-folder/", Hash: "folder-hash", Blob: false},
+		{Path: "my-folder/_folder.json", Hash: "new-metadata-hash", Blob: true},
+		{Path: "my-folder/dashboard.json", Hash: "dashboard-hash", Blob: true},
+	}
+	target := &provisioning.ResourceList{}
+
+	repoResources.On("List", mock.Anything).Return(target, nil)
+	repoResources.On("SetTree", mock.Anything).Return().Maybe()
+	repo.On("ReadTree", mock.Anything, "current-ref").Return(source, nil)
+	repo.On("Read", mock.Anything, "my-folder/_folder.json", "current-ref").
+		Return(&repository.FileInfo{
+			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"Broken Folder"}}`),
+			Hash: "new-metadata-hash",
+		}, nil)
+
+	changes, missing, invalid, err := Compare(context.Background(), repo, repoResources, "current-ref", true)
+
+	require.NoError(t, err)
+	require.Empty(t, missing)
+	require.Len(t, invalid, 1)
+	require.ErrorIs(t, invalid[0], resources.ErrInvalidFolderMetadata)
+	require.Equal(t, repository.FileActionCreated, invalid[0].Action)
+
+	actionsByPath := make(map[string]repository.FileAction, len(changes))
+	for _, change := range changes {
+		actionsByPath[change.Path] = change.Action
+	}
+	require.Equal(t, repository.FileActionCreated, actionsByPath["my-folder/"])
+	require.Equal(t, repository.FileActionCreated, actionsByPath["my-folder/dashboard.json"])
 }
 
 func TestAugmentChangesForFolderMoves(t *testing.T) {
@@ -864,7 +970,7 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 		require.Len(t, result, 2)
 	})
 
-	t.Run("empty UID in metadata is skipped", func(t *testing.T) {
+	t.Run("invalid metadata leaves folder move as delete plus create", func(t *testing.T) {
 		repo := repository.NewMockReader(t)
 		repo.On("Read", mock.Anything, "new-folder/_folder.json", "main").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"No UID"}}`)}, nil)
@@ -878,9 +984,12 @@ func TestAugmentChangesForFolderMoves(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, result, 2)
 
+		paths := map[string]repository.FileAction{}
 		for _, c := range result {
-			require.NotEqual(t, repository.FileActionUpdated, c.Action, "no UPDATE should be emitted")
+			paths[c.Path] = c.Action
 		}
+		require.Equal(t, repository.FileActionDeleted, paths["old-folder/"])
+		require.Equal(t, repository.FileActionCreated, paths["new-folder/"])
 	})
 
 	t.Run("non-folder paths are ignored", func(t *testing.T) {
@@ -997,7 +1106,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
@@ -1037,7 +1146,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Len(t, result, 1, "only the original folder update — no children emitted")
 		require.Equal(t, "my-folder/", result[0].Path)
@@ -1074,7 +1183,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
@@ -1120,7 +1229,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		count := 0
@@ -1147,7 +1256,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			{Action: repository.FileActionCreated, Path: "my-folder/dashboard.json"},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Equal(t, changes, result, "should return changes unchanged")
 	})
@@ -1171,7 +1280,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{} // no changes from Changes()
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		require.Len(t, result, 1)
@@ -1201,7 +1310,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{} // empty
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		require.Len(t, result, 3, "folder update + dashboard + child folder")
@@ -1233,7 +1342,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, nil)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, nil)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
@@ -1261,7 +1370,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Empty(t, result, "no changes expected when folder never had metadata")
 	})
@@ -1283,7 +1392,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Empty(t, result, "no changes expected when _folder.json still exists")
 	})
@@ -1307,7 +1416,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			}},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 		require.Equal(t, changes, result, "no additional changes expected when folder is entirely deleted")
 	})
@@ -1337,7 +1446,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 			},
 		}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		folderCount := 0
@@ -1376,7 +1485,7 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 
 		changes := []ResourceFileChange{}
 
-		result, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
+		result, _, err := augmentChangesForFolderMetadata(context.Background(), repo, "main", source, target, changes)
 		require.NoError(t, err)
 
 		paths := make(map[string]bool)
@@ -1386,5 +1495,153 @@ func TestAugmentChangesForFolderMetadata(t *testing.T) {
 		require.True(t, paths["parent/"], "parent folder update should be present")
 		require.True(t, paths["parent/child/"], "direct child folder should be emitted")
 		require.False(t, paths["parent/child/gc.json"], "grandchild should NOT be emitted")
+	})
+}
+
+func TestDetectRenames(t *testing.T) {
+	t.Run("matching hash collapses delete+create into rename", func(t *testing.T) {
+		existing := &provisioning.ResourceListItem{
+			Path: "old-path/dashboard.json", Name: "my-dashboard",
+			Group: "dashboard.grafana.app", Resource: "dashboards", Hash: "abc123",
+		}
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old-path/dashboard.json", Existing: existing},
+			{Action: repository.FileActionCreated, Path: "new-path/dashboard.json", Hash: "abc123"},
+		}
+
+		result := DetectRenames(changes)
+
+		require.Len(t, result, 1)
+		require.Equal(t, repository.FileActionRenamed, result[0].Action)
+		require.Equal(t, "new-path/dashboard.json", result[0].Path)
+		require.Equal(t, existing, result[0].Existing)
+	})
+
+	t.Run("different hash keeps separate delete and create", func(t *testing.T) {
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old.json", Existing: &provisioning.ResourceListItem{
+				Hash: "aaa",
+			}},
+			{Action: repository.FileActionCreated, Path: "new.json", Hash: "bbb"},
+		}
+
+		result := DetectRenames(changes)
+
+		require.Len(t, result, 2)
+		require.Equal(t, repository.FileActionDeleted, result[0].Action)
+		require.Equal(t, repository.FileActionCreated, result[1].Action)
+	})
+
+	t.Run("no deletions returns changes unchanged", func(t *testing.T) {
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionCreated, Path: "a.json", Hash: "abc"},
+			{Action: repository.FileActionUpdated, Path: "b.json"},
+		}
+
+		result := DetectRenames(changes)
+		require.Equal(t, changes, result)
+	})
+
+	t.Run("no creations returns changes unchanged", func(t *testing.T) {
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "a.json", Existing: &provisioning.ResourceListItem{Hash: "abc"}},
+		}
+
+		result := DetectRenames(changes)
+		require.Equal(t, changes, result)
+	})
+
+	t.Run("empty hash on deletion is skipped", func(t *testing.T) {
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old.json", Existing: &provisioning.ResourceListItem{Hash: ""}},
+			{Action: repository.FileActionCreated, Path: "new.json", Hash: "abc"},
+		}
+
+		result := DetectRenames(changes)
+		require.Len(t, result, 2)
+	})
+
+	t.Run("empty hash on creation is skipped", func(t *testing.T) {
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old.json", Existing: &provisioning.ResourceListItem{Hash: "abc"}},
+			{Action: repository.FileActionCreated, Path: "new.json", Hash: ""},
+		}
+
+		result := DetectRenames(changes)
+		require.Len(t, result, 2)
+	})
+
+	t.Run("multiple rename pairs in one batch", func(t *testing.T) {
+		existingA := &provisioning.ResourceListItem{Path: "old-a/d1.json", Hash: "hash-1"}
+		existingB := &provisioning.ResourceListItem{Path: "old-b/d2.json", Hash: "hash-2"}
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old-a/d1.json", Existing: existingA},
+			{Action: repository.FileActionDeleted, Path: "old-b/d2.json", Existing: existingB},
+			{Action: repository.FileActionCreated, Path: "new-a/d1.json", Hash: "hash-1"},
+			{Action: repository.FileActionCreated, Path: "new-b/d2.json", Hash: "hash-2"},
+		}
+
+		result := DetectRenames(changes)
+
+		require.Len(t, result, 2)
+		for _, c := range result {
+			require.Equal(t, repository.FileActionRenamed, c.Action, "path %s should be renamed", c.Path)
+			require.NotNil(t, c.Existing)
+		}
+	})
+
+	t.Run("mixed renames and genuine deletes/creates", func(t *testing.T) {
+		movedExisting := &provisioning.ResourceListItem{Path: "original/dashboard.json", Hash: "same-hash"}
+		deletedExisting := &provisioning.ResourceListItem{Path: "gone.json", Hash: "other-hash"}
+
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "original/dashboard.json", Existing: movedExisting},
+			{Action: repository.FileActionDeleted, Path: "gone.json", Existing: deletedExisting},
+			{Action: repository.FileActionCreated, Path: "moved/dashboard.json", Hash: "same-hash"},
+			{Action: repository.FileActionCreated, Path: "brand-new.json", Hash: "brand-new-hash"},
+			{Action: repository.FileActionUpdated, Path: "unchanged/other.json"},
+		}
+
+		result := DetectRenames(changes)
+
+		require.Len(t, result, 4, "one deletion removed, one rename converted")
+
+		actionsByPath := make(map[string]repository.FileAction)
+		for _, c := range result {
+			actionsByPath[c.Path] = c.Action
+		}
+
+		require.Equal(t, repository.FileActionRenamed, actionsByPath["moved/dashboard.json"])
+		require.Equal(t, repository.FileActionDeleted, actionsByPath["gone.json"])
+		require.Equal(t, repository.FileActionCreated, actionsByPath["brand-new.json"])
+		require.Equal(t, repository.FileActionUpdated, actionsByPath["unchanged/other.json"])
+	})
+
+	t.Run("folder deletions are not matched", func(t *testing.T) {
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "old-folder/", Existing: &provisioning.ResourceListItem{
+				Path: "old-folder/", Hash: "folder-hash",
+			}},
+			{Action: repository.FileActionCreated, Path: "new-folder/", Hash: "folder-hash"},
+		}
+
+		result := DetectRenames(changes)
+		require.Len(t, result, 2)
+		require.Equal(t, repository.FileActionDeleted, result[0].Action)
+		require.Equal(t, repository.FileActionCreated, result[1].Action)
+	})
+
+	t.Run("duplicate hashes across deletions are not matched", func(t *testing.T) {
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "a.json", Existing: &provisioning.ResourceListItem{Hash: "same"}},
+			{Action: repository.FileActionDeleted, Path: "b.json", Existing: &provisioning.ResourceListItem{Hash: "same"}},
+			{Action: repository.FileActionCreated, Path: "c.json", Hash: "same"},
+		}
+
+		result := DetectRenames(changes)
+		require.Len(t, result, 3, "ambiguous hash should not be matched")
+		require.Equal(t, repository.FileActionDeleted, result[0].Action)
+		require.Equal(t, repository.FileActionDeleted, result[1].Action)
+		require.Equal(t, repository.FileActionCreated, result[2].Action)
 	})
 }

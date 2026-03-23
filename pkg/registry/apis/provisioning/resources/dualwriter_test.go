@@ -276,7 +276,7 @@ func TestEnsureFolderPathExist_UsesStableUID(t *testing.T) {
 	config := newTestRepoConfig("test-repo")
 	rw := repository.NewMockReaderWriter(t)
 	rw.On("Config").Return(config)
-	rw.On("Read", mock.Anything, "my-folder/_folder.json", "").Return(&repository.FileInfo{Data: data}, nil)
+	rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").Return(&repository.FileInfo{Data: data}, nil)
 
 	// Pre-populate the tree with the stable UID only — if effectiveFolderID is not
 	// called the hash-based UID won't match and EnsureFolderExists would be invoked
@@ -286,7 +286,7 @@ func TestEnsureFolderPathExist_UsesStableUID(t *testing.T) {
 
 	fm := NewFolderManager(rw, nil, tree, WithFolderMetadataEnabled(true))
 
-	parentID, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+	parentID, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 	require.NoError(t, err)
 	require.Equal(t, stableUID, parentID)
 }
