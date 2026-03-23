@@ -1340,13 +1340,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
-		// producing errors. The rename still works via fallback, so we only
-		// wait for completion without asserting success.
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		// The folder should now be at new-team with the same UID (identity preserved).
 		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Old Team", "new-team", "")
