@@ -1,38 +1,62 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
+import { Job } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { JobStatus } from '../../Job/JobStatus';
+import { StepStatusInfo } from '../../Wizard/types';
 import { useOrphanedResourceActions } from '../../hooks/useOrphanedResourceActions';
 
 import { OrphanedResourceActionConfirmModal, OrphanedResourceModalAction } from './OrphanedResourceActionConfirmModal';
 
 interface Props {
-  uid: string;
-  resourceType: 'dashboards' | 'folders';
+  repositoryName: string;
 }
 
 /**
  * Shared banner/alert for orphaned resources (dashboards or folders) whose
  * provisioning repository no longer exists. All users see the warning;
- * admins can release or delete the resource (API wiring pending).
+ * admins can release or delete all resources from the missing repository.
  */
-export function OrphanedResourceBanner({ uid, resourceType }: Props) {
+export function OrphanedResourceBanner({ repositoryName }: Props) {
   const [pendingAction, setPendingAction] = useState<OrphanedResourceModalAction | null>(null);
+  const [job, setJob] = useState<Job | null>(null);
   const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
   const { submitRelease, submitDelete, isSubmitting, clearError } = useOrphanedResourceActions({
-    uid,
-    resourceType,
+    repositoryName,
   });
-
-  const resourceLabel = resourceType === 'dashboards' ? 'dashboard' : 'folder';
 
   const openConfirm = (nextAction: OrphanedResourceModalAction) => {
     clearError();
     setPendingAction(nextAction);
   };
+
+  const handleRelease = useCallback(async () => {
+    const j = await submitRelease();
+    setJob(j);
+    setPendingAction(null);
+    return j;
+  }, [submitRelease]);
+
+  const handleDelete = useCallback(async () => {
+    const j = await submitDelete();
+    setJob(j);
+    setPendingAction(null);
+    return j;
+  }, [submitDelete]);
+
+  const handleJobStatusChange = useCallback((statusInfo: StepStatusInfo) => {
+    if (statusInfo.status === 'success') {
+      window.location.reload();
+    }
+  }, []);
+
+  if (job) {
+    return <JobStatus watch={job} jobType="delete" onStatusChange={handleJobStatusChange} />;
+  }
 
   return (
     <>
@@ -40,8 +64,7 @@ export function OrphanedResourceBanner({ uid, resourceType }: Props) {
         severity="warning"
         title={t(
           'provisioning.orphaned-resource-banner.title',
-          'This {{resourceLabel}} is linked to a repository that no longer exists',
-          { resourceLabel }
+          'This resource is managed by a repository that no longer exists'
         )}
         action={
           isAdmin ? (
@@ -58,23 +81,22 @@ export function OrphanedResourceBanner({ uid, resourceType }: Props) {
       >
         <Stack direction="column" gap={1}>
           <Trans i18nKey="provisioning.orphaned-resource-banner.message">
-            The provisioning repository that managed this resource has been removed. You can view this resource but
-            cannot save or delete it until it is released from the missing repository or removed.
+            The repository that managed this resource has been deleted. This resource cannot be saved or modified until
+            it is released or removed. Releasing or deleting will affect all resources managed by that repository.
           </Trans>
           {!isAdmin && (
             <Trans i18nKey="provisioning.orphaned-resource-banner.contact-admin">
-              Contact your Grafana administrator to release or delete this resource.
+              Contact your Grafana administrator to release or delete all resources from the missing repository.
             </Trans>
           )}
         </Stack>
       </Alert>
       <OrphanedResourceActionConfirmModal
         action={pendingAction}
-        resourceLabel={resourceLabel}
         isSubmitting={isSubmitting}
         onDismiss={() => setPendingAction(null)}
-        submitRelease={submitRelease}
-        submitDelete={submitDelete}
+        submitRelease={handleRelease}
+        submitDelete={handleDelete}
         onSuccess={() => setPendingAction(null)}
       />
     </>

@@ -34,7 +34,7 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
   }
 
   if (repoDataStatus === RepoViewStatus.Orphaned) {
-    return <OrphanedProvisionedDrawerNotice onDismiss={onDismiss} />;
+    return <OrphanedProvisionedDrawerNotice />;
   }
 
   if (repoDataStatus === RepoViewStatus.Error || !defaultValues) {

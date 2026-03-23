@@ -13313,17 +13313,17 @@
       "title": "Provisioning repository no longer exists"
     },
     "orphaned-resource-banner": {
-      "confirm-delete-body": "This will permanently delete this {{resourceLabel}}. This action cannot be undone.",
+      "confirm-delete-body": "This will permanently delete all dashboards and folders managed by the missing repository. This action cannot be undone.",
       "confirm-delete-button": "Delete",
-      "confirm-delete-title": "Delete this {{resourceLabel}}?",
-      "confirm-release-body": "This will remove all provisioning annotations from this {{resourceLabel}}, converting it to a regular {{resourceLabel}} that can be saved and deleted normally.",
+      "confirm-delete-title": "Delete all resources from this repository?",
+      "confirm-release-body": "This will remove provisioning annotations from all dashboards and folders managed by the missing repository, converting them to regular resources that can be saved and deleted normally.",
       "confirm-release-button": "Release",
-      "confirm-release-title": "Release from provisioning?",
-      "contact-admin": "Contact your Grafana administrator to release or delete this resource.",
+      "confirm-release-title": "Release all resources from this repository?",
+      "contact-admin": "Contact your Grafana administrator to release or delete all resources from the missing repository.",
       "delete-button": "Delete",
-      "message": "The provisioning repository that managed this resource has been removed. You can view this resource but cannot save or delete it until it is released from the missing repository or removed.",
+      "message": "The repository that managed this resource has been deleted. This resource cannot be saved or modified until it is released or removed. Releasing or deleting will affect all resources managed by that repository.",
       "release-button": "Release",
-      "title": "This {{resourceLabel}} is linked to a repository that no longer exists"
+      "title": "This resource is managed by a repository that no longer exists"
     },
     "provisioning-wizard": {
       "on-submit": {

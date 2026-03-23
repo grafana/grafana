@@ -39,7 +39,7 @@ export function MoveProvisionedDashboardDrawer({
   }
 
   if (repoDataStatus === RepoViewStatus.Orphaned) {
-    return <OrphanedProvisionedDrawerNotice onDismiss={onDismiss} />;
+    return <OrphanedProvisionedDrawerNotice />;
   }
 
   if (repoDataStatus === RepoViewStatus.Error || !defaultValues) {

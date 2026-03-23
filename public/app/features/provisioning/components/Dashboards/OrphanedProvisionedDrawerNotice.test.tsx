@@ -7,14 +7,9 @@ describe('OrphanedProvisionedDrawerNotice', () => {
     const user = userEvent.setup();
     const onDismiss = jest.fn();
 
-    render(<OrphanedProvisionedDrawerNotice onDismiss={onDismiss} />);
+    render(<OrphanedProvisionedDrawerNotice />);
 
     expect(screen.getByText('Provisioning repository no longer exists')).toBeInTheDocument();
-    expect(
-      screen.getByText(/Use the warning at the top of the dashboard/i, { exact: false })
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Close' }));
-    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/Use the warning at the top of the dashboard/i, { exact: false })).toBeInTheDocument();
   });
 });

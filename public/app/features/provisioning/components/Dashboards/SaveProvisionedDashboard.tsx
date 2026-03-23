@@ -26,7 +26,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
   }
 
   if (repoDataStatus === RepoViewStatus.Orphaned) {
-    return <OrphanedProvisionedDrawerNotice onDismiss={() => drawer.onClose()} />;
+    return <OrphanedProvisionedDrawerNotice />;
   }
 
   if (repoDataStatus === RepoViewStatus.Error || !defaultValues) {

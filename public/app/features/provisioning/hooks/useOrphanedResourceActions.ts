@@ -1,16 +1,12 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import { Job } from 'app/api/clients/provisioning/v0alpha1';
-
-import { ResourceRef } from '../components/BulkActions/useBulkActionJob';
+import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning/v0alpha1';
 
 export interface UseOrphanedResourceActionsOptions {
-  uid: string;
-  resourceType: 'dashboards' | 'folders';
+  repositoryName: string;
 }
 
 export interface UseOrphanedResourceActionsResult {
-  resourceRef: ResourceRef;
   submit: (action: 'release' | 'delete') => Promise<Job>;
   submitRelease: () => Promise<Job>;
   submitDelete: () => Promise<Job>;
@@ -20,51 +16,31 @@ export interface UseOrphanedResourceActionsResult {
 }
 
 export function useOrphanedResourceActions({
-  uid,
-  resourceType,
+  repositoryName,
 }: UseOrphanedResourceActionsOptions): UseOrphanedResourceActionsResult {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createJob, { isLoading }] = useCreateRepositoryJobsMutation();
   const [error, setError] = useState<unknown>(null);
 
-  const resourceRef = useMemo<ResourceRef>(
-    () => ({
-      group: resourceType === 'dashboards' ? 'dashboard.grafana.app' : 'folder.grafana.app',
-      kind: resourceType === 'dashboards' ? 'Dashboard' : 'Folder',
-      name: uid,
-    }),
-    [resourceType, uid]
-  );
-
   const submit = useCallback(
-    async (_action: 'release' | 'delete') => {
-      const target: ResourceRef = {
-        group: resourceType === 'dashboards' ? 'dashboard.grafana.app' : 'folder.grafana.app',
-        kind: resourceType === 'dashboards' ? 'Dashboard' : 'Folder',
-        name: uid,
-      };
-
-      setIsSubmitting(true);
+    async (action: 'release' | 'delete'): Promise<Job> => {
       setError(null);
-
       try {
-        await Promise.resolve();
-        // TODO: POST orphan action with { action, target } (see file comment).
+        const jobAction = action === 'release' ? ('releaseResources' as const) : ('deleteResources' as const);
+        return await createJob({
+          name: repositoryName,
+          jobSpec: { action: jobAction, repository: repositoryName },
+        }).unwrap();
       } catch (err) {
         setError(err);
         throw err;
-      } finally {
-        setIsSubmitting(false);
       }
     },
-    [uid, resourceType]
+    [repositoryName, createJob]
   );
 
   const submitRelease = useCallback(() => submit('release'), [submit]);
   const submitDelete = useCallback(() => submit('delete'), [submit]);
+  const clearError = useCallback(() => setError(null), []);
 
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
-  return { resourceRef, submit, submitRelease, submitDelete, isSubmitting, error, clearError };
+  return { submit, submitRelease, submitDelete, isSubmitting: isLoading, error, clearError };
 }

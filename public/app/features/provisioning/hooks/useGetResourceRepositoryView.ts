@@ -28,6 +28,7 @@ interface RepositoryViewData {
   folder?: Folder;
   status: RepoViewStatus;
   error?: unknown;
+  orphanedRepoName?: string; // Only present when status is RepoViewStatus.Orphaned
   isLoading?: boolean; // TODO: status now contains loading state, this can be removed
   isInstanceManaged: boolean;
   isReadOnlyRepo: boolean;
@@ -102,7 +103,13 @@ export const useGetResourceRepositoryView = ({
 
     // name specified but no matching repository found = orphaned resource
     const instanceRepo = items.find((repo) => repo.target === 'instance');
-    return { folder, isInstanceManaged: Boolean(instanceRepo), isReadOnlyRepo: false, status: RepoViewStatus.Orphaned };
+    return {
+      folder,
+      isInstanceManaged: Boolean(instanceRepo),
+      isReadOnlyRepo: false,
+      status: RepoViewStatus.Orphaned,
+      orphanedRepoName: name,
+    };
   }
 
   if (!items.length) {
@@ -141,7 +148,13 @@ export const useGetResourceRepositoryView = ({
       }
 
       // Folder has a manager identity annotation but the repo no longer exists = orphaned
-      return { folder, isInstanceManaged, isReadOnlyRepo: false, status: RepoViewStatus.Orphaned };
+      return {
+        folder,
+        isInstanceManaged,
+        isReadOnlyRepo: false,
+        status: RepoViewStatus.Orphaned,
+        orphanedRepoName: annotatedFolderName,
+      };
     }
   }
 

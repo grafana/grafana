@@ -14,11 +14,6 @@ const mockUseOrphanedResourceActions = jest.mocked(useOrphanedResourceActions);
 
 function mockHook(overrides: Partial<ReturnType<typeof useOrphanedResourceActions>> = {}) {
   mockUseOrphanedResourceActions.mockReturnValue({
-    resourceRef: {
-      group: 'dashboard.grafana.app',
-      kind: 'Dashboard',
-      name: 'dash-uid',
-    },
     submit: jest.fn(),
     submitRelease: jest.fn().mockRejectedValue(new Error('stub')),
     submitDelete: jest.fn().mockRejectedValue(new Error('stub')),
@@ -41,7 +36,7 @@ describe('OrphanedResourceBanner', () => {
   });
 
   it('shows Release and Delete for admins', () => {
-    render(<OrphanedResourceBanner uid="dash-uid" resourceType="dashboards" />);
+    render(<OrphanedResourceBanner repositoryName="gone-repo" />);
 
     expect(screen.getByRole('button', { name: 'Release' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
@@ -51,12 +46,14 @@ describe('OrphanedResourceBanner', () => {
     jest.spyOn(contextSrv, 'hasRole').mockReturnValue(false);
     contextSrv.isGrafanaAdmin = false;
 
-    render(<OrphanedResourceBanner uid="dash-uid" resourceType="dashboards" />);
+    render(<OrphanedResourceBanner repositoryName="gone-repo" />);
 
     expect(screen.queryByRole('button', { name: 'Release' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     expect(
-      screen.getByText(/Contact your Grafana administrator to release or delete this resource/)
+      screen.getByText(
+        /Contact your Grafana administrator to release or delete all resources from the missing repository/
+      )
     ).toBeInTheDocument();
   });
 
@@ -64,12 +61,12 @@ describe('OrphanedResourceBanner', () => {
     const submitRelease = jest.fn().mockResolvedValue({} as Job);
     mockHook({ submitRelease });
 
-    const { user } = render(<OrphanedResourceBanner uid="dash-uid" resourceType="dashboards" />);
+    const { user } = render(<OrphanedResourceBanner repositoryName="gone-repo" />);
 
     await user.click(screen.getByRole('button', { name: 'Release' }));
 
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('Release from provisioning?')).toBeInTheDocument();
+    expect(within(dialog).getByText('Release all resources from this repository?')).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole('button', { name: 'Release' }));
 
@@ -80,12 +77,12 @@ describe('OrphanedResourceBanner', () => {
     const submitDelete = jest.fn().mockResolvedValue({} as Job);
     mockHook({ submitDelete });
 
-    const { user } = render(<OrphanedResourceBanner uid="dash-uid" resourceType="folders" />);
+    const { user } = render(<OrphanedResourceBanner repositoryName="gone-repo" />);
 
     await user.click(screen.getByRole('button', { name: 'Delete' }));
 
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('Delete this folder?')).toBeInTheDocument();
+    expect(within(dialog).getByText('Delete all resources from this repository?')).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
 

@@ -3,7 +3,6 @@ import { ManagerKind } from 'app/features/apiserver/types';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { RepoViewStatus, useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
-
 import { OrphanedResourceBanner } from '../Shared/OrphanedResourceBanner';
 
 interface Props {
@@ -13,7 +12,6 @@ interface Props {
 export function OrphanedDashboardBanner({ dashboard }: Props) {
   const kind = dashboard.getManagerKind();
   const id = dashboard.getManagerIdentity();
-  const uid = dashboard.state.uid ?? '';
 
   const shouldSkip = !config.featureToggles.provisioning || kind !== ManagerKind.Repo || !id;
 
@@ -26,5 +24,5 @@ export function OrphanedDashboardBanner({ dashboard }: Props) {
     return null;
   }
 
-  return <OrphanedResourceBanner uid={uid} resourceType="dashboards" />;
+  return <OrphanedResourceBanner repositoryName={id!} />;
 }
