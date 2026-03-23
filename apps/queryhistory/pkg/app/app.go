@@ -92,7 +92,7 @@ func (m *queryHistoryMutator) Mutate(ctx context.Context, req *app.AdmissionRequ
 		labels = make(map[string]string)
 	}
 
-	labels[LabelCreatedBy] = user.GetUID()
+	labels[LabelCreatedBy] = user.GetIdentifier()
 
 	// Set datasource-uid from spec
 	qh, ok := obj.(*v0alpha1.QueryHistory)

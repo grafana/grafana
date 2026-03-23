@@ -75,7 +75,7 @@ func (s *searchREST) Connect(ctx context.Context, name string, opts runtime.Obje
 			return
 		}
 
-		searchReq, err := convertSearchParamsFromURL(req.URL, user.GetUID())
+		searchReq, err := convertSearchParamsFromURL(req.URL, user.GetNamespace(), user.GetIdentifier())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -94,11 +94,17 @@ func (s *searchREST) Connect(ctx context.Context, name string, opts runtime.Obje
 	}), nil
 }
 
-func convertSearchParamsFromURL(u *url.URL, userUID string) (*resourcepb.ResourceSearchRequest, error) {
+func convertSearchParamsFromURL(u *url.URL, namespace, userUID string) (*resourcepb.ResourceSearchRequest, error) {
 	q := u.Query()
 
 	searchReq := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{},
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: namespace,
+				Group:     "queryhistory.grafana.app",
+				Resource:  "queryhistories",
+			},
+		},
 		// Request the custom fields we need in the response
 		Fields: []string{
 			resource.SEARCH_FIELD_PREFIX + builders.QH_COMMENT,
@@ -208,7 +214,12 @@ func NewSearchHandler(searcher resourcepb.ResourceIndexClient) simple.AppCustomR
 			return nil
 		}
 
-		searchReq, err := convertSearchParamsFromURL(req.URL, user.GetUID())
+		namespace := req.ResourceIdentifier.Namespace
+		if namespace == "" {
+			namespace = user.GetNamespace()
+		}
+
+		searchReq, err := convertSearchParamsFromURL(req.URL, namespace, user.GetIdentifier())
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			return nil

@@ -181,8 +181,9 @@ var serviceIdentityTokenPermissions = []string{
 	"provisioning.grafana.app/repositories:watch",
 	"provisioning.grafana.app/settings:read",
 	"provisioning.grafana.app/settings:watch",
-	"preferences.grafana.app:*", // user, team, and org preferences
-	"collections.grafana.app:*", // user stars
+	"preferences.grafana.app:*",  // user, team, and org preferences
+	"collections.grafana.app:*",  // user stars
+	"queryhistory.grafana.app:*", // user query history
 	"plugins.grafana.app:*",
 	"historian.alerting.grafana.app:*",
 	"advisor.grafana.app:*",

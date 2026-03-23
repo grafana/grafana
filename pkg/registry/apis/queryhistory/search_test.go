@@ -24,7 +24,7 @@ func TestConvertSearchParams(t *testing.T) {
 	}
 
 	req, _ := http.NewRequest("GET", "/search?"+params.Encode(), nil)
-	searchReq, err := convertSearchParamsFromURL(req.URL, "user-abc")
+	searchReq, err := convertSearchParamsFromURL(req.URL, "default", "user-abc")
 	require.NoError(t, err)
 	require.NotNil(t, searchReq)
 
@@ -35,8 +35,14 @@ func TestConvertSearchParams(t *testing.T) {
 	assert.Equal(t, resource.SEARCH_FIELD_CREATED, searchReq.SortBy[0].Field)
 	assert.True(t, searchReq.SortBy[0].Desc)
 
-	// Should have privacy filter + datasource filter
+	// Verify resource key
 	require.NotNil(t, searchReq.Options)
+	require.NotNil(t, searchReq.Options.Key)
+	assert.Equal(t, "default", searchReq.Options.Key.Namespace)
+	assert.Equal(t, "queryhistory.grafana.app", searchReq.Options.Key.Group)
+	assert.Equal(t, "queryhistories", searchReq.Options.Key.Resource)
+
+	// Should have privacy filter + datasource filter
 	require.GreaterOrEqual(t, len(searchReq.Options.Fields), 2)
 
 	// Verify privacy filter
@@ -54,7 +60,7 @@ func TestConvertSearchParams(t *testing.T) {
 
 func TestConvertSearchParamsDefaults(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/search", nil)
-	searchReq, err := convertSearchParamsFromURL(req.URL, "user-abc")
+	searchReq, err := convertSearchParamsFromURL(req.URL, "default", "user-abc")
 	require.NoError(t, err)
 	require.NotNil(t, searchReq)
 
@@ -76,7 +82,7 @@ func TestConvertSearchParamsTimeRange(t *testing.T) {
 	}
 
 	req, _ := http.NewRequest("GET", "/search?"+params.Encode(), nil)
-	searchReq, err := convertSearchParamsFromURL(req.URL, "user-abc")
+	searchReq, err := convertSearchParamsFromURL(req.URL, "default", "user-abc")
 	require.NoError(t, err)
 
 	// Privacy filter + from + to = 3 field requirements

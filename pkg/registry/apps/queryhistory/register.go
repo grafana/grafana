@@ -1,19 +1,23 @@
 package queryhistory
 
 import (
+	"context"
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
+	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/queryhistory/pkg/apis/manifestdata"
 	qhv0alpha1 "github.com/grafana/grafana/apps/queryhistory/pkg/apis/queryhistory/v0alpha1"
 	queryhistoryapp "github.com/grafana/grafana/apps/queryhistory/pkg/app"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	qhregistry "github.com/grafana/grafana/pkg/registry/apis/queryhistory"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -98,10 +102,38 @@ func (a *AppInstaller) InitializeApp(cfg restclient.Config) error {
 }
 
 func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
-	return &utils.AuthorizeFromName{
-		Resource: map[string][]utils.ResourceOwner{
-			"queryhistories": {utils.UserResourceOwner},
-		},
+	// Query history is personal user data: any authenticated user can CRUD their own items.
+	// Per-user isolation is enforced at the storage layer via the "created-by" label,
+	// not at the authorizer level. This differs from AuthorizeFromName (used by preferences/stars)
+	// because query history items have auto-generated names, not owner-encoded names.
+	return &queryHistoryAuthorizer{}
+}
+
+// queryHistoryAuthorizer allows all authenticated users full CRUD access to query history.
+type queryHistoryAuthorizer struct{}
+
+func (a *queryHistoryAuthorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user == nil {
+		return authorizer.DecisionDeny, "valid user is required", err
+	}
+
+	if !attr.IsResourceRequest() {
+		return authorizer.DecisionNoOpinion, "", nil
+	}
+
+	// Verify service-level permissions (same check as AuthorizeFromName)
+	res := authzlib.CheckServicePermissions(user, attr.GetAPIGroup(), attr.GetResource(), attr.GetVerb())
+	if !res.Allowed {
+		return authorizer.DecisionDeny, "calling service lacks required permissions", nil
+	}
+
+	// Any authenticated user can perform any operation on query history.
+	switch attr.GetVerb() {
+	case "get", "list", "watch", "create", "update", "patch", "delete", "deletecollection":
+		return authorizer.DecisionAllow, "", nil
+	default:
+		return authorizer.DecisionDeny, fmt.Sprintf("verb %q not supported", attr.GetVerb()), nil
 	}
 }
 
