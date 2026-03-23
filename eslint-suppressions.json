@@ -1614,11 +1614,6 @@
       "count": 2
     }
   },
-  "public/app/features/correlations/Forms/QueryEditorField.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/correlations/Forms/TransformationEditorRow.tsx": {
     "no-restricted-syntax": {
       "count": 4

@@ -14,7 +14,7 @@ export type CorrelationConfigQuery = {
   timeRange?: CorrelationQueryTimeRange;
 };
 
-type CorrelationQueryTimeRange = {
+export type CorrelationQueryTimeRange = {
   field: string;
   range: RelativeTimeRange;
 };

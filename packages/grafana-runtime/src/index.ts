@@ -74,6 +74,7 @@ export {
   type CorrelationsData,
   type CorrelationExternal,
   type CorrelationQuery,
+  type CorrelationQueryTimeRange,
   getCorrelationsService,
   setCorrelationsService,
 } from './services/CorrelationsService';

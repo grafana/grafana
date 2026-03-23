@@ -3,8 +3,8 @@ import { Controller, FieldError, useFormContext, useWatch } from 'react-hook-for
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { CorrelationExternal } from '@grafana/runtime';
-import { Field, FieldSet, Input, Select, useStyles2 } from '@grafana/ui';
+import { CorrelationExternal, CorrelationQueryTimeRange } from '@grafana/runtime';
+import { Field, FieldSet, Input, RelativeTimeRangePicker, Select, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { CorrelationType } from '../types';
@@ -12,6 +12,7 @@ import { CorrelationType } from '../types';
 import { QueryEditorField } from './QueryEditorField';
 import { useCorrelationsFormContext } from './correlationsFormContext';
 import { assertIsQueryTypeError, FormDTO } from './types';
+import { getQuickOptionsForCorrelation } from './utils';
 
 type CorrelationTypeOptions = {
   value: CorrelationType;
@@ -48,6 +49,8 @@ export const ConfigureCorrelationTargetForm = () => {
   const targetUIDFromCorrelation = correlation && 'targetUID' in correlation ? correlation.targetUID : undefined;
   const targetUID: string | undefined = useWatch({ name: 'targetUID' }) || targetUIDFromCorrelation;
   const correlationType: CorrelationType | undefined = useWatch({ name: 'type' }) || correlation?.type;
+  const timeRange: CorrelationQueryTimeRange | undefined =
+    useWatch({ name: 'timeRange' }) || (correlation?.type === 'query' ? correlation?.config?.timeRange : undefined);
   const styles = useStyles2(getStyles);
 
   return (
@@ -137,6 +140,34 @@ export const ConfigureCorrelationTargetForm = () => {
                       : 'Error'
                   }
                 />
+
+                <Field
+                  noMargin={false}
+                  label={t('correlations.target-form.target-time-range-label', 'Time Range')}
+                  description={t(
+                    'correlations.target-form.target-time-range-description',
+                    'Specify a field to use as a base (optional) and a window on either side of the range. If no field is specified, the window will be now. If no range is specified, it will default to +- 24 hours.'
+                  )}
+                  htmlFor="timeRange"
+                >
+                  <Input
+                    id="timeRange"
+                    value={timeRange?.field || ''}
+                    onChange={(e) => {
+                      console.log(e.currentTarget.value);
+                    }}
+                  />
+                </Field>
+                <Field noMargin={false}>
+                  <RelativeTimeRangePicker
+                    timeRange={timeRange?.range || { to: 86400, from: 86400 }}
+                    onChange={(e) => {
+                      console.log(e);
+                    }}
+                    customQuickOptions={getQuickOptionsForCorrelation()}
+                    isRelativeToNow={false}
+                  />
+                </Field>
               </>
             );
           })()}

@@ -34,6 +34,7 @@ export interface RelativeTimeRangePickerProps {
   timeRange: RelativeTimeRange;
   onChange: (timeRange: RelativeTimeRange) => void;
   customQuickOptions?: TimeOption[];
+  isRelativeToNow?: boolean;
 }
 
 type InputState = {
@@ -46,10 +47,10 @@ type InputState = {
  * @internal
  */
 export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
-  const { timeRange, onChange, customQuickOptions } = props;
+  const { timeRange, onChange, customQuickOptions, isRelativeToNow = true } = props;
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
-  const timeOption = mapRelativeTimeRangeToOption(timeRange);
+  const timeOption = mapRelativeTimeRangeToOption(timeRange, isRelativeToNow);
   const [from, setFrom] = useState<InputState>({ value: timeOption.from, validation: isRangeValid(timeOption.from) });
   const [to, setTo] = useState<InputState>({ value: timeOption.to, validation: isRangeValid(timeOption.to) });
   const ref = useRef<HTMLDivElement>(null);
@@ -58,7 +59,8 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
     ref
   );
   const { dialogProps } = useDialog({}, ref);
-  const validOptions = (customQuickOptions ?? getQuickOptions()).filter((o) => isRelativeFormat(o.from));
+  // custom options may use something besides 'now' as a base time
+  const validOptions = customQuickOptions ?? getQuickOptions().filter((o) => isRelativeFormat(o.from, isRelativeToNow));
   const placement = 'bottom-start';
 
   // the order of middleware is important!
