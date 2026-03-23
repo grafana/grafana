@@ -752,9 +752,10 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) ([]r
 			}
 
 			changes = append(changes, repository.VersionedFileChange{
-				Path:   currentPath,
-				Ref:    ref,
-				Action: repository.FileActionUpdated,
+				Path:        currentPath,
+				Ref:         ref,
+				PreviousRef: base,
+				Action:      repository.FileActionUpdated,
 			})
 		case protocol.FileStatusDeleted:
 			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)

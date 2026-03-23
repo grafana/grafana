@@ -17,9 +17,15 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
 }));
 
 const mockUseGetResourceRepositoryView = jest.fn();
-jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => ({
-  useGetResourceRepositoryView: () => mockUseGetResourceRepositoryView(),
-}));
+jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
+  const actual = jest.requireActual<typeof import('app/features/provisioning/hooks/useGetResourceRepositoryView')>(
+    'app/features/provisioning/hooks/useGetResourceRepositoryView'
+  );
+  return {
+    ...actual,
+    useGetResourceRepositoryView: () => mockUseGetResourceRepositoryView(),
+  };
+});
 
 function mockSettings(items: Array<Partial<RepositoryView>>) {
   mockUseGetFrontendSettingsQuery.mockReturnValue({ data: { items } });

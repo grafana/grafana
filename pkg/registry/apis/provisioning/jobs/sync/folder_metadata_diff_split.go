@@ -75,6 +75,9 @@ func (input folderMetadataDiffSplit) HasMetadataFolderAt(path string) bool {
 
 // isHandledFolderMetadataChange reports whether the diff entry is a `_folder.json`
 // action that the incremental metadata builder knows how to rewrite.
+// Renamed _folder.json files (from directory renames) are included so they are
+// split out of the normal diff and don't reach RenameResourceFile; the directory
+// rename itself handles the folder path change.
 func isHandledFolderMetadataChange(change repository.VersionedFileChange) bool {
 	if !resources.IsFolderMetadataFile(change.Path) {
 		return false
@@ -82,5 +85,6 @@ func isHandledFolderMetadataChange(change repository.VersionedFileChange) bool {
 
 	return change.Action == repository.FileActionCreated ||
 		change.Action == repository.FileActionUpdated ||
-		change.Action == repository.FileActionDeleted
+		change.Action == repository.FileActionDeleted ||
+		change.Action == repository.FileActionRenamed
 }

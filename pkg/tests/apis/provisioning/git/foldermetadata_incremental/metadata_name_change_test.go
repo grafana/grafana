@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -15,8 +16,8 @@ import (
 
 // TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange verifies
 // that when a resource's metadata.name (uid) changes in a file at the same
-// path, incremental sync creates a new resource with the new name while the old
-// resource remains orphaned.
+// path, incremental sync creates a new resource with the new name and deletes
+// the old one to prevent orphans.
 func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -53,13 +54,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 		}
 	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "dashboard with new name should be created")
 
-	// The old dashboard is orphaned: incremental sync sees the file as
-	// updated and writes the resource with the new name, but never removes
-	// the old one.
+	// The old dashboard should be deleted — ReplaceResourceFromFileByRef detects
+	// the name change and removes the previous resource.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "name-change-incr-001", metav1.GetOptions{})
-		assert.NoError(c, err, "old dashboard should still exist (orphaned)")
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "old dashboard should remain orphaned")
+		assert.True(c, apierrors.IsNotFound(err), "old dashboard should be NotFound, got: %v", err)
+	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "old dashboard should be deleted after name change")
 
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 }

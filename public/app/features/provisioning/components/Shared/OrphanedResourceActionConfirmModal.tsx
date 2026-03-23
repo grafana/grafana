@@ -1,18 +1,20 @@
 import { t } from '@grafana/i18n';
 import { ConfirmModal } from '@grafana/ui';
 
-export type OrphanedResourceModalAction = 'release' | 'delete';
+import { JobType } from '../../types';
+
+export type OrphanedResourceAction = Extract<JobType, 'releaseResources' | 'deleteResources'>;
 
 interface Props {
-  action: OrphanedResourceModalAction | null;
+  action: OrphanedResourceAction | null;
   isSubmitting: boolean;
   onDismiss: () => void;
   submitRelease: () => Promise<unknown>;
   submitDelete: () => Promise<unknown>;
 }
 
-function getModalConfig(action: OrphanedResourceModalAction) {
-  if (action === 'release') {
+function getModalConfig(action: OrphanedResourceAction) {
+  if (action === 'releaseResources') {
     return {
       title: t(
         'provisioning.orphaned-resource-banner.confirm-release-title',
@@ -53,7 +55,7 @@ export function OrphanedResourceActionConfirmModal({
   const { title, body, confirmText } = getModalConfig(action);
 
   const handleConfirm = async () => {
-    if (action === 'release') {
+    if (action === 'releaseResources') {
       await submitRelease();
     } else {
       await submitDelete();
