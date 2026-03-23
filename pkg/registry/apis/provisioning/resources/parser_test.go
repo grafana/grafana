@@ -205,6 +205,22 @@ func TestSameIdentity(t *testing.T) {
 		b := makeParsed("dash-2", "dashboard.grafana.app", "Dashboard")
 		require.Equal(t, a.SameIdentity(b), b.SameIdentity(a))
 	})
+
+	t.Run("false when receiver is nil", func(t *testing.T) {
+		var a *ParsedResource
+		b := makeParsed("dash-1", "dashboard.grafana.app", "Dashboard")
+		require.False(t, a.SameIdentity(b))
+	})
+
+	t.Run("false when other is nil", func(t *testing.T) {
+		a := makeParsed("dash-1", "dashboard.grafana.app", "Dashboard")
+		require.False(t, a.SameIdentity(nil))
+	})
+
+	t.Run("false when both are nil", func(t *testing.T) {
+		var a *ParsedResource
+		require.False(t, a.SameIdentity(nil))
+	})
 }
 
 func TestExistingFolder(t *testing.T) {

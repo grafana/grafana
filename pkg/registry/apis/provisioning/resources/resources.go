@@ -314,6 +314,8 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 			return oldParsed.Obj.GetName(), oldParsed.ExistingFolder(), oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
 		}
 	} else {
+		// Delete dry-run fetches the existing object (with ownership validation)
+		// without mutating it, populating oldParsed.Existing for identity comparison.
 		oldParsed.Action = provisioning.ResourceActionDelete
 		if err := oldParsed.DryRun(ctx); err != nil {
 			return "", "", schema.GroupVersionKind{}, err

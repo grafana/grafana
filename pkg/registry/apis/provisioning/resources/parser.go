@@ -245,6 +245,9 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 // SameIdentity reports whether f and other refer to the same Kubernetes
 // resource: same metadata.name, API group, and kind.
 func (f *ParsedResource) SameIdentity(other *ParsedResource) bool {
+	if f == nil || other == nil {
+		return false
+	}
 	return f.Obj.GetName() == other.Obj.GetName() &&
 		f.GVK.Group == other.GVK.Group &&
 		f.GVK.Kind == other.GVK.Kind
