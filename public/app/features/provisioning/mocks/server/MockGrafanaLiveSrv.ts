@@ -66,7 +66,7 @@ export class MockGrafanaLiveSrv implements GrafanaLiveSrv {
     };
 
     for (const [key, subject] of this.streams) {
-      if (key.includes(`/${resource}`)) {
+      if (key.includes(`/v0alpha1/${resource}`)) {
         subject.next(messageEvent);
       }
     }
@@ -86,7 +86,7 @@ export class MockGrafanaLiveSrv implements GrafanaLiveSrv {
     };
 
     for (const [key, subject] of this.streams) {
-      if (key.includes(`/${resource}`)) {
+      if (key.includes(`/v0alpha1/${resource}`)) {
         subject.next(statusEvent);
       }
     }

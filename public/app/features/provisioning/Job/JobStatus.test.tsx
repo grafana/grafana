@@ -5,69 +5,12 @@ import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
 
+import { createJob, createRepository } from '../mocks/factories';
 import { getMockLiveSrv, setupProvisioningMswServer } from '../mocks/server';
 
 import { JobStatus } from './JobStatus';
 
 setupProvisioningMswServer();
-
-const repositoryName = 'test-repo-abc123';
-const repositoryLabel = { 'provisioning.grafana.app/repository': repositoryName };
-
-function createJob(overrides: Record<string, unknown> = {}): Job {
-  const {
-    metadata: metadataOverrides,
-    spec: specOverrides,
-    status: statusOverrides,
-    ...rest
-  } = overrides as Partial<Job>;
-
-  return {
-    ...rest,
-    metadata: {
-      name: 'job-1',
-      uid: 'uid-1',
-      ...metadataOverrides,
-      labels: {
-        ...repositoryLabel,
-        ...metadataOverrides?.labels,
-      },
-    },
-    spec: {
-      action: 'pull' as const,
-      ...specOverrides,
-    },
-    status: {
-      state: 'working' as const,
-      message: 'Pulling...',
-      progress: 30,
-      ...statusOverrides,
-    },
-  } as Job;
-}
-
-function createRepository(overrides: Record<string, unknown> = {}): Repository {
-  const { metadata: metadataOverrides, spec: specOverrides, ...rest } = overrides as Partial<Repository>;
-
-  return {
-    ...rest,
-    metadata: {
-      name: repositoryName,
-      ...metadataOverrides,
-    },
-    spec: {
-      title: 'Test Repository',
-      type: 'github',
-      sync: { target: 'folder', enabled: true },
-      workflows: [],
-      github: {
-        url: 'https://github.com/test/repo',
-        branch: 'main',
-      },
-      ...specOverrides,
-    },
-  } as Repository;
-}
 
 function mockJobList(job: Job) {
   server.use(

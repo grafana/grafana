@@ -7,9 +7,10 @@ import { act, render, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { Job, Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
+import { createJob, createRepository } from '../mocks/factories';
 import { getMockLiveSrv, setupProvisioningMswServer } from '../mocks/server';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
@@ -75,13 +76,7 @@ async function navigateToConnectionStep(
   }
 
   if (type !== 'local' && data?.url) {
-    const urlPlaceholders = {
-      github: 'https://github.com/owner/repository',
-      gitlab: 'https://gitlab.com/owner/repository',
-      bitbucket: 'https://bitbucket.org/owner/repository',
-      git: 'https://git.example.com/owner/repository.git',
-    };
-    await pasteIntoInput(user, screen.getByPlaceholderText(urlPlaceholders[type]), data.url);
+    await pasteIntoInput(user, screen.getByRole('textbox', { name: /Repository URL/i }), data.url);
   }
 
   if (type !== 'local') {
@@ -170,77 +165,6 @@ function setupMockSubmitData() {
   return mockSubmitData;
 }
 
-const syncRepositoryName = 'test-repo-abc123';
-const syncRepositoryLabel = { 'provisioning.grafana.app/repository': syncRepositoryName };
-
-function createSyncJob(overrides: Record<string, unknown> = {}): Job {
-  const {
-    metadata: metadataOverrides,
-    spec: specOverrides,
-    status: statusOverrides,
-    ...rest
-  } = overrides as Partial<Job>;
-
-  return {
-    ...rest,
-    metadata: {
-      name: 'sync-job-1',
-      uid: 'uid-1',
-      ...metadataOverrides,
-      labels: {
-        ...syncRepositoryLabel,
-        ...metadataOverrides?.labels,
-      },
-    },
-    spec: {
-      action: 'pull' as const,
-      ...specOverrides,
-    },
-    status: {
-      state: 'pending' as const,
-      ...statusOverrides,
-    },
-  } as Job;
-}
-
-function createSyncRepository(overrides: Record<string, unknown> = {}): Repository {
-  const {
-    metadata: metadataOverrides,
-    spec: specOverrides,
-    status: statusOverrides,
-    ...rest
-  } = overrides as Partial<Repository>;
-
-  return {
-    ...rest,
-    metadata: {
-      name: syncRepositoryName,
-      generation: 1,
-      ...metadataOverrides,
-    },
-    spec: {
-      title: 'Test Repository',
-      type: 'github',
-      sync: { target: 'folder', enabled: true },
-      workflows: [],
-      github: {
-        url: 'https://github.com/test/repo',
-        branch: 'main',
-      },
-      ...specOverrides,
-    },
-    status: {
-      observedGeneration: 1,
-      health: {
-        healthy: true,
-        checked: 1704067200000,
-        message: [],
-      },
-      ...statusOverrides,
-    },
-  } as Repository;
-}
-
 function enableSynchronizationStep() {
   server.use(
     http.get(`${BASE}/stats`, () => HttpResponse.json({ instance: [{ group: 'dashboard.grafana.app', count: 1 }] })),
@@ -250,7 +174,7 @@ function enableSynchronizationStep() {
   );
 }
 
-function mockRepositoryList(repository: Repository = createSyncRepository()) {
+function mockRepositoryList(repository: Repository = createRepository()) {
   server.use(
     http.get(`${BASE}/repositories`, () =>
       HttpResponse.json({
@@ -261,7 +185,7 @@ function mockRepositoryList(repository: Repository = createSyncRepository()) {
   );
 }
 
-function mockSyncRepositoryLookup(repository: Repository = createSyncRepository()) {
+function mockSyncRepositoryLookup(repository: Repository = createRepository()) {
   server.use(http.get(`${BASE}/repositories/:name`, () => HttpResponse.json(repository)));
 }
 
@@ -285,10 +209,8 @@ async function navigateToSynchronizationStep(user: UserEvent) {
 }
 
 function setupWorkingJobHandlers() {
-  const createdJob = createSyncJob();
-  const workingJob = createSyncJob({
-    status: { state: 'working', message: 'Pulling...', progress: 30 },
-  });
+  const createdJob = createJob({ status: { state: 'pending' } });
+  const workingJob = createJob();
   server.use(
     http.post(`${BASE}/repositories/:name/jobs`, () => HttpResponse.json(createdJob)),
     http.get(`${BASE}/jobs`, () => HttpResponse.json({ items: [workingJob], metadata: { resourceVersion: '1' } }))
@@ -479,7 +401,7 @@ describe('ProvisioningWizard', () => {
       await typeIntoTokenField(user, 'ghp_xxxxxxxxxxxxxxxxxxxx', 'test-token');
       await pasteIntoInput(
         user,
-        screen.getByPlaceholderText('https://github.com/owner/repository'),
+        screen.getByRole('textbox', { name: /Repository URL/i }),
         'https://github.com/test/repo'
       );
 
@@ -500,7 +422,7 @@ describe('ProvisioningWizard', () => {
   describe('Repository Reconciliation', () => {
     it('shows loading while waiting for reconciliation, then shows bootstrap content after a healthy watch event', async () => {
       mockRepositoryList(
-        createSyncRepository({
+        createRepository({
           status: {
             observedGeneration: undefined,
           },
@@ -516,7 +438,7 @@ describe('ProvisioningWizard', () => {
       act(() => {
         getMockLiveSrv().emitWatchEvent('repositories', {
           type: 'MODIFIED',
-          object: createSyncRepository(),
+          object: createRepository(),
         });
       });
 
@@ -528,7 +450,7 @@ describe('ProvisioningWizard', () => {
 
     it('shows an unhealthy repository error and clears it after retry plus a healthy watch event', async () => {
       mockRepositoryList(
-        createSyncRepository({
+        createRepository({
           status: {
             observedGeneration: 1,
             health: {
@@ -554,7 +476,7 @@ describe('ProvisioningWizard', () => {
       act(() => {
         getMockLiveSrv().emitWatchEvent('repositories', {
           type: 'MODIFIED',
-          object: createSyncRepository(),
+          object: createRepository(),
         });
       });
 
@@ -566,7 +488,7 @@ describe('ProvisioningWizard', () => {
 
     it('transitions from loading to unhealthy to healthy as repository watch events arrive', async () => {
       mockRepositoryList(
-        createSyncRepository({
+        createRepository({
           status: {
             observedGeneration: undefined,
           },
@@ -582,7 +504,7 @@ describe('ProvisioningWizard', () => {
       act(() => {
         getMockLiveSrv().emitWatchEvent('repositories', {
           type: 'MODIFIED',
-          object: createSyncRepository({
+          object: createRepository({
             status: {
               observedGeneration: 1,
               health: {
@@ -600,7 +522,7 @@ describe('ProvisioningWizard', () => {
       act(() => {
         getMockLiveSrv().emitWatchEvent('repositories', {
           type: 'MODIFIED',
-          object: createSyncRepository(),
+          object: createRepository(),
         });
       });
 
@@ -623,7 +545,7 @@ describe('ProvisioningWizard', () => {
       act(() => {
         getMockLiveSrv().emitWatchEvent('jobs', {
           type: 'MODIFIED',
-          object: createSyncJob({ status: { state: 'success' } }),
+          object: createJob({ status: { state: 'success' } }),
         });
       });
 
@@ -643,7 +565,7 @@ describe('ProvisioningWizard', () => {
       act(() => {
         getMockLiveSrv().emitWatchEvent('jobs', {
           type: 'MODIFIED',
-          object: createSyncJob({ status: { state: 'warning', message: 'Completed with warnings' } }),
+          object: createJob({ status: { state: 'warning', message: 'Completed with warnings' } }),
         });
       });
 
@@ -663,7 +585,7 @@ describe('ProvisioningWizard', () => {
       act(() => {
         getMockLiveSrv().emitWatchEvent('jobs', {
           type: 'MODIFIED',
-          object: createSyncJob({ status: { state: 'error', message: 'Sync failed' } }),
+          object: createJob({ status: { state: 'error', message: 'Sync failed' } }),
         });
       });
 
@@ -693,41 +615,21 @@ describe('ProvisioningWizard', () => {
 
     it('creates a new sync job when retry is clicked after a job error', async () => {
       const createdJobs = [
-        createSyncJob(),
-        createSyncJob({
-          metadata: {
-            name: 'sync-job-2',
-            uid: 'uid-2',
-            labels: syncRepositoryLabel,
-          },
+        createJob({ status: { state: 'pending' } }),
+        createJob({
+          metadata: { name: 'job-2', uid: 'uid-2' },
+          status: { state: 'pending' },
         }),
       ];
       const jobLists = {
-        'metadata.name=sync-job-1': createSyncJob({
-          status: {
-            state: 'working',
-            message: 'Pulling...',
-            progress: 30,
-          },
-        }),
-        'metadata.name=sync-job-2': createSyncJob({
-          metadata: {
-            name: 'sync-job-2',
-            uid: 'uid-2',
-            labels: syncRepositoryLabel,
-          },
-          status: {
-            state: 'working',
-            message: 'Retrying...',
-            progress: 10,
-          },
+        'metadata.name=job-1': createJob(),
+        'metadata.name=job-2': createJob({
+          metadata: { name: 'job-2', uid: 'uid-2' },
+          status: { state: 'working', message: 'Retrying...', progress: 10 },
         }),
       };
-      const errorJob = createSyncJob({
-        status: {
-          state: 'error',
-          message: 'Sync failed',
-        },
+      const errorJob = createJob({
+        status: { state: 'error', message: 'Sync failed' },
       });
 
       let createJobCalls = 0;
@@ -738,7 +640,7 @@ describe('ProvisioningWizard', () => {
           return HttpResponse.json(job);
         }),
         http.get(`${BASE}/jobs`, ({ request }) => {
-          const fieldSelector = new URL(request.url).searchParams.get('fieldSelector') ?? 'metadata.name=sync-job-1';
+          const fieldSelector = new URL(request.url).searchParams.get('fieldSelector') ?? 'metadata.name=job-1';
           return HttpResponse.json({
             items: [jobLists[fieldSelector as keyof typeof jobLists]],
             metadata: { resourceVersion: '1' },
@@ -841,7 +743,7 @@ describe('ProvisioningWizard', () => {
       await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
       await pasteIntoInput(
         user,
-        screen.getByPlaceholderText('https://bitbucket.org/owner/repository'),
+        screen.getByRole('textbox', { name: /Repository URL/i }),
         'https://bitbucket.org/test/repo'
       );
 
@@ -855,7 +757,7 @@ describe('ProvisioningWizard', () => {
       await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
       await pasteIntoInput(
         user,
-        screen.getByPlaceholderText('https://git.example.com/owner/repository.git'),
+        screen.getByRole('textbox', { name: /Repository URL/i }),
         'https://git.example.com/test/repo.git'
       );
 

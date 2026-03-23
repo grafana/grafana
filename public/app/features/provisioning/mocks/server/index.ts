@@ -6,6 +6,7 @@ import { MockGrafanaLiveSrv } from './MockGrafanaLiveSrv';
 
 export { MockGrafanaLiveSrv } from './MockGrafanaLiveSrv';
 
+// Module-level singleton is safe: Jest runs each test file in its own worker.
 let mockLiveSrv: MockGrafanaLiveSrv;
 
 /**
