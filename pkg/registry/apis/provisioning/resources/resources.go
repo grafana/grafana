@@ -356,7 +356,7 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 	}
 
 	if currentPath := existing.GetAnnotations()[utils.AnnoKeySourcePath]; currentPath != "" && currentPath != sourcePath {
-		return nil
+		return fmt.Errorf("skipping delete of old resource %s: now managed by %s, not %s", oldName, currentPath, sourcePath)
 	}
 
 	requestingManager := utils.ManagerProperties{

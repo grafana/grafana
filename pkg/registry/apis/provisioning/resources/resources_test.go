@@ -450,7 +450,9 @@ func TestDeleteOldResource(t *testing.T) {
 		mgr := NewResourcesManager(repo, nil, nil, mockClients)
 		err := mgr.deleteOldResource(context.Background(), "alerts/rule.json", "old-uid", replaceTestGVR, "new-uid")
 
-		require.NoError(t, err)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "skipping delete of old resource old-uid")
+		require.Contains(t, err.Error(), "alerts/other-file.json")
 		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
