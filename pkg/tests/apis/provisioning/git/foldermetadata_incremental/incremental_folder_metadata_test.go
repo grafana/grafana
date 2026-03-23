@@ -1353,6 +1353,107 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		})
 	})
 
+	t.Run("metadata moved to folder with dashboard but no metadata", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-rename-to-existing"
+		const folderUID = "src-uid-001"
+
+		// Seed: source folder with metadata + dashboard, destination folder
+		// with only a dashboard (no _folder.json).
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"src/_folder.json": folderMetadataJSON(folderUID, "Source Folder"),
+			"src/dash-src.json": gitcommon.DashboardJSON("dash-src", "Source Dashboard", 1),
+			"dst/dash-dst.json": gitcommon.DashboardJSON("dash-dst", "Dest Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Source Folder", "src", "")
+		// dst/ gets a hash-derived UID since it has no metadata.
+		dstAutoUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "dst")
+		require.NotEqual(t, folderUID, dstAutoUID)
+
+		// Move _folder.json from src/ to dst/. The dashboard stays put.
+		_, err := local.Git("mv", "src/_folder.json", "dst/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "move metadata to dst")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		// dst/ should now carry the metadata UID and title.
+		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Source Folder", "dst", "")
+
+		// src/ should still exist (it has a dashboard) but with a
+		// hash-derived UID since its metadata is gone.
+		srcAutoUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "src")
+		require.NotEqual(t, folderUID, srcAutoUID)
+
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"src", "dst"})
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-src": {Title: "Source Dashboard", SourcePath: "src/dash-src.json", Folder: srcAutoUID},
+			"dash-dst": {Title: "Dest Dashboard", SourcePath: "dst/dash-dst.json", Folder: folderUID},
+		})
+	})
+
+	t.Run("metadata moved to folder with dashboard and pre-existing metadata", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-rename-over"
+		const srcUID = "override-src-uid"
+		const dstUID = "override-dst-uid"
+
+		// Seed: both folders have _folder.json with distinct UIDs + dashboards.
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"src/_folder.json":  folderMetadataJSON(srcUID, "Source"),
+			"src/dash-s.json":   gitcommon.DashboardJSON("dash-s", "Src Dash", 1),
+			"dst/_folder.json":  folderMetadataJSON(dstUID, "Destination"),
+			"dst/dash-d.json":   gitcommon.DashboardJSON("dash-d", "Dst Dash", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.RequireFolderState(t, helper.FoldersV1, srcUID, "Source", "src", "")
+		common.RequireFolderState(t, helper.FoldersV1, dstUID, "Destination", "dst", "")
+
+		// Overwrite dst/_folder.json with src's metadata. Git sees this as
+		// a delete of src/_folder.json + update of dst/_folder.json.
+		_, err := local.Git("rm", "src/_folder.json")
+		require.NoError(t, err)
+		require.NoError(t, local.UpdateFile("dst/_folder.json", string(folderMetadataJSON(srcUID, "Source"))))
+		_, err = local.Git("add", "dst/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "replace dst metadata with src metadata")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		// dst/ should now carry the source UID.
+		common.RequireFolderState(t, helper.FoldersV1, srcUID, "Source", "dst", "")
+
+		// The old dst UID should be replaced/gone since a new identity
+		// was written to dst/_folder.json.
+		_, err = helper.FoldersV1.Resource.Get(ctx, dstUID, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old dst UID should be gone")
+
+		// src/ still has a dashboard, so it should exist with a hash UID.
+		srcAutoUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "src")
+		require.NotEqual(t, srcUID, srcAutoUID)
+
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"src", "dst"})
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-s": {Title: "Src Dash", SourcePath: "src/dash-s.json", Folder: srcAutoUID},
+			"dash-d": {Title: "Dst Dash", SourcePath: "dst/dash-d.json", Folder: srcUID},
+		})
+	})
+
 	t.Run("metadata-only empty folder rename cleans up old folder", func(t *testing.T) {
 		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
