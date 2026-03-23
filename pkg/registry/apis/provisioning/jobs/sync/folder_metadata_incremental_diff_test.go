@@ -656,6 +656,55 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 			Ref:    "new-ref",
 		})
 	})
+	t.Run("nested metadata renames do not emit spurious updates for old child paths", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionRenamed, Path: "new/_folder.json", PreviousPath: "old/_folder.json", PreviousRef: "old-ref", Ref: "new-ref"},
+			{Action: repository.FileActionRenamed, Path: "new/child/_folder.json", PreviousPath: "old/child/_folder.json", PreviousRef: "old-ref", Ref: "new-ref"},
+		}
+
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{
+					Name:     "parent-uid",
+					Group:    resources.FolderResource.Group,
+					Resource: resources.FolderResource.Resource,
+					Path:     "old/",
+				},
+				{
+					Name:     "child-uid",
+					Group:    resources.FolderResource.Group,
+					Resource: resources.FolderResource.Resource,
+					Path:     "old/child/",
+				},
+			},
+		}, nil).Once()
+		repo.MockReader.On("Read", mock.Anything, "old/child/", "new-ref").
+			Return((*repository.FileInfo)(nil), repository.ErrFileNotFound).Once()
+		repo.MockReader.On("Read", mock.Anything, "old/", "new-ref").
+			Return(&repository.FileInfo{Path: "old/"}, nil).Once()
+
+		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repoResources)
+		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff)
+
+		require.NoError(t, err)
+		require.Contains(t, filteredDiff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated, Path: "new/", Ref: "new-ref",
+		})
+		require.Contains(t, filteredDiff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated, Path: "new/child/", Ref: "new-ref",
+		})
+		require.Contains(t, filteredDiff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated, Path: "old/", Ref: "new-ref",
+		})
+		require.NotContains(t, filteredDiff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated, Path: "old/child/", Ref: "new-ref",
+		})
+		require.Contains(t, replacedFolders, replacedFolder{Path: "old/", OldUID: "parent-uid"})
+		require.Contains(t, replacedFolders, replacedFolder{Path: "old/child/", OldUID: "child-uid"})
+	})
+
 	t.Run("nested metadata changes are both expanded deterministically", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
 		repoResources := resources.NewMockRepositoryResources(t)
