@@ -162,7 +162,12 @@ function fieldToNumberField(field: Field): Field {
   for (let n = 0; n < numValues.length; n++) {
     let toBeConverted = numValues[n];
 
-    if (valuesAsStrings && toBeConverted != null && typeof toBeConverted === 'string') {
+    if (toBeConverted == null || toBeConverted === '') {
+      numValues[n] = null;
+      continue;
+    }
+
+    if (valuesAsStrings && typeof toBeConverted === 'string') {
       // some numbers returned from datasources have commas
       // strip the commas, coerce the string to a number
       toBeConverted = toBeConverted.replace(/,/g, '');
