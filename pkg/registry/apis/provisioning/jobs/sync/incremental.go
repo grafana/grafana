@@ -61,17 +61,28 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 			return tracing.Error(span, fmt.Errorf("folder metadata incremental sync requires repository.Reader"))
 		}
 
+		target, err := repositoryResources.List(ctx)
+		if err != nil {
+			return tracing.Error(span, fmt.Errorf("list managed resources: %w", err))
+		}
+		// Incremental sync normally starts with an empty folder tree, but folder
+		// metadata handling needs the current managed path->UID state before apply:
+		// - invalid `_folder.json` falls back to the existing folder at that path
+		// - valid metadata replacements remove old UIDs from that same tree before replay
+		// Seed the tree here, before building the rewritten diff, so both the
+		// builder and the later apply phase reason from the same managed state.
+		repositoryResources.SetTree(resources.NewFolderTreeFromResourceList(target))
+
 		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo, repositoryResources)
 		diff, replaced, invalidFolderMetadata, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff)
 		if err != nil {
 			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
 		}
+
 		if len(invalidFolderMetadata) > 0 {
-			target, err := repositoryResources.List(ctx)
-			if err != nil {
-				return tracing.Error(span, fmt.Errorf("list managed resources: %w", err))
+			for _, replacedFolder := range replaced {
+				repositoryResources.RemoveFolderFromTree(replacedFolder.OldUID)
 			}
-			repositoryResources.SetTree(resources.NewFolderTreeFromResourceList(target))
 		}
 	}
 
