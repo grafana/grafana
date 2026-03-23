@@ -86,20 +86,22 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 		"teamA/teamC/dashboard.json":       newTeamCUID,
 	})
 
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "teamA/dashboard.json"},
+		"WZ7AhQiVz": {Title: "Text options", SourcePath: "teamA/teamC/teamB/dashboard.json"},
+		"mIJjFy8Kz": {Title: "Timeline Demo", SourcePath: "teamA/teamC/dashboard.json"},
+	})
+
 	// Verify dashboards were updated in place (UIDs preserved, not recreated).
-	// teamA/dashboard.json didn't move, so use same key for before and after.
 	afterSnapshots := common.SnapshotDashboardsBySourcePath(t, helper, repo, []string{
 		"teamA/dashboard.json",
 		"teamA/teamC/teamB/dashboard.json",
 		"teamA/teamC/dashboard.json",
 	})
-	// teamA/dashboard.json stayed at the same path
 	common.RequireDashboardsUpdatedInPlace(t, beforeSnapshots, afterSnapshots, []string{"teamA/dashboard.json"})
-	// teamB/dashboard.json moved to teamA/teamC/teamB/dashboard.json
 	require.Equal(t, beforeSnapshots["teamB/dashboard.json"].UID,
 		afterSnapshots["teamA/teamC/teamB/dashboard.json"].UID,
 		"moved dashboard (teamB -> teamA/teamC/teamB) should preserve UID")
-	// teamC/dashboard.json moved to teamA/teamC/dashboard.json
 	require.Equal(t, beforeSnapshots["teamC/dashboard.json"].UID,
 		afterSnapshots["teamA/teamC/dashboard.json"].UID,
 		"moved dashboard (teamC -> teamA/teamC) should preserve UID")
@@ -152,6 +154,12 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t
 		"other/child/dashboard.json":       "child-uid",
 		"other/child/grand/dashboard.json": newGrandUID,
 	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "root/dashboard.json"},
+		"WZ7AhQiVz": {Title: "Text options", SourcePath: "other/child/dashboard.json"},
+		"mIJjFy8Kz": {Title: "Timeline Demo", SourcePath: "other/child/grand/dashboard.json"},
+	})
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *testing.T) {
@@ -193,6 +201,11 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *
 		"metaA/dashboard.json":        "meta-a-uid",
 		"metaA/plainB/dashboard.json": newPlainBUID,
 	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "metaA/dashboard.json"},
+		"WZ7AhQiVz": {Title: "Text options", SourcePath: "metaA/plainB/dashboard.json"},
+	})
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainParent(t *testing.T) {
@@ -227,6 +240,10 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainPare
 	assertNoFolderAtPath(t, helper, repo, "parent/child")
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"child/dashboard.json": "child-uid",
+	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "child/dashboard.json"},
 	})
 }
 
@@ -269,6 +286,10 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t 
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"parent/myfolder/dashboard.json": "my-uid",
 	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "parent/myfolder/dashboard.json"},
+	})
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t *testing.T) {
@@ -309,6 +330,10 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 	assertNoFolderAtPath(t, helper, repo, "parent/child")
 	requireDashboardParents(t, helper, repo, map[string]string{
 		"child/dashboard.json": "child-uid",
+	})
+
+	common.RequireDashboards(t, helper.DashboardsV1, t.Context(), map[string]common.ExpectedDashboard{
+		"n1jR8vnnz": {Title: "Panel tests - All panels", SourcePath: "child/dashboard.json"},
 	})
 }
 

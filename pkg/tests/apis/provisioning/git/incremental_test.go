@@ -147,7 +147,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_Rename(t *testing.T) {
 		"incr-dash-001": {Title: "Dashboard One", SourcePath: "dashboard1.json"},
 	})
 
-	_, err := local.Git("mv", "dashboard1.json", "renamed-dashboard1.json")
+	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "incr-dash-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	dashSnap := common.SnapshotObject(t, dashBefore)
+
+	_, err = local.Git("mv", "dashboard1.json", "renamed-dashboard1.json")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "rename dashboard1")
 	require.NoError(t, err)
@@ -158,6 +162,10 @@ func TestIntegrationProvisioning_IncrementalGitSync_Rename(t *testing.T) {
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"incr-dash-001": {Title: "Dashboard One", SourcePath: "renamed-dashboard1.json"},
 	})
+
+	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "incr-dash-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder verifies that
@@ -180,8 +188,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T)
 	})
 	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{})
 
+	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "move-in-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	dashSnap := common.SnapshotObject(t, dashBefore)
+
 	require.NoError(t, local.CreateDirPath("team-a"))
-	_, err := local.Git("mv", "dashboard1.json", "team-a/dashboard1.json")
+	_, err = local.Git("mv", "dashboard1.json", "team-a/dashboard1.json")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "move dashboard into team-a folder")
 	require.NoError(t, err)
@@ -193,6 +205,10 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T)
 		"move-in-001": {Title: "Dashboard One", SourcePath: "team-a/dashboard1.json"},
 	})
 	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"team-a"})
+
+	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "move-in-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders verifies
@@ -216,7 +232,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 	})
 	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"folder-a", "folder-b"})
 
-	_, err := local.Git("mv", "folder-a/dashboard1.json", "folder-b/dashboard1.json")
+	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "move-btwn-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	dashSnap := common.SnapshotObject(t, dashBefore)
+
+	_, err = local.Git("mv", "folder-a/dashboard1.json", "folder-b/dashboard1.json")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "move dashboard from folder-a to folder-b")
 	require.NoError(t, err)
@@ -228,6 +248,10 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 		"move-btwn-001": {Title: "Dashboard Between", SourcePath: "folder-b/dashboard1.json"},
 	})
 	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"folder-b"})
+
+	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "move-btwn-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot verifies that
@@ -250,7 +274,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 	})
 	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"team-x"})
 
-	_, err := local.Git("mv", "team-x/dashboard1.json", "dashboard1.json")
+	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "move-root-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	dashSnap := common.SnapshotObject(t, dashBefore)
+
+	_, err = local.Git("mv", "team-x/dashboard1.json", "dashboard1.json")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "move dashboard from team-x to root")
 	require.NoError(t, err)
@@ -262,6 +290,10 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 		"move-root-001": {Title: "Dashboard Root", SourcePath: "dashboard1.json"},
 	})
 	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{})
+
+	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "move-root-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_RenameFolder verifies that
@@ -287,7 +319,15 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 	})
 	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"old-team"})
 
-	_, err := local.Git("mv", "old-team", "new-team")
+	dash1Before, err := helper.DashboardsV1.Resource.Get(ctx, "ren-fold-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	dash1Snap := common.SnapshotObject(t, dash1Before)
+
+	dash2Before, err := helper.DashboardsV1.Resource.Get(ctx, "ren-fold-002", metav1.GetOptions{})
+	require.NoError(t, err)
+	dash2Snap := common.SnapshotObject(t, dash2Before)
+
+	_, err = local.Git("mv", "old-team", "new-team")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "rename folder old-team to new-team")
 	require.NoError(t, err)
@@ -300,6 +340,14 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 		"ren-fold-002": {Title: "Folder Dash Two", SourcePath: "new-team/dashboard2.json"},
 	})
 	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-team"})
+
+	dash1After, err := helper.DashboardsV1.Resource.Get(ctx, "ren-fold-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	common.RequireUpdatedInPlace(t, "dashboard 1", dash1Snap, common.SnapshotObject(t, dash1After))
+
+	dash2After, err := helper.DashboardsV1.Resource.Get(ctx, "ren-fold-002", metav1.GetOptions{})
+	require.NoError(t, err)
+	common.RequireUpdatedInPlace(t, "dashboard 2", dash2Snap, common.SnapshotObject(t, dash2After))
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard verifies
@@ -323,7 +371,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 	})
 	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/child-a", "parent/child-b"})
 
-	_, err := local.Git("mv", "parent/child-a/dashboard1.json", "parent/child-b/dashboard1.json")
+	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "nested-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	dashSnap := common.SnapshotObject(t, dashBefore)
+
+	_, err = local.Git("mv", "parent/child-a/dashboard1.json", "parent/child-b/dashboard1.json")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "move dashboard from child-a to child-b")
 	require.NoError(t, err)
@@ -335,6 +387,10 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 		"nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child-b/dashboard1.json"},
 	})
 	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/child-b"})
+
+	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "nested-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }
 
 // TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder verifies
@@ -359,7 +415,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 	})
 	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/old-child", "parent/sibling"})
 
-	_, err := local.Git("mv", "parent/old-child", "parent/new-child")
+	dashBefore, err := helper.DashboardsV1.Resource.Get(ctx, "ren-nest-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	dashSnap := common.SnapshotObject(t, dashBefore)
+
+	_, err = local.Git("mv", "parent/old-child", "parent/new-child")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "rename nested folder old-child to new-child")
 	require.NoError(t, err)
@@ -372,4 +432,8 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 		"ren-nest-002": {Title: "Sibling Dash", SourcePath: "parent/sibling/dashboard2.json"},
 	})
 	common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/new-child", "parent/sibling"})
+
+	dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "ren-nest-001", metav1.GetOptions{})
+	require.NoError(t, err)
+	common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 }

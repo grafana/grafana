@@ -515,18 +515,20 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Empty(t, replacedFolders)
 	})
 
-	t.Run("leaves unsupported metadata rename actions in diff", func(t *testing.T) {
+	t.Run("renamed metadata file is split out and produces empty diff", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
 		repoResources := resources.NewMockRepositoryResources(t)
 		diff := []repository.VersionedFileChange{
 			{Action: repository.FileActionRenamed, Path: "renamed/_folder.json", PreviousPath: "old/_folder.json", PreviousRef: "old-ref", Ref: "new-ref"},
 		}
 
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
+
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repoResources)
 		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff)
 
 		require.NoError(t, err)
-		require.Equal(t, diff, filteredDiff)
+		require.Empty(t, filteredDiff)
 		require.Empty(t, replacedFolders)
 	})
 	t.Run("nested metadata changes are both expanded deterministically", func(t *testing.T) {

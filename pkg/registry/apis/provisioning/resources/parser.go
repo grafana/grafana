@@ -242,6 +242,30 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	return parsed, nil
 }
 
+// SameIdentity reports whether f and other refer to the same Kubernetes
+// resource: same metadata.name, API group, and kind.
+func (f *ParsedResource) SameIdentity(other *ParsedResource) bool {
+	if f == nil || other == nil {
+		return false
+	}
+	return f.Obj.GetName() == other.Obj.GetName() &&
+		f.GVK.Group == other.GVK.Group &&
+		f.GVK.Kind == other.GVK.Kind
+}
+
+// ExistingFolder returns the grafana.app/folder annotation from the existing
+// Grafana object, or "" if Existing is nil or has no folder annotation.
+func (f *ParsedResource) ExistingFolder() string {
+	if f.Existing == nil {
+		return ""
+	}
+	meta, err := utils.MetaAccessor(f.Existing)
+	if err != nil {
+		return ""
+	}
+	return meta.GetFolder()
+}
+
 func (f *ParsedResource) DryRun(ctx context.Context) error {
 	if f.DryRunResponse != nil {
 		return nil // this already ran (and helpful for testing)
