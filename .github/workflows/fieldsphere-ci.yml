@@ -1,0 +1,55 @@
+# Fieldsphere fork: minimal CI on standard GitHub-hosted runners (no Vault, no org runners).
+name: Fieldsphere CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release-*.*.*'
+  push:
+    branches:
+      - main
+      - 'release-*.*.*'
+
+concurrency:
+  group: fieldsphere-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend unit tests (short)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+          cache-dependency-path: |
+            go.sum
+            **/*.sum
+      - name: Run Go unit tests
+        run: |
+          set -euo pipefail
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N1/1)"
+          CGO_ENABLED=0 go test -short -timeout=30m "${PACKAGES[@]}"
+
+  frontend:
+    name: Frontend lint and typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/yarn-install
+      - run: yarn run prettier:check
+      - run: yarn run lint
+      - run: yarn run typecheck
