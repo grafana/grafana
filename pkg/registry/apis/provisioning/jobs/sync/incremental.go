@@ -79,10 +79,8 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
 		}
 
-		if len(invalidFolderMetadata) > 0 {
-			for _, replacedFolder := range replaced {
-				repositoryResources.RemoveFolderFromTree(replacedFolder.OldUID)
-			}
+		for _, replacedFolder := range replaced {
+			repositoryResources.RemoveFolderFromTree(replacedFolder.OldUID)
 		}
 	}
 

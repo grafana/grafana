@@ -1423,6 +1423,7 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 			},
 		}, nil).Twice()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
+		repoResources.On("RemoveFolderFromTree", "stable-uid").Return().Once()
 
 		repo.MockReader.On("Read", mock.Anything, "alpha/", "new-ref").Return(&repository.FileInfo{}, nil)
 
@@ -1518,6 +1519,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 			},
 		}, nil).Twice()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
+		repoResources.On("RemoveFolderFromTree", "old-alpha-uid").Return().Once()
 
 		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: folderJSON(t, "new-alpha-uid", "Alpha Renamed"),
@@ -1572,6 +1574,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 			},
 		}, nil).Twice()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
+		repoResources.On("RemoveFolderFromTree", "old-uid").Return().Once()
 
 		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: folderJSON(t, "new-uid", "Alpha"),
@@ -1620,6 +1623,7 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 			},
 		}, nil).Twice()
 		repoResources.On("SetTree", mock.Anything).Return().Once()
+		repoResources.On("RemoveFolderFromTree", "old-uid").Return().Once()
 
 		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: folderJSON(t, "new-uid", "Alpha"),
