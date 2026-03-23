@@ -114,6 +114,9 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 		// A rename is a move operation; if it fails the child stays under the old folder.
 		if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
 			r.failedUpdates = append(r.failedUpdates, result.Path())
+			if result.Action() == repository.FileActionRenamed && result.PreviousPath() != "" {
+				r.failedUpdates = append(r.failedUpdates, result.PreviousPath())
+			}
 		}
 	} else if result.Warning() != nil {
 		// Track failed deletions/updates/renames with warnings — these still represent
@@ -123,6 +126,9 @@ func (r *jobProgressRecorder) Record(ctx context.Context, result JobResourceResu
 		}
 		if result.Action() == repository.FileActionUpdated || result.Action() == repository.FileActionRenamed {
 			r.failedUpdates = append(r.failedUpdates, result.Path())
+			if result.Action() == repository.FileActionRenamed && result.PreviousPath() != "" {
+				r.failedUpdates = append(r.failedUpdates, result.PreviousPath())
+			}
 		}
 
 		if reason := result.WarningReason(); reason != "" {

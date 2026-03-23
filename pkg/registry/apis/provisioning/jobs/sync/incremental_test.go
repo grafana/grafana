@@ -273,6 +273,7 @@ func TestIncrementalSync(t *testing.T) {
 					"dashboards",
 					"Dashboard",
 				).WithPath("dashboards/new.json").
+					WithPreviousPath("dashboards/old.json").
 					WithAction(repository.FileActionRenamed).
 					Build()).Return()
 
