@@ -180,7 +180,12 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {EnableMigration: false},
+			"folders.folder.grafana.app":       {EnableMigration: false},
+		},
+	})
 
 	clientV0 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
