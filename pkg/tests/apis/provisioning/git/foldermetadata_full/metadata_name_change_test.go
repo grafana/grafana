@@ -8,7 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -172,12 +174,14 @@ func TestIntegrationProvisioning_FullSync_MultipleFilesNameChange(t *testing.T) 
 }
 
 // TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync verifies
-// that if orphans somehow accumulated at the same path (e.g., from a previous
-// Grafana version without the cleanup fix), a subsequent full sync detects and
-// removes them. The orphan state is simulated by performing two name changes
-// with a full sync only after the second change: the index will have the
-// original resource and the file will resolve to the third name, so the
-// Changes() duplicate-path detection kicks in on the next sync.
+// that if orphans somehow accumulated at the same sourcePath (e.g., from a
+// previous Grafana version without the cleanup fix), a subsequent full sync
+// detects the duplicates and removes them.
+//
+// The orphan state is simulated by creating the real dashboard via sync, then
+// injecting a second dashboard directly through the K8s API with the same
+// manager annotations and sourcePath. This produces two resources at the same
+// path, exactly the state that triggers the Changes() multi-item cleanup.
 func TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -186,32 +190,52 @@ func TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync(t *testi
 
 	const repoName = "git-full-orphan-cleanup"
 
-	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard.json": gitcommon.DashboardJSON("orphan-orig", "Dashboard Original", 1),
+	helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"dashboard.json": gitcommon.DashboardJSON("real-dash", "Real Dashboard", 1),
 	}, "write", "branch")
 
-	// Initial sync: orphan-orig exists.
 	helper.SyncAndWait(t, repoName)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 
-	// Change name and sync, producing the new resource and deleting the old one.
-	require.NoError(t, local.UpdateFile("dashboard.json", string(gitcommon.DashboardJSON("orphan-second", "Dashboard Second", 2))))
-	_, err := local.Git("add", ".")
-	require.NoError(t, err)
-	_, err = local.Git("commit", "-m", "rename to second")
-	require.NoError(t, err)
-	_, err = local.Git("push")
-	require.NoError(t, err)
+	// Inject a second dashboard that mimics a pre-existing orphan: same
+	// manager annotations and sourcePath as the real one, but a different UID.
+	orphan := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "dashboard.grafana.app/v1beta1",
+			"kind":       "Dashboard",
+			"metadata": map[string]interface{}{
+				"name": "orphan-dash",
+				"annotations": map[string]interface{}{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: repoName,
+					utils.AnnoKeySourcePath:      "dashboard.json",
+					utils.AnnoKeySourceChecksum:  "stale-checksum",
+				},
+			},
+			"spec": map[string]interface{}{
+				"title":         "Orphan Dashboard",
+				"schemaVersion": 41,
+			},
+		},
+	}
+	_, err := helper.DashboardsV1.Resource.Create(ctx, orphan, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to inject orphan dashboard")
 
-	helper.SyncAndWait(t, repoName)
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	// Confirm two dashboards exist before cleanup.
+	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
 
-	// Another full sync should be a no-op — still exactly 1 dashboard.
+	// Full sync should detect the duplicate sourcePath and delete the orphan.
 	helper.SyncAndWait(t, repoName)
+
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		_, err := helper.DashboardsV1.Resource.Get(ctx, "orphan-second", metav1.GetOptions{})
-		assert.NoError(c, err, "current dashboard should still exist")
+		_, err := helper.DashboardsV1.Resource.Get(ctx, "real-dash", metav1.GetOptions{})
+		assert.NoError(c, err, "real dashboard should survive cleanup")
+	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
+
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		_, err := helper.DashboardsV1.Resource.Get(ctx, "orphan-dash", metav1.GetOptions{})
+		assert.True(c, apierrors.IsNotFound(err), "orphan should be deleted, got: %v", err)
 	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
 }
