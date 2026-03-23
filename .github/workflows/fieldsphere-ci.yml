@@ -49,4 +49,8 @@ jobs:
       - uses: ./.github/actions/yarn-install
       - run: yarn run prettier:check
       - run: yarn run lint
-      - run: yarn run typecheck
+      - name: Typecheck
+        run: yarn run typecheck
+        env:
+          # Root tsc + Nx package graphs are memory-heavy; default heap can OOM on ubuntu-latest.
+          NODE_OPTIONS: --max-old-space-size=6144

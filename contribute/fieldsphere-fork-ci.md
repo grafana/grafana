@@ -5,7 +5,7 @@ This repository fork uses a **minimal GitHub Actions workflow** ([`.github/workf
 ## What runs in CI
 
 - **Backend:** `CGO_ENABLED=0 go test -short -timeout=40m ./...` from the repo root (Go workspace).
-- **Frontend:** `yarn run prettier:check`, `yarn run lint`, `yarn run typecheck` (same commands as the upstream fork path in the old `frontend-lint` workflow).
+- **Frontend:** `yarn run prettier:check`, `yarn run lint`, `yarn run typecheck` (same commands as the upstream fork path in the old `frontend-lint` workflow). Typecheck runs with `NODE_OPTIONS=--max-old-space-size=6144` so `tsc` / Nx do not hit the default heap limit on standard runners.
 
 Fork-local paths (`.cursor/`, `.vscode/`, and root `manifest.json`) are listed in [`.prettierignore`](../.prettierignore) so `prettier:check` matches upstream expectations without formatting IDE tooling.
 
