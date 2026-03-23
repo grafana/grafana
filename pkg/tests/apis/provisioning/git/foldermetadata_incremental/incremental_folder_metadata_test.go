@@ -1347,7 +1347,6 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		const repoName = "incr-meta-rename-orphan"
 		const folderUID = "rename-orphan-uid"
 
-		// Seed: empty folder managed only by _folder.json.
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"old-team/_folder.json": folderMetadataJSON(folderUID, "Old Team"),
 			"old-team/dash.json":    gitcommon.DashboardJSON("rename-orphan-dash", "Team Dashboard", 1),
@@ -1371,10 +1370,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		// The folder should now be at new-team with the same UID (identity preserved).
 		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Old Team", "new-team", "")
@@ -1411,10 +1407,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		// The folder should now be at new-empty with the same UID.
 		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Empty Folder", "new-empty", "")

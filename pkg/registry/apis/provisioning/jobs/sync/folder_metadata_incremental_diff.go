@@ -231,9 +231,9 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 	}
 
 	syntheticDelete := repository.VersionedFileChange{
-		Action: repository.FileActionDeleted,
-		Path:   change.PreviousPath,
-		Ref:    change.PreviousRef,
+		Action:      repository.FileActionDeleted,
+		Path:        change.PreviousPath,
+		PreviousRef: change.PreviousRef,
 	}
 	return d.rewriteDeletedMetadataChange(ctx, currentRef, input, index, diffTracker, syntheticDelete)
 }
