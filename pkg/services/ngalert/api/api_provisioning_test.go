@@ -2035,8 +2035,9 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	t.Helper()
 	tracer := tracing.InitializeTracerForTest()
 	configStore := legacy_storage.NewAlertmanagerConfigStore(env.configs, notifier.NewExtraConfigsCrypto(env.secrets))
+	receiverAuthz := ac.NewReceiverAccess[*models.Receiver](env.ac, true)
 	receiverSvc := notifier.NewReceiverService(
-		ac.NewReceiverAccess[*models.Receiver](env.ac, true),
+		receiverAuthz,
 		configStore,
 		env.prov,
 		env.store,
@@ -2049,7 +2050,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),
-		contactPointService: provisioning.NewContactPointService(configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
+		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.store, ngalertfakes.NewFakeReceiverPermissionsService()),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.store),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, &provisioning.NotificationSettingsValidatorProviderFake{}, env.rulesAuthz),

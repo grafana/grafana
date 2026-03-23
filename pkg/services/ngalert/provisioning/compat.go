@@ -1,6 +1,7 @@
 package provisioning
 
 import (
+	"fmt"
 	"strings"
 
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -66,4 +67,28 @@ func GrafanaIntegrationConfigToEmbeddedContactPoint(r *models.Integration, prove
 		Settings:              settingJson,
 		Provenance:            string(provenance),
 	}
+}
+
+// EmbeddedContactPointToIntegration converts an EmbeddedContactPoint to a models.Integration.
+// This is primarily used for protected field comparison during updates.
+// Note: SecureSettings is not populated as the provisioning API doesn't expose encrypted values.
+func EmbeddedContactPointToIntegration(
+	cp definitions.EmbeddedContactPoint,
+	typeConfig models.IntegrationConfig,
+) (*models.Integration, error) {
+	settings := make(map[string]any)
+	if cp.Settings != nil {
+		m, err := cp.Settings.Map()
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse contact point settings: %w", err)
+		}
+		settings = m
+	}
+	return &models.Integration{
+		UID:                   cp.UID,
+		Name:                  cp.Name,
+		Config:                typeConfig,
+		DisableResolveMessage: cp.DisableResolveMessage,
+		Settings:              settings,
+	}, nil
 }
