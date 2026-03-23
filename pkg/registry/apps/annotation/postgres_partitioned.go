@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
@@ -46,6 +47,7 @@ type PostgreSQLStore struct {
 	tagCache      *tagCache
 	logger        log.Logger
 	cleanupCancel context.CancelFunc
+	cleanupWg     sync.WaitGroup
 }
 
 var _ Store = (*PostgreSQLStore)(nil)
@@ -128,6 +130,7 @@ func NewPostgreSQLStore(ctx context.Context, cfg PostgreSQLStoreConfig) (*Postgr
 func (s *PostgreSQLStore) Close() {
 	if s.cleanupCancel != nil {
 		s.cleanupCancel()
+		s.cleanupWg.Wait()
 	}
 	if s.pool != nil {
 		s.pool.Close()

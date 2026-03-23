@@ -16,7 +16,7 @@ func (s *PostgreSQLStore) startCleanup(parentCtx context.Context) {
 	ctx, cancel := context.WithCancel(parentCtx)
 	s.cleanupCancel = cancel
 
-	go func() {
+	s.cleanupWg.Go(func() {
 		ticker := time.NewTicker(cleanupInterval)
 		defer ticker.Stop()
 
@@ -34,7 +34,7 @@ func (s *PostgreSQLStore) startCleanup(parentCtx context.Context) {
 				return
 			}
 		}
-	}()
+	})
 }
 
 func (s *PostgreSQLStore) runCleanup(ctx context.Context) {
