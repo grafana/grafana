@@ -1542,6 +1542,70 @@ func RequireDashboards(t *testing.T, dashboardClient *apis.K8sResourceClient, ct
 	}, WaitTimeoutDefault, WaitIntervalDefault, "dashboards should match expected state")
 }
 
+// RequireRepoDashboardParent asserts that the dashboard managed by repoName at
+// the given sourcePath is parented to the expected folder UID.
+func RequireRepoDashboardParent(t *testing.T, dashboardClient *apis.K8sResourceClient, ctx context.Context, repoName, sourcePath, expectedFolderUID string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := dashboardClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		for _, d := range list.Items {
+			annotations := d.GetAnnotations()
+			if annotations["grafana.app/managerId"] != repoName {
+				continue
+			}
+			if annotations["grafana.app/sourcePath"] != sourcePath {
+				continue
+			}
+			assert.Equal(c, expectedFolderUID, annotations["grafana.app/folder"], "dashboard %q parent folder", sourcePath)
+			return
+		}
+		c.Errorf("dashboard with sourcePath %q not found for repo %q", sourcePath, repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected dashboard %q to be parented to folder %q for repo %q", sourcePath, expectedFolderUID, repoName)
+}
+
+// RequireRepoFolderTitle asserts that a folder managed by repoName exists with
+// the given title and returns its UID.
+func RequireRepoFolderTitle(t *testing.T, folderClient *apis.K8sResourceClient, ctx context.Context, repoName, expectedTitle string) string {
+	t.Helper()
+	var folderUID string
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := folderClient.Resource.List(ctx, metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list folders") {
+			return
+		}
+		for _, f := range list.Items {
+			mgr, _, _ := unstructured.NestedString(f.Object, "metadata", "annotations", "grafana.app/managerId")
+			if mgr != repoName {
+				continue
+			}
+			title, _, _ := unstructured.NestedString(f.Object, "spec", "title")
+			if title == expectedTitle {
+				folderUID = f.GetName()
+				return
+			}
+		}
+		c.Errorf("no folder managed by %q with title %q found", repoName, expectedTitle)
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected folder with title %q for repo %q", expectedTitle, repoName)
+	return folderUID
+}
+
+// RequireRepoFolderTitle asserts that a folder managed by repoName exists with
+// the given title and returns its UID.
+func RequireRepoFolderUID(t *testing.T, folderClient *apis.K8sResourceClient, ctx context.Context, repoName, expectedUID string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		folder, err := folderClient.Resource.Get(ctx, expectedUID, metav1.GetOptions{})
+		require.NoError(c, err, "failed to get folder")
+		mgr, _, _ := unstructured.NestedString(folder.Object, "metadata", "annotations", "grafana.app/managerId")
+		require.Equal(c, repoName, mgr, "folder %q is not managed by %q", expectedUID, repoName)
+	}, WaitTimeoutDefault, WaitIntervalDefault, "expected folder with UID %q for repo %q", expectedUID, repoName)
+}
+
 // RequireRepoFolders lists folders once and asserts that the set of
 // grafana.app/sourcePath values for folders managed by repoName matches exactly.
 func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx context.Context, repoName string, expectedSourcePaths []string) {
@@ -1757,6 +1821,71 @@ func RequireRecreated(t *testing.T, label string, before, after ObjectSnapshot) 
 		"%s: UID unchanged — object was updated in place instead of recreated", label)
 	require.Equal(t, int64(1), after.Generation,
 		"%s: generation should reset to 1 after recreate", label)
+}
+
+func RequireFolderState(t *testing.T, folderClient *apis.K8sResourceClient, folderUID, expectedTitle, expectedSourcePath, expectedParent string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		obj, err := folderClient.Resource.Get(t.Context(), folderUID, metav1.GetOptions{})
+		if !assert.NoError(c, err, "failed to get folder %s", folderUID) {
+			return
+		}
+
+		title, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
+		assert.Equal(c, expectedTitle, title, "folder title")
+
+		annotations := obj.GetAnnotations()
+		assert.Equal(c, expectedSourcePath, annotations["grafana.app/sourcePath"], "source path")
+		assert.Equal(c, expectedParent, annotations["grafana.app/folder"], "parent folder")
+	}, 30*time.Second, 100*time.Millisecond,
+		"expected folder %q with title=%q sourcePath=%q parent=%q", folderUID, expectedTitle, expectedSourcePath, expectedParent)
+}
+
+// SnapshotDashboardsBySourcePath returns a map from sourcePath to ObjectSnapshot
+// for dashboards managed by the given repo. It waits until all requested paths are found.
+func SnapshotDashboardsBySourcePath(t *testing.T, helper *ProvisioningTestHelper, repoName string, paths []string) map[string]ObjectSnapshot {
+	t.Helper()
+	wanted := make(map[string]bool, len(paths))
+	for _, p := range paths {
+		wanted[p] = true
+	}
+	result := make(map[string]ObjectSnapshot, len(paths))
+
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list, err := helper.DashboardsV1.Resource.List(t.Context(), metav1.ListOptions{})
+		if !assert.NoError(c, err, "failed to list dashboards") {
+			return
+		}
+		for i := range list.Items {
+			annotations := list.Items[i].GetAnnotations()
+			if annotations["grafana.app/managerId"] != repoName {
+				continue
+			}
+			sp := annotations["grafana.app/sourcePath"]
+			if wanted[sp] {
+				result[sp] = SnapshotObject(t, &list.Items[i])
+			}
+		}
+		for _, p := range paths {
+			assert.Contains(c, result, p, "dashboard with sourcePath %q not found", p)
+		}
+	}, WaitTimeoutDefault, WaitIntervalDefault,
+		"expected dashboards for repo %q", repoName)
+	return result
+}
+
+// RequireDashboardsUpdatedInPlace verifies that the K8s UIDs are preserved
+// (i.e., the resources were updated in place, not deleted and recreated)
+// for all given paths that appear in both before and after snapshot maps.
+func RequireDashboardsUpdatedInPlace(t *testing.T, before, after map[string]ObjectSnapshot, paths []string) {
+	t.Helper()
+	for _, p := range paths {
+		b, okB := before[p]
+		a, okA := after[p]
+		require.True(t, okB, "before snapshot missing for %q", p)
+		require.True(t, okA, "after snapshot missing for %q", p)
+		RequireUpdatedInPlace(t, p, b, a)
+	}
 }
 
 // SnapshotDashboardsBySourcePath returns a map from sourcePath to ObjectSnapshot
