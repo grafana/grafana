@@ -218,6 +218,7 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 
 	c.loadAPIGroups()
 
+	// ensure unified storage is alive and running
 	ctx := identity.WithRequester(context.Background(), c.Org1.Admin.Identity)
 	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 	require.NoError(t, err, "unable to read resource client health check")
