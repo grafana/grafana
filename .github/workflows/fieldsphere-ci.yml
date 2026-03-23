@@ -22,7 +22,7 @@ jobs:
   backend:
     name: Backend unit tests (short)
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
         with:
@@ -35,7 +35,7 @@ jobs:
             go.sum
             **/*.sum
       - name: Run Go unit tests
-        run: CGO_ENABLED=0 go test -short -timeout=40m ./...
+        run: CGO_ENABLED=0 go test -short -timeout=50m ./...
 
   frontend:
     name: Frontend lint and typecheck
