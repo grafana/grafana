@@ -630,13 +630,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
-		// producing errors. The rename still works via fallback, so we only
-		// wait for completion without asserting success.
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, folderUID, metav1.GetOptions{})
 		require.NoError(t, err, "folder should still exist with same UID")
@@ -690,13 +684,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
-		// producing errors. The rename still works via fallback, so we only
-		// wait for completion without asserting success.
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		childAfter, err := helper.FoldersV1.Resource.Get(ctx, childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child folder should still exist with same UID")
@@ -750,13 +738,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
-		// producing errors. The rename still works via fallback, so we only
-		// wait for completion without asserting success.
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, movedUID, metav1.GetOptions{})
 		require.NoError(t, err, "moved folder should still exist with same UID")
@@ -811,13 +793,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
-		// producing errors. The rename still works via fallback, so we only
-		// wait for completion without asserting success.
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, movedUID, metav1.GetOptions{})
 		require.NoError(t, err, "moved folder should still exist with same UID")
@@ -882,13 +858,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
-		// producing errors. The rename still works via fallback, so we only
-		// wait for completion without asserting success.
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		// Verify parent folder updated in place.
 		parentAfter, err := helper.FoldersV1.Resource.Get(ctx, parentUID, metav1.GetOptions{})

@@ -334,6 +334,7 @@ func (h *GitTestHelper) SyncAndWait(t *testing.T, repoName string) {
 // repository and waits for all active jobs to complete.
 //
 //nolint:unused // Called from incremental_folder_metadata_test.go
+
 func (h *GitTestHelper) SyncAndWaitIncremental(t *testing.T, repoName string) {
 	t.Helper()
 	h.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
