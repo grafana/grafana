@@ -355,12 +355,14 @@ func TestDeleteOldResource(t *testing.T) {
 		repo.On("Config").Return(replaceRepoConfig())
 		mockClients.On("ForResource", mock.Anything, replaceTestGVR).Return(mockClient, replaceTestGVK, nil)
 
-		grafanaObj := managedGrafanaObj("old-uid", "default", nil)
+		grafanaObj := managedGrafanaObj("old-uid", "default", map[string]any{
+			grafanautils.AnnoKeySourcePath: "alerts/rule.json",
+		})
 		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		mockClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
 		mgr := NewResourcesManager(repo, nil, nil, mockClients)
-		err := mgr.deleteOldResource(context.Background(), "old-uid", replaceTestGVR, "new-uid")
+		err := mgr.deleteOldResource(context.Background(), "alerts/rule.json", "old-uid", replaceTestGVR, "new-uid")
 
 		require.NoError(t, err)
 		mockClient.AssertCalled(t, "Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything)
@@ -374,7 +376,7 @@ func TestDeleteOldResource(t *testing.T) {
 			Return(nil, schema.GroupVersionKind{}, fmt.Errorf("unknown resource"))
 
 		mgr := NewResourcesManager(repo, nil, nil, mockClients)
-		err := mgr.deleteOldResource(context.Background(), "old-uid", replaceTestGVR, "new-uid")
+		err := mgr.deleteOldResource(context.Background(), "alerts/rule.json", "old-uid", replaceTestGVR, "new-uid")
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to delete old resource old-uid")
@@ -392,12 +394,14 @@ func TestDeleteOldResource(t *testing.T) {
 		repo.On("Config").Return(cfg)
 		mockClients.On("ForResource", mock.Anything, replaceTestGVR).Return(mockClient, replaceTestGVK, nil)
 
-		grafanaObj := managedGrafanaObj("old-uid", "custom-ns", nil)
+		grafanaObj := managedGrafanaObj("old-uid", "custom-ns", map[string]any{
+			grafanautils.AnnoKeySourcePath: "alerts/rule.json",
+		})
 		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		mockClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
 		mgr := NewResourcesManager(repo, nil, nil, mockClients)
-		err := mgr.deleteOldResource(context.Background(), "old-uid", replaceTestGVR, "new-uid")
+		err := mgr.deleteOldResource(context.Background(), "alerts/rule.json", "old-uid", replaceTestGVR, "new-uid")
 
 		require.NoError(t, err)
 	})
@@ -417,15 +421,55 @@ func TestDeleteOldResource(t *testing.T) {
 				"annotations": map[string]any{
 					grafanautils.AnnoKeyManagerKind:     string(grafanautils.ManagerKindRepo),
 					grafanautils.AnnoKeyManagerIdentity: "different-repo",
+					grafanautils.AnnoKeySourcePath:      "alerts/rule.json",
 				},
 			},
 		}}
 		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(unownedObj, nil)
 
 		mgr := NewResourcesManager(repo, nil, nil, mockClients)
-		err := mgr.deleteOldResource(context.Background(), "old-uid", replaceTestGVR, "new-uid")
+		err := mgr.deleteOldResource(context.Background(), "alerts/rule.json", "old-uid", replaceTestGVR, "new-uid")
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "failed to delete old resource old-uid")
+	})
+
+	t.Run("skips delete when sourcePath points to a different file", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockClients := NewMockResourceClients(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		repo.On("Config").Return(replaceRepoConfig())
+		mockClients.On("ForResource", mock.Anything, replaceTestGVR).Return(mockClient, replaceTestGVK, nil)
+
+		grafanaObj := managedGrafanaObj("old-uid", "default", map[string]any{
+			grafanautils.AnnoKeySourcePath: "alerts/other-file.json",
+		})
+		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+
+		mgr := NewResourcesManager(repo, nil, nil, mockClients)
+		err := mgr.deleteOldResource(context.Background(), "alerts/rule.json", "old-uid", replaceTestGVR, "new-uid")
+
+		require.NoError(t, err)
+		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("proceeds with delete when sourcePath is empty", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockClients := NewMockResourceClients(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		repo.On("Config").Return(replaceRepoConfig())
+		mockClients.On("ForResource", mock.Anything, replaceTestGVR).Return(mockClient, replaceTestGVK, nil)
+
+		grafanaObj := managedGrafanaObj("old-uid", "default", nil)
+		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		mockClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
+
+		mgr := NewResourcesManager(repo, nil, nil, mockClients)
+		err := mgr.deleteOldResource(context.Background(), "alerts/rule.json", "old-uid", replaceTestGVR, "new-uid")
+
+		require.NoError(t, err)
+		mockClient.AssertCalled(t, "Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything)
 	})
 }

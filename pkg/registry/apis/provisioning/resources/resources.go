@@ -294,7 +294,7 @@ func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, re
 		return newName, gvk, err
 	}
 
-	return newName, gvk, r.deleteOldResource(ctx, oldName, oldGVR, newName)
+	return newName, gvk, r.deleteOldResource(ctx, path, oldName, oldGVR, newName)
 }
 
 // ReplaceResourceFromFileByRef writes a resource from the file at path/ref and,
@@ -322,13 +322,19 @@ func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, pat
 		return newName, gvk, nil
 	}
 
-	return newName, gvk, r.deleteOldResource(ctx, oldName, oldParsed.GVR, newName)
+	return newName, gvk, r.deleteOldResource(ctx, path, oldName, oldParsed.GVR, newName)
 }
 
 // deleteOldResource deletes the previous resource when a name change is
 // detected. It sets the provisioning identity, checks ownership, and
 // calls the client directly.
-func (r *ResourcesManager) deleteOldResource(ctx context.Context, oldName string, oldGVR schema.GroupVersionResource, newName string) error {
+//
+// The sourcePath parameter is the file path that triggered the replacement.
+// Before deleting, we verify that the existing resource's sourcePath annotation
+// still points to this file. If another file in the same sync has already
+// written a resource with the same UID (e.g. a multi-file UID swap), the
+// annotation will reference the other file and we skip the delete.
+func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, oldName string, oldGVR schema.GroupVersionResource, newName string) error {
 	client, _, err := r.clients.ForResource(ctx, oldGVR)
 	if err != nil {
 		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
@@ -347,6 +353,10 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, oldName string
 			return nil
 		}
 		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
+	}
+
+	if currentPath := existing.GetAnnotations()[utils.AnnoKeySourcePath]; currentPath != "" && currentPath != sourcePath {
+		return nil
 	}
 
 	requestingManager := utils.ManagerProperties{
