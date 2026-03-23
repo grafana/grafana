@@ -228,29 +228,42 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 	diffTracker *rebuiltIncrementalDiffTracker,
 	change repository.VersionedFileChange,
 ) error {
+	// Destination side: create or update the folder at the new path.
 	if err := d.rewriteCreatedOrUpdatedMetadataChange(ctx, input, index, diffTracker, change); err != nil {
 		return err
 	}
 
+	// Source side: clean up the old path. If the rename originates from a
+	// non-metadata file (e.g. config.json -> _folder.json), there is no
+	// metadata folder to clean up.
 	if !resources.IsFolderMetadataFile(change.PreviousPath) {
 		return nil
 	}
 
+	// A directory-level rename in the original diff already handles this
+	// folder via RenameFolderPath; skip to avoid duplicate processing.
 	oldFolderPath := folderPathForMetadataChange(change.PreviousPath)
 	if input.HadChangeOriginallyAt(oldFolderPath) {
 		return nil
 	}
 
+	// No managed folder at the old path — nothing to clean up.
 	existing := index.ExistingAt(oldFolderPath)
 	if existing == nil {
 		return nil
 	}
 
+	// Determine whether the old directory still exists and build a
+	// replacement entry that schedules the old folder UID for deletion.
 	replacement, directoryExists, err := d.replacementForDeletedMetadataChange(ctx, currentRef, oldFolderPath, existing)
 	if err != nil {
 		return err
 	}
 
+	// Only schedule the old UID for deletion when the folder identity
+	// actually changes. An identity-preserving move (same UID at both
+	// paths) must not delete the UID — it still belongs to the
+	// destination folder.
 	if replacement != nil {
 		newUID, err := d.resolveNewMetadataUID(ctx, change)
 		if err != nil {
@@ -261,10 +274,13 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 		}
 	}
 
+	// Old directory is gone — no folder or child entries to re-sync.
 	if !directoryExists {
 		return nil
 	}
 
+	// Emit an update for the old folder path so it reverts to its
+	// path-derived identity now that _folder.json is gone.
 	if !input.HadChangeOriginallyAt(oldFolderPath) && !diffTracker.HasGeneratedPath(oldFolderPath) {
 		diffTracker.Append(repository.VersionedFileChange{
 			Action: repository.FileActionUpdated,
@@ -277,6 +293,10 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 		return nil
 	}
 
+	// Re-parent direct children so they are re-synced under the
+	// old folder's new (path-derived) identity. Skip children already
+	// covered by the original diff, their own metadata rewrite, or a
+	// prior expansion to keep the output stable and deduplicated.
 	for _, childPath := range index.DirectChildrenOf(oldFolderPath) {
 		if input.HadChangeOriginallyAt(childPath) || input.HasMetadataFolderAt(childPath) || diffTracker.HasGeneratedPath(childPath) {
 			continue
