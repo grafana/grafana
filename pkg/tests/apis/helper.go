@@ -159,6 +159,8 @@ func fillK8sOpts(t *testing.T, opts K8sTestHelperOpts, createDir func(*testing.T
 	if opts.APIServerStorageType == "" && opts.GRPCServerAddress == "" {
 		opts.APIServerStorageType = options.StorageTypeUnified
 	}
+	// Always enable `FlagAppPlatformGrpcClientAuth` for k8s integration tests, as this is the desired behavior.
+	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
 	if opts.Dir == "" && opts.DirPath == "" {
 		opts.Dir, opts.DirPath = createDir(t, opts.GrafanaOpts)
