@@ -341,11 +341,6 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForMetadataChange(
 	folderPath string,
 	change repository.VersionedFileChange,
 ) (*replacedFolder, string, error) {
-	existing := index.ExistingAt(folderPath)
-	if existing == nil {
-		return nil, "", nil
-	}
-
 	folder, _, err := resources.ReadFolderMetadata(ctx, d.repo, folderPath, change.Ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
@@ -354,7 +349,9 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForMetadataChange(
 		return nil, "", fmt.Errorf("read folder metadata for %s: %w", folderPath, err)
 	}
 	newUID := folder.GetName()
-	if newUID == existing.Name {
+
+	existing := index.ExistingAt(folderPath)
+	if existing == nil || newUID == existing.Name {
 		return nil, newUID, nil
 	}
 
