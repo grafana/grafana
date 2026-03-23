@@ -2925,6 +2925,56 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 		require.Len(t, stats, 0)
 	})
 
+	t.Run("filter by group only", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Group: "apps"}, 0)
+		require.NoError(t, err)
+		// 3 namespaces × 3 resources for the "apps" group
+		require.Len(t, stats, 9)
+		for _, stat := range stats {
+			require.Equal(t, "apps", stat.Group)
+			require.Equal(t, int64(3), stat.Count)
+		}
+	})
+
+	t.Run("filter by resource only", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Resource: "deployments"}, 0)
+		require.NoError(t, err)
+		// 3 namespaces × 3 groups for the "deployments" resource
+		require.Len(t, stats, 9)
+		for _, stat := range stats {
+			require.Equal(t, "deployments", stat.Resource)
+			require.Equal(t, int64(3), stat.Count)
+		}
+	})
+
+	t.Run("filter by group and resource", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Group: "apps", Resource: "deployments"}, 0)
+		require.NoError(t, err)
+		// 3 namespaces for apps/deployments
+		require.Len(t, stats, 3)
+		for _, stat := range stats {
+			require.Equal(t, "apps", stat.Group)
+			require.Equal(t, "deployments", stat.Resource)
+			require.Equal(t, int64(3), stat.Count)
+		}
+	})
+
+	t.Run("filter by namespace group and resource", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "ns1", Group: "apps", Resource: "deployments"}, 0)
+		require.NoError(t, err)
+		require.Len(t, stats, 1)
+		require.Equal(t, "ns1", stats[0].Namespace)
+		require.Equal(t, "apps", stats[0].Group)
+		require.Equal(t, "deployments", stats[0].Resource)
+		require.Equal(t, int64(3), stats[0].Count)
+	})
+
+	t.Run("filter by non-existent group", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Group: "non-existent"}, 0)
+		require.NoError(t, err)
+		require.Len(t, stats, 0)
+	})
+
 	t.Run("add deleted resources and verify counts", func(t *testing.T) {
 		// Delete one resource from ns1/apps/deployments/item1
 		rv := node.Generate().Int64()

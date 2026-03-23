@@ -1786,6 +1786,24 @@ func TestKvStorageBackend_GetResourceStats_Success(t *testing.T) {
 	require.Equal(t, "apps", filteredStats[0].Group)
 	require.Equal(t, "resources", filteredStats[0].Resource)
 	require.Equal(t, int64(2), filteredStats[0].Count)
+
+	// Filter by group and resource
+	groupResourceStats, err := backend.GetResourceStats(ctx, NamespacedResource{Group: "apps", Resource: "resources"}, 0)
+	require.NoError(t, err)
+	require.Len(t, groupResourceStats, 2) // default (2 items) + kube-system (1 item)
+	for _, stat := range groupResourceStats {
+		require.Equal(t, "apps", stat.Group)
+		require.Equal(t, "resources", stat.Resource)
+	}
+
+	// Filter by namespace, group, and resource
+	exactStats, err := backend.GetResourceStats(ctx, NamespacedResource{Namespace: "default", Group: "apps", Resource: "resources"}, 0)
+	require.NoError(t, err)
+	require.Len(t, exactStats, 1)
+	require.Equal(t, "default", exactStats[0].Namespace)
+	require.Equal(t, "apps", exactStats[0].Group)
+	require.Equal(t, "resources", exactStats[0].Resource)
+	require.Equal(t, int64(2), exactStats[0].Count)
 }
 
 func TestKvStorageBackend_PruneEvents(t *testing.T) {
