@@ -55,7 +55,7 @@ ORDER BY child.relname;
 // getPartitionName calculates the partition name for a given timestamp
 // Returns partition name in format: annotations_YYYYwWW (e.g., annotations_2025w10)
 func getPartitionName(ts int64) string {
-	t := time.UnixMilli(ts)
+	t := time.UnixMilli(ts).UTC()
 	year, week := t.ISOWeek()
 	return fmt.Sprintf("annotations_%dw%02d", year, week)
 }
