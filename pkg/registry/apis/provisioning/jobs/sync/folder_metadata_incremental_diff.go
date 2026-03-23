@@ -121,9 +121,12 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 		})
 	}
 
-	replaced, err := d.replacementForMetadataChange(ctx, index, folderPath, change)
+	replaced, newUID, err := d.replacementForMetadataChange(ctx, index, folderPath, change)
 	if err != nil {
 		return err
+	}
+	if newUID != "" {
+		diffTracker.TrackActiveUID(newUID)
 	}
 	if replaced != nil {
 		diffTracker.AppendReplaced(*replaced)
@@ -337,27 +340,28 @@ func (d *folderMetadataIncrementalDiffBuilder) replacementForMetadataChange(
 	index managedResourceIndex,
 	folderPath string,
 	change repository.VersionedFileChange,
-) (*replacedFolder, error) {
+) (*replacedFolder, string, error) {
 	existing := index.ExistingAt(folderPath)
 	if existing == nil {
-		return nil, nil
+		return nil, "", nil
 	}
 
 	folder, _, err := resources.ReadFolderMetadata(ctx, d.repo, folderPath, change.Ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
-			return nil, nil
+			return nil, "", nil
 		}
-		return nil, fmt.Errorf("read folder metadata for %s: %w", folderPath, err)
+		return nil, "", fmt.Errorf("read folder metadata for %s: %w", folderPath, err)
 	}
-	if folder.GetName() == existing.Name {
-		return nil, nil
+	newUID := folder.GetName()
+	if newUID == existing.Name {
+		return nil, newUID, nil
 	}
 
 	return &replacedFolder{
 		Path:   folderPath,
 		OldUID: existing.Name,
-	}, nil
+	}, newUID, nil
 }
 
 // replacementForDeletedMetadataChange determines whether deleting _folder.json

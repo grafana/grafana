@@ -1441,13 +1441,11 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		// Deleting src/_folder.json while src/ still has a dashboard
-		// means the old folder cannot be deleted (not empty). The sync
-		// completes with errors that a subsequent full sync resolves.
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		// The incremental sync completes with a warning because src/
+		// loses its _folder.json (triggering a missing-metadata warning).
+		// The src UID is NOT scheduled for deletion because it is being
+		// actively written to dst/_folder.json.
+		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
 
 		// dst/ should now carry the source UID.
 		common.RequireFolderState(t, helper.FoldersV1, srcUID, "Source", "dst", "")
