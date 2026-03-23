@@ -1332,3 +1332,95 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		})
 	})
 }
+
+// TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanCleanup
+// verifies that renaming a _folder.json file (file-only rename, no directory
+// rename event) correctly cleans up the old folder resource and creates the new
+// folder at the destination path.
+func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanCleanup(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("metadata-only folder rename cleans up old folder", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-rename-orphan"
+		const folderUID = "rename-orphan-uid"
+
+		// Seed: empty folder managed only by _folder.json.
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"old-team/_folder.json": folderMetadataJSON(folderUID, "Old Team"),
+			"old-team/dash.json":    gitcommon.DashboardJSON("rename-orphan-dash", "Team Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Old Team", "old-team", "")
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"rename-orphan-dash": {Title: "Team Dashboard", SourcePath: "old-team/dash.json", Folder: folderUID},
+		})
+
+		// Move the _folder.json to a new directory while also moving the
+		// dashboard. This produces file-level renames in the git diff.
+		require.NoError(t, local.CreateDirPath("new-team"))
+		_, err := local.Git("mv", "old-team/_folder.json", "new-team/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("mv", "old-team/dash.json", "new-team/dash.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "move folder contents to new-team")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
+
+		// The folder should now be at new-team with the same UID (identity preserved).
+		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Old Team", "new-team", "")
+
+		// Only one folder should exist for this repo — old-team should be gone.
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-team"})
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"rename-orphan-dash": {Title: "Team Dashboard", SourcePath: "new-team/dash.json", Folder: folderUID},
+		})
+	})
+
+	t.Run("metadata-only empty folder rename cleans up old folder", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-rename-empty"
+		const folderUID = "empty-rename-uid"
+
+		// Seed: metadata-only folder (no dashboards inside).
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"old-empty/_folder.json": folderMetadataJSON(folderUID, "Empty Folder"),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Empty Folder", "old-empty", "")
+
+		// Move the _folder.json to a new path — this is a pure file rename.
+		require.NoError(t, local.CreateDirPath("new-empty"))
+		_, err := local.Git("mv", "old-empty/_folder.json", "new-empty/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename empty metadata folder")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{Incremental: true},
+		})
+
+		// The folder should now be at new-empty with the same UID.
+		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Empty Folder", "new-empty", "")
+
+		// Only one folder should exist for this repo.
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-empty"})
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+	})
+}
