@@ -213,6 +213,13 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteDeletedMetadataChange(
 // (e.g. old/_folder.json -> new/_folder.json) where no separate directory
 // rename event exists in the diff. It treats the new path as a create/update
 // and the old path as a delete so the old folder is tracked for orphan cleanup.
+//
+// Two special cases are handled:
+//   - When PreviousPath is not a _folder.json file (e.g. foo.json renamed to
+//     _folder.json), the old path is not a metadata folder so no cleanup is needed.
+//   - When the new _folder.json preserves the same UID as the existing folder,
+//     the folder is being moved rather than replaced, so the old UID must not
+//     be scheduled for deletion (that would destroy the moved folder).
 func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 	ctx context.Context,
 	currentRef string,
@@ -225,17 +232,78 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 		return err
 	}
 
+	if !resources.IsFolderMetadataFile(change.PreviousPath) {
+		return nil
+	}
+
 	oldFolderPath := folderPathForMetadataChange(change.PreviousPath)
 	if input.HadChangeOriginallyAt(oldFolderPath) {
 		return nil
 	}
 
-	syntheticDelete := repository.VersionedFileChange{
-		Action:      repository.FileActionDeleted,
-		Path:        change.PreviousPath,
-		PreviousRef: change.PreviousRef,
+	existing := index.ExistingAt(oldFolderPath)
+	if existing == nil {
+		return nil
 	}
-	return d.rewriteDeletedMetadataChange(ctx, currentRef, input, index, diffTracker, syntheticDelete)
+
+	replacement, directoryExists, err := d.replacementForDeletedMetadataChange(ctx, currentRef, oldFolderPath, existing)
+	if err != nil {
+		return err
+	}
+
+	if replacement != nil {
+		newUID, err := d.resolveNewMetadataUID(ctx, change)
+		if err != nil {
+			return err
+		}
+		if newUID != existing.Name {
+			diffTracker.AppendReplaced(*replacement)
+		}
+	}
+
+	if !directoryExists {
+		return nil
+	}
+
+	if !input.HadChangeOriginallyAt(oldFolderPath) && !diffTracker.HasGeneratedPath(oldFolderPath) {
+		diffTracker.Append(repository.VersionedFileChange{
+			Action: repository.FileActionUpdated,
+			Path:   oldFolderPath,
+			Ref:    currentRef,
+		})
+	}
+
+	if replacement == nil {
+		return nil
+	}
+
+	for _, childPath := range index.DirectChildrenOf(oldFolderPath) {
+		if input.HadChangeOriginallyAt(childPath) || input.HasMetadataFolderAt(childPath) || diffTracker.HasGeneratedPath(childPath) {
+			continue
+		}
+
+		diffTracker.Append(repository.VersionedFileChange{
+			Action: repository.FileActionUpdated,
+			Path:   childPath,
+			Ref:    currentRef,
+		})
+	}
+
+	return nil
+}
+
+// resolveNewMetadataUID reads the UID from the _folder.json at the rename's
+// destination path. Returns empty string if the metadata cannot be read.
+func (d *folderMetadataIncrementalDiffBuilder) resolveNewMetadataUID(
+	ctx context.Context,
+	change repository.VersionedFileChange,
+) (string, error) {
+	folderPath := folderPathForMetadataChange(change.Path)
+	folder, _, err := resources.ReadFolderMetadata(ctx, d.repo, folderPath, change.Ref)
+	if err != nil {
+		return "", fmt.Errorf("read new folder metadata for identity check at %s: %w", folderPath, err)
+	}
+	return folder.GetName(), nil
 }
 
 // replacementForMetadataChange determines whether a metadata change at a folder
