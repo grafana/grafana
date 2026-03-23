@@ -632,11 +632,14 @@ func emitDirectChildrenChanges(
 	}
 
 	// Collect items already targeted by a DELETE so we can skip them when
-	// selecting the best match for reparent updates.
-	deletedItems := make(map[string]bool, len(changes))
+	// selecting the best match for reparent updates. Keyed by pointer
+	// identity (all items reference target.Items) rather than Name alone,
+	// since Name is only unique within a (Group, Resource) and different
+	// resource kinds can share the same name.
+	deletedItems := make(map[*provisioning.ResourceListItem]bool, len(changes))
 	for _, c := range changes {
 		if c.Action == repository.FileActionDeleted && c.Existing != nil {
-			deletedItems[c.Existing.Name] = true
+			deletedItems[c.Existing] = true
 		}
 	}
 
@@ -670,14 +673,14 @@ func emitDirectChildrenChanges(
 		}
 		best := items[0]
 		for _, it := range items {
-			if deletedItems[it.Name] {
+			if deletedItems[it] {
 				continue
 			}
 			if it.Hash == file.Hash {
 				best = it
 				break
 			}
-			if deletedItems[best.Name] {
+			if deletedItems[best] {
 				best = it
 			}
 		}
