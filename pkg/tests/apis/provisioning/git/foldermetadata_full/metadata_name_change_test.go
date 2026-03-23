@@ -4,12 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // TestIntegrationProvisioning_FullSync_MetadataNameChange verifies that when a
@@ -56,7 +58,7 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 	// the name change and removes the previous resource.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "name-change-full-001", metav1.GetOptions{})
-		assert.Error(c, err, "old dashboard should be deleted")
+		assert.True(c, apierrors.IsNotFound(err), "old dashboard should be NotFound, got: %v", err)
 	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "old dashboard should be deleted after name change")
 
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)

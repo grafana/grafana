@@ -168,7 +168,7 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		require.Equal(t, replaceTestGVK, gvk)
 	})
 
-	t.Run("ForResource error is silently ignored", func(t *testing.T) {
+	t.Run("ForResource error is propagated", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClients := NewMockResourceClients(t)
@@ -183,7 +183,8 @@ func TestReplaceResourceFromFile(t *testing.T) {
 		mgr := NewResourcesManager(repo, nil, mockParser, mockClients)
 		name, _, err := mgr.ReplaceResourceFromFile(context.Background(), "alerts/rule.json", "", "old-uid", replaceTestGVR)
 
-		require.NoError(t, err)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to delete old resource old-uid")
 		require.Equal(t, "new-uid", name)
 	})
 }
@@ -365,7 +366,7 @@ func TestDeleteOldResource(t *testing.T) {
 		mockClient.AssertCalled(t, "Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything)
 	})
 
-	t.Run("ForResource error returns nil", func(t *testing.T) {
+	t.Run("ForResource error is propagated", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockClients := NewMockResourceClients(t)
 
@@ -375,7 +376,9 @@ func TestDeleteOldResource(t *testing.T) {
 		mgr := NewResourcesManager(repo, nil, nil, mockClients)
 		err := mgr.deleteOldResource(context.Background(), "old-uid", replaceTestGVR, "new-uid")
 
-		require.NoError(t, err)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "failed to delete old resource old-uid")
+		require.Contains(t, err.Error(), "unknown resource")
 	})
 
 	t.Run("sets correct namespace from repo config", func(t *testing.T) {

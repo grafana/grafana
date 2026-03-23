@@ -331,7 +331,7 @@ func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, pat
 func (r *ResourcesManager) deleteOldResource(ctx context.Context, oldName string, oldGVR schema.GroupVersionResource, newName string) error {
 	client, _, err := r.clients.ForResource(ctx, oldGVR)
 	if err != nil {
-		return nil
+		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
 	}
 
 	cfg := r.repo.Config()
@@ -351,7 +351,7 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, oldName string
 
 	requestingManager := utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,
-		Identity: cfg.Name,
+		Identity: cfg.GetName(),
 	}
 	if err := CheckResourceOwnership(ctx, existing, oldName, requestingManager); err != nil {
 		return fmt.Errorf("wrote new resource %s but failed to delete old resource %s: %w", newName, oldName, err)
