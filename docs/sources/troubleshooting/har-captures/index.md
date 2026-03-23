@@ -18,6 +18,8 @@ weight: 300
 
 Support may request information about the network requests your browser generated in the form of a HAR file.
 
+Important: HAR files can contain sensitive information, including cookies, session data, personal information, and sometimes credentials or tokens entered during troubleshooting. Before sharing a HAR file, make sure you review or sanitize it. One option is to use [Google’s HAR Analyzer](https://toolbox.googleapps.com/apps/har_analyzer/). After uploading your HAR file there, click the redaction button in the top-left corner to download a version with sensitive data removed. You can then attach the redacted HAR file to your Grafana Support ticket. After uploading your HAR file there, click the redaction button in the top-left corner to download a version with sensitive data removed. You can then attach the redacted HAR file to your Grafana Support ticket.
+
 To generate a HAR capture, follow the steps for your browser:
 
 ## Chrome
