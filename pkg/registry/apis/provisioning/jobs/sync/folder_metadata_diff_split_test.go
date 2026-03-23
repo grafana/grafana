@@ -85,8 +85,8 @@ func TestFolderMetadataDiffSplit_RenamedFromNonMetadataDoesNotRegisterOldPath(t 
 	diff := []repository.VersionedFileChange{
 		{
 			Action:       repository.FileActionRenamed,
-			Path:         "team/_folder.json",
-			PreviousPath: "team/config.json",
+			Path:         "new-team/_folder.json",
+			PreviousPath: "old-team/config.json",
 			PreviousRef:  "old-ref",
 			Ref:          "new-ref",
 		},
@@ -95,8 +95,8 @@ func TestFolderMetadataDiffSplit_RenamedFromNonMetadataDoesNotRegisterOldPath(t 
 	split := splitMetadataChanges(diff)
 
 	require.True(t, split.HasMetadataChanges(), "rename to _folder.json is still a metadata change")
-	require.True(t, split.HasMetadataFolderAt("team/"), "new path should be registered")
-	require.False(t, split.HasMetadataFolderAt("team/config.json"), "non-metadata PreviousPath must not be registered")
+	require.True(t, split.HasMetadataFolderAt("new-team/"), "new path should be registered")
+	require.False(t, split.HasMetadataFolderAt("old-team/"), "non-metadata PreviousPath folder must not be registered")
 }
 
 func TestFolderMetadataDiffSplitWithoutMetadataChanges(t *testing.T) {

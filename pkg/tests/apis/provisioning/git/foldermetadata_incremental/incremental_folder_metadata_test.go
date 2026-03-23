@@ -1368,7 +1368,9 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 			"dst/dash-dst.json": gitcommon.DashboardJSON("dash-dst", "Dest Dashboard", 1),
 		})
 
-		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		// dst/ has no _folder.json, so the initial sync produces a
+		// missing-metadata warning.
+		common.SyncAndWaitWithWarning(t, helper, repoName)
 		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Source Folder", "src", "")
 		// dst/ gets a hash-derived UID since it has no metadata.
 		dstAutoUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "dst")

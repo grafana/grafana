@@ -281,7 +281,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 
 	// Emit an update for the old folder path so it reverts to its
 	// path-derived identity now that _folder.json is gone.
-	if !input.HadChangeOriginallyAt(oldFolderPath) && !diffTracker.HasGeneratedPath(oldFolderPath) {
+	if !diffTracker.HasGeneratedPath(oldFolderPath) {
 		diffTracker.Append(repository.VersionedFileChange{
 			Action: repository.FileActionUpdated,
 			Path:   oldFolderPath,
