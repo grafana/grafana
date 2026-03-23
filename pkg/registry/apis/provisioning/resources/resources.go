@@ -328,6 +328,15 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	if err != nil {
 		return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
 	}
+
+	// When the resource's parent folder didn't change (e.g. the entire
+	// directory was renamed and the folder was updated in place with the
+	// same UID), the old folder was not emptied — suppress the signal so
+	// the caller doesn't mark it for orphan deletion.
+	if newParsed.Meta.GetFolder() == oldFolderName {
+		oldFolderName = ""
+	}
+
 	return newName, oldFolderName, gvk, nil
 }
 
