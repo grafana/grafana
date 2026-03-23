@@ -48,6 +48,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	}
 	compareSpan.End()
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCompare, time.Since(compareStart))
+	originalDiff := slices.Clone(diff)
 
 	if len(diff) < 1 {
 		progress.SetFinalMessage(ctx, "no changes detected between commits")
@@ -55,6 +56,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	}
 
 	var replaced []replacedFolder
+	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	if folderMetadataEnabled {
 		readerRepo, ok := repo.(repository.Reader)
 		if !ok {
@@ -65,6 +67,17 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		diff, replaced, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff)
 		if err != nil {
 			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
+		}
+		invalidFolderMetadata, err = collectInvalidFolderMetadata(ctx, readerRepo, currentRef, originalDiff, tracer)
+		if err != nil {
+			return tracing.Error(span, err)
+		}
+		if len(invalidFolderMetadata) > 0 {
+			target, err := repositoryResources.List(ctx)
+			if err != nil {
+				return tracing.Error(span, fmt.Errorf("list managed resources: %w", err))
+			}
+			repositoryResources.SetTree(resources.NewFolderTreeFromResourceList(target))
 		}
 	}
 
@@ -101,6 +114,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	// Run after deleteFolders so its informational warnings (e.g. missing
 	// _folder.json) don't interfere with HasChildPathFailedUpdate safety checks.
 	if folderMetadataEnabled {
+		recordInvalidFolderMetadataWarnings(ctx, invalidFolderMetadata, progress)
 		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
 			return err
 		}
@@ -416,6 +430,70 @@ func deleteFolders(
 			resultBuilder.WithError(fmt.Errorf("delete folder %s: %w", entry.UID, err))
 		}
 		progress.Record(ctx, resultBuilder.Build())
+	}
+}
+
+// collectInvalidFolderMetadata reads the original `_folder.json` create/update/rename
+// changes and returns warnings for malformed or incomplete folder metadata.
+//
+// The original git diff is used so the recorded warning action preserves the
+// user's actual change (`created`, `updated`, or `renamed`) instead of the synthetic
+// directory `updated` entries emitted by the incremental diff builder.
+func collectInvalidFolderMetadata(ctx context.Context, repo repository.Reader, currentRef string, diff []repository.VersionedFileChange, tracer tracing.Tracer) ([]*resources.InvalidFolderMetadata, error) {
+	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.detect_invalid_folder_metadata")
+	defer span.End()
+
+	seen := make(map[string]struct{}, len(diff))
+	invalid := make([]*resources.InvalidFolderMetadata, 0)
+	for _, change := range diff {
+		if change.Action != repository.FileActionCreated &&
+			change.Action != repository.FileActionUpdated &&
+			change.Action != repository.FileActionRenamed {
+			continue
+		}
+		if !resources.IsFolderMetadataFile(change.Path) {
+			continue
+		}
+
+		folderPath := safepath.EnsureTrailingSlash(safepath.Dir(change.Path))
+		if _, ok := seen[folderPath]; ok {
+			continue
+		}
+		seen[folderPath] = struct{}{}
+
+		_, _, err := resources.ReadFolderMetadata(ctx, repo, folderPath, currentRef)
+		if err == nil {
+			continue
+		}
+		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+			continue
+		}
+
+		var invalidErr *resources.InvalidFolderMetadata
+		if errors.As(err, &invalidErr) {
+			invalid = append(invalid, invalidErr.WithAction(change.Action))
+			continue
+		}
+
+		span.RecordError(err)
+		return nil, fmt.Errorf("collect invalid folder metadata for %s: %w", folderPath, err)
+	}
+
+	return invalid, nil
+}
+
+// recordInvalidFolderMetadataWarnings writes collected invalid `_folder.json`
+// warnings to job progress after folder cleanup has completed.
+func recordInvalidFolderMetadataWarnings(ctx context.Context, invalid []*resources.InvalidFolderMetadata, progress jobs.JobProgressRecorder) {
+	for _, warning := range invalid {
+		action := warning.Action
+		if action == "" {
+			action = repository.FileActionIgnored
+		}
+		progress.Record(ctx, jobs.NewFolderResult(warning.Path).
+			WithAction(action).
+			WithWarning(warning).
+			Build())
 	}
 }
 

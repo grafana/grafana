@@ -338,7 +338,16 @@ func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, error) {
 	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef, fm.folderMetadataEnabled)
 	if err != nil {
-		return "", fmt.Errorf("parse old folder: %w", err)
+		var invalidErr *InvalidFolderMetadata
+		if !errors.As(err, &invalidErr) {
+			return "", fmt.Errorf("parse old folder: %w", err)
+		}
+
+		if existing, ok := fm.tree.GetByPath(previousPath); ok {
+			oldFolder = existing
+		} else {
+			oldFolder = ParseFolder(previousPath, fm.repo.Config().Name)
+		}
 	}
 
 	if _, err := fm.EnsureFolderPathExist(ctx, newPath, newRef); err != nil {
@@ -347,7 +356,11 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 
 	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef, fm.folderMetadataEnabled)
 	if err != nil {
-		return "", fmt.Errorf("parse new folder: %w", err)
+		var invalidErr *InvalidFolderMetadata
+		if !errors.As(err, &invalidErr) {
+			return "", fmt.Errorf("parse new folder: %w", err)
+		}
+		newFolder = ParseFolder(newPath, fm.repo.Config().Name)
 	}
 
 	if oldFolder.ID == newFolder.ID {

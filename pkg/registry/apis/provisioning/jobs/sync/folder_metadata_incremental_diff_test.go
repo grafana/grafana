@@ -213,6 +213,68 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		}}, replacedFolders)
 	})
 
+	t.Run("invalid metadata update on existing folder keeps replay without replacement", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "myfolder/_folder.json", Ref: "new-ref"},
+		}
+
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{
+					Name:     "stable-uid",
+					Group:    resources.FolderResource.Group,
+					Resource: resources.FolderResource.Resource,
+					Path:     "myfolder/",
+				},
+				{
+					Name:     "dash-uid",
+					Group:    "dashboards",
+					Resource: "dashboards",
+					Path:     "myfolder/dashboard.json",
+				},
+			},
+		}, nil).Once()
+		repo.MockReader.On("Read", mock.Anything, "myfolder/_folder.json", "new-ref").Return(&repository.FileInfo{
+			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"Broken"}}`),
+		}, nil).Once()
+
+		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repoResources)
+		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff)
+
+		require.NoError(t, err)
+		require.Contains(t, filteredDiff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated, Path: "myfolder/", Ref: "new-ref",
+		})
+		require.Contains(t, filteredDiff, repository.VersionedFileChange{
+			Action: repository.FileActionUpdated, Path: "myfolder/dashboard.json", Ref: "new-ref",
+		})
+		require.Empty(t, replacedFolders)
+	})
+
+	t.Run("invalid metadata creation on new folder still emits folder replay", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+		diff := []repository.VersionedFileChange{
+			{Action: repository.FileActionCreated, Path: "myfolder/_folder.json", Ref: "new-ref"},
+		}
+
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil).Once()
+		repo.MockReader.On("Read", mock.Anything, "myfolder/_folder.json", "new-ref").Return(&repository.FileInfo{
+			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"Broken"}}`),
+		}, nil).Once()
+
+		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo, repoResources)
+		filteredDiff, replacedFolders, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff)
+
+		require.NoError(t, err)
+		require.Equal(t, []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "myfolder/", Ref: "new-ref"},
+		}, filteredDiff)
+		require.Empty(t, replacedFolders)
+	})
+
 	t.Run("does not duplicate synthetic child updates when the real diff already contains them", func(t *testing.T) {
 		repo := newCompositeRepoWithConfig(t)
 		repoResources := resources.NewMockRepositoryResources(t)
