@@ -58,13 +58,14 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				tt.rulesInst,
 				correlationsAppInstaller,
 				notificationsAppInstaller,
-				nil,
+				nil, // logsdrilldown
 				annotationAppInstaller,
 				exampleAppInstaller,
 				advisorAppInstaller,
 				historianAppInstaller,
 				quotasAppInstaller,
 				dashvalidatorAppInstaller,
+				nil, // queryhistory
 			)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)
