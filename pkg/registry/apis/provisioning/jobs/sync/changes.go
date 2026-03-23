@@ -326,7 +326,7 @@ func processInvalidFolderMetadataChanges(
 
 		var invalidErr *resources.InvalidFolderMetadata
 		if errors.As(err, &invalidErr) {
-			invalidErr.WithAction(change.Action)
+			invalidErr = invalidErr.WithAction(change.Action)
 			invalidFolderMetadata = append(invalidFolderMetadata, invalidErr)
 			if change.Action == repository.FileActionCreated {
 				filtered = append(filtered, change)
