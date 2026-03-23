@@ -48,10 +48,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
+	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
+	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
@@ -835,15 +837,19 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			fixMetadataWorker := fixfoldermetadata.NewWorker()
+			releaseResourcesWorker := releaseresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
+			deleteResourcesWorker := deleteresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
 
 			// All workers registered - export/migrate will check feature flag at runtime
-			workers := make([]jobs.Worker, 0, 6+len(b.extraWorkers))
+			workers := make([]jobs.Worker, 0, 8+len(b.extraWorkers))
 			workers = append(workers,
+				deleteResourcesWorker,
 				deleteWorker,
 				exportWorker,
 				fixMetadataWorker,
 				migrationWorker,
 				moveWorker,
+				releaseResourcesWorker,
 				syncWorker,
 			)
 

@@ -290,9 +290,10 @@ func actionPriority(action repository.FileAction) int {
 		return 2
 	case repository.FileActionCreated:
 		return 3
-	default:
+	case repository.FileActionIgnored:
 		return 4
 	}
+	return 4
 }
 
 // findOrphanedFolders checks which affected folders no longer exist in git
