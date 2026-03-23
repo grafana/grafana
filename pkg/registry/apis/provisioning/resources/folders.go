@@ -102,7 +102,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 		return parent, nil
 	}
 
-	f, err := ParseFolderWithMetadata(ctx, fm.repo, dir, ref, fm.folderMetadataEnabled)
+	f, err := fm.resolveFolderForPath(ctx, dir, ref)
 	if err != nil {
 		return "", err
 	}
@@ -115,7 +115,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
-		f, err := ParseFolderWithMetadata(ctx, fm.repo, traverse, ref, fm.folderMetadataEnabled)
+		f, err := fm.resolveFolderForPath(ctx, traverse, ref)
 		if err != nil {
 			return err
 		}
@@ -143,6 +143,27 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 	}
 
 	return f.ID, nil
+}
+
+// resolveFolderForPath parses folder metadata when possible. If metadata is
+// invalid, it falls back to the current folder already known at that path. When
+// no folder exists yet, it falls back to the hash/path-derived folder identity.
+func (fm *FolderManager) resolveFolderForPath(ctx context.Context, path, ref string) (Folder, error) {
+	f, err := ParseFolderWithMetadata(ctx, fm.repo, path, ref, fm.folderMetadataEnabled)
+	if err == nil {
+		return f, nil
+	}
+
+	var invalidErr *InvalidFolderMetadata
+	if !errors.As(err, &invalidErr) {
+		return Folder{}, err
+	}
+
+	if existing, ok := fm.tree.GetByPath(path); ok {
+		return existing, nil
+	}
+
+	return ParseFolder(path, fm.repo.Config().Name), nil
 }
 
 // EnsureFolderExists creates the folder if it doesn't exist.
