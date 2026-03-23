@@ -377,6 +377,9 @@ func processInvalidFolderMetadataChanges(
 	changes []ResourceFileChange,
 	foldersWithMetadata map[string]bool,
 ) ([]ResourceFileChange, []*resources.InvalidFolderMetadata, error) {
+	// First pass: validate metadata and collect folder paths with invalid
+	// _folder.json so we can also suppress orphan-cleanup deletes there.
+	invalidPaths := make(map[string]bool)
 	filtered := make([]ResourceFileChange, 0, len(changes))
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 
@@ -400,6 +403,7 @@ func processInvalidFolderMetadataChanges(
 		if errors.As(err, &invalidErr) {
 			invalidErr = invalidErr.WithAction(change.Action)
 			invalidFolderMetadata = append(invalidFolderMetadata, invalidErr)
+			invalidPaths[change.Path] = true
 			if change.Action == repository.FileActionCreated {
 				filtered = append(filtered, change)
 			}
@@ -412,6 +416,20 @@ func processInvalidFolderMetadataChanges(
 		}
 
 		return nil, nil, fmt.Errorf("read folder metadata for %s: %w", change.Path, err)
+	}
+
+	// Second pass: suppress orphan-cleanup deletes at folder paths whose
+	// metadata is invalid — the hash-based primary selection is unreliable
+	// when the _folder.json content can't be parsed.
+	if len(invalidPaths) > 0 {
+		kept := make([]ResourceFileChange, 0, len(filtered))
+		for _, c := range filtered {
+			if c.OrphanCleanup && safepath.IsDir(c.Path) && invalidPaths[c.Path] {
+				continue
+			}
+			kept = append(kept, c)
+		}
+		filtered = kept
 	}
 
 	return filtered, invalidFolderMetadata, nil
