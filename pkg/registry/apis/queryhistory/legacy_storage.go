@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -116,7 +117,7 @@ func (s *LegacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 }
 
 func (s *LegacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
-	return nil, fmt.Errorf("delete collection not supported for query history")
+	return nil, apierrors.NewMethodNotSupported(qhv0alpha1.QueryHistoryResourceInfo.GroupResource(), "deleteCollection")
 }
 
 func (s *LegacyStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {

@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/k8s"
 	sdkresource "github.com/grafana/grafana-app-sdk/resource"
-	collectionsv1alpha1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	qhv0alpha1 "github.com/grafana/grafana/apps/queryhistory/pkg/apis/queryhistory/v0alpha1"
 	queryhistoryapp "github.com/grafana/grafana/apps/queryhistory/pkg/app"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -27,7 +26,6 @@ type BackfillJob struct {
 	userService user.Service
 	orgService  org.Service
 	qhClient    *qhv0alpha1.QueryHistoryClient
-	starsClient *collectionsv1alpha1.StarsClient
 	logger      *slog.Logger
 	batchSize   int
 	restConfig  *restclient.Config
@@ -63,13 +61,6 @@ func (b *BackfillJob) Run(ctx context.Context) error {
 			}
 			b.qhClient = client
 		}
-		if b.starsClient == nil {
-			client, err := collectionsv1alpha1.NewStarsClientFromGenerator(gen)
-			if err != nil {
-				return fmt.Errorf("failed to create stars client: %w", err)
-			}
-			b.starsClient = client
-		}
 	}
 
 	b.logger.Info("starting query history backfill")
@@ -85,6 +76,13 @@ func (b *BackfillJob) Run(ctx context.Context) error {
 	totalSkipped := 0
 
 	for {
+		select {
+		case <-ctx.Done():
+			b.logger.Info("backfill cancelled", "created", totalCreated, "skipped", totalSkipped)
+			return ctx.Err()
+		default:
+		}
+
 		var rows []queryhistorysvc.QueryHistory
 		err := b.store.WithDbSession(ctx, func(sess *db.Session) error {
 			return sess.Table("query_history").
