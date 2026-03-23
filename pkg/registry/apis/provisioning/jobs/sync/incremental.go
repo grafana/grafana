@@ -81,7 +81,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetMessage(ctx, "versioned changes replicated")
 
 	cleanupStart := time.Now()
-	foldersToDelete := findOrphanedFolders(ctx, repo, affectedFolders, tracer)
+	foldersToDelete := findOrphanedFolders(ctx, repo, currentRef, affectedFolders, tracer)
 
 	for _, r := range replaced {
 		if progress.HasDirPathFailedCreation(r.Path) {
@@ -152,7 +152,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			}
 
 			if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
-				folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment)
+				folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment, change.Ref)
 				if err != nil {
 					ensureFolderSpan.RecordError(err)
 					ensureFolderSpan.End()
@@ -189,7 +189,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			if change.Action == repository.FileActionUpdated {
 				folderResultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
 				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.reparent_child_folder")
-				folder, fErr := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path)
+				folder, fErr := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path, change.Ref)
 				if fErr != nil {
 					folderSpan.RecordError(fErr)
 					folderResultBuilder.WithError(fmt.Errorf("re-parenting child folder at %s: %w", change.Path, fErr))
@@ -256,6 +256,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 			removeSpan.End()
 		case repository.FileActionRenamed:
+			resultBuilder.WithPreviousPath(change.PreviousPath)
 			if safepath.IsDir(change.Path) {
 				renameFolderCtx, renameFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_folder_path")
 				oldFolderID, err := repositoryResources.RenameFolderPath(renameFolderCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
@@ -318,6 +319,7 @@ func actionPriority(action repository.FileAction) int {
 func findOrphanedFolders(
 	ctx context.Context,
 	repo repository.Versioned,
+	currentRef string,
 	affectedFolders map[string]string,
 	tracer tracing.Tracer,
 ) map[string]string {
@@ -334,7 +336,7 @@ func findOrphanedFolders(
 	for path, folderName := range affectedFolders {
 		span.SetAttributes(attribute.String("folder", folderName))
 
-		_, err := readerRepo.Read(ctx, path, "")
+		_, err := readerRepo.Read(ctx, path, currentRef)
 		if err != nil && (errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			span.AddEvent("folder not found in git, marking for deletion")
 			orphaned[path] = folderName

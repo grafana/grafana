@@ -630,13 +630,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
-		// producing errors. The rename still works via fallback, so we only
-		// wait for completion without asserting success.
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, folderUID, metav1.GetOptions{})
 		require.NoError(t, err, "folder should still exist with same UID")
@@ -649,11 +643,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-team"})
 
-		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
-		// folders are recreated with new UIDs. They should be updated in place instead.
 		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "rr-dash-001", metav1.GetOptions{})
 		require.NoError(t, err)
-		common.RequireRecreated(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
+		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"rr-dash-001": {Title: "Team Dashboard", SourcePath: "new-team/dashboard1.json", Folder: folderUID},
@@ -692,13 +684,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
-		// producing errors. The rename still works via fallback, so we only
-		// wait for completion without asserting success.
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		childAfter, err := helper.FoldersV1.Resource.Get(ctx, childUID, metav1.GetOptions{})
 		require.NoError(t, err, "child folder should still exist with same UID")
@@ -711,11 +697,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/new-child"})
 
-		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
-		// folders are recreated with new UIDs. They should be updated in place instead.
 		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "nn-dash-001", metav1.GetOptions{})
 		require.NoError(t, err)
-		common.RequireRecreated(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
+		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"nn-dash-001": {Title: "Child Dashboard", SourcePath: "parent/new-child/dashboard1.json", Folder: childUID},
@@ -754,13 +738,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
-		// producing errors. The rename still works via fallback, so we only
-		// wait for completion without asserting success.
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, movedUID, metav1.GetOptions{})
 		require.NoError(t, err, "moved folder should still exist with same UID")
@@ -774,11 +752,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "parent/my-folder"})
 
-		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
-		// folders are recreated with new UIDs. They should be updated in place instead.
 		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "rn-dash-001", metav1.GetOptions{})
 		require.NoError(t, err)
-		common.RequireRecreated(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
+		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"rn-dash-001": {Title: "Moved Dashboard", SourcePath: "parent/my-folder/dashboard1.json", Folder: movedUID},
@@ -817,13 +793,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
-		// producing errors. The rename still works via fallback, so we only
-		// wait for completion without asserting success.
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		folderAfter, err := helper.FoldersV1.Resource.Get(ctx, movedUID, metav1.GetOptions{})
 		require.NoError(t, err, "moved folder should still exist with same UID")
@@ -836,11 +806,9 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"parent", "my-folder"})
 
-		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
-		// folders are recreated with new UIDs. They should be updated in place instead.
 		dashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "nr-dash-001", metav1.GetOptions{})
 		require.NoError(t, err)
-		common.RequireRecreated(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
+		common.RequireUpdatedInPlace(t, "dashboard", dashSnap, common.SnapshotObject(t, dashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"nr-dash-001": {Title: "Moved Dashboard", SourcePath: "my-folder/dashboard1.json", Folder: movedUID},
@@ -890,13 +858,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		// FIXME: RenameResourceFile currently fails to delete non-empty folders,
-		// producing errors. The rename still works via fallback, so we only
-		// wait for completion without asserting success.
-		helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
-			Action: provisioning.JobActionPull,
-			Pull:   &provisioning.SyncJobOptions{Incremental: true},
-		})
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
 
 		// Verify parent folder updated in place.
 		parentAfter, err := helper.FoldersV1.Resource.Get(ctx, parentUID, metav1.GetOptions{})
@@ -920,15 +882,13 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 
 		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-parent", "new-parent/child"})
 
-		// FIXME: RenameResourceFile does delete+create, so dashboards inside renamed
-		// folders are recreated with new UIDs. They should be updated in place instead.
 		parentDashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "mx-parent-dash", metav1.GetOptions{})
 		require.NoError(t, err)
-		common.RequireRecreated(t, "parent dashboard", parentDashSnap, common.SnapshotObject(t, parentDashAfter))
+		common.RequireUpdatedInPlace(t, "parent dashboard", parentDashSnap, common.SnapshotObject(t, parentDashAfter))
 
 		childDashAfter, err := helper.DashboardsV1.Resource.Get(ctx, "mx-child-dash", metav1.GetOptions{})
 		require.NoError(t, err)
-		common.RequireRecreated(t, "child dashboard", childDashSnap, common.SnapshotObject(t, childDashAfter))
+		common.RequireUpdatedInPlace(t, "child dashboard", childDashSnap, common.SnapshotObject(t, childDashAfter))
 
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"mx-parent-dash": {Title: "Parent Dashboard", SourcePath: "new-parent/parent-dash.json", Folder: parentUID},
