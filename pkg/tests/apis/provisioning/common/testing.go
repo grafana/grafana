@@ -1118,6 +1118,10 @@ func NewSharedEnv(options ...GrafanaOption) *SharedEnv {
 // GetHelper returns the shared ProvisioningTestHelper, starting the Grafana
 // server on the first call (via sync.Once). Subsequent calls reuse the same
 // server. The test is skipped automatically when running in short mode.
+//
+// If initialization fails (panic or t.FailNow/runtime.Goexit), the error is
+// persisted and every subsequent caller gets a clear t.Fatal rather than a
+// nil-pointer crash.
 func (e *SharedEnv) GetHelper(t *testing.T) *ProvisioningTestHelper {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -1126,6 +1130,8 @@ func (e *SharedEnv) GetHelper(t *testing.T) *ProvisioningTestHelper {
 		defer func() {
 			if r := recover(); r != nil {
 				e.initErr = fmt.Sprintf("shared server init panicked: %v", r)
+			} else if e.Helper == nil && e.initErr == "" {
+				e.initErr = "shared server init failed (FailNow/Goexit called; see first test output)"
 			}
 		}()
 		e.Helper, e.shutdownFunc = RunGrafanaShared(t, e.options...)

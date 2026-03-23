@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -420,7 +421,9 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 		connectionName := created.GetName()
 		require.NotEmpty(t, connectionName, "connection name should not be empty")
 		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
+			if err := helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+				t.Errorf("cleanup: failed to delete GitLab connection %q: %v", connectionName, err)
+			}
 		})
 
 		output, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
@@ -490,7 +493,9 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 		connectionName := created.GetName()
 		require.NotEmpty(t, connectionName, "connection name should not be empty")
 		t.Cleanup(func() {
-			_ = helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{})
+			if err := helper.Connections.Resource.Delete(ctx, connectionName, metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+				t.Errorf("cleanup: failed to delete Bitbucket connection %q: %v", connectionName, err)
+			}
 		})
 
 		output, err := helper.Connections.Resource.Get(ctx, connectionName, metav1.GetOptions{})
@@ -558,7 +563,9 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 					return
 				}
 				t.Cleanup(func() {
-					_ = helper.Connections.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+					if err := helper.Connections.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+						t.Errorf("cleanup: failed to delete connection %q: %v", created.GetName(), err)
+					}
 				})
 			})
 		}

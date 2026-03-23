@@ -20,7 +20,7 @@ where every test started its own server, which was the main source of slowness.
 ### Key Files
 
 | File | Purpose |
-|------|---------|
+| ---- | ------- |
 | `testinfra/testinfra.go` | `StartGrafanaEnvWithManualCleanup` — returns a cleanup func instead of registering on `t.Cleanup` |
 | `apis/helper.go` | `NewK8sTestHelperShared` — wraps the manual-cleanup variant |
 | `common/testing.go` | `SharedEnv`, `RunGrafanaShared`, `CleanupAllResources` |
