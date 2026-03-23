@@ -1363,7 +1363,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		// Seed: source folder with metadata + dashboard, destination folder
 		// with only a dashboard (no _folder.json).
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-			"src/_folder.json": folderMetadataJSON(folderUID, "Source Folder"),
+			"src/_folder.json":  folderMetadataJSON(folderUID, "Source Folder"),
 			"src/dash-src.json": gitcommon.DashboardJSON("dash-src", "Source Dashboard", 1),
 			"dst/dash-dst.json": gitcommon.DashboardJSON("dash-dst", "Dest Dashboard", 1),
 		})
@@ -1410,10 +1410,10 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 
 		// Seed: both folders have _folder.json with distinct UIDs + dashboards.
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-			"src/_folder.json":  folderMetadataJSON(srcUID, "Source"),
-			"src/dash-s.json":   gitcommon.DashboardJSON("dash-s", "Src Dash", 1),
-			"dst/_folder.json":  folderMetadataJSON(dstUID, "Destination"),
-			"dst/dash-d.json":   gitcommon.DashboardJSON("dash-d", "Dst Dash", 1),
+			"src/_folder.json": folderMetadataJSON(srcUID, "Source"),
+			"src/dash-s.json":  gitcommon.DashboardJSON("dash-s", "Src Dash", 1),
+			"dst/_folder.json": folderMetadataJSON(dstUID, "Destination"),
+			"dst/dash-d.json":  gitcommon.DashboardJSON("dash-d", "Dst Dash", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repoName)
