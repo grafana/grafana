@@ -1369,6 +1369,7 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 	progress.On("SetTotal", mock.Anything, 2).Return()
 	progress.On("TooManyErrors").Return(nil)
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
 	// Folder phase: updated folder triggers RemoveFolderFromTree then EnsureFolderPathExist
 	repoResources.On("RemoveFolderFromTree", "old-uid-123").Run(func(args mock.Arguments) {
@@ -1449,6 +1450,7 @@ func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 	progress.On("SetTotal", mock.Anything, 2).Return()
 	progress.On("TooManyErrors").Return(nil)
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
 	// Folder phase mocks
 	repoResources.On("RemoveFolderFromTree", mock.Anything).Return()
@@ -1499,6 +1501,7 @@ func TestApplyChanges_OldFolderDeletion_ErrorContinues(t *testing.T) {
 	progress.On("SetTotal", mock.Anything, 1).Return()
 	progress.On("TooManyErrors").Return(nil)
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
 	// Folder phase
 	repoResources.On("RemoveFolderFromTree", "old-broken-uid").Return()
