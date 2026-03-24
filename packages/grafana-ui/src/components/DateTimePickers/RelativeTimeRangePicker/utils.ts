@@ -23,8 +23,8 @@ export type RangeValidation = {
   errorMessage?: string;
 };
 
-export const isRangeValid = (relative: string, now = Date.now()): RangeValidation => {
-  if (!isRelativeFormat(relative)) {
+export const isRangeValid = (relative: string, now = Date.now(), isRelativeToNow = true): RangeValidation => {
+  if (!isRelativeFormat(relative, isRelativeToNow)) {
     return {
       isValid: false,
       errorMessage: 'Value not in relative time format.',

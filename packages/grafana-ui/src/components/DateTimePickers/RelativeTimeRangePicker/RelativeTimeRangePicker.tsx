@@ -51,8 +51,14 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const onClose = useCallback(() => setIsOpen(false), []);
   const timeOption = mapRelativeTimeRangeToOption(timeRange, isRelativeToNow);
-  const [from, setFrom] = useState<InputState>({ value: timeOption.from, validation: isRangeValid(timeOption.from) });
-  const [to, setTo] = useState<InputState>({ value: timeOption.to, validation: isRangeValid(timeOption.to) });
+  const [from, setFrom] = useState<InputState>({
+    value: timeOption.from,
+    validation: isRangeValid(timeOption.from, undefined, isRelativeToNow),
+  });
+  const [to, setTo] = useState<InputState>({
+    value: timeOption.to,
+    validation: isRangeValid(timeOption.to, undefined, isRelativeToNow),
+  });
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps, underlayProps } = useOverlay(
     { onClose: () => setIsOpen(false), isDismissable: true, isOpen },
@@ -177,7 +183,9 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                     >
                       <Input
                         onClick={(event) => event.stopPropagation()}
-                        onBlur={() => setFrom({ ...from, validation: isRangeValid(from.value) })}
+                        onBlur={() =>
+                          setFrom({ ...from, validation: isRangeValid(from.value, undefined, isRelativeToNow) })
+                        }
                         onChange={(event) => setFrom({ ...from, value: event.currentTarget.value })}
                         value={from.value}
                       />
@@ -189,7 +197,7 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
                     >
                       <Input
                         onClick={(event) => event.stopPropagation()}
-                        onBlur={() => setTo({ ...to, validation: isRangeValid(to.value) })}
+                        onBlur={() => setTo({ ...to, validation: isRangeValid(to.value, undefined, isRelativeToNow) })}
                         onChange={(event) => setTo({ ...to, value: event.currentTarget.value })}
                         value={to.value}
                       />

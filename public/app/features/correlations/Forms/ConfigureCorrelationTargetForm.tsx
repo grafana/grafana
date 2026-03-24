@@ -1,10 +1,22 @@
 import { css } from '@emotion/css';
+import { ChangeEvent, useState } from 'react';
 import { Controller, FieldError, useFormContext, useWatch } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { CorrelationExternal, CorrelationQueryTimeRange } from '@grafana/runtime';
-import { Field, FieldSet, Input, RelativeTimeRangePicker, Select, useStyles2 } from '@grafana/ui';
+import {
+  Checkbox,
+  Field,
+  FieldSet,
+  InlineField,
+  InlineFieldRow,
+  Input,
+  Label,
+  RelativeTimeRangePicker,
+  Select,
+  useStyles2,
+} from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { CorrelationType } from '../types';
@@ -52,6 +64,7 @@ export const ConfigureCorrelationTargetForm = () => {
   const timeRange: CorrelationQueryTimeRange | undefined =
     useWatch({ name: 'timeRange' }) || (correlation?.type === 'query' ? correlation?.config?.timeRange : undefined);
   const styles = useStyles2(getStyles);
+  const [enableTimeRange, setEnableTimeRange] = useState(false);
 
   return (
     <>
@@ -141,33 +154,63 @@ export const ConfigureCorrelationTargetForm = () => {
                   }
                 />
 
-                <Field
-                  noMargin={false}
-                  label={t('correlations.target-form.target-time-range-label', 'Time Range')}
+                <Label
+                  htmlFor={'timeRange'}
                   description={t(
                     'correlations.target-form.target-time-range-description',
-                    'Specify a field to use as a base (optional) and a window on either side of the range. If no field is specified, the window will be now. If no range is specified, it will default to +- 24 hours.'
+                    'Use a custom time range window when running this query. If not specified, the time range will be the same as the source query.'
                   )}
-                  htmlFor="timeRange"
                 >
-                  <Input
-                    id="timeRange"
-                    value={timeRange?.field || ''}
-                    onChange={(e) => {
-                      console.log(e.currentTarget.value);
-                    }}
-                  />
-                </Field>
-                <Field noMargin={false}>
-                  <RelativeTimeRangePicker
-                    timeRange={timeRange?.range || { to: 86400, from: 86400 }}
-                    onChange={(e) => {
-                      console.log(e);
-                    }}
-                    customQuickOptions={getQuickOptionsForCorrelation()}
-                    isRelativeToNow={false}
-                  />
-                </Field>
+                  {t('correlations.target-form.target-time-range-label', 'Custom Time Range')}
+                </Label>
+                <InlineFieldRow>
+                  <InlineField label={t('correlations.target-form.target-time-range-enable', 'Enable')}>
+                    <Checkbox
+                      value={enableTimeRange}
+                      onChange={(e: ChangeEvent<HTMLInputElement>) => setEnableTimeRange(e.target.checked)}
+                    />
+                  </InlineField>
+                </InlineFieldRow>
+                {enableTimeRange && (
+                  <>
+                    <InlineFieldRow>
+                      <InlineField
+                        label={t('correlations.target-form.target-time-range-field-label', 'Field')}
+                        tooltip={t(
+                          'correlations.target-form.target-time-range-field-tooltip',
+                          'Specify a field to use as the base for the range offsets. If not specified while a custom range is enabled, the base will be the current time.'
+                        )}
+                        htmlFor="timerange-field"
+                      >
+                        <Input
+                          id="timerange-field"
+                          value={timeRange?.field || ''}
+                          onChange={(e) => {
+                            console.log(e.currentTarget.value);
+                          }}
+                        />
+                      </InlineField>
+                    </InlineFieldRow>
+                    <InlineFieldRow>
+                      <InlineField
+                        label={t('correlations.target-form.target-time-range-range-label', 'Range')}
+                        tooltip={t(
+                          'correlations.target-form.target-time-range-range-tooltip',
+                          'Specify the offset to use against the range. If not specified while a custom range is enabled, the range will be +- 24 hours'
+                        )}
+                      >
+                        <RelativeTimeRangePicker
+                          timeRange={timeRange?.range || { from: -86400, to: 86400 }}
+                          onChange={(e) => {
+                            console.log(e);
+                          }}
+                          customQuickOptions={getQuickOptionsForCorrelation()}
+                          isRelativeToNow={false}
+                        />
+                      </InlineField>
+                    </InlineFieldRow>
+                  </>
+                )}
               </>
             );
           })()}
