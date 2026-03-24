@@ -1,3 +1,4 @@
+import { BasicPrettyPrinter, mutate, Parser, Walker } from '@elastic/esql';
 import { cloneDeep, first as _first, isNumber, isString, map as _map, isObject } from 'lodash';
 import { from, generate, lastValueFrom, Observable, of } from 'rxjs';
 import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
@@ -1162,7 +1163,10 @@ export class ElasticDatasource
       datasource: this.getRef(),
       query:
         query.queryType === 'esql'
-          ? this.addAdHocFilters(this.interpolateEsqlQuery(query.query || '', scopedVars), filters)
+          ? this.addAdHocFilters(
+              this.interpolateEsqlQuery(this.addTimeRangeToEsqlQuery(query.query || ''), scopedVars),
+              filters
+            )
           : this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars), filters),
       bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
     };
@@ -1173,6 +1177,46 @@ export class ElasticDatasource
 
   private interpolateEsqlQuery(esqlQuery: string, scopedVars?: ScopedVars): string {
     return this.templateSrv.replace(esqlQuery, scopedVars);
+  }
+
+  private addTimeRangeToEsqlQuery(esqlQuery: string): string {
+    if (!esqlQuery || !this.timeField) {
+      return esqlQuery;
+    }
+
+    try {
+      const { root } = Parser.parse(esqlQuery);
+
+      const whereCommands = Walker.matchAll(root, {
+        type: 'command',
+        name: 'where',
+      });
+
+      for (const whereCmd of whereCommands) {
+        const columns = Walker.matchAll(whereCmd, {
+          type: 'column',
+        });
+        if (columns.some((col) => col.name === this.timeField)) {
+          return esqlQuery;
+        }
+      }
+
+      const fromCmdIndex = root.commands.findIndex((cmd) => cmd.name === 'from');
+      if (fromCmdIndex === -1) {
+        return esqlQuery;
+      }
+
+      const { root: whereCmd } = Parser.parseCommand(
+        `WHERE ${this.timeField} >= "\${__from:date:iso}" AND ${this.timeField} <= "\${__to:date:iso}"`
+      );
+
+      // Insert right after FROM so the time filter runs before LIMIT or other commands
+      mutate.generic.commands.insert(root, whereCmd, fromCmdIndex + 1);
+
+      return BasicPrettyPrinter.print(root);
+    } catch {
+      return esqlQuery;
+    }
   }
 
   // Private method used in the `getDatabaseVersion` to get the database version from the Elasticsearch API.

@@ -1549,4 +1549,160 @@ describe('ElasticDatasource', () => {
       });
     });
   });
+
+  describe('addTimeRangeToEsqlQuery', () => {
+    const fromISO = '2024-03-23T00:00:00.000Z';
+    const toISO = '2024-03-24T00:00:00.000Z';
+
+    function createDsWithTimeRange() {
+      const instanceSettings = {
+        meta: {
+          id: 'id',
+          name: 'name',
+          type: 'datasource' as const,
+          module: '',
+          baseUrl: '',
+          info: {
+            author: { name: 'Test' },
+            description: '',
+            links: [],
+            logos: { large: '', small: '' },
+            screenshots: [],
+            updated: '',
+            version: '',
+          },
+        },
+        readOnly: false,
+        name: 'test-elastic',
+        type: 'type',
+        uid: 'uid',
+        access: 'proxy' as const,
+        url: 'http://elasticsearch.local',
+        jsonData: {
+          timeField: '@timestamp',
+          timeInterval: '',
+          index: 'test-index',
+        },
+      };
+
+      const templateSrv = {
+        getVariables: () => [],
+        replace: (text?: string) => {
+          if (!text) {
+            return '';
+          }
+          return text
+            .replace(/\$\{__from:date:iso\}/g, fromISO)
+            .replace(/\$\{__to:date:iso\}/g, toISO);
+        },
+        containsTemplate: (text?: string) => text?.includes('$') ?? false,
+        updateTimeRange: () => {},
+      };
+
+      return new ElasticDatasource(instanceSettings as any, templateSrv as any);
+    }
+
+    it('should insert time filter right after FROM, before LIMIT', () => {
+      const testDs = createDsWithTimeRange();
+      const result = testDs.applyTemplateVariables(
+        { refId: 'A', query: 'FROM test-index | LIMIT 10', queryType: 'esql' },
+        {}
+      );
+      expect(result.query).toMatch(/FROM test-index \| WHERE @timestamp >=.*AND @timestamp <=.*\| LIMIT 10/);
+    });
+
+    it('should insert time filter after FROM when WHERE exists on a different field', () => {
+      const testDs = createDsWithTimeRange();
+      const result = testDs.applyTemplateVariables(
+        { refId: 'A', query: 'FROM test-index | WHERE status == 200 | LIMIT 10', queryType: 'esql' },
+        {}
+      );
+      expect(result.query).toMatch(/FROM test-index \| WHERE @timestamp >=.*\| WHERE status == 200/);
+    });
+
+    it('should NOT add time filter when WHERE clause references the time field', () => {
+      const testDs = createDsWithTimeRange();
+      const result = testDs.applyTemplateVariables(
+        {
+          refId: 'A',
+          query: 'FROM test-index | WHERE @timestamp >= "2024-01-01T00:00:00Z"',
+          queryType: 'esql',
+        },
+        {}
+      );
+      const whereCount = (result.query!.match(/WHERE/g) || []).length;
+      expect(whereCount).toBe(1);
+    });
+
+    it('should append time filter when query has only FROM and no pipe commands', () => {
+      const testDs = createDsWithTimeRange();
+      const result = testDs.applyTemplateVariables({ refId: 'A', query: 'FROM test-index', queryType: 'esql' }, {});
+      expect(result.query).toContain('WHERE @timestamp >=');
+    });
+
+    it('should return empty query unchanged', () => {
+      const testDs = createDsWithTimeRange();
+      const result = testDs.applyTemplateVariables({ refId: 'A', query: '', queryType: 'esql' }, {});
+      expect(result.query).toBe('');
+    });
+
+    it('should return malformed query unchanged when parsing fails', () => {
+      const testDs = createDsWithTimeRange();
+      const input = '}{}{][';
+      const result = testDs.applyTemplateVariables({ refId: 'A', query: input, queryType: 'esql' }, {});
+      expect(result.query).toBe(input);
+    });
+
+    it('should contain the time macro placeholders before templateSrv resolves them', () => {
+      const instanceSettings = {
+        meta: {
+          id: 'id',
+          name: 'name',
+          type: 'datasource' as const,
+          module: '',
+          baseUrl: '',
+          info: {
+            author: { name: 'Test' },
+            description: '',
+            links: [],
+            logos: { large: '', small: '' },
+            screenshots: [],
+            updated: '',
+            version: '',
+          },
+        },
+        readOnly: false,
+        name: 'test-elastic',
+        type: 'type',
+        uid: 'uid',
+        access: 'proxy' as const,
+        url: 'http://elasticsearch.local',
+        jsonData: {
+          timeField: '@timestamp',
+          timeInterval: '',
+          index: 'test-index',
+        },
+      };
+
+      const replaceCalls: string[] = [];
+      const templateSrv = {
+        getVariables: () => [],
+        replace: (text?: string) => {
+          replaceCalls.push(text || '');
+          return text || '';
+        },
+        containsTemplate: (text?: string) => text?.includes('$') ?? false,
+        updateTimeRange: () => {},
+      };
+
+      const testDs = new ElasticDatasource(instanceSettings as any, templateSrv as any);
+      testDs.applyTemplateVariables(
+        { refId: 'A', query: 'FROM test-index | LIMIT 10', queryType: 'esql' },
+        {}
+      );
+      const finalReplaceCall = replaceCalls[replaceCalls.length - 1];
+      expect(finalReplaceCall).toContain('${__from:date:iso}');
+      expect(finalReplaceCall).toContain('${__to:date:iso}');
+    });
+  });
 });
