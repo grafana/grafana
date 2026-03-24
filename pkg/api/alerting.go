@@ -19,6 +19,10 @@ func (hs *HTTPServer) GetAlertNotifiers(cfg *setting.Cfg) func(*contextmodel.Req
 		slices.SortFunc(v2, func(a, b schema.IntegrationTypeSchema) int {
 			return strings.Compare(string(a.Type), string(b.Type))
 		})
+		v2 = slices.DeleteFunc(v2, func(s schema.IntegrationTypeSchema) bool {
+			_, disabled := cfg.UnifiedAlerting.DisabledNotifiers[s.Type]
+			return disabled
+		})
 		if r.Query("version") == "2" {
 			return response.JSON(http.StatusOK, v2)
 		}
@@ -37,9 +41,6 @@ func (hs *HTTPServer) GetAlertNotifiers(cfg *setting.Cfg) func(*contextmodel.Req
 		for _, s := range v2 {
 			v1, ok := s.GetVersion(schema.V1)
 			if !ok {
-				continue
-			}
-			if _, exists := cfg.UnifiedAlerting.DisabledNotifiers[s.Type]; exists {
 				continue
 			}
 			result = append(result, &NotifierPlugin{
