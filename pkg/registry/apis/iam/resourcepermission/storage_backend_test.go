@@ -4,11 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -131,7 +135,7 @@ func TestWriteEvent_Add(t *testing.T) {
 	}
 
 	t.Run("should error with invalid namespace", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, nil)
 
 		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
 			Type: resourcepb.WatchEvent_ADDED,
@@ -144,7 +148,7 @@ func TestWriteEvent_Add(t *testing.T) {
 	})
 
 	t.Run("should error if resource name is empty", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, nil)
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
@@ -180,7 +184,7 @@ func TestWriteEvent_Add(t *testing.T) {
 	})
 
 	t.Run("should error if the resource is unknown", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, nil)
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
@@ -216,7 +220,7 @@ func TestWriteEvent_Add(t *testing.T) {
 	})
 
 	t.Run("should work with valid resource permission", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, nil)
 		backend.identityStore = NewFakeIdentityStore(t)
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
@@ -670,7 +674,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 	}
 
 	t.Run("should error with invalid namespace", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, nil)
 
 		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
 			Type: resourcepb.WatchEvent_MODIFIED,
@@ -683,7 +687,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 	})
 
 	t.Run("should error if resource name is empty", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, nil)
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
@@ -719,7 +723,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 	})
 
 	t.Run("should error if the resource is unknown", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, nil)
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
 			ObjectMeta: metav1.ObjectMeta{
@@ -755,7 +759,7 @@ func TestWriteEvent_Modify(t *testing.T) {
 	})
 
 	t.Run("should work with valid resource permission", func(t *testing.T) {
-		backend := ProvideStorageBackend(dbProvider)
+		backend := ProvideStorageBackend(dbProvider, nil)
 		backend.identityStore = NewFakeIdentityStore(t)
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
@@ -823,4 +827,144 @@ func TestWriteEvent_Modify(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, timeNow().UnixMilli(), rv)
 	})
+}
+
+func TestIntegration_ResourcePermSqlBackend_ReadResource_ServiceAccounts(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	backend := setupBackend(t)
+	backend.identityStore = NewFakeIdentityStore(t)
+	saGR := schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"}
+	// SA internal ID=3 has UID "sa-1"; inject a test resolver that maps between them
+	backend.nameResolvers = map[schema.GroupResource]ResourceNameResolver{
+		saGR: newTestSAResolver(map[string]string{"sa-1": "3"}, map[string]string{"3": "sa-1"}),
+	}
+
+	sql, err := backend.dbProvider(context.Background())
+	require.NoError(t, err)
+	setupTestRoles(t, sql.DB)
+	setupServiceAccountPermissions(t, sql.DB)
+
+	t.Run("ReadResource - Get service account permissions by UID", func(t *testing.T) {
+		// SA with internal ID=3 has UID "sa-1" — the API uses UID in the key name
+		resp := backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{Name: "iam.grafana.app-serviceaccounts-sa-1", Namespace: "default"},
+		})
+
+		require.NotNil(t, resp)
+		require.Nil(t, resp.Error)
+		require.NotNil(t, resp.Value)
+
+		var permission v0alpha1.ResourcePermission
+		err := json.Unmarshal(resp.Value, &permission)
+		require.NoError(t, err)
+		require.Equal(t, "iam.grafana.app-serviceaccounts-sa-1", permission.Name)
+		require.Equal(t, "iam.grafana.app", permission.Spec.Resource.ApiGroup)
+		require.Equal(t, "serviceaccounts", permission.Spec.Resource.Resource)
+		require.Equal(t, "sa-1", permission.Spec.Resource.Name)
+
+		require.Len(t, permission.Spec.Permissions, 2)
+	})
+}
+
+func TestWriteEvent_ServiceAccounts(t *testing.T) {
+	store := db.InitTestDB(t)
+
+	timeNow = func() time.Time {
+		return time.Date(2025, 8, 28, 17, 13, 0, 0, time.UTC)
+	}
+
+	sqlHelper := &legacysql.LegacyDatabaseHelper{
+		DB:    store,
+		Table: func(name string) string { return name },
+	}
+
+	dbProvider := func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return sqlHelper, nil
+	}
+
+	t.Run("should work with valid service account resource permission using basic role", func(t *testing.T) {
+		backend := ProvideStorageBackend(dbProvider, nil)
+		backend.identityStore = NewFakeIdentityStore(t)
+		saGR := schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"}
+		backend.nameResolvers = map[schema.GroupResource]ResourceNameResolver{
+			saGR: newTestSAResolver(map[string]string{"robot": "201"}, map[string]string{"201": "robot"}),
+		}
+
+		// "robot" UID maps to internal ID 201 in the fake store
+		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "iam.grafana.app-serviceaccounts-robot",
+				Namespace: "default",
+			},
+			Spec: v0alpha1.ResourcePermissionSpec{
+				Resource: v0alpha1.ResourcePermissionspecResource{
+					ApiGroup: "iam.grafana.app",
+					Resource: "serviceaccounts",
+					Name:     "robot",
+				},
+				Permissions: []v0alpha1.ResourcePermissionspecPermission{
+					{
+						Kind: v0alpha1.ResourcePermissionSpecPermissionKindBasicRole,
+						Name: "Editor",
+						Verb: "edit",
+					},
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		gr := v0alpha1.ResourcePermissionInfo.GroupResource()
+		rv, err := backend.WriteEvent(context.Background(), resource.WriteEvent{
+			Type:   resourcepb.WatchEvent_ADDED,
+			Key:    &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource, Name: "iam.grafana.app-serviceaccounts-robot", Namespace: "default"},
+			Object: resourcePerm,
+		})
+
+		require.NoError(t, err)
+		require.Equal(t, timeNow().UnixMilli(), rv)
+
+		// Verify we can read it back — the response should use the SA UID, not the numeric ID
+		resp := backend.ReadResource(context.Background(), &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{Name: "iam.grafana.app-serviceaccounts-robot", Namespace: "default"},
+		})
+
+		require.NotNil(t, resp)
+		require.Nil(t, resp.Error)
+		require.NotNil(t, resp.Value)
+
+		var permission v0alpha1.ResourcePermission
+		err = json.Unmarshal(resp.Value, &permission)
+		require.NoError(t, err)
+		require.Equal(t, "iam.grafana.app-serviceaccounts-robot", permission.Name)
+		require.Equal(t, "robot", permission.Spec.Resource.Name)
+		require.Len(t, permission.Spec.Permissions, 1)
+	})
+}
+
+// testSANameResolver is a simple in-process resolver for unit/integration tests,
+// bypassing the real K8s API used by APIServiceAccountNameResolver.
+type testSANameResolver struct {
+	uidToID map[string]string
+	idToUID map[string]string
+}
+
+func newTestSAResolver(uidToID, idToUID map[string]string) ResourceNameResolver {
+	return &testSANameResolver{uidToID: uidToID, idToUID: idToUID}
+}
+
+func (r *testSANameResolver) ExternalToInternal(_ context.Context, _ types.NamespaceInfo, uid string) (string, error) {
+	id, ok := r.uidToID[uid]
+	if !ok {
+		return "", fmt.Errorf("service account UID %q not found in test resolver", uid)
+	}
+	return id, nil
+}
+
+func (r *testSANameResolver) InternalToExternal(_ context.Context, _ types.NamespaceInfo, id string) (string, error) {
+	uid, ok := r.idToUID[id]
+	if !ok {
+		return "", fmt.Errorf("service account internal ID %q not found in test resolver", id)
+	}
+	return uid, nil
 }

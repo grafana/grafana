@@ -392,7 +392,7 @@ func TestIdentityQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlQueryServiceAccountsTemplate: {
+		sqlQueryServiceAccountsTemplate: {
 				{
 					Name: "service_accounts",
 					Data: listServiceAccounts(&ListServiceAccountsQuery{

@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
 
 var (
@@ -43,6 +45,7 @@ func ProvideServiceAccountPermissions(
 	options := resourcepermissions.Options{
 		Resource:           "serviceaccounts",
 		ResourceAttribute:  "id",
+		APIGroup:           iamv0.APIGroup,
 		ResourceTranslator: serviceaccounts.UIDToIDHandler(serviceAccountRetrieverService),
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			ctx, span := tracer.Start(ctx, "accesscontrol.ossaccesscontrol.ProvideServiceAccountPermissions.ResourceValidator")

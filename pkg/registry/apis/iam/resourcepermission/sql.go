@@ -89,7 +89,7 @@ func (s *ResourcePermSqlBackend) newRoleIterator(ctx context.Context, dbHelper *
 		return &listIterator{}, nil
 	}
 
-	v0ResourcePermissions, err := s.toV0ResourcePermissions(assignments, ns.Value)
+	v0ResourcePermissions, err := s.toV0ResourcePermissions(ctx, ns, assignments, ns.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -157,6 +157,8 @@ func (s *ResourcePermSqlBackend) getRbacAssignmentsWithTx(ctx context.Context, s
 }
 
 // getResourcePermission retrieves a single ResourcePermission by its name in the format <group>-<resource>-<name> (e.g. dashboard.grafana.app-dashboards-ad5rwqs)
+// The name component is the external (API) identifier (e.g. a UID), which is resolved to
+// the internal scope name (e.g. numeric ID) when the resource has a registered name resolver.
 func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql *legacysql.LegacyDatabaseHelper, tx *session.SessionTx, ns types.NamespaceInfo, name string) (*v0alpha1.ResourcePermission, error) {
 	grn, err := splitResourceName(name)
 	if err != nil {
@@ -168,8 +170,13 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		return nil, apierrors.NewInternalError(err)
 	}
 
+	internalName, err := s.resolveToInternalName(ctx, ns, grn)
+	if err != nil {
+		return nil, apierrors.NewInternalError(err)
+	}
+
 	resourceQuery := &ListResourcePermissionsQuery{
-		Scopes:     []string{mapper.Scope(grn.Name)},
+		Scopes:     []string{mapper.Scope(internalName)},
 		OrgID:      ns.OrgID,
 		ActionSets: mapper.ActionSets(),
 	}
@@ -183,7 +190,7 @@ func (s *ResourcePermSqlBackend) getResourcePermission(ctx context.Context, sql 
 		return nil, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), name)
 	}
 
-	resourcePermission, err := s.toV0ResourcePermissions(assignments, ns.Value)
+	resourcePermission, err := s.toV0ResourcePermissions(ctx, ns, assignments, ns.Value)
 	if err != nil {
 		return nil, apierrors.NewInternalError(err)
 	}
@@ -376,14 +383,19 @@ func (s *ResourcePermSqlBackend) existsResourcePermission(ctx context.Context, t
 func (s *ResourcePermSqlBackend) createResourcePermission(
 	ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, mapper Mapper, grn *groupResourceName, v0ResourcePerm *v0alpha1.ResourcePermission,
 ) (int64, error) {
-	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm.Spec.Permissions, mapper.Scope(grn.Name))
+	internalName, err := s.resolveToInternalName(ctx, ns, grn)
+	if err != nil {
+		return 0, err
+	}
+	scope := mapper.Scope(internalName)
+
+	assignments, err := s.buildRbacAssignments(ctx, ns, mapper, v0ResourcePerm.Spec.Permissions, scope)
 	if err != nil {
 		return 0, err
 	}
 
 	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
-		// Check if a resource permission for the same resource already exists
-		if err = s.existsResourcePermission(ctx, tx, dbHelper, ns.OrgID, mapper.Scope(grn.Name)); err != nil {
+		if err = s.existsResourcePermission(ctx, tx, dbHelper, ns.OrgID, scope); err != nil {
 			return err
 		}
 
@@ -400,12 +412,17 @@ func (s *ResourcePermSqlBackend) createResourcePermission(
 		return 0, err
 	}
 
-	// Return a timestamp as resource version
 	return timeNow().UnixMilli(), nil
 }
 
 func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, ns types.NamespaceInfo, mapper Mapper, grn *groupResourceName, v0ResourcePerm *v0alpha1.ResourcePermission) (int64, error) {
-	err := dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
+	internalName, err := s.resolveToInternalName(ctx, ns, grn)
+	if err != nil {
+		return 0, err
+	}
+	scope := mapper.Scope(internalName)
+
+	err = dbHelper.DB.GetSqlxSession().WithTransaction(ctx, func(tx *session.SessionTx) error {
 		currentPerms, err := s.getResourcePermission(ctx, dbHelper, tx, ns, grn.string())
 		if err != nil {
 			if apierrors.IsNotFound(err) {
@@ -418,7 +435,7 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 		permissionsToAdd, permissionsToRemove := diffPermissions(currentPerms.Spec.Permissions, v0ResourcePerm.Spec.Permissions)
 
 		if len(permissionsToRemove) > 0 {
-			permsToRemove, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToRemove, mapper.Scope(grn.Name))
+			permsToRemove, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToRemove, scope)
 			if err != nil {
 				return err
 			}
@@ -443,7 +460,7 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 		}
 
 		if len(permissionsToAdd) > 0 {
-			permsToAdd, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToAdd, mapper.Scope(grn.Name))
+			permsToAdd, err := s.buildRbacAssignments(ctx, ns, mapper, permissionsToAdd, scope)
 			if err != nil {
 				return err
 			}
@@ -462,7 +479,6 @@ func (s *ResourcePermSqlBackend) updateResourcePermission(ctx context.Context, d
 		return 0, err
 	}
 
-	// Return a timestamp as resource version
 	return timeNow().UnixMilli(), nil
 }
 
@@ -508,7 +524,12 @@ func (s *ResourcePermSqlBackend) deleteResourcePermission(ctx context.Context, s
 	if err != nil {
 		return err
 	}
-	scope := mapper.Scope(grn.Name)
+
+	internalName, err := s.resolveToInternalName(ctx, ns, grn)
+	if err != nil {
+		return err
+	}
+	scope := mapper.Scope(internalName)
 
 	resourceQuery := &DeleteResourcePermissionsQuery{
 		Scope: scope,

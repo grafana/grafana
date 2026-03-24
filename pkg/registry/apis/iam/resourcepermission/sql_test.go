@@ -111,7 +111,7 @@ func setupBackend(t *testing.T) *ResourcePermSqlBackend {
 		return sqlHelper, nil
 	}
 
-	return ProvideStorageBackend(dbProvider)
+	return ProvideStorageBackend(dbProvider, nil)
 }
 
 func setupTestRoles(t *testing.T, store db.DB) {
@@ -203,6 +203,60 @@ func setupFineGrainedPermissions(t *testing.T, store db.DB) {
 		// Permissions for managed:users:2:permissions
 		2, "folders:read", "folders:uid:fold1", "2025-09-02", "2025-09-02",
 		2, "folders:create", "folders:uid:fold1", "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+}
+
+func setupServiceAccountPermissions(t *testing.T, store db.DB) {
+	sess := store.GetSqlxSession()
+
+	// Ensure org_user entries exist for the SA (ID=3, UID="sa-1") from setupTestRoles
+	// so the resolver can join user → org_user to look up SA by internal ID.
+	_, err := sess.Exec(context.Background(),
+		`INSERT INTO org_user (org_id, user_id, role, created, updated)
+		VALUES (?, ?, ?, ?, ?)`,
+		1, 3, "Viewer", "2025-09-02 00:00:00", "2025-09-02 00:00:00",
+	)
+	require.NoError(t, err)
+
+	// Insert service account managed role — uses SA ID=3 (UID "sa-1")
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO role (id, version, org_id, uid, name, display_name, description, group_name, hidden, created, updated)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		6, 0, 1, "managed_serviceaccounts_3_permissions_org1", "managed:serviceaccounts:3:permissions", "", "", "", false, "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+
+	// Insert service account permissions with id-based scope (SA internal ID=3)
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO permission (role_id, action, scope, created, updated)
+		VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)`,
+		6, "serviceaccounts:edit", "serviceaccounts:id:3", "2025-09-02", "2025-09-02",
+		6, "serviceaccounts:admin", "serviceaccounts:id:3", "2025-09-02", "2025-09-02",
+	)
+	require.NoError(t, err)
+
+	// Insert a user who will have permissions on the service account
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO`+store.GetDialect().Quote("user")+`(id, org_id, uid, login, email, is_admin, is_service_account, created, updated, version)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		4, 1, "user-sa-admin", "user-sa-admin", "user-sa-admin@example.com", false, false, "2025-09-02 00:00:00", "2025-09-02 00:00:00", 0,
+	)
+	require.NoError(t, err)
+
+	// Org user for user-sa-admin so the SQL query finds them
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO org_user (org_id, user_id, role, created, updated)
+		VALUES (?, ?, ?, ?, ?)`,
+		1, 4, "Editor", "2025-09-02 00:00:00", "2025-09-02 00:00:00",
+	)
+	require.NoError(t, err)
+
+	// User role binding for service account permissions
+	_, err = sess.Exec(context.Background(),
+		`INSERT INTO user_role (org_id, user_id, role_id, created)
+		VALUES (?, ?, ?, ?)`,
+		1, 4, 6, "2025-09-02 00:00:00", // User-4 -> managed:serviceaccounts:3:permissions
 	)
 	require.NoError(t, err)
 }
@@ -646,7 +700,7 @@ func NewFakeIdentityStore(t *testing.T) *fakeIdentityStore {
 	}
 }
 
-// GetServiceAccountInternalID implements legacy.LegacyIdentityStore.
+// GetServiceAccountInternalID implements IdentityStore.
 func (f *fakeIdentityStore) GetServiceAccountInternalID(ctx context.Context, ns types.NamespaceInfo, query legacy.GetServiceAccountInternalIDQuery) (*legacy.GetServiceAccountInternalIDResult, error) {
 	require.Equal(f.t, f.expectedNs.Value, ns.Value)
 

@@ -12,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/authlib/types"
 
@@ -34,27 +35,40 @@ type ResourcePermSqlBackend struct {
 	identityStore IdentityStore
 	logger        log.Logger
 
-	mappers        map[schema.GroupResource]Mapper // group/resource -> rbac mapper
-	reverseMappers map[string]schema.GroupResource // rbac kind -> group/resource
+	mappers        map[schema.GroupResource]Mapper               // group/resource -> rbac mapper
+	reverseMappers map[string]schema.GroupResource               // rbac kind -> group/resource
+	nameResolvers  map[schema.GroupResource]ResourceNameResolver // optional per-resource name translation
 
 	subscribers []chan *resource.WrittenEvent
 	mutex       sync.Mutex
 }
 
-func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider) *ResourcePermSqlBackend {
+func ProvideStorageBackend(dbProvider legacysql.LegacyDatabaseProvider, configProvider func(ctx context.Context) (*rest.Config, error)) *ResourcePermSqlBackend {
+	identityStore := idStore.NewLegacySQLStores(dbProvider)
+
+	saGR := schema.GroupResource{Group: "iam.grafana.app", Resource: "serviceaccounts"}
+
+	nameResolvers := map[schema.GroupResource]ResourceNameResolver{}
+	if configProvider != nil {
+		nameResolvers[saGR] = NewAPIServiceAccountNameResolver(configProvider)
+	}
+
 	return &ResourcePermSqlBackend{
 		dbProvider:    dbProvider,
-		identityStore: idStore.NewLegacySQLStores(dbProvider),
+		identityStore: identityStore,
 		logger:        log.New("resourceperm_storage_backend"),
 
 		mappers: map[schema.GroupResource]Mapper{
 			{Group: "folder.grafana.app", Resource: "folders"}:       NewMapper("folders", defaultLevels),
 			{Group: "dashboard.grafana.app", Resource: "dashboards"}: NewMapper("dashboards", defaultLevels),
+			saGR: NewMapperWithAttribute("serviceaccounts", serviceAccountLevels, "id"),
 		},
 		reverseMappers: map[string]schema.GroupResource{
-			"folders":    {Group: "folder.grafana.app", Resource: "folders"},
-			"dashboards": {Group: "dashboard.grafana.app", Resource: "dashboards"},
+			"folders":         {Group: "folder.grafana.app", Resource: "folders"},
+			"dashboards":      {Group: "dashboard.grafana.app", Resource: "dashboards"},
+			"serviceaccounts": saGR,
 		},
+		nameResolvers: nameResolvers,
 
 		subscribers: make([]chan *resource.WrittenEvent, 0),
 		mutex:       sync.Mutex{},

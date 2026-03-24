@@ -35,8 +35,9 @@ var (
 	errInvalidScope         = errors.New("invalid scope")
 	errInvalidNamespace     = errors.New("invalid namespace")
 
-	defaultLevels     = []string{"view", "edit", "admin"}
-	allowedBasicRoles = map[string]bool{"Viewer": true, "Editor": true, "Admin": true}
+	defaultLevels          = []string{"view", "edit", "admin"}
+	serviceAccountLevels   = []string{"edit", "admin"} // Service accounts don't have view level
+	allowedBasicRoles    = map[string]bool{"Viewer": true, "Editor": true, "Admin": true}
 )
 
 type IdentityStore interface {
@@ -129,7 +130,7 @@ func newV0ResourcePermission(grn *groupResourceName, specs []v0alpha1.ResourcePe
 
 // toV0ResourcePermissions translates a list of rbacAssignments into a list of v0alpha1.ResourcePermissions.
 // it is assumed that assignments are sorted by scope
-func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssignment, namespace string) ([]v0alpha1.ResourcePermission, error) {
+func (s *ResourcePermSqlBackend) toV0ResourcePermissions(ctx context.Context, ns types.NamespaceInfo, assignments []rbacAssignment, namespace string) ([]v0alpha1.ResourcePermission, error) {
 	if len(assignments) == 0 {
 		return nil, nil
 	}
@@ -137,32 +138,32 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssig
 	var (
 		created        = assignments[0].Created
 		updated        = assignments[0].Updated
+		currentScope   = assignments[0].Scope
 		permissionKind v0alpha1.ResourcePermissionSpecPermissionKind
 
 		resourcePermissions = make([]v0alpha1.ResourcePermission, 0, 8)
 		specs               = make([]v0alpha1.ResourcePermissionspecPermission, 0, 4)
 	)
 
-	grn, err := s.ParseScope(assignments[0].Scope)
+	grn, err := s.parseScopeExternal(ctx, ns, currentScope)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, assign := range assignments {
-		// Ensure all assignments belong to the same resource
-		parsedGrn, err := s.ParseScope(assign.Scope)
-		if err != nil {
-			return nil, err
-		}
-		// If it's a new resource, flush the current specs to a ResourcePermission and start a new one
-		if *parsedGrn != *grn {
+		// If it's a new scope/resource, flush the current specs and start a new one
+		if assign.Scope != currentScope {
 			resourcePermissions = append(
 				resourcePermissions,
 				newV0ResourcePermission(grn, specs, created, updated, namespace),
 			)
 
 			// Reset for the new resource
-			grn = parsedGrn
+			currentScope = assign.Scope
+			grn, err = s.parseScopeExternal(ctx, ns, currentScope)
+			if err != nil {
+				return nil, err
+			}
 			specs = make([]v0alpha1.ResourcePermissionspecPermission, 0, 4)
 			created = assign.Created
 			updated = assign.Updated
@@ -215,6 +216,20 @@ func (s *ResourcePermSqlBackend) toV0ResourcePermissions(assignments []rbacAssig
 	)
 
 	return resourcePermissions, nil
+}
+
+// parseScopeExternal parses a scope and resolves the resource name to the external (API) form.
+func (s *ResourcePermSqlBackend) parseScopeExternal(ctx context.Context, ns types.NamespaceInfo, scope string) (*groupResourceName, error) {
+	grn, err := s.ParseScope(scope)
+	if err != nil {
+		return nil, err
+	}
+	externalName, err := s.resolveToExternalName(ctx, ns, grn)
+	if err != nil {
+		return nil, err
+	}
+	grn.Name = externalName
+	return grn, nil
 }
 
 type groupResourceName struct {
@@ -277,4 +292,29 @@ func (s *ResourcePermSqlBackend) getResourceMapper(group, resource string) (Mapp
 	}
 
 	return mapper, nil
+}
+
+// getNameResolver returns the optional ResourceNameResolver for a group/resource, or nil if none is registered.
+func (s *ResourcePermSqlBackend) getNameResolver(group, resource string) ResourceNameResolver {
+	return s.nameResolvers[schema.GroupResource{Group: group, Resource: resource}]
+}
+
+// resolveToInternalName translates an external (API) name to the internal (scope) name.
+// Returns the name unchanged when no resolver is registered for the resource.
+func (s *ResourcePermSqlBackend) resolveToInternalName(ctx context.Context, ns types.NamespaceInfo, grn *groupResourceName) (string, error) {
+	resolver := s.getNameResolver(grn.Group, grn.Resource)
+	if resolver == nil {
+		return grn.Name, nil
+	}
+	return resolver.ExternalToInternal(ctx, ns, grn.Name)
+}
+
+// resolveToExternalName translates an internal (scope) name to the external (API) name.
+// Returns the name unchanged when no resolver is registered for the resource.
+func (s *ResourcePermSqlBackend) resolveToExternalName(ctx context.Context, ns types.NamespaceInfo, grn *groupResourceName) (string, error) {
+	resolver := s.getNameResolver(grn.Group, grn.Resource)
+	if resolver == nil {
+		return grn.Name, nil
+	}
+	return resolver.InternalToExternal(ctx, ns, grn.Name)
 }
