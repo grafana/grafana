@@ -97,7 +97,7 @@ export const StatsPicker = memo<StatsPickerProps>(
         options,
         placeholder,
         isClearable: false as const,
-        onChange: (item: ComboboxOption<string>) => onChange(item.value ? [item.value] : []),
+        onChange: (item: ComboboxOption) => onChange(item.value ? [item.value] : []),
       } satisfies ComboboxProps<string>;
 
       return <Combobox {...notClearableProps} />;
