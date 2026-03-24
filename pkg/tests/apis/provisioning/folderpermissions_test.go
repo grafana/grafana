@@ -17,10 +17,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// TestIntegrationFolderPermissions_ProvisionedFolders verifies that permission updates
-// succeed for provisioned folders (the shared server has provisioningFolderMetadata enabled).
+// We currently block permission updates for folders managed by provisioning.
 func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
-	repoName := "nested-folder-repo-flag"
+	repoName := "nested-folder-repo"
 	helper := sharedHelper(t)
 	helper.CreateRepo(t, common.TestRepo{
 		Name:            repoName,
@@ -31,7 +30,7 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 		},
 		SkipResourceAssertions: true,
 	})
-	t.Run("should succeed updating permissions for provisioned nested folder when flag is enabled", func(t *testing.T) {
+	t.Run("should fail to update permissions for provisioned nested folder", func(t *testing.T) {
 		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
 		require.NoError(t, err)
 		require.GreaterOrEqual(t, len(folders.Items), 2, "should have 2 folders (root and nested)")
@@ -57,14 +56,15 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 			},
 		}
 
-		// Test that permission updates succeed for all provisioned folders when the flag is enabled
+		// Test that permission updates fail for all provisioned folders
 		for _, folder := range provisionedFolders {
 			folderName := folder.GetName()
 			permissionsURL := fmt.Sprintf("/api/folders/%s/permissions", folderName)
 			permissionsData, code, err := common.PostHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
-			require.NoError(t, err, "should succeed updating permissions for folder %s", folderName)
-			require.Equal(t, http.StatusOK, code, "should return OK status for folder %s", folderName)
-			require.NotNil(t, permissionsData, "should have response data for folder %s", folderName)
+			require.Error(t, err, "should fail to update permissions for folder %s", folderName)
+			require.Equal(t, http.StatusForbidden, code, "should return forbidden status for folder %s", folderName)
+			require.NotNil(t, permissionsData, "should have error response for folder %s", folderName)
+			require.Equal(t, "Cannot update permissions for folders managed by provisioning.", permissionsData["message"], "should have correct error message for folder %s", folderName)
 		}
 	})
 }
