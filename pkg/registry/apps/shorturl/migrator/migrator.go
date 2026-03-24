@@ -13,6 +13,7 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/concurrency"
 	shorturlv1beta1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
@@ -143,15 +144,18 @@ func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, op
 		convertDuration += time.Since(convertStart)
 
 		writeStart := time.Now()
-		for _, req := range chunk {
+		err = concurrency.ForEachJob(ctx, len(chunk), 25, func(ctx context.Context, idx int) error {
 			count++
-			err = stream.Send(req)
-			if err != nil {
+			if err := stream.Send(chunk[idx]); err != nil {
 				if errors.Is(err, io.EOF) {
 					opts.Progress(count, fmt.Sprintf("stream EOF/cancelled. index=%d", count))
 				}
 				return err
 			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
 		writeDuration += time.Since(writeStart)
 
