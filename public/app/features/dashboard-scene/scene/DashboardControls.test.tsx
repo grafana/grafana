@@ -390,7 +390,7 @@ describe('DashboardControls', () => {
       const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
       renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
-      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
+      expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
     });
   });
 });
