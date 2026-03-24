@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Stack, EmptyState, LinkButton, useStyles2 } from '@grafana/ui';
+
+import { getFooterLinks } from '../Footer/Footer';
 
 export interface Props {
   /**
@@ -15,6 +18,12 @@ export interface Props {
 export function EntityNotFound({ entity = 'Page' }: Props) {
   const styles = useStyles2(getStyles);
   const lowerCaseEntity = entity.toLowerCase();
+
+  const communityLink = useMemo(() => {
+    const footerLinks = getFooterLinks();
+    const link = footerLinks.find((l) => l.id === 'community');
+    return link?.url ?? 'https://community.grafana.com/?utm_source=entity_not_found';
+  }, []);
 
   return (
     <div className={styles.container} data-testid={selectors.components.EntityNotFound.container}>
@@ -29,7 +38,7 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
 
             <LinkButton
               icon="question-circle"
-              href="https://community.grafana.com"
+              href={communityLink}
               target="_blank"
               rel="noreferrer"
               variant="secondary"
