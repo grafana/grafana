@@ -435,8 +435,8 @@ github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e h1:7pAt
 github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e/go.mod h1:KZyoO3jngyZCLyCf100FEQTrwAHj33AIMj4Zv4u3MNE=
 github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 h1:bMGS25NWAGTEtT5tOBsCuCrlYnLRKpbJVJkDbrTRhwQ=
 github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71/go.mod h1:2/2zjLQ/JOOSbbSboojeg+cAwcRV0fDLzIiWch/lhqI=
-github.com/dolthub/vitess v0.0.0-20250410090211-143e6b272ad4 h1:LGTt2LtYX8vaai32d+c9L0sMcP+Dg9w1kO6+lbsxxYg=
-github.com/dolthub/vitess v0.0.0-20250410090211-143e6b272ad4/go.mod h1:1gQZs/byeHLMSul3Lvl3MzioMtOW1je79QYGyi2fd70=
+github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e h1:ZrRCF8F8Iq8RP0OBowkYpOwd/1NTFU34Ydp0MZ2qTq4=
+github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e/go.mod h1:eLLslh1CSPMf89pPcaMG4yM72PQbTN9OUYJeAy0fAis=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
