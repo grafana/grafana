@@ -14,13 +14,18 @@ export interface UpdatePackageJsonExportsActionConfig {
   type: 'updatePackageJsonExports';
 }
 
+export interface UpdatePackageJsonFetchExportsActionConfig {
+  type: 'updatePackageJsonFetchExports';
+}
+
 // Union type of all possible action configs
 export type ActionConfig =
   | AddActionConfig
   | ModifyActionConfig
   | FormatFilesActionConfig
   | RunGenerateApisActionConfig
-  | UpdatePackageJsonExportsActionConfig;
+  | UpdatePackageJsonExportsActionConfig
+  | UpdatePackageJsonFetchExportsActionConfig;
 
 export interface PlopData {
   groupName: string;
