@@ -1080,6 +1080,8 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 
 // CleanupAllResources deletes resources in dependency order: repositories
 // reference connections, so they go first; dashboards/folders are cleaned last.
+// It also clears the shared provisioning directory so leftover files from
+// a previous test don't leak into the next one.
 // Failures are fatal because cleanup is the primary test-isolation mechanism.
 func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
 	t.Helper()
@@ -1094,6 +1096,22 @@ func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.C
 	} {
 		if err := deleteAndWait(ctx, c.client, 10*time.Second); err != nil {
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
+		}
+	}
+	h.cleanProvisioningPath(t)
+}
+
+// cleanProvisioningPath removes all files and directories inside the shared
+// provisioning directory without removing the directory itself.
+func (h *ProvisioningTestHelper) cleanProvisioningPath(t *testing.T) {
+	t.Helper()
+	entries, err := os.ReadDir(h.ProvisioningPath)
+	if err != nil {
+		return
+	}
+	for _, entry := range entries {
+		if err := os.RemoveAll(filepath.Join(h.ProvisioningPath, entry.Name())); err != nil {
+			t.Fatalf("cleanProvisioningPath(%s): %v", entry.Name(), err)
 		}
 	}
 }
