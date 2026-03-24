@@ -41,6 +41,11 @@ func (hs *HTTPServer) GetBootdata(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to get settings", err)
 		return
 	}
+
+	if !c.IsSignedIn {
+		data.AutoLoginRedirectURL = hs.getAutoLoginRedirectURL(c)
+	}
+
 	c.JSON(http.StatusOK, data)
 }
 
