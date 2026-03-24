@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/require"
+	"gonum.org/v1/gonum/graph/simple"
 
+	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -291,4 +294,98 @@ func getRefIDOrder(nodes []Node) []string {
 		ids = append(ids, n.RefID())
 	}
 	return ids
+}
+
+func TestCollectBrokenNodes(t *testing.T) {
+	t.Run("single node with missing dependency", func(t *testing.T) {
+		graph := simple.NewDirectedGraph()
+		mathCmd, err := NewMathCommand("A", "$B")
+		require.NoError(t, err)
+		mathNode := &CMDNode{
+			baseNode: baseNode{id: 0, refID: "A"},
+			CMDType:  TypeMath,
+			Command:  mathCmd,
+		}
+		graph.AddNode(mathNode)
+		registry := buildNodeRegistry(graph)
+
+		broken := collectBrokenNodes(graph, registry)
+
+		require.Len(t, broken, 1)
+		require.Contains(t, broken, "A")
+		require.ErrorContains(t, broken["A"], "B")
+	})
+
+	t.Run("transitive dependent is also broken", func(t *testing.T) {
+		graph := simple.NewDirectedGraph()
+		dsNode := &DSNode{baseNode: baseNode{id: 0, refID: "A"}}
+		mathCmd, err := NewMathCommand("B", "$NONEXISTENT")
+		require.NoError(t, err)
+		mathNode := &CMDNode{
+			baseNode: baseNode{id: 1, refID: "B"},
+			CMDType:  TypeMath,
+			Command:  mathCmd,
+		}
+		reduceCmd, err := NewReduceCommand("C", "mean", "B", nil)
+		require.NoError(t, err)
+		reduceNode := &CMDNode{
+			baseNode: baseNode{id: 2, refID: "C"},
+			CMDType:  TypeReduce,
+			Command:  reduceCmd,
+		}
+		graph.AddNode(dsNode)
+		graph.AddNode(mathNode)
+		graph.AddNode(reduceNode)
+		registry := buildNodeRegistry(graph)
+
+		broken := collectBrokenNodes(graph, registry)
+
+		require.Len(t, broken, 2)
+		require.Contains(t, broken, "B")
+		require.Contains(t, broken, "C")
+		require.NotNil(t, graph.Node(dsNode.ID()))
+		require.Nil(t, graph.Node(mathNode.ID()))
+		require.Nil(t, graph.Node(reduceNode.ID()))
+	})
+
+	t.Run("no broken nodes returns empty map", func(t *testing.T) {
+		graph := simple.NewDirectedGraph()
+		dsNode := &DSNode{baseNode: baseNode{id: 0, refID: "A"}}
+		reduceCmd, err := NewReduceCommand("B", "mean", "A", nil)
+		require.NoError(t, err)
+		reduceNode := &CMDNode{
+			baseNode: baseNode{id: 1, refID: "B"},
+			CMDType:  TypeReduce,
+			Command:  reduceCmd,
+		}
+		graph.AddNode(dsNode)
+		graph.AddNode(reduceNode)
+		registry := buildNodeRegistry(graph)
+
+		broken := collectBrokenNodes(graph, registry)
+
+		require.Empty(t, broken)
+		require.NotNil(t, graph.Node(dsNode.ID()))
+		require.NotNil(t, graph.Node(reduceNode.ID()))
+	})
+
+	t.Run("SQL node with missing table gets categorized error", func(t *testing.T) {
+		graph := simple.NewDirectedGraph()
+		sqlCmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "C", "table", "SELECT * FROM nonexistent", 0, 0, 0)
+		require.NoError(t, err)
+		sqlNode := &CMDNode{
+			baseNode: baseNode{id: 0, refID: "C"},
+			CMDType:  TypeSQL,
+			Command:  sqlCmd,
+		}
+		graph.AddNode(sqlNode)
+		registry := buildNodeRegistry(graph)
+
+		broken := collectBrokenNodes(graph, registry)
+
+		require.Len(t, broken, 1)
+		require.Contains(t, broken, "C")
+		var catErr *sql.ErrorWithCategory
+		require.ErrorAs(t, broken["C"], &catErr)
+	})
 }

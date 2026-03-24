@@ -425,6 +425,72 @@ func (s *Service) buildGraphEdges(dp *simple.DirectedGraph, registry map[string]
 	return nil
 }
 
+// collectBrokenNodes identifies expression nodes with missing dependencies,
+// propagates to their transitive dependents, removes all broken nodes from
+// the graph and registry, and returns a map of refID → error for each.
+func collectBrokenNodes(graph *simple.DirectedGraph, registry map[string]Node) map[string]error {
+	// Collect all CMD nodes for inspection
+	var cmdNodes []*CMDNode
+	nodeIt := graph.Nodes()
+	for nodeIt.Next() {
+		node := nodeIt.Node().(Node)
+		if node.NodeType() == TypeCMDNode {
+			cmdNodes = append(cmdNodes, node.(*CMDNode))
+		}
+	}
+
+	broken := make(map[string]error)
+
+	// Phase 1: Find nodes with missing dependencies
+	for _, cmdNode := range cmdNodes {
+		for _, neededVar := range cmdNode.Command.NeedsVars() {
+			if _, ok := registry[neededVar]; !ok {
+				if cmdNode.CMDType == TypeSQL {
+					broken[cmdNode.RefID()] = sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
+				} else {
+					broken[cmdNode.RefID()] = fmt.Errorf("unable to find dependent node '%v'", neededVar)
+				}
+				break
+			}
+		}
+	}
+
+	if len(broken) == 0 {
+		return broken
+	}
+
+	// Phase 2: Propagate to transitive dependents
+	changed := true
+	for changed {
+		changed = false
+		for _, cmdNode := range cmdNodes {
+			if _, alreadyBroken := broken[cmdNode.RefID()]; alreadyBroken {
+				continue
+			}
+			for _, neededVar := range cmdNode.Command.NeedsVars() {
+				if _, depBroken := broken[neededVar]; depBroken {
+					if cmdNode.CMDType == TypeSQL {
+						broken[cmdNode.RefID()] = sql.MakeSQLDependencyError(cmdNode.RefID(), neededVar)
+					} else {
+						broken[cmdNode.RefID()] = MakeDependencyError(cmdNode.RefID(), neededVar)
+					}
+					changed = true
+					break
+				}
+			}
+		}
+	}
+
+	// Phase 3: Remove broken nodes from graph and registry
+	for refID := range broken {
+		node := registry[refID]
+		graph.RemoveNode(node.ID())
+		delete(registry, refID)
+	}
+
+	return broken
+}
+
 // GetCommandsFromPipeline traverses the pipeline and extracts all CMDNode commands that match the type
 func GetCommandsFromPipeline[T Command](pipeline DataPipeline) []T {
 	var results []T
