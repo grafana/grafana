@@ -42,6 +42,10 @@ export function extractErrorMessage(error: unknown, fallback?: string): string |
     if ('message' in error && error.message != null) {
       return String(error.message);
     }
+
+    if ('error' in error && typeof error.error === 'string') {
+      return error.error;
+    }
   }
   return fallback; // when no fallback is provided, undefined is returned
 }
