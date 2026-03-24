@@ -125,8 +125,6 @@ describe('VariableControls', () => {
     expect(await screen.findByTestId('variable-description-info-icon')).toBeInTheDocument();
     expect(screen.queryByTestId('variable-description-docs-link')).not.toBeInTheDocument();
   });
-
-
 });
 
 function buildScene(variables: SceneVariable[] = []) {
