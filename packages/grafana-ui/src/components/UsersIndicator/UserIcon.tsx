@@ -98,7 +98,7 @@ export const UserIcon = ({
 
   if (showTooltip) {
     const tooltip = (
-      <div className={styles.tooltipContainer}>
+      <div className={styles.tooltipContainer} data-testid="user-icon-tooltip">
         <div className={styles.tooltipName}>{user.name}</div>
         {hasActive && (
           <div className={styles.tooltipDate}>

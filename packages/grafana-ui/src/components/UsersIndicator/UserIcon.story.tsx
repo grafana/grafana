@@ -51,7 +51,14 @@ export const Examples: StoryFn<typeof UserIcon> = (args) => {
   };
 
   const examples = [
-    { title: 'Interactive (click handler provided), user with avatar', props: { userView, onClick: () => console.log('Avatar clicked') } },
+    {
+      title: 'Interactive (click handler provided), user with avatar and tooltip',
+      props: { userView, onClick: () => console.log('Avatar clicked'), showTooltip: true },
+    },
+    {
+      title: 'Interactive, no tooltip',
+      props: { userView, onClick: () => console.log('Avatar clicked'), showTooltip: false },
+    },
     {
       title: 'Interactive, user with initials',
       props: {
@@ -62,22 +69,14 @@ export const Examples: StoryFn<typeof UserIcon> = (args) => {
         onClick: () => console.log('Initials clicked'),
       },
     },
-    {
-      title: 'Interactive, with tooltip',
-      props: { userView, onClick: () => console.log('Avatar clicked'), showTooltip: true },
-    },
-    {
-      title: 'Interactive, no tooltip',
-      props: { userView, onClick: () => console.log('Avatar clicked'), showTooltip: false },
-    },
     { title: 'Non-interactive, with tooltip', props: { userView, showTooltip: true } },
-    { title: 'Non-interactive, no tooltip', props: { userView, showTooltip: false } },
+    { title: 'Non-interactive, with initials', props: { userView, showTooltip: false } },
   ];
 
   return (
     <>
       {examples.map((example) => (
-        <Stack direction="column" key={example.title} gap={5}>
+        <Stack direction="column" key={example.title}>
           <Text element="p">{example.title}</Text>
           <UserIcon {...args} {...example.props} />
         </Stack>
