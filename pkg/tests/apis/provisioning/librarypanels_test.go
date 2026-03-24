@@ -89,6 +89,10 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 		require.NotNil(t, libraryElementData)
 
 		res := libraryElementData["result"].(map[string]interface{})
+		t.Cleanup(func() {
+			deleteURL := fmt.Sprintf("/api/library-elements/%s", res["uid"].(string))
+			common.DeleteHelper(t, *helper.K8sTestHelper, deleteURL, helper.Org1.Admin)
+		})
 		helper.SetPermissions(helper.Org1.Admin, []resourcepermissions.SetResourcePermissionCommand{
 			{
 				Actions:           []string{"library.panels:write"},
@@ -169,5 +173,11 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, code)
 		require.NotNil(t, libraryElementData)
+
+		res := libraryElementData["result"].(map[string]interface{})
+		t.Cleanup(func() {
+			deleteURL := fmt.Sprintf("/api/library-elements/%s", res["uid"].(string))
+			common.DeleteHelper(t, *helper.K8sTestHelper, deleteURL, helper.Org1.Admin)
+		})
 	})
 }

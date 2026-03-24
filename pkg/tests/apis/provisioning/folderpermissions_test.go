@@ -17,61 +17,9 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// We currently block permission updates for folders managed by provisioning.
+// TestIntegrationFolderPermissions_ProvisionedFolders verifies that permission updates
+// succeed for provisioned folders (the shared server has provisioningFolderMetadata enabled).
 func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
-	repoName := "nested-folder-repo"
-	helper := common.RunGrafana(t)
-	helper.CreateRepo(t, common.TestRepo{
-		Name:            repoName,
-		Target:          "folder",
-		ExpectedFolders: 1,
-		Copies: map[string]string{
-			"testdata/all-panels.json": "folder/subfolder/dashboard.json",
-		},
-		SkipResourceAssertions: true,
-	})
-	t.Run("should fail to update permissions for provisioned nested folder", func(t *testing.T) {
-		folders, err := helper.Folders.Resource.List(t.Context(), metav1.ListOptions{})
-		require.NoError(t, err)
-		require.GreaterOrEqual(t, len(folders.Items), 2, "should have 2 folders (root and nested)")
-
-		// Find all folders managed by provisioning
-		var provisionedFolders []*unstructured.Unstructured
-		for i := range folders.Items {
-			annotations := folders.Items[i].GetAnnotations()
-			if _, hasManagerKind := annotations[utils.AnnoKeyManagerKind]; hasManagerKind {
-				if _, hasManagerIdentity := annotations[utils.AnnoKeyManagerIdentity]; hasManagerIdentity {
-					provisionedFolders = append(provisionedFolders, &folders.Items[i])
-				}
-			}
-		}
-		require.Greater(t, len(provisionedFolders), 0, "should have at least one provisioned folder")
-
-		permissionsPayload := map[string]interface{}{
-			"items": []map[string]interface{}{
-				{
-					"role":       "Viewer",
-					"permission": 1, // View permission
-				},
-			},
-		}
-
-		// Test that permission updates fail for all provisioned folders
-		for _, folder := range provisionedFolders {
-			folderName := folder.GetName()
-			permissionsURL := fmt.Sprintf("/api/folders/%s/permissions", folderName)
-			permissionsData, code, err := common.PostHelper(t, *helper.K8sTestHelper, permissionsURL, permissionsPayload, helper.Org1.Admin)
-			require.Error(t, err, "should fail to update permissions for folder %s", folderName)
-			require.Equal(t, http.StatusForbidden, code, "should return forbidden status for folder %s", folderName)
-			require.NotNil(t, permissionsData, "should have error response for folder %s", folderName)
-			require.Equal(t, "Cannot update permissions for folders managed by provisioning.", permissionsData["message"], "should have correct error message for folder %s", folderName)
-		}
-	})
-}
-
-// TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag verifies that permission updates
-// succeed for provisioned folders when the provisioningFolderMetadata feature flag is enabled.
-func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) {
 	repoName := "nested-folder-repo-flag"
 	helper := sharedHelper(t)
 	helper.CreateRepo(t, common.TestRepo{

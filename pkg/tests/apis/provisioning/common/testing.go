@@ -1569,6 +1569,16 @@ func PatchHelper(t *testing.T, helper apis.K8sTestHelper, path string, body inte
 	return requestHelper(t, helper, http.MethodPatch, path, body, user)
 }
 
+func DeleteHelper(t *testing.T, helper apis.K8sTestHelper, path string, user apis.User) {
+	t.Helper()
+	resp := apis.DoRequest(&helper, apis.RequestParams{
+		User:   user,
+		Method: http.MethodDelete,
+		Path:   path,
+	}, &struct{}{})
+	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "DELETE %s failed: %s", path, string(resp.Body))
+}
+
 func requestHelper(
 	t *testing.T,
 	helper apis.K8sTestHelper,
