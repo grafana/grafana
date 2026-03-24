@@ -3699,6 +3699,129 @@ func TestGitRepository_CompareFiles_Renamed(t *testing.T) {
 	}
 }
 
+func TestGitRepository_CompareFiles_Modified_PreviousRef(t *testing.T) {
+	tests := []struct {
+		name        string
+		files       []nanogit.CommitFile
+		gitPath     string
+		wantChanges []repository.VersionedFileChange
+	}{
+		{
+			name: "modified file has PreviousRef set to base",
+			files: []nanogit.CommitFile{
+				{
+					Path:   "configs/dashboard.json",
+					Status: protocol.FileStatusModified,
+					Mode:   0o100644,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:      repository.FileActionUpdated,
+					Path:        "dashboard.json",
+					Ref:         "feature",
+					PreviousRef: "main",
+				},
+			},
+		},
+		{
+			name: "modified file outside configured path is skipped",
+			files: []nanogit.CommitFile{
+				{
+					Path:   "other/dashboard.json",
+					Status: protocol.FileStatusModified,
+					Mode:   0o100644,
+				},
+			},
+			gitPath:     "configs",
+			wantChanges: []repository.VersionedFileChange{},
+		},
+		{
+			name: "modified file with no configured path has PreviousRef set",
+			files: []nanogit.CommitFile{
+				{
+					Path:   "dashboard.json",
+					Status: protocol.FileStatusModified,
+					Mode:   0o100644,
+				},
+			},
+			gitPath: "",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action:      repository.FileActionUpdated,
+					Path:        "dashboard.json",
+					Ref:         "feature",
+					PreviousRef: "main",
+				},
+			},
+		},
+		{
+			name: "mix of added and modified: only modified has PreviousRef",
+			files: []nanogit.CommitFile{
+				{
+					Path:   "configs/new.json",
+					Status: protocol.FileStatusAdded,
+					Mode:   0o100644,
+				},
+				{
+					Path:   "configs/existing.json",
+					Status: protocol.FileStatusModified,
+					Mode:   0o100644,
+				},
+			},
+			gitPath: "configs",
+			wantChanges: []repository.VersionedFileChange{
+				{
+					Action: repository.FileActionCreated,
+					Path:   "new.json",
+					Ref:    "feature",
+				},
+				{
+					Action:      repository.FileActionUpdated,
+					Path:        "existing.json",
+					Ref:         "feature",
+					PreviousRef: "main",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			mockClient.GetRefReturnsOnCall(0, nanogit.Ref{
+				Name: "refs/heads/main",
+				Hash: hash.Hash{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+			}, nil)
+			mockClient.GetRefReturnsOnCall(1, nanogit.Ref{
+				Name: "refs/heads/feature",
+				Hash: hash.Hash{4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23},
+			}, nil)
+			mockClient.CompareCommitsReturns(tt.files, nil)
+
+			gitRepo := &gitRepository{
+				client: mockClient,
+				gitConfig: RepositoryConfig{
+					Branch: "main",
+					Path:   tt.gitPath,
+				},
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Type: provisioning.GitHubRepositoryType,
+					},
+				},
+			}
+
+			changes, err := gitRepo.CompareFiles(context.Background(), "main", "feature")
+
+			require.NoError(t, err)
+			require.NotNil(t, changes)
+			require.Equal(t, tt.wantChanges, changes)
+		})
+	}
+}
+
 func TestGitRepository_EmptyRefHandling(t *testing.T) {
 	tests := []struct {
 		name   string

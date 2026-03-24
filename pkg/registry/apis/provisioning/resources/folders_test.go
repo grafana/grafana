@@ -95,7 +95,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 
 		repo := repository.NewMockReaderWriter(t)
 		repo.On("Config").Return(cfg)
-		repo.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("not found")).Maybe()
+		repo.On("Read", mock.Anything, mock.Anything, "test-ref").Return(nil, errors.New("not found")).Maybe()
 		return repo, cfg
 	}
 
@@ -111,7 +111,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 			return hookErr
 		}))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/dashboard.json", "test-ref")
 		require.Error(t, err)
 		require.Empty(t, parent)
 
@@ -144,7 +144,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 			return nil
 		}))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/c/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/c/dashboard.json", "test-ref")
 		require.NoError(t, err)
 
 		fA := ParseFolder("a", cfg.GetName())
@@ -182,7 +182,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 			return nil
 		}))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/c/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/c/dashboard.json", "test-ref")
 		require.Error(t, err)
 		require.Empty(t, parent)
 
@@ -227,7 +227,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 			return nil
 		}))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/c/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "a/b/c/dashboard.json", "test-ref")
 		require.NoError(t, err)
 
 		fABC := ParseFolder("a/b/c", cfg.GetName())
@@ -497,7 +497,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 			Return(nil, nil)
 
 		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree())
-		err := fm.CreateFolderWithUID(ctx, "myfolder/", stableUID)
+		err := fm.CreateFolderWithUID(ctx, "myfolder/", stableUID, "test-ref")
 
 		require.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -510,7 +510,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").Return(nil, errors.New("not found")).Maybe()
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").Return(nil, errors.New("not found")).Maybe()
 
 		// Pre-populate tree with the parent's hash-derived ID so EnsureFolderPathExist
 		// finds it immediately without needing to create it.
@@ -526,7 +526,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 			Return(nil, nil)
 
 		fm := NewFolderManager(rw, mockClient, tree)
-		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID)
+		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID, "test-ref")
 
 		require.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -539,7 +539,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").Return(nil, errors.New("not found")).Maybe()
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").Return(nil, errors.New("not found")).Maybe()
 
 		parentFolder := ParseFolder("parent/", config.Name)
 
@@ -556,7 +556,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 			Return(nil, nil).Once()
 
 		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree())
-		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID)
+		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID, "test-ref")
 
 		require.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -570,7 +570,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-parent-uid"},"spec":{"title":"parent"}}`)}, nil)
 
 		mockClient := &MockDynamicResourceInterface{}
@@ -586,7 +586,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 			Return(nil, nil).Once()
 
 		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
-		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID)
+		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID, "test-ref")
 
 		require.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -599,7 +599,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 
 		parentFolder := ParseFolder("parent/", config.Name)
@@ -617,7 +617,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 			Return(nil, nil).Once()
 
 		fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
-		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID)
+		err := fm.CreateFolderWithUID(ctx, "parent/child/", stableUID, "test-ref")
 
 		require.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -631,7 +631,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"Custom Title"}}`)}, nil)
 
 		var createdFolder Folder
@@ -649,7 +649,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			return nil
 		}), WithFolderMetadataEnabled(true))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Equal(t, "Custom Title", createdFolder.Title)
@@ -660,7 +660,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":""}}`)}, nil)
 
 		var createdFolder Folder
@@ -678,7 +678,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			return nil
 		}), WithFolderMetadataEnabled(true))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Equal(t, "my-folder", createdFolder.Title)
@@ -688,7 +688,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 
 		var createdFolder Folder
@@ -706,7 +706,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			return nil
 		}), WithFolderMetadataEnabled(true))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "my-folder", createdFolder.Title)
 		require.NotEmpty(t, parent)
@@ -717,10 +717,10 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Pre-walk reads leaf folder metadata — not found so we walk
-		rw.On("Read", mock.Anything, "parent/child/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 		// Walk reads parent folder metadata — has custom title
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"parent-uid"},"spec":{"title":"Parent Custom"}}`)}, nil)
 
 		var createdFolders []Folder
@@ -738,7 +738,7 @@ func TestEnsureFolderPathExist_MetadataTitle(t *testing.T) {
 			return nil
 		}), WithFolderMetadataEnabled(true))
 
-		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Len(t, createdFolders, 2)
 		// First created folder is "parent" — should have custom title from _folder.json
@@ -779,7 +779,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"New Title"}}`)}, nil)
 
 		// Folder NOT in tree — EnsureFolderExists will be called and reconcile the title.
@@ -797,7 +797,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Equal(t, []string{"stable-uid"}, client.getCalls)
@@ -811,7 +811,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"Same Title"}}`)}, nil)
 
 		// Folder NOT in tree — EnsureFolderExists will be called but no update needed.
@@ -824,7 +824,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Equal(t, []string{"stable-uid"}, client.getCalls)
@@ -835,7 +835,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 
 		tree := NewEmptyFolderTree()
@@ -845,7 +845,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, f.ID, parent)
 		require.Empty(t, client.getCalls, "should not call GET when no _folder.json")
@@ -857,10 +857,10 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Pre-walk reads leaf folder metadata — not found so we walk
-		rw.On("Read", mock.Anything, "parent/child/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 		// Walk reads parent folder metadata — has new title
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"parent-uid"},"spec":{"title":"New Parent Title"}}`)}, nil)
 
 		// Neither parent nor child in tree — walk processes both via EnsureFolderExists.
@@ -884,7 +884,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json", "test-ref")
 		require.NoError(t, err)
 
 		// Parent title should have been reconciled
@@ -903,7 +903,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":""}}`)}, nil)
 
 		tree := NewEmptyFolderTree()
@@ -914,7 +914,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Empty(t, client.getCalls, "should not call GET when _folder.json has empty title")
@@ -925,7 +925,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
 				Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"Same Title"}}`),
 				Hash: "same-hash",
@@ -942,7 +942,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Empty(t, client.getCalls, "should not call GET when hash matches")
@@ -953,7 +953,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
 				Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"New Title"}}`),
 				Hash: "new-hash",
@@ -978,7 +978,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Contains(t, client.getCalls, "stable-uid", "should call GET to reconcile")
@@ -991,7 +991,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
 				Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"Same Title"}}`),
 				Hash: "new-hash",
@@ -1014,7 +1014,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
 		require.Contains(t, client.getCalls, "stable-uid", "should call GET to store hash")
@@ -1025,7 +1025,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"New Title"}}`)}, nil)
 
 		// Folder NOT in tree — EnsureFolderExists will try to update the title and fail.
@@ -1041,7 +1041,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "update folder")
 		require.ErrorContains(t, err, "conflict")
@@ -1052,10 +1052,10 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Pre-walk reads "parent/child/_folder.json" — not found, so we enter the walk.
-		rw.On("Read", mock.Anything, "parent/child/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 		// Walk traverse="parent" reads "parent/_folder.json" — returns metadata with a new title.
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"parent-uid"},"spec":{"title":"New Parent Title"}}`)}, nil)
 
 		// Neither parent nor child in tree — walk tries EnsureFolderExists for parent, which fails.
@@ -1071,7 +1071,7 @@ func TestEnsureFolderPathExist_ReconcileTitle(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/dashboard.json", "test-ref")
 		require.Error(t, err)
 
 		var pathErr *PathCreationError
@@ -1420,13 +1420,13 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(nil, errors.New("connection refused"))
 
 		client := &fakeDynamicResourceClient{}
 		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
 
-		_, err := fm.EnsureFolderPathExist(ctx, "parent/child.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child.json", "test-ref")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "connection refused")
 		require.Empty(t, client.getCalls)
@@ -1437,16 +1437,16 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// pre-walk reads "parent/child/_folder.json" — file not found, proceed to walk
-		rw.On("Read", mock.Anything, "parent/child/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 		// walk traverse="parent" reads "parent/_folder.json" — real error
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(nil, errors.New("connection refused"))
 
 		client := &fakeDynamicResourceClient{}
 		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), WithFolderMetadataEnabled(true))
 
-		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json", "test-ref")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "connection refused")
 		require.Empty(t, client.getCalls)
@@ -1465,7 +1465,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 		fm := NewFolderManager(rw, client, tree)
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, parentFolder.ID, parent)
 		require.Empty(t, client.getCalls)
@@ -1475,7 +1475,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 
 		// Pre-populate tree so the function returns early after ignoring the error.
@@ -1486,7 +1486,7 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json", "test-ref")
 		require.NoError(t, err)
 		require.Equal(t, parentFolder.ID, parent)
 		require.Empty(t, client.getCalls)
@@ -1743,9 +1743,6 @@ func TestRenameFolderPath(t *testing.T) {
 		metaJSON := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"My Folder"}}`)
 		rw.On("Read", mock.Anything, "old-team/_folder.json", "ref-old").
 			Return(&repository.FileInfo{Data: metaJSON}, nil)
-		// EnsureFolderPathExist reads with empty ref; RenameFolderPath reads with "ref-new"
-		rw.On("Read", mock.Anything, "new-team/_folder.json", "").
-			Return(&repository.FileInfo{Data: metaJSON}, nil)
 		rw.On("Read", mock.Anything, "new-team/_folder.json", "ref-new").
 			Return(&repository.FileInfo{Data: metaJSON}, nil)
 
@@ -1776,8 +1773,6 @@ func TestRenameFolderPath(t *testing.T) {
 		newMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"new-uid"},"spec":{"title":"New"}}`)
 		rw.On("Read", mock.Anything, "old-team/_folder.json", "ref-old").
 			Return(&repository.FileInfo{Data: oldMeta}, nil)
-		rw.On("Read", mock.Anything, "new-team/_folder.json", "").
-			Return(&repository.FileInfo{Data: newMeta}, nil)
 		rw.On("Read", mock.Anything, "new-team/_folder.json", "ref-new").
 			Return(&repository.FileInfo{Data: newMeta}, nil)
 
@@ -1815,7 +1810,7 @@ func TestRenameFolderPath(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree)
-		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "", "new-team/", "")
+		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
 		require.NoError(t, err)
 
 		oldFolder := ParseFolder("old-team/", config.Name)
@@ -1839,9 +1834,9 @@ func TestRenameFolderPath(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "old-team/_folder.json", "").
+		rw.On("Read", mock.Anything, "old-team/_folder.json", "ref-old").
 			Return(nil, repository.ErrFileNotFound)
-		rw.On("Read", mock.Anything, "new-team/_folder.json", "").
+		rw.On("Read", mock.Anything, "new-team/_folder.json", "ref-new").
 			Return(nil, repository.ErrFileNotFound)
 
 		client := &fakeDynamicResourceClient{
@@ -1852,7 +1847,7 @@ func TestRenameFolderPath(t *testing.T) {
 
 		tree := NewEmptyFolderTree()
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		_, err := fm.RenameFolderPath(ctx, "old-team/", "", "new-team/", "")
+		_, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "ensure new folder path")
 	})

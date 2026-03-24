@@ -71,7 +71,7 @@
   "dev-dashboards-output/panel-flamegraph/panel_tests_flame_graph.v42.json": "1cb247f8757032496c725dd6f5d932cc04980d0cc7c664db81612b83d6aec035",
   "dev-dashboards-output/panel-gauge/gauge-multi-series.v42.json": "712bd116080613648de9e493d93bb39f83e11d752f93d08e29a7231289bba777",
   "dev-dashboards-output/panel-gauge/gauge_tests.v42.json": "2eade52f43f2859ed93d2148f695e24739c88a41fa80104d90e9d145321e6e10",
-  "dev-dashboards-output/panel-gauge/gauge_tests_new.v42.json": "490829d6fa96e833a13f2034762c26b4feb4a85e686c628076009d53fdc84144",
+  "dev-dashboards-output/panel-gauge/gauge_tests_new.v42.json": "28e2f048eaaa21fb88afb2a4bf999ab4d727d8dd74e3682de3dd4320d00b3d09",
   "dev-dashboards-output/panel-gauge/gauge_tests_old_to_new.v42.json": "6cf057d0cf13ead60d8a039662d1d6b320230dbf1de2b2892dd0b3790c158760",
   "dev-dashboards-output/panel-geomap/geomap-color-field.v42.json": "a3dc6a3291a47088a229bea0eca833fd3ff7f227b1d0296a52dbd42d03907124",
   "dev-dashboards-output/panel-geomap/geomap-photo-layer.v42.json": "1b9eca89aeb6244e5eb9415ff4f737b4ae0dafcbf3310213cef60567a3d09f3c",

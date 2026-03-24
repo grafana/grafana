@@ -54,6 +54,20 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		return nil
 	}
 
+	var replaced []replacedFolder
+	if folderMetadataEnabled {
+		readerRepo, ok := repo.(repository.Reader)
+		if !ok {
+			return tracing.Error(span, fmt.Errorf("folder metadata incremental sync requires repository.Reader"))
+		}
+
+		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo, repositoryResources)
+		diff, replaced, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff)
+		if err != nil {
+			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
+		}
+	}
+
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
@@ -65,19 +79,32 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 
 	progress.SetMessage(ctx, "versioned changes replicated")
 
+	cleanupStart := time.Now()
+	foldersToDelete := findOrphanedFolders(ctx, repo, currentRef, affectedFolders, tracer)
+
+	for _, r := range replaced {
+		if progress.HasDirPathFailedCreation(r.Path) {
+			progress.Record(ctx, jobs.NewFolderResult(r.Path).
+				WithAction(repository.FileActionIgnored).
+				WithName(r.OldUID).
+				WithWarning(fmt.Errorf("old folder %s not deleted because the replacement folder at %s could not be created", r.OldUID, r.Path)).
+				Build())
+			continue
+		}
+		if foldersToDelete == nil {
+			foldersToDelete = make(map[string]string)
+		}
+		foldersToDelete[r.Path] = r.OldUID
+	}
+
+	deleteFolders(ctx, foldersToDelete, repositoryResources, progress, tracer)
+	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCleanup, time.Since(cleanupStart))
+
+	// Run after deleteFolders so its informational warnings (e.g. missing
+	// _folder.json) don't interfere with HasChildPathFailedUpdate safety checks.
 	if folderMetadataEnabled {
 		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
 			return err
-		}
-	}
-
-	if len(affectedFolders) > 0 {
-		cleanupStart := time.Now()
-		span.AddEvent("checking if impacted folders should be deleted", trace.WithAttributes(attribute.Int("affected_folders", len(affectedFolders))))
-		err := cleanupOrphanedFolders(ctx, repo, affectedFolders, repositoryResources, tracer, progress)
-		metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCleanup, time.Since(cleanupStart))
-		if err != nil {
-			return tracing.Error(span, fmt.Errorf("cleanup orphaned folders: %w", err))
 		}
 	}
 
@@ -124,7 +151,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			}
 
 			if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
-				folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment)
+				folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment, change.Ref)
 				if err != nil {
 					ensureFolderSpan.RecordError(err)
 					ensureFolderSpan.End()
@@ -151,26 +178,27 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
 
-		// Created/deleted directory entries (trailing-slash paths) appear from
-		// cross-boundary renames. The individual file-level changes within the
-		// directory are emitted separately and already handle folder creation
-		// (via EnsureFolderPathExist inside WriteResourceFromFile) and deletion
-		// (via affectedFolders / orphan cleanup). Skip them to avoid routing
-		// directory paths to file-processing logic. Renamed directories must
-		// still reach RenameFolderPath below.
+		// Directory entries (trailing-slash paths) need special handling:
+		// - Renamed directories reach RenameFolderPath below.
+		// - Updated directories are emitted by planFolderMetadataChanges when a
+		//   parent folder's UID changed; re-parent them via EnsureFolderPathExist.
+		// - Created/deleted directory entries from cross-boundary renames are
+		//   skipped since individual file-level changes handle them.
 		if safepath.IsDir(change.Path) && change.Action != repository.FileActionRenamed {
-			progress.Record(ctx, resultBuilder.Build())
-			continue
-		}
-
-		if folderMetadataEnabled && resources.IsFolderMetadataFile(change.Path) &&
-			(change.Action == repository.FileActionCreated || change.Action == repository.FileActionUpdated) {
-			name, err := applyFolderMetadataUpdate(ctx, change, repositoryResources, tracer)
-			if err != nil {
-				resultBuilder.WithError(err)
+			if change.Action == repository.FileActionUpdated {
+				folderResultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
+				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.reparent_child_folder")
+				folder, fErr := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path, change.Ref)
+				if fErr != nil {
+					folderSpan.RecordError(fErr)
+					folderResultBuilder.WithError(fmt.Errorf("re-parenting child folder at %s: %w", change.Path, fErr))
+				}
+				folderResultBuilder.WithName(folder)
+				folderSpan.End()
+				progress.Record(ctx, folderResultBuilder.Build())
+			} else {
+				progress.Record(ctx, resultBuilder.Build())
 			}
-			resultBuilder.WithName(name)
-			progress.Record(ctx, resultBuilder.Build())
 			continue
 		}
 
@@ -183,7 +211,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 		}
 
 		switch change.Action {
-		case repository.FileActionCreated, repository.FileActionUpdated:
+		case repository.FileActionCreated:
 			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
 			name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
@@ -192,6 +220,26 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			}
 			resultBuilder.WithName(name).WithGVK(gvk)
 			writeSpan.End()
+		case repository.FileActionUpdated:
+			if change.PreviousRef != "" {
+				writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.replace_resource_from_file")
+				name, gvk, err := repositoryResources.ReplaceResourceFromFileByRef(writeCtx, change.Path, change.Ref, change.PreviousRef)
+				if err != nil {
+					writeSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("replacing resource from file %s: %w", change.Path, err))
+				}
+				resultBuilder.WithName(name).WithGVK(gvk)
+				writeSpan.End()
+			} else {
+				writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
+				name, gvk, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
+				if err != nil {
+					writeSpan.RecordError(err)
+					resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
+				}
+				resultBuilder.WithName(name).WithGVK(gvk)
+				writeSpan.End()
+			}
 		case repository.FileActionDeleted:
 			removeCtx, removeSpan := tracer.Start(ctx, "provisioning.sync.incremental.remove_resource_from_file")
 			name, folderName, gvk, err := repositoryResources.RemoveResourceFromFile(removeCtx, change.Path, change.PreviousRef)
@@ -209,6 +257,7 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 
 			removeSpan.End()
 		case repository.FileActionRenamed:
+			resultBuilder.WithPreviousPath(change.PreviousPath)
 			if safepath.IsDir(change.Path) {
 				renameFolderCtx, renameFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_folder_path")
 				oldFolderID, err := repositoryResources.RenameFolderPath(renameFolderCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
@@ -244,22 +293,6 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 	return affectedFolders, nil
 }
 
-// applyFolderMetadataUpdate routes _folder.json changes through EnsureFolderPathExist
-// so the folder manager can create or update the folder with the correct title,
-// metadata hash, and annotations.
-func applyFolderMetadataUpdate(ctx context.Context, change repository.VersionedFileChange, repositoryResources resources.RepositoryResources, tracer tracing.Tracer) (string, error) {
-	folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.update_folder_metadata")
-	defer folderSpan.End()
-
-	folderDir := safepath.Dir(change.Path)
-	folder, err := repositoryResources.EnsureFolderPathExist(folderCtx, folderDir)
-	if err != nil {
-		folderSpan.RecordError(err)
-		return "", fmt.Errorf("updating folder metadata at %s: %w", folderDir, err)
-	}
-	return folder, nil
-}
-
 // sortChangesByActionPriority reorders changes so deletions are processed before creations.
 func sortChangesByActionPriority(diff []repository.VersionedFileChange) {
 	slices.SortStableFunc(diff, func(a, b repository.VersionedFileChange) int {
@@ -277,21 +310,22 @@ func actionPriority(action repository.FileAction) int {
 		return 2
 	case repository.FileActionCreated:
 		return 3
-	default:
+	case repository.FileActionIgnored:
 		return 4
 	}
+	return 4
 }
 
-// cleanupOrphanedFolders removes folders that no longer contain any resources in git after deletions have occurred.
-func cleanupOrphanedFolders(
+// findOrphanedFolders checks which affected folders no longer exist in git
+// and returns a path->UID map of folders to delete.
+func findOrphanedFolders(
 	ctx context.Context,
 	repo repository.Versioned,
+	currentRef string,
 	affectedFolders map[string]string,
-	repositoryResources resources.RepositoryResources,
 	tracer tracing.Tracer,
-	progress jobs.JobProgressRecorder,
-) error {
-	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.cleanup_orphaned_folders")
+) map[string]string {
+	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.find_orphaned_folders")
 	defer span.End()
 
 	readerRepo, ok := repo.(repository.Reader)
@@ -300,31 +334,72 @@ func cleanupOrphanedFolders(
 		return nil
 	}
 
+	orphaned := make(map[string]string)
 	for path, folderName := range affectedFolders {
 		span.SetAttributes(attribute.String("folder", folderName))
 
-		// Check if any resources under this folder failed to delete
-		if progress.HasDirPathFailedDeletion(path) {
-			span.AddEvent("skipping orphaned folder cleanup: a child resource in its path failed to be deleted")
+		_, err := readerRepo.Read(ctx, path, currentRef)
+		if err != nil && (errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
+			span.AddEvent("folder not found in git, marking for deletion")
+			orphaned[path] = folderName
 			continue
 		}
-
-		// if we can no longer find the folder in git, then we can delete it from grafana
-		_, err := readerRepo.Read(ctx, path, "")
-		if err != nil && (errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
-			span.AddEvent("folder not found in git, removing from grafana")
-			if err := repositoryResources.RemoveFolder(ctx, folderName); err != nil {
-				span.RecordError(err)
-			} else {
-				span.AddEvent("successfully deleted")
-			}
+		if err != nil {
+			span.RecordError(err)
+			span.AddEvent("could not determine folder existence in git, skipping")
 			continue
 		}
 
 		span.AddEvent("folder still exists in git, continuing")
 	}
 
-	return nil
+	return orphaned
+}
+
+// deleteFolders removes folder K8s objects, processing deepest paths first.
+func deleteFolders(
+	ctx context.Context,
+	foldersToDelete map[string]string,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	tracer tracing.Tracer,
+) {
+	if len(foldersToDelete) == 0 {
+		return
+	}
+
+	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.delete_folders")
+	defer span.End()
+
+	type pathUID struct {
+		Path string
+		UID  string
+	}
+	sorted := make([]pathUID, 0, len(foldersToDelete))
+	for path, uid := range foldersToDelete {
+		sorted = append(sorted, pathUID{Path: path, UID: uid})
+	}
+	safepath.SortByDepth(sorted, func(p pathUID) string { return p.Path }, false)
+
+	for _, entry := range sorted {
+		if progress.HasDirPathFailedCreation(entry.Path) || progress.HasDirPathFailedDeletion(entry.Path) || progress.HasChildPathFailedCreation(entry.Path) || progress.HasChildPathFailedUpdate(entry.Path) {
+			progress.Record(ctx, jobs.NewFolderResult(entry.Path).
+				WithAction(repository.FileActionIgnored).
+				WithName(entry.UID).
+				WithWarning(fmt.Errorf("folder %s was not deleted because a related operation failed", entry.UID)).
+				Build())
+			continue
+		}
+
+		resultBuilder := jobs.NewFolderResult(entry.Path).
+			WithAction(repository.FileActionDeleted).
+			WithName(entry.UID)
+		if err := repositoryResources.RemoveFolder(ctx, entry.UID); err != nil {
+			span.RecordError(err)
+			resultBuilder.WithError(fmt.Errorf("delete folder %s: %w", entry.UID, err))
+		}
+		progress.Record(ctx, resultBuilder.Build())
+	}
 }
 
 // detectMissingFolderMetadata reads the full file tree and records warnings for folders
