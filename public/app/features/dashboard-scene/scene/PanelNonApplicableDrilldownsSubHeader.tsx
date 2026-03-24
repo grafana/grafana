@@ -4,11 +4,11 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n';
 import { AdHocFiltersVariable, GroupByVariable, SceneQueryRunner } from '@grafana/scenes';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getDrilldownApplicability } from '../utils/drilldownUtils';
-import { t } from '@grafana/i18n';
 
 const GAP_SIZE = 8;
 const FONT_SIZE = 12;
