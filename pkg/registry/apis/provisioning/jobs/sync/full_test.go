@@ -1421,6 +1421,66 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 	}, callOrder)
 }
 
+func TestApplyChanges_SortsFolderUpdatesShallowestFirst(t *testing.T) {
+	repoResources := resources.NewMockRepositoryResources(t)
+	clients := resources.NewMockResourceClients(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+	tracer := tracing.NewNoopTracerService()
+	metrics := jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry())
+
+	var callOrder []string
+	recordCall := func(name string) {
+		callOrder = append(callOrder, name)
+	}
+
+	changes := []ResourceFileChange{
+		{
+			Action:   repository.FileActionUpdated,
+			Path:     "parent/child/",
+			Existing: &provisioning.ResourceListItem{Name: "child-uid"},
+		},
+		{
+			Action:   repository.FileActionUpdated,
+			Path:     "parent/",
+			Existing: &provisioning.ResourceListItem{Name: "parent-uid"},
+		},
+	}
+
+	progress.On("SetTotal", mock.Anything, 2).Return()
+	progress.On("TooManyErrors").Return(nil)
+	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+		return r.Action() == repository.FileActionUpdated &&
+			(r.Path() == "parent/" || r.Path() == "parent/child/")
+	})).Return()
+
+	repoResources.On("RemoveFolderFromTree", "parent-uid").Run(func(args mock.Arguments) {
+		recordCall("remove parent")
+	}).Return()
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "parent/", "test-ref").Run(func(args mock.Arguments) {
+		recordCall("ensure parent")
+	}).Return("parent-uid", nil)
+
+	repoResources.On("RemoveFolderFromTree", "child-uid").Run(func(args mock.Arguments) {
+		recordCall("remove child")
+	}).Return()
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "parent/child/", "test-ref").Run(func(args mock.Arguments) {
+		recordCall("ensure child")
+	}).Return("child-uid", nil)
+
+	err := applyChanges(
+		context.Background(), changes, clients, "test-ref", repoResources, progress, tracer, 1, metrics,
+		quotas.NewInMemoryQuotaTracker(0, 0), true,
+	)
+	require.NoError(t, err)
+	require.Equal(t, []string{
+		"remove parent",
+		"ensure parent",
+		"remove child",
+		"ensure child",
+	}, callOrder)
+}
+
 func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 	// When multiple folders have OldFolderUID, deeper paths must be deleted first.
 	repoResources := resources.NewMockRepositoryResources(t)

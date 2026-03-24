@@ -75,18 +75,10 @@ func FullSync(
 	}
 
 	if folderMetadataEnabled && len(missingFolderMetadata) > 0 {
-		changeActions := make(map[string]repository.FileAction, len(changes))
-		for _, c := range changes {
-			changeActions[c.Path] = c.Action
-		}
 		for _, p := range missingFolderMetadata {
 			builder := jobs.NewFolderResult(p).
-				WithWarning(resources.NewMissingFolderMetadata(p))
-			if action, ok := changeActions[p]; ok {
-				builder = builder.WithAction(action)
-			} else {
-				builder = builder.WithAction(repository.FileActionIgnored)
-			}
+				WithWarning(resources.NewMissingFolderMetadata(p)).
+				WithAction(repository.FileActionIgnored)
 			progress.Record(ctx, builder.Build())
 		}
 	}
@@ -372,6 +364,11 @@ func applyChanges(
 	}
 
 	if len(folderCreations) > 0 {
+		// Process folder creations/updates shallowest-first so that parent folders are
+		// set up (and their old tree entries removed) before children are walked. Without
+		// this, a child's EnsureFolderPathExist walk would encounter the parent's UID at
+		// its old path in the tree and trigger a spurious CheckIDConflict error.
+		safepath.SortByDepth(folderCreations, func(c ResourceFileChange) string { return c.Path }, true)
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseFolderCreations, func() error {
 			return applyFoldersSerially(ctx, folderCreations, clients, currentRef, repositoryResources, progress, tracer, quotaTracker, folderMetadataEnabled)
 		}, metrics); err != nil {
