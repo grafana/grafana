@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -239,6 +240,13 @@ func (r *Reconciler) reconcileNamespace(ctx context.Context, namespace string) e
 	// 1. Build expected tuple map from CRDs
 	expectedMap, err := r.fetchAndTranslateTuples(ctx, namespace)
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			r.logger.Warn("Namespace deleted or archived, removing store from Zanzana", "namespace", namespace)
+			if delErr := r.server.DeleteStore(ctx, namespace); delErr != nil {
+				r.logger.Error("Failed to delete orphaned store", "namespace", namespace, "error", delErr)
+			}
+			return nil
+		}
 		return fmt.Errorf("failed to fetch and translate CRDs: %w", err)
 	}
 

@@ -336,10 +336,8 @@ func (s *service) starting(ctx context.Context) error {
 	// Initialize the server (builds search indexes) while in JOINING state.
 	// The ring is Running so OwnsIndex checks work, but this instance won't
 	// receive ring-routed queries until it switches to ACTIVE below.
-	if s.uninitializedSearchServer != nil {
-		if err := s.uninitializedSearchServer.Init(ctx); err != nil {
-			return fmt.Errorf("failed to initialize server: %w", err)
-		}
+	if err := s.uninitializedSearchServer.Init(ctx); err != nil {
+		return fmt.Errorf("failed to initialize server: %w", err)
 	}
 
 	if s.cfg.EnableSharding {

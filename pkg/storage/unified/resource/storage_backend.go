@@ -79,6 +79,10 @@ type kvStorageBackend struct {
 	// nil if tenant watching is not configured.
 	tenantWatcher *TenantWatcher
 
+	// tenantDeleter periodically deletes data for expired pending-delete tenants.
+	// nil if tenant deletion is not configured.
+	tenantDeleter *TenantDeleter
+
 	searchLookback time.Duration
 }
 
@@ -115,6 +119,9 @@ type KVBackendOptions struct {
 
 	// TenantWatcherConfig, if set, enables watching Tenant CRDs for pending-delete state.
 	TenantWatcherConfig *TenantWatcherConfig
+
+	// TenantDeleterConfig, if set, enables periodic deletion of expired pending-delete tenant data.
+	TenantDeleterConfig *TenantDeleterConfig
 
 	// SearchLookback is the duration subtracted from sinceRv in calls to ListModifiedSince.
 	// This guards against concurrent writes that commit slightly out-of-order. 0 means no lookback.
@@ -209,6 +216,13 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		backend.tenantWatcher = tw
 	}
 
+	// Optionally start the tenant deleter.
+	if opts.TenantDeleterConfig != nil {
+		td := NewTenantDeleter(backend.dataStore, newPendingDeleteStore(backend.kv), *opts.TenantDeleterConfig)
+		td.Start(ctx)
+		backend.tenantDeleter = td
+	}
+
 	// Start the cleanup background job.
 	go backend.runCleanups(ctx)
 
@@ -233,6 +247,9 @@ func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCh
 func (k *kvStorageBackend) Stop() {
 	if k.tenantWatcher != nil {
 		k.tenantWatcher.Stop()
+	}
+	if k.tenantDeleter != nil {
+		k.tenantDeleter.Stop()
 	}
 }
 
@@ -1691,7 +1708,7 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 
 // GetResourceStats returns resource stats within the storage backend.
 func (k *kvStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
-	return k.dataStore.GetResourceStats(ctx, nsr.Namespace, minCount)
+	return k.dataStore.GetResourceStats(ctx, nsr, minCount)
 }
 
 func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
