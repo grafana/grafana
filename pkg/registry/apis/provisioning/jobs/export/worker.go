@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
@@ -28,6 +31,7 @@ type ExportWorker struct {
 	exportFn            ExportFn
 	wrapWithStageFn     WrapWithStageFn
 	metrics             jobs.JobMetrics
+	enabled             bool
 }
 
 func NewExportWorker(
@@ -37,6 +41,7 @@ func NewExportWorker(
 	exportFn ExportFn,
 	wrapWithStageFn WrapWithStageFn,
 	metrics jobs.JobMetrics,
+	enabled bool,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
@@ -45,6 +50,7 @@ func NewExportWorker(
 		exportFn:            exportFn,
 		wrapWithStageFn:     wrapWithStageFn,
 		metrics:             metrics,
+		enabled:             enabled,
 	}
 }
 
@@ -53,13 +59,31 @@ func (r *ExportWorker) IsSupported(ctx context.Context, job provisioning.Job) bo
 }
 
 // Process will start a job
-func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) error {
+func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, job provisioning.Job, progress jobs.JobProgressRecorder) (processErr error) {
+	if !r.enabled {
+		return fmt.Errorf("export functionality is disabled by configuration")
+	}
+
 	options := job.Spec.Push
 	if options == nil {
 		return errors.New("missing export settings")
 	}
 
-	logger := logging.FromContext(ctx).With("job", job.GetName(), "namespace", job.GetNamespace())
+	logger := logging.FromContext(ctx).With("options", options)
+	ctx = logging.Context(ctx, logger)
+	ctx, span := tracing.Start(ctx, "provisioning.export.process")
+	defer func() {
+		if processErr != nil {
+			_ = tracing.Error(span, processErr)
+		}
+		span.End()
+	}()
+	span.SetAttributes(
+		attribute.String("export.branch", options.Branch),
+		attribute.String("export.folder", options.Folder),
+		attribute.String("export.path", options.Path),
+	)
+
 	start := time.Now()
 	outcome := utils.ErrorOutcome
 	resourcesExported := 0

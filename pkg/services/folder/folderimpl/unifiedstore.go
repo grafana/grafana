@@ -22,6 +22,7 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
@@ -34,17 +35,19 @@ type FolderUnifiedStoreImpl struct {
 	k8sclient   client.K8sHandler
 	userService user.Service
 	tracer      trace.Tracer
+	maxDepth    int
 }
 
 // sqlStore implements the store interface.
 var _ folder.Store = (*FolderUnifiedStoreImpl)(nil)
 
-func ProvideUnifiedStore(k8sHandler client.K8sHandler, userService user.Service, tracer trace.Tracer) *FolderUnifiedStoreImpl {
+func ProvideUnifiedStore(k8sHandler client.K8sHandler, userService user.Service, tracer trace.Tracer, cfg *setting.Cfg) *FolderUnifiedStoreImpl {
 	return &FolderUnifiedStoreImpl{
 		k8sclient:   k8sHandler,
 		log:         log.New("folder-store"),
 		userService: userService,
 		tracer:      tracer,
+		maxDepth:    cfg.MaxNestedFolderDepth,
 	}
 }
 
@@ -252,6 +255,22 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		})
 	}
 
+	// Exclude k6 folder from search results at the query level to avoid returning
+	// fewer results than the LIMIT, which breaks pagination. The unified/bleve
+	// search backend handles NotIn correctly. The legacy search backend ignores
+	// NotIn (it is not supported), so we also keep a post-filter as a fallback
+	// for legacy mode. The post-filter alone would break pagination (returning
+	// 49 instead of 50 results), but this is acceptable as a temporary state
+	// until legacy search is fully removed.
+	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
+	if !allowK6Folder {
+		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_NAME,
+			Operator: string(selection.NotIn),
+			Values:   []string{accesscontrol.K6FolderUID},
+		})
+	}
+
 	// now, get children of the parent folder
 	out, err := ss.k8sclient.Search(ctx, q.OrgID, req)
 	if err != nil {
@@ -263,14 +282,14 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		return nil, err
 	}
 
-	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
-	hits := make([]*folder.FolderReference, 0)
+	hits := make([]*folder.FolderReference, 0, len(res.Hits))
 	for _, item := range res.Hits {
-		// filter out k6 folders if request is not from a service account
+		// TODO: Remove this post-filter once legacy search is fully removed.
+		// Post-filter k6 folder as a fallback for the legacy search backend,
+		// which ignores the NotIn filter above.
 		if item.Name == accesscontrol.K6FolderUID && !allowK6Folder {
 			continue
 		}
-
 		f := &folder.FolderReference{
 			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 			UID:       item.Name,
@@ -291,7 +310,7 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 
 	height := -1
 	queue := []string{foldrUID}
-	for len(queue) > 0 && height <= folder.MaxNestedFolderDepth {
+	for len(queue) > 0 && height <= ss.maxDepth {
 		length := len(queue)
 		height++
 		for i := 0; i < length; i++ {
@@ -309,8 +328,8 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 			}
 		}
 	}
-	if height > folder.MaxNestedFolderDepth {
-		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", folder.MaxNestedFolderDepth)
+	if height > ss.maxDepth {
+		ss.log.Warn("folder height exceeds the maximum allowed depth, You might have a circular reference", "uid", foldrUID, "orgId", orgID, "maxDepth", ss.maxDepth)
 	}
 	return height, nil
 }
@@ -350,14 +369,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"GetFolders")
 	defer span.End()
 
-	opts := v1.ListOptions{}
-	if q.WithFullpath || q.WithFullpathUIDs {
-		// only supported in modes 0-2, to keep the alerting queries from causing tons of get folder requests
-		// to retrieve the parent for all folders in grafana
-		opts.LabelSelector = utils.LabelGetFullpath + "=true"
-	}
-
-	out, err := ss.list(ctx, q.OrgID, opts)
+	out, err := ss.list(ctx, q.OrgID, v1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}

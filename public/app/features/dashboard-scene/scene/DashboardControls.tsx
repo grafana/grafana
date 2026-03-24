@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -105,10 +105,19 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
         refreshPickerDeactivation = this.state.refreshPicker.activate();
       }
 
+      // Subscribe to time range changes to track interactions
+      const timeRange = sceneGraph.getTimeRange(this);
+      const timeRangeSubscription = timeRange.subscribeToState((newState, prevState) => {
+        if (newState.value !== prevState.value) {
+          reportInteraction('grafana_dashboards_time_picker_changed');
+        }
+      });
+
       return () => {
         if (refreshPickerDeactivation) {
           refreshPickerDeactivation();
         }
+        timeRangeSubscription.unsubscribe();
       };
     });
   }
@@ -163,6 +172,24 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const useUnifiedDrilldownUI = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
 
   if (!model.hasControls()) {
+    // If dynamic dashboards is enabled, we need to show the edit/share/playlist buttons
+    // However we shouldn't do it if we're in edit panel view
+    // `DashboardControlActions` already check for edit panel view but we need to prevent showing the container as well
+    if (config.featureToggles.dashboardNewLayouts && !editPanel) {
+      return (
+        <>
+          <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
+            <div className={styles.rightControls}>
+              <div className={styles.fixedControls}>
+                <DashboardControlActions dashboard={dashboard} />
+              </div>
+            </div>
+          </div>
+          {renderHiddenVariables(dashboard)}
+        </>
+      );
+    }
+
     // To still have spacing when no controls are rendered
     return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
   }
@@ -234,7 +261,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <DashboardControlActions dashboard={dashboard} />
           </div>
         )}
-        {config.featureToggles.dashboardFiltersOverview && (
+        {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
           <div className={styles.fixedControls}>
             <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
           </div>

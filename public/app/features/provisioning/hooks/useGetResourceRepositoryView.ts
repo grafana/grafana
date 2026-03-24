@@ -1,10 +1,8 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { OrgRole } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
 
 import { RepoType } from '../Wizard/types';
@@ -16,11 +14,20 @@ interface GetResourceRepositoryArgs {
   skipQuery?: boolean;
 }
 
+export enum RepoViewStatus {
+  Disabled = 'disabled',
+  Loading = 'loading',
+  Ready = 'ready',
+  Error = 'error',
+}
+
 interface RepositoryViewData {
   repository?: RepositoryView;
   repoType?: RepoType;
   folder?: Folder;
-  isLoading?: boolean;
+  status: RepoViewStatus;
+  error?: unknown;
+  isLoading?: boolean; // TODO: status now contains loading state, this can be removed
   isInstanceManaged: boolean;
   isReadOnlyRepo: boolean;
 }
@@ -31,31 +38,55 @@ export const useGetResourceRepositoryView = ({
   folderName,
   skipQuery,
 }: GetResourceRepositoryArgs): RepositoryViewData => {
-  const hasNoRole = contextSrv.user.orgRole === OrgRole.None;
-
   const provisioningEnabled = config.featureToggles.provisioning;
-  const shouldSkipSettings = !provisioningEnabled || skipQuery || hasNoRole || (!name && !folderName);
+  const shouldSkipSettings = !provisioningEnabled || skipQuery || (!name && !folderName);
   const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
 
-  const { data: settingsData, isLoading: isSettingsLoading } = useGetFrontendSettingsQuery(settingsQueryArg);
+  const {
+    data: settingsData,
+    isLoading: isSettingsLoading,
+    error: settingsError,
+  } = useGetFrontendSettingsQuery(settingsQueryArg);
 
-  const skipFolderQuery = !folderName || !provisioningEnabled || skipQuery || hasNoRole;
-  const { data: folder, isLoading: isFolderLoading } = useGetFolderQuery(
-    skipFolderQuery ? skipToken : { name: folderName }
-  );
+  const skipFolderQuery = !folderName || !provisioningEnabled || skipQuery;
+  const {
+    data: folder,
+    isLoading: isFolderLoading,
+    error: folderError,
+  } = useGetFolderQuery(skipFolderQuery ? skipToken : { name: folderName });
 
   if (!provisioningEnabled) {
-    return { isLoading: false, isInstanceManaged: false, isReadOnlyRepo: false };
+    return {
+      isLoading: false,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      status: RepoViewStatus.Disabled,
+    };
   }
 
   if (isSettingsLoading || isFolderLoading) {
-    return { isLoading: true, isInstanceManaged: false, isReadOnlyRepo: false };
+    return {
+      isLoading: true,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      status: RepoViewStatus.Loading,
+    };
+  }
+
+  if (settingsError || folderError) {
+    return {
+      isLoading: false,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      status: RepoViewStatus.Error,
+      error: settingsError || folderError,
+    };
   }
 
   const items = settingsData?.items ?? [];
 
   if (!items.length) {
-    return { folder, isInstanceManaged: false, isReadOnlyRepo: false };
+    return { folder, isInstanceManaged: false, isReadOnlyRepo: false, status: RepoViewStatus.Ready };
   }
 
   const instanceRepo = items.find((repo) => repo.target === 'instance');
@@ -69,6 +100,7 @@ export const useGetResourceRepositoryView = ({
         folder,
         isInstanceManaged,
         isReadOnlyRepo: getIsReadOnlyRepo(repository),
+        status: RepoViewStatus.Ready,
       };
     }
   }
@@ -83,6 +115,7 @@ export const useGetResourceRepositoryView = ({
         folder,
         isInstanceManaged,
         isReadOnlyRepo: getIsReadOnlyRepo(repository),
+        status: RepoViewStatus.Ready,
       };
     }
 
@@ -96,6 +129,7 @@ export const useGetResourceRepositoryView = ({
           folder,
           isInstanceManaged,
           isReadOnlyRepo: getIsReadOnlyRepo(repository),
+          status: RepoViewStatus.Ready,
         };
       }
     }
@@ -107,5 +141,6 @@ export const useGetResourceRepositoryView = ({
     isInstanceManaged,
     isReadOnlyRepo: getIsReadOnlyRepo(instanceRepo),
     repoType: instanceRepo?.type,
+    status: RepoViewStatus.Ready,
   };
 };

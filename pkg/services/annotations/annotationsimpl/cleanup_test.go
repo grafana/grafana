@@ -28,7 +28,7 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 		createAnnotationsNum    int
 		createOldAnnotationsNum int
 
-		cfg                           *setting.Cfg
+		cleanupSettings               annotations.CleanupSettings
 		alertAnnotationCount          int64
 		annotationCleanupJobBatchSize int
 		dashboardAnnotationCount      int64
@@ -40,75 +40,55 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 			createAnnotationsNum:          21,
 			createOldAnnotationsNum:       6,
 			annotationCleanupJobBatchSize: 1,
-			cfg: &setting.Cfg{
-				AlertingAnnotationCleanupSetting:   settingsFn(0, 0),
-				DashboardAnnotationCleanupSettings: settingsFn(0, 0),
-				APIAnnotationCleanupSettings:       settingsFn(0, 0),
-			},
-			alertAnnotationCount:     7,
-			dashboardAnnotationCount: 7,
-			APIAnnotationCount:       7,
-			affectedAnnotations:      0,
+			cleanupSettings:               settingsFn(0, 0),
+			alertAnnotationCount:          7,
+			dashboardAnnotationCount:      7,
+			APIAnnotationCount:            7,
+			affectedAnnotations:           0,
 		},
 		{
 			name:                          "should remove annotations created before cut off point",
 			createAnnotationsNum:          21,
 			createOldAnnotationsNum:       6,
 			annotationCleanupJobBatchSize: 1,
-			cfg: &setting.Cfg{
-				AlertingAnnotationCleanupSetting:   settingsFn(time.Hour*48, 0),
-				DashboardAnnotationCleanupSettings: settingsFn(time.Hour*48, 0),
-				APIAnnotationCleanupSettings:       settingsFn(time.Hour*48, 0),
-			},
-			alertAnnotationCount:     5,
-			dashboardAnnotationCount: 5,
-			APIAnnotationCount:       5,
-			affectedAnnotations:      6,
+			cleanupSettings:               settingsFn(time.Hour*48, 0),
+			alertAnnotationCount:          5,
+			dashboardAnnotationCount:      5,
+			APIAnnotationCount:            5,
+			affectedAnnotations:           6,
 		},
 		{
 			name:                          "should only keep three annotations",
 			createAnnotationsNum:          15,
 			createOldAnnotationsNum:       6,
 			annotationCleanupJobBatchSize: 1,
-			cfg: &setting.Cfg{
-				AlertingAnnotationCleanupSetting:   settingsFn(0, 3),
-				DashboardAnnotationCleanupSettings: settingsFn(0, 3),
-				APIAnnotationCleanupSettings:       settingsFn(0, 3),
-			},
-			alertAnnotationCount:     3,
-			dashboardAnnotationCount: 3,
-			APIAnnotationCount:       3,
-			affectedAnnotations:      6,
+			cleanupSettings:               settingsFn(0, 3),
+			alertAnnotationCount:          3,
+			dashboardAnnotationCount:      3,
+			APIAnnotationCount:            3,
+			affectedAnnotations:           6,
 		},
 		{
 			name:                          "running the max count delete again should not remove any annotations",
 			createAnnotationsNum:          9,
 			createOldAnnotationsNum:       6,
 			annotationCleanupJobBatchSize: 1,
-			cfg: &setting.Cfg{
-				AlertingAnnotationCleanupSetting:   settingsFn(0, 3),
-				DashboardAnnotationCleanupSettings: settingsFn(0, 3),
-				APIAnnotationCleanupSettings:       settingsFn(0, 3),
-			},
-			alertAnnotationCount:     3,
-			dashboardAnnotationCount: 3,
-			APIAnnotationCount:       3,
-			affectedAnnotations:      0,
+			cleanupSettings:               settingsFn(0, 3),
+			alertAnnotationCount:          3,
+			dashboardAnnotationCount:      3,
+			APIAnnotationCount:            3,
+			affectedAnnotations:           0,
 		},
 		{
 			name:                          "should not fail if batch size is larger than SQLITE_MAX_VARIABLE_NUMBER for SQLite >= 3.32.0",
 			createAnnotationsNum:          40003,
 			createOldAnnotationsNum:       0,
 			annotationCleanupJobBatchSize: 32767,
-			cfg: &setting.Cfg{
-				AlertingAnnotationCleanupSetting:   settingsFn(0, 1),
-				DashboardAnnotationCleanupSettings: settingsFn(0, 1),
-				APIAnnotationCleanupSettings:       settingsFn(0, 1),
-			},
-			alertAnnotationCount:     1,
-			dashboardAnnotationCount: 1,
-			APIAnnotationCount:       1,
-			affectedAnnotations:      40000,
+			cleanupSettings:               settingsFn(0, 1),
+			alertAnnotationCount:          1,
+			dashboardAnnotationCount:      1,
+			APIAnnotationCount:            1,
+			affectedAnnotations:           40000,
 		},
 	}
 
@@ -130,7 +110,7 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AnnotationCleanupJobBatchSize = int64(test.annotationCleanupJobBatchSize)
 			cleaner := ProvideCleanupService(fakeSQL, cfg)
-			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cfg)
+			affectedAnnotations, affectedAnnotationTags, err := cleaner.Run(context.Background(), test.cleanupSettings)
 			require.NoError(t, err)
 
 			assert.Equal(t, test.affectedAnnotations, affectedAnnotations)
@@ -293,6 +273,7 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 	require.NoError(t, err)
 }
 
-func settingsFn(maxAge time.Duration, maxCount int64) setting.AnnotationCleanupSettings {
-	return setting.AnnotationCleanupSettings{MaxAge: maxAge, MaxCount: maxCount}
+func settingsFn(maxAge time.Duration, maxCount int64) annotations.CleanupSettings {
+	p := setting.AnnotationCleanupSettings{MaxAge: maxAge, MaxCount: maxCount}
+	return annotations.CleanupSettings{Alerting: p, API: p, Dashboard: p}
 }

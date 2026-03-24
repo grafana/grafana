@@ -19,7 +19,15 @@ import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { RowItem } from './RowItem';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, collapse, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
+  const {
+    layout,
+    collapse,
+    fillScreen,
+    hideHeader: isHeaderHidden,
+    isDropTarget,
+    key,
+    repeatSourceKey,
+  } = model.useState();
   const isCollapsed = collapse && !isHeaderHidden; // never allow a row without a header to be collapsed
   const isClone = isRepeatCloneOrChildOf(model);
   const { isEditing } = useDashboardState(model);
@@ -27,6 +35,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
     model.state.conditionalRendering
   );
   const { isSelected, onSelect, isSelectable, onClear: onClearSelection } = useElementSelection(key);
+  const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
   const title = useInterpolatedTitle(model);
   const { rows } = model.getParentLayout().useState();
   const styles = useStyles2(getStyles);
@@ -63,6 +72,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
         !isTopLevel && styles.rowTitleNested,
         isCollapsed && styles.rowTitleCollapsed
       )}
+      data-testid={selectors.components.DashboardRow.title(title)}
     >
       {!model.hasUniqueTitle() && (
         <Tooltip content={t('dashboard.rows-layout.row-warning.title-not-unique', 'This title is not unique')}>
@@ -95,8 +105,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             isCollapsed && styles.wrapperCollapsed,
             shouldGrow && styles.wrapperGrow,
             conditionalRenderingClass,
-            !isClone && isSelected && 'dashboard-selected-element',
-            !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element',
+            !isSelected && !isSourceSelected && selectableHighlight && 'dashboard-selectable-element',
+            (isSelected || isSourceSelected) && 'dashboard-selected-element',
             isDropTarget && 'dashboard-drop-target'
           )}
           onPointerDown={(evt) => {
@@ -135,10 +145,10 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 className={cx(clearStyles, styles.rowTitleButton)}
                 aria-label={
                   isCollapsed
-                    ? t('dashboard.rows-layout.row.expand', 'Expand row')
-                    : t('dashboard.rows-layout.row.collapse', 'Collapse row')
+                    ? t('dashboard.rows-layout.row.expand', 'Expand row {{title}}', { title })
+                    : t('dashboard.rows-layout.row.collapse', 'Collapse row {{title}}', { title })
                 }
-                data-testid={selectors.components.DashboardRow.title(title!)}
+                data-testid={selectors.components.DashboardRow.toggle(title)}
               >
                 <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
                 {!isEditing && titleElement}

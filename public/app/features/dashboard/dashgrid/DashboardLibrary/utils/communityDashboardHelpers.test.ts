@@ -3,7 +3,7 @@ import { InputType, DataSourceInput, DashboardInput, DashboardJson } from 'app/f
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../../types';
 import { fetchCommunityDashboard } from '../api/dashboardLibraryApi';
-import { CONTENT_KINDS, CREATION_ORIGINS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../interactions';
+import { CONTENT_KINDS, CREATION_ORIGINS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../constants';
 import { GnetDashboard } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs } from './autoMapDatasources';

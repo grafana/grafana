@@ -2,7 +2,7 @@ import { isNumber, set, unset, get, cloneDeep, defaultsDeep } from 'lodash';
 import { createContext, useContext, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
-import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
+import { ThresholdsMode, VariableFormatID, MatcherScope } from '@grafana/schema';
 
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
 import { createDataFrame, guessFieldTypeForField } from '../dataframe/processDataFrame';
@@ -20,7 +20,6 @@ import {
   DynamicConfigValue,
   ApplyFieldOverrideOptions,
   FieldOverrideContext,
-  FieldConfigPropertyItem,
   DataLinkPostProcessor,
   FieldConfigSource,
 } from '../types/fieldOverrides';
@@ -70,14 +69,18 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
 /**
  * Return a copy of the DataFrame with all rules applied
  */
-export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFrame[] {
-  if (!options.data) {
+export function applyFieldOverrides(
+  options: ApplyFieldOverrideOptions,
+  data: DataFrame[] | undefined = options.data,
+  scope: MatcherScope = 'series'
+): DataFrame[] {
+  if (!data) {
     return [];
   }
 
   const source = options.fieldConfig;
   if (!source) {
-    return options.data;
+    return data;
   }
 
   const fieldConfigRegistry = options.fieldConfigRegistry ?? standardFieldConfigEditorRegistry;
@@ -89,6 +92,9 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   const override: OverrideProps[] = [];
   if (source.overrides) {
     for (const rule of source.overrides) {
+      if ((rule.matcher.scope ?? 'series') !== scope) {
+        continue;
+      }
       const info = fieldMatchers.get(rule.matcher.id);
       if (info) {
         override.push({
@@ -99,37 +105,45 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
     }
   }
 
-  return options.data.map((originalFrame, index) => {
+  const result: DataFrame[] = Array(data.length);
+  for (let index = 0; index < data.length; index++) {
+    const originalFrame = data[index];
     // Need to define this new frame here as it's passed to the getLinkSupplier function inside the fields loop
-    const newFrame: DataFrame = { ...originalFrame };
-    // Copy fields
-    newFrame.fields = newFrame.fields.map((field) => {
-      return {
-        ...field,
-        config: cloneDeep(field.config),
+    const newFrame = (result[index] = { ...originalFrame });
+
+    // start by making a copy. looping twice is currently unavoidable, as methods downstream (like the displayName
+    // uniqueness check) depend on clone already being present in the fields array.
+    const newFields = Array(newFrame.fields.length);
+    for (let i = 0; i < newFrame.fields.length; i++) {
+      const originalField = newFrame.fields[i];
+      newFields[i] = {
+        ...originalField,
+        config: cloneDeep(originalField.config),
         state: {
-          ...field.state,
+          ...originalField.state,
         },
       };
-    });
+    }
+    newFrame.fields = newFields;
 
+    // now that the frame has the new fields, we can mutate the fields in place.
     for (const field of newFrame.fields) {
       const config = field.config;
 
       field.state!.scopedVars = {
         __dataContext: {
           value: {
-            data: options.data!,
+            data,
             frame: newFrame,
             frameIndex: index,
-            field: field,
+            field,
           },
         },
       };
 
       const context = {
-        field: field,
-        data: options.data!,
+        field,
+        data,
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
         fieldConfigRegistry: fieldConfigRegistry,
@@ -141,7 +155,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
       // Find any matching rules and then override
       for (const rule of override) {
-        if (rule.match(field, newFrame, options.data!)) {
+        if (rule.match(field, newFrame, data)) {
           for (const prop of rule.properties) {
             // config.scopedVars is set already here
             setDynamicConfigValue(config, prop, context);
@@ -159,7 +173,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       }
 
       // Set the Min/Max value automatically
-      const { range, newGlobalRange } = calculateRange(config, field, globalRange, options.data!);
+      const { range, newGlobalRange } = calculateRange(config, field, globalRange, data);
       globalRange = newGlobalRange;
 
       // Clear any cached displayName as it can change during field overrides process
@@ -197,11 +211,12 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       );
 
       if (field.type === FieldType.nestedFrames) {
-        for (const nestedFrames of field.values) {
+        const newValues: DataFrame[][] = Array(field.values.length);
+        for (let idx = 0; idx < field.values.length; idx++) {
+          const nestedFrames: DataFrame[] = field.values[idx];
           for (let nfIndex = 0; nfIndex < nestedFrames.length; nfIndex++) {
-            // TODO: should we apply fieldOverrides to nested frames?
-
-            for (const valueField of nestedFrames[nfIndex].fields) {
+            const nestedFrame = nestedFrames[nfIndex];
+            for (const valueField of nestedFrame.fields) {
               // Get display processor for nested fields
               valueField.display = getDisplayProcessor({
                 field: valueField,
@@ -214,7 +229,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
                   __dataContext: {
                     value: {
                       data: nestedFrames,
-                      frame: nestedFrames[nfIndex],
+                      frame: nestedFrame,
                       frameIndex: nfIndex,
                       field: valueField,
                     },
@@ -223,37 +238,35 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
               };
 
               valueField.getLinks = getLinksSupplier(
-                nestedFrames[nfIndex],
+                nestedFrame,
                 valueField,
-                valueField.state!.scopedVars,
+                valueField.state?.scopedVars ?? {},
                 context.replaceVariables,
                 options.timeZone,
                 options.dataLinkPostProcessor
               );
             }
           }
+          newValues[idx] = applyFieldOverrides(options, nestedFrames, 'nested');
         }
-      }
-
-      if (field.type === FieldType.frame) {
-        field.values = applyFieldOverrides({
-          ...options,
-          // nested frames can be `undefined` in certain situations, like after `merge` transform due to padding the value array.
-          // let's replace them with empty frames to avoid errors applying overrides
-          data: field.values.map((nestedFrame: DataFrame | undefined): DataFrame => {
-            const result = nestedFrame ?? createDataFrame({ fields: [] });
-            result.fields = result.fields.map((newField) => {
-              newField.config = defaultsDeep(newField.config || {}, config);
-              return newField;
-            });
-            return result;
-          }),
-        });
+        field.values = newValues;
+      } else if (field.type === FieldType.frame) {
+        const newValues: DataFrame[] = Array(field.values.length);
+        for (let idx = 0; idx < field.values.length; idx++) {
+          const nestedFrame: DataFrame = field.values[idx] ?? createDataFrame({ fields: [] });
+          for (let fieldIndex = 0; fieldIndex < nestedFrame.fields.length; fieldIndex++) {
+            const valueField = nestedFrame.fields[fieldIndex];
+            valueField.config = defaultsDeep(valueField.config || {}, config);
+          }
+          newValues[idx] = nestedFrame;
+        }
+        // @todo should this be scoped?
+        field.values = applyFieldOverrides(options, newValues);
       }
     }
+  }
 
-    return newFrame;
-  });
+  return result;
 }
 
 function calculateRange(
@@ -288,22 +301,21 @@ function calculateRange(
   return { range: { min, max, delta: max! - min! }, newGlobalRange };
 }
 
+// decimals -> cache mapping, -1 is unspecified decimals. pre-init caches for up to 15 decimals
+type DecimalsCache = Map<unknown, DisplayValue>;
+
 // this is a significant optimization for streaming, where we currently re-process all values in the buffer on ech update
 // via field.display(value). this can potentially be removed once we...
 // 1. process data packets incrementally and/if cache the results in the streaming datafame (maybe by buffer index)
 // 2. have the ability to selectively get display color or text (but not always both, which are each quite expensive)
 // 3. sufficently optimize text formatting and threshold color determinitation
 function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): DisplayProcessor {
-  type dispCache = Map<unknown, DisplayValue>;
-  // decimals -> cache mapping, -1 is unspecified decimals
-  const caches = new Map<number, dispCache>();
-
-  // pre-init caches for up to 15 decimals
-  for (let i = -1; i <= 15; i++) {
-    caches.set(i, new Map());
-  }
-
+  let caches: Map<number, DecimalsCache>;
   return (value: unknown, decimals?: DecimalCount) => {
+    // pre-allocating these maps is quite expensive, so we do it just-in-time.
+    // -1, 0, 1..15 = 17 entries
+    caches ??= new Map(Array.from({ length: 17 }, (_, i) => [i - 1, new Map()]));
+
     let cache = caches.get(decimals ?? -1)!;
 
     let v = cache.get(value);
@@ -378,8 +390,8 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
 export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfig, context: FieldOverrideEnv) {
   // For cases where we have links on the datasource config and the panel config, we need to merge them
   if (config.links && defaults.links) {
-    // Combine the data source links and the panel default config links
-    config.links = [...config.links, ...defaults.links];
+    // Combine the data source links and the panel default config links. mutate rather than allocate new for perf reasons.
+    config.links.push(...defaults.links);
   }
 
   // if we have a base threshold set by default but not on the config, we need to merge it in
@@ -391,43 +403,35 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
     !config.thresholds.steps.some((step) => step.value === -Infinity) &&
     defaultBaseStep
   ) {
-    config.thresholds.steps = [defaultBaseStep, ...config.thresholds.steps];
+    config.thresholds.steps.unshift(defaultBaseStep);
   }
+
   for (const fieldConfigProperty of context.fieldConfigRegistry.list()) {
-    if (fieldConfigProperty.isCustom && !config.custom) {
-      config.custom = {};
-    }
-    processFieldConfigValue(
-      fieldConfigProperty.isCustom ? config.custom : config,
-      fieldConfigProperty.isCustom ? defaults.custom : defaults,
-      fieldConfigProperty,
-      context
-    );
-  }
-
-  validateFieldConfig(config);
-}
-
-function processFieldConfigValue(
-  destination: Record<string, unknown>, // it's mutable
-  source: Record<string, unknown>,
-  fieldConfigProperty: FieldConfigPropertyItem,
-  context: FieldOverrideEnv
-) {
-  const currentConfig = get(destination, fieldConfigProperty.path);
-  if (currentConfig === null || currentConfig === undefined) {
-    const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
-    if (!item) {
-      return;
+    let destination = config;
+    let source = defaults;
+    if (fieldConfigProperty.isCustom) {
+      config.custom ??= {};
+      destination = config.custom;
+      source = defaults.custom;
     }
 
-    if (item && item.shouldApply(context.field!)) {
-      const val = item.process(get(source, item.path), context, item.settings);
-      if (val !== undefined && val !== null) {
-        set(destination, item.path, val);
+    const currentConfig = get(destination, fieldConfigProperty.path);
+    if (currentConfig == null) {
+      const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
+      if (!item) {
+        return;
+      }
+
+      if (item.shouldApply(context.field!)) {
+        const val = item.process(get(source, item.path), context, item.settings);
+        if (val != null) {
+          set(destination, item.path, val);
+        }
       }
     }
   }
+
+  validateFieldConfig(config);
 }
 
 /**
@@ -450,7 +454,7 @@ export function validateFieldConfig(config: FieldConfig) {
   }
 
   // Verify that max > min (swap if necessary)
-  if (config.hasOwnProperty('min') && config.hasOwnProperty('max') && config.min! > config.max!) {
+  if (config.min != null && config.max != null && config.min > config.max) {
     const tmp = config.max;
     config.max = config.min;
     config.min = tmp;

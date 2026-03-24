@@ -341,6 +341,7 @@ describe('DeleteProvisionedFolderForm', () => {
         const expectedParams = new URLSearchParams();
         expectedParams.set('new_pull_request_url', 'https://github.com/test/repo/pull/new');
         expectedParams.set('repo_type', 'git');
+        expectedParams.set('action', 'delete');
         const expectedUrl = `/dashboards?${expectedParams.toString()}`;
 
         expect(mockNavigate).toHaveBeenCalledWith(expectedUrl);

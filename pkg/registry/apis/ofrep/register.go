@@ -10,7 +10,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +23,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -138,6 +139,24 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 				},
 			}}}
 
+	flagsResponse := &spec3.Responses{
+		ResponsesProps: spec3.ResponsesProps{
+			StatusCodeResponses: map[int]*spec3.Response{
+				200: {
+					ResponseProps: spec3.ResponseProps{
+						Content: map[string]*spec3.MediaType{
+							"application/json": {
+								MediaTypeProps: spec3.MediaTypeProps{
+									Schema: spec.MapProperty(nil),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -160,23 +179,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 								},
 							},
 							RequestBody: evaluationContext,
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: spec.MapProperty(nil), // TODO... real type?
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+							Responses:   flagsResponse,
 						},
 					},
 				},
@@ -212,23 +215,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 								},
 							},
 							RequestBody: evaluationContext,
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: spec.MapProperty(nil), // TODO, real type
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
+							Responses:   flagsResponse,
 						},
 					},
 				},

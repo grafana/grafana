@@ -13,7 +13,6 @@ v0alpha1: {
     kinds: [
 		globalrolev0alpha1,
 		globalrolebindingv0alpha1,
-		corerolev0alpha1,
 		rolev0alpha1,
 		rolebindingv0alpha1,
 		resourcepermissionv0alpha1,
@@ -29,6 +28,7 @@ v0alpha1: {
 		namespaced: {
 			"/searchUsers": {
 				"GET": {
+					name: "getSearchUsers",
 					request: {
 						query: {
 							query?: string
@@ -52,6 +52,7 @@ v0alpha1: {
 			}
 			"/searchTeams": {
 				"GET": {
+				  name: "getSearchTeams",
 					request: {
 						query: { 
 							query?: string
@@ -67,6 +68,7 @@ v0alpha1: {
 							email: string
 							provisioned: bool
 							externalUID: string
+							accessControl?: {[string]: bool}
 						}
 						offset: int64
 						totalHits: int64
@@ -91,4 +93,5 @@ v0alpha1: {
 	lastSeenAtAge: string
 	provisioned: bool
 	score: float64
+	accessControl?: {[string]: bool}
 }

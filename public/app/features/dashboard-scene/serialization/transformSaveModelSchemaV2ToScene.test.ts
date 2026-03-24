@@ -392,6 +392,67 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
       expect(adhocVariable.state.defaultKeys).toEqual(adhocVar.spec.defaultKeys);
     });
+
+    it('should set enableGroupBy to true when feature flag is on and enableGroupBy is true', () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+        adhocVar.spec.enableGroupBy = true;
+
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+        expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+        expect(adhocVariable.state.enableGroupBy).toBe(true);
+      } finally {
+        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      }
+    });
+
+    it('should set enableGroupBy to false when feature flag is on and enableGroupBy is false', () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+        adhocVar.spec.enableGroupBy = false;
+
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+        expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+        expect(adhocVariable.state.enableGroupBy).toBe(false);
+      } finally {
+        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      }
+    });
+
+    it('should default enableGroupBy to false when feature flag is on and enableGroupBy is not set', () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      try {
+        const dashboard = cloneDeep(defaultDashboard);
+        const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+        const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+        expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+        expect(adhocVariable.state.enableGroupBy).toBe(false);
+      } finally {
+        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      }
+    });
+
+    it('should not set enableGroupBy when dashboardUnifiedDrilldownControls is disabled', () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      const dashboard = cloneDeep(defaultDashboard);
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      adhocVar.spec.enableGroupBy = true;
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
+      expect(adhocVariable.state.enableGroupBy).toBe(false);
+    });
   });
 
   describe('When creating a snapshot dashboard scene', () => {
@@ -490,11 +551,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
             canAdmin: false,
             annotationsPermissions: {
               dashboard: {
-                canAdd: false,
-                canEdit: false,
-                canDelete: false,
-              },
-              organization: {
                 canAdd: false,
                 canEdit: false,
                 canDelete: false,
@@ -812,11 +868,6 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           canShare: true,
           annotationsPermissions: {
             dashboard: {
-              canAdd: true,
-              canEdit: true,
-              canDelete: true,
-            },
-            organization: {
               canAdd: true,
               canEdit: true,
               canDelete: true,

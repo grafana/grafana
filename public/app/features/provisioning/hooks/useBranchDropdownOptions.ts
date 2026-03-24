@@ -7,6 +7,7 @@ interface UseBranchDropdownOptionsParams {
   repository?: RepositoryView;
   prBranch?: string;
   lastBranch?: string;
+  selectedBranch?: string;
   branchData?: GetRepositoryRefsApiResponse;
   canPushToConfiguredBranch?: boolean;
   canPushToNonConfiguredBranch?: boolean;
@@ -27,6 +28,7 @@ function getBranchDescriptions() {
     ),
     pr: t('provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-pr-branch', 'Pull request branch'),
     lastUsed: t('provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-last-used', 'Last branch'),
+    newBranch: t('provisioned-resource-form.save-or-delete-resource-shared-fields.suffix-new-branch', 'New branch'),
     disabledConfigured: t(
       'provisioned-resource-form.save-or-delete-resource-shared-fields.info-branch-disabled',
       'Push to configured branch is disabled'
@@ -40,12 +42,13 @@ function getBranchDescriptions() {
 
 /**
  * Hook to generate branch dropdown options with proper ordering and deduplication.
- * Order: Configured branch → PR branch → Last used branch → Other branches
+ * Order: Configured branch → PR branch → Last used branch → Selected custom branch → Other branches
  */
 export const useBranchDropdownOptions = ({
   repository,
   prBranch,
   lastBranch,
+  selectedBranch,
   branchData,
   canPushToConfiguredBranch,
   canPushToNonConfiguredBranch,
@@ -88,6 +91,16 @@ export const useBranchDropdownOptions = ({
       description: descriptions.lastUsed,
     });
     addedBranches.add(lastBranch);
+  }
+
+  const selectedExistsInRepository = branchData?.items?.some((ref) => ref.name === selectedBranch);
+  if (selectedBranch && !selectedExistsInRepository && !addedBranches.has(selectedBranch)) {
+    options.push({
+      label: selectedBranch,
+      value: selectedBranch,
+      description: descriptions.newBranch,
+    });
+    addedBranches.add(selectedBranch);
   }
 
   if (branchData?.items) {

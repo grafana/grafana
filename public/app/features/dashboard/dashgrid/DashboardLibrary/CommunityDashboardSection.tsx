@@ -13,13 +13,8 @@ import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './SuggestedDashboardsModal';
 import { checkDashboardCompatibility } from './api/compatibilityApi';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
-import {
-  CONTENT_KINDS,
-  DashboardLibraryInteractions,
-  DISCOVERY_METHODS,
-  EVENT_LOCATIONS,
-  SOURCE_ENTRY_POINTS,
-} from './interactions';
+import { CONTENT_KINDS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
+import { DashboardLibraryInteractions, SuggestedDashboardInteractions } from './interactions';
 import { GnetDashboard, isGnetDashboard } from './types';
 import {
   getThumbnailUrl,
@@ -45,6 +40,10 @@ const INCLUDE_SCREENSHOTS = true;
 export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Props) => {
   const [searchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
+  // Resolve type directly from the UID so the skeleton badge is shown correctly on first render,
+  // even if the parent prop hasn't been computed yet.
+  const resolvedDatasourceType =
+    (datasourceUid ? getDataSourceSrv().getInstanceSettings(datasourceUid)?.type : undefined) ?? datasourceType;
   const [searchQuery, setSearchQuery] = useState('');
   const hasTrackedLoaded = useRef(false);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
@@ -121,7 +120,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   // Track analytics only once on first successful load
   useEffect(() => {
     if (!loading && !hasTrackedLoaded.current && response?.dashboards && response.dashboards.length > 0) {
-      DashboardLibraryInteractions.loaded({
+      SuggestedDashboardInteractions.loaded({
         numberOfItems: response.dashboards.length,
         contentKinds: [CONTENT_KINDS.COMMUNITY_DASHBOARD],
         datasourceTypes: [response.datasourceType],
@@ -146,7 +145,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       }
 
       // Track item click
-      DashboardLibraryInteractions.itemClicked({
+      SuggestedDashboardInteractions.itemClicked({
         contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         datasourceTypes: [response.datasourceType],
         libraryItemId: String(dashboard.id),
@@ -302,16 +301,21 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
             }}
           >
             {Array.from({ length: COMMUNITY_RESULT_SIZE }).map((_, i) => (
-              <DashboardCard.Skeleton key={`skeleton-${i}`} />
+              <DashboardCard.Skeleton
+                key={`skeleton-${i}`}
+                showCompatibilityBadge={
+                  isCompatibilityAppEnabled && !!datasourceUid && resolvedDatasourceType === 'prometheus'
+                }
+              />
             ))}
           </Grid>
         ) : showError ? (
           <Stack direction="column" alignItems="center" gap={2}>
             <Alert
-              title={t('dashboard-library.community-error-title', 'Error loading community dashboards')}
+              title={t('dashboard-library.multi-community-error-title', 'Error loading community dashboards')}
               severity="error"
             >
-              <Trans i18nKey="dashboard-library.community-error">
+              <Trans i18nKey="dashboard-library.multi-community-error">
                 Failed to load community dashboards. Please try again.
               </Trans>
             </Alert>
@@ -369,7 +373,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
                 // Only show badge for Prometheus datasources
                 const showBadge =
-                  isCompatibilityAppEnabled && !!datasourceUid && response?.datasourceType === 'prometheus';
+                  isCompatibilityAppEnabled && !!datasourceUid && resolvedDatasourceType === 'prometheus';
 
                 return (
                   <DashboardCard

@@ -4,6 +4,8 @@ import (
 	"cmp"
 	"context"
 	"fmt"
+	"hash/fnv"
+	"math/rand"
 	"slices"
 	"strings"
 	"sync"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/hashicorp/golang-lru/v2/expirable"
+	gocache "github.com/patrickmn/go-cache"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
@@ -157,7 +160,19 @@ type searchServer struct {
 	rebuildQueue   *debouncer.Queue[rebuildRequest]
 	rebuildWorkers int
 
-	backendDiagnostics resourcepb.DiagnosticsServer
+	injectFailuresPercent     int
+	indexModificationCacheTTL time.Duration
+
+	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
+}
+
+// maybeInjectFailure returns an error for a configured percentage of calls.
+// Returns nil when failure injection is disabled or the call is not selected.
+func (s *searchServer) maybeInjectFailure() error {
+	if s.injectFailuresPercent > 0 && rand.Intn(100) < s.injectFailuresPercent {
+		return fmt.Errorf("injected search failure")
+	}
+	return nil
 }
 
 var (
@@ -198,9 +213,11 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, access types.Ac
 		indexMetrics:   indexMetrics,
 		ownsIndexFn:    ownsIndexFn,
 
-		dashboardIndexMaxAge: opts.DashboardIndexMaxAge,
-		maxIndexAge:          opts.MaxIndexAge,
-		minBuildVersion:      opts.MinBuildVersion,
+		dashboardIndexMaxAge:      opts.DashboardIndexMaxAge,
+		maxIndexAge:               opts.MaxIndexAge,
+		minBuildVersion:           opts.MinBuildVersion,
+		injectFailuresPercent:     opts.InjectFailuresPercent,
+		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 	}
 
 	s.rebuildQueue = debouncer.NewQueue(combineRebuildRequests)
@@ -250,6 +267,10 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.ListManagedObjects")
 	defer span.End()
+
+	if err := s.maybeInjectFailure(); err != nil {
+		return nil, err
+	}
 
 	if req.NextPageToken != "" {
 		return &resourcepb.ListManagedObjectsResponse{
@@ -336,6 +357,10 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 	ctx, span := tracer.Start(ctx, "resource.searchServer.CountManagedObjects")
 	defer span.End()
 
+	if err := s.maybeInjectFailure(); err != nil {
+		return nil, err
+	}
+
 	stats := NewSearchStats("CountManagedObjects")
 	defer s.logStats(ctx, stats, span, "namespace", req.Namespace)
 
@@ -394,6 +419,10 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	ctx, span := tracer.Start(ctx, "resource.searchServer.Search")
 	defer span.End()
 
+	if err := s.maybeInjectFailure(); err != nil {
+		return nil, err
+	}
+
 	if req.Options.Key.Namespace == "" || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
 		return &resourcepb.ResourceSearchResponse{
 			Error: NewBadRequestError("missing namespace, group or resource"),
@@ -447,6 +476,10 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.GetStats")
 	defer span.End()
+
+	if err := s.maybeInjectFailure(); err != nil {
+		return nil, err
+	}
 
 	if req.Namespace == "" {
 		return &resourcepb.ResourceStatsResponse{
@@ -559,7 +592,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		}, nil
 	}
 
-	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now())
+	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
 	rebuildCount := len(completeChs)
 	for _, ch := range completeChs {
 		select {
@@ -691,7 +724,7 @@ func (s *searchServer) IsHealthy(ctx context.Context, req *resourcepb.HealthChec
 	if s.backendDiagnostics == nil {
 		return resourcepb.UnimplementedDiagnosticsServer{}.IsHealthy(ctx, req)
 	}
-	return s.backendDiagnostics.IsHealthy(ctx, req)
+	return s.backendDiagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
 func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
@@ -710,12 +743,28 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			if err != nil {
 				s.log.Error("failed to get import times", "error", err)
 			}
-			s.findIndexesToRebuild(importTimes, nil, time.Now())
+			s.findIndexesToRebuild(importTimes, nil, time.Now(), true)
 		}
 	}
 }
 
-func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time) []chan struct{} {
+// jitterForKey returns a deterministic jitter duration for the given key,
+// bounded to [0, maxAge/2). This spreads index rebuilds across scan intervals
+// to avoid thundering herd CPU spikes when many indexes become stale at once.
+func jitterForKey(key NamespacedResource, maxAge time.Duration) time.Duration {
+	if maxAge <= 0 {
+		return 0
+	}
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(key.String()))
+	jitterRange := uint64(maxAge / 2)
+	if jitterRange == 0 {
+		return 0
+	}
+	return time.Duration(h.Sum64() % jitterRange)
+}
+
+func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool) []chan struct{} {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
 
@@ -742,6 +791,10 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 		var minBuildTime time.Time
 		if maxAge > 0 {
 			minBuildTime = now.Add(-maxAge)
+		}
+
+		if applyJitter {
+			minBuildTime = minBuildTime.Add(-jitterForKey(key, maxAge))
 		}
 
 		lastImportTime := lastImportTimes[key] // Will be time.Time{} if not found.
@@ -1020,6 +1073,7 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	return idx, nil
 }
 
+//nolint:gocyclo
 func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.build")
 	defer span.End()
@@ -1109,20 +1163,45 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		return listRV, err
 	}
 
+	var dedupCache *gocache.Cache
+	if s.indexModificationCacheTTL > 0 {
+		dedupCache = gocache.New(s.indexModificationCacheTTL, time.Minute)
+	}
+
+	addToDedupCache := func(pendingKeys []string) {
+		if dedupCache != nil {
+			for _, k := range pendingKeys {
+				dedupCache.SetDefault(k, struct{}{})
+			}
+		}
+	}
+
+	var lastSinceRV int64
+	var lastCalledAt *time.Time
+
 	updaterFn := func(ctx context.Context, index ResourceIndex, sinceRV int64) (int64, int, error) {
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("updating index", trace.WithAttributes(attribute.Int64("sinceRV", sinceRV)))
 
+		// If we're calling with the same sinceRV as last time, pass the timestamp
+		// of our last call so the backend can skip the lookback window when safe.
+		var calledAt *time.Time
+		if lastSinceRV > 0 && sinceRV == lastSinceRV {
+			calledAt = lastCalledAt
+		}
+
+		listModifiedTime := time.Now()
 		rv, it := s.storage.ListModifiedSince(ctx, NamespacedResource{
 			Group:     nsr.Group,
 			Resource:  nsr.Resource,
 			Namespace: nsr.Namespace,
-		}, sinceRV)
+		}, sinceRV, calledAt)
 
 		// Process documents in batches to avoid memory issues
 		// When dealing with large collections (e.g., 100k+ documents),
 		// loading all documents into memory at once can cause OOM errors.
 		items := make([]*BulkIndexItem, 0, maxBatchSize)
+		pendingKeys := make([]string, 0, maxBatchSize)
 
 		docs := 0
 		for res, err := range it {
@@ -1131,12 +1210,22 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				return 0, 0, ctx.Err()
 			}
 
-			docs++
-
 			if err != nil {
 				span.RecordError(err)
 				return 0, 0, err
 			}
+
+			// Skip events we've already processed when the dedupCache is enabled.
+			// The underlying ListModifiedSince implementation may return events
+			// prior to sinceRV, and the cache lets us skip the extra work.
+			cacheKey := fmt.Sprintf("%s~%d", res.Key.Name, res.ResourceVersion)
+			if dedupCache != nil {
+				if _, found := dedupCache.Get(cacheKey); found {
+					continue
+				}
+			}
+
+			docs++
 
 			key := &res.Key
 			switch res.Action {
@@ -1165,6 +1254,8 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				continue
 			}
 
+			pendingKeys = append(pendingKeys, cacheKey)
+
 			// When we reach the batch size, perform bulk index and reset the batch.
 			if len(items) >= maxBatchSize {
 				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
@@ -1172,7 +1263,9 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 					return 0, 0, err
 				}
 
+				addToDedupCache(pendingKeys)
 				items = items[:0]
+				pendingKeys = pendingKeys[:0]
 			}
 		}
 
@@ -1182,7 +1275,14 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
 				return 0, 0, err
 			}
+
+			addToDedupCache(pendingKeys)
 		}
+
+		// Update timestamp of calling the given `sinceRV` to be used the next
+		// time this function is called.
+		lastSinceRV = sinceRV
+		lastCalledAt = &listModifiedTime
 
 		return rv, docs, nil
 	}
@@ -1380,6 +1480,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 		Title: title,
 		Tags:  tags,
 		Fields: map[string]interface{}{
+			"title": title,
 			"value": val,
 		},
 	}, nil

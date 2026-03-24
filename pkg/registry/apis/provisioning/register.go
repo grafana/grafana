@@ -19,6 +19,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	clientrest "k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -47,9 +48,12 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
+	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
+	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
@@ -94,7 +98,6 @@ type APIBuilder struct {
 	allowedTargets      []provisioning.SyncTargetType
 	allowImageRendering bool
 	minSyncInterval     time.Duration
-	quotaLimits         quotas.QuotaLimits
 
 	features   featuremgmt.FeatureToggles
 	usageStats usagestats.Service
@@ -129,9 +132,10 @@ type APIBuilder struct {
 	extras       []Extra
 	extraWorkers []jobs.Worker
 
-	restConfigGetter func(context.Context) (*clientrest.Config, error)
-	registry         prometheus.Registerer
-	quotaGetter      quotas.QuotaGetter
+	restConfigGetter      func(context.Context) (*clientrest.Config, error)
+	registry              prometheus.Registerer
+	quotaGetter           quotas.QuotaGetter
+	folderMetadataEnabled bool
 }
 
 // NewAPIBuilder creates an API builder.
@@ -159,6 +163,7 @@ func NewAPIBuilder(
 	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
 	useExclusivelyAccessCheckerForAuthz bool,
 	quotaGetter quotas.QuotaGetter,
+	folderMetadataEnabled bool,
 ) *APIBuilder {
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
@@ -167,7 +172,7 @@ func NewAPIBuilder(
 		clients = resources.NewClientFactory(configProvider)
 	}
 
-	parsers := resources.NewParserFactory(clients)
+	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
 	resourceLister := resources.NewResourceListerForMigrations(unified)
 
 	// Create access checker based on mode
@@ -188,7 +193,7 @@ func NewAPIBuilder(
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
 		parsers:                             parsers,
-		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
+		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
 		resourceLister:                      resourceLister,
 		unified:                             unified,
 		access:                              accessChecker,
@@ -203,6 +208,7 @@ func NewAPIBuilder(
 		registry:                            registry,
 		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
 		quotaGetter:                         quotaGetter,
+		folderMetadataEnabled:               folderMetadataEnabled,
 	}
 
 	for _, builder := range extraBuilders {
@@ -210,15 +216,6 @@ func NewAPIBuilder(
 	}
 
 	return b
-}
-
-// SetQuotas sets the quota limits (including repository and resource limits).
-// HACK: This is a workaround to avoid changing NewAPIBuilder signature which would require
-// changes in the enterprise repository. This should be moved to NewAPIBuilder parameters
-// once we can coordinate the change across repositories.
-// The limits are stored here and then passed to validators and workers via quotaLimits.
-func (b *APIBuilder) SetQuotas(limits quotas.QuotaLimits) {
-	b.quotaLimits = limits
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -271,6 +268,7 @@ func RegisterAPIService(
 	extraWorkers []jobs.Worker,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,
+	quotaGetter quotas.QuotaGetter,
 ) (*APIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
@@ -285,11 +283,6 @@ func RegisterAPIService(
 	for _, target := range cfg.ProvisioningAllowedTargets {
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
-
-	quotaGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
-		MaxResourcesPerRepository: cfg.ProvisioningMaxResourcesPerRepository,
-		MaxRepositories:           cfg.ProvisioningMaxRepositories,
-	})
 
 	builder := NewAPIBuilder(
 		cfg.DisableControllers,
@@ -313,14 +306,8 @@ func RegisterAPIService(
 		nil,
 		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
 		quotaGetter,
+		features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), //nolint:staticcheck
 	)
-	// HACK: Set quota limits after construction to avoid changing NewAPIBuilder signature.
-	// See SetQuotas for details.
-	// Config defaults to 10 in pkg/setting. If user sets 0, that means unlimited.
-	builder.SetQuotas(quotas.QuotaLimits{
-		MaxResources:    cfg.ProvisioningMaxResourcesPerRepository,
-		MaxRepositories: cfg.ProvisioningMaxRepositories,
-	})
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -707,7 +694,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// TODO: Remove this connector when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = NewTestConnector(b, testTester)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = NewFilesConnector(b, b.parsers, b.clients, b.accessWithAdmin, b.folderMetadataEnabled)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = NewRefsConnector(b)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = &listConnector{
 		getter: b,
@@ -716,7 +703,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = &historySubresource{
 		repoGetter: b,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled)
 
 	// Add any extra storage
 	for _, extra := range b.extras {
@@ -799,16 +786,22 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			metrics := jobs.RegisterJobMetrics(b.registry)
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
+
+			exportEnabled := b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningExport) //nolint:staticcheck
+
+			// Standalone export generates new UIDs so exported files don't
+			// reference existing resource identifiers.
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
 				b.resourceLister,
-				export.ExportAll,
+				export.ExportAllWithNewUIDs,
 				stageIfPossible,
 				metrics,
+				exportEnabled,
 			)
 
-			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics)
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled) //nolint:staticcheck
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
@@ -819,23 +812,46 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				10,
 			)
 
+			// Migration export preserves original names so the takeover
+			// allowlist can correlate resources during the sync phase.
+			migrateExportWorker := export.NewExportWorker(
+				b.clients,
+				b.repositoryResources,
+				b.resourceLister,
+				export.ExportAll,
+				stageIfPossible,
+				metrics,
+				exportEnabled,
+			)
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
 				cleaner,
-				exportWorker,
+				migrateExportWorker,
 				syncWorker,
 			)
-			migrationWorker := migrate.NewMigrationWorker(unifiedStorageMigrator)
+			migrationWorker := migrate.NewMigrationWorker(
+				unifiedStorageMigrator,
+				b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningExport), //nolint:staticcheck
+			)
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
 			moveWorker := movepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
-			workers := []jobs.Worker{ //nolint:prealloc
+			fixMetadataWorker := fixfoldermetadata.NewWorker()
+			releaseResourcesWorker := releaseresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
+			deleteResourcesWorker := deleteresourcespkg.NewWorker(b.resourceLister, b.clients, 10)
+
+			// All workers registered - export/migrate will check feature flag at runtime
+			workers := make([]jobs.Worker, 0, 8+len(b.extraWorkers))
+			workers = append(workers,
+				deleteResourcesWorker,
 				deleteWorker,
 				exportWorker,
+				fixMetadataWorker,
 				migrationWorker,
 				moveWorker,
+				releaseResourcesWorker,
 				syncWorker,
-			}
+			)
 
 			// Create JobController to handle job create notifications
 			jobController, err := appcontroller.NewJobController(jobInformer)
@@ -872,6 +888,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.jobs, repoGetter, jobHistoryWriter,
 				jobController.InsertNotifications(),
 				b.registry,
+				&metrics,
 				workers...,
 			)
 			if err != nil {
@@ -890,10 +907,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				}
 			}()
 
-			quotaGetter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{
-				MaxResourcesPerRepository: b.quotaLimits.MaxResources,
-				MaxRepositories:           b.quotaLimits.MaxRepositories,
-			})
 			repoController, err := controller.NewRepositoryController(
 				b.GetClient(),
 				repoInformer,
@@ -909,13 +922,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				10,
 				informerFactoryResyncInterval,
 				b.minSyncInterval,
-				quotaGetter,
+				30*time.Second,
+				b.quotaGetter,
+				b.folderMetadataEnabled,
 			)
 			if err != nil {
 				return err
 			}
 
-			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers)
+			go repoController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
 
 			// Create and run connection controller
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
@@ -928,11 +943,16 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				connHealthChecker,
 				b.connectionFactory,
 				informerFactoryResyncInterval,
+				30*time.Second,
+				b.registry,
 			)
 			if err != nil {
 				return err
 			}
-			go connController.Run(postStartHookCtx.Context, repoControllerWorkers)
+			if !cache.WaitForCacheSync(postStartHookCtx.Done(), connInformer.Informer().HasSynced) {
+				return fmt.Errorf("connection controller cache sync failed")
+			}
+			go connController.Run(postStartHookCtx.Context, repoControllerWorkers, func() {}, func() {})
 
 			// If Loki not used, initialize the API client-based history writer and start the controller for history jobs
 			if b.jobHistoryLoki == nil {

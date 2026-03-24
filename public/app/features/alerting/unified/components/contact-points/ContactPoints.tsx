@@ -25,7 +25,6 @@ import { usePagination } from '../../hooks/usePagination';
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { isExtraConfig } from '../../utils/alertmanager/extraConfigs';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
@@ -91,7 +90,7 @@ const ContactPointsTab = () => {
               icon="plus"
               size="lg"
             >
-              <Trans i18nKey="alerting.contact-points.create">Create contact point</Trans>
+              <Trans i18nKey="alerting.contact-points.create">New contact point</Trans>
             </LinkButton>
           )
         }
@@ -115,7 +114,7 @@ const ContactPointsTab = () => {
               href="/alerting/notifications/receivers/new"
               disabled={!addContactPointAllowed}
             >
-              <Trans i18nKey="alerting.contact-points.create">Create contact point</Trans>
+              <Trans i18nKey="alerting.contact-points.create">New contact point</Trans>
             </LinkButton>
           )}
           {exportContactPointsSupported && (
@@ -144,11 +143,8 @@ const ContactPointsTab = () => {
         <ContactPointsList contactPoints={contactPoints} search={search} pageSize={DEFAULT_PAGE_SIZE} />
       )}
 
-      {/* Grafana manager Alertmanager does not support global config, Mimir and Cortex do */}
-      {/* Extra configs also don't support global config */}
-      {!isGrafanaManagedAlertmanager && !isExtraConfig(selectedAlertmanager!) && (
-        <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />
-      )}
+      {/* Grafana managed Alertmanager does not support global config, Mimir and Cortex do */}
+      {!isGrafanaManagedAlertmanager && <GlobalConfigAlert alertManagerName={selectedAlertmanager!} />}
       {ExportDrawer}
     </Stack>
   );
@@ -175,7 +171,7 @@ const NotificationTemplatesTab = () => {
             disabled={!createTemplateAllowed}
           >
             <Trans i18nKey="alerting.notification-templates-tab.add-notification-template-group">
-              Add notification template group
+              New notification template
             </Trans>
           </LinkButton>
         )}

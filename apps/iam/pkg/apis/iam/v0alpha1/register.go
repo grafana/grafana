@@ -19,34 +19,6 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var CoreRoleInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"coreroles", "corerole", "CoreRole",
-	func() runtime.Object { return &CoreRole{} },
-	func() runtime.Object { return &CoreRoleList{} },
-	utils.TableColumns{
-		Definition: []metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Group", Type: "string", Format: "group", Description: "Core role group"},
-			{Name: "Title", Type: "string", Format: "string", Description: "Core role name"},
-			{Name: "Created At", Type: "date"},
-		},
-		Reader: func(obj any) ([]interface{}, error) {
-			core, ok := obj.(*CoreRole)
-			if ok {
-				if core != nil {
-					return []interface{}{
-						core.Name,
-						core.Spec.Group,
-						core.Spec.Title,
-						core.CreationTimestamp.UTC().Format(time.RFC3339),
-					}, nil
-				}
-			}
-			return nil, fmt.Errorf("expected core role")
-		},
-	},
-)
-
 var RoleInfo = utils.NewResourceInfo(GROUP, VERSION,
 	"roles", "role", "Role",
 	func() runtime.Object { return &Role{} },
@@ -339,8 +311,6 @@ func init() {
 
 func AddAuthZKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&CoreRole{},
-		&CoreRoleList{},
 		&Role{},
 		&RoleList{},
 		&RoleBinding{},
@@ -369,6 +339,7 @@ func AddResourcePermissionKnownTypes(scheme *runtime.Scheme, version schema.Grou
 	scheme.AddKnownTypes(version,
 		&ResourcePermission{},
 		&ResourcePermissionList{},
+		&PermissionsSearchResult{},
 
 		// What is this about?
 		&metav1.PartialObjectMetadata{},
@@ -399,8 +370,9 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 		&TeamBindingList{},
 		&ExternalGroupMapping{},
 		&ExternalGroupMappingList{},
-		&GetGroupsResponse{},
-		&GetMembersResponse{},
+		&GetTeamGroupsResponse{},
+		&GetTeamMembersResponse{},
+		&GetUserTeamsResponse{},
 		// For now these are registered in pkg/apis/iam/v0alpha1/register.go
 		// &UserTeamList{},
 		// &ServiceAccountTokenList{},
@@ -420,6 +392,12 @@ func AddAuthNKnownTypes(scheme *runtime.Scheme) error {
 
 	// Enable field selectors for ExternalGroupMapping
 	err = fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, ExternalGroupMappingKind())
+	if err != nil {
+		return err
+	}
+
+	// Enable field selectors for User
+	err = fieldselectors.AddSelectableFieldLabelConversions(scheme, SchemeGroupVersion, UserKind())
 	if err != nil {
 		return err
 	}

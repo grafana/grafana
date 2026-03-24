@@ -1,8 +1,18 @@
 import { screen } from '@testing-library/react';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
+import { AssistantHook, useAssistant } from '@grafana/assistant';
+import { selectors } from '@grafana/e2e-selectors';
+
 import { DashboardCard } from './DashboardCard';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn(),
+  createAssistantContextItem: jest.fn(),
+}));
+
+const useAssistantMock = jest.mocked(useAssistant);
 
 const createMockDetails = (overrides = {}) => ({
   id: '123',
@@ -16,9 +26,16 @@ const createMockDetails = (overrides = {}) => ({
 
 describe('DashboardCard', () => {
   const mockOnClick = jest.fn();
+  const mockOpenAssistant = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default: assistant not available
+    useAssistantMock.mockReturnValue({
+      isLoading: false,
+      isAvailable: false,
+      openAssistant: mockOpenAssistant,
+    } as unknown as AssistantHook);
   });
 
   it('should render title as heading', () => {
@@ -27,7 +44,9 @@ describe('DashboardCard', () => {
       <DashboardCard title="My Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
     );
 
-    expect(screen.getByRole('heading', { name: 'My Dashboard' })).toBeInTheDocument();
+    const cardHeading = screen.getByTestId(selectors.components.Card.heading);
+    expect(cardHeading).toBeInTheDocument();
+    expect(cardHeading).toHaveTextContent('My Dashboard');
   });
 
   it('should render image when imageUrl is provided', () => {
@@ -72,7 +91,9 @@ describe('DashboardCard', () => {
       <DashboardCard title="Test Dashboard" dashboard={dashboard} onClick={mockOnClick} kind="suggested_dashboard" />
     );
 
-    expect(screen.getByRole('heading', { name: 'Test Dashboard' })).toBeInTheDocument();
+    const cardHeading = screen.getByTestId(selectors.components.Card.heading);
+    expect(cardHeading).toBeInTheDocument();
+    expect(cardHeading).toHaveTextContent('Test Dashboard');
     expect(screen.queryByTestId('dashboard-card-description')).not.toBeInTheDocument();
   });
 
@@ -87,7 +108,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      await user.click(screen.getByRole('button', { name: 'Use dashboard' }));
+      await user.click(screen.getByRole('button', { name: 'View dashboard: Test Dashboard' }));
 
       expect(mockOnClick).toHaveBeenCalledTimes(1);
     });
@@ -102,8 +123,8 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'Use template' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Use dashboard' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'View template: Test Dashboard' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'View dashboard: Test Dashboard' })).not.toBeInTheDocument();
     });
 
     it('should display dashboard button text', () => {
@@ -116,8 +137,8 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('button', { name: 'Use dashboard' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Use template' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'View dashboard: Test Dashboard' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'View template: Test Dashboard' })).not.toBeInTheDocument();
     });
   });
 
@@ -310,7 +331,9 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByRole('heading', { name: 'Community Dashboard' })).toBeInTheDocument();
+      const cardHeading = screen.getByTestId(selectors.components.Card.heading);
+      expect(cardHeading).toBeInTheDocument();
+      expect(cardHeading).toHaveTextContent('Community Dashboard');
     });
   });
 
@@ -453,7 +476,7 @@ describe('DashboardCard', () => {
       // With dashboardValidatorApp enabled, details button moves into the title row
       const buttons = screen.getAllByRole('button');
       expect(buttons[0]).toHaveAttribute('aria-label', 'Details');
-      expect(buttons[1]).toHaveTextContent('Use dashboard');
+      expect(buttons[1]).toHaveTextContent('View dashboard');
       expect(buttons[2]).toHaveTextContent('Check compatibility');
     });
   });
@@ -499,6 +522,122 @@ describe('DashboardCard', () => {
 
         expect(screen.getByRole('button', { name: /Check/i })).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Assistant button', () => {
+    const mockOnClose = jest.fn();
+
+    beforeEach(() => {
+      // Enable assistant for these tests
+      useAssistantMock.mockReturnValue({
+        isLoading: false,
+        isAvailable: true,
+        openAssistant: mockOpenAssistant,
+      } as unknown as AssistantHook);
+    });
+
+    it('should show Assistant button when assistant is available and showAssistantButton is true', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+          showAssistantButton
+        />
+      );
+
+      expect(screen.getByRole('button', { name: /Customize with Assistant/i })).toBeInTheDocument();
+    });
+
+    it('should not show Assistant button when showAssistantButton is false', () => {
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+          showAssistantButton={false}
+        />
+      );
+
+      expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
+    });
+
+    it('should not show Assistant button when assistant is unavailable', () => {
+      useAssistantMock.mockReturnValue({
+        isLoading: false,
+        isAvailable: false,
+        openAssistant: mockOpenAssistant,
+      } as unknown as AssistantHook);
+
+      render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+          showAssistantButton
+        />
+      );
+
+      expect(screen.queryByRole('button', { name: /Customize with Assistant/i })).not.toBeInTheDocument();
+    });
+
+    it('should open assistant when Assistant button is clicked', async () => {
+      const { user } = render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+          showAssistantButton
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: /Customize with Assistant/i }));
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          origin: 'dashboard-library/use-dashboard',
+          mode: 'dashboarding',
+          autoSend: true,
+        })
+      );
+    });
+
+    it('should call onClick when Assistant button is clicked', async () => {
+      const { user } = render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+          showAssistantButton
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: /Customize with Assistant/i }));
+
+      expect(mockOnClick).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call onClose when Assistant button is clicked', async () => {
+      const { user } = render(
+        <DashboardCard
+          title="Test Dashboard"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onClose={mockOnClose}
+          kind="template_dashboard"
+          showAssistantButton
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: /Customize with Assistant/i }));
+
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
   });
 });
