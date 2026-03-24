@@ -41,6 +41,10 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardV2FieldConfigSourceOverrides,Properties
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardAutoGridLayoutKindOrGridLayoutKind,AutoGridLayoutKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardAutoGridLayoutKindOrGridLayoutKind,GridLayoutKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind,AutoGridLayoutKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind,GridLayoutKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind,RowsLayoutKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind,TabsLayoutKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardClient,client
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind,ConditionalRenderingDataKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2,DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind,ConditionalRenderingTimeRangeSizeKind

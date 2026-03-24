@@ -21,7 +21,7 @@ DashboardSpec: {
 
 	elements: [ElementReference.name]: Element | *{}
 
-	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+	layout: AutoGridLayoutKind | GridLayoutKind | RowsLayoutKind | TabsLayoutKind
 
 	// Links with references to other dashboards or external websites.
 	links: [...DashboardLink] | *[]

@@ -677,49 +677,51 @@ export const defaultLibraryPanelRef = (): LibraryPanelRef => ({
 	uid: "",
 });
 
-export interface GridLayoutKind {
-	kind: "GridLayout";
-	spec: GridLayoutSpec;
+export interface AutoGridLayoutKind {
+	kind: "AutoGridLayout";
+	spec: AutoGridLayoutSpec;
 }
 
-export const defaultGridLayoutKind = (): GridLayoutKind => ({
-	kind: "GridLayout",
-	spec: defaultGridLayoutSpec(),
+export const defaultAutoGridLayoutKind = (): AutoGridLayoutKind => ({
+	kind: "AutoGridLayout",
+	spec: defaultAutoGridLayoutSpec(),
 });
 
-export interface GridLayoutSpec {
-	items: GridLayoutItemKind[];
+export interface AutoGridLayoutSpec {
+	maxColumnCount?: number;
+	columnWidthMode: "narrow" | "standard" | "wide" | "custom";
+	columnWidth?: number;
+	rowHeightMode: "short" | "standard" | "tall" | "custom";
+	rowHeight?: number;
+	fillScreen?: boolean;
+	items: AutoGridLayoutItemKind[];
 }
 
-export const defaultGridLayoutSpec = (): GridLayoutSpec => ({
+export const defaultAutoGridLayoutSpec = (): AutoGridLayoutSpec => ({
+	maxColumnCount: 3,
+	columnWidthMode: "standard",
+	rowHeightMode: "standard",
+	fillScreen: false,
 	items: [],
 });
 
-export interface GridLayoutItemKind {
-	kind: "GridLayoutItem";
-	spec: GridLayoutItemSpec;
+export interface AutoGridLayoutItemKind {
+	kind: "AutoGridLayoutItem";
+	spec: AutoGridLayoutItemSpec;
 }
 
-export const defaultGridLayoutItemKind = (): GridLayoutItemKind => ({
-	kind: "GridLayoutItem",
-	spec: defaultGridLayoutItemSpec(),
+export const defaultAutoGridLayoutItemKind = (): AutoGridLayoutItemKind => ({
+	kind: "AutoGridLayoutItem",
+	spec: defaultAutoGridLayoutItemSpec(),
 });
 
-export interface GridLayoutItemSpec {
-	x: number;
-	y: number;
-	width: number;
-	height: number;
-	// reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
+export interface AutoGridLayoutItemSpec {
 	element: ElementReference;
-	repeat?: RepeatOptions;
+	repeat?: AutoGridRepeatOptions;
+	conditionalRendering?: ConditionalRenderingGroupKind;
 }
 
-export const defaultGridLayoutItemSpec = (): GridLayoutItemSpec => ({
-	x: 0,
-	y: 0,
-	width: 0,
-	height: 0,
+export const defaultAutoGridLayoutItemSpec = (): AutoGridLayoutItemSpec => ({
 	element: defaultElementReference(),
 });
 
@@ -733,63 +735,18 @@ export const defaultElementReference = (): ElementReference => ({
 	name: "",
 });
 
-export interface RepeatOptions {
+export interface AutoGridRepeatOptions {
 	mode: "variable";
 	value: string;
-	direction?: "h" | "v";
-	maxPerRow?: number;
 }
 
-export const defaultRepeatOptions = (): RepeatOptions => ({
+export const defaultAutoGridRepeatOptions = (): AutoGridRepeatOptions => ({
 	mode: RepeatMode,
 	value: "",
 });
 
 // other repeat modes will be added in the future: label, frame
 export const RepeatMode = "variable";
-
-export interface RowsLayoutKind {
-	kind: "RowsLayout";
-	spec: RowsLayoutSpec;
-}
-
-export const defaultRowsLayoutKind = (): RowsLayoutKind => ({
-	kind: "RowsLayout",
-	spec: defaultRowsLayoutSpec(),
-});
-
-export interface RowsLayoutSpec {
-	rows: RowsLayoutRowKind[];
-}
-
-export const defaultRowsLayoutSpec = (): RowsLayoutSpec => ({
-	rows: [],
-});
-
-export interface RowsLayoutRowKind {
-	kind: "RowsLayoutRow";
-	spec: RowsLayoutRowSpec;
-}
-
-export const defaultRowsLayoutRowKind = (): RowsLayoutRowKind => ({
-	kind: "RowsLayoutRow",
-	spec: defaultRowsLayoutRowSpec(),
-});
-
-export interface RowsLayoutRowSpec {
-	title?: string;
-	collapse?: boolean;
-	hideHeader?: boolean;
-	fillScreen?: boolean;
-	conditionalRendering?: ConditionalRenderingGroupKind;
-	repeat?: RowRepeatOptions;
-	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
-	variables?: VariableKind[];
-}
-
-export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
-	layout: defaultGridLayoutKind(),
-});
 
 export interface ConditionalRenderingGroupKind {
 	kind: "ConditionalRenderingGroup";
@@ -871,70 +828,113 @@ export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRende
 	value: "",
 });
 
+export interface GridLayoutKind {
+	kind: "GridLayout";
+	spec: GridLayoutSpec;
+}
+
+export const defaultGridLayoutKind = (): GridLayoutKind => ({
+	kind: "GridLayout",
+	spec: defaultGridLayoutSpec(),
+});
+
+export interface GridLayoutSpec {
+	items: GridLayoutItemKind[];
+}
+
+export const defaultGridLayoutSpec = (): GridLayoutSpec => ({
+	items: [],
+});
+
+export interface GridLayoutItemKind {
+	kind: "GridLayoutItem";
+	spec: GridLayoutItemSpec;
+}
+
+export const defaultGridLayoutItemKind = (): GridLayoutItemKind => ({
+	kind: "GridLayoutItem",
+	spec: defaultGridLayoutItemSpec(),
+});
+
+export interface GridLayoutItemSpec {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+	// reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
+	element: ElementReference;
+	repeat?: RepeatOptions;
+}
+
+export const defaultGridLayoutItemSpec = (): GridLayoutItemSpec => ({
+	x: 0,
+	y: 0,
+	width: 0,
+	height: 0,
+	element: defaultElementReference(),
+});
+
+export interface RepeatOptions {
+	mode: "variable";
+	value: string;
+	direction?: "h" | "v";
+	maxPerRow?: number;
+}
+
+export const defaultRepeatOptions = (): RepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
+});
+
+export interface RowsLayoutKind {
+	kind: "RowsLayout";
+	spec: RowsLayoutSpec;
+}
+
+export const defaultRowsLayoutKind = (): RowsLayoutKind => ({
+	kind: "RowsLayout",
+	spec: defaultRowsLayoutSpec(),
+});
+
+export interface RowsLayoutSpec {
+	rows: RowsLayoutRowKind[];
+}
+
+export const defaultRowsLayoutSpec = (): RowsLayoutSpec => ({
+	rows: [],
+});
+
+export interface RowsLayoutRowKind {
+	kind: "RowsLayoutRow";
+	spec: RowsLayoutRowSpec;
+}
+
+export const defaultRowsLayoutRowKind = (): RowsLayoutRowKind => ({
+	kind: "RowsLayoutRow",
+	spec: defaultRowsLayoutRowSpec(),
+});
+
+export interface RowsLayoutRowSpec {
+	title?: string;
+	collapse?: boolean;
+	hideHeader?: boolean;
+	fillScreen?: boolean;
+	conditionalRendering?: ConditionalRenderingGroupKind;
+	repeat?: RowRepeatOptions;
+	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
+	variables?: VariableKind[];
+}
+
+export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
+	layout: defaultGridLayoutKind(),
+});
+
 export interface RowRepeatOptions {
 	mode: "variable";
 	value: string;
 }
 
 export const defaultRowRepeatOptions = (): RowRepeatOptions => ({
-	mode: RepeatMode,
-	value: "",
-});
-
-export interface AutoGridLayoutKind {
-	kind: "AutoGridLayout";
-	spec: AutoGridLayoutSpec;
-}
-
-export const defaultAutoGridLayoutKind = (): AutoGridLayoutKind => ({
-	kind: "AutoGridLayout",
-	spec: defaultAutoGridLayoutSpec(),
-});
-
-export interface AutoGridLayoutSpec {
-	maxColumnCount?: number;
-	columnWidthMode: "narrow" | "standard" | "wide" | "custom";
-	columnWidth?: number;
-	rowHeightMode: "short" | "standard" | "tall" | "custom";
-	rowHeight?: number;
-	fillScreen?: boolean;
-	items: AutoGridLayoutItemKind[];
-}
-
-export const defaultAutoGridLayoutSpec = (): AutoGridLayoutSpec => ({
-	maxColumnCount: 3,
-	columnWidthMode: "standard",
-	rowHeightMode: "standard",
-	fillScreen: false,
-	items: [],
-});
-
-export interface AutoGridLayoutItemKind {
-	kind: "AutoGridLayoutItem";
-	spec: AutoGridLayoutItemSpec;
-}
-
-export const defaultAutoGridLayoutItemKind = (): AutoGridLayoutItemKind => ({
-	kind: "AutoGridLayoutItem",
-	spec: defaultAutoGridLayoutItemSpec(),
-});
-
-export interface AutoGridLayoutItemSpec {
-	element: ElementReference;
-	repeat?: AutoGridRepeatOptions;
-	conditionalRendering?: ConditionalRenderingGroupKind;
-}
-
-export const defaultAutoGridLayoutItemSpec = (): AutoGridLayoutItemSpec => ({
-	element: defaultElementReference(),
-});
-
-export interface AutoGridRepeatOptions {
-	mode: "variable";
-	value: string;
-}
-
-export const defaultAutoGridRepeatOptions = (): AutoGridRepeatOptions => ({
 	mode: RepeatMode,
 	value: "",
 });
@@ -1587,7 +1587,7 @@ export interface Spec {
 	// Whether a dashboard is editable or not.
 	editable?: boolean;
 	elements: Record<string, Element>;
-	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
+	layout: AutoGridLayoutKind | GridLayoutKind | RowsLayoutKind | TabsLayoutKind;
 	// Links with references to other dashboards or external websites.
 	links: DashboardLink[];
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
@@ -1614,7 +1614,7 @@ export const defaultSpec = (): Spec => ({
 	cursorSync: "Off",
 	editable: true,
 	elements: {},
-	layout: defaultGridLayoutKind(),
+	layout: defaultAutoGridLayoutKind(),
 	links: [],
 	preload: false,
 	tags: [],

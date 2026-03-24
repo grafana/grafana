@@ -1072,81 +1072,87 @@ func (DashboardLibraryPanelRef) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type DashboardGridLayoutKind struct {
-	Kind string                  `json:"kind"`
-	Spec DashboardGridLayoutSpec `json:"spec"`
-}
-
-// NewDashboardGridLayoutKind creates a new DashboardGridLayoutKind object.
-func NewDashboardGridLayoutKind() *DashboardGridLayoutKind {
-	return &DashboardGridLayoutKind{
-		Kind: "GridLayout",
-		Spec: *NewDashboardGridLayoutSpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutKind.
-func (DashboardGridLayoutKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardGridLayoutSpec struct {
-	Items []DashboardGridLayoutItemKind `json:"items"`
-}
-
-// NewDashboardGridLayoutSpec creates a new DashboardGridLayoutSpec object.
-func NewDashboardGridLayoutSpec() *DashboardGridLayoutSpec {
-	return &DashboardGridLayoutSpec{
-		Items: []DashboardGridLayoutItemKind{},
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutSpec.
-func (DashboardGridLayoutSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutSpec"
-}
-
-// +k8s:openapi-gen=true
-type DashboardGridLayoutItemKind struct {
+type DashboardAutoGridLayoutKind struct {
 	Kind string                      `json:"kind"`
-	Spec DashboardGridLayoutItemSpec `json:"spec"`
+	Spec DashboardAutoGridLayoutSpec `json:"spec"`
 }
 
-// NewDashboardGridLayoutItemKind creates a new DashboardGridLayoutItemKind object.
-func NewDashboardGridLayoutItemKind() *DashboardGridLayoutItemKind {
-	return &DashboardGridLayoutItemKind{
-		Kind: "GridLayoutItem",
-		Spec: *NewDashboardGridLayoutItemSpec(),
+// NewDashboardAutoGridLayoutKind creates a new DashboardAutoGridLayoutKind object.
+func NewDashboardAutoGridLayoutKind() *DashboardAutoGridLayoutKind {
+	return &DashboardAutoGridLayoutKind{
+		Kind: "AutoGridLayout",
+		Spec: *NewDashboardAutoGridLayoutSpec(),
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutItemKind.
-func (DashboardGridLayoutItemKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutItemKind"
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutKind.
+func (DashboardAutoGridLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutKind"
 }
 
 // +k8s:openapi-gen=true
-type DashboardGridLayoutItemSpec struct {
-	X      int64 `json:"x"`
-	Y      int64 `json:"y"`
-	Width  int64 `json:"width"`
-	Height int64 `json:"height"`
-	// reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
-	Element DashboardElementReference `json:"element"`
-	Repeat  *DashboardRepeatOptions   `json:"repeat,omitempty"`
+type DashboardAutoGridLayoutSpec struct {
+	MaxColumnCount  *float64                                   `json:"maxColumnCount,omitempty"`
+	ColumnWidthMode DashboardAutoGridLayoutSpecColumnWidthMode `json:"columnWidthMode"`
+	ColumnWidth     *float64                                   `json:"columnWidth,omitempty"`
+	RowHeightMode   DashboardAutoGridLayoutSpecRowHeightMode   `json:"rowHeightMode"`
+	RowHeight       *float64                                   `json:"rowHeight,omitempty"`
+	FillScreen      *bool                                      `json:"fillScreen,omitempty"`
+	Items           []DashboardAutoGridLayoutItemKind          `json:"items"`
 }
 
-// NewDashboardGridLayoutItemSpec creates a new DashboardGridLayoutItemSpec object.
-func NewDashboardGridLayoutItemSpec() *DashboardGridLayoutItemSpec {
-	return &DashboardGridLayoutItemSpec{
+// NewDashboardAutoGridLayoutSpec creates a new DashboardAutoGridLayoutSpec object.
+func NewDashboardAutoGridLayoutSpec() *DashboardAutoGridLayoutSpec {
+	return &DashboardAutoGridLayoutSpec{
+		MaxColumnCount:  (func(input float64) *float64 { return &input })(3),
+		ColumnWidthMode: DashboardAutoGridLayoutSpecColumnWidthModeStandard,
+		RowHeightMode:   DashboardAutoGridLayoutSpecRowHeightModeStandard,
+		FillScreen:      (func(input bool) *bool { return &input })(false),
+		Items:           []DashboardAutoGridLayoutItemKind{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpec.
+func (DashboardAutoGridLayoutSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridLayoutItemKind struct {
+	Kind string                          `json:"kind"`
+	Spec DashboardAutoGridLayoutItemSpec `json:"spec"`
+}
+
+// NewDashboardAutoGridLayoutItemKind creates a new DashboardAutoGridLayoutItemKind object.
+func NewDashboardAutoGridLayoutItemKind() *DashboardAutoGridLayoutItemKind {
+	return &DashboardAutoGridLayoutItemKind{
+		Kind: "AutoGridLayoutItem",
+		Spec: *NewDashboardAutoGridLayoutItemSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutItemKind.
+func (DashboardAutoGridLayoutItemKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutItemKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridLayoutItemSpec struct {
+	Element              DashboardElementReference               `json:"element"`
+	Repeat               *DashboardAutoGridRepeatOptions         `json:"repeat,omitempty"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind `json:"conditionalRendering,omitempty"`
+}
+
+// NewDashboardAutoGridLayoutItemSpec creates a new DashboardAutoGridLayoutItemSpec object.
+func NewDashboardAutoGridLayoutItemSpec() *DashboardAutoGridLayoutItemSpec {
+	return &DashboardAutoGridLayoutItemSpec{
 		Element: *NewDashboardElementReference(),
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutItemSpec.
-func (DashboardGridLayoutItemSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutItemSpec"
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutItemSpec.
+func (DashboardAutoGridLayoutItemSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutItemSpec"
 }
 
 // +k8s:openapi-gen=true
@@ -1168,107 +1174,26 @@ func (DashboardElementReference) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type DashboardRepeatOptions struct {
-	Mode      string                           `json:"mode"`
-	Value     string                           `json:"value"`
-	Direction *DashboardRepeatOptionsDirection `json:"direction,omitempty"`
-	MaxPerRow *int64                           `json:"maxPerRow,omitempty"`
+type DashboardAutoGridRepeatOptions struct {
+	Mode  string `json:"mode"`
+	Value string `json:"value"`
 }
 
-// NewDashboardRepeatOptions creates a new DashboardRepeatOptions object.
-func NewDashboardRepeatOptions() *DashboardRepeatOptions {
-	return &DashboardRepeatOptions{
+// NewDashboardAutoGridRepeatOptions creates a new DashboardAutoGridRepeatOptions object.
+func NewDashboardAutoGridRepeatOptions() *DashboardAutoGridRepeatOptions {
+	return &DashboardAutoGridRepeatOptions{
 		Mode: DashboardRepeatMode,
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for DashboardRepeatOptions.
-func (DashboardRepeatOptions) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRepeatOptions"
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridRepeatOptions.
+func (DashboardAutoGridRepeatOptions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridRepeatOptions"
 }
 
 // other repeat modes will be added in the future: label, frame
 // +k8s:openapi-gen=true
 const DashboardRepeatMode = "variable"
-
-// +k8s:openapi-gen=true
-type DashboardRowsLayoutKind struct {
-	Kind string                  `json:"kind"`
-	Spec DashboardRowsLayoutSpec `json:"spec"`
-}
-
-// NewDashboardRowsLayoutKind creates a new DashboardRowsLayoutKind object.
-func NewDashboardRowsLayoutKind() *DashboardRowsLayoutKind {
-	return &DashboardRowsLayoutKind{
-		Kind: "RowsLayout",
-		Spec: *NewDashboardRowsLayoutSpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutKind.
-func (DashboardRowsLayoutKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowsLayoutKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardRowsLayoutSpec struct {
-	Rows []DashboardRowsLayoutRowKind `json:"rows"`
-}
-
-// NewDashboardRowsLayoutSpec creates a new DashboardRowsLayoutSpec object.
-func NewDashboardRowsLayoutSpec() *DashboardRowsLayoutSpec {
-	return &DashboardRowsLayoutSpec{
-		Rows: []DashboardRowsLayoutRowKind{},
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutSpec.
-func (DashboardRowsLayoutSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowsLayoutSpec"
-}
-
-// +k8s:openapi-gen=true
-type DashboardRowsLayoutRowKind struct {
-	Kind string                     `json:"kind"`
-	Spec DashboardRowsLayoutRowSpec `json:"spec"`
-}
-
-// NewDashboardRowsLayoutRowKind creates a new DashboardRowsLayoutRowKind object.
-func NewDashboardRowsLayoutRowKind() *DashboardRowsLayoutRowKind {
-	return &DashboardRowsLayoutRowKind{
-		Kind: "RowsLayoutRow",
-		Spec: *NewDashboardRowsLayoutRowSpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutRowKind.
-func (DashboardRowsLayoutRowKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowsLayoutRowKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardRowsLayoutRowSpec struct {
-	Title                *string                                                                     `json:"title,omitempty"`
-	Collapse             *bool                                                                       `json:"collapse,omitempty"`
-	HideHeader           *bool                                                                       `json:"hideHeader,omitempty"`
-	FillScreen           *bool                                                                       `json:"fillScreen,omitempty"`
-	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
-	Repeat               *DashboardRowRepeatOptions                                                  `json:"repeat,omitempty"`
-	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
-	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
-}
-
-// NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
-func NewDashboardRowsLayoutRowSpec() *DashboardRowsLayoutRowSpec {
-	return &DashboardRowsLayoutRowSpec{
-		Layout: *NewDashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutRowSpec.
-func (DashboardRowsLayoutRowSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowsLayoutRowSpec"
-}
 
 // +k8s:openapi-gen=true
 type DashboardConditionalRenderingGroupKind struct {
@@ -1413,6 +1338,183 @@ func (DashboardConditionalRenderingTimeRangeSizeSpec) OpenAPIModelName() string 
 }
 
 // +k8s:openapi-gen=true
+type DashboardGridLayoutKind struct {
+	Kind string                  `json:"kind"`
+	Spec DashboardGridLayoutSpec `json:"spec"`
+}
+
+// NewDashboardGridLayoutKind creates a new DashboardGridLayoutKind object.
+func NewDashboardGridLayoutKind() *DashboardGridLayoutKind {
+	return &DashboardGridLayoutKind{
+		Kind: "GridLayout",
+		Spec: *NewDashboardGridLayoutSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutKind.
+func (DashboardGridLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardGridLayoutSpec struct {
+	Items []DashboardGridLayoutItemKind `json:"items"`
+}
+
+// NewDashboardGridLayoutSpec creates a new DashboardGridLayoutSpec object.
+func NewDashboardGridLayoutSpec() *DashboardGridLayoutSpec {
+	return &DashboardGridLayoutSpec{
+		Items: []DashboardGridLayoutItemKind{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutSpec.
+func (DashboardGridLayoutSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardGridLayoutItemKind struct {
+	Kind string                      `json:"kind"`
+	Spec DashboardGridLayoutItemSpec `json:"spec"`
+}
+
+// NewDashboardGridLayoutItemKind creates a new DashboardGridLayoutItemKind object.
+func NewDashboardGridLayoutItemKind() *DashboardGridLayoutItemKind {
+	return &DashboardGridLayoutItemKind{
+		Kind: "GridLayoutItem",
+		Spec: *NewDashboardGridLayoutItemSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutItemKind.
+func (DashboardGridLayoutItemKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutItemKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardGridLayoutItemSpec struct {
+	X      int64 `json:"x"`
+	Y      int64 `json:"y"`
+	Width  int64 `json:"width"`
+	Height int64 `json:"height"`
+	// reference to a PanelKind from dashboard.spec.elements Expressed as JSON Schema reference
+	Element DashboardElementReference `json:"element"`
+	Repeat  *DashboardRepeatOptions   `json:"repeat,omitempty"`
+}
+
+// NewDashboardGridLayoutItemSpec creates a new DashboardGridLayoutItemSpec object.
+func NewDashboardGridLayoutItemSpec() *DashboardGridLayoutItemSpec {
+	return &DashboardGridLayoutItemSpec{
+		Element: *NewDashboardElementReference(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutItemSpec.
+func (DashboardGridLayoutItemSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutItemSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardRepeatOptions struct {
+	Mode      string                           `json:"mode"`
+	Value     string                           `json:"value"`
+	Direction *DashboardRepeatOptionsDirection `json:"direction,omitempty"`
+	MaxPerRow *int64                           `json:"maxPerRow,omitempty"`
+}
+
+// NewDashboardRepeatOptions creates a new DashboardRepeatOptions object.
+func NewDashboardRepeatOptions() *DashboardRepeatOptions {
+	return &DashboardRepeatOptions{
+		Mode: DashboardRepeatMode,
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardRepeatOptions.
+func (DashboardRepeatOptions) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRepeatOptions"
+}
+
+// +k8s:openapi-gen=true
+type DashboardRowsLayoutKind struct {
+	Kind string                  `json:"kind"`
+	Spec DashboardRowsLayoutSpec `json:"spec"`
+}
+
+// NewDashboardRowsLayoutKind creates a new DashboardRowsLayoutKind object.
+func NewDashboardRowsLayoutKind() *DashboardRowsLayoutKind {
+	return &DashboardRowsLayoutKind{
+		Kind: "RowsLayout",
+		Spec: *NewDashboardRowsLayoutSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutKind.
+func (DashboardRowsLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowsLayoutKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardRowsLayoutSpec struct {
+	Rows []DashboardRowsLayoutRowKind `json:"rows"`
+}
+
+// NewDashboardRowsLayoutSpec creates a new DashboardRowsLayoutSpec object.
+func NewDashboardRowsLayoutSpec() *DashboardRowsLayoutSpec {
+	return &DashboardRowsLayoutSpec{
+		Rows: []DashboardRowsLayoutRowKind{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutSpec.
+func (DashboardRowsLayoutSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowsLayoutSpec"
+}
+
+// +k8s:openapi-gen=true
+type DashboardRowsLayoutRowKind struct {
+	Kind string                     `json:"kind"`
+	Spec DashboardRowsLayoutRowSpec `json:"spec"`
+}
+
+// NewDashboardRowsLayoutRowKind creates a new DashboardRowsLayoutRowKind object.
+func NewDashboardRowsLayoutRowKind() *DashboardRowsLayoutRowKind {
+	return &DashboardRowsLayoutRowKind{
+		Kind: "RowsLayoutRow",
+		Spec: *NewDashboardRowsLayoutRowSpec(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutRowKind.
+func (DashboardRowsLayoutRowKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowsLayoutRowKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardRowsLayoutRowSpec struct {
+	Title                *string                                                                     `json:"title,omitempty"`
+	Collapse             *bool                                                                       `json:"collapse,omitempty"`
+	HideHeader           *bool                                                                       `json:"hideHeader,omitempty"`
+	FillScreen           *bool                                                                       `json:"fillScreen,omitempty"`
+	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
+	Repeat               *DashboardRowRepeatOptions                                                  `json:"repeat,omitempty"`
+	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
+	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
+}
+
+// NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
+func NewDashboardRowsLayoutRowSpec() *DashboardRowsLayoutRowSpec {
+	return &DashboardRowsLayoutRowSpec{
+		Layout: *NewDashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind(),
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardRowsLayoutRowSpec.
+func (DashboardRowsLayoutRowSpec) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowsLayoutRowSpec"
+}
+
+// +k8s:openapi-gen=true
 type DashboardRowRepeatOptions struct {
 	Mode  string `json:"mode"`
 	Value string `json:"value"`
@@ -1428,108 +1530,6 @@ func NewDashboardRowRepeatOptions() *DashboardRowRepeatOptions {
 // OpenAPIModelName returns the OpenAPI model name for DashboardRowRepeatOptions.
 func (DashboardRowRepeatOptions) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowRepeatOptions"
-}
-
-// +k8s:openapi-gen=true
-type DashboardAutoGridLayoutKind struct {
-	Kind string                      `json:"kind"`
-	Spec DashboardAutoGridLayoutSpec `json:"spec"`
-}
-
-// NewDashboardAutoGridLayoutKind creates a new DashboardAutoGridLayoutKind object.
-func NewDashboardAutoGridLayoutKind() *DashboardAutoGridLayoutKind {
-	return &DashboardAutoGridLayoutKind{
-		Kind: "AutoGridLayout",
-		Spec: *NewDashboardAutoGridLayoutSpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutKind.
-func (DashboardAutoGridLayoutKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardAutoGridLayoutSpec struct {
-	MaxColumnCount  *float64                                   `json:"maxColumnCount,omitempty"`
-	ColumnWidthMode DashboardAutoGridLayoutSpecColumnWidthMode `json:"columnWidthMode"`
-	ColumnWidth     *float64                                   `json:"columnWidth,omitempty"`
-	RowHeightMode   DashboardAutoGridLayoutSpecRowHeightMode   `json:"rowHeightMode"`
-	RowHeight       *float64                                   `json:"rowHeight,omitempty"`
-	FillScreen      *bool                                      `json:"fillScreen,omitempty"`
-	Items           []DashboardAutoGridLayoutItemKind          `json:"items"`
-}
-
-// NewDashboardAutoGridLayoutSpec creates a new DashboardAutoGridLayoutSpec object.
-func NewDashboardAutoGridLayoutSpec() *DashboardAutoGridLayoutSpec {
-	return &DashboardAutoGridLayoutSpec{
-		MaxColumnCount:  (func(input float64) *float64 { return &input })(3),
-		ColumnWidthMode: DashboardAutoGridLayoutSpecColumnWidthModeStandard,
-		RowHeightMode:   DashboardAutoGridLayoutSpecRowHeightModeStandard,
-		FillScreen:      (func(input bool) *bool { return &input })(false),
-		Items:           []DashboardAutoGridLayoutItemKind{},
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpec.
-func (DashboardAutoGridLayoutSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutSpec"
-}
-
-// +k8s:openapi-gen=true
-type DashboardAutoGridLayoutItemKind struct {
-	Kind string                          `json:"kind"`
-	Spec DashboardAutoGridLayoutItemSpec `json:"spec"`
-}
-
-// NewDashboardAutoGridLayoutItemKind creates a new DashboardAutoGridLayoutItemKind object.
-func NewDashboardAutoGridLayoutItemKind() *DashboardAutoGridLayoutItemKind {
-	return &DashboardAutoGridLayoutItemKind{
-		Kind: "AutoGridLayoutItem",
-		Spec: *NewDashboardAutoGridLayoutItemSpec(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutItemKind.
-func (DashboardAutoGridLayoutItemKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutItemKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardAutoGridLayoutItemSpec struct {
-	Element              DashboardElementReference               `json:"element"`
-	Repeat               *DashboardAutoGridRepeatOptions         `json:"repeat,omitempty"`
-	ConditionalRendering *DashboardConditionalRenderingGroupKind `json:"conditionalRendering,omitempty"`
-}
-
-// NewDashboardAutoGridLayoutItemSpec creates a new DashboardAutoGridLayoutItemSpec object.
-func NewDashboardAutoGridLayoutItemSpec() *DashboardAutoGridLayoutItemSpec {
-	return &DashboardAutoGridLayoutItemSpec{
-		Element: *NewDashboardElementReference(),
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutItemSpec.
-func (DashboardAutoGridLayoutItemSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutItemSpec"
-}
-
-// +k8s:openapi-gen=true
-type DashboardAutoGridRepeatOptions struct {
-	Mode  string `json:"mode"`
-	Value string `json:"value"`
-}
-
-// NewDashboardAutoGridRepeatOptions creates a new DashboardAutoGridRepeatOptions object.
-func NewDashboardAutoGridRepeatOptions() *DashboardAutoGridRepeatOptions {
-	return &DashboardAutoGridRepeatOptions{
-		Mode: DashboardRepeatMode,
-	}
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridRepeatOptions.
-func (DashboardAutoGridRepeatOptions) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridRepeatOptions"
 }
 
 // +k8s:openapi-gen=true
@@ -2537,7 +2537,7 @@ type DashboardSpec struct {
 	// Whether a dashboard is editable or not.
 	Editable *bool                                                                       `json:"editable,omitempty"`
 	Elements map[string]DashboardElement                                                 `json:"elements"`
-	Layout   DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind `json:"layout"`
+	Layout   DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind `json:"layout"`
 	// Links with references to other dashboards or external websites.
 	Links []DashboardDashboardLink `json:"links"`
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
@@ -2566,7 +2566,7 @@ func NewDashboardSpec() *DashboardSpec {
 		CursorSync:   DashboardDashboardCursorSyncOff,
 		Editable:     (func(input bool) *bool { return &input })(true),
 		Elements:     map[string]DashboardElement{},
-		Layout:       *NewDashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind(),
+		Layout:       *NewDashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind(),
 		Links:        []DashboardDashboardLink{},
 		Preload:      false,
 		Tags:         []string{},
@@ -2724,16 +2724,33 @@ func (DashboardV2AdhocVariableKindDatasource) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
-type DashboardRepeatOptionsDirection string
+type DashboardAutoGridLayoutSpecColumnWidthMode string
 
 const (
-	DashboardRepeatOptionsDirectionH DashboardRepeatOptionsDirection = "h"
-	DashboardRepeatOptionsDirectionV DashboardRepeatOptionsDirection = "v"
+	DashboardAutoGridLayoutSpecColumnWidthModeNarrow   DashboardAutoGridLayoutSpecColumnWidthMode = "narrow"
+	DashboardAutoGridLayoutSpecColumnWidthModeStandard DashboardAutoGridLayoutSpecColumnWidthMode = "standard"
+	DashboardAutoGridLayoutSpecColumnWidthModeWide     DashboardAutoGridLayoutSpecColumnWidthMode = "wide"
+	DashboardAutoGridLayoutSpecColumnWidthModeCustom   DashboardAutoGridLayoutSpecColumnWidthMode = "custom"
 )
 
-// OpenAPIModelName returns the OpenAPI model name for DashboardRepeatOptionsDirection.
-func (DashboardRepeatOptionsDirection) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRepeatOptionsDirection"
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpecColumnWidthMode.
+func (DashboardAutoGridLayoutSpecColumnWidthMode) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutSpecColumnWidthMode"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridLayoutSpecRowHeightMode string
+
+const (
+	DashboardAutoGridLayoutSpecRowHeightModeShort    DashboardAutoGridLayoutSpecRowHeightMode = "short"
+	DashboardAutoGridLayoutSpecRowHeightModeStandard DashboardAutoGridLayoutSpecRowHeightMode = "standard"
+	DashboardAutoGridLayoutSpecRowHeightModeTall     DashboardAutoGridLayoutSpecRowHeightMode = "tall"
+	DashboardAutoGridLayoutSpecRowHeightModeCustom   DashboardAutoGridLayoutSpecRowHeightMode = "custom"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpecRowHeightMode.
+func (DashboardAutoGridLayoutSpecRowHeightMode) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutSpecRowHeightMode"
 }
 
 // +k8s:openapi-gen=true
@@ -2778,33 +2795,16 @@ func (DashboardConditionalRenderingVariableSpecOperator) OpenAPIModelName() stri
 }
 
 // +k8s:openapi-gen=true
-type DashboardAutoGridLayoutSpecColumnWidthMode string
+type DashboardRepeatOptionsDirection string
 
 const (
-	DashboardAutoGridLayoutSpecColumnWidthModeNarrow   DashboardAutoGridLayoutSpecColumnWidthMode = "narrow"
-	DashboardAutoGridLayoutSpecColumnWidthModeStandard DashboardAutoGridLayoutSpecColumnWidthMode = "standard"
-	DashboardAutoGridLayoutSpecColumnWidthModeWide     DashboardAutoGridLayoutSpecColumnWidthMode = "wide"
-	DashboardAutoGridLayoutSpecColumnWidthModeCustom   DashboardAutoGridLayoutSpecColumnWidthMode = "custom"
+	DashboardRepeatOptionsDirectionH DashboardRepeatOptionsDirection = "h"
+	DashboardRepeatOptionsDirectionV DashboardRepeatOptionsDirection = "v"
 )
 
-// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpecColumnWidthMode.
-func (DashboardAutoGridLayoutSpecColumnWidthMode) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutSpecColumnWidthMode"
-}
-
-// +k8s:openapi-gen=true
-type DashboardAutoGridLayoutSpecRowHeightMode string
-
-const (
-	DashboardAutoGridLayoutSpecRowHeightModeShort    DashboardAutoGridLayoutSpecRowHeightMode = "short"
-	DashboardAutoGridLayoutSpecRowHeightModeStandard DashboardAutoGridLayoutSpecRowHeightMode = "standard"
-	DashboardAutoGridLayoutSpecRowHeightModeTall     DashboardAutoGridLayoutSpecRowHeightMode = "tall"
-	DashboardAutoGridLayoutSpecRowHeightModeCustom   DashboardAutoGridLayoutSpecRowHeightMode = "custom"
-)
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutSpecRowHeightMode.
-func (DashboardAutoGridLayoutSpecRowHeightMode) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutSpecRowHeightMode"
+// OpenAPIModelName returns the OpenAPI model name for DashboardRepeatOptionsDirection.
+func (DashboardRepeatOptionsDirection) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRepeatOptionsDirection"
 }
 
 // +k8s:openapi-gen=true
@@ -3007,6 +3007,85 @@ func (DashboardValueMapOrRangeMapOrRegexMapOrSpecialValueMap) OpenAPIModelName()
 }
 
 // +k8s:openapi-gen=true
+type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind struct {
+	ConditionalRenderingVariableKind      *DashboardConditionalRenderingVariableKind      `json:"ConditionalRenderingVariableKind,omitempty"`
+	ConditionalRenderingDataKind          *DashboardConditionalRenderingDataKind          `json:"ConditionalRenderingDataKind,omitempty"`
+	ConditionalRenderingTimeRangeSizeKind *DashboardConditionalRenderingTimeRangeSizeKind `json:"ConditionalRenderingTimeRangeSizeKind,omitempty"`
+}
+
+// NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind creates a new DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind object.
+func NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind() *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind {
+	return &DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind` as JSON.
+func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) MarshalJSON() ([]byte, error) {
+	if resource.ConditionalRenderingVariableKind != nil {
+		return json.Marshal(resource.ConditionalRenderingVariableKind)
+	}
+	if resource.ConditionalRenderingDataKind != nil {
+		return json.Marshal(resource.ConditionalRenderingDataKind)
+	}
+	if resource.ConditionalRenderingTimeRangeSizeKind != nil {
+		return json.Marshal(resource.ConditionalRenderingTimeRangeSizeKind)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind` from JSON.
+func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["kind"]
+	if !found {
+		return nil
+	}
+
+	switch discriminator {
+	case "ConditionalRenderingData":
+		var dashboardConditionalRenderingDataKind DashboardConditionalRenderingDataKind
+		if err := json.Unmarshal(raw, &dashboardConditionalRenderingDataKind); err != nil {
+			return err
+		}
+
+		resource.ConditionalRenderingDataKind = &dashboardConditionalRenderingDataKind
+		return nil
+	case "ConditionalRenderingTimeRangeSize":
+		var dashboardConditionalRenderingTimeRangeSizeKind DashboardConditionalRenderingTimeRangeSizeKind
+		if err := json.Unmarshal(raw, &dashboardConditionalRenderingTimeRangeSizeKind); err != nil {
+			return err
+		}
+
+		resource.ConditionalRenderingTimeRangeSizeKind = &dashboardConditionalRenderingTimeRangeSizeKind
+		return nil
+	case "ConditionalRenderingVariable":
+		var dashboardConditionalRenderingVariableKind DashboardConditionalRenderingVariableKind
+		if err := json.Unmarshal(raw, &dashboardConditionalRenderingVariableKind); err != nil {
+			return err
+		}
+
+		resource.ConditionalRenderingVariableKind = &dashboardConditionalRenderingVariableKind
+		return nil
+	}
+
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind.
+func (DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind"
+}
+
+// +k8s:openapi-gen=true
 type DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind struct {
 	GridLayoutKind     *DashboardGridLayoutKind     `json:"GridLayoutKind,omitempty"`
 	AutoGridLayoutKind *DashboardAutoGridLayoutKind `json:"AutoGridLayoutKind,omitempty"`
@@ -3095,85 +3174,6 @@ func (resource *DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRow
 // OpenAPIModelName returns the OpenAPI model name for DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind.
 func (DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind"
-}
-
-// +k8s:openapi-gen=true
-type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind struct {
-	ConditionalRenderingVariableKind      *DashboardConditionalRenderingVariableKind      `json:"ConditionalRenderingVariableKind,omitempty"`
-	ConditionalRenderingDataKind          *DashboardConditionalRenderingDataKind          `json:"ConditionalRenderingDataKind,omitempty"`
-	ConditionalRenderingTimeRangeSizeKind *DashboardConditionalRenderingTimeRangeSizeKind `json:"ConditionalRenderingTimeRangeSizeKind,omitempty"`
-}
-
-// NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind creates a new DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind object.
-func NewDashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind() *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind {
-	return &DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind{}
-}
-
-// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind` as JSON.
-func (resource DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) MarshalJSON() ([]byte, error) {
-	if resource.ConditionalRenderingVariableKind != nil {
-		return json.Marshal(resource.ConditionalRenderingVariableKind)
-	}
-	if resource.ConditionalRenderingDataKind != nil {
-		return json.Marshal(resource.ConditionalRenderingDataKind)
-	}
-	if resource.ConditionalRenderingTimeRangeSizeKind != nil {
-		return json.Marshal(resource.ConditionalRenderingTimeRangeSizeKind)
-	}
-
-	return []byte("null"), nil
-}
-
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind` from JSON.
-func (resource *DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) UnmarshalJSON(raw []byte) error {
-	if raw == nil {
-		return nil
-	}
-
-	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
-	parsedAsMap := make(map[string]interface{})
-	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
-		return err
-	}
-
-	discriminator, found := parsedAsMap["kind"]
-	if !found {
-		return nil
-	}
-
-	switch discriminator {
-	case "ConditionalRenderingData":
-		var dashboardConditionalRenderingDataKind DashboardConditionalRenderingDataKind
-		if err := json.Unmarshal(raw, &dashboardConditionalRenderingDataKind); err != nil {
-			return err
-		}
-
-		resource.ConditionalRenderingDataKind = &dashboardConditionalRenderingDataKind
-		return nil
-	case "ConditionalRenderingTimeRangeSize":
-		var dashboardConditionalRenderingTimeRangeSizeKind DashboardConditionalRenderingTimeRangeSizeKind
-		if err := json.Unmarshal(raw, &dashboardConditionalRenderingTimeRangeSizeKind); err != nil {
-			return err
-		}
-
-		resource.ConditionalRenderingTimeRangeSizeKind = &dashboardConditionalRenderingTimeRangeSizeKind
-		return nil
-	case "ConditionalRenderingVariable":
-		var dashboardConditionalRenderingVariableKind DashboardConditionalRenderingVariableKind
-		if err := json.Unmarshal(raw, &dashboardConditionalRenderingVariableKind); err != nil {
-			return err
-		}
-
-		resource.ConditionalRenderingVariableKind = &dashboardConditionalRenderingVariableKind
-		return nil
-	}
-
-	return nil
-}
-
-// OpenAPIModelName returns the OpenAPI model name for DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind.
-func (DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind"
 }
 
 // +k8s:openapi-gen=true
@@ -3603,4 +3603,95 @@ func (resource *DashboardAutoGridLayoutKindOrGridLayoutKind) UnmarshalJSON(raw [
 // OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutKindOrGridLayoutKind.
 func (DashboardAutoGridLayoutKindOrGridLayoutKind) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutKindOrGridLayoutKind"
+}
+
+// +k8s:openapi-gen=true
+type DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind struct {
+	AutoGridLayoutKind *DashboardAutoGridLayoutKind `json:"AutoGridLayoutKind,omitempty"`
+	GridLayoutKind     *DashboardGridLayoutKind     `json:"GridLayoutKind,omitempty"`
+	RowsLayoutKind     *DashboardRowsLayoutKind     `json:"RowsLayoutKind,omitempty"`
+	TabsLayoutKind     *DashboardTabsLayoutKind     `json:"TabsLayoutKind,omitempty"`
+}
+
+// NewDashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind creates a new DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind object.
+func NewDashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind() *DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind {
+	return &DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind{}
+}
+
+// MarshalJSON implements a custom JSON marshalling logic to encode `DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind` as JSON.
+func (resource DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind) MarshalJSON() ([]byte, error) {
+	if resource.AutoGridLayoutKind != nil {
+		return json.Marshal(resource.AutoGridLayoutKind)
+	}
+	if resource.GridLayoutKind != nil {
+		return json.Marshal(resource.GridLayoutKind)
+	}
+	if resource.RowsLayoutKind != nil {
+		return json.Marshal(resource.RowsLayoutKind)
+	}
+	if resource.TabsLayoutKind != nil {
+		return json.Marshal(resource.TabsLayoutKind)
+	}
+
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind` from JSON.
+func (resource *DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind) UnmarshalJSON(raw []byte) error {
+	if raw == nil {
+		return nil
+	}
+
+	// FIXME: this is wasteful, we need to find a more efficient way to unmarshal this.
+	parsedAsMap := make(map[string]interface{})
+	if err := json.Unmarshal(raw, &parsedAsMap); err != nil {
+		return err
+	}
+
+	discriminator, found := parsedAsMap["kind"]
+	if !found {
+		return nil
+	}
+
+	switch discriminator {
+	case "AutoGridLayout":
+		var dashboardAutoGridLayoutKind DashboardAutoGridLayoutKind
+		if err := json.Unmarshal(raw, &dashboardAutoGridLayoutKind); err != nil {
+			return err
+		}
+
+		resource.AutoGridLayoutKind = &dashboardAutoGridLayoutKind
+		return nil
+	case "GridLayout":
+		var dashboardGridLayoutKind DashboardGridLayoutKind
+		if err := json.Unmarshal(raw, &dashboardGridLayoutKind); err != nil {
+			return err
+		}
+
+		resource.GridLayoutKind = &dashboardGridLayoutKind
+		return nil
+	case "RowsLayout":
+		var dashboardRowsLayoutKind DashboardRowsLayoutKind
+		if err := json.Unmarshal(raw, &dashboardRowsLayoutKind); err != nil {
+			return err
+		}
+
+		resource.RowsLayoutKind = &dashboardRowsLayoutKind
+		return nil
+	case "TabsLayout":
+		var dashboardTabsLayoutKind DashboardTabsLayoutKind
+		if err := json.Unmarshal(raw, &dashboardTabsLayoutKind); err != nil {
+			return err
+		}
+
+		resource.TabsLayoutKind = &dashboardTabsLayoutKind
+		return nil
+	}
+
+	return nil
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind.
+func (DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardAutoGridLayoutKindOrGridLayoutKindOrRowsLayoutKindOrTabsLayoutKind"
 }
