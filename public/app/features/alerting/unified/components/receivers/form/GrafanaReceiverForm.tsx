@@ -150,7 +150,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
   return (
     <>
-      {hasOnCallError && (
+      {hasOnCallError && onCallNotifierMeta.enabled && (
         <Alert
           severity="error"
           title={t(
