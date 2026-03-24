@@ -593,9 +593,6 @@ func (d *dataStore) batchSave(ctx context.Context, items []batchSaveItem) error 
 
 	ops := make([]kvpkg.BatchOp, len(items))
 	for i, item := range items {
-		if err := validateDataKey(item.Key); err != nil {
-			return fmt.Errorf("invalid data key at index %d: %w", i, err)
-		}
 		key := item.Key.String()
 		if item.Key.GUID != "" {
 			key = item.Key.StringWithGUID()

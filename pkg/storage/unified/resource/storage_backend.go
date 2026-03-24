@@ -1896,6 +1896,9 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	// Track the last micro RV per resource name for computing previous_resource_version in compat mode.
 	lastMicroRV := make(map[string]int64)
 
+	// Track ADDED resources accepted in the pending buffer to catch duplicates before flush.
+	seenCreates := make(map[string]bool)
+
 	// Accumulate validated items for batch save instead of saving one at a time.
 	type pendingItem struct {
 		dataKey DataKey
@@ -1972,7 +1975,17 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		switch resourcepb.WatchEvent_Type(req.Action) {
 		case resourcepb.WatchEvent_ADDED:
 			action = DataActionCreated
-			// Check if resource already exists for create operations
+			createID := req.Key.Group + "/" + req.Key.Resource + "/" + req.Key.Namespace + "/" + req.Key.Name
+			// Check pending buffer for duplicate creates not yet flushed
+			if seenCreates[createID] {
+				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+					Key:    req.Key,
+					Action: req.Action,
+					Error:  "resource already exists",
+				})
+				continue
+			}
+			// Check if resource already exists in storage
 			_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
 				Group:     req.Key.Group,
 				Resource:  req.Key.Resource,
@@ -1995,6 +2008,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				})
 				continue
 			}
+			seenCreates[createID] = true
 		case resourcepb.WatchEvent_MODIFIED:
 			action = DataActionUpdated
 		case resourcepb.WatchEvent_DELETED:
@@ -2027,6 +2041,15 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			ResourceVersion: bulkRvGenerator.next(obj),
 			Action:          action,
 			Folder:          req.Folder,
+		}
+
+		if err := validateDataKey(dataKey); err != nil {
+			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+				Key:    req.Key,
+				Action: req.Action,
+				Error:  fmt.Sprintf("invalid data key: %s", err),
+			})
+			continue
 		}
 
 		pending = append(pending, pendingItem{dataKey: dataKey, value: req.Value, obj: obj, action: action})
