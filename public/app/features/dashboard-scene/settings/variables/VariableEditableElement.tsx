@@ -295,8 +295,6 @@ function VariableDescriptionTextArea({ variable, id }: VariableInputProps) {
 
 function VariableDisplayInput({ variable }: VariableInputProps) {
   const { hide: display = VariableHide.dontHide } = variable.useState();
-  const set = variable.parent;
-  const isSectionVariable = set instanceof SceneVariableSet && !(set.parent instanceof DashboardScene);
 
   const onChange = (option: VariableHide) => {
     dashboardEditActions.changeVariableHideValue({
@@ -310,10 +308,16 @@ function VariableDisplayInput({ variable }: VariableInputProps) {
     <VariableDisplaySelect
       display={display}
       type={variable.state.type}
-      hideControlsMenuOption={isSectionVariable}
+      hideControlsMenuOption={shouldHideControlsMenuOption(variable)}
       onChange={onChange}
     />
   );
+}
+
+export function shouldHideControlsMenuOption(variable: SceneVariable): boolean {
+  const set = variable.parent;
+  const dashboardVariable = set instanceof SceneVariableSet && set.parent instanceof DashboardScene;
+  return !dashboardVariable;
 }
 
 function useVariableTypeCategory(variable: SceneVariable) {
