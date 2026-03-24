@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useSceneContext } from '@grafana/scenes-react';
-import { Button, Drawer, IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { FiringCount, PendingCount } from '../BadgeCounts';
 import { type LabelStats, type LabelValueCount } from '../useLabelsBreakdown';
@@ -13,23 +13,8 @@ import { addOrReplaceFilter, removeFilter, useExactFilterKeys, useFilterValue, u
 import { useLabelSectionOpen } from './labelFilter.hooks';
 import { filterLabels } from './labelFilter.utils';
 
-// --- Public API ---
-
-interface AllLabelsDrawerProps {
-  allLabels: LabelStats[];
-  onClose: () => void;
-}
-
 export const DEFAULT_VISIBLE_LABELS = 25;
 export const DEFAULT_VISIBLE_VALUES = 12;
-
-export function AllLabelsDrawer({ allLabels, onClose }: AllLabelsDrawerProps) {
-  return (
-    <Drawer title={t('alerting.triage.all-labels-drawer-title', 'All labels')} size="sm" onClose={onClose}>
-      <AllLabelsContent allLabels={allLabels} onFilterAdded={onClose} />
-    </Drawer>
-  );
-}
 
 // --- Shared content component (also used by LabelsColumn) ---
 
@@ -47,7 +32,10 @@ export function AllLabelsContent({ allLabels, onFilterAdded, labelFilter = '' }:
   const [showAll, setShowAll] = useState(false);
 
   const exactFilterKeys = useExactFilterKeys();
-  const { filteredLabels, valueMatchKeys, valueHitMap } = filterLabels(allLabels, labelFilter);
+  const { filteredLabels, valueMatchKeys, valueHitMap } = useMemo(
+    () => filterLabels(allLabels, labelFilter),
+    [allLabels, labelFilter]
+  );
   const sectionOpen = useLabelSectionOpen(exactFilterKeys, valueMatchKeys);
 
   const visibleLabels = showAll ? filteredLabels : filteredLabels.slice(0, DEFAULT_VISIBLE_LABELS);
@@ -213,11 +201,6 @@ const getContentStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
     paddingLeft: theme.spacing(1),
     gap: theme.spacing(0.5),
-  }),
-  sectionSeparator: css({
-    borderTop: `1px solid ${theme.colors.border.weak}`,
-    marginTop: theme.spacing(0.75),
-    marginBottom: theme.spacing(0.75),
   }),
   labelRow: css({
     display: 'flex',

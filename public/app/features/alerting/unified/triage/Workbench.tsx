@@ -6,7 +6,7 @@ import { useMeasure } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { SceneQueryRunner } from '@grafana/scenes';
-import { Box, Button, EmptyState, ScrollContainer, Text, useSplitter, useStyles2 } from '@grafana/ui';
+import { Box, Button, EmptyState, ScrollContainer, Stack, Text, useSplitter, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import LoadMoreHelper from '../rule-list/LoadMoreHelper';
@@ -169,7 +169,7 @@ export function Workbench({
   const hasMore = data.length > itemsToRender;
 
   return (
-    <div style={{ display: 'flex', flexGrow: 1, width: '100%', height: '100%' }}>
+    <Stack gap={0} grow={1} width="100%" height="100%">
       {/* always-visible labels column */}
       <LabelsColumn />
       {/* main workbench: splitter + overlaid content */}
@@ -271,7 +271,7 @@ export function Workbench({
           )}
         </div>
       </div>
-    </div>
+    </Stack>
   );
 }
 
