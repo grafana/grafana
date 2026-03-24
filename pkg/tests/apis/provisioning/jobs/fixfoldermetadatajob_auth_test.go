@@ -9,20 +9,11 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	testinfra "github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func withProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
-	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
-}
-
 func TestIntegrationProvisioning_FixFolderMetadataJobAuthorization(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "fixfoldermetadata-auth-test"
@@ -90,39 +81,3 @@ func TestIntegrationProvisioning_FixFolderMetadataJobAuthorization(t *testing.T)
 	})
 }
 
-func TestIntegrationProvisioning_FixFolderMetadataJobFlagDisabled(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
-	ctx := context.Background()
-
-	const repo = "fixfoldermeta-flag-disabled"
-	testRepo := common.TestRepo{
-		Name:               repo,
-		Target:             "folder",
-		Copies:             map[string]string{},
-		ExpectedDashboards: 0,
-		ExpectedFolders:    1,
-	}
-	helper.CreateRepo(t, testRepo)
-
-	body := common.AsJSON(provisioning.JobSpec{
-		Action: provisioning.JobActionFixFolderMetadata,
-	})
-
-	t.Run("admin cannot create fixFolderMetadata job when flag is disabled", func(t *testing.T) {
-		var statusCode int
-		result := helper.AdminREST.Post().
-			Namespace("default").
-			Resource("repositories").
-			Name(repo).
-			SubResource("jobs").
-			Body(body).
-			SetHeader("Content-Type", "application/json").
-			Do(ctx).StatusCode(&statusCode)
-
-		require.Error(t, result.Error(), "should fail when flag is disabled")
-		require.Equal(t, http.StatusBadRequest, statusCode, "should return 400 Bad Request")
-		require.True(t, apierrors.IsBadRequest(result.Error()), "error should be bad request")
-	})
-}

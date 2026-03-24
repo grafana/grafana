@@ -7,13 +7,10 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 
 	const repo = "fix-folder-metadata-test-repo"
 	testRepo := common.TestRepo{
