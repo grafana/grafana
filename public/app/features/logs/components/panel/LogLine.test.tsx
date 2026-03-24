@@ -357,7 +357,8 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     });
 
     test('Highlights the OTel attributes field when rendered', () => {
-      log = createLogLine({
+      log = createLogLine(
+        {
           labels: { [OTEL_PROBE_FIELD]: '1', service: 'some service' },
           entry: `place="luna" 1ms 3 KB`,
         },
@@ -387,7 +388,8 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     });
 
     test('OTel attributes field is not present when the flag is disabled', () => {
-      log = createLogLine({
+      log = createLogLine(
+        {
           labels: { [OTEL_PROBE_FIELD]: '1', service: 'some service' },
           entry: `place="luna" 1ms 3 KB`,
         },
