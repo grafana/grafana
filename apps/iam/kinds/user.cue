@@ -16,9 +16,7 @@ userKind: {
 userv0alpha1: userKind & {
 	schema: {
 		spec: v0alpha1.UserSpec
-		status: {
-			lastSeenAt: int64 | 0
-		}
+		status: UserStatus
 	}
 	selectableFields: [
 		"spec.email",
@@ -40,4 +38,14 @@ userv0alpha1: userKind & {
 			}
 		}
 	}
+}
+
+UserStatus: {
+	lastSeenAt: int64 | 0
+	teamSync?: TeamSyncStatus
+}
+
+TeamSyncStatus: {
+	state: "syncing" | "success" | "error" @cog(kind="enum",memberNames="Syncing|Success|Error")
+	lastSyncAt: int64 | 0
 }

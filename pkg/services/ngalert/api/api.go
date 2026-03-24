@@ -187,7 +187,6 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterProvisioningApiEndpoints(NewProvisioningApi(&ProvisioningSrv{
 		log:                 logger,
 		policies:            api.Policies,
-		routeService:        api.RouteService,
 		contactPointService: api.ContactPointService,
 		templates:           api.Templates,
 		muteTimings:         api.MuteTimings,

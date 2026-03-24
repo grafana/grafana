@@ -124,6 +124,38 @@ func TestIntegrationShortURLService(t *testing.T) {
 		newShortURL, err = service.CreateShortURL(ctx, user, cmd3)
 		require.ErrorIs(t, err, shorturls.ErrShortURLInvalidPath)
 		require.Nil(t, newShortURL)
+
+		// Protocol-relative URL (open redirect)
+		cmd4 := &dtos.CreateShortURLCmd{
+			Path: "//evil.com/path",
+		}
+		newShortURL, err = service.CreateShortURL(ctx, user, cmd4)
+		require.ErrorIs(t, err, shorturls.ErrShortURLInvalidPath)
+		require.Nil(t, newShortURL)
+
+		// Full URL with scheme (open redirect)
+		cmd5 := &dtos.CreateShortURLCmd{
+			Path: "https://evil.com/path",
+		}
+		newShortURL, err = service.CreateShortURL(ctx, user, cmd5)
+		require.ErrorIs(t, err, shorturls.ErrShortURLInvalidPath)
+		require.Nil(t, newShortURL)
+
+		// Backslash-based URL (open redirect)
+		cmd6 := &dtos.CreateShortURLCmd{
+			Path: `\\evil.com`,
+		}
+		newShortURL, err = service.CreateShortURL(ctx, user, cmd6)
+		require.ErrorIs(t, err, shorturls.ErrShortURLInvalidPath)
+		require.Nil(t, newShortURL)
+
+		// javascript: scheme
+		cmd7 := &dtos.CreateShortURLCmd{
+			Path: "javascript:alert(1)",
+		}
+		newShortURL, err = service.CreateShortURL(ctx, user, cmd7)
+		require.ErrorIs(t, err, shorturls.ErrShortURLInvalidPath)
+		require.Nil(t, newShortURL)
 	})
 
 	t.Run("The same URL will generate different entries", func(t *testing.T) {

@@ -30,9 +30,11 @@ export interface FieldSelectorProps {
   clear(): void;
   collapse(): void;
   fields: FieldWithStats[];
+  logLevelActive?: boolean;
   reorder(fields: string[]): void;
   suggestedFields: FieldWithStats[];
   toggle: (key: string) => void;
+  toggleLevel?: () => void;
 }
 
 export const FieldSelector = ({
@@ -40,9 +42,11 @@ export const FieldSelector = ({
   clear,
   collapse,
   fields,
+  logLevelActive,
   reorder,
   suggestedFields,
   toggle,
+  toggleLevel,
 }: FieldSelectorProps) => {
   const [searchValue, setSearchValue] = useState<string>('');
   const styles = useStyles2(getStyles);
@@ -87,9 +91,11 @@ export const FieldSelector = ({
         activeFields={activeFields}
         clear={clear}
         fields={filteredFields}
+        logLevelActive={logLevelActive}
         reorder={reorder}
         suggestedFields={filteredSuggestedFields}
         toggle={toggle}
+        toggleLevel={toggleLevel}
       />
     </section>
   );
