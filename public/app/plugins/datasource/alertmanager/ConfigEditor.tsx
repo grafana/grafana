@@ -2,6 +2,8 @@ import { produce } from 'immer';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom-v5-compat';
 
+import { appendOrgId } from 'app/core/utils/navigationUrl';
+
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -82,7 +84,7 @@ export const ConfigEditor = (props: Props) => {
         </InlineField>
         {options.jsonData.handleGrafanaManagedAlerts && (
           <Text variant="bodySmall" color="secondary">
-            Make sure to enable the alert forwarding on the <Link to="/alerting/admin">settings page</Link>.
+            Make sure to enable the alert forwarding on the <Link to={appendOrgId('/alerting/admin')}>settings page</Link>.
           </Text>
         )}
       </Box>

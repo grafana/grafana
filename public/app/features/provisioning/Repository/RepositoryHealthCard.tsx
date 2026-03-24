@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
 import { Link } from 'react-router-dom-v5-compat';
 
+import { appendOrgId } from 'app/core/utils/navigationUrl';
+
 import { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Card, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -73,7 +75,7 @@ export function RepositoryHealthCard({ repo }: { repo: Repository }) {
                 <Trans i18nKey="provisioning.repository-overview.connection-status">Connection status:</Trans>
               </Text>
               <div className={styles.spanTwo}>
-                <Link to={`${CONNECTIONS_URL}/${connectionName}/edit`}>
+                <Link to={appendOrgId(`${CONNECTIONS_URL}/${connectionName}/edit`)}>
                   <ConnectionStatusBadge
                     key={connection?.status?.conditions?.find((c) => c.type === 'Ready')?.status || 'pending'}
                     status={connection?.status}

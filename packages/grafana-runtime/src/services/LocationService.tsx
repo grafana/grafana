@@ -9,6 +9,44 @@ import { config } from '../config';
 
 import { LocationUpdate } from './LocationSrv';
 
+let orgIdGetter: (() => number) | undefined;
+
+/**
+ * Registers a callback that returns the current organisation ID.
+ * When set, locationService.push() and .replace() automatically append
+ * ?orgId=<N> to every SPA navigation so URLs remain shareable across orgs.
+ *
+ * Must be called once at app startup after the user session is initialised.
+ * @internal
+ */
+export function setLocationServiceOrgIdGetter(fn: () => number): void {
+  orgIdGetter = fn;
+}
+
+function withOrgId(location: H.Path | H.LocationDescriptor<unknown>): H.Path | H.LocationDescriptor<unknown> {
+  const orgId = orgIdGetter?.();
+  if (!orgId) {
+    return location;
+  }
+
+  if (typeof location === 'string') {
+    if (location.includes('orgId=')) {
+      return location;
+    }
+    return location + (location.includes('?') ? '&' : '?') + `orgId=${orgId}`;
+  }
+
+  // LocationDescriptorObject
+  const search = location.search ?? '';
+  if (search.includes('orgId=')) {
+    return location;
+  }
+  return {
+    ...location,
+    search: search + (search.length > 0 ? '&' : '?') + `orgId=${orgId}`,
+  };
+}
+
 /**
  * @public
  * A wrapper to help work with browser location and history
@@ -92,11 +130,11 @@ export class HistoryWrapper implements LocationService {
   }
 
   push(location: H.Path | H.LocationDescriptor) {
-    this.history.push(location);
+    this.history.push(withOrgId(location));
   }
 
   replace(location: H.Path | H.LocationDescriptor) {
-    this.history.replace(location);
+    this.history.replace(withOrgId(location));
   }
 
   reload() {

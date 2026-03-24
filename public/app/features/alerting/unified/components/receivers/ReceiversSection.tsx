@@ -1,6 +1,8 @@
 import { css, cx } from '@emotion/css';
 import * as React from 'react';
 import { Link } from 'react-router-dom-v5-compat';
+
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -55,7 +57,7 @@ export const ReceiversSection = ({
         </div>
         <Stack direction="row" gap={0.5}>
           {showButton && (
-            <Link to={addButtonTo}>
+            <Link to={appendOrgId(addButtonTo)}>
               <Button type="button" icon="plus">
                 {addButtonLabel}
               </Button>

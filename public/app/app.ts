@@ -41,6 +41,7 @@ import {
   setCorrelationsService,
   setPluginFunctionsHook,
   setMegaMenuOpenHook,
+  setLocationServiceOrgIdGetter,
 } from '@grafana/runtime';
 import {
   initOpenFeature,
@@ -246,6 +247,9 @@ export class GrafanaApp {
 
       // intercept anchor clicks and forward it to custom history instead of relying on browser's history
       document.addEventListener('click', interceptLinkClicks);
+
+      // ensure every SPA navigation carries ?orgId so URLs remain shareable across orgs
+      setLocationServiceOrgIdGetter(() => contextSrv.user.orgId);
 
       // Init DataSourceSrv
       const dataSourceSrv = new DatasourceSrv();
