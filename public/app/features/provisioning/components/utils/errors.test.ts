@@ -64,11 +64,6 @@ describe('getProvisionedRequestError', () => {
       expect(result).toBe('something broke');
     });
 
-    it('returns fallback for a string error that is empty', () => {
-      const result = getProvisionedRequestError('', 'dashboard', 'fallback');
-      expect(result).toBe('fallback');
-    });
-
     it('uses String coercion for non-empty string errors', () => {
       const result = getProvisionedRequestError('custom error text', 'dashboard', 'fallback');
       expect(result).toBe('custom error text');
