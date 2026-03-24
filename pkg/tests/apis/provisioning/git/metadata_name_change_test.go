@@ -1,4 +1,4 @@
-package foldermetadataincremental
+package git
 
 import (
 	"context"
@@ -21,7 +21,7 @@ import (
 func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := sharedDefaultGitHelper(t)
+	helper := gitcommon.RunGrafanaWithGitServer(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-name-change"
