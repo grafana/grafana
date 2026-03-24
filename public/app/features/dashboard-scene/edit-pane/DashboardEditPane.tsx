@@ -265,7 +265,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
         }
       } else {
         if (this.state.selection?.getFirstObject() === obj) {
-          this.clearSelection();
+          this.clearSelection(true);
           return;
         }
       }

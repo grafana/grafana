@@ -40,6 +40,18 @@ setPluginImportUtils({
 });
 
 describe('DashboardEditPane', () => {
+  it('Can close dashboard settings pane when docked', () => {
+    const scene = buildTestScene();
+    const editPane = scene.state.editPane;
+    editPane.setState({ isDocked: true });
+
+    editPane.selectObject(scene, scene.state.key!);
+    expect(editPane.state.selection).toBeDefined();
+
+    editPane.selectObject(scene, scene.state.key!);
+    expect(editPane.state.selection).toBeUndefined();
+  });
+
   it('Handles edit action events that adds objects', () => {
     const scene = buildTestScene();
     const editPane = scene.state.editPane;
