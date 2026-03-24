@@ -1,6 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 
-import { Stack, Text } from '@grafana/ui';
+import { Stack } from '../Layout/Stack/Stack';
+import { Text } from '../Text/Text';
 
 import { UserIcon } from './UserIcon';
 import mdx from './UserIcon.mdx';
