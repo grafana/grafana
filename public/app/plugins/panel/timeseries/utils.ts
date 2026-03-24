@@ -149,6 +149,9 @@ export function prepareGraphableFields(
         case FieldType.number:
           hasValueField = useNumericX ? fieldIdx > 0 : true;
 
+          // we need to make sure all values in the array are numbers or null
+          // so, check all values and if we encounter a bad one, copy the array and
+          // replace all further-occuring non-numbers with null to make safe values array
           let values = field.values;
           let safeValues: unknown[] | undefined = undefined;
 
