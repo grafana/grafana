@@ -78,6 +78,7 @@ export function Modal(props: PropsWithChildren<Props>) {
 
   const dismiss = useDismiss(context, {
     enabled: closeOnEscape,
+    outsidePress: false,
   });
 
   const role = useRole(context, {
