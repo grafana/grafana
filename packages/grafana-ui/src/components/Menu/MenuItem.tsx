@@ -284,7 +284,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     disabled: css({
       color: theme.colors.action.disabledText,
       label: 'menu-item-disabled',
-
       '&:hover, &:focus, &:focus-visible': {
         cursor: 'not-allowed',
         background: 'none',
