@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gonum.org/v1/gonum/graph/simple"
 
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -479,5 +480,39 @@ func TestBuildPipelineDegraded(t *testing.T) {
 		_, _, err := s.buildPipeline(t.Context(), req)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "cannot reference itself")
+	})
+}
+
+func TestBuildPipelinePublicRejectsDegraded(t *testing.T) {
+	t.Run("BuildPipeline returns error for broken nodes even with toggle ON", func(t *testing.T) {
+		s := Service{
+			cfg:      setting.NewCfg(),
+			tracer:   &testTracer{},
+			features: featuremgmt.WithFeatures(featuremgmt.FlagSseExpressionErrorIsolation),
+			metrics:  metrics.NewSSEMetrics(nil),
+		}
+		req := &Request{
+			Queries: []Query{
+				{
+					RefID: "A",
+					DataSource: &datasources.DataSource{
+						UID: "Fake",
+					},
+					TimeRange: AbsoluteTimeRange{},
+				},
+				{
+					RefID:      "B",
+					DataSource: dataSourceModel(),
+					JSON: json.RawMessage(`{
+						"expression": "$NONEXISTENT",
+						"type": "math"
+					}`),
+				},
+			},
+		}
+
+		_, err := s.BuildPipeline(t.Context(), req)
+		require.Error(t, err, "BuildPipeline should reject degraded pipelines")
+		require.Contains(t, err.Error(), "NONEXISTENT")
 	})
 }
