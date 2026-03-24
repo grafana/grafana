@@ -1,4 +1,4 @@
-package foldermetadata
+package authorization
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -125,4 +126,8 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
 }

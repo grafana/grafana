@@ -11,14 +11,11 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("invalid folder metadata created on existing folder keeps unstable uid and preserves children", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		ctx := context.Background()
 		const repo = "full-sync-invalid-meta-existing"
 
@@ -61,7 +58,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("invalid folder metadata on new folder falls back to unstable uid and reconciles children", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		ctx := context.Background()
 		const repo = "full-sync-invalid-meta-new"
 
@@ -95,7 +92,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("resource move into existing folder with invalid metadata keeps using that folder uid", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "fs-inv-move-existing"
 
 		helper.CreateRepo(t, common.TestRepo{
@@ -139,7 +136,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("resource move into new folder with invalid metadata falls back to unstable uid", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "fs-inv-move-new"
 
 		helper.CreateRepo(t, common.TestRepo{
@@ -170,7 +167,7 @@ func TestIntegrationProvisioning_FullSync_InvalidFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("moving folder with invalid metadata deletes old path and recreates at new path", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 		const repo = "fs-inv-folder-move"
 
 		helper.CreateRepo(t, common.TestRepo{

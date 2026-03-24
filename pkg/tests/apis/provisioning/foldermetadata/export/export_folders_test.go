@@ -1,4 +1,4 @@
-package foldermetadata
+package export
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -462,4 +463,8 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderFiles(t *testing.T) {
 		require.False(t, helper.GitFileExists(t, ctx, repoName, folderTitle+"/.keep"),
 			".keep must not exist when the feature flag is enabled")
 	})
+}
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
 }
