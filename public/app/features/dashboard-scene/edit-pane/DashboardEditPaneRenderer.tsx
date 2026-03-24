@@ -113,24 +113,26 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
               active={selectedObject === dashboard ? true : false}
             />
-            <Sidebar.Button
-              style={{ color: '#ff671d' }}
-              icon="comment-alt-message"
-              onClick={() =>
-                window.open(
-                  'https://docs.google.com/forms/d/e/1FAIpQLSfDZJM_VlZgRHDx8UPtLWbd9bIBPRxoA28qynTHEYniyPXO6Q/viewform',
-                  '_blank'
-                )
-              }
-              title={t(
-                'dashboard-scene.dashboard-edit-pane-renderer.title-feedback-dashboard-editing-experience',
-                'Give feedback on the new dashboard editing experience'
-              )}
-              tooltip={t(
-                'dashboard-scene.dashboard-edit-pane-renderer.title-feedback-dashboard-editing-experience',
-                'Give feedback on the new dashboard editing experience'
-              )}
-            />
+            {config.featureToggles.feedbackButton && (
+              <Sidebar.Button
+                style={{ color: '#ff671d' }}
+                icon="comment-alt-message"
+                onClick={() =>
+                  window.open(
+                    'https://docs.google.com/forms/d/e/1FAIpQLSfDZJM_VlZgRHDx8UPtLWbd9bIBPRxoA28qynTHEYniyPXO6Q/viewform',
+                    '_blank'
+                  )
+                }
+                title={t(
+                  'dashboard-scene.dashboard-edit-pane-renderer.title-feedback-dashboard-editing-experience',
+                  'Give feedback on the new dashboard editing experience'
+                )}
+                tooltip={t(
+                  'dashboard-scene.dashboard-edit-pane-renderer.title-feedback-dashboard-editing-experience',
+                  'Give feedback on the new dashboard editing experience'
+                )}
+              />
+            )}
             {config.featureToggles.dashboardUndoRedo && (
               <>
                 <Sidebar.Divider />

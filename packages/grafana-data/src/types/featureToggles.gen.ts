@@ -459,6 +459,11 @@ export interface FeatureToggles {
   */
   dashboardFiltersOverview?: boolean;
   /**
+  * Enables the feedback button in the dashboard edit sidebar
+  * @default true
+  */
+  feedbackButton?: boolean;
+  /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
   */

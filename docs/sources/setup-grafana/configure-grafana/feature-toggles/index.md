@@ -80,6 +80,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `externalServiceAccounts`         | Automatic service account and token setup for plugins                                                  |
 | `dashboardNewLayouts`             | Enables new dashboard layouts                                                                          |
 | `dashboardFiltersOverview`        | Enables the dashboard filters overview pane                                                            |
+| `feedbackButton`                  | Enables the feedback button in the dashboard edit sidebar                                              |
 | `pdfTables`                       | Enables generating table data as PDF in reporting                                                      |
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                                     |
 | `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                          |
