@@ -157,7 +157,7 @@ export function Step1Content({ canImport, dryRunState, dryRunResult, onTriggerDr
           <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
             <Text color="secondary" variant="bodySmall">
               <Trans i18nKey="alerting.import-to-gma.step1.policy-tree-desc">
-                When you import, Grafana creates a separate notification policy tree. Pick a name you will recognize.
+                When you import, Grafana creates a separate notification policy tree. Enter a name you will recognize.
               </Trans>
             </Text>
             <PolicyTreeNameHelp />
