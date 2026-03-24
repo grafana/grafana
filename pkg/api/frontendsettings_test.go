@@ -708,7 +708,9 @@ func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *plugina
 }
 
 func TestIntegrationHTTPServer_GetFrontendSettings_publicDashboardDataSourceFiltering(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	enabledPlugins := []string{"prometheus", "loki", "mysql"}
 
@@ -716,10 +718,9 @@ func TestIntegrationHTTPServer_GetFrontendSettings_publicDashboardDataSourceFilt
 	pluginSettingsList := make(map[string]*pluginsettings.DTO, len(enabledPlugins))
 	for i, name := range enabledPlugins {
 		pluginList[i] = pluginstore.Plugin{
-			Module:          fmt.Sprintf("/%s/module.js", name),
-			JSONData:        plugins.JSONData{ID: name, Info: plugins.Info{Version: "1.0.0"}, Type: plugins.TypeDataSource},
-			FS:              &pluginfakes.FakePluginFS{},
-			LoadingStrategy: plugins.LoadingStrategyScript,
+			Class:    plugins.ClassCDN,
+			Module:   fmt.Sprintf("/%s/module.js", name),
+			JSONData: plugins.JSONData{ID: name, Info: plugins.Info{Version: "1.0.0"}, Type: plugins.TypeDataSource},
 		}
 		pluginSettingsList[name] = &pluginsettings.DTO{ID: int64(i + 1), OrgID: 1, PluginID: name, PluginVersion: "1.0.0", Enabled: true}
 	}

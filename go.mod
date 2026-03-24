@@ -52,7 +52,7 @@ require (
 	github.com/dgraph-io/badger/v4 v4.7.0 // @grafana/grafana-search-and-storage
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/grafana-backend-group
 	github.com/dolthub/go-mysql-server v0.19.1-0.20250410182021-5632d67cd46e // @grafana/grafana-datasources-core-services
-	github.com/dolthub/vitess v0.0.0-20250410090211-143e6b272ad4 // @grafana/grafana-datasources-core-services
+	github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e // @grafana/grafana-datasources-core-services
 	github.com/dustin/go-humanize v1.0.1 // @grafana/observability-traces-and-profiling
 	github.com/fatih/color v1.18.0 // @grafana/grafana-backend-group
 	github.com/fullstorydev/grpchan v1.1.1 // @grafana/grafana-backend-group
@@ -357,7 +357,6 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dolthub/flatbuffers/v23 v23.3.3-dh.2 // indirect
-	github.com/dolthub/go-icu-regex v0.0.0-20250327004329-6799764f2dad // indirect
 	github.com/dolthub/jsonpath v0.0.2-0.20240227200619-19675ab05c71 // indirect
 	github.com/dolthub/maphash v0.1.0 // indirect
 	github.com/edsrzf/mmap-go v1.2.0 // indirect
@@ -530,7 +529,6 @@ require (
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/tetratelabs/wazero v1.8.2 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
@@ -625,3 +623,7 @@ exclude k8s.io/client-go v12.0.0+incompatible
 // only used to run tests and not required for building the Grafana binary.
 // Since the test data doesn't contain a license file we exclude it.
 exclude github.com/RoaringBitmap/real-roaring-datasets v0.0.0-20190726190000-eb7c87156f76
+
+// Use our fork of dolthub/go-mysql-server which makes non-cgo the default
+// since using a build tag is not sufficient for some use cases (e.g. developers tests in IDE).
+replace github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana

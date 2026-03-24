@@ -21,7 +21,7 @@ type DB struct {
 	// queryGuard is an optional function that validates SQL queries before execution.
 	// It takes a refID and the raw SQL string, returning true if the query is allowed
 	// and false with an error if the query should be blocked. If nil, AllowQuery is used as the default.
-	queryGuard func(refID, rawSQL string) (bool, error)
+	queryGuard func(rawSQL string) (bool, error)
 }
 
 // GoMySQLServerError represents an error from the underlying Go MySQL Server
@@ -91,7 +91,7 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 		guard = AllowQuery
 	}
 
-	allow, err := guard(name, query)
+	allow, err := guard(query)
 	if err != nil || !allow {
 		return nil, err
 	}

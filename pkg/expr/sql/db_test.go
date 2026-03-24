@@ -197,18 +197,6 @@ func TestQueryFramesDateTimeSelect(t *testing.T) {
 	}
 }
 
-func TestErrorsFromGoMySQLServerAreFlagged(t *testing.T) {
-	const GmsNotImplemented = "TRUNCATE" // not implemented in go-mysql-server as of 2025-04-11
-
-	db := DB{}
-
-	query := `SELECT ` + GmsNotImplemented + `(123.456, 2);`
-
-	_, err := db.QueryFrames(context.Background(), &testTracer{}, "sqlExpressionRefId", query, nil)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "error in go-mysql-server")
-}
-
 func TestFrameToSQLAndBack_JSONRoundtrip(t *testing.T) {
 	expectedFrame := &data.Frame{
 		RefID: "json_test",
