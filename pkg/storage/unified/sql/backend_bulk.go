@@ -251,7 +251,7 @@ func (b *backend) processBulkWithTx(ctx context.Context, tx db.Tx, setting resou
 	rv := newBulkRV()
 	batchIter, ok := iter.(resource.BulkRequestBatchIterator)
 	if !ok {
-		batchIter = &singleRequestBatchIterator{iter: iter}
+		batchIter = resource.NewSingleRequestBatchIterator(iter)
 	}
 
 	summaries := make(map[string]*resourcepb.BulkResponse_Summary, len(setting.Collection))
@@ -405,34 +405,6 @@ func bulkHistoryInsertRowLimit(dialectName string) int {
 	default:
 		return bulkHistoryInsertDefaultMaxRows
 	}
-}
-
-type singleRequestBatchIterator struct {
-	iter  resource.BulkRequestIterator
-	batch []*resourcepb.BulkRequest
-}
-
-func (s *singleRequestBatchIterator) NextBatch() bool {
-	if !s.iter.Next() {
-		return false
-	}
-	if req := s.iter.Request(); req != nil {
-		if len(s.batch) == 0 {
-			s.batch = make([]*resourcepb.BulkRequest, 1)
-		}
-		s.batch[0] = req
-	} else {
-		s.batch = nil
-	}
-	return true
-}
-
-func (s *singleRequestBatchIterator) Batch() []*resourcepb.BulkRequest {
-	return s.batch
-}
-
-func (s *singleRequestBatchIterator) RollbackRequested() bool {
-	return s.iter.RollbackRequested()
 }
 
 func (b *backend) updateLastImportTime(ctx context.Context, tx db.Tx, key *resourcepb.ResourceKey, now time.Time) error {
