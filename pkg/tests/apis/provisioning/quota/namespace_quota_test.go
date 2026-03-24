@@ -50,8 +50,8 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 
 	// --- Step 2: lower quota to 1 — both repos exceed the limit --------
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 1})
-	helper.TriggerRepositoryReconciliation(t, repo1Name)
-	helper.TriggerRepositoryReconciliation(t, repo2Name)
+	triggerReconciliation(t, helper, repo1Name)
+	triggerReconciliation(t, helper, repo2Name)
 
 	waitForUnhealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaExceeded)
 	waitForUnhealthyWithNamespaceQuota(t, helper, repo2Name, provisioning.ReasonQuotaExceeded)
@@ -60,13 +60,13 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 	err := helper.Repositories.Resource.Delete(t.Context(), repo2Name, metav1.DeleteOptions{})
 	require.NoError(t, err)
 
-	helper.TriggerRepositoryReconciliation(t, repo1Name)
+	triggerReconciliation(t, helper, repo1Name)
 	waitForHealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaReached)
 
 	// --- Step 4: set quota back to unlimited — repo fully recovers -----
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
 
-	helper.TriggerRepositoryReconciliation(t, repo1Name)
+	triggerReconciliation(t, helper, repo1Name)
 	waitForHealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaUnlimited)
 }
 
@@ -215,8 +215,8 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 
 	// --- Step 3: lower quota to 1 — both repos exceed the limit ---------------
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 1})
-	helper.TriggerRepositoryReconciliation(t, repoName1)
-	helper.TriggerRepositoryReconciliation(t, repoName2)
+	triggerReconciliation(t, helper, repoName1)
+	triggerReconciliation(t, helper, repoName2)
 
 	waitForUnhealthyWithNamespaceQuota(t, helper, repoName1, provisioning.ReasonQuotaExceeded)
 
