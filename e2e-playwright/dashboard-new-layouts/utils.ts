@@ -64,6 +64,11 @@ export const flows = {
     await dashboardPage
       .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
       .click();
+
+    // New variable creation schedules a delayed autofocus to name input
+    // Let that timer finish before we interact to prevent focus on the wrong input
+    await dashboardPage.ctx.page.waitForTimeout(250);
+
     const variableNameInput = dashboardPage.getByGrafanaSelector(
       selectors.components.PanelEditor.ElementEditPane.variableNameInput
     );
