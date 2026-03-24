@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import memoizeOne from 'memoize-one';
 import { useState } from 'react';
 import useMountedState from 'react-use/lib/useMountedState';
 
@@ -8,64 +8,18 @@ import {
   useCreateTeamMutation,
   useSetTeamRolesMutation,
 } from '@grafana/api-clients/internal/rtkq/legacy';
-import { AppEvents, GrafanaTheme2 } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
-import { Alert, AlertVariant, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useCreateFolder } from 'app/api/clients/folder/v1beta1/hooks';
-import { Role } from 'app/types/accessControl';
+import { config, getAppEvents } from '@grafana/runtime';
 
-import { extractErrorMessage } from '../../api/utils';
-import { contextSrv } from '../../core/services/context_srv';
-import { TeamDTO } from '../../types/teams';
+import { useCreateFolder } from '../../../api/clients/folder/v1beta1/hooks';
+import { extractErrorMessage } from '../../../api/utils';
+import { contextSrv } from '../../../core/services/context_srv';
+import { Role } from '../../../types/accessControl';
+import { TeamDTO } from '../../../types/teams';
+import { canUpdateRoles } from '../hooks';
 
-import { canUpdateRoles } from './hooks';
-
-export interface CardProps {
-  severity: AlertVariant;
-  description: string;
-  help?: string;
-  link?: ResultCardLink;
-}
-
-interface ResultCardLink {
-  href: string;
-  text: string;
-}
-
-/**
- * Alert that just shows the message and optional link. Link should point to some resource that the step successfully
- * created.
- */
-export function StepResultAlert({ severity, description, link, help }: CardProps) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <Alert severity={severity} title="" aria-label={description}>
-      <Stack direction="row" justifyContent={'space-between'}>
-        <Text>{description}</Text>
-        {link && (
-          <Link href={link.href} className={styles.link}>
-            {link.text}
-            <Icon name="external-link-alt" size="md" aria-hidden={true} className={styles.linkIcon} />
-          </Link>
-        )}
-      </Stack>
-      {help && <Text variant={'bodySmall'}>{help}</Text>}
-    </Alert>
-  );
-}
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  link: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
-  }),
-  linkIcon: css({
-    flexShrink: 0,
-  }),
-});
+import { StepResultAlertProps } from './StepResultAlert';
 
 /**
  * Each step is in one of these states.
@@ -180,9 +134,9 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
       }
     }
 
-    //////////////////////
+    //
     // Create a team first
-    //////////////////////
+    //
     localUpdateState({ state: 'loading' }, 'createTeam');
     const mutationArg: CreateTeamApiArg & { showSuccessAlert?: boolean } = {
       createTeamCommand: { email: formModel.email || '', name: formModel.name },
@@ -199,9 +153,9 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
 
     localUpdateState({ state: 'success', data: teamData.uid }, 'createTeam');
 
-    ////////////////////////////
+    //
     // Create roles if requested
-    ////////////////////////////
+    //
     if (pendingRoles && pendingRoles.length) {
       localUpdateState({ state: 'loading' }, 'createRoles');
       // TODO: this fetch can fail or user just don't have permissions and this is skipped silently
@@ -237,10 +191,10 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
       }
     }
 
-    ///////////////////////////////
+    //
     // Create a folder if requested
-    ///////////////////////////////
-    if (autocreateTeamFolder) {
+    //
+    if (autocreateTeamFolder && config.featureToggles.teamFolders) {
       localUpdateState({ state: 'loading' }, 'createFolder');
       const { data: folderData, error: folderError } = await createFolderTrigger({
         title: formModel.name,
@@ -266,7 +220,7 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
  * @param type
  * @param href
  */
-export function getStatusCardProps(status: CallState, type: CallTypes, href?: string): CardProps {
+export function getStatusCardProps(status: CallState, type: CallTypes, href?: string): StepResultAlertProps {
   const messages = getMessages()[type];
   if (status.state === 'error') {
     return {
@@ -297,7 +251,7 @@ export function getStatusCardProps(status: CallState, type: CallTypes, href?: st
   };
 }
 
-function getMessages() {
+const getMessages = memoizeOne(() => {
   return {
     createTeam: {
       success: t('teams.create-team.team-creation-success', 'Team created successfully.'),
@@ -321,4 +275,4 @@ function getMessages() {
       loading: t('teams.create-team.roles-creation-loading', 'Creating roles...'),
     },
   };
-}
+});

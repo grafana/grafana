@@ -1,7 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { delay, HttpResponse } from 'msw';
 import useMountedState from 'react-use/lib/useMountedState';
-import { getWrapper } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { config, getAppEvents, setBackendSrv } from '@grafana/runtime';
@@ -12,8 +11,10 @@ import {
   customCreateTeamHandler,
   customSetTeamRolesHandler,
 } from '@grafana/test-utils/unstable';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/services/context_srv';
+
+import { getWrapper } from '../../../../test/test-utils';
+import { backendSrv } from '../../../core/services/backend_srv';
+import { contextSrv } from '../../../core/services/context_srv';
 
 import { useCreateTeamOrchestrate } from './CreateTeamAPICalls';
 
