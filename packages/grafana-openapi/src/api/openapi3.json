@@ -24504,6 +24504,7 @@
     },
     "/v1/provisioning/alert-rules": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetAlertRules",
         "responses": {
           "200": {
@@ -24531,6 +24532,7 @@
         "tags": ["provisioning"]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostAlertRule",
         "parameters": [
           {
@@ -24709,6 +24711,7 @@
     },
     "/v1/provisioning/alert-rules/{UID}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteAlertRule",
         "parameters": [
           {
@@ -24747,6 +24750,7 @@
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetAlertRule",
         "parameters": [
           {
@@ -24788,6 +24792,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutAlertRule",
         "parameters": [
           {
@@ -25257,6 +25262,7 @@
     },
     "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
       "delete": {
+        "deprecated": true,
         "description": "Delete rule group",
         "operationId": "RouteDeleteAlertRuleGroup",
         "parameters": [
@@ -25305,6 +25311,7 @@
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetAlertRuleGroup",
         "parameters": [
           {
@@ -25353,6 +25360,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
           {

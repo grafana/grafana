@@ -16,10 +16,11 @@ const (
 )
 
 // PendingDeleteRecord is the JSON blob stored in the KV store for a tenant
-// that has been marked as pending deletion. The existence of a record implies
-// that all the tenant's resources have been labelled.
+// that has been marked as pending deletion. The record is created before
+// labelling begins so that cleanup can proceed even after partial failures.
 type PendingDeleteRecord struct {
-	DeleteAfter string `json:"deleteAfter"`
+	DeleteAfter      string `json:"deleteAfter"`
+	LabelingComplete bool   `json:"labelingComplete"`
 }
 
 // PendingDeleteStore manages pending-delete records in the KV store and keeps

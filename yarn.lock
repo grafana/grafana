@@ -3817,6 +3817,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@floating-ui/react": "npm:0.27.18"
+    "@grafana/assistant": "npm:0.1.24"
     "@grafana/data": "npm:13.0.0-pre"
     "@grafana/e2e-selectors": "npm:13.0.0-pre"
     "@grafana/i18n": "npm:13.0.0-pre"
@@ -3925,13 +3926,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:7.1.7":
-  version: 7.1.7
-  resolution: "@grafana/scenes-react@npm:7.1.7"
+"@grafana/scenes-react@npm:7.1.8":
+  version: 7.1.8
+  resolution: "@grafana/scenes-react@npm:7.1.8"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
-    "@grafana/scenes": "npm:7.1.7"
+    "@grafana/scenes": "npm:7.1.8"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -3945,7 +3946,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/f76bb782483d8337219c0bed5f4942c0962d8b2409a1e69cd9e9cbbf61269cd09d96d3b58c617199d9ff200b0d1c199f401d51ccd1893c24384f41b54d382fb8
+  checksum: 10/b39ce1ef8a28b467ccd32971837d452a528f69f2fbd7395ceef7eb4bb0c2dafa08cf282db3eca4f474a767b9f0e21c628b4d022fc7b90ed645e80e3c51d5cd3f
   languageName: node
   linkType: hard
 
@@ -3980,9 +3981,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:7.1.7":
-  version: 7.1.7
-  resolution: "@grafana/scenes@npm:7.1.7"
+"@grafana/scenes@npm:7.1.8":
+  version: 7.1.8
+  resolution: "@grafana/scenes@npm:7.1.8"
   dependencies:
     "@emotion/css": "npm:11.10.5"
     "@emotion/react": "npm:11.10.5"
@@ -4007,7 +4008,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/ca1ce05c01119cc1e486193b60d242506d16905a9c03bc8dc531c066478433237891ae1ac3f4df256d5b16df7a722d652f20854345a2502f0360435082cbb402
+  checksum: 10/c170de43aa5fd47e4d037e556f5b81184eede6b7cd1aae991fb485af6b0f826db6dd669a02dc83d020145323fcaa5559f7d06ae4343629a20f3fbfd2e17f9b3c
   languageName: node
   linkType: hard
 
@@ -20172,8 +20173,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:7.1.7"
-    "@grafana/scenes-react": "npm:7.1.7"
+    "@grafana/scenes": "npm:7.1.8"
+    "@grafana/scenes-react": "npm:7.1.8"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"

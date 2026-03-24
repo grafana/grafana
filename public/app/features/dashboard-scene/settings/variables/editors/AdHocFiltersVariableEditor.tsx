@@ -18,7 +18,7 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const { datasource: datasourceRef, defaultKeys, allowCustomValue } = variable.useState();
+  const { datasource: datasourceRef, defaultKeys, allowCustomValue, enableGroupBy } = variable.useState();
 
   const [wip, setWip] = useState<AdHocFilterWithLabels | undefined>(undefined);
   const [originalFilters, setOriginalFilters] = useState(() => variable.getOriginalFilters());
@@ -63,12 +63,16 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     ? 'Ad hoc filters are applied automatically to all queries that target this data source'
     : 'This data source does not support ad hoc filters.';
 
-  const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
+  const onDataSourceChange = async (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);
+    const dsInstance = await getDataSourceSrv().get(dsRef);
 
     variable.setState({
       datasource: dsRef,
       supportsMultiValueOperators: ds.meta.multiValueFilterOperators,
+      ...(config.featureToggles.dashboardUnifiedDrilldownControls && {
+        enableGroupBy: !!dsInstance?.getGroupByKeys,
+      }),
     });
   };
 
@@ -82,18 +86,25 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     variable.setState({ allowCustomValue: event.currentTarget.checked });
   };
 
+  const onEnableGroupByChange = (event: FormEvent<HTMLInputElement>) => {
+    variable.setState({ enableGroupBy: event.currentTarget.checked });
+  };
+
   return (
     <AdHocVariableForm
       datasource={datasourceRef ?? undefined}
       infoText={message}
       allowCustomValue={allowCustomValue}
+      enableGroupBy={enableGroupBy}
       onDataSourceChange={onDataSourceChange}
       defaultKeys={defaultKeys}
       onDefaultKeysChange={onDefaultKeysChange}
       onAllowCustomValueChange={onAllowCustomValueChange}
+      onEnableGroupByChange={onEnableGroupByChange}
       originFiltersController={originFiltersController}
       inline={props.inline}
       datasourceSupported={datasourceSettings?.getTagKeys ? true : false}
+      datasourceSupportsGroupBy={!!datasourceSettings?.getGroupByKeys}
     />
   );
 }
