@@ -6,6 +6,7 @@ import { DashboardLink } from '@grafana/schema';
 import { Field, Input, Select, Switch, TagsInput } from '@grafana/ui';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
 
 import { LinkEdit } from './LinkAddEditableElement';
 import { linkEditActions } from './actions';
@@ -65,16 +66,28 @@ const TEXT_LINK_PROP_CONFIG: Record<
   },
 };
 
-export function LinkTextInput({ linkEdit, prop }: { linkEdit: LinkEdit; prop: TextLinkProp }) {
+export function LinkTextInput({
+  linkEdit,
+  prop,
+  autoFocus,
+}: {
+  linkEdit: LinkEdit;
+  prop: TextLinkProp;
+  autoFocus?: boolean;
+}) {
   const { dashboard, link, linkIndex } = useLinkState(linkEdit);
+  const ref = useEditPaneInputAutoFocus({ autoFocus });
+
   const config = TEXT_LINK_PROP_CONFIG[prop];
   const oldValue = useRef(link?.[prop] ?? '');
   if (!link || !config.showIf(link)) {
     return null;
   }
+
   return (
     <Field label={t(config.labelKey, config.labelFallback)} noMargin>
       <Input
+        ref={ref}
         value={link[prop] ?? ''}
         placeholder={
           config.placeholderKey && config.placeholderFallback

@@ -9,6 +9,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { ProvisionedDashboardData, useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
 
 import { DeleteProvisionedDashboardDrawer, Props } from './DeleteProvisionedDashboardDrawer';
@@ -106,9 +107,6 @@ function setup(options: SetupOptions = {}) {
   });
 
   const defaultProvisionedData: ProvisionedDashboardData = {
-    isReady: true,
-    isLoading: false,
-    setIsLoading: jest.fn(),
     defaultValues: {
       repo: 'test-repo',
       ref: 'main',
@@ -133,6 +131,7 @@ function setup(options: SetupOptions = {}) {
     readOnly: false,
     canPushToConfiguredBranch: true,
     isNew: false,
+    repoDataStatus: RepoViewStatus.Ready,
     ...provisionedData,
   };
 

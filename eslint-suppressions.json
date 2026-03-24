@@ -632,11 +632,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/MatchersUI/FieldValueMatcher.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/MatchersUI/fieldMatchersUI.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -1642,6 +1637,11 @@
       "count": 2
     }
   },
+  "public/app/features/dashboard-scene/edit-pane/shared.ts": {
+    "no-barrel-files/no-barrel-files": {
+      "count": 3
+    }
+  },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
     "no-restricted-syntax": {
       "count": 3
@@ -1649,11 +1649,6 @@
   },
   "public/app/features/dashboard-scene/inspect/HelpWizard/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/pages/DashboardScenePage.test.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -1665,21 +1660,8 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/pages/PublicDashboardScenePage.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/saving/getDashboardChanges.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 8
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
@@ -1739,16 +1721,6 @@
   },
   "public/app/features/dashboard-scene/serialization/buildNewDashboardSaveModel.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/serialization/layoutSerializers/utils.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.test.ts": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -1825,11 +1797,6 @@
   },
   "public/app/features/dashboard-scene/utils/PanelModelCompatibilityWrapper.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/createPanelDataProvider.ts": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -2174,11 +2141,6 @@
   },
   "public/app/features/dashboard/state/initDashboard.test.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/utils/dashboard.ts": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -3155,16 +3117,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/AppRegistrationCredentials.tsx": {
-    "no-restricted-syntax": {
-      "count": 5
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/AzureCredentialsForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/BasicLogsToggle.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -3854,16 +3806,6 @@
   },
   "public/app/plugins/panel/debug/StateView.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/gauge/v1/GaugeMigrations.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/gauge/v1/GaugePanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },

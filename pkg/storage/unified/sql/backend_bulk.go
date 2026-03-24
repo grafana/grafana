@@ -130,6 +130,11 @@ func buildKeyPath(key *resourcepb.ResourceKey, rv int64, action resourcepb.BulkR
 		actionStr = fmt.Sprintf("%d", action)
 	}
 	snowflakeRV := rvmanager.SnowflakeFromRV(rv)
+	if key.Namespace == "" {
+		return fmt.Sprintf("unified/data/%s/%s/%s/%d~%s~%s",
+			key.Group, key.Resource, key.Name, snowflakeRV, actionStr, folder)
+	}
+
 	return fmt.Sprintf("unified/data/%s/%s/%s/%s/%d~%s~%s",
 		key.Group, key.Resource, key.Namespace, key.Name, snowflakeRV, actionStr, folder)
 }

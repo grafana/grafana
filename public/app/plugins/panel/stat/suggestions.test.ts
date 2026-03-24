@@ -102,6 +102,18 @@ describe('State panel suggestions', () => {
         ],
       },
       {
+        description: 'tabular data with high row count',
+        aggregated: true,
+        dataframes: [
+          createDataFrame({
+            fields: [
+              { name: 'name', type: FieldType.string, values: Array.from({ length: 51 }, (_, i) => `item_${i}`) },
+              { name: 'value', type: FieldType.number, values: Array.from({ length: 51 }, (_, i) => i * 10) },
+            ],
+          }),
+        ],
+      },
+      {
         description: 'multiple frames with tabular data',
         aggregated: true,
         dataframes: [

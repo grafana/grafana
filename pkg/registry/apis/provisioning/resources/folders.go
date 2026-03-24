@@ -88,8 +88,8 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
 }
 
-// EnsureFoldersExist creates the folder structure in the cluster.
-func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath string) (parent string, err error) {
+// EnsureFolderPathExist creates the folder structure in the cluster.
+func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, ref string) (parent string, err error) {
 	cfg := fm.repo.Config()
 	parent = RootFolder(cfg)
 
@@ -102,33 +102,30 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 		return parent, nil
 	}
 
-	f := ParseFolder(dir, cfg.Name)
-	// Use stable UID from _folder.json if available
-	if meta, err := ReadFolderMetadata(ctx, fm.repo, f.Path, ""); err == nil {
-		if meta.Name != "" {
-			f.ID = meta.Name
-		}
-	} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
-		return "", fmt.Errorf("read folder metadata for %s: %w", f.Path, err)
+	f, err := fm.resolveFolderForPath(ctx, dir, ref)
+	if err != nil {
+		return "", err
 	}
 	if fm.tree.In(f.ID) {
-		return f.ID, nil
+		// ParentID is only resolved during the walk below, so we skip it here
+		// to avoid a false mismatch against the already-resolved tree entry.
+		if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing, IgnoreParent()) {
+			return f.ID, nil
+		}
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
-		f := ParseFolder(traverse, cfg.GetName())
-		if meta, err := ReadFolderMetadata(ctx, fm.repo, traverse, ""); err == nil {
-			if meta.Name != "" {
-				f.ID = meta.Name
-			}
-		} else if fm.folderMetadataEnabled && !errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err) {
-			return fmt.Errorf("read folder metadata for %s: %w", traverse, err)
+		f, err := fm.resolveFolderForPath(ctx, traverse, ref)
+		if err != nil {
+			return err
 		}
+		f.ParentID = parent
 		if fm.tree.In(f.ID) {
-			parent = f.ID
-			return nil
+			if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing) {
+				parent = f.ID
+				return nil
+			}
 		}
-
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
 			return &PathCreationError{
 				Path: f.Path,
@@ -148,10 +145,31 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 	return f.ID, nil
 }
 
+// resolveFolderForPath parses folder metadata when possible. If metadata is
+// invalid, it falls back to the current folder already known at that path. When
+// no folder exists yet, it falls back to the hash/path-derived folder identity.
+func (fm *FolderManager) resolveFolderForPath(ctx context.Context, path, ref string) (Folder, error) {
+	f, err := ParseFolderWithMetadata(ctx, fm.repo, path, ref, fm.folderMetadataEnabled)
+	if err == nil {
+		return f, nil
+	}
+
+	var invalidErr *InvalidFolderMetadata
+	if !errors.As(err, &invalidErr) {
+		return Folder{}, err
+	}
+
+	if existing, ok := fm.tree.GetByPath(path); ok {
+		return existing, nil
+	}
+
+	return ParseFolder(path, fm.repo.Config().Name), nil
+}
+
 // EnsureFolderExists creates the folder if it doesn't exist.
 // If the folder already exists:
 // - it will error if the folder is not owned by this repository
-// - it will update the title if it has changed
+// - it will update metadata-backed properties if they have changed
 func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, parent string) error {
 	cfg := fm.repo.Config()
 	obj, err := fm.client.Get(ctx, folder.ID, metav1.GetOptions{})
@@ -164,17 +182,35 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			return fmt.Errorf("target folder is managed by a different repository (%s)", current)
 		}
 
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return fmt.Errorf("create meta accessor: %w", err)
+		}
+
 		currentTitle, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
-		if currentTitle != folder.Title {
+		source, _ := meta.GetSourceProperties()
+		existing := Folder{
+			Title:        currentTitle,
+			Path:         source.Path,
+			MetadataHash: source.Checksum,
+			ParentID:     meta.GetFolder(),
+		}
+
+		if !folder.Equal(existing) {
+			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
+				return fmt.Errorf("set folder title: %w", err)
+			}
+			meta.SetSourceProperties(utils.SourceProperties{
+				Path:     folder.Path,
+				Checksum: folder.MetadataHash,
+			})
+			meta.SetFolder(folder.ParentID)
 			ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
 			if err != nil {
 				return fmt.Errorf("unable to use provisioning identity %w", err)
 			}
-			if err := unstructured.SetNestedField(obj.Object, folder.Title, "spec", "title"); err != nil {
-				return fmt.Errorf("set folder title: %w", err)
-			}
 			if _, err := fm.client.Update(ctx, obj, metav1.UpdateOptions{}); err != nil {
-				return fmt.Errorf("update folder title: %w", err)
+				return fmt.Errorf("update folder: %w", err)
 			}
 		}
 
@@ -221,7 +257,8 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		Identity: cfg.GetName(),
 	})
 	meta.SetSourceProperties(utils.SourceProperties{
-		Path: folder.Path,
+		Path:     folder.Path,
+		Checksum: folder.MetadataHash,
 	})
 
 	if _, err := fm.client.Create(ctx, obj, metav1.CreateOptions{}); err != nil {
@@ -260,7 +297,7 @@ func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructu
 // instead of the path-derived hash UID produced by ParseFolder.
 // It ensures all ancestor folders exist first, then creates the leaf folder.
 // Used when _folder.json has already been written to the repository.
-func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, stableUID string) error {
+func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, stableUID, ref string) error {
 	cfg := fm.repo.Config()
 
 	// Determine the parent folder ID, ensuring ancestor folders exist.
@@ -270,7 +307,7 @@ func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, st
 		parentFolderID = RootFolder(cfg)
 	} else {
 		var err error
-		parentFolderID, err = fm.EnsureFolderPathExist(ctx, parentPath)
+		parentFolderID, err = fm.EnsureFolderPathExist(ctx, parentPath, ref)
 		if err != nil {
 			return fmt.Errorf("ensure parent folder path: %w", err)
 		}
@@ -279,12 +316,45 @@ func (fm *FolderManager) CreateFolderWithUID(ctx context.Context, folderPath, st
 	// Build the leaf folder struct but replace the hash-derived ID with the stable UID.
 	leaf := ParseFolder(folderPath, cfg.GetName())
 	leaf.ID = stableUID
+	leaf.ParentID = parentFolderID
 
 	return fm.EnsureFolderExists(ctx, leaf, parentFolderID)
 }
 
+// RemoveFolderFromTree removes the folder and all its descendants from the in-memory tree.
+func (fm *FolderManager) RemoveFolderFromTree(folderID string) {
+	fm.tree.Remove(folderID)
+}
+
 func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 	return fm.client.Delete(ctx, name, metav1.DeleteOptions{})
+}
+
+// RenameFolderPath handles a directory rename during incremental sync.
+// For metadata-backed folders (stable UID), the existing K8s object is
+// updated in place and an empty string is returned (no cleanup needed).
+// For non-metadata folders the UID changes, so a new folder is created
+// at newPath and the old folder ID is returned for cleanup.
+func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string) (string, error) {
+	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef, fm.folderMetadataEnabled)
+	if err != nil {
+		return "", fmt.Errorf("parse old folder: %w", err)
+	}
+
+	if _, err := fm.EnsureFolderPathExist(ctx, newPath, newRef); err != nil {
+		return "", fmt.Errorf("ensure new folder path: %w", err)
+	}
+
+	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef, fm.folderMetadataEnabled)
+	if err != nil {
+		return "", fmt.Errorf("parse new folder: %w", err)
+	}
+
+	if oldFolder.ID == newFolder.ID {
+		return "", nil
+	}
+
+	return oldFolder.ID, nil
 }
 
 // EnsureFolderTreeExists replicates the folder tree to the repository.
