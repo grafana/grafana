@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"io"
+	"iter"
 	"testing"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -154,6 +156,49 @@ func TestBatchRunnerStopUnblocksBlockedSend(t *testing.T) {
 	}
 }
 
+func TestBulkProcessStopsRunnerOnPanic(t *testing.T) {
+	backend := &panicBulkBackend{}
+	srv := &server{
+		backend:          backend,
+		access:           authlib.FixedAccessClient(true),
+		bulkBatchOptions: DefaultBulkBatchOptions(),
+	}
+
+	req := newTestBulkRequest("item-1")
+	settings := BulkSettings{
+		Collection: []*resourcepb.ResourceKey{
+			{
+				Namespace: req.Key.Namespace,
+				Group:     req.Key.Group,
+				Resource:  req.Key.Resource,
+			},
+		},
+	}
+
+	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
+		Type:           authlib.TypeUser,
+		Login:          "testuser",
+		UserID:         1,
+		UserUID:        "u1",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+	})
+	ctx = metadata.NewIncomingContext(ctx, settings.ToMD())
+
+	stream := &testBulkProcessServer{ctx: ctx}
+
+	require.PanicsWithValue(t, errPanicBulkProcess, func() {
+		_ = srv.BulkProcess(stream)
+	})
+
+	select {
+	case sent := <-backend.sendDone:
+		require.False(t, sent)
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for blocked send to stop")
+	}
+}
+
 func newTestBatchRunner(stream resourcepb.BulkStore_BulkProcessServer, key *resourcepb.ResourceKey, opts BulkBatchOptions) *batchRunner {
 	return &batchRunner{
 		stream: stream,
@@ -238,5 +283,65 @@ func (s *testBulkProcessServer) SendMsg(any) error {
 }
 
 func (s *testBulkProcessServer) RecvMsg(any) error {
+	return nil
+}
+
+const errPanicBulkProcess = "panic from ProcessBulk"
+
+type panicBulkBackend struct {
+	sendDone chan bool
+}
+
+func (b *panicBulkBackend) ProcessBulk(_ context.Context, _ BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+	runner, ok := iter.(*batchRunner)
+	if !ok {
+		panic("expected batchRunner")
+	}
+
+	runner.recvCh = make(chan batchStreamResult, 1)
+	runner.recvCh <- batchStreamResult{request: newTestBulkRequest("item-1")}
+	b.sendDone = make(chan bool, 1)
+	go func() {
+		b.sendDone <- runner.sendResult(batchStreamResult{request: newTestBulkRequest("item-2")})
+	}()
+
+	select {
+	case <-b.sendDone:
+		panic("sendResult unexpectedly unblocked")
+	case <-time.After(20 * time.Millisecond):
+	}
+
+	panic(errPanicBulkProcess)
+}
+
+func (b *panicBulkBackend) WriteEvent(context.Context, WriteEvent) (int64, error) {
+	return 0, nil
+}
+
+func (b *panicBulkBackend) ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse {
+	return nil
+}
+
+func (b *panicBulkBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
+	return 0, nil
+}
+
+func (b *panicBulkBackend) ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
+	return 0, nil
+}
+
+func (b *panicBulkBackend) ListModifiedSince(context.Context, NamespacedResource, int64, *time.Time) (int64, iter.Seq2[*ModifiedResource, error]) {
+	return 0, nil
+}
+
+func (b *panicBulkBackend) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, error) {
+	return nil, nil
+}
+
+func (b *panicBulkBackend) GetResourceStats(context.Context, NamespacedResource, int) ([]ResourceStats, error) {
+	return nil, nil
+}
+
+func (b *panicBulkBackend) GetResourceLastImportTimes(context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return nil
 }

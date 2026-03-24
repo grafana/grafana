@@ -254,8 +254,8 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 	}
 
 	// BulkProcess requests
+	defer runner.stop()
 	rsp := backend.ProcessBulk(ctx, settings, runner)
-	runner.stop()
 	if rsp == nil {
 		rsp = &resourcepb.BulkResponse{
 			Error: &resourcepb.ErrorResult{
