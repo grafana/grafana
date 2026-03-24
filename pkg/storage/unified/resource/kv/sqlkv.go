@@ -426,6 +426,15 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 	}
 	defer tx.Rollback() //nolint:errcheck
 
+	// Fast path: all BatchOpPut on DataSection → multi-row INSERT.
+	// Safe because DataSection key_paths include the resource version, making them unique.
+	if section == DataSection && allBatchOpPut(ops) {
+		if err := k.batchInsertDatastore(ctx, tx, qb, section, ops); err != nil {
+			return err
+		}
+		return tx.Commit()
+	}
+
 	// General path: process ops in order within a single transaction
 	for i, op := range ops {
 		keyPath := getKeyPath(section, op.Key)
@@ -512,38 +521,16 @@ func putDataSectionTx(ctx context.Context, tx *sql.Tx, qb *queryBuilder, keyPath
 	return err
 }
 
-// BulkInsertData performs multi-row INSERT into the DataSection (resource_history).
-// Keys must be new — this does NOT upsert. It is the caller's responsibility to
-// ensure no duplicate key_paths exist (e.g. by deleting the collection first).
-// Used by dataStore.batchSave during bulk import for maximum throughput.
-func (k *SqlKV) BulkInsertData(ctx context.Context, ops []BatchOp) error {
-	if len(ops) == 0 {
-		return nil
-	}
-	if len(ops) > MaxBatchOps {
-		return fmt.Errorf("too many operations: %d > %d", len(ops), MaxBatchOps)
-	}
-
-	for i, op := range ops {
+func allBatchOpPut(ops []BatchOp) bool {
+	for _, op := range ops {
 		if op.Mode != BatchOpPut {
-			return &BatchError{Err: fmt.Errorf("BulkInsertData only supports BatchOpPut"), Index: i, Op: op}
-		}
-		if len(op.Value) == 0 {
-			return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
+			return false
 		}
 	}
+	return true
+}
 
-	qb, err := k.getQueryBuilder(DataSection)
-	if err != nil {
-		return err
-	}
-
-	tx, err := k.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer tx.Rollback() //nolint:errcheck
-
+func (k *SqlKV) batchInsertDatastore(ctx context.Context, tx *sql.Tx, qb *queryBuilder, section string, ops []BatchOp) error {
 	maxRows := BatchInsertMaxRows(k.dialect, 9) // 9 params per row
 	for start := 0; start < len(ops); start += maxRows {
 		end := start + maxRows
@@ -556,7 +543,7 @@ func (k *SqlKV) BulkInsertData(ctx context.Context, ops []BatchOp) error {
 		for i, op := range chunk {
 			rows[i] = batchInsertRow{
 				GUID:    uuid.New().String(),
-				KeyPath: getKeyPath(DataSection, op.Key),
+				KeyPath: getKeyPath(section, op.Key),
 				Value:   op.Value,
 			}
 		}
@@ -566,8 +553,7 @@ func (k *SqlKV) BulkInsertData(ctx context.Context, ops []BatchOp) error {
 			return fmt.Errorf("batch insert failed at rows %d-%d: %w", start, end-1, err)
 		}
 	}
-
-	return tx.Commit()
+	return nil
 }
 
 func (k *SqlKV) UnixTimestamp(ctx context.Context) (int64, error) {

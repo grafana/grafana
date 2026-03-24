@@ -607,7 +607,7 @@ func (d *dataStore) batchSave(ctx context.Context, items []batchSaveItem) error 
 		}
 	}
 
-	return d.kv.BulkInsertData(ctx, ops)
+	return d.kv.Batch(ctx, dataSection, ops)
 }
 
 // ParseKey parses a string key into a DataKey struct

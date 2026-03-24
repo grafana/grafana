@@ -106,12 +106,6 @@ type KV interface {
 	// This is used to ensure the server and client are not too far apart in time.
 	UnixTimestamp(ctx context.Context) (int64, error)
 
-	// BulkInsertData performs optimized multi-row INSERT into the DataSection.
-	// Keys must be new — this does NOT upsert. The caller must ensure no
-	// duplicate key_paths exist (e.g. by deleting the collection first).
-	// Only BatchOpPut operations are supported.
-	BulkInsertData(ctx context.Context, ops []BatchOp) error
-
 	// Batch executes all operations atomically within a single transaction.
 	// If any operation fails, all operations are rolled back.
 	// Operations are executed in order; the batch stops on first failure.
@@ -497,8 +491,4 @@ func (k *badgerKV) Batch(ctx context.Context, section string, ops []BatchOp) err
 	}
 
 	return txn.Commit()
-}
-
-func (k *badgerKV) BulkInsertData(ctx context.Context, ops []BatchOp) error {
-	return k.Batch(ctx, DataSection, ops)
 }
