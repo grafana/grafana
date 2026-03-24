@@ -576,6 +576,37 @@ func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
 	return nil
 }
 
+// batchSaveItem represents a single item for batch save operations
+type batchSaveItem struct {
+	Key   DataKey
+	Value []byte
+}
+
+// batchSave saves multiple items in a single Batch call to the KV store.
+func (d *dataStore) batchSave(ctx context.Context, items []batchSaveItem) error {
+	if len(items) == 0 {
+		return nil
+	}
+
+	ops := make([]kvpkg.BatchOp, len(items))
+	for i, item := range items {
+		if err := validateDataKey(item.Key); err != nil {
+			return fmt.Errorf("invalid data key at index %d: %w", i, err)
+		}
+		key := item.Key.String()
+		if item.Key.GUID != "" {
+			key = item.Key.StringWithGUID()
+		}
+		ops[i] = kvpkg.BatchOp{
+			Mode:  kvpkg.BatchOpPut,
+			Key:   key,
+			Value: item.Value,
+		}
+	}
+
+	return d.kv.Batch(ctx, dataSection, ops)
+}
+
 // ParseKey parses a string key into a DataKey struct
 func ParseKey(key string) (DataKey, error) {
 	parts := strings.Split(key, "/")

@@ -1894,6 +1894,59 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	// Track the last micro RV per resource name for computing previous_resource_version in compat mode.
 	lastMicroRV := make(map[string]int64)
 
+	// Accumulate validated items for batch save instead of saving one at a time.
+	type pendingItem struct {
+		dataKey DataKey
+		value   []byte
+		obj     *unstructured.Unstructured
+		action  kv.DataAction
+	}
+	pending := make([]pendingItem, 0, kv.MaxBatchOps)
+
+	// flushPending batch-saves all accumulated items and runs post-save work (legacy updates).
+	flushPending := func() error {
+		if len(pending) == 0 {
+			return nil
+		}
+
+		items := make([]batchSaveItem, len(pending))
+		for i, p := range pending {
+			items[i] = batchSaveItem{Key: p.dataKey, Value: p.value}
+		}
+
+		if err := b.dataStore.batchSave(ctx, items); err != nil {
+			return err
+		}
+
+		for _, p := range pending {
+			saved = append(saved, p.dataKey)
+			updatedResources[NamespacedResource{Namespace: p.dataKey.Namespace, Group: p.dataKey.Group, Resource: p.dataKey.Resource}] = true
+
+			// Fill in legacy columns on the resource_history row that was just inserted with only key_path and value.
+			if b.rvManager != nil {
+				microRV := rvmanager.RVFromBulkSnowflake(p.dataKey.ResourceVersion)
+				generation := p.obj.GetGeneration()
+				if p.action == DataActionDeleted {
+					generation = 0
+				}
+
+				nameKey := p.dataKey.Group + "/" + p.dataKey.Resource + "/" + p.dataKey.Namespace + "/" + p.dataKey.Name
+				var previousRV int64
+				if p.action != DataActionCreated {
+					previousRV = lastMicroRV[nameKey]
+				}
+
+				if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, b.rvManager.DB(), p.dataKey, microRV, previousRV, generation); err != nil {
+					return fmt.Errorf("failed to update legacy resource_history for bulk: %w", err)
+				}
+				lastMicroRV[nameKey] = microRV
+			}
+		}
+
+		pending = pending[:0]
+		return nil
+	}
+
 	for iter.Next() {
 		if iter.RollbackRequested() {
 			rollback()
@@ -1969,39 +2022,23 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			Action:          action,
 			Folder:          req.Folder,
 		}
-		err = b.dataStore.Save(ctx, dataKey, bytes.NewReader(req.Value))
-		if err != nil {
-			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-				Key:    req.Key,
-				Action: req.Action,
-				Error:  fmt.Sprintf("failed to save resource: %s", err),
-			})
-			continue
+
+		pending = append(pending, pendingItem{dataKey: dataKey, value: req.Value, obj: obj, action: action})
+
+		if len(pending) >= kv.MaxBatchOps {
+			if err := flushPending(); err != nil {
+				rollback()
+				rsp.Error = AsErrorResult(err)
+				break
+			}
 		}
+	}
 
-		saved = append(saved, dataKey)
-		updatedResources[NamespacedResource{Namespace: dataKey.Namespace, Group: dataKey.Group, Resource: dataKey.Resource}] = true
-
-		// Fill in legacy columns on the resource_history row that was just inserted with only key_path and value.
-		if rvManagerDB != nil {
-			microRV := rvmanager.RVFromBulkSnowflake(dataKey.ResourceVersion)
-			generation := obj.GetGeneration()
-			if action == DataActionDeleted {
-				generation = 0
-			}
-
-			// For creates, previous RV is 0. For updates/deletes, it's the RV of the previous event for this resource.
-			nameKey := dataKey.Group + "/" + dataKey.Resource + "/" + dataKey.Namespace + "/" + dataKey.Name
-			var previousRV int64
-			if action != DataActionCreated {
-				previousRV = lastMicroRV[nameKey]
-			}
-
-			if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, rvManagerDB, dataKey, microRV, previousRV, generation); err != nil {
-				b.log.Error("failed to update legacy resource_history for bulk", "error", err)
-				return rsp
-			}
-			lastMicroRV[nameKey] = microRV
+	// Flush any remaining items
+	if rsp.Error == nil {
+		if err := flushPending(); err != nil {
+			rollback()
+			rsp.Error = AsErrorResult(err)
 		}
 	}
 
