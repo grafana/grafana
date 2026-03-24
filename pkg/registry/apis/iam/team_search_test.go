@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
+	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -52,7 +53,7 @@ func TestTeamSearchFallback(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideStaticServiceForTests(cfg)
-			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil, nil)
+			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil, nil, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/teams/search", nil)
@@ -189,7 +190,7 @@ func TestTeamSearchHandler(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideStaticServiceForTests(cfg)
-			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil, nil)
+			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil, nil, nil)
 
 			rr := httptest.NewRecorder()
 			endpoint := fmt.Sprintf("/teams/search?limit=%d", limit)
@@ -214,101 +215,6 @@ func TestTeamSearchHandler(t *testing.T) {
 			require.Equal(t, tt.expectedPage, int(mockClient.LastSearchRequest.Page), fmt.Sprintf("mismatch page in test %d", i))
 		}
 	})
-}
-
-type MockClient struct {
-	resourcepb.ResourceIndexClient
-	resource.ResourceIndex
-
-	// Capture the last SearchRequest for assertions
-	LastSearchRequest *resourcepb.ResourceSearchRequest
-
-	MockResponses []*resourcepb.ResourceSearchResponse
-	MockError     error
-	MockCalls     []*resourcepb.ResourceSearchRequest
-	CallCount     int
-}
-
-func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	if m.MockError != nil {
-		return nil, m.MockError
-	}
-
-	m.LastSearchRequest = in
-	m.MockCalls = append(m.MockCalls, in)
-
-	var response *resourcepb.ResourceSearchResponse
-	if m.CallCount < len(m.MockResponses) {
-		response = m.MockResponses[m.CallCount]
-	}
-
-	m.CallCount = m.CallCount + 1
-
-	return response, nil
-}
-func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) Watch(ctx context.Context, in *resourcepb.WatchRequest, opts ...grpc.CallOption) (resourcepb.ResourceStore_WatchClient, error) {
-	return nil, nil
-}
-func (m *MockClient) Delete(ctx context.Context, in *resourcepb.DeleteRequest, opts ...grpc.CallOption) (*resourcepb.DeleteResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) Create(ctx context.Context, in *resourcepb.CreateRequest, opts ...grpc.CallOption) (*resourcepb.CreateResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) Update(ctx context.Context, in *resourcepb.UpdateRequest, opts ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) Read(ctx context.Context, in *resourcepb.ReadRequest, opts ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) GetBlob(ctx context.Context, in *resourcepb.GetBlobRequest, opts ...grpc.CallOption) (*resourcepb.GetBlobResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) PutBlob(ctx context.Context, in *resourcepb.PutBlobRequest, opts ...grpc.CallOption) (*resourcepb.PutBlobResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) List(ctx context.Context, in *resourcepb.ListRequest, opts ...grpc.CallOption) (*resourcepb.ListResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
-	return nil, nil
-}
-func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessClient, error) {
-	return nil, nil
-}
-func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
-	return nil
-}
-func (m *MockClient) GetQuotaUsage(ctx context.Context, in *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
-	return nil, nil
-}
-
-func mockTeamClientWithHits() *MockClient {
-	return &MockClient{
-		MockResponses: []*resourcepb.ResourceSearchResponse{
-			{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{
-						{Name: "title"},
-					},
-					Rows: []*resourcepb.ResourceTableRow{
-						{Key: &resourcepb.ResourceKey{Name: "team-1"}, Cells: [][]byte{[]byte("Team One")}},
-						{Key: &resourcepb.ResourceKey{Name: "team-2"}, Cells: [][]byte{[]byte("Team Two")}},
-					},
-				},
-				TotalHits: 2,
-			},
-		},
-	}
 }
 
 func TestTeamAccessControl(t *testing.T) {
@@ -486,6 +392,81 @@ func TestTeamAccessControl(t *testing.T) {
 	}
 }
 
+func TestEnrichWithMemberCounts(t *testing.T) {
+	t.Run("all succeed - sets correct member counts", func(t *testing.T) {
+		lister := &mockTeamBindingLister{
+			listFunc: func(_ context.Context, _ string, opts sdkresource.ListOptions) (*iamv0alpha1.TeamBindingList, error) {
+				teamUID := opts.FieldSelectors[0][len("spec.teamRef.name="):]
+				switch teamUID {
+				case "team-1":
+					return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 3)}, nil
+				case "team-2":
+					return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 0)}, nil
+				default:
+					return &iamv0alpha1.TeamBindingList{}, nil
+				}
+			},
+		}
+
+		handler := &TeamSearchHandler{
+			log:               log.New("test"),
+			tracer:            tracing.NewNoopTracerService(),
+			teamBindingClient: lister,
+		}
+
+		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
+			{Name: "team-1"},
+			{Name: "team-2"},
+		}
+
+		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		require.NoError(t, err)
+		assert.Equal(t, int64(3), hits[0].MemberCount)
+		assert.Equal(t, int64(0), hits[1].MemberCount)
+	})
+
+	t.Run("one fails - other goroutines still complete", func(t *testing.T) {
+		lister := &mockTeamBindingLister{
+			listFunc: func(_ context.Context, _ string, opts sdkresource.ListOptions) (*iamv0alpha1.TeamBindingList, error) {
+				teamUID := opts.FieldSelectors[0][len("spec.teamRef.name="):]
+				if teamUID == "team-bad" {
+					return nil, fmt.Errorf("teambinding list failed for team-bad")
+				}
+				return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 2)}, nil
+			},
+		}
+
+		handler := &TeamSearchHandler{
+			log:               log.New("test"),
+			tracer:            tracing.NewNoopTracerService(),
+			teamBindingClient: lister,
+		}
+
+		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
+			{Name: "team-ok-1"},
+			{Name: "team-bad"},
+			{Name: "team-ok-2"},
+		}
+
+		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "team-bad")
+
+		// The other goroutines ran to completion despite the failure
+		assert.Equal(t, int64(2), hits[0].MemberCount, "team-ok-1 should still have its count")
+		assert.Equal(t, int64(0), hits[1].MemberCount, "team-bad should remain at zero")
+		assert.Equal(t, int64(2), hits[2].MemberCount, "team-ok-2 should still have its count")
+	})
+}
+
+type mockTeamBindingLister struct {
+	listFunc func(ctx context.Context, namespace string, opts sdkresource.ListOptions) (*iamv0alpha1.TeamBindingList, error)
+}
+
+func (m *mockTeamBindingLister) List(ctx context.Context, namespace string, opts sdkresource.ListOptions) (*iamv0alpha1.TeamBindingList, error) {
+	return m.listFunc(ctx, namespace, opts)
+}
+
 type mockTeamAccessClient struct {
 	batchCheckFunc func(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error)
 }
@@ -503,4 +484,99 @@ func (m *mockTeamAccessClient) BatchCheck(ctx context.Context, info authlib.Auth
 		return m.batchCheckFunc(ctx, info, req)
 	}
 	return authlib.BatchCheckResponse{}, nil
+}
+
+type MockClient struct {
+	resourcepb.ResourceIndexClient
+	resource.ResourceIndex
+
+	// Capture the last SearchRequest for assertions
+	LastSearchRequest *resourcepb.ResourceSearchRequest
+
+	MockResponses []*resourcepb.ResourceSearchResponse
+	MockError     error
+	MockCalls     []*resourcepb.ResourceSearchRequest
+	CallCount     int
+}
+
+func (m *MockClient) Search(ctx context.Context, in *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if m.MockError != nil {
+		return nil, m.MockError
+	}
+
+	m.LastSearchRequest = in
+	m.MockCalls = append(m.MockCalls, in)
+
+	var response *resourcepb.ResourceSearchResponse
+	if m.CallCount < len(m.MockResponses) {
+		response = m.MockResponses[m.CallCount]
+	}
+
+	m.CallCount = m.CallCount + 1
+
+	return response, nil
+}
+func (m *MockClient) GetStats(ctx context.Context, in *resourcepb.ResourceStatsRequest, opts ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) CountManagedObjects(ctx context.Context, in *resourcepb.CountManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.CountManagedObjectsResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Watch(ctx context.Context, in *resourcepb.WatchRequest, opts ...grpc.CallOption) (resourcepb.ResourceStore_WatchClient, error) {
+	return nil, nil
+}
+func (m *MockClient) Delete(ctx context.Context, in *resourcepb.DeleteRequest, opts ...grpc.CallOption) (*resourcepb.DeleteResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Create(ctx context.Context, in *resourcepb.CreateRequest, opts ...grpc.CallOption) (*resourcepb.CreateResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Update(ctx context.Context, in *resourcepb.UpdateRequest, opts ...grpc.CallOption) (*resourcepb.UpdateResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) Read(ctx context.Context, in *resourcepb.ReadRequest, opts ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) GetBlob(ctx context.Context, in *resourcepb.GetBlobRequest, opts ...grpc.CallOption) (*resourcepb.GetBlobResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) PutBlob(ctx context.Context, in *resourcepb.PutBlobRequest, opts ...grpc.CallOption) (*resourcepb.PutBlobResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) List(ctx context.Context, in *resourcepb.ListRequest, opts ...grpc.CallOption) (*resourcepb.ListResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) ListManagedObjects(ctx context.Context, in *resourcepb.ListManagedObjectsRequest, opts ...grpc.CallOption) (*resourcepb.ListManagedObjectsResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) IsHealthy(ctx context.Context, in *resourcepb.HealthCheckRequest, opts ...grpc.CallOption) (*resourcepb.HealthCheckResponse, error) {
+	return nil, nil
+}
+func (m *MockClient) BulkProcess(ctx context.Context, opts ...grpc.CallOption) (resourcepb.BulkStore_BulkProcessClient, error) {
+	return nil, nil
+}
+func (m *MockClient) UpdateIndex(ctx context.Context, reason string) error {
+	return nil
+}
+func (m *MockClient) GetQuotaUsage(ctx context.Context, in *resourcepb.QuotaUsageRequest, opts ...grpc.CallOption) (*resourcepb.QuotaUsageResponse, error) {
+	return nil, nil
+}
+
+func mockTeamClientWithHits() *MockClient {
+	return &MockClient{
+		MockResponses: []*resourcepb.ResourceSearchResponse{
+			{
+				Results: &resourcepb.ResourceTable{
+					Columns: []*resourcepb.ResourceTableColumnDefinition{
+						{Name: "title"},
+					},
+					Rows: []*resourcepb.ResourceTableRow{
+						{Key: &resourcepb.ResourceKey{Name: "team-1"}, Cells: [][]byte{[]byte("Team One")}},
+						{Key: &resourcepb.ResourceKey{Name: "team-2"}, Cells: [][]byte{[]byte("Team Two")}},
+					},
+				},
+				TotalHits: 2,
+			},
+		},
+	}
 }
