@@ -1,8 +1,8 @@
 import { isNumber, set, unset, get, cloneDeep, defaultsDeep } from 'lodash';
 import { createContext, useContext, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
+import { NullValueMode } from 'src';
 
-import { NullValueMode } from '@grafana/data';
 import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
 
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
