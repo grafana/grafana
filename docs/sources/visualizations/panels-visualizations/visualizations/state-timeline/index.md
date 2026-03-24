@@ -117,6 +117,7 @@ Use these options to refine the visualization.
 | Show values  | Controls whether values are rendered inside the state regions. Choose from **Auto**, **Always**, and **Never**. **Auto** renders values if there is sufficient space. |
 | Align values | Controls value alignment inside state regions. Choose from **Left**, **Center**, and **Right**. |
 | Row height | Controls bar height as a fraction of each row. `1` fills the row, and lower values leave more space between rows. |
+| Series name position | Controls where series names are displayed. Choose from **Left** (default, on the Y-axis) and **Above bars** (above each timeline row, hiding the Y-axis). **Above bars** is useful when you want the state timeline to share the same width as adjacent panels or when series names are too long for the Y-axis. {{< admonition type="note" >}}This option is currently experimental and requires enabling the `stateTimelineNameAboveBars` [feature toggle](ref:configure-feature-toggles).{{< /admonition >}} |
 | [Page size](#page-size-enable-pagination) | The **Page size** option lets you paginate the state timeline visualization to limit how many series are visible at once.  |
 | Line width | Controls line width of state regions. This is a field option and can be set in field defaults or overrides. |
 | Fill opacity | Controls the fill opacity of state regions. This is a field option and can be set in field defaults or overrides. |
