@@ -138,6 +138,12 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		}
 	}
 
+	// Honour the org requested via ?orgId query param so that OrgRedirect middleware
+	// does not see a mismatch and cause an infinite redirect loop.
+	if r.OrgID > 0 {
+		id.OrgID = r.OrgID
+	}
+
 	if id.Login == "" && id.Email == "" {
 		s.log.FromContext(ctx).Debug("Failed to get an authentication claim from JWT",
 			"login", id.Login, "email", id.Email)

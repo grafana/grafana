@@ -549,16 +549,22 @@ func parseNamespace(path string) string {
 // name of query string used to target specific org for request
 const orgIDTargetQuery = "targetOrgId"
 
+// orgIDQuery is the query param sent by the Grafana frontend when switching orgs
+const orgIDQuery = "orgId"
+
 func orgIDFromQuery(req *http.Request) int64 {
 	params := req.URL.Query()
-	if !params.Has(orgIDTargetQuery) {
-		return 0
+	// Prefer orgId (sent by the frontend) over the legacy targetOrgId
+	for _, key := range []string{orgIDQuery, orgIDTargetQuery} {
+		if params.Has(key) {
+			id, err := strconv.ParseInt(params.Get(key), 10, 64)
+			if err != nil {
+				return 0
+			}
+			return id
+		}
 	}
-	id, err := strconv.ParseInt(params.Get(orgIDTargetQuery), 10, 64)
-	if err != nil {
-		return 0
-	}
-	return id
+	return 0
 }
 
 // name of header containing org id for request
