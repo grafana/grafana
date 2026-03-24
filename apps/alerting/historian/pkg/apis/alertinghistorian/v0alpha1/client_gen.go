@@ -31,11 +31,11 @@ func NewCustomRouteClientFromGenerator(generator resource.ClientGenerator, defau
 	return NewCustomRouteClient(client), nil
 }
 
-type GetAlertStateHistoryRequest struct {
+type GetAlertstatehistoryRequest struct {
 	Headers http.Header
 }
 
-func (c *CustomRouteClient) GetAlertStateHistory(ctx context.Context, namespace string, request GetAlertStateHistoryRequest) (*GetAlertStateHistoryResponse, error) {
+func (c *CustomRouteClient) GetAlertstatehistory(ctx context.Context, namespace string, request GetAlertstatehistoryRequest) (*GetAlertstatehistoryResponse, error) {
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
 		Path:    "/alertstate/history",
 		Verb:    "GET",
@@ -44,20 +44,20 @@ func (c *CustomRouteClient) GetAlertStateHistory(ctx context.Context, namespace 
 	if err != nil {
 		return nil, err
 	}
-	cast := GetAlertStateHistoryResponse{}
+	cast := GetAlertstatehistoryResponse{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetAlertStateHistoryResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetAlertstatehistoryResponse: %w", err)
 	}
 	return &cast, nil
 }
 
-type CreateNotificationQueryRequest struct {
-	Body    CreateNotificationQueryRequestBody
+type CreateNotificationqueryRequest struct {
+	Body    CreateNotificationqueryRequestBody
 	Headers http.Header
 }
 
-func (c *CustomRouteClient) CreateNotificationQuery(ctx context.Context, namespace string, request CreateNotificationQueryRequest) (*CreateNotificationQueryResponse, error) {
+func (c *CustomRouteClient) CreateNotificationquery(ctx context.Context, namespace string, request CreateNotificationqueryRequest) (*CreateNotificationqueryResponse, error) {
 	body, err := json.Marshal(request.Body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
@@ -71,20 +71,20 @@ func (c *CustomRouteClient) CreateNotificationQuery(ctx context.Context, namespa
 	if err != nil {
 		return nil, err
 	}
-	cast := CreateNotificationQueryResponse{}
+	cast := CreateNotificationqueryResponse{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateNotificationQueryResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateNotificationqueryResponse: %w", err)
 	}
 	return &cast, nil
 }
 
-type CreateNotificationAlertQueryRequest struct {
-	Body    CreateNotificationAlertQueryRequestBody
+type CreateNotificationsqueryalertsRequest struct {
+	Body    CreateNotificationsqueryalertsRequestBody
 	Headers http.Header
 }
 
-func (c *CustomRouteClient) CreateNotificationAlertQuery(ctx context.Context, namespace string, request CreateNotificationAlertQueryRequest) (*CreateNotificationAlertQueryResponse, error) {
+func (c *CustomRouteClient) CreateNotificationsqueryalerts(ctx context.Context, namespace string, request CreateNotificationsqueryalertsRequest) (*CreateNotificationsqueryalertsResponse, error) {
 	body, err := json.Marshal(request.Body)
 	if err != nil {
 		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
@@ -98,10 +98,10 @@ func (c *CustomRouteClient) CreateNotificationAlertQuery(ctx context.Context, na
 	if err != nil {
 		return nil, err
 	}
-	cast := CreateNotificationAlertQueryResponse{}
+	cast := CreateNotificationsqueryalertsResponse{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateNotificationAlertQueryResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateNotificationsqueryalertsResponse: %w", err)
 	}
 	return &cast, nil
 }

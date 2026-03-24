@@ -9,182 +9,182 @@ import (
 
 // IntegrationTypeSchemaResource - K8s-style wrapper for integration type schemas
 // +k8s:openapi-gen=true
-type GetIntegrationTypeSchemasIntegrationTypeSchemaResource struct {
-	Metadata GetIntegrationTypeSchemasV0alpha1IntegrationTypeSchemaResourceMetadata `json:"metadata"`
-	Spec     GetIntegrationTypeSchemasIntegrationTypeSchema                         `json:"spec"`
+type GetIntegrationtypeschemasIntegrationTypeSchemaResource struct {
+	Metadata GetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata `json:"metadata"`
+	Spec     GetIntegrationtypeschemasIntegrationTypeSchema                         `json:"spec"`
 }
 
-// NewGetIntegrationTypeSchemasIntegrationTypeSchemaResource creates a new GetIntegrationTypeSchemasIntegrationTypeSchemaResource object.
-func NewGetIntegrationTypeSchemasIntegrationTypeSchemaResource() *GetIntegrationTypeSchemasIntegrationTypeSchemaResource {
-	return &GetIntegrationTypeSchemasIntegrationTypeSchemaResource{
-		Metadata: *NewGetIntegrationTypeSchemasV0alpha1IntegrationTypeSchemaResourceMetadata(),
-		Spec:     *NewGetIntegrationTypeSchemasIntegrationTypeSchema(),
+// NewGetIntegrationtypeschemasIntegrationTypeSchemaResource creates a new GetIntegrationtypeschemasIntegrationTypeSchemaResource object.
+func NewGetIntegrationtypeschemasIntegrationTypeSchemaResource() *GetIntegrationtypeschemasIntegrationTypeSchemaResource {
+	return &GetIntegrationtypeschemasIntegrationTypeSchemaResource{
+		Metadata: *NewGetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata(),
+		Spec:     *NewGetIntegrationtypeschemasIntegrationTypeSchema(),
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for GetIntegrationTypeSchemasIntegrationTypeSchemaResource.
-func (GetIntegrationTypeSchemasIntegrationTypeSchemaResource) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationTypeSchemasIntegrationTypeSchemaResource"
+// OpenAPIModelName returns the OpenAPI model name for GetIntegrationtypeschemasIntegrationTypeSchemaResource.
+func (GetIntegrationtypeschemasIntegrationTypeSchemaResource) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasIntegrationTypeSchemaResource"
 }
 
 // IntegrationTypeSchema - receiver integration schema format
 // +k8s:openapi-gen=true
-type GetIntegrationTypeSchemasIntegrationTypeSchema struct {
+type GetIntegrationtypeschemasIntegrationTypeSchema struct {
 	Type           string                                                  `json:"type"`
 	CurrentVersion string                                                  `json:"currentVersion"`
 	Name           string                                                  `json:"name"`
 	Heading        *string                                                 `json:"heading,omitempty"`
 	Description    *string                                                 `json:"description,omitempty"`
 	Info           *string                                                 `json:"info,omitempty"`
-	Versions       []GetIntegrationTypeSchemasIntegrationTypeSchemaVersion `json:"versions"`
+	Versions       []GetIntegrationtypeschemasIntegrationTypeSchemaVersion `json:"versions"`
 	Deprecated     *bool                                                   `json:"deprecated,omitempty"`
 }
 
-// NewGetIntegrationTypeSchemasIntegrationTypeSchema creates a new GetIntegrationTypeSchemasIntegrationTypeSchema object.
-func NewGetIntegrationTypeSchemasIntegrationTypeSchema() *GetIntegrationTypeSchemasIntegrationTypeSchema {
-	return &GetIntegrationTypeSchemasIntegrationTypeSchema{
-		Versions: []GetIntegrationTypeSchemasIntegrationTypeSchemaVersion{},
+// NewGetIntegrationtypeschemasIntegrationTypeSchema creates a new GetIntegrationtypeschemasIntegrationTypeSchema object.
+func NewGetIntegrationtypeschemasIntegrationTypeSchema() *GetIntegrationtypeschemasIntegrationTypeSchema {
+	return &GetIntegrationtypeschemasIntegrationTypeSchema{
+		Versions: []GetIntegrationtypeschemasIntegrationTypeSchemaVersion{},
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for GetIntegrationTypeSchemasIntegrationTypeSchema.
-func (GetIntegrationTypeSchemasIntegrationTypeSchema) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationTypeSchemasIntegrationTypeSchema"
+// OpenAPIModelName returns the OpenAPI model name for GetIntegrationtypeschemasIntegrationTypeSchema.
+func (GetIntegrationtypeschemasIntegrationTypeSchema) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasIntegrationTypeSchema"
 }
 
 // +k8s:openapi-gen=true
-type GetIntegrationTypeSchemasIntegrationTypeSchemaVersion struct {
+type GetIntegrationtypeschemasIntegrationTypeSchemaVersion struct {
 	TypeAlias  *string                          `json:"typeAlias,omitempty"`
 	Version    string                           `json:"version"`
 	CanCreate  bool                             `json:"canCreate"`
-	Options    []GetIntegrationTypeSchemasField `json:"options"`
+	Options    []GetIntegrationtypeschemasField `json:"options"`
 	Info       *string                          `json:"info,omitempty"`
 	Deprecated *bool                            `json:"deprecated,omitempty"`
 }
 
-// NewGetIntegrationTypeSchemasIntegrationTypeSchemaVersion creates a new GetIntegrationTypeSchemasIntegrationTypeSchemaVersion object.
-func NewGetIntegrationTypeSchemasIntegrationTypeSchemaVersion() *GetIntegrationTypeSchemasIntegrationTypeSchemaVersion {
-	return &GetIntegrationTypeSchemasIntegrationTypeSchemaVersion{
-		Options: []GetIntegrationTypeSchemasField{},
+// NewGetIntegrationtypeschemasIntegrationTypeSchemaVersion creates a new GetIntegrationtypeschemasIntegrationTypeSchemaVersion object.
+func NewGetIntegrationtypeschemasIntegrationTypeSchemaVersion() *GetIntegrationtypeschemasIntegrationTypeSchemaVersion {
+	return &GetIntegrationtypeschemasIntegrationTypeSchemaVersion{
+		Options: []GetIntegrationtypeschemasField{},
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for GetIntegrationTypeSchemasIntegrationTypeSchemaVersion.
-func (GetIntegrationTypeSchemasIntegrationTypeSchemaVersion) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationTypeSchemasIntegrationTypeSchemaVersion"
+// OpenAPIModelName returns the OpenAPI model name for GetIntegrationtypeschemasIntegrationTypeSchemaVersion.
+func (GetIntegrationtypeschemasIntegrationTypeSchemaVersion) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasIntegrationTypeSchemaVersion"
 }
 
 // +k8s:openapi-gen=true
-type GetIntegrationTypeSchemasField struct {
+type GetIntegrationtypeschemasField struct {
 	Element        string                                  `json:"element"`
 	InputType      string                                  `json:"inputType"`
 	Label          string                                  `json:"label"`
 	Description    string                                  `json:"description"`
 	Placeholder    string                                  `json:"placeholder"`
 	PropertyName   string                                  `json:"propertyName"`
-	SelectOptions  []GetIntegrationTypeSchemasSelectOption `json:"selectOptions,omitempty"`
-	ShowWhen       GetIntegrationTypeSchemasShowWhen       `json:"showWhen"`
+	SelectOptions  []GetIntegrationtypeschemasSelectOption `json:"selectOptions,omitempty"`
+	ShowWhen       GetIntegrationtypeschemasShowWhen       `json:"showWhen"`
 	Required       bool                                    `json:"required"`
 	Protected      *bool                                   `json:"protected,omitempty"`
 	ValidationRule string                                  `json:"validationRule"`
 	Secure         bool                                    `json:"secure"`
 	DependsOn      string                                  `json:"dependsOn"`
-	SubformOptions []GetIntegrationTypeSchemasField        `json:"subformOptions,omitempty"`
+	SubformOptions []GetIntegrationtypeschemasField        `json:"subformOptions,omitempty"`
 }
 
-// NewGetIntegrationTypeSchemasField creates a new GetIntegrationTypeSchemasField object.
-func NewGetIntegrationTypeSchemasField() *GetIntegrationTypeSchemasField {
-	return &GetIntegrationTypeSchemasField{
-		ShowWhen: *NewGetIntegrationTypeSchemasShowWhen(),
+// NewGetIntegrationtypeschemasField creates a new GetIntegrationtypeschemasField object.
+func NewGetIntegrationtypeschemasField() *GetIntegrationtypeschemasField {
+	return &GetIntegrationtypeschemasField{
+		ShowWhen: *NewGetIntegrationtypeschemasShowWhen(),
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for GetIntegrationTypeSchemasField.
-func (GetIntegrationTypeSchemasField) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationTypeSchemasField"
+// OpenAPIModelName returns the OpenAPI model name for GetIntegrationtypeschemasField.
+func (GetIntegrationtypeschemasField) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasField"
 }
 
 // +k8s:openapi-gen=true
-type GetIntegrationTypeSchemasSelectOption struct {
+type GetIntegrationtypeschemasSelectOption struct {
 	Label       string                                   `json:"label"`
-	Value       GetIntegrationTypeSchemasStringOrFloat64 `json:"value"`
+	Value       GetIntegrationtypeschemasStringOrFloat64 `json:"value"`
 	Description string                                   `json:"description"`
 }
 
-// NewGetIntegrationTypeSchemasSelectOption creates a new GetIntegrationTypeSchemasSelectOption object.
-func NewGetIntegrationTypeSchemasSelectOption() *GetIntegrationTypeSchemasSelectOption {
-	return &GetIntegrationTypeSchemasSelectOption{
-		Value: *NewGetIntegrationTypeSchemasStringOrFloat64(),
+// NewGetIntegrationtypeschemasSelectOption creates a new GetIntegrationtypeschemasSelectOption object.
+func NewGetIntegrationtypeschemasSelectOption() *GetIntegrationtypeschemasSelectOption {
+	return &GetIntegrationtypeschemasSelectOption{
+		Value: *NewGetIntegrationtypeschemasStringOrFloat64(),
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for GetIntegrationTypeSchemasSelectOption.
-func (GetIntegrationTypeSchemasSelectOption) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationTypeSchemasSelectOption"
+// OpenAPIModelName returns the OpenAPI model name for GetIntegrationtypeschemasSelectOption.
+func (GetIntegrationtypeschemasSelectOption) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasSelectOption"
 }
 
 // +k8s:openapi-gen=true
-type GetIntegrationTypeSchemasShowWhen struct {
+type GetIntegrationtypeschemasShowWhen struct {
 	Field string `json:"field"`
 	Is    string `json:"is"`
 }
 
-// NewGetIntegrationTypeSchemasShowWhen creates a new GetIntegrationTypeSchemasShowWhen object.
-func NewGetIntegrationTypeSchemasShowWhen() *GetIntegrationTypeSchemasShowWhen {
-	return &GetIntegrationTypeSchemasShowWhen{}
+// NewGetIntegrationtypeschemasShowWhen creates a new GetIntegrationtypeschemasShowWhen object.
+func NewGetIntegrationtypeschemasShowWhen() *GetIntegrationtypeschemasShowWhen {
+	return &GetIntegrationtypeschemasShowWhen{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for GetIntegrationTypeSchemasShowWhen.
-func (GetIntegrationTypeSchemasShowWhen) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationTypeSchemasShowWhen"
+// OpenAPIModelName returns the OpenAPI model name for GetIntegrationtypeschemasShowWhen.
+func (GetIntegrationtypeschemasShowWhen) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasShowWhen"
 }
 
 // +k8s:openapi-gen=true
-type GetIntegrationTypeSchemasResponse struct {
-	Items []GetIntegrationTypeSchemasIntegrationTypeSchemaResource `json:"items"`
+type GetIntegrationtypeschemasResponse struct {
+	Items []GetIntegrationtypeschemasIntegrationTypeSchemaResource `json:"items"`
 }
 
-// NewGetIntegrationTypeSchemasResponse creates a new GetIntegrationTypeSchemasResponse object.
-func NewGetIntegrationTypeSchemasResponse() *GetIntegrationTypeSchemasResponse {
-	return &GetIntegrationTypeSchemasResponse{
-		Items: []GetIntegrationTypeSchemasIntegrationTypeSchemaResource{},
+// NewGetIntegrationtypeschemasResponse creates a new GetIntegrationtypeschemasResponse object.
+func NewGetIntegrationtypeschemasResponse() *GetIntegrationtypeschemasResponse {
+	return &GetIntegrationtypeschemasResponse{
+		Items: []GetIntegrationtypeschemasIntegrationTypeSchemaResource{},
 	}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for GetIntegrationTypeSchemasResponse.
-func (GetIntegrationTypeSchemasResponse) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationTypeSchemasResponse"
+// OpenAPIModelName returns the OpenAPI model name for GetIntegrationtypeschemasResponse.
+func (GetIntegrationtypeschemasResponse) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasResponse"
 }
 
 // +k8s:openapi-gen=true
-type GetIntegrationTypeSchemasV0alpha1IntegrationTypeSchemaResourceMetadata struct {
+type GetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 }
 
-// NewGetIntegrationTypeSchemasV0alpha1IntegrationTypeSchemaResourceMetadata creates a new GetIntegrationTypeSchemasV0alpha1IntegrationTypeSchemaResourceMetadata object.
-func NewGetIntegrationTypeSchemasV0alpha1IntegrationTypeSchemaResourceMetadata() *GetIntegrationTypeSchemasV0alpha1IntegrationTypeSchemaResourceMetadata {
-	return &GetIntegrationTypeSchemasV0alpha1IntegrationTypeSchemaResourceMetadata{}
+// NewGetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata creates a new GetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata object.
+func NewGetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata() *GetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata {
+	return &GetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata{}
 }
 
-// OpenAPIModelName returns the OpenAPI model name for GetIntegrationTypeSchemasV0alpha1IntegrationTypeSchemaResourceMetadata.
-func (GetIntegrationTypeSchemasV0alpha1IntegrationTypeSchemaResourceMetadata) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationTypeSchemasV0alpha1IntegrationTypeSchemaResourceMetadata"
+// OpenAPIModelName returns the OpenAPI model name for GetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata.
+func (GetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasV0alpha1IntegrationTypeSchemaResourceMetadata"
 }
 
 // +k8s:openapi-gen=true
-type GetIntegrationTypeSchemasStringOrFloat64 struct {
+type GetIntegrationtypeschemasStringOrFloat64 struct {
 	String  *string  `json:"String,omitempty"`
 	Float64 *float64 `json:"Float64,omitempty"`
 }
 
-// NewGetIntegrationTypeSchemasStringOrFloat64 creates a new GetIntegrationTypeSchemasStringOrFloat64 object.
-func NewGetIntegrationTypeSchemasStringOrFloat64() *GetIntegrationTypeSchemasStringOrFloat64 {
-	return &GetIntegrationTypeSchemasStringOrFloat64{}
+// NewGetIntegrationtypeschemasStringOrFloat64 creates a new GetIntegrationtypeschemasStringOrFloat64 object.
+func NewGetIntegrationtypeschemasStringOrFloat64() *GetIntegrationtypeschemasStringOrFloat64 {
+	return &GetIntegrationtypeschemasStringOrFloat64{}
 }
 
-// MarshalJSON implements a custom JSON marshalling logic to encode `GetIntegrationTypeSchemasStringOrFloat64` as JSON.
-func (resource GetIntegrationTypeSchemasStringOrFloat64) MarshalJSON() ([]byte, error) {
+// MarshalJSON implements a custom JSON marshalling logic to encode `GetIntegrationtypeschemasStringOrFloat64` as JSON.
+func (resource GetIntegrationtypeschemasStringOrFloat64) MarshalJSON() ([]byte, error) {
 	if resource.String != nil {
 		return json.Marshal(resource.String)
 	}
@@ -196,8 +196,8 @@ func (resource GetIntegrationTypeSchemasStringOrFloat64) MarshalJSON() ([]byte, 
 	return []byte("null"), nil
 }
 
-// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `GetIntegrationTypeSchemasStringOrFloat64` from JSON.
-func (resource *GetIntegrationTypeSchemasStringOrFloat64) UnmarshalJSON(raw []byte) error {
+// UnmarshalJSON implements a custom JSON unmarshalling logic to decode `GetIntegrationtypeschemasStringOrFloat64` from JSON.
+func (resource *GetIntegrationtypeschemasStringOrFloat64) UnmarshalJSON(raw []byte) error {
 	if raw == nil {
 		return nil
 	}
@@ -227,7 +227,7 @@ func (resource *GetIntegrationTypeSchemasStringOrFloat64) UnmarshalJSON(raw []by
 	return errors.Join(errList...)
 }
 
-// OpenAPIModelName returns the OpenAPI model name for GetIntegrationTypeSchemasStringOrFloat64.
-func (GetIntegrationTypeSchemasStringOrFloat64) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationTypeSchemasStringOrFloat64"
+// OpenAPIModelName returns the OpenAPI model name for GetIntegrationtypeschemasStringOrFloat64.
+func (GetIntegrationtypeschemasStringOrFloat64) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v0alpha1.GetIntegrationtypeschemasStringOrFloat64"
 }
