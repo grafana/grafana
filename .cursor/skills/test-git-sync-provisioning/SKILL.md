@@ -369,25 +369,32 @@ After the wizard completes and the repo is synced, the following operations can 
 
 **Tabs:** The drawer has "Details" (default) and "Changes" tabs. `click` the "Changes" tab to verify the diff before saving.
 
-### Testing Both Workflows
+### Full Test Matrix
 
-Concrete test sequence covering both `write` (push to configured branch) and `branch` (PR) workflows:
+The CRUD operations above must be tested against **both** repository auth types (PAT and GitHub App). Each connected repository is independent — a folder or dashboard created in the PAT repo does not appear in the GitHub App repo.
 
-**Setup:** Complete the wizard with both `prWorkflow` and `enablePushToConfiguredBranch` enabled (see "Wizard Step 5 Configuration" above).
+For each auth type, run the complete wizard (Steps 1–5) with both `prWorkflow` and `enablePushToConfiguredBranch` enabled, then execute the CRUD tests:
 
-**1. Push to configured branch (`write` workflow):**
+**Per repository (PAT repo first, then GitHub App repo):**
 
-1. Create a folder using the configured branch in the save dialog → direct write.
-2. Create a dashboard in that folder using the configured branch → direct write.
-3. Modify the dashboard using the configured branch → direct write.
-4. Verify: The resources are visible in Grafana. API confirms they exist.
+1. **Push to configured branch (`write` workflow):**
+   1. Create a folder using the configured branch → direct write.
+   2. Create a dashboard in that folder using the configured branch → direct write.
+   3. Modify the dashboard using the configured branch → direct write.
+   4. Verify: Resources are visible in Grafana. API confirms they exist.
 
-**2. PR workflow (`branch` workflow):**
+2. **PR workflow (`branch` workflow):**
+   1. Create another folder, selecting a new branch name (e.g., `pr-test-branch`) → PR workflow.
+   2. Verify: PR banner appears with PR URL.
+   3. Modify the dashboard, selecting a new branch (e.g., `dashboard-edit-branch`) → PR workflow.
+   4. Verify: Preview page shows PR banner with "View branch", "Compare branch", and "Open pull request" buttons.
 
-1. Create another folder, selecting a new branch name (e.g., `pr-test-branch`) → PR workflow.
-2. Verify: PR banner appears with PR URL.
-3. Modify the dashboard, selecting a new branch (e.g., `dashboard-edit-branch`) → PR workflow.
-4. Verify: Preview page shows PR banner with "View branch", "Compare branch", and "Open pull request" buttons.
+3. **Cleanup** the repository (see Cleanup section below) before moving to the next auth type.
+
+**Concrete sequence:**
+
+1. Run PAT wizard → CRUD tests (write + branch workflows) → cleanup PAT repo
+2. Run GitHub App wizard → CRUD tests (write + branch workflows) → cleanup GitHub App repo
 
 ## Cleanup
 
