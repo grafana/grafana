@@ -1,5 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 
+import { Stack, Text } from '@grafana/ui';
+
 import { UserIcon } from './UserIcon';
 import mdx from './UserIcon.mdx';
 
@@ -38,6 +40,52 @@ export const Basic: StoryFn<typeof UserIcon> = (args) => {
 
   return <UserIcon {...args} userView={userView} />;
 };
+
+export const Examples: StoryFn<typeof UserIcon> = (args) => {
+  const userView = {
+    user: {
+      name: 'John Smith',
+      avatarUrl: 'https://picsum.photos/id/1/200/200',
+    },
+    lastActiveAt: '2023-04-18T15:00:00.000Z',
+  };
+
+  const examples = [
+    { title: 'Interactive (click handler provided), user with avatar', props: { userView, onClick: () => console.log('Avatar clicked') } },
+    {
+      title: 'Interactive, user with initials',
+      props: {
+        userView: {
+          ...userView,
+          user: { ...userView.user, avatarUrl: undefined },
+        },
+        onClick: () => console.log('Initials clicked'),
+      },
+    },
+    {
+      title: 'Interactive, with tooltip',
+      props: { userView, onClick: () => console.log('Avatar clicked'), showTooltip: true },
+    },
+    {
+      title: 'Interactive, no tooltip',
+      props: { userView, onClick: () => console.log('Avatar clicked'), showTooltip: false },
+    },
+    { title: 'Non-interactive, with tooltip', props: { userView, showTooltip: true } },
+    { title: 'Non-interactive, no tooltip', props: { userView, showTooltip: false } },
+  ];
+
+  return (
+    <>
+      {examples.map((example) => (
+        <Stack direction="column" key={example.title} gap={5}>
+          <Text element="p">{example.title}</Text>
+          <UserIcon {...args} {...example.props} />
+        </Stack>
+      ))}
+    </>
+  );
+};
+
 Basic.args = {
   showTooltip: true,
   onClick: undefined,
