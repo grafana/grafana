@@ -69,7 +69,10 @@ public/css/*.min.css
 .vscode/
 !.vscode/launch.json
 .vs/
-.cursor/
+.cursor/*
+!.cursor/rules/
+.cursor/rules/*
+!.cursor/rules/test-git-sync-provisioning-cloud.mdc
 .devcontainer/
 .claude/
 
@@ -275,3 +278,8 @@ devenv/docker/blocks/auth/signer/keys/ec_private_key.pem
 .specs
 .playwright-mcp/
 overrides.yaml
+
+
+# Git Sync provisioning test credentials
+.env
+*.pem
