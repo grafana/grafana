@@ -6,14 +6,10 @@ import (
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 var env = common.NewSharedEnv(
 	common.WithProvisioningFolderMetadata,
-	func(opts *testinfra.GrafanaOpts) {
-		opts.ProvisioningMaxRepositories = 10
-	},
 )
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
