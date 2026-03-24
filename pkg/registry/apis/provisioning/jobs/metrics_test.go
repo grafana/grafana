@@ -100,6 +100,42 @@ func TestRecordResourceOperation(t *testing.T) {
 	})], 0.001)
 }
 
+func TestRecordFolderMetadataOp(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := RegisterJobMetrics(reg)
+
+	m.RecordFolderMetadataOp(FolderMetadataActionMissing, FolderMetadataOutcomeSuccess, SyncTypeIncremental)
+	m.RecordFolderMetadataOp(FolderMetadataActionMissing, FolderMetadataOutcomeSuccess, SyncTypeIncremental)
+	m.RecordFolderMetadataOp(FolderMetadataActionInvalid, FolderMetadataOutcomeError, SyncTypeFull)
+	m.RecordFolderMetadataOp(FolderMetadataActionDiffBuilt, FolderMetadataOutcomeSuccess, SyncTypeIncremental)
+	m.RecordFolderMetadataOp(FolderMetadataActionOrphaned, FolderMetadataOutcomeSuccess, SyncTypeIncremental)
+
+	metrics, err := reg.Gather()
+	require.NoError(t, err)
+
+	counter := findMetric(metrics, "grafana_provisioning_jobs_folder_metadata_ops_total")
+	require.NotNil(t, counter, "folder_metadata_ops_total counter should be registered")
+
+	pairs := counterValues(counter)
+	require.Len(t, pairs, 4)
+
+	assert.InDelta(t, 2.0, pairs[labelKey(map[string]string{
+		"action": "missing", "outcome": "success", "sync_type": "incremental",
+	})], 0.001, "missing/success/incremental should be 2")
+
+	assert.InDelta(t, 1.0, pairs[labelKey(map[string]string{
+		"action": "invalid", "outcome": "error", "sync_type": "full",
+	})], 0.001)
+
+	assert.InDelta(t, 1.0, pairs[labelKey(map[string]string{
+		"action": "diff_built", "outcome": "success", "sync_type": "incremental",
+	})], 0.001)
+
+	assert.InDelta(t, 1.0, pairs[labelKey(map[string]string{
+		"action": "orphaned", "outcome": "success", "sync_type": "incremental",
+	})], 0.001)
+}
+
 // --- helpers ---
 
 func findMetric(families []*dto.MetricFamily, name string) *dto.MetricFamily {

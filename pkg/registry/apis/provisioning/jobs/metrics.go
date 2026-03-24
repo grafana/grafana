@@ -20,7 +20,8 @@ type JobMetrics struct {
 	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
 
-	resourceOpsTotal *prometheus.CounterVec // per-resource outcome counter
+	resourceOpsTotal       *prometheus.CounterVec // per-resource outcome counter
+	folderMetadataOpsTotal *prometheus.CounterVec // folder metadata lifecycle operations
 }
 
 type QueueMetrics struct {
@@ -137,6 +138,15 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		)
 		registry.MustRegister(resourceOpsTotal)
 
+		folderMetadataOpsTotal := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_jobs_folder_metadata_ops_total",
+				Help: "Total number of folder metadata operations during sync",
+			},
+			[]string{"action", "outcome", "sync_type"},
+		)
+		registry.MustRegister(folderMetadataOpsTotal)
+
 		jobMetrics = JobMetrics{
 			registry:                         registry,
 			processedTotal:                   processedTotal,
@@ -187,6 +197,35 @@ func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, resu
 	}
 
 	m.resourceOpsTotal.WithLabelValues(string(action), string(fileActionToOperation(result.Action())), string(outcome), reason, result.Group(), result.Kind()).Inc()
+}
+
+// Folder metadata operation action labels.
+const (
+	// FolderMetadataActionDiffBuilt is recorded when the incremental diff builder rewrites _folder.json changes into synthetic folder updates.
+	FolderMetadataActionDiffBuilt = "diff_built"
+	// FolderMetadataActionInvalid is recorded when a _folder.json file exists but contains malformed or unparseable content.
+	FolderMetadataActionInvalid = "invalid"
+	// FolderMetadataActionMissing is recorded when a folder has no _folder.json metadata file.
+	FolderMetadataActionMissing = "missing"
+	// FolderMetadataActionOrphaned is recorded when a folder exists in the cluster but no longer exists in the git repository.
+	FolderMetadataActionOrphaned = "orphaned"
+	// FolderMetadataActionRenamed is recorded when an old folder UID is cleaned up after a metadata-driven rename.
+	FolderMetadataActionRenamed = "renamed"
+	// FolderMetadataActionTreeCleanup is recorded when an in-memory folder tree entry is removed after a folder deletion.
+	FolderMetadataActionTreeCleanup = "tree_cleanup"
+)
+
+// Folder metadata operation outcome labels.
+const (
+	// FolderMetadataOutcomeSuccess indicates the metadata operation completed successfully.
+	FolderMetadataOutcomeSuccess = "success"
+	// FolderMetadataOutcomeError indicates the metadata operation failed.
+	FolderMetadataOutcomeError = "error"
+)
+
+// RecordFolderMetadataOp increments the folder metadata operations counter.
+func (m *JobMetrics) RecordFolderMetadataOp(action, outcome string, syncType SyncType) {
+	m.folderMetadataOpsTotal.WithLabelValues(action, outcome, syncType.String()).Inc()
 }
 
 func fileActionToOperation(action repository.FileAction) ResourceOperation {
