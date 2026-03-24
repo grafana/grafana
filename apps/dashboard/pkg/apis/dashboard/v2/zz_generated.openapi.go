@@ -30,6 +30,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardAutoGridLayoutItemKind{}.OpenAPIModelName():                              schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutItemKind(ref),
 		DashboardAutoGridLayoutItemSpec{}.OpenAPIModelName():                              schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutItemSpec(ref),
 		DashboardAutoGridLayoutKind{}.OpenAPIModelName():                                  schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutKind(ref),
+		DashboardAutoGridLayoutKindOrGridLayoutKind{}.OpenAPIModelName():                  schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutKindOrGridLayoutKind(ref),
 		DashboardAutoGridLayoutSpec{}.OpenAPIModelName():                                  schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutSpec(ref),
 		DashboardAutoGridRepeatOptions{}.OpenAPIModelName():                               schema_pkg_apis_dashboard_v2_DashboardAutoGridRepeatOptions(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2.DashboardClient": schema_pkg_apis_dashboard_v2_DashboardClient(ref),
@@ -82,6 +83,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardPanelQueryKind{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardPanelQueryKind(ref),
 		DashboardPanelQuerySpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardPanelQuerySpec(ref),
 		DashboardPanelSpec{}.OpenAPIModelName():                                                                                             schema_pkg_apis_dashboard_v2_DashboardPanelSpec(ref),
+		DashboardPreferences{}.OpenAPIModelName():                                                                                           schema_pkg_apis_dashboard_v2_DashboardPreferences(ref),
 		DashboardQueryGroupKind{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardQueryGroupKind(ref),
 		DashboardQueryGroupSpec{}.OpenAPIModelName():                                                                                        schema_pkg_apis_dashboard_v2_DashboardQueryGroupSpec(ref),
 		DashboardQueryOptionsSpec{}.OpenAPIModelName():                                                                                      schema_pkg_apis_dashboard_v2_DashboardQueryOptionsSpec(ref),
@@ -944,6 +946,30 @@ func schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutKind(ref common.Referen
 		},
 		Dependencies: []string{
 			DashboardAutoGridLayoutSpec{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2_DashboardAutoGridLayoutKindOrGridLayoutKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"AutoGridLayoutKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardAutoGridLayoutKind{}.OpenAPIModelName()),
+						},
+					},
+					"GridLayoutKind": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardGridLayoutKind{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			DashboardAutoGridLayoutKind{}.OpenAPIModelName(), DashboardGridLayoutKind{}.OpenAPIModelName()},
 	}
 }
 
@@ -3351,6 +3377,27 @@ func schema_pkg_apis_dashboard_v2_DashboardPanelSpec(ref common.ReferenceCallbac
 	}
 }
 
+func schema_pkg_apis_dashboard_v2_DashboardPreferences(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Dashboard specific preferences (applied per dashboard = all users using the dashboard)",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"layout": {
+						SchemaProps: spec.SchemaProps{
+							Description: "default layout template to be used when new containers are created",
+							Ref:         ref(DashboardAutoGridLayoutKindOrGridLayoutKind{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			DashboardAutoGridLayoutKindOrGridLayoutKind{}.OpenAPIModelName()},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2_DashboardQueryGroupKind(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -4151,12 +4198,17 @@ func schema_pkg_apis_dashboard_v2_DashboardSpec(ref common.ReferenceCallback) co
 							},
 						},
 					},
+					"preferences": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(DashboardPreferences{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"annotations", "cursorSync", "elements", "layout", "links", "preload", "tags", "timeSettings", "title", "variables"},
 			},
 		},
 		Dependencies: []string{
-			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
+			DashboardAnnotationQueryKind{}.OpenAPIModelName(), DashboardDashboardLink{}.OpenAPIModelName(), DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{}.OpenAPIModelName(), DashboardPanelKindOrLibraryPanelKind{}.OpenAPIModelName(), DashboardPreferences{}.OpenAPIModelName(), DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind{}.OpenAPIModelName(), DashboardTimeSettingsSpec{}.OpenAPIModelName()},
 	}
 }
 

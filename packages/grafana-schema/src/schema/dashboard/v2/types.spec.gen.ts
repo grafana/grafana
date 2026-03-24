@@ -1566,6 +1566,15 @@ export const defaultTimeRangeOption = (): TimeRangeOption => ({
 	to: "now",
 });
 
+// Dashboard specific preferences (applied per dashboard = all users using the dashboard)
+export interface Preferences {
+	// default layout template to be used when new containers are created
+	layout?: AutoGridLayoutKind | GridLayoutKind;
+}
+
+export const defaultPreferences = (): Preferences => ({
+});
+
 export interface Spec {
 	annotations: AnnotationQueryKind[];
 	// Configuration of dashboard cursor sync behavior.
@@ -1597,6 +1606,7 @@ export interface Spec {
 	title: string;
 	// Configured template variables.
 	variables: VariableKind[];
+	preferences?: Preferences;
 }
 
 export const defaultSpec = (): Spec => ({
