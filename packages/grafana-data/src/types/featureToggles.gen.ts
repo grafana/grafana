@@ -1735,4 +1735,9 @@ export interface FeatureToggles {
   * @default false
   */
   rbacIAMClient?: boolean;
+  /**
+  * Enables the logs tableNG panel to replace existing tableRT
+  * @default false
+  */
+  logsTablePanelNG?: boolean;
 }
