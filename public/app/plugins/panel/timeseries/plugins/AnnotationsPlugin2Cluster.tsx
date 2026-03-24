@@ -19,7 +19,7 @@ import { AnnotationMarker2 } from './annotations2-cluster/AnnotationMarker2';
 import { AnnotationVals, XYAnnoVals } from './annotations2-cluster/types';
 import { ClusteringMode, useAnnotationClustering } from './annotations2-cluster/useAnnotationClustering';
 import { useAnnotations } from './annotations2-cluster/useAnnotations';
-import { ANNOTATION_LANE_SIZE, ANNOTATION_REGION_MIN_WIDTH } from './utils';
+import { ANNOTATION_LANE_SIZE, getAnnoRegionStyle } from './utils';
 
 interface AnnotationsPlugin2ClusterProps {
   config: UPlotConfigBuilder;
@@ -259,30 +259,17 @@ export const AnnotationsPlugin2Cluster = ({
 
         let style: React.CSSProperties | null = null;
         let isVisible = true;
+        const plotWidth = plot.rect.width;
 
         if (isRegion && timeEnd != null) {
           const right = Math.round(plot.valToPos(timeEnd, 'x')) || 0; // handles -0
-
-          isVisible = left < plot.rect.width && right > 0;
+          isVisible = left < plotWidth && right > 0;
 
           if (isVisible) {
-            const clampedRight = Math.min(plot.rect.width, right);
-            const width = clampedRight - left;
-            const clusteredAnnoTooSmall = vals.clusterIdx?.[i] != null && width <= ANNOTATION_REGION_MIN_WIDTH;
-            // If the clustered anno is too small to see/click, adjust the left offset and set a minWidth
-            const adjustedLeft = clusteredAnnoTooSmall ? left - ANNOTATION_REGION_MIN_WIDTH / 2 : left;
-            const clampedLeft = Math.max(0, adjustedLeft);
-
-            style = {
-              left: clampedLeft,
-              background: color,
-              width,
-              top,
-              minWidth: clusteredAnnoTooSmall ? ANNOTATION_REGION_MIN_WIDTH : undefined,
-            };
+            style = getAnnoRegionStyle(plotWidth, right, left, vals, i, color, top);
           }
         } else {
-          isVisible = left >= 0 && left <= plot.rect.width;
+          isVisible = left >= 0 && left <= plotWidth;
 
           if (isVisible) {
             style = { left, borderBottomColor: color, top };
