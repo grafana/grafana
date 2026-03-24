@@ -13326,6 +13326,7 @@
       "job-warning": "Some resources were processed with warnings. Please review the results.",
       "message": "The repository that managed this resource has been deleted. This resource cannot be saved or modified until it is released or removed. Releasing or deleting will affect all resources managed by that repository.",
       "release-button": "Release",
+      "submit-error": "Failed to create job for orphaned resources",
       "success-back-to-dashboards": "Back to dashboards",
       "title": "This resource is managed by a repository that no longer exists"
     },

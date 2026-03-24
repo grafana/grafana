@@ -15,8 +15,8 @@ const mockUseOrphanedResourceActions = jest.mocked(useOrphanedResourceActions);
 function mockHook(overrides: Partial<ReturnType<typeof useOrphanedResourceActions>> = {}) {
   mockUseOrphanedResourceActions.mockReturnValue({
     submit: jest.fn(),
-    submitRelease: jest.fn().mockRejectedValue(new Error('stub')),
-    submitDelete: jest.fn().mockRejectedValue(new Error('stub')),
+    submitRelease: jest.fn().mockResolvedValue(undefined),
+    submitDelete: jest.fn().mockResolvedValue(undefined),
     isSubmitting: false,
     error: null,
     clearError: jest.fn(),
@@ -87,5 +87,21 @@ describe('OrphanedResourceBanner', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Delete' }));
 
     expect(submitDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows an error alert when the hook exposes an error and no job exists', () => {
+    mockHook({ error: new Error('API failure') });
+
+    render(<OrphanedResourceBanner repositoryName="gone-repo" />);
+
+    expect(screen.getByText('Failed to create job for orphaned resources')).toBeInTheDocument();
+  });
+
+  it('does not show an error alert when error is null', () => {
+    mockHook({ error: null });
+
+    render(<OrphanedResourceBanner repositoryName="gone-repo" />);
+
+    expect(screen.queryByText('Failed to create job for orphaned resources')).not.toBeInTheDocument();
   });
 });

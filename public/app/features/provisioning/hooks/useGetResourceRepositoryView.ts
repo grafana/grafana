@@ -47,7 +47,6 @@ export const useGetResourceRepositoryView = ({
   const {
     data: settingsData,
     isLoading: isSettingsLoading,
-    isFetching: isSettingsFetching,
     error: settingsError,
   } = useGetFrontendSettingsQuery(settingsQueryArg);
 
@@ -55,7 +54,6 @@ export const useGetResourceRepositoryView = ({
   const {
     data: folder,
     isLoading: isFolderLoading,
-    isFetching: isFolderFetching,
     error: folderError,
   } = useGetFolderQuery(skipFolderQuery ? skipToken : { name: folderName });
 
@@ -68,7 +66,7 @@ export const useGetResourceRepositoryView = ({
     };
   }
 
-  if (isSettingsLoading || isFolderLoading || isSettingsFetching || isFolderFetching) {
+  if (isSettingsLoading || isFolderLoading) {
     return {
       isLoading: true,
       isInstanceManaged: false,

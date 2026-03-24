@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Stack } from '@grafana/ui';
@@ -9,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { JobStatus } from '../../Job/JobStatus';
 import { StepStatusInfo } from '../../Wizard/types';
 import { useOrphanedResourceActions } from '../../hooks/useOrphanedResourceActions';
+import { getJobResultAlertByStatus } from '../utils/orphanedResource';
 
 import { OrphanedResourceActionConfirmModal, OrphanedResourceAction } from './OrphanedResourceActionConfirmModal';
 
@@ -26,11 +26,9 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
   const [job, setJob] = useState<Job | null>(null);
   const [jobResult, setJobResult] = useState<StepStatusInfo | null>(null);
 
-  const navigate = useNavigate();
-
   const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
 
-  const { submitRelease, submitDelete, isSubmitting, clearError } = useOrphanedResourceActions({
+  const { submitRelease, submitDelete, isSubmitting, error, clearError } = useOrphanedResourceActions({
     repositoryName,
   });
 
@@ -40,15 +38,17 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
   };
 
   const handleRelease = useCallback(async () => {
-    const job = await submitRelease();
-    setJob(job);
-    return job;
+    const result = await submitRelease();
+    if (result) {
+      setJob(result);
+    }
   }, [submitRelease]);
 
   const handleDelete = useCallback(async () => {
-    const job = await submitDelete();
-    setJob(job);
-    return job;
+    const result = await submitDelete();
+    if (result) {
+      setJob(result);
+    }
   }, [submitDelete]);
 
   const handleJobStatusChange = useCallback((statusInfo: StepStatusInfo) => {
@@ -56,51 +56,24 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
     setJobResult(statusInfo);
   }, []);
 
-  const handleSuccess = () => {
-    navigate('/dashboards');
-  };
-
   if (job && actionType) {
+    const result = jobResult ? getJobResultAlertByStatus()[jobResult.status] : undefined;
     return (
       <>
         <JobStatus watch={job} jobType={actionType} onStatusChange={handleJobStatusChange} />
-        {jobResult?.status === 'success' && (
-          <Alert
-            severity="success"
-            title={t('provisioning.orphaned-resource-banner.job-success', 'Orphaned resources processed successfully')}
-            action={
-              <Button onClick={handleSuccess}>
-                <Trans i18nKey="provisioning.orphaned-resource-banner.success-back-to-dashboards">
-                  Back to dashboards
-                </Trans>
-              </Button>
-            }
-          />
-        )}
-        {jobResult?.status === 'warning' && (
-          <Alert
-            severity="warning"
-            title={t(
-              'provisioning.orphaned-resource-banner.job-warning',
-              'Some resources were processed with warnings. Please review the results.'
-            )}
-          />
-        )}
-        {jobResult?.status === 'error' && (
-          <Alert
-            severity="error"
-            title={t(
-              'provisioning.orphaned-resource-banner.job-error',
-              'An error occurred while processing orphaned resources'
-            )}
-          />
-        )}
+        {result && <Alert severity={result.severity} title={result.title} />}
       </>
     );
   }
 
   return (
     <>
+      {error && !job && (
+        <Alert
+          severity="error"
+          title={t('provisioning.orphaned-resource-banner.submit-error', 'Failed to create job for orphaned resources')}
+        />
+      )}
       <Alert
         severity="warning"
         title={t(
