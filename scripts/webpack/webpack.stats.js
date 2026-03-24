@@ -6,7 +6,7 @@ const { FilterStatsPlugin } = require('./plugins/FilterStatsPlugin');
 const prodConfig = require('./webpack.prod.js');
 
 module.exports = (env = {}) => {
-  let opts = env.filtered ? {
+  const bundleAnalyzerOpts = env.filtered ? {
     analyzerMode: 'static',
     reportFilename: 'bundle-stats.html',
     openAnalyzer: false,
@@ -15,11 +15,11 @@ module.exports = (env = {}) => {
 
   const config = {
     plugins: [
-      new BundleAnalyzerPlugin(opts),
+      new BundleAnalyzerPlugin(bundleAnalyzerOpts),
     ]
   };
 
-  // yarn build:filtStats
+  // yarn build:smolstats
   if (env.filtered) {
     config.plugins.push(
       new FilterStatsPlugin({
