@@ -46,7 +46,7 @@ func schema_pkg_apis_secret_v1beta1_Keeper(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -67,7 +67,7 @@ func schema_pkg_apis_secret_v1beta1_Keeper(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			KeeperSpec{}.OpenAPIModelName(), KeeperStatus{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			KeeperSpec{}.OpenAPIModelName(), KeeperStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -148,7 +148,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperList(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -169,7 +169,7 @@ func schema_pkg_apis_secret_v1beta1_KeeperList(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			Keeper{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			Keeper{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -327,7 +327,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValue(ref common.ReferenceCallback) co
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -348,7 +348,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValue(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			SecureValueSpec{}.OpenAPIModelName(), SecureValueStatus{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			SecureValueSpec{}.OpenAPIModelName(), SecureValueStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -375,7 +375,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueList(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -396,7 +396,7 @@ func schema_pkg_apis_secret_v1beta1_SecureValueList(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			SecureValue{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			SecureValue{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 

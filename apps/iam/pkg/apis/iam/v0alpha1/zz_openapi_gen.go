@@ -114,7 +114,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRole(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -129,7 +129,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRole(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			CoreRoleSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			CoreRoleSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -156,7 +156,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleList(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -177,7 +177,7 @@ func schema_pkg_apis_iam_v0alpha1_CoreRoleList(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			CoreRole{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			CoreRole{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -379,7 +379,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref common.ReferenceCallb
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -394,7 +394,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMapping(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			ExternalGroupMappingSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			ExternalGroupMappingSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -421,7 +421,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref common.ReferenceC
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -442,7 +442,7 @@ func schema_pkg_apis_iam_v0alpha1_ExternalGroupMappingList(ref common.ReferenceC
 			},
 		},
 		Dependencies: []string{
-			ExternalGroupMapping{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			ExternalGroupMapping{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1143,7 +1143,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRole(ref common.ReferenceCallback) commo
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -1158,7 +1158,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRole(ref common.ReferenceCallback) commo
 			},
 		},
 		Dependencies: []string{
-			GlobalRoleSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			GlobalRoleSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1185,7 +1185,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBinding(ref common.ReferenceCallback
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -1200,7 +1200,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBinding(ref common.ReferenceCallback
 			},
 		},
 		Dependencies: []string{
-			GlobalRoleBindingSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			GlobalRoleBindingSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1227,7 +1227,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingList(ref common.ReferenceCall
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1248,7 +1248,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleBindingList(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			GlobalRoleBinding{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			GlobalRoleBinding{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1462,7 +1462,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleList(ref common.ReferenceCallback) c
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1483,7 +1483,7 @@ func schema_pkg_apis_iam_v0alpha1_GlobalRoleList(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			GlobalRole{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			GlobalRole{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1685,7 +1685,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref common.ReferenceCallbac
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -1700,7 +1700,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermission(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			ResourcePermissionSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			ResourcePermissionSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1727,7 +1727,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref common.ReferenceCal
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -1748,7 +1748,7 @@ func schema_pkg_apis_iam_v0alpha1_ResourcePermissionList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			ResourcePermission{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			ResourcePermission{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -1978,7 +1978,7 @@ func schema_pkg_apis_iam_v0alpha1_Role(ref common.ReferenceCallback) common.Open
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -1993,7 +1993,7 @@ func schema_pkg_apis_iam_v0alpha1_Role(ref common.ReferenceCallback) common.Open
 			},
 		},
 		Dependencies: []string{
-			RoleSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			RoleSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -2020,7 +2020,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBinding(ref common.ReferenceCallback) comm
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -2035,7 +2035,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBinding(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			RoleBindingSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			RoleBindingSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -2062,7 +2062,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingList(ref common.ReferenceCallback) 
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2083,7 +2083,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleBindingList(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			RoleBinding{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			RoleBinding{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -2297,7 +2297,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleList(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2318,7 +2318,7 @@ func schema_pkg_apis_iam_v0alpha1_RoleList(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			Role{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			Role{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -2520,7 +2520,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref common.ReferenceCallback) c
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -2535,7 +2535,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccount(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			ServiceAccountSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			ServiceAccountSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -2562,7 +2562,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref common.ReferenceCallbac
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2583,7 +2583,7 @@ func schema_pkg_apis_iam_v0alpha1_ServiceAccountList(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			ServiceAccount{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			ServiceAccount{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -2746,7 +2746,7 @@ func schema_pkg_apis_iam_v0alpha1_Team(ref common.ReferenceCallback) common.Open
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -2761,7 +2761,7 @@ func schema_pkg_apis_iam_v0alpha1_Team(ref common.ReferenceCallback) common.Open
 			},
 		},
 		Dependencies: []string{
-			TeamSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			TeamSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -2788,7 +2788,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBinding(ref common.ReferenceCallback) comm
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -2803,7 +2803,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBinding(ref common.ReferenceCallback) comm
 			},
 		},
 		Dependencies: []string{
-			TeamBindingSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			TeamBindingSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -2830,7 +2830,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref common.ReferenceCallback) 
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -2851,7 +2851,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamBindingList(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			TeamBinding{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			TeamBinding{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -3057,7 +3057,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRule(ref common.ReferenceCallback) com
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -3072,7 +3072,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRule(ref common.ReferenceCallback) com
 			},
 		},
 		Dependencies: []string{
-			TeamLBACRuleSpec{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			TeamLBACRuleSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -3099,7 +3099,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref common.ReferenceCallback)
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -3120,7 +3120,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamLBACRuleList(ref common.ReferenceCallback)
 			},
 		},
 		Dependencies: []string{
-			TeamLBACRule{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			TeamLBACRule{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -3199,7 +3199,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamList(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -3220,7 +3220,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamList(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			Team{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			Team{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
@@ -3383,7 +3383,7 @@ func schema_pkg_apis_iam_v0alpha1_User(ref common.ReferenceCallback) common.Open
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
 						},
 					},
 					"spec": {
@@ -3404,7 +3404,7 @@ func schema_pkg_apis_iam_v0alpha1_User(ref common.ReferenceCallback) common.Open
 			},
 		},
 		Dependencies: []string{
-			UserSpec{}.OpenAPIModelName(), UserStatus{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			UserSpec{}.OpenAPIModelName(), UserStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -3431,7 +3431,7 @@ func schema_pkg_apis_iam_v0alpha1_UserList(ref common.ReferenceCallback) common.
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
 						},
 					},
 					"items": {
@@ -3452,7 +3452,7 @@ func schema_pkg_apis_iam_v0alpha1_UserList(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			User{}.OpenAPIModelName(), "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			User{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
 	}
 }
 
