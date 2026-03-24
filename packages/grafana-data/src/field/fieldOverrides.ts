@@ -1,10 +1,10 @@
 import { isNumber, set, unset, get, cloneDeep, defaultsDeep } from 'lodash';
 import { createContext, useContext, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
-import { NullValueMode } from 'src/types/data';
 
 import { ThresholdsMode, VariableFormatID } from '@grafana/schema';
 
+import { NullValueMode } from '../../src/types/data';
 import { compareArrayValues, compareDataFrameStructures } from '../dataframe/frameComparisons';
 import { createDataFrame, guessFieldTypeForField } from '../dataframe/processDataFrame';
 import { PanelPlugin } from '../panel/PanelPlugin';
