@@ -86,7 +86,7 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 		hooksService: hooksService,
 		config:       cfg,
 		license:      license,
-		bootScript:   template.JS(bootScriptRaw),
+		bootScript:   template.JS(bootScriptRaw), //nolint:gosec - boot.js is a build artifact, not user input
 	}, nil
 }
 
