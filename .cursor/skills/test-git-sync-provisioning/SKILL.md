@@ -1,10 +1,10 @@
 ---
 name: test-git-sync-provisioning
 description: >
-  Use when asked to test or exercise the Grafana Git Sync provisioning wizard end-to-end
-  via browser automation. Covers GitHub PAT and GitHub App authentication flows through
-  the 5-step wizard: authentication, repository configuration, sync target selection,
-  synchronization, and settings.
+  Use when asked to test or exercise the Grafana Git Sync provisioning wizard and
+  provisioned resource operations end-to-end via browser automation. Covers the 5-step
+  wizard (PAT and GitHub App auth), dashboard CRUD, folder creation, and both
+  direct-push and PR workflows for provisioned resources.
 ---
 
 # Git Sync Provisioning Wizard E2E Testing
@@ -13,15 +13,118 @@ Drive the Grafana provisioning wizard through the browser using `mcp_chrome_devt
 
 ## Prerequisites
 
-1. Grafana running at `http://localhost:3000` with feature toggles `provisioning`, `kubernetesDashboards`, and `provisioningFolderMetadata` enabled.
-2. `.env` in the project root with credentials (see `.env.example`). Ensure `.env` is in `.gitignore` before committing. Source it before starting:
+### Required Feature Toggles
+
+Grafana must have these feature toggles enabled: `provisioning`, `kubernetesDashboards`, and `provisioningFolderMetadata`.
+
+### Required Secrets
+
+| Variable                                    | Description                                                          |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| `GIT_SYNC_TEST_PAT_REPO_URL`                | GitHub repo URL for PAT flow (e.g., `https://github.com/owner/repo`) |
+| `GIT_SYNC_TEST_PAT`                         | GitHub Personal Access Token                                         |
+| `GIT_SYNC_TEST_APP_REPO_URL`                | GitHub repo URL for GitHub App flow                                  |
+| `GIT_SYNC_TEST_GITHUB_APP_ID`               | GitHub App ID, numeric                                               |
+| `GIT_SYNC_TEST_GITHUB_APP_INSTALLATION_ID`  | GitHub App Installation ID, numeric                                  |
+| `GIT_SYNC_TEST_GITHUB_APP_PRIVATE_KEY_PATH` | Path to PEM private key file (local)                                 |
+| `GIT_SYNC_TEST_GITHUB_APP_PRIVATE_KEY`      | PEM private key content (cloud)                                      |
+
+For PAT flow only, the first two variables are sufficient.
+
+### Local Setup
+
+1. Create `.env` in the project root with credentials (see `.env.example`). Ensure `.env` is in `.gitignore`.
+2. Source the credentials:
+   ```bash
+   source .cursor/skills/test-git-sync-provisioning/scripts/load-env.sh
+   ```
+3. Add the feature toggles to `conf/custom.ini`:
+   ```ini
+   [feature_toggles]
+   provisioning = true
+   kubernetesDashboards = true
+   provisioningFolderMetadata = true
+   ```
+4. Grafana must be running at `http://localhost:3000`.
+
+### Cloud Setup
+
+On a cloud VM, Grafana must be built and started from scratch.
+
+1. **Create `conf/custom.ini`** (does not exist by default; it is gitignored):
+
+   ```bash
+   cat > conf/custom.ini << 'EOF'
+   [feature_toggles]
+   provisioning = true
+   kubernetesDashboards = true
+   provisioningFolderMetadata = true
+   EOF
+   ```
+
+   Do NOT edit `conf/defaults.ini`.
+
+2. **Start Grafana:**
+
+   ```bash
+   # Backend (first build ~3 min, hot-reload after)
+   make run &
+   # Frontend dev server (~45s first compile)
+   yarn start &
+   ```
+
+3. **Wait for health:**
+
+   ```bash
+   for i in $(seq 1 60); do
+     if curl -sf http://localhost:3000/api/health > /dev/null; then
+       echo "Grafana is ready"
+       break
+     fi
+     echo "Waiting for Grafana... ($i/60)"
+     sleep 5
+   done
+   ```
+
+4. **Secrets** are available as environment variables (configured in Cursor dashboard). Do not use `.env` files. Verify:
+
+   ```bash
+   for var in GIT_SYNC_TEST_PAT_REPO_URL GIT_SYNC_TEST_PAT GIT_SYNC_TEST_APP_REPO_URL \
+              GIT_SYNC_TEST_GITHUB_APP_ID GIT_SYNC_TEST_GITHUB_APP_INSTALLATION_ID \
+              GIT_SYNC_TEST_GITHUB_APP_PRIVATE_KEY; do
+     if [ -z "${!var}" ]; then echo "ERROR: $var is not set"; exit 1; fi
+     echo "OK: $var is set"
+   done
+   ```
+
+5. **Log in to Grafana:** Open browser to `http://localhost:3000`. Log in as `admin`/`admin`. Skip password change if prompted.
+
+### Cleanup Before Testing
+
+Before running any flow, delete existing test resources to avoid conflicts:
 
 ```bash
-source .cursor/skills/test-git-sync-provisioning/scripts/load-env.sh
+BASE="http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default"
+AUTH="admin:admin"
+
+# Delete repositories first (must be deleted before their connections)
+for name in $(curl -s -u "$AUTH" "$BASE/repositories" | jq -r '.items[].metadata.name'); do
+  echo "Deleting repository: $name"
+  curl -s -X DELETE -u "$AUTH" "$BASE/repositories/$name"
+done
+
+# Then delete connections
+for name in $(curl -s -u "$AUTH" "$BASE/connections" | jq -r '.items[].metadata.name // empty'); do
+  echo "Deleting connection: $name"
+  curl -s -X DELETE -u "$AUTH" "$BASE/connections/$name"
+done
+echo "Cleanup complete."
 ```
 
-3. Detailed element selectors: `references/selectors.md`
-4. API cleanup endpoints: `references/api.md`
+### References
+
+- Element selectors: `references/selectors.md`
+- API cleanup endpoints: `references/api.md`
 
 ## Overview
 
@@ -97,7 +200,7 @@ The step loads async. `wait_for` the cards to appear (the loading text is "Loadi
 
 ## GitHub App Flow (Secondary)
 
-Requires `$GIT_SYNC_TEST_APP_REPO_URL`, `$GIT_SYNC_TEST_GITHUB_APP_ID`, `$GIT_SYNC_TEST_GITHUB_APP_INSTALLATION_ID`, and `$GIT_SYNC_TEST_GITHUB_APP_PRIVATE_KEY_PATH`.
+Requires `$GIT_SYNC_TEST_APP_REPO_URL`, `$GIT_SYNC_TEST_GITHUB_APP_ID`, `$GIT_SYNC_TEST_GITHUB_APP_INSTALLATION_ID`, and the PEM private key (via `$GIT_SYNC_TEST_GITHUB_APP_PRIVATE_KEY_PATH` locally or `$GIT_SYNC_TEST_GITHUB_APP_PRIVATE_KEY` on cloud).
 
 ### Step 1: Connect (authType) -- GitHub App variant
 
@@ -111,7 +214,7 @@ Requires `$GIT_SYNC_TEST_APP_REPO_URL`, `$GIT_SYNC_TEST_GITHUB_APP_ID`, `$GIT_SY
 5. `fill` the title input (id: `title`, placeholder: `My GitHub App`) -- pick any descriptive name
 6. `fill` the App ID input (id: `appID`, placeholder: `123456`) with `$GIT_SYNC_TEST_GITHUB_APP_ID`
 7. `fill` the Installation ID input (id: `installationID`, placeholder: `12345678`) with `$GIT_SYNC_TEST_GITHUB_APP_INSTALLATION_ID`
-8. The private key textarea (id: `privateKey`) **does not accept multiline content via `fill`**. Instead, read the PEM file content and inject it via `evaluate_script`:
+8. The private key textarea (id: `privateKey`) **does not accept multiline content via `fill`**. Instead, get the PEM content (from `$GIT_SYNC_TEST_GITHUB_APP_PRIVATE_KEY_PATH` file locally, or `$GIT_SYNC_TEST_GITHUB_APP_PRIVATE_KEY` env var on cloud) and inject it via `evaluate_script`:
    ```js
    (pemContent) => {
      const ta = document.querySelector('textarea');
@@ -194,6 +297,10 @@ Always `take_snapshot` to verify the button is enabled before clicking.
 ### `wait_for` Timeout Cap
 
 The Chrome DevTools MCP `wait_for` tool has a **hard 30-second internal timeout** regardless of the `timeout` value you pass. Any `wait_for` call that needs more than 30s will fail. For short waits (step transitions, button states), `wait_for` works fine. For long-running operations (sync jobs on large repos), **poll with `take_snapshot`** every 10-15s instead.
+
+### Branch Must Exist
+
+The `agent-test` branch (or whatever branch you configure in Step 2) must already exist on the remote repository. The wizard validates the branch and will error with `branch "X" not found` if it does not exist.
 
 ## Wizard Step 5 Configuration for Full Testing
 
@@ -284,16 +391,36 @@ Concrete test sequence covering both `write` (push to configured branch) and `br
 
 ## Cleanup
 
-After testing, delete the created resources. See `references/api.md` for details.
+After testing, delete the created resources.
 
 **Quick cleanup via API:**
 
 ```bash
-# Delete the repository (replace {name} with actual repo name)
-curl -X DELETE -u admin:admin http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/{name}
+BASE="http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default"
+AUTH="admin:admin"
 
-# Delete connection if created (GitHub App flow only)
-curl -X DELETE -u admin:admin http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/connections/{name}
+# Delete repositories first (must be deleted before their connections)
+for name in $(curl -s -u "$AUTH" "$BASE/repositories" | jq -r '.items[].metadata.name'); do
+  echo "Deleting repository: $name"
+  curl -s -X DELETE -u "$AUTH" "$BASE/repositories/$name"
+done
+
+# Delete connections (GitHub App flow only)
+for name in $(curl -s -u "$AUTH" "$BASE/connections" | jq -r '.items[].metadata.name // empty'); do
+  echo "Deleting connection: $name"
+  curl -s -X DELETE -u "$AUTH" "$BASE/connections/$name"
+done
+
+echo "Cleanup complete."
+```
+
+**Verify cleanup:**
+
+```bash
+curl -s -u admin:admin \
+  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
+  jq '.items | length'
+# Should return 0
 ```
 
 **Via UI:**
