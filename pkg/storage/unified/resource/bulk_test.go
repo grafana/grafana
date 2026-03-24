@@ -15,16 +15,45 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func TestBatchRunnerNextBatchHonorsMaxItemsAndEOF(t *testing.T) {
-	restore := setBulkBatchOptionsForTesting(2, 1<<20, 0)
-	t.Cleanup(restore)
+func TestResourceServerOptionsBulkBatchOptions(t *testing.T) {
+	custom := BulkBatchOptions{
+		MaxItems: 42,
+		MaxBytes: 3 << 20,
+		MaxIdle:  15 * time.Millisecond,
+	}
 
+	cases := []struct {
+		name string
+		opts ResourceServerOptions
+		want BulkBatchOptions
+	}{
+		{
+			name: "default",
+			opts: ResourceServerOptions{},
+			want: DefaultBulkBatchOptions(),
+		},
+		{
+			name: "custom",
+			opts: ResourceServerOptions{BulkBatchOptions: &custom},
+			want: custom,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, tc.opts.bulkBatchOptions())
+		})
+	}
+}
+
+func TestBatchRunnerNextBatchHonorsMaxItemsAndEOF(t *testing.T) {
+	opts := testBulkBatchOptions(2, 1<<20, 0)
 	reqs := []*resourcepb.BulkRequest{
 		newTestBulkRequest("item-1"),
 		newTestBulkRequest("item-2"),
 		newTestBulkRequest("item-3"),
 	}
-	runner := newTestBatchRunner(&testBulkProcessServer{requests: reqs}, reqs[0].Key)
+	runner := newTestBatchRunner(&testBulkProcessServer{requests: reqs}, reqs[0].Key, opts)
 
 	require.True(t, runner.NextBatch())
 	require.Len(t, runner.Batch(), 2)
@@ -41,9 +70,7 @@ func TestBatchRunnerNextBatchHonorsMaxItemsAndEOF(t *testing.T) {
 }
 
 func TestBatchRunnerNextBatchHonorsIdleFlush(t *testing.T) {
-	restore := setBulkBatchOptionsForTesting(100, 1<<20, 5*time.Millisecond)
-	t.Cleanup(restore)
-
+	opts := testBulkBatchOptions(100, 1<<20, 5*time.Millisecond)
 	reqs := []*resourcepb.BulkRequest{
 		newTestBulkRequest("item-1"),
 		newTestBulkRequest("item-2"),
@@ -51,7 +78,7 @@ func TestBatchRunnerNextBatchHonorsIdleFlush(t *testing.T) {
 	runner := newTestBatchRunner(&testBulkProcessServer{
 		requests: reqs,
 		delays:   []time.Duration{0, 20 * time.Millisecond},
-	}, reqs[0].Key)
+	}, reqs[0].Key, opts)
 
 	require.True(t, runner.NextBatch())
 	require.Len(t, runner.Batch(), 1)
@@ -65,15 +92,13 @@ func TestBatchRunnerNextBatchHonorsIdleFlush(t *testing.T) {
 }
 
 func TestBatchRunnerNextPreservesSingleItemIteration(t *testing.T) {
-	restore := setBulkBatchOptionsForTesting(2, 1<<20, 0)
-	t.Cleanup(restore)
-
+	opts := testBulkBatchOptions(2, 1<<20, 0)
 	reqs := []*resourcepb.BulkRequest{
 		newTestBulkRequest("item-1"),
 		newTestBulkRequest("item-2"),
 		newTestBulkRequest("item-3"),
 	}
-	runner := newTestBatchRunner(&testBulkProcessServer{requests: reqs}, reqs[0].Key)
+	runner := newTestBatchRunner(&testBulkProcessServer{requests: reqs}, reqs[0].Key, opts)
 
 	got := make([]string, 0, len(reqs))
 	for runner.Next() {
@@ -85,15 +110,14 @@ func TestBatchRunnerNextPreservesSingleItemIteration(t *testing.T) {
 }
 
 func TestBatchRunnerNextBatchRollbackOnAccessError(t *testing.T) {
-	restore := setBulkBatchOptionsForTesting(10, 1<<20, 0)
-	t.Cleanup(restore)
-
+	opts := testBulkBatchOptions(10, 1<<20, 0)
 	req := newTestBulkRequest("item-1")
 	runner := &batchRunner{
-		stream:  &testBulkProcessServer{requests: []*resourcepb.BulkRequest{req}},
-		checker: map[string]authlib.ItemChecker{},
-		span:    trace.SpanFromContext(context.Background()),
-		stopCh:  make(chan struct{}),
+		stream:    &testBulkProcessServer{requests: []*resourcepb.BulkRequest{req}},
+		checker:   map[string]authlib.ItemChecker{},
+		span:      trace.SpanFromContext(context.Background()),
+		batchOpts: opts,
+		stopCh:    make(chan struct{}),
 	}
 
 	require.True(t, runner.NextBatch())
@@ -130,15 +154,24 @@ func TestBatchRunnerStopUnblocksBlockedSend(t *testing.T) {
 	}
 }
 
-func newTestBatchRunner(stream resourcepb.BulkStore_BulkProcessServer, key *resourcepb.ResourceKey) *batchRunner {
+func newTestBatchRunner(stream resourcepb.BulkStore_BulkProcessServer, key *resourcepb.ResourceKey, opts BulkBatchOptions) *batchRunner {
 	return &batchRunner{
 		stream: stream,
 		checker: map[string]authlib.ItemChecker{
 			NSGR(key): func(string, string) bool { return true },
 		},
-		span:   trace.SpanFromContext(context.Background()),
-		stopCh: make(chan struct{}),
+		span:      trace.SpanFromContext(context.Background()),
+		batchOpts: opts,
+		stopCh:    make(chan struct{}),
 	}
+}
+
+func testBulkBatchOptions(maxItems, maxBytes int, maxIdle time.Duration) BulkBatchOptions {
+	opts := DefaultBulkBatchOptions()
+	opts.MaxItems = maxItems
+	opts.MaxBytes = maxBytes
+	opts.MaxIdle = maxIdle
+	return opts
 }
 
 func newTestBulkRequest(name string) *resourcepb.BulkRequest {

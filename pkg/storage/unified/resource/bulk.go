@@ -24,17 +24,14 @@ import (
 const grpcMetaKeyCollection = "x-gf-batch-collection"
 const grpcMetaKeySkipValidation = "x-gf-batch-skip-validation"
 
-type bulkBatchOptions struct {
+var defaultBulkBatchOptions = BulkBatchOptions{MaxItems: 1000, MaxBytes: 2 * 1024 * 1024, MaxIdle: 5 * time.Millisecond}
+
+// BulkBatchOptions controls how incoming bulk requests are grouped before they are processed.
+type BulkBatchOptions struct {
 	MaxItems int
 	MaxBytes int
 	MaxIdle  time.Duration
 }
-
-var (
-	defaultBulkBatchOptions = bulkBatchOptions{MaxItems: 1000, MaxBytes: 2 * 1024 * 1024, MaxIdle: 5 * time.Millisecond}
-	bulkBatchMu             sync.RWMutex
-	bulkBatchOpts           = defaultBulkBatchOptions
-)
 
 // Logged in trace.
 var metadataKeys = []string{
@@ -122,32 +119,9 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 	return settings, nil
 }
 
-func currentBulkBatchOptions() bulkBatchOptions {
-	bulkBatchMu.RLock()
-	defer bulkBatchMu.RUnlock()
-	return bulkBatchOpts
-}
-
-func setBulkBatchOptionsForTesting(maxItems, maxBytes int, maxIdle time.Duration) func() {
-	bulkBatchMu.Lock()
-	prev := bulkBatchOpts
-	bulkBatchOpts = bulkBatchOptions{
-		MaxItems: maxItems,
-		MaxBytes: maxBytes,
-		MaxIdle:  maxIdle,
-	}
-	bulkBatchMu.Unlock()
-	return func() {
-		bulkBatchMu.Lock()
-		bulkBatchOpts = prev
-		bulkBatchMu.Unlock()
-	}
-}
-
-// SetBulkBatchOptionsForTesting overrides the internal BulkProcess batching thresholds.
-// It is intended for tests and benchmarks and returns a restore function.
-func SetBulkBatchOptionsForTesting(maxItems, maxBytes int, maxIdle time.Duration) func() {
-	return setBulkBatchOptionsForTesting(maxItems, maxBytes, maxIdle)
+// DefaultBulkBatchOptions returns the default BulkProcess batching thresholds.
+func DefaultBulkBatchOptions() BulkBatchOptions {
+	return defaultBulkBatchOptions
 }
 
 // BulkWrite implements ResourceServer.
@@ -196,10 +170,11 @@ func (s *server) BulkProcess(stream resourcepb.BulkStore_BulkProcessServer) erro
 	}
 
 	runner := &batchRunner{
-		checker: make(map[string]authlib.ItemChecker), // Can create
-		stream:  stream,
-		span:    span,
-		stopCh:  make(chan struct{}),
+		checker:   make(map[string]authlib.ItemChecker), // Can create
+		stream:    stream,
+		span:      span,
+		batchOpts: s.bulkBatchOptions,
+		stopCh:    make(chan struct{}),
 	}
 	settings, err := NewBulkSettings(md)
 	if err != nil {
@@ -302,14 +277,15 @@ var (
 )
 
 type batchRunner struct {
-	stream   resourcepb.BulkStore_BulkProcessServer
-	rollback bool
-	request  *resourcepb.BulkRequest
-	batch    []*resourcepb.BulkRequest
-	batchIdx int
-	err      error
-	checker  map[string]authlib.ItemChecker
-	span     trace.Span
+	stream    resourcepb.BulkStore_BulkProcessServer
+	rollback  bool
+	request   *resourcepb.BulkRequest
+	batch     []*resourcepb.BulkRequest
+	batchIdx  int
+	err       error
+	checker   map[string]authlib.ItemChecker
+	span      trace.Span
+	batchOpts BulkBatchOptions
 
 	recvOnce sync.Once
 	recvCh   chan batchStreamResult
@@ -362,7 +338,7 @@ func (b *batchRunner) NextBatch() bool {
 
 	b.batch = b.batch[:0]
 	b.batchIdx = 0
-	opts := currentBulkBatchOptions()
+	opts := b.batchOpts
 	payloadBytes := 0
 
 	appendRequest := func(req *resourcepb.BulkRequest) bool {

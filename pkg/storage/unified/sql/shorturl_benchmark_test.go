@@ -43,12 +43,6 @@ func BenchmarkShortURLBulkProcessBatching(b *testing.B) {
 		_ = services.StopAndAwaitTerminated(context.Background(), svc)
 	})
 
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend: backend,
-	})
-	require.NoError(b, err)
-
-	client := resource.NewLocalResourceClient(server)
 	requests := buildShortURLBulkRequests(shortURLBenchmarkRows)
 	settings := resource.BulkSettings{
 		SkipValidation: true,
@@ -62,8 +56,21 @@ func BenchmarkShortURLBulkProcessBatching(b *testing.B) {
 	}
 
 	runBenchmark := func(b *testing.B, maxItems, maxBytes int, maxIdle time.Duration) {
-		restore := resource.SetBulkBatchOptionsForTesting(maxItems, maxBytes, maxIdle)
-		b.Cleanup(restore)
+		batchOpts := resource.DefaultBulkBatchOptions()
+		batchOpts.MaxItems = maxItems
+		batchOpts.MaxBytes = maxBytes
+		batchOpts.MaxIdle = maxIdle
+
+		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+			Backend:          backend,
+			BulkBatchOptions: &batchOpts,
+		})
+		require.NoError(b, err)
+		b.Cleanup(func() {
+			require.NoError(b, server.Stop(context.Background()))
+		})
+
+		client := resource.NewLocalResourceClient(server)
 		b.ReportAllocs()
 		b.ResetTimer()
 
