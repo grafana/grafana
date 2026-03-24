@@ -180,7 +180,7 @@ FieldConfigSource: {
 	overrides: [...{
 		// Describes config override rules created when interacting with Grafana.
 		"__systemRef"?: string
-		matcher: MatcherConfig
+		matcher:        MatcherConfig
 		properties: [...DynamicConfigValue]
 	}]
 }
@@ -417,8 +417,8 @@ ActionType: "fetch" | "infinity"
 
 FetchOptions: {
 	method: HttpRequestMethod
-	url: string
-	body?: string
+	url:    string
+	body?:  string
 	// These are 2D arrays of strings, each representing a key-value pair
 	// We are defining them this way because we can't generate a go struct that
 	// that would have exactly two strings in each sub-array
@@ -436,24 +436,23 @@ HttpRequestMethod: "GET" | "PUT" | "POST" | "DELETE" | "PATCH"
 ActionVariableType: "string"
 
 ActionVariable: {
-	key: string
+	key:  string
 	name: string
 	type: ActionVariableType
 }
 
 Action: {
-	type: ActionType
-	title: string
-	fetch?: FetchOptions
-	infinity?: InfinityOptions
+	type:          ActionType
+	title:         string
+	fetch?:        FetchOptions
+	infinity?:     InfinityOptions
 	confirmation?: string
-	oneClick?: bool
+	oneClick?:     bool
 	variables?: [...ActionVariable]
 	style?: {
 		backgroundColor?: string
 	}
 }
-
 
 // --- Common types ---
 Kind: {
@@ -471,25 +470,25 @@ VizConfigSpec: {
 VizConfigKind: {
 	kind: "VizConfig"
 	// The group is the plugin ID
-	group: string
+	group:   string
 	version: string
-	spec: VizConfigSpec
+	spec:    VizConfigSpec
 }
 
 AnnotationQuerySpec: {
-	query:      DataQueryKind
-	enable:      bool
-	hide:        bool
-	iconColor:   string
-	name:        string
-	builtIn?:    bool | *false
-	filter?:     AnnotationPanelFilter
+	query:     DataQueryKind
+	enable:    bool
+	hide:      bool
+	iconColor: string
+	name:      string
+	builtIn?:  bool | *false
+	filter?:   AnnotationPanelFilter
 	// Placement can be used to display the annotation query somewhere else on the dashboard other than the default location.
-	placement?:  AnnotationQueryPlacement
+	placement?: AnnotationQueryPlacement
 	// Mappings define how to convert data frame fields to annotation event fields.
-	mappings?:   [string]: AnnotationEventFieldMapping
+	mappings?: [string]: AnnotationEventFieldMapping
 	// Catch-all field for datasource-specific properties. Should not be available in as code tooling.
-	legacyOptions?:     [string]: _
+	legacyOptions?: [string]: _
 }
 
 AnnotationQueryKind: {
@@ -509,8 +508,8 @@ QueryOptionsSpec: {
 }
 
 DataQueryKind: {
-	kind: "DataQuery"
-	group: string
+	kind:    "DataQuery"
+	group:   string
 	version: string | *"v0"
 	labels?: [string]: string
 	// New type for datasource reference
@@ -522,7 +521,7 @@ DataQueryKind: {
 }
 
 PanelQuerySpec: {
-	query:       DataQueryKind
+	query:  DataQueryKind
 	refId:  string | *"A"
 	hidden: bool
 }
@@ -651,7 +650,7 @@ RowsLayoutRowSpec: {
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               RowRepeatOptions
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
-	variables?:            [...VariableKind]
+	variables?: [...VariableKind]
 }
 
 AutoGridLayoutKind: {
@@ -662,10 +661,10 @@ AutoGridLayoutKind: {
 AutoGridLayoutSpec: {
 	maxColumnCount?: number | *3
 	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
-	columnWidth?: number
-	rowHeightMode: "short" | *"standard" | "tall" | "custom"
-	rowHeight?: number
-	fillScreen?: bool | *false
+	columnWidth?:    number
+	rowHeightMode:   "short" | *"standard" | "tall" | "custom"
+	rowHeight?:      number
+	fillScreen?:     bool | *false
 	items: [...AutoGridLayoutItemKind]
 }
 
@@ -699,7 +698,7 @@ TabsLayoutTabSpec: {
 	layout:                GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               TabRepeatOptions
-	variables?:            [...VariableKind]
+	variables?: [...VariableKind]
 }
 
 PanelSpec: {
@@ -823,13 +822,12 @@ VariableOption: {
 
 // Source information for controls (e.g. variables or links)
 DatasourceControlSourceRef: {
-  type: "datasource"
-  // The plugin type-id
-  group: string
+	type: "datasource"
+	// The plugin type-id
+	group: string
 }
 
 ControlSourceRef: DatasourceControlSourceRef
-
 
 // Query variable specification
 QueryVariableSpec: {
@@ -838,25 +836,25 @@ QueryVariableSpec: {
 		text:  ""
 		value: ""
 	}
-	label?:       string
-	hide:         VariableHide
-	refresh:      VariableRefresh
-	skipUrlSync:  bool | *false
-	description?: string
-	query:        DataQueryKind
-	regex:        string | *""
+	label?:        string
+	hide:          VariableHide
+	refresh:       VariableRefresh
+	skipUrlSync:   bool | *false
+	description?:  string
+	query:         DataQueryKind
+	regex:         string | *""
 	regexApplyTo?: VariableRegexApplyTo
-	sort:         VariableSort
-	definition?:  string
+	sort:          VariableSort
+	definition?:   string
 	options: [...VariableOption] | *[]
-	multi:        bool | *false
-	includeAll:   bool | *false
-	allValue?:    string
-	placeholder?: string
+	multi:            bool | *false
+	includeAll:       bool | *false
+	allValue?:        string
+	placeholder?:     string
 	allowCustomValue: bool | *true
 	staticOptions?: [...VariableOption]
 	staticOptionsOrder?: "before" | "after" | "sorted"
-	origin?: ControlSourceRef
+	origin?:             ControlSourceRef
 }
 
 // Query variable kind
@@ -877,7 +875,7 @@ TextVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	origin?: ControlSourceRef
+	origin?:      ControlSourceRef
 }
 
 // Text variable kind
@@ -898,7 +896,7 @@ ConstantVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	origin?: ControlSourceRef
+	origin?:      ControlSourceRef
 }
 
 // Constant variable kind
@@ -918,15 +916,15 @@ DatasourceVariableSpec: {
 		value: ""
 	}
 	options: [...VariableOption] | *[]
-	multi:        bool | *false
-	includeAll:   bool | *false
-	allValue?:    string
-	label?:       string
-	hide:         VariableHide
-	skipUrlSync:  bool | *false
-	description?: string
+	multi:            bool | *false
+	includeAll:       bool | *false
+	allValue?:        string
+	label?:           string
+	hide:             VariableHide
+	skipUrlSync:      bool | *false
+	description?:     string
 	allowCustomValue: bool | *true
-	origin?: ControlSourceRef
+	origin?:          ControlSourceRef
 }
 
 // Datasource variable kind
@@ -952,7 +950,7 @@ IntervalVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	origin?: ControlSourceRef
+	origin?:      ControlSourceRef
 }
 
 // Interval variable kind
@@ -967,16 +965,16 @@ CustomVariableSpec: {
 	query:   string | *""
 	current: VariableOption
 	options: [...VariableOption] | *[]
-	multi:        bool | *false
-	includeAll:   bool | *false
-	allValue?:    string
-	label?:       string
-	hide:         VariableHide
-	skipUrlSync:  bool | *false
-	description?: string
+	multi:            bool | *false
+	includeAll:       bool | *false
+	allValue?:        string
+	label?:           string
+	hide:             VariableHide
+	skipUrlSync:      bool | *false
+	description?:     string
 	allowCustomValue: bool | *true
-	valuesFormat?: "csv" | "json"
-	origin?: ControlSourceRef
+	valuesFormat?:    "csv" | "json"
+	origin?:          ControlSourceRef
 }
 
 // Custom variable kind
@@ -986,7 +984,7 @@ CustomVariableKind: {
 }
 
 SwitchVariableSpec: {
-	name:    	   string | *""
+	name:          string | *""
 	current:       string | *"false"
 	enabledValue:  string | *"true"
 	disabledValue: string | *"false"
@@ -994,7 +992,7 @@ SwitchVariableSpec: {
 	hide:          VariableHide
 	skipUrlSync:   bool | *false
 	description?:  string
-	origin?: ControlSourceRef
+	origin?:       ControlSourceRef
 }
 
 SwitchVariableKind: {
@@ -1004,7 +1002,7 @@ SwitchVariableKind: {
 
 // GroupBy variable specification
 GroupByVariableSpec: {
-	name:        string | *""
+	name:          string | *""
 	defaultValue?: VariableOption
 	current: VariableOption | *{
 		text:  ""
@@ -1016,12 +1014,12 @@ GroupByVariableSpec: {
 	hide:         VariableHide
 	skipUrlSync:  bool | *false
 	description?: string
-	origin?: ControlSourceRef
+	origin?:      ControlSourceRef
 }
 
 // Group variable kind
 GroupByVariableKind: {
-	kind: "GroupByVariable"
+	kind:  "GroupByVariable"
 	group: string
 	labels?: [string]: string
 	datasource?: {
@@ -1032,18 +1030,18 @@ GroupByVariableKind: {
 
 // Adhoc variable specification
 AdhocVariableSpec: {
-	name:        string | *""
+	name: string | *""
 	baseFilters: [...AdHocFilterWithLabels] | *[]
 	filters: [...AdHocFilterWithLabels] | *[]
 	defaultKeys: [...MetricFindValue] | *[]
-	label?:       string
-	hide:         VariableHide
-	skipUrlSync:  bool | *false
-	description?: string
+	label?:           string
+	hide:             VariableHide
+	skipUrlSync:      bool | *false
+	description?:     string
 	allowCustomValue: bool | *true
 	// Whether the group-by operator is enabled in the ad hoc filter combobox.
 	enableGroupBy?: bool | *false
-	origin?: ControlSourceRef
+	origin?:        ControlSourceRef
 }
 
 // Define the MetricFindValue type
@@ -1063,14 +1061,14 @@ AdHocFilterWithLabels: {
 	keyLabel?: string
 	valueLabels?: [...string]
 	forceEdit?: bool
-	origin?: FilterOrigin
+	origin?:    FilterOrigin
 	// @deprecated
 	condition?: string
 }
 
 // Adhoc variable kind
 AdhocVariableKind: {
-	kind: "AdhocVariable"
+	kind:  "AdhocVariable"
 	group: string
 	labels?: [string]: string
 	datasource?: {
@@ -1086,7 +1084,7 @@ ConditionalRenderingGroupKind: {
 
 ConditionalRenderingGroupSpec: {
 	visibility: "show" | "hide"
-	condition: "and" | "or"
+	condition:  "and" | "or"
 	items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 
