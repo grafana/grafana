@@ -16,7 +16,7 @@ labels:
     - oss
 menuTitle: Alerting
 title: Microsoft SQL Server alerting
-weight: 400
+weight: 450
 ---
 
 # Microsoft SQL Server alerting

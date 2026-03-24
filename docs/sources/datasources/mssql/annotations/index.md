@@ -16,7 +16,7 @@ labels:
     - oss
 menuTitle: Annotations
 title: Microsoft SQL Server annotations
-weight: 500
+weight: 400
 ---
 
 # Microsoft SQL Server annotations

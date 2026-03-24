@@ -40,9 +40,9 @@ The following documentation helps you set up and use the Microsoft SQL Server da
 
 - [Configure the data source](configure/)
 - [Query editor](query-editor/)
-- [Alerting](alerting/)
-- [Annotations](annotations/)
 - [Template variables](template-variables/)
+- [Annotations](annotations/)
+- [Alerting](alerting/)
 - [Troubleshooting](troubleshooting/)
 
 ## Supported versions
