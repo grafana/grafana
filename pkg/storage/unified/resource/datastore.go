@@ -607,12 +607,7 @@ func (d *dataStore) batchSave(ctx context.Context, items []batchSaveItem) error 
 		}
 	}
 
-	// Use optimized multi-row INSERT for SqlKV (keys guaranteed new during bulk import).
-	if sqlkv, ok := d.kv.(*kvpkg.SqlKV); ok {
-		return sqlkv.BulkInsertData(ctx, ops)
-	}
-
-	return d.kv.Batch(ctx, dataSection, ops)
+	return d.kv.BulkInsertData(ctx, ops)
 }
 
 // ParseKey parses a string key into a DataKey struct
