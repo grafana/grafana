@@ -22,8 +22,10 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	grpcstatus "google.golang.org/grpc/status"
 )
 
 var (
@@ -273,18 +275,25 @@ func TracingStreamInterceptor() grpc.StreamClientInterceptor {
 
 		stream, err := streamer(ctx, desc, cc, method, opts...)
 		if err != nil {
-			// Record the error in the span
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
-			span.SetAttributes(attribute.String("rpc.grpc.status", "error"))
-			logger.Error("gRPC streaming call failed", "method", method, "error", err)
-		} else {
-			span.SetStatus(codes.Ok, "success")
-			span.SetAttributes(attribute.String("rpc.grpc.status", "ok"))
+			return nil, backend.DownstreamErrorf("gRPC streaming call failed: %w", err)
 		}
-
-		return stream, err
+		span.SetStatus(codes.Ok, "")
+		return stream, nil
 	}
+}
+
+// grpcStatusLabel returns the gRPC status code name for use as a metric label.
+func grpcStatusLabel(err error) string {
+	if err == nil {
+		return grpccodes.OK.String()
+	}
+	st, ok := grpcstatus.FromError(err)
+	if !ok {
+		return grpccodes.Unknown.String()
+	}
+	return st.Code().String()
 }
 
 // MetricsStreamInterceptor adds Prometheus metrics collection for gRPC streaming calls.
@@ -304,10 +313,7 @@ func MetricsStreamInterceptor() grpc.StreamClientInterceptor {
 
 		// Calculate metrics
 		duration := time.Since(startTime)
-		status := "success"
-		if err != nil {
-			status = "error"
-		}
+		status := grpcStatusLabel(err)
 
 		// Record metrics
 		grpcRequestsTotal.WithLabelValues(method, status).Inc()
