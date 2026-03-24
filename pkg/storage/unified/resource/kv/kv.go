@@ -59,7 +59,7 @@ type BatchOp struct {
 }
 
 // Maximum limit for batch operations
-const MaxBatchOps = 20
+const MaxBatchOps = 1000
 
 // BatchError wraps errors from Batch operations with context about which operation failed
 type BatchError struct {

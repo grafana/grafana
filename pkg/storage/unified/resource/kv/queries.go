@@ -180,6 +180,50 @@ func (qb *queryBuilder) buildInsertDatastoreQuery(keyPath string, value []byte, 
 	return query, []interface{}{guid, keyPath, value, "", "", "", "", 0, ""}
 }
 
+// batchInsertRow represents a single row for batch INSERT into the datastore
+type batchInsertRow struct {
+	GUID    string
+	KeyPath string
+	Value   []byte
+}
+
+// buildBatchInsertDatastoreQuery generates a multi-row INSERT for the datastore section.
+// Same 9 columns as buildInsertDatastoreQuery. Legacy columns are set to empty/zero defaults.
+func (qb *queryBuilder) buildBatchInsertDatastoreQuery(rows []batchInsertRow) (string, []interface{}) {
+	if len(rows) == 0 {
+		return "", nil
+	}
+
+	cols := []string{"guid", "key_path", "value", "group", "resource", "namespace", "name", "action", "folder"}
+	quotedCols := make([]string, len(cols))
+	for i, col := range cols {
+		quotedCols[i] = qb.dialect.QuoteIdent(col)
+	}
+
+	paramsPerRow := len(cols)
+	valueParts := make([]string, 0, len(rows))
+	args := make([]interface{}, 0, len(rows)*paramsPerRow)
+
+	for i, row := range rows {
+		placeholders := make([]string, paramsPerRow)
+		base := i * paramsPerRow
+		for j := 0; j < paramsPerRow; j++ {
+			placeholders[j] = qb.dialect.Placeholder(base + j + 1)
+		}
+		valueParts = append(valueParts, "("+strings.Join(placeholders, ", ")+")")
+		args = append(args, row.GUID, row.KeyPath, row.Value, "", "", "", "", 0, "")
+	}
+
+	query := fmt.Sprintf(
+		"INSERT INTO %s (%s) VALUES %s",
+		qb.dialect.QuoteIdent(qb.tableName),
+		strings.Join(quotedCols, ", "),
+		strings.Join(valueParts, ", "),
+	)
+
+	return query, args
+}
+
 // buildInsertDatastoreBackwardCompatQuery generates INSERT for backward-compatible mode
 // Inserts guid, value, and placeholder values for NOT NULL columns - these will be updated by applyBackwardsCompatibleChanges()
 func (qb *queryBuilder) buildInsertDatastoreBackwardCompatQuery(value []byte, guid, group, resource, namespace, name, folder string, action int64) (string, []interface{}) {

@@ -77,3 +77,20 @@ func (d sqliteDialect) QuoteIdent(name string) string {
 func (d sqliteDialect) Placeholder(n int) string {
 	return "?"
 }
+
+// BatchInsertMaxRows returns the maximum number of rows per multi-row INSERT
+// for the given dialect with the specified number of parameters per row.
+func BatchInsertMaxRows(dialect Dialect, paramsPerRow int) int {
+	switch dialect.Name() {
+	case "sqlite":
+		// SQLite has a 999 parameter limit
+		maxByLimit := 999 / paramsPerRow
+		if maxByLimit > 100 {
+			return 100
+		}
+		return maxByLimit
+	default:
+		// MySQL and PostgreSQL handle large batches well
+		return 1000
+	}
+}
