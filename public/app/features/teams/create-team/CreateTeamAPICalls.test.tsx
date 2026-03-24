@@ -12,7 +12,7 @@ import {
   customSetTeamRolesHandler,
 } from '@grafana/test-utils/unstable';
 
-import { getWrapper } from '../../../../test/test-utils';
+import { getWrapper, testWithFeatureToggles } from '../../../../test/test-utils';
 import { backendSrv } from '../../../core/services/backend_srv';
 import { contextSrv } from '../../../core/services/context_srv';
 
@@ -38,6 +38,8 @@ const mockGetAppEvents = jest.mocked(getAppEvents);
 const formModel = { name: 'My New Team', email: 'test@example.com' };
 
 describe('useCreateTeamOrchestrate', () => {
+  testWithFeatureToggles({ enable: ['teamFolders'] });
+
   const mockPublish = jest.fn();
 
   beforeEach(() => {
