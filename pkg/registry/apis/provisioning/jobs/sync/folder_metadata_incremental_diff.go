@@ -95,7 +95,6 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteMetadataChange(
 		return d.rewriteDeletedMetadataChange(ctx, currentRef, input, index, diffTracker, change)
 	case repository.FileActionRenamed:
 		return d.rewriteRenamedMetadataChange(ctx, currentRef, input, index, diffTracker, change)
-		return d.collectInvalidRenamedMetadataChange(ctx, currentRef, change)
 	default:
 		return nil, nil
 	}
@@ -244,35 +243,36 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 	index managedResourceIndex,
 	diffTracker *rebuiltIncrementalDiffTracker,
 	change repository.VersionedFileChange,
-) error {
+) ([]*resources.InvalidFolderMetadata, error) {
 	// Destination side: create or update the folder at the new path.
-	if err := d.rewriteCreatedOrUpdatedMetadataChange(ctx, input, index, diffTracker, change); err != nil {
-		return err
+	warnings, err := d.rewriteCreatedOrUpdatedMetadataChange(ctx, input, index, diffTracker, change)
+	if err != nil {
+		return nil, err
 	}
 
 	// Source side: clean up the old path. If the rename originates from a
 	// non-metadata file (e.g. config.json -> _folder.json), there is no
 	// metadata folder to clean up.
 	if !resources.IsFolderMetadataFile(change.PreviousPath) {
-		return nil
+		return warnings, nil
 	}
 
 	// A directory-level rename in the original diff already handles this
 	// folder via RenameFolderPath; skip to avoid duplicate processing.
 	oldFolderPath := folderPathForMetadataChange(change.PreviousPath)
 	if input.HadChangeOriginallyAt(oldFolderPath) {
-		return nil
+		return warnings, nil
 	}
 
 	// No managed folders at the old path — nothing to clean up.
 	items := index.ExistingAt(oldFolderPath)
 	if len(items) == 0 {
-		return nil
+		return warnings, nil
 	}
 
 	directoryExists, err := d.folderDirectoryExists(ctx, currentRef, oldFolderPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Schedule each old-path item for potential deletion.
@@ -291,7 +291,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 
 	// Old directory is gone — no folder or child entries to re-sync.
 	if !directoryExists {
-		return nil
+		return warnings, nil
 	}
 
 	// Emit an update for the old folder path so it reverts to its
@@ -305,7 +305,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 	}
 
 	if !hasReplacement {
-		return nil
+		return warnings, nil
 	}
 
 	// Re-parent direct children so they are re-synced under the
@@ -324,16 +324,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteRenamedMetadataChange(
 		})
 	}
 
-	return nil
-}
-
-func (d *folderMetadataIncrementalDiffBuilder) collectInvalidRenamedMetadataChange(
-	ctx context.Context,
-	currentRef string,
-	change repository.VersionedFileChange,
-) ([]*resources.InvalidFolderMetadata, error) {
-	_, invalid, err := d.readMetadata(ctx, folderPathForMetadataChange(change.Path), currentRef, change.Action)
-	return invalid, err
+	return warnings, nil
 }
 
 // readMetadata reads `_folder.json` once and returns either the parsed folder
@@ -374,22 +365,18 @@ func (d *folderMetadataIncrementalDiffBuilder) readMetadata(
 // same path (from prior metadata.name changes) all of them are returned.
 // The new UID is also returned so callers can track it as active.
 func (d *folderMetadataIncrementalDiffBuilder) replacementsForMetadataChange(
-	ctx context.Context,
 	index managedResourceIndex,
 	folderPath string,
 	folder *folders.Folder,
 ) ([]replacedFolder, string, error) {
-	folder, _, err := resources.ReadFolderMetadata(ctx, d.repo, folderPath, change.Ref)
-	if err != nil {
-		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
-			return nil, "", nil
-		}
-		var invalidErr *resources.InvalidFolderMetadata
-		if errors.As(err, &invalidErr) {
-			return nil, "", nil
-		}
-		return nil, "", fmt.Errorf("read folder metadata for %s: %w", folderPath, err)
+	// Replacements are only scheduled for confirmed identity transitions. If the
+	// managed folder does not exist yet, or metadata could not be parsed into a
+	// trustworthy folder identity, replay still happens but there is no old UID
+	// to delete after apply.
+	if folder == nil {
+		return nil, "", nil
 	}
+
 	newUID := folder.GetName()
 
 	items := index.ExistingAt(folderPath)
