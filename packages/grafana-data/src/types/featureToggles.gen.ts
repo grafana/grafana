@@ -229,6 +229,11 @@ export interface FeatureToggles {
   */
   sseGroupByDatasource?: boolean;
   /**
+  * Isolate expression build errors to the broken expression's refID instead of failing the entire pipeline
+  * @default false
+  */
+  sseExpressionErrorIsolation?: boolean;
+  /**
   * Enables running Loki queries in parallel
   * @default false
   */
