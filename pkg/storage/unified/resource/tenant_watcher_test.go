@@ -187,9 +187,11 @@ func TestTenantResourceLabelling(t *testing.T) {
 		pendingLabels := map[string]string{labelPendingDelete: "true"}
 		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, pendingLabels)
 
-		// Create the pending-delete record so the cache knows about it.
+		// Create the pending-delete record (with LabelingComplete=true) so the
+		// cache knows about it and clearTenantPendingDelete exercises the full path.
 		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
-			DeleteAfter: "2026-03-01T00:00:00Z",
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: true,
 		}))
 		tw.pendingDeleteStore.RefreshCache(t.Context())
 
@@ -248,7 +250,8 @@ func TestTenantResourceLabelling(t *testing.T) {
 		// Seed a labelled resource and an existing pending-delete record.
 		saveTestResource(t, ds, "tenant-1", "apps", "deployments", "deploy-a", 100, map[string]string{labelPendingDelete: "true"})
 		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
-			DeleteAfter: "2026-03-01T00:00:00Z",
+			DeleteAfter:      "2026-03-01T00:00:00Z",
+			LabelingComplete: true,
 		}))
 		tw.pendingDeleteStore.RefreshCache(t.Context())
 
@@ -340,9 +343,11 @@ func TestTenantResourceLabelling(t *testing.T) {
 
 		tw.handleTenant(pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
-		// The latest version does NOT have the label, so this should have failed.
-		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
-		assert.ErrorIs(t, err, ErrNotFound, "record should not be created when conflict cannot be resolved")
+		// The intent record is written before labelling, so it should exist
+		// but with LabelingComplete=false since the conflict could not be resolved.
+		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		require.NoError(t, err, "intent record should exist")
+		assert.False(t, record.LabelingComplete, "labeling should not be marked complete")
 	})
 
 	t.Run("partial labelling failure followed by tenant unmark cleans up orphaned labels", func(t *testing.T) {
