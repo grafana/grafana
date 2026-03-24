@@ -22,7 +22,7 @@ weight: 900
 
 # Microsoft SQL Server data source
 
-Microsoft SQL Server (MSSQL) is one of the most widely used relational databases for business applications, analytics, and operational workloads. The built-in MSSQL data source lets you query your existing SQL Server instance directly from Grafana -- no data migration or additional plugins required.
+Microsoft SQL Server (MSSQL) is one of the most widely used relational databases for business applications, analytics, and operational workloads. The built-in MSSQL data source lets you query your existing SQL Server instance directly from Grafana, no data migration or additional plugins required.
 
 You can connect to Microsoft SQL Server 2012 or newer, Azure SQL Database, and Azure SQL Managed Instance.
 
