@@ -30,12 +30,12 @@ func NewCustomRouteClientFromGenerator(generator resource.ClientGenerator, defau
 	return NewCustomRouteClient(client), nil
 }
 
-type GetQuotaUsageRequest struct {
-	Params  GetQuotaUsageRequestParams
+type GetUsageRequest struct {
+	Params  GetUsageRequestParams
 	Headers http.Header
 }
 
-func (c *CustomRouteClient) GetQuotaUsage(ctx context.Context, namespace string, request GetQuotaUsageRequest) (*GetQuotaUsageResponse, error) {
+func (c *CustomRouteClient) GetUsage(ctx context.Context, namespace string, request GetUsageRequest) (*GetUsageResponse, error) {
 	params := url.Values{}
 	params.Set("group", fmt.Sprintf("%v", request.Params.Group))
 	params.Set("resource", fmt.Sprintf("%v", request.Params.Resource))
@@ -48,10 +48,10 @@ func (c *CustomRouteClient) GetQuotaUsage(ctx context.Context, namespace string,
 	if err != nil {
 		return nil, err
 	}
-	cast := GetQuotaUsageResponse{}
+	cast := GetUsageResponse{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetQuotaUsageResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetUsageResponse: %w", err)
 	}
 	return &cast, nil
 }

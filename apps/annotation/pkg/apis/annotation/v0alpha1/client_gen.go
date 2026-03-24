@@ -29,11 +29,11 @@ func NewCustomRouteClientFromGenerator(generator resource.ClientGenerator, defau
 	return NewCustomRouteClient(client), nil
 }
 
-type GetAnnotationsRequest struct {
+type GetSearchRequest struct {
 	Headers http.Header
 }
 
-func (c *CustomRouteClient) GetAnnotations(ctx context.Context, namespace string, request GetAnnotationsRequest) (*GetAnnotationsResponse, error) {
+func (c *CustomRouteClient) GetSearch(ctx context.Context, namespace string, request GetSearchRequest) (*GetSearchResponse, error) {
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
 		Path:    "/search",
 		Verb:    "GET",
@@ -42,19 +42,19 @@ func (c *CustomRouteClient) GetAnnotations(ctx context.Context, namespace string
 	if err != nil {
 		return nil, err
 	}
-	cast := GetAnnotationsResponse{}
+	cast := GetSearchResponse{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetAnnotationsResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetSearchResponse: %w", err)
 	}
 	return &cast, nil
 }
 
-type GetAnnotationTagsRequest struct {
+type GetTagsRequest struct {
 	Headers http.Header
 }
 
-func (c *CustomRouteClient) GetAnnotationTags(ctx context.Context, namespace string, request GetAnnotationTagsRequest) (*GetAnnotationTagsResponse, error) {
+func (c *CustomRouteClient) GetTags(ctx context.Context, namespace string, request GetTagsRequest) (*GetTagsResponse, error) {
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
 		Path:    "/tags",
 		Verb:    "GET",
@@ -63,10 +63,10 @@ func (c *CustomRouteClient) GetAnnotationTags(ctx context.Context, namespace str
 	if err != nil {
 		return nil, err
 	}
-	cast := GetAnnotationTagsResponse{}
+	cast := GetTagsResponse{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetAnnotationTagsResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetTagsResponse: %w", err)
 	}
 	return &cast, nil
 }

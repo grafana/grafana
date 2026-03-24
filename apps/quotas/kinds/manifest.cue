@@ -49,7 +49,7 @@ v0alpha1: {
 		namespaced: {
 			"/usage": {
 				"GET": {
-					name: "getQuotaUsage"
+					name: "getUsage"
 					response: {
 						namespace: string
 						resource:  string

@@ -15,7 +15,7 @@ v0alpha1: {
 		namespaced: {
 			"/tags": {
 				"GET": {
-					name: "getAnnotationTags"
+					name: "getTags"
 					response: {
 						tags: [...{
 							tag:   string
@@ -26,7 +26,7 @@ v0alpha1: {
 			}
 			"/search": {
 				"GET": {
-					name: "getAnnotations"
+					name: "getSearch"
 					response: {
 						apiVersion: string
 						kind:       string

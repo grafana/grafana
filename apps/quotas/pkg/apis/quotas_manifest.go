@@ -34,7 +34,7 @@ var appManifestData = app.ManifestData{
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "getQuotaUsage",
+								OperationId: "getUsage",
 
 								Parameters: []*spec3.Parameter{
 
@@ -159,7 +159,7 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/usage|GET": v0alpha1.GetQuotaUsageResponse{},
+	"v0alpha1||<namespace>/usage|GET": v0alpha1.GetUsageResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
