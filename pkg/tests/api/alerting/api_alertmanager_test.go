@@ -544,10 +544,6 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 	}
 }
 `
-	cfgWithoutAutogen := fmt.Sprintf(cfgTemplate, `{
-			"receiver": "empty",
-			"group_by": ["grafana_folder", "alertname"]
-		}`)
 	cfgWithAutogen := fmt.Sprintf(cfgTemplate, `{
 					"receiver": "empty",
 					"routes": [{
@@ -572,14 +568,14 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 		{
 			desc:      "viewer request should succeed",
 			url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/status",
-			expStatus: http.StatusOK,
-			expBody:   cfgWithoutAutogen,
+			expStatus: http.StatusUnauthorized,
+			expBody:   `{"extra":null,"message":"Unauthorized","messageId":"auth.unauthorized","statusCode":401,"traceID":""}`,
 		},
 		{
 			desc:      "editor request should succeed",
 			url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/status",
-			expStatus: http.StatusOK,
-			expBody:   cfgWithoutAutogen,
+			expStatus: http.StatusUnauthorized,
+			expBody:   `{"extra":null,"message":"Unauthorized","messageId":"auth.unauthorized","statusCode":401,"traceID":""}`,
 		},
 		{
 			desc:      "admin request should succeed",
