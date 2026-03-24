@@ -3271,7 +3271,8 @@
       "metadata": {
         "name": "logsExploreTableVisualisation",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2023-07-12T13:52:42Z"
+        "creationTimestamp": "2023-07-12T13:52:42Z",
+        "deletionTimestamp": "2026-03-24T16:21:01Z"
       },
       "spec": {
         "description": "A table visualisation for logs in Explore",

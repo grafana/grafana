@@ -8,6 +8,19 @@ import * as logUtils from '../../logs/utils';
 
 import { LogsVolumePanelList } from './LogsVolumePanelList';
 
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
+
 jest.mock('../Graph/ExploreGraph', () => {
   const ExploreGraph = () => <span>ExploreGraph</span>;
   return {
@@ -33,6 +46,10 @@ function renderPanel(logsVolumeData?: DataQueryResponse, onLoadLogsVolume = () =
 }
 
 describe('LogsVolumePanelList', () => {
+  beforeEach(() => {
+    setBooleanFlags({ lokiShardSplitting: false });
+  });
+
   it('shows loading message', () => {
     renderPanel({ state: LoadingState.Loading, error: undefined, data: [] });
     expect(screen.getByText('Loading...')).toBeInTheDocument();

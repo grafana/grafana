@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import { createAssistantContextItem, OpenAssistantProps, useAssistant } from '@grafana/assistant';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import {
   CoreApp,
   DataFrame,
@@ -23,7 +24,7 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { PopoverContent } from '@grafana/ui';
 
 import { checkLogsError, checkLogsSampled, downloadLogs as download, DownloadFormat } from '../../utils';
@@ -253,6 +254,7 @@ export const LogListContextProvider = ({
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
   const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
   const [showLevel, setShowLevelState] = useState(showLevelProp);
+  const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
 
   useEffect(() => {
     if (noInteractions) {
@@ -280,18 +282,18 @@ export const LogListContextProvider = ({
   }, []);
 
   const otelDisplayedFields = useMemo(() => {
-    if (!config.featureToggles.otelLogsFormatting || !setDisplayedFields || showLogAttributes === false) {
+    if (!otelLogsFormattingEnabled || !setDisplayedFields || showLogAttributes === false) {
       return [];
     }
     return getDisplayedFieldsForLogs(logs);
-  }, [logs, setDisplayedFields, showLogAttributes]);
+  }, [logs, otelLogsFormattingEnabled, setDisplayedFields, showLogAttributes]);
 
   // OTel displayed fields
   useEffect(() => {
-    if (config.featureToggles.otelLogsFormatting && showLogAttributes !== false) {
+    if (otelLogsFormattingEnabled && showLogAttributes !== false) {
       onLogOptionsChange?.('defaultDisplayedFields', otelDisplayedFields);
     }
-  }, [onLogOptionsChange, otelDisplayedFields, showLogAttributes]);
+  }, [onLogOptionsChange, otelDisplayedFields, otelLogsFormattingEnabled, showLogAttributes]);
 
   useEffect(() => {
     if (displayedFields.length > 0 || !setDisplayedFields) {

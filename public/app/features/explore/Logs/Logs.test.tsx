@@ -16,7 +16,6 @@ import {
   DataQuery,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
-import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { configureStore } from 'app/store/configureStore';
@@ -39,6 +38,19 @@ const createAndCopyShortLink = jest.fn();
 jest.mock('app/core/utils/shortLinks', () => ({
   ...jest.requireActual('app/core/utils/shortLinks'),
   createAndCopyShortLink: (url: string) => createAndCopyShortLink(url),
+}));
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
 }));
 
 const fakeChangePanelState = jest.fn().mockReturnValue({ type: 'fakeAction' });
@@ -65,6 +77,7 @@ describe('Logs', () => {
   let originalHref = window.location.href;
 
   beforeEach(() => {
+    setBooleanFlags({ newLogsPanel: false });
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
     window.HTMLElement.prototype.scroll = jest.fn();
     localStorage.clear();
@@ -467,15 +480,10 @@ describe('Logs', () => {
   });
 
   describe('with table visualisation', () => {
-    let originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
-
-    beforeAll(() => {
-      originalVisualisationTypeValue = config.featureToggles.logsExploreTableVisualisation;
-      config.featureToggles.logsExploreTableVisualisation = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.logsExploreTableVisualisation = originalVisualisationTypeValue;
+    beforeEach(() => {
+      setBooleanFlags({
+        newLogsPanel: false,
+      });
     });
 
     it('should show visualisation type radio group', () => {
@@ -517,7 +525,6 @@ describe('Logs', () => {
     });
   });
   describe('with table panel visualisation', () => {
-    let originalVisualisationTypeValue = config.featureToggles.logsTablePanelNG;
     let origResizeObserver = global.ResizeObserver;
 
     beforeEach(() => {
@@ -545,13 +552,11 @@ describe('Logs', () => {
       global.ResizeObserver = origResizeObserver;
     });
 
-    beforeAll(() => {
-      originalVisualisationTypeValue = config.featureToggles.logsTablePanelNG;
-      config.featureToggles.logsTablePanelNG = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.logsTablePanelNG = originalVisualisationTypeValue;
+    beforeEach(() => {
+      setBooleanFlags({
+        newLogsPanel: false,
+        logsTablePanelNG: true,
+      });
     });
 
     it('should show table', async () => {

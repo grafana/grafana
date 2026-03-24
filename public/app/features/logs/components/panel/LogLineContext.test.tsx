@@ -7,13 +7,25 @@ import {
   LogsSortOrder,
   SplitOpenOptions,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { dataFrameToLogsModel } from '../../logsModel';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { getDisplayedFieldsForLogs, identifyOTelLanguages } from '../otel/formats';
 
 import { DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext';
+
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
+    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+  });
+};
+
+jest.mock('@openfeature/react-sdk', () => ({
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
 
 jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
@@ -93,6 +105,10 @@ const row = logs.rows[0];
 const timeZone = 'UTC';
 
 describe('LogLineContext', () => {
+  beforeEach(() => {
+    setBooleanFlags({});
+  });
+
   let uniqueRefIdCounter = 1;
 
   beforeEach(() => {
@@ -667,15 +683,11 @@ describe('LogLineContext', () => {
   });
 
   describe('Default displayed fields', () => {
-    const originalFlagValue = config.featureToggles.otelLogsFormatting;
     beforeEach(() => {
-      config.featureToggles.otelLogsFormatting = true;
+      setBooleanFlags({ otelLogsFormatting: true });
       jest
         .mocked(getDisplayedFieldsForLogs)
         .mockReturnValue([LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]);
-    });
-    afterAll(() => {
-      config.featureToggles.otelLogsFormatting = originalFlagValue;
     });
 
     test('Should show "Show original logs" button when displayed fields are different than the default fields', async () => {

@@ -1,5 +1,3 @@
-import { config } from '@grafana/runtime';
-
 import { getSuggestedFieldsForLogs } from '../otel/formats';
 import { LogListModel } from '../panel/processing';
 
@@ -15,7 +13,8 @@ import { LOG_LINE_BODY_FIELD_NAME } from './logFields';
 export function getSuggestedFieldsFromLogList(
   logs: LogListModel[],
   displayedFields: string[],
-  defaultFields: string[] = []
+  defaultFields: string[] = [],
+  otelLogsFormattingEnabled = false
 ) {
   const suggestedFields: FieldWithStats[] = defaultFields.map((field) => ({
     name: field,
@@ -24,7 +23,7 @@ export function getSuggestedFieldsFromLogList(
     },
   }));
 
-  if (config.featureToggles.otelLogsFormatting) {
+  if (otelLogsFormattingEnabled) {
     getSuggestedFieldsForLogs(logs).forEach((field) => {
       suggestedFields.push({
         name: field,
