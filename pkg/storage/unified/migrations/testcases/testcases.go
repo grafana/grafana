@@ -4,11 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+
+	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
 // ResourceMigratorTestCase defines the interface for testing a resource migrator.
@@ -17,8 +20,15 @@ type ResourceMigratorTestCase interface {
 	Name() string
 	// Resources returns the GVRs that this migrator handles
 	Resources() []schema.GroupVersionResource
-	// Setup creates test resources in legacy storage (Mode0)
-	Setup(t *testing.T, helper *apis.K8sTestHelper)
+	// FeatureToggles returns feature toggles required for the K8s API to be registered
+	FeatureToggles() []string
+	// RenameTables returns the legacy tables that should be renamed after migration
+	RenameTables() []string
+	// Setup any tables that are no longer run on startup
+	AddLegacySQLMigrations(mg *migrator.Migrator)
+	// Setup creates test resources in legacy storage -- returns true if
+	// the properties should be accessible via k8s APIs
+	Setup(t *testing.T, helper *apis.K8sTestHelper) bool
 	// Verify checks that resources exist (or don't exist) in unified storage
 	Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool)
 }
@@ -27,12 +37,24 @@ type ResourceMigratorTestCase interface {
 func verifyResourceCount(t *testing.T, client *apis.K8sResourceClient, expectedCount int) {
 	t.Helper()
 
-	l, err := client.Resource.List(context.Background(), metav1.ListOptions{})
-	require.NoError(t, err)
+	var total int
+	continueToken := ""
+	for {
+		l, err := client.Resource.List(context.Background(), metav1.ListOptions{
+			Continue: continueToken,
+		})
+		require.NoError(t, err)
 
-	resources, err := meta.ExtractList(l)
-	require.NoError(t, err)
-	require.Equal(t, expectedCount, len(resources))
+		resources, err := meta.ExtractList(l)
+		require.NoError(t, err)
+		total += len(resources)
+
+		continueToken = l.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+	require.Equal(t, expectedCount, total)
 }
 
 // verifyResource verifies that a resource with the given UID exists in K8s storage

@@ -1,5 +1,5 @@
 import { clamp } from 'lodash';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { store } from '@grafana/data';
 
@@ -74,7 +74,7 @@ export function useSidebar({
 
   const [isDocked, setIsDocked] = useSidebarSavedState(persistanceKey, 'docked', defaultToDocked);
   const [compact, setCompact] = useSidebarSavedState(persistanceKey, 'compact', defaultToCompact);
-  const [paneWidth, setPaneWidth] = useSidebarSavedState(persistanceKey, 'size', 280);
+  const [paneWidth, setPaneWidth] = useSidebarSavedState(persistanceKey, 'size', 240);
 
   // Used to accumulate drag distance to know when to change compact mode
   const [_, setCompactDrag] = React.useState(0);
@@ -144,33 +144,38 @@ export function useSidebar({
   };
 }
 
-function useSidebarSavedState<T = number | boolean>(
+function readFromStore<T>(persistanceKey: string | undefined, subKey: string, defaultValue: T): T {
+  if (!persistanceKey) {
+    return defaultValue;
+  }
+
+  if (typeof defaultValue === 'boolean') {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return store.getBool(`grafana.ui.sidebar.${persistanceKey}.${subKey}`, defaultValue) as T;
+  }
+
+  if (typeof defaultValue === 'number') {
+    const value = Number.parseInt(store.get(`grafana.ui.sidebar.${persistanceKey}.${subKey}`), 10);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return Number.isNaN(value) ? defaultValue : (value as T);
+  }
+
+  return defaultValue;
+}
+
+export function useSidebarSavedState<T = number | boolean>(
   persistanceKey: string | undefined,
   subKey: string,
   defaultValue: T
 ) {
-  const [state, setState] = React.useState<T>(() => {
-    if (!persistanceKey) {
-      return defaultValue;
-    }
+  const [state, setState] = React.useState<T>(() => readFromStore(persistanceKey, subKey, defaultValue));
 
-    if (typeof defaultValue === 'boolean') {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return store.getBool(`grafana.ui.sidebar.${persistanceKey}.${subKey}`, defaultValue) as T;
-    }
-
-    if (typeof defaultValue === 'number') {
-      const value = Number.parseInt(store.get(`grafana.ui.sidebar.${persistanceKey}.${subKey}`), 10);
-      if (Number.isNaN(value)) {
-        return defaultValue;
-      }
-
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return value as T;
-    }
-
-    return defaultValue;
-  });
+  useEffect(() => {
+    setState(readFromStore(persistanceKey, subKey, defaultValue));
+    // Re-read from storage when the persistence key changes, but not when defaultValue changes
+    // to avoid overriding a user-persisted value.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [persistanceKey, subKey]);
 
   const setPersisted = useCallback(
     (cb: (prevState: T) => T) => {

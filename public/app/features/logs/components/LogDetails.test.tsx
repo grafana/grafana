@@ -19,7 +19,7 @@ import { setPluginLinksHook } from '@grafana/runtime';
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../logsFrame';
 
 import { LogDetails, Props } from './LogDetails';
-import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME } from './fieldSelector/logFields';
 import { getLogRowStyles } from './getLogRowStyles';
 import { createLogRow } from './mocks/logRow';
 
@@ -43,7 +43,6 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
     onClickFilterOutLabel: () => {},
     onClickShowField: () => {},
     onClickHideField: () => {},
-    theme,
     styles,
     app: CoreApp.Explore,
     timeRange: {

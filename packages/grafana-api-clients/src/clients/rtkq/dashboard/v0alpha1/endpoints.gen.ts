@@ -252,6 +252,7 @@ const injectedRtkApi = api
             sort: queryArg.sort,
             limit: queryArg.limit,
             ownerReference: queryArg.ownerReference,
+            createdBy: queryArg.createdBy,
             explain: queryArg.explain,
             panelTitleSearch: queryArg.panelTitleSearch,
           },
@@ -319,6 +320,10 @@ const injectedRtkApi = api
       }),
       getSnapshotDashboard: build.query<GetSnapshotDashboardApiResponse, GetSnapshotDashboardApiArg>({
         query: (queryArg) => ({ url: `/snapshots/${queryArg.name}/dashboard` }),
+        providesTags: ['Snapshot'],
+      }),
+      getSnapshotDeletekey: build.query<GetSnapshotDeletekeyApiResponse, GetSnapshotDeletekeyApiArg>({
+        query: (queryArg) => ({ url: `/snapshots/${queryArg.name}/deletekey` }),
         providesTags: ['Snapshot'],
       }),
     }),
@@ -690,12 +695,21 @@ export type SearchDashboardsAndFoldersApiArg = {
   limit?: number;
   /** filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them. */
   ownerReference?: string[];
+  /** filter by the user who created the resource (format: user:<uid>) */
+  createdBy?: string;
   /** add debugging info that may help explain why the result matched */
   explain?: boolean;
   /** [experimental] optionally include matches from panel titles */
   panelTitleSearch?: boolean;
 };
-export type GetSortableFieldsApiResponse = /** status 200 undefined */ any;
+export type GetSortableFieldsApiResponse = /** status 200 undefined */ {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Sortable fields (depends on backend support) */
+  fields: any[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+};
 export type GetSortableFieldsApiArg = void;
 export type ListSnapshotApiResponse = /** status 200 OK */ SnapshotList;
 export type ListSnapshotApiArg = {
@@ -780,6 +794,11 @@ export type DeleteSnapshotApiArg = {
 export type GetSnapshotDashboardApiResponse = /** status 200 OK */ Dashboard;
 export type GetSnapshotDashboardApiArg = {
   /** name of the Dashboard */
+  name: string;
+};
+export type GetSnapshotDeletekeyApiResponse = /** status 200 OK */ DashboardSnapshotWithDeleteKey;
+export type GetSnapshotDeletekeyApiArg = {
+  /** name of the DashboardSnapshotWithDeleteKey */
   name: string;
 };
 export type ApiResource = {
@@ -1225,6 +1244,8 @@ export type SnapshotSpec = {
   dashboard?: {
     [key: string]: object;
   };
+  /** Snapshot delete key */
+  deleteKey?: string;
   /** Optionally auto-remove the snapshot at a future date (Unix timestamp in seconds) */
   expires?: number;
   /** When set to true, the snapshot exists in a remote server */
@@ -1254,6 +1275,17 @@ export type SnapshotList = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: ListMeta;
+};
+export type DashboardSnapshotWithDeleteKey = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** The delete key is only returned when the item is created.  It is not returned from a get request */
+  deleteKey?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata: ObjectMeta;
+  /** Spec is the spec of the Snapshot */
+  spec: SnapshotSpec;
 };
 export const {
   useGetApiResourcesQuery,
@@ -1293,4 +1325,6 @@ export const {
   useDeleteSnapshotMutation,
   useGetSnapshotDashboardQuery,
   useLazyGetSnapshotDashboardQuery,
+  useGetSnapshotDeletekeyQuery,
+  useLazyGetSnapshotDeletekeyQuery,
 } = injectedRtkApi;

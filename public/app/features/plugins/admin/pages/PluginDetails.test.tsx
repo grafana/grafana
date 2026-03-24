@@ -261,7 +261,12 @@ describe('Plugin details page', () => {
     });
 
     it('should not display an update button for a plugin that is managed', async () => {
-      const { queryByRole } = renderPluginDetails({ id, isInstalled: true, hasUpdate: true, isManaged: true });
+      const { queryByRole } = renderPluginDetails({
+        id,
+        isInstalled: true,
+        hasUpdate: true,
+        managed: { enabled: true },
+      });
 
       // Does not display an "update" button
       expect(await queryByRole('button', { name: /update/i })).not.toBeInTheDocument();

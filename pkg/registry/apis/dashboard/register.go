@@ -121,6 +121,7 @@ type DashboardsAPIBuilder struct {
 	publicDashboardService       publicdashboards.Service
 	snapshotService              dashboardsnapshots.Service
 	snapshotOptions              dashv0.SnapshotSharingOptions
+	snapshotStorage              rest.Storage // for dual-write support in routes
 	namespacer                   request.NamespaceMapper
 	dashboardActivityChannel     live.DashboardActivityChannel
 	isStandalone                 bool // skips any handling including anything to do with legacy storage
@@ -393,6 +394,11 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		return apierrors.NewBadRequest(err.Error())
 	}
 
+	// Check that the we are not sending v2 objects to v0|v1
+	if err := validateNotV2Object(dashObj); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
 	id, err := identity.GetRequester(ctx)
 	if err != nil {
 		return fmt.Errorf("error getting requester: %w", err)
@@ -400,13 +406,8 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 
 	// Validate folder existence if specified
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
-		folder, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID())
-		if err != nil {
+		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
 			return err
-		}
-
-		if err := b.validateFolderManagedBySameManager(folder, accessor); err != nil {
-			return apierrors.NewBadRequest(err.Error())
 		}
 	}
 
@@ -485,13 +486,8 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 			return err
 		}
 
-		folder, err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID)
-		if err != nil {
+		if _, err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID); err != nil {
 			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), newAccessor.GetFolder())
-		}
-
-		if err := b.validateFolderManagedBySameManager(folder, newAccessor); err != nil {
-			return err
 		}
 	}
 
@@ -524,28 +520,6 @@ func (b *DashboardsAPIBuilder) validateFolderExists(ctx context.Context, folderU
 	return folder, nil
 }
 
-// validation should fail if:
-// 1. The parent folder is managed but this dashboard is not
-// 2. The parent folder is managed by a different repository than this dashboard
-func (b *DashboardsAPIBuilder) validateFolderManagedBySameManager(folder *unstructured.Unstructured, dashboardAccessor utils.GrafanaMetaAccessor) error {
-	folderAccessor, err := utils.MetaAccessor(folder)
-	if err != nil {
-		return fmt.Errorf("error getting meta accessor: %w", err)
-	}
-
-	if folderManager, ok := folderAccessor.GetManagerProperties(); ok && folderManager.Kind == utils.ManagerKindRepo {
-		manager, ok := dashboardAccessor.GetManagerProperties()
-		if !ok {
-			return fmt.Errorf("folder is managed by a repository, but the dashboard is not managed")
-		}
-		if manager.Kind != utils.ManagerKindRepo || manager.Identity != folderManager.Identity {
-			return fmt.Errorf("folder is managed by a repository, but the dashboard is not managed by the same manager")
-		}
-	}
-
-	return nil
-}
-
 // getDashboardProperties extracts title and refresh interval from any dashboard version
 func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	var title, refresh string
@@ -569,6 +543,26 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	}
 
 	return title, refresh, nil
+}
+
+// validateNotV2Object validates that all dashboard tags are within the maximum length
+func validateNotV2Object(obj runtime.Object) error {
+	var spec map[string]any
+
+	switch d := obj.(type) {
+	case *dashv0.Dashboard:
+		spec = d.Spec.Object
+	case *dashv1.Dashboard:
+		spec = d.Spec.Object
+	default:
+		return nil
+	}
+
+	if dashboards.LooksLikeV2Spec(spec) {
+		// nolint:staticcheck ST1005
+		return fmt.Errorf(dashboards.LooksLikeV2SpecMessage)
+	}
+	return nil
 }
 
 // validateDashboardTags validates that all dashboard tags are within the maximum length
@@ -788,15 +782,30 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		}
 	}
 
-	// Legacy only (for now) and only v0alpha1
+	// Snapshots - only v0alpha1
 	if snapshots != nil && dashboards.GroupVersion().Version == "v0alpha1" {
 		snapshotLegacyStore := &snapshot.SnapshotLegacyStore{
 			ResourceInfo: *snapshots,
 			Service:      b.snapshotService,
 			Namespacer:   b.namespacer,
 		}
-		storage[snapshots.StoragePath()] = snapshotLegacyStore
-		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(dashboards, b.snapshotService)
+
+		unifiedSnapshotStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *snapshots, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+		snapshotGr := snapshots.GroupResource()
+		snapshotDualWrite, err := opts.DualWriteBuilder(snapshotGr, snapshotLegacyStore, unifiedSnapshotStore)
+		if err != nil {
+			return err
+		}
+		storage[snapshots.StoragePath()] = snapshot.NewStorageWrapper(snapshotDualWrite)
+		b.snapshotStorage = snapshotDualWrite // store for use in routes (needs rest.Creater)
+		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(snapshotDualWrite)
+		if err != nil {
+			return err
+		}
+		storage[snapshots.StoragePath("deletekey")], err = snapshot.NewDeleteKeyREST(snapshotDualWrite)
 		if err != nil {
 			return err
 		}
@@ -1019,16 +1028,29 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	searchAPIRoutes := b.search.GetAPIRoutes(defs)
-	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotService, b.snapshotOptions, defs)
+	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotService, b.snapshotOptions, b.accessControl, defs,
+		func() rest.Storage {
+			return b.snapshotStorage
+		}, b.dashboardService)
 
 	return &builder.APIRoutes{
 		Namespace: append(searchAPIRoutes.Namespace, snapshotAPIRoutes.Namespace...),
 	}
 }
 
-// The default authorizer is fine because authorization happens in storage where we know the parent folder
+// GetAuthorizer returns a composite authorizer that dispatches by resource type.
+// Snapshots use RBAC-based authorization; other resources fall back to ServiceAuthorizer.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return grafanaauthorizer.NewServiceAuthorizer()
+	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
+	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
+
+	return authorizer.AuthorizerFunc(
+		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+			if attr.IsResourceRequest() && attr.GetResource() == dashv0.SNAPSHOT_RESOURCE {
+				return snapshotAuthorizer.Authorize(ctx, attr)
+			}
+			return serviceAuthorizer.Authorize(ctx, attr)
+		})
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {

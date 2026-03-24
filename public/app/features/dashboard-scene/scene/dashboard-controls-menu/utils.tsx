@@ -32,10 +32,12 @@ export function getDashboardControls(dashboard: DashboardScene) {
 
 export function useDashboardControls(dashboard: DashboardScene) {
   const dashboardState = dashboard.useState();
+
   const variablesState = sceneGraph.getVariables(dashboard).useState();
+  const variables = getDashboardControlsVariables(variablesState.variables);
+
   const dataState = sceneGraph.getData(dashboard).useState();
   const links = getDashboardControlsLinks(dashboardState.links);
-  const variables = getDashboardControlsVariables(variablesState.variables);
   const annotations = getDashboardControlsAnnotations(dataState);
 
   return {

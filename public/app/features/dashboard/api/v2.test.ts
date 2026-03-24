@@ -1,7 +1,7 @@
 import {
   Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import * as folderHooks from 'app/api/clients/folder/v1beta1/hooks';
 import {
   AnnoKeyFolder,
@@ -415,6 +415,56 @@ describe('v2 dashboard API', () => {
 
       const api = new K8sDashboardV2API();
       await expect(api.getDashboardDTO('test')).resolves.toBeDefined();
+    });
+  });
+
+  describe('listDashboardHistory', () => {
+    it('should return all versions in a single request when no pagination needed', async () => {
+      const mockHistory = {
+        metadata: { resourceVersion: '1' },
+        items: [
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 3 } },
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 2 } },
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 1 } },
+        ],
+      };
+      mockGet.mockResolvedValueOnce(mockHistory);
+
+      const api = new K8sDashboardV2API();
+      const result = await api.listDashboardHistory('dash-uid');
+
+      expect(result.items).toHaveLength(3);
+      expect(mockGet).toHaveBeenCalledTimes(1);
+    });
+
+    it('should follow pagination tokens across multiple pages', async () => {
+      const page1 = {
+        metadata: { resourceVersion: '1', continue: 'token-page2' },
+        items: [
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 5 } },
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 4 } },
+        ],
+      };
+      const page2 = {
+        metadata: { resourceVersion: '1', continue: 'token-page3' },
+        items: [
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 3 } },
+          { ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 2 } },
+        ],
+      };
+      const page3 = {
+        metadata: { resourceVersion: '1' },
+        items: [{ ...mockDashboardDto, metadata: { ...mockDashboardDto.metadata, generation: 1 } }],
+      };
+
+      mockGet.mockResolvedValueOnce(page1).mockResolvedValueOnce(page2).mockResolvedValueOnce(page3);
+
+      const api = new K8sDashboardV2API();
+      const result = await api.listDashboardHistory('dash-uid');
+
+      expect(result.items).toHaveLength(5);
+      expect(mockGet).toHaveBeenCalledTimes(3);
+      expect(result.metadata.continue).toBeUndefined();
     });
   });
 

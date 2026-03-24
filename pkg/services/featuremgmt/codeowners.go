@@ -11,7 +11,7 @@ const (
 	grafanaSessionReplaySquad                   codeowner = "@grafana/session-replay"
 	grafanaDataProSquad                         codeowner = "@grafana/datapro"
 	grafanaFrontendPlatformSquad                codeowner = "@grafana/grafana-frontend-platform"
-	grafanaFrontendSearchNavOrganise            codeowner = "@grafana/grafana-search-navigate-organise"
+	grafanaFrontendNavigation                   codeowner = "@grafana/grafana-frontend-navigation"
 	grafanaBackendServicesSquad                 codeowner = "@grafana/grafana-backend-services-squad"
 	grafanaSearchAndStorageSquad                codeowner = "@grafana/search-and-storage"
 	grafanaPluginsPlatformSquad                 codeowner = "@grafana/plugins-platform-backend"
@@ -29,4 +29,5 @@ const (
 	grafanaDatasourcesCoreServicesSquad         codeowner = "@grafana/grafana-datasources-core-services"
 	grafanaBackendGroup                         codeowner = "@grafana/grafana-backend-group"
 	grafanaPathfinderSquad                      codeowner = "@grafana/pathfinder"
+	grafanaDataSources                          codeowner = "@grafana/data-sources"
 )

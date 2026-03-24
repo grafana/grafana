@@ -53,6 +53,7 @@ export const toEnrichedCorrelationDataK8s = (item: CorrelationK8s): CorrelationD
             transformations: transformationsFmt,
           },
         };
+
         return toEnrichedCorrelationData(queryCorr);
       } else {
         return undefined;
@@ -73,7 +74,6 @@ export const useCorrelationsK8s = (limit = 100, page: number) => {
   const { currentData, isLoading, error } = useListCorrelationQuery({ limit: pagedLimit });
   const startIdx = limit * (page - 1);
   const pagedData = currentData?.items.slice(startIdx, startIdx + limit) ?? [];
-
   const enrichedCorrelations =
     currentData !== undefined
       ? pagedData

@@ -16,9 +16,9 @@ import { config } from '@grafana/runtime';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
-import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { FieldDef, getAllFields } from '../logParser';
-import { identifyOTelLanguage, getOtelAttributesField, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
+import { identifyOTelLanguage, getOtelAttributesField } from '../otel/formats';
 
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
 import { LogLineVirtualization } from './virtualization';
@@ -145,10 +145,12 @@ export class LogListModel implements LogRowModel {
         if (reStringified) {
           this.raw = reStringified;
         }
-        if (this._escapeUnescapedString) {
-          this.raw = escapeUnescapedString(this.raw);
-        }
       } catch (error) {}
+
+      // always escape for literal \n, \t, \r sequences so "Escape newlines" works for all log types.
+      if (this._escapeUnescapedString) {
+        this.raw = escapeUnescapedString(this.raw);
+      }
       const raw = this.raw;
       this._body = this.collapsed
         ? raw.substring(0, this._virtualization?.getTruncationLength(null) ?? TRUNCATION_DEFAULT_LENGTH)

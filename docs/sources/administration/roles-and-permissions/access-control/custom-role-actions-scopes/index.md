@@ -7,9 +7,9 @@ labels:
   products:
     - cloud
     - enterprise
-menuTitle: RBAC permissions, actions, and scopes
-title: Grafana RBAC permissions, actions, and scopes
-weight: 80
+menuTitle: RBAC permission actions and scopes
+title: Grafana RBAC permission actions and scopes
+weight: 30
 refs:
   rbac-grafana-provisioning:
     - pattern: /docs/grafana/
@@ -23,27 +23,20 @@ refs:
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/access-control/#fixed-roles
 ---
 
-# RBAC permissions, actions, and scopes
+# Grafana RBAC permission actions and scopes
 
 {{< admonition type="note" >}}
-Available in [Grafana Enterprise](/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud/).
+Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise/) and [Grafana Cloud](https://grafana.com/docs/grafana-cloud/).
 {{< /admonition >}}
 
-A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resources on which they can perform those actions.
-
-To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions](ref:rbac-fixed-roles).
-
-{{< admonition type="note" >}}
-**Before creating custom roles**, consider whether you can meet your access requirements using:
-
-- **[Folder permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/folder-access-control/)**: Control access to dashboards, alert rules, and other resources by folder
-- **[Fixed roles](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/)**: Pre-built roles for common access patterns
-
-Custom roles are most useful when you need fine-grained control that these options don't provide.
-{{< /admonition >}}
+An RBAC permission comprises an action and a scope:
 
 - **Action:** An action describes what tasks a user can perform on a resource.
 - **Scope:** A scope describes where an action can be performed, such as reading a specific user profile. In this example, a permission is associated with the scope `users:<userId>` to the relevant role.
+
+To learn more about the Grafana resources to which you can apply RBAC, refer to [Resources with RBAC permissions](ref:rbac-fixed-roles).
+
+If you're using Grafana Enterprise or Grafana Cloud, you can create **custom roles** with specific sets of permissions. Refer to [Create custom roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/create-custom-roles) to learn how.
 
 ## Action definitions
 
@@ -199,27 +192,27 @@ The following list contains role-based access control actions.
 
 ### Grafana Alerting Notification action definitions
 
-| Action                                          | Applicable scopes                                          | Description                                                                                                                                                                                                                                          |
-| ----------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `alert.notifications.receivers:read`            | `receivers:*`<br>`receivers:uid:*`                         | Read contact points.                                                                                                                                                                                                                                 |
-| `alert.notifications.receivers.secrets:read`    | `receivers:*`<br>`receivers:uid:*`                         | Export contact points with decrypted secrets.                                                                                                                                                                                                        |
-| `alert.notifications.receivers:create`          | None                                                       | Create a new contact points. The creator is automatically granted full access to the created contact point.                                                                                                                                          |
-| `alert.notifications.receivers:write`           | `receivers:*`<br>`receivers:uid:*`                         | Update existing contact points.                                                                                                                                                                                                                      |
-| `alert.notifications.receivers.protected:write` | `receivers:*`<br>`receivers:uid:*`                         | Update [protected fields](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points#grafana-cloud-protected-fields) in contact points (such as target URLs for integrations). This scope only applies to Grafana Cloud. |
-| `alert.notifications.receivers:delete`          | `receivers:*`<br>`receivers:uid:*`                         | Update and delete existing contact points.                                                                                                                                                                                                           |
-| `alert.notifications.receivers:test`            | None                                                       | Test contact point notification. Deprecated. Use "alert.notifications.receivers.test:create"                                                                                                                                                         |
-| `alert.notifications.receivers.test:create`     | `receivers:*`<br>`receivers:uid:*`<br>`receivers:type:new` | Test contact points to verify their configuration. Use scope `receivers:type:new` to grant permission to test new integrations                                                                                                                       |
-| `receivers.permissions:read`                    | `receivers:*`<br>`receivers:uid:*`                         | Read permissions for contact points.                                                                                                                                                                                                                 |
-| `receivers.permissions:write`                   | `receivers:*`<br>`receivers:uid:*`                         | Manage permissions for contact points.                                                                                                                                                                                                               |
-| `alert.notifications.time-intervals:read`       | None                                                       | Read mute time intervals.                                                                                                                                                                                                                            |
-| `alert.notifications.time-intervals:write`      | None                                                       | Create new or update existing mute time intervals.                                                                                                                                                                                                   |
-| `alert.notifications.time-intervals:delete`     | None                                                       | Delete existing time intervals.                                                                                                                                                                                                                      |
-| `alert.notifications.templates:read`            | None                                                       | Read templates.                                                                                                                                                                                                                                      |
-| `alert.notifications.templates:write`           | None                                                       | Create new or update existing templates.                                                                                                                                                                                                             |
-| `alert.notifications.templates:delete`          | None                                                       | Delete existing templates.                                                                                                                                                                                                                           |
-| `alert.notifications.templates.test:write`      | None                                                       | Test templates with custom payloads (preview and payload editor functionality).                                                                                                                                                                      |
-| `alert.notifications.routes:read`               | None                                                       | Read notification policies.                                                                                                                                                                                                                          |
-| `alert.notifications.routes:write`              | None                                                       | Create new, update or delete notification policies                                                                                                                                                                                                   |
+| Action                                          | Applicable scopes                                       | Description                                                                                                                                                                                                                                          |
+| ----------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alert.notifications.receivers:read`            | `receivers:*`<br>`receivers:uid:*`                      | Read contact points.                                                                                                                                                                                                                                 |
+| `alert.notifications.receivers.secrets:read`    | `receivers:*`<br>`receivers:uid:*`                      | Export contact points with decrypted secrets.                                                                                                                                                                                                        |
+| `alert.notifications.receivers:create`          | None                                                    | Create a new contact points. The creator is automatically granted full access to the created contact point.                                                                                                                                          |
+| `alert.notifications.receivers:write`           | `receivers:*`<br>`receivers:uid:*`                      | Update existing contact points.                                                                                                                                                                                                                      |
+| `alert.notifications.receivers.protected:write` | `receivers:*`<br>`receivers:uid:*`                      | Update [protected fields](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points#grafana-cloud-protected-fields) in contact points (such as target URLs for integrations). This scope only applies to Grafana Cloud. |
+| `alert.notifications.receivers:delete`          | `receivers:*`<br>`receivers:uid:*`                      | Update and delete existing contact points.                                                                                                                                                                                                           |
+| `alert.notifications.receivers:test`            | None                                                    | Test contact point notification. Deprecated. Use "alert.notifications.receivers.test:create"                                                                                                                                                         |
+| `alert.notifications.receivers.test:create`     | `receivers:*`<br>`receivers:uid:*`<br>`receivers:uid:-` | Test contact points to verify their configuration. Use scope `receivers:uid:-` to grant permission to test new integrations                                                                                                                          |
+| `receivers.permissions:read`                    | `receivers:*`<br>`receivers:uid:*`                      | Read permissions for contact points.                                                                                                                                                                                                                 |
+| `receivers.permissions:write`                   | `receivers:*`<br>`receivers:uid:*`                      | Manage permissions for contact points.                                                                                                                                                                                                               |
+| `alert.notifications.time-intervals:read`       | None                                                    | Read mute time intervals.                                                                                                                                                                                                                            |
+| `alert.notifications.time-intervals:write`      | None                                                    | Create new or update existing mute time intervals.                                                                                                                                                                                                   |
+| `alert.notifications.time-intervals:delete`     | None                                                    | Delete existing time intervals.                                                                                                                                                                                                                      |
+| `alert.notifications.templates:read`            | None                                                    | Read templates.                                                                                                                                                                                                                                      |
+| `alert.notifications.templates:write`           | None                                                    | Create new or update existing templates.                                                                                                                                                                                                             |
+| `alert.notifications.templates:delete`          | None                                                    | Delete existing templates.                                                                                                                                                                                                                           |
+| `alert.notifications.templates.test:write`      | None                                                    | Test templates with custom payloads (preview and payload editor functionality).                                                                                                                                                                      |
+| `alert.notifications.routes:read`               | None                                                    | Read notification policies.                                                                                                                                                                                                                          |
+| `alert.notifications.routes:write`              | None                                                    | Create new, update or delete notification policies                                                                                                                                                                                                   |
 
 ## Scope definitions
 
@@ -228,7 +221,7 @@ The following list contains role-based access control scopes.
 <!-- prettier-ignore-start -->
 | Scopes                                                               | Descriptions                                                                                                                                                                                                                                       |
 | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <ul><li>`annotations:*`</li><li>`annotations:type:*`</li></ul>       | Restrict an action to a set of annotations. For example, `annotations:*` matches any annotation, `annotations:type:dashboard` matches annotations associated with dashboards and `annotations:type:organization` matches organization annotations. |
+| <ul><li>`annotations:*`</li><li>`annotations:type:*`</li></ul>       | Restrict an action to a set of annotations. For example, `annotations:*` matches any annotation, and `annotations:type:organization` matches organization annotations. |
 | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li></ul>          | Restrict an action to a set of dashboards. For example, `dashboards:*` matches any dashboard, and `dashboards:uid:1` matches the dashboard whose UID is `1`.                                                                                       |
 | <ul><li>`datasources:*`</li><li>`datasources:uid:*`</li></ul>        | Restrict an action to a set of data sources. For example, `datasources:*` matches any data source, and `datasources:uid:1` matches the data source whose UID is `1`.                                                                               |
 | <ul><li>`folders:*`</li><li>`folders:uid:*`</li></ul>                | Restrict an action to a set of folders. For example, `folders:*` matches any folder, and `folders:uid:1` matches the folder whose UID is `1`. Note that permissions granted to a folder cascade down to subfolders located under it.               |
@@ -250,7 +243,7 @@ The following list contains role-based access control scopes.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-## Discovering plugin actions
+## Discover plugin actions
 
 The action definitions table above lists actions for core Grafana features. App plugins can define their own actions, which follow the pattern `<plugin-id>.<resource>:<operation>`.
 
@@ -263,4 +256,4 @@ curl -X GET "https://your-grafana-instance/api/access-control/roles/basic_admin"
 
 The response includes all permissions granted to that role, including plugin-specific actions. Plugin actions typically use `None` for their scope because they operate at the organization level.
 
-For a centralized reference of plugin roles and their default permissions, refer to [Grafana Cloud app plugin role definitions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plugin-role-definitions/).
+For a centralized reference of plugin roles and their default permissions, refer to [Grafana Cloud app plugin role definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/plugin-role-definitions/).

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/utils/ptr"
@@ -67,18 +68,44 @@ func ConvertDashboard_V0_to_V1beta1(in *dashv0.Dashboard, out *dashv1.Dashboard,
 		},
 	}
 
-	ctx, _, err := prepareV0ConversionContext(in)
+	ctx := context.Background()
+	if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
+		if scopeCtx, ok := scope.Meta().Context.(context.Context); ok {
+			ctx = scopeCtx
+		}
+	}
+
+	ctxWithNamespace, _, err := prepareV0ConversionContext(in)
 	if err != nil {
 		out.Status.Conversion.Failed = true
 		out.Status.Conversion.Error = ptr.To(err.Error())
 		return schemaversion.NewMigrationError(err.Error(), schemaversion.GetSchemaVersion(in.Spec.Object), schemaversion.LATEST_VERSION, "Convert_V0_to_V1")
 	}
 
+	// merge contexts to have namespace and spans
+	if ctxWithNamespace != nil {
+		if ns := request.NamespaceValue(ctxWithNamespace); ns != "" {
+			ctx = request.WithNamespace(ctx, ns)
+		}
+	}
+
+	sourceSchemaVersion := schemaversion.GetSchemaVersion(in.Spec.Object)
+	ctx, span := TracingStart(ctx, "dashboard.conversion.v0alpha1_to_v1beta1",
+		attribute.String("dashboard.uid", in.Name),
+		attribute.String("dashboard.namespace", in.Namespace),
+		attribute.String("source.version", dashv0.APIVERSION),
+		attribute.String("target.version", dashv1.APIVERSION),
+		attribute.Int("source.schema_version", sourceSchemaVersion),
+	)
+	defer span.End()
+
 	if err := migrateV0Dashboard(ctx, out.Spec.Object, schemaversion.LATEST_VERSION); err != nil {
 		out.Status.Conversion.Failed = true
 		out.Status.Conversion.Error = ptr.To(err.Error())
 		return schemaversion.NewMigrationError(err.Error(), schemaversion.GetSchemaVersion(in.Spec.Object), schemaversion.LATEST_VERSION, "Convert_V0_to_V1")
 	}
+
+	span.SetAttributes(attribute.Int("target.schema_version", schemaversion.LATEST_VERSION))
 
 	// Normalize template variable datasources from string to object format
 	// This handles legacy dashboards where query variables have datasource: "$datasource" (string)

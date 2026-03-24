@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -32,6 +32,7 @@ import { DrilldownControls } from './DrilldownControls';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
+import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview/DashboardFiltersOverviewPaneToggle';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
@@ -104,10 +105,19 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
         refreshPickerDeactivation = this.state.refreshPicker.activate();
       }
 
+      // Subscribe to time range changes to track interactions
+      const timeRange = sceneGraph.getTimeRange(this);
+      const timeRangeSubscription = timeRange.subscribeToState((newState, prevState) => {
+        if (newState.value !== prevState.value) {
+          reportInteraction('grafana_dashboards_time_picker_changed');
+        }
+      });
+
       return () => {
         if (refreshPickerDeactivation) {
           refreshPickerDeactivation();
         }
+        timeRangeSubscription.unsubscribe();
       };
     });
   }
@@ -148,7 +158,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
     hideDashboardControls,
   } = model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const { links, editPanel } = dashboard.useState();
+  const { links, editPanel, isEditing } = dashboard.useState();
   const isQueryEditorNext = Boolean(editPanel?.state.useQueryExperienceNext);
   const styles = useStyles2(getStyles, isQueryEditorNext);
   const showDebugger = window.location.search.includes('scene-debugger');
@@ -162,6 +172,24 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const useUnifiedDrilldownUI = config.featureToggles.dashboardAdHocAndGroupByWrapper && adHocVar && groupByVar;
 
   if (!model.hasControls()) {
+    // If dynamic dashboards is enabled, we need to show the edit/share/playlist buttons
+    // However we shouldn't do it if we're in edit panel view
+    // `DashboardControlActions` already check for edit panel view but we need to prevent showing the container as well
+    if (config.featureToggles.dashboardNewLayouts && !editPanel) {
+      return (
+        <>
+          <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
+            <div className={styles.rightControls}>
+              <div className={styles.fixedControls}>
+                <DashboardControlActions dashboard={dashboard} />
+              </div>
+            </div>
+          </div>
+          {renderHiddenVariables(dashboard)}
+        </>
+      );
+    }
+
     // To still have spacing when no controls are rendered
     return <Box padding={1}>{renderHiddenVariables(dashboard)}</Box>;
   }
@@ -179,7 +207,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           )}
           {!hideVariableControls && (
             <div className={styles.drilldownControlsContainer}>
-              <DrilldownControls adHocVar={adHocVar} groupByVar={groupByVar} />
+              <DrilldownControls adHocVar={adHocVar} groupByVar={groupByVar} isEditing={isEditing} />
             </div>
           )}
           <div className={cx(styles.rightControlsNewLayout, editPanel && styles.rightControlsWrap)}>
@@ -192,6 +220,11 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             {config.featureToggles.dashboardNewLayouts && (
               <div className={styles.fixedControlsNewLayout}>
                 <DashboardControlActions dashboard={dashboard} />
+              </div>
+            )}
+            {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
+              <div className={styles.fixedControls}>
+                <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
               </div>
             )}
           </div>
@@ -226,6 +259,11 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {config.featureToggles.dashboardNewLayouts && (
           <div className={styles.fixedControls}>
             <DashboardControlActions dashboard={dashboard} />
+          </div>
+        )}
+        {config.featureToggles.dashboardFiltersOverview && !config.featureToggles.dashboardNewLayouts && (
+          <div className={styles.fixedControls}>
+            <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
           </div>
         )}
       </div>
@@ -322,7 +360,7 @@ function getStyles(theme: GrafanaTheme2, isQueryEditorNext: boolean) {
       flexWrap: 'wrap-reverse',
       ...(isQueryEditorNext && {
         padding: 0,
-        marginBottom: theme.spacing(1),
+        marginBottom: theme.spacing(-1),
       }),
       paddingRight: 0,
     }),

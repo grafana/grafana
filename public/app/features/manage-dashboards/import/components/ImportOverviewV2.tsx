@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { AppEvents, locationUtil } from '@grafana/data';
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { Form } from 'app/core/components/Form/Form';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
@@ -18,6 +18,7 @@ const IMPORT_FINISHED_EVENT_NAME = 'dashboard_import_imported';
 
 type Props = {
   dashboard: DashboardV2Spec;
+  dashboardUid?: string;
   inputs: DashboardInputs;
   meta: { updatedAt: string; orgName: string };
   source: DashboardSource;
@@ -25,7 +26,7 @@ type Props = {
   onCancel: () => void;
 };
 
-export function ImportOverviewV2({ dashboard, inputs, meta, source, folderUid, onCancel }: Props) {
+export function ImportOverviewV2({ dashboard, dashboardUid, inputs, meta, source, folderUid, onCancel }: Props) {
   const { layout: normalizedLayout, modified: hasFloatGridItems } = useMemo(
     () => truncateFloatGridItems(dashboard.layout),
     [dashboard.layout]
@@ -44,7 +45,8 @@ export function ImportOverviewV2({ dashboard, inputs, meta, source, folderUid, o
         title: form.dashboard.title,
       };
 
-      const result = await getDashboardAPI('v2').saveDashboard({
+      const api = await getDashboardAPI('v2');
+      const result = await api.saveDashboard({
         ...form,
         dashboard: dashboardWithDataSources,
       });
@@ -69,7 +71,10 @@ export function ImportOverviewV2({ dashboard, inputs, meta, source, folderUid, o
         defaultValues={{
           dashboard: dashboard,
           folderUid: folderUid,
-          k8s: { annotations: { 'grafana.app/folder': folderUid } },
+          k8s: {
+            ...(dashboardUid !== undefined ? { name: dashboardUid } : {}),
+            annotations: { 'grafana.app/folder': folderUid },
+          },
         }}
         validateOnMount
         validateOn="onChange"

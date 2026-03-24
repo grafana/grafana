@@ -1,14 +1,16 @@
+import { css } from '@emotion/css';
 import { FormEvent, useCallback } from 'react';
 
-import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2, MetricFindValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
+import { AdHocFiltersController } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
-import { Alert, CodeEditor, Field, Switch, Box } from '@grafana/ui';
+import { Alert, CodeEditor, Field, Switch, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { VariableCheckboxField } from './VariableCheckboxField';
+import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
 import { VariableLegend } from './VariableLegend';
 
 export interface AdHocVariableFormProps {
@@ -19,6 +21,7 @@ export interface AdHocVariableFormProps {
   defaultKeys?: MetricFindValue[];
   onDefaultKeysChange?: (keys?: MetricFindValue[]) => void;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
+  originFiltersController?: AdHocFiltersController;
   inline?: boolean;
   datasourceSupported: boolean;
 }
@@ -30,10 +33,12 @@ export function AdHocVariableForm({
   onDataSourceChange,
   onDefaultKeysChange,
   onAllowCustomValueChange,
+  originFiltersController,
   defaultKeys,
   inline,
   datasourceSupported,
 }: AdHocVariableFormProps) {
+  const styles = useStyles2(getStyles);
   const updateStaticKeys = useCallback(
     (csvContent: string) => {
       const df = readCSV('key,value\n' + csvContent)[0];
@@ -48,29 +53,27 @@ export function AdHocVariableForm({
   );
 
   return (
-    <>
+    <Stack direction="column" gap={2}>
       {!inline && (
         <VariableLegend>
           <Trans i18nKey="dashboard-scene.ad-hoc-variable-form.adhoc-options">Ad-hoc options</Trans>
         </VariableLegend>
       )}
 
-      <Box marginBottom={2}>
-        <EditorField
-          label={t('dashboard-scene.ad-hoc-variable-form.label-data-source', 'Data source')}
-          htmlFor="data-source-picker"
-          tooltip={infoText}
-        >
-          <DataSourcePicker
-            current={datasource}
-            onChange={onDataSourceChange}
-            width={30}
-            variables={true}
-            dashboard={true}
-            noDefault
-          />
-        </EditorField>
-      </Box>
+      <EditorField
+        label={t('dashboard-scene.ad-hoc-variable-form.label-data-source', 'Data source')}
+        htmlFor="data-source-picker"
+        tooltip={infoText}
+      >
+        <DataSourcePicker
+          current={datasource}
+          onChange={onDataSourceChange}
+          width={inline ? undefined : 30}
+          variables={true}
+          dashboard={true}
+          noDefault
+        />
+      </EditorField>
 
       {datasourceSupported === false ? (
         <Alert
@@ -79,9 +82,16 @@ export function AdHocVariableForm({
             'This data source does not support ad hoc filters'
           )}
           severity="warning"
+          bottomSpacing={0}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText}
         />
       ) : null}
+
+      {datasourceSupported && originFiltersController && (
+        <div className={!inline ? styles.originFiltersWrapper : undefined}>
+          <AdHocOriginFiltersEditor controller={originFiltersController} />
+        </div>
+      )}
 
       {datasourceSupported && onDefaultKeysChange && (
         <>
@@ -95,6 +105,7 @@ export function AdHocVariableForm({
               'Provide dimensions as CSV: {{name}}, {{value}}',
               { name: 'dimensionName', value: 'dimensionId' }
             )}
+            noMargin
           >
             <Switch
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle}
@@ -124,17 +135,29 @@ export function AdHocVariableForm({
       )}
 
       {datasourceSupported && onAllowCustomValueChange && (
-        <VariableCheckboxField
-          value={allowCustomValue ?? true}
-          name={t('dashboard-scene.ad-hoc-variable-form.name-allow-custom-values', 'Allow custom values')}
+        <Field
+          label={t('dashboard-scene.ad-hoc-variable-form.name-allow-custom-values', 'Allow custom values')}
           description={t(
             'dashboard-scene.ad-hoc-variable-form.description-enables-users-custom-values',
             'Enables users to add custom values to the list'
           )}
-          onChange={onAllowCustomValueChange}
-          testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
-        />
+          noMargin
+        >
+          <Switch
+            value={allowCustomValue ?? true}
+            onChange={onAllowCustomValueChange}
+            data-testid={
+              selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+            }
+          />
+        </Field>
       )}
-    </>
+    </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  originFiltersWrapper: css({
+    maxWidth: theme.spacing(55),
+  }),
+});

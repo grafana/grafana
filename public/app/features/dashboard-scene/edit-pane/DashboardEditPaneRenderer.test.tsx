@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils, config } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -34,10 +35,21 @@ jest.mock('@grafana/runtime', () => ({
   useChromeHeaderHeight: jest.fn().mockReturnValue(80),
 }));
 
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: false,
+    isLoading: false,
+    openAssistant: jest.fn(),
+    closeAssistant: jest.fn(),
+    toggleAssistant: jest.fn(),
+  }),
+}));
+
 export function buildTestScene() {
   const testScene = new DashboardScene({
     $variables: new SceneVariableSet({ variables: [] }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $data: new DashboardDataLayerSet({ annotationLayers: [] }),
     isEditing: true,
     body: new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
@@ -69,15 +81,22 @@ describe('DashboardEditPaneRenderer', () => {
 
   it('Should sync sidebar docked state with edit pane state', async () => {
     const scene = buildTestScene();
-    render(<DashboardEditPaneSplitter dashboard={scene} />);
+
+    act(() => activateFullSceneTree(scene));
+
+    render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
 
     act(() => screen.getByLabelText('Outline').click());
 
     expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
 
+    // With defaultToDocked: true when editing, sidebar starts docked
+    expect(scene.state.editPane.state.isDocked).toBe(true);
+
+    // Clicking dock toggle should undock the sidebar
     act(() => screen.getByTestId(selectors.components.Sidebar.dockToggle).click());
 
-    expect(scene.state.editPane.state.isDocked).toBe(true);
+    expect(scene.state.editPane.state.isDocked).toBe(false);
   });
 
   // describe('outline interactions tracking', () => {

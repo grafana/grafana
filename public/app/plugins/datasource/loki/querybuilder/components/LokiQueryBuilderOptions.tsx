@@ -134,7 +134,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }, [query.step, datasource]);
 
     return (
-      <Box backgroundColor={'secondary'}>
+      <Box backgroundColor={'secondary'} borderRadius="default">
         <QueryOptionGroup
           title="Options"
           collapsedInfo={getCollapsedInfo(query, queryType, maxLines, isLogQuery, isValidStep, query.direction)}

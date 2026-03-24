@@ -1,5 +1,6 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { SeriesEditor } from './SeriesEditor';
@@ -38,6 +39,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
       });
 
     commonOptionsBuilder.addTooltipOptions(builder, true);
-    commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder, true, true, config.featureToggles.vizLegendSeriesLimit);
   })
   .setSuggestionsSupplier(xychartSuggestionsSupplier);

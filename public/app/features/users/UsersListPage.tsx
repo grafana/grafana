@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { OrgRole, renderMarkdown } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -26,7 +27,6 @@ function mapStateToProps(state: StoreState) {
     totalPages: state.users.totalPages,
     perPage: state.users.perPage,
     invitees: selectInvitesMatchingQuery(state.invites, searchQuery),
-    externalUserMngInfo: state.users.externalUserMngInfo,
     isLoading: state.users.isLoading,
     rolesLoading: state.users.rolesLoading,
   };
@@ -54,7 +54,6 @@ export const UsersListPageUnconnected = ({
   page,
   totalPages,
   invitees,
-  externalUserMngInfo,
   isLoading,
   rolesLoading,
   loadUsers,
@@ -65,7 +64,7 @@ export const UsersListPageUnconnected = ({
   changeSort,
 }: Props) => {
   const [showInvites, setShowInvites] = useState(false);
-  const externalUserMngInfoHtml = externalUserMngInfo ? renderMarkdown(externalUserMngInfo) : '';
+  const externalUserMngInfoHtml = config.externalUserMngInfo ? renderMarkdown(config.externalUserMngInfo) : '';
 
   useEffect(() => {
     loadUsers();

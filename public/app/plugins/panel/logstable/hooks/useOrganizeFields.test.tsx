@@ -1,9 +1,9 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
 import { DataFrame, DataFrameType, FieldType, toDataFrame } from '@grafana/data';
+// Internal package imports, but not exposed to end users, how do we expect plugin developers to test anything that contains a transform?
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
 import { TableCellDisplayMode } from '@grafana/ui';
-// Internal package imports, but not exposed to end users, how do we expect plugin developers to test anything that contains a transform?
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
@@ -69,6 +69,7 @@ describe('useOrganizeFields', () => {
           options: {},
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
         })
       );
 
@@ -91,6 +92,7 @@ describe('useOrganizeFields', () => {
           },
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
         })
       );
 
@@ -115,6 +117,7 @@ describe('useOrganizeFields', () => {
           },
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
         })
       );
       await waitFor(() => {
@@ -138,6 +141,7 @@ describe('useOrganizeFields', () => {
           },
           supportsPermalink: true,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
         })
       );
       await waitFor(() => {
@@ -159,12 +163,33 @@ describe('useOrganizeFields', () => {
           options: {},
           supportsPermalink: false,
           timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
         })
       );
 
       await waitFor(() => {
         expect(organizedFields.current.organizedFrame).not.toBeNull();
         expect(organizedFields.current.organizedFrame?.fields[0].config.custom.cellOptions).not.toBeDefined();
+      });
+    });
+
+    test('fieldConfig defaults', async () => {
+      const { result: organizedFields } = renderHook(() =>
+        useOrganizeFields({
+          extractedFrame,
+          bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          logsFrame: testLogsFrame,
+          onPermalinkClick: () => null,
+          options: {},
+          supportsPermalink: false,
+          timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: { custom: { filterable: true } }, overrides: [] },
+        })
+      );
+
+      await waitFor(() => {
+        expect(organizedFields.current.organizedFrame).not.toBeNull();
+        expect(organizedFields.current.organizedFrame?.fields[0].config.custom.filterable).toBe(true);
       });
     });
   });

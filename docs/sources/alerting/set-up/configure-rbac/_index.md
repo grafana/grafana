@@ -106,18 +106,18 @@ Permissions for managing alert instances in external data sources.
 
 Permissions for managing contact points (notification receivers).
 
-| Action                                       | Applicable scope                                           | Description                                                                                                                    |
-| -------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `alert.notifications.receivers:list`         | n/a                                                        | List contact points in the current organization.                                                                               |
-| `alert.notifications.receivers:read`         | `receivers:*`<br>`receivers:uid:*`                         | Read contact points.                                                                                                           |
-| `alert.notifications.receivers.secrets:read` | `receivers:*`<br>`receivers:uid:*`                         | Export contact points with decrypted secrets.                                                                                  |
-| `alert.notifications.receivers:create`       | n/a                                                        | Create a new contact points. The creator is automatically granted full access to the created contact point.                    |
-| `alert.notifications.receivers:write`        | `receivers:*`<br>`receivers:uid:*`                         | Update existing contact points.                                                                                                |
-| `alert.notifications.receivers:delete`       | `receivers:*`<br>`receivers:uid:*`                         | Update and delete existing contact points.                                                                                     |
-| `alert.notifications.receivers:test`         | n/a                                                        | Test contact points to verify their configuration. Deprecated. Use "alert.notifications.receivers.test:create"                 |
-| `alert.notifications.receivers.test:create`  | `receivers:*`<br>`receivers:uid:*`<br>`receivers:type:new` | Test contact points to verify their configuration. Use scope `receivers:type:new` to grant permission to test new integrations |
-| `receivers.permissions:read`                 | `receivers:*`<br>`receivers:uid:*`                         | Read permissions for contact points.                                                                                           |
-| `receivers.permissions:write`                | `receivers:*`<br>`receivers:uid:*`                         | Manage permissions for contact points.                                                                                         |
+| Action                                       | Applicable scope                                        | Description                                                                                                                 |
+| -------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `alert.notifications.receivers:list`         | n/a                                                     | List contact points in the current organization.                                                                            |
+| `alert.notifications.receivers:read`         | `receivers:*`<br>`receivers:uid:*`                      | Read contact points.                                                                                                        |
+| `alert.notifications.receivers.secrets:read` | `receivers:*`<br>`receivers:uid:*`                      | Export contact points with decrypted secrets.                                                                               |
+| `alert.notifications.receivers:create`       | n/a                                                     | Create a new contact points. The creator is automatically granted full access to the created contact point.                 |
+| `alert.notifications.receivers:write`        | `receivers:*`<br>`receivers:uid:*`                      | Update existing contact points.                                                                                             |
+| `alert.notifications.receivers:delete`       | `receivers:*`<br>`receivers:uid:*`                      | Update and delete existing contact points.                                                                                  |
+| `alert.notifications.receivers:test`         | n/a                                                     | Test contact points to verify their configuration. Deprecated. Use "alert.notifications.receivers.test:create"              |
+| `alert.notifications.receivers.test:create`  | `receivers:*`<br>`receivers:uid:*`<br>`receivers:uid:-` | Test contact points to verify their configuration. Use scope `receivers:uid:-` to grant permission to test new integrations |
+| `receivers.permissions:read`                 | `receivers:*`<br>`receivers:uid:*`                      | Read permissions for contact points.                                                                                        |
+| `receivers.permissions:write`                | `receivers:*`<br>`receivers:uid:*`                      | Manage permissions for contact points.                                                                                      |
 
 ### Notification policies
 

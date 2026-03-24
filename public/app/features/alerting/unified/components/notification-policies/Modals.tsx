@@ -52,10 +52,7 @@ const useAddPolicyModal = (
           onDismiss={handleDismiss}
           closeOnBackdropClick={true}
           closeOnEscape={true}
-          title={t(
-            'alerting.use-add-policy-modal.modal-element.title-add-notification-policy',
-            'Add notification policy'
-          )}
+          title={t('alerting.use-add-policy-modal.modal-element.title-add-route', 'Add route')}
         >
           {error && <NotificationPoliciesErrorAlert error={error} />}
           <AmRoutesExpandedForm
@@ -73,7 +70,7 @@ const useAddPolicyModal = (
                   <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
                 </Button>
                 <Button type="submit">
-                  <Trans i18nKey="alerting.policies.save-policy">Save policy</Trans>
+                  <Trans i18nKey="alerting.policies.add-route">Add route</Trans>
                 </Button>
               </Modal.ButtonRow>
             }
@@ -119,10 +116,7 @@ const useEditPolicyModal = (
           onDismiss={handleDismiss}
           closeOnBackdropClick={true}
           closeOnEscape={true}
-          title={t(
-            'alerting.use-edit-policy-modal.modal-element.title-edit-notification-policy',
-            'Edit notification policy'
-          )}
+          title={t('alerting.use-edit-policy-modal.modal-element.title-edit-route', 'Edit route')}
         >
           {error && <NotificationPoliciesErrorAlert error={error} />}
           {isDefaultPolicy && route && (
@@ -138,7 +132,7 @@ const useEditPolicyModal = (
                     <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
                   </Button>
                   <Button type="submit">
-                    <Trans i18nKey="alerting.policies.default-policy.update">Update default policy</Trans>
+                    <Trans i18nKey="alerting.policies.default-policy.update">Update policy</Trans>
                   </Button>
                 </Modal.ButtonRow>
               }
@@ -154,7 +148,7 @@ const useEditPolicyModal = (
                     <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
                   </Button>
                   <Button type="submit">
-                    <Trans i18nKey="alerting.policies.update.update-policy">Update policy</Trans>
+                    <Trans i18nKey="alerting.policies.update.update-route">Update route</Trans>
                   </Button>
                 </Modal.ButtonRow>
               }

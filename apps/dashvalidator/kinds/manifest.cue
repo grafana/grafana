@@ -29,13 +29,14 @@ manifest: {
 			// }
 		]
 	}
+	roles: {}
 }
 
 // v1alpha1 is the v1alpha1 version of the app's API.
 // It includes kinds which the v1alpha1 API serves, and (future) custom routes served globally from the v1alpha1 version.
 v1alpha1: {
 	// kinds is the list of kinds served by this version
-	kinds: [dashboardcompatibilityscorev0alpha1]
+	kinds: []
 	// [OPTIONAL]
 	// served indicates whether this particular version is served by the API server.
 	// served should be set to false before a version is removed from the manifest entirely.

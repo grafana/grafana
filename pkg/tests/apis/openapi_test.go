@@ -26,7 +26,8 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	h := NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: false, // required for experimental APIs
+		AppModeProduction:      false, // required for experimental APIs
+		RBACSingleOrganization: true,  // required for the Users API
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
@@ -34,10 +35,18 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesAlertingRules,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
+			featuremgmt.FlagDatasourcesApiServerEnableResourceEndpoint,
 			featuremgmt.FlagKubernetesShortURLs,
 			featuremgmt.FlagKubernetesCorrelations,
 			featuremgmt.FlagKubernetesAlertingHistorian,
 			featuremgmt.FlagKubernetesLogsDrilldown,
+			featuremgmt.FlagKubernetesUnifiedStorageQuotas,
+			featuremgmt.FlagKubernetesTeamsApi,
+			featuremgmt.FlagKubernetesUsersApi,
+			featuremgmt.FlagKubernetesServiceAccountsApi,
+			featuremgmt.FlagKubernetesServiceAccountTokensApi,
+			featuremgmt.FlagKubernetesExternalGroupMappingsApi,
+			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,
 		},
 		// Explicitly configure with mode 5 the resources supported by provisioning.
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -119,17 +128,14 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "notifications.alerting.grafana.app",
 		Version: "v0alpha1",
 	}, {
+		Group:   "notifications.alerting.grafana.app",
+		Version: "v1beta1",
+	}, {
 		Group:   "rules.alerting.grafana.app",
 		Version: "v0alpha1",
-		// }, {
-		// In app-sdk v0.40+, the exported names changed
-		// The request/response payload is the same, so the existing generated clients
-		// based on the old OpenAPI will still work.
-		//
-		// This should be updated and replaced soon!
-		//
-		// 	Group:   "historian.alerting.grafana.app",
-		// 	Version: "v0alpha1",
+	}, {
+		Group:   "historian.alerting.grafana.app",
+		Version: "v0alpha1",
 	}, {
 		Group:   "correlations.grafana.app",
 		Version: "v0alpha1",
@@ -142,6 +148,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 	}, {
 		Group:   "logsdrilldown.grafana.app",
 		Version: "v1beta1",
+	}, {
+		Group:   "quotas.grafana.app",
+		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {
 		VerifyOpenAPISnapshots(t, dir, gv, h)

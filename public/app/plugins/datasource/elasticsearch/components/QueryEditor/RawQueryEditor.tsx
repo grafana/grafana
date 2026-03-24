@@ -1,22 +1,52 @@
 import { css } from '@emotion/css';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { CodeEditor, Monaco, CodeEditorMonacoOptions, monacoTypes, useStyles2, Button, Stack, Box } from '@grafana/ui';
+import { CodeEditor, Monaco, CodeEditorMonacoOptions, monacoTypes, useStyles2, Box } from '@grafana/ui';
 
 interface Props {
   value?: string;
+  language?: string;
   onChange: (value: string) => void;
   onRunQuery: () => void;
+  onFocusPopulate?: (currentValue: string) => string | undefined;
+  onBeforeEditorMount?: (monaco: Monaco) => void;
+  onEditorDidMount?: (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => void;
+  onFormatReady?: (formatFn: () => void) => void;
 }
 
 // This offset was chosen by testing to match Prometheus behavior
 const EDITOR_HEIGHT_OFFSET = 2;
+export type RawQueryEditorProps = Props;
 
-export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
+export function RawQueryEditor({
+  value,
+  language = 'json',
+  onChange,
+  onRunQuery,
+  onFocusPopulate,
+  onBeforeEditorMount,
+  onEditorDidMount,
+  onFormatReady,
+}: Props) {
   const styles = useStyles2(getStyles);
   const editorRef = useRef<monacoTypes.editor.IStandaloneCodeEditor | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const onRunQueryRef = useRef(onRunQuery);
+  const onFocusPopulateRef = useRef(onFocusPopulate);
+  const onEditorDidMountRef = useRef(onEditorDidMount);
+
+  useEffect(() => {
+    onRunQueryRef.current = onRunQuery;
+  }, [onRunQuery]);
+
+  useEffect(() => {
+    onFocusPopulateRef.current = onFocusPopulate;
+  }, [onFocusPopulate]);
+
+  useEffect(() => {
+    onEditorDidMountRef.current = onEditorDidMount;
+  }, [onEditorDidMount]);
 
   const handleEditorDidMount = useCallback(
     (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
@@ -24,7 +54,18 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
 
       // Add keyboard shortcut for running query (Ctrl/Cmd+Enter)
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-        onRunQuery();
+        onRunQueryRef.current();
+      });
+
+      editor.onDidFocusEditorText(() => {
+        const currentValue = editor.getValue();
+        const populatedValue = onFocusPopulateRef.current?.(currentValue);
+        if (!populatedValue || currentValue.trim() !== '') {
+          return;
+        }
+
+        // Populate editor text without dispatching query changes on focus.
+        editor.setValue(populatedValue);
       });
 
       // Make the editor resize itself so that the content fits (grows taller when necessary)
@@ -42,15 +83,14 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
 
       editor.onDidContentSizeChange(updateElementHeight);
       updateElementHeight();
-    },
-    [onRunQuery]
-  );
 
-  const handleFormat = useCallback(() => {
-    if (editorRef.current) {
-      editorRef.current.getAction('editor.action.formatDocument')?.run();
-    }
-  }, []);
+      onEditorDidMountRef.current?.(editor, monaco);
+      onFormatReady?.(() => {
+        editorRef.current?.getAction('editor.action.formatDocument')?.run();
+      });
+    },
+    [onFormatReady]
+  );
 
   const handleQueryChange = useCallback(
     (newValue: string) => {
@@ -88,25 +128,13 @@ export function RawQueryEditor({ value, onChange, onRunQuery }: Props) {
       <div ref={containerRef} className={styles.editorContainer}>
         <CodeEditor
           value={value ?? ''}
-          language="json"
+          language={language}
           width="100%"
           onBlur={handleQueryChange}
           monacoOptions={monacoOptions}
           onEditorDidMount={handleEditorDidMount}
+          onBeforeEditorMount={onBeforeEditorMount}
         />
-      </div>
-      <div className={styles.footer}>
-        <Stack gap={1}>
-          <Button
-            size="sm"
-            variant="secondary"
-            icon="brackets-curly"
-            onClick={handleFormat}
-            tooltip="Format query (Shift+Alt+F)"
-          >
-            Format
-          </Button>
-        </Stack>
       </div>
     </Box>
   );
@@ -121,10 +149,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   editorContainer: css({
     width: '100%',
     overflow: 'hidden',
-  }),
-  footer: css({
-    display: 'flex',
-    justifyContent: 'flex-end',
-    padding: theme.spacing(0.5, 0),
   }),
 });

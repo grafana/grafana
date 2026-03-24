@@ -77,14 +77,22 @@ export const DashboardInteractions = {
 
   // grafana_dashboards_outline_item_clicked
   // when a user clicks on an element of the outline
-  outlineItemClicked: (properties: { index: number; depth: number }) => {
-    reportDashboardInteraction('outline_item_clicked', properties);
+  outlineItemClicked: (props: { index: number; depth: number; isEditing?: boolean }) => {
+    reportDashboardInteraction('outline_item_clicked', {
+      index: props.index,
+      depth: props.depth,
+      mode: props.isEditing ? 'edit' : 'view',
+    });
   },
 
   // dashboards_add_variable_button_clicked
   // when a user clicks on ‘Add Variable’ or ‘New Variable’
   addVariableButtonClicked: (properties: { source: 'edit_pane' | 'settings_pane' | 'variable_controls' }) => {
     reportDashboardInteraction('add_variable_button_clicked', properties);
+  },
+
+  addLinkButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_link_button_clicked', properties);
   },
 
   // dashboards_new_variable_type_selected
@@ -105,10 +113,21 @@ export const DashboardInteractions = {
     reportDashboardInteraction('variables_reordered', properties);
   },
 
+  // dashboards_add_annotation_button_clicked
+  // when a user clicks on 'Add annotation'
+  addAnnotationButtonClicked: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('add_annotation_button_clicked', properties);
+  },
+  // dashboards_annotations_reordered
+  // when a user drags and drops an annotation in the content outline
+  annotationsReordered: (properties: { source: 'edit_pane' }) => {
+    reportDashboardInteraction('annotations_reordered', properties);
+  },
+
   panelActionClicked(
     item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view',
     id: number,
-    source: 'panel' | 'edit_pane'
+    source: 'panel' | 'edit_pane' | 'keyboard'
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source });
   },
@@ -137,16 +156,16 @@ export const DashboardInteractions = {
   trackUngroupClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
   },
-  trackPastePanelClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel' });
+  trackPastePanelClick(
+    source: 'sidebar' | 'canvas' | 'editPaneHeader' = 'canvas',
+    target?: 'row' | 'tab' | 'dashboard',
+    action: 'drop' | 'click' = 'click'
+  ) {
+    reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },
-  trackRemoveRowClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'remove_row' });
+  trackDeleteDashboardElement(elementType: string) {
+    reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}` });
   },
-  trackRemoveTabClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'remove_tab' });
-  },
-
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
   },

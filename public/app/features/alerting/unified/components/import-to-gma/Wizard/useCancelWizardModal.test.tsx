@@ -42,6 +42,69 @@ describe('useCancelWizardModal', () => {
     });
   });
 
+  describe('onCancel callback', () => {
+    it('should call onCancel when navigating away (non-dirty form)', () => {
+      const onCancel = jest.fn();
+      const { result } = renderHook(() =>
+        useCancelWizardModal({ isDirty: false, redirectUrl: '/alerting/list', onCancel })
+      );
+
+      const [, handleCancel] = result.current;
+      handleCancel();
+
+      expect(onCancel).toHaveBeenCalledTimes(1);
+      expect(locationService.push).toHaveBeenCalledWith('/alerting/list');
+    });
+
+    it('should call onCancel when user confirms discard (dirty form)', async () => {
+      const onCancel = jest.fn();
+
+      function TestComponent() {
+        const [Modal, handleCancel] = useCancelWizardModal({
+          isDirty: true,
+          onCancel,
+        });
+        return (
+          <>
+            <button onClick={handleCancel}>Cancel</button>
+            {Modal}
+          </>
+        );
+      }
+
+      render(<TestComponent />);
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+      await user.click(await screen.findByRole('button', { name: 'Discard changes' }));
+
+      expect(onCancel).toHaveBeenCalledTimes(1);
+      expect(locationService.push).toHaveBeenCalled();
+    });
+
+    it('should not call onCancel when user dismisses modal', async () => {
+      const onCancel = jest.fn();
+
+      function TestComponent() {
+        const [Modal, handleCancel] = useCancelWizardModal({
+          isDirty: true,
+          onCancel,
+        });
+        return (
+          <>
+            <button onClick={handleCancel}>Cancel</button>
+            {Modal}
+          </>
+        );
+      }
+
+      render(<TestComponent />);
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+      await user.click(await screen.findByRole('button', { name: 'Dismiss' }));
+
+      expect(onCancel).not.toHaveBeenCalled();
+      expect(locationService.push).not.toHaveBeenCalled();
+    });
+  });
+
   describe('when form is dirty', () => {
     function createTestComponent(options: { redirectUrl?: string } = {}) {
       return function TestComponent() {

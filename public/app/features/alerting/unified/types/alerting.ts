@@ -101,7 +101,7 @@ export interface NotifierDTO<T = NotifierType> {
   description: string;
   type: T;
   heading: string;
-  options: NotificationChannelOption[];
+  options?: NotificationChannelOption[];
   info?: string;
   secure?: boolean;
   /**

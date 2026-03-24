@@ -52,6 +52,11 @@ export const versionedComponents = {
       '12.1.0': 'data-testid CanvasGridAddActions paste-panel',
     },
   },
+  Card: {
+    heading: {
+      '13.0.0': 'data-testid Card heading',
+    },
+  },
   DashboardEditPaneSplitter: {
     primaryBody: {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
@@ -86,6 +91,9 @@ export const versionedComponents = {
     },
     duplicate: {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
+    },
+    paste: {
+      '12.1.0': 'data-testid EditPaneHeader paste',
     },
   },
   LayoutContainer: {
@@ -560,6 +568,12 @@ export const versionedComponents = {
         Container: {
           '12.4.0': 'data-testid gauge container',
         },
+        Track: {
+          '13.0.0': 'data-testid gauge track',
+        },
+        Bar: {
+          '13.0.0': 'data-testid gauge bar',
+        },
       },
     },
   },
@@ -688,6 +702,12 @@ export const versionedComponents = {
       },
       addVariableButton: {
         '12.0.0': 'data-testid add variable button',
+      },
+      addAnnotationButton: {
+        '12.6.0': 'data-testid add annotation button',
+      },
+      addLinkButton: {
+        '12.6.0': 'data-testid add link button',
       },
       variableNameInput: {
         '12.0.0': 'data-testid variable name input',
@@ -1329,6 +1349,9 @@ export const versionedComponents = {
   DashboardRow: {
     title: {
       [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-title-${title}`,
+    },
+    toggle: {
+      [MIN_GRAFANA_VERSION]: (title: string) => `data-testid dashboard-row-toggle-for-${title}`,
     },
     wrapper: {
       '12.1.0': (title: string) => `data-testid dashboard-row-wrapper-for-${title}`,

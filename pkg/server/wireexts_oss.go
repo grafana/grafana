@@ -74,6 +74,7 @@ import (
 var provisioningExtras = wire.NewSet(
 	extras.ProvideProvisioningOSSRepositoryExtras,
 	extras.ProvideProvisioningOSSConnectionExtras,
+	extras.ProvideFactoryFromConfig,
 )
 
 var configProviderExtras = wire.NewSet(
@@ -201,7 +202,7 @@ var wireExtsModuleServerSet = wire.NewSet(
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
-	// Overriden by enterprise
+	// Overridden by enterprise
 	ProvideNoopModuleRegisterer,
 	sql.ProvideStorageBackend,
 )
