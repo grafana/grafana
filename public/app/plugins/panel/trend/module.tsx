@@ -29,7 +29,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TrendPanel)
     });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder, true, true, true);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
   })
   .setSuggestionsSupplier((ds) => {
     if (

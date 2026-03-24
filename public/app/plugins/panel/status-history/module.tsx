@@ -110,7 +110,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StatusHistoryPanel)
         },
       });
 
-    commonOptionsBuilder.addLegendOptions(builder, false, true, true);
+    commonOptionsBuilder.addLegendOptions(builder, false, true);
     commonOptionsBuilder.addTooltipOptions(builder);
     addAnnotationOptions(builder);
   })

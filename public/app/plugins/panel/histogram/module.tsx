@@ -77,7 +77,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(HistogramPanel)
       });
 
     commonOptionsBuilder.addTooltipOptions(builder);
-    commonOptionsBuilder.addLegendOptions(builder, true, true, true);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
   })
   .useFieldConfig({
     standardOptions: {
