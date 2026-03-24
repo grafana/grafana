@@ -19,8 +19,3 @@ func sharedGitHelper(t *testing.T) *gitcommon.GitTestHelper {
 	t.Helper()
 	return sharedGitEnvWithFolderMetadata.GetCleanHelper(t)
 }
-
-func sharedDefaultGitHelper(t *testing.T) *gitcommon.GitTestHelper {
-	t.Helper()
-	return gitcommon.RunGrafanaWithGitServer(t)
-}
