@@ -22,7 +22,11 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
   const communityLink = useMemo(() => {
     const footerLinks = getFooterLinks();
     const link = footerLinks.find((l) => l.id === 'community');
-    const url = link?.url ?? 'https://community.grafana.com';
+    const url = link?.url;
+
+    if (!url) {
+      return undefined;
+    }
 
     // Override the default footer UTM attribution with one specific to this component
     if (url.includes('utm_source=grafana_footer')) {
@@ -42,15 +46,17 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
               <Trans i18nKey="entity-not-found.home-link">Back to Home</Trans>
             </LinkButton>
 
-            <LinkButton
-              icon="question-circle"
-              href={communityLink}
-              target="_blank"
-              rel="noreferrer"
-              variant="secondary"
-            >
-              <Trans i18nKey="entity-not-found.community-link">Community Help</Trans>
-            </LinkButton>
+            {communityLink && (
+              <LinkButton
+                icon="question-circle"
+                href={communityLink}
+                target="_blank"
+                rel="noreferrer"
+                variant="secondary"
+              >
+                <Trans i18nKey="entity-not-found.community-link">Community Help</Trans>
+              </LinkButton>
+            )}
           </Stack>
         }
       >
