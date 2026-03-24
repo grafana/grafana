@@ -19,7 +19,7 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
   const styles = useStyles2(getStyles);
   const lowerCaseEntity = entity.toLowerCase();
 
-  const communityLink = useMemo(() => {
+  const communityLinkInfo = useMemo(() => {
     const footerLinks = getFooterLinks();
     const link = footerLinks.find((l) => l.id === 'community');
     const url = link?.url;
@@ -28,11 +28,19 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
       return undefined;
     }
 
+    const defaultText = t('nav.help/community', 'Community');
+    const isCustomText = link?.text && link.text !== defaultText;
+
     // Override the default footer UTM attribution with one specific to this component
+    let finalUrl = url;
     if (url.includes('utm_source=grafana_footer')) {
-      return url.replace('utm_source=grafana_footer', 'utm_source=entity_not_found');
+      finalUrl = url.replace('utm_source=grafana_footer', 'utm_source=entity_not_found');
     }
-    return url;
+
+    return {
+      url: finalUrl,
+      text: isCustomText ? link.text : undefined,
+    };
   }, []);
 
   return (
@@ -46,15 +54,15 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
               <Trans i18nKey="entity-not-found.home-link">Back to Home</Trans>
             </LinkButton>
 
-            {communityLink && (
+            {communityLinkInfo && (
               <LinkButton
                 icon="question-circle"
-                href={communityLink}
+                href={communityLinkInfo.url}
                 target="_blank"
                 rel="noreferrer"
                 variant="secondary"
               >
-                <Trans i18nKey="entity-not-found.community-link">Community Help</Trans>
+                {communityLinkInfo.text ?? <Trans i18nKey="entity-not-found.community-link">Community Help</Trans>}
               </LinkButton>
             )}
           </Stack>
