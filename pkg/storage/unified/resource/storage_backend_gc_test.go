@@ -456,7 +456,10 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
-		// Both resources should be fully GC'd; no history keys left
+		// other-dash was deleted and not recreated: all of its history is removed.
+		// my-dash still exists (recreated after delete); GC skips deleting its history when
+		// GetLatestResourceKey succeeds, so all five revision keys remain.
+		// BatchSize=3 exercises pagination across both resources without dropping my-dash history.
 		historyResp := storageBackend.kv.Keys(ctx, dataSection, ListOptions{
 			StartKey: "group/resource/namespace/",
 			EndKey:   "group/resource/namespace0",
@@ -464,10 +467,12 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		count := 0
 		historyResp(func(k string, err error) bool {
 			require.NoError(t, err)
+			require.Contains(t, k, "/my-dash/")
+			require.NotContains(t, k, "/other-dash/")
 			count++
 			return true
 		})
-		require.Equal(t, 2, count)
+		require.Equal(t, 5, count)
 	})
 }
 
