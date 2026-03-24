@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -230,10 +229,11 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 	now := time.Now()
 	var staledHealthChecked, staledTokenLastUpdated int64
 
-	const maxStatusRetries = 5
-	for attempt := range maxStatusRetries {
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		repoUnstr, err := helper.Repositories.Resource.Get(ctx, repoName1, metav1.GetOptions{})
-		require.NoError(t, err, "failed to get repo1 before status manipulation")
+		if !assert.NoError(c, err, "failed to get repo1 before status manipulation") {
+			return
+		}
 		repo1 := common.UnstructuredToRepository(t, repoUnstr)
 
 		// Token lastUpdated far in the past (not "recently created") and expiration
@@ -251,14 +251,8 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 
 		updatedUnstr := common.RepositoryToUnstructured(t, repo1)
 		_, err = helper.Repositories.Resource.UpdateStatus(ctx, updatedUnstr, metav1.UpdateOptions{})
-		if err == nil {
-			break
-		}
-		if apierrors.IsConflict(err) && attempt < maxStatusRetries-1 {
-			continue
-		}
-		require.NoError(t, err, "failed to update repo1 status with near-expiry token")
-	}
+		assert.NoError(c, err, "failed to update repo1 status with near-expiry token")
+	}, common.WaitTimeoutDefault, 200*time.Millisecond, "should update repo1 status with near-expiry token")
 
 	// --- Step 5: verify health check AND token refresh happened, repo still blocked
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
