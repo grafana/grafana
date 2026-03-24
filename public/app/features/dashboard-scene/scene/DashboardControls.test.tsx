@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,7 +12,9 @@ import {
   ScopesVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
+import { KioskMode } from 'app/types/dashboard';
 
 import { DashboardControls, DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
@@ -33,6 +37,14 @@ jest.mock('@grafana/runtime', () => ({
     registerRuntimeDataSource: jest.fn(),
   })),
 }));
+
+function renderInKioskMode(child: React.ReactNode, kioskMode?: KioskMode) {
+  const context = getGrafanaContextMock();
+  if (kioskMode !== undefined) {
+    context.chrome.update({ kioskMode: KioskMode.Full });
+  }
+  return render(<GrafanaContext.Provider value={context}>{child}</GrafanaContext.Provider>);
+}
 
 describe('DashboardControls', () => {
   describe('Given a standard scene', () => {
@@ -351,6 +363,34 @@ describe('DashboardControls', () => {
 
       expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
+    });
+  });
+
+  describe('DashboardControlActions kiosk mode', () => {
+    const originalFeatureToggles = { ...config.featureToggles };
+
+    beforeEach(() => {
+      config.featureToggles.dashboardNewLayouts = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles = originalFeatureToggles;
+      jest.clearAllMocks();
+    });
+
+    it('should hide Edit and Share buttons in kiosk mode', async () => {
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      renderInKioskMode(<controls.Component model={controls} />, KioskMode.Full);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container)).not.toBeInTheDocument();
+    });
+
+    it('should show Edit and Share buttons when not in kiosk mode', async () => {
+      const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
+      renderInKioskMode(<controls.Component model={controls} />);
+
+      expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
     });
   });
 });

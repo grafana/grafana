@@ -19,8 +19,10 @@ import {
   sceneUtils,
 } from '@grafana/scenes';
 import { Box, Button, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
+import { KioskMode } from 'app/types/dashboard';
 
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -287,8 +289,14 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 function DashboardControlActions({ dashboard }: { dashboard: DashboardScene }) {
   const { isEditing, editPanel, uid, meta, editable } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
+  const { chrome } = useGrafana();
+  const { kioskMode } = chrome.useState();
 
   if (editPanel) {
+    return null;
+  }
+
+  if (kioskMode === KioskMode.Full) {
     return null;
   }
 
