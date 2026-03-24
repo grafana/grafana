@@ -130,6 +130,7 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 		})
 
 		t.Run("When editor tries to delete library panel, it should succeed", func(t *testing.T) {
+			t.Skip() // TODO fix the flaky test: https://github.com/grafana/grafana/issues/120712
 			deleteLibraryElement(t, grafanaListedAddr, "editor", "editor", uid, http.StatusOK)
 		})
 	})

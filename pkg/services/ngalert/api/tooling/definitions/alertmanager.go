@@ -74,17 +74,6 @@ import (
 //       400: ValidationError
 //       404: NotFound
 
-// swagger:route DELETE /alertmanager/grafana/config/api/v1/alerts alertmanager RouteDeleteGrafanaAlertingConfig
-//
-// deletes the Alerting config for a tenant
-//
-// This API is designated to internal use only and can be removed or changed at any time without prior notice.
-//
-// Deprecated: true
-//     Responses:
-//       200: Ack
-//       400: ValidationError
-
 // swagger:route DELETE /alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RouteDeleteAlertingConfig
 //
 // deletes the Alerting config for a tenant

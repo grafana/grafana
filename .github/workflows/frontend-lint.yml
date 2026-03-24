@@ -313,6 +313,8 @@ jobs:
     if: needs.detect-changes.outputs.changed-frontend-dependencies == 'true'
     runs-on: ubuntu-x64-small
     name: Validate yarn install
+    permissions:
+      contents: read
     steps:
     - uses: actions/checkout@v5
       with:

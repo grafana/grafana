@@ -236,13 +236,13 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions
 	if r.shouldUpdateGrafanaDB(opts, nil) {
 		var folderID string
 		if stableUID != "" {
-			if err := r.folders.CreateFolderWithUID(ctx, opts.Path, stableUID); err != nil {
+			if err := r.folders.CreateFolderWithUID(ctx, opts.Path, stableUID, opts.Ref); err != nil {
 				return nil, err
 			}
 			folderID = stableUID
 		} else {
 			var err error
-			folderID, err = r.folders.EnsureFolderPathExist(ctx, opts.Path)
+			folderID, err = r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref)
 			if err != nil {
 				return nil, err
 			}
@@ -346,7 +346,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts D
 			})
 		}
 
-		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
+		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 
@@ -530,7 +530,7 @@ func (r *DualReadWriter) moveFile(ctx context.Context, opts DualWriteOptions) (*
 
 	// Update the grafana database if this is the main branch
 	if r.shouldUpdateGrafanaDB(opts, newParsed) {
-		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
+		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path, opts.Ref); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 

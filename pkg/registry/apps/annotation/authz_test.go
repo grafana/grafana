@@ -15,8 +15,6 @@ import (
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // fakeAccessClient delegates Check decisions to fn allowing per-request allow/deny control in tests.
@@ -107,8 +105,7 @@ func TestK8sRESTAdapter_UpdateScopeEscalation(t *testing.T) {
 	// Allow writes on org annotations (annotation.grafana.app) but deny on dashboard scope.
 	// The update attempts to move an org annotation onto a dashboard the caller cannot write.
 	adapter := &k8sRESTAdapter{
-		store:  store,
-		mapper: request.GetNamespaceMapper(&setting.Cfg{}),
+		store: store,
 		accessClient: &fakeAccessClient{fn: func(req authtypes.CheckRequest) bool {
 			return req.Group == "annotation.grafana.app"
 		}},

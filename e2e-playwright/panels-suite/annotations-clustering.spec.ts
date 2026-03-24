@@ -298,36 +298,49 @@ test.describe('Panels test: Clustering', { tag: ['@panels', '@annotations'] }, (
         ).toBeVisible();
 
         // edit from cluster
-        await page.getByRole('button', { name: 'Edit' }).nth(2).click();
+        const tooltip = page.getByTestId(selectors.pages.Dashboard.Annotations.tooltip);
+        await expect(tooltip.getByRole('button', { name: 'Edit' }).nth(0)).toBeVisible();
+        await expect(tooltip.getByRole('button', { name: 'Edit' }).nth(1)).toBeVisible();
+
+        await tooltip.getByRole('button', { name: 'Edit' }).nth(1).click();
         await expect(
-          page.getByText('Edit annotation'),
+          tooltip.getByText('Edit annotation'),
           'edit annotation text should be visible in tooltip'
         ).toBeVisible();
+        await expect(
+          tooltip.getByTestId('annotation-editor-description'),
+          'second annotation textarea has unedited description'
+        ).toHaveValue('description2 text goes here');
+
         await descriptionTextarea.fill('description2 text goes here - EDITED');
-        await page.getByRole('button', { name: 'Save', exact: true }).click();
+        await tooltip.getByRole('button', { name: 'Save', exact: true }).click();
 
         // Delete first anno
         await markersLocator.click();
         await expect(
-          page.getByText('description text goes here'),
+          dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Annotations.clusterTooltip),
+          'cluster tooltip is visible'
+        ).toBeVisible();
+        await expect(
+          tooltip.getByText('description text goes here'),
           'annotation 1 description is visible in cluster tooltip'
         ).toBeVisible();
         await expect(
-          page.getByText('description2 text goes here - EDITED'),
+          tooltip.getByText('description2 text goes here - EDITED'),
           'annotation 2 edited description text is visible'
         ).toBeVisible();
-        await expect(page.getByText('tag1'), 'tag from anno 1 is visible').toBeVisible();
-        await expect(page.getByText('tag2'), 'tag from anno 2 is visible').toBeVisible();
-        await page.getByRole('button', { name: 'Delete' }).first().click();
+        await expect(tooltip.getByText('tag1'), 'tag from anno 1 is visible').toBeVisible();
+        await expect(tooltip.getByText('tag2'), 'tag from anno 2 is visible').toBeVisible();
+        await tooltip.getByRole('button', { name: 'Delete' }).first().click();
 
         // Delete second anno
         await markersLocator.click();
         await expect(
-          page.getByText('description2 text goes here - EDITED'),
+          tooltip.getByText('description2 text goes here - EDITED'),
           'anno 2 edited text is visible'
         ).toBeVisible();
-        await expect(page.getByText('tag2'), 'anno 2 tag is visible').toBeVisible();
-        await page.getByRole('button', { name: 'Delete' }).first().click();
+        await expect(tooltip.getByText('tag2'), 'anno 2 tag is visible').toBeVisible();
+        await tooltip.getByRole('button', { name: 'Delete' }).first().click();
         await expect(markersLocator, 'should no longer be any annotations').toHaveCount(0);
       });
     });
