@@ -1,6 +1,6 @@
 import { useAsync } from 'react-use';
 
-import { getNextRefId, locationUtil, urlUtil } from '@grafana/data';
+import { getDefaultRelativeTimeRange, getNextRefId, locationUtil, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
@@ -8,11 +8,7 @@ import { Button, Modal } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
 import { RuleFormType } from '../types/rule-form';
-import {
-  dataQueriesToGrafanaQueries,
-  getDefaultReduceExpression,
-  getDefaultThresholdExpression,
-} from '../utils/rule-form';
+import { dataQueriesToGrafanaQueries, getDefaultExpressions } from '../utils/rule-form';
 
 /**
  * Props for the CreateAlertFromPanel exposed component.
@@ -95,9 +91,9 @@ export const CreateAlertFromPanelExposedComponent = (props: Partial<CreateAlertF
     }
 
     // Default relative time range of 10 minutes (600 seconds)
-    const relativeTimeRange = { from: 600, to: 0 };
+    const relativeTimeRange = getDefaultRelativeTimeRange();
 
-    // Convert panel queries to Grafana alert queries format
+    // Convert panel queries to Grafana alert queries format using shared utility
     const grafanaQueries = await dataQueriesToGrafanaQueries(
       panel.targets,
       relativeTimeRange,
@@ -114,18 +110,16 @@ export const CreateAlertFromPanelExposedComponent = (props: Partial<CreateAlertF
     // This provides a sensible default alert condition for simple queries.
     if (!grafanaQueries.find((q) => q.datasourceUid === ExpressionDatasourceUID)) {
       const lastQuery = grafanaQueries.at(-1)!;
+      const reduceRefId = getNextRefId(grafanaQueries);
+      const queriesWithReduce = [
+        ...grafanaQueries,
+        { refId: reduceRefId, datasourceUid: '', queryType: '', model: {} },
+      ];
+      const thresholdRefId = getNextRefId(queriesWithReduce);
 
-      const reduceExpr = getDefaultReduceExpression({
-        inputRefId: lastQuery.refId,
-        reduceRefId: getNextRefId(grafanaQueries),
-      });
-      grafanaQueries.push(reduceExpr);
-
-      const thresholdExpr = getDefaultThresholdExpression({
-        inputRefId: reduceExpr.refId,
-        thresholdRefId: getNextRefId(grafanaQueries),
-      });
-      grafanaQueries.push(thresholdExpr);
+      // Use getDefaultExpressions to create both reduce and threshold expressions
+      const expressions = getDefaultExpressions(reduceRefId, thresholdRefId, lastQuery.refId);
+      grafanaQueries.push(...expressions);
     }
 
     return {

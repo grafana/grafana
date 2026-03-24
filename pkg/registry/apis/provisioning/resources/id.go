@@ -101,6 +101,44 @@ type Folder struct {
 	ID string
 	// Path is the full path to the folder, as given to the parse function.
 	Path string
+	// MetadataHash is the hash of the _folder.json file content.
+	// Empty when folder metadata is disabled or no _folder.json exists.
+	MetadataHash string
+	// ParentID is the UID of this folder's parent folder.
+	// Set during EnsureFolderPathExist's walk and used to detect stale parent annotations.
+	ParentID string
+}
+
+// FolderCompareOption configures how Equal compares folders.
+type FolderCompareOption func(*folderCompareConfig)
+
+type folderCompareConfig struct {
+	ignoreParent bool
+}
+
+// IgnoreParent skips the ParentID field when comparing folders.
+func IgnoreParent() FolderCompareOption {
+	return func(c *folderCompareConfig) { c.ignoreParent = true }
+}
+
+// Equal reports whether two folders have the same comparable properties
+// (title, path, metadata hash, and parent). The ID field is intentionally
+// excluded. Use IgnoreParent() to skip the parent comparison.
+func (f Folder) Equal(other Folder, opts ...FolderCompareOption) bool {
+	var cfg folderCompareConfig
+	for _, o := range opts {
+		o(&cfg)
+	}
+
+	if f.Title != other.Title || f.MetadataHash != other.MetadataHash {
+		return false
+	}
+
+	if strings.TrimSuffix(f.Path, "/") != strings.TrimSuffix(other.Path, "/") {
+		return false
+	}
+
+	return cfg.ignoreParent || f.ParentID == other.ParentID
 }
 
 func ParseFolder(dirPath, repositoryName string) Folder {

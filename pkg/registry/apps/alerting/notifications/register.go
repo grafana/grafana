@@ -2,7 +2,10 @@ package notifications
 
 import (
 	"context"
+	"unsafe"
 
+	"k8s.io/apimachinery/pkg/conversion"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
@@ -12,6 +15,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
+	v0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	v1beta1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -102,26 +107,123 @@ func (a AppInstaller) GetAuthorizer() authorizer.Authorizer {
 func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
 	namespacer := request.GetNamespaceMapper(a.cfg)
 	api := a.ng.Api
-	if gvr == inhibitionrule.ResourceInfo.GroupVersionResource() {
+	// Match on group+resource only (ignoring version) so that both v0alpha1 and v1beta1
+	// requests are served by the same legacy storage.
+	switch gvr.Resource {
+	case inhibitionrule.ResourceInfo.GroupResource().Resource:
 		return inhibitionrule.NewStorage(api.InhibitionRules, namespacer)
-	} else if gvr == receiver.ResourceInfo.GroupVersionResource() {
+	case receiver.ResourceInfo.GroupResource().Resource:
 		return receiver.NewStorage(api.ReceiverService, namespacer, api.ReceiverService)
-	} else if gvr == timeinterval.ResourceInfo.GroupVersionResource() {
+	case timeinterval.ResourceInfo.GroupResource().Resource:
 		srv := api.MuteTimings
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 			srv = srv.WithIncludeImported()
 		}
 		return timeinterval.NewStorage(srv, namespacer)
-	} else if gvr == templategroup.ResourceInfo.GroupVersionResource() {
+	case templategroup.ResourceInfo.GroupResource().Resource:
 		srv := api.Templates
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 			srv = srv.WithIncludeImported()
 		}
 		return templategroup.NewStorage(srv, namespacer)
-	} else if gvr == routingtree.ResourceInfo.GroupVersionResource() {
+	case routingtree.ResourceInfo.GroupResource().Resource:
 		return routingtree.NewStorage(api.RouteService, namespacer)
 	}
 	panic("unknown legacy storage requested: " + gvr.String())
+}
+
+// AddToScheme overrides the embedded AppInstaller to also register list conversion functions
+// between v0alpha1 and v1beta1. The SDK only registers conversions for individual kinds;
+// list conversions must be added manually.
+func (a AppInstaller) AddToScheme(scheme *runtime.Scheme) error {
+	if err := a.AppInstaller.AddToScheme(scheme); err != nil {
+		return err
+	}
+	// All list types have identical memory layouts between v0alpha1 and v1beta1
+	// (same fields: TypeMeta, ListMeta, Items), so we can reinterpret the pointer
+	// directly — the same approach used by conversion-gen for layout-identical types.
+	type convPair struct {
+		src, dst  interface{}
+		convertFn conversion.ConversionFunc
+	}
+	pairs := []convPair{
+		{
+			(*v0alpha1.ReceiverList)(nil), (*v1beta1.ReceiverList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v1beta1.ReceiverList) = *(*v1beta1.ReceiverList)(unsafe.Pointer(in.(*v0alpha1.ReceiverList))) // #nosec G103
+				return nil
+			},
+		},
+		{
+			(*v1beta1.ReceiverList)(nil), (*v0alpha1.ReceiverList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v0alpha1.ReceiverList) = *(*v0alpha1.ReceiverList)(unsafe.Pointer(in.(*v1beta1.ReceiverList))) // #nosec G103
+				return nil
+			},
+		},
+		{
+			(*v0alpha1.InhibitionRuleList)(nil), (*v1beta1.InhibitionRuleList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v1beta1.InhibitionRuleList) = *(*v1beta1.InhibitionRuleList)(unsafe.Pointer(in.(*v0alpha1.InhibitionRuleList))) // #nosec G103
+				return nil
+			},
+		},
+		{
+			(*v1beta1.InhibitionRuleList)(nil), (*v0alpha1.InhibitionRuleList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v0alpha1.InhibitionRuleList) = *(*v0alpha1.InhibitionRuleList)(unsafe.Pointer(in.(*v1beta1.InhibitionRuleList))) // #nosec G103
+				return nil
+			},
+		},
+		{
+			(*v0alpha1.RoutingTreeList)(nil), (*v1beta1.RoutingTreeList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v1beta1.RoutingTreeList) = *(*v1beta1.RoutingTreeList)(unsafe.Pointer(in.(*v0alpha1.RoutingTreeList))) // #nosec G103
+				return nil
+			},
+		},
+		{
+			(*v1beta1.RoutingTreeList)(nil), (*v0alpha1.RoutingTreeList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v0alpha1.RoutingTreeList) = *(*v0alpha1.RoutingTreeList)(unsafe.Pointer(in.(*v1beta1.RoutingTreeList))) // #nosec G103
+				return nil
+			},
+		},
+		{
+			(*v0alpha1.TemplateGroupList)(nil), (*v1beta1.TemplateGroupList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v1beta1.TemplateGroupList) = *(*v1beta1.TemplateGroupList)(unsafe.Pointer(in.(*v0alpha1.TemplateGroupList))) // #nosec G103
+				return nil
+			},
+		},
+		{
+			(*v1beta1.TemplateGroupList)(nil), (*v0alpha1.TemplateGroupList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v0alpha1.TemplateGroupList) = *(*v0alpha1.TemplateGroupList)(unsafe.Pointer(in.(*v1beta1.TemplateGroupList))) // #nosec G103
+				return nil
+			},
+		},
+		{
+			(*v0alpha1.TimeIntervalList)(nil), (*v1beta1.TimeIntervalList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v1beta1.TimeIntervalList) = *(*v1beta1.TimeIntervalList)(unsafe.Pointer(in.(*v0alpha1.TimeIntervalList))) // #nosec G103
+				return nil
+			},
+		},
+		{
+			(*v1beta1.TimeIntervalList)(nil), (*v0alpha1.TimeIntervalList)(nil),
+			func(in, out interface{}, _ conversion.Scope) error {
+				*out.(*v0alpha1.TimeIntervalList) = *(*v0alpha1.TimeIntervalList)(unsafe.Pointer(in.(*v1beta1.TimeIntervalList))) // #nosec G103
+				return nil
+			},
+		},
+	}
+	for _, p := range pairs {
+		if err := scheme.AddConversionFunc(p.src, p.dst, p.convertFn); err != nil {
+			return err
+		}
+	}
+	return nil
 }

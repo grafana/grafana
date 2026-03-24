@@ -11,20 +11,14 @@ import (
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestK8sRESTAdapter_Create_GenerateName(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(t.Context(), 1)
 
-	cfg := &setting.Cfg{}
-	nsMapper := request.GetNamespaceMapper(cfg)
-
 	store := NewMemoryStore()
 	adapter := &k8sRESTAdapter{
 		store:        store,
-		mapper:       nsMapper,
 		accessClient: authtypes.FixedAccessClient(true),
 	}
 

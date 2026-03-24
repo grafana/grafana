@@ -355,6 +355,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagPlaylistsRBAC
+	// Enables RBAC for playlists
+	FlagPlaylistsRBAC = "playlistsRBAC"
+
 	// FlagSavedQueriesRBAC
 	// Enables Saved queries (query library) RBAC permissions
 	FlagSavedQueriesRBAC = "savedQueriesRBAC"
@@ -658,6 +662,10 @@ const (
 	// Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints
 	FlagKubernetesAuthzRolesAndRoleBindingsRedirect = "kubernetesAuthzRolesAndRoleBindingsRedirect"
 
+	// FlagKubernetesAuthzDatasourceResourcePermissions
+	// Enables datasource resource permissions via the K8s IAM resource permission APIs
+	FlagKubernetesAuthzDatasourceResourcePermissions = "kubernetesAuthzDatasourceResourcePermissions"
+
 	// FlagRestoreDashboards
 	// Enables restore deleted dashboards feature
 	FlagRestoreDashboards = "restoreDashboards"
@@ -913,4 +921,12 @@ const (
 	// FlagColorblindThemes
 	// Enables the new colorblind-friendly themes
 	FlagColorblindThemes = "colorblindThemes"
+
+	// FlagRbacIAMClient
+	// Enables the IAM client integration for fetching remote IAM global roles
+	FlagRbacIAMClient = "rbacIAMClient"
+
+	// FlagLogsTablePanelNG
+	// Enables the logs tableNG panel to replace existing tableRT
+	FlagLogsTablePanelNG = "logsTablePanelNG"
 )

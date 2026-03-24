@@ -992,6 +992,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "playlistsRBAC",
+			Description:  "Enables RBAC for playlists",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
 			Name:         "savedQueriesRBAC",
 			Description:  "Enables Saved queries (query library) RBAC permissions",
 			Stage:        FeatureStagePublicPreview,
@@ -1074,10 +1082,10 @@ var (
 		{
 			Name:         "alertingNavigationV2",
 			Description:  "Enables the new Alerting navigation structure with improved menu grouping",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: false,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "alertingSavedSearches",
@@ -1881,6 +1889,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "kubernetesAuthzDatasourceResourcePermissions",
+			Description:  "Enables datasource resource permissions via the K8s IAM resource permission APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
 			Name:        "restoreDashboards",
 			Description: "Enables restore deleted dashboards feature",
 			Stage:       FeatureStageExperimental,
@@ -2179,14 +2195,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
 			Expression:   "false",
-		},
-		{
-			Name:         "newGauge",
-			Description:  "Enable new gauge visualization",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "true",
 		},
 		{
 			Name:         "newVizSuggestions",
@@ -2720,6 +2728,29 @@ var (
 			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
+		}, {
+			Name:         "yAxisTickControl",
+			Description:  "Enables fine-grained Y-axis tick options beyond the auto-ticks",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "rbacIAMClient",
+			Description:  "Enables the IAM client integration for fetching remote IAM global roles",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "logsTablePanelNG",
+			Description:  "Enables the logs tableNG panel to replace existing tableRT",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
 		},
 	}
 )

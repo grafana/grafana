@@ -304,8 +304,8 @@
     "@grafana/plugin-ui": "^0.13.1",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "7.1.7",
-    "@grafana/scenes-react": "7.1.7",
+    "@grafana/scenes": "7.1.8",
+    "@grafana/scenes-react": "7.1.8",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -474,7 +474,7 @@
     "js-yaml@npm:4.1.0": "^4.1.0",
     "js-yaml@npm:=4.1.0": "^4.1.0",
     "nodemailer": "7.0.12",
-    "@storybook/core@npm:8.6.15": "patch:@storybook/core@npm%3A8.6.15#~/.yarn/patches/@storybook-core-npm-8.6.15-a468a35170.patch"
+    "@storybook/core@npm:8.6.18": "patch:@storybook/core@npm%3A8.6.18#~/.yarn/patches/@storybook-core-npm-8.6.18-cff02a3017.patch"
   },
   "workspaces": {
     "packages": [

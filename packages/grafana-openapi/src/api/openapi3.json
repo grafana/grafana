@@ -17378,7 +17378,7 @@
         "tags": ["dashboards"]
       },
       "get": {
-        "description": "Will return the dashboard given the dashboard unique identifier (uid).",
+        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).",
         "operationId": "getDashboardByUID",
         "parameters": [
           {
@@ -24504,6 +24504,7 @@
     },
     "/v1/provisioning/alert-rules": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetAlertRules",
         "responses": {
           "200": {
@@ -24515,12 +24516,23 @@
               }
             },
             "description": "ProvisionedAlertRules"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Get all the alert rules.",
         "tags": ["provisioning"]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostAlertRule",
         "parameters": [
           {
@@ -24561,6 +24573,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Create a new alert rule.",
@@ -24649,6 +24671,36 @@
             },
             "description": "AlertingFileExport"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "description": " Not found."
           }
@@ -24659,6 +24711,7 @@
     },
     "/v1/provisioning/alert-rules/{UID}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteAlertRule",
         "parameters": [
           {
@@ -24681,12 +24734,23 @@
         "responses": {
           "204": {
             "description": " The alert rule was deleted successfully."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Delete a specific alert rule by UID.",
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetAlertRule",
         "parameters": [
           {
@@ -24710,6 +24774,16 @@
             },
             "description": "ProvisionedAlertRule"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "description": " Not found."
           }
@@ -24718,6 +24792,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutAlertRule",
         "parameters": [
           {
@@ -24767,6 +24842,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Update an existing alert rule.",
@@ -24837,6 +24922,36 @@
             },
             "description": "AlertingFileExport"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "description": " Not found."
           }
@@ -24868,6 +24983,16 @@
               }
             },
             "description": "ContactPoints"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Get all the contact points.",
@@ -24914,6 +25039,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Create a contact point.",
@@ -25044,6 +25179,16 @@
         "responses": {
           "202": {
             "description": " The contact point was deleted successfully."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Delete a contact point.",
@@ -25099,6 +25244,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Update an existing contact point.",
@@ -25107,6 +25262,7 @@
     },
     "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
       "delete": {
+        "deprecated": true,
         "description": "Delete rule group",
         "operationId": "RouteDeleteAlertRuleGroup",
         "parameters": [
@@ -25155,6 +25311,7 @@
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetAlertRuleGroup",
         "parameters": [
           {
@@ -25185,6 +25342,16 @@
             },
             "description": "AlertRuleGroup"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "description": " Not found."
           }
@@ -25193,6 +25360,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
           {
@@ -25249,6 +25417,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Create or update alert rule group.",
@@ -25326,6 +25504,36 @@
             },
             "description": "AlertingFileExport"
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "404": {
             "description": " Not found."
           }
@@ -25347,6 +25555,16 @@
               }
             },
             "description": "MuteTimings"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Get all the mute timings.",
@@ -25393,6 +25611,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Create a new mute timing.",
@@ -25522,6 +25750,16 @@
           "204": {
             "description": " The mute timing was deleted successfully."
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
           "409": {
             "content": {
               "application/json": {
@@ -25559,6 +25797,16 @@
               }
             },
             "description": "MuteTimeInterval"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           },
           "404": {
             "description": " Not found."
@@ -25617,6 +25865,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           },
           "409": {
             "content": {
@@ -25745,6 +26003,16 @@
               }
             },
             "description": "Ack"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Clears the notification policy tree.",
@@ -25762,6 +26030,16 @@
               }
             },
             "description": "Route"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Get the notification policy tree.",
@@ -25809,6 +26087,16 @@
               }
             },
             "description": "ValidationError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Sets the notification policy tree.",
@@ -25848,6 +26136,36 @@
               }
             },
             "description": "AlertingFileExport"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/terraform+hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/hcl": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              },
+              "text/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           },
           "404": {
             "content": {
@@ -25897,6 +26215,16 @@
               }
             },
             "description": "NotificationTemplates"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           }
         },
         "summary": "Get all notification template groups.",
@@ -25928,6 +26256,16 @@
         "responses": {
           "204": {
             "description": " The template was deleted successfully."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           },
           "409": {
             "content": {
@@ -25966,6 +26304,16 @@
               }
             },
             "description": "NotificationTemplate"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           },
           "404": {
             "content": {
@@ -26031,6 +26379,16 @@
               }
             },
             "description": "PublicError"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
           },
           "409": {
             "content": {
