@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -25,9 +24,7 @@ import (
 )
 
 func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 
 	const repo = "empty-files-repo"
 	helper.CreateRepo(t, common.TestRepo{
@@ -53,9 +50,7 @@ func TestIntegrationProvisioning_EmptyRepositoryFileList(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "delete-test-repo"
@@ -169,9 +164,7 @@ func TestIntegrationProvisioning_DeleteResources(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_MoveResources(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	repo := "move-test-repo"
 	helper.CreateRepo(t, common.TestRepo{
@@ -401,9 +394,7 @@ func TestIntegrationProvisioning_MoveResources(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// create both repos concurrently to reduce duration of this test
@@ -625,9 +616,7 @@ func TestIntegrationProvisioning_FilesOwnershipProtection(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "auth-test-repo"
@@ -1100,9 +1089,7 @@ func TestIntegrationProvisioning_FilesAuthorization(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "folder-metadata-test-repo"
@@ -1221,9 +1208,7 @@ func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "folder-protection-test-repo"
@@ -1316,8 +1301,6 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	tests := []struct {
 		name                  string
 		folderMetadataEnabled bool
@@ -1340,12 +1323,7 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var helper *common.ProvisioningTestHelper
-			if tt.folderMetadataEnabled {
-				helper = common.RunGrafana(t, common.WithProvisioningFolderMetadata)
-			} else {
-				helper = common.RunGrafana(t)
-			}
+			helper := sharedHelper(t)
 			ctx := context.Background()
 
 			helper.CreateRepo(t, common.TestRepo{

@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -21,9 +20,7 @@ import (
 
 // We currently block the creation of library panels in provisioned folders.
 func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	helper.CreateRepo(t, common.TestRepo{
 		Name:            "test-repo",
 		Target:          "folder",
@@ -118,7 +115,7 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 
 func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 	const repo = "test-repo"
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	helper.CreateRepo(t, common.TestRepo{
 		Name:            repo,
 		Target:          "folder",

@@ -9,7 +9,6 @@ import (
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -20,8 +19,6 @@ import (
 
 // We currently block permission updates for folders managed by provisioning.
 func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	repoName := "nested-folder-repo"
 	helper := common.RunGrafana(t)
 	helper.CreateRepo(t, common.TestRepo{
@@ -75,10 +72,8 @@ func TestIntegrationFolderPermissions_ProvisionedFolders(t *testing.T) {
 // TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag verifies that permission updates
 // succeed for provisioned folders when the provisioningFolderMetadata feature flag is enabled.
 func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	repoName := "nested-folder-repo-flag"
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	helper.CreateRepo(t, common.TestRepo{
 		Name:            repoName,
 		Target:          "folder",
@@ -128,7 +123,7 @@ func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) 
 
 func TestIntegrationFolderPermissions_UnprovisionedFolders(t *testing.T) {
 	const repo = "test-repo"
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	helper.CreateRepo(t, common.TestRepo{
 		Name:            repo,
 		Target:          "folder",
