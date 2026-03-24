@@ -47,7 +47,7 @@ manifest: {
 				namespaced: {
 					"/integrationtypeschemas": {
 						"GET": {
-							name: "getIntegrationTypeSchemas"
+							name: "getIntegrationtypeschemas"
 							response: {
 								items: [...#IntegrationTypeSchemaResource]
 							}

@@ -29,11 +29,11 @@ func NewCustomRouteClientFromGenerator(generator resource.ClientGenerator, defau
 	return NewCustomRouteClient(client), nil
 }
 
-type GetIntegrationTypeSchemasRequest struct {
+type GetIntegrationtypeschemasRequest struct {
 	Headers http.Header
 }
 
-func (c *CustomRouteClient) GetIntegrationTypeSchemas(ctx context.Context, namespace string, request GetIntegrationTypeSchemasRequest) (*GetIntegrationTypeSchemasResponse, error) {
+func (c *CustomRouteClient) GetIntegrationtypeschemas(ctx context.Context, namespace string, request GetIntegrationtypeschemasRequest) (*GetIntegrationtypeschemasResponse, error) {
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
 		Path:    "/integrationtypeschemas",
 		Verb:    "GET",
@@ -42,10 +42,10 @@ func (c *CustomRouteClient) GetIntegrationTypeSchemas(ctx context.Context, names
 	if err != nil {
 		return nil, err
 	}
-	cast := GetIntegrationTypeSchemasResponse{}
+	cast := GetIntegrationtypeschemasResponse{}
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into GetIntegrationTypeSchemasResponse: %w", err)
+		return nil, fmt.Errorf("unable to unmarshal response bytes into GetIntegrationtypeschemasResponse: %w", err)
 	}
 	return &cast, nil
 }
