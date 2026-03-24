@@ -1882,7 +1882,9 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 
 	saved := make([]DataKey, 0)
+	rolledBack := false
 	rollback := func() {
+		rolledBack = true
 		// we don't have transactions in the kv store, so we simply delete everything we created
 		err = b.dataStore.batchDelete(ctx, saved)
 		if err != nil {
@@ -1918,12 +1920,16 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			return err
 		}
 
+		// Track all keys for rollback BEFORE legacy updates so a mid-loop
+		// failure in updateLegacyResourceHistoryBulk doesn't leave orphan rows.
 		for _, p := range pending {
 			saved = append(saved, p.dataKey)
 			updatedResources[NamespacedResource{Namespace: p.dataKey.Namespace, Group: p.dataKey.Group, Resource: p.dataKey.Resource}] = true
+		}
 
-			// Fill in legacy columns on the resource_history row that was just inserted with only key_path and value.
-			if b.rvManager != nil {
+		// Fill in legacy columns on the resource_history rows that were just inserted.
+		if b.rvManager != nil {
+			for _, p := range pending {
 				microRV := rvmanager.RVFromBulkSnowflake(p.dataKey.ResourceVersion)
 				generation := p.obj.GetGeneration()
 				if p.action == DataActionDeleted {
@@ -2034,8 +2040,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 	}
 
-	// Flush any remaining items
-	if rsp.Error == nil {
+	// Flush any remaining items (skip if rollback was triggered)
+	if rsp.Error == nil && !rolledBack {
 		if err := flushPending(); err != nil {
 			rollback()
 			rsp.Error = AsErrorResult(err)
