@@ -34,17 +34,6 @@ You can connect to Microsoft SQL Server 2012 or newer, Azure SQL Database, and A
 | Alerting    | Yes       |
 | Annotations | Yes       |
 
-## Get started
-
-The following documentation helps you set up and use the Microsoft SQL Server data source:
-
-- [Configure the data source](configure/)
-- [Query editor](query-editor/)
-- [Template variables](template-variables/)
-- [Annotations](annotations/)
-- [Alerting](alerting/)
-- [Troubleshooting](troubleshooting/)
-
 ## Supported versions
 
 | Version | Supported |
@@ -69,6 +58,17 @@ The Microsoft SQL Server data source supports the following authentication metho
 | Azure Entra ID (Current User) | User-level access control with Azure SQL | Yes |
 
 For configuration details, refer to [Configure the Microsoft SQL Server data source](configure/).
+
+## Get started
+
+The following documentation helps you set up and use the Microsoft SQL Server data source:
+
+- [Configure the data source](configure/)
+- [Query editor](query-editor/)
+- [Template variables](template-variables/)
+- [Annotations](annotations/)
+- [Alerting](alerting/)
+- [Troubleshooting](troubleshooting/)
 
 ## Additional features
 
