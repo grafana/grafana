@@ -31,10 +31,8 @@ import (
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	provisioningAPIServer "github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -1123,12 +1121,7 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 	require.Equal(t, http.StatusFailedDependency, statusCode, "should return 424 Failed Dependency for unhealthy repository")
 }
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	// Explicitly set max repositories to 10 to test the limit enforcement
-	helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-		opts.ProvisioningMaxRepositories = 10
-	})
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	originalName := "original-repo"
@@ -1673,11 +1666,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *
 }
 
 func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-		opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
-	})
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "job-permissions-test"
