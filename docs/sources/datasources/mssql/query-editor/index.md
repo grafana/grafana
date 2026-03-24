@@ -47,8 +47,9 @@ To run a query, select **Run query** in the upper right of the editor.
 In addition to writing queries, the query editor also allows you to create and use:
 
 - [Macros](#macros)
-- [Annotations](#apply-annotations)
 - [Stored procedures](#use-stored-procedures)
+
+You can also add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/annotations/) to overlay SQL Server events on your graphs.
 
 ## Builder mode
 
@@ -310,75 +311,6 @@ Data frame result:
 | 2020-01-02 03:04:00 | 3               | 4               |
 | 2020-01-02 03:05:00 | 6               | 7               |
 +---------------------+-----------------+-----------------+
-```
-
-## Apply annotations
-
-[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs.
-You can add annotation queries in the Dashboard menu's **Annotations** view.
-
-**Columns:**
-
-| Name      | Description                                                                                                       |
-| --------- | ----------------------------------------------------------------------------------------------------------------- |
-| `time`    | The name of the date/time field. Can be a column with a native SQL date/time data type or epoch value.            |
-| `timeend` | _Optional_ name of the end date/time field. Can be a column with a native SQL date/time data type or epoch value. |
-| `text`    | Field containing the event description.                                                                           |
-| `tags`    | _Optional_ field used for event tags, formatted as a comma-separated string.                                      |
-
-**Example database tables:**
-
-```sql
-CREATE TABLE [events] (
-  time_sec bigint,
-  description nvarchar(100),
-  tags nvarchar(100),
-)
-```
-
-The following example also uses the database table defined in the [Time series queries](#time-series-queries) section.
-
-**Example query using time column with epoch values:**
-
-```sql
-SELECT
-  time_sec as time,
-  description as [text],
-  tags
-FROM
-  [events]
-WHERE
-  $__unixEpochFilter(time_sec)
-ORDER BY 1
-```
-
-**Example region query using time and timeend columns with epoch values:**
-
-```sql
-SELECT
-  time_sec as time,
-  time_end_sec as timeend,
-  description as [text],
-  tags
-FROM
-  [events]
-WHERE
-  $__unixEpochFilter(time_sec)
-ORDER BY 1
-```
-
-**Example query using time column of native SQL date/time data type:**
-
-```sql
-SELECT
-  time,
-  measurement as text,
-  convert(varchar, valueOne) + ',' + convert(varchar, valueTwo) as tags
-FROM
-  metric_values
-WHERE
-  $__timeFilter(time_column)
-ORDER BY 1
 ```
 
 ## Use stored procedures
