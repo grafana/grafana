@@ -285,6 +285,7 @@ export function RadialGauge(props: RadialGaugeProps) {
       display="flex"
       justifyContent="center"
       alignItems="center"
+      position="relative"
       data-testid={selectors.components.Panels.Visualization.Gauge.Container}
     >
       <svg

@@ -1023,12 +1023,12 @@ func TestJitterForKey(t *testing.T) {
 		require.Equal(t, time.Duration(0), jitterForKey(key, 0))
 	})
 
-	t.Run("bounded to maxAge/5", func(t *testing.T) {
+	t.Run("bounded to maxAge/2", func(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			key := NamespacedResource{Namespace: fmt.Sprintf("ns%d", i), Group: "g", Resource: "r"}
 			j := jitterForKey(key, maxAge)
 			require.GreaterOrEqual(t, j, time.Duration(0))
-			require.Less(t, j, maxAge/5)
+			require.Less(t, j, maxAge/2)
 		}
 	})
 

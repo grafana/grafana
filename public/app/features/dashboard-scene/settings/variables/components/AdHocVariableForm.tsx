@@ -1,12 +1,13 @@
+import { css } from '@emotion/css';
 import { FormEvent, useCallback } from 'react';
 
-import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
+import { DataSourceInstanceSettings, GrafanaTheme2, MetricFindValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { AdHocFiltersController } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
-import { Alert, CodeEditor, Field, Switch, Stack } from '@grafana/ui';
+import { Alert, CodeEditor, Field, Switch, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
@@ -37,6 +38,7 @@ export function AdHocVariableForm({
   inline,
   datasourceSupported,
 }: AdHocVariableFormProps) {
+  const styles = useStyles2(getStyles);
   const updateStaticKeys = useCallback(
     (csvContent: string) => {
       const df = readCSV('key,value\n' + csvContent)[0];
@@ -86,7 +88,9 @@ export function AdHocVariableForm({
       ) : null}
 
       {datasourceSupported && originFiltersController && (
-        <AdHocOriginFiltersEditor controller={originFiltersController} />
+        <div className={!inline ? styles.originFiltersWrapper : undefined}>
+          <AdHocOriginFiltersEditor controller={originFiltersController} />
+        </div>
       )}
 
       {datasourceSupported && onDefaultKeysChange && (
@@ -151,3 +155,9 @@ export function AdHocVariableForm({
     </Stack>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  originFiltersWrapper: css({
+    maxWidth: theme.spacing(55),
+  }),
+});

@@ -2139,11 +2139,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/utils/dashboard.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/utils/panelMerge.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
