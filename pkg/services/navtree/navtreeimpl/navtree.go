@@ -664,7 +664,6 @@ func (s *ServiceImpl) hasConnectionsPluginItems(c *contextmodel.ReqContext, tree
 			if child.Id != "" &&
 				(strings.HasPrefix(child.Id, "standalone-plugin-page-/connections/") ||
 					strings.HasPrefix(child.Url, "/connections/")) {
-
 				// If this is a plugin item, check RBAC permissions
 				if child.PluginID != "" {
 					// Get the plugin to check its includes and permissions
