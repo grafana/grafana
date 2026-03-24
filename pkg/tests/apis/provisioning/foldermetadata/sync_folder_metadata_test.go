@@ -654,8 +654,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		})
 
 		helper.SyncAndWait(t, repo, nil)
-		requireFolderState(t, helper, "parent-old-uid", "Parent", "parent", repo)
-		requireFolderState(t, helper, "child-uid", "Child", "parent/child", "parent-old-uid")
+		common.RequireFolderState(t, helper.Folders, "parent-old-uid", "Parent", "parent", repo)
+		common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "parent/child", "parent-old-uid")
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"parent/child/dashboard.json": "child-uid",
 		})
@@ -669,10 +669,10 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		assertNoFolderByUID(t, helper, "parent-old-uid")
 
 		// New parent folder should exist with correct state.
-		requireFolderState(t, helper, "parent-new-uid", "Parent", "parent", repo)
+		common.RequireFolderState(t, helper.Folders, "parent-new-uid", "Parent", "parent", repo)
 
 		// Child folder should be re-parented to new parent UID.
-		requireFolderState(t, helper, "child-uid", "Child", "parent/child", "parent-new-uid")
+		common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "parent/child", "parent-new-uid")
 
 		// Dashboard should still be parented to child (unchanged).
 		requireDashboardParents(t, helper, repo, map[string]string{
@@ -699,8 +699,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		})
 
 		helper.SyncAndWait(t, repo, nil)
-		requireFolderState(t, helper, "p-old", "Parent", "parent", repo)
-		requireFolderState(t, helper, "c-old", "Child", "parent/child", "p-old")
+		common.RequireFolderState(t, helper.Folders, "p-old", "Parent", "parent", repo)
+		common.RequireFolderState(t, helper.Folders, "c-old", "Child", "parent/child", "p-old")
 
 		// Change both UIDs.
 		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("p-new", "Parent"))
@@ -713,8 +713,8 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		assertNoFolderByUID(t, helper, "c-old")
 
 		// New parent under repo root, new child under new parent.
-		requireFolderState(t, helper, "p-new", "Parent", "parent", repo)
-		requireFolderState(t, helper, "c-new", "Child", "parent/child", "p-new")
+		common.RequireFolderState(t, helper.Folders, "p-new", "Parent", "parent", repo)
+		common.RequireFolderState(t, helper.Folders, "c-new", "Child", "parent/child", "p-new")
 
 		// Dashboard re-parented to new child.
 		requireDashboardParents(t, helper, repo, map[string]string{
@@ -741,7 +741,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		})
 
 		helper.SyncAndWait(t, repo, nil)
-		requireFolderState(t, helper, "root-old-uid", "Root Folder", "root-folder", repo)
+		common.RequireFolderState(t, helper.Folders, "root-old-uid", "Root Folder", "root-folder", repo)
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"root-folder/dashboard.json": "root-old-uid",
 		})
@@ -755,11 +755,192 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataUIDChange(t *testing.T) 
 		assertNoFolderByUID(t, helper, "root-old-uid")
 
 		// New folder should exist with repo as parent (folder-target repo).
-		requireFolderState(t, helper, "root-new-uid", "Root Folder", "root-folder", repo)
+		common.RequireFolderState(t, helper.Folders, "root-new-uid", "Root Folder", "root-folder", repo)
 
 		// Dashboard re-parented to new UID.
 		requireDashboardParents(t, helper, repo, map[string]string{
 			"root-folder/dashboard.json": "root-new-uid",
+		})
+	})
+}
+
+// TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts verifies that
+// deleting a _folder.json between syncs causes the folder to revert to hash-based UID
+// and directory-name title, and that child resources are re-parented accordingly.
+func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("folder reverts to hash-based UID and directory-name title", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-deleted-revert"
+
+		// First sync: folder with _folder.json (stable UID + custom title).
+		writeToProvisioningPath(t, helper, "my-folder/_folder.json", folderMetadataJSON("stable-uid", "Custom Title"))
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "my-folder/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+		helper.SyncAndWait(t, repo, nil)
+		common.RequireFolderState(t, helper.Folders, "stable-uid", "Custom Title", "my-folder", repo)
+
+		// Delete _folder.json (keep the directory and dashboard).
+		require.NoError(t, os.Remove(filepath.Join(helper.ProvisioningPath, "my-folder/_folder.json")))
+
+		// Second sync — folder should revert.
+		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		})
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
+		require.NotEmpty(t, jobObj.Status.Warnings)
+
+		found := false
+		for _, w := range jobObj.Status.Warnings {
+			if strings.Contains(w, "missing folder metadata") && strings.Contains(w, "my-folder") {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "expected missing folder metadata warning for my-folder; warnings: %v", jobObj.Status.Warnings)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonMissingFolderMetadata)
+
+		// Old stable-UID folder should be gone.
+		assertNoFolderByUID(t, helper, "stable-uid")
+
+		// New folder should exist with directory-name title and empty checksum.
+		newUID := findFolderUIDBySourcePath(t, helper, repo, "my-folder")
+		require.NotEqual(t, "stable-uid", newUID, "folder should have a new hash-based UID")
+		requireRepoFolderTitle(t, helper, repo, "my-folder", "my-folder") // title = directory name
+		requireRepoFolderChecksum(t, helper, repo, "my-folder", "")       // checksum cleared
+
+		// Dashboard re-parented to new UID.
+		requireDashboardParents(t, helper, repo, map[string]string{
+			"my-folder/dashboard.json": newUID,
+		})
+	})
+
+	t.Run("nested: parent _folder.json deleted, child retains metadata", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-deleted-nested"
+
+		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
+		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-uid", "Child"))
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "parent/child/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+		helper.SyncAndWait(t, repo, nil)
+		common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
+		common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "parent/child", "parent-uid")
+
+		// Delete ONLY parent's _folder.json.
+		require.NoError(t, os.Remove(filepath.Join(helper.ProvisioningPath, "parent/_folder.json")))
+
+		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		})
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
+		require.NotEmpty(t, jobObj.Status.Warnings)
+
+		hasParentWarning := false
+		hasChildWarning := false
+		for _, w := range jobObj.Status.Warnings {
+			if strings.Contains(w, "missing folder metadata") && strings.Contains(w, "parent") {
+				hasParentWarning = true
+			}
+			if strings.Contains(w, "missing folder metadata") && strings.Contains(w, "parent/child") {
+				hasChildWarning = true
+			}
+		}
+		require.True(t, hasParentWarning, "expected missing folder metadata warning for parent; warnings: %v", jobObj.Status.Warnings)
+		require.False(t, hasChildWarning, "did not expect missing folder metadata warning for parent/child; warnings: %v", jobObj.Status.Warnings)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonMissingFolderMetadata)
+
+		// Old parent-uid should be gone.
+		assertNoFolderByUID(t, helper, "parent-uid")
+
+		// New hash-based parent with directory-name title.
+		newParentUID := findFolderUIDBySourcePath(t, helper, repo, "parent")
+		require.NotEqual(t, "parent-uid", newParentUID)
+
+		// Child should still have its stable UID but re-parented to new parent.
+		common.RequireFolderState(t, helper.Folders, "child-uid", "Child", "parent/child", newParentUID)
+
+		// Dashboard still parented to child-uid.
+		requireDashboardParents(t, helper, repo, map[string]string{
+			"parent/child/dashboard.json": "child-uid",
+		})
+	})
+
+	t.Run("nested: parent _folder.json deleted while child UID changes", func(t *testing.T) {
+		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		const repo = "full-sync-meta-deleted-child-uid-change"
+
+		writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
+		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-old-uid", "Child"))
+		helper.CreateRepo(t, common.TestRepo{
+			Name:   repo,
+			Target: "folder",
+			Copies: map[string]string{
+				"../testdata/all-panels.json": "parent/child/dashboard.json",
+			},
+			SkipSync:               true,
+			SkipResourceAssertions: true,
+		})
+		helper.SyncAndWait(t, repo, nil)
+		common.RequireFolderState(t, helper.Folders, "parent-uid", "Parent", "parent", repo)
+		common.RequireFolderState(t, helper.Folders, "child-old-uid", "Child", "parent/child", "parent-uid")
+
+		require.NoError(t, os.Remove(filepath.Join(helper.ProvisioningPath, "parent/_folder.json")))
+		writeToProvisioningPath(t, helper, "parent/child/_folder.json", folderMetadataJSON("child-new-uid", "Child"))
+
+		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		})
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+		require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
+		require.NotEmpty(t, jobObj.Status.Warnings)
+
+		hasParentWarning := false
+		hasChildWarning := false
+		for _, w := range jobObj.Status.Warnings {
+			if strings.Contains(w, "missing folder metadata") && strings.Contains(w, "parent") {
+				hasParentWarning = true
+			}
+			if strings.Contains(w, "missing folder metadata") && strings.Contains(w, "parent/child") {
+				hasChildWarning = true
+			}
+		}
+		require.True(t, hasParentWarning, "expected missing folder metadata warning for parent; warnings: %v", jobObj.Status.Warnings)
+		require.False(t, hasChildWarning, "did not expect missing folder metadata warning for parent/child; warnings: %v", jobObj.Status.Warnings)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonMissingFolderMetadata)
+
+		assertNoFolderByUID(t, helper, "parent-uid")
+		assertNoFolderByUID(t, helper, "child-old-uid")
+
+		newParentUID := findFolderUIDBySourcePath(t, helper, repo, "parent")
+		require.NotEqual(t, "parent-uid", newParentUID)
+
+		common.RequireFolderState(t, helper.Folders, "child-new-uid", "Child", "parent/child", newParentUID)
+		requireDashboardParents(t, helper, repo, map[string]string{
+			"parent/child/dashboard.json": "child-new-uid",
 		})
 	})
 }

@@ -385,6 +385,7 @@
         "group-by": "Csoportosítás alapja",
         "group-title": "Értesítési konfiguráció",
         "mute-timings": "Némítási időzítések",
+        "notification-policy": "",
         "timing-options": "Időzítések"
       },
       "pending-period": "Függőben lévő időszak",
@@ -497,6 +498,15 @@
     },
     "alert-rule": {
       "term": "Riasztási szabály"
+    },
+    "alert-rule-drawer": {
+      "error-title": "",
+      "error-unexpected": "",
+      "error-unknown": "",
+      "success-message": "",
+      "success-title": "",
+      "validation-error-message": "",
+      "validation-error-title": ""
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -880,6 +890,8 @@
       "export-all": "Összes exportálása",
       "learn-more": "További információk",
       "loading": "Betöltés...",
+      "optional": "",
+      "refresh": "",
       "search-by-matchers": "Keresés egyezések alapján",
       "titles": {
         "notification-templates": "Értesítés sablonok"
@@ -1849,7 +1861,7 @@
       },
       "history-error": "Az állapotelőzmények betöltése nem sikerült",
       "history-error-desc": "Nem sikerült lekérni az állapotátmeneti előzményeket ehhez a példányhoz.",
-      "instance-timeline": "",
+      "instance-history-heading": "",
       "no-history": "Nincsenek friss állapotváltozások",
       "notifications-error": "",
       "notifications-error-desc": "",
@@ -1861,6 +1873,8 @@
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
+      "timeline-dot-all-failed": "",
+      "timeline-dot-some-failed": "",
       "timeline-empty": "",
       "timeline-failed": "",
       "timeline-filter-all": "",
@@ -1868,17 +1882,15 @@
       "timeline-filter-notifications": "",
       "timeline-filter-states": "",
       "timeline-loading": "",
-      "timeline-mixed-outcome": "",
-      "timeline-one-notification": "",
+      "timeline-notification-label": "",
+      "timeline-partial-failure": "",
       "timeline-status-firing": "",
       "timeline-status-resolved": "",
       "timeline-toggle-notifications": "",
       "view-notification-detail": "",
       "view-notification-tooltip": "",
-      "timeline-n-notifications_one": "",
-      "timeline-n-notifications_other": "",
-      "timeline-n-receivers_one": "",
-      "timeline-n-receivers_other": ""
+      "timeline-n-uniqueReceivers_one": "",
+      "timeline-n-uniqueReceivers_other": ""
     },
     "instance-match": {
       "non-matching-labels": "Nem egyező címkék",
@@ -2021,6 +2033,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "",
+          "notification-policy": "",
           "select-contact-point": "Kapcsolattartási pont kiválasztása",
           "use-notification-policy": "Értesítési házirend használata"
         }
@@ -3276,12 +3290,57 @@
       "title-the-selected-alertmanager-has-no-configuration": "A kijelölt riasztáskezelőnek nincs konfigurációja"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "",
+      "aria-label-threshold": "",
+      "aria-label-threshold-from": "",
+      "aria-label-threshold-to": "",
       "label-of-query": "OF LEKÉRDEZÉS",
       "label-when": "WHEN",
       "label-when-query": "WHEN LEKÉRDEZÉS"
     },
     "simpleCondition": {
       "alertCondition": "Riasztási feltétel"
+    },
+    "simplified": {
+      "condition": {
+        "title": ""
+      },
+      "continue-in-alerting": "",
+      "create": "",
+      "evaluation": {
+        "immediate-warning": ""
+      },
+      "notification": {
+        "contact-point-selected": "",
+        "description": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "manual-routing": {
+          "aria": ""
+        },
+        "policy-selected": "",
+        "recipient": {
+          "label": ""
+        },
+        "refresh-error": "",
+        "runbook-url": {
+          "aria-label": "",
+          "invalid-format": "",
+          "invalid-protocol": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "select-contact-point": "",
+        "summary": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "title": ""
+      },
+      "rule-definition": ""
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Adatforrás által felügyelt",
@@ -3492,7 +3551,9 @@
       "error-loading-rule": "Hiba történt a szabály betöltésekor",
       "high-activity-labels": "",
       "instance-details-drawer": {
-        "instance-details": "Példány részletei"
+        "declare-incident": "",
+        "instance-details": "Példány részletei",
+        "silence-button": ""
       },
       "no-firing-or-pending-instances": "Nincsenek aktív vagy függő állapotú riasztáspéldányok a kiválasztott időtartományban.",
       "no-instances-found": "Nem találhatók riasztáspéldányok ehhez a szabályhoz: {{ruleUID}}",
@@ -5220,6 +5281,12 @@
       "ungroup-rows": "Sorok csoportosításának megszüntetése",
       "ungroup-tabs": "Lapok csoportosításának megszüntetése"
     },
+    "code-pane": {
+      "collapse": "",
+      "expand": "",
+      "header": "",
+      "modal-title": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -6102,6 +6169,13 @@
       "save-json-to-file": "JSON mentése fájlba",
       "see-docs": "A kiépítéssel kapcsolatos további információkért tekintse meg a <2>dokumentációt</2>."
     },
+    "schema-editor": {
+      "apply-button": "",
+      "apply-button-disabled-tooltip": "",
+      "apply-button-disabled-tooltip-yaml": "",
+      "apply-error-title": "",
+      "undo-title": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6116,6 +6190,10 @@
       "dashboard-options": {
         "title": "Beállítások",
         "tooltip": "Irányítópult beállításai"
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
       },
       "export": {
         "title": "Exportálás"
@@ -6459,11 +6537,14 @@
     "browse-plugins": "Bővítmények tallózása",
     "card": {
       "customize-with-assistant-button": "",
+      "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Adatforrás biztosítva",
       "details-tooltip": "Részletek",
       "no-preview": "",
-      "use-dashboard-button": "Irányítópult használata",
-      "view-template-button": ""
+      "view-dashboard-button": "",
+      "view-dashboard-button-label": "",
+      "view-template-button": "",
+      "view-template-button-label": ""
     },
     "community-empty-title": "Nem található közösségi irányítópult",
     "community-empty-title-with-datasource": "Nem található {{datasourceType}} típusú közösségi irányítópult",
@@ -6547,6 +6628,9 @@
       "label-data-source": "Adatforrás",
       "label-use-static-key-dimensions": "Statikus kulcsméretek használata",
       "name-allow-custom-values": "Egyéni értékek engedélyezése"
+    },
+    "add-filters": {
+      "label": ""
     },
     "add-link": {
       "inline-instance-name": "",
@@ -7589,6 +7673,11 @@
   "dashboard-scene-help-wizard": {
     "support-bundle": "A < 1 >támogatási csomagokról szóló részben</1> a Grafana-példányra és a konfigurált adatforrásokra vonatkozó információkat tartalmazó támogatási csomagot is lekérheti."
   },
+  "dashboard-schema-editor": {
+    "format-label": "",
+    "json-disabled-tooltip": "",
+    "yaml-disabled-tooltip": ""
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Jegyzetek"
@@ -7619,6 +7708,8 @@
     },
     "json-editor": {
       "save-button": "Beállítások mentése",
+      "save-button-disabled-tooltip": "",
+      "save-button-disabled-tooltip-yaml": "",
       "subtitle": "Az alábbi JSON-modell az irányítópultot meghatározó adatszerkezet. Ez magában foglalja az irányítópult beállításait, a panel beállításait, az elrendezést, a lekérdezéseket és így tovább.",
       "title": "JSON-modell"
     },
@@ -8898,9 +8989,6 @@
     "data-links-actions-menu": "",
     "description-min-height": "Minimális sormagasság (vízszintes tájolás)",
     "description-min-width": "Minimális oszlopszélesség (függőleges tájolás)",
-    "description-neutral": "Hagyja üresen, hogy a Min. értéket használja semleges pontként",
-    "description-show-threshold-labels": "A küszöbértékek megjelenítése a mérősáv körül",
-    "description-show-threshold-markers": "A küszöbértékeket külső sávként jeleníti meg",
     "gauge-size-options": {
       "label-auto": "Automatikus",
       "label-manual": "Kézi"
@@ -8908,11 +8996,7 @@
     "name-gauge-size": "Mérőeszköz mérete",
     "name-min-height": "Min. magasság",
     "name-min-width": "Min. szélesség",
-    "name-neutral": "Semleges",
-    "name-show-threshold-labels": "Küszöbértékcímkék megjelenítése",
-    "name-show-threshold-markers": "Küszöbértékjelölők megjelenítése",
     "neutral": "Semleges {{value}}",
-    "placeholder-neutral": "automatikus",
     "presets": {
       "circle": "",
       "circle_desc": "",
@@ -8929,8 +9013,7 @@
     },
     "suggestions": {
       "arc": "Mérőeszköz",
-      "circular": "Kör alakú mérőeszköz",
-      "no-thresholds": "Mérőeszköz – nincs küszöbérték"
+      "circular": "Kör alakú mérőeszköz"
     },
     "threshold": "Küszöbérték {{value}}"
   },
@@ -10329,11 +10412,14 @@
       "remove-button": "{{children}} eltávolítása"
     },
     "viz-legend": {
+      "all-series-selected": "",
       "clear-filters": "",
+      "color-picker": "",
       "faceted-by-labels": "",
       "faceted-by-name": "",
       "faceted-deselect-all": "",
       "faceted-select-all": "",
+      "only-this-series-selected": "",
       "pin-filter": "",
       "right-axis-indicator": "(jobb y tengely)",
       "series-visibility": "",
@@ -10933,6 +11019,7 @@
       "collapse": "Oldalsáv összecsukása",
       "expand": "Oldalsáv kibontása",
       "label-title": "A(z) {{fieldName}} a naplósorok {{percentage}}%-ában jelenik meg",
+      "log-level": "",
       "placeholder-search-fields-by-name": "Mezők keresése név alapján",
       "title-drag-and-drop-to-reorder": "Húzza át az átrendezéshez"
     },
@@ -11968,8 +12055,9 @@
       "upgrade-tooltip": "Bővítés további felhasználók hozzáadásához"
     },
     "item": {
-      "add-bookmark": "",
-      "remove-bookmark": ""
+      "bookmark": {
+        "tooltip": ""
+      }
     },
     "kiosk": {
       "tv-alert": "Nyomja le az ESC gombot a kioszk módból való kilépéshez"
@@ -13830,6 +13918,7 @@
     "sidebar": {
       "add-below": "",
       "add-expression": "",
+      "add-expression-disabled": "",
       "add-query": "",
       "add-query-or-expression": "",
       "add-saved-query": "",

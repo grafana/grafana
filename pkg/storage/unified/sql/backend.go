@@ -149,6 +149,7 @@ func NewStorageBackend(
 		DBKeepAlive:          eDB,
 		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
 		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
+		TenantDeleterConfig:  resource.NewTenantDeleterConfig(cfg),
 		GarbageCollection: resource.GarbageCollectionConfig{
 			Enabled:          cfg.EnableGarbageCollection,
 			DryRun:           cfg.GarbageCollectionDryRun,
