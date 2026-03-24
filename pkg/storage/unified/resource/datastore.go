@@ -582,7 +582,10 @@ type batchSaveItem struct {
 	Value []byte
 }
 
-// batchSave saves multiple items in a single Batch call to the KV store.
+// batchSave saves multiple items to the DataSection.
+// For SqlKV it uses BulkInsertData (multi-row INSERT) for maximum throughput.
+// The caller must ensure keys are new (e.g. by deleting the collection first).
+// For other KV implementations it falls back to the general Batch method.
 func (d *dataStore) batchSave(ctx context.Context, items []batchSaveItem) error {
 	if len(items) == 0 {
 		return nil
@@ -602,6 +605,11 @@ func (d *dataStore) batchSave(ctx context.Context, items []batchSaveItem) error 
 			Key:   key,
 			Value: item.Value,
 		}
+	}
+
+	// Use optimized multi-row INSERT for SqlKV (keys guaranteed new during bulk import).
+	if sqlkv, ok := d.kv.(*kvpkg.SqlKV); ok {
+		return sqlkv.BulkInsertData(ctx, ops)
 	}
 
 	return d.kv.Batch(ctx, dataSection, ops)
