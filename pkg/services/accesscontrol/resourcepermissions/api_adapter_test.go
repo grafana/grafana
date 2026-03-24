@@ -665,6 +665,47 @@ func TestGetProvisionedPermissions(t *testing.T) {
 		assert.Equal(t, "provisioned-user", directPerm.UserLogin)
 		assert.False(t, directPerm.IsInherited, "direct permission should not be inherited")
 	})
+
+	t.Run("returns error when InheritedScopesSolver fails", func(t *testing.T) {
+		license := licensingtest.NewFakeLicensing()
+		license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
+
+		mockStore := &mockResourcePermissionStore{
+			permissions: []accesscontrol.ResourcePermission{},
+		}
+
+		expectedError := errors.New("dashboard not found")
+
+		api := &api{
+			cfg:    &setting.Cfg{},
+			logger: log.New("test"),
+			service: &Service{
+				store: mockStore,
+				options: Options{
+					Resource:          "dashboards",
+					ResourceAttribute: "uid",
+					APIGroup:          dashboardv1.APIGroup,
+					PermissionsToActions: map[string][]string{
+						"View": {"dashboards:read"},
+						"Edit": {"dashboards:read", "dashboards:write"},
+					},
+					InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
+						// Simulate error (e.g., dashboard not found)
+						return nil, expectedError
+					},
+				},
+				actions:     []string{"dashboards:read", "dashboards:write"},
+				permissions: []string{"Edit", "View"},
+				license:     license,
+			},
+		}
+
+		_, err := api.getProvisionedPermissions(context.Background(), "stack-123-org-1", "dashboard-123")
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, expectedError, "should return error from InheritedScopesSolver")
+		assert.Contains(t, err.Error(), "failed to get inherited scopes for provisioned permissions")
+	})
 }
 
 // TestGetResourcePermissionsFromK8s_AdminRole tests that Admin role is added when access control enforcement is disabled

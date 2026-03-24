@@ -20,7 +20,6 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -84,10 +83,9 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 	// Get provisioned permissions from legacy API
 	provisionedDTO, err := a.getProvisionedPermissions(ctx, namespace, resourceID)
 	if err != nil {
-		a.logger.Warn("Failed to get provisioned permissions from legacy API", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
-	} else {
-		dto = append(dto, provisionedDTO...)
+		return nil, fmt.Errorf("failed to get provisioned permissions: %w", err)
 	}
+	dto = append(dto, provisionedDTO...)
 
 	// Add default Admin role when access control enforcement is disabled
 	// This maintains parity with the legacy API behavior
@@ -318,15 +316,8 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 		var err error
 		inheritedScopes, err = a.service.options.InheritedScopesSolver(ctx, orgID, resourceID)
 		if err != nil {
-			a.logger.Warn("Failed to get inherited scopes for provisioned permissions", "error", err, "resourceID", resourceID)
-			inheritedScopes = nil
+			return nil, fmt.Errorf("failed to get inherited scopes for provisioned permissions: %w", err)
 		}
-	}
-
-	requester, err := identity.GetRequester(ctx)
-	if err != nil {
-		a.logger.Warn("Failed to get requester for provisioned permissions", "error", err)
-		requester = nil
 	}
 
 	legacyPermissions, err := a.service.store.GetResourcePermissions(ctx, orgID, GetResourcePermissionsQuery{
@@ -338,7 +329,7 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 		ExcludeManaged:       true, // SQL-level filter: exclude "managed:" roles to get only provisioned
 		InheritedScopes:      inheritedScopes,
 		EnforceAccessControl: false,
-		User:                 requester,
+		User:                 nil,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get legacy permissions: %w", err)
