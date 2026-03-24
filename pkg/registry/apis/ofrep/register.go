@@ -267,7 +267,7 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-               valid, ns := b.validateNamespace(w, r)
+		valid, ns := b.validateNamespace(w, r)
 		b.logger.Debug("validating namespace in oneFlagHandler handler", "namespace", ns, "valid", valid, "flag", flagKey)
 		if !valid {
 			_ = tracing.Errorf(span, namespaceMismatchMsg)
@@ -294,7 +294,7 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-               valid, ns := b.validateNamespace(w, r)
+		valid, ns := b.validateNamespace(w, r)
 		b.logger.Debug("validating namespace in allFlagsHandler handler", "namespace", ns, "valid", valid)
 
 		if !valid {
@@ -371,9 +371,9 @@ func (b *APIBuilder) validateNamespace(w http.ResponseWriter, r *http.Request) (
 		namespace = mux.Vars(r)["namespace"]
 	}
 
-       const mib = 1024 * 1024
+	const mib = 1024 * 1024
 	// Read request body for namespace validation and tracing
-       body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, mib))
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, mib))
 	if err != nil {
 		_ = tracing.Errorf(span, "failed to read request body: %w", err)
 		b.logger.Error("Error reading evaluation request body", "error", err)
