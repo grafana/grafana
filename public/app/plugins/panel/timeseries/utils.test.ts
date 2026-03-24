@@ -20,11 +20,11 @@ describe('prepare timeseries graph', () => {
   });
 
   it('does not needlessly copy clean arrays', () => {
-    const values = [1,2];
+    const values = [1, 2];
 
     const df = createDataFrame({
       fields: [
-        { name: 'time', type: FieldType.time, values: [1000,2000] },
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
         { name: 'a', values },
       ],
     });
