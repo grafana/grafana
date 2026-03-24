@@ -73,6 +73,7 @@ func TestIntegrationProvisioning_FilesQuotaEnforcement(t *testing.T) {
 	})
 
 	t.Run("within quota allows create and update via files endpoint", func(t *testing.T) {
+		// With folder target: 1 dashboard + 1 folder = 2 resources, limit 10 → within quota
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 10})
 		ctx := context.Background()

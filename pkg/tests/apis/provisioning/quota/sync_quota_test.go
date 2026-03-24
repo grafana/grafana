@@ -170,6 +170,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonQuotaExceeded)
 	})
 	t.Run("full sync that exceeds quota creates some resources and skips others with warnings", func(t *testing.T) {
+		// Allow 3 total resources: 1 folder + 2 dashboards
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 3})
 
@@ -254,6 +255,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	})
 
 	t.Run("full sync with nested folders counts folders toward quota and skips resources", func(t *testing.T) {
+		// Allow 6 total resources: 1 root folder + 2 nested folders + 2 dashboards + 1 new folder = 6
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 6})
 

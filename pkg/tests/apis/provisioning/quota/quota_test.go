@@ -71,6 +71,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 	// Is only possible to set the first sync to exceed quota when the repo is created.
 	// It should be possible to get that situation when https://github.com/grafana/git-ui-sync-project/issues/832 is implemented.
 	t.Run("quota condition is ResourceQuotaExceeded when limit is exceeded", func(t *testing.T) {
+		// Set a low resource limit
 		helper := sharedHelper(t)
 		ctx := context.Background()
 
@@ -134,6 +135,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 	})
 
 	t.Run("quota condition is WithinQuota when resources are below limit", func(t *testing.T) {
+		// Set a limit higher than resources
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 10})
 		ctx := context.Background()
@@ -222,6 +224,7 @@ func nestedField(obj map[string]interface{}, fields ...string) (interface{}, boo
 
 func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 	t.Run("quota status shows configured limits", func(t *testing.T) {
+		// Set specific quota limits
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{
 			MaxResourcesPerRepository: 50,
@@ -282,6 +285,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 	})
 
 	t.Run("quota status shows unlimited when no limits configured", func(t *testing.T) {
+		// Don't set any quota limits (defaults to 0 = unlimited)
 		helper := sharedHelper(t)
 		ctx := context.Background()
 
