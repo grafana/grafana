@@ -51,7 +51,7 @@ export function SaveBeforeShareModal({ dashboard, onContinue, onDismiss, title, 
     </Trans>
   ) : (
     <Trans i18nKey="dashboard-scene.sharing.save-before-share.text-no-save">
-      You have unsaved changes to this dashboard. Are you sure you want to discard them?
+      You have unsaved changes. You don’t have permission to save. Discard changes and share the original?
     </Trans>
   );
 
