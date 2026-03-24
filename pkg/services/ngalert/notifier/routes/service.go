@@ -43,6 +43,8 @@ type routeAccessControl interface {
 	AuthorizeCreate(ctx context.Context, user identity.Requester) error
 	AuthorizeUpdateByUID(ctx context.Context, user identity.Requester, uid string) error
 	AuthorizeDeleteByUID(ctx context.Context, user identity.Requester, uid string) error
+	SetDefaultPermissions(ctx context.Context, user identity.Requester, route *legacy_storage.ManagedRoute) error
+	DeleteAllPermissions(ctx context.Context, orgID int64, route *legacy_storage.ManagedRoute) error
 }
 
 type Service struct {
@@ -357,6 +359,9 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}
+		if err := nps.routeAccess.DeleteAllPermissions(ctx, orgID, existing); err != nil {
+			return err
+		}
 		return nps.provenanceStore.DeleteProvenance(ctx, existing, orgID)
 	})
 	if err != nil {
@@ -411,6 +416,9 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
+			return err
+		}
+		if err := nps.routeAccess.SetDefaultPermissions(ctx, user, created); err != nil {
 			return err
 		}
 		return nps.provenanceStore.SetProvenance(ctx, created, orgID, p)

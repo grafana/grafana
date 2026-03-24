@@ -134,7 +134,7 @@ func TestGetManagedRoute(t *testing.T) {
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		)
 
-		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService{})
+		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
 
 		route, err := sut.GetManagedRoute(context.Background(), orgID, "imported", user)
 		require.NoError(t, err)
@@ -165,7 +165,7 @@ func TestGetManagedRoute(t *testing.T) {
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		)
 
-		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService{})
+		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
 
 		route, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, user)
 		require.NoError(t, err)
@@ -194,7 +194,7 @@ func TestGetManagedRoute(t *testing.T) {
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		)
 
-		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService{})
+		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
 
 		_, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, user)
 		require.ErrorIs(t, err, expectedErr)
@@ -213,7 +213,7 @@ func TestGetManagedRoute(t *testing.T) {
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		)
 
-		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService{})
+		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
 
 		singleRoute, err := sut.GetManagedRoute(context.Background(), orgID, "imported", user)
 		require.NoError(t, err)
@@ -247,7 +247,7 @@ func TestGetManagedRoute(t *testing.T) {
 			featuremgmt.FlagAlertingMultiplePolicies,
 		)
 
-		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService{})
+		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
 
 		_, err := sut.GetManagedRoute(context.Background(), orgID, "does-not-exist", user)
 		require.ErrorIs(t, err, models.ErrRouteNotFound)
@@ -257,7 +257,7 @@ func TestGetManagedRoute(t *testing.T) {
 		configStore := &legacy_storage.AlertmanagerConfigStoreFake{}
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
-		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService())
+		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
 		_, err := sut.GetManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
@@ -277,7 +277,7 @@ func TestGetManagedRoutes(t *testing.T) {
 		}
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
-		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService())
+		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
 		_, err := sut.GetManagedRoutes(context.Background(), orgID, usr)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
@@ -296,7 +296,7 @@ func TestGetManagedRoutes(t *testing.T) {
 			legacy_storage.UserDefinedRoutingTreeName: {},
 			"route-a": {},
 		}
-		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService{
+		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{
 			FilterReadFunc: func(_ context.Context, _ identity.Requester, routes ...*legacy_storage.ManagedRoute) ([]*legacy_storage.ManagedRoute, error) {
 				var filtered []*legacy_storage.ManagedRoute
 				for _, r := range routes {
@@ -327,7 +327,7 @@ func TestGetManagedRoutes(t *testing.T) {
 		}
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
-		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService{
+		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{
 			FilterReadFunc: func(_ context.Context, _ identity.Requester, _ ...*legacy_storage.ManagedRoute) ([]*legacy_storage.ManagedRoute, error) {
 				return nil, nil // no routes allowed
 			},
@@ -347,7 +347,7 @@ func TestGetManagedRoutes(t *testing.T) {
 		}
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
-		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService{})
+		sut := createServiceSut(configStore, provStore, features, &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{})
 
 		routes, err := sut.GetManagedRoutes(context.Background(), orgID, usr)
 		require.NoError(t, err)
@@ -356,7 +356,7 @@ func TestGetManagedRoutes(t *testing.T) {
 	})
 }
 
-func TestCreateManagedRoute_Authorization(t *testing.T) {
+func TestCreateManagedRoute(t *testing.T) {
 	orgID := int64(1)
 	user := &user.SignedInUser{OrgID: 1}
 
@@ -364,14 +364,36 @@ func TestCreateManagedRoute_Authorization(t *testing.T) {
 		configStore := &legacy_storage.AlertmanagerConfigStoreFake{}
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
-		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService())
+		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
 		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", definitions.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
+	t.Run("sets default permissions when create", func(t *testing.T) {
+		rev := configRevisionWithImportedRoute()
+		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
+				return rev, nil
+			},
+		}
+		provStore := fakes.NewFakeProvisioningStore()
+		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
+		authz := &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{
+			SetDefaultPermissionsFunc: func(_ context.Context, u identity.Requester, r *legacy_storage.ManagedRoute) error {
+				assert.Equal(t, user, u)
+				assert.Equal(t, "new-route", r.Name)
+				return nil
+			},
+		}
+		sut := createServiceSut(configStore, provStore, features, authz)
+
+		_, err := sut.CreateManagedRoute(context.Background(), orgID, "new-route", definitions.Route{Receiver: "grafana-default"}, models.ProvenanceNone, user)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"AuthorizeCreate", "SetDefaultPermissions"}, authz.Calls.Methods())
+	})
 }
 
-func TestUpdateManagedRoute_Authorization(t *testing.T) {
+func TestUpdateManagedRoute(t *testing.T) {
 	orgID := int64(1)
 	user := &user.SignedInUser{OrgID: 1}
 
@@ -379,14 +401,14 @@ func TestUpdateManagedRoute_Authorization(t *testing.T) {
 		configStore := &legacy_storage.AlertmanagerConfigStoreFake{}
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
-		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService())
+		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
 		_, err := sut.UpdateManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, definitions.Route{Receiver: "grafana-default"}, models.ProvenanceNone, "v1", user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
 	})
 }
 
-func TestDeleteManagedRoute_Authorization(t *testing.T) {
+func TestDeleteManagedRoute(t *testing.T) {
 	orgID := int64(1)
 	user := &user.SignedInUser{OrgID: 1}
 
@@ -394,9 +416,32 @@ func TestDeleteManagedRoute_Authorization(t *testing.T) {
 		configStore := &legacy_storage.AlertmanagerConfigStoreFake{}
 		provStore := fakes.NewFakeProvisioningStore()
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
-		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService())
+		sut := createServiceSut(configStore, provStore, features, acfakes.NewDenyAllRouteAccessService[*legacy_storage.ManagedRoute]())
 
 		err := sut.DeleteManagedRoute(context.Background(), orgID, legacy_storage.UserDefinedRoutingTreeName, models.ProvenanceNone, "v1", user)
 		require.ErrorIs(t, err, ac.ErrAuthorizationBase)
+	})
+
+	t.Run("deletes all permissions when delete", func(t *testing.T) {
+		rev := configRevisionWithManagedRoutes()
+		configStore := &legacy_storage.AlertmanagerConfigStoreFake{
+			GetFn: func(_ context.Context, _ int64) (*legacy_storage.ConfigRevision, error) {
+				return rev, nil
+			},
+		}
+		provStore := fakes.NewFakeProvisioningStore()
+		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
+		authz := &acfakes.FakeRouteAccessService[*legacy_storage.ManagedRoute]{
+			DeleteAllPermissionsFunc: func(_ context.Context, o int64, r *legacy_storage.ManagedRoute) error {
+				assert.Equal(t, orgID, o)
+				assert.Equal(t, "route-a", r.Name)
+				return nil
+			},
+		}
+		sut := createServiceSut(configStore, provStore, features, authz)
+
+		err := sut.DeleteManagedRoute(context.Background(), orgID, "route-a", models.ProvenanceNone, "", user)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"AuthorizeDeleteByUID", "DeleteAllPermissions"}, authz.Calls.Methods())
 	})
 }
