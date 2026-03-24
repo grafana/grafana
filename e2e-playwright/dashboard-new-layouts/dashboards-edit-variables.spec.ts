@@ -52,7 +52,7 @@ test.describe(
       const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
       await expect(panelContent).toBeVisible();
       const markdownContent = panelContent.locator('.markdown-html');
-      await expect(markdownContent).toContainText(`${variable.label}: ${variable.value}`);
+      await expect(markdownContent).toContainText(`VariableUnderTest: ${variable.value}`);
     });
 
     test('can add a new textbox variable', async ({ gotoDashboardPage, selectors, page }) => {
@@ -75,7 +75,7 @@ test.describe(
       const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
       await expect(panelContent).toBeVisible();
       const markdownContent = panelContent.locator('.markdown-html');
-      await expect(markdownContent).toContainText(`${variable.label}: ${variable.value}`);
+      await expect(markdownContent).toContainText(`VariableUnderTest: ${variable.value}`);
     });
 
     test('can add a new interval variable', async ({ gotoDashboardPage, selectors, page }) => {
@@ -103,7 +103,7 @@ test.describe(
       const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
       await expect(panelContent).toBeVisible();
       const markdownContent = panelContent.locator('.markdown-html');
-      await expect(markdownContent).toContainText(`${variable.label}: ${variable.value}`);
+      await expect(markdownContent).toContainText(`VariableUnderTest: ${variable.value}`);
 
       // select the variable in the dashboard and set the Auto option
       const variableDropdown = dashboardPage.getByGrafanaSelector(
@@ -117,7 +117,7 @@ test.describe(
 
       // assert the panel is visible and has the correct "Auto" value
       await expect(panelContent).toBeVisible();
-      await expect(markdownContent).toContainText(`${variable.label}: 10m`);
+      await expect(markdownContent).toContainText('VariableUnderTest: 10m');
     });
     test('can make a hidden variable visible', async ({ dashboardPage, selectors, page }) => {
       const variable = variableWithDefaults({ display: 'Hidden' });
