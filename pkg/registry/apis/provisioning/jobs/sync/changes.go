@@ -32,6 +32,10 @@ type ResourceFileChange struct {
 	// after _folder.json deletion). The old folder needs cleanup after children
 	// have been re-parented.
 	FolderRenamed bool
+
+	// OrphanCleanup marks deletions emitted to clean up duplicate-path orphans.
+	// DetectRenames must skip these so orphan removal is not consumed as a rename.
+	OrphanCleanup bool
 }
 
 // IsUpdatedFolder reports whether this change is an update to an existing folder.
@@ -101,8 +105,9 @@ func Changes(
 	folderMetadataEnabled bool,
 ) ([]ResourceFileChange, error) {
 	logger := logging.FromContext(ctx)
-	lookup := make(map[string]*provisioning.ResourceListItem, len(target.Items))
-	for _, item := range target.Items {
+	lookup := make(map[string][]*provisioning.ResourceListItem, len(target.Items))
+	for i := range target.Items {
+		item := &target.Items[i]
 		if item.Path == "" {
 			if item.Group != resources.FolderResource.Group {
 				return nil, fmt.Errorf("empty path on a non folder")
@@ -115,7 +120,7 @@ func Changes(
 			item.Path = item.Path + "/"
 		}
 
-		lookup[item.Path] = &item
+		lookup[item.Path] = append(lookup[item.Path], item)
 	}
 
 	keep := safepath.NewTrie()
@@ -127,13 +132,44 @@ func Changes(
 			file.Path = file.Path + "/"
 		}
 
-		check, ok := lookup[file.Path]
+		items, ok := lookup[file.Path]
 		if ok {
-			if check.Hash != file.Hash && check.Resource != resources.FolderResource.Resource {
+			// Pick the best match: prefer the item whose hash matches the
+			// source file (preserves K8s UID). Fall back to the first item.
+			primary := items[0]
+			for _, item := range items {
+				if item.Hash == file.Hash {
+					primary = item
+					break
+				}
+			}
+
+			// Emit deletions for orphan duplicates at this path.
+			// Skip folder resources: directory tree hashes don't match the
+			// _folder.json blob hash stored on managed folders, so the
+			// primary selection above is unreliable for folders. Folder
+			// orphan cleanup is handled by augmentChangesForFolderMetadata
+			// (full sync) and the incremental diff builder.
+			if primary.Resource != resources.FolderResource.Resource {
+				for _, item := range items {
+					if item == primary {
+						continue
+					}
+					logger.Warn("deleting orphan resource at duplicate path", "path", item.Path, "name", item.Name)
+					changes = append(changes, ResourceFileChange{
+						Action:        repository.FileActionDeleted,
+						Path:          item.Path,
+						Existing:      item,
+						OrphanCleanup: true,
+					})
+				}
+			}
+
+			if primary.Hash != file.Hash && primary.Resource != resources.FolderResource.Resource {
 				changes = append(changes, ResourceFileChange{
 					Action:   repository.FileActionUpdated,
-					Path:     check.Path,
-					Existing: check,
+					Path:     primary.Path,
+					Existing: primary,
 				})
 			}
 
@@ -141,7 +177,7 @@ func Changes(
 				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
-			if check.Resource != resources.FolderResource.Resource {
+			if primary.Resource != resources.FolderResource.Resource {
 				delete(lookup, file.Path)
 			}
 
@@ -167,16 +203,43 @@ func Changes(
 				}
 				// If the parent directory already exists in Grafana and the hash changed,
 				// record an update to reconcile metadata (e.g. folder title).
+				// When multiple managed folders share the path (orphans), pick the
+				// one whose metadata hash matches the new _folder.json content so
+				// we target the correct UID, and delete the rest as orphans.
+				// This is the correct place for folder orphan cleanup because
+				// file.Hash (_folder.json blob hash) is directly comparable to
+				// managed folder hashes (sourceChecksum derived from MetadataHash).
 				parentDir := safepath.Dir(file.Path)
 				if !strings.HasSuffix(parentDir, "/") {
 					parentDir += "/"
 				}
-				if existing, ok := lookup[parentDir]; ok && existing.Hash != file.Hash {
-					changes = append(changes, ResourceFileChange{
-						Action:   repository.FileActionUpdated,
-						Path:     parentDir,
-						Existing: existing,
-					})
+				if parentItems, ok := lookup[parentDir]; ok && len(parentItems) > 0 {
+					best := parentItems[0]
+					for _, p := range parentItems {
+						if p.Hash == file.Hash {
+							best = p
+							break
+						}
+					}
+					for _, p := range parentItems {
+						if p == best {
+							continue
+						}
+						logger.Warn("deleting orphan folder at duplicate path", "path", p.Path, "name", p.Name)
+						changes = append(changes, ResourceFileChange{
+							Action:        repository.FileActionDeleted,
+							Path:          parentDir,
+							Existing:      p,
+							OrphanCleanup: true,
+						})
+					}
+					if best.Hash != file.Hash {
+						changes = append(changes, ResourceFileChange{
+							Action:   repository.FileActionUpdated,
+							Path:     parentDir,
+							Existing: best,
+						})
+					}
 				}
 				continue
 			}
@@ -205,8 +268,7 @@ func Changes(
 				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
-			_, ok := lookup[safeSegment]
-			if ok {
+			if _, ok := lookup[safeSegment]; ok {
 				continue
 			}
 
@@ -224,16 +286,18 @@ func Changes(
 	}
 
 	// Paths found in grafana, without a matching path in the repository
-	for _, v := range lookup {
-		if v.Resource == resources.FolderResource.Resource && keep.Exists(v.Path) {
-			continue
-		}
+	for _, items := range lookup {
+		for _, v := range items {
+			if v.Resource == resources.FolderResource.Resource && keep.Exists(v.Path) {
+				continue
+			}
 
-		changes = append(changes, ResourceFileChange{
-			Action:   repository.FileActionDeleted,
-			Path:     v.Path,
-			Existing: v,
-		})
+			changes = append(changes, ResourceFileChange{
+				Action:   repository.FileActionDeleted,
+				Path:     v.Path,
+				Existing: v,
+			})
+		}
 	}
 
 	// Deepest first (stable sort order)
@@ -262,6 +326,14 @@ func augmentChangesForFolderMetadata(
 
 	pathsWithChanges := make(map[string]bool, len(changes))
 	for _, c := range changes {
+		// Exclude DELETE actions: emitDirectChildrenChanges iterates source
+		// tree entries, so files deleted from source won't appear there.
+		// Only orphan-cleanup deletes (where the source file still exists)
+		// would land here, and those must not suppress the reparent UPDATE
+		// that the surviving primary needs when a parent folder UID changes.
+		if c.Action == repository.FileActionDeleted {
+			continue
+		}
 		pathsWithChanges[c.Path] = true
 	}
 
@@ -305,6 +377,9 @@ func processInvalidFolderMetadataChanges(
 	changes []ResourceFileChange,
 	foldersWithMetadata map[string]bool,
 ) ([]ResourceFileChange, []*resources.InvalidFolderMetadata, error) {
+	// First pass: validate metadata and collect folder paths with invalid
+	// _folder.json so we can also suppress orphan-cleanup deletes there.
+	invalidPaths := make(map[string]bool)
 	filtered := make([]ResourceFileChange, 0, len(changes))
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 
@@ -328,6 +403,7 @@ func processInvalidFolderMetadataChanges(
 		if errors.As(err, &invalidErr) {
 			invalidErr = invalidErr.WithAction(change.Action)
 			invalidFolderMetadata = append(invalidFolderMetadata, invalidErr)
+			invalidPaths[change.Path] = true
 			if change.Action == repository.FileActionCreated {
 				filtered = append(filtered, change)
 			}
@@ -340,6 +416,20 @@ func processInvalidFolderMetadataChanges(
 		}
 
 		return nil, nil, fmt.Errorf("read folder metadata for %s: %w", change.Path, err)
+	}
+
+	// Second pass: suppress orphan-cleanup deletes at folder paths whose
+	// metadata is invalid — the hash-based primary selection is unreliable
+	// when the _folder.json content can't be parsed.
+	if len(invalidPaths) > 0 {
+		kept := make([]ResourceFileChange, 0, len(filtered))
+		for _, c := range filtered {
+			if c.OrphanCleanup && safepath.IsDir(c.Path) && invalidPaths[c.Path] {
+				continue
+			}
+			kept = append(kept, c)
+		}
+		filtered = kept
 	}
 
 	return filtered, invalidFolderMetadata, nil
@@ -480,6 +570,9 @@ func DetectRenames(changes []ResourceFileChange) []ResourceFileChange {
 		if change.Action != repository.FileActionDeleted || change.Existing == nil {
 			continue
 		}
+		if change.OrphanCleanup {
+			continue
+		}
 		if safepath.IsDir(change.Path) || change.Existing.Hash == "" {
 			continue
 		}
@@ -544,7 +637,7 @@ func emitDirectChildrenChanges(
 	pathsWithChanges, affectedFolders map[string]bool,
 	changes []ResourceFileChange,
 ) []ResourceFileChange {
-	existingByPath := make(map[string]*provisioning.ResourceListItem, len(target.Items))
+	existingByPath := make(map[string][]*provisioning.ResourceListItem, len(target.Items))
 	for i := range target.Items {
 		item := &target.Items[i]
 
@@ -553,7 +646,19 @@ func emitDirectChildrenChanges(
 			path = safepath.EnsureTrailingSlash(path)
 		}
 
-		existingByPath[path] = item
+		existingByPath[path] = append(existingByPath[path], item)
+	}
+
+	// Collect items already targeted by a DELETE so we can skip them when
+	// selecting the best match for reparent updates. Keyed by pointer
+	// identity (all items reference target.Items) rather than Name alone,
+	// since Name is only unique within a (Group, Resource) and different
+	// resource kinds can share the same name.
+	deletedItems := make(map[*provisioning.ResourceListItem]bool, len(changes))
+	for _, c := range changes {
+		if c.Action == repository.FileActionDeleted && c.Existing != nil {
+			deletedItems[c.Existing] = true
+		}
 	}
 
 	for _, file := range source {
@@ -578,16 +683,29 @@ func emitDirectChildrenChanges(
 			continue
 		}
 
-		existing, ok := existingByPath[path]
+		items, ok := existingByPath[path]
 		// If the resource path doesn't exist in Grafana, it means it's new
 		// therefore it doesn't need to be updated.
-		if !ok {
+		if !ok || len(items) == 0 {
 			continue
+		}
+		best := items[0]
+		for _, it := range items {
+			if deletedItems[it] {
+				continue
+			}
+			if it.Hash == file.Hash {
+				best = it
+				break
+			}
+			if deletedItems[best] {
+				best = it
+			}
 		}
 		changes = append(changes, ResourceFileChange{
 			Action:   repository.FileActionUpdated,
 			Path:     path,
-			Existing: existing,
+			Existing: best,
 		})
 		pathsWithChanges[path] = true
 	}

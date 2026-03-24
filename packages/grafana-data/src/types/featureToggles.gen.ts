@@ -1391,11 +1391,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable new gauge visualization
-  * @default true
-  */
-  newGauge?: boolean;
-  /**
   * Enable new visualization suggestions
   * @default false
   */
@@ -1735,4 +1730,9 @@ export interface FeatureToggles {
   * @default false
   */
   rbacIAMClient?: boolean;
+  /**
+  * Enables the logs tableNG panel to replace existing tableRT
+  * @default false
+  */
+  logsTablePanelNG?: boolean;
 }

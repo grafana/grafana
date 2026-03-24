@@ -64,13 +64,12 @@ export function AlertRuleInstances({ ruleUID, depth = 0 }: AlertRuleInstancesPro
     return (
       <GenericRow
         width={leftColumnWidth}
-        title={<Trans i18nKey="alerting.triage.alert-instances">Alert instances</Trans>}
-        depth={depth}
-      >
-        <div>
+        title={
           <Trans i18nKey="alerting.triage.no-instances-found">No alert instances found for rule: {{ ruleUID }}</Trans>
-        </div>
-      </GenericRow>
+        }
+        depth={depth}
+        showIndentBorder
+      />
     );
   }
 
