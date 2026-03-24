@@ -265,7 +265,7 @@ func TestDataKey_Validate(t *testing.T) {
 		},
 		// Invalid cases - empty fields
 		{
-			name: "invalid - empty namespace",
+			name: "valid - empty namespace (cluster-scoped)",
 			key: DataKey{
 				Namespace:       "",
 				Group:           "test-group",
@@ -274,8 +274,7 @@ func TestDataKey_Validate(t *testing.T) {
 				ResourceVersion: rv,
 				Action:          DataActionCreated,
 			},
-			expectError: true,
-			errorMsg:    ErrNamespaceRequired,
+			expectError: false,
 		},
 		{
 			name: "invalid - empty group",
@@ -1263,8 +1262,8 @@ func testDataStoreValidationEnforced(t *testing.T, ctx context.Context, ds *data
 		require.Equal(t, "namespace", validationErr.Field)
 	})
 
-	// Test another type of invalid key
-	emptyFieldKey := DataKey{
+	// Empty namespace is valid for cluster-scoped resources
+	clusterScopedKey := DataKey{
 		Namespace:       "",
 		Group:           "test-group",
 		Resource:        "test-resource",
@@ -1273,25 +1272,21 @@ func testDataStoreValidationEnforced(t *testing.T, ctx context.Context, ds *data
 		Action:          DataActionCreated,
 	}
 
-	t.Run("Get with empty namespace returns validation error", func(t *testing.T) {
-		_, err := ds.Get(ctx, emptyFieldKey)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "invalid data key")
-		require.Contains(t, err.Error(), "namespace is required")
+	t.Run("Save with empty namespace succeeds (cluster-scoped)", func(t *testing.T) {
+		err := ds.Save(ctx, clusterScopedKey, testValue)
+		require.NoError(t, err)
 	})
 
-	t.Run("Save with empty namespace returns validation error", func(t *testing.T) {
-		err := ds.Save(ctx, emptyFieldKey, testValue)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "invalid data key")
-		require.Contains(t, err.Error(), "namespace is required")
+	t.Run("Get with empty namespace succeeds (cluster-scoped)", func(t *testing.T) {
+		reader, err := ds.Get(ctx, clusterScopedKey)
+		require.NoError(t, err)
+		require.NotNil(t, reader)
+		_ = reader.Close()
 	})
 
-	t.Run("Delete with empty namespace returns validation error", func(t *testing.T) {
-		err := ds.Delete(ctx, emptyFieldKey)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "invalid data key")
-		require.Contains(t, err.Error(), "namespace is required")
+	t.Run("Delete with empty namespace succeeds (cluster-scoped)", func(t *testing.T) {
+		err := ds.Delete(ctx, clusterScopedKey)
+		require.NoError(t, err)
 	})
 }
 
@@ -1425,14 +1420,13 @@ func TestListRequestKey_Validate(t *testing.T) {
 			errorField:  "resource",
 		},
 		{
-			name: "invalid - name without namespace",
+			name: "valid - name without namespace (cluster-scoped)",
 			key: ListRequestKey{
 				Name:     "test-name",
 				Resource: "test-resource",
 				Group:    "test-group",
 			},
-			expectError: true,
-			errorMsg:    ErrNameMustBeEmptyWhenNamespaceEmpty,
+			expectError: false,
 		},
 		{
 			name: "invalid - name without group and resource",
@@ -1619,12 +1613,6 @@ func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dat
 
 	t.Run("returns error for empty required fields", func(t *testing.T) {
 		testCases := map[string]ListRequestKey{
-			"empty namespace": {
-				Namespace: "",
-				Group:     "test-group",
-				Resource:  "test-resource",
-				Name:      "test-name",
-			},
 			"empty group": {
 				Namespace: "test-namespace",
 				Group:     "",
@@ -2675,14 +2663,13 @@ func TestGetRequestKey_Validate(t *testing.T) {
 			errorField: "resource",
 		},
 		{
-			name: "missing namespace",
+			name: "valid - missing namespace (cluster-scoped)",
 			key: GetRequestKey{
 				Group:    "apps",
 				Resource: "resources",
 				Name:     "test-resource",
 			},
-			expectErr:  true,
-			errorField: "namespace",
+			expectErr: false,
 		},
 		{
 			name: "missing name",

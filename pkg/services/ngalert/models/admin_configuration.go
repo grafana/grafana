@@ -1,7 +1,7 @@
 package models
 
 import (
-	"errors"
+	"fmt"
 )
 
 type AlertmanagersChoice int
@@ -45,5 +45,5 @@ func StringToAlertmanagersChoice(str string) (AlertmanagersChoice, error) {
 			return k, nil
 		}
 	}
-	return 0, errors.New("invalid alertmanager choice")
+	return 0, fmt.Errorf("invalid alertmanager choice: %q", str)
 }

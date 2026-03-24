@@ -47,7 +47,7 @@ composableKinds: DataQuery: {
 					valueField?: string
 				}
 
-				#QueryType: "lucene" | "dsl" @cuetsy(kind="type")
+				#QueryType: "lucene" | "dsl" | "esql" @cuetsy(kind="type")
 
 				#BucketAggregation: #DateHistogram | #Histogram | #Terms | #Filters | #GeoHashGrid | #Nested @cuetsy(kind="type")
 				#MetricAggregation: #Count | #PipelineMetricAggregation | #MetricAggregationWithSettings     @cuetsy(kind="type")

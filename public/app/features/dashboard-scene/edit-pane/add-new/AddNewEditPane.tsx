@@ -4,6 +4,7 @@ import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { SceneObject } from '@grafana/scenes';
 import { Sidebar, useStyles2 } from '@grafana/ui';
 import addPanelImg from 'img/dashboards/add-panel.png';
@@ -13,17 +14,21 @@ import { getDashboardSceneFor } from '../../utils/utils';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
 import { AddButton } from './AddButton';
+import { AddFilters } from './AddFilters';
 import { AddLink } from './AddLink';
 import { AddNewSection } from './AddNewSection';
+import { AddRow } from './AddRow';
+import { AddTab } from './AddTab';
 import { AddVariable } from './AddVariable';
 
 interface AddNewEditPaneProps {
   dashboard: SceneObject;
+  selectedElement: SceneObject | undefined;
   onAddPanel: () => void;
   onPastePanel: () => void;
 }
 
-export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard }: AddNewEditPaneProps) {
+export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard, selectedElement }: AddNewEditPaneProps) {
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
   const dashboardScene = getDashboardSceneFor(dashboard);
@@ -112,7 +117,12 @@ export function AddNewEditPane({ onAddPanel, onPastePanel, dashboard }: AddNewEd
           </Droppable>
         </DragDropContext>
       </AddNewSection>
+      <AddNewSection title={t('dashboard-scene.add-new-edit-pane.group-layouts', 'Group layouts')}>
+        <AddRow dashboardScene={dashboardScene} selectedElement={selectedElement} />
+        <AddTab dashboardScene={dashboardScene} selectedElement={selectedElement} />
+      </AddNewSection>
       <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
+        {config.featureToggles.dashboardUnifiedDrilldownControls && <AddFilters dashboardScene={dashboardScene} />}
         <AddVariable dashboardScene={dashboardScene} />
         <AddAnnotationQuery dashboardScene={dashboardScene} />
         <AddLink dashboardScene={dashboardScene} />
