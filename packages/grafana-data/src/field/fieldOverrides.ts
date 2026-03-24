@@ -61,7 +61,7 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
                 max = 0;
               }
             }
-          } else if (!Number.isNaN(v)) {// Number.isFinite()
+          } else if (!Number.isNaN(v)) {
             if (min! > v) {
               min = v;
             }
