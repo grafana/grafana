@@ -103,8 +103,8 @@ func buildUpdateCols(adminConfig *ngmodels.AdminConfiguration) []string {
 		cols = append(cols, "send_alerts_to")
 	}
 
-	if adminConfig.RemoteAlertmanagerUID != nil {
-		cols = append(cols, "remote_alertmanager_uid")
+	if adminConfig.ExternalAlertmanagerUID != nil {
+		cols = append(cols, "external_alertmanager_uid")
 	}
 
 	return cols

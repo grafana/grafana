@@ -66,8 +66,8 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *contextmodel.ReqContext) response.
 		resp.AlertmanagersChoice = apimodels.AlertmanagersChoice(cfg.SendAlertsTo.String())
 	}
 
-	if cfg.RemoteAlertmanagerUID != nil {
-		resp.RemoteAlertmanagerUID = *cfg.RemoteAlertmanagerUID
+	if cfg.ExternalAlertmanagerUID != nil {
+		resp.ExternalAlertmanagerUID = *cfg.ExternalAlertmanagerUID
 	}
 
 	return response.JSON(http.StatusOK, resp)
@@ -78,7 +78,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		return accessForbiddenResp()
 	}
 
-	if body.AlertmanagersChoice == nil && body.RemoteAlertmanagerUID == nil {
+	if body.AlertmanagersChoice == nil && body.ExternalAlertmanagerUID == nil {
 		return response.Error(http.StatusBadRequest, "No fields to update", nil)
 	}
 
