@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -2038,6 +2039,151 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		}
 		require.Equal(t, defaultEventPruningLimit, deletedCount, "All deleted events should be kept")
 		require.Equal(t, defaultEventPruningLimit*2, counter, "Should have 20 deleted + 20 non-deleted events")
+	})
+
+	t.Run("will prune oldest events for cluster-scoped resources", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		ctx := t.Context()
+
+		// Create a cluster-scoped resource (no namespace)
+		ns := NamespacedResource{
+			Namespace: "",
+			Group:     "cluster.example.io",
+			Resource:  "clusterresources",
+		}
+		testObj, err := createTestObjectWithName("my-cluster-resource", ns, "test-data")
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "",
+				Group:     "cluster.example.io",
+				Resource:  "clusterresources",
+				Name:      "my-cluster-resource",
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			PreviousRV: 0,
+		}
+		rv1, err := backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+
+		// Update the resource defaultEventPruningLimit times to exceed the pruner limit
+		previousRV := rv1
+		for i := 0; i < defaultEventPruningLimit; i++ {
+			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
+			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
+			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.PreviousRV = previousRV
+			newRv, err := backend.WriteEvent(ctx, writeEvent)
+			require.NoError(t, err)
+			previousRV = newRv
+		}
+
+		pruningKey := PruningKey{
+			Namespace: "",
+			Group:     "cluster.example.io",
+			Resource:  "clusterresources",
+			Name:      "my-cluster-resource",
+		}
+
+		err = backend.pruneEvents(ctx, pruningKey)
+		require.NoError(t, err)
+
+		// Verify the first event has been pruned (rv1)
+		eventKey1 := DataKey{
+			Namespace:       "",
+			Group:           "cluster.example.io",
+			Resource:        "clusterresources",
+			Name:            "my-cluster-resource",
+			ResourceVersion: rv1,
+			Action:          kv.DataActionCreated,
+		}
+
+		_, err = backend.dataStore.Get(ctx, eventKey1)
+		require.Error(t, err) // Should return error as event is pruned
+		require.ErrorIs(t, err, ErrNotFound)
+
+		// assert defaultEventPruningLimit most recent events exist
+		counter := 0
+		for datakey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: "",
+			Group:     "cluster.example.io",
+			Resource:  "clusterresources",
+			Name:      "my-cluster-resource",
+		}, SortOrderDesc) {
+			require.NoError(t, err)
+			require.NotEqual(t, rv1, datakey.ResourceVersion)
+			counter++
+		}
+		require.Equal(t, defaultEventPruningLimit, counter)
+	})
+
+	t.Run("will not prune events for cluster-scoped resources when less than limit", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		ctx := t.Context()
+
+		// Create a cluster-scoped resource (no namespace)
+		ns := NamespacedResource{
+			Namespace: "",
+			Group:     "cluster.example.io",
+			Resource:  "clusterresources",
+		}
+		testObj, err := createTestObjectWithName("my-cluster-resource", ns, "test-data")
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(testObj)
+		require.NoError(t, err)
+		writeEvent := WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: "",
+				Group:     "cluster.example.io",
+				Resource:  "clusterresources",
+				Name:      "my-cluster-resource",
+			},
+			Value:      objectToJSONBytes(t, testObj),
+			Object:     metaAccessor,
+			PreviousRV: 0,
+		}
+		rv1, err := backend.WriteEvent(ctx, writeEvent)
+		require.NoError(t, err)
+
+		// Update defaultEventPruningLimit-1 times (total events = limit, nothing to prune)
+		previousRV := rv1
+		for i := 0; i < defaultEventPruningLimit-1; i++ {
+			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("update-%d", i)
+			writeEvent.Type = resourcepb.WatchEvent_MODIFIED
+			writeEvent.Value = objectToJSONBytes(t, testObj)
+			writeEvent.PreviousRV = previousRV
+			newRv, err := backend.WriteEvent(ctx, writeEvent)
+			require.NoError(t, err)
+			previousRV = newRv
+		}
+
+		pruningKey := PruningKey{
+			Namespace: "",
+			Group:     "cluster.example.io",
+			Resource:  "clusterresources",
+			Name:      "my-cluster-resource",
+		}
+
+		err = backend.pruneEvents(ctx, pruningKey)
+		require.NoError(t, err)
+
+		// assert all events still exist
+		counter := 0
+		for _, err := range backend.dataStore.Keys(ctx, ListRequestKey{
+			Namespace: "",
+			Group:     "cluster.example.io",
+			Resource:  "clusterresources",
+			Name:      "my-cluster-resource",
+		}, SortOrderDesc) {
+			require.NoError(t, err)
+			counter++
+		}
+		require.Equal(t, defaultEventPruningLimit, counter)
 	})
 }
 

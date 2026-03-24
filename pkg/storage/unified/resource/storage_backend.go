@@ -301,7 +301,7 @@ func (k *kvStorageBackend) cleanupOldEvents(ctx context.Context) {
 
 func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) error {
 	if !key.Validate() {
-		return fmt.Errorf("invalid pruning key, all fields must be set: %+v", key)
+		return fmt.Errorf("invalid pruning key: group, resource, and name must be set: %+v", key)
 	}
 
 	prunerMaxLimit := k.prunerHistoryLimit(key.Group, key.Resource)

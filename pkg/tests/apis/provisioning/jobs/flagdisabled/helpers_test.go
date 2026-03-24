@@ -1,15 +1,12 @@
-package limits
+package flagdisabled
 
 import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-var env = common.NewSharedEnv(func(opts *testinfra.GrafanaOpts) {
-	opts.ProvisioningMaxRepositories = 10
-})
+var env = common.NewSharedEnv()
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
 	t.Helper()
