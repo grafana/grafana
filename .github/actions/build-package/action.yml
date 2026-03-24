@@ -94,11 +94,6 @@ inputs:
     type: boolean
     default: true
     required: false
-  catalog-plugins:
-    type: string
-    description: Comma separated list of catalog plugins to bundle.
-    required: false
-    default: 'elasticsearch'
 outputs:
   dist-dir:
     description: Directory where artifacts are placed
@@ -146,7 +141,6 @@ runs:
         CACHE_BUILDERS: ${{ inputs.cache-builders }}
         ALPINE_BASE: ${{ inputs.alpine-base }}
         UBUNTU_BASE: ${{ inputs.ubuntu-base }}
-        CATALOG_PLUGINS: ${{ inputs.catalog-plugins }}
       with:
         verb: run
         dagger-flags: --verbose=0
@@ -168,8 +162,7 @@ runs:
           --registry=${DOCKER_REGISTRY}
           --checksum=${CHECKSUM}
           --cache-builders=${CACHE_BUILDERS}
-          --verify=${VERIFY}
-          --bundle-catalog-plugins=${CATALOG_PLUGINS} > $OUTFILE
+          --verify=${VERIFY} > $OUTFILE
     - id: output
       shell: bash
       env:
