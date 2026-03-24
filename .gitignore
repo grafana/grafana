@@ -71,8 +71,11 @@ public/css/*.min.css
 .vs/
 .cursor/*
 !.cursor/rules/
+!.cursor/skills/
 .cursor/rules/*
 !.cursor/rules/test-git-sync-provisioning-cloud.mdc
+.cursor/skills/*
+!.cursor/skills/test-git-sync-provisioning/
 .devcontainer/
 .claude/
 

@@ -38,25 +38,31 @@ for i in $(seq 1 60); do
 done
 ```
 
-The feature toggles `provisioning` and `kubernetesDashboards` must be enabled. Add to `conf/custom.ini` before starting:
+The feature toggles `provisioning`, `kubernetesDashboards`, and `provisioningFolderMetadata` must be enabled. Before starting Grafana, **create** `conf/custom.ini` (this file does not exist by default and is gitignored):
 
-```ini
+```bash
+cat > conf/custom.ini << 'EOF'
 [feature_toggles]
-enable = provisioning,kubernetesDashboards
+provisioning = true
+kubernetesDashboards = true
+provisioningFolderMetadata = true
+EOF
 ```
+
+Do NOT edit `conf/defaults.ini`.
 
 ### 2. Required Secrets
 
 Secrets are configured in the Cursor dashboard and exposed as environment variables. Read them in bash with `echo "$VAR_NAME"`. **Do not reference `.env` files or `source load-env.sh`.**
 
-| Environment Variable | Description |
-|---|---|
-| `GIT_SYNC_TEST_PAT_REPO_URL` | GitHub repo URL for PAT flow (e.g., `https://github.com/owner/repo`) |
-| `GIT_SYNC_TEST_PAT` | GitHub Personal Access Token |
-| `GIT_SYNC_TEST_APP_REPO_URL` | GitHub repo URL for GitHub App flow |
-| `GIT_SYNC_TEST_GITHUB_APP_ID` | GitHub App ID (numeric) |
-| `GIT_SYNC_TEST_GITHUB_APP_INSTALLATION_ID` | GitHub App Installation ID (numeric) |
-| `GIT_SYNC_TEST_GITHUB_APP_PRIVATE_KEY` | PEM private key **content** (not a file path) |
+| Environment Variable                       | Description                                                          |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| `GIT_SYNC_TEST_PAT_REPO_URL`               | GitHub repo URL for PAT flow (e.g., `https://github.com/owner/repo`) |
+| `GIT_SYNC_TEST_PAT`                        | GitHub Personal Access Token                                         |
+| `GIT_SYNC_TEST_APP_REPO_URL`               | GitHub repo URL for GitHub App flow                                  |
+| `GIT_SYNC_TEST_GITHUB_APP_ID`              | GitHub App ID (numeric)                                              |
+| `GIT_SYNC_TEST_GITHUB_APP_INSTALLATION_ID` | GitHub App Installation ID (numeric)                                 |
+| `GIT_SYNC_TEST_GITHUB_APP_PRIVATE_KEY`     | PEM private key **content** (not a file path)                        |
 
 Verify secrets are available before starting:
 
@@ -109,7 +115,7 @@ echo "Cleanup complete."
 
 **Entry URL:** `http://localhost:3000/admin/provisioning/connect/github`
 
-The wizard has 5 steps. The Next button text always shows the *next step's name* (e.g., "Configure repository", "Choose what to synchronize"), except on the last step where it says "Finish".
+The wizard has 5 steps. The Next button text always shows the _next step's name_ (e.g., "Configure repository", "Choose what to synchronize"), except on the last step where it says "Finish".
 
 **Step heading format:** `{n}. {step title}` (e.g., "1. Connect", "2. Configure repository"). Always verify the step heading in a screenshot before interacting with the step's fields.
 
@@ -205,30 +211,118 @@ Requires `$GIT_SYNC_TEST_APP_REPO_URL`, `$GIT_SYNC_TEST_GITHUB_APP_ID`, `$GIT_SY
 
 **Steps 2-5 are identical to the PAT flow above.**
 
+## Wizard Step 5 Configuration for Full Testing
+
+When setting up the repo in Step 5, to test all save workflows later:
+
+1. Take a screenshot. Find the checkbox labeled "Enable pull request option when saving". Click it to enable.
+2. Find the checkbox labeled "Enable push to synchronized branch" (may say "Push to configured branch"). Click it to enable.
+3. Click "Finish".
+
+This enables both direct push and PR creation in save dialogs.
+
+## Post-Wizard: Dashboard & Folder Operations
+
+After the wizard completes and the repo is synced, the following operations can be tested against provisioned resources.
+
+**Workflow selection:** The Branch field in every save/create dialog determines the workflow:
+
+- **Configured branch** (e.g., `agent-test`) → direct commit to the synced branch.
+- **New/different branch** → creates a pull request.
+
+### Creating a New Folder
+
+1. Navigate to the provisioned folder page (e.g., `/dashboards/f/{folderUid}/`).
+2. Take a screenshot. Click the "New" dropdown button. Click "New folder" from the menu.
+3. A drawer opens. Take a screenshot.
+4. Click the folder name input (placeholder: "Enter folder name"). Type a folder name (e.g., `test-subfolder`). Only letters, numbers, spaces, underscores, and hyphens are allowed.
+5. **For push to configured branch:** Leave the Branch field as-is (it defaults to the configured branch, e.g., `agent-test`).
+6. **For PR workflow:** Click the Branch combobox. Clear any existing value (click the X icon or select all and delete). Type a new branch name (e.g., `folder-test-branch`). Press Enter.
+7. Optionally type a comment in the Comment field (placeholder: "Add a note to describe your changes (optional)").
+8. Click the "Create" button.
+9. Take screenshots every 5 seconds until the page navigates to the new folder, or a PR alert banner appears (for PR workflow).
+
+### Creating a New Dashboard
+
+1. Navigate to the provisioned folder page. Click the "New" dropdown button. Click "New dashboard". The dashboard editor opens.
+2. Add a panel or make a visual change to the dashboard.
+3. Click "Save" (or press Ctrl+S). A save drawer opens. Take a screenshot.
+4. Click the Title input field. Type a dashboard name (e.g., `Test Dashboard`).
+5. Optionally type a Description.
+6. The Target folder should be pre-selected. Verify it matches the intended folder.
+7. **Branch selection:** Same as folder creation -- leave the configured branch for direct write, or enter a new branch name for PR workflow.
+8. The Folder path and Filename fields are auto-populated. Adjust if needed.
+9. Optionally type a Comment.
+10. Click the "Save" button.
+11. Take screenshots every 5 seconds until a success notification appears (direct write) or the page navigates to a preview page with a PR banner (PR workflow).
+
+### Modifying an Existing Dashboard
+
+1. Navigate to an existing provisioned dashboard.
+2. Make a change (e.g., edit a panel title, add a panel, change the time range).
+3. Click "Save". A save drawer opens. Take a screenshot.
+4. For existing dashboards, Title, Description, and Target folder are NOT shown.
+5. **Branch selection:** Same as above. Leave the configured branch for direct write, or enter a new branch name for PR workflow.
+6. The Path field is shown read-only.
+7. Optionally type a Comment.
+8. Click the "Save" button.
+9. Take screenshots until a success notification appears or the preview page loads.
+
+**Tip:** The drawer has "Details" and "Changes" tabs. Click "Changes" to see the diff before saving.
+
+### Testing Both Workflows
+
+Concrete test sequence covering both direct push and PR workflows:
+
+**Setup:** Complete the wizard with both "Enable pull request option when saving" and "Enable push to synchronized branch" checked (see "Wizard Step 5 Configuration" above).
+
+**1. Push to configured branch (direct write):**
+
+1. Create a folder using the configured branch in the branch field.
+2. Create a dashboard in that folder using the configured branch.
+3. Modify the dashboard using the configured branch.
+4. Verify: The resources are visible in Grafana. Take a screenshot of the folder contents.
+
+**2. PR workflow (new branch):**
+
+1. Create another folder, entering a new branch name (e.g., `pr-test-branch`) in the Branch field.
+2. Verify: A PR alert banner appears with a PR URL. Take a screenshot.
+3. Modify the dashboard, entering a new branch name (e.g., `dashboard-edit-branch`).
+4. Verify: Preview page shows a PR banner with "View branch", "Compare branch", and "Open pull request" buttons. Take a screenshot.
+
 ## Gotchas
 
 ### Kubernetes Reconciliation Delays
+
 Every Next button click that submits data triggers a K8s resource write + reconciliation. The UI shows "Submitting..." on the button. **Never click the next element until the new step heading is visible in a screenshot.** Always take a screenshot and verify the next step's heading before proceeding.
 
 ### FormPrompt (Unsaved Changes Dialog)
+
 The wizard intercepts navigation when the form is dirty (during bootstrap and synchronize steps). If a browser dialog appears asking to confirm navigation, click "Leave" or accept the dialog.
 
 ### Loading States
+
 Each step loads data asynchronously. Take a screenshot and check for these loading indicators before interacting with form fields:
+
 - Bootstrap step: "Loading resource information..."
 - Synchronize step: "Checking repository status..."
 
 ### Combobox Fields
+
 Branch, path, and repository URL (in GitHub App mode) use Combobox components, not plain input elements. To interact:
+
 1. Click the combobox to open the dropdown.
 2. For **selecting from options**: type to filter, then click the matching option from the dropdown in the screenshot.
 3. For **free-text entry** (e.g., a branch name not in the pre-populated list): click the "Clear value" button (X icon) if a value is pre-filled. Click the combobox. Triple-click or Ctrl+A to select all existing text. Press Delete. Type the new value. Press Enter. The dropdown may appear empty -- this is expected; Enter commits the typed value.
 
 ### Step Heading as Navigation Confirmation
+
 The step heading format is `{n}. {title}` (e.g., "2. Configure repository"). Always verify the full heading with the step number in screenshots to confirm step transitions completed. Do not rely on partial text matches -- use the full heading like "3. Choose what to synchronize" to avoid false matches with sidebar labels.
 
 ### Button Disabled States
+
 The Next button may be disabled when:
+
 - Form validation fails (required fields empty)
 - Data is loading
 - On the synchronize step: until the sync job completes
@@ -237,12 +331,15 @@ The Next button may be disabled when:
 Always take a screenshot and verify the button appears enabled (not grayed out) before clicking.
 
 ### Screenshot Polling
+
 For any wait longer than 5 seconds, take screenshots in a loop rather than sleeping blindly. Check the screenshot for the expected state before proceeding. This applies to:
+
 - Step transitions after clicking Next
 - Sync job completion on Step 4
 - Connection status becoming "Connected" after creation
 
 ### Branch Must Exist
+
 The `agent-test` branch must already exist on the remote repository. The wizard will error with `branch "X" not found` if it does not.
 
 ## Verification
@@ -333,10 +430,10 @@ Organized by wizard step. No `data-testid` attributes exist -- use ids, roles, l
 
 ### Step 2: Configure Repository
 
-| Field | Type | Placeholder |
-|---|---|---|
-| Branch | Combobox (first on page) | `main` |
-| Path | Combobox (second on page) | (empty) |
+| Field  | Type                      | Placeholder |
+| ------ | ------------------------- | ----------- |
+| Branch | Combobox (first on page)  | `main`      |
+| Path   | Combobox (second on page) | (empty)     |
 
 **Button:** "Choose what to synchronize"
 
@@ -362,32 +459,32 @@ Organized by wizard step. No `data-testid` attributes exist -- use ids, roles, l
 
 **Loading indicator:** "Checking repository status..."
 
-| Element | Text |
-|---|---|
-| Begin Sync button | "Begin synchronization" |
-| Next button | "Choose additional settings" (enabled after sync completes) |
+| Element           | Text                                                        |
+| ----------------- | ----------------------------------------------------------- |
+| Begin Sync button | "Begin synchronization"                                     |
+| Next button       | "Choose additional settings" (enabled after sync completes) |
 
 ### Step 5: Additional Settings
 
-| Field | Type | Default |
-|---|---|---|
-| Sync Interval | Number input (placeholder: `60`) | 60 seconds |
-| Read Only | Checkbox | unchecked |
-| PR Workflow | Checkbox ("Enable pull request option when saving") | unchecked |
-| Push to Branch | Checkbox | unchecked |
-| Dashboard Previews | Checkbox (GitHub-only) | unchecked |
-| Webhook URL | Text input (placeholder: `https://grafana.example.com`) | empty |
+| Field              | Type                                                    | Default    |
+| ------------------ | ------------------------------------------------------- | ---------- |
+| Sync Interval      | Number input (placeholder: `60`)                        | 60 seconds |
+| Read Only          | Checkbox                                                | unchecked  |
+| PR Workflow        | Checkbox ("Enable pull request option when saving")     | unchecked  |
+| Push to Branch     | Checkbox                                                | unchecked  |
+| Dashboard Previews | Checkbox (GitHub-only)                                  | unchecked  |
+| Webhook URL        | Text input (placeholder: `https://grafana.example.com`) | empty      |
 
 **Button:** "Finish" (navigates to `/admin/provisioning/{repoName}`)
 
 ### Step Headings
 
-| Step | Heading |
-|---|---|
-| authType | "1. Connect" |
-| connection | "2. Configure repository" |
-| bootstrap | "3. Choose what to synchronize" |
-| synchronize | "4. Synchronize with external storage" |
-| finish | "5. Choose additional settings" (or "4." if sync was skipped) |
+| Step        | Heading                                                       |
+| ----------- | ------------------------------------------------------------- |
+| authType    | "1. Connect"                                                  |
+| connection  | "2. Configure repository"                                     |
+| bootstrap   | "3. Choose what to synchronize"                               |
+| synchronize | "4. Synchronize with external storage"                        |
+| finish      | "5. Choose additional settings" (or "4." if sync was skipped) |
 
 Note: If the synchronize step is skipped, the finish step becomes step 4 instead of 5.
