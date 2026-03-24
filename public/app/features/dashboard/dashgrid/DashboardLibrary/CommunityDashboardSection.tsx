@@ -40,6 +40,10 @@ const INCLUDE_SCREENSHOTS = true;
 export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Props) => {
   const [searchParams] = useSearchParams();
   const datasourceUid = searchParams.get('dashboardLibraryDatasourceUid');
+  // Resolve type directly from the UID so the skeleton badge is shown correctly on first render,
+  // even if the parent prop hasn't been computed yet.
+  const resolvedDatasourceType =
+    (datasourceUid ? getDataSourceSrv().getInstanceSettings(datasourceUid)?.type : undefined) ?? datasourceType;
   const [searchQuery, setSearchQuery] = useState('');
   const hasTrackedLoaded = useRef(false);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
@@ -297,7 +301,12 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
             }}
           >
             {Array.from({ length: COMMUNITY_RESULT_SIZE }).map((_, i) => (
-              <DashboardCard.Skeleton key={`skeleton-${i}`} />
+              <DashboardCard.Skeleton
+                key={`skeleton-${i}`}
+                showCompatibilityBadge={
+                  isCompatibilityAppEnabled && !!datasourceUid && resolvedDatasourceType === 'prometheus'
+                }
+              />
             ))}
           </Grid>
         ) : showError ? (
@@ -364,7 +373,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
                 // Only show badge for Prometheus datasources
                 const showBadge =
-                  isCompatibilityAppEnabled && !!datasourceUid && response?.datasourceType === 'prometheus';
+                  isCompatibilityAppEnabled && !!datasourceUid && resolvedDatasourceType === 'prometheus';
 
                 return (
                   <DashboardCard

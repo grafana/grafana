@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "",
       "aria-label-client-id": "Klantnummer",
       "aria-label-client-secret": "Gebruikerssleutel",
+      "aria-label-private-key": "",
+      "aria-label-private-key-password": "",
       "aria-label-symbol-client-secret": "Gebruikerssleutel",
       "aria-label-tenant-id": "Tenant-id",
+      "description-certificate-format": "",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "",
+      "label-client-certificate": "",
       "label-client-id": "Client-id applicatie",
       "label-client-secret": "Gebruikerssleutel",
+      "label-private-key": "",
       "label-symbol-client-secret": "Gebruikerssleutel",
+      "label-symbol-private-key-password": "",
       "label-tenant-id": "Directory-id (tenant)",
       "placeholder-symbol-client-secret": "geconfigureerd",
       "reset-symbol-client-secret": "Resetten"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Kies het type authenticatie voor Azure-services",
-      "label-authentication": "Autorisate",
+      "label-authentication": "",
       "title-authentication": "Autorisate"
     },
     "basic-logs-toggle": {

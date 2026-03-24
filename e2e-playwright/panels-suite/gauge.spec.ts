@@ -2,7 +2,6 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 // this test requires a larger viewport so all gauge panels load properly
 test.use({
-  featureToggles: { newGauge: true },
   viewport: { width: 1280, height: 3000 },
 });
 
@@ -10,12 +9,25 @@ const OLD_GAUGES_DASHBOARD_UID = '_5rDmaQiz';
 const NEW_GAUGES_DASHBOARD_UID = 'panel-tests-gauge-new';
 const OLD_TO_NEW_GAUGES_DASHBOARD_UID = 'panel-tests-old-gauge-to-new';
 
+const OLD_GAUGES_DASHBOARD_GAUGE_COUNT = 16;
+const NEW_GAUGE_DASHBOARD_GAUGE_COUNT = 36;
+
 test.describe(
   'Gauge Panel',
   {
     tag: ['@panels', '@gauge'],
   },
   () => {
+    test('a11y', { tag: ['@a11y'] }, async ({ scanForA11yViolations, selectors, gotoDashboardPage }) => {
+      const dashboardPage = await gotoDashboardPage({ uid: NEW_GAUGES_DASHBOARD_UID });
+      await expect(
+        dashboardPage.getByGrafanaSelector(selectors.components.Panels.Visualization.Gauge.Container)
+      ).toHaveCount(NEW_GAUGE_DASHBOARD_GAUGE_COUNT);
+      const results = await scanForA11yViolations();
+      // there's a dashboards issue with this rule right now - headers have aria-role="heading" but are missing aria-level
+      expect(results).toHaveNoA11yViolations({ ignoredRules: ['aria-required-attr'] });
+    });
+
     test('successfully migrates all gauge panels', async ({ gotoDashboardPage, selectors }) => {
       const dashboardPage = await gotoDashboardPage({ uid: OLD_GAUGES_DASHBOARD_UID });
 
@@ -23,15 +35,14 @@ test.describe(
       const gaugeElements = dashboardPage.getByGrafanaSelector(
         selectors.components.Panels.Visualization.Gauge.Container
       );
-      await expect(gaugeElements).toHaveCount(16);
+      await expect(gaugeElements).toHaveCount(OLD_GAUGES_DASHBOARD_GAUGE_COUNT);
 
       // check that no panel errors exist
       const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
       await expect(errorInfo).toBeHidden();
     });
 
-    // Failing test breaking CI
-    test.skip('renders new gauge panels', async ({ gotoDashboardPage, selectors }) => {
+    test('renders new gauge panels', async ({ gotoDashboardPage, selectors }) => {
       // open Panel Tests - Gauge
       const dashboardPage = await gotoDashboardPage({ uid: NEW_GAUGES_DASHBOARD_UID });
 
@@ -39,7 +50,7 @@ test.describe(
       const gaugeElements = dashboardPage.getByGrafanaSelector(
         selectors.components.Panels.Visualization.Gauge.Container
       );
-      await expect(gaugeElements).toHaveCount(33); // the multi-link panel will not render the container, so it's 34 minus 1.
+      await expect(gaugeElements).toHaveCount(NEW_GAUGE_DASHBOARD_GAUGE_COUNT);
 
       // check that no panel errors exist
       const errorInfo = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'));
