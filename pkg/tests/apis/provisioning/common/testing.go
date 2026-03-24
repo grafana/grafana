@@ -1100,22 +1100,7 @@ func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.C
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
-	h.cleanProvisioningPath(t)
-}
-
-// cleanProvisioningPath removes all files and directories inside the shared
-// provisioning directory without removing the directory itself.
-func (h *ProvisioningTestHelper) cleanProvisioningPath(t *testing.T) {
-	t.Helper()
-	entries, err := os.ReadDir(h.ProvisioningPath)
-	if err != nil {
-		return
-	}
-	for _, entry := range entries {
-		if err := os.RemoveAll(filepath.Join(h.ProvisioningPath, entry.Name())); err != nil {
-			t.Fatalf("cleanProvisioningPath(%s): %v", entry.Name(), err)
-		}
-	}
+	h.CleanProvisioningDir(t)
 }
 
 // SharedEnv manages a single shared Grafana server for a test package.
@@ -1170,7 +1155,6 @@ func (e *SharedEnv) GetCleanHelper(t *testing.T) *ProvisioningTestHelper {
 	t.Helper()
 	h := e.GetHelper(t)
 	h.CleanupAllResources(t, context.Background())
-	h.CleanProvisioningDir(t)
 	return h
 }
 
