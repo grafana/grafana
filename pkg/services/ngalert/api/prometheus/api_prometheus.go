@@ -380,7 +380,7 @@ func NewInMemoryRuleMutator(statusReader StatusReader, manager state.AlertInstan
 
 // NewDBRuleMutator creates a RuleMutator that performs a single GetStatesForRuleUID
 // call and derives both status and alert state from the result. Used in HA single-node eval
-// mode, avoiding the separate StatusReader query that NewInMemoryRuleMutator uses.
+// mode, where we don't have in-memory data to get rule state.
 func NewDBRuleMutator(manager state.AlertInstanceManager) RuleMutator {
 	return func(ctx context.Context, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (map[string]int64, map[string]int64) {
 		states := manager.GetStatesForRuleUID(ctx, source.OrgID, source.UID)
