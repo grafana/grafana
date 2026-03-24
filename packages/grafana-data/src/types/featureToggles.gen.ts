@@ -1730,9 +1730,4 @@ export interface FeatureToggles {
   * @default false
   */
   yAxisTickControl?: boolean;
-  /**
-  * Enables the IAM client integration for fetching remote IAM global roles
-  * @default false
-  */
-  rbacIAMClient?: boolean;
 }
