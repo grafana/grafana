@@ -75,11 +75,21 @@ async function rotateSession() {
   await fetch('/api/user/auth-tokens/rotate', { method: 'POST' });
 }
 
+interface BootApiResponse {
+  navTree: NavLinkDTO[];
+  settings: GrafanaConfig & { loginError?: string }; // loginError is enterprise-only
+  user: CurrentUserDTO;
+  autoLoginRedirectURL?: string;
+  code?: string; // present with value 'Loading' on 503 responses
+}
+
+type FetchBootDataResult = undefined | { redirect: string } | BootApiResponse;
+
 /**
  * Fetches boot data from the server. If it returns undefined, it should be retried later.
  * Will return a rejected promise on unrecoverable errors.
  **/
-async function fetchBootData() {
+async function fetchBootData(): Promise<FetchBootDataResult> {
   const queryParams = new URLSearchParams(window.location.search);
 
   let path = '/bootdata';
@@ -141,12 +151,7 @@ async function fetchBootData() {
 /**
  * Loads the boot data from the server, retrying if it's unavailable.
  **/
-function loadBootData(): Promise<{
-  navTree: NavLinkDTO[];
-  settings: GrafanaConfig;
-  user: CurrentUserDTO;
-  redirect?: string;
-}> {
+function loadBootData(): Promise<{ redirect: string } | BootApiResponse> {
   return new Promise((resolve, reject) => {
     const attemptFetch = async () => {
       try {
@@ -188,21 +193,21 @@ async function initGrafana() {
   // - nav tree and user info come from the backend
   // - merge settings from both. FS settings contains less values
   // - build info edition comes from the backend
-  const { navTree, settings, user, redirect } = await loadBootData();
+  const bootData = await loadBootData();
 
   // If the backend wants us to redirect, we reject this promise to avoid booting the rest of the app.
-  if (redirect) {
-    return Promise.reject({ redirect });
+  if ('redirect' in bootData) {
+    return Promise.reject({ redirect: bootData.redirect });
   }
 
   window.grafanaBootData.settings = {
-    ...settings,
+    ...bootData.settings,
     ...window.grafanaBootData.settings,
   };
-  window.grafanaBootData.navTree = navTree;
-  window.grafanaBootData.user = user;
-  if (settings?.buildInfo?.edition) {
-    window.grafanaBootData.settings.buildInfo.edition = settings.buildInfo.edition;
+  window.grafanaBootData.navTree = bootData.navTree;
+  window.grafanaBootData.user = bootData.user;
+  if (bootData.settings?.buildInfo?.edition) {
+    window.grafanaBootData.settings.buildInfo.edition = bootData.settings.buildInfo.edition;
   }
 
   // The per-theme CSS still contains some global styles needed
