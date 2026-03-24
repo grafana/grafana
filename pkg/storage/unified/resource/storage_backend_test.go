@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -71,6 +72,52 @@ func TestNewKvStorageBackend(t *testing.T) {
 	assert.NotNil(t, backend.eventStore)
 	assert.NotNil(t, backend.notifier)
 	assert.NotNil(t, backend.snowflake)
+}
+
+func TestKvStorageBackendProcessBulkUsesBatchSaveForSQLKV(t *testing.T) {
+	countingKV := newCountingKV(setupSqlKV(t))
+	backend := setupTestStorageBackend(t, withKV(countingKV))
+	t.Cleanup(backend.Stop)
+
+	ns := NamespacedResource{
+		Namespace: "default",
+		Group:     "playlist.grafana.app",
+		Resource:  "playlists",
+	}
+
+	requests := make([]*resourcepb.BulkRequest, 0, 3)
+	for i := 1; i <= 3; i++ {
+		name := fmt.Sprintf("bulk-item-%d", i)
+		obj, err := createTestObjectWithName(name, ns, fmt.Sprintf("data-%d", i))
+		require.NoError(t, err)
+
+		requests = append(requests, &resourcepb.BulkRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: ns.Namespace,
+				Group:     ns.Group,
+				Resource:  ns.Resource,
+				Name:      name,
+			},
+			Action: resourcepb.BulkRequest_ADDED,
+			Value:  objectToJSONBytes(t, obj),
+		})
+	}
+
+	resp := backend.ProcessBulk(context.Background(), BulkSettings{
+		Collection: []*resourcepb.ResourceKey{
+			{
+				Namespace: ns.Namespace,
+				Group:     ns.Group,
+				Resource:  ns.Resource,
+			},
+		},
+	}, &testBulkBatchIterator{batches: [][]*resourcepb.BulkRequest{requests}})
+
+	require.Nil(t, resp.Error)
+	require.Empty(t, resp.Rejected)
+	require.Equal(t, int64(len(requests)), resp.Processed)
+	require.Equal(t, 1, countingKV.batchCalls(kvpkg.DataSection))
+	require.Zero(t, countingKV.saveCalls(kvpkg.DataSection), "sqlkv batch error: %s", countingKV.batchErr(kvpkg.DataSection))
 }
 
 func TestKvStorageBackend_WriteEvent_Success(t *testing.T) {
@@ -2367,6 +2414,106 @@ func testClusterScopedResources(t *testing.T, backend *kvStorageBackend) {
 			t.Fatalf("Timeout waiting for event %d", i)
 		}
 	}
+}
+
+type countingKV struct {
+	KV
+	mu              sync.Mutex
+	batchCallsBySec map[string]int
+	batchErrBySec   map[string]string
+	saveCallsBySec  map[string]int
+}
+
+func newCountingKV(inner KV) *countingKV {
+	return &countingKV{
+		KV:              inner,
+		batchCallsBySec: make(map[string]int),
+		batchErrBySec:   make(map[string]string),
+		saveCallsBySec:  make(map[string]int),
+	}
+}
+
+func (k *countingKV) Save(ctx context.Context, section string, key string) (io.WriteCloser, error) {
+	k.mu.Lock()
+	k.saveCallsBySec[section]++
+	k.mu.Unlock()
+	return k.KV.Save(ctx, section, key)
+}
+
+func (k *countingKV) Batch(ctx context.Context, section string, ops []kvpkg.BatchOp) error {
+	k.mu.Lock()
+	k.batchCallsBySec[section]++
+	k.mu.Unlock()
+	err := k.KV.Batch(ctx, section, ops)
+	if err != nil {
+		k.mu.Lock()
+		k.batchErrBySec[section] = err.Error()
+		k.mu.Unlock()
+	}
+	return err
+}
+
+func (k *countingKV) batchCalls(section string) int {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.batchCallsBySec[section]
+}
+
+func (k *countingKV) saveCalls(section string) int {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.saveCallsBySec[section]
+}
+
+func (k *countingKV) batchErr(section string) string {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.batchErrBySec[section]
+}
+
+type testBulkBatchIterator struct {
+	batches  [][]*resourcepb.BulkRequest
+	idx      int
+	batchIdx int
+	current  *resourcepb.BulkRequest
+}
+
+func (t *testBulkBatchIterator) NextBatch() bool {
+	if t.idx >= len(t.batches) {
+		return false
+	}
+	t.idx++
+	t.batchIdx = 0
+	return true
+}
+
+func (t *testBulkBatchIterator) Batch() []*resourcepb.BulkRequest {
+	if t.idx == 0 || t.idx > len(t.batches) {
+		return nil
+	}
+	return t.batches[t.idx-1]
+}
+
+func (t *testBulkBatchIterator) Next() bool {
+	if t.idx == 0 || t.idx > len(t.batches) {
+		return false
+	}
+	batch := t.batches[t.idx-1]
+	if t.batchIdx >= len(batch) {
+		t.current = nil
+		return false
+	}
+	t.current = batch[t.batchIdx]
+	t.batchIdx++
+	return true
+}
+
+func (t *testBulkBatchIterator) Request() *resourcepb.BulkRequest {
+	return t.current
+}
+
+func (t *testBulkBatchIterator) RollbackRequested() bool {
+	return false
 }
 
 func TestKvStorageBackend_prunerHistoryLimit(t *testing.T) {

@@ -382,7 +382,72 @@ func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 }
 
 func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error {
-	return fmt.Errorf("Batch operation not implemented for sqlKV")
+	if len(ops) == 0 {
+		return nil
+	}
+	if len(ops) > MaxBatchOps {
+		return fmt.Errorf("too many operations: %d > %d", len(ops), MaxBatchOps)
+	}
+	if section == LastImportTimeSection {
+		return fmt.Errorf("batch operation not supported for section: %s", section)
+	}
+
+	qb, err := k.getQueryBuilder(section)
+	if err != nil {
+		return err
+	}
+
+	tx, err := k.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin batch transaction: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	for i, op := range ops {
+		if op.Key == "" {
+			return &BatchError{Err: fmt.Errorf("key is required"), Index: i, Op: op}
+		}
+
+		keyPath := getKeyPath(section, op.Key)
+
+		switch op.Mode {
+		case BatchOpPut:
+			if len(op.Value) == 0 {
+				return &BatchError{Err: ErrEmptyValue, Index: i, Op: op}
+			}
+
+			var query string
+			var args []interface{}
+			if section == DataSection {
+				query, args = qb.buildInsertDatastoreQuery(keyPath, op.Value, uuid.New().String())
+			} else {
+				query, args = qb.buildUpsertQuery(keyPath, op.Value)
+			}
+
+			if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+		case BatchOpDelete:
+			query, args := qb.buildDeleteQuery(keyPath)
+			if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+		default:
+			return &BatchError{
+				Err:   fmt.Errorf("unsupported batch operation mode for sqlkv: %d", op.Mode),
+				Index: i,
+				Op:    op,
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit batch transaction: %w", err)
+	}
+
+	return nil
 }
 
 func (k *SqlKV) UnixTimestamp(ctx context.Context) (int64, error) {

@@ -76,6 +76,11 @@ type DataObj struct {
 	Value io.ReadCloser
 }
 
+type dataSaveRequest struct {
+	Key   DataKey
+	Value []byte
+}
+
 // TODO: pull DataKey from kv/sqlkv into here once we don't need sql/backend backwards compatibility
 type DataKey = kvpkg.DataKey
 
@@ -545,6 +550,40 @@ func (d *dataStore) Save(ctx context.Context, key DataKey, value io.Reader) erro
 	}
 
 	return writer.Close()
+}
+
+func (d *dataStore) batchSave(ctx context.Context, requests []dataSaveRequest) error {
+	for len(requests) > 0 {
+		batch := requests
+		if len(batch) > kvpkg.MaxBatchOps {
+			batch = batch[:kvpkg.MaxBatchOps]
+		}
+
+		requests = requests[len(batch):]
+		ops := make([]kvpkg.BatchOp, 0, len(batch))
+		for _, req := range batch {
+			if err := validateDataKey(req.Key); err != nil {
+				return fmt.Errorf("invalid data key: %w", err)
+			}
+
+			key := req.Key.String()
+			if req.Key.GUID != "" {
+				key = req.Key.StringWithGUID()
+			}
+
+			ops = append(ops, kvpkg.BatchOp{
+				Mode:  kvpkg.BatchOpPut,
+				Key:   key,
+				Value: req.Value,
+			})
+		}
+
+		if err := d.kv.Batch(ctx, dataSection, ops); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (d *dataStore) Delete(ctx context.Context, key DataKey) error {

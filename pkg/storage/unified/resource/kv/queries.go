@@ -180,6 +180,8 @@ func (qb *queryBuilder) buildInsertDatastoreQuery(keyPath string, value []byte, 
 	return query, []interface{}{guid, keyPath, value, "", "", "", "", 0, ""}
 }
 
+// buildUpsertDatastoreQuery generates an UPSERT for datastore rows.
+// It preserves the existing guid and placeholder columns on conflict and only refreshes the stored value.
 // buildInsertDatastoreBackwardCompatQuery generates INSERT for backward-compatible mode
 // Inserts guid, value, and placeholder values for NOT NULL columns - these will be updated by applyBackwardsCompatibleChanges()
 func (qb *queryBuilder) buildInsertDatastoreBackwardCompatQuery(value []byte, guid, group, resource, namespace, name, folder string, action int64) (string, []interface{}) {
