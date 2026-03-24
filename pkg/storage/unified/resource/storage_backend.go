@@ -453,11 +453,10 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	seenKeys := map[ListRequestKey]struct{}{}
 
 	// Data keys are group/resource/namespace/name/{rv}~…, so lexicographic order (asc or
-	// desc) keeps all revisions for one resource contiguous. While iterating one resource,
-	// the first key we see is the newest; if it is create/update, the resource is live and
-	// we skip older keys until the name changes. State persists across paginated batches.
+	// desc) keeps all revisions for one resource contiguous. While iterating in descending
+	// RV order, only the first key per ListRequestKey is the head revision; older rows for
+	// the same resource are skipped. State persists across paginated batches.
 	var currentResource ListRequestKey
-	var currentResourceLive bool
 
 	for {
 		keysProcessed := int64(0)
@@ -498,19 +497,11 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			// the next end key is the immediate previous key for the current key
 			endKey = previousKey(dataKey)
 
-			if k != currentResource {
-				currentResource = k
-				currentResourceLive = false
-			}
-			if currentResourceLive {
+			if k == currentResource {
+				// Older revision for a resource we already handled at its head key.
 				continue
 			}
-
-			// First key seen for this resource (newest revision): create/update means live.
-			if dk.Action == DataActionCreated || dk.Action == DataActionUpdated {
-				currentResourceLive = true
-				continue
-			}
+			currentResource = k
 
 			// if the action is deleted and the resource version is older than the cutoff, get all previous versions
 			// of the same resource and delete them in batch
