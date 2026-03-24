@@ -1131,7 +1131,7 @@ func applyLiveHistoryFilter(filteredKeys []DataKey, req *resourcepb.ListRequest)
 	return filteredKeys
 }
 
-// applyPagination filters keys based on pagination parameters (ascending order only)
+// applyPagination filters keys based on pagination parameters (descending order only)
 func applyPagination(keys []DataKey, lastSeenRV int64) []DataKey {
 	if lastSeenRV == 0 {
 		return keys
@@ -1139,7 +1139,7 @@ func applyPagination(keys []DataKey, lastSeenRV int64) []DataKey {
 
 	pagedKeys := make([]DataKey, 0, len(keys))
 	for _, key := range keys {
-		if key.ResourceVersion > lastSeenRV {
+		if key.ResourceVersion < lastSeenRV {
 			pagedKeys = append(pagedKeys, key)
 		}
 	}
@@ -1390,7 +1390,7 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		Group:     key.Group,
 		Resource:  key.Resource,
 		Name:      key.Name,
-	}, SortOrderAsc) {
+	}, SortOrderDesc) {
 		if err != nil {
 			return 0, err
 		}

@@ -1576,23 +1576,23 @@ func TestKvStorageBackend_ListHistory_Success(t *testing.T) {
 	require.Greater(t, rv, int64(0))
 	require.Len(t, historyItems, 3) // Should have all 3 versions
 
-	// Verify the history is sorted in ascending order
-	require.Equal(t, rv1, historyItems[0].resourceVersion)
+	// Verify the history is sorted in descending order
+	require.Equal(t, rv3, historyItems[0].resourceVersion)
 	require.Equal(t, rv2, historyItems[1].resourceVersion)
-	require.Equal(t, rv3, historyItems[2].resourceVersion)
+	require.Equal(t, rv1, historyItems[2].resourceVersion)
 
 	// Verify the content matches expectations for all versions
-	initialObj, err := createTestObjectWithName("test-resource", appsNamespace, "initial-data")
+	finalObj, err := createTestObjectWithName("test-resource", appsNamespace, "final-data")
 	require.NoError(t, err)
-	require.Equal(t, objectToJSONBytes(t, initialObj), historyItems[0].value)
+	require.Equal(t, objectToJSONBytes(t, finalObj), historyItems[0].value)
 
 	updatedObj, err := createTestObjectWithName("test-resource", appsNamespace, "updated-data")
 	require.NoError(t, err)
 	require.Equal(t, objectToJSONBytes(t, updatedObj), historyItems[1].value)
 
-	finalObj, err := createTestObjectWithName("test-resource", appsNamespace, "final-data")
+	initialObj, err := createTestObjectWithName("test-resource", appsNamespace, "initial-data")
 	require.NoError(t, err)
-	require.Equal(t, objectToJSONBytes(t, finalObj), historyItems[2].value)
+	require.Equal(t, objectToJSONBytes(t, initialObj), historyItems[2].value)
 }
 
 func TestKvStorageBackend_ListTrash_Success(t *testing.T) {
