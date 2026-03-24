@@ -468,6 +468,12 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	// track keys that have been processed to avoid processing the same key twice
 	seenKeys := map[ListRequestKey]struct{}{}
 
+	// Data keys are group/resource/namespace/name/{rv}~…, so lexicographic order (asc or
+	// desc) keeps all revisions for one resource contiguous. While iterating in descending
+	// RV order, only the first key per ListRequestKey is the head revision; older rows for
+	// the same resource are skipped. State persists across paginated batches.
+	var currentResource ListRequestKey
+
 	for {
 		keysProcessed := int64(0)
 		keysDeleted := int64(0)
@@ -507,6 +513,12 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			// the next end key is the immediate previous key for the current key
 			endKey = previousKey(dataKey)
 
+			if k == currentResource {
+				// Older revision for a resource we already handled at its head key.
+				continue
+			}
+			currentResource = k
+
 			// if the action is deleted and the resource version is older than the cutoff, get all previous versions
 			// of the same resource and delete them in batch
 			if dk.Action == DataActionDeleted && dk.ResourceVersion < cutoffTimestamp {
@@ -533,6 +545,21 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 					keysToDelete = append(keysToDelete, deleteKey)
 				}
 
+				// check if the resource still exists
+				_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+					Group:     dk.Group,
+					Resource:  dk.Resource,
+					Namespace: dk.Namespace,
+					Name:      dk.Name,
+				})
+				if err == nil {
+					// resource still exists, no need to delete anything
+					continue
+				}
+				if !errors.Is(err, ErrNotFound) {
+					return fmt.Errorf("garbage collection: latest resource key lookup for %s: %w", dk, err)
+				}
+
 				if b.garbageCollection.DryRun {
 					// if in dry run mode, just count the keys to delete
 					totalDryRun += int64(len(keysToDelete))
@@ -540,7 +567,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 				}
 
 				// if not in dry run mode, batch delete the keys
-				err := b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
+				err = b.kv.BatchDelete(ctx, kv.DataSection, keysToDelete)
 				if err != nil {
 					return fmt.Errorf("failed to batch delete keys: %s", err)
 				}
