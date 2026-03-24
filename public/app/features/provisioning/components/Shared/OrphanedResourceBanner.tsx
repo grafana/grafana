@@ -84,7 +84,7 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
           isAdmin ? (
             <Stack direction="row" gap={1} alignItems="center">
               <Button variant="secondary" disabled={isSubmitting} onClick={() => openConfirm('releaseResources')}>
-                {t('provisioning.orphaned-resource-banner.release-button', 'Release')}
+                {t('provisioning.orphaned-resource-banner.convert-to-local-button', 'Convert to local')}
               </Button>
               <Button variant="destructive" disabled={isSubmitting} onClick={() => openConfirm('deleteResources')}>
                 {t('provisioning.orphaned-resource-banner.delete-button', 'Delete')}
@@ -95,12 +95,13 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
       >
         <Stack direction="column" gap={1}>
           <Trans i18nKey="provisioning.orphaned-resource-banner.message">
-            The repository that managed this resource has been deleted. This resource cannot be saved or modified until
-            it is released or removed. Releasing or deleting will affect all resources managed by that repository.
+            This resource cannot be saved or modified until it is converted to local. Converting to local or deleting it
+            will affect all resources managed by that repository.
           </Trans>
           {!isAdmin && (
             <Trans i18nKey="provisioning.orphaned-resource-banner.contact-admin">
-              Contact your Grafana administrator to release or delete all resources from the missing repository.
+              Contact your Grafana administrator to convert this resource to local or delete all resources from the
+              missing repository.
             </Trans>
           )}
         </Stack>

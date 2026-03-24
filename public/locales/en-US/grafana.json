@@ -13319,15 +13319,14 @@
       "confirm-release-body": "This will remove provisioning annotations from all dashboards and folders managed by the missing repository, converting them to regular resources that can be saved and deleted normally.",
       "confirm-release-button": "Release",
       "confirm-release-title": "Release all resources from this repository?",
-      "contact-admin": "Contact your Grafana administrator to release or delete all resources from the missing repository.",
+      "contact-admin": "Contact your Grafana administrator to convert this resource to local or delete all resources from the missing repository.",
+      "convert-to-local-button": "Convert to local",
       "delete-button": "Delete",
       "job-error": "An error occurred while processing orphaned resources",
       "job-success": "Orphaned resources processed successfully",
       "job-warning": "Some resources were processed with warnings. Please review the results.",
-      "message": "The repository that managed this resource has been deleted. This resource cannot be saved or modified until it is released or removed. Releasing or deleting will affect all resources managed by that repository.",
-      "release-button": "Release",
+      "message": "This resource cannot be saved or modified until it is converted to local. Converting to local or deleting it will affect all resources managed by that repository.",
       "submit-error": "Failed to create job for orphaned resources",
-      "success-back-to-dashboards": "Back to dashboards",
       "title": "This resource is managed by a repository that no longer exists"
     },
     "provisioning-wizard": {
