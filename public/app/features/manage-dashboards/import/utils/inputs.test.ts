@@ -643,22 +643,10 @@ describe('applyV1Inputs', () => {
     expect(vars[1].current?.value).toBe('http://my-app:7070');
   });
 
-  it('replaces target datasource UIDs in panels with built-in datasources like Mixed', () => {
-    const dashboard = {
-      title: 'old',
-      uid: 'old',
-      panels: [
-        {
-          datasource: { type: 'datasource', uid: '-- Mixed --' },
-          targets: [
-            { datasource: { type: 'grafana-bigquery-datasource', uid: '${DS}' }, refId: 'A' },
-            { datasource: { type: 'grafana-athena-datasource', uid: '${DS}' }, refId: 'B' },
-          ],
-        },
-      ],
-    } as unknown as Dashboard;
+  describe('row panels', () => {
+    type RowPanel = { type: string; collapsed: boolean; datasource?: { uid: string }; panels: PanelWithTargets[] };
 
-    const form: ImportDashboardDTO = {
+    const makeForm = (): ImportDashboardDTO => ({
       title: 'new-title',
       uid: 'new-uid',
       gnetId: '',
@@ -666,15 +654,81 @@ describe('applyV1Inputs', () => {
       dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'My DS' } as DataSourceInstanceSettings],
       elements: [],
       folder: { uid: 'folder' },
-    };
+    });
 
-    const result = applyV1Inputs(dashboard, sampleV1Inputs, form);
+    it('should import dashboards with both collapsed and uncollapsed rows', () => {
+      const dashboard = {
+        title: 'old',
+        uid: 'old',
+        panels: [
+          { type: 'row', collapsed: false, title: 'Summary' },
+          { datasource: { uid: '${DS}' }, targets: [{ datasource: { uid: '${DS}' } }] },
+          {
+            type: 'row',
+            collapsed: true,
+            panels: [{ datasource: { uid: '${DS}' }, targets: [{ datasource: { uid: '${DS}' } }] }],
+          },
+          { type: 'row', collapsed: false, title: 'Appendix' },
+        ],
+      } as unknown as Dashboard;
 
-    expect(result.panels?.[0].datasource?.uid).toBe('-- Mixed --');
+      const result = applyV1Inputs(dashboard, sampleV1Inputs, makeForm());
 
-    const panel = result.panels?.[0] as PanelWithTargets;
-    expect(panel.targets?.[0].datasource?.uid).toBe('ds-uid');
-    expect(panel.targets?.[1].datasource?.uid).toBe('ds-uid');
+      expect(result.panels).toHaveLength(4);
+      expect((result.panels?.[0] as unknown as { type: string }).type).toBe('row');
+      expect((result.panels?.[1] as unknown as PanelWithTargets).datasource?.uid).toBe('ds-uid');
+      const collapsedRow = result.panels?.[2] as unknown as RowPanel;
+      expect(collapsedRow.panels[0].datasource?.uid).toBe('ds-uid');
+      expect(collapsedRow.panels[0].targets?.[0].datasource?.uid).toBe('ds-uid');
+      expect((result.panels?.[3] as unknown as { type: string }).type).toBe('row');
+    });
+
+    it('replaces datasources in collapsed row children', () => {
+      const dashboard = {
+        title: 'old',
+        uid: 'old',
+        panels: [
+          { type: 'row', collapsed: false, title: 'Summary' },
+          {
+            datasource: { type: 'datasource', uid: '-- Mixed --' },
+            targets: [
+              { datasource: { type: 'grafana-bigquery-datasource', uid: '${DS}' }, refId: 'A' },
+              { datasource: { type: 'grafana-athena-datasource', uid: '${DS}' }, refId: 'B' },
+            ],
+          },
+          {
+            type: 'row',
+            collapsed: true,
+            datasource: { uid: '${DS}' },
+            panels: [
+              { datasource: { uid: '${DS}' }, targets: [{ datasource: { uid: '${DS}' } }] },
+              { datasource: { uid: '${DS}' }, targets: [{ datasource: { uid: '${DS}' } }] },
+            ],
+          },
+          { type: 'row', collapsed: false, title: 'Appendix' },
+        ],
+      } as unknown as Dashboard;
+
+      const result = applyV1Inputs(dashboard, sampleV1Inputs, makeForm());
+
+      expect(result.panels).toHaveLength(4);
+
+      expect((result.panels?.[0] as unknown as { type: string }).type).toBe('row');
+
+      expect(result.panels?.[1].datasource?.uid).toBe('-- Mixed --');
+      const mixedPanel = result.panels?.[1] as PanelWithTargets;
+      expect(mixedPanel.targets?.[0].datasource?.uid).toBe('ds-uid');
+      expect(mixedPanel.targets?.[1].datasource?.uid).toBe('ds-uid');
+
+      const row = result.panels?.[2] as unknown as RowPanel;
+      expect(row.datasource?.uid).toBe('ds-uid');
+      expect(row.panels[0].datasource?.uid).toBe('ds-uid');
+      expect(row.panels[0].targets?.[0].datasource?.uid).toBe('ds-uid');
+      expect(row.panels[1].datasource?.uid).toBe('ds-uid');
+      expect(row.panels[1].targets?.[0].datasource?.uid).toBe('ds-uid');
+
+      expect((result.panels?.[3] as unknown as { type: string }).type).toBe('row');
+    });
   });
 });
 

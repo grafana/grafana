@@ -3,12 +3,10 @@ package dualwrite
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
@@ -30,9 +28,6 @@ type staticService struct {
 	cfg          *setting.Cfg
 	statusReader unifiedmigrations.MigrationStatusReader
 	metrics      *dualWriterMetrics
-
-	// resourceModesCache holds the resolved StorageMode per resource
-	resourceModesCache sync.Map // map[string]unifiedmigrations.StorageMode
 }
 
 // Used in tests
@@ -49,26 +44,18 @@ func (m *staticService) SetMode(gr schema.GroupResource, mode rest.DualWriterMod
 }
 
 // getStorageMode returns the StorageMode for a resource.
-//
-// When a MigrationStatusReader is available the result is cached.
-// Without a statusReader (tests via NewStaticStorage) the config-mode.
+// Without a statusReader or on error, the config-mode is used directly.
 func (m *staticService) getStorageMode(ctx context.Context, gr schema.GroupResource) unifiedmigrations.StorageMode {
+	resource := gr.String()
 	if m.statusReader == nil {
-		config := m.cfg.UnifiedStorage[gr.String()]
-		return storageModeFromConfigMode(config.DualWriterMode)
+		m.metrics.statusReaderNull.WithLabelValues(resource).Inc()
+		return storageModeFromConfigMode(m.cfg.UnifiedStorage[resource].DualWriterMode)
 	}
-
-	key := gr.String()
-
-	if val, ok := m.resourceModesCache.Load(key); ok {
-		return val.(unifiedmigrations.StorageMode)
+	mode, err := m.statusReader.GetStorageMode(ctx, gr)
+	if err != nil {
+		m.metrics.statusReaderErrors.WithLabelValues(resource).Inc()
+		return mode
 	}
-
-	// Resolve once from the MigrationStatusReader.
-	mode := m.statusReader.GetStorageMode(ctx, gr)
-	m.resourceModesCache.Store(key, mode)
-
-	logging.DefaultLogger.With("resource", key, "mode", mode).Info("resolved static storage mode")
 	return mode
 }
 

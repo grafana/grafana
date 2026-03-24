@@ -22,30 +22,6 @@
   },
   "basePath": "/api",
   "paths": {
-    "/access-control/assignments/search": {
-      "post": {
-        "description": "Returns the result of the search through access-control role assignments.\n\nYou need to have a permission with action `teams.roles:read` on scope `teams:*`\nand a permission with action `users.roles:read` on scope `users:*`.",
-        "tags": [
-          "enterprise"
-        ],
-        "summary": "Debug permissions.",
-        "operationId": "searchResult",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/searchResultResponse"
-          },
-          "400": {
-            "$ref": "#/responses/badRequestError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/access-control/roles": {
       "get": {
         "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.\n\nThe `delegatable` flag reduces the set of roles to only those for which the signed-in user has permissions to assign.",
@@ -7350,32 +7326,6 @@
         }
       }
     },
-    "SearchDTO": {
-      "type": "object",
-      "properties": {
-        "action": {
-          "type": "string"
-        },
-        "basicRole": {
-          "type": "string"
-        },
-        "onlyRoles": {
-          "type": "boolean"
-        },
-        "roleName": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        },
-        "teamId": {
-          "type": "string"
-        },
-        "userId": {
-          "type": "string"
-        }
-      }
-    },
     "SearchDeviceQueryResult": {
       "type": "object",
       "properties": {
@@ -7442,50 +7392,6 @@
           "format": "int64"
         },
         "totalCount": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "SearchResult": {
-      "type": "object",
-      "properties": {
-        "result": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/SearchResultItem"
-          }
-        }
-      }
-    },
-    "SearchResultItem": {
-      "type": "object",
-      "properties": {
-        "action": {
-          "type": "string"
-        },
-        "basicRole": {
-          "type": "string"
-        },
-        "orgId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "roleName": {
-          "type": "string"
-        },
-        "scope": {
-          "type": "string"
-        },
-        "teamId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "userId": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "version": {
           "type": "integer",
           "format": "int64"
         }
@@ -10471,12 +10377,6 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/HitList"
-      }
-    },
-    "searchResultResponse": {
-      "description": "",
-      "schema": {
-        "$ref": "#/definitions/SearchResult"
       }
     },
     "searchTeamGroupsResponse": {

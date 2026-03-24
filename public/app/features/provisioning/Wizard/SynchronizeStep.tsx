@@ -213,7 +213,6 @@ export const SynchronizeStep = memo(function SynchronizeStep({
           </Stack>
         </Alert>
       )}
-      {/* Migration/export functionality is experimental and gated behind the provisioningExport feature flag */}
       {config.featureToggles.provisioningExport && (
         <>
           <Text element="h3">

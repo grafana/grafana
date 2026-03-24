@@ -299,7 +299,7 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 	helper := common.RunGrafana(t)
 	ctx := context.Background()
 
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
+	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("dryRun call with App's insufficient permissions returns 403", func(t *testing.T) {
 		// Setup mock with insufficient permissions
@@ -768,4 +768,68 @@ func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
 		err = helper.Repositories.Resource.Delete(ctx, "test-git-healthy-readonly", metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
+}
+
+func createAppWithPermissions(id int64, permissions map[string]string) *github.App {
+	app := &github.App{
+		ID:   github.Ptr(id),
+		Slug: github.Ptr("test-app"),
+		Owner: &github.User{
+			Login: github.Ptr("test-owner"),
+		},
+	}
+
+	if len(permissions) > 0 {
+		installationPerms := &github.InstallationPermissions{}
+
+		if contents, ok := permissions["contents"]; ok {
+			installationPerms.Contents = github.Ptr(contents)
+		}
+		if metadata, ok := permissions["metadata"]; ok {
+			installationPerms.Metadata = github.Ptr(metadata)
+		}
+		if prs, ok := permissions["pull_requests"]; ok {
+			installationPerms.PullRequests = github.Ptr(prs)
+		}
+		if hooks, ok := permissions["webhooks"]; ok {
+			installationPerms.RepositoryHooks = github.Ptr(hooks)
+		}
+
+		app.Permissions = installationPerms
+	}
+
+	return app
+}
+
+func createAppInstallationWithPermissions(id int64, permissions map[string]string) *github.Installation {
+	installation := &github.Installation{
+		ID: github.Ptr(id),
+		Permissions: &github.InstallationPermissions{
+			Contents:        github.Ptr("write"),
+			Metadata:        github.Ptr("read"),
+			PullRequests:    github.Ptr("write"),
+			RepositoryHooks: github.Ptr("write"),
+		},
+	}
+
+	if len(permissions) > 0 {
+		installationPerms := &github.InstallationPermissions{}
+
+		if contents, ok := permissions["contents"]; ok {
+			installationPerms.Contents = github.Ptr(contents)
+		}
+		if metadata, ok := permissions["metadata"]; ok {
+			installationPerms.Metadata = github.Ptr(metadata)
+		}
+		if prs, ok := permissions["pull_requests"]; ok {
+			installationPerms.PullRequests = github.Ptr(prs)
+		}
+		if hooks, ok := permissions["webhooks"]; ok {
+			installationPerms.RepositoryHooks = github.Ptr(hooks)
+		}
+
+		installation.Permissions = installationPerms
+	}
+
+	return installation
 }

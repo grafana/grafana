@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { DataQueryRequest, dateTime, Field } from '@grafana/data';
-import { EditorRows, EditorRow, EditorField } from '@grafana/plugin-ui';
-import { Combobox, ComboboxOption, Text } from '@grafana/ui';
+import { EditorField, EditorRow, EditorRows } from '@grafana/plugin-ui';
+import { Alert, Combobox, ComboboxOption, Input, Text } from '@grafana/ui';
 
 import { ElasticsearchVariableQuery, migrateVariableQuery, refId } from './ElasticsearchVariableUtils';
 import { ElasticQueryEditorProps, QueryEditor } from './components/QueryEditor';
@@ -12,6 +12,10 @@ type ElasticsearchVariableQueryEditorProps = ElasticQueryEditorProps;
 
 export const ElasticsearchVariableEditor = (props: ElasticsearchVariableQueryEditorProps) => {
   const query = useMemo(() => migrateVariableQuery(props.query), [props.query]);
+
+  if (query.queryType === 'legacy_variable') {
+    return <LegacyVariableEditor {...props} query={query} />;
+  }
 
   const handleQueryChange = (newQuery: ElasticsearchDataQuery) => {
     // Clear field mapping when the query structure changes significantly — the available fields
@@ -31,6 +35,26 @@ export const ElasticsearchVariableEditor = (props: ElasticsearchVariableQueryEdi
       <QueryEditor {...props} query={query} onChange={handleQueryChange} />
       <FieldMapping datasource={props.datasource} query={query} onChange={props.onChange} />
     </>
+  );
+};
+
+const LegacyVariableEditor = (props: ElasticsearchVariableQueryEditorProps) => {
+  const { query, onChange } = props;
+
+  return (
+    <EditorRows>
+      <EditorRow>
+        <Alert severity="warning" title="Legacy variable query">
+          This variable uses a legacy query format. You can continue using it as-is but it is deprecated and will be
+          removed in the future. New variables will use the new query editor.
+        </Alert>
+      </EditorRow>
+      <EditorRow>
+        <EditorField label="Query" width={80}>
+          <Input value={query.query ?? ''} onChange={(e) => onChange({ ...query, query: e.currentTarget.value })} />
+        </EditorField>
+      </EditorRow>
+    </EditorRows>
   );
 };
 

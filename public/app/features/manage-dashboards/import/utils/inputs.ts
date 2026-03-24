@@ -1,9 +1,8 @@
 import { DataSourceInstanceSettings, VariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { AnnotationQuery, Dashboard, Panel, RowPanel } from '@grafana/schema';
 import { AnnotationQueryKind, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Panel } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
-import { AnnotationQuery, Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { isRecord } from 'app/core/utils/isRecord';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -583,8 +582,29 @@ function processAnnotation(
   return annotation;
 }
 
-function processPanel(panel: Panel, inputs: { dataSources: DataSourceInput[] }, form: ImportDashboardDTO): Panel {
-  const queries = panel.targets?.map((target) => {
+function resolveInputDatasource(
+  datasource: Panel['datasource'],
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+): Panel['datasource'] {
+  if (datasource && hasUid(datasource) && datasource.uid.startsWith('$')) {
+    const userInput = checkUserInputMatch(datasource.uid, inputs.dataSources, form.dataSources);
+    if (userInput) {
+      return {
+        ...datasource,
+        uid: userInput.uid,
+      };
+    }
+  }
+  return datasource;
+}
+
+function resolveInputTargets(
+  targets: Panel['targets'],
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+): Panel['targets'] {
+  return targets?.map((target) => {
     if (target.datasource && hasUid(target.datasource) && target.datasource.uid.startsWith('$')) {
       const userInput = checkUserInputMatch(target.datasource.uid, inputs.dataSources, form.dataSources);
       if (userInput) {
@@ -599,21 +619,27 @@ function processPanel(panel: Panel, inputs: { dataSources: DataSourceInput[] }, 
     }
     return target;
   });
+}
 
-  const panelDs =
-    panel.datasource && panel.datasource.uid && panel.datasource.uid.startsWith('$')
-      ? checkUserInputMatch(panel.datasource.uid, inputs.dataSources, form.dataSources)
-      : undefined;
+function processPanel(
+  panel: Panel | RowPanel,
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+): Panel | RowPanel {
+  if ('panels' in panel) {
+    return {
+      ...panel,
+      ...(panel.datasource && { datasource: resolveInputDatasource(panel.datasource, inputs, form) }),
+      panels: panel.panels.map((nestedPanel) => {
+        return processPanel(nestedPanel, inputs, form);
+      }),
+    };
+  }
 
   return {
     ...panel,
-    ...(queries && { targets: queries }),
-    ...(panelDs && {
-      datasource: {
-        ...panel.datasource,
-        uid: panelDs.uid,
-      },
-    }),
+    ...(panel.datasource && { datasource: resolveInputDatasource(panel.datasource, inputs, form) }),
+    ...(panel.targets && { targets: resolveInputTargets(panel.targets, inputs, form) }),
   };
 }
 
