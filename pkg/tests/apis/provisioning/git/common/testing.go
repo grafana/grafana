@@ -160,9 +160,21 @@ func (h *GitTestHelper) GitServer() *gittest.Server {
 	return h.gitServer
 }
 
-// createGitRepo creates a git repository using gittest and registers it with Grafana provisioning.
-// workflows parameter is optional - if not provided, defaults to ["write"].
+// CreateGitRepo creates a git repository with sync target "instance" and registers
+// it with Grafana provisioning. workflows is optional; defaults to ["write"].
 func (h *GitTestHelper) CreateGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createGitRepo(t, repoName, "instance", initialFiles, workflows...)
+}
+
+// CreateFolderTargetGitRepo creates a git repository with sync target "folder" and
+// registers it with Grafana provisioning. Unlike "instance" repos, multiple "folder"
+// repos can coexist on the same Grafana server. workflows is optional; defaults to ["write"].
+func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createGitRepo(t, repoName, "folder", initialFiles, workflows...)
+}
+
+// createGitRepo is the shared implementation for CreateGitRepo and CreateFolderTargetGitRepo.
+func (h *GitTestHelper) createGitRepo(t *testing.T, repoName string, syncTarget string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
 	t.Helper()
 
 	ctx := context.Background()
@@ -226,7 +238,7 @@ func (h *GitTestHelper) CreateGitRepo(t *testing.T, repoName string, initialFile
 			},
 			"sync": map[string]interface{}{
 				"enabled":         false,
-				"target":          "instance",
+				"target":          syncTarget,
 				"intervalSeconds": 60,
 			},
 			"workflows": workflows,
@@ -334,6 +346,7 @@ func (h *GitTestHelper) SyncAndWait(t *testing.T, repoName string) {
 // repository and waits for all active jobs to complete.
 //
 //nolint:unused // Called from incremental_folder_metadata_test.go
+
 func (h *GitTestHelper) SyncAndWaitIncremental(t *testing.T, repoName string) {
 	t.Helper()
 	h.triggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{

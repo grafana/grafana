@@ -31,6 +31,9 @@ func splitMetadataChanges(repoDiff []repository.VersionedFileChange) folderMetad
 		if isHandledFolderMetadataChange(change) {
 			input.metadataChanges = append(input.metadataChanges, change)
 			input.metadataFolderPaths[folderPathForMetadataChange(change.Path)] = struct{}{}
+			if change.Action == repository.FileActionRenamed && resources.IsFolderMetadataFile(change.PreviousPath) {
+				input.metadataFolderPaths[folderPathForMetadataChange(change.PreviousPath)] = struct{}{}
+			}
 			continue
 		}
 
