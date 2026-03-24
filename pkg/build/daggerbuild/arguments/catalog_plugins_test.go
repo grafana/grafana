@@ -414,7 +414,7 @@ func TestCatalogPluginsValueFunc_CLIPinsDefaultPluginVersion(t *testing.T) {
 	state := &pipeline.State{
 		CLIContext: &fakeCLIContext{
 			stringSliceValues: map[string][]string{
-				"bundle-catalog-plugins": {"grafana-elasticsearch-datasource:5.0.0"},
+				"bundle-catalog-plugins": {"elasticsearch:5.0.0"},
 			},
 		},
 	}
@@ -430,7 +430,7 @@ func TestCatalogPluginsValueFunc_CLIPinsDefaultPluginVersion(t *testing.T) {
 	}
 
 	want := []CatalogPluginSpec{
-		{ID: "grafana-elasticsearch-datasource", Version: "5.0.0"},
+		{ID: "elasticsearch", Version: "5.0.0"},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("GetCatalogPlugins() = %#v, want %#v", got, want)
