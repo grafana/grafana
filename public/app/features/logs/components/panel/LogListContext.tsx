@@ -56,6 +56,7 @@ export interface LogListContextData
   setPinnedLogs: (pinnedlogs: string[]) => void;
   setPrettifyJSON: (prettifyJSON: boolean) => void;
   setSyntaxHighlighting: (syntaxHighlighting: boolean) => void;
+  setShowLevel: (showLevel: boolean) => void;
   setShowTime: (showTime: boolean) => void;
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
@@ -88,6 +89,7 @@ export const LogListContext = createContext<LogListContextData>({
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setPrettifyJSON: () => {},
+  setShowLevel: () => {},
   setShowTime: () => {},
   setShowUniqueLabels: () => {},
   setSortOrder: () => {},
@@ -149,6 +151,7 @@ export interface Props {
   filterLevels?: LogLevel[];
   fontSize: LogListFontSize;
   getRowContextQuery?: GetRowContextQueryFn;
+  isCustomGrammar?: boolean;
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
@@ -194,6 +197,7 @@ export const LogListContextProvider = ({
   displayedFields,
   filterLevels,
   fontSize,
+  isCustomGrammar,
   isLabelFilterActive,
   getRowContextQuery,
   logs,
@@ -219,7 +223,7 @@ export const LogListContextProvider = ({
   prettifyJSON: prettifyJSONProp,
   setDisplayedFields,
   showControls,
-  showLevel,
+  showLevel: showLevelProp = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.showLevel`, true) : true,
   showLogAttributes,
   showTime,
   showUniqueLabels,
@@ -248,6 +252,7 @@ export const LogListContextProvider = ({
   const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
   const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
+  const [showLevel, setShowLevelState] = useState(showLevelProp);
 
   useEffect(() => {
     if (noInteractions) {
@@ -358,6 +363,11 @@ export const LogListContextProvider = ({
     setWrapLogMessageState(wrapLogMessageProp);
   }, [wrapLogMessageProp]);
 
+  // Sync showLevel
+  useEffect(() => {
+    setShowLevelState(showLevelProp);
+  }, [showLevelProp]);
+
   // Sync timestamp resolution
   useEffect(() => {
     setLogListState((state) => ({
@@ -420,6 +430,16 @@ export const LogListContextProvider = ({
       onLogOptionsChange?.('pinnedLogs', pinnedLogs);
     },
     [logListState, onLogOptionsChange]
+  );
+
+  const setShowLevel = useCallback(
+    (newShowLevel: boolean) => {
+      setShowLevelState(newShowLevel);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.showLevel`, newShowLevel);
+      }
+    },
+    [logOptionsStorageKey]
   );
 
   const setShowTime = useCallback(
@@ -582,6 +602,7 @@ export const LogListContextProvider = ({
         hasLogsWithErrors,
         hasSampledLogs,
         hasUnescapedContent,
+        isCustomGrammar,
         isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,
@@ -612,6 +633,7 @@ export const LogListContextProvider = ({
         setLogListState,
         setPinnedLogs,
         setPrettifyJSON,
+        setShowLevel,
         setShowTime,
         setShowUniqueLabels,
         setSortOrder,

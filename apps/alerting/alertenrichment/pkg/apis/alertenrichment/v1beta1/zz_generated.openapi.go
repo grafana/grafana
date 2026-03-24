@@ -31,6 +31,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		LogsDataSourceQuery{}.OpenAPIModelName(): schema_pkg_apis_alertenrichment_v1beta1_LogsDataSourceQuery(ref),
 		LoopEnricher{}.OpenAPIModelName():        schema_pkg_apis_alertenrichment_v1beta1_LoopEnricher(ref),
 		Matcher{}.OpenAPIModelName():             schema_pkg_apis_alertenrichment_v1beta1_Matcher(ref),
+		QuerySampleEnricher{}.OpenAPIModelName(): schema_pkg_apis_alertenrichment_v1beta1_QuerySampleEnricher(ref),
 		RawDataSourceQuery{}.OpenAPIModelName():  schema_pkg_apis_alertenrichment_v1beta1_RawDataSourceQuery(ref),
 		SiftEnricher{}.OpenAPIModelName():        schema_pkg_apis_alertenrichment_v1beta1_SiftEnricher(ref),
 		Step{}.OpenAPIModelName():                schema_pkg_apis_alertenrichment_v1beta1_Step(ref),
@@ -468,11 +469,11 @@ func schema_pkg_apis_alertenrichment_v1beta1_EnricherConfig(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Possible enum values:\n - `\"asserts\"`\n - `\"assign\"`\n - `\"assistant\"`\n - `\"dsquery\"`\n - `\"explain\"`\n - `\"external\"`\n - `\"loop\"`\n - `\"sift\"`",
+							Description: "Possible enum values:\n - `\"asserts\"`\n - `\"assign\"`\n - `\"assistant\"`\n - `\"dsquery\"`\n - `\"explain\"`\n - `\"external\"`\n - `\"loop\"`\n - `\"querySample\"`\n - `\"sift\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
-							Enum:        []interface{}{"asserts", "assign", "assistant", "dsquery", "explain", "external", "loop", "sift"},
+							Enum:        []interface{}{"asserts", "assign", "assistant", "dsquery", "explain", "external", "loop", "querySample", "sift"},
 						},
 					},
 					"assign": {
@@ -515,12 +516,17 @@ func schema_pkg_apis_alertenrichment_v1beta1_EnricherConfig(ref common.Reference
 							Ref: ref(AssistantEnricher{}.OpenAPIModelName()),
 						},
 					},
+					"querySample": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(QuerySampleEnricher{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"type"},
 			},
 		},
 		Dependencies: []string{
-			AssertsEnricher{}.OpenAPIModelName(), AssignEnricher{}.OpenAPIModelName(), AssistantEnricher{}.OpenAPIModelName(), DataSourceEnricher{}.OpenAPIModelName(), ExplainEnricher{}.OpenAPIModelName(), ExternalEnricher{}.OpenAPIModelName(), LoopEnricher{}.OpenAPIModelName(), SiftEnricher{}.OpenAPIModelName()},
+			AssertsEnricher{}.OpenAPIModelName(), AssignEnricher{}.OpenAPIModelName(), AssistantEnricher{}.OpenAPIModelName(), DataSourceEnricher{}.OpenAPIModelName(), ExplainEnricher{}.OpenAPIModelName(), ExternalEnricher{}.OpenAPIModelName(), LoopEnricher{}.OpenAPIModelName(), QuerySampleEnricher{}.OpenAPIModelName(), SiftEnricher{}.OpenAPIModelName()},
 	}
 }
 
@@ -654,6 +660,17 @@ func schema_pkg_apis_alertenrichment_v1beta1_Matcher(ref common.ReferenceCallbac
 					},
 				},
 				Required: []string{"type", "name", "value"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_alertenrichment_v1beta1_QuerySampleEnricher(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "QuerySampleEnricher configures an enricher that samples data from the queries used in the alert rule definition, such as logs.",
+				Type:        []string{"object"},
 			},
 		},
 	}

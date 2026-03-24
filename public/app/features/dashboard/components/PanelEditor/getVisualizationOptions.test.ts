@@ -51,6 +51,12 @@ describe('getVisualizationOptions', () => {
           value: '__field.name',
         },
         {
+          documentation: 'Display name of the field (includes overrides and transformations)',
+          label: 'Display name',
+          origin: 'field',
+          value: '__field.displayName',
+        },
+        {
           documentation: 'Adds current variables',
           label: 'All variables',
           origin: 'template',
@@ -114,6 +120,12 @@ describe('getVisualizationOptions', () => {
           label: 'Name',
           origin: 'field',
           value: '__field.name',
+        },
+        {
+          documentation: 'Display name of the field (includes overrides and transformations)',
+          label: 'Display name',
+          origin: 'field',
+          value: '__field.displayName',
         },
         {
           documentation: 'Formatted value for time on the same row',

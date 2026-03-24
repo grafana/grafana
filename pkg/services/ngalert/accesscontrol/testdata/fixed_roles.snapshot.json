@@ -679,7 +679,7 @@
   },
   {
     "name": "fixed:alerting.provisioning:writer",
-    "displayName": "Access to alert rules provisioning API",
+    "displayName": "Write via Provisioning API",
     "description": "Manage all alert rules, contact points, notification policies, silences, etc. in the organization via provisioning API.",
     "group": "Alerting",
     "permissions": [
@@ -813,6 +813,39 @@
     ],
     "grants": [
       "Editor"
+    ]
+  },
+  {
+    "name": "fixed:alerting.legacy.config:reader",
+    "displayName": "Alerting legacy config read permission (deprecated, admin only)",
+    "description": "",
+    "group": "Alerting",
+    "hidden": true,
+    "permissions": [
+      {
+        "action": "alert.notifications.config-history:read"
+      }
+    ],
+    "grants": [
+      "Admin"
+    ]
+  },
+  {
+    "name": "fixed:alerting.legacy.config:writer",
+    "displayName": "Alerting legacy config write permission (deprecated, admin only)",
+    "description": "",
+    "group": "Alerting",
+    "hidden": true,
+    "permissions": [
+      {
+        "action": "alert.notifications.config-history:read"
+      },
+      {
+        "action": "alert.notifications.config-history:write"
+      }
+    ],
+    "grants": [
+      "Admin"
     ]
   },
   {

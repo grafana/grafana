@@ -8,6 +8,7 @@ import {
   getPanelPluginMeta,
   getPanelPluginMetas,
   getPanelPluginMetasMap,
+  getPanelPluginMetasMapSync,
   getPanelPluginVersion,
   isPanelPluginInstalled,
   refetchPanelPluginMetas,
@@ -61,6 +62,31 @@ describe('when useMTPlugins flag is enabled', () => {
 
       expect(panels).toEqual({});
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('getPanelPluginMetasMapSync should return empty map', () => {
+      const panels = getPanelPluginMetasMapSync();
+
+      expect(panels).toEqual({});
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    describe('when process is under development', () => {
+      let originalNodeEnv = process.env.NODE_ENV;
+      beforeEach(() => {
+        process.env.NODE_ENV = 'development';
+      });
+
+      afterEach(() => {
+        process.env.NODE_ENV = originalNodeEnv;
+      });
+
+      it('getPanelPluginMetasMapSync should throw', () => {
+        expect(() => getPanelPluginMetasMapSync()).toThrow(
+          new Error('getPanelPluginMetasMapSync() was called before panel plugins map was initialized!')
+        );
+        expect(initPluginMetasMock).not.toHaveBeenCalled();
+      });
     });
 
     it('getPanelPluginMeta should call initPluginMetas and return correct result', async () => {
@@ -122,6 +148,31 @@ describe('when useMTPlugins flag is enabled', () => {
 
       expect(panels).toEqual({ 'grafana-test-panel': panel });
       expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    it('getPanelPluginMetasMapSync should return correct result', () => {
+      const panels = getPanelPluginMetasMapSync();
+
+      expect(panels).toEqual({ 'grafana-test-panel': panel });
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+    });
+
+    describe('when process is under development', () => {
+      let originalNodeEnv = process.env.NODE_ENV;
+      beforeEach(() => {
+        process.env.NODE_ENV = 'development';
+      });
+
+      afterEach(() => {
+        process.env.NODE_ENV = originalNodeEnv;
+      });
+
+      it('getPanelPluginMetasMapSync should not throw', () => {
+        const panels = getPanelPluginMetasMapSync();
+
+        expect(panels).toEqual({ 'grafana-test-panel': panel });
+        expect(initPluginMetasMock).not.toHaveBeenCalled();
+      });
     });
 
     it('getPanelPluginMeta should not call initPluginMetas and return correct result', async () => {
@@ -513,6 +564,31 @@ describe('immutability', () => {
     expect(mutatedPanels['grafana-test-panel'].info.links[0]).toEqual({ name: '', url: '' });
 
     const panels = await getPanelPluginMetasMap();
+
+    // assert that we have not mutated the source
+    expect(panels).toEqual({ 'grafana-test-panel': panel });
+    expect(panels['grafana-test-panel'].info.author.name).toEqual('Grafana');
+    expect(panels['grafana-test-panel'].info.links).toHaveLength(0);
+  });
+
+  it('getPanelPluginMetasMapSync should return a deep clone', () => {
+    const mutatedPanels = getPanelPluginMetasMapSync();
+
+    // assert we have correct props
+    expect(mutatedPanels).toEqual({ 'grafana-test-panel': panel });
+    expect(mutatedPanels['grafana-test-panel'].info.author.name).toEqual('Grafana');
+    expect(mutatedPanels['grafana-test-panel'].info.links).toHaveLength(0);
+
+    // mutate deep props
+    mutatedPanels['grafana-test-panel'].info.author.name = '';
+    mutatedPanels['grafana-test-panel'].info.links.push({ name: '', url: '' });
+
+    // assert we have mutated props
+    expect(mutatedPanels['grafana-test-panel'].info.author.name).toEqual('');
+    expect(mutatedPanels['grafana-test-panel'].info.links).toHaveLength(1);
+    expect(mutatedPanels['grafana-test-panel'].info.links[0]).toEqual({ name: '', url: '' });
+
+    const panels = getPanelPluginMetasMapSync();
 
     // assert that we have not mutated the source
     expect(panels).toEqual({ 'grafana-test-panel': panel });

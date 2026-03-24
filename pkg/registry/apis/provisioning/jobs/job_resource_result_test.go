@@ -366,4 +366,19 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 
 		assert.Equal(t, provisioning.ReasonMissingFolderMetadata, result.WarningReason())
 	})
+
+	t.Run("FolderMetadataConflict classifies as ReasonFolderMetadataConflict", func(t *testing.T) {
+		conflictErr := &resources.FolderMetadataConflict{Path: "somefolder/", Reason: "UID mismatch"}
+		result := NewResourceResult().WithWarning(conflictErr).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderMetadataConflict, result.WarningReason())
+	})
+
+	t.Run("wrapped FolderMetadataConflict classifies as ReasonFolderMetadataConflict", func(t *testing.T) {
+		conflictErr := &resources.FolderMetadataConflict{Path: "somefolder/", Reason: "UID mismatch"}
+		wrapped := fmt.Errorf("processing folder: %w", conflictErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderMetadataConflict, result.WarningReason())
+	})
 }

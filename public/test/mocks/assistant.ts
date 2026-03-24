@@ -3,6 +3,7 @@
 // which fails because Grafana hasn't started. This mock prevents that.
 
 export const useAssistant = jest.fn().mockReturnValue({
+  isLoading: false,
   isAvailable: false,
   openAssistant: undefined,
   closeAssistant: jest.fn(),

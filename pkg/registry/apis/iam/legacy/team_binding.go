@@ -2,7 +2,7 @@ package legacy
 
 import (
 	"context"
-	"database/sql"
+	stdsql "database/sql"
 	"fmt"
 	"time"
 
@@ -119,9 +119,13 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 
 	for rows.Next() {
 		m := TeamMember{}
-		err = rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission, &m.External)
+		var nullableExternal stdsql.NullBool
+		err = rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Created, &m.Updated, &m.Permission, &nullableExternal)
 		if err != nil {
 			return res, err
+		}
+		if nullableExternal.Valid {
+			m.External = nullableExternal.Bool
 		}
 
 		res.Bindings = append(res.Bindings, m)
@@ -437,8 +441,25 @@ func (s *legacySQLStore) DeleteTeamMember(ctx context.Context, ns claims.Namespa
 	return nil
 }
 
-func scanMember(rows *sql.Rows) (TeamMember, error) {
+func scanMember(rows *stdsql.Rows) (TeamMember, error) {
 	m := TeamMember{}
-	err := rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Name, &m.Email, &m.Username, &m.External, &m.Created, &m.Updated, &m.Permission)
-	return m, err
+	var nullableExternal stdsql.NullBool
+	var name, email, username stdsql.NullString
+	err := rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &name, &email, &username, &nullableExternal, &m.Created, &m.Updated, &m.Permission)
+	if err != nil {
+		return m, err
+	}
+	if nullableExternal.Valid {
+		m.External = nullableExternal.Bool
+	}
+	if name.Valid {
+		m.Name = name.String
+	}
+	if email.Valid {
+		m.Email = email.String
+	}
+	if username.Valid {
+		m.Username = username.String
+	}
+	return m, nil
 }

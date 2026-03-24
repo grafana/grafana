@@ -12,6 +12,7 @@ import (
 //
 //     Responses:
 //       200: ProvisionedAlertRules
+//       403: ForbiddenError
 
 // swagger:route GET /v1/provisioning/alert-rules/export provisioning stable RouteGetAlertRulesExport
 //
@@ -26,6 +27,7 @@ import (
 //
 //     Responses:
 //       200: AlertingFileExport
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route GET /v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
@@ -34,6 +36,7 @@ import (
 //
 //     Responses:
 //       200: ProvisionedAlertRule
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route GET /v1/provisioning/alert-rules/{UID}/export provisioning stable RouteGetAlertRuleExport
@@ -49,6 +52,7 @@ import (
 //
 //     Responses:
 //       200: AlertingFileExport
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route POST /v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
@@ -61,6 +65,7 @@ import (
 //     Responses:
 //       201: ProvisionedAlertRule
 //       400: ValidationError
+//       403: ForbiddenError
 
 // swagger:route PUT /v1/provisioning/alert-rules/{UID} provisioning stable RoutePutAlertRule
 //
@@ -72,6 +77,7 @@ import (
 //     Responses:
 //       200: ProvisionedAlertRule
 //       400: ValidationError
+//       403: ForbiddenError
 
 // swagger:route DELETE /v1/provisioning/alert-rules/{UID} provisioning stable RouteDeleteAlertRule
 //
@@ -79,6 +85,7 @@ import (
 //
 //     Responses:
 //       204: description: The alert rule was deleted successfully.
+//       403: ForbiddenError
 
 // swagger:parameters RouteGetAlertRulesExport RouteGetRulesForExport
 type AlertRulesExportParameters struct {
@@ -183,6 +190,7 @@ type ProvisionedAlertRule struct {
 //
 //     Responses:
 //       200: AlertRuleGroup
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route DELETE /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteDeleteAlertRuleGroup
@@ -207,6 +215,7 @@ type ProvisionedAlertRule struct {
 //
 //     Responses:
 //       200: AlertingFileExport
+//       403: ForbiddenError
 //       404: description: Not found.
 
 // swagger:route PUT /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
@@ -219,6 +228,7 @@ type ProvisionedAlertRule struct {
 //     Responses:
 //       200: AlertRuleGroup
 //       400: ValidationError
+//       403: ForbiddenError
 
 // swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport RouteDeleteAlertRuleGroup
 type FolderUIDPathParam struct {
