@@ -25,15 +25,15 @@ require (
 	go.opentelemetry.io/otel v1.40.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/sdk v1.40.0 // indirect; @grafana/grafana-backend-group
 	go.opentelemetry.io/otel/trace v1.40.0 // @grafana/grafana-backend-group
-	golang.org/x/crypto v0.45.0 // indirect; @grafana/grafana-backend-group
-	golang.org/x/net v0.47.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
-	golang.org/x/oauth2 v0.30.0 // @grafana/identity-access-team
-	golang.org/x/sync v0.18.0 // @grafana/alerting-backend
-	golang.org/x/text v0.31.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/crypto v0.46.0 // indirect; @grafana/grafana-backend-group
+	golang.org/x/net v0.48.0 // indirect; @grafana/oss-big-tent @grafana/partner-datasources
+	golang.org/x/oauth2 v0.34.0 // @grafana/identity-access-team
+	golang.org/x/sync v0.19.0 // @grafana/alerting-backend
+	golang.org/x/text v0.32.0 // indirect; @grafana/grafana-backend-group
 	golang.org/x/time v0.11.0 // indirect; @grafana/grafana-backend-group
 	google.golang.org/api v0.233.0 // @grafana/grafana-backend-group
-	google.golang.org/grpc v1.73.0 // indirect; @grafana/plugins-platform-backend
-	google.golang.org/protobuf v1.36.6 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/grpc v1.79.3 // indirect; @grafana/plugins-platform-backend
+	google.golang.org/protobuf v1.36.10 // indirect; @grafana/plugins-platform-backend
 	gopkg.in/yaml.v3 v3.0.1 // @grafana/alerting-backend
 )
 
@@ -41,7 +41,7 @@ require (
 	cloud.google.com/go v0.120.0 // indirect
 	cloud.google.com/go/auth v0.16.1 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
-	cloud.google.com/go/compute/metadata v0.6.0 // indirect
+	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cloud.google.com/go/iam v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
@@ -71,9 +71,9 @@ require (
 	go.opentelemetry.io/otel/metric v1.40.0 // indirect
 	go.starlark.net v0.0.0-20230525235612-a134d8f9ddca // indirect
 	golang.org/x/sys v0.40.0 // indirect
-	google.golang.org/genproto v0.0.0-20250303144028-a0af3efb3deb // indirect; @grafana/grafana-backend-group
-	google.golang.org/genproto/googleapis/api v0.0.0-20250519155744-55703ea1f237 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250519155744-55703ea1f237 // indirect
+	google.golang.org/genproto v0.0.0-20250324211829-b45e905df463 // indirect; @grafana/grafana-backend-group
+	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
@@ -86,35 +86,35 @@ require (
 )
 
 require (
-	cel.dev/expr v0.23.1 // indirect
-	cloud.google.com/go/monitoring v1.24.0 // indirect
+	cel.dev/expr v0.25.1 // indirect
+	cloud.google.com/go/monitoring v1.24.1 // indirect
+	cloud.google.com/go/trace v1.11.5 // indirect
 	github.com/99designs/gqlgen v0.17.73 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
-	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.27.0 // indirect
+	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.30.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.51.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.51.0 // indirect
 	github.com/Khan/genqlient v0.8.1 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/cncf/xds/go v0.0.0-20250326154945-ae57f3c0d45f // indirect
+	github.com/cncf/xds/go v0.0.0-20251210132809-ee656c7534f5 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
-	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
+	github.com/envoyproxy/go-control-plane/envoy v1.36.0 // indirect
+	github.com/envoyproxy/protoc-gen-validate v1.3.0 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/sosodev/duration v1.3.1 // indirect
-	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
+	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.27 // indirect
-	github.com/zeebo/errs v1.4.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/contrib/detectors/gcp v1.35.0 // indirect
+	go.opentelemetry.io/contrib/detectors/gcp v1.39.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.12.2 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp v0.12.2 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.36.0 // indirect
@@ -126,7 +126,7 @@ require (
 	go.opentelemetry.io/otel/log v0.12.2 // indirect
 	go.opentelemetry.io/otel/sdk/log v0.12.2 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.40.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.6.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 )
 
