@@ -28,6 +28,7 @@ export interface RulesFilter {
   plugins?: 'hide';
   contactPoint?: string | null;
   ruleSource?: RuleSource;
+  policy?: string | null;
 }
 
 const filterSupportedTerms: FilterSupportedTerm[] = [
@@ -43,6 +44,7 @@ const filterSupportedTerms: FilterSupportedTerm[] = [
   FilterSupportedTerm.plugins,
   FilterSupportedTerm.contactPoint,
   FilterSupportedTerm.source,
+  FilterSupportedTerm.policy,
 ];
 
 export enum RuleHealth {
@@ -74,6 +76,7 @@ export function getSearchFilterFromQuery(query: string): RulesFilter {
     [terms.PluginsToken]: (value) => (filter.plugins = value === 'hide' ? value : undefined),
     [terms.ContactPointToken]: (value) => (filter.contactPoint = value),
     [terms.RuleSourceToken]: (value) => (filter.ruleSource = getRuleSource(value)),
+    [terms.PolicyToken]: (value) => (filter.policy = value),
     [terms.FreeFormExpression]: (value) => filter.freeFormWords.push(value),
   };
 
@@ -127,6 +130,9 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
   }
   if (filter.contactPoint) {
     filterStateArray.push({ type: terms.ContactPointToken, value: filter.contactPoint });
+  }
+  if (filter.policy) {
+    filterStateArray.push({ type: terms.PolicyToken, value: filter.policy });
   }
 
   return applyFiltersToQuery(query, filterSupportedTerms, filterStateArray);

@@ -67,6 +67,14 @@ describe('Alert rules searchParser', () => {
       }
     );
 
+    it.each([{ query: 'policy:team-a-policy', expectedFilter: 'team-a-policy' }])(
+      `should parse policy $expectedFilter filter from "$query" query`,
+      ({ query, expectedFilter }) => {
+        const filter = getSearchFilterFromQuery(query);
+        expect(filter.policy).toBe(expectedFilter);
+      }
+    );
+
     it('should parse non-filtering words as free form query', () => {
       const filter = getSearchFilterFromQuery('cpu usage rule');
       expect(filter.freeFormWords).toHaveLength(3);
@@ -135,6 +143,12 @@ describe('Alert rules searchParser', () => {
   });
 
   describe('applySearchFilterToQuery', () => {
+    it('should apply policy filter to query', () => {
+      const filter = getFilter({ policy: 'team-a-policy' });
+      const query = applySearchFilterToQuery('', filter);
+      expect(query).toContain('policy:team-a-policy');
+    });
+
     it('should apply filters to an empty query', () => {
       const filter = getFilter({
         freeFormWords: ['cpu', 'eighty'],
