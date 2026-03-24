@@ -1,24 +1,13 @@
 import { css } from '@emotion/css';
-import { useCallback, useState } from 'react';
 
 import { CoreApp, GrafanaTheme2, PanelPlugin, PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { sceneUtils } from '@grafana/scenes';
-import {
-  Box,
-  Button,
-  ButtonGroup,
-  Dropdown,
-  EmptyState,
-  Icon,
-  Menu,
-  Stack,
-  Text,
-  usePanelContext,
-  useStyles2,
-} from '@grafana/ui';
+import { sceneGraph, sceneUtils } from '@grafana/scenes';
+import { Button, EmptyState, Icon, Text, useElementSelection, usePanelContext, useStyles2 } from '@grafana/ui';
+import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
+import { applyQueryToPanel, getVizSuggestionForQuery } from '../utils/getVizSuggestionForQuery';
 import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../utils/utils';
 
@@ -28,19 +17,9 @@ export const UNCONFIGURED_PANEL_PLUGIN_ID = '__unconfigured-panel';
 const UnconfiguredPanel = new PanelPlugin(UnconfiguredPanelComp);
 
 function UnconfiguredPanelComp(props: PanelProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const panelContext = usePanelContext();
   const styles = useStyles2(getStyles);
-
-  const onMenuClick = useCallback(
-    (isOpen: boolean) => {
-      if (isOpen) {
-        DashboardInteractions.panelActionClicked('configure_dropdown', props.id, 'panel');
-      }
-      setIsOpen(isOpen);
-    },
-    [props.id]
-  );
+  const { openDrawer, queryLibraryEnabled } = useQueryLibraryContext();
 
   const onConfigure = () => {
     locationService.partial({ editPanel: props.id });
@@ -50,6 +29,25 @@ function UnconfiguredPanelComp(props: PanelProps) {
   const dashboard = window.__grafanaSceneContext;
   const panel =
     dashboard instanceof DashboardScene ? findVizPanelByKey(dashboard, getVizPanelKeyForPanelId(props.id)) : null;
+
+  const { isSelected } = useElementSelection(panel?.state.key);
+
+  const onUseSavedQuery = () => {
+    openDrawer({
+      onSelectQuery: async (query, title) => {
+        if (!(dashboard instanceof DashboardScene) || !panel) {
+          return;
+        }
+        const timeRange = sceneGraph.getTimeRange(dashboard).state.value;
+        const suggestion = await getVizSuggestionForQuery(query, timeRange);
+        if (!suggestion) {
+          return;
+        }
+        await applyQueryToPanel(panel, dashboard, query, suggestion, title);
+      },
+      options: { context: 'dashboard' },
+    });
+  };
 
   const onUseLibraryPanel = () => {
     if (!dashboard || !(dashboard instanceof DashboardScene)) {
@@ -62,21 +60,6 @@ function UnconfiguredPanelComp(props: PanelProps) {
 
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
   };
-
-  const MenuActions = () => (
-    <Menu>
-      <Menu.Item
-        icon="pen"
-        label={t('dashboard.new-panel.menu-open-panel-editor', 'Configure')}
-        onClick={onConfigure}
-      ></Menu.Item>
-      <Menu.Item
-        icon="library-panel"
-        label={t('dashboard.new-panel.menu-use-library-panel', 'Use library panel')}
-        onClick={onUseLibraryPanel}
-      ></Menu.Item>
-    </Menu>
-  );
 
   const showEmptyState = config.featureToggles.newVizSuggestions && panelContext.app === CoreApp.PanelEditor;
 
@@ -100,29 +83,39 @@ function UnconfiguredPanelComp(props: PanelProps) {
   const { isEditing } = dashboard.state;
 
   return (
-    <Stack direction={'row'} alignItems={'center'} height={'100%'} justifyContent={'center'}>
-      <Box paddingBottom={2}>
-        {isEditing ? (
-          <ButtonGroup>
-            <Button icon="sliders-v-alt" onClick={onConfigure}>
-              <Trans i18nKey="dashboard.new-panel.configure-button">Configure</Trans>
+    <div className={styles.root} data-selected={isSelected || undefined}>
+      {isEditing ? (
+        <>
+          <div className={styles.quietState}>
+            <div className={styles.gearIconWrapper}>
+              <Icon name="cog" size="xl" />
+            </div>
+            <Text color="secondary">
+              <Trans i18nKey="dashboard.new-panel.no-visualization">No visualization configured</Trans>
+            </Text>
+          </div>
+          <div className={styles.buttonList}>
+            <Button icon="sliders-v-alt" onClick={onConfigure} fullWidth>
+              <Trans i18nKey="dashboard.new-panel.configure-visualization">Configure visualization</Trans>
             </Button>
-            <Dropdown overlay={MenuActions} placement="bottom-end" onVisibleChange={onMenuClick}>
-              <Button
-                aria-label={t('dashboard.new-panel.configure-button-menu', 'Toggle menu')}
-                icon={isOpen ? 'angle-up' : 'angle-down'}
-              />
-            </Dropdown>
-          </ButtonGroup>
-        ) : (
-          <EmptyState
-            variant="call-to-action"
-            message={t('dashboard.new-panel.missing-config', 'Missing panel configuration')}
-            hideImage
-          />
-        )}
-      </Box>
-    </Stack>
+            {queryLibraryEnabled && (
+              <Button icon="book-open" variant="secondary" onClick={onUseSavedQuery} fullWidth>
+                <Trans i18nKey="dashboard.new-panel.menu-use-saved-query">Use saved query</Trans>
+              </Button>
+            )}
+            <Button icon="library-panel" variant="secondary" onClick={onUseLibraryPanel} fullWidth>
+              <Trans i18nKey="dashboard.new-panel.menu-use-library-panel">Use library panel</Trans>
+            </Button>
+          </div>
+        </>
+      ) : (
+        <EmptyState
+          variant="call-to-action"
+          message={t('dashboard.new-panel.missing-config', 'Missing panel configuration')}
+          hideImage
+        />
+      )}
+    </div>
   );
 }
 
@@ -133,6 +126,38 @@ sceneUtils.registerRuntimePanelPlugin({
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    root: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: '100%',
+      height: '100%',
+    }),
+    buttonList: css({
+      display: 'none',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+      width: theme.spacing(34),
+      'section:hover &': { display: 'flex' },
+      '[data-selected] &': { display: 'flex' },
+    }),
+    quietState: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      'section:hover &': { display: 'none' },
+      '[data-selected] &': { display: 'none' },
+    }),
+    gearIconWrapper: css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      border: `1px dashed ${theme.colors.text.secondary}`,
+      borderRadius: theme.shape.radius.circle,
+      padding: theme.spacing(1.5),
+      color: theme.colors.text.secondary,
+    }),
     emptyStateWrapper: css({
       display: 'flex',
       flexDirection: 'column',
