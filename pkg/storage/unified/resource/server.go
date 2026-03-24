@@ -252,6 +252,10 @@ type ResourceServerOptions struct {
 	// Real storage backend
 	Backend StorageBackend
 
+	// BulkBatchOptions overrides the default BulkProcess batching thresholds.
+	// When nil, DefaultBulkBatchOptions is used.
+	BulkBatchOptions *BulkBatchOptions
+
 	// The blob configuration
 	Blob BlobConfig
 
@@ -298,6 +302,14 @@ type ResourceServerOptions struct {
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
 
 	QuotasConfig QuotasConfig
+}
+
+func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
+	if opts.BulkBatchOptions == nil {
+		return DefaultBulkBatchOptions()
+	}
+
+	return *opts.BulkBatchOptions
 }
 
 // NewUninitializedSearchServer creates a standalone search server without calling Init.
@@ -398,6 +410,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 	s := &server{
 		log:                            logger,
 		backend:                        opts.Backend,
+		bulkBatchOptions:               opts.bulkBatchOptions(),
 		blob:                           blobstore,
 		diagnostics:                    opts.Diagnostics,
 		access:                         opts.AccessClient,
@@ -471,6 +484,7 @@ var _ ResourceServer = &server{}
 type server struct {
 	log              log.Logger
 	backend          StorageBackend
+	bulkBatchOptions BulkBatchOptions
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
 	search           *searchServer
