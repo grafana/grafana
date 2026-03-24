@@ -199,15 +199,18 @@ export const getMarker = (
     end -= model.getLineLength(endLine) + 1;
   }
 
+  // Monaco uses 1-based line numbers; avoid getLineLength(0) and invalid line 0 (fixes editor break on invalid query at position 0)
+  const startLineNumber = startLine > 0 ? startLine : 1;
+  const endLineNumber = endLine > 0 ? endLine : 1;
+  const startColumn = startLine > 0 ? start + model.getLineLength(startLine) + 2 : 1;
+  const endColumn = endLine > 0 ? end + model.getLineLength(endLine) + 2 : 1;
+
   return {
     message,
     severity,
-
-    startLineNumber: startLine,
-    endLineNumber: endLine,
-
-    // `+ 2` because of the above computations
-    startColumn: start + model.getLineLength(startLine) + 2,
-    endColumn: end + model.getLineLength(endLine) + 2,
+    startLineNumber,
+    endLineNumber,
+    startColumn,
+    endColumn,
   };
 };

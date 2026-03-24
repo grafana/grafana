@@ -29,7 +29,9 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	githubRepository "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -149,14 +151,14 @@ func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelp
 	require.NoError(c.t, err)
 	c.orgSvc = orgSvc
 
-	teamSvc, err := teamimpl.ProvideService(c.env.SQLStore, c.env.Cfg, tracing.NewNoopTracerService())
+	teamSvc, err := teamimpl.NewLegacyService(c.env.SQLStore, c.env.Cfg, tracing.NewNoopTracerService())
 	require.NoError(c.t, err)
 	c.teamSvc = teamSvc
 
 	userSvc, err := userimpl.ProvideService(
 		c.env.SQLStore, orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
-		supportbundlestest.NewFakeBundleService())
+		supportbundlestest.NewFakeBundleService(), nil)
 	require.NoError(c.t, err)
 	c.userSvc = userSvc
 
@@ -186,7 +188,7 @@ func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelp
 
 	// ensure unified storage is alive and running
 	ctx := identity.WithRequester(context.Background(), c.Org1.Admin.Identity)
-	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
+	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 	require.NoError(t, err, "unable to read resource client health check")
 	require.Equal(t, resourcepb.HealthCheckResponse_SERVING, rsp.Status)
 
@@ -219,6 +221,10 @@ func (c *K8sTestHelper) SetGithubConnectionFactory(f githubConnection.GithubFact
 
 func (c *K8sTestHelper) SetGithubRepositoryFactory(f *githubRepository.Factory) {
 	c.env.GithubRepoFactory = f
+}
+
+func (c *K8sTestHelper) SetQuotaStatus(status provisioning.QuotaStatus) {
+	c.env.QuotaGetter.(*quotas.FixedQuotaGetter).SetQuotaStatus(status)
 }
 
 func (c *K8sTestHelper) GetListenerAddress() string {
@@ -350,7 +356,7 @@ func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, r
 func (c *K8sResourceClient) SpecJSON(v *unstructured.UnstructuredList) string {
 	c.t.Helper()
 
-	clean := []any{}
+	clean := make([]any, 0, len(v.Items))
 	for _, item := range v.Items {
 		clean = append(clean, item.Object["spec"])
 	}
@@ -466,6 +472,7 @@ type RequestParams struct {
 	Body        []byte
 	ContentType string
 	Accept      string
+	Headers     map[string]string
 }
 
 type K8sResponse[T any] struct {
@@ -570,6 +577,9 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	}
 	if params.Accept != "" {
 		req.Header.Set("Accept", params.Accept)
+	}
+	for k, v := range params.Headers {
+		req.Header.Set(k, v)
 	}
 
 	rsp, err := sharedHTTPClient.Do(req)

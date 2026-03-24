@@ -243,6 +243,10 @@ func (o *SecureValue) DeepCopyInto(dst *SecureValue) {
 	o.Status.DeepCopyInto(&dst.Status)
 }
 
+func (SecureValue) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.SecureValue"
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &SecureValue{}
 
@@ -294,6 +298,10 @@ func (o *SecureValueList) DeepCopy() *SecureValueList {
 
 func (o *SecureValueList) DeepCopyInto(dst *SecureValueList) {
 	resource.CopyObjectInto(dst, o)
+}
+
+func (SecureValueList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.SecureValueList"
 }
 
 // Interface compliance compile-time check

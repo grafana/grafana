@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/google/go-github/v70/github"
+	"github.com/google/go-github/v82/github"
 	"github.com/google/uuid"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -236,7 +236,7 @@ func (r *githubWebhookRepository) updateWebhook(ctx context.Context) (WebhookCon
 
 	hook, err := r.gh.GetWebhook(ctx, r.owner, r.repo, r.config.Status.Webhook.ID)
 	switch {
-	case errors.Is(err, ErrResourceNotFound):
+	case errors.Is(err, repository.ErrFileNotFound):
 		hook, err := r.createWebhook(ctx)
 		if err != nil {
 			return WebhookConfig{}, false, err
@@ -285,14 +285,14 @@ func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
 	id := r.config.Status.Webhook.ID
 
 	err := r.gh.DeleteWebhook(ctx, r.owner, r.repo, id)
-	if err != nil && !errors.Is(err, ErrResourceNotFound) && !errors.Is(err, ErrUnauthorized) {
+	if err != nil && !errors.Is(err, repository.ErrFileNotFound) && !errors.Is(err, repository.ErrUnauthorized) {
 		return fmt.Errorf("delete webhook: %w", err)
 	}
-	if errors.Is(err, ErrResourceNotFound) {
+	if errors.Is(err, repository.ErrFileNotFound) {
 		logger.Warn("webhook no longer exists", "url", r.config.Status.Webhook.URL, "id", id)
 		return nil
 	}
-	if errors.Is(err, ErrUnauthorized) {
+	if errors.Is(err, repository.ErrUnauthorized) {
 		logger.Warn("webhook deletion failed. no longer authorized to delete this webhook", "url", r.config.Status.Webhook.URL, "id", id)
 		return nil
 	}
@@ -303,6 +303,10 @@ func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
 
 func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
 	if len(r.webhookURL) == 0 {
+		return nil, nil
+	}
+
+	if len(r.config.Spec.Workflows) == 0 {
 		return nil, nil
 	}
 
@@ -335,6 +339,22 @@ func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]in
 	if len(r.webhookURL) == 0 {
 		return nil, nil
 	}
+
+	if len(r.config.Spec.Workflows) == 0 {
+		if r.config.Status.Webhook != nil {
+			ctx, _ = r.logger(ctx, "")
+			if err := r.deleteWebhook(ctx); err != nil {
+				return nil, err
+			}
+			return []map[string]any{{
+				"op":    "replace",
+				"path":  "/status/webhook",
+				"value": nil,
+			}}, nil
+		}
+		return nil, nil
+	}
+
 	ctx, _ = r.logger(ctx, "")
 	hook, changed, err := r.updateWebhook(ctx)
 	if err != nil || !changed {

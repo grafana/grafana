@@ -10,6 +10,23 @@ import (
 )
 
 type ctxUserKey struct{}
+type metadataIdentityUIDKey struct{}
+
+// WithOriginalIdentityUID sets the UID to use for createdBy/updatedBy annotations when the
+// context identity is overridden (e.g. by the store wrapper using service identity). Storage
+// that sets these annotations (e.g. unistore prepare) should call MetadataIdentityUIDFrom
+// and use it when present so the real acting user is recorded.
+func WithOriginalIdentityUID(ctx context.Context, uid string) context.Context {
+	return context.WithValue(ctx, metadataIdentityUIDKey{}, uid)
+}
+
+// MetadataIdentityUIDFrom returns the UID to use for createdBy/updatedBy when set by a
+// wrapper (e.g. store wrapper). If not set, the caller should use the identity from
+// AuthInfoFrom(ctx) for annotations.
+func MetadataIdentityUIDFrom(ctx context.Context) (string, bool) {
+	uid, ok := ctx.Value(metadataIdentityUIDKey{}).(string)
+	return uid, ok && uid != ""
+}
 
 // WithRequester attaches the requester to the context.
 func WithRequester(ctx context.Context, usr Requester) context.Context {
@@ -158,18 +175,27 @@ var serviceIdentityTokenPermissions = []string{
 	"dashboard.grafana.app:*",
 	"secret.grafana.app:*",
 	"query.grafana.app:*",
+	"datasource.grafana.app:*",
 	"iam.grafana.app:*",
+	"provisioning.grafana.app/repositories:read",
+	"provisioning.grafana.app/repositories:watch",
+	"provisioning.grafana.app/settings:read",
+	"provisioning.grafana.app/settings:watch",
 	"preferences.grafana.app:*", // user, team, and org preferences
 	"collections.grafana.app:*", // user stars
 	"plugins.grafana.app:*",
 	"historian.alerting.grafana.app:*",
 	"advisor.grafana.app:*",
+	"annotation.grafana.app:*",
 
 	// allow access to all datasource types
 	"*.datasource.grafana.app:*",
 
 	// Secrets Manager uses a custom verb for secret decryption, and its authorizer does not allow wildcard permissions.
 	"secret.grafana.app/securevalues:decrypt",
+
+	// Allow access to all apiextensions.k8s.io resources
+	"*.ext.grafana.app:*",
 }
 
 var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{

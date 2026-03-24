@@ -211,7 +211,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 		require.NoError(t, err)
 
 		expValues := []string{"vol-1-1", "vol-1-2", "vol-2-1", "vol-2-2", "vol-3-1", "vol-3-2"}
-		expResponse := []suggestData{}
+		expResponse := make([]suggestData, 0, len(expValues))
 		for _, value := range expValues {
 			expResponse = append(expResponse, suggestData{Text: value, Value: value, Label: value})
 		}
@@ -276,7 +276,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 			"arn:aws:ec2:us-east-1:123456789012:instance/i-12345678901234567",
 			"arn:aws:ec2:us-east-1:123456789012:instance/i-76543210987654321",
 		}
-		expResponse := []suggestData{}
+		expResponse := make([]suggestData, 0, len(expValues))
 		for _, value := range expValues {
 			expResponse = append(expResponse, suggestData{Text: value, Value: value, Label: value})
 		}

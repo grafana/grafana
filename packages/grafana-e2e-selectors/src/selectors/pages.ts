@@ -594,6 +594,9 @@ export const versionedPages = {
             applyButton: {
               [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-apply-button',
             },
+            previewTable: {
+              [MIN_GRAFANA_VERSION]: 'data-testid custom-variable-preview-table',
+            },
           },
           IntervalVariable: {
             intervalsValueInput: {
@@ -618,6 +621,9 @@ export const versionedPages = {
             },
             modeToggle: {
               '10.4.0': 'data-testid group by variable mode toggle',
+            },
+            defaultValueSection: {
+              '13.0.0': 'data-testid group by variable default value',
             },
           },
           AdHocFiltersVariable: {
@@ -666,8 +672,14 @@ export const versionedPages = {
       },
     },
     Annotations: {
+      tooltip: {
+        '10.0.0': 'annotation-marker',
+      },
       marker: {
         '10.0.0': 'data-testid annotation-marker',
+      },
+      clusterTooltip: {
+        '13.0.0': 'data-testid annotation-cluster-tooltip',
       },
     },
     Rows: {

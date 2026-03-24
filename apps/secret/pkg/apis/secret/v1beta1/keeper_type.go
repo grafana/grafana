@@ -8,11 +8,8 @@ package v1beta1
 type KeeperType string
 
 const (
-	AWSKeeperType       KeeperType = "aws"
-	AzureKeeperType     KeeperType = "azure"
-	GCPKeeperType       KeeperType = "gcp"
-	HashiCorpKeeperType KeeperType = "hashicorp"
-	SystemKeeperType    KeeperType = "system"
+	AWSKeeperType    KeeperType = "aws"
+	SystemKeeperType KeeperType = "system"
 )
 
 func (kt KeeperType) String() string {
@@ -50,15 +47,6 @@ func (s *KeeperSpec) GetType() KeeperType {
 	if s.Aws != nil {
 		return AWSKeeperType
 	}
-	if s.Azure != nil {
-		return AzureKeeperType
-	}
-	if s.Gcp != nil {
-		return GCPKeeperType
-	}
-	if s.HashiCorpVault != nil {
-		return HashiCorpKeeperType
-	}
 	return ""
 }
 
@@ -71,16 +59,4 @@ func (*SystemKeeperConfig) Type() KeeperType {
 
 func (s *KeeperAWSConfig) Type() KeeperType {
 	return AWSKeeperType
-}
-
-func (s *KeeperAzureConfig) Type() KeeperType {
-	return AzureKeeperType
-}
-
-func (s *KeeperGCPConfig) Type() KeeperType {
-	return GCPKeeperType
-}
-
-func (s *KeeperHashiCorpConfig) Type() KeeperType {
-	return HashiCorpKeeperType
 }

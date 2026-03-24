@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -49,14 +48,15 @@ var resourceInfo = folders.FolderResourceInfo
 
 // This is used just so wire has something unique to return
 type FolderAPIBuilder struct {
-	features            featuremgmt.FeatureToggles
-	namespacer          request.NamespaceMapper
-	storage             grafanarest.Storage
-	permissionStore     reconcilers.PermissionStore
-	accessClient        authlib.AccessClient
-	parents             parentsGetter
-	searcher            resourcepb.ResourceIndexClient
-	permissionsOnCreate bool
+	features             featuremgmt.FeatureToggles
+	namespacer           request.NamespaceMapper
+	storage              grafanarest.Storage
+	permissionStore      PermissionStore
+	accessClient         authlib.AccessClient
+	parents              parentsGetter
+	searcher             resourcepb.ResourceIndexClient
+	permissionsOnCreate  bool
+	maxNestedFolderDepth int
 
 	// Legacy services -- these will not exist in the MT environment
 	folderSvc              folder.LegacyService
@@ -88,19 +88,21 @@ func RegisterAPIService(cfg *setting.Cfg,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		searcher:             unified,
-		permissionStore:      reconcilers.NewZanzanaPermissionStore(zanzanaClient),
+		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
+		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface) *FolderAPIBuilder {
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
 	return &FolderAPIBuilder{
 		features:               features,
 		accessClient:           ac,
 		searcher:               searcher,
-		permissionStore:        reconcilers.NewZanzanaPermissionStore(zanzanaClient),
+		permissionStore:        NewZanzanaPermissionStore(zanzanaClient),
 		resourcePermissionsSvc: resourcePermissionsSvc,
+		maxNestedFolderDepth:   maxNestedFolderDepth,
 	}
 }
 
@@ -186,7 +188,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = b.storage
 
-	b.parents = newParentsGetter(b.storage, folder.MaxNestedFolderDepth) // used for validation
+	b.parents = newParentsGetter(b.storage, b.maxNestedFolderDepth) // used for validation
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{
 		getter:  b.storage,
 		parents: b.parents,
@@ -356,7 +358,10 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 
 	switch a.GetOperation() {
 	case admission.Create:
-		return validateOnCreate(ctx, f, b.parents, folder.MaxNestedFolderDepth)
+		if err := validateOwnerReferencesOnManagedFolder(f, nil); err != nil {
+			return err
+		}
+		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
 	case admission.Delete:
 		return validateOnDelete(ctx, f, b.searcher)
 	case admission.Update:
@@ -364,7 +369,10 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
 		}
-		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, folder.MaxNestedFolderDepth)
+		if err := validateOwnerReferencesOnManagedFolder(f, old); err != nil {
+			return err
+		}
+		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, b.maxNestedFolderDepth)
 	default:
 		return nil
 	}

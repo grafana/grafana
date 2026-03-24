@@ -72,7 +72,7 @@ func NewRemoteSecondaryFactory(
 	cfgStore configStore,
 	syncInterval time.Duration,
 	crypto Crypto,
-	autogenFn AutogenFn,
+	autogenRuleStore autogenRuleStore,
 	m *metrics.RemoteAlertmanager,
 	t tracing.Tracer,
 	withRemoteState bool,
@@ -83,7 +83,7 @@ func NewRemoteSecondaryFactory(
 			// Create the remote Alertmanager first so we don't need to unregister internal AM metrics if this fails.
 			cfg.OrgID = orgID
 			l := log.New("ngalert.forked-alertmanager.remote-secondary")
-			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenFn, m, t, features)
+			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenRuleStore, m, t, features)
 			if err != nil && withRemoteState {
 				// We can't start the internal Alertmanager without the remote state.
 				return nil, fmt.Errorf("failed to create remote Alertmanager, can't start the internal Alertmanager without the remote state: %w", err)
@@ -229,7 +229,7 @@ func (fam *RemoteSecondaryForkedAlertmanager) PutAlerts(ctx context.Context, ale
 	return fam.internal.PutAlerts(ctx, alerts)
 }
 
-func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
+func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]alertingModels.ReceiverStatus, error) {
 	return fam.internal.GetReceivers(ctx)
 }
 
@@ -260,15 +260,6 @@ func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 	ctx := context.TODO()
 	if err := fam.remote.SendState(ctx); err != nil {
 		fam.log.Error("Error sending state to the remote Alertmanager while stopping", "err", err)
-	}
-
-	config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, fam.orgID)
-	if err != nil {
-		fam.log.Error("Error getting latest Alertmanager configuration while stopping", "err", err)
-		return
-	}
-	if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
-		fam.log.Error("Error sending configuration to the remote Alertmanager while stopping", "err", err)
 	}
 }
 

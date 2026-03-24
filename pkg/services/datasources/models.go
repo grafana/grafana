@@ -250,7 +250,6 @@ type UpdateSecretFn func() error
 type GetDataSourcesQuery struct {
 	OrgID           int64
 	DataSourceLimit int
-	User            *user.SignedInUser
 }
 
 type GetAllDataSourcesQuery struct{}

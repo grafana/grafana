@@ -1,10 +1,20 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import * as React from 'react';
+import { useMemo } from 'react';
 
 import { PageLayoutType, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { SceneComponentProps, SceneObjectBase, sceneGraph } from '@grafana/scenes';
-import { Spinner, Stack } from '@grafana/ui';
+import { Alert, Spinner, Stack } from '@grafana/ui';
+import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { Page } from 'app/core/components/Page/Page';
-import { Resource } from 'app/features/apiserver/types';
+import {
+  AnnoKeyCreatedBy,
+  AnnoKeyMessage,
+  AnnoKeyUpdatedBy,
+  AnnoKeyUpdatedTimestamp,
+  Resource,
+} from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import {
   DecoratedRevisionModel,
@@ -98,8 +108,8 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     const options = append ? { limit: this._limit, continueToken: this._continueToken } : { limit: this._limit };
 
     getDashboardAPI()
-      .listDashboardHistory(uid, options)
-      .then((result) => {
+      .then(async (api) => {
+        const result = await api.listDashboardHistory(uid, options);
         const versions = this.transformToRevisionModels(result.items);
         this.setState({
           isLoading: false,
@@ -119,9 +129,12 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
         checked: false,
         uid: item.metadata.name,
         version: item.metadata.generation ?? 0,
-        created: item.metadata.creationTimestamp ?? new Date().toISOString(),
-        createdBy: item.metadata.annotations?.['grafana.app/updatedBy'] ?? '',
-        message: item.metadata.annotations?.['grafana.app/message'] ?? '',
+        created:
+          item.metadata.annotations?.[AnnoKeyUpdatedTimestamp] ??
+          item.metadata.creationTimestamp ??
+          new Date().toISOString(),
+        createdBy: item.metadata.annotations?.[AnnoKeyUpdatedBy] ?? item.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
+        message: item.metadata.annotations?.[AnnoKeyMessage] ?? '',
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         data: item.spec as object,
       })
@@ -182,6 +195,31 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
   const dashboard = model.getDashboard();
   const { isLoading, isAppending, viewMode, baseInfo, newInfo, isNewLatest } = model.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
+
+  const userKeys = useMemo(
+    () => [...new Set(model.versions.map((v) => v.createdBy).filter(Boolean))],
+    [model.versions]
+  );
+  const { data: displayData } = useGetDisplayMappingQuery(userKeys.length > 0 ? { key: userKeys } : skipToken);
+  const isLoadingUserDisplayNames = userKeys.length > 0 && !displayData;
+
+  const versionsWithDisplayNames = useMemo(() => {
+    if (!displayData) {
+      return model.versions;
+    }
+    const displayMap = new Map<string, string>();
+    for (const item of displayData.display) {
+      displayMap.set(`${item.identity.type}:${item.identity.name}`, item.displayName);
+      if (item.internalId) {
+        displayMap.set(String(item.internalId), item.displayName);
+      }
+    }
+    return model.versions.map((version) => {
+      const displayName = version.createdBy ? displayMap.get(version.createdBy) : undefined;
+      return displayName ? { ...version, createdBy: displayName } : version;
+    });
+  }, [model.versions, displayData]);
+
   const canCompare = model.versions.filter((version) => version.checked).length === 2;
   const showButtons = model.versions.length > 1;
   const hasMore = model.versions.length >= model.limit;
@@ -219,10 +257,11 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
         <VersionsHistorySpinner msg="Fetching history list&hellip;" />
       ) : (
         <VersionHistoryTable
-          versions={model.versions}
+          versions={versionsWithDisplayNames}
           onCheck={model.onCheck}
           canCompare={canCompare}
           onRestore={dashboard.onRestore}
+          isLoadingUserDisplayNames={isLoadingUserDisplayNames}
         />
       )}
       {isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
@@ -238,10 +277,22 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
     </>
   );
 
+  const isProvisioned = dashboard.isManagedRepository();
+
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      {viewMode === 'compare' ? viewModeCompare : viewModeList}
+      {isProvisioned ? (
+        <Alert title="" severity="info">
+          <Trans i18nKey="dashboard-settings.versions.provisioned-warning">
+            This dashboard is managed by a repository. Version history is not available for provisioned dashboards.
+          </Trans>
+        </Alert>
+      ) : viewMode === 'compare' ? (
+        viewModeCompare
+      ) : (
+        viewModeList
+      )}
     </Page>
   );
 }

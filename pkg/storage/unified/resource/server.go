@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"iter"
 	"net/http"
@@ -16,10 +17,13 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
 
@@ -34,6 +38,10 @@ import (
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
 
+// errStopping is returned when a write operation is rejected because the server is shutting down.
+// Uses gRPC Unavailable so clients with retry interceptors will retry on another backend.
+var errStopping = status.Error(codes.Unavailable, "server is stopping")
+
 // ResourceServer implements all gRPC services
 type ResourceServer interface {
 	SearchServer
@@ -41,16 +49,18 @@ type ResourceServer interface {
 	resourcepb.BulkStoreServer
 	resourcepb.BlobStoreServer
 	resourcepb.QuotasServer
-	resourcepb.DiagnosticsServer
+	// Deprecated: clients should use grpc.health.v1.Health with modules.StorageServer service name instead
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 	ResourceServerStopper
 }
 
 // SearchServer implements the search-related gRPC services
 type SearchServer interface {
-	LifecycleHooks
 	resourcepb.ResourceIndexServer
 	resourcepb.ManagedObjectIndexServer
-	resourcepb.DiagnosticsServer
+	// Deprecated: clients should use grpc.health.v1.Health with modules.SearchServer service name instead
+	resourcepb.DiagnosticsServer //nolint:staticcheck
+	ResourceServerStopper
 }
 
 type ResourceServerStopper interface {
@@ -132,7 +142,12 @@ type StorageBackend interface {
 
 	// ListModifiedSince will return all resources that have changed since the given resource version.
 	// If a resource has changes, only the latest change will be returned.
-	ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64) (int64, iter.Seq2[*ModifiedResource, error])
+	// Implementations may return events shortly before sinceRv; callers should filter out
+	// events older than `sinceRv` if necessary.
+	//
+	// lastCalledWithSinceRv is an optional timestamp of the last time the caller called
+	// ListModifiedSince with the same sinceRv value.
+	ListModifiedSince(ctx context.Context, key NamespacedResource, sinceRv int64, lastCalledWithSinceRv *time.Time) (int64, iter.Seq2[*ModifiedResource, error])
 
 	// Get all events from the store
 	// For HA setups, this will be more events than the local WriteEvent above!
@@ -224,6 +239,12 @@ type SearchOptions struct {
 	// Minimum time between index updates. This is also used as a delay after a successful write operation, to guarantee
 	// that subsequent search will observe the effect of the writing.
 	IndexMinUpdateInterval time.Duration
+
+	// TTL for the dedup cache used in ListModifiedSince updates. 0 disables the cache.
+	IndexModificationCacheTTL time.Duration
+
+	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
+	InjectFailuresPercent int
 }
 
 type ResourceServerOptions struct {
@@ -243,7 +264,7 @@ type ResourceServerOptions struct {
 	OverridesService *OverridesService
 
 	// Diagnostics
-	Diagnostics resourcepb.DiagnosticsServer
+	Diagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 
 	// Check if a user has access to write folders
 	// When this is nil, no resources can have folders configured
@@ -256,15 +277,13 @@ type ResourceServerOptions struct {
 	SecureValues secrets.InlineSecureValueSupport
 
 	// Callbacks for startup and shutdown
-	Lifecycle LifecycleHooks
-
 	// Get the current time in unix millis
 	Now func() int64
 
 	// Registerer to register prometheus Metrics for the Resource server
 	Reg prometheus.Registerer
 
-	storageMetrics *StorageMetrics
+	StorageMetrics *StorageMetrics
 
 	IndexMetrics *BleveIndexMetrics
 
@@ -276,6 +295,8 @@ type ResourceServerOptions struct {
 	QOSConfig QueueConfig
 
 	OwnsIndexFn func(key NamespacedResource) (bool, error)
+
+	QuotasConfig QuotasConfig
 }
 
 // NewSearchServer creates a standalone search server.
@@ -298,7 +319,6 @@ func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 	if err != nil || searchServer == nil {
 		return nil, fmt.Errorf("search server could not be created: %w", err)
 	}
-	searchServer.lifecycle = opts.Lifecycle
 	searchServer.backendDiagnostics = opts.Diagnostics
 
 	// Initialize the search server
@@ -362,26 +382,25 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	// Make this cancelable
 	ctx, cancel := context.WithCancel(context.Background())
 	s := &server{
-		log:              logger,
-		backend:          opts.Backend,
-		blob:             blobstore,
-		diagnostics:      opts.Diagnostics,
-		access:           opts.AccessClient,
-		secure:           opts.SecureValues,
-		writeHooks:       opts.WriteHooks,
-		lifecycle:        opts.Lifecycle,
-		now:              opts.Now,
-		ctx:              ctx,
-		cancel:           cancel,
-		storageMetrics:   opts.storageMetrics,
-		maxPageSizeBytes: opts.MaxPageSizeBytes,
-		reg:              opts.Reg,
-		queue:            opts.QOSQueue,
-		queueConfig:      opts.QOSConfig,
-		overridesService: opts.OverridesService,
-		storageEnabled:   true,
-		searchClient:     opts.SearchClient,
-
+		log:                            logger,
+		backend:                        opts.Backend,
+		blob:                           blobstore,
+		diagnostics:                    opts.Diagnostics,
+		access:                         opts.AccessClient,
+		secure:                         opts.SecureValues,
+		writeHooks:                     opts.WriteHooks,
+		now:                            opts.Now,
+		ctx:                            ctx,
+		cancel:                         cancel,
+		storageMetrics:                 opts.StorageMetrics,
+		maxPageSizeBytes:               opts.MaxPageSizeBytes,
+		reg:                            opts.Reg,
+		queue:                          opts.QOSQueue,
+		queueConfig:                    opts.QOSConfig,
+		overridesService:               opts.OverridesService,
+		storageEnabled:                 true,
+		searchClient:                   opts.SearchClient,
+		quotasConfig:                   opts.QuotasConfig,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 	}
 
@@ -434,19 +453,27 @@ type server struct {
 	secure           secrets.InlineSecureValueSupport
 	search           *searchServer
 	searchClient     resourcepb.ResourceIndexClient
-	diagnostics      resourcepb.DiagnosticsServer
+	diagnostics      resourcepb.DiagnosticsServer //nolint:staticcheck
 	access           claims.AccessClient
 	writeHooks       WriteAccessHooks
-	lifecycle        LifecycleHooks
 	now              func() int64
 	mostRecentRV     atomic.Int64 // The most recent resource version seen by the server
 	storageMetrics   *StorageMetrics
 	overridesService *OverridesService
+	quotasConfig     QuotasConfig
 
 	// Background watch task -- this has permissions for everything
 	ctx         context.Context
 	cancel      context.CancelFunc
 	broadcaster Broadcaster[*WrittenEvent]
+
+	// Graceful shutdown: tracks in-flight write operations so Stop can wait
+	// for them to complete before tearing down the backend.
+	// stopMu serialises the transition to "stopping" with new Add(1) calls
+	// so that Add never races with Wait on a zero counter.
+	stopMu   sync.Mutex
+	inflight sync.WaitGroup
+	stopping bool
 
 	// init checking
 	once    sync.Once
@@ -467,14 +494,6 @@ type server struct {
 // Init implements ResourceServer.
 func (s *server) Init(ctx context.Context) error {
 	s.once.Do(func() {
-		// Call lifecycle hooks
-		if s.lifecycle != nil {
-			err := s.lifecycle.Init(ctx)
-			if err != nil {
-				s.initErr = fmt.Errorf("initialize Resource Server: %w", err)
-			}
-		}
-
 		// initialize tenant overrides service
 		if s.initErr == nil && s.overridesService != nil {
 			s.initErr = s.overridesService.init(ctx)
@@ -497,17 +516,43 @@ func (s *server) Init(ctx context.Context) error {
 	return s.initErr
 }
 
+// trackWrite atomically checks the stopping flag and increments the in-flight
+// counter. It returns true if the write was accepted (caller must defer
+// s.inflight.Done()), or false if the server is shutting down.
+func (s *server) trackWrite() bool {
+	s.stopMu.Lock()
+	defer s.stopMu.Unlock()
+	if s.stopping {
+		return false
+	}
+	s.inflight.Add(1)
+	return true
+}
+
 func (s *server) Stop(ctx context.Context) error {
 	s.initErr = fmt.Errorf("service is stopping")
 
-	var stopFailed bool
-	if s.lifecycle != nil {
-		err := s.lifecycle.Stop(ctx)
-		if err != nil {
-			stopFailed = true
-			s.initErr = fmt.Errorf("service stopped with error: %w", err)
-		}
+	// Signal that no new write operations should be accepted.
+	// The lock ensures no goroutine is between its stopping check and Add(1).
+	s.stopMu.Lock()
+	s.stopping = true
+	s.stopMu.Unlock()
+
+	// Wait for in-flight write operations to finish, respecting the context deadline.
+	// After the unlock above, no new Add(1) can happen, so Wait is safe.
+	done := make(chan struct{})
+	go func() {
+		s.inflight.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+		s.log.Debug("all in-flight write operations completed")
+	case <-ctx.Done():
+		s.log.Warn("timed out waiting for in-flight write operations to complete")
 	}
+
+	var stopFailed bool
 
 	if s.search != nil {
 		s.search.stop()
@@ -518,6 +563,10 @@ func (s *server) Stop(ctx context.Context) error {
 			stopFailed = true
 			s.initErr = fmt.Errorf("service stopeed with error: %w", err)
 		}
+	}
+
+	if kvBackend, ok := s.backend.(KVBackend); ok {
+		kvBackend.Stop()
 	}
 
 	// Stops the streaming
@@ -559,7 +608,7 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *resour
 
 	// Make sure the command labels are not saved
 	for k := range obj.GetLabels() {
-		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash || k == utils.LabelGetFullpath {
+		if k == utils.LabelKeyGetHistory || k == utils.LabelKeyGetTrash {
 			return nil, NewBadRequestError("can not save label: " + k)
 		}
 	}
@@ -723,12 +772,30 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Create")
 	defer span.End()
 
-	// check quotas and log for now
-	s.checkQuota(ctx, NamespacedResource{
+	if !s.trackWrite() {
+		return nil, errStopping
+	}
+	defer s.inflight.Done()
+
+	err := s.checkQuota(ctx, NamespacedResource{
 		Namespace: req.Key.Namespace,
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 	})
+
+	if err != nil {
+		var quotaErr QuotaExceededError
+		msg := err.Error()
+		if errors.As(err, &quotaErr) {
+			msg = quotaErr.Message()
+		}
+		return &resourcepb.CreateResponse{
+			Error: &resourcepb.ErrorResult{
+				Message: msg,
+				Code:    http.StatusForbidden,
+			},
+		}, nil
+	}
 
 	if r := verifyRequestKey(req.Key); r != nil {
 		return nil, fmt.Errorf("invalid request key: %s", r.Message)
@@ -744,10 +811,7 @@ func (s *server) Create(ctx context.Context, req *resourcepb.CreateRequest) (*re
 		return rsp, nil
 	}
 
-	var (
-		res *resourcepb.CreateResponse
-		err error
-	)
+	var res *resourcepb.CreateResponse
 	runErr := s.runInQueue(ctx, req.Key.Namespace, func(queueCtx context.Context) {
 		res, err = s.create(queueCtx, user, req)
 	})
@@ -825,6 +889,11 @@ func (s *server) Update(ctx context.Context, req *resourcepb.UpdateRequest) (*re
 	ctx, span := tracer.Start(ctx, "resource.server.Update")
 	defer span.End()
 
+	if !s.trackWrite() {
+		return nil, errStopping
+	}
+	defer s.inflight.Done()
+
 	rsp := &resourcepb.UpdateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -898,6 +967,11 @@ func (s *server) update(ctx context.Context, user claims.AuthInfo, req *resource
 func (s *server) Delete(ctx context.Context, req *resourcepb.DeleteRequest) (*resourcepb.DeleteResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.Delete")
 	defer span.End()
+
+	if !s.trackWrite() {
+		return nil, errStopping
+	}
+	defer s.inflight.Done()
 
 	rsp := &resourcepb.DeleteResponse{}
 	if req.ResourceVersion < 0 {
@@ -1068,6 +1142,7 @@ func (s *server) read(ctx context.Context, user claims.AuthInfo, req *resourcepb
 
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
+	span.SetAttributes(attribute.String("group", req.Options.Key.Group), attribute.String("resource", req.Options.Key.Resource))
 	defer span.End()
 
 	// The history + trash queries do not yet support additional filters
@@ -1079,8 +1154,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}
 	}
 
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok || user == nil {
+	if _, ok := claims.AuthInfoFrom(ctx); !ok {
 		return &resourcepb.ListResponse{
 			Error: &resourcepb.ErrorResult{
 				Message: "no user found in context",
@@ -1103,59 +1177,158 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 	if req.Limit < 1 {
 		req.Limit = 500 // default max 500 items in a page
 	}
-	pageBytes := 0
-	rsp := &resourcepb.ListResponse{}
 
 	req = filterFieldSelectors(req)
 	if s.useFieldSelectorSearch(req) {
 		// If we get here, we're doing list with selectable fields. Let's do search instead, since
 		// we index all selectable fields, and fetch resulting documents one by one.
+		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
+		if s.storageMetrics != nil {
+			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
+		}
 		return s.listWithFieldSelectors(ctx, req)
 	}
 
-	key := req.Options.Key
-	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
-	checker, _, err := s.access.Compile(ctx, user, claims.ListRequest{
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-		Verb:      utils.VerbGet,
-	})
-	var trashChecker claims.ItemChecker // only for trash
-	if req.Source == resourcepb.ListRequest_TRASH {
-		//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
-		trashChecker, _, err = s.access.Compile(ctx, user, claims.ListRequest{
-			Group:     key.Group,
-			Resource:  key.Resource,
-			Namespace: key.Namespace,
-			Verb:      utils.VerbSetPermissions, // Basically Admin
-		})
-		if err != nil {
-			return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
-		}
+	switch req.Source {
+	case resourcepb.ListRequest_STORE:
+		return s.listAuthorized(ctx, req, s.backend.ListIterator)
+	case resourcepb.ListRequest_HISTORY:
+		return s.listAuthorized(ctx, req, s.backend.ListHistory)
+	case resourcepb.ListRequest_TRASH:
+		return s.listFromTrash(ctx, req)
+	default:
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
 	}
-	if err != nil {
-		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
-	}
-	if checker == nil {
-		return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
-			Code: http.StatusForbidden,
-		}}, nil
+}
+
+// listBackendFunc is the signature shared by ListIterator and ListHistory.
+type listBackendFunc func(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
+
+// listAuthorized lists resources using batch authorization via FilterAuthorized.
+// The backendList parameter selects the backend method (ListIterator or ListHistory).
+func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest, backendList listBackendFunc) (*resourcepb.ListResponse, error) {
+	// candidateItem holds metadata from the ListIterator for batch authorization.
+	type candidateItem struct {
+		name            string
+		folder          string
+		resourceVersion int64
+		value           []byte
+		continueToken   string
 	}
 
-	iterFunc := func(iter ListIterator) error {
+	key := req.Options.Key
+	rsp := &resourcepb.ListResponse{}
+	var (
+		pageBytes int
+		nextToken string
+	)
+	maxPageBytes := s.maxPageSizeBytes
+
+	rv, err := backendList(ctx, req, func(iter ListIterator) error {
+		// Convert ListIterator to iter.Seq for FilterAuthorized
+		candidates := func(yield func(candidateItem) bool) {
+			for iter.Next() {
+				if err := iter.Error(); err != nil {
+					return
+				}
+				if !yield(candidateItem{
+					name:            iter.Name(),
+					folder:          iter.Folder(),
+					resourceVersion: iter.ResourceVersion(),
+					value:           iter.Value(),
+					continueToken:   iter.ContinueToken(),
+				}) {
+					return
+				}
+			}
+		}
+
+		extractFn := func(c candidateItem) authz.BatchCheckItem {
+			return authz.BatchCheckItem{
+				Name:               c.name,
+				Folder:             c.folder,
+				Verb:               utils.VerbGet,
+				Group:              key.Group,
+				Resource:           key.Resource,
+				Namespace:          key.Namespace,
+				FreshnessTimestamp: resourceVersionTime(c.resourceVersion),
+			}
+		}
+
+		var lastContinueToken string
+		for item, err := range authz.FilterAuthorized(ctx, s.access, candidates, extractFn, authz.WithTracer(tracer)) {
+			if err != nil {
+				return err
+			}
+
+			// If the page is already full, this extra authorized item confirms
+			// there are more results. Set the continue token and stop.
+			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
+				nextToken = lastContinueToken
+				break
+			}
+
+			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+				ResourceVersion: item.resourceVersion,
+				Value:           item.value,
+			})
+			pageBytes += len(item.value)
+			lastContinueToken = item.continueToken
+		}
+
+		return iter.Error()
+	})
+
+	return s.finalizeListResponse(rsp, rv, err, nextToken, req.Options.Key)
+}
+
+// listFromTrash lists deleted resources. Trash uses a different authorization
+// model: the user must be admin OR the user who deleted the object.
+func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return &resourcepb.ListResponse{
+			Error: &resourcepb.ErrorResult{
+				Message: "no user found in context",
+				Code:    http.StatusUnauthorized,
+			}}, nil
+	}
+
+	key := req.Options.Key
+
+	rsp := &resourcepb.ListResponse{}
+	var (
+		pageBytes int
+		nextToken string
+	)
+	maxPageBytes := s.maxPageSizeBytes
+
+	// Cache admin check results per folder to avoid redundant Check calls
+	// for items in the same folder.
+	folderAdminCache := make(map[string]bool)
+
+	rv, err := s.backend.ListHistory(ctx, req, func(iter ListIterator) error {
 		for iter.Next() {
 			if err := iter.Error(); err != nil {
 				return err
 			}
 
-			// Trash is only accessible to admins or the user who deleted the object
-			if req.Source == resourcepb.ListRequest_TRASH {
-				if !s.isTrashItemAuthorized(ctx, iter, trashChecker) {
+			// Parse item metadata — needed for both provisioned and authorization checks.
+			obj, err := parseTrashItem(iter.Value())
+			if err != nil {
+				continue
+			}
+
+			// Provisioned objects should never be retrievable from trash.
+			if obj.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
+				continue
+			}
+
+			// Check if user is admin in this folder (cached) or the user who deleted the item.
+			if !s.checkFolderAdmin(ctx, user, iter.Folder(), key, folderAdminCache) {
+				if obj.GetUpdatedBy() != user.GetUID() {
 					continue
 				}
-			} else if !checker(iter.Name(), iter.Folder()) {
-				continue
 			}
 
 			item := &resourcepb.ResourceWrapper{
@@ -1165,27 +1338,23 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 
 			pageBytes += len(item.Value)
 			rsp.Items = append(rsp.Items, item)
-			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
+			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
 				t := iter.ContinueToken()
 				if iter.Next() {
-					rsp.NextPageToken = t
+					nextToken = t
 				}
 				return iter.Error()
 			}
 		}
 		return iter.Error()
-	}
+	})
 
-	var rv int64
-	switch req.Source {
-	case resourcepb.ListRequest_STORE:
-		rv, err = s.backend.ListIterator(ctx, req, iterFunc)
-	case resourcepb.ListRequest_HISTORY, resourcepb.ListRequest_TRASH:
-		rv, err = s.backend.ListHistory(ctx, req, iterFunc)
-	default:
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid list source: %v", req.Source))
-	}
+	return s.finalizeListResponse(rsp, rv, err, nextToken, req.Options.Key)
+}
 
+// finalizeListResponse validates the resource version, sets pagination token,
+// and records metrics. Shared by listFromStore, listFromHistory, and listFromTrash.
+func (s *server) finalizeListResponse(rsp *resourcepb.ListResponse, rv int64, err error, nextToken string, key *resourcepb.ResourceKey) (*resourcepb.ListResponse, error) {
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
 		return rsp, nil
@@ -1198,64 +1367,70 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (*resour
 		}
 		return rsp, nil
 	}
+
 	rsp.ResourceVersion = rv
-	return rsp, err
+	rsp.NextPageToken = nextToken
+	gr := key.Group + "/" + key.Resource
+	if s.storageMetrics != nil {
+		s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
+	}
+	return rsp, nil
 }
 
-// isTrashItemAuthorized checks if the user has access to the trash item.
-func (s *server) isTrashItemAuthorized(ctx context.Context, iter ListIterator, trashChecker claims.ItemChecker) bool {
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok || user == nil {
-		return false
+// checkFolderAdmin checks whether the user has admin permission (VerbSetPermissions) in the given
+// folder. Results are cached per folder to avoid redundant Check calls.
+func (s *server) checkFolderAdmin(ctx context.Context, user claims.AuthInfo, folder string, key *resourcepb.ResourceKey, cache map[string]bool) bool {
+	if isAdmin, ok := cache[folder]; ok {
+		return isAdmin
 	}
+	resp, err := s.access.Check(ctx, user, claims.CheckRequest{
+		Verb:      utils.VerbSetPermissions,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+	}, folder)
+	isAdmin := err == nil && resp.Allowed
+	cache[folder] = isAdmin
+	return isAdmin
+}
 
+// parseTrashItem unmarshals the raw value into a GrafanaMetaAccessor.
+func parseTrashItem(value []byte) (utils.GrafanaMetaAccessor, error) {
 	partial := &metav1.PartialObjectMetadata{}
-	err := json.Unmarshal(iter.Value(), partial)
-	if err != nil {
-		return false
+	if err := json.Unmarshal(value, partial); err != nil {
+		return nil, err
 	}
-
-	obj, err := utils.MetaAccessor(partial)
-	if err != nil {
-		return false
-	}
-
-	// provisioned objects should not be retrievable in the trash
-	if obj.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
-		return false
-	}
-
-	// Trash is only accessible to admins or the user who deleted the object
-	return obj.GetUpdatedBy() == user.GetUID() || trashChecker(iter.Name(), iter.Folder())
+	return utils.MetaAccessor(partial)
 }
 
 // Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
-	var err error
-	s.broadcaster, err = NewBroadcaster(s.ctx, func(out chan<- *WrittenEvent) error {
-		events, err := s.backend.WatchWriteEvents(s.ctx)
-		if err != nil {
-			return err
-		}
-		go func() {
-			for v := range events {
-				if v == nil {
-					s.log.Error("received nil event")
-					continue
-				}
-				// Skip events during batch updates
-				if v.PreviousRV < 0 {
-					continue
-				}
+	events, err := s.backend.WatchWriteEvents(s.ctx)
+	if err != nil {
+		return err
+	}
 
-				s.log.Debug("Server. Streaming Event", "type", v.Type, "previousRV", v.PreviousRV, "group", v.Key.Group, "namespace", v.Key.Namespace, "resource", v.Key.Resource, "name", v.Key.Name)
-				s.mostRecentRV.Store(v.ResourceVersion)
-				out <- v
+	out := make(chan *WrittenEvent, chanBufferLen)
+	go func() {
+		defer close(out)
+		for v := range events {
+			if v == nil {
+				s.log.Error("received nil event")
+				continue
 			}
-		}()
-		return nil
-	})
-	return err
+			// Skip events during batch updates
+			if v.PreviousRV < 0 {
+				continue
+			}
+
+			s.log.Debug("Server. Streaming Event", "type", v.Type, "previousRV", v.PreviousRV, "group", v.Key.Group, "namespace", v.Key.Namespace, "resource", v.Key.Resource, "name", v.Key.Name)
+			s.mostRecentRV.Store(v.ResourceVersion)
+			out <- v
+		}
+	}()
+
+	s.broadcaster = NewBroadcaster(s.ctx, out)
+	return nil
 }
 
 //nolint:gocyclo
@@ -1285,7 +1460,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	// Start listening -- this will buffer any changes that happen while we backfill.
 	// If events are generated faster than we can process them, then some events will be dropped.
 	// TODO: Think of a way to allow the client to catch up.
-	stream, err := s.broadcaster.Subscribe(ctx)
+	stream, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace))
 	if err != nil {
 		return err
 	}
@@ -1486,7 +1661,7 @@ func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountM
 
 // IsHealthy implements ResourceServer.
 func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
-	return s.diagnostics.IsHealthy(ctx, req)
+	return s.diagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
 // GetBlob implements BlobStore.
@@ -1615,6 +1790,11 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 		MaxRetries: s.queueConfig.MaxRetries,
 	})
 
+	// Allow cluster-scoped resources to be enqueued with an empty tenantID.
+	if tenantID == "" {
+		tenantID = clusterScopeNamespace
+	}
+
 	for {
 		err := s.queue.Enqueue(queueCtx, tenantID, wrappedRunnable)
 		if err == nil {
@@ -1647,7 +1827,7 @@ func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildInde
 	return s.search.RebuildIndexes(ctx, req)
 }
 
-func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
+func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent("checkQuota", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
@@ -1657,19 +1837,19 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
 
 	if s.overridesService == nil {
 		s.log.FromContext(ctx).Debug("overrides service not configured, skipping quota check", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource)
-		return
+		return nil
 	}
 
 	quota, err := s.overridesService.GetQuota(ctx, nsr)
 	if err != nil {
 		s.log.FromContext(ctx).Error("failed to get quota for resource", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
-		return
+		return nil
 	}
 
 	stats, err := s.backend.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
 		s.log.FromContext(ctx).Error("failed to get resource stats for quota checking", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "error", err)
-		return
+		return nil
 	}
 	if len(stats) > 0 {
 		s.log.FromContext(ctx).Debug("stats found", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "count", stats[0].Count)
@@ -1679,5 +1859,26 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) {
 
 	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
 		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
+		if s.quotasConfig.EnforceQuotas {
+			return QuotaExceededError{
+				Resource:       nsr.Resource,
+				Used:           stats[0].Count,
+				Limit:          quota.Limit,
+				SupportMessage: s.quotasConfig.SupportMessage,
+			}
+		}
 	}
+
+	return nil
+}
+
+// resourceVersionTime extracts the timestamp embedded in a resource version.
+// Resource versions can be either snowflake IDs (KV backend) or microsecond
+// Unix timestamps (SQL backend).
+func resourceVersionTime(rv int64) time.Time {
+	micro := rv
+	if isSnowflake(rv) {
+		micro = rvmanager.RVFromSnowflake(rv)
+	}
+	return time.UnixMicro(micro)
 }

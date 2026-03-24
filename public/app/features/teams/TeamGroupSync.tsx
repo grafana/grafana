@@ -6,7 +6,7 @@ import {
   useAddTeamGroupApiMutation,
   useGetTeamGroupsApiQuery,
   useRemoveTeamGroupApiQueryMutation,
-} from '@grafana/api-clients/rtkq/legacy';
+} from '@grafana/api-clients/internal/rtkq/legacy';
 import { Trans, t } from '@grafana/i18n';
 import { Input, Tooltip, Icon, Button, useTheme2, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';

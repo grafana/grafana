@@ -121,7 +121,7 @@ export function useResourceStats(
     refetchOnMountOrArgChange: true,
   });
 
-  const isLoading = resourceStatsQuery.isLoading || filesQuery.isLoading || Boolean(repoName && healthStatusNotReady);
+  const isLoading = resourceStatsQuery.isFetching || filesQuery.isFetching || Boolean(healthStatusNotReady);
 
   const { resourceCount, resourceCountString, fileCount } = useMemo(
     () => getResourceStats(filesQuery.data, resourceStatsQuery.data),

@@ -29,7 +29,7 @@ import (
 func NewOpenFGAServer(cfg setting.ZanzanaServerSettings, store storage.OpenFGADatastore) (*server.Server, error) {
 	logger := log.New("openfga.server")
 
-	opts := []server.OpenFGAServiceV1Option{
+	opts := []server.OpenFGAServiceV1Option{ //nolint:prealloc
 		server.WithDatastore(store),
 		server.WithLogger(zlogger.New(logger)),
 
@@ -132,6 +132,9 @@ func withOpenFGAOptions(cfg setting.ZanzanaServerSettings) []server.OpenFGAServi
 	}
 	if cfg.OpenFgaServerSettings.AuthorizationModelCacheSize != 0 {
 		opts = append(opts, server.WithAuthorizationModelCacheSize(cfg.OpenFgaServerSettings.AuthorizationModelCacheSize))
+	}
+	if cfg.OpenFgaServerSettings.TypesystemCacheSize != 0 {
+		opts = append(opts, server.WithTypesystemCacheSize(cfg.OpenFgaServerSettings.TypesystemCacheSize))
 	}
 	if cfg.OpenFgaServerSettings.ChangelogHorizonOffset != 0 {
 		opts = append(opts, server.WithChangelogHorizonOffset(cfg.OpenFgaServerSettings.ChangelogHorizonOffset))

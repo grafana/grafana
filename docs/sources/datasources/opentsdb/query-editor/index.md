@@ -18,27 +18,6 @@ menuTitle: Query editor
 title: OpenTSDB query editor
 weight: 200
 last_reviewed: 2026-01-28
-refs:
-  troubleshooting-opentsdb:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/
-  template-variables:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # OpenTSDB query editor
@@ -47,7 +26,7 @@ The query editor allows you to build OpenTSDB queries visually. The available op
 
 ## Access the query editor
 
-The OpenTSDB query editor is located on the [Explore](ref:explore) page. You can also access the OpenTSDB query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
+The OpenTSDB query editor is located on the [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) page. You can also access the OpenTSDB query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
 ## Create a query
 
@@ -280,7 +259,7 @@ For autocomplete to work:
 - Metrics must exist in your OpenTSDB database.
 - The **Lookup limit** setting in your data source configuration controls the maximum number of suggestions returned.
 
-If autocomplete isn't working, refer to [Troubleshooting](ref:troubleshooting-opentsdb).
+If autocomplete isn't working, refer to [Troubleshooting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/).
 
 ## Use template variables
 
@@ -292,7 +271,7 @@ Common uses include:
 - **Filter values**: `$host` to filter by a variable-selected host.
 - **Tag values**: `$environment` to filter by environment.
 
-For more information about creating and using template variables, refer to [Template variables](ref:template-variables).
+For more information about creating and using template variables, refer to [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/).
 
 ## Query examples
 
@@ -398,6 +377,6 @@ This query only returns time series that have the `host` tag defined, excluding 
 
 ## Next steps
 
-- [Use template variables](ref:template-variables) to create dynamic, reusable dashboards.
-- [Set up alerting](ref:alerting) to get notified when metrics cross thresholds.
-- [Troubleshoot issues](ref:troubleshooting-opentsdb) if you encounter problems with queries.
+- [Use template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/template-variables/) to create dynamic, reusable dashboards.
+- [Set up alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/alerting/) to get notified when metrics cross thresholds.
+- [Troubleshoot issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/opentsdb/troubleshooting/) if you encounter problems with queries.

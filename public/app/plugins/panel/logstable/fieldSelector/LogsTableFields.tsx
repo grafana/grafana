@@ -1,32 +1,39 @@
 import { css } from '@emotion/css';
+import { Resizable, ResizeCallback } from 're-resizable';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { DataFrame, GrafanaTheme2, store } from '@grafana/data';
+import { getDragStyles, useStyles2 } from '@grafana/ui';
 import { FieldNameMetaStore } from 'app/features/explore/Logs/LogsTableWrap';
-import { FIELD_SELECTOR_DEFAULT_WIDTH } from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
+import {
+  FIELD_SELECTOR_MIN_WIDTH,
+  getDefaultFieldSelectorWidth,
+} from 'app/features/logs/components/fieldSelector/FieldSelector';
+import { LogsTableFieldSelector } from 'app/features/logs/components/fieldSelector/LogsTableFieldSelector';
+import { reportInteractionOnce } from 'app/features/logs/components/panel/analytics';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
-import { LogsTableFieldSelector } from './LogsTableFieldSelector';
 import { buildColumnsWithMeta } from './buildColumnsWithMeta';
 
 interface Props {
-  sidebarWidth: number | undefined;
-  tableWidth: number;
-  height: number;
-  dataFrame: DataFrame;
+  fieldSelectorWidth: number | undefined;
+  onFieldSelectorWidthChange: (width: number) => void;
   displayedFields: string[];
   onDisplayedFieldsChange: (displayedFields: string[]) => void;
-  onSidebarWidthChange: (width: number) => void;
+
+  dataFrame: DataFrame;
   logsFrame: LogsFrame;
+
+  tableWidth: number;
+  height: number;
   timeFieldName: string;
   bodyFieldName: string;
 }
 
-// @todo take getSuggestedFields as prop and delete this component
 export function LogsTableFields({
   tableWidth,
-  sidebarWidth = FIELD_SELECTOR_DEFAULT_WIDTH,
+  fieldSelectorWidth = getDefaultFieldSelectorWidth(),
   height,
   dataFrame,
   displayedFields,
@@ -34,9 +41,10 @@ export function LogsTableFields({
   timeFieldName,
   bodyFieldName,
   logsFrame,
-  onSidebarWidthChange,
+  onFieldSelectorWidthChange,
 }: Props) {
-  const styles = useStyles2(getStyles, sidebarWidth, height);
+  const styles = useStyles2(getStyles, fieldSelectorWidth, height);
+  const dragStyles = useStyles2(getDragStyles);
   const [containerElement, setContainerRefState] = useState<HTMLDivElement | null>(null);
   const containerRef = useCallback((node: HTMLDivElement) => {
     setContainerRefState(node);
@@ -48,6 +56,36 @@ export function LogsTableFields({
   const handleSetColumnsWithMeta = useCallback((columnsWithMeta: FieldNameMetaStore) => {
     setColumnsWithMeta(columnsWithMeta);
   }, []);
+
+  const setFieldSelectorWidthWrapper = useCallback(
+    (width: number) => {
+      onFieldSelectorWidthChange(width);
+      // Getting value in getFieldSelectorWidth
+      store.set(`${SETTING_KEY_ROOT}.fieldSelector.width`, width);
+    },
+    [onFieldSelectorWidthChange]
+  );
+
+  const handleResize: ResizeCallback = useCallback(
+    (event, direction, ref) => {
+      setFieldSelectorWidthWrapper(ref.clientWidth);
+      reportInteractionOnce(`${SETTING_KEY_ROOT}.table.field_selector_resized`, {
+        mode: 'logs',
+      });
+    },
+    [setFieldSelectorWidthWrapper]
+  );
+
+  const toggleField = useCallback(
+    (key: string) => {
+      if (displayedFields.includes(key)) {
+        onDisplayedFieldsChange(displayedFields.filter((f) => f !== key));
+      } else {
+        onDisplayedFieldsChange([...displayedFields, key]);
+      }
+    },
+    [displayedFields, onDisplayedFieldsChange]
+  );
 
   /**
    * Build columns meta
@@ -76,38 +114,43 @@ export function LogsTableFields({
   }
 
   return (
-    <div ref={containerRef} className={styles.sidebarWrapper}>
+    <div ref={containerRef} className={styles.fieldSelectorWrapper}>
       {containerElement && (
-        <LogsTableFieldSelector
+        <Resizable
+          enable={{
+            right: true,
+          }}
+          handleClasses={{ right: dragStyles.dragHandleVertical }}
+          size={{ width: fieldSelectorWidth, height: height }}
+          defaultSize={{ width: fieldSelectorWidth, height: height }}
+          minWidth={FIELD_SELECTOR_MIN_WIDTH}
           maxWidth={tableWidth * 0.8}
-          clear={() => {
-            onDisplayedFieldsChange(defaultDisplayedFields);
-          }}
-          columnsWithMeta={columnsWithMeta}
-          dataFrame={dataFrame}
-          reorder={onDisplayedFieldsChange}
-          setSidebarWidth={onSidebarWidthChange}
-          sidebarWidth={sidebarWidth}
-          sidebarHeight={height}
-          toggle={(key: string) => {
-            if (displayedFields.includes(key)) {
-              onDisplayedFieldsChange(displayedFields.filter((f) => f !== key));
-            } else {
-              onDisplayedFieldsChange([...displayedFields, key]);
-            }
-          }}
-        />
+          onResize={handleResize}
+        >
+          <LogsTableFieldSelector
+            clear={() => {
+              onDisplayedFieldsChange(defaultDisplayedFields);
+            }}
+            columnsWithMeta={columnsWithMeta}
+            dataFrames={[dataFrame]}
+            reorder={onDisplayedFieldsChange}
+            setWidth={onFieldSelectorWidthChange}
+            width={fieldSelectorWidth}
+            toggle={toggleField}
+          />
+        </Resizable>
       )}
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, sidebarWidth: number, height: number) => {
+const getStyles = (theme: GrafanaTheme2, fieldSelectorWidth: number, height: number) => {
   return {
-    sidebarWrapper: css({
+    fieldSelectorWrapper: css({
       position: 'absolute',
       height: height,
-      width: sidebarWidth,
+      width: fieldSelectorWidth,
+      zIndex: 1,
     }),
   };
 };

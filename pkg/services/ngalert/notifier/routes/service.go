@@ -9,6 +9,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -69,7 +70,7 @@ func NewService(
 	}
 }
 
-func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name string) (legacy_storage.ManagedRoute, error) {
+func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name string, user identity.Requester) (legacy_storage.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.get", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("query_name", name),
@@ -103,16 +104,21 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 		attribute.String("concurrency_token", rev.ConcurrencyToken),
 	))
 
-	provenance, err := nps.provenanceStore.GetProvenance(ctx, route, orgID)
-	if err != nil {
-		return legacy_storage.ManagedRoute{}, err
+	// Imported routes derive their provenance from the external config (ProvenanceConvertedPrometheus).
+	// They are not stored in the provenance store, so we must not overwrite with a store lookup
+	// which would return ProvenanceNone and cause a discrepancy with the list view.
+	if route.Origin != models.ResourceOriginImported {
+		provenance, err := nps.provenanceStore.GetProvenance(ctx, route, orgID)
+		if err != nil {
+			return legacy_storage.ManagedRoute{}, err
+		}
+		route.Provenance = provenance
 	}
-	route.Provenance = provenance
 
 	return *route, nil
 }
 
-func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_storage.ManagedRoutes, error) {
+func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user identity.Requester) (legacy_storage.ManagedRoutes, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.getMany", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.Bool("managed_routes_enabled", nps.managedRoutesEnabled()),
@@ -165,7 +171,7 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64) (legacy_s
 	return managedRoutes, nil
 }
 
-func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance, version string) (*legacy_storage.ManagedRoute, error) {
+func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance, version string, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.update", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -250,7 +256,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	return updated, nil
 }
 
-func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name string, p models.Provenance, version string) error {
+func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name string, p models.Provenance, version string, user identity.Requester) error {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.delete", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),
@@ -336,7 +342,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	return nil
 }
 
-func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance) (*legacy_storage.ManagedRoute, error) {
+func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name string, subtree definitions.Route, p models.Provenance, user identity.Requester) (*legacy_storage.ManagedRoute, error) {
 	ctx, span := nps.tracer.Start(ctx, "alerting.routes.create", trace.WithAttributes(
 		attribute.Int64("query_org_id", orgID),
 		attribute.String("route_name", name),

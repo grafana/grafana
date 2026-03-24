@@ -1846,6 +1846,7 @@ type fakeClient struct {
 	multiSearchError    error
 	builder             *es.MultiSearchRequestBuilder
 	multisearchRequests []*es.MultiSearchRequest
+	executedEsqlQuery   string
 }
 
 func newFakeClient() *fakeClient {
@@ -1874,6 +1875,12 @@ func (c *fakeClient) ExecuteMultisearch(r *es.MultiSearchRequest) (*es.MultiSear
 func (c *fakeClient) MultiSearch() *es.MultiSearchRequestBuilder {
 	c.builder = es.NewMultiSearchRequestBuilder()
 	return c.builder
+}
+
+func (c *fakeClient) ExecuteEsql(query string) (*es.EsqlResponse, error) {
+	c.executedEsqlQuery = query
+	// Return empty response for tests that don't use ES|QL
+	return &es.EsqlResponse{}, nil
 }
 
 func newDataQuery(body string) (backend.QueryDataRequest, error) {
@@ -1907,8 +1914,42 @@ func executeElasticsearchDataQueryWithContext(c es.Client, body string, from, to
 			},
 		},
 	}
-	query := newElasticsearchDataQuery(ctx, c, &dataRequest, log.New())
+	query := newElasticsearchDataQuery(ctx, c, &dataRequest, log.New(), "")
 	return query.execute()
+}
+
+func TestExecuteElasticsearchDataQuery_ReplacesEsqlIndexPlaceholder(t *testing.T) {
+	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
+	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+
+	c := newFakeClient()
+	timeRange := backend.TimeRange{
+		From: from,
+		To:   to,
+	}
+	dataRequest := backend.QueryDataRequest{
+		Queries: []backend.DataQuery{
+			{
+				JSON: json.RawMessage(`{
+					"queryType": "esql",
+					"query": "FROM $__index | LIMIT 10"
+				}`),
+				TimeRange: timeRange,
+				RefID:     "A",
+			},
+		},
+	}
+
+	cfg := backend.NewGrafanaCfg(map[string]string{
+		featuretoggles.EnabledFeatures: "elasticsearchESQLQuery",
+	})
+	ctx := backend.WithGrafanaConfig(context.Background(), cfg)
+
+	query := newElasticsearchDataQuery(ctx, c, &dataRequest, log.New(), "logs-*")
+	_, err := query.execute()
+	require.NoError(t, err)
+
+	require.Equal(t, "FROM logs-* | LIMIT 10", c.executedEsqlQuery)
 }
 
 func TestRawDSLQuery(t *testing.T) {
@@ -1925,8 +1966,8 @@ func TestRawDSLQuery(t *testing.T) {
 		t.Run("Basic raw DSL query with aggregations", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeElasticsearchDataQueryWithContext(c, `{
-				"editorType": "code",
-				"rawDSLQuery": "{\"query\":{\"bool\":{\"filter\":[{\"range\":{\"@timestamp\":{\"gte\":1526405400000,\"lte\":1526405700000,\"format\":\"epoch_millis\"}}}]}},\"aggs\":{\"date_histogram\":{\"date_histogram\":{\"field\":\"@timestamp\",\"interval\":\"1m\"}}},\"size\":0}"
+				"queryType": "dsl",
+				"query": "{\"query\":{\"bool\":{\"filter\":[{\"range\":{\"@timestamp\":{\"gte\":1526405400000,\"lte\":1526405700000,\"format\":\"epoch_millis\"}}}]}},\"aggs\":{\"date_histogram\":{\"date_histogram\":{\"field\":\"@timestamp\",\"interval\":\"1m\"}}},\"size\":0}"
 			}`, from, to, ctx)
 			require.NoError(t, err)
 			require.Len(t, c.multisearchRequests, 1)
@@ -1947,8 +1988,8 @@ func TestRawDSLQuery(t *testing.T) {
 		t.Run("Raw DSL query with query_string", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeElasticsearchDataQueryWithContext(c, `{
-				"editorType": "code",
-				"rawDSLQuery": "{\"query\":{\"query_string\":{\"query\":\"status:200\",\"analyze_wildcard\":true}},\"size\":100}"
+				"queryType": "dsl",
+				"query": "{\"query\":{\"query_string\":{\"query\":\"status:200\",\"analyze_wildcard\":true}},\"size\":100}"
 			}`, from, to, ctx)
 			require.NoError(t, err)
 			require.Len(t, c.multisearchRequests, 1)
@@ -1972,8 +2013,8 @@ func TestRawDSLQuery(t *testing.T) {
 		t.Run("Raw DSL query with sort", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeElasticsearchDataQueryWithContext(c, `{
-				"editorType": "code",
-				"rawDSLQuery": "{\"query\":{\"match_all\":{}},\"sort\":[{\"@timestamp\":{\"order\":\"desc\"}}],\"size\":50}"
+				"queryType": "dsl",
+				"query": "{\"query\":{\"match_all\":{}},\"sort\":[{\"@timestamp\":{\"order\":\"desc\"}}],\"size\":50}"
 			}`, from, to, ctx)
 			require.NoError(t, err)
 			require.Len(t, c.multisearchRequests, 1)
@@ -1993,8 +2034,8 @@ func TestRawDSLQuery(t *testing.T) {
 		t.Run("Invalid JSON in raw DSL query returns error", func(t *testing.T) {
 			c := newFakeClient()
 			response, err := executeElasticsearchDataQueryWithContext(c, `{
-				"editorType": "code",
-				"rawDSLQuery": "{ invalid json }"
+				"queryType": "dsl",
+				"query": "{ invalid json }"
 			}`, from, to, ctx)
 			require.NoError(t, err)
 			require.NotNil(t, response.Responses["A"].Error)

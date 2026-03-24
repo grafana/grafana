@@ -88,6 +88,31 @@ func (s *store) DeleteResourcePermissions(ctx context.Context, orgID int64, cmd 
 	return err
 }
 
+func (s *store) GetPermissionIDByRoleName(ctx context.Context, orgID int64, roleName string) (int64, error) {
+	ctx, span := tracer.Start(ctx, "accesscontrol.resourcepermissions.GetPermissionIDByRoleName")
+	defer span.End()
+
+	var permissionID int64
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.SQL(`
+			SELECT p.id 
+			FROM permission p
+			INNER JOIN role r ON p.role_id = r.id
+			WHERE r.name = ? AND r.org_id = ?
+			LIMIT 1
+		`, roleName, orgID).Get(&permissionID)
+		if err != nil {
+			return err
+		}
+		if !has {
+			return fmt.Errorf("permission not found for role")
+		}
+		return nil
+	})
+
+	return permissionID, err
+}
+
 func (s *store) SetUserResourcePermission(
 	ctx context.Context, orgID int64, usr accesscontrol.User,
 	cmd SetResourcePermissionCommand,
@@ -408,7 +433,10 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 	where += `) AND p.action IN (?` + strings.Repeat(",?", len(query.Actions)-1) + `)`
 
 	if query.OnlyManaged {
-		where += `AND r.name LIKE 'managed:%'`
+		where += ` AND r.name LIKE 'managed:%'`
+	} else if query.ExcludeManaged {
+		//Exclude managed roles to only fetch provisioned permissions (custom:*, fixed:*, etc.)
+		where += ` AND r.name NOT LIKE 'managed:%'`
 	}
 
 	for _, a := range query.Actions {
@@ -437,14 +465,27 @@ func (s *store) getResourcePermissions(sess *db.Session, orgID int64, query GetR
 		args = append(args, saFilter.Args...)
 	}
 
-	teamFilter, err := accesscontrol.Filter(query.User, "t.id", "teams:id:", accesscontrol.ActionTeamsRead)
-	if err != nil {
-		return nil, err
+	var teamFilter *accesscontrol.SQLFilter
+	if !query.ExcludeManaged {
+		filter, err := accesscontrol.Filter(
+			query.User,
+			"t.id",
+			"teams:id:",
+			accesscontrol.ActionTeamsRead,
+		)
+		if err != nil {
+			return nil, err
+		}
+		teamFilter = &filter
 	}
 
-	team := teamSelect + teamFrom + where + " AND " + teamFilter.Where
+	team := teamSelect + teamFrom + where
 	args = append(args, args[:initialLength]...)
-	args = append(args, teamFilter.Args...)
+
+	if teamFilter != nil {
+		team += " AND " + teamFilter.Where
+		args = append(args, teamFilter.Args...)
+	}
 
 	builtin := builtinSelect + builtinFrom + where
 	args = append(args, args[:initialLength]...)

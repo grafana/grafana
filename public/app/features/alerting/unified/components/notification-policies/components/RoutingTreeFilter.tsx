@@ -36,7 +36,10 @@ const RoutingTreeFilter = () => {
       <Field
         noMargin
         className={styles.noBottom}
-        label={t('alerting.routing-tree-filter.label-search-by-name-or-receiver', 'Search by name or receiver')}
+        label={t(
+          'alerting.routing-tree-filter.label-search-by-name-or-receiver',
+          'Search by policy name or contact point'
+        )}
       >
         <Input
           aria-label={t('alerting.routing-tree-filter.aria-label-search-routing-trees', 'search routing trees')}

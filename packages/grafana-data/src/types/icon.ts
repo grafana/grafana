@@ -131,6 +131,7 @@ export const availableIconsIndex = {
   'file-export': true,
   'file-landscape-alt': true,
   filter: true,
+  flask: true,
   'filter-plus': true,
   'filter-minus': true,
   flip: true,
@@ -297,6 +298,7 @@ export const availableIconsIndex = {
   'tachometer-fast': true,
   'tachometer-empty': true,
   'cmab-logo': true,
+  vial: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -16,6 +17,7 @@ import (
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
@@ -33,12 +35,17 @@ var (
 func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstructured.Unstructured, *schema.GroupVersionKind, provisioning.ClassicFileType, error) {
 	var value map[string]any
 
+	// Strip BOMs from file data before parsing
+	cleanData := util.StripBOMFromBytes(info.Data)
+
 	// Try parsing as JSON
-	if info.Data[0] == '{' {
-		err := json.Unmarshal(info.Data, &value)
+	if cleanData[0] == '{' {
+		err := json.Unmarshal(cleanData, &value)
 		if err != nil {
 			return nil, nil, "", err
 		}
+		// Strip BOMs from all string values in the parsed JSON
+		value = util.StripBOMFromInterface(value).(map[string]any)
 	} else {
 		return nil, nil, "", fmt.Errorf("unable to read file")
 	}
@@ -70,7 +77,7 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 			Version: "v0alpha1", // no schema
 			Kind:    "Dashboard"}
 		return &unstructured.Unstructured{
-			Object: map[string]interface{}{
+			Object: map[string]any{
 				"apiVersion": gvk.GroupVersion().String(),
 				"kind":       gvk.Kind,
 				"metadata": map[string]any{
@@ -84,6 +91,32 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 	return nil, nil, "", ErrUnableToReadResourceBytes
 }
 
+// ParseFileResource parses repository file data into a Kubernetes resource. It first tries the
+// standard K8s YAML/JSON decoder, then falls back to classic Grafana formats (e.g. dashboards
+// with panels/schemaVersion/tags but no apiVersion/kind).
+//
+// On success the returned object and GVK are guaranteed to be non-nil.
+// Returns a ResourceValidationError when the file does not contain a recognised resource format.
+func ParseFileResource(ctx context.Context, info *repository.FileInfo) (*unstructured.Unstructured, *schema.GroupVersionKind, provisioning.ClassicFileType, error) {
+	obj, gvk, err := DecodeYAMLObject(bytes.NewReader(info.Data))
+	if err == nil && obj != nil && gvk != nil {
+		return obj, gvk, "", nil
+	}
+
+	logging.FromContext(ctx).Debug("failed to decode as k8s resource, trying classic format", "error", err)
+	obj, gvk, classic, classicErr := ReadClassicResource(ctx, info)
+	if classicErr == nil && obj != nil && gvk != nil {
+		return obj, gvk, classic, nil
+	}
+
+	// Neither decoder recognised the file — return a validation error so callers
+	// can treat this as a "not a resource" rather than a transient failure.
+	if classicErr != nil {
+		return nil, nil, "", NewResourceValidationError(fmt.Errorf("file does not contain a valid resource: %w", classicErr))
+	}
+	return nil, nil, "", NewResourceValidationError(fmt.Errorf("file does not contain a valid resource: %w", err))
+}
+
 // DecodeYAMLObject reads the input as YAML and outputs its Kubernetes resource, if it is one.
 // Note that all JSON is also valid YAML, so this can also be used for JSON data.
 func DecodeYAMLObject(input io.Reader) (*unstructured.Unstructured, *schema.GroupVersionKind, error) {
@@ -91,6 +124,9 @@ func DecodeYAMLObject(input io.Reader) (*unstructured.Unstructured, *schema.Grou
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// Strip BOMs before decoding YAML
+	data = util.StripBOMFromBytes(data)
 
 	obj, gvk, err := yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme).
 		Decode(data, nil, nil)
@@ -101,6 +137,8 @@ func DecodeYAMLObject(input io.Reader) (*unstructured.Unstructured, *schema.Grou
 	// The decoder should put it directly into an unstructured object
 	val, ok := obj.(*unstructured.Unstructured)
 	if ok {
+		// Strip BOMs from all string values in the parsed object
+		val.Object = util.StripBOMFromInterface(val.Object).(map[string]any)
 		return val, gvk, err
 	}
 
@@ -108,5 +146,7 @@ func DecodeYAMLObject(input io.Reader) (*unstructured.Unstructured, *schema.Grou
 	if err != nil {
 		return nil, gvk, err
 	}
+	// Strip BOMs from all string values in the converted object
+	unstructuredMap = util.StripBOMFromInterface(unstructuredMap).(map[string]any)
 	return &unstructured.Unstructured{Object: unstructuredMap}, gvk, err
 }

@@ -10,7 +10,7 @@ import (
 // Query represents the time series query model of the datasource
 type Query struct {
 	RawQuery      string       `json:"query"`
-	RawDSLQuery   string       `json:"rawDSLQuery"`
+	QueryType     *string      `json:"queryType"`
 	BucketAggs    []*BucketAgg `json:"bucketAggs"`
 	Metrics       []*MetricAgg `json:"metrics"`
 	Alias         string       `json:"alias"`
@@ -125,4 +125,12 @@ func describeMetric(metricType, field string) string {
 		return text
 	}
 	return text + " " + field
+}
+
+func (q *Query) IsEsqlQuery() bool {
+	return q.QueryType != nil && *q.QueryType == "esql"
+}
+
+func (q *Query) IsDSLQuery() bool {
+	return q.QueryType != nil && *q.QueryType == "dsl"
 }

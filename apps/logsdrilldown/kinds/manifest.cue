@@ -30,6 +30,7 @@ manifest: {
 			// }
 		]
 	}
+	roles: {}
 }
 
 // v1alpha1 is the v1alpha1 version of the app's API.
@@ -69,7 +70,7 @@ v1alpha1: {
 
 v1beta1: {
     // kinds is the list of kinds served by this version
-    kinds: [logsdrilldownDefaultColumnsv1beta1]
+    kinds: [logsdrilldownDefaultColumnsv1beta1, logsdrilldownDefaultLabelsv1beta1]
     // [OPTIONAL]
     // served indicates whether this particular version is served by the API server.
     // served should be set to false before a version is removed from the manifest entirely.

@@ -1,7 +1,7 @@
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dashboard } from '@grafana/schema';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2';
+import { Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
@@ -26,6 +26,7 @@ import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/ty
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
+import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import {
   DashboardAPI,
   DashboardVersionError,
@@ -35,17 +36,19 @@ import {
 } from './types';
 import { isV2StoredVersion } from './utils';
 
-export const K8S_V1_DASHBOARD_API_CONFIG = {
-  group: 'dashboard.grafana.app',
-  version: 'v1beta1',
-  resource: 'dashboards',
-};
+export function getK8sV1DashboardApiConfig() {
+  return {
+    group: 'dashboard.grafana.app',
+    version: dashboardAPIVersionResolver.getV1(),
+    resource: 'dashboards',
+  };
+}
 
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   private client: ResourceClient<DashboardDataDTO, Status>;
 
   constructor() {
-    this.client = new ScopedResourceClient<DashboardDataDTO>(K8S_V1_DASHBOARD_API_CONFIG);
+    this.client = new ScopedResourceClient<DashboardDataDTO>(getK8sV1DashboardApiConfig());
   }
 
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
@@ -85,15 +88,8 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
-      // if the uid changed from the original k8s metadata (e.g., when editing JSON),
-      // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
-      const originalUid = options?.k8s?.name;
-      if (originalUid && dashboard.uid !== originalUid) {
-        delete obj.spec.id;
-        if (obj.metadata.labels && obj.metadata.labels['grafana.app/deprecatedInternalID']) {
-          delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
-        }
-      }
+      delete obj.metadata.labels?.[DeprecatedInternalId];
+
       return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
@@ -104,9 +100,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     delete obj.metadata.name;
     // on create, always clear the id to prevent duplicate ids
     delete obj.spec.id;
-    if (obj.metadata.labels && obj.metadata.labels['grafana.app/deprecatedInternalID']) {
-      delete obj.metadata.labels['grafana.app/deprecatedInternalID'];
-    }
+    delete obj.metadata.labels?.[DeprecatedInternalId];
     return this.client.create(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
@@ -125,7 +119,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     return {
       uid: v.metadata.name,
       version: v.metadata.generation ?? 0,
-      id: v.spec.id ?? 0,
       status: 'success',
       url,
       slug,
@@ -282,6 +275,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
         name: uid,
       },
       message: `Restored from version ${version}`,
+      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
     });
   }
 

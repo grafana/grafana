@@ -12,9 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 type IndexProvider struct {
@@ -22,7 +25,7 @@ type IndexProvider struct {
 	index        *template.Template
 	hooksService *hooks.HooksService
 	config       *setting.Cfg
-	assets       dtos.EntryPointAssets // Includes CDN info
+	license      licensing.Licensing
 }
 
 type IndexViewData struct {
@@ -42,6 +45,9 @@ type IndexViewData struct {
 	Nonce string
 
 	PublicDashboardAccessToken string
+
+	// Feature flag for image-renderer to check support for binding calls
+	RenderBindingSupported bool
 }
 
 // Templates setup.
@@ -53,7 +59,7 @@ var (
 	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `*.html`))
 )
 
-func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets, license licensing.Licensing, hooksService *hooks.HooksService) (*IndexProvider, error) {
+func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksService *hooks.HooksService) (*IndexProvider, error) {
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
@@ -69,7 +75,7 @@ func NewIndexProvider(cfg *setting.Cfg, assetsManifest dtos.EntryPointAssets, li
 		index:        t,
 		hooksService: hooksService,
 		config:       cfg,
-		assets:       assetsManifest,
+		license:      license,
 	}, nil
 }
 
@@ -89,20 +95,31 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		return
 	}
 
+	assetsManifest, err := fswebassets.GetWebAssets(ctx, p.config, p.license)
+	if err != nil {
+		p.log.Error("unable to get web assets", "err", err)
+		http.Error(writer, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
 	reqCtx := contexthandler.FromContext(ctx)
 
 	// make a copy of the settings
 	fsSettings := requestConfig.FSFrontendSettings
 
+	ofClient := openfeature.NewDefaultClient()
+	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
+
 	data := IndexViewData{
 		AppTitle:                   "Grafana",
 		AppSubUrl:                  p.config.AppSubURL,
 		IsDevelopmentEnv:           p.config.Env == setting.Dev,
-		Assets:                     p.assets,
+		Assets:                     assetsManifest,
 		DefaultUser:                dtos.CurrentUser{},
 		Nonce:                      reqCtx.RequestNonce,
 		PublicDashboardAccessToken: reqCtx.PublicDashboardAccessToken,
 		Settings:                   fsSettings,
+		RenderBindingSupported:     renderBindingSupported,
 	}
 
 	// TODO -- reevaluate with mt authnz

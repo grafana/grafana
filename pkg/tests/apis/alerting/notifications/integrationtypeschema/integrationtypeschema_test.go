@@ -1,12 +1,15 @@
 package integrationtypeschema
 
 import (
+	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
+	"os"
 	"path"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -52,6 +55,12 @@ func TestIntegrationTypeSchemaList(t *testing.T) {
 		exp, err := testData.ReadFile(path.Join("test-data", "list.json"))
 		require.NoError(t, err)
 
-		require.JSONEq(t, string(exp), string(got), "response should match expected snapshot")
+		if !assert.JSONEq(t, string(exp), string(got), "response should match expected snapshot") {
+			var prettyJSON bytes.Buffer
+			err = json.Indent(&prettyJSON, got, "", "  ")
+			require.NoError(t, err, "failed to indent snapshot")
+			err = os.WriteFile(path.Join("test-data", "list.json"), prettyJSON.Bytes(), 0o644)
+			require.NoError(t, err, "failed to update snapshot")
+		}
 	})
 }
