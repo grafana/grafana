@@ -708,7 +708,9 @@ func newPluginAssetsWithConfig(pCfg *config.PluginManagementCfg) func() *plugina
 }
 
 func TestIntegrationHTTPServer_GetFrontendSettings_publicDashboardDataSourceFiltering(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 
 	enabledPlugins := []string{"prometheus", "loki", "mysql"}
 
