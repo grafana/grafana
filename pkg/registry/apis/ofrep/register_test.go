@@ -122,7 +122,8 @@ func TestAPIBuilder_ValidateNamespace(t *testing.T) {
 				req = req.WithContext(context.Background())
 			}
 
-			valid, ns := builder.validateNamespace(req)
+			rec := httptest.NewRecorder()
+			valid, ns := builder.validateNamespace(rec, req)
 			assert.Equal(t, tt.expectedValid, valid, "expected valid namespace")
 			assert.Equal(t, tt.expectedNamespace, ns, "expected namespace to match")
 
