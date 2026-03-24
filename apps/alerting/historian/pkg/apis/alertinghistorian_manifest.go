@@ -27,6 +27,7 @@ var (
 
 var appManifestData = app.ManifestData{
 	AppName:          "alerting-historian",
+	AppDisplayName:   "alerting-historian",
 	Group:            "historian.alerting.grafana.app",
 	PreferredVersion: "v0alpha1",
 	Versions: []app.ManifestVersion{
@@ -48,7 +49,7 @@ var appManifestData = app.ManifestData{
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "getAlertstatehistory",
+								OperationId: "getAlertStateHistory",
 
 								Responses: &spec3.Responses{
 									ResponsesProps: spec3.ResponsesProps{
@@ -87,7 +88,7 @@ var appManifestData = app.ManifestData{
 						Post: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "createNotificationquery",
+								OperationId: "createNotificationQuery",
 
 								RequestBody: &spec3.RequestBody{
 									RequestBodyProps: spec3.RequestBodyProps{
@@ -162,14 +163,14 @@ var appManifestData = app.ManifestData{
 																	SchemaProps: spec.SchemaProps{
 
 																		Description: "GroupLabels optionally filters the entries by matching group labels.",
-																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryMatchers"),
+																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationQueryMatchers"),
 																	},
 																},
 																"labels": {
 																	SchemaProps: spec.SchemaProps{
 
 																		Description: "Labels optionally filters the entries by matching alert labels.",
-																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryMatchers"),
+																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationQueryMatchers"),
 																	},
 																},
 																"limit": {
@@ -182,7 +183,7 @@ var appManifestData = app.ManifestData{
 																	SchemaProps: spec.SchemaProps{
 
 																		Description: "Outcome optionally filters the entries to only either successful or failed attempts.",
-																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationOutcome"),
+																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationQueryNotificationOutcome"),
 																	},
 																},
 																"receiver": {
@@ -201,7 +202,7 @@ var appManifestData = app.ManifestData{
 																	SchemaProps: spec.SchemaProps{
 
 																		Description: "Status optionally filters the entries to only either firing or resolved.",
-																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationStatus"),
+																		Ref:         spec.MustCreateRef("#/components/schemas/createNotificationQueryNotificationStatus"),
 																	},
 																},
 																"step": {
@@ -252,7 +253,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationCount"),
+																							Ref: spec.MustCreateRef("#/components/schemas/createNotificationQueryNotificationCount"),
 																						}},
 																				},
 																			},
@@ -264,7 +265,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationEntry"),
+																							Ref: spec.MustCreateRef("#/components/schemas/createNotificationQueryNotificationEntry"),
 																						}},
 																				},
 																			},
@@ -287,7 +288,7 @@ var appManifestData = app.ManifestData{
 						Post: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "createNotificationsqueryalerts",
+								OperationId: "createNotificationAlertQuery",
 
 								RequestBody: &spec3.RequestBody{
 									RequestBodyProps: spec3.RequestBodyProps{
@@ -349,7 +350,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/createNotificationsqueryalertsNotificationEntryAlert"),
+																							Ref: spec.MustCreateRef("#/components/schemas/createNotificationAlertQueryNotificationEntryAlert"),
 																						}},
 																				},
 																			},
@@ -370,7 +371,72 @@ var appManifestData = app.ManifestData{
 				},
 				Cluster: map[string]spec3.PathProps{},
 				Schemas: map[string]spec.Schema{
-					"createNotificationqueryMatcher": {
+					"createNotificationAlertQueryNotificationEntryAlert": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							Properties: map[string]spec.Schema{
+								"annotations": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"endsAt": {
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "date-time",
+									},
+								},
+								"enrichments": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{},
+											},
+										},
+									},
+								},
+								"labels": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												},
+											},
+										},
+									},
+								},
+								"startsAt": {
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "date-time",
+									},
+								},
+								"status": {
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"string"},
+									},
+								},
+							},
+							Required: []string{
+								"status",
+								"labels",
+								"annotations",
+								"startsAt",
+								"endsAt",
+							},
+						},
+					},
+					"createNotificationQueryMatcher": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -403,19 +469,19 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"createNotificationqueryMatchers": {
+					"createNotificationQueryMatchers": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryMatcher"),
+										Ref: spec.MustCreateRef("#/components/schemas/createNotificationQueryMatcher"),
 									}},
 							},
 						},
 					},
-					"createNotificationqueryNotificationCount": {
+					"createNotificationQueryNotificationCount": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -443,7 +509,7 @@ var appManifestData = app.ManifestData{
 								"outcome": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationOutcome"),
+										Ref: spec.MustCreateRef("#/components/schemas/createNotificationQueryNotificationOutcome"),
 									},
 								},
 								"receiver": {
@@ -459,7 +525,7 @@ var appManifestData = app.ManifestData{
 								"status": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationStatus"),
+										Ref: spec.MustCreateRef("#/components/schemas/createNotificationQueryNotificationStatus"),
 									},
 								},
 								"values": {
@@ -470,7 +536,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationRangeValue"),
+													Ref: spec.MustCreateRef("#/components/schemas/createNotificationQueryNotificationRangeValue"),
 												}},
 										},
 									},
@@ -482,7 +548,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"createNotificationqueryNotificationEntry": {
+					"createNotificationQueryNotificationEntry": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -500,7 +566,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationEntryAlert"),
+													Ref: spec.MustCreateRef("#/components/schemas/createNotificationQueryNotificationEntryAlert"),
 												}},
 										},
 									},
@@ -552,7 +618,7 @@ var appManifestData = app.ManifestData{
 									SchemaProps: spec.SchemaProps{
 
 										Description: "Outcome indicaes if the notificaion attempt was successful or if it failed.",
-										Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationOutcome"),
+										Ref:         spec.MustCreateRef("#/components/schemas/createNotificationQueryNotificationOutcome"),
 									},
 								},
 								"pipelineTime": {
@@ -590,7 +656,7 @@ var appManifestData = app.ManifestData{
 									SchemaProps: spec.SchemaProps{
 
 										Description: "Status indicates if the notification contains one or more firing alerts.",
-										Ref:         spec.MustCreateRef("#/components/schemas/createNotificationqueryNotificationStatus"),
+										Ref:         spec.MustCreateRef("#/components/schemas/createNotificationQueryNotificationStatus"),
 									},
 								},
 								"timestamp": {
@@ -626,7 +692,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"createNotificationqueryNotificationEntryAlert": {
+					"createNotificationQueryNotificationEntryAlert": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -691,7 +757,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"createNotificationqueryNotificationOutcome": {
+					"createNotificationQueryNotificationOutcome": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"string"},
 							Enum: []interface{}{
@@ -700,7 +766,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"createNotificationqueryNotificationRangeValue": {
+					"createNotificationQueryNotificationRangeValue": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "NotificationRangeValue is a single (timestamp, count) data point in a range count series.",
@@ -724,77 +790,12 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"createNotificationqueryNotificationStatus": {
+					"createNotificationQueryNotificationStatus": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"string"},
 							Enum: []interface{}{
 								"firing",
 								"resolved",
-							},
-						},
-					},
-					"createNotificationsqueryalertsNotificationEntryAlert": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							Properties: map[string]spec.Schema{
-								"annotations": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-								},
-								"endsAt": {
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "date-time",
-									},
-								},
-								"enrichments": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{},
-											},
-										},
-									},
-								},
-								"labels": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"object"},
-										AdditionalProperties: &spec.SchemaOrBool{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Type: []string{"string"},
-												},
-											},
-										},
-									},
-								},
-								"startsAt": {
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "date-time",
-									},
-								},
-								"status": {
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"string"},
-									},
-								},
-							},
-							Required: []string{
-								"status",
-								"labels",
-								"annotations",
-								"startsAt",
-								"endsAt",
 							},
 						},
 					},
@@ -824,9 +825,9 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/alertstate/history|GET":         v0alpha1.GetAlertstatehistoryResponse{},
-	"v0alpha1||<namespace>/notification/query|POST":        v0alpha1.CreateNotificationqueryResponse{},
-	"v0alpha1||<namespace>/notifications/queryalerts|POST": v0alpha1.CreateNotificationsqueryalertsResponse{},
+	"v0alpha1||<namespace>/alertstate/history|GET":         v0alpha1.GetAlertStateHistoryResponse{},
+	"v0alpha1||<namespace>/notification/query|POST":        v0alpha1.CreateNotificationQueryResponse{},
+	"v0alpha1||<namespace>/notifications/queryalerts|POST": v0alpha1.CreateNotificationAlertQueryResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -852,8 +853,8 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 }
 
 var customRouteToGoRequestBodyType = map[string]any{
-	"v0alpha1||<namespace>/notification/query|POST":        v0alpha1.CreateNotificationqueryRequestBody{},
-	"v0alpha1||<namespace>/notifications/queryalerts|POST": v0alpha1.CreateNotificationsqueryalertsRequestBody{},
+	"v0alpha1||<namespace>/notification/query|POST":        v0alpha1.CreateNotificationQueryRequestBody{},
+	"v0alpha1||<namespace>/notifications/queryalerts|POST": v0alpha1.CreateNotificationAlertQueryRequestBody{},
 }
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {

@@ -267,9 +267,12 @@ gen-app-manifests-unistore: ## Generate unified storage app manifests list
 
 .PHONY: fix-cue
 fix-cue:
-	@echo "formatting cue files"
-	$(CUE) fix kinds/**/*.cue
-	$(CUE) fix public/app/plugins/**/**/*.cue
+	@fd 'cue.mod' -t d | while read -r mod_dir; do \
+		project_dir="$$(dirname $$mod_dir)"; \
+		echo "Formatting: $$project_dir"; \
+		(cd "$$project_dir" && $(CUE) fmt ./...); \
+		(cd "$$project_dir" && $(CUE) fix ./...); \
+	done
 
 .PHONY: gen-jsonnet
 gen-jsonnet:

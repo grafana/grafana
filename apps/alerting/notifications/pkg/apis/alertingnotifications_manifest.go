@@ -55,6 +55,7 @@ var (
 
 var appManifestData = app.ManifestData{
 	AppName:          "alerting-notifications",
+	AppDisplayName:   "alerting-notifications",
 	Group:            "notifications.alerting.grafana.app",
 	PreferredVersion: "v1beta1",
 	Versions: []app.ManifestVersion{
@@ -210,7 +211,7 @@ var appManifestData = app.ManifestData{
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "getIntegrationtypeschemas",
+								OperationId: "getIntegrationTypeSchemas",
 
 								Responses: &spec3.Responses{
 									ResponsesProps: spec3.ResponsesProps{
@@ -231,7 +232,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaResource"),
+																							Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasIntegrationTypeSchemaResource"),
 																						}},
 																				},
 																			},
@@ -252,7 +253,7 @@ var appManifestData = app.ManifestData{
 				},
 				Cluster: map[string]spec3.PathProps{},
 				Schemas: map[string]spec.Schema{
-					"getIntegrationtypeschemasField": {
+					"getIntegrationTypeSchemasField": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -313,7 +314,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasSelectOption"),
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasSelectOption"),
 												}},
 										},
 									},
@@ -321,7 +322,7 @@ var appManifestData = app.ManifestData{
 								"showWhen": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasShowWhen"),
+										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasShowWhen"),
 									},
 								},
 								"subformOptions": {
@@ -331,7 +332,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasField"),
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasField"),
 												}},
 										},
 									},
@@ -357,7 +358,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasIntegrationTypeSchema": {
+					"getIntegrationTypeSchemasIntegrationTypeSchema": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "IntegrationTypeSchema - receiver integration schema format",
@@ -404,7 +405,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaVersion"),
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasIntegrationTypeSchemaVersion"),
 												}},
 										},
 									},
@@ -418,7 +419,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasIntegrationTypeSchemaResource": {
+					"getIntegrationTypeSchemasIntegrationTypeSchemaResource": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "IntegrationTypeSchemaResource - K8s-style wrapper for integration type schemas",
@@ -447,7 +448,7 @@ var appManifestData = app.ManifestData{
 								"spec": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchema"),
+										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasIntegrationTypeSchema"),
 									},
 								},
 							},
@@ -457,7 +458,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasIntegrationTypeSchemaVersion": {
+					"getIntegrationTypeSchemasIntegrationTypeSchemaVersion": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -483,7 +484,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasField"),
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasField"),
 												}},
 										},
 									},
@@ -506,7 +507,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasSelectOption": {
+					"getIntegrationTypeSchemasSelectOption": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -531,7 +532,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasShowWhen": {
+					"getIntegrationTypeSchemasShowWhen": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -708,7 +709,7 @@ var appManifestData = app.ManifestData{
 						Get: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
-								OperationId: "getIntegrationtypeschemas",
+								OperationId: "getIntegrationTypeSchemas",
 
 								Responses: &spec3.Responses{
 									ResponsesProps: spec3.ResponsesProps{
@@ -729,7 +730,7 @@ var appManifestData = app.ManifestData{
 																					Schema: &spec.Schema{
 																						SchemaProps: spec.SchemaProps{
 
-																							Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaResource"),
+																							Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasIntegrationTypeSchemaResource"),
 																						}},
 																				},
 																			},
@@ -750,7 +751,7 @@ var appManifestData = app.ManifestData{
 				},
 				Cluster: map[string]spec3.PathProps{},
 				Schemas: map[string]spec.Schema{
-					"getIntegrationtypeschemasField": {
+					"getIntegrationTypeSchemasField": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -811,7 +812,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasSelectOption"),
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasSelectOption"),
 												}},
 										},
 									},
@@ -819,7 +820,7 @@ var appManifestData = app.ManifestData{
 								"showWhen": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasShowWhen"),
+										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasShowWhen"),
 									},
 								},
 								"subformOptions": {
@@ -829,7 +830,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasField"),
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasField"),
 												}},
 										},
 									},
@@ -855,7 +856,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasIntegrationTypeSchema": {
+					"getIntegrationTypeSchemasIntegrationTypeSchema": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "IntegrationTypeSchema - receiver integration schema format",
@@ -902,7 +903,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchemaVersion"),
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasIntegrationTypeSchemaVersion"),
 												}},
 										},
 									},
@@ -916,7 +917,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasIntegrationTypeSchemaResource": {
+					"getIntegrationTypeSchemasIntegrationTypeSchemaResource": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
 							Description: "IntegrationTypeSchemaResource - K8s-style wrapper for integration type schemas",
@@ -945,7 +946,7 @@ var appManifestData = app.ManifestData{
 								"spec": {
 									SchemaProps: spec.SchemaProps{
 
-										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasIntegrationTypeSchema"),
+										Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasIntegrationTypeSchema"),
 									},
 								},
 							},
@@ -955,7 +956,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasIntegrationTypeSchemaVersion": {
+					"getIntegrationTypeSchemasIntegrationTypeSchemaVersion": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -981,7 +982,7 @@ var appManifestData = app.ManifestData{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
 
-													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationtypeschemasField"),
+													Ref: spec.MustCreateRef("#/components/schemas/getIntegrationTypeSchemasField"),
 												}},
 										},
 									},
@@ -1004,7 +1005,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasSelectOption": {
+					"getIntegrationTypeSchemasSelectOption": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -1029,7 +1030,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"getIntegrationtypeschemasShowWhen": {
+					"getIntegrationTypeSchemasShowWhen": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
 							Properties: map[string]spec.Schema{
@@ -1087,11 +1088,11 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 var customRouteToGoResponseType = map[string]any{
 	"v0alpha1|Receiver|test|POST": v0alpha1.CreateReceiverIntegrationTestResponse{},
 
-	"v0alpha1||<namespace>/integrationtypeschemas|GET": v0alpha1.GetIntegrationtypeschemasResponse{},
+	"v0alpha1||<namespace>/integrationtypeschemas|GET": v0alpha1.GetIntegrationTypeSchemasResponse{},
 
 	"v1beta1|Receiver|test|POST": v1beta1.CreateReceiverIntegrationTestResponse{},
 
-	"v1beta1||<namespace>/integrationtypeschemas|GET": v1beta1.GetIntegrationtypeschemasResponse{},
+	"v1beta1||<namespace>/integrationtypeschemas|GET": v1beta1.GetIntegrationTypeSchemasResponse{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
