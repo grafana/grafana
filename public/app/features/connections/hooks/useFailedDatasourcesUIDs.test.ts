@@ -42,16 +42,14 @@ function makeCheckType(
     },
     spec: {
       name: overrides.name ?? 'datasource',
-      steps:
-        overrides.steps ??
-        [
-          {
-            title: 'Health check',
-            description: 'Checks if datasource is healthy',
-            stepID: 'health-check',
-            resolution: 'Open datasource settings and address reported issues.',
-          },
-        ],
+      steps: overrides.steps ?? [
+        {
+          title: 'Health check',
+          description: 'Checks if datasource is healthy',
+          stepID: 'health-check',
+          resolution: 'Open datasource settings and address reported issues.',
+        },
+      ],
     },
   };
 }

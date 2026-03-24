@@ -44,10 +44,9 @@ export function DataSourcesListCard({
           dataSource.typeName,
           dataSource.url,
           dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
-          hasFailures &&
-            failureSeverity && (
-              <DataSourceFailureBadge key="unhealthy-badge" severity={failureSeverity} message={failureMessage} />
-            ),
+          hasFailures && failureSeverity && (
+            <DataSourceFailureBadge key="unhealthy-badge" severity={failureSeverity} message={failureMessage} />
+          ),
         ]}
       </Card.Meta>
       <Card.Tags>

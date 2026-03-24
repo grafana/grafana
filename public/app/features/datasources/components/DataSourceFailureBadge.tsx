@@ -16,14 +16,8 @@ export function DataSourceFailureBadge({ severity, message }: Props) {
   const styles = useStyles2(getStyles);
   const isHigh = severity === 'high';
   const fallbackTooltip = isHigh
-    ? t(
-        'datasources.list.failed-high-tooltip',
-        'This data source has critical failures reported by Grafana Advisor.'
-      )
-    : t(
-        'datasources.list.failed-low-tooltip',
-        'This data source has non-critical issues reported by Grafana Advisor.'
-      );
+    ? t('datasources.list.failed-high-tooltip', 'This data source has critical failures reported by Grafana Advisor.')
+    : t('datasources.list.failed-low-tooltip', 'This data source has non-critical issues reported by Grafana Advisor.');
   const tooltipContent: string | ReactElement = message ? (
     <span className={styles.tooltipContent} dangerouslySetInnerHTML={{ __html: textUtil.sanitize(message) }} />
   ) : (
