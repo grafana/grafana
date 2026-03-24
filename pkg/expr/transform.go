@@ -88,7 +88,7 @@ func (s *Service) TransformData(ctx context.Context, now time.Time, req *Request
 
 	// Build the pipeline from the request, checking for ordering issues (e.g. loops)
 	// and parsing graph nodes from the queries.
-	pipeline, err := s.BuildPipeline(ctx, req)
+	pipeline, _, err := s.buildPipeline(ctx, req)
 	if err != nil {
 		return nil, err
 	}

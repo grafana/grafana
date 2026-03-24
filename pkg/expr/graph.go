@@ -197,9 +197,11 @@ func (dp *DataPipeline) GetCommandTypes() []string {
 	return result
 }
 
-// BuildPipeline builds a graph of the nodes, and returns the nodes in an
-// executable order.
-func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline, error) {
+// buildPipeline builds a graph of the nodes, and returns the nodes in an
+// executable order. When the sseExpressionErrorIsolation feature toggle is
+// enabled, broken expression nodes are pruned instead of failing the entire
+// pipeline, and returned in the brokenNodes map.
+func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline, map[string]error, error) {
 	if req != nil && len(req.Headers) == 0 {
 		req.Headers = map[string]string{}
 	}
@@ -224,33 +226,43 @@ func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline
 		span.End()
 	}()
 
-	graph, err := s.buildDependencyGraph(ctx, req)
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	degraded := s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagSseExpressionErrorIsolation)
+	graph, brokenNodes, err := s.buildDependencyGraph(ctx, req, degraded)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	nodes, err := buildExecutionOrder(graph)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return nodes, nil
+	return nodes, brokenNodes, nil
 }
 
 // buildDependencyGraph returns a dependency graph for a set of queries.
-func (s *Service) buildDependencyGraph(ctx context.Context, req *Request) (*simple.DirectedGraph, error) {
+// When degraded is true, broken nodes (expression nodes with missing
+// dependencies) are pruned from the graph instead of causing a hard error,
+// and returned in the brokenNodes map.
+func (s *Service) buildDependencyGraph(ctx context.Context, req *Request, degraded bool) (*simple.DirectedGraph, map[string]error, error) {
 	graph, err := s.buildGraph(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	registry := buildNodeRegistry(graph)
 
-	if err := s.buildGraphEdges(graph, registry); err != nil {
-		return nil, err
+	var brokenNodes map[string]error
+	if degraded {
+		brokenNodes = collectBrokenNodes(graph, registry)
 	}
 
-	return graph, nil
+	if err := s.buildGraphEdges(graph, registry); err != nil {
+		return nil, nil, err
+	}
+
+	return graph, brokenNodes, nil
 }
 
 // buildExecutionOrder returns a sequence of nodes ordered by dependency.

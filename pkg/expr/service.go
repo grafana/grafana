@@ -103,7 +103,8 @@ func (s *Service) isDisabled() bool {
 
 // BuildPipeline builds a pipeline from a request.
 func (s *Service) BuildPipeline(ctx context.Context, req *Request) (DataPipeline, error) {
-	return s.buildPipeline(ctx, req)
+	pipeline, _, err := s.buildPipeline(ctx, req)
+	return pipeline, err
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.

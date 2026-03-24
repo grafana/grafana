@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -241,7 +242,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nodes, err := s.buildPipeline(t.Context(), tt.req)
+			nodes, _, err := s.buildPipeline(t.Context(), tt.req)
 			if tt.expectErrContains != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.expectErrContains)
@@ -387,5 +388,96 @@ func TestCollectBrokenNodes(t *testing.T) {
 		require.Contains(t, broken, "C")
 		var catErr *sql.ErrorWithCategory
 		require.ErrorAs(t, broken["C"], &catErr)
+	})
+}
+
+func TestBuildPipelineDegraded(t *testing.T) {
+	t.Run("missing dep produces degraded pipeline when toggle ON", func(t *testing.T) {
+		s := Service{
+			cfg:      setting.NewCfg(),
+			tracer:   &testTracer{},
+			features: featuremgmt.WithFeatures(featuremgmt.FlagSseExpressionErrorIsolation),
+		}
+		req := &Request{
+			Queries: []Query{
+				{
+					RefID: "A",
+					DataSource: &datasources.DataSource{
+						UID: "Fake",
+					},
+					TimeRange: AbsoluteTimeRange{},
+				},
+				{
+					RefID:      "B",
+					DataSource: dataSourceModel(),
+					JSON: json.RawMessage(`{
+						"expression": "$NONEXISTENT",
+						"type": "math"
+					}`),
+				},
+			},
+		}
+
+		pipeline, brokenNodes, err := s.buildPipeline(t.Context(), req)
+		require.NoError(t, err)
+		require.Len(t, pipeline, 1, "only valid node A should be in pipeline")
+		require.Equal(t, "A", pipeline[0].RefID())
+		require.Len(t, brokenNodes, 1)
+		require.Contains(t, brokenNodes, "B")
+	})
+
+	t.Run("missing dep still hard-fails when toggle OFF", func(t *testing.T) {
+		s := Service{
+			cfg:      setting.NewCfg(),
+			tracer:   &testTracer{},
+			features: featuremgmt.WithFeatures(),
+		}
+		req := &Request{
+			Queries: []Query{
+				{
+					RefID: "A",
+					DataSource: &datasources.DataSource{
+						UID: "Fake",
+					},
+					TimeRange: AbsoluteTimeRange{},
+				},
+				{
+					RefID:      "B",
+					DataSource: dataSourceModel(),
+					JSON: json.RawMessage(`{
+						"expression": "$NONEXISTENT",
+						"type": "math"
+					}`),
+				},
+			},
+		}
+
+		_, _, err := s.buildPipeline(t.Context(), req)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "find dependent")
+	})
+
+	t.Run("structural errors remain fatal even with toggle ON", func(t *testing.T) {
+		s := Service{
+			cfg:      setting.NewCfg(),
+			tracer:   &testTracer{},
+			features: featuremgmt.WithFeatures(featuremgmt.FlagSseExpressionErrorIsolation),
+		}
+		req := &Request{
+			Queries: []Query{
+				{
+					RefID:      "A",
+					DataSource: dataSourceModel(),
+					JSON: json.RawMessage(`{
+						"expression": "$A",
+						"type": "math"
+					}`),
+				},
+			},
+		}
+
+		_, _, err := s.buildPipeline(t.Context(), req)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "cannot reference itself")
 	})
 }
