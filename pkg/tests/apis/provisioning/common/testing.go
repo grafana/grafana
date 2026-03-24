@@ -432,6 +432,20 @@ func (h *ProvisioningTestHelper) WriteToProvisioningPath(t *testing.T, name stri
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
+// CleanProvisioningDir removes all entries from the provisioning directory
+// so that leftover files from a previous test don't interfere.
+func (h *ProvisioningTestHelper) CleanProvisioningDir(t *testing.T) {
+	t.Helper()
+	entries, err := os.ReadDir(h.ProvisioningPath)
+	if err != nil {
+		return
+	}
+	for _, entry := range entries {
+		require.NoError(t, os.RemoveAll(filepath.Join(h.ProvisioningPath, entry.Name())),
+			"failed to clean provisioning dir entry %s", entry.Name())
+	}
+}
+
 // DebugState logs the current state of filesystem, repository, and Grafana resources for debugging
 func (h *ProvisioningTestHelper) DebugState(t *testing.T, repo string, label string) {
 	t.Helper()
@@ -771,59 +785,47 @@ func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoNam
 
 // TriggerConnectionReconciliation forces the controller to re-process a connection
 // by touching its status (aging the health timestamp by 1ms).
-// Retries on conflict errors caused by optimistic locking.
+// Uses EventuallyWithT to tolerate prolonged optimistic-locking conflicts from
+// concurrent controller reconciliations (common with shared servers).
 func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, name string) {
 	t.Helper()
 	ctx := t.Context()
-
-	const maxRetries = 5
-	for attempt := range maxRetries {
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		conn, err := h.Connections.Resource.Get(ctx, name, metav1.GetOptions{})
-		require.NoError(t, err, "failed to get connection %s", name)
-
-		health, ok := conn.Object["status"].(map[string]any)["health"].(map[string]any)
-		require.True(t, ok, "missing status.health on connection %s", name)
-
-		health["checked"] = time.Now().UnixMilli() - 1
-
-		_, err = h.Connections.Resource.UpdateStatus(ctx, conn, metav1.UpdateOptions{})
-		if err == nil {
+		if !assert.NoError(c, err, "failed to get connection %s", name) {
 			return
 		}
-		if apierrors.IsConflict(err) && attempt < maxRetries-1 {
-			continue
+		health, ok := conn.Object["status"].(map[string]any)["health"].(map[string]any)
+		if !assert.True(c, ok, "missing status.health on connection %s", name) {
+			return
 		}
-		require.NoError(t, err, "failed to update status for connection %s", name)
-	}
+		health["checked"] = time.Now().UnixMilli() - 1
+		_, err = h.Connections.Resource.UpdateStatus(ctx, conn, metav1.UpdateOptions{})
+		assert.NoError(c, err, "failed to update status for connection %s", name)
+	}, WaitTimeoutDefault, 200*time.Millisecond, "should trigger reconciliation for connection %s", name)
 }
 
 // TriggerRepositoryReconciliation forces the controller to re-process a repo
 // by touching its status (aging the health timestamp by 1ms).
 // Updating it by incrementing its generation by +1 is not triggering a reconciliation.
-// Retries on conflict errors caused by optimistic locking.
+// Uses EventuallyWithT to tolerate prolonged optimistic-locking conflicts from
+// concurrent controller reconciliations (common with shared servers).
 func (h *ProvisioningTestHelper) TriggerRepositoryReconciliation(t *testing.T, name string) {
 	t.Helper()
 	ctx := t.Context()
-
-	const maxRetries = 5
-	for attempt := range maxRetries {
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		repo, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
-		require.NoError(t, err, "failed to get repository %s", name)
-
-		health, ok := repo.Object["status"].(map[string]any)["health"].(map[string]any)
-		require.True(t, ok, "missing status.health on repository %s", name)
-
-		health["checked"] = time.Now().UnixMilli() - 1
-
-		_, err = h.Repositories.Resource.UpdateStatus(ctx, repo, metav1.UpdateOptions{})
-		if err == nil {
+		if !assert.NoError(c, err, "failed to get repository %s", name) {
 			return
 		}
-		if apierrors.IsConflict(err) && attempt < maxRetries-1 {
-			continue
+		health, ok := repo.Object["status"].(map[string]any)["health"].(map[string]any)
+		if !assert.True(c, ok, "missing status.health on repository %s", name) {
+			return
 		}
-		require.NoError(t, err, "failed to update status for repository %s", name)
-	}
+		health["checked"] = time.Now().UnixMilli() - 1
+		_, err = h.Repositories.Resource.UpdateStatus(ctx, repo, metav1.UpdateOptions{})
+		assert.NoError(c, err, "failed to update status for repository %s", name)
+	}, WaitTimeoutDefault, 200*time.Millisecond, "should trigger reconciliation for repository %s", name)
 }
 
 // WaitForHealthyRepository waits for a repository to become healthy.
@@ -1168,6 +1170,7 @@ func (e *SharedEnv) GetCleanHelper(t *testing.T) *ProvisioningTestHelper {
 	t.Helper()
 	h := e.GetHelper(t)
 	h.CleanupAllResources(t, context.Background())
+	h.CleanProvisioningDir(t)
 	return h
 }
 
