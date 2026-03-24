@@ -60,14 +60,21 @@ func TestMain(m *testing.M) {
 }
 
 func getTestHelper(t *testing.T) *apis.K8sTestHelper {
-	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
+	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagAlertingMultiplePolicies,
+		},
+	})
 }
 
 func TestIntegrationNotAllowedMethods(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	helper := getTestHelper(t)
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableFeatureToggles: []string{featuremgmt.FlagAlertingMultiplePolicies},
+	})
+
 	client, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 
@@ -98,6 +105,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 		canRead          bool
 		canUpdate        bool
 		canDelete        bool
+		canCreateNew     bool
 	}
 
 	legacyReader := helper.CreateUser("LegacyRoutesReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
@@ -135,7 +143,15 @@ func TestIntegrationAccessControl(t *testing.T) {
 		createWildcardPermission(accesscontrol.ActionAlertingManagedRoutesRead),
 	})
 	routesWriter := helper.CreateUser("RoutesWriter", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
-		createWildcardPermission(accesscontrol.ActionAlertingManagedRoutesRead, accesscontrol.ActionAlertingManagedRoutesWrite),
+		createWildcardPermission(accesscontrol.ActionAlertingManagedRoutesRead, accesscontrol.ActionAlertingManagedRoutesWrite, accesscontrol.ActionAlertingManagedRoutesDelete),
+	})
+
+	routesCreator := helper.CreateUser("RoutesCreator", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingManagedRoutesCreate,
+			},
+		},
 	})
 
 	testCases := []testCase{
@@ -149,11 +165,13 @@ func TestIntegrationAccessControl(t *testing.T) {
 			canRead:          true,
 			canUpdate:        true,
 			canDelete:        true,
+			canCreateNew:     true,
 		},
 		{
 			user:             org1.Editor,
 			canReadDefault:   true,
 			canUpdateDefault: true,
+			canCreateNew:     true,
 		},
 		{
 			user:           org1.Viewer,
@@ -180,17 +198,47 @@ func TestIntegrationAccessControl(t *testing.T) {
 		{
 			user:           routesReader,
 			canReadDefault: true,
+			canRead:        true,
 		},
 		{
 			user:             routesWriter,
 			canReadDefault:   true,
 			canUpdateDefault: true,
+			canRead:          true,
+			canUpdate:        true,
+			canDelete:        true,
+			canCreateNew:     false,
+		},
+		{
+			user:             routesCreator,
+			canReadDefault:   false,
+			canUpdateDefault: false,
+			canRead:          false,
+			canUpdate:        false,
+			canCreateNew:     true,
 		},
 	}
 
 	admin := org1.Admin
 	adminClient, err := v1beta1.NewRoutingTreeClientFromGenerator(admin.GetClientRegistry())
 	require.NoError(t, err)
+
+	forbiddenOrNotfound := func(predicate bool) string {
+		if predicate {
+			return "NotFound"
+		}
+		return "Forbidden"
+	}
+
+	assertForbiddenOrNotFound := func(t *testing.T, predicate bool, err error) {
+		var matches bool
+		if predicate {
+			matches = errors.IsNotFound(err)
+		} else {
+			matches = errors.IsForbidden(err)
+		}
+		require.Truef(t, matches, "Should get %s error but got: %s", forbiddenOrNotfound(predicate), err)
+	}
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
@@ -209,19 +257,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 					_, err := client.Get(ctx, defaultTreeIdentifier)
 					require.NoError(t, err)
 
-					expectedError := "Forbidden"
-					if tc.user == org1.Admin {
-						expectedError = "NotFound"
-					}
-					t.Run(fmt.Sprintf("should get %s if resource does not exist", expectedError), func(t *testing.T) {
+					t.Run(fmt.Sprintf("should get %s if resource does not exist", forbiddenOrNotfound(tc.canRead)), func(t *testing.T) {
 						_, err := client.Get(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "Notfound"})
-						var matches bool
-						if expectedError == "Forbidden" {
-							matches = errors.IsForbidden(err)
-						} else {
-							matches = errors.IsNotFound(err)
-						}
-						require.Truef(t, matches, "Should get %s error but got: %s", expectedError, err)
+						assertForbiddenOrNotFound(t, tc.canRead, err)
 					})
 				})
 			} else {
@@ -268,23 +306,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 					require.NoErrorf(t, err, "Payload %s", string(d))
 
 					expected = updated
-
-					expectedError := "Forbidden"
-					if tc.user == org1.Admin {
-						expectedError = "NotFound"
-					}
-					t.Run(fmt.Sprintf("should get %s if name does not exist", expectedError), func(t *testing.T) {
+					t.Run(fmt.Sprintf("should get %s if name does not exist", forbiddenOrNotfound(tc.canUpdate)), func(t *testing.T) {
 						up := expected.Copy().(*v1beta1.RoutingTree)
 						up.Name = "notFound"
 						_, err := client.Update(ctx, up, resource.UpdateOptions{})
 						require.Error(t, err)
-						var matches bool
-						if expectedError == "Forbidden" {
-							matches = errors.IsForbidden(err)
-						} else {
-							matches = errors.IsNotFound(err)
-						}
-						require.Truef(t, matches, "Should get %s error but got: %s", expectedError, err)
+						assertForbiddenOrNotFound(t, tc.canUpdate, err)
 					})
 				})
 			} else {
@@ -310,20 +337,10 @@ func TestIntegrationAccessControl(t *testing.T) {
 					err := client.Delete(ctx, expected.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 					require.NoError(t, err)
 
-					expectedError := "Forbidden"
-					if tc.user == org1.Admin {
-						expectedError = "NotFound"
-					}
-					t.Run(fmt.Sprintf("should get %s if name does not exist", expectedError), func(t *testing.T) {
+					t.Run(fmt.Sprintf("should get %s if name does not exist", forbiddenOrNotfound(tc.canDelete)), func(t *testing.T) {
 						err := client.Delete(ctx, resource.Identifier{Namespace: apis.DefaultNamespace, Name: "notfound"}, resource.DeleteOptions{})
 						require.Error(t, err)
-						var matches bool
-						if expectedError == "Forbidden" {
-							matches = errors.IsForbidden(err)
-						} else {
-							matches = errors.IsNotFound(err)
-						}
-						require.Truef(t, matches, "Should get %s error but got: %s", expectedError, err)
+						assertForbiddenOrNotFound(t, tc.canDelete, err)
 					})
 				})
 			} else {
@@ -339,6 +356,55 @@ func TestIntegrationAccessControl(t *testing.T) {
 					})
 				})
 				require.NoError(t, adminClient.Delete(ctx, expected.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+			}
+
+			newTree := &v1beta1.RoutingTree{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      fmt.Sprintf("new-tree-%s", tc.user.Identity.GetLogin()),
+					Namespace: apis.DefaultNamespace,
+				},
+				Spec: v1beta1.RoutingTreeSpec{
+					Defaults: v1beta1.RoutingTreeRouteDefaults{
+						Receiver: current.Spec.Defaults.Receiver,
+					},
+				},
+			}
+
+			if tc.canCreateNew {
+				t.Run("should be able to create new routing tree", func(t *testing.T) {
+					tree, err := client.Create(ctx, newTree, resource.CreateOptions{})
+					require.NoError(t, err)
+					t.Run("should be able to read new routing tree", func(t *testing.T) {
+						tree, err = client.Get(ctx, tree.GetStaticMetadata().Identifier())
+						require.NoError(t, err)
+					})
+					t.Run("should be able to update routing tree", func(t *testing.T) {
+						up := tree.Copy().(*v1beta1.RoutingTree)
+						up.Spec.Routes = []v1beta1.RoutingTreeRoute{
+							{
+								Matchers: []v1beta1.RoutingTreeMatcher{
+									{
+										Label: "test",
+										Type:  v1beta1.RoutingTreeMatcherTypeEqual,
+										Value: "test",
+									},
+								},
+							},
+						}
+						_, err := client.Update(ctx, up, resource.UpdateOptions{})
+						require.NoError(t, err)
+					})
+					t.Run("should be able to delete new routing tree", func(t *testing.T) {
+						err := client.Delete(ctx, tree.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+						require.NoError(t, err)
+					})
+				})
+			} else {
+				t.Run("should be forbidden to create new routing tree", func(t *testing.T) {
+					_, err := client.Create(ctx, newTree, resource.CreateOptions{})
+					require.Error(t, err)
+					require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+				})
 			}
 		})
 
@@ -797,9 +863,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{featuremgmt.FlagAlertingMultiplePolicies},
-	})
+	helper := getTestHelper(t)
 
 	org1 := helper.Org1
 	admin := org1.Admin
@@ -1057,9 +1121,7 @@ func TestIntegrationMultipleRoutesReferentialIntegrity(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{featuremgmt.FlagAlertingMultiplePolicies},
-	})
+	helper := getTestHelper(t)
 
 	org1 := helper.Org1
 	admin := org1.Admin
