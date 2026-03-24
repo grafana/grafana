@@ -56,14 +56,9 @@ function createMockColumn(columnOverrides: MockColumnOverrides) {
     getHeaderProps: () => ({ key: `col-${headerText}`, style: {} }),
     getSortByToggleProps: () => ({}),
     render: (key: string) => (key === 'Header' ? headerText : null),
-    field: { config: { custom: {} } },
     canSort,
     isSorted,
     isSortedDesc,
-    canResize: false,
-    isResizing: false,
-    justifyContent: 'flex-start',
-    totalLeft: 0,
   };
 }
 
