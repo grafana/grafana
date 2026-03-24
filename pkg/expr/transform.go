@@ -3,12 +3,14 @@ package expr
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -88,7 +90,7 @@ func (s *Service) TransformData(ctx context.Context, now time.Time, req *Request
 
 	// Build the pipeline from the request, checking for ordering issues (e.g. loops)
 	// and parsing graph nodes from the queries.
-	pipeline, _, err := s.buildPipeline(ctx, req)
+	pipeline, brokenNodes, err := s.buildPipeline(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +101,20 @@ func (s *Service) TransformData(ctx context.Context, now time.Time, req *Request
 		return nil, err
 	}
 
-	// Get which queries have the Hide property so they those queries' results
+	// Pre-populate error entries for broken nodes (degraded pipeline).
+	// These are nodes that were removed during pipeline building because
+	// they referenced nonexistent dependencies.
+	for refID, nodeErr := range brokenNodes {
+		responses.Responses[refID] = backend.DataResponse{
+			Error: nodeErr,
+		}
+		var sqlErr *sql.ErrorWithCategory
+		if errors.As(nodeErr, &sqlErr) {
+			s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
+		}
+	}
+
+	// Get which queries have the Hide property so those queries' results
 	// can be excluded from the response.
 	hidden, err := hiddenRefIDs(req.Queries)
 	if err != nil {
