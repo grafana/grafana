@@ -1527,7 +1527,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Both the pre-walk check and the walk step read the same _folder.json.
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
 				Data: folderJSON("conflict-uid", "My Folder"),
 				Hash: "new-hash",
@@ -1545,7 +1545,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
 
-		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/file.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/file.json", "test-ref")
 
 		require.Error(t, err)
 		require.ErrorContains(t, err, "conflict-uid")
@@ -1563,10 +1563,10 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Pre-walk reads the leaf folder (parent/child) — not found, so we enter the walk.
-		rw.On("Read", mock.Anything, "parent/child/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 		// Walk step for "parent" — _folder.json with a stable UID and a known hash.
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
 				Data: folderJSON("parent-uid", "Parent"),
 				Hash: "parent-hash",
@@ -1592,7 +1592,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		parent, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json", "test-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, childFolder.ID, parent)
@@ -1608,10 +1608,10 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Pre-walk reads the leaf folder — not found, so we enter the walk.
-		rw.On("Read", mock.Anything, "parent/child/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/child/_folder.json", "test-ref").
 			Return(nil, repository.ErrFileNotFound)
 		// Walk step for "parent" — same UID as in tree, but a newer hash.
-		rw.On("Read", mock.Anything, "parent/_folder.json", "").
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
 				Data: folderJSON("parent-uid", "Parent Updated"),
 				Hash: "new-hash",
@@ -1644,7 +1644,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		}
 
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
-		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json", "test-ref")
 
 		require.NoError(t, err)
 		// EnsureFolderExists must have been called for "parent-uid" (reconcile stale hash).
@@ -1658,7 +1658,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "team-a/_folder.json", "").
+		rw.On("Read", mock.Anything, "team-a/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
 				Data: folderJSON("shared-uid", "Team A"),
 				Hash: "hash-a",
@@ -1673,7 +1673,7 @@ func TestEnsureFolderPathExist_UIDConflict(t *testing.T) {
 		}, "")
 
 		fm := NewFolderManager(rw, &fakeDynamicResourceClient{}, tree, WithFolderMetadataEnabled(true))
-		_, err := fm.EnsureFolderPathExist(ctx, "team-a/dashboard.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "team-a/dashboard.json", "test-ref")
 
 		require.Error(t, err)
 		var validationErr *ResourceValidationError
@@ -2056,7 +2056,7 @@ func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
 		// Pre-walk reads "my-folder/_folder.json" — returns a stable UID and hash.
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
 				Data: folderJSON("shared-uid", "My Folder"),
 				Hash: "same-hash",
@@ -2074,7 +2074,7 @@ func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
 
-		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		_, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 
 		require.Error(t, err)
 		var validationErr *ResourceValidationError
@@ -2091,7 +2091,7 @@ func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").
 			Return(&repository.FileInfo{
 				Data: folderJSON("stable-uid", "My Folder"),
 				Hash: "same-hash",
@@ -2108,7 +2108,7 @@ func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
 		client := &fakeDynamicResourceClient{}
 		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
 
-		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+		parent, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 
 		require.NoError(t, err)
 		require.Equal(t, "stable-uid", parent)
