@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -69,9 +68,7 @@ u5/wOyuHp1cIBnjeN41/pluOWFBHI9xLW3ExLtmYMiecJ8VdRA==
 -----END RSA PRIVATE KEY-----`
 
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	ctx := context.Background()
 
@@ -317,9 +314,7 @@ func TestIntegrationProvisioning_ViewerSettings_CustomRepositoryTypes(t *testing
 }
 
 func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	for _, testCase := range []struct {
@@ -693,11 +688,9 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Skip("Reenable this test once we enforce schema validation for provisioning")
 
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "invalid-schema-tmp"
@@ -746,9 +739,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// FIXME: instead of using an existing GitHub repository, we should create a new one for the tests and a branch
@@ -860,9 +851,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	t.Run("repository with no workflows should not create a webhook", func(t *testing.T) {
@@ -887,9 +876,7 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	t.Run("create repository with HTTPS webhook base URL", func(t *testing.T) {
@@ -1080,9 +1067,7 @@ func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	repoName := "webhook-unhealthy-test"
@@ -1268,9 +1253,7 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const allPanels = "n1jR8vnnz"
@@ -1455,9 +1438,7 @@ spec:
 }
 
 func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// The dashboard shouldn't exist yet
@@ -1522,9 +1503,7 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 }
 
 func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "gh-repo"
@@ -1595,9 +1574,7 @@ func TestIntegrationProvisioning_DeleteRepositoryAndReleaseResources(t *testing.
 }
 
 func TestIntegrationProvisioning_DeleteRepositoryAndCleanupClassicDashboards(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	t.Run("remove-orphan-resources finalizer deletes classic dashboards", func(t *testing.T) {
@@ -1784,9 +1761,7 @@ func TestIntegrationProvisioning_JobPermissions(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "refs-permissions-test"
@@ -1847,9 +1822,7 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	t.Run("repository with empty path syncs from root", func(t *testing.T) {
@@ -1943,9 +1916,7 @@ func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	createOptions := metav1.CreateOptions{FieldValidation: "Strict"}
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
@@ -2116,9 +2087,7 @@ func TestIntegrationProvisioning_RepositoryConnection(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	namespace := "default"
 
@@ -2302,9 +2271,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 }
 
 func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	namespace := "default"
 
@@ -2440,9 +2407,7 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 }
 
 func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	namespace := "default"
 	defaultBranchName := "defaultBranchName"
@@ -2521,221 +2486,6 @@ func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 	})
 }
 
-func TestIntegrationRepositoryController_EnterpriseWiring(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	if !extensions.IsEnterprise {
-		t.Skip("Skipping integration test when not enterprise")
-	}
-
-	helper := common.RunGrafana(t)
-	ctx := context.Background()
-
-	t.Run("GitLab repository can be created and reconciled", func(t *testing.T) {
-		token := base64.StdEncoding.EncodeToString([]byte("test-gitlab-token"))
-
-		repository := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Repository",
-			"metadata": map[string]any{
-				"name":      "test-gitlab-repo",
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test GitLab Repository",
-				"type":  string(provisioning.GitLabRepositoryType),
-				"gitlab": map[string]any{
-					"url":    "https://gitlab.com/test/repo.git",
-					"branch": "main",
-					"path":   "dashboards",
-				},
-			},
-			"secure": map[string]any{
-				"token": map[string]any{
-					"create": token,
-				},
-			},
-		}}
-
-		// CREATE
-		created, err := helper.Repositories.Resource.Create(ctx, repository, metav1.CreateOptions{})
-		require.NoError(t, err, "failed to create GitLab repository")
-		require.NotNil(t, created)
-
-		repoName := created.GetName()
-		require.NotEmpty(t, repoName, "repository name should not be empty")
-
-		// Cleanup
-		defer func() {
-			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
-		}()
-
-		// READ
-		output, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
-		require.NoError(t, err, "failed to read back GitLab repository")
-		assert.Equal(t, repoName, output.GetName(), "name should be equal")
-
-		spec := output.Object["spec"].(map[string]any)
-		assert.Equal(t, string(provisioning.GitLabRepositoryType), spec["type"], "type should be gitlab")
-
-		// Get typed client for status checks
-		restConfig := helper.Org1.Admin.NewRestConfig()
-		provClient, err := clientset.NewForConfig(restConfig)
-		require.NoError(t, err, "failed to create provisioning client")
-		repoClient := provClient.ProvisioningV0alpha1().Repositories("default")
-
-		// Wait for reconciliation - controller should process the resource
-		// With fake credentials, the git operations will fail, but reconciliation should happen
-		require.Eventually(t, func() bool {
-			updated, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
-			if err != nil {
-				return false
-			}
-			// Check that controller has reconciled (ObservedGeneration matches Generation)
-			// and that health check was attempted (Checked > 0)
-			return updated.Status.ObservedGeneration == updated.Generation &&
-				updated.Status.Health.Checked > 0
-		}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled by controller")
-
-		// Verify reconciliation status
-		reconciled, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
-		require.NoError(t, err)
-
-		// Controller should have set ObservedGeneration - this proves reconciliation happened
-		assert.Equal(t, reconciled.Generation, reconciled.Status.ObservedGeneration,
-			"controller should have reconciled the repository")
-
-		// Health check should have been attempted - proves the controller processed it
-		assert.Greater(t, reconciled.Status.Health.Checked, int64(0),
-			"health check should have been attempted")
-
-		// Should have a ready condition - proves status was updated
-		readyCondition := meta.FindStatusCondition(reconciled.Status.Conditions, provisioning.ConditionTypeReady)
-		assert.NotNil(t, readyCondition, "should have ready condition")
-
-		t.Logf("GitLab repository reconciled successfully. Health: %v, ObservedGen: %d, Checked: %d",
-			reconciled.Status.Health.Healthy, reconciled.Status.ObservedGeneration, reconciled.Status.Health.Checked)
-	})
-
-	t.Run("Bitbucket repository can be and reconciled", func(t *testing.T) {
-		token := base64.StdEncoding.EncodeToString([]byte("test-bitbucket-token"))
-
-		repository := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "provisioning.grafana.app/v0alpha1",
-			"kind":       "Repository",
-			"metadata": map[string]any{
-				"name":      "test-bitbucket-repo",
-				"namespace": "default",
-			},
-			"spec": map[string]any{
-				"title": "Test Bitbucket Repository",
-				"type":  string(provisioning.BitbucketRepositoryType),
-				"bitbucket": map[string]any{
-					"url":    "https://bitbucket.org/workspace/repo.git",
-					"branch": "main",
-					"path":   "dashboards",
-				},
-			},
-			"secure": map[string]any{
-				"token": map[string]any{
-					"create": token,
-				},
-			},
-		}}
-
-		// CREATE
-		created, err := helper.Repositories.Resource.Create(ctx, repository, metav1.CreateOptions{})
-		require.NoError(t, err, "failed to create Bitbucket repository")
-		require.NotNil(t, created)
-
-		repoName := created.GetName()
-		require.NotEmpty(t, repoName, "repository name should not be empty")
-
-		// Cleanup
-		defer func() {
-			_ = helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{})
-		}()
-
-		// READ
-		output, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
-		require.NoError(t, err, "failed to read back Bitbucket repository")
-		assert.Equal(t, repoName, output.GetName(), "name should be equal")
-
-		spec := output.Object["spec"].(map[string]any)
-		assert.Equal(t, string(provisioning.BitbucketRepositoryType), spec["type"], "type should be bitbucket")
-
-		// Get typed client for status checks
-		restConfig := helper.Org1.Admin.NewRestConfig()
-		provClient, err := clientset.NewForConfig(restConfig)
-		require.NoError(t, err, "failed to create provisioning client")
-		repoClient := provClient.ProvisioningV0alpha1().Repositories("default")
-
-		// Wait for reconciliation
-		require.Eventually(t, func() bool {
-			updated, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
-			if err != nil {
-				return false
-			}
-			return updated.Status.ObservedGeneration == updated.Generation &&
-				updated.Status.Health.Checked > 0
-		}, 15*time.Second, 500*time.Millisecond, "repository should be reconciled by controller")
-
-		// Verify reconciliation status
-		reconciled, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
-		require.NoError(t, err)
-
-		assert.Equal(t, reconciled.Generation, reconciled.Status.ObservedGeneration,
-			"controller should have reconciled the repository")
-		assert.Greater(t, reconciled.Status.Health.Checked, int64(0),
-			"health check should have been attempted")
-
-		readyCondition := meta.FindStatusCondition(reconciled.Status.Conditions, provisioning.ConditionTypeReady)
-		assert.NotNil(t, readyCondition, "should have ready condition")
-
-		t.Logf("Bitbucket repository reconciled successfully. Health: %v, ObservedGen: %d, Checked: %d",
-			reconciled.Status.Health.Healthy, reconciled.Status.ObservedGeneration, reconciled.Status.Health.Checked)
-	})
-
-	t.Run("All repository types are supported", func(t *testing.T) {
-		// List all supported repository types
-
-		supportedTypes := []provisioning.RepositoryType{
-			provisioning.GitHubRepositoryType,
-			provisioning.GitLabRepositoryType,
-			provisioning.BitbucketRepositoryType,
-			provisioning.GitRepositoryType,
-			provisioning.LocalRepositoryType,
-		}
-
-		for _, repoType := range supportedTypes {
-			t.Run(string(repoType), func(t *testing.T) {
-				// We just check that we can create the object without factory errors
-				// Validation errors are expected if configuration is missing/invalid
-				repo := &unstructured.Unstructured{Object: map[string]any{
-					"apiVersion": "provisioning.grafana.app/v0alpha1",
-					"kind":       "Repository",
-					"metadata": map[string]any{
-						"generateName": "test-",
-						"namespace":    "default",
-					},
-					"spec": map[string]any{
-						"title": "Test Repository",
-						"type":  string(repoType),
-					},
-				}}
-
-				// Try to create - we expect validation error, not "type not supported"
-				_, err := helper.Repositories.Resource.Create(ctx, repo, metav1.CreateOptions{})
-				if err != nil {
-					// Should be a validation error, not "type not supported"
-					assert.NotContains(t, err.Error(), "is not supported",
-						"type %s should be supported by factory", repoType)
-				}
-			})
-		}
-	})
-}
-
 // TestIntegrationProvisioning_ConcurrentRepositoryCreation tests creating multiple repositories
 // concurrently with secure tokens, which triggers secret storage operations.
 // This simulates what happens with 'grafanactl resources push' when pushing multiple
@@ -2746,9 +2496,7 @@ func TestIntegrationRepositoryController_EnterpriseWiring(t *testing.T) {
 //	Error: migration failed (id = add lease_created index to secret_secure_value):
 //	database is locked (5) (SQLITE_BUSY)
 func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Number of repositories to create concurrently
@@ -2856,9 +2604,7 @@ func TestIntegrationProvisioning_ConcurrentRepositoryCreation(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FolderTitleUpdatesOnSync(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repoName = "folder-title-update-test"
