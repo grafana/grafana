@@ -94,7 +94,7 @@ type APIBuilder struct {
 	// HACK:This will be removed once we have proper wire providers for the controllers.
 	// TODO: Set this up in the standalone API server
 	onlyApiServer                       bool
-	isNotPreferredVersion               bool
+	isPreferredVersion                  bool
 	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
@@ -143,7 +143,7 @@ type APIBuilder struct {
 type Options struct {
 	GroupVersion                        schema.GroupVersion
 	OnlyApiServer                       bool
-	IsNotPreferredVersion               bool
+	IsPreferredVersion                  bool
 	RepoFactory                         repository.Factory
 	ConnectionFactory                   connection.Factory
 	Features                            featuremgmt.FeatureToggles
@@ -195,7 +195,7 @@ func NewAPIBuilder(opts Options) (*APIBuilder, error) {
 	b := &APIBuilder{
 		gv:                                  opts.GroupVersion,
 		onlyApiServer:                       opts.OnlyApiServer,
-		isNotPreferredVersion:               opts.IsNotPreferredVersion,
+		isPreferredVersion:                  opts.IsPreferredVersion,
 		minSyncInterval:                     opts.MinSyncInterval,
 		tracer:                              opts.Tracer,
 		usageStats:                          opts.UsageStats,
@@ -301,7 +301,7 @@ func RegisterAPIService(
 			Version: provisioning.VERSION, // v0alpha1
 		},
 		OnlyApiServer:                       true,
-		IsNotPreferredVersion:               true,
+		IsPreferredVersion:                  false,
 		RepoFactory:                         repoFactory,
 		ConnectionFactory:                   connectionFactory,
 		Features:                            features,
@@ -333,7 +333,7 @@ func RegisterAPIService(
 
 	// Register additional API version
 	opts.OnlyApiServer = cfg.DisableControllers
-	opts.IsNotPreferredVersion = false    // this is the preferred version
+	opts.IsPreferredVersion = true        // this is the preferred version
 	opts.GroupVersion.Version = "v1beta1" // preferred version
 	builder, err = NewAPIBuilder(opts)
 	if err != nil {
@@ -635,7 +635,7 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 
 	metav1.AddToGroupVersion(scheme, b.gv)
 
-	if !b.isNotPreferredVersion {
+	if b.isPreferredVersion {
 		return scheme.SetVersionPriority(b.gv)
 	}
 	return nil
@@ -768,8 +768,8 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
-	if b.isNotPreferredVersion {
-		return nil, nil
+	if b.isPreferredVersion {
+		return nil, nil // TODO, flip the logic when the types actually change
 	}
 
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
