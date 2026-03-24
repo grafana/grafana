@@ -13,17 +13,10 @@ import { getReducerType, isRangeEvaluator } from 'app/features/expressions/utils
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { ToLabel } from '../../../../../expressions/components/ToLabel';
+import { SimpleCondition } from '../../../types/rule-form';
 import { ExpressionResult } from '../../expressions/Expression';
 
 import { updateExpression } from './reducer';
-
-export interface SimpleCondition {
-  whenField?: string;
-  evaluator: {
-    params: number[];
-    type: EvalFunction;
-  };
-}
 
 /**
  * This is the simple condition editor if the user is in the simple mode in the query section

@@ -20,11 +20,10 @@ import (
 //go:generate mockery --name FolderTree --structname MockFolderTree --inpackage --filename tree_mock.go --with-expecter
 type FolderTree interface {
 	In(folder string) bool
-	// Get returns the folder entry for the given ID, or false if not found.
 	Get(folderID string) (Folder, bool)
+	GetByPath(path string) (Folder, bool)
 	DirPath(folder, baseFolder string) (Folder, bool)
 	Add(folder Folder, parent string)
-	// Remove deletes folderID and all its descendants from the tree.
 	Remove(folderID string)
 	AddUnstructured(item *unstructured.Unstructured) error
 	Count() int
@@ -34,6 +33,7 @@ type FolderTree interface {
 type folderTree struct {
 	tree    map[string]string
 	folders map[string]Folder
+	paths   map[string]string
 	count   int
 	mu      sync.RWMutex
 }
@@ -46,14 +46,31 @@ func (t *folderTree) In(folder string) bool {
 	return t.in(folder)
 }
 
+// in is the unlocked implementation of In used by helpers that already hold the mutex.
 func (t *folderTree) in(folder string) bool {
 	_, ok := t.tree[folder]
 	return ok || folder == ""
 }
 
+// Get returns the folder entry stored for a specific folder UID.
 func (t *folderTree) Get(folderID string) (Folder, bool) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
+	f, ok := t.folders[folderID]
+	return f, ok
+}
+
+// GetByPath returns the folder entry stored at the given source path.
+// Paths are normalized to trailing-slash directory form.
+func (t *folderTree) GetByPath(path string) (Folder, bool) {
+	t.mu.RLock()
+	defer t.mu.RUnlock()
+
+	folderID, ok := t.paths[safepath.EnsureTrailingSlash(path)]
+	if !ok {
+		return Folder{}, false
+	}
+
 	f, ok := t.folders[folderID]
 	return f, ok
 }
@@ -106,12 +123,22 @@ func (t *folderTree) dirPath(folder, baseFolder string) (fid Folder, ok bool) {
 	return fid, ok
 }
 
+// Add inserts or updates a folder entry and keeps the UID and path indexes in sync.
 func (t *folderTree) Add(folder Folder, parent string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	_, exists := t.tree[folder.ID]
+	// Remove the stale path key when an existing folder entry is updated in place.
+	if existing, ok := t.folders[folder.ID]; ok && existing.Path != "" && existing.Path != folder.Path {
+		delete(t.paths, safepath.EnsureTrailingSlash(existing.Path))
+	}
 	t.tree[folder.ID] = parent
+	// Ensure the parent folder is set
+	folder.ParentID = parent
 	t.folders[folder.ID] = folder
+	if folder.Path != "" {
+		t.paths[safepath.EnsureTrailingSlash(folder.Path)] = folder.ID
+	}
 	if !exists {
 		t.count++
 	}
@@ -139,6 +166,9 @@ func (t *folderTree) Remove(folderID string) {
 	// Delete collected nodes and adjust count.
 	for _, id := range toDelete {
 		if _, exists := t.tree[id]; exists {
+			if folder, ok := t.folders[id]; ok && folder.Path != "" {
+				delete(t.paths, safepath.EnsureTrailingSlash(folder.Path))
+			}
 			delete(t.tree, id)
 			delete(t.folders, id)
 			t.count--
@@ -146,6 +176,7 @@ func (t *folderTree) Remove(folderID string) {
 	}
 }
 
+// Count returns the number of folders currently stored in the tree.
 func (t *folderTree) Count() int {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
@@ -154,6 +185,7 @@ func (t *folderTree) Count() int {
 
 type WalkFunc func(ctx context.Context, folder Folder, parent string) error
 
+// Walk visits all folders in shallowest-first order and passes each folder's parent UID.
 func (t *folderTree) Walk(ctx context.Context, fn WalkFunc) error {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
@@ -175,13 +207,16 @@ func (t *folderTree) Walk(ctx context.Context, fn WalkFunc) error {
 	return nil
 }
 
+// NewEmptyFolderTree creates an empty folder tree with UID and source-path indexes.
 func NewEmptyFolderTree() FolderTree {
 	return &folderTree{
 		tree:    make(map[string]string, 0),
 		folders: make(map[string]Folder, 0),
+		paths:   make(map[string]string, 0),
 	}
 }
 
+// AddUnstructured adds a live folder object into the tree using its metadata annotations.
 func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
@@ -189,8 +224,9 @@ func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 	}
 
 	folder := Folder{
-		Title: meta.FindTitle(item.GetName()),
-		ID:    item.GetName(),
+		Title:    meta.FindTitle(item.GetName()),
+		ID:       item.GetName(),
+		ParentID: meta.GetFolder(),
 	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -200,9 +236,11 @@ func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 	return nil
 }
 
+// NewFolderTreeFromResourceList seeds a tree from the current managed resource listing.
 func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) FolderTree {
 	tree := make(map[string]string, len(resources.Items))
 	folderIDs := make(map[string]Folder, len(resources.Items))
+	paths := make(map[string]string, len(resources.Items))
 	for _, rf := range resources.Items {
 		if rf.Group != folders.GROUP {
 			continue
@@ -214,12 +252,17 @@ func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) FolderT
 			ID:           rf.Name,
 			Path:         rf.Path,
 			MetadataHash: rf.Hash,
+			ParentID:     rf.Folder,
+		}
+		if rf.Path != "" {
+			paths[safepath.EnsureTrailingSlash(rf.Path)] = rf.Name
 		}
 	}
 
 	return &folderTree{
 		tree:    tree,
 		folders: folderIDs,
+		paths:   paths,
 		count:   len(resources.Items),
 	}
 }

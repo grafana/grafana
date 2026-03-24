@@ -355,6 +355,10 @@ const (
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
 
+	// FlagPlaylistsRBAC
+	// Enables RBAC for playlists
+	FlagPlaylistsRBAC = "playlistsRBAC"
+
 	// FlagSavedQueriesRBAC
 	// Enables Saved queries (query library) RBAC permissions
 	FlagSavedQueriesRBAC = "savedQueriesRBAC"
@@ -917,4 +921,12 @@ const (
 	// FlagColorblindThemes
 	// Enables the new colorblind-friendly themes
 	FlagColorblindThemes = "colorblindThemes"
+
+	// FlagRbacIAMClient
+	// Enables the IAM client integration for fetching remote IAM global roles
+	FlagRbacIAMClient = "rbacIAMClient"
+
+	// FlagLogsTablePanelNG
+	// Enables the logs tableNG panel to replace existing tableRT
+	FlagLogsTablePanelNG = "logsTablePanelNG"
 )
