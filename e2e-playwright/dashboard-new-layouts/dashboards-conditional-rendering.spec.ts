@@ -1,4 +1,3 @@
-import { set } from 'lodash';
 import { Page } from 'playwright-core';
 
 import { test, expect, E2ESelectorGroups, DashboardPage } from '@grafana/plugin-e2e';
@@ -60,7 +59,6 @@ test.describe(
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
 
       // check that tab is visible when variable value is changed
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.TimePicker.openButton).click();
       await page.getByText('Last 30 days').click();
 
@@ -133,7 +131,8 @@ test.describe(
       await switchTabAndSave(dashboardPage, selectors, page);
 
       // make sure tab is visible when no conditions are met
-      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '1');
+      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
+
       await selectTimeRange(dashboardPage, selectors, page, 'Last 30 days');
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
 
@@ -187,6 +186,11 @@ test.describe(
 
       // change variable value to make tab visible
       await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
+
+      // reset to hidden and check that changing just the time range rule also makes the tab visible
+      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '1');
+      await selectTimeRange(dashboardPage, selectors, page, 'Last 5 minutes');
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
     });
 
@@ -264,7 +268,8 @@ test.describe(
       // visible because at least one condition is met
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
 
-      // select time range more than 7 days, which should keep the tab visible
+      // reset to hide and check that changing just the time range also makes the tab visible
+      await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '1');
       await selectTimeRange(dashboardPage, selectors, page, 'Last 5 minutes');
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
     });
