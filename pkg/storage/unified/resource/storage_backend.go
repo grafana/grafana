@@ -452,8 +452,12 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	// track keys that have been processed to avoid processing the same key twice
 	seenKeys := map[ListRequestKey]struct{}{}
 
-	// track keys that are live
-	liveKeys := map[ListRequestKey]struct{}{}
+	// Data keys are group/resource/namespace/name/{rv}~…, so lexicographic order (asc or
+	// desc) keeps all revisions for one resource contiguous. While iterating one resource,
+	// the first key we see is the newest; if it is create/update, the resource is live and
+	// we skip older keys until the name changes. State persists across paginated batches.
+	var currentResource ListRequestKey
+	var currentResourceLive bool
 
 	for {
 		keysProcessed := int64(0)
@@ -494,17 +498,17 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			// the next end key is the immediate previous key for the current key
 			endKey = previousKey(dataKey)
 
-			// the resource is live, no need to delete anything
-			if _, live := liveKeys[k]; live {
+			if k != currentResource {
+				currentResource = k
+				currentResourceLive = false
+			}
+			if currentResourceLive {
 				continue
 			}
 
-			// since we are processing keys in descending order of resource version,
-			// if the first occurrence is a create or update action, then it means the
-			// resource is live, so we can add the key to the live keys map and
-			// skip the rest of the logic for this key (no need to delete anything)
+			// First key seen for this resource (newest revision): create/update means live.
 			if dk.Action == DataActionCreated || dk.Action == DataActionUpdated {
-				liveKeys[k] = struct{}{}
+				currentResourceLive = true
 				continue
 			}
 
