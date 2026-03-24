@@ -110,31 +110,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		adminConfig.SendAlertsTo = &sendAlertsTo
 	}
 
-	// TODO: hook it up once the new feature flag is added
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	//if body.RemoteAlertmanagerUID != nil && srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRemoteAMConfigSync) {
-	//	if *body.RemoteAlertmanagerUID != "" {
-	//		ds, err := srv.datasourceService.GetDataSource(c.Req.Context(), &datasources.GetDataSourceQuery{
-	//			UID:   *body.RemoteAlertmanagerUID,
-	//			OrgID: c.GetOrgID(),
-	//		})
-	//		if err != nil {
-	//			if errors.Is(err, datasources.ErrDataSourceNotFound) {
-	//				return response.Error(http.StatusBadRequest, "datasource not found", err)
-	//			}
-	//			return ErrResp(http.StatusInternalServerError, err, "failed to look up datasource")
-	//		}
-	//		if ds.Type != datasources.DS_ALERTMANAGER {
-	//			return response.Error(http.StatusBadRequest, "datasource must be of type alertmanager", nil)
-	//		}
-	//		impl := ds.JsonData.Get("implementation").MustString("")
-	//		if impl != "mimir" && impl != "cortex" {
-	//			return response.Error(http.StatusBadRequest, "datasource implementation must be mimir or cortex", nil)
-	//		}
-	//	}
-
-	//	adminConfig.RemoteAlertmanagerUID = body.RemoteAlertmanagerUID
-	//}
+	// TODO: setup remote alertmanager uid
 
 	if err := srv.store.UpdateAdminConfiguration(store.UpdateAdminConfigurationCmd{
 		AdminConfiguration: &adminConfig,
