@@ -10217,6 +10217,9 @@
       "group": "Group",
       "group-tooltip": "Name of the stacking group"
     },
+    "stats-picker": {
+      "placeholder": "Choose"
+    },
     "table": {
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
