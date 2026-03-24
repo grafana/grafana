@@ -12332,6 +12332,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "Display name",
         "name": "Name"
       }
     },
