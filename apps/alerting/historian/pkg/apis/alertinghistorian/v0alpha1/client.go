@@ -5,8 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 )
@@ -56,6 +59,70 @@ func (h *Client) NotificationsQueryAlerts(ctx context.Context, body CreateNotifi
 		return nil, err
 	}
 	return &resp, nil
+}
+
+// AlertStateHistory invokes GET /alertstate/history.
+func (h *Client) AlertStateHistory(ctx context.Context, params url.Values) (*AlertStateHistoryResponse, error) {
+	raw, err := h.get(ctx, "/alertstate/history", params)
+	if err != nil {
+		return nil, err
+	}
+	var frame data.Frame
+	if err := json.Unmarshal(raw, &frame); err != nil {
+		return nil, fmt.Errorf("unmarshal [/alertstate/history]: %w", err)
+	}
+	entries, err := parseAlertStateHistoryFrame(&frame)
+	if err != nil {
+		return nil, err
+	}
+	return &AlertStateHistoryResponse{Entries: entries}, nil
+}
+
+func parseAlertStateHistoryFrame(frame *data.Frame) ([]AlertStateHistoryEntry, error) {
+	if frame == nil || len(frame.Fields) < 2 || frame.Rows() == 0 {
+		return nil, nil
+	}
+	timeField := frame.Fields[0]
+	lineField := frame.Fields[1]
+
+	entries := make([]AlertStateHistoryEntry, 0, frame.Rows())
+	for i := 0; i < frame.Rows(); i++ {
+		ts, ok := timeField.ConcreteAt(i)
+		if !ok {
+			continue
+		}
+		lineRaw, ok := lineField.ConcreteAt(i)
+		if !ok {
+			continue
+		}
+
+		rawBytes, err := json.Marshal(lineRaw)
+		if err != nil {
+			continue
+		}
+
+		var entry AlertStateHistoryEntry
+		if err := json.Unmarshal(rawBytes, &entry); err != nil {
+			continue
+		}
+		entry.Timestamp = ts.(time.Time)
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (h *Client) get(ctx context.Context, path string, params url.Values) ([]byte, error) {
+	req := h.client.Get().Namespace(h.namespace).Suffix(path)
+	for k, vals := range params {
+		for _, v := range vals {
+			req = req.Param(k, v)
+		}
+	}
+	result := req.Do(ctx)
+	if err := result.Error(); err != nil {
+		return nil, fmt.Errorf("request [%s]: %w", path, err)
+	}
+	return result.Raw()
 }
 
 func (h *Client) post(ctx context.Context, path string, body any, resp any) error {
