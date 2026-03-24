@@ -1,19 +1,9 @@
 #! /usr/bin/env bash
 
-# Wrapper for the grafana binary
-# This file serves as a wrapper for the grafana binary. It ensures we set
-# the system-wide Grafana configuration that was bundled with the package as we
-# use the binary.
-
-GRAFANA_HOME="${GRAFANA_HOME:-/usr/share/grafana}"
-
-EXECUTABLE="$GRAFANA_HOME/bin/grafana"
-
-if [ ! -x $EXECUTABLE ]; then
- echo "$EXECUTABLE not installed or not executable"
- exit 5
+if ! command -v grafana >/dev/null 2>&1; then
+  echo "grafana command not installed or not executable"
+  exit 5
 fi
 
-CMD=server
-
-eval $EXECUTABLE "$CMD" "$@"
+echo "Deprecation warning: 'grafana-server' is deprecated and will be removed in a future release. Use 'grafana' instead." >&2
+exec grafana server "$@"
