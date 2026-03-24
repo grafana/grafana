@@ -21,8 +21,6 @@
     <script nonce="[[.Nonce]]">
       performance.mark('frontend_boot_css_time_seconds');
     </script>
-
-
   </head>
 
   <body>
@@ -289,6 +287,18 @@
 
           if (!resp.ok) {
             throw new Error("Unexpected response body: " + textResponse);
+          }
+
+          // Handle SSO auto-login redirection from /bootdata.
+          if (rawBootData.autoLoginRedirectURL) {
+            // Copied from context_srv.setRedirectToUrl
+            window.sessionStorage.setItem(
+              'redirectTo',
+              encodeURIComponent(window.location.href.substring(window.location.origin.length))
+            );
+
+            window.location.href = rawBootData.autoLoginRedirectURL;
+            return;
           }
 
           return rawBootData;
