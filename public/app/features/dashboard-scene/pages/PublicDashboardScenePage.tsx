@@ -38,8 +38,7 @@ export function PublicDashboardScenePage({ route }: Props) {
   const { dashboard, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {
-    // Full page loads set this via boot data; client-side navigation must set it here or panel queries
-    // will not use /api/public/dashboards/{token}/... (see DataSourceWithBackend, runRequest).
+    // Full page loads set this via boot data, but client-side navigation must set it here or panel queries will not use /api/public/dashboards/{token}/...
     const previousToken = config.publicDashboardAccessToken;
     if (accessToken) {
       config.publicDashboardAccessToken = accessToken;
