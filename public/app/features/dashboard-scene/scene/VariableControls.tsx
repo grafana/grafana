@@ -190,12 +190,7 @@ function VariableLabel({
   const labelOrName = state.label || state.name;
   const description = state.description ?? undefined;
   const docsUrl =
-    config.featureToggles.variableDocsInfoLink &&
-    'docsUrl' in state &&
-    typeof state.docsUrl === 'string' &&
-    state.docsUrl.length > 0
-      ? state.docsUrl
-      : undefined;
+    'docsUrl' in state && typeof state.docsUrl === 'string' && state.docsUrl.length > 0 ? state.docsUrl : undefined;
 
   if (description) {
     return (
