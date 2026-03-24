@@ -26,7 +26,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
       // Remove Panel #1
-      await removePanelsByTitle(dashboardPage, selectors, ['Panel #1']);
+      await removePanelsByTitle(dashboardPage, selectors, [/^Panel #1$/]);
 
       // Check that panel has been deleted
       await expect(
@@ -42,7 +42,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
       // Remove multiple panels
-      await removePanelsByTitle(dashboardPage, selectors, ['Panel #1', 'Panel #2', 'Panel #3']);
+      await removePanelsByTitle(dashboardPage, selectors, [/^Panel #1$/, /^Panel #2$/, /^Panel #3$/]);
 
       // Check that panels have been deleted
       await expect(
@@ -55,7 +55,7 @@ test.describe(
 );
 
 // Helper function to remove a panel by its title
-async function removePanelsByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, panelTitles: string[]) {
+async function removePanelsByTitle(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, panelTitles: RegExp[]) {
   for (const panelTitle of panelTitles) {
     await dashboardPage
       .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
