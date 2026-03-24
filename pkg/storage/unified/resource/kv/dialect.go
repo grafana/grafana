@@ -90,7 +90,6 @@ func BatchInsertMaxRows(dialect Dialect, paramsPerRow int) int {
 		}
 		return maxByLimit
 	default:
-		// MySQL and PostgreSQL handle large batches well
-		return 1000
+		return MaxBatchOps
 	}
 }
