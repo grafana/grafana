@@ -1,4 +1,5 @@
 import { waitFor } from '@testing-library/react';
+import React from 'react';
 
 import { DataFrameView } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -46,6 +47,49 @@ describe('SearchStateManager', () => {
   it('Can get search state manager with initial state', async () => {
     const stm = getSearchStateManager();
     expect(stm.state.layout).toBe(SearchLayout.Folders);
+  });
+
+  describe('starred and teamFolders mutual exclusivity', () => {
+    const mockCheckboxEvent = (checked: boolean) =>
+      ({ currentTarget: { checked } }) as React.FormEvent<HTMLInputElement>;
+
+    it('clears teamFolders when starred is toggled on', () => {
+      const stm = getSearchStateManager();
+      stm.onSetTeamFolders(true);
+      expect(stm.state.teamFolders).toBe(true);
+
+      stm.onStarredFilterChange(mockCheckboxEvent(true));
+      expect(stm.state.starred).toBe(true);
+      expect(stm.state.teamFolders).toBe(false);
+    });
+
+    it('clears starred when teamFolders is toggled on', () => {
+      const stm = getSearchStateManager();
+      stm.onSetStarred(true);
+      expect(stm.state.starred).toBe(true);
+
+      stm.onTeamFoldersFilterChange(mockCheckboxEvent(true));
+      expect(stm.state.teamFolders).toBe(true);
+      expect(stm.state.starred).toBe(false);
+    });
+
+    it('clears teamFolders when starred is set via onSetStarred', () => {
+      const stm = getSearchStateManager();
+      stm.onSetTeamFolders(true);
+
+      stm.onSetStarred(true);
+      expect(stm.state.starred).toBe(true);
+      expect(stm.state.teamFolders).toBe(false);
+    });
+
+    it('clears starred when teamFolders is set via onSetTeamFolders', () => {
+      const stm = getSearchStateManager();
+      stm.onSetStarred(true);
+
+      stm.onSetTeamFolders(true);
+      expect(stm.state.teamFolders).toBe(true);
+      expect(stm.state.starred).toBe(false);
+    });
   });
 
   describe('initStateFromUrl', () => {

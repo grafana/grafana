@@ -167,7 +167,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
     const starred = e.currentTarget.checked;
-    this.setStateAndDoSearch({ starred });
+    this.setStateAndDoSearch({ starred, teamFolders: starred ? false : this.state.teamFolders });
   };
 
   onClearStarred = () => {
@@ -176,18 +176,18 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   onSetStarred = (starred: boolean) => {
     if (starred !== this.state.starred) {
-      this.setStateAndDoSearch({ starred });
+      this.setStateAndDoSearch({ starred, teamFolders: starred ? false : this.state.teamFolders });
     }
   };
 
   onTeamFoldersFilterChange = (e: FormEvent<HTMLInputElement>) => {
     const teamFolders = e.currentTarget.checked;
-    this.setStateAndDoSearch({ teamFolders });
+    this.setStateAndDoSearch({ teamFolders, starred: teamFolders ? false : this.state.starred });
   };
 
   onSetTeamFolders = (teamFolders: boolean) => {
     if (teamFolders !== this.state.teamFolders) {
-      this.setStateAndDoSearch({ teamFolders });
+      this.setStateAndDoSearch({ teamFolders, starred: teamFolders ? false : this.state.starred });
     }
   };
 

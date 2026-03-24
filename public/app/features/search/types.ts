@@ -95,7 +95,7 @@ export interface SearchState {
   query: string;
   tag: string[];
   starred: boolean;
-  teamFolders?: boolean;
+  teamFolders: boolean;
   explain?: boolean; // adds debug info
   datasource?: string;
   panel_type?: string;

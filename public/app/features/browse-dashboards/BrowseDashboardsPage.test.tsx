@@ -235,6 +235,19 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
           // Other root-level items should not appear as they are not team-owned
           expect(screen.queryByText(dashbdD.item.title)).not.toBeInTheDocument();
         });
+
+        it('unchecks starred when team folders is checked', async () => {
+          const { user } = render(<BrowseDashboardsPage queryParams={{}} />);
+
+          const starred = await screen.findByLabelText('Starred');
+          await user.click(starred);
+          expect(starred).toBeChecked();
+
+          const teamFolders = await screen.findByLabelText('My team folders');
+          await user.click(teamFolders);
+          expect(teamFolders).toBeChecked();
+          expect(starred).not.toBeChecked();
+        });
       });
 
       it('does not show the "My team folders" checkbox when feature toggles are disabled', async () => {

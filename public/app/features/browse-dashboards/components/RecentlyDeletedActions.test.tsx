@@ -69,6 +69,7 @@ describe('RecentlyDeletedActions', () => {
         query: '',
         tag: [],
         starred: false,
+        teamFolders: false,
         layout: SearchLayout.List,
         deleted: true,
         eventTrackingNamespace: 'manage_dashboards',
