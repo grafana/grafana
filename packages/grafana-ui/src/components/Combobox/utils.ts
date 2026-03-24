@@ -24,13 +24,12 @@ export const isNewGroup = <T extends string | number>(option: ComboboxOption<T>,
 export const selectableValueToComboboxOption = <T extends string | number>(
   v: SelectableValue<T>
 ): ComboboxOption<T> | undefined => {
-  if (v == null) {
-    return undefined;
-  }
-  if (v.value == null) {
+  if (v == null || v.value == null) {
+    console.warn('selectableValueToComboboxOption: value is null or undefined', v);
     return undefined;
   }
   if (v.icon != null && !isIconName(v.icon)) {
+    console.warn('selectableValueToComboboxOption: icon is not a valid icon name', v.icon);
     return undefined;
   }
   return {
