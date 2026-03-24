@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { useSceneObjectState } from '@grafana/scenes';
+import { VizPanel, useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useSidebar, useStyles2, Sidebar } from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -12,7 +12,11 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
-import { getAssistantViewModeStyles, useDashboardAssistantViewMode } from '../assistant/DashboardAssistantViewMode';
+import { type PopoverTarget, AssistantPopoverContext } from '../assistant/AssistantPopoverContext';
+import {
+  useDashboardAssistantViewMode,
+  usePopoverDismissOnClickOutside,
+} from '../assistant/DashboardAssistantViewMode';
 import { ViewModePanelPromptCard } from '../assistant/ViewModePanelPromptCard';
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
@@ -57,7 +61,6 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const headerHeight = useChromeHeaderHeight();
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles, headerHeight ?? 0);
-  const assistantStyles = useStyles2(getAssistantViewModeStyles);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
@@ -67,25 +70,52 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
    */
   useUpdateAppChromeActions(dashboard);
 
-  const { selectionContext, openPane, selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
+  const { selectionContext, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
 
-  const { isEnabled: isAssistantEnabled, isViewModeWithPanelSelected } = useDashboardAssistantViewMode({
+  const { isEnabled: isAssistantEnabled } = useDashboardAssistantViewMode({
     dashboard,
-    editPane,
     isEditing,
-    selection,
   });
+
+  // --- Assistant popover state (decoupled from selection system) ---
+  // Stores both the VizPanel reference and the panel's DOM element directly,
+  // avoiding findByKey/containerRef ambiguity with repeated/cloned panels.
+  const [popoverTarget, setPopoverTarget] = useState<PopoverTarget | null>(null);
+
+  // Close popover when entering edit mode
+  useEffect(() => {
+    if (isEditing) {
+      setPopoverTarget(null);
+    }
+  }, [isEditing]);
+
+  const clearPopover = useCallback(() => setPopoverTarget(null), []);
+  usePopoverDismissOnClickOutside(popoverTarget, clearPopover);
+
+  const popoverContextValue = useMemo(
+    () => ({
+      openPopover: (panel: VizPanel, anchorEl: HTMLElement) => {
+        // Always show the popover — clicking the sparkle button is an intentional action.
+        // The AssistantPromptCard will send the prompt to the already-open sidebar if present.
+        setPopoverTarget((prev) => (prev?.panel === panel ? null : { panel, anchorEl }));
+      },
+    }),
+    []
+  );
 
   const CODE_PANE_MIN_WIDTH = 700;
   const originalPaneWidthRef = useRef<number | null>(null);
   const previousPaneRef = useRef<DashboardSidebarPaneName | undefined>(undefined);
+
+  // Selection is only needed in edit mode — the assistant popover is triggered
+  // exclusively via the sparkle button, not through the selection system.
   useEffect(() => {
-    if (isEditing || isAssistantEnabled) {
+    if (isEditing) {
       editPane.enableSelection();
     } else {
       editPane.disableSelection();
     }
-  }, [isEditing, isAssistantEnabled, editPane]);
+  }, [isEditing, editPane]);
 
   const sidebarContext = useSidebar({
     hasOpenPane: Boolean(openPane) && Boolean(isEditing),
@@ -174,24 +204,26 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     );
   }
 
+  const showPopover = !isEditing && isAssistantEnabled && popoverTarget !== null;
+
   return (
-    <div
-      className={cx(
-        styles.container,
-        !isEditing && isAssistantEnabled && assistantStyles.viewModeHoverOverride,
-        isViewModeWithPanelSelected && assistantStyles.viewModeAnimatedBorder
-      )}
-    >
-      <ElementSelectionContext.Provider value={selectionContext}>
-        <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
-          {controls}
-        </div>
-        {renderBody()}
-        {isViewModeWithPanelSelected && (
-          <ViewModePanelPromptCard selection={selection} editPane={editPane} dashboard={dashboard} />
-        )}
-      </ElementSelectionContext.Provider>
-    </div>
+    <AssistantPopoverContext.Provider value={popoverContextValue}>
+      <div className={styles.container}>
+        <ElementSelectionContext.Provider value={selectionContext}>
+          <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
+            {controls}
+          </div>
+          {renderBody()}
+          {showPopover && (
+            <ViewModePanelPromptCard
+              panel={popoverTarget.panel}
+              hintEl={popoverTarget.anchorEl}
+              onClose={clearPopover}
+            />
+          )}
+        </ElementSelectionContext.Provider>
+      </div>
+    </AssistantPopoverContext.Provider>
   );
 }
 

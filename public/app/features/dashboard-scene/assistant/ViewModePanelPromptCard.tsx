@@ -7,39 +7,59 @@ import { AssistantPromptCard, createAssistantContextItem } from '@grafana/assist
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { SceneObject, VizPanel, sceneGraph } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import { VizPanel } from '@grafana/scenes';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
-import { ElementSelection } from '../edit-pane/ElementSelection';
-import { EditPaneSelectionActions } from '../edit-pane/types';
-
-import { panelHasData } from './PanelAssistantHint';
+import { getAnimatedBorderClass } from './DashboardAssistantViewMode';
 
 interface ViewModePanelPromptCardProps {
-  selection: ElementSelection | undefined;
-  editPane: EditPaneSelectionActions;
-  dashboard: SceneObject;
+  panel: VizPanel;
+  /** A DOM element inside the panel (e.g. the sparkle button). Used to locate the panel container. */
+  hintEl: HTMLElement;
+  onClose: () => void;
 }
 
 /**
- * Renders a floating AssistantPromptCard below a selected VizPanel in dashboard view mode.
+ * Renders a floating AssistantPromptCard below a VizPanel in dashboard view mode.
  * Uses Floating UI for positioning and creates a portal to render outside the panel DOM hierarchy.
+ * Applies an animated gradient border to the active panel.
  */
-export function ViewModePanelPromptCard({ selection, editPane, dashboard }: ViewModePanelPromptCardProps) {
-  const selectedPanels = useSelectedVizPanels(selection);
-  const firstPanel = selectedPanels.length > 0 ? selectedPanels[0] : null;
+export function ViewModePanelPromptCard({ panel, hintEl, onClose }: ViewModePanelPromptCardProps) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  // Walk up from the sparkle button to find the panel's <section> element.
+  // PanelChrome renders: <div> → <section class="...-panel-container"> → header → titleItems → button.
+  // Using `section[class*="panel-container"]` targets the individual panel precisely,
+  // even inside repeated rows/panels where a parent wrapper may also exist.
+  const anchorEl = useMemo(() => {
+    const section = hintEl.closest<HTMLElement>('section[class*="panel-container"]');
+    return section ?? hintEl;
+  }, [hintEl]);
 
-  useLayoutEffect(() => {
-    if (!firstPanel?.state.key) {
-      setAnchorEl(null);
-      return;
-    }
-    const el = findPanelDomElement(firstPanel.state.key, dashboard);
-    setAnchorEl(el);
-  }, [firstPanel, dashboard]);
+  // Apply animated border to the active panel's DOM element
+  const borderClass = useMemo(() => getAnimatedBorderClass(theme), [theme]);
+  useEffect(() => {
+    anchorEl.classList.add(borderClass);
+    return () => anchorEl.classList.remove(borderClass);
+  }, [anchorEl, borderClass]);
+
+  // Close the popover when the anchor element is removed from the DOM
+  // (e.g. when a row is collapsed). Polls via rAF because MutationObserver
+  // on the parent won't fire when a grandparent is removed, and the scene
+  // object may not deactivate when its React component unmounts.
+  useEffect(() => {
+    let rafId: number;
+    const check = () => {
+      if (!anchorEl.isConnected) {
+        onClose();
+        return;
+      }
+      rafId = requestAnimationFrame(check);
+    };
+    rafId = requestAnimationFrame(check);
+    return () => cancelAnimationFrame(rafId);
+  }, [anchorEl, onClose]);
 
   const { refs, floatingStyles, isPositioned } = useFloating({
     placement: 'bottom',
@@ -55,10 +75,10 @@ export function ViewModePanelPromptCard({ selection, editPane, dashboard }: View
 
   useEffect(() => {
     setVisible(false);
-  }, [anchorEl]);
+  }, [panel]);
 
   useEffect(() => {
-    if (!anchorEl || !isPositioned) {
+    if (!isPositioned) {
       setVisible(false);
       return;
     }
@@ -66,23 +86,32 @@ export function ViewModePanelPromptCard({ selection, editPane, dashboard }: View
       requestAnimationFrame(() => setVisible(true));
     });
     return () => cancelAnimationFrame(raf);
-  }, [anchorEl, isPositioned]);
+  }, [isPositioned, panel]);
 
-  const context = usePanelsContext(selectedPanels);
-  const promptPlaceholder =
-    selectedPanels.length > 1
-      ? t('dashboard.panel-assistant.prompt-card.placeholder-multi', 'Ask Assistant about these panels...')
-      : t('dashboard.panel-assistant.prompt-card.placeholder', 'Ask Assistant about this panel...');
+  const context = useMemo(
+    () => [
+      createAssistantContextItem('structured', {
+        title: panel.state.title || 'Panel',
+        data: {
+          panelKey: panel.state.key,
+          panelTitle: panel.state.title,
+          pluginId: panel.state.pluginId,
+        },
+      }),
+    ],
+    [panel]
+  );
+
+  const promptPlaceholder = t('dashboard.panel-assistant.prompt-card.placeholder', 'Ask Assistant about this panel...');
 
   const closedExplicitlyRef = useRef(false);
-  const selectedPanelKeys = useMemo(() => selectedPanels.map((p) => p.state.key).join(','), [selectedPanels]);
 
   useEffect(() => {
-    if (visible && selectedPanels.length > 0) {
+    if (visible) {
       closedExplicitlyRef.current = false;
       reportInteraction('dashboards_assistant_popover_displayed', {
-        panelCount: selectedPanels.length,
-        pluginIds: selectedPanels.map((p) => p.state.pluginId),
+        panelCount: 1,
+        pluginIds: [panel.state.pluginId],
       });
 
       return () => {
@@ -93,24 +122,24 @@ export function ViewModePanelPromptCard({ selection, editPane, dashboard }: View
     }
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, selectedPanelKeys]);
+  }, [visible, panel]);
 
   const handleClose = useCallback(() => {
     closedExplicitlyRef.current = true;
     reportInteraction('dashboards_assistant_popover_closed', { action: 'escape' });
-    editPane.clearSelection(true);
-  }, [editPane]);
+    onClose();
+  }, [onClose]);
 
   const handleSubmit = useCallback(
     (prompt: string) => {
       closedExplicitlyRef.current = true;
       reportInteraction('dashboards_assistant_popover_prompt_submitted', {
-        panelCount: selectedPanels.length,
+        panelCount: 1,
         promptLength: prompt.length,
       });
-      editPane.clearSelection(true);
+      onClose();
     },
-    [editPane, selectedPanels]
+    [onClose]
   );
 
   const hiddenStyle = {
@@ -128,76 +157,18 @@ export function ViewModePanelPromptCard({ selection, editPane, dashboard }: View
       className={visible ? styles.floatingContainer : undefined}
       data-testid="view-mode-panel-prompt-card"
     >
-      {firstPanel && anchorEl && (
-        <AssistantPromptCard
-          origin="grafana/dashboard/panel-popover"
-          context={context}
-          placeholder={promptPlaceholder}
-          animated={false}
-          onClose={handleClose}
-          onSubmit={handleSubmit}
-          className={styles.card}
-        />
-      )}
+      <AssistantPromptCard
+        origin="grafana/dashboard/panel-popover"
+        context={context}
+        placeholder={promptPlaceholder}
+        animated={false}
+        onClose={handleClose}
+        onSubmit={handleSubmit}
+        className={styles.card}
+      />
     </div>,
     document.body
   );
-}
-
-function useSelectedVizPanels(selection: ElementSelection | undefined): VizPanel[] {
-  return useMemo(() => {
-    if (!selection) {
-      return [];
-    }
-
-    const selected = selection.getSelection();
-    if (Array.isArray(selected)) {
-      return selected.filter((obj): obj is VizPanel => obj instanceof VizPanel && panelHasData(obj));
-    }
-    if (selected instanceof VizPanel && panelHasData(selected)) {
-      return [selected];
-    }
-    return [];
-  }, [selection]);
-}
-
-function findPanelDomElement(panelKey: string, dashboard: SceneObject): HTMLElement | null {
-  try {
-    const panel = sceneGraph.findByKey(dashboard, panelKey);
-    if (!panel) {
-      return null;
-    }
-
-    let current: SceneObject | undefined = panel;
-    while (current) {
-      if (hasContainerRef(current) && current.containerRef?.current) {
-        return current.containerRef.current;
-      }
-      current = current.parent;
-    }
-  } catch {
-    return null;
-  }
-  return null;
-}
-
-function usePanelsContext(panels: VizPanel[]) {
-  return useMemo(() => {
-    if (panels.length === 0) {
-      return undefined;
-    }
-
-    return panels.map((panel) =>
-      createAssistantContextItem('structured', {
-        title: panel.state.title || 'Panel',
-        data: {
-          panelKey: panel.state.key,
-          panelTitle: panel.state.title,
-          pluginId: panel.state.pluginId,
-        },
-      })
-    );
-  }, [panels]);
 }
 
 const popIn = keyframes({
@@ -220,12 +191,4 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
     }),
   };
-}
-
-interface WithContainerRef {
-  containerRef?: { current: HTMLElement | null };
-}
-
-function hasContainerRef(obj: SceneObject): obj is SceneObject & WithContainerRef {
-  return 'containerRef' in obj;
 }
