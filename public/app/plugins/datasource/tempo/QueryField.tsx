@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { PureComponent } from 'react';
 
+import { QueryWithAssistantButton } from '@grafana/assistant';
 import { CoreApp, QueryEditorProps, SelectableValue } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import {
@@ -127,6 +128,12 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
       onChange(migrateFromSearchToTraceQLSearch(query));
     }
 
+    // only show query with assistant button if:
+    // feature toggle is enabled
+    // app is Explore, Dashboard, or PanelEditor
+    const showAssistant =
+      config.featureToggles.queryWithAssistant &&
+      (app === CoreApp.Explore || app === CoreApp.Dashboard || app === CoreApp.PanelEditor);
     return (
       <>
         <Modal
@@ -152,6 +159,17 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
             />
           </div>
         </Modal>
+        {!isAlerting && showAssistant && (
+          <InlineFieldRow className={css({ marginBottom: this.props.theme.spacing(1) })}>
+            <QueryWithAssistantButton
+              currentQuery={query}
+              queries={[query]}
+              dataSourceInstanceSettings={datasource.instanceSettings}
+              datasourceApi={null}
+              app={app}
+            />
+          </InlineFieldRow>
+        )}
         {!isAlerting && (
           <InlineFieldRow>
             <InlineField label="Query type" grow={true}>

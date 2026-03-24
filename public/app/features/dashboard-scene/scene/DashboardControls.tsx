@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -105,10 +105,19 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
         refreshPickerDeactivation = this.state.refreshPicker.activate();
       }
 
+      // Subscribe to time range changes to track interactions
+      const timeRange = sceneGraph.getTimeRange(this);
+      const timeRangeSubscription = timeRange.subscribeToState((newState, prevState) => {
+        if (newState.value !== prevState.value) {
+          reportInteraction('grafana_dashboards_time_picker_changed');
+        }
+      });
+
       return () => {
         if (refreshPickerDeactivation) {
           refreshPickerDeactivation();
         }
+        timeRangeSubscription.unsubscribe();
       };
     });
   }

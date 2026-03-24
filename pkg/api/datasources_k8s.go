@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
-	dsconverter "github.com/grafana/grafana/pkg/registry/apis/datasource"
+	dsconverter "github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"

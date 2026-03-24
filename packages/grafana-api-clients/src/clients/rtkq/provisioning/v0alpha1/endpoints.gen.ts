@@ -1673,13 +1673,24 @@ export type ExportJobOptions = {
 export type JobSpec = {
   /** Possible enum values:
      - `"delete"` deletes files in the remote repository
+     - `"deleteResources"` deletes all resources managed by a repository that no longer exists or is stuck in Terminating state. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.
      - `"fixFolderMetadata"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.
      - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
      - `"move"` moves files in the remote repository
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
-     - `"push"` replicates the local copy of the repository in the remote branch. */
-  action: 'delete' | 'fixFolderMetadata' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
+     - `"push"` replicates the local copy of the repository in the remote branch.
+     - `"releaseResources"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set. */
+  action:
+    | 'delete'
+    | 'deleteResources'
+    | 'fixFolderMetadata'
+    | 'migrate'
+    | 'move'
+    | 'pr'
+    | 'pull'
+    | 'push'
+    | 'releaseResources';
   /** Delete when the action is `delete` */
   delete?: DeleteJobOptions;
   /** Options when the action is `fix-folder-metadata` */

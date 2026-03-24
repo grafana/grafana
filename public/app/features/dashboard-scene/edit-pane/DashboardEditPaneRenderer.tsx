@@ -14,11 +14,13 @@ import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overvie
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
+import { DashboardCodePane } from './DashboardCodePane';
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
+import { applyJsonToDashboard, getDashboardJsonText } from './codePaneUtils';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -89,6 +91,15 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
           />
         </Sidebar.OpenPane>
       )}
+      {openPane === 'code' && (
+        <Sidebar.OpenPane>
+          <DashboardCodePane
+            key={dashboard.state.key}
+            initialValue={getDashboardJsonText(dashboard)}
+            onApply={(jsonText) => applyJsonToDashboard(dashboard, jsonText)}
+          />
+        </Sidebar.OpenPane>
+      )}
       <Sidebar.Toolbar>
         {isEditing && (
           <>
@@ -133,6 +144,13 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
                 )}
               />
             )}
+            <Sidebar.Button
+              tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
+              title={t('dashboard.sidebar.edit-schema.title', 'Code')}
+              icon="brackets-curly"
+              onClick={() => editPane.openPane('code')}
+              active={openPane === 'code'}
+            />
             {config.featureToggles.dashboardUndoRedo && (
               <>
                 <Sidebar.Divider />

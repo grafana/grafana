@@ -444,9 +444,22 @@ func (s *legacySQLStore) DeleteTeamMember(ctx context.Context, ns claims.Namespa
 func scanMember(rows *stdsql.Rows) (TeamMember, error) {
 	m := TeamMember{}
 	var nullableExternal stdsql.NullBool
-	err := rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &m.Name, &m.Email, &m.Username, &nullableExternal, &m.Created, &m.Updated, &m.Permission)
+	var name, email, username stdsql.NullString
+	err := rows.Scan(&m.ID, &m.UID, &m.TeamUID, &m.TeamID, &m.UserUID, &m.UserID, &name, &email, &username, &nullableExternal, &m.Created, &m.Updated, &m.Permission)
+	if err != nil {
+		return m, err
+	}
 	if nullableExternal.Valid {
 		m.External = nullableExternal.Bool
 	}
-	return m, err
+	if name.Valid {
+		m.Name = name.String
+	}
+	if email.Valid {
+		m.Email = email.String
+	}
+	if username.Valid {
+		m.Username = username.String
+	}
+	return m, nil
 }
