@@ -31,6 +31,9 @@ func splitMetadataChanges(repoDiff []repository.VersionedFileChange) folderMetad
 		if isHandledFolderMetadataChange(change) {
 			input.metadataChanges = append(input.metadataChanges, change)
 			input.metadataFolderPaths[folderPathForMetadataChange(change.Path)] = struct{}{}
+			if change.Action == repository.FileActionRenamed && resources.IsFolderMetadataFile(change.PreviousPath) {
+				input.metadataFolderPaths[folderPathForMetadataChange(change.PreviousPath)] = struct{}{}
+			}
 			continue
 		}
 
@@ -54,7 +57,7 @@ func (input folderMetadataDiffSplit) MetadataChanges() []repository.VersionedFil
 }
 
 // HasMetadataChanges reports whether the diff contains any handled
-// `_folder.json` create, update, or delete entries.
+// `_folder.json` create, update, delete, or rename entries.
 func (input folderMetadataDiffSplit) HasMetadataChanges() bool {
 	return len(input.metadataChanges) > 0
 }

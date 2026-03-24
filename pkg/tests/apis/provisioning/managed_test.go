@@ -9,7 +9,6 @@ import (
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,10 +21,8 @@ import (
 )
 
 func TestIntegrationFolderManagerConsistency(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	const repoName = "folder-manager-repo"
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 
 	helper.CreateRepo(t, common.TestRepo{
 		Name:            repoName,
@@ -544,9 +541,7 @@ func TestIntegrationFolderManagerConsistency(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "managed-change-test"
@@ -634,9 +629,7 @@ func TestIntegrationProvisioning_BlockManagerChange(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "admin-release-test"
@@ -722,9 +715,7 @@ func TestIntegrationProvisioning_AdminCanReleaseManagedResource(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_AdminCanReleaseManagedResourceViaPatch(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "admin-release-patch-test"

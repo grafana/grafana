@@ -612,11 +612,6 @@
       "count": 3
     }
   },
-  "packages/grafana-ui/src/components/Gauge/Gauge.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Icon/Icon.story.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -2141,11 +2136,6 @@
   },
   "public/app/features/dashboard/state/initDashboard.test.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/utils/dashboard.ts": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
