@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -2024,7 +2025,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 	t.Run("will prune oldest events for cluster-scoped resources", func(t *testing.T) {
 		backend := setupTestStorageBackend(t)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		// Create a cluster-scoped resource (no namespace)
 		ns := NamespacedResource{
@@ -2080,10 +2081,12 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			Resource:        "clusterresources",
 			Name:            "my-cluster-resource",
 			ResourceVersion: rv1,
+			Action:          kv.DataActionCreated,
 		}
 
 		_, err = backend.dataStore.Get(ctx, eventKey1)
 		require.Error(t, err) // Should return error as event is pruned
+		require.ErrorIs(t, err, ErrNotFound)
 
 		// assert defaultEventPruningLimit most recent events exist
 		counter := 0
@@ -2102,7 +2105,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 
 	t.Run("will not prune events for cluster-scoped resources when less than limit", func(t *testing.T) {
 		backend := setupTestStorageBackend(t)
-		ctx := context.Background()
+		ctx := t.Context()
 
 		// Create a cluster-scoped resource (no namespace)
 		ns := NamespacedResource{
