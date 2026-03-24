@@ -279,7 +279,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/notifications-history/view/:uuid',
-      component: cfg.featureToggles.alertingNotificationHistoryGlobal
+      component: cfg.featureToggles.alertingNotificationHistoryDetail
         ? importAlertingComponent(
             () =>
               import(

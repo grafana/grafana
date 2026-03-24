@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/apps/iam/pkg/reconcilers"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -52,7 +51,7 @@ type FolderAPIBuilder struct {
 	features             featuremgmt.FeatureToggles
 	namespacer           request.NamespaceMapper
 	storage              grafanarest.Storage
-	permissionStore      reconcilers.PermissionStore
+	permissionStore      PermissionStore
 	accessClient         authlib.AccessClient
 	parents              parentsGetter
 	searcher             resourcepb.ResourceIndexClient
@@ -89,7 +88,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		accessClient:         accessClient,
 		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
 		searcher:             unified,
-		permissionStore:      reconcilers.NewZanzanaPermissionStore(zanzanaClient),
+		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
 	}
 	apiregistration.RegisterAPI(builder)
@@ -101,7 +100,7 @@ func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, fe
 		features:               features,
 		accessClient:           ac,
 		searcher:               searcher,
-		permissionStore:        reconcilers.NewZanzanaPermissionStore(zanzanaClient),
+		permissionStore:        NewZanzanaPermissionStore(zanzanaClient),
 		resourcePermissionsSvc: resourcePermissionsSvc,
 		maxNestedFolderDepth:   maxNestedFolderDepth,
 	}
@@ -359,6 +358,9 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 
 	switch a.GetOperation() {
 	case admission.Create:
+		if err := validateOwnerReferencesOnManagedFolder(f, nil); err != nil {
+			return err
+		}
 		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
 	case admission.Delete:
 		return validateOnDelete(ctx, f, b.searcher)
@@ -366,6 +368,9 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		old, ok := a.GetOldObject().(*folders.Folder)
 		if !ok {
 			return fmt.Errorf("obj is not folders.Folder")
+		}
+		if err := validateOwnerReferencesOnManagedFolder(f, old); err != nil {
+			return err
 		}
 		return validateOnUpdate(ctx, f, old, b.storage, b.parents, b.searcher, b.maxNestedFolderDepth)
 	default:
