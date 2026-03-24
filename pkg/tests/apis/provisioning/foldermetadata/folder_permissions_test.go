@@ -26,7 +26,7 @@ func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) 
 		Target:          "folder",
 		ExpectedFolders: 1,
 		Copies: map[string]string{
-			"testdata/all-panels.json": "folder/subfolder/dashboard.json",
+			"../testdata/all-panels.json": "folder/subfolder/dashboard.json",
 		},
 		SkipResourceAssertions: true,
 	})
