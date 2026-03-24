@@ -1726,11 +1726,6 @@ export interface FeatureToggles {
   */
   colorblindThemes?: boolean;
   /**
-  * Enables the logs tableNG panel to replace existing tableRT
-  * @default false
-  */
-  logsTablePanelNG?: boolean;
-  /**
   * Enables fine-grained Y-axis tick options beyond the auto-ticks
   * @default false
   */
@@ -1740,4 +1735,9 @@ export interface FeatureToggles {
   * @default false
   */
   rbacIAMClient?: boolean;
+  /**
+  * Enables the logs tableNG panel to replace existing tableRT
+  * @default false
+  */
+  logsTablePanelNG?: boolean;
 }

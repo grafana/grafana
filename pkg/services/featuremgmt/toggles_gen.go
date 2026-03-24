@@ -922,11 +922,11 @@ const (
 	// Enables the new colorblind-friendly themes
 	FlagColorblindThemes = "colorblindThemes"
 
-	// FlagLogsTablePanelNG
-	// Enables the logs tableNG panel to replace existing tableRT
-	FlagLogsTablePanelNG = "logsTablePanelNG"
-
 	// FlagRbacIAMClient
 	// Enables the IAM client integration for fetching remote IAM global roles
 	FlagRbacIAMClient = "rbacIAMClient"
+
+	// FlagLogsTablePanelNG
+	// Enables the logs tableNG panel to replace existing tableRT
+	FlagLogsTablePanelNG = "logsTablePanelNG"
 )
