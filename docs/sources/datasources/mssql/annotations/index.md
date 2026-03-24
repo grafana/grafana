@@ -119,6 +119,39 @@ ORDER BY 1
 
 The `$__timeFilter` macro works with native SQL date/time types and filters to the dashboard time range.
 
+## Example: Deployment annotations
+
+Display deployment events on your graphs:
+
+```sql
+SELECT
+  deployed_at as time,
+  'Deployed ' + version + ' to ' + environment as [text],
+  environment as tags
+FROM
+  [deployments]
+WHERE
+  $__timeFilter(deployed_at)
+ORDER BY 1
+```
+
+## Example: Maintenance window annotations
+
+Display maintenance windows as shaded regions:
+
+```sql
+SELECT
+  start_time as time,
+  end_time as timeend,
+  'Maintenance: ' + description as [text],
+  'maintenance' as tags
+FROM
+  [maintenance_windows]
+WHERE
+  $__timeFilter(start_time)
+ORDER BY 1
+```
+
 ## Use template variables
 
 You can use [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/template-variables/) in your annotation queries to make them dynamic. For example, filter events by a selected server:
@@ -135,6 +168,27 @@ WHERE
   AND server IN ($server)
 ORDER BY 1
 ```
+
+## Macros
+
+Use these macros in your annotation queries to filter by the dashboard time range:
+
+| Macro                        | Description                                                          |
+|------------------------------|----------------------------------------------------------------------|
+| `$__timeFilter(column)`      | Filters by time range using a native SQL `datetime`/`datetime2` column. |
+| `$__unixEpochFilter(column)` | Filters by time range using a column with Unix epoch timestamps.     |
+
+For the full list of available macros, refer to the [Microsoft SQL Server query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/query-editor/#macros).
+
+## Best practices
+
+Follow these best practices when creating Microsoft SQL Server annotations:
+
+- **Use time filters:** Always include `$__timeFilter()` or `$__unixEpochFilter()` to limit results to the dashboard time range.
+- **Keep queries efficient:** Add indexes on time columns and filter columns to improve query performance.
+- **Use meaningful text:** Include descriptive information in the `text` column to make annotations useful at a glance.
+- **Organize with tags:** Use consistent tag values to categorize annotations and enable filtering.
+- **Test queries first:** Verify your query returns expected results in Explore before adding it as an annotation.
 
 ## Get help
 
