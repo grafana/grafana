@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { getMockFrames } from 'app/plugins/datasource/loki/mocks/frames';
 
+import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';
 import { createLogRow } from './components/mocks/logRow';
 import { logSeriesToLogsModel } from './logsModel';
 import {
@@ -621,6 +622,15 @@ describe('downloadLogs', () => {
       const text = typeof blob === 'string' ? blob : await blob.text();
 
       expect(text).toContain('value other value');
+    });
+
+    it('Downloads selected fields including log line', async () => {
+      downloadLogs(DownloadFormat.Text, logs, [], ['label', LOG_LINE_BODY_FIELD_NAME]);
+
+      const blob = jest.mocked(saveAs).mock.calls[0][0];
+      const text = typeof blob === 'string' ? blob : await blob.text();
+
+      expect(text).toContain('test entry');
     });
   });
 

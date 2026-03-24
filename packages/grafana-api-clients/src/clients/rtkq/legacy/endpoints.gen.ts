@@ -1778,21 +1778,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/users/${queryArg.userId}/teams` }),
         providesTags: ['users'],
       }),
-      routeGetAlertRules: build.query<RouteGetAlertRulesApiResponse, RouteGetAlertRulesApiArg>({
-        query: () => ({ url: `/v1/provisioning/alert-rules` }),
-        providesTags: ['provisioning'],
-      }),
-      routePostAlertRule: build.mutation<RoutePostAlertRuleApiResponse, RoutePostAlertRuleApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/alert-rules`,
-          method: 'POST',
-          body: queryArg.provisionedAlertRule,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
       routeGetAlertRulesExport: build.query<RouteGetAlertRulesExportApiResponse, RouteGetAlertRulesExportApiArg>({
         query: (queryArg) => ({
           url: `/v1/provisioning/alert-rules/export`,
@@ -1805,31 +1790,6 @@ const injectedRtkApi = api
           },
         }),
         providesTags: ['provisioning'],
-      }),
-      routeDeleteAlertRule: build.mutation<RouteDeleteAlertRuleApiResponse, RouteDeleteAlertRuleApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/alert-rules/${queryArg.uid}`,
-          method: 'DELETE',
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetAlertRule: build.query<RouteGetAlertRuleApiResponse, RouteGetAlertRuleApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/alert-rules/${queryArg.uid}` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutAlertRule: build.mutation<RoutePutAlertRuleApiResponse, RoutePutAlertRuleApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/alert-rules/${queryArg.uid}`,
-          method: 'PUT',
-          body: queryArg.provisionedAlertRule,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
       }),
       routeGetAlertRuleExport: build.query<RouteGetAlertRuleExportApiResponse, RouteGetAlertRuleExportApiArg>({
         query: (queryArg) => ({
@@ -1885,28 +1845,6 @@ const injectedRtkApi = api
           url: `/v1/provisioning/contact-points/${queryArg.uid}`,
           method: 'PUT',
           body: queryArg.embeddedContactPoint,
-          headers: {
-            'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
-          },
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeDeleteAlertRuleGroup: build.mutation<RouteDeleteAlertRuleGroupApiResponse, RouteDeleteAlertRuleGroupApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/folder/${queryArg.folderUid}/rule-groups/${queryArg.group}`,
-          method: 'DELETE',
-        }),
-        invalidatesTags: ['provisioning'],
-      }),
-      routeGetAlertRuleGroup: build.query<RouteGetAlertRuleGroupApiResponse, RouteGetAlertRuleGroupApiArg>({
-        query: (queryArg) => ({ url: `/v1/provisioning/folder/${queryArg.folderUid}/rule-groups/${queryArg.group}` }),
-        providesTags: ['provisioning'],
-      }),
-      routePutAlertRuleGroup: build.mutation<RoutePutAlertRuleGroupApiResponse, RoutePutAlertRuleGroupApiArg>({
-        query: (queryArg) => ({
-          url: `/v1/provisioning/folder/${queryArg.folderUid}/rule-groups/${queryArg.group}`,
-          method: 'PUT',
-          body: queryArg.alertRuleGroup,
           headers: {
             'X-Disable-Provenance': queryArg['X-Disable-Provenance'],
           },
@@ -3542,13 +3480,6 @@ export type GetUserTeamsApiResponse = /** status 200 (empty) */ TeamDto[];
 export type GetUserTeamsApiArg = {
   userId: number;
 };
-export type RouteGetAlertRulesApiResponse = /** status 200 ProvisionedAlertRules */ ProvisionedAlertRulesRead;
-export type RouteGetAlertRulesApiArg = void;
-export type RoutePostAlertRuleApiResponse = /** status 201 ProvisionedAlertRule */ ProvisionedAlertRuleRead;
-export type RoutePostAlertRuleApiArg = {
-  'X-Disable-Provenance'?: string;
-  provisionedAlertRule: ProvisionedAlertRule;
-};
 export type RouteGetAlertRulesExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
 export type RouteGetAlertRulesExportApiArg = {
@@ -3562,24 +3493,6 @@ export type RouteGetAlertRulesExportApiArg = {
   group?: string;
   /** UID of alert rule to export. If specified, parameters folderUid and group must be empty. */
   ruleUid?: string;
-};
-export type RouteDeleteAlertRuleApiResponse = unknown;
-export type RouteDeleteAlertRuleApiArg = {
-  /** Alert rule UID */
-  uid: string;
-  'X-Disable-Provenance'?: string;
-};
-export type RouteGetAlertRuleApiResponse = /** status 200 ProvisionedAlertRule */ ProvisionedAlertRuleRead;
-export type RouteGetAlertRuleApiArg = {
-  /** Alert rule UID */
-  uid: string;
-};
-export type RoutePutAlertRuleApiResponse = /** status 200 ProvisionedAlertRule */ ProvisionedAlertRuleRead;
-export type RoutePutAlertRuleApiArg = {
-  /** Alert rule UID */
-  uid: string;
-  'X-Disable-Provenance'?: string;
-  provisionedAlertRule: ProvisionedAlertRule;
 };
 export type RouteGetAlertRuleExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
@@ -3624,23 +3537,6 @@ export type RoutePutContactpointApiArg = {
   uid: string;
   'X-Disable-Provenance'?: string;
   embeddedContactPoint: EmbeddedContactPoint;
-};
-export type RouteDeleteAlertRuleGroupApiResponse = unknown;
-export type RouteDeleteAlertRuleGroupApiArg = {
-  folderUid: string;
-  group: string;
-};
-export type RouteGetAlertRuleGroupApiResponse = /** status 200 AlertRuleGroup */ AlertRuleGroupRead;
-export type RouteGetAlertRuleGroupApiArg = {
-  folderUid: string;
-  group: string;
-};
-export type RoutePutAlertRuleGroupApiResponse = /** status 200 AlertRuleGroup */ AlertRuleGroupRead;
-export type RoutePutAlertRuleGroupApiArg = {
-  'X-Disable-Provenance'?: string;
-  folderUid: string;
-  group: string;
-  alertRuleGroup: AlertRuleGroup;
 };
 export type RouteGetAlertRuleGroupExportApiResponse =
   /** status 200 AlertingFileExport */ AlertingFileExportIsTheFullProvisionedFileExport;
@@ -5979,118 +5875,6 @@ export type SearchUserQueryResult = {
   totalCount?: number;
   users?: UserSearchHitDto[];
 };
-export type RelativeTimeRange = {
-  from?: Duration;
-  to?: Duration;
-};
-export type AlertQueryRepresentsASingleQueryAssociatedWithAnAlertDefinition = {
-  /** Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation. */
-  datasourceUid?: string;
-  /** JSON is the raw JSON query and includes the above properties as well as custom properties. */
-  model?: object;
-  /** QueryType is an optional identifier for the type of query.
-    It can be used to distinguish different types of queries. */
-  queryType?: string;
-  /** RefID is the unique identifier of the query, set by the frontend call. */
-  refId?: string;
-  relativeTimeRange?: RelativeTimeRange;
-};
-export type AlertRuleNotificationSettings = {
-  /** Override the times when notifications should not be muted. These must match the name of a mute time interval defined
-    in the alertmanager configuration time_intervals section. All notifications will be suppressed unless they are sent
-    at the time that matches any interval. */
-  active_time_intervals?: string[];
-  /** Override the labels by which incoming alerts are grouped together. For example, multiple alerts coming in for
-    cluster=A and alertname=LatencyHigh would be batched into a single group. To aggregate by all possible labels
-    use the special value '...' as the sole label name.
-    This effectively disables aggregation entirely, passing through all alerts as-is. This is unlikely to be what
-    you want, unless you have a very low alert volume or your upstream notification system performs its own grouping.
-    Must include 'alertname' and 'grafana_folder' if not using '...'. */
-  group_by?: string[];
-  /** Override how long to wait before sending a notification about new alerts that are added to a group of alerts for
-    which an initial notification has already been sent. (Usually ~5m or more.) */
-  group_interval?: string;
-  /** Override how long to initially wait to send a notification for a group of alerts. Allows to wait for an
-    inhibiting alert to arrive or collect more initial alerts for the same group. (Usually ~0s to few minutes.) */
-  group_wait?: string;
-  /** Override the times when notifications should be muted. These must match the name of a mute time interval defined
-    in the alertmanager configuration time_intervals section. When muted it will not send any notifications, but
-    otherwise acts normally. */
-  mute_time_intervals?: string[];
-  /** Name of the receiver to send notifications to. */
-  receiver: string;
-  /** Override how long to wait before sending a notification again if it has already been sent successfully for an
-    alert. (Usually ~3h or more).
-    Note that this parameter is implicitly bound by Alertmanager's `--data.retention` configuration flag.
-    Notifications will be resent after either repeat_interval or the data retention period have passed, whichever
-    occurs first. `repeat_interval` should not be less than `group_interval`. */
-  repeat_interval?: string;
-};
-export type Provenance = string;
-export type Record = {
-  /** Which expression node should be used as the input for the recorded metric. */
-  from: string;
-  /** Name of the recorded metric. */
-  metric: string;
-  /** Which data source should be used to write the output of the recording rule, specified by UID. */
-  target_datasource_uid?: string;
-};
-export type ProvisionedAlertRule = {
-  annotations?: {
-    [key: string]: string;
-  };
-  condition: string;
-  data: AlertQueryRepresentsASingleQueryAssociatedWithAnAlertDefinition[];
-  execErrState: 'OK' | 'Alerting' | 'Error';
-  folderUID: string;
-  for: string;
-  id?: number;
-  isPaused?: boolean;
-  keep_firing_for?: string;
-  labels?: {
-    [key: string]: string;
-  };
-  missingSeriesEvalsToResolve?: number;
-  noDataState: 'Alerting' | 'NoData' | 'OK';
-  notification_settings?: AlertRuleNotificationSettings;
-  orgID: number;
-  provenance?: Provenance;
-  record?: Record;
-  ruleGroup: string;
-  title: string;
-  uid?: string;
-};
-export type ProvisionedAlertRuleRead = {
-  annotations?: {
-    [key: string]: string;
-  };
-  condition: string;
-  data: AlertQueryRepresentsASingleQueryAssociatedWithAnAlertDefinition[];
-  execErrState: 'OK' | 'Alerting' | 'Error';
-  folderUID: string;
-  for: string;
-  id?: number;
-  isPaused?: boolean;
-  keep_firing_for?: string;
-  labels?: {
-    [key: string]: string;
-  };
-  missingSeriesEvalsToResolve?: number;
-  noDataState: 'Alerting' | 'NoData' | 'OK';
-  notification_settings?: AlertRuleNotificationSettings;
-  orgID: number;
-  provenance?: Provenance;
-  record?: Record;
-  ruleGroup: string;
-  title: string;
-  uid?: string;
-  updated?: string;
-};
-export type ProvisionedAlertRules = ProvisionedAlertRule[];
-export type ProvisionedAlertRulesRead = ProvisionedAlertRuleRead[];
-export type ValidationError = {
-  message?: string;
-};
 export type RawMessage = object;
 export type ReceiverExportIsTheProvisionedFileExportOfAlertingReceiverV1 = {
   disableResolveMessage?: boolean;
@@ -6286,26 +6070,17 @@ export type EmbeddedContactPointRead = {
 };
 export type ContactPoints = EmbeddedContactPoint[];
 export type ContactPointsRead = EmbeddedContactPointRead[];
+export type ValidationError = {
+  message?: string;
+};
 export type PermissionDenied = object;
 export type Ack = object;
-export type NotFound = object;
-export type AlertRuleGroup = {
-  folderUid?: string;
-  interval?: number;
-  rules?: ProvisionedAlertRule[];
-  title?: string;
-};
-export type AlertRuleGroupRead = {
-  folderUid?: string;
-  interval?: number;
-  rules?: ProvisionedAlertRuleRead[];
-  title?: string;
-};
 export type MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted = {
   name?: string;
   time_intervals?: TimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted[];
 };
 export type MuteTimings = MuteTimeIntervalRepresentsANamedSetOfTimeIntervalsForWhichARouteShouldBeMuted[];
+export type Provenance = string;
 export type Route = {
   active_time_intervals?: string[];
   continue?: boolean;
@@ -6325,6 +6100,7 @@ export type Route = {
   repeat_interval?: string;
   routes?: Route[];
 };
+export type NotFound = object;
 export type NotificationTemplate = {
   name?: string;
   provenance?: Provenance;
@@ -6726,15 +6502,8 @@ export const {
   useLazyGetUserOrgListQuery,
   useGetUserTeamsQuery,
   useLazyGetUserTeamsQuery,
-  useRouteGetAlertRulesQuery,
-  useLazyRouteGetAlertRulesQuery,
-  useRoutePostAlertRuleMutation,
   useRouteGetAlertRulesExportQuery,
   useLazyRouteGetAlertRulesExportQuery,
-  useRouteDeleteAlertRuleMutation,
-  useRouteGetAlertRuleQuery,
-  useLazyRouteGetAlertRuleQuery,
-  useRoutePutAlertRuleMutation,
   useRouteGetAlertRuleExportQuery,
   useLazyRouteGetAlertRuleExportQuery,
   useRouteGetContactpointsQuery,
@@ -6744,10 +6513,6 @@ export const {
   useLazyRouteGetContactpointsExportQuery,
   useRouteDeleteContactpointsMutation,
   useRoutePutContactpointMutation,
-  useRouteDeleteAlertRuleGroupMutation,
-  useRouteGetAlertRuleGroupQuery,
-  useLazyRouteGetAlertRuleGroupQuery,
-  useRoutePutAlertRuleGroupMutation,
   useRouteGetAlertRuleGroupExportQuery,
   useLazyRouteGetAlertRuleGroupExportQuery,
   useRouteGetMuteTimingsQuery,

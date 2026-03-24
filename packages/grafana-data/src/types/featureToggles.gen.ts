@@ -690,7 +690,7 @@ export interface FeatureToggles {
   alertingAlertListPanelEnhancements?: boolean;
   /**
   * Enables the new Alerting navigation structure with improved menu grouping
-  * @default false
+  * @default true
   */
   alertingNavigationV2?: boolean;
   /**
@@ -1391,11 +1391,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable new gauge visualization
-  * @default true
-  */
-  newGauge?: boolean;
-  /**
   * Enable new visualization suggestions
   * @default false
   */
@@ -1730,4 +1725,14 @@ export interface FeatureToggles {
   * @default false
   */
   yAxisTickControl?: boolean;
+  /**
+  * Enables the IAM client integration for fetching remote IAM global roles
+  * @default false
+  */
+  rbacIAMClient?: boolean;
+  /**
+  * Enables the logs tableNG panel to replace existing tableRT
+  * @default false
+  */
+  logsTablePanelNG?: boolean;
 }

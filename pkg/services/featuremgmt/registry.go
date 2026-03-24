@@ -1082,10 +1082,10 @@ var (
 		{
 			Name:         "alertingNavigationV2",
 			Description:  "Enables the new Alerting navigation structure with improved menu grouping",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: false,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "alertingSavedSearches",
@@ -2197,14 +2197,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "newGauge",
-			Description:  "Enable new gauge visualization",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "true",
-		},
-		{
 			Name:         "newVizSuggestions",
 			Description:  "Enable new visualization suggestions",
 			Stage:        FeatureStagePublicPreview,
@@ -2742,6 +2734,22 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "rbacIAMClient",
+			Description:  "Enables the IAM client integration for fetching remote IAM global roles",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "logsTablePanelNG",
+			Description:  "Enables the logs tableNG panel to replace existing tableRT",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+			HideFromDocs: true,
 			Expression:   "false",
 		},
 	}

@@ -92,7 +92,14 @@ export function AppChrome({ children }: Props) {
     >
       {!state.chromeless && (
         <>
-          <LinkButton className={styles.skipLink} href="#pageContent">
+          <LinkButton
+            className={styles.skipLink}
+            href="#pageContent"
+            onClick={(e) => {
+              e.preventDefault();
+              document.getElementById('pageContent')?.focus();
+            }}
+          >
             <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>
           </LinkButton>
           {menuDockedAndOpen && (
@@ -133,6 +140,7 @@ export function AppChrome({ children }: Props) {
               [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen,
             })}
             id="pageContent"
+            tabIndex={-1}
           >
             {children}
           </main>

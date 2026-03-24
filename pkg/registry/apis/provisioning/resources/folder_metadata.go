@@ -48,6 +48,44 @@ func NewMissingFolderMetadata(path string) *MissingFolderMetadata {
 	return &MissingFolderMetadata{Path: path}
 }
 
+// ErrInvalidFolderMetadata is a sentinel error for malformed or incomplete _folder.json files.
+var ErrInvalidFolderMetadata = errors.New("invalid folder metadata")
+
+// InvalidFolderMetadata is returned when a folder metadata file exists but
+// cannot be used to resolve folder identity.
+type InvalidFolderMetadata struct {
+	Path   string
+	Action repository.FileAction
+	Err    error
+}
+
+func (e *InvalidFolderMetadata) Error() string {
+	if e.Err == nil {
+		return fmt.Sprintf("invalid folder metadata at %q", e.Path)
+	}
+	return fmt.Sprintf("invalid folder metadata at %q: %v", e.Path, e.Err)
+}
+
+// Unwrap supports errors.Is(err, ErrInvalidFolderMetadata) while preserving the
+// underlying validation/parsing failure.
+func (e *InvalidFolderMetadata) Unwrap() []error {
+	if e.Err == nil {
+		return []error{ErrInvalidFolderMetadata}
+	}
+	return []error{ErrInvalidFolderMetadata, e.Err}
+}
+
+// NewInvalidFolderMetadata creates an InvalidFolderMetadata error for the given path.
+func NewInvalidFolderMetadata(path string, err error) *InvalidFolderMetadata {
+	return &InvalidFolderMetadata{Path: path, Err: err}
+}
+
+// WithAction records the intended file action for this invalid metadata warning.
+func (e *InvalidFolderMetadata) WithAction(action repository.FileAction) *InvalidFolderMetadata {
+	e.Action = action
+	return e
+}
+
 // ErrFolderMetadataConflict is a sentinel error for folder metadata conflicts.
 var ErrFolderMetadataConflict = errors.New("folder metadata conflict")
 
@@ -137,7 +175,10 @@ func ReadFolderMetadata(ctx context.Context, repo repository.Reader, folderPath,
 	}
 	var f folders.Folder
 	if err := json.Unmarshal(info.Data, &f); err != nil {
-		return nil, "", fmt.Errorf("parse folder manifest: %w", err)
+		return nil, "", NewInvalidFolderMetadata(folderPath, fmt.Errorf("parse folder manifest: %w", err))
+	}
+	if f.Name == "" {
+		return nil, "", NewInvalidFolderMetadata(folderPath, errors.New("missing metadata.name"))
 	}
 	return &f, info.Hash, nil
 }

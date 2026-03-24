@@ -22,11 +22,20 @@ type ResourceFileChange struct {
 	// The current value in the database -- only required for delete
 	Existing *provisioning.ResourceListItem
 
+	// Hash is the source-side content hash from the repository tree.
+	// Populated for FileActionCreated entries so DetectRenames can match
+	// them against deletions without reading file content.
+	Hash string
+
 	// FolderRenamed is set when folder metadata reconciliation changes the folder ID
 	// (for example, a UID change in _folder.json or reverting to a hash-based ID
 	// after _folder.json deletion). The old folder needs cleanup after children
 	// have been re-parented.
 	FolderRenamed bool
+
+	// OrphanCleanup marks deletions emitted to clean up duplicate-path orphans.
+	// DetectRenames must skip these so orphan removal is not consumed as a rename.
+	OrphanCleanup bool
 }
 
 // IsUpdatedFolder reports whether this change is an update to an existing folder.
@@ -38,38 +47,40 @@ func (c *ResourceFileChange) IsUpdatedFolder() bool {
 
 // Compare reads the repository tree at ref, lists the current Grafana resources,
 // and delegates to Changes to produce the diff. It also returns the list of
-// folder paths that are missing a _folder.json metadata file.
+// folder paths that are missing a _folder.json metadata file, plus any invalid
+// folder metadata warnings detected during compare.
 func Compare(
 	ctx context.Context,
 	repo repository.Reader,
 	repositoryResources resources.RepositoryResources,
 	ref string,
 	folderMetadataEnabled bool,
-) ([]ResourceFileChange, []string, error) {
+) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error) {
 	target, err := repositoryResources.List(ctx)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error listing current: %w", err)
+		return nil, nil, nil, fmt.Errorf("error listing current: %w", err)
 	}
 
 	source, err := repo.ReadTree(ctx, ref)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error reading tree: %w", err)
+		return nil, nil, nil, fmt.Errorf("error reading tree: %w", err)
 	}
 
 	changes, err := Changes(ctx, source, target, folderMetadataEnabled)
 	if err != nil {
-		return nil, nil, fmt.Errorf("calculate changes: %w", err)
+		return nil, nil, nil, fmt.Errorf("calculate changes: %w", err)
 	}
 
+	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	if folderMetadataEnabled {
-		changes, err = augmentChangesForFolderMetadata(ctx, repo, ref, source, target, changes)
+		changes, invalidFolderMetadata, err = augmentChangesForFolderMetadata(ctx, repo, ref, source, target, changes)
 		if err != nil {
-			return nil, nil, fmt.Errorf("augment changes for folder metadata: %w", err)
+			return nil, nil, nil, fmt.Errorf("augment changes for folder metadata: %w", err)
 		}
 
 		changes, err = augmentChangesForFolderMoves(ctx, repo, ref, changes)
 		if err != nil {
-			return nil, nil, fmt.Errorf("augment changes for folder moves: %w", err)
+			return nil, nil, nil, fmt.Errorf("augment changes for folder moves: %w", err)
 		}
 	}
 
@@ -81,7 +92,7 @@ func Compare(
 
 	missingMetadata := resources.FindFoldersMissingMetadata(source)
 
-	return changes, missingMetadata, nil
+	return changes, missingMetadata, invalidFolderMetadata, nil
 }
 
 // Changes computes the diff between a repository source tree and the current Grafana state (target).
@@ -94,8 +105,9 @@ func Changes(
 	folderMetadataEnabled bool,
 ) ([]ResourceFileChange, error) {
 	logger := logging.FromContext(ctx)
-	lookup := make(map[string]*provisioning.ResourceListItem, len(target.Items))
-	for _, item := range target.Items {
+	lookup := make(map[string][]*provisioning.ResourceListItem, len(target.Items))
+	for i := range target.Items {
+		item := &target.Items[i]
 		if item.Path == "" {
 			if item.Group != resources.FolderResource.Group {
 				return nil, fmt.Errorf("empty path on a non folder")
@@ -108,7 +120,7 @@ func Changes(
 			item.Path = item.Path + "/"
 		}
 
-		lookup[item.Path] = &item
+		lookup[item.Path] = append(lookup[item.Path], item)
 	}
 
 	keep := safepath.NewTrie()
@@ -120,13 +132,44 @@ func Changes(
 			file.Path = file.Path + "/"
 		}
 
-		check, ok := lookup[file.Path]
+		items, ok := lookup[file.Path]
 		if ok {
-			if check.Hash != file.Hash && check.Resource != resources.FolderResource.Resource {
+			// Pick the best match: prefer the item whose hash matches the
+			// source file (preserves K8s UID). Fall back to the first item.
+			primary := items[0]
+			for _, item := range items {
+				if item.Hash == file.Hash {
+					primary = item
+					break
+				}
+			}
+
+			// Emit deletions for orphan duplicates at this path.
+			// Skip folder resources: directory tree hashes don't match the
+			// _folder.json blob hash stored on managed folders, so the
+			// primary selection above is unreliable for folders. Folder
+			// orphan cleanup is handled by augmentChangesForFolderMetadata
+			// (full sync) and the incremental diff builder.
+			if primary.Resource != resources.FolderResource.Resource {
+				for _, item := range items {
+					if item == primary {
+						continue
+					}
+					logger.Warn("deleting orphan resource at duplicate path", "path", item.Path, "name", item.Name)
+					changes = append(changes, ResourceFileChange{
+						Action:        repository.FileActionDeleted,
+						Path:          item.Path,
+						Existing:      item,
+						OrphanCleanup: true,
+					})
+				}
+			}
+
+			if primary.Hash != file.Hash && primary.Resource != resources.FolderResource.Resource {
 				changes = append(changes, ResourceFileChange{
 					Action:   repository.FileActionUpdated,
-					Path:     check.Path,
-					Existing: check,
+					Path:     primary.Path,
+					Existing: primary,
 				})
 			}
 
@@ -134,7 +177,7 @@ func Changes(
 				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
-			if check.Resource != resources.FolderResource.Resource {
+			if primary.Resource != resources.FolderResource.Resource {
 				delete(lookup, file.Path)
 			}
 
@@ -147,7 +190,7 @@ func Changes(
 			// for existing folders we compare hashes to detect metadata changes.
 			if resources.IsFolderMetadataFile(file.Path) {
 				if !folderMetadataEnabled {
-					logger.Debug("skipping folder metadata file - will be handled by parent directory change", "path", file.Path)
+					logger.Debug("skipping folder metadata file as feature flag is off", "path", file.Path)
 					if err := keep.Add(file.Path); err != nil {
 						return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
 					}
@@ -160,23 +203,51 @@ func Changes(
 				}
 				// If the parent directory already exists in Grafana and the hash changed,
 				// record an update to reconcile metadata (e.g. folder title).
+				// When multiple managed folders share the path (orphans), pick the
+				// one whose metadata hash matches the new _folder.json content so
+				// we target the correct UID, and delete the rest as orphans.
+				// This is the correct place for folder orphan cleanup because
+				// file.Hash (_folder.json blob hash) is directly comparable to
+				// managed folder hashes (sourceChecksum derived from MetadataHash).
 				parentDir := safepath.Dir(file.Path)
 				if !strings.HasSuffix(parentDir, "/") {
 					parentDir += "/"
 				}
-				if existing, ok := lookup[parentDir]; ok && existing.Hash != file.Hash {
-					changes = append(changes, ResourceFileChange{
-						Action:   repository.FileActionUpdated,
-						Path:     parentDir,
-						Existing: existing,
-					})
+				if parentItems, ok := lookup[parentDir]; ok && len(parentItems) > 0 {
+					best := parentItems[0]
+					for _, p := range parentItems {
+						if p.Hash == file.Hash {
+							best = p
+							break
+						}
+					}
+					for _, p := range parentItems {
+						if p == best {
+							continue
+						}
+						logger.Warn("deleting orphan folder at duplicate path", "path", p.Path, "name", p.Name)
+						changes = append(changes, ResourceFileChange{
+							Action:        repository.FileActionDeleted,
+							Path:          parentDir,
+							Existing:      p,
+							OrphanCleanup: true,
+						})
+					}
+					if best.Hash != file.Hash {
+						changes = append(changes, ResourceFileChange{
+							Action:   repository.FileActionUpdated,
+							Path:     parentDir,
+							Existing: best,
+						})
+					}
 				}
 				continue
 			}
 
 			changes = append(changes, ResourceFileChange{
-				Action: repository.FileActionCreated, // or previously ignored/failed
+				Action: repository.FileActionCreated,
 				Path:   file.Path,
+				Hash:   file.Hash,
 			})
 
 			if err := keep.Add(file.Path); err != nil {
@@ -197,8 +268,7 @@ func Changes(
 				return nil, fmt.Errorf("failed to add path to keep trie: %w", err)
 			}
 
-			_, ok := lookup[safeSegment]
-			if ok {
+			if _, ok := lookup[safeSegment]; ok {
 				continue
 			}
 
@@ -208,23 +278,26 @@ func Changes(
 			}
 
 			changes = append(changes, ResourceFileChange{
-				Action: repository.FileActionCreated, // or previously ignored/failed
+				Action: repository.FileActionCreated,
 				Path:   safeSegment,
+				Hash:   file.Hash,
 			})
 		}
 	}
 
 	// Paths found in grafana, without a matching path in the repository
-	for _, v := range lookup {
-		if v.Resource == resources.FolderResource.Resource && keep.Exists(v.Path) {
-			continue
-		}
+	for _, items := range lookup {
+		for _, v := range items {
+			if v.Resource == resources.FolderResource.Resource && keep.Exists(v.Path) {
+				continue
+			}
 
-		changes = append(changes, ResourceFileChange{
-			Action:   repository.FileActionDeleted,
-			Path:     v.Path,
-			Existing: v,
-		})
+			changes = append(changes, ResourceFileChange{
+				Action:   repository.FileActionDeleted,
+				Path:     v.Path,
+				Existing: v,
+			})
+		}
 	}
 
 	// Deepest first (stable sort order)
@@ -244,11 +317,23 @@ func augmentChangesForFolderMetadata(
 	source []repository.FileTreeEntry,
 	target *provisioning.ResourceList,
 	changes []ResourceFileChange,
-) ([]ResourceFileChange, error) {
+) ([]ResourceFileChange, []*resources.InvalidFolderMetadata, error) {
 	sourceFolders, foldersWithMetadata := buildSourceMetadataIndex(source)
+	changes, invalidFolderMetadata, err := processInvalidFolderMetadataChanges(ctx, repo, ref, changes, foldersWithMetadata)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	pathsWithChanges := make(map[string]bool, len(changes))
 	for _, c := range changes {
+		// Exclude DELETE actions: emitDirectChildrenChanges iterates source
+		// tree entries, so files deleted from source won't appear there.
+		// Only orphan-cleanup deletes (where the source file still exists)
+		// would land here, and those must not suppress the reparent UPDATE
+		// that the surviving primary needs when a parent folder UID changes.
+		if c.Action == repository.FileActionDeleted {
+			continue
+		}
 		pathsWithChanges[c.Path] = true
 	}
 
@@ -263,22 +348,91 @@ func augmentChangesForFolderMetadata(
 	affectedFolders = mergeAffectedFolders(affectedFolders, deletedAffected)
 
 	// Detect folders whose _folder.json UID changed.
-	var err error
 	uidAffected, err := detectFolderUIDChanges(ctx, repo, ref, changes)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	affectedFolders = mergeAffectedFolders(affectedFolders, uidAffected)
 
 	// No folders will be renamed, so we can return the changes as is.
 	if len(affectedFolders) == 0 {
-		return changes, nil
+		return changes, invalidFolderMetadata, nil
 	}
 
 	// Emit children for re-parenting and re-sort by path depth.
 	changes = emitDirectChildrenChanges(source, target, pathsWithChanges, affectedFolders, changes)
 	safepath.SortByDepth(changes, func(c ResourceFileChange) string { return c.Path }, false)
-	return changes, nil
+	return changes, invalidFolderMetadata, nil
+}
+
+// processInvalidFolderMetadataChanges performs a single metadata read for each
+// created/updated folder path that currently has a _folder.json file. Invalid
+// metadata is surfaced as warnings. Existing-folder updates are suppressed so
+// the current folder UID is preserved; brand-new folders keep their created
+// change so apply can fall back to the hash-derived folder identity.
+func processInvalidFolderMetadataChanges(
+	ctx context.Context,
+	repo repository.Reader,
+	ref string,
+	changes []ResourceFileChange,
+	foldersWithMetadata map[string]bool,
+) ([]ResourceFileChange, []*resources.InvalidFolderMetadata, error) {
+	// First pass: validate metadata and collect folder paths with invalid
+	// _folder.json so we can also suppress orphan-cleanup deletes there.
+	invalidPaths := make(map[string]bool)
+	filtered := make([]ResourceFileChange, 0, len(changes))
+	var invalidFolderMetadata []*resources.InvalidFolderMetadata
+
+	for _, change := range changes {
+		if !safepath.IsDir(change.Path) || (change.Action != repository.FileActionCreated && change.Action != repository.FileActionUpdated) {
+			filtered = append(filtered, change)
+			continue
+		}
+		if !foldersWithMetadata[change.Path] {
+			filtered = append(filtered, change)
+			continue
+		}
+
+		_, _, err := resources.ReadFolderMetadata(ctx, repo, change.Path, ref)
+		if err == nil {
+			filtered = append(filtered, change)
+			continue
+		}
+
+		var invalidErr *resources.InvalidFolderMetadata
+		if errors.As(err, &invalidErr) {
+			invalidErr = invalidErr.WithAction(change.Action)
+			invalidFolderMetadata = append(invalidFolderMetadata, invalidErr)
+			invalidPaths[change.Path] = true
+			if change.Action == repository.FileActionCreated {
+				filtered = append(filtered, change)
+			}
+			continue
+		}
+
+		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+			filtered = append(filtered, change)
+			continue
+		}
+
+		return nil, nil, fmt.Errorf("read folder metadata for %s: %w", change.Path, err)
+	}
+
+	// Second pass: suppress orphan-cleanup deletes at folder paths whose
+	// metadata is invalid — the hash-based primary selection is unreliable
+	// when the _folder.json content can't be parsed.
+	if len(invalidPaths) > 0 {
+		kept := make([]ResourceFileChange, 0, len(filtered))
+		for _, c := range filtered {
+			if c.OrphanCleanup && safepath.IsDir(c.Path) && invalidPaths[c.Path] {
+				continue
+			}
+			kept = append(kept, c)
+		}
+		filtered = kept
+	}
+
+	return filtered, invalidFolderMetadata, nil
 }
 
 // buildSourceMetadataIndex performs a single pass over the source tree, returning
@@ -393,6 +547,88 @@ func detectFolderUIDChanges(
 	return affectedFolders, nil
 }
 
+// DetectRenames finds delete+create pairs whose content hash matches and
+// collapses them into a single FileActionRenamed change. This preserves the
+// K8s UID, creationTimestamp, and generation when a file is moved/renamed in
+// the repo without changing its content.
+//
+// Matching uses the source checksum stored on the existing resource
+// (Existing.Hash) and the repository tree hash carried on created entries
+// (Hash). Only simple renames (content unchanged) are detected; if the
+// content also changed the pair remains as separate delete + create.
+//
+// When multiple deleted resources share the same hash the match is ambiguous
+// (we cannot determine which deletion corresponds to the new file), so all
+// entries with that hash are left as separate delete + create operations.
+//
+// Folder paths are skipped because folder renames are handled separately by
+// augmentChangesForFolderMetadata.
+func DetectRenames(changes []ResourceFileChange) []ResourceFileChange {
+	deletionsByHash := make(map[string]int)
+	ambiguous := make(map[string]bool)
+	for i, change := range changes {
+		if change.Action != repository.FileActionDeleted || change.Existing == nil {
+			continue
+		}
+		if change.OrphanCleanup {
+			continue
+		}
+		if safepath.IsDir(change.Path) || change.Existing.Hash == "" {
+			continue
+		}
+		// Track hashes seen more than once so we can discard them below.
+		if _, exists := deletionsByHash[change.Existing.Hash]; exists {
+			ambiguous[change.Existing.Hash] = true
+		}
+		deletionsByHash[change.Existing.Hash] = i
+	}
+	// Remove ambiguous hashes: when multiple deletions share the same hash
+	// we cannot reliably pick the right one, so skip them entirely.
+	for h := range ambiguous {
+		delete(deletionsByHash, h)
+	}
+
+	if len(deletionsByHash) == 0 {
+		return changes
+	}
+
+	removedDeletions := make(map[int]bool)
+	for i, change := range changes {
+		if change.Action != repository.FileActionCreated || change.Hash == "" {
+			continue
+		}
+		if safepath.IsDir(change.Path) {
+			continue
+		}
+
+		deletionIdx, found := deletionsByHash[change.Hash]
+		if !found {
+			continue
+		}
+
+		changes[i] = ResourceFileChange{
+			Action:   repository.FileActionRenamed,
+			Path:     change.Path,
+			Hash:     change.Hash,
+			Existing: changes[deletionIdx].Existing,
+		}
+		removedDeletions[deletionIdx] = true
+		delete(deletionsByHash, change.Hash)
+	}
+
+	if len(removedDeletions) == 0 {
+		return changes
+	}
+
+	result := make([]ResourceFileChange, 0, len(changes)-len(removedDeletions))
+	for i, change := range changes {
+		if !removedDeletions[i] {
+			result = append(result, change)
+		}
+	}
+	return result
+}
+
 // emitDirectChildrenChanges iterates the source tree and emits FileActionUpdated for
 // direct children of affected folders that exist in target but aren't already in changes.
 func emitDirectChildrenChanges(
@@ -401,7 +637,7 @@ func emitDirectChildrenChanges(
 	pathsWithChanges, affectedFolders map[string]bool,
 	changes []ResourceFileChange,
 ) []ResourceFileChange {
-	existingByPath := make(map[string]*provisioning.ResourceListItem, len(target.Items))
+	existingByPath := make(map[string][]*provisioning.ResourceListItem, len(target.Items))
 	for i := range target.Items {
 		item := &target.Items[i]
 
@@ -410,7 +646,19 @@ func emitDirectChildrenChanges(
 			path = safepath.EnsureTrailingSlash(path)
 		}
 
-		existingByPath[path] = item
+		existingByPath[path] = append(existingByPath[path], item)
+	}
+
+	// Collect items already targeted by a DELETE so we can skip them when
+	// selecting the best match for reparent updates. Keyed by pointer
+	// identity (all items reference target.Items) rather than Name alone,
+	// since Name is only unique within a (Group, Resource) and different
+	// resource kinds can share the same name.
+	deletedItems := make(map[*provisioning.ResourceListItem]bool, len(changes))
+	for _, c := range changes {
+		if c.Action == repository.FileActionDeleted && c.Existing != nil {
+			deletedItems[c.Existing] = true
+		}
 	}
 
 	for _, file := range source {
@@ -435,16 +683,29 @@ func emitDirectChildrenChanges(
 			continue
 		}
 
-		existing, ok := existingByPath[path]
+		items, ok := existingByPath[path]
 		// If the resource path doesn't exist in Grafana, it means it's new
 		// therefore it doesn't need to be updated.
-		if !ok {
+		if !ok || len(items) == 0 {
 			continue
+		}
+		best := items[0]
+		for _, it := range items {
+			if deletedItems[it] {
+				continue
+			}
+			if it.Hash == file.Hash {
+				best = it
+				break
+			}
+			if deletedItems[best] {
+				best = it
+			}
 		}
 		changes = append(changes, ResourceFileChange{
 			Action:   repository.FileActionUpdated,
 			Path:     path,
-			Existing: existing,
+			Existing: best,
 		})
 		pathsWithChanges[path] = true
 	}
@@ -456,7 +717,9 @@ func emitDirectChildrenChanges(
 // directory path changed but the UID in _folder.json stayed the same. The initial
 // diff produces a DELETE (old path) and a CREATE (new path); this function merges
 // them into a single UPDATE so the folder is updated in-place instead of being
-// deleted and recreated (which would reset the K8s generation).
+// deleted and recreated (which would reset the K8s generation). Invalid
+// metadata is left as a normal delete+create sequence because the move cannot be
+// matched safely.
 func augmentChangesForFolderMoves(
 	ctx context.Context,
 	repo repository.Reader,
@@ -487,6 +750,9 @@ func augmentChangesForFolderMoves(
 		meta, _, err := resources.ReadFolderMetadata(ctx, repo, create.Path, ref)
 		if err != nil {
 			if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
+				continue
+			}
+			if errors.Is(err, resources.ErrInvalidFolderMetadata) {
 				continue
 			}
 			return nil, fmt.Errorf("read folder metadata for %s: %w", create.Path, err)
