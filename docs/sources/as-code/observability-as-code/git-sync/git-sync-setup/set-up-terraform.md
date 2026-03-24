@@ -35,7 +35,7 @@ Before you begin, make sure to have the following:
 
 - A Grafana Cloud account or an on-prem Grafana instance.
 - Administrator permissions in your Grafana stack/instance.
-- Terraform installed on your machine. Refer to the [Terraform install documentation](https://developer.hashicorp.com/terraform/install) to learn how.
+- Terraform 1.11 or later installed on your machine. Refer to the [Terraform install documentation](https://developer.hashicorp.com/terraform/install) to learn more.
 
 {{< admonition type="note" >}}
 Save all of the following Terraform configuration files in the same directory.
@@ -47,9 +47,7 @@ Use this Terraform configuration to set up the [Grafana provider](https://regist
 
 1. Create a service account and token in Grafana. For more information refer to [Service account tokens](https://grafana.com/docs/grafana/latest/administration/service-accounts/#service-account-tokens) or [Creating and managing a Grafana Cloud stack using Terraform](https://grafana.com/docs/grafana-cloud/as-code/infrastructure-as-code/terraform/terraform-cloud-stack/).
 
-1. Make sure that the token has the following permissions:
-
-TBC
+1. Make sure that the token has the Admin or the `Provisioning:Repositories` writer permission.
 
 1. Create a file named `main.tf` and add the following:
 
@@ -58,20 +56,22 @@ TBC
         required_providers {
           grafana = {
             source  = "grafana/grafana"
-            version = ">= 4.5.3"
+            version = ">= 4.28.1"
           }
         }
       }
 
       provider "grafana" {
-        cloud_api_url      = "<STACK_URL>"
-        cloud_access_policy_token     = "<SERVICE_ACCOUNT_TOKEN>"
+        cloud_api_url = "<STACK_URL>"
+        stack_id = "<STACK_ID>"
+        cloud_access_policy_token = "<SERVICE_ACCOUNT_TOKEN>"
       }
    ```
 
 Replace the following field values:
 
 - `STACK_URL` with the URL of your Grafana stack, for example `https://my-stack.grafana.net/`
+- `<STACK_ID>` with the Grafana stack ID, if you are using a Grafana Cloud stack
 - `SERVICE_ACCOUNT_TOKEN` with the service account token that you created
 
 ## Create the resources to use Git Sync
