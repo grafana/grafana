@@ -1,5 +1,6 @@
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { ServiceAccountDTO } from 'app/types/serviceaccount';
 import { ThunkResult } from 'app/types/store';
 
@@ -40,7 +41,7 @@ export function updateServiceAccount(serviceAccount: ServiceAccountDTO): ThunkRe
 export function deleteServiceAccount(serviceAccountUid: string): ThunkResult<void> {
   return async () => {
     await getBackendSrv().delete(`${BASE_URL}/${serviceAccountUid}`);
-    locationService.push('/org/serviceaccounts');
+    locationService.push(appendOrgId('/org/serviceaccounts'));
   };
 }
 

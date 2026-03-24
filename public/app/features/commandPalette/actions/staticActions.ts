@@ -4,6 +4,7 @@ import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv, config, locationService } from '@grafana/runtime';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import {
   shouldRenderInviteUserButton,
   performInviteUserClick,
@@ -161,7 +162,7 @@ export function useStaticActions(): CommandPaletteAction[] {
               entryPoint: SOURCE_ENTRY_POINTS.COMMAND_PALETTE,
               contentKind: CONTENT_KINDS.TEMPLATE_DASHBOARD,
             });
-            locationService.push('/dashboards?templateDashboards=true&source=commandPalette');
+            locationService.push(appendOrgId('/dashboards?templateDashboards=true&source=commandPalette'));
           },
         });
 

@@ -1,6 +1,7 @@
 import { throttle } from 'lodash';
 
 import { getBackendSrv, locationService } from '@grafana/runtime';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { ThunkResult } from 'app/types/store';
 import { SupportBundle, SupportBundleCollector, SupportBundleCreateRequest } from 'app/types/supportBundles';
 
@@ -65,7 +66,7 @@ export function createSupportBundle(data: SupportBundleCreateRequest): ThunkResu
   return async (dispatch) => {
     try {
       await getBackendSrv().post('/api/support-bundles', data);
-      locationService.push('/support-bundles');
+      locationService.push(appendOrgId('/support-bundles'));
     } catch (err) {
       dispatch(setCreateBundleError('Error creating support bundle'));
     }

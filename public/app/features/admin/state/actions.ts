@@ -6,6 +6,7 @@ import { FetchDataArgs } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { AccessControlAction } from 'app/types/accessControl';
 import { LdapUser } from 'app/types/ldap';
 import { ThunkResult } from 'app/types/store';
@@ -89,7 +90,7 @@ export function setUserPassword(userUid: string, password: string): ThunkResult<
 export function disableUser(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().post(`/api/admin/users/${userUid}/disable`);
-    locationService.push('/admin/users');
+    locationService.push(appendOrgId('/admin/users'));
   };
 }
 
@@ -103,7 +104,7 @@ export function enableUser(userUid: string): ThunkResult<void> {
 export function deleteUser(userUid: string): ThunkResult<void> {
   return async (dispatch) => {
     await getBackendSrv().delete(`/api/admin/users/${userUid}`);
-    locationService.push('/admin/users');
+    locationService.push(appendOrgId('/admin/users'));
   };
 }
 

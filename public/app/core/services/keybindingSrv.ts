@@ -393,7 +393,7 @@ export class KeybindingSrv {
     });
 
     this.bind('d n', () => {
-      this.locationService.push('/dashboard/new');
+      this.locationService.push(appendOrgId('/dashboard/new'));
     });
 
     this.bind('d r', () => {

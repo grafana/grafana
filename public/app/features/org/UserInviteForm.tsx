@@ -3,6 +3,7 @@ import { Controller } from 'react-hook-form';
 import { locationUtil, OrgRole, SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import {
   Button,
   LinkButton,
@@ -68,7 +69,7 @@ export const UserInviteForm = () => {
 
   const onSubmit = async (formData: FormModel) => {
     await dispatch(addInvitee(formData)).unwrap();
-    locationService.push('/admin/users/');
+    locationService.push(appendOrgId('/admin/users/'));
   };
 
   return (

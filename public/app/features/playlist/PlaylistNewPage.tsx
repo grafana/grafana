@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { Page } from 'app/core/components/Page/Page';
 
 import { Playlist, useCreatePlaylistMutation } from '../../api/clients/playlist/v1';
@@ -18,7 +19,7 @@ export const PlaylistNewPage = () => {
     await createPlaylist({
       playlist,
     });
-    locationService.push('/playlists');
+    locationService.push(appendOrgId('/playlists'));
   };
 
   const pageNav: NavModelItem = {

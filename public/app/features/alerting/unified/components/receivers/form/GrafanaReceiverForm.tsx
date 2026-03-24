@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import {
   useCreateContactPoint,
@@ -102,7 +103,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       } else {
         await createContactPoint.execute({ contactPoint: newReceiver });
       }
-      locationService.push('/alerting/notifications');
+      locationService.push(appendOrgId('/alerting/notifications'));
     } catch (error) {
       // React form validation will handle this for us
     }

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { Page } from 'app/core/components/Page/Page';
 
 import { Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
@@ -23,7 +24,7 @@ export const PlaylistEditPage = () => {
       name: playlist.metadata?.name ?? '',
       playlist,
     });
-    locationService.push('/playlists');
+    locationService.push(appendOrgId('/playlists'));
   };
 
   const pageNav: NavModelItem = {

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { Alert } from '@grafana/ui';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import {
@@ -62,7 +63,7 @@ export const CloudReceiverForm = ({ contactPoint, alertManagerSourceName, readOn
       } else {
         await createContactPoint.execute({ contactPoint: newReceiver });
       }
-      locationService.push('/alerting/notifications');
+      locationService.push(appendOrgId('/alerting/notifications'));
     } catch (error) {
       // React form validation will handle this for us
     }

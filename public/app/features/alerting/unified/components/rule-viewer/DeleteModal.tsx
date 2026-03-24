@@ -2,6 +2,7 @@ import { type JSX, useCallback, useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { ConfirmModal } from '@grafana/ui';
 import { dispatch } from 'app/store/store';
 import { EditableRuleIdentifier, RuleGroupIdentifierV2 } from 'app/types/unified-alerting';
@@ -62,7 +63,7 @@ export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
     dismissModal();
 
     if (redirectToListView) {
-      locationService.replace('/alerting/list');
+      locationService.replace(appendOrgId('/alerting/list'));
     }
   }, [deleteRuleFromGroup, dismissModal, ruleToDelete, redirectToListView, waitForRemoval]);
 

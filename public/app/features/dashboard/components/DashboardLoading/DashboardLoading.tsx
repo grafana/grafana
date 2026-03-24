@@ -3,6 +3,7 @@ import { css, keyframes } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { DashboardInitPhase } from 'app/types/dashboard';
 
@@ -13,7 +14,7 @@ export interface Props {
 export const DashboardLoading = ({ initPhase }: Props) => {
   const styles = useStyles2(getStyles);
   const cancelVariables = () => {
-    locationService.push('/');
+    locationService.push(appendOrgId('/'));
   };
 
   return (

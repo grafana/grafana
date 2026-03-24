@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { Button, Modal, useStyles2 } from '@grafana/ui';
 
 import { dashboardWatcher } from './dashboardWatcher';
@@ -18,7 +19,7 @@ export function DashboardChangedModal({ onDismiss, event }: Props) {
 
   const onDiscardChanges = () => {
     if (event?.action === DashboardEventAction.Deleted) {
-      locationService.push('/');
+      locationService.push(appendOrgId('/'));
       return;
     }
 

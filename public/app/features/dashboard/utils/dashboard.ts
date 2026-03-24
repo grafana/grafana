@@ -3,6 +3,7 @@ import { chain, cloneDeep, defaults, find } from 'lodash';
 import { PanelPluginMeta, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -48,7 +49,7 @@ export function onCreateNewRow(dashboard: DashboardModel) {
 }
 
 export function onImportDashboard() {
-  locationService.push('/dashboard/import');
+  locationService.push(appendOrgId('/dashboard/import'));
 }
 
 export function onAddLibraryPanel(dashboard: DashboardModel) {
