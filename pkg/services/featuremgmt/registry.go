@@ -2752,6 +2752,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "logsTablePanelNG",
+			Description:  "Enables the logs tableNG panel to replace existing tableRT",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
 	}
 )
 
