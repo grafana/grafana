@@ -23,14 +23,12 @@ class FilterStatsPlugin {
         let statsHTML = fs.readFileSync(STATS_PATH, 'utf8');
         let filteredStatsHTML = statsHTML.replace(/(window.chartData = )(\[.*?\])(;)/, (m, head, data, tail) => {
           let nodes = JSON.parse(data);
-          let filtered = nodes.filter(node => !this.pathContains(node, node.parsedSize));
+          let filtered = nodes.filter((node) => !this.pathContains(node, node.parsedSize));
           return head + JSON.stringify(filtered) + tail;
         });
 
         fs.writeFileSync(STATS_PATH_FILT, filteredStatsHTML);
       }
-
-
     });
   }
   pathContains(node, rootParsedSize) {
