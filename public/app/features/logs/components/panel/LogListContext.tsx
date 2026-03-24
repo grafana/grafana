@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import {
   createContext,
   Dispatch,
@@ -11,7 +12,6 @@ import {
 } from 'react';
 
 import { createAssistantContextItem, OpenAssistantProps, useAssistant } from '@grafana/assistant';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import {
   CoreApp,
   DataFrame,

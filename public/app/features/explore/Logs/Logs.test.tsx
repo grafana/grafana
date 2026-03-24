@@ -77,7 +77,7 @@ describe('Logs', () => {
   let originalHref = window.location.href;
 
   beforeEach(() => {
-    setBooleanFlags({ newLogsPanel: false });
+    setBooleanFlags({ newLogsPanel: false, logsPanelControls: false });
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
     window.HTMLElement.prototype.scroll = jest.fn();
     localStorage.clear();
