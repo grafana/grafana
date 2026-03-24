@@ -4,8 +4,8 @@
   "tags": null,
   "datasource": [
     {
-      "uid": "default.uid",
-      "type": "default.type"
+      "uid": "000000001",
+      "type": "graphite"
     }
   ],
   "panels": [
@@ -16,8 +16,8 @@
       "libraryPanel": "dfkljg98345dkf",
       "datasource": [
         {
-          "uid": "default.uid",
-          "type": "default.type"
+          "uid": "000000001",
+          "type": "graphite"
         }
       ]
     }
