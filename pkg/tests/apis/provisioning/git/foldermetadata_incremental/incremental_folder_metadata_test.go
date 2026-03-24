@@ -1075,6 +1075,101 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 			"uid-combo-001": {Title: "Updated Dashboard", SourcePath: "team/dash.json", Folder: newUID},
 		})
 	})
+
+	t.Run("chained UID changes never accumulate orphans", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-uid-chained"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"team/_folder.json": folderMetadataJSON("uid-v1", "Team"),
+			"team/dash.json":    gitcommon.DashboardJSON("chain-dash", "Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+
+		// v1 -> v2
+		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON("uid-v2", "Team v2"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "uid v1 to v2")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, "uid-v2", metav1.GetOptions{})
+		require.NoError(t, err, "v2 folder should exist")
+		_, err = helper.FoldersV1.Resource.Get(ctx, "uid-v1", metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "v1 folder should be deleted")
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+
+		// v2 -> v3
+		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON("uid-v3", "Team v3"))))
+		_, err = local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "uid v2 to v3")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, "uid-v3", metav1.GetOptions{})
+		require.NoError(t, err, "v3 folder should exist")
+		_, err = helper.FoldersV1.Resource.Get(ctx, "uid-v2", metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "v2 folder should be deleted")
+		_, err = helper.FoldersV1.Resource.Get(ctx, "uid-v1", metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "v1 folder should still be deleted")
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"chain-dash": {Title: "Dashboard", SourcePath: "team/dash.json", Folder: "uid-v3"},
+		})
+	})
+
+	t.Run("full sync after incremental UID changes cleans up any remaining orphans", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-uid-full-cleanup"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"team/_folder.json": folderMetadataJSON("cleanup-v1", "Team"),
+			"team/dash.json":    gitcommon.DashboardJSON("cleanup-dash", "Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+
+		// Change UID via incremental sync
+		require.NoError(t, local.UpdateFile("team/_folder.json", string(folderMetadataJSON("cleanup-v2", "Team v2"))))
+		_, err := local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "uid change for cleanup test")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+
+		// A subsequent full sync should be idempotent — still exactly 1 folder
+		helper.SyncAndWait(t, repoName)
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
+
+		_, err = helper.FoldersV1.Resource.Get(ctx, "cleanup-v2", metav1.GetOptions{})
+		require.NoError(t, err, "current folder should still exist")
+		_, err = helper.FoldersV1.Resource.Get(ctx, "cleanup-v1", metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "old folder should not reappear")
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"cleanup-dash": {Title: "Dashboard", SourcePath: "team/dash.json", Folder: "cleanup-v2"},
+		})
+	})
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion verifies that
@@ -1300,5 +1395,192 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 			"combo-del-001": {Title: "Updated Dashboard", SourcePath: "team/dash.json", Folder: newFolderUID},
 		})
+	})
+}
+
+// TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanCleanup
+// verifies that renaming a _folder.json file (file-only rename, no directory
+// rename event) correctly cleans up the old folder resource and creates the new
+// folder at the destination path.
+func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanCleanup(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("metadata-only folder rename cleans up old folder", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-rename-orphan"
+		const folderUID = "rename-orphan-uid"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"old-team/_folder.json": folderMetadataJSON(folderUID, "Old Team"),
+			"old-team/dash.json":    gitcommon.DashboardJSON("rename-orphan-dash", "Team Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Old Team", "old-team", "")
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"rename-orphan-dash": {Title: "Team Dashboard", SourcePath: "old-team/dash.json", Folder: folderUID},
+		})
+
+		// Move the _folder.json to a new directory while also moving the
+		// dashboard. This produces file-level renames in the git diff.
+		require.NoError(t, local.CreateDirPath("new-team"))
+		_, err := local.Git("mv", "old-team/_folder.json", "new-team/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("mv", "old-team/dash.json", "new-team/dash.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "move folder contents to new-team")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		// The folder should now be at new-team with the same UID (identity preserved).
+		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Old Team", "new-team", "")
+
+		// Only one folder should exist for this repo — old-team should be gone.
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-team"})
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"rename-orphan-dash": {Title: "Team Dashboard", SourcePath: "new-team/dash.json", Folder: folderUID},
+		})
+	})
+
+	t.Run("metadata moved to folder with dashboard but no metadata", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-rename-to-existing"
+		const folderUID = "src-uid-001"
+
+		// Seed: source folder with metadata + dashboard, destination folder
+		// with only a dashboard (no _folder.json).
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"src/_folder.json":  folderMetadataJSON(folderUID, "Source Folder"),
+			"src/dash-src.json": gitcommon.DashboardJSON("dash-src", "Source Dashboard", 1),
+			"dst/dash-dst.json": gitcommon.DashboardJSON("dash-dst", "Dest Dashboard", 1),
+		})
+
+		// dst/ has no _folder.json, so the initial sync produces a
+		// missing-metadata warning.
+		common.SyncAndWaitWithWarning(t, helper, repoName)
+		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Source Folder", "src", "")
+		// dst/ gets a hash-derived UID since it has no metadata.
+		dstAutoUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "dst")
+		require.NotEqual(t, folderUID, dstAutoUID)
+
+		// Move _folder.json from src/ to dst/. The dashboard stays put.
+		_, err := local.Git("mv", "src/_folder.json", "dst/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "move metadata to dst")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+
+		// dst/ should now carry the metadata UID and title.
+		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Source Folder", "dst", "")
+
+		// src/ should still exist (it has a dashboard) but with a
+		// hash-derived UID since its metadata is gone.
+		srcAutoUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "src")
+		require.NotEqual(t, folderUID, srcAutoUID)
+
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"src", "dst"})
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-src": {Title: "Source Dashboard", SourcePath: "src/dash-src.json", Folder: srcAutoUID},
+			"dash-dst": {Title: "Dest Dashboard", SourcePath: "dst/dash-dst.json", Folder: folderUID},
+		})
+	})
+
+	t.Run("metadata moved to folder with dashboard and pre-existing metadata", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-rename-over"
+		const srcUID = "override-src-uid"
+		const dstUID = "override-dst-uid"
+
+		// Seed: both folders have _folder.json with distinct UIDs + dashboards.
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"src/_folder.json": folderMetadataJSON(srcUID, "Source"),
+			"src/dash-s.json":  gitcommon.DashboardJSON("dash-s", "Src Dash", 1),
+			"dst/_folder.json": folderMetadataJSON(dstUID, "Destination"),
+			"dst/dash-d.json":  gitcommon.DashboardJSON("dash-d", "Dst Dash", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.RequireFolderState(t, helper.FoldersV1, srcUID, "Source", "src", "")
+		common.RequireFolderState(t, helper.FoldersV1, dstUID, "Destination", "dst", "")
+
+		// Overwrite dst/_folder.json with src's metadata. Git sees this as
+		// a delete of src/_folder.json + update of dst/_folder.json.
+		_, err := local.Git("rm", "src/_folder.json")
+		require.NoError(t, err)
+		require.NoError(t, local.UpdateFile("dst/_folder.json", string(folderMetadataJSON(srcUID, "Source"))))
+		_, err = local.Git("add", "dst/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "replace dst metadata with src metadata")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// The incremental sync completes with a warning because src/
+		// loses its _folder.json (triggering a missing-metadata warning).
+		// The src UID is NOT scheduled for deletion because it is being
+		// actively written to dst/_folder.json.
+		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+
+		// dst/ should now carry the source UID.
+		common.RequireFolderState(t, helper.FoldersV1, srcUID, "Source", "dst", "")
+
+		// src/ still has a dashboard, so it should exist with a hash UID.
+		srcAutoUID := common.RequireRepoFolderTitle(t, helper.FoldersV1, ctx, repoName, "src")
+		require.NotEqual(t, srcUID, srcAutoUID)
+
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"src", "dst"})
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-s": {Title: "Src Dash", SourcePath: "src/dash-s.json", Folder: srcAutoUID},
+			"dash-d": {Title: "Dst Dash", SourcePath: "dst/dash-d.json", Folder: srcUID},
+		})
+	})
+
+	t.Run("metadata-only empty folder rename cleans up old folder", func(t *testing.T) {
+		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		ctx := context.Background()
+
+		const repoName = "incr-meta-rename-empty"
+		const folderUID = "empty-rename-uid"
+
+		// Seed: metadata-only folder (no dashboards inside).
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"old-empty/_folder.json": folderMetadataJSON(folderUID, "Empty Folder"),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Empty Folder", "old-empty", "")
+
+		// Move the _folder.json to a new path — this is a pure file rename.
+		require.NoError(t, local.CreateDirPath("new-empty"))
+		_, err := local.Git("mv", "old-empty/_folder.json", "new-empty/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename empty metadata folder")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWaitSuccessfulIncremental(t, helper, repoName)
+
+		// The folder should now be at new-empty with the same UID.
+		common.RequireFolderState(t, helper.FoldersV1, folderUID, "Empty Folder", "new-empty", "")
+
+		// Only one folder should exist for this repo.
+		common.RequireRepoFolders(t, helper.FoldersV1, ctx, repoName, []string{"new-empty"})
+		gitcommon.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
 	})
 }

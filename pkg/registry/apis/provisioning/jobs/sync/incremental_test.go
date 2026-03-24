@@ -1501,7 +1501,7 @@ func TestDeleteFolders(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 
 		deleteFolders(context.Background(), nil, repoResources, progress, tracer)
-		deleteFolders(context.Background(), map[string]string{}, repoResources, progress, tracer)
+		deleteFolders(context.Background(), []folderDeletion{}, repoResources, progress, tracer)
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
 		progress.AssertNotCalled(t, "Record", mock.Anything, mock.Anything)
@@ -1523,8 +1523,8 @@ func TestDeleteFolders(t *testing.T) {
 				r.Error() == nil
 		})).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"dashboards/": "folder-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "dashboards/", UID: "folder-uid"},
 		}, repoResources, progress, tracer)
 
 		repoResources.AssertCalled(t, "RemoveFolder", mock.Anything, "folder-uid")
@@ -1546,8 +1546,8 @@ func TestDeleteFolders(t *testing.T) {
 				r.Error().Error() == "delete folder bad-uid: not found"
 		})).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"alpha/": "bad-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "alpha/", UID: "bad-uid"},
 		}, repoResources, progress, tracer)
 	})
 
@@ -1562,8 +1562,8 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"alpha/": "old-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "alpha/", UID: "old-uid"},
 		}, repoResources, progress, tracer)
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
@@ -1581,8 +1581,8 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"dashboards/": "folder-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "dashboards/", UID: "folder-uid"},
 		}, repoResources, progress, tracer)
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
@@ -1601,8 +1601,8 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"alpha/": "old-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "alpha/", UID: "old-uid"},
 		}, repoResources, progress, tracer)
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
@@ -1622,8 +1622,8 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"alpha/": "old-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "alpha/", UID: "old-uid"},
 		}, repoResources, progress, tracer)
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
@@ -1645,11 +1645,11 @@ func TestDeleteFolders(t *testing.T) {
 			}).Return(nil)
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"a/":       "shallow-uid",
-			"a/b/":     "mid-uid",
-			"a/b/c/":   "deep-uid",
-			"x/y/z/w/": "deepest-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "a/", UID: "shallow-uid"},
+			{Path: "a/b/", UID: "mid-uid"},
+			{Path: "a/b/c/", UID: "deep-uid"},
+			{Path: "x/y/z/w/", UID: "deepest-uid"},
 		}, repoResources, progress, tracer)
 
 		require.Len(t, deletionOrder, 4)
@@ -1681,4 +1681,33 @@ func newCompositeRepoWithConfig(t *testing.T) *compositeRepo {
 		MockVersioned: mockVersioned,
 		MockReader:    mockReader,
 	}
+}
+
+func TestDeduplicateFolderDeletions(t *testing.T) {
+	t.Run("removes exact duplicates", func(t *testing.T) {
+		input := []folderDeletion{
+			{Path: "a/", UID: "uid-1"},
+			{Path: "b/", UID: "uid-2"},
+			{Path: "a/", UID: "uid-1"},
+		}
+		result := deduplicateFolderDeletions(input)
+		require.Equal(t, []folderDeletion{
+			{Path: "a/", UID: "uid-1"},
+			{Path: "b/", UID: "uid-2"},
+		}, result)
+	})
+
+	t.Run("keeps entries with same path but different UIDs", func(t *testing.T) {
+		input := []folderDeletion{
+			{Path: "a/", UID: "uid-1"},
+			{Path: "a/", UID: "uid-2"},
+		}
+		result := deduplicateFolderDeletions(input)
+		require.Equal(t, input, result)
+	})
+
+	t.Run("returns empty for empty input", func(t *testing.T) {
+		result := deduplicateFolderDeletions(nil)
+		require.Empty(t, result)
+	})
 }

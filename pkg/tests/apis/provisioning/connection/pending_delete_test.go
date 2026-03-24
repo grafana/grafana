@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // labelPendingDelete mirrors the constant defined in the connection controller
@@ -24,9 +23,7 @@ const labelPendingDelete = "cloud.grafana.com/pending-delete"
 // reconciliation – in particular it never advances ObservedGeneration for a soft-deleted
 // stack, which would otherwise happen within a few seconds of a spec change.
 func TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 
 	const connName = "pending-delete-skip-conn"
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
