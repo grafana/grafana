@@ -126,7 +126,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 		})
 	}
 
-	replaced, newUID, err := d.replacementsForMetadataChange(ctx, index, folderPath, change)
+	replaced, newUID, err := d.replacementsForMetadataChange(index, folderPath, folder)
 	if err != nil {
 		return nil, err
 	}
