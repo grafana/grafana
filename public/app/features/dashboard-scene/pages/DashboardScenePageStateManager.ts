@@ -517,19 +517,28 @@ abstract class DashboardScenePageStateManagerBase<T>
 
 export class DashboardScenePageStateManager extends DashboardScenePageStateManagerBase<DashboardDTO> {
   transformResponseToScene(rsp: DashboardDTO | null, options: LoadDashboardOptions): DashboardScene | null {
-    const fromCache = this.getSceneFromCache(options.uid);
+    // Public dashboards are not part of a session and therefore should not use the cache
+    const skipSceneCache = options.route === DashboardRoutes.Public;
 
-    if (
-      fromCache &&
-      fromCache.state.version === rsp?.dashboard.version &&
-      fromCache.state.meta.created === rsp?.meta.created
-    ) {
-      const profiler = getDashboardSceneProfiler();
-      profiler.setMetadata({
-        dashboardUID: fromCache.state.uid,
-        dashboardTitle: fromCache.state.title,
-      });
-      return fromCache;
+    if (skipSceneCache && options.uid) {
+      this.removeSceneCache(options.uid);
+    }
+
+    if (!skipSceneCache) {
+      const fromCache = this.getSceneFromCache(options.uid);
+
+      if (
+        fromCache &&
+        fromCache.state.version === rsp?.dashboard.version &&
+        fromCache.state.meta.created === rsp?.meta.created
+      ) {
+        const profiler = getDashboardSceneProfiler();
+        profiler.setMetadata({
+          dashboardUID: fromCache.state.uid,
+          dashboardTitle: fromCache.state.title,
+        });
+        return fromCache;
+      }
     }
 
     if (rsp?.dashboard) {
@@ -548,8 +557,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         scene.setState({ isDirty: true });
       }
 
-      // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
-      if (options.uid) {
+      // We don't want to cache temporary dashboards (e.g from Explore) or public dashboards
+      if (options.uid && !skipSceneCache) {
         this.setSceneCache(options.uid, scene);
       }
 
@@ -918,22 +927,31 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     rsp: DashboardWithAccessInfo<DashboardV2Spec> | null,
     options: LoadDashboardOptions
   ): DashboardScene | null {
-    const fromCache = this.getSceneFromCache(options.uid);
+    // Public dashboards are not part of a session and therefore should not use the cache
+    const skipSceneCache = options.route === DashboardRoutes.Public;
 
-    if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
-      const profiler = getDashboardSceneProfiler();
-      profiler.setMetadata({
-        dashboardUID: fromCache.state.uid,
-        dashboardTitle: fromCache.state.title,
-      });
-      return fromCache;
+    if (skipSceneCache && options.uid) {
+      this.removeSceneCache(options.uid);
+    }
+
+    if (!skipSceneCache) {
+      const fromCache = this.getSceneFromCache(options.uid);
+
+      if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
+        const profiler = getDashboardSceneProfiler();
+        profiler.setMetadata({
+          dashboardUID: fromCache.state.uid,
+          dashboardTitle: fromCache.state.title,
+        });
+        return fromCache;
+      }
     }
 
     if (rsp) {
       const scene = transformSaveModelSchemaV2ToScene(rsp, options);
 
-      // Cache scene only if not coming from Explore, we don't want to cache temporary dashboard
-      if (options.uid) {
+      // We don't want to cache temporary dashboards (e.g from Explore) or public dashboards
+      if (options.uid && !skipSceneCache) {
         this.setSceneCache(options.uid, scene);
       }
 
