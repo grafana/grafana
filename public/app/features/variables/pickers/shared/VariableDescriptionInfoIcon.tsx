@@ -4,7 +4,7 @@ import { GrafanaTheme2, textUtil } from '@grafana/data';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 interface Props {
-  description: string;
+  description?: string | null;
   docsUrl?: string | null;
   label?: string;
 }
@@ -48,11 +48,15 @@ export function VariableDescriptionInfoIcon({ description, docsUrl, label }: Pro
     </span>
   );
 
-  return (
-    <Tooltip content={description} placement="bottom">
-      {iconElement}
-    </Tooltip>
-  );
+  if (description) {
+    return (
+      <Tooltip content={description} placement="bottom">
+        {iconElement}
+      </Tooltip>
+    );
+  }
+
+  return iconElement;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -61,7 +65,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     lineHeight: 0,
     verticalAlign: 'middle',
-    marginBottom: theme.spacing(0.5),
   }),
   iconLink: css({
     textDecoration: 'none',

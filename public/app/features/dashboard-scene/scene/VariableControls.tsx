@@ -179,7 +179,6 @@ function VariableLabel({
   className?: string;
   layout?: ControlsLayout;
 }) {
-  const styles = useStyles2(getStyles);
   const { state } = variable;
   const elementId = `var-${state.key}`;
 
@@ -192,22 +191,7 @@ function VariableLabel({
   const docsUrl =
     'docsUrl' in state && typeof state.docsUrl === 'string' && state.docsUrl.length > 0 ? state.docsUrl : undefined;
 
-  if (description) {
-    return (
-      <div className={cx(styles.labelWithDescription, className)}>
-        <ControlsLabel
-          htmlFor={elementId}
-          isLoading={state.loading}
-          onCancel={() => variable.onCancel?.()}
-          label={labelOrName}
-          error={state.error}
-          layout={layout ?? 'horizontal'}
-          className={className}
-        />
-        <VariableDescriptionInfoIcon description={description} docsUrl={docsUrl} label={labelOrName} />
-      </div>
-    );
-  }
+  const hasInfoIcon = description || docsUrl;
 
   return (
     <ControlsLabel
@@ -217,7 +201,11 @@ function VariableLabel({
       label={labelOrName}
       error={state.error}
       layout={layout ?? 'horizontal'}
-      description={description}
+      suffix={
+        hasInfoIcon ? (
+          <VariableDescriptionInfoIcon description={description} docsUrl={docsUrl} label={labelOrName} />
+        ) : undefined
+      }
       className={className}
     />
   );
@@ -265,10 +253,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   label: css({
     display: 'flex',
     alignItems: 'center',
-  }),
-  labelWithDescription: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.5),
   }),
 });

@@ -110,6 +110,24 @@ describe('VariableControls', () => {
     expect(docsLink).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
+  it('should render a docs link when only docsUrl is set without description', async () => {
+    const docsUrlProps: Record<string, unknown> = { docsUrl: 'https://grafana.com/docs' };
+    const dashboard = buildScene([
+      new TextBoxVariable({
+        name: 'TextVarDocsOnly',
+        hide: VariableHide.dontHide,
+        ...docsUrlProps,
+      }),
+    ]);
+    dashboard.activate();
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    const docsLink = await screen.findByTestId('variable-description-docs-link');
+    expect(docsLink).toHaveAttribute('href', 'https://grafana.com/docs');
+    expect(docsLink).toHaveAttribute('target', '_blank');
+  });
+
   it('should render a non-clickable info icon when docsUrl is not present in state', async () => {
     const dashboard = buildScene([
       new TextBoxVariable({

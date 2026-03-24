@@ -28,6 +28,15 @@ describe('VariableDescriptionInfoIcon', () => {
     expect(screen.getByTestId('variable-description-info-icon')).toBeInTheDocument();
   });
 
+  it('renders a clickable docs link when only docsUrl is provided without description', () => {
+    render(<VariableDescriptionInfoIcon docsUrl="https://grafana.com/docs" label="env" />);
+
+    const link = screen.getByTestId('variable-description-docs-link');
+    expect(link).toHaveAttribute('href', 'https://grafana.com/docs');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
   it('does not render a clickable link for unsafe docsUrl values', () => {
     render(<VariableDescriptionInfoIcon description="Helpful context" docsUrl="javascript:alert(1)" />);
 
