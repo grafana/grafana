@@ -82,7 +82,7 @@ test.describe(
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
-      const variable = variableWithDefaults({type: 'interval'});
+      const variable = variableWithDefaults({type: 'interval', value: '1m'});
 
       // common steps to add a new variable
       await flows.newEditPaneVariableClick(dashboardPage, selectors);
