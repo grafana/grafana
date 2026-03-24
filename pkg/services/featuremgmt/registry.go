@@ -807,6 +807,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:         "stateTimelineNameAboveBars",
+			Description:  "Enables option to position series names above bars in the state timeline panel",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
 			Name:            "cloudRBACRoles",
 			Description:     "Enabled grafana cloud specific RBAC roles",
 			Stage:           FeatureStagePublicPreview,
