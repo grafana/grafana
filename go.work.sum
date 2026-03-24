@@ -582,6 +582,8 @@ github.com/dolthub/sqllogictest/go v0.0.0-20201107003712-816f3ae12d81 h1:7/v8q9X
 github.com/dolthub/sqllogictest/go v0.0.0-20201107003712-816f3ae12d81/go.mod h1:siLfyv2c92W1eN/R4QqG/+RjjX5W2+gCTRjZxBjI3TY=
 github.com/dolthub/swiss v0.2.1 h1:gs2osYs5SJkAaH5/ggVJqXQxRXtWshF6uE0lgR/Y3Gw=
 github.com/dolthub/swiss v0.2.1/go.mod h1:8AhKZZ1HK7g18j7v7k6c5cYIGEZJcPn0ARsai8cUrh0=
+github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e h1:ZrRCF8F8Iq8RP0OBowkYpOwd/1NTFU34Ydp0MZ2qTq4=
+github.com/dolthub/vitess v0.0.0-20260225173707-20566e4abe9e/go.mod h1:eLLslh1CSPMf89pPcaMG4yM72PQbTN9OUYJeAy0fAis=
 github.com/drone/envsubst v1.0.3 h1:PCIBwNDYjs50AsLZPYdfhSATKaRg/FJmDc2D6+C2x8g=
 github.com/drone/envsubst v1.0.3/go.mod h1:N2jZmlMufstn1KEqvbHjw40h1KyTmnVzHcSc9bFiJ2g=
 github.com/dvyukov/go-fuzz v0.0.0-20210103155950-6a8e9d1f2415 h1:q1oJaUPdmpDm/VyXosjgPgr6wS7c5iV2p0PwJD73bUI=
@@ -790,6 +792,8 @@ github.com/grafana/dskit v0.0.0-20250818234656-8ff9c6532e85/go.mod h1:kImsvJ1xnm
 github.com/grafana/dskit v0.0.0-20250908063411-6b6da59b5cc4/go.mod h1:VahT+GtfQIM+o8ht2StR6J9g+Ef+C2Vokh5uuSmOD/4=
 github.com/grafana/go-gelf/v2 v2.0.1 h1:BOChP0h/jLeD+7F9mL7tq10xVkDG15he3T1zHuQaWak=
 github.com/grafana/go-gelf/v2 v2.0.1/go.mod h1:lexHie0xzYGwCgiRGcvZ723bSNyNI8ZRD4s0CLobh90=
+github.com/grafana/go-mysql-server v0.20.2-grafana h1:6ylD8V7MEqBQYSjI2Rt/2h+gOYeTkO5DLn8JmBm2x1A=
+github.com/grafana/go-mysql-server v0.20.2-grafana/go.mod h1:ZIk2bQ8apaxHVuvGOVcSe0hR/c5YJM5zk+CJVe19yrk=
 github.com/grafana/grafana-app-sdk v0.50.1-0.20260206151541-35a8b14e789b/go.mod h1:NnbIMg6fIUZnF7/bml2RPpKY/vokGcP82/bPY4HkW6A=
 github.com/grafana/grafana-app-sdk v0.50.2-0.20260210144258-179229bcd6c7/go.mod h1:NnbIMg6fIUZnF7/bml2RPpKY/vokGcP82/bPY4HkW6A=
 github.com/grafana/grafana-app-sdk/logging v0.48.5/go.mod h1:Gh/nBWnspK3oDNWtiM5qUF/fardHzOIEez+SPI3JeHA=
@@ -1704,6 +1708,7 @@ google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba/go.
 google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217/go.mod h1:7i2o+ce6H/6BluujYR+kqX3GKH+dChPTQU19wjRPiGk=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2/go.mod h1:7i2o+ce6H/6BluujYR+kqX3GKH+dChPTQU19wjRPiGk=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20260122232226-8e98ce8d340d/go.mod h1:j9x/tPzZkyxcgEFkiKEEGxfvyumM01BEtsW8xzOahRQ=
+google.golang.org/grpc v1.56.3/go.mod h1:I9bI3vqKfayGqPUAwGdOSu7kt6oIJLixfffKrpXqQ9s=
 google.golang.org/grpc v1.63.2/go.mod h1:WAX/8DgncnokcFUldAxq7GeB5DXHDbMF+lLvDomNkRA=
 google.golang.org/grpc v1.64.1/go.mod h1:hiQF4LFZelK2WKaP6W0L92zGHtiQdZxk8CrSdvyjeP0=
 google.golang.org/grpc v1.67.3/go.mod h1:YGaHCc6Oap+FzBJTZLBzkGSYt/cvGPFTPxkn7QfSU8s=
