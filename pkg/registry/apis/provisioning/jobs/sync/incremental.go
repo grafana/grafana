@@ -48,24 +48,39 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	}
 	compareSpan.End()
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCompare, time.Since(compareStart))
-
 	if len(diff) < 1 {
 		progress.SetFinalMessage(ctx, "no changes detected between commits")
 		return nil
 	}
 
 	var replaced []replacedFolder
+	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	if folderMetadataEnabled {
 		readerRepo, ok := repo.(repository.Reader)
 		if !ok {
 			return tracing.Error(span, fmt.Errorf("folder metadata incremental sync requires repository.Reader"))
 		}
 
-		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo, repositoryResources)
-		diff, replaced, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff)
+		target, err := repositoryResources.List(ctx)
+		if err != nil {
+			return tracing.Error(span, fmt.Errorf("list managed resources: %w", err))
+		}
+
+		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo)
+		diff, replaced, invalidFolderMetadata, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff, target)
 		if err != nil {
 			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
 		}
+
+		// Incremental sync normally starts with an empty folder tree, but folder
+		// metadata handling needs the current managed path->UID state before apply:
+		// - invalid `_folder.json` falls back to the existing folder at that path
+		// - valid metadata replacements remove old UIDs from that same tree before replay
+		tree := resources.NewFolderTreeFromResourceList(target)
+		for _, replacedFolder := range replaced {
+			tree.Remove(replacedFolder.OldUID)
+		}
+		repositoryResources.SetTree(tree)
 	}
 
 	progress.SetTotal(ctx, len(diff))
@@ -91,18 +106,17 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 				Build())
 			continue
 		}
-		if foldersToDelete == nil {
-			foldersToDelete = make(map[string]string)
-		}
-		foldersToDelete[r.Path] = r.OldUID
+		foldersToDelete = append(foldersToDelete, folderDeletion{Path: r.Path, UID: r.OldUID})
 	}
 
+	foldersToDelete = deduplicateFolderDeletions(foldersToDelete)
 	deleteFolders(ctx, foldersToDelete, repositoryResources, progress, tracer)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCleanup, time.Since(cleanupStart))
 
 	// Run after deleteFolders so its informational warnings (e.g. missing
 	// _folder.json) don't interfere with HasChildPathFailedUpdate safety checks.
 	if folderMetadataEnabled {
+		recordInvalidFolderMetadataWarnings(ctx, invalidFolderMetadata, progress)
 		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
 			return err
 		}
@@ -316,15 +330,42 @@ func actionPriority(action repository.FileAction) int {
 	return 4
 }
 
+// folderDeletion pairs a folder path with the K8s UID of the resource to
+// delete. Using a slice of these (instead of a map) avoids silently dropping
+// duplicate UIDs that share the same path (e.g. orphans from prior name
+// changes).
+type folderDeletion struct {
+	Path string
+	UID  string
+}
+
+// deduplicateFolderDeletions removes duplicate (Path, UID) pairs from the
+// deletion list. Duplicates can occur when both findOrphanedFolders and
+// replaced-folder metadata cleanup produce entries for the same folder.
+func deduplicateFolderDeletions(deletions []folderDeletion) []folderDeletion {
+	type key struct{ path, uid string }
+	seen := make(map[key]bool, len(deletions))
+	result := make([]folderDeletion, 0, len(deletions))
+	for _, d := range deletions {
+		k := key{d.Path, d.UID}
+		if seen[k] {
+			continue
+		}
+		seen[k] = true
+		result = append(result, d)
+	}
+	return result
+}
+
 // findOrphanedFolders checks which affected folders no longer exist in git
-// and returns a path->UID map of folders to delete.
+// and returns a list of folders to delete.
 func findOrphanedFolders(
 	ctx context.Context,
 	repo repository.Versioned,
 	currentRef string,
 	affectedFolders map[string]string,
 	tracer tracing.Tracer,
-) map[string]string {
+) []folderDeletion {
 	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.find_orphaned_folders")
 	defer span.End()
 
@@ -334,14 +375,14 @@ func findOrphanedFolders(
 		return nil
 	}
 
-	orphaned := make(map[string]string)
+	var orphaned []folderDeletion
 	for path, folderName := range affectedFolders {
 		span.SetAttributes(attribute.String("folder", folderName))
 
 		_, err := readerRepo.Read(ctx, path, currentRef)
 		if err != nil && (errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
 			span.AddEvent("folder not found in git, marking for deletion")
-			orphaned[path] = folderName
+			orphaned = append(orphaned, folderDeletion{Path: path, UID: folderName})
 			continue
 		}
 		if err != nil {
@@ -359,7 +400,7 @@ func findOrphanedFolders(
 // deleteFolders removes folder K8s objects, processing deepest paths first.
 func deleteFolders(
 	ctx context.Context,
-	foldersToDelete map[string]string,
+	foldersToDelete []folderDeletion,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 	tracer tracing.Tracer,
@@ -371,17 +412,9 @@ func deleteFolders(
 	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.delete_folders")
 	defer span.End()
 
-	type pathUID struct {
-		Path string
-		UID  string
-	}
-	sorted := make([]pathUID, 0, len(foldersToDelete))
-	for path, uid := range foldersToDelete {
-		sorted = append(sorted, pathUID{Path: path, UID: uid})
-	}
-	safepath.SortByDepth(sorted, func(p pathUID) string { return p.Path }, false)
+	safepath.SortByDepth(foldersToDelete, func(d folderDeletion) string { return d.Path }, false)
 
-	for _, entry := range sorted {
+	for _, entry := range foldersToDelete {
 		if progress.HasDirPathFailedCreation(entry.Path) || progress.HasDirPathFailedDeletion(entry.Path) || progress.HasChildPathFailedCreation(entry.Path) || progress.HasChildPathFailedUpdate(entry.Path) {
 			progress.Record(ctx, jobs.NewFolderResult(entry.Path).
 				WithAction(repository.FileActionIgnored).
@@ -399,6 +432,21 @@ func deleteFolders(
 			resultBuilder.WithError(fmt.Errorf("delete folder %s: %w", entry.UID, err))
 		}
 		progress.Record(ctx, resultBuilder.Build())
+	}
+}
+
+// recordInvalidFolderMetadataWarnings writes collected invalid `_folder.json`
+// warnings to job progress after folder cleanup has completed.
+func recordInvalidFolderMetadataWarnings(ctx context.Context, invalid []*resources.InvalidFolderMetadata, progress jobs.JobProgressRecorder) {
+	for _, warning := range invalid {
+		action := warning.Action
+		if action == "" {
+			action = repository.FileActionIgnored
+		}
+		progress.Record(ctx, jobs.NewFolderResult(warning.Path).
+			WithAction(action).
+			WithWarning(warning).
+			Build())
 	}
 }
 

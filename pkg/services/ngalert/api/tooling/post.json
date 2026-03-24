@@ -8680,6 +8680,7 @@
   "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
+    "deprecated": true,
     "responses": {
      "200": {
       "description": "ProvisionedAlertRules",
@@ -8698,6 +8699,7 @@
      "application/json"
     ],
     "operationId": "RoutePostAlertRule",
+    "deprecated": true,
     "parameters": [
      {
       "in": "body",
@@ -8804,6 +8806,7 @@
   "/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
+    "deprecated": true,
     "parameters": [
      {
       "description": "Alert rule UID",
@@ -8830,6 +8833,7 @@
    },
    "get": {
     "operationId": "RouteGetAlertRule",
+    "deprecated": true,
     "parameters": [
      {
       "description": "Alert rule UID",
@@ -8860,6 +8864,7 @@
      "application/json"
     ],
     "operationId": "RoutePutAlertRule",
+    "deprecated": true,
     "parameters": [
      {
       "description": "Alert rule UID",
@@ -9158,6 +9163,7 @@
    "delete": {
     "description": "Delete rule group",
     "operationId": "RouteDeleteAlertRuleGroup",
+    "deprecated": true,
     "parameters": [
      {
       "in": "path",
@@ -9195,6 +9201,7 @@
    },
    "get": {
     "operationId": "RouteGetAlertRuleGroup",
+    "deprecated": true,
     "parameters": [
      {
       "in": "path",
@@ -9230,6 +9237,7 @@
      "application/json"
     ],
     "operationId": "RoutePutAlertRuleGroup",
+    "deprecated": true,
     "parameters": [
      {
       "in": "header",

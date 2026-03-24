@@ -10,7 +10,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -277,6 +279,70 @@ func TestTenantResourceLabelling(t *testing.T) {
 		tw.handleTenant(pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
 
 		assert.Empty(t, collector.all(), "should not write events for already-labelled resources")
+	})
+
+	t.Run("conflict error during labelling succeeds when latest version already has label", func(t *testing.T) {
+		ds := newDataStore(setupBadgerKV(t))
+
+		// Save the resource at RV 100 without the label (this is what the stale dataKey will read).
+		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
+		// Save a newer version at RV 200 WITH the label (simulating another pod having already labelled it).
+		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 200, map[string]string{labelPendingDelete: "true"})
+
+		callCount := 0
+		conflictOnce := func(_ context.Context, _ *WriteEvent) (int64, error) {
+			callCount++
+			// Return a conflict error (as produced by the backwards-compatible update path).
+			return 0, apierrors.NewConflict(schema.GroupResource{
+				Group: "apps", Resource: "dashboards",
+			}, "dash1", fmt.Errorf("resource version does not match current value"))
+		}
+
+		tw := &TenantWatcher{
+			log:                log.NewNopLogger(),
+			pendingDeleteStore: newPendingDeleteStore(ds.kv),
+			dataStore:          ds,
+			writeEvent:         conflictOnce,
+			ctx:                t.Context(),
+			stopCh:             make(chan struct{}),
+		}
+
+		tw.handleTenant(pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+
+		// The write failed with a conflict, but the latest version already has
+		// the label, so the operation should have succeeded overall.
+		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		require.NoError(t, err, "pending delete record should be created despite conflict error")
+	})
+
+	t.Run("conflict error during labelling fails when latest version does not have label", func(t *testing.T) {
+		ds := newDataStore(setupBadgerKV(t))
+
+		// Save the resource at RV 100 without the label.
+		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
+		// Save a newer version at RV 200 also without the label (e.g., an unrelated modification).
+		saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 200, nil)
+
+		conflictWriter := func(_ context.Context, _ *WriteEvent) (int64, error) {
+			return 0, apierrors.NewConflict(schema.GroupResource{
+				Group: "apps", Resource: "dashboards",
+			}, "dash1", fmt.Errorf("resource version does not match current value"))
+		}
+
+		tw := &TenantWatcher{
+			log:                log.NewNopLogger(),
+			pendingDeleteStore: newPendingDeleteStore(ds.kv),
+			dataStore:          ds,
+			writeEvent:         conflictWriter,
+			ctx:                t.Context(),
+			stopCh:             make(chan struct{}),
+		}
+
+		tw.handleTenant(pendingDeleteTenant("tenant-1", "2026-03-01T00:00:00Z"))
+
+		// The latest version does NOT have the label, so this should have failed.
+		_, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
+		assert.ErrorIs(t, err, ErrNotFound, "record should not be created when conflict cannot be resolved")
 	})
 
 	t.Run("partial labelling failure followed by tenant unmark cleans up orphaned labels", func(t *testing.T) {

@@ -1071,6 +1071,7 @@ func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 			},
 		}
 		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+		allowFolderTreeSeed(repoResources, &provisioning.ResourceList{})
 		progress.On("SetTotal", mock.Anything, 1).Return()
 		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 		progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
@@ -1131,6 +1132,7 @@ func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 			},
 		}
 		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+		allowFolderTreeSeed(repoResources, &provisioning.ResourceList{})
 		progress.On("SetTotal", mock.Anything, 1).Return()
 		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
 		progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
@@ -1147,6 +1149,155 @@ func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "detect missing folder metadata: read tree failed")
+	})
+}
+
+func TestIncrementalSync_InvalidFolderMetadata(t *testing.T) {
+	t.Run("created invalid metadata records created warning and still applies fallback folder replay", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		changes := []repository.VersionedFileChange{
+			{Action: repository.FileActionCreated, Path: "alpha/_folder.json", Ref: "new-ref"},
+		}
+		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil).Once()
+		repoResources.On("SetTree", mock.Anything).Return().Once()
+		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
+			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"Broken"}}`),
+		}, nil).Once()
+
+		progress.On("SetTotal", mock.Anything, 1).Return()
+		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+		progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+		progress.On("TooManyErrors").Return(nil)
+		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
+
+		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref").Return("hash-uid", nil)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action() == repository.FileActionUpdated && result.Path() == "alpha/" && result.Name() == "hash-uid"
+		})).Return().Once()
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action() == repository.FileActionCreated &&
+				result.Path() == "alpha/" &&
+				result.Warning() != nil &&
+				errors.Is(result.Warning(), resources.ErrInvalidFolderMetadata)
+		})).Return().Once()
+
+		repo.MockReader.On("ReadTree", mock.Anything, "new-ref").Return([]repository.FileTreeEntry{
+			{Path: "alpha", Blob: false},
+			{Path: "alpha/_folder.json", Blob: true},
+		}, nil)
+
+		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
+		require.NoError(t, err)
+	})
+
+	t.Run("updated invalid metadata records updated warning without replacing the folder", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		changes := []repository.VersionedFileChange{
+			{Action: repository.FileActionUpdated, Path: "alpha/_folder.json", Ref: "new-ref"},
+		}
+		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "stable-uid"},
+			},
+		}, nil).Once()
+		repoResources.On("SetTree", mock.Anything).Return().Once()
+		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
+			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"Broken"}}`),
+		}, nil).Once()
+
+		progress.On("SetTotal", mock.Anything, 1).Return()
+		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+		progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+		progress.On("TooManyErrors").Return(nil)
+		progress.On("HasDirPathFailedCreation", "alpha/").Return(false)
+
+		repoResources.On("EnsureFolderPathExist", mock.Anything, "alpha/", "new-ref").Return("stable-uid", nil)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action() == repository.FileActionUpdated && result.Path() == "alpha/" && result.Name() == "stable-uid"
+		})).Return().Once()
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action() == repository.FileActionUpdated &&
+				result.Path() == "alpha/" &&
+				result.Warning() != nil &&
+				errors.Is(result.Warning(), resources.ErrInvalidFolderMetadata)
+		})).Return().Once()
+
+		repo.MockReader.On("ReadTree", mock.Anything, "new-ref").Return([]repository.FileTreeEntry{
+			{Path: "alpha", Blob: false},
+			{Path: "alpha/_folder.json", Blob: true},
+		}, nil)
+
+		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
+		require.NoError(t, err)
+		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
+	})
+
+	t.Run("renamed invalid metadata records renamed warning and recreates the folder", func(t *testing.T) {
+		repo := newCompositeRepoWithConfig(t)
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		changes := []repository.VersionedFileChange{
+			{Action: repository.FileActionRenamed, Path: "moved/", PreviousPath: "team/", PreviousRef: "old-ref", Ref: "new-ref"},
+			{Action: repository.FileActionRenamed, Path: "moved/_folder.json", PreviousPath: "team/_folder.json", PreviousRef: "old-ref", Ref: "new-ref"},
+		}
+		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "team/", Group: resources.FolderResource.Group, Name: "stable-uid"},
+			},
+		}, nil).Once()
+		repoResources.On("SetTree", mock.Anything).Return().Once()
+		repo.MockReader.On("Read", mock.Anything, "moved/_folder.json", "new-ref").Return(&repository.FileInfo{
+			Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"Broken"}}`),
+		}, nil).Once()
+		repo.MockReader.On("Read", mock.Anything, "team/", "new-ref").Return((*repository.FileInfo)(nil), repository.ErrFileNotFound).Once()
+
+		progress.On("SetTotal", mock.Anything, 1).Return()
+		progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+		progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+		progress.On("TooManyErrors").Return(nil)
+		progress.On("HasDirPathFailedCreation", "moved/").Return(false)
+		progress.On("HasDirPathFailedCreation", "team/").Return(false)
+		progress.On("HasDirPathFailedDeletion", "team/").Return(false)
+		progress.On("HasChildPathFailedCreation", "team/").Return(false)
+		progress.On("HasChildPathFailedUpdate", "team/").Return(false)
+
+		repoResources.On("RenameFolderPath", mock.Anything, "team/", "old-ref", "moved/", "new-ref").Return("stable-uid", nil).Once()
+		repoResources.On("RemoveFolder", mock.Anything, "stable-uid").Return(nil).Once()
+
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action() == repository.FileActionRenamed &&
+				result.Path() == "moved/" &&
+				result.Error() == nil
+		})).Return().Once()
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action() == repository.FileActionDeleted &&
+				result.Path() == "team/" &&
+				result.Name() == "stable-uid"
+		})).Return().Once()
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action() == repository.FileActionRenamed &&
+				result.Path() == "moved/" &&
+				result.Warning() != nil &&
+				errors.Is(result.Warning(), resources.ErrInvalidFolderMetadata)
+		})).Return().Once()
+
+		repo.MockReader.On("ReadTree", mock.Anything, "new-ref").Return([]repository.FileTreeEntry{
+			{Path: "moved", Blob: false},
+			{Path: "moved/_folder.json", Blob: true},
+		}, nil)
+
+		err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
+		require.NoError(t, err)
 	})
 }
 
@@ -1270,7 +1421,8 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "stable-uid"},
 				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "stable-uid"},
 			},
-		}, nil)
+		}, nil).Once()
+		repoResources.On("SetTree", mock.Anything).Return().Once()
 
 		repo.MockReader.On("Read", mock.Anything, "alpha/", "new-ref").Return(&repository.FileInfo{}, nil)
 
@@ -1316,7 +1468,8 @@ func TestIncrementalSync_FolderMetadataDeletion(t *testing.T) {
 		repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
 
 		// No existing folder — just ensure the deletion is skipped gracefully
-		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil)
+		repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{}, nil).Once()
+		repoResources.On("SetTree", mock.Anything).Return().Once()
 
 		progress.On("SetTotal", mock.Anything, mock.Anything).Return()
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -1363,7 +1516,8 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-alpha-uid"},
 				{Path: "alpha/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "old-alpha-uid"},
 			},
-		}, nil)
+		}, nil).Once()
+		repoResources.On("SetTree", mock.Anything).Return().Once()
 
 		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: folderJSON(t, "new-alpha-uid", "Alpha Renamed"),
@@ -1416,7 +1570,8 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-uid"},
 				{Path: "alpha/beta", Group: resources.FolderResource.Group, Name: "beta-uid", Folder: "old-uid"},
 			},
-		}, nil)
+		}, nil).Once()
+		repoResources.On("SetTree", mock.Anything).Return().Once()
 
 		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: folderJSON(t, "new-uid", "Alpha"),
@@ -1463,7 +1618,8 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 			Items: []provisioning.ResourceListItem{
 				{Path: "alpha/", Group: resources.FolderResource.Group, Name: "old-uid"},
 			},
-		}, nil)
+		}, nil).Once()
+		repoResources.On("SetTree", mock.Anything).Return().Once()
 
 		repo.MockReader.On("Read", mock.Anything, "alpha/_folder.json", "new-ref").Return(&repository.FileInfo{
 			Data: folderJSON(t, "new-uid", "Alpha"),
@@ -1501,7 +1657,7 @@ func TestDeleteFolders(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 
 		deleteFolders(context.Background(), nil, repoResources, progress, tracer)
-		deleteFolders(context.Background(), map[string]string{}, repoResources, progress, tracer)
+		deleteFolders(context.Background(), []folderDeletion{}, repoResources, progress, tracer)
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
 		progress.AssertNotCalled(t, "Record", mock.Anything, mock.Anything)
@@ -1523,8 +1679,8 @@ func TestDeleteFolders(t *testing.T) {
 				r.Error() == nil
 		})).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"dashboards/": "folder-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "dashboards/", UID: "folder-uid"},
 		}, repoResources, progress, tracer)
 
 		repoResources.AssertCalled(t, "RemoveFolder", mock.Anything, "folder-uid")
@@ -1546,8 +1702,8 @@ func TestDeleteFolders(t *testing.T) {
 				r.Error().Error() == "delete folder bad-uid: not found"
 		})).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"alpha/": "bad-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "alpha/", UID: "bad-uid"},
 		}, repoResources, progress, tracer)
 	})
 
@@ -1562,8 +1718,8 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"alpha/": "old-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "alpha/", UID: "old-uid"},
 		}, repoResources, progress, tracer)
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
@@ -1581,8 +1737,8 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"dashboards/": "folder-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "dashboards/", UID: "folder-uid"},
 		}, repoResources, progress, tracer)
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
@@ -1601,8 +1757,8 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"alpha/": "old-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "alpha/", UID: "old-uid"},
 		}, repoResources, progress, tracer)
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
@@ -1622,8 +1778,8 @@ func TestDeleteFolders(t *testing.T) {
 				r.Warning() != nil
 		})).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"alpha/": "old-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "alpha/", UID: "old-uid"},
 		}, repoResources, progress, tracer)
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
@@ -1645,11 +1801,11 @@ func TestDeleteFolders(t *testing.T) {
 			}).Return(nil)
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 
-		deleteFolders(context.Background(), map[string]string{
-			"a/":       "shallow-uid",
-			"a/b/":     "mid-uid",
-			"a/b/c/":   "deep-uid",
-			"x/y/z/w/": "deepest-uid",
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "a/", UID: "shallow-uid"},
+			{Path: "a/b/", UID: "mid-uid"},
+			{Path: "a/b/c/", UID: "deep-uid"},
+			{Path: "x/y/z/w/", UID: "deepest-uid"},
 		}, repoResources, progress, tracer)
 
 		require.Len(t, deletionOrder, 4)
@@ -1681,4 +1837,38 @@ func newCompositeRepoWithConfig(t *testing.T) *compositeRepo {
 		MockVersioned: mockVersioned,
 		MockReader:    mockReader,
 	}
+}
+
+func TestDeduplicateFolderDeletions(t *testing.T) {
+	t.Run("removes exact duplicates", func(t *testing.T) {
+		input := []folderDeletion{
+			{Path: "a/", UID: "uid-1"},
+			{Path: "b/", UID: "uid-2"},
+			{Path: "a/", UID: "uid-1"},
+		}
+		result := deduplicateFolderDeletions(input)
+		require.Equal(t, []folderDeletion{
+			{Path: "a/", UID: "uid-1"},
+			{Path: "b/", UID: "uid-2"},
+		}, result)
+	})
+
+	t.Run("keeps entries with same path but different UIDs", func(t *testing.T) {
+		input := []folderDeletion{
+			{Path: "a/", UID: "uid-1"},
+			{Path: "a/", UID: "uid-2"},
+		}
+		result := deduplicateFolderDeletions(input)
+		require.Equal(t, input, result)
+	})
+
+	t.Run("returns empty for empty input", func(t *testing.T) {
+		result := deduplicateFolderDeletions(nil)
+		require.Empty(t, result)
+	})
+}
+
+func allowFolderTreeSeed(repoResources *resources.MockRepositoryResources, target *provisioning.ResourceList) {
+	repoResources.On("List", mock.Anything).Return(target, nil).Maybe()
+	repoResources.On("SetTree", mock.Anything).Return().Maybe()
 }
