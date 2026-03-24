@@ -11,87 +11,45 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// TestIntegrationProvisioning_FullSync_MultiFileUIDSwap verifies the
-// deleteOldResource sourcePath guard during a full sync. File A takes file B's
-// UID while file B moves to a brand-new UID. Full sync processes file
-// creations/updates in parallel; when both writes complete before the deletes
-// (the common case), B's deleteOldResource discovers that its old UID's
-// sourcePath annotation was already changed to dashboard_a.json by A's write
-// and skips the delete, preserving the resource.
-func TestIntegrationProvisioning_FullSync_MultiFileUIDSwap(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
-	ctx := context.Background()
-
-	const repoName = "git-full-uid-swap"
-
-	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard_a.json": gitcommon.DashboardJSON("swap-full-uid-a", "Dashboard A", 1),
-		"dashboard_b.json": gitcommon.DashboardJSON("swap-full-uid-b", "Dashboard B", 1),
-	}, "write", "branch")
-
-	helper.SyncAndWait(t, repoName)
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
-		"swap-full-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
-		"swap-full-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
-	})
-
-	// File A takes B's UID; file B gets a brand-new UID. This is a
-	// one-directional takeover rather than a symmetric swap so that the
-	// parallel write phase does not require recreating a just-deleted resource
-	// (which can race with the storage layer).
-	require.NoError(t, local.UpdateFile("dashboard_a.json", string(gitcommon.DashboardJSON("swap-full-uid-b", "Dashboard A Took B", 2))))
-	require.NoError(t, local.UpdateFile("dashboard_b.json", string(gitcommon.DashboardJSON("swap-full-uid-new", "Dashboard B New UID", 2))))
-	_, err := local.Git("add", ".")
-	require.NoError(t, err)
-	_, err = local.Git("commit", "-m", "file A takes B's UID, B gets new UID")
-	require.NoError(t, err)
-	_, err = local.Git("push")
-	require.NoError(t, err)
-
-	helper.SyncAndWait(t, repoName)
-
-	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
-		"swap-full-uid-b":   {Title: "Dashboard A Took B", SourcePath: "dashboard_a.json"},
-		"swap-full-uid-new": {Title: "Dashboard B New UID", SourcePath: "dashboard_b.json"},
-	})
-}
-
-// TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDSwap verifies the
-// deleteOldResource sourcePath guard during an incremental sync. File A takes
-// file B's UID while file B moves to a brand-new UID. Incremental sync
+// TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDTakeover verifies
+// the deleteOldResource sourcePath guard during an incremental sync. File A
+// takes file B's UID while file B moves to a brand-new UID. Incremental sync
 // processes changes serially in alphabetical order, so A's write updates
 // swap-incr-uid-b's sourcePath annotation to dashboard_a.json before B's
 // deleteOldResource runs. The guard detects the mismatch and skips the delete,
 // preserving the resource that A just claimed.
-func TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDSwap(t *testing.T) {
+//
+// This scenario is tested only with incremental sync because full sync
+// processes files in parallel, making it impossible to guarantee that A's write
+// completes before B's deleteOldResource runs. A unit test in
+// resources_test.go covers the guard logic directly.
+func TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDTakeover(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := gitcommon.RunGrafanaWithGitServer(t)
 	ctx := context.Background()
 
-	const repoName = "git-incr-uid-swap"
+	const repoName = "git-incr-uid-takeover"
 
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard_a.json": gitcommon.DashboardJSON("swap-incr-uid-a", "Dashboard A", 1),
-		"dashboard_b.json": gitcommon.DashboardJSON("swap-incr-uid-b", "Dashboard B", 1),
+		"dashboard_a.json": gitcommon.DashboardJSON("takeover-uid-a", "Dashboard A", 1),
+		"dashboard_b.json": gitcommon.DashboardJSON("takeover-uid-b", "Dashboard B", 1),
 	}, "write", "branch")
 
 	common.SyncAndWaitWithSuccess(t, helper, repoName)
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
-		"swap-incr-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
-		"swap-incr-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
+		"takeover-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
+		"takeover-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
 	})
 
 	// File A takes B's UID; file B gets a brand-new UID. Because incremental
 	// sync processes files sequentially (alphabetical), A runs first: it
-	// updates swap-incr-uid-b so that its sourcePath becomes dashboard_a.json,
-	// then deletes its own old UID (swap-incr-uid-a). When B runs next it
-	// writes the new UID and tries to delete swap-incr-uid-b, but the
+	// updates takeover-uid-b so that its sourcePath becomes dashboard_a.json,
+	// then deletes its own old UID (takeover-uid-a). When B runs next it
+	// writes the new UID and tries to delete takeover-uid-b, but the
 	// sourcePath guard skips the delete since dashboard_a.json ≠ dashboard_b.json.
-	require.NoError(t, local.UpdateFile("dashboard_a.json", string(gitcommon.DashboardJSON("swap-incr-uid-b", "Dashboard A Took B", 2))))
-	require.NoError(t, local.UpdateFile("dashboard_b.json", string(gitcommon.DashboardJSON("swap-incr-uid-new", "Dashboard B New UID", 2))))
+	require.NoError(t, local.UpdateFile("dashboard_a.json", string(gitcommon.DashboardJSON("takeover-uid-b", "Dashboard A Took B", 2))))
+	require.NoError(t, local.UpdateFile("dashboard_b.json", string(gitcommon.DashboardJSON("takeover-uid-new", "Dashboard B New UID", 2))))
 	_, err := local.Git("add", ".")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "file A takes B's UID, B gets new UID")
@@ -102,7 +60,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDSwap(t *testing.
 	helper.SyncAndWaitIncremental(t, repoName)
 
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
-		"swap-incr-uid-b":   {Title: "Dashboard A Took B", SourcePath: "dashboard_a.json"},
-		"swap-incr-uid-new": {Title: "Dashboard B New UID", SourcePath: "dashboard_b.json"},
+		"takeover-uid-b":   {Title: "Dashboard A Took B", SourcePath: "dashboard_a.json"},
+		"takeover-uid-new": {Title: "Dashboard B New UID", SourcePath: "dashboard_b.json"},
 	})
 }
