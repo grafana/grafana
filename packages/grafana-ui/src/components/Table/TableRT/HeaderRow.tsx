@@ -97,9 +97,10 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
 }
 
 const getAriaLabel = (column: string, isDesc: boolean, isSorted: boolean, t: TFunction) => {
-  const columnLabel = t('grafana-ui.table.sort-by-column', 'Sort by column {{column}}', { column });
-  const directionLabel = isDesc
-    ? t('grafana-ui.table.descending', 'descending')
-    : t('grafana-ui.table.ascending', 'ascending');
-  return isSorted ? `${columnLabel}, ${directionLabel}` : columnLabel;
+  const unsortedLabel = t('grafana-ui.table.sort-by-column', 'Sort by column {{column}}', { column });
+  return isSorted
+    ? isDesc
+      ? t('grafana-ui.table.sort-by-column-descending', 'Sort by column {{column}}, descending', { column })
+      : t('grafana-ui.table.sort-by-column-ascending', 'Sort by column {{column}}, ascending', { column })
+    : unsortedLabel;
 };

@@ -10132,7 +10132,6 @@
       "group-tooltip": "Name of the stacking group"
     },
     "table": {
-      "ascending": "ascending",
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
@@ -10140,7 +10139,6 @@
       "copy": "Copy to Clipboard",
       "csv-counts": "Rows:{{rows}}, Columns:{{columns}}",
       "csv-placeholder": "Enter CSV here...",
-      "descending": "descending",
       "filter": {
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
@@ -10182,6 +10180,8 @@
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
       "sort-by-column": "Sort by column {{column}}",
+      "sort-by-column-ascending": "Sort by column {{column}}, ascending",
+      "sort-by-column-descending": "Sort by column {{column}}, descending",
       "sort-column": "Sort column",
       "sparkline": {
         "no-data": "no data"
