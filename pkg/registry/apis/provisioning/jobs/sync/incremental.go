@@ -48,24 +48,39 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	}
 	compareSpan.End()
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCompare, time.Since(compareStart))
-
 	if len(diff) < 1 {
 		progress.SetFinalMessage(ctx, "no changes detected between commits")
 		return nil
 	}
 
 	var replaced []replacedFolder
+	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	if folderMetadataEnabled {
 		readerRepo, ok := repo.(repository.Reader)
 		if !ok {
 			return tracing.Error(span, fmt.Errorf("folder metadata incremental sync requires repository.Reader"))
 		}
 
-		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo, repositoryResources)
-		diff, replaced, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff)
+		target, err := repositoryResources.List(ctx)
+		if err != nil {
+			return tracing.Error(span, fmt.Errorf("list managed resources: %w", err))
+		}
+
+		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo)
+		diff, replaced, invalidFolderMetadata, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff, target)
 		if err != nil {
 			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
 		}
+
+		// Incremental sync normally starts with an empty folder tree, but folder
+		// metadata handling needs the current managed path->UID state before apply:
+		// - invalid `_folder.json` falls back to the existing folder at that path
+		// - valid metadata replacements remove old UIDs from that same tree before replay
+		tree := resources.NewFolderTreeFromResourceList(target)
+		for _, replacedFolder := range replaced {
+			tree.Remove(replacedFolder.OldUID)
+		}
+		repositoryResources.SetTree(tree)
 	}
 
 	progress.SetTotal(ctx, len(diff))
@@ -101,6 +116,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	// Run after deleteFolders so its informational warnings (e.g. missing
 	// _folder.json) don't interfere with HasChildPathFailedUpdate safety checks.
 	if folderMetadataEnabled {
+		recordInvalidFolderMetadataWarnings(ctx, invalidFolderMetadata, progress)
 		if err := detectMissingFolderMetadata(ctx, repo, currentRef, diff, progress, tracer); err != nil {
 			return err
 		}
@@ -416,6 +432,21 @@ func deleteFolders(
 			resultBuilder.WithError(fmt.Errorf("delete folder %s: %w", entry.UID, err))
 		}
 		progress.Record(ctx, resultBuilder.Build())
+	}
+}
+
+// recordInvalidFolderMetadataWarnings writes collected invalid `_folder.json`
+// warnings to job progress after folder cleanup has completed.
+func recordInvalidFolderMetadataWarnings(ctx context.Context, invalid []*resources.InvalidFolderMetadata, progress jobs.JobProgressRecorder) {
+	for _, warning := range invalid {
+		action := warning.Action
+		if action == "" {
+			action = repository.FileActionIgnored
+		}
+		progress.Record(ctx, jobs.NewFolderResult(warning.Path).
+			WithAction(action).
+			WithWarning(warning).
+			Build())
 	}
 }
 
