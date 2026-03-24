@@ -1,5 +1,6 @@
 import { SceneVariableSet } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -7,6 +8,14 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 
 import { deserializeTabsLayout } from './TabsLayoutSerializer';
+
+beforeEach(() => {
+  setTestFlags({ dashboardSectionVariables: true });
+});
+
+afterEach(() => {
+  setTestFlags({});
+});
 
 describe('deserialization', () => {
   it('should deserialize tabs layout with row child', () => {

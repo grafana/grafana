@@ -1,5 +1,6 @@
 import { CustomVariable, SceneGridLayout, SceneVariableSet } from '@grafana/scenes';
 import { Spec as DashboardV2Spec, RowsLayoutSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -8,6 +9,14 @@ import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 
 import { deserializeRowsLayout, serializeRowsLayout } from './RowsLayoutSerializer';
+
+beforeEach(() => {
+  setTestFlags({ dashboardSectionVariables: true });
+});
+
+afterEach(() => {
+  setTestFlags({});
+});
 
 describe('deserialization', () => {
   it('should deserialize rows layout with default grid child', () => {

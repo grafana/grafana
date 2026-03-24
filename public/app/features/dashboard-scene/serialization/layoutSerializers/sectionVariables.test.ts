@@ -1,5 +1,6 @@
 import { ConstantVariable, CustomVariable, SceneVariableSet } from '@grafana/scenes';
 import { ConstantVariableKind, CustomVariableKind, VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
 
@@ -49,6 +50,14 @@ const makeConstantVariableKind = (overrides: Partial<ConstantVariableKind['spec'
     skipUrlSync: false,
     ...overrides,
   },
+});
+
+beforeEach(() => {
+  setTestFlags({ dashboardSectionVariables: true });
+});
+
+afterEach(() => {
+  setTestFlags({});
 });
 
 describe('serializeSectionVariables', () => {
