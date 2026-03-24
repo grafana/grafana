@@ -1,6 +1,6 @@
 package kinds
 
-config: {
+  config: {
 	codegen: {
 		goGenPath: "./pkg/apis"
 	}
