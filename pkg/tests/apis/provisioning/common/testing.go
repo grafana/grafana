@@ -432,6 +432,20 @@ func (h *ProvisioningTestHelper) WriteToProvisioningPath(t *testing.T, name stri
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
+// CleanProvisioningDir removes all entries from the provisioning directory
+// so that leftover files from a previous test don't interfere.
+func (h *ProvisioningTestHelper) CleanProvisioningDir(t *testing.T) {
+	t.Helper()
+	entries, err := os.ReadDir(h.ProvisioningPath)
+	if err != nil {
+		return
+	}
+	for _, entry := range entries {
+		require.NoError(t, os.RemoveAll(filepath.Join(h.ProvisioningPath, entry.Name())),
+			"failed to clean provisioning dir entry %s", entry.Name())
+	}
+}
+
 // DebugState logs the current state of filesystem, repository, and Grafana resources for debugging
 func (h *ProvisioningTestHelper) DebugState(t *testing.T, repo string, label string) {
 	t.Helper()
@@ -1138,6 +1152,7 @@ func (e *SharedEnv) GetCleanHelper(t *testing.T) *ProvisioningTestHelper {
 	t.Helper()
 	h := e.GetHelper(t)
 	h.CleanupAllResources(t, context.Background())
+	h.CleanProvisioningDir(t)
 	return h
 }
 
