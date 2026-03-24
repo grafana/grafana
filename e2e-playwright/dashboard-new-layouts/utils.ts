@@ -75,7 +75,6 @@ export const flows = {
     await variableNameInput.click();
     await variableNameInput.fill(variable.name);
     await variableNameInput.blur();
-    // await expect(variableNameInput).toHaveValue(variable.name);
     if (variable.label) {
       const variableLabelInput = dashboardPage.getByGrafanaSelector(
         selectors.components.PanelEditor.ElementEditPane.variableLabelInput
@@ -83,7 +82,6 @@ export const flows = {
       await variableLabelInput.click();
       await variableLabelInput.fill(variable.label);
       await variableLabelInput.blur();
-      // await expect(variableLabelInput).toHaveValue(variable.label);
     }
   },
   async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
