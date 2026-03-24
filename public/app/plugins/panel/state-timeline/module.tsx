@@ -155,6 +155,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(StateTimelinePanel)
           ],
         },
         defaultValue: defaultOptions.namePosition,
+        showIf: () => !!config.featureToggles.stateTimelineNameAboveBars,
       })
       .addNumberInput({
         path: 'perPage',
