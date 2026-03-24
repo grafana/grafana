@@ -266,14 +266,20 @@ export const AnnotationsPlugin2Cluster = ({
           isVisible = left < plot.rect.width && right > 0;
 
           if (isVisible) {
-            const clampedLeft = Math.max(0, left);
             const clampedRight = Math.min(plot.rect.width, right);
-            const width = clampedRight - clampedLeft;
-            // If the anno is too small to see/click, adjust the left offset and set a minWidth
-            const adjustedLeft =
-              width <= ANNOTATION_REGION_MIN_WIDTH ? clampedLeft - ANNOTATION_REGION_MIN_WIDTH / 2 : clampedLeft;
+            const width = clampedRight - left;
+            const clusteredAnnoTooSmall = vals.clusterIdx?.[i] != null && width <= ANNOTATION_REGION_MIN_WIDTH;
+            // If the clustered anno is too small to see/click, adjust the left offset and set a minWidth
+            const adjustedLeft = clusteredAnnoTooSmall ? left - ANNOTATION_REGION_MIN_WIDTH / 2 : left;
+            const clampedLeft = Math.max(0, adjustedLeft);
 
-            style = { left: adjustedLeft, background: color, width, top, minWidth: ANNOTATION_REGION_MIN_WIDTH };
+            style = {
+              left: clampedLeft,
+              background: color,
+              width,
+              top,
+              minWidth: clusteredAnnoTooSmall ? ANNOTATION_REGION_MIN_WIDTH : undefined,
+            };
           }
         } else {
           isVisible = left >= 0 && left <= plot.rect.width;
