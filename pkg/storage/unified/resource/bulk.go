@@ -32,9 +32,8 @@ type bulkBatchOptions struct {
 
 var (
 	defaultBulkBatchOptions = bulkBatchOptions{MaxItems: 1000, MaxBytes: 2 * 1024 * 1024, MaxIdle: 5 * time.Millisecond}
-	bulkBatchMaxItems       = defaultBulkBatchOptions.MaxItems
-	bulkBatchMaxBytes       = defaultBulkBatchOptions.MaxBytes
-	bulkBatchMaxIdle        = defaultBulkBatchOptions.MaxIdle
+	bulkBatchMu             sync.RWMutex
+	bulkBatchOpts           = defaultBulkBatchOptions
 )
 
 // Logged in trace.
@@ -124,24 +123,24 @@ func NewBulkSettings(md metadata.MD) (BulkSettings, error) {
 }
 
 func currentBulkBatchOptions() bulkBatchOptions {
-	return bulkBatchOptions{
-		MaxItems: bulkBatchMaxItems,
-		MaxBytes: bulkBatchMaxBytes,
-		MaxIdle:  bulkBatchMaxIdle,
-	}
+	bulkBatchMu.RLock()
+	defer bulkBatchMu.RUnlock()
+	return bulkBatchOpts
 }
 
 func setBulkBatchOptionsForTesting(maxItems, maxBytes int, maxIdle time.Duration) func() {
-	prevItems := bulkBatchMaxItems
-	prevBytes := bulkBatchMaxBytes
-	prevIdle := bulkBatchMaxIdle
-	bulkBatchMaxItems = maxItems
-	bulkBatchMaxBytes = maxBytes
-	bulkBatchMaxIdle = maxIdle
+	bulkBatchMu.Lock()
+	prev := bulkBatchOpts
+	bulkBatchOpts = bulkBatchOptions{
+		MaxItems: maxItems,
+		MaxBytes: maxBytes,
+		MaxIdle:  maxIdle,
+	}
+	bulkBatchMu.Unlock()
 	return func() {
-		bulkBatchMaxItems = prevItems
-		bulkBatchMaxBytes = prevBytes
-		bulkBatchMaxIdle = prevIdle
+		bulkBatchMu.Lock()
+		bulkBatchOpts = prev
+		bulkBatchMu.Unlock()
 	}
 }
 
