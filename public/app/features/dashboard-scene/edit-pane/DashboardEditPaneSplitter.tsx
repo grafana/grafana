@@ -86,6 +86,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   const sidebarContext = useSidebar({
     hasOpenPane: Boolean(openPane) && Boolean(isEditing),
     contentMargin: 1,
+    topMargin: 2,
     position: 'right',
     persistanceKey: isEditing ? 'dashboard' : 'dashboard-view',
     defaultToDocked: isEditing ? true : false,
@@ -113,26 +114,13 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     }
   };
 
+  const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
+
   function renderBody() {
-    const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
-
-    // In kiosk mode the full document body scrolls so we don't need to wrap in our own scrollbar
-    if (renderWithoutSidebar) {
-      return (
-        <div
-          className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk)}
-          data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
-        >
-          <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
-        </div>
-      );
-    }
-
     return (
       <div
-        className={styles.bodyWrapper}
+        className={cx(styles.bodyWrapper, renderWithoutSidebar && styles.bodyWrapperKiosk)}
         data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
-        {...sidebarContext.outerWrapperProps}
       >
         <div
           className={styles.scrollContainer}
@@ -142,12 +130,12 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         >
           {body}
         </div>
-
-        <Sidebar contextValue={sidebarContext}>
-          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
-        </Sidebar>
       </div>
     );
+  }
+
+  if (renderWithoutSidebar) {
+    sidebarContext.outerWrapperProps = {};
   }
 
   return (
@@ -157,6 +145,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         !isEditing && isAssistantEnabled && assistantStyles.viewModeHoverOverride,
         isViewModeWithPanelSelected && assistantStyles.viewModeAnimatedBorder
       )}
+      {...sidebarContext.outerWrapperProps}
     >
       <ElementSelectionContext.Provider value={selectionContext}>
         <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
@@ -165,6 +154,11 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         {renderBody()}
         {isViewModeWithPanelSelected && (
           <ViewModePanelPromptCard selection={selection} editPane={editPane} dashboard={dashboard} />
+        )}
+        {!renderWithoutSidebar && (
+          <Sidebar contextValue={sidebarContext}>
+            <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+          </Sidebar>
         )}
       </ElementSelectionContext.Provider>
     </div>

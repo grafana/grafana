@@ -18,6 +18,7 @@ export interface SidebarContextValue {
   bottomMargin: number;
   edgeMargin: number;
   contentMargin: number;
+  topMargin: number;
   isHidden: boolean;
   onToggleDock: () => void;
   onResize: (diff: number) => void;
@@ -43,6 +44,8 @@ export interface UseSideBarOptions {
   edgeMargin?: number;
   /** defaults to 2 grid units (16px) */
   contentMargin?: number;
+  /** defaults to 0 grid units (16px) */
+  topMargin?: number;
   /** Called when pane is closed or clicked outside of (in undocked mode) */
   onClosePane?: () => void;
   /**
@@ -66,6 +69,7 @@ export function useSidebar({
   bottomMargin = 2,
   edgeMargin = 2,
   contentMargin = 2,
+  topMargin = 0,
   persistanceKey,
   onClosePane,
   isHidden = false,
@@ -139,6 +143,7 @@ export function useSidebar({
     edgeMargin,
     bottomMargin,
     contentMargin,
+    topMargin,
     isHidden,
     onClosePane,
   };

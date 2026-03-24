@@ -32,7 +32,11 @@ export function SidebarComp({ children, contextValue }: Props) {
     [styles.containerHidden]: !!contextValue.isHidden,
   });
 
-  const style = { [position]: theme.spacing(edgeMargin), bottom: theme.spacing(bottomMargin) };
+  const style = {
+    [position]: theme.spacing(edgeMargin),
+    bottom: theme.spacing(bottomMargin),
+    top: theme.spacing(contextValue.topMargin),
+  };
 
   const ref = useCustomClickAway((evt) => {
     const portalContainer = getPortalContainer();
