@@ -26,7 +26,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-
 	appadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -89,10 +88,13 @@ type JobHistoryConfig struct {
 }
 
 type APIBuilder struct {
+	gv schema.GroupVersion
+
 	// onlyApiServer used to disable starting controllers for the standalone API server.
 	// HACK:This will be removed once we have proper wire providers for the controllers.
 	// TODO: Set this up in the standalone API server
 	onlyApiServer                       bool
+	isNotPreferredVersion               bool
 	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
@@ -138,84 +140,93 @@ type APIBuilder struct {
 	folderMetadataEnabled bool
 }
 
+type Options struct {
+	GroupVersion                        schema.GroupVersion
+	OnlyApiServer                       bool
+	IsNotPreferredVersion               bool
+	RepoFactory                         repository.Factory
+	ConnectionFactory                   connection.Factory
+	Features                            featuremgmt.FeatureToggles
+	Unified                             resource.ResourceClient
+	ConfigProvider                      apiserver.RestConfigProvider
+	StorageStatus                       dualwrite.Service
+	UsageStats                          usagestats.Service
+	Access                              authlib.AccessChecker
+	Tracer                              tracing.Tracer
+	ExtraBuilders                       []ExtraBuilder
+	ExtraWorkers                        []jobs.Worker
+	JobHistoryConfig                    *JobHistoryConfig
+	AllowedTargets                      []provisioning.SyncTargetType
+	RestConfigGetter                    func(context.Context) (*clientrest.Config, error)
+	AllowImageRendering                 bool
+	MinSyncInterval                     time.Duration
+	Registry                            prometheus.Registerer
+	NewStandaloneClientFactoryFunc      func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory // optional, only used for standalone apiserver
+	UseExclusivelyAccessCheckerForAuthz bool
+	QuotaGetter                         quotas.QuotaGetter
+	FolderMetadataEnabled               bool
+}
+
 // NewAPIBuilder creates an API builder.
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
-func NewAPIBuilder(
-	onlyApiServer bool,
-	repoFactory repository.Factory,
-	connectionFactory connection.Factory,
-	features featuremgmt.FeatureToggles,
-	unified resource.ResourceClient,
-	configProvider apiserver.RestConfigProvider,
-	storageStatus dualwrite.Service,
-	usageStats usagestats.Service,
-	access authlib.AccessChecker,
-	tracer tracing.Tracer,
-	extraBuilders []ExtraBuilder,
-	extraWorkers []jobs.Worker,
-	jobHistoryConfig *JobHistoryConfig,
-	allowedTargets []provisioning.SyncTargetType,
-	restConfigGetter func(context.Context) (*clientrest.Config, error),
-	allowImageRendering bool,
-	minSyncInterval time.Duration,
-	registry prometheus.Registerer,
-	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory, // optional, only used for standalone apiserver
-	useExclusivelyAccessCheckerForAuthz bool,
-	quotaGetter quotas.QuotaGetter,
-	folderMetadataEnabled bool,
-) *APIBuilder {
+func NewAPIBuilder(opts Options) (*APIBuilder, error) {
 	var clients resources.ClientFactory
-	if newStandaloneClientFactoryFunc != nil {
-		clients = newStandaloneClientFactoryFunc(configProvider)
+	if opts.NewStandaloneClientFactoryFunc != nil {
+		clients = opts.NewStandaloneClientFactoryFunc(opts.ConfigProvider)
 	} else {
-		clients = resources.NewClientFactory(configProvider)
+		clients = resources.NewClientFactory(opts.ConfigProvider)
+	}
+	if opts.GroupVersion.Version == "" {
+		return nil, fmt.Errorf("invalid provisioning group/version")
 	}
 
-	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
-	resourceLister := resources.NewResourceListerForMigrations(unified)
+	parsers := resources.NewParserFactory(clients, opts.FolderMetadataEnabled)
+	resourceLister := resources.NewResourceListerForMigrations(opts.Unified)
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker
-	if useExclusivelyAccessCheckerForAuthz {
-		accessChecker = auth.NewTokenAccessChecker(access)
+	if opts.UseExclusivelyAccessCheckerForAuthz {
+		accessChecker = auth.NewTokenAccessChecker(opts.Access)
 	} else {
-		accessChecker = auth.NewSessionAccessChecker(access)
+		accessChecker = auth.NewSessionAccessChecker(opts.Access)
 	}
 
 	b := &APIBuilder{
-		onlyApiServer:                       onlyApiServer,
-		minSyncInterval:                     minSyncInterval,
-		tracer:                              tracer,
-		usageStats:                          usageStats,
-		features:                            features,
-		repoFactory:                         repoFactory,
-		connectionFactory:                   connectionFactory,
+		gv:                                  opts.GroupVersion,
+		onlyApiServer:                       opts.OnlyApiServer,
+		isNotPreferredVersion:               opts.IsNotPreferredVersion,
+		minSyncInterval:                     opts.MinSyncInterval,
+		tracer:                              opts.Tracer,
+		usageStats:                          opts.UsageStats,
+		features:                            opts.Features,
+		repoFactory:                         opts.RepoFactory,
+		connectionFactory:                   opts.ConnectionFactory,
 		clients:                             clients,
 		parsers:                             parsers,
-		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
+		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, opts.Features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
 		resourceLister:                      resourceLister,
-		unified:                             unified,
+		unified:                             opts.Unified,
 		access:                              accessChecker,
 		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
 		accessWithEditor:                    accessChecker.WithFallbackRole(identity.RoleEditor),
 		accessWithViewer:                    accessChecker.WithFallbackRole(identity.RoleViewer),
-		jobHistoryConfig:                    jobHistoryConfig,
-		extraWorkers:                        extraWorkers,
-		restConfigGetter:                    restConfigGetter,
-		allowedTargets:                      allowedTargets,
-		allowImageRendering:                 allowImageRendering,
-		registry:                            registry,
-		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
-		quotaGetter:                         quotaGetter,
-		folderMetadataEnabled:               folderMetadataEnabled,
+		jobHistoryConfig:                    opts.JobHistoryConfig,
+		extraWorkers:                        opts.ExtraWorkers,
+		restConfigGetter:                    opts.RestConfigGetter,
+		allowedTargets:                      opts.AllowedTargets,
+		allowImageRendering:                 opts.AllowImageRendering,
+		registry:                            opts.Registry,
+		useExclusivelyAccessCheckerForAuthz: opts.UseExclusivelyAccessCheckerForAuthz,
+		quotaGetter:                         opts.QuotaGetter,
+		folderMetadataEnabled:               opts.FolderMetadataEnabled,
 	}
 
-	for _, builder := range extraBuilders {
+	for _, builder := range opts.ExtraBuilders {
 		b.extras = append(b.extras, builder(b))
 	}
 
-	return b
+	return b, nil
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -284,30 +295,51 @@ func RegisterAPIService(
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
 
-	builder := NewAPIBuilder(
-		cfg.DisableControllers,
-		repoFactory,
-		connectionFactory,
-		features,
-		client,
-		configProvider,
-		storageStatus,
-		usageStats,
-		access,
-		tracer,
-		extraBuilders,
-		extraWorkers,
-		createJobHistoryConfigFromSettings(cfg),
-		allowedTargets,
-		nil, // will use loopback instead
-		cfg.ProvisioningAllowImageRendering,
-		cfg.ProvisioningMinSyncInterval,
-		reg,
-		nil,
-		false, // TODO: first, test this on the MT side before we enable it by default in ST as well
-		quotaGetter,
-		features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), //nolint:staticcheck
-	)
+	opts := Options{
+		GroupVersion: schema.GroupVersion{
+			Group:   provisioning.GROUP,
+			Version: provisioning.VERSION, // v0alpha1
+		},
+		OnlyApiServer:                       true,
+		IsNotPreferredVersion:               true,
+		RepoFactory:                         repoFactory,
+		ConnectionFactory:                   connectionFactory,
+		Features:                            features,
+		Unified:                             client,
+		ConfigProvider:                      configProvider,
+		StorageStatus:                       storageStatus,
+		UsageStats:                          usageStats,
+		Access:                              access,
+		Tracer:                              tracer,
+		ExtraBuilders:                       extraBuilders,
+		ExtraWorkers:                        extraWorkers,
+		JobHistoryConfig:                    createJobHistoryConfigFromSettings(cfg),
+		AllowedTargets:                      allowedTargets,
+		RestConfigGetter:                    nil, // will use loopback instead
+		AllowImageRendering:                 cfg.ProvisioningAllowImageRendering,
+		MinSyncInterval:                     cfg.ProvisioningMinSyncInterval,
+		Registry:                            reg,
+		NewStandaloneClientFactoryFunc:      nil,
+		UseExclusivelyAccessCheckerForAuthz: false, // TODO: first, test this on the MT side before we enable it by default in ST as well
+		QuotaGetter:                         quotaGetter,
+		FolderMetadataEnabled:               features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), //nolint:staticcheck
+	}
+
+	builder, err := NewAPIBuilder(opts)
+	if err != nil {
+		return nil, err
+	}
+	apiregistration.RegisterAPI(builder)
+
+	// Register additional API version
+	opts.OnlyApiServer = cfg.DisableControllers
+	opts.IsNotPreferredVersion = false    // this is the preferred version
+	opts.GroupVersion.Version = "v1beta1" // preferred version
+	builder, err = NewAPIBuilder(opts)
+	if err != nil {
+		return nil, err
+	}
+
 	apiregistration.RegisterAPI(builder)
 	return builder, nil
 }
@@ -554,7 +586,7 @@ func (b *APIBuilder) authorizeDefault(ctx context.Context) (authorizer.Decision,
 }
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
-	return provisioning.SchemeGroupVersion
+	return b.gv
 }
 
 func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
@@ -574,7 +606,7 @@ func (b *APIBuilder) GetHealthChecker() *controller.RepositoryHealthChecker {
 }
 
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	err := provisioning.AddToScheme(scheme)
+	err := provisioning.AddKnownTypes(b.gv, scheme)
 	if err != nil {
 		return err
 	}
@@ -587,7 +619,7 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 
 	// Register custom field label conversion for Repository to enable field selectors like spec.connection.name
 	err = scheme.AddFieldLabelConversionFunc(
-		provisioning.SchemeGroupVersion.WithKind("Repository"),
+		b.gv.WithKind("Repository"),
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "metadata.name", "metadata.namespace", "spec.connection.name":
@@ -601,9 +633,12 @@ func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
-	metav1.AddToGroupVersion(scheme, provisioning.SchemeGroupVersion)
-	// Only 1 version (for now?)
-	return scheme.SetVersionPriority(provisioning.SchemeGroupVersion)
+	metav1.AddToGroupVersion(scheme, b.gv)
+
+	if !b.isNotPreferredVersion {
+		return scheme.SetVersionPriority(b.gv)
+	}
+	return nil
 }
 
 func (b *APIBuilder) AllowedV0Alpha1Resources() []string {
@@ -712,7 +747,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		}
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return nil
 }
 
@@ -733,6 +768,10 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
+	if b.isNotPreferredVersion {
+		return nil, nil
+	}
+
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
 			var config *clientrest.Config
@@ -980,6 +1019,20 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 }
 
 func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+	if b.gv.Version == "v1beta1" {
+		return func(rc common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+			defs := provisioning.GetOpenAPIDefinitions(rc)
+			for k, v := range defs {
+				k = strings.Replace(k, ".provisioning.v0alpha1.", ".provisioning.v1beta1.", 1)
+				defs[k] = v
+
+				if strings.HasSuffix(k, ".Repository") {
+					fmt.Printf("%+v\n", v)
+				}
+			}
+			return defs
+		}
+	}
 	return provisioning.GetOpenAPIDefinitions
 }
 
