@@ -38,7 +38,7 @@ jest.mock('@grafana/runtime', () => ({
   })),
 }));
 
-function renderInKioskMode(child: React.ReactNode, kioskMode?: KioskMode) {
+function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
   const context = getGrafanaContextMock();
   if (kioskMode !== undefined) {
     context.chrome.update({ kioskMode: KioskMode.Full });
@@ -223,7 +223,7 @@ describe('DashboardControls', () => {
         dashboard.setState({ isEditing: true });
 
         const controls = dashboard.state.controls as DashboardControls;
-        render(<controls.Component model={controls} />);
+        renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
         // Hidden variables should still be visible in edit mode.
         expect(await screen.findByText('query0')).toBeInTheDocument();
@@ -328,7 +328,7 @@ describe('DashboardControls', () => {
 
     it('should show EditDashboardSwitch when editable is true', async () => {
       const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
-      render(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(await screen.findByRole('button', { name: /edit/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
@@ -336,7 +336,7 @@ describe('DashboardControls', () => {
 
     it('should show MakeDashboardEditableButton when editable is false', async () => {
       const controls = buildTestSceneWithEditable({ editable: false, canEdit: false, canMakeEditable: true });
-      render(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(await screen.findByRole('button', { name: /make editable/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
@@ -349,7 +349,7 @@ describe('DashboardControls', () => {
         canMakeEditable: false,
         isSnapshot: true,
       });
-      render(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /make editable/i })).not.toBeInTheDocument();
@@ -359,7 +359,7 @@ describe('DashboardControls', () => {
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
 
       const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
-      render(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(screen.queryByRole('button', { name: /^edit$/i })).not.toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
@@ -380,7 +380,7 @@ describe('DashboardControls', () => {
 
     it('should hide Edit and Share buttons in kiosk mode', async () => {
       const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
-      renderInKioskMode(<controls.Component model={controls} />, KioskMode.Full);
+      renderInGrafanaContext(<controls.Component model={controls} />, KioskMode.Full);
 
       expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).not.toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container)).not.toBeInTheDocument();
@@ -388,9 +388,9 @@ describe('DashboardControls', () => {
 
     it('should show Edit and Share buttons when not in kiosk mode', async () => {
       const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
-      renderInKioskMode(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
-      expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
     });
   });
 });
