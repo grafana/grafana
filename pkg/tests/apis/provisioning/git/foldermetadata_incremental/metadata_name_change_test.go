@@ -21,7 +21,7 @@ import (
 func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedDefaultGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-name-change"

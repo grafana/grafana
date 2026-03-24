@@ -21,12 +21,12 @@ import (
 func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-    helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := sharedGitHelper(t)
 
 	t.Run("invalid metadata creation on existing folder keeps unstable uid and reconciles changed child", func(t *testing.T) {
 		ctx := context.Background()
 		const repoName = "incr-invalid-meta-existing"
-		t.Cleanup(func ()  {
+		t.Cleanup(func() {
 			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
 		})
 
@@ -67,7 +67,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 	t.Run("invalid metadata on new folder falls back to unstable uid and reconciles children", func(t *testing.T) {
 		ctx := context.Background()
 		const repoName = "incr-invalid-meta-new"
-		t.Cleanup(func ()  {
+		t.Cleanup(func() {
 			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
 		})
 
@@ -109,7 +109,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		ctx := context.Background()
 		const repoName = "incr-invalid-meta-update"
 		const stableUID = "team-stable-uid"
-		t.Cleanup(func ()  {
+		t.Cleanup(func() {
 			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
 		})
 
@@ -151,7 +151,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		ctx := context.Background()
 		const repoName = "incr-invalid-meta-follow-up-child"
 		const stableUID = "team-stable-uid"
-		t.Cleanup(func ()  {
+		t.Cleanup(func() {
 			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
 		})
 
@@ -210,7 +210,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		const repoName = "incr-invalid-meta-with-valid-replaced"
 		const parentStableUID = "parent-stable-uid"
 		const childUID = "child-stable-uid"
-		t.Cleanup(func ()  {
+		t.Cleanup(func() {
 			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
 		})
 
@@ -263,7 +263,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 	t.Run("moving a resource into an existing folder with invalid metadata still works", func(t *testing.T) {
 		ctx := context.Background()
 		const repoName = "incr-invalid-meta-move-into-existing"
-		t.Cleanup(func ()  {
+		t.Cleanup(func() {
 			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
 		})
 
@@ -303,7 +303,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 	t.Run("moving a resource into a new folder with invalid metadata falls back to unstable uid", func(t *testing.T) {
 		ctx := context.Background()
 		const repoName = "incr-invalid-meta-move-into-new"
-		t.Cleanup(func ()  {
+		t.Cleanup(func() {
 			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
 		})
 
@@ -345,7 +345,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		ctx := context.Background()
 		const repoName = "incr-invalid-meta-folder-move"
 		const stableUID = "team-stable-uid"
-		t.Cleanup(func ()  {
+		t.Cleanup(func() {
 			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
 		})
 
@@ -395,7 +395,7 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 		const repoName = "incr-invalid-meta-with-valid-rename"
 		const parentStableUID = "parent-stable-uid"
 		const childUID = "child-stable-uid"
-		t.Cleanup(func ()  {
+		t.Cleanup(func() {
 			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
 		})
 

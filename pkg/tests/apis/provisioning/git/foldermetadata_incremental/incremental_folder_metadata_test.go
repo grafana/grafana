@@ -22,7 +22,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("detects missing folder metadata after adding file to folder", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 
 		const repoName = "incr-missing-meta-add"
 
@@ -60,7 +60,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 	})
 
 	t.Run("noop incremental sync still detects missing metadata", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 
 		const repoName = "incr-missing-meta-noop"
 
@@ -101,7 +101,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagEnabl
 func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := gitcommon.RunGrafanaWithGitServer(t) // no withProvisioningFolderMetadata
+	helper := sharedDefaultGitHelper(t) // no withProvisioningFolderMetadata
 
 	const repoName = "incr-missing-meta-disabled"
 
@@ -163,7 +163,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("folder uses spec.title from _folder.json", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title"
@@ -192,7 +192,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 	})
 
 	t.Run("folder falls back to directory name when spec.title is empty", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title-empty"
@@ -219,7 +219,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 	})
 
 	t.Run("folder uses directory name when no _folder.json exists", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title-absent"
@@ -245,7 +245,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitle(t *testing.
 	})
 
 	t.Run("nested folders use respective spec.title from _folder.json", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title-nested"
@@ -278,7 +278,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("adding _folder.json clears prior missing metadata warnings", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-create-clears-warning"
@@ -322,7 +322,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 	})
 
 	t.Run("new _folder.json creates a brand-new empty folder", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-create-empty-folder"
@@ -349,7 +349,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 	})
 
 	t.Run("new _folder.json transitions existing folder to stable uid", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-create-existing"
@@ -381,7 +381,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 	})
 
 	t.Run("new _folder.json transitions existing folder to stable uid and re-parents children", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-create-existing"
@@ -420,7 +420,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 	})
 
 	t.Run("new _folder.json with direct child rename does not replay the old child path", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-create-child-rename"
@@ -454,7 +454,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataCreation(t *testi
 	})
 
 	t.Run("new nested _folder.json files transition both parent and child to stable uids", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-create-nested"
@@ -505,7 +505,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("updates folder title when _folder.json spec.title changes", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title-update"
@@ -532,7 +532,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 	})
 
 	t.Run("updates nested folder title", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title-nested-upd"
@@ -562,7 +562,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataTitleUpdate(t *te
 	})
 
 	t.Run("updates title alongside dashboard changes", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-title-with-dash"
@@ -601,7 +601,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("root to root rename", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-rename-root-root"
@@ -653,7 +653,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("nested to nested rename within same parent", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-rename-nested-nested"
@@ -707,7 +707,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("root to nested rename", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-rename-root-nested"
@@ -762,7 +762,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("nested to root rename", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-rename-nested-root"
@@ -816,7 +816,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("rename folder with both resources and folder children", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-rename-mixed"
@@ -897,7 +897,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 	})
 
 	t.Run("non-metadata folder rename still works via delete and create", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-graceful-rename-nometa"
@@ -934,7 +934,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("simple UID change re-parents dashboard", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-uid-change-simple"
@@ -980,7 +980,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 	})
 
 	t.Run("UID change with nested child folder", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-uid-change-nested"
@@ -1035,7 +1035,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 	})
 
 	t.Run("UID change alongside dashboard update in same commit", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-uid-change-combo"
@@ -1077,7 +1077,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 	})
 
 	t.Run("chained UID changes never accumulate orphans", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-uid-chained"
@@ -1132,7 +1132,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderUIDChange(t *testing.T) {
 	})
 
 	t.Run("full sync after incremental UID changes cleans up any remaining orphans", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-uid-full-cleanup"
@@ -1179,7 +1179,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("simple metadata deletion re-parents dashboard", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-delete-simple"
@@ -1228,7 +1228,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 	})
 
 	t.Run("metadata deletion with nested child folder", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-delete-nested"
@@ -1284,7 +1284,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 	})
 
 	t.Run("metadata deletion re-parents all direct children", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-delete-children"
@@ -1354,7 +1354,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataDeletion(t *testi
 	})
 
 	t.Run("metadata deletion alongside dashboard update in same commit", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-delete-combo"
@@ -1406,7 +1406,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("metadata-only folder rename cleans up old folder", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-rename-orphan"
@@ -1449,7 +1449,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 	})
 
 	t.Run("metadata moved to folder with dashboard but no metadata", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-rename-to-existing"
@@ -1498,7 +1498,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 	})
 
 	t.Run("metadata moved to folder with dashboard and pre-existing metadata", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-rename-over"
@@ -1551,7 +1551,7 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 	})
 
 	t.Run("metadata-only empty folder rename cleans up old folder", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+		helper := sharedGitHelper(t)
 		ctx := context.Background()
 
 		const repoName = "incr-meta-rename-empty"
