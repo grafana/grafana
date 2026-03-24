@@ -19,7 +19,7 @@ import { AnnotationMarker2 } from './annotations2-cluster/AnnotationMarker2';
 import { AnnotationVals, XYAnnoVals } from './annotations2-cluster/types';
 import { ClusteringMode, useAnnotationClustering } from './annotations2-cluster/useAnnotationClustering';
 import { useAnnotations } from './annotations2-cluster/useAnnotations';
-import { ANNOTATION_LANE_SIZE } from './utils';
+import { ANNOTATION_LANE_SIZE, ANNOTATION_REGION_MIN_WIDTH } from './utils';
 
 interface AnnotationsPlugin2ClusterProps {
   config: UPlotConfigBuilder;
@@ -268,8 +268,12 @@ export const AnnotationsPlugin2Cluster = ({
           if (isVisible) {
             const clampedLeft = Math.max(0, left);
             const clampedRight = Math.min(plot.rect.width, right);
+            const width = clampedRight - clampedLeft;
+            // If the anno is too small to see/click, adjust the left offset and set a minWidth
+            const adjustedLeft =
+              width <= ANNOTATION_REGION_MIN_WIDTH ? clampedLeft - ANNOTATION_REGION_MIN_WIDTH / 2 : clampedLeft;
 
-            style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
+            style = { left: adjustedLeft, background: color, width, top, minWidth: ANNOTATION_REGION_MIN_WIDTH };
           }
         } else {
           isVisible = left >= 0 && left <= plot.rect.width;

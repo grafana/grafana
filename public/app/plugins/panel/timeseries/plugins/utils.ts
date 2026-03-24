@@ -2,6 +2,7 @@ import { DataFrame, FieldType } from '@grafana/data';
 
 // Annotation points/regions are 5px with 1px of padding
 export const ANNOTATION_LANE_SIZE = 7;
+export const ANNOTATION_REGION_MIN_WIDTH = 5;
 
 export function getXAnnotationFrames(dataFrames: DataFrame[] = []) {
   return dataFrames.filter(
