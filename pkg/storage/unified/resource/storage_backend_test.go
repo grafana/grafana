@@ -2721,6 +2721,73 @@ func TestKvStorageBackend_ListHistory_Behaviour(t *testing.T) {
 		require.Len(t, items, 0)
 	})
 
+	t.Run("History_Pagination_NotOlderThan", func(t *testing.T) {
+		// Paginate through history entries and verify descending RV order across pages
+		backend := setupTestStorageBackend(t)
+		ctx := t.Context()
+
+		const numVersions = 7
+		rvs := make([]int64, numVersions)
+
+		// Create initial resource
+		rv, _ := addTestObject(t, backend, ctx, ns, "paged", "v0")
+		rvs[numVersions-1] = rv
+
+		// Create additional versions, storing them in reverse order for ease of comparison later.
+		for i := 1; i < numVersions; i++ {
+			obj, err := createTestObjectWithName("paged", ns, fmt.Sprintf("v%d", i))
+			require.NoError(t, err)
+			rv = updateTestObject(t, backend, ctx, obj, rv, ns, "paged", fmt.Sprintf("v%d", i))
+			rvs[numVersions-i-1] = rv
+		}
+
+		// Page through with limit=3, expecting descending RV order
+		var allRVs []int64
+		nextToken := ""
+		for range 3 {
+			req := &resourcepb.ListRequest{
+				Source:         resourcepb.ListRequest_HISTORY,
+				Limit:          3,
+				VersionMatchV2: resourcepb.ResourceVersionMatchV2_NotOlderThan,
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Namespace: ns.Namespace, Group: ns.Group, Resource: ns.Resource, Name: "paged",
+					},
+				},
+			}
+			if nextToken != "" {
+				req.NextPageToken = nextToken
+			}
+
+			var historyRVs []int64
+			_, err := backend.ListHistory(ctx, req, func(iter ListIterator) error {
+				count := 0
+				for iter.Next() {
+					if err := iter.Error(); err != nil {
+						return err
+					}
+					historyRVs = append(historyRVs, iter.ResourceVersion())
+					count++
+					if count >= int(req.Limit) {
+						nextToken = iter.ContinueToken()
+						return nil
+					}
+				}
+				nextToken = "" // no more pages
+				return iter.Error()
+			})
+			require.NoError(t, err)
+			allRVs = append(allRVs, historyRVs...)
+
+			if nextToken == "" {
+				break
+			}
+		}
+
+		// All versions should be returned
+		require.Equal(t, rvs, allRVs)
+	})
+
 	for _, tc := range []struct {
 		name       string
 		ns         NamespacedResource
