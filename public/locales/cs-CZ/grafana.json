@@ -385,6 +385,7 @@
         "group-by": "Seskupeno podle",
         "group-title": "Konfigurace oznámení",
         "mute-timings": "Ztlumit časování",
+        "notification-policy": "",
         "timing-options": "Časování"
       },
       "pending-period": "Čekající období",
@@ -503,6 +504,15 @@
     },
     "alert-rule": {
       "term": "Pravidlo výstrahy"
+    },
+    "alert-rule-drawer": {
+      "error-title": "",
+      "error-unexpected": "",
+      "error-unknown": "",
+      "success-message": "",
+      "success-title": "",
+      "validation-error-message": "",
+      "validation-error-title": ""
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -886,6 +896,8 @@
       "export-all": "Exportovat vše",
       "learn-more": "Zjistěte víc",
       "loading": "Načítání…",
+      "optional": "",
+      "refresh": "",
       "search-by-matchers": "Hledat podle shody",
       "titles": {
         "notification-templates": "Šablony oznámení"
@@ -1865,7 +1877,7 @@
       },
       "history-error": "Nepodařilo se načíst historii stavu",
       "history-error-desc": "Nelze načíst historii přechodu stavu pro tuto instanci.",
-      "instance-timeline": "",
+      "instance-history-heading": "",
       "no-history": "Žádné nedávné změny stavu",
       "notifications-error": "",
       "notifications-error-desc": "",
@@ -1877,6 +1889,8 @@
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
+      "timeline-dot-all-failed": "",
+      "timeline-dot-some-failed": "",
       "timeline-empty": "",
       "timeline-failed": "",
       "timeline-filter-all": "",
@@ -1884,21 +1898,17 @@
       "timeline-filter-notifications": "",
       "timeline-filter-states": "",
       "timeline-loading": "",
-      "timeline-mixed-outcome": "",
-      "timeline-one-notification": "",
+      "timeline-notification-label": "",
+      "timeline-partial-failure": "",
       "timeline-status-firing": "",
       "timeline-status-resolved": "",
       "timeline-toggle-notifications": "",
       "view-notification-detail": "",
       "view-notification-tooltip": "",
-      "timeline-n-notifications_one": "",
-      "timeline-n-notifications_few": "",
-      "timeline-n-notifications_many": "",
-      "timeline-n-notifications_other": "",
-      "timeline-n-receivers_one": "",
-      "timeline-n-receivers_few": "",
-      "timeline-n-receivers_many": "",
-      "timeline-n-receivers_other": ""
+      "timeline-n-uniqueReceivers_one": "",
+      "timeline-n-uniqueReceivers_few": "",
+      "timeline-n-uniqueReceivers_many": "",
+      "timeline-n-uniqueReceivers_other": ""
     },
     "instance-match": {
       "non-matching-labels": "Neshodné štítky",
@@ -2043,6 +2053,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "",
+          "notification-policy": "",
           "select-contact-point": "Vybrat kontaktní bod",
           "use-notification-policy": "Použít zásadu oznamování"
         }
@@ -3316,12 +3328,57 @@
       "title-the-selected-alertmanager-has-no-configuration": "Vybraný správce výstrah nemá žádnou konfiguraci"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "",
+      "aria-label-threshold": "",
+      "aria-label-threshold-from": "",
+      "aria-label-threshold-to": "",
       "label-of-query": "DOTAZU",
       "label-when": "KDY",
       "label-when-query": "PŘI DOTAZU"
     },
     "simpleCondition": {
       "alertCondition": "Podmínka výstrahy"
+    },
+    "simplified": {
+      "condition": {
+        "title": ""
+      },
+      "continue-in-alerting": "",
+      "create": "",
+      "evaluation": {
+        "immediate-warning": ""
+      },
+      "notification": {
+        "contact-point-selected": "",
+        "description": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "manual-routing": {
+          "aria": ""
+        },
+        "policy-selected": "",
+        "recipient": {
+          "label": ""
+        },
+        "refresh-error": "",
+        "runbook-url": {
+          "aria-label": "",
+          "invalid-format": "",
+          "invalid-protocol": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "select-contact-point": "",
+        "summary": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "title": ""
+      },
+      "rule-definition": ""
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Spravovaný zdroj dat",
@@ -3532,7 +3589,9 @@
       "error-loading-rule": "Chyba při načítání pravidla",
       "high-activity-labels": "",
       "instance-details-drawer": {
-        "instance-details": "Podrobnosti o instanci"
+        "declare-incident": "",
+        "instance-details": "Podrobnosti o instanci",
+        "silence-button": ""
       },
       "no-firing-or-pending-instances": "Pro vybraný časový rozsah nemáte žádné výskyty výstrah ve stavu spuštění nebo čekání.",
       "no-instances-found": "Nebyly nalezeny žádné instance výstrah pro pravidlo: {{ruleUID}}",
@@ -5284,6 +5343,12 @@
       "ungroup-rows": "Zrušit seskupení řádků",
       "ungroup-tabs": "Zrušit seskupení karet"
     },
+    "code-pane": {
+      "collapse": "",
+      "expand": "",
+      "header": "",
+      "modal-title": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -6168,6 +6233,13 @@
       "save-json-to-file": "Uložit JSON do souboru",
       "see-docs": "Další informace o zajištění najdete v <2>dokumentaci</2>."
     },
+    "schema-editor": {
+      "apply-button": "",
+      "apply-button-disabled-tooltip": "",
+      "apply-button-disabled-tooltip-yaml": "",
+      "apply-error-title": "",
+      "undo-title": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6182,6 +6254,10 @@
       "dashboard-options": {
         "title": "Možnosti",
         "tooltip": "Možnosti nástěnky"
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
       },
       "export": {
         "title": "Exportovat"
@@ -6525,11 +6601,14 @@
     "browse-plugins": "Procházet pluginy",
     "card": {
       "customize-with-assistant-button": "",
+      "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Zdroj dat poskytnut",
       "details-tooltip": "Podrobnosti",
       "no-preview": "",
-      "use-dashboard-button": "Použít nástěnku",
-      "view-template-button": ""
+      "view-dashboard-button": "",
+      "view-dashboard-button-label": "",
+      "view-template-button": "",
+      "view-template-button-label": ""
     },
     "community-empty-title": "Nebyly nalezeny žádné komunitní nástěnky",
     "community-empty-title-with-datasource": "Nebyly nalezeny žádné komunitní nástěnky {{datasourceType}}",
@@ -6615,6 +6694,9 @@
       "label-data-source": "Zdroj dat",
       "label-use-static-key-dimensions": "Použít dimenze statického klíče",
       "name-allow-custom-values": "Povolit vlastní hodnoty"
+    },
+    "add-filters": {
+      "label": ""
     },
     "add-link": {
       "inline-instance-name": "",
@@ -7679,6 +7761,11 @@
   "dashboard-scene-help-wizard": {
     "support-bundle": "Balíček podpory obsahující informace ohledně vaší instance Grafana a nakonfigurovaných zdrojů dat můžete také získat v části <1>Balíčky podpory</1>."
   },
+  "dashboard-schema-editor": {
+    "format-label": "",
+    "json-disabled-tooltip": "",
+    "yaml-disabled-tooltip": ""
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Vysvětlivky"
@@ -7709,6 +7796,8 @@
     },
     "json-editor": {
       "save-button": "Uložit změny",
+      "save-button-disabled-tooltip": "",
+      "save-button-disabled-tooltip-yaml": "",
       "subtitle": "Model JSON dole je datová struktura, která definuje nástěnku. Patří sem nastavení nástěnky, nastavení panelu, rozvržení, dotazy atd.",
       "title": "Model JSON"
     },
@@ -8992,9 +9081,6 @@
     "data-links-actions-menu": "",
     "description-min-height": "Minimální výška řádku (vodorovná orientace)",
     "description-min-width": "Minimální šířka sloupce (svislá orientace)",
-    "description-neutral": "Ponechte prázdné pro použití Min. jako neutrálního bodu",
-    "description-show-threshold-labels": "Vykreslit prahové hodnoty kolem měřicí lišty",
-    "description-show-threshold-markers": "Vykreslí prahové hodnoty jako vnější lištu",
     "gauge-size-options": {
       "label-auto": "Auto",
       "label-manual": "Manuálně"
@@ -9002,11 +9088,7 @@
     "name-gauge-size": "Velikost měřidla",
     "name-min-height": "Min. výška",
     "name-min-width": "Min. šířka",
-    "name-neutral": "Neutrální",
-    "name-show-threshold-labels": "Zobrazit štítky prahových hodnot",
-    "name-show-threshold-markers": "Zobrazit značky prahových hodnot",
     "neutral": "Neutrální {{value}}",
-    "placeholder-neutral": "auto.",
     "presets": {
       "circle": "",
       "circle_desc": "",
@@ -9023,8 +9105,7 @@
     },
     "suggestions": {
       "arc": "Metrika",
-      "circular": "Kruhová metrika",
-      "no-thresholds": "Metrika – žádné prahové hodnoty"
+      "circular": "Kruhová metrika"
     },
     "threshold": "Prahová hodnota {{value}}"
   },
@@ -10443,11 +10524,14 @@
       "remove-button": "Odebrat {{children}}"
     },
     "viz-legend": {
+      "all-series-selected": "",
       "clear-filters": "",
+      "color-picker": "",
       "faceted-by-labels": "",
       "faceted-by-name": "",
       "faceted-deselect-all": "",
       "faceted-select-all": "",
+      "only-this-series-selected": "",
       "pin-filter": "",
       "right-axis-indicator": "(pravá osa y)",
       "series-visibility": "",
@@ -11057,6 +11141,7 @@
       "collapse": "Sbalit postranní panel",
       "expand": "Rozbalit postranní panel",
       "label-title": "{{fieldName}} se objeví v {{percentage}} % řádcích protokolu",
+      "log-level": "",
       "placeholder-search-fields-by-name": "Hledat pole podle názvu",
       "title-drag-and-drop-to-reorder": "Přetažením změníte pořadí"
     },
@@ -12098,8 +12183,9 @@
       "upgrade-tooltip": "Upgradujte a přidejte další uživatele"
     },
     "item": {
-      "add-bookmark": "",
-      "remove-bookmark": ""
+      "bookmark": {
+        "tooltip": ""
+      }
     },
     "kiosk": {
       "tv-alert": "Stisknutím klávesy ESC ukončíte režim kiosku"
@@ -13996,6 +14082,7 @@
     "sidebar": {
       "add-below": "",
       "add-expression": "",
+      "add-expression-disabled": "",
       "add-query": "",
       "add-query-or-expression": "",
       "add-saved-query": "",

@@ -61,18 +61,6 @@ func setupTestStorageBackend(t *testing.T, configs ...func(*KVBackendOptions)) *
 	return kvBackend
 }
 
-func setupTestStorageBackendWithClusterScope(t *testing.T) *kvStorageBackend {
-	kv := setupBadgerKV(t)
-	opts := KVBackendOptions{
-		KvStore:                      kv,
-		WithExperimentalClusterScope: true,
-	}
-	backend, err := NewKVStorageBackend(opts)
-	kvBackend := backend.(*kvStorageBackend)
-	require.NoError(t, err)
-	return kvBackend
-}
-
 func TestNewKvStorageBackend(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 
@@ -2122,7 +2110,7 @@ func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstruc
 
 // TestKvStorageBackend_ClusterScopedResources tests create, update, delete, list, and watch
 // operations for cluster-scoped resources (empty namespace).
-// This test requires the backend to be configured with WithExperimentalClusterScoped set to true.
+// Cluster-scoped resources use empty namespace, like etcd.
 //
 // The test verifies that:
 // - All write operations accept empty namespace
@@ -2130,7 +2118,18 @@ func createAndWriteTestObject(t *testing.T, backend *kvStorageBackend) (*unstruc
 // - ListIterator results return empty namespace
 // - WatchWriteEvents return empty namespace
 func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
-	backend := setupTestStorageBackendWithClusterScope(t)
+	t.Run("badger", func(t *testing.T) {
+		backend := setupTestStorageBackend(t)
+		testClusterScopedResources(t, backend)
+	})
+
+	t.Run("sqlkv", func(t *testing.T) {
+		backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)))
+		testClusterScopedResources(t, backend)
+	})
+}
+
+func testClusterScopedResources(t *testing.T, backend *kvStorageBackend) {
 	ctx := context.Background()
 
 	// Start watching for events before creating resources

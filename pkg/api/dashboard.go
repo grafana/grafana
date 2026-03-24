@@ -72,6 +72,9 @@ func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashU
 //
 // Get dashboard by uid.
 //
+// Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first
+// (for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.
+//
 // Will return the dashboard given the dashboard unique identifier (uid).
 //
 // Responses:
@@ -89,15 +92,13 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 	c.Req = c.Req.WithContext(ctx)
 
 	uid := web.Params(c.Req)[":uid"]
-	dash, rsp := hs.getDashboardHelper(ctx, c.GetOrgID(), uid)
+	apiVersion := strings.TrimSpace(c.Req.URL.Query().Get("apiVersion"))
+	dash, rsp := hs.getDashboardHelper(ctx, c.GetOrgID(), uid, apiVersion)
 	if rsp != nil {
 		return rsp
 	}
 
-	var (
-		publicDashboardEnabled = false
-		err                    error
-	)
+	publicDashboardEnabled := false
 
 	// If public dashboards is enabled and we have a public dashboard, update meta values
 	if hs.Cfg.PublicDashboardsEnabled {
@@ -305,11 +306,15 @@ func (hs *HTTPServer) getIdentityName(ctx context.Context, orgID, id int64) stri
 	return ident.GetLogin()
 }
 
-func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, response.Response) {
+func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, uid string, k8sGetAPIVersion string) (*dashboards.Dashboard, response.Response) {
 	ctx, span := hs.tracer.Start(ctx, "api.getDashboardHelper")
 	defer span.End()
 
-	queryResult, err := hs.DashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: uid, OrgID: orgID})
+	queryResult, err := hs.DashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+		UID:              uid,
+		OrgID:            orgID,
+		K8sGetAPIVersion: k8sGetAPIVersion,
+	})
 	if err != nil {
 		return nil, response.Error(http.StatusNotFound, "Dashboard not found", err)
 	}
@@ -341,7 +346,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 	uid := web.Params(c.Req)[":uid"]
 
 	var rsp response.Response
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), uid)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), uid, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -789,7 +794,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "uid is required", nil)
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID, "")
 	if rsp != nil {
 		return rsp
 	}
@@ -880,7 +885,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "uid is required", nil)
 	}
 
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID)
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.GetOrgID(), dashUID, "")
 	if rsp != nil {
 		return rsp
 	}
