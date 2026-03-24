@@ -131,17 +131,22 @@ export function DataSourcesListView({
         .map((_, index) => <DataSourcesListCard.Skeleton key={index} hasExploreRights={hasExploreRights} />);
     }
 
-    return dataSources.map((dataSource) => (
-      <li key={dataSource.uid}>
-        <DataSourcesListCard
-          dataSource={dataSource}
-          hasWriteRights={hasWriteRights}
-          hasExploreRights={hasExploreRights}
-          hasFailures={datasourceFailureByUID.has(dataSource.uid)}
-          failureSeverity={datasourceFailureByUID.get(dataSource.uid)}
-        />
-      </li>
-    ));
+    return dataSources.map((dataSource) => {
+      const failure = datasourceFailureByUID.get(dataSource.uid);
+
+      return (
+        <li key={dataSource.uid}>
+          <DataSourcesListCard
+            dataSource={dataSource}
+            hasWriteRights={hasWriteRights}
+            hasExploreRights={hasExploreRights}
+            hasFailures={Boolean(failure)}
+            failureSeverity={failure?.severity}
+            failureMessage={failure?.message}
+          />
+        </li>
+      );
+    });
   };
 
   return (

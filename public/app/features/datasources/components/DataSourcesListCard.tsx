@@ -11,7 +11,7 @@ import { FailureSeverity } from '../../connections/hooks/useFailedDatasourcesUID
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
-import { DataSourceFailureTag } from './DataSourceFailureTag';
+import { DataSourceFailureBadge } from './DataSourceFailureBadge';
 
 export interface Props {
   dataSource: DataSourceSettings;
@@ -19,6 +19,7 @@ export interface Props {
   hasExploreRights: boolean;
   hasFailures?: boolean;
   failureSeverity?: FailureSeverity;
+  failureMessage?: string;
 }
 
 export function DataSourcesListCard({
@@ -27,6 +28,7 @@ export function DataSourcesListCard({
   hasExploreRights,
   hasFailures,
   failureSeverity,
+  failureMessage,
 }: Props) {
   const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
@@ -42,7 +44,10 @@ export function DataSourcesListCard({
           dataSource.typeName,
           dataSource.url,
           dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
-          hasFailures && failureSeverity && <DataSourceFailureTag key="unhealthy-tag" severity={failureSeverity} />,
+          hasFailures &&
+            failureSeverity && (
+              <DataSourceFailureBadge key="unhealthy-badge" severity={failureSeverity} message={failureMessage} />
+            ),
         ]}
       </Card.Meta>
       <Card.Tags>
