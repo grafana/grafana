@@ -79,7 +79,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 	}
 
 	if body.AlertmanagersChoice == nil && body.RemoteAlertmanagerUID == nil {
-		return response.Error(http.StatusBadRequest, "no fields to update", nil)
+		return response.Error(http.StatusBadRequest, "No fields to update", nil)
 	}
 
 	adminConfig := ngmodels.AdminConfiguration{
