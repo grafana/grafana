@@ -2,6 +2,7 @@ import { isEqual } from 'lodash';
 import { memo, SyntheticEvent, useCallback, useEffect, useId, useState } from 'react';
 import { usePrevious } from 'react-use';
 
+import { QueryWithAssistantButton } from '@grafana/assistant';
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
@@ -12,7 +13,7 @@ import {
   QueryHeaderSwitch,
   QueryEditorMode,
 } from '@grafana/plugin-ui';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
@@ -51,6 +52,10 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
 
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
+
+  const showAssistant =
+    config.featureToggles.queryWithAssistant &&
+    (app === CoreApp.Explore || app === CoreApp.Dashboard || app === CoreApp.PanelEditor);
 
   const onExplainChange = (event: SyntheticEvent<HTMLInputElement>) => {
     window.localStorage.setItem(lokiQueryEditorExplainKey, event.currentTarget.checked ? 'true' : 'false');
@@ -150,6 +155,15 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
         timeRange={timeRange}
       />
       <EditorHeader>
+        {showAssistant && (
+          <QueryWithAssistantButton
+            currentQuery={query}
+            queries={queries ?? [query]}
+            dataSourceInstanceSettings={datasource.instanceSettings}
+            datasourceApi={null}
+            app={app}
+          />
+        )}
         <Stack gap={1}>
           <Button
             data-testid={selectors.components.QueryBuilder.queryPatterns}
