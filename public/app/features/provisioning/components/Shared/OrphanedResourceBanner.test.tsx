@@ -38,7 +38,7 @@ describe('OrphanedResourceBanner', () => {
   it('shows Release and Delete for admins', () => {
     render(<OrphanedResourceBanner repositoryName="gone-repo" />);
 
-    expect(screen.getByRole('button', { name: 'Release' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Convert to local' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
 
@@ -48,11 +48,11 @@ describe('OrphanedResourceBanner', () => {
 
     render(<OrphanedResourceBanner repositoryName="gone-repo" />);
 
-    expect(screen.queryByRole('button', { name: 'Release' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Convert to local' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     expect(
       screen.getByText(
-        /Contact your Grafana administrator to release or delete all resources from the missing repository/
+        /Contact your Grafana administrator to convert this resource to local or delete all resources from the missing repository/
       )
     ).toBeInTheDocument();
   });
@@ -63,7 +63,7 @@ describe('OrphanedResourceBanner', () => {
 
     const { user } = render(<OrphanedResourceBanner repositoryName="gone-repo" />);
 
-    await user.click(screen.getByRole('button', { name: 'Release' }));
+    await user.click(screen.getByRole('button', { name: 'Convert to local' }));
 
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByText('Release all resources from this repository?')).toBeInTheDocument();
