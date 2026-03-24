@@ -1,6 +1,6 @@
 import { Unsubscribable } from 'rxjs';
 
-import { DataSourceApi, DEFAULT_APPLICABILITY_KEY, DrilldownsApplicability } from '@grafana/data';
+import { DEFAULT_APPLICABILITY_KEY, DrilldownsApplicability } from '@grafana/data';
 import {
   AdHocFiltersVariable,
   findClosestAdHocFilterInHierarchy,
@@ -31,7 +31,6 @@ export interface ApplicabilityManagerState extends SceneObjectState {
 export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerState> {
   private _adhocSubs: Unsubscribable[] = [];
   private _bodySub?: Unsubscribable;
-  private _dsCache = new Map<string, DataSourceApi>();
   private _groups = new Map<string, ApplicabilityGroup>();
   private _lastPanelKeys = new Set<string>();
 
@@ -59,22 +58,10 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
       this._bodySub = undefined;
       this._debouncedResolveForAdhoc.cancel();
       this._debouncedResolveAll.cancel();
-      this._dsCache.clear();
       this._groups.clear();
       this._lastPanelKeys.clear();
     };
   };
-
-  private async getDs(uid: string): Promise<DataSourceApi> {
-    const cached = this._dsCache.get(uid);
-    if (cached) {
-      return cached;
-    }
-
-    const ds = await getDataSourceSrv().get({ uid });
-    this._dsCache.set(uid, ds);
-    return ds;
-  }
 
   private getDashboard(): DashboardScene {
     const parent = this.parent;
@@ -191,7 +178,7 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
       }
 
       try {
-        const ds = await this.getDs(group.dsUid);
+        const ds = await getDataSourceSrv().get({ uid: group.dsUid });
         if (!ds.getDrilldownsApplicability) {
           return;
         }
@@ -275,7 +262,7 @@ export class ApplicabilityManager extends SceneObjectBase<ApplicabilityManagerSt
     }
 
     try {
-      const ds = await this.getDs(dsUid);
+      const ds = await getDataSourceSrv().get({ uid: dsUid });
       if (!ds.getDrilldownsApplicability) {
         return;
       }
