@@ -1,7 +1,7 @@
 import { ConstantVariable, CustomVariable, SceneVariableSet } from '@grafana/scenes';
 import { ConstantVariableKind, CustomVariableKind, VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { createSectionVariables, serializeSectionVariables } from './sectionVariables';
+import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
 
 const makeVariableSet = (...variables: Array<CustomVariable | ConstantVariable>) => new SceneVariableSet({ variables });
 
@@ -86,13 +86,13 @@ describe('createSectionVariables', () => {
     ['undefined input', undefined],
     ['empty array', []],
   ])('should return undefined for %s', (_, input) => {
-    expect(createSectionVariables(input)).toBeUndefined();
+    expect(deserializeSectionVariables(input)).toBeUndefined();
   });
 
   it('should create a SceneVariableSet from a single CustomVariableKind', () => {
     const variables: VariableKind[] = [makeCustomVariableKind({ description: 'Target environment' })];
 
-    const result = createSectionVariables(variables);
+    const result = deserializeSectionVariables(variables);
 
     expect(result).toBeDefined();
     expect(result!.state.variables).toHaveLength(1);
@@ -102,7 +102,7 @@ describe('createSectionVariables', () => {
   it('should create a SceneVariableSet with multiple variables', () => {
     const variables: VariableKind[] = [makeCustomVariableKind(), makeConstantVariableKind()];
 
-    const result = createSectionVariables(variables);
+    const result = deserializeSectionVariables(variables);
 
     expect(result).toBeDefined();
     expect(result!.state.variables).toHaveLength(2);
@@ -126,7 +126,7 @@ describe('round-trip: serialize → deserialize', () => {
     const serialized = serializeSectionVariables(original);
     expect(serialized).toBeDefined();
 
-    const deserialized = createSectionVariables(serialized);
+    const deserialized = deserializeSectionVariables(serialized);
     expect(deserialized).toBeDefined();
 
     const variable = deserialized!.state.variables[0];
@@ -146,7 +146,7 @@ describe('round-trip: serialize → deserialize', () => {
     expect(serialized).toBeDefined();
     expect(serialized).toHaveLength(2);
 
-    const deserialized = createSectionVariables(serialized);
+    const deserialized = deserializeSectionVariables(serialized);
     expect(deserialized).toBeDefined();
     expect(deserialized!.state.variables).toHaveLength(2);
 

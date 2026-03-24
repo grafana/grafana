@@ -5,7 +5,7 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
-import { createSectionVariables, serializeSectionVariables } from './sectionVariables';
+import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
 import { getConditionalRendering } from './utils';
 
 export function serializeTabsLayout(layoutManager: TabsLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
@@ -76,7 +76,7 @@ export function deserializeTab(
 
   return new TabItem({
     title: tab.spec.title,
-    $variables: createSectionVariables(tab.spec.variables),
+    $variables: deserializeSectionVariables(tab.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     repeatByVariable: tab.spec.repeat?.value,
     conditionalRendering: getConditionalRendering(tab),

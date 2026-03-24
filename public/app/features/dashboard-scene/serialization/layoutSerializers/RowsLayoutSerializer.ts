@@ -5,7 +5,7 @@ import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
-import { createSectionVariables, serializeSectionVariables } from './sectionVariables';
+import { deserializeSectionVariables, serializeSectionVariables } from './sectionVariables';
 import { getConditionalRendering } from './utils';
 
 export function serializeRowsLayout(layoutManager: RowsLayoutManager, isSnapshot?: boolean): DashboardV2Spec['layout'] {
@@ -96,7 +96,7 @@ export function deserializeRow(
     hideHeader: row.spec.hideHeader,
     fillScreen: row.spec.fillScreen,
     repeatByVariable: row.spec.repeat?.value,
-    $variables: createSectionVariables(row.spec.variables),
+    $variables: deserializeSectionVariables(row.spec.variables),
     layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
     conditionalRendering: getConditionalRendering(row),
   });
