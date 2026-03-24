@@ -10,6 +10,7 @@ import (
 	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -348,9 +349,60 @@ func (tw *TenantWatcher) editResourceLabel(dataKey DataKey, addLabel bool) error
 	}
 
 	if _, err := tw.writeEvent(tw.ctx, event); err != nil {
-		return fmt.Errorf("writing event: %w", err)
+		if !isConflictError(err) {
+			return fmt.Errorf("writing event: %w", err)
+		}
+		// Another pod may have already modified this resource. Re-read the
+		// latest version and check whether the label is already correct.
+		if checkErr := tw.verifyLabelState(dataKey, addLabel); checkErr != nil {
+			return fmt.Errorf("writing event: %w", err)
+		}
+		// The latest version already has the desired label state — treat as success.
+		return nil
 	}
 	return nil
+}
+
+// verifyLabelState reads the latest version of a resource and returns nil if
+// the pending-delete label is already in the desired state.
+func (tw *TenantWatcher) verifyLabelState(dataKey DataKey, wantLabel bool) error {
+	latestKey, err := tw.dataStore.GetLatestResourceKey(tw.ctx, GetRequestKey{
+		Group:     dataKey.Group,
+		Resource:  dataKey.Resource,
+		Namespace: dataKey.Namespace,
+		Name:      dataKey.Name,
+	})
+	if err != nil {
+		return fmt.Errorf("fetching latest key: %w", err)
+	}
+
+	reader, err := tw.dataStore.Get(tw.ctx, latestKey)
+	if err != nil {
+		return fmt.Errorf("reading latest resource: %w", err)
+	}
+	value, err := io.ReadAll(reader)
+	_ = reader.Close()
+	if err != nil {
+		return fmt.Errorf("reading latest resource bytes: %w", err)
+	}
+
+	tmp := &unstructured.Unstructured{}
+	if err := tmp.UnmarshalJSON(value); err != nil {
+		return fmt.Errorf("unmarshaling latest resource: %w", err)
+	}
+
+	labels := tmp.GetLabels()
+	hasLabel := labels[labelPendingDelete] == "true"
+	if hasLabel != wantLabel {
+		return fmt.Errorf("label state mismatch: want=%v, got=%v", wantLabel, hasLabel)
+	}
+	return nil
+}
+
+// isConflictError returns true if the error indicates an optimistic locking /
+// resource version conflict.
+func isConflictError(err error) bool {
+	return apierrors.IsConflict(err) || strings.Contains(err.Error(), "optimistic locking failed")
 }
 
 // clearTenantPendingDelete removes the pending-delete record for a tenant from the
