@@ -92,19 +92,22 @@ func TestIntegrationAccessControl(t *testing.T) {
 	org1 := helper.Org1
 
 	type testCase struct {
-		user      apis.User
-		canRead   bool
-		canUpdate bool
+		user             apis.User
+		canReadDefault   bool
+		canUpdateDefault bool
+		canRead          bool
+		canUpdate        bool
+		canDelete        bool
 	}
 
-	reader := helper.CreateUser("RoutesReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+	legacyReader := helper.CreateUser("LegacyRoutesReader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions: []string{
 				accesscontrol.ActionAlertingRoutesRead,
 			},
 		},
 	})
-	writer := helper.CreateUser("RoutesWriter", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+	legacyWriter := helper.CreateUser("LegacyRoutesWriter", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions: []string{
 				accesscontrol.ActionAlertingRoutesRead,
@@ -113,14 +116,14 @@ func TestIntegrationAccessControl(t *testing.T) {
 		},
 	})
 	none := helper.CreateUser("RoutesNone", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{})
-	legacyReader := helper.CreateUser("LegacyRoutesReader", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+	veryLegacyReader := helper.CreateUser("LegacyNotificaitonsReader", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions: []string{
 				accesscontrol.ActionAlertingNotificationsRead,
 			},
 		},
 	})
-	legacyWriter := helper.CreateUser("LegacyRoutesWriter", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+	veryLegacyWriter := helper.CreateUser("LegacyNotificaitonsWriter", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions: []string{
 				accesscontrol.ActionAlertingNotificationsRead,
@@ -128,42 +131,60 @@ func TestIntegrationAccessControl(t *testing.T) {
 			},
 		},
 	})
+	routesReader := helper.CreateUser("RoutesReader", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(accesscontrol.ActionAlertingManagedRoutesRead),
+	})
+	routesWriter := helper.CreateUser("RoutesWriter", "Org1", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		createWildcardPermission(accesscontrol.ActionAlertingManagedRoutesRead, accesscontrol.ActionAlertingManagedRoutesWrite),
+	})
 
 	testCases := []testCase{
 		{
 			user: none,
 		},
 		{
-			user:      org1.Admin,
-			canRead:   true,
-			canUpdate: true,
+			user:             org1.Admin,
+			canReadDefault:   true,
+			canUpdateDefault: true,
+			canRead:          true,
+			canUpdate:        true,
+			canDelete:        true,
 		},
 		{
-			user:      org1.Editor,
-			canRead:   true,
-			canUpdate: true,
+			user:             org1.Editor,
+			canReadDefault:   true,
+			canUpdateDefault: true,
 		},
 		{
-			user:    org1.Viewer,
-			canRead: true,
+			user:           org1.Viewer,
+			canReadDefault: true,
 		},
 		{
-			user:    reader,
-			canRead: true,
+			user:           legacyReader,
+			canReadDefault: true,
 		},
 		{
-			user:      writer,
-			canRead:   true,
-			canUpdate: true,
+			user:             legacyWriter,
+			canReadDefault:   true,
+			canUpdateDefault: true,
 		},
 		{
-			user:    legacyReader,
-			canRead: true,
+			user:           veryLegacyReader,
+			canReadDefault: true,
 		},
 		{
-			user:      legacyWriter,
-			canRead:   true,
-			canUpdate: true,
+			user:             veryLegacyWriter,
+			canReadDefault:   true,
+			canUpdateDefault: true,
+		},
+		{
+			user:           routesReader,
+			canReadDefault: true,
+		},
+		{
+			user:             routesWriter,
+			canReadDefault:   true,
+			canUpdateDefault: true,
 		},
 	}
 
@@ -176,7 +197,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			client, err := v1beta1.NewRoutingTreeClientFromGenerator(tc.user.GetClientRegistry())
 			require.NoError(t, err)
 
-			if tc.canRead {
+			if tc.canReadDefault {
 				t.Run("should be able to list routing trees", func(t *testing.T) {
 					list, err := client.List(ctx, apis.DefaultNamespace, resource.ListOptions{})
 					require.NoError(t, err)
@@ -241,7 +262,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			d, err := json.Marshal(expected)
 			require.NoError(t, err)
 
-			if tc.canUpdate {
+			if tc.canUpdateDefault {
 				t.Run("should be able to update routing tree", func(t *testing.T) {
 					updated, err := client.Update(ctx, expected, resource.UpdateOptions{})
 					require.NoErrorf(t, err, "Payload %s", string(d))
@@ -284,7 +305,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				})
 			}
 
-			if tc.canUpdate {
+			if tc.canUpdateDefault {
 				t.Run("should be able to reset routing tree", func(t *testing.T) {
 					err := client.Delete(ctx, expected.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 					require.NoError(t, err)
@@ -1181,4 +1202,13 @@ func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []confi
 		res[ti.Name] = created
 	}
 	return res
+}
+
+func createWildcardPermission(actions ...string) resourcepermissions.SetResourcePermissionCommand {
+	return resourcepermissions.SetResourcePermissionCommand{
+		Actions:           actions,
+		Resource:          "routes",
+		ResourceAttribute: "uid",
+		ResourceID:        "*",
+	}
 }
