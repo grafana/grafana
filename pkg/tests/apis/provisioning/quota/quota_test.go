@@ -91,7 +91,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 		helper.RequireRepoDashboardCount(t, repo, 2)
 
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
-		triggerReconciliation(t, helper, repo)
+		helper.TriggerRepositoryReconciliation(t, repo)
 		helper.WaitForResourceQuotaLimit(t, repo, 2)
 		helper.SyncAndWait(t, repo, nil)
 
