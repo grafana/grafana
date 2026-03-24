@@ -4260,7 +4260,7 @@
       "this-folder-is-empty": "This folder is empty"
     },
     "bulk-actions": {
-      "error-generic": "Unexpected error"
+      "error-generic": "Unexpected error happened when creating job"
     },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
@@ -4325,7 +4325,6 @@
       "button-deleting": "Deleting...",
       "commit": "Delete folder",
       "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
-      "job-not-success-error": "Failed to create delete folder job",
       "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
     },

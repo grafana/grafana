@@ -113,7 +113,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     setError(undefined);
     const repoName = repository?.name;
     if (!title || !repoName) {
-      setError(
+      onError(
         t(
           'browse-dashboards.new-provisioned-folder-form.error-missing-title-or-repo',
           'Missing folder name or repository information'

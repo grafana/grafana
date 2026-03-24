@@ -29,5 +29,5 @@ export function getProvisionedRequestError(
     return apiMessage || fallbackMessage;
   }
 
-  return error ? extractErrorMessage(error) : fallbackMessage;
+  return extractErrorMessage(error, fallbackMessage);
 }
