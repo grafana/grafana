@@ -198,7 +198,7 @@ export function useCreateTeamOrchestrate(pendingRoles: Role[], autocreateTeamFol
       localUpdateState({ state: 'loading' }, 'createFolder');
       const { data: folderData, error: folderError } = await createFolderTrigger({
         title: formModel.name,
-        teamOwnerReferences: [{ uid: teamData.uid, name: formModel.name }],
+        teamOwnerReferences: [{ uid: teamData.uid, name: teamData.uid }],
       });
 
       if (folderError || !folderData?.url) {
