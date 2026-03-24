@@ -22,7 +22,13 @@ export function EntityNotFound({ entity = 'Page' }: Props) {
   const communityLink = useMemo(() => {
     const footerLinks = getFooterLinks();
     const link = footerLinks.find((l) => l.id === 'community');
-    return link?.url ?? 'https://community.grafana.com/?utm_source=entity_not_found';
+    const url = link?.url ?? 'https://community.grafana.com';
+
+    // Override the default footer UTM attribution with one specific to this component
+    if (url.includes('utm_source=grafana_footer')) {
+      return url.replace('utm_source=grafana_footer', 'utm_source=entity_not_found');
+    }
+    return url;
   }, []);
 
   return (
