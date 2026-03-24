@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -29,17 +30,12 @@ import (
 
 var ErrRestConfigNotAvailable = errors.New("k8s rest config provider not available")
 
-func (a *api) getDynamicClient(ctx context.Context) (dynamic.Interface, error) {
+func (a *api) getDynamicClient(c *contextmodel.ReqContext) (dynamic.Interface, error) {
 	if a.restConfigProvider == nil {
 		return nil, ErrRestConfigNotAvailable
 	}
 
-	restConfig, err := a.restConfigProvider.GetRestConfig(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get rest config: %w", err)
-	}
-
-	dynamicClient, err := dynamic.NewForConfig(restConfig)
+	dynamicClient, err := dynamic.NewForConfig(a.restConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
 	}
@@ -47,8 +43,9 @@ func (a *api) getDynamicClient(ctx context.Context) (dynamic.Interface, error) {
 	return dynamicClient, nil
 }
 
-func (a *api) getResourcePermissionsFromK8s(ctx context.Context, namespace string, resourceID string) (getResourcePermissionsResponse, error) {
-	dynamicClient, err := a.getDynamicClient(ctx)
+func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespace string, resourceID string) (getResourcePermissionsResponse, error) {
+	ctx := c.Req.Context()
+	dynamicClient, err := a.getDynamicClient(c)
 	if err != nil {
 		return nil, err
 	}
@@ -379,8 +376,9 @@ func (a *api) buildResourcePermissionName(resourceID string) string {
 
 // Write operations
 
-func (a *api) setResourcePermissionsToK8s(ctx context.Context, namespace string, resourceID string, permissions []accesscontrol.SetResourcePermissionCommand) error {
-	dynamicClient, err := a.getDynamicClient(ctx)
+func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, permissions []accesscontrol.SetResourcePermissionCommand) error {
+	ctx := c.Req.Context()
+	dynamicClient, err := a.getDynamicClient(c)
 	if err != nil {
 		return err
 	}
@@ -446,30 +444,33 @@ func (a *api) setResourcePermissionsToK8s(ctx context.Context, namespace string,
 	return a.createOrUpdateResourcePermission(ctx, resourcePermResource, resourcePerm, existingResourceVersion != "")
 }
 
-func (a *api) setUserPermissionToK8s(ctx context.Context, namespace string, resourceID string, userID int64, permission string) error {
+func (a *api) setUserPermissionToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, userID int64, permission string) error {
+	ctx := c.Req.Context()
 	userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
 	if err != nil {
 		return fmt.Errorf("failed to get user details: %w", err)
 	}
 
-	return a.setSinglePermissionToK8s(ctx, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindUser), userDetails.UID, permission)
+	return a.setSinglePermissionToK8s(c, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindUser), userDetails.UID, permission)
 }
 
-func (a *api) setTeamPermissionToK8s(ctx context.Context, namespace string, resourceID string, teamID int64, permission string) error {
+func (a *api) setTeamPermissionToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, teamID int64, permission string) error {
+	ctx := c.Req.Context()
 	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{ID: teamID})
 	if err != nil {
 		return fmt.Errorf("failed to get team details: %w", err)
 	}
 
-	return a.setSinglePermissionToK8s(ctx, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindTeam), teamDetails.UID, permission)
+	return a.setSinglePermissionToK8s(c, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindTeam), teamDetails.UID, permission)
 }
 
-func (a *api) setBuiltInRolePermissionToK8s(ctx context.Context, namespace string, resourceID string, builtInRole string, permission string) error {
-	return a.setSinglePermissionToK8s(ctx, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindBasicRole), builtInRole, permission)
+func (a *api) setBuiltInRolePermissionToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, builtInRole string, permission string) error {
+	return a.setSinglePermissionToK8s(c, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindBasicRole), builtInRole, permission)
 }
 
-func (a *api) setSinglePermissionToK8s(ctx context.Context, namespace string, resourceID string, kind string, name string, permission string) error {
-	dynamicClient, err := a.getDynamicClient(ctx)
+func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, kind string, name string, permission string) error {
+	ctx := c.Req.Context()
+	dynamicClient, err := a.getDynamicClient(c)
 	if err != nil {
 		return err
 	}

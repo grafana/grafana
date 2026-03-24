@@ -3,6 +3,8 @@ package jobs
 import (
 	"time"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -15,6 +17,8 @@ type JobMetrics struct {
 	incrementalSyncPhaseDurationHist *prometheus.HistogramVec // phases of incremental sync
 	fullSyncPhaseDurationHist        *prometheus.HistogramVec // phases of full sync
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
+
+	resourceOpsTotal *prometheus.CounterVec // per-resource outcome counter
 }
 
 type QueueMetrics struct {
@@ -109,6 +113,15 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 	)
 	registry.MustRegister(syncDurationHist)
 
+	resourceOpsTotal := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "grafana_provisioning_jobs_resource_operations_total",
+			Help: "Total resource operations performed during provisioning job runs",
+		},
+		[]string{"action", "operation", "outcome", "reason", "group", "kind"},
+	)
+	registry.MustRegister(resourceOpsTotal)
+
 	return JobMetrics{
 		registry:                         registry,
 		processedTotal:                   processedTotal,
@@ -116,6 +129,7 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		incrementalSyncPhaseDurationHist: incrementalSyncPhaseDurationHist,
 		fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 		syncDurationHist:                 syncDurationHist,
+		resourceOpsTotal:                 resourceOpsTotal,
 	}
 }
 
@@ -138,6 +152,41 @@ func (m *JobMetrics) RecordFullSyncPhase(phase FullSyncPhase, duration time.Dura
 
 func (m *JobMetrics) RecordSyncDuration(syncType SyncType, duration time.Duration) {
 	m.syncDurationHist.WithLabelValues(syncType.String()).Observe(duration.Seconds())
+}
+
+// RecordResourceOperation derives outcome, operation, and reason from the
+// result and increments the resource operations counter.
+func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, result JobResourceResult) {
+	var outcome ResourceOutcome
+	var reason string
+	switch {
+	case result.Error() != nil:
+		outcome = OutcomeError
+	case result.Warning() != nil:
+		outcome = OutcomeWarning
+		reason = result.WarningReason()
+	default:
+		outcome = OutcomeSuccess
+	}
+
+	m.resourceOpsTotal.WithLabelValues(string(action), string(fileActionToOperation(result.Action())), string(outcome), reason, result.Group(), result.Kind()).Inc()
+}
+
+func fileActionToOperation(action repository.FileAction) ResourceOperation {
+	switch action {
+	case repository.FileActionCreated:
+		return OperationCreated
+	case repository.FileActionUpdated:
+		return OperationUpdated
+	case repository.FileActionDeleted:
+		return OperationDeleted
+	case repository.FileActionRenamed:
+		return OperationRenamed
+	case repository.FileActionIgnored:
+		return OperationIgnored
+	default:
+		return ResourceOperation(action)
+	}
 }
 
 func recordConcurrentDriverMetric(registry prometheus.Registerer, numDrivers int) {
@@ -180,6 +229,7 @@ const (
 	FullSyncPhaseFolderDeletions
 	FullSyncPhaseFolderCreations
 	FullSyncPhaseFileCreations
+	FullSyncPhaseOldFolderCleanup
 )
 
 func (p FullSyncPhase) String() string {
@@ -194,6 +244,8 @@ func (p FullSyncPhase) String() string {
 		return "folder_creations"
 	case FullSyncPhaseFileCreations:
 		return "file_creations"
+	case FullSyncPhaseOldFolderCleanup:
+		return "old_folder_cleanup"
 	default:
 		return "unknown"
 	}

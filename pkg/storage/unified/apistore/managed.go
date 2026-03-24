@@ -34,27 +34,16 @@ func checkManagerPropertiesOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMe
 }
 
 func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, old utils.GrafanaMetaAccessor) error {
-	objKind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
-	oldKind := old.GetAnnotation(utils.AnnoKeyManagerKind)
-	if objKind == "" && objKind == oldKind {
-		return nil // not managed
+	managerNew, hasNew := obj.GetManagerProperties()
+	managerOld, hasOld := old.GetManagerProperties()
+
+	if !hasNew && !hasOld {
+		return nil // neither old nor new are managed
 	}
 
-	// Check the current settings
-	err := checkManagerPropertiesOnCreate(auth, obj)
-	if err != nil { // new settings failed
-		return err
-	}
-
-	managerNew, okNew := obj.GetManagerProperties()
-	managerOld, okOld := old.GetManagerProperties()
-	if managerNew == managerOld || (okNew && !okOld) { // added manager is OK
-		return nil
-	}
-
-	if !okNew && okOld {
-		// This allows removing the managedBy annotations if you were allowed to write them originally
-		if err := checkManagerPropertiesOnCreate(auth, old); err != nil {
+	// Removing a manager: the caller must be authorized for the *old* manager.
+	if !hasNew && hasOld {
+		if err := enforceManagerProperties(auth, old); err != nil {
 			return &apierrors.StatusError{ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    http.StatusForbidden,
@@ -62,7 +51,51 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 				Message: "Can not remove resource manager from resource",
 			}}
 		}
+		return nil
 	}
+
+	// Changing the owner (kind or identity) is not allowed.
+	// Remove the old manager first, then add the new one.
+	if hasOld && (managerNew.Kind != managerOld.Kind || managerNew.Identity != managerOld.Identity) {
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    http.StatusForbidden,
+			Reason:  metav1.StatusReasonForbidden,
+			Message: "Cannot change resource manager; remove the existing manager first, then add the new one",
+		}}
+	}
+
+	// Adding a manager or updating flags on the same owner.
+	return enforceManagerProperties(auth, obj)
+}
+
+func ensureSameRepoManager(folder utils.GrafanaMetaAccessor, resource utils.GrafanaMetaAccessor) error {
+	folderManager, ok := folder.GetManagerProperties()
+	if !ok || folderManager.Kind != utils.ManagerKindRepo {
+		return nil
+	}
+
+	resourceManager, resourceManaged := resource.GetManagerProperties()
+	if !resourceManaged {
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    http.StatusForbidden,
+			Reason:  metav1.StatusReasonForbidden,
+			Message: fmt.Sprintf("folder is managed by %s:%s, but the resource is not managed", folderManager.Kind, folderManager.Identity),
+		}}
+	}
+
+	if resourceManager.Kind != folderManager.Kind || resourceManager.Identity != folderManager.Identity {
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status: metav1.StatusFailure,
+			Code:   http.StatusForbidden,
+			Reason: metav1.StatusReasonForbidden,
+			Message: fmt.Sprintf("resource manager (%s:%s) does not match folder manager (%s:%s); resources must be managed by the same manager as their containing folder",
+				resourceManager.Kind, resourceManager.Identity,
+				folderManager.Kind, folderManager.Identity),
+		}}
+	}
+
 	return nil
 }
 

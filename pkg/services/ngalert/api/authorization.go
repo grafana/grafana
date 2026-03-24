@@ -289,14 +289,22 @@ func (api *API) authorize(method, path string) web.Handler {
 		return middleware.ReqOrgAdmin
 
 	// Grafana-only Provisioning Export Paths for everything except contact points.
-	case http.MethodGet + "/api/v1/provisioning/policies/export",
-		http.MethodGet + "/api/v1/provisioning/mute-timings/export",
-		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}/export":
+	case http.MethodGet + "/api/v1/provisioning/policies/export":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),             // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningRead),              // organization scope
 			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),       // organization scope
+			ac.EvalPermission(ac.ActionAlertingRoutesRead),                    // organization scope
+		)
+	case http.MethodGet + "/api/v1/provisioning/mute-timings/export",
+		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}/export":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),              // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),               // organization scope
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead),  // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),        // organization scope
+			ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead), // organization scope
 		)
 
 	// Grafana-only Provisioning Export Paths for contact points.
@@ -307,8 +315,8 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),       // organization scope
 
-			ac.EvalPermission(ac.ActionAlertingReceiversRead),        // organization scope
-			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets), // organization scope
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),        // fine-grained permissions checked later
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets), // fine-grained permissions checked later
 		}
 		eval = ac.EvalAny(perms...)
 
@@ -348,17 +356,41 @@ func (api *API) authorize(method, path string) web.Handler {
 			),
 		)
 
-	case http.MethodGet + "/api/v1/provisioning/policies",
-		http.MethodGet + "/api/v1/provisioning/contact-points",
-		http.MethodGet + "/api/v1/provisioning/templates",
-		http.MethodGet + "/api/v1/provisioning/templates/{name}",
-		http.MethodGet + "/api/v1/provisioning/mute-timings",
+	case http.MethodGet + "/api/v1/provisioning/policies":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+			ac.EvalPermission(ac.ActionAlertingRoutesRead),
+		)
+	case http.MethodGet + "/api/v1/provisioning/contact-points":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversRead),
+			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		)
+
+	case http.MethodGet + "/api/v1/provisioning/templates",
+		http.MethodGet + "/api/v1/provisioning/templates/{name}":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
+			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
+			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
+		)
+	case http.MethodGet + "/api/v1/provisioning/mute-timings",
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningRead),
 			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningRead), // organization scope
 			ac.EvalPermission(ac.ActionAlertingProvisioningReadSecrets),
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),
+			ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsRead),
 		)
 
 	// Grafana-only Provisioning Write Paths
@@ -419,20 +451,101 @@ func (api *API) authorize(method, path string) web.Handler {
 		)
 
 	case http.MethodPut + "/api/v1/provisioning/policies",
-		http.MethodDelete + "/api/v1/provisioning/policies",
-		http.MethodPost + "/api/v1/provisioning/contact-points",
-		http.MethodPut + "/api/v1/provisioning/contact-points/{UID}",
-		http.MethodDelete + "/api/v1/provisioning/contact-points/{UID}",
-		http.MethodPut + "/api/v1/provisioning/templates/{name}",
-		http.MethodDelete + "/api/v1/provisioning/templates/{name}",
-		http.MethodPost + "/api/v1/provisioning/mute-timings",
-		http.MethodPut + "/api/v1/provisioning/mute-timings/{name}",
-		http.MethodDelete + "/api/v1/provisioning/mute-timings/{name}":
+		http.MethodDelete + "/api/v1/provisioning/policies":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
 			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
 			ac.EvalAll(
-				ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+				ac.EvalAny(
+					ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+					ac.EvalPermission(ac.ActionAlertingRoutesWrite),
+				),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+	case http.MethodPost + "/api/v1/provisioning/contact-points":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
+			ac.EvalAll(
+				ac.EvalAny(
+					ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+					ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+				),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+	case http.MethodPut + "/api/v1/provisioning/contact-points/{UID}":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
+			ac.EvalAll(
+				ac.EvalAny(
+					ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+					ac.EvalPermission(ac.ActionAlertingReceiversUpdate), // fine-grained permission is checked later
+				),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+	case http.MethodDelete + "/api/v1/provisioning/contact-points/{UID}":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
+			ac.EvalAll(
+				ac.EvalAny(
+					ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+					ac.EvalPermission(ac.ActionAlertingReceiversDelete), // fine-grained permission is checked later
+				),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+	case http.MethodPut + "/api/v1/provisioning/templates/{name}":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
+			ac.EvalAll(
+				ac.EvalAny(
+					ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+					ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
+				),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+	case http.MethodDelete + "/api/v1/provisioning/templates/{name}":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
+			ac.EvalAll(
+				ac.EvalAny(
+					ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+					ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
+				),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+	case http.MethodPost + "/api/v1/provisioning/mute-timings",
+		http.MethodPut + "/api/v1/provisioning/mute-timings/{name}":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
+			ac.EvalAll(
+				ac.EvalAny(
+					ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+					ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsWrite),
+				),
+				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
+			),
+		)
+
+	case http.MethodDelete + "/api/v1/provisioning/mute-timings/{name}":
+		eval = ac.EvalAny(
+			ac.EvalPermission(ac.ActionAlertingProvisioningWrite),              // organization scope,
+			ac.EvalPermission(ac.ActionAlertingNotificationsProvisioningWrite), // organization scope
+			ac.EvalAll(
+				ac.EvalAny(
+					ac.EvalPermission(ac.ActionAlertingNotificationsWrite),
+					ac.EvalPermission(ac.ActionAlertingNotificationsTimeIntervalsDelete),
+				),
 				ac.EvalPermission(ac.ActionAlertingProvisioningSetStatus),
 			),
 		)

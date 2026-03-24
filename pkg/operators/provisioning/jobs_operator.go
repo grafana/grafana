@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -21,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
+	jobsync "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
 	"github.com/grafana/grafana/pkg/server"
@@ -120,7 +121,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
 
-	workers, err := setupWorkers(deps.Config, controllerCfg, deps.Registerer, tracer)
+	workers, metrics, err := setupWorkers(deps.Config, controllerCfg, deps.Registerer, tracer)
 	if err != nil {
 		return fmt.Errorf("setup workers: %w", err)
 	}
@@ -145,20 +146,28 @@ func RunJobController(deps server.OperatorDependencies) error {
 		jobHistoryWriter,
 		jobController.InsertNotifications(),
 		deps.Registerer,
+		metrics,
 		workers...,
 	)
 	if err != nil {
 		return fmt.Errorf("create concurrent job driver: %w", err)
 	}
 
+	var wg sync.WaitGroup
+
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		logger.Info("jobs controller started")
 		if err := driver.Run(ctx); err != nil {
 			logger.Error("job driver failed", "error", err)
 		}
+		logger.Info("job driver stopped")
 	}()
 
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		jobCleanupController := jobs.NewJobCleanupController(
 			jobStore,
 			jobHistoryWriter,
@@ -167,6 +176,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 		if err := jobCleanupController.Run(ctx); err != nil {
 			logger.Error("job cleanup controller failed", "error", err)
 		}
+		logger.Info("job cleanup controller stopped")
 	}()
 
 	// Start informers
@@ -182,6 +192,23 @@ func RunJobController(deps server.OperatorDependencies) error {
 	deps.HealthNotifier.SetReady()
 
 	<-ctx.Done()
+	deps.HealthNotifier.SetNotReady()
+	logger.Info("shutdown signal received, waiting for goroutines to finish")
+
+	shutdownTimeout := controllerCfg.maxJobTimeout + 30*time.Second
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		logger.Info("jobs operator shutdown complete")
+	case <-time.After(shutdownTimeout):
+		logger.Warn("shutdown timeout exceeded, forcing exit", "timeout", shutdownTimeout)
+	}
+
 	return nil
 }
 
@@ -216,11 +243,11 @@ func setupJobsControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registe
 
 func setupWorkers(
 	cfg *setting.Cfg, controllerCfg *jobsControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer,
-) ([]jobs.Worker, error) {
+) ([]jobs.Worker, *jobs.JobMetrics, error) {
 	// Initialize feature toggles from config
 	featureManager, err := featuremgmt.ProvideManagerService(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to provide feature manager: %w", err)
+		return nil, nil, fmt.Errorf("failed to provide feature manager: %w", err)
 	}
 	features := featuremgmt.ProvideToggles(featureManager)
 	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
@@ -228,19 +255,19 @@ func setupWorkers(
 
 	clients, err := controllerCfg.Clients()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get clients: %w", err)
+		return nil, nil, fmt.Errorf("failed to get clients: %w", err)
 	}
 	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
 
 	unified, err := controllerCfg.UnifiedStorageClient()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get unified storage client: %w", err)
+		return nil, nil, fmt.Errorf("failed to get unified storage client: %w", err)
 	}
 	resourceLister := resources.NewResourceLister(unified)
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
-		return nil, fmt.Errorf("failed to create provisioning client: %w", err)
+		return nil, nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
 	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled)
@@ -251,8 +278,8 @@ func setupWorkers(
 	metrics := jobs.RegisterJobMetrics(registry)
 
 	// Sync
-	syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics, folderMetadataEnabled)
-	syncWorker := sync.NewSyncWorker(
+	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, controllerCfg.maxSyncWorkers, metrics, folderMetadataEnabled)
+	syncWorker := jobsync.NewSyncWorker(
 		clients,
 		repositoryResources,
 		statusPatcher.Patch,
@@ -305,14 +332,14 @@ func setupWorkers(
 	moveWorker := move.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
 	workers = append(workers, moveWorker)
 
-	// Fix Metadata (no-op placeholder)
+	// Fix Metadata
 	fixMetadataWorker := fixfoldermetadata.NewWorker()
 	workers = append(workers, fixMetadataWorker)
 
 	// PullRequest
 	urlProvider, err := controllerCfg.URLProvider()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get URL provider: %w", err)
+		return nil, nil, fmt.Errorf("failed to get URL provider: %w", err)
 	}
 	renderer := pullrequest.NewNoOpRenderer()
 	evaluator := pullrequest.NewEvaluator(renderer, parsers, urlProvider, registry)
@@ -320,5 +347,5 @@ func setupWorkers(
 	prWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 	workers = append(workers, prWorker)
 
-	return workers, nil
+	return workers, &metrics, nil
 }
