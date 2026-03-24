@@ -21,11 +21,14 @@ import (
 func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	t.Run("invalid metadata creation on existing folder keeps unstable uid and reconciles changed child", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
-		ctx := context.Background()
+    helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 
+	t.Run("invalid metadata creation on existing folder keeps unstable uid and reconciles changed child", func(t *testing.T) {
+		ctx := context.Background()
 		const repoName = "incr-invalid-meta-existing"
+		t.Cleanup(func ()  {
+			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"team/dashboard.json": gitcommon.DashboardJSON("team-dash", "Team Dashboard", 1),
@@ -62,10 +65,11 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 	})
 
 	t.Run("invalid metadata on new folder falls back to unstable uid and reconciles children", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
-
 		const repoName = "incr-invalid-meta-new"
+		t.Cleanup(func ()  {
+			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"root.json": gitcommon.DashboardJSON("root-dash", "Root Dashboard", 1),
@@ -102,11 +106,12 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 	})
 
 	t.Run("invalid metadata update on stable folder keeps stable uid and reconciles changed child", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
-
 		const repoName = "incr-invalid-meta-update"
 		const stableUID = "team-stable-uid"
+		t.Cleanup(func ()  {
+			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"team/_folder.json":   folderMetadataJSON(stableUID, "Team"),
@@ -143,11 +148,12 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 	})
 
 	t.Run("follow-up child update under already-invalid metadata keeps the existing stable uid", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
-
 		const repoName = "incr-invalid-meta-follow-up-child"
 		const stableUID = "team-stable-uid"
+		t.Cleanup(func ()  {
+			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"team/_folder.json":   folderMetadataJSON(stableUID, "Team"),
@@ -200,12 +206,13 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 	})
 
 	t.Run("invalid metadata creation on existing folder does not break valid folder meta creation on another folder in the same incremental sync", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
-
 		const repoName = "incr-invalid-meta-with-valid-replaced"
 		const parentStableUID = "parent-stable-uid"
 		const childUID = "child-stable-uid"
+		t.Cleanup(func ()  {
+			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"broken/dashboard.json":         gitcommon.DashboardJSON("broken-dash", "Broken Dashboard", 1),
@@ -254,10 +261,11 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 	})
 
 	t.Run("moving a resource into an existing folder with invalid metadata still works", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
-
 		const repoName = "incr-invalid-meta-move-into-existing"
+		t.Cleanup(func ()  {
+			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"team/_folder.json": invalidFolderMetadataJSON("Broken Team"),
@@ -293,10 +301,11 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 	})
 
 	t.Run("moving a resource into a new folder with invalid metadata falls back to unstable uid", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
-
 		const repoName = "incr-invalid-meta-move-into-new"
+		t.Cleanup(func ()  {
+			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"root.json": gitcommon.DashboardJSON("root-dash", "Root Dashboard", 1),
@@ -333,11 +342,12 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 	})
 
 	t.Run("moving a folder with invalid metadata falls back to delete and recreate", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
-
 		const repoName = "incr-invalid-meta-folder-move"
 		const stableUID = "team-stable-uid"
+		t.Cleanup(func ()  {
+			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"team/_folder.json":   folderMetadataJSON(stableUID, "Team"),
@@ -381,12 +391,13 @@ func TestIntegrationProvisioning_IncrementalSync_InvalidFolderMetadata(t *testin
 	})
 
 	t.Run("invalid metadata creation does not break valid metadata-backed folder rename in the same incremental sync", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
 		ctx := context.Background()
-
 		const repoName = "incr-invalid-meta-with-valid-rename"
 		const parentStableUID = "parent-stable-uid"
 		const childUID = "child-stable-uid"
+		t.Cleanup(func ()  {
+			require.NoError(t, helper.Repositories.Resource.Delete(ctx, repoName, metav1.DeleteOptions{}))
+		})
 
 		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 			"old-parent/_folder.json":         folderMetadataJSON(parentStableUID, "Parent"),
