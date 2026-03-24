@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"text/template"
 	"time"
@@ -28,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -38,11 +40,13 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const (
@@ -428,6 +432,20 @@ func (h *ProvisioningTestHelper) WriteToProvisioningPath(t *testing.T, name stri
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
 
+// CleanProvisioningDir removes all entries from the provisioning directory
+// so that leftover files from a previous test don't interfere.
+func (h *ProvisioningTestHelper) CleanProvisioningDir(t *testing.T) {
+	t.Helper()
+	entries, err := os.ReadDir(h.ProvisioningPath)
+	if err != nil {
+		return
+	}
+	for _, entry := range entries {
+		require.NoError(t, os.RemoveAll(filepath.Join(h.ProvisioningPath, entry.Name())),
+			"failed to clean provisioning dir entry %s", entry.Name())
+	}
+}
+
 // DebugState logs the current state of filesystem, repository, and Grafana resources for debugging
 func (h *ProvisioningTestHelper) DebugState(t *testing.T, repo string, label string) {
 	t.Helper()
@@ -767,59 +785,47 @@ func (h *ProvisioningTestHelper) RequireRepoDashboardCount(t *testing.T, repoNam
 
 // TriggerConnectionReconciliation forces the controller to re-process a connection
 // by touching its status (aging the health timestamp by 1ms).
-// Retries on conflict errors caused by optimistic locking.
+// Uses EventuallyWithT to tolerate prolonged optimistic-locking conflicts from
+// concurrent controller reconciliations (common with shared servers).
 func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, name string) {
 	t.Helper()
 	ctx := t.Context()
-
-	const maxRetries = 5
-	for attempt := range maxRetries {
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		conn, err := h.Connections.Resource.Get(ctx, name, metav1.GetOptions{})
-		require.NoError(t, err, "failed to get connection %s", name)
-
-		health, ok := conn.Object["status"].(map[string]any)["health"].(map[string]any)
-		require.True(t, ok, "missing status.health on connection %s", name)
-
-		health["checked"] = time.Now().UnixMilli() - 1
-
-		_, err = h.Connections.Resource.UpdateStatus(ctx, conn, metav1.UpdateOptions{})
-		if err == nil {
+		if !assert.NoError(c, err, "failed to get connection %s", name) {
 			return
 		}
-		if apierrors.IsConflict(err) && attempt < maxRetries-1 {
-			continue
+		health, ok := conn.Object["status"].(map[string]any)["health"].(map[string]any)
+		if !assert.True(c, ok, "missing status.health on connection %s", name) {
+			return
 		}
-		require.NoError(t, err, "failed to update status for connection %s", name)
-	}
+		health["checked"] = time.Now().UnixMilli() - 1
+		_, err = h.Connections.Resource.UpdateStatus(ctx, conn, metav1.UpdateOptions{})
+		assert.NoError(c, err, "failed to update status for connection %s", name)
+	}, WaitTimeoutDefault, 200*time.Millisecond, "should trigger reconciliation for connection %s", name)
 }
 
 // TriggerRepositoryReconciliation forces the controller to re-process a repo
 // by touching its status (aging the health timestamp by 1ms).
 // Updating it by incrementing its generation by +1 is not triggering a reconciliation.
-// Retries on conflict errors caused by optimistic locking.
+// Uses EventuallyWithT to tolerate prolonged optimistic-locking conflicts from
+// concurrent controller reconciliations (common with shared servers).
 func (h *ProvisioningTestHelper) TriggerRepositoryReconciliation(t *testing.T, name string) {
 	t.Helper()
 	ctx := t.Context()
-
-	const maxRetries = 5
-	for attempt := range maxRetries {
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		repo, err := h.Repositories.Resource.Get(ctx, name, metav1.GetOptions{})
-		require.NoError(t, err, "failed to get repository %s", name)
-
-		health, ok := repo.Object["status"].(map[string]any)["health"].(map[string]any)
-		require.True(t, ok, "missing status.health on repository %s", name)
-
-		health["checked"] = time.Now().UnixMilli() - 1
-
-		_, err = h.Repositories.Resource.UpdateStatus(ctx, repo, metav1.UpdateOptions{})
-		if err == nil {
+		if !assert.NoError(c, err, "failed to get repository %s", name) {
 			return
 		}
-		if apierrors.IsConflict(err) && attempt < maxRetries-1 {
-			continue
+		health, ok := repo.Object["status"].(map[string]any)["health"].(map[string]any)
+		if !assert.True(c, ok, "missing status.health on repository %s", name) {
+			return
 		}
-		require.NoError(t, err, "failed to update status for repository %s", name)
-	}
+		health["checked"] = time.Now().UnixMilli() - 1
+		_, err = h.Repositories.Resource.UpdateStatus(ctx, repo, metav1.UpdateOptions{})
+		assert.NoError(c, err, "failed to update status for repository %s", name)
+	}, WaitTimeoutDefault, 200*time.Millisecond, "should trigger reconciliation for repository %s", name)
 }
 
 // WaitForHealthyRepository waits for a repository to become healthy.
@@ -888,9 +894,8 @@ func WithoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
 	opts.EnableFeatureToggles = filtered
 }
 
-func RunGrafana(t *testing.T, options ...GrafanaOption) *ProvisioningTestHelper {
-	provisioningPath := t.TempDir()
-	opts := testinfra.GrafanaOpts{
+func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
+	return testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagProvisioningExport,
@@ -913,83 +918,62 @@ func RunGrafana(t *testing.T, options ...GrafanaOption) *ProvisioningTestHelper 
 		// (instance is needed for export jobs, folder for most operations)
 		ProvisioningAllowedTargets: []string{"folder", "instance"},
 	}
+}
 
-	for _, o := range options {
-		o(&opts)
-	}
-	helper := apis.NewK8sTestHelper(t, opts)
+func buildProvisioningHelper(t *testing.T, k8sHelper *apis.K8sTestHelper, provisioningPath string) *ProvisioningTestHelper {
+	t.Helper()
 
-	// FIXME: keeping these lines here to keep the dependency around until we have tests which use this again.
-	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
+	k8sHelper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
 
-	repositories := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
+	repositories := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8sHelper.Org1.Admin,
 		Namespace: "default", // actually org1
 		GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
 	})
-	connections := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: "default", // actually org1
+	connections := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8sHelper.Org1.Admin,
+		Namespace: "default",
 		GVR:       provisioning.ConnectionResourceInfo.GroupVersionResource(),
 	})
-	jobsClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: "default", // actually org1
+	jobsClient := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8sHelper.Org1.Admin,
+		Namespace: "default",
 		GVR:       provisioning.JobResourceInfo.GroupVersionResource(),
 	})
-	foldersClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: "default", // actually org1
+	foldersClient := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8sHelper.Org1.Admin,
+		Namespace: "default",
 		GVR:       folder.FolderResourceInfo.GroupVersionResource(),
 	})
-	dashboardsV0 := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: "default", // actually org1
+	dashboardsV0 := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8sHelper.Org1.Admin,
+		Namespace: "default",
 		GVR:       dashboardV0.DashboardResourceInfo.GroupVersionResource(),
 	})
-	dashboardsV1 := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: "default", // actually org1
+	dashboardsV1 := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8sHelper.Org1.Admin,
+		Namespace: "default",
 		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 	})
-	dashboardsV2alpha1Client := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: "default", // actually org1
+	dashboardsV2alpha1Client := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8sHelper.Org1.Admin,
+		Namespace: "default",
 		GVR:       dashboardsV2alpha1.DashboardResourceInfo.GroupVersionResource(),
 	})
-	dashboardsV2beta1Client := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      helper.Org1.Admin,
-		Namespace: "default", // actually org1
+	dashboardsV2beta1Client := k8sHelper.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8sHelper.Org1.Admin,
+		Namespace: "default",
 		GVR:       dashboardsV2beta1.DashboardResourceInfo.GroupVersionResource(),
 	})
 
-	// Repo client, but less guard rails. Useful for subresources. We'll need this later...
 	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
-	adminClient := helper.Org1.Admin.RESTClient(t, gv)
-	editorClient := helper.Org1.Editor.RESTClient(t, gv)
-	viewerClient := helper.Org1.Viewer.RESTClient(t, gv)
+	adminClient := k8sHelper.Org1.Admin.RESTClient(t, gv)
+	editorClient := k8sHelper.Org1.Editor.RESTClient(t, gv)
+	viewerClient := k8sHelper.Org1.Viewer.RESTClient(t, gv)
 
-	deleteAll := func(client *apis.K8sResourceClient) error {
-		ctx := context.Background()
-		list, err := client.Resource.List(ctx, metav1.ListOptions{})
-		if err != nil {
-			return err
-		}
-		for _, resource := range list.Items {
-			if err := client.Resource.Delete(ctx, resource.GetName(), metav1.DeleteOptions{}); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	require.NoError(t, deleteAll(dashboardsV1), "deleting all dashboards") // v0+v1+v2
-	require.NoError(t, deleteAll(foldersClient), "deleting all folders")
-	require.NoError(t, deleteAll(repositories), "deleting all repositories")
-
-	return &ProvisioningTestHelper{
+	h := &ProvisioningTestHelper{
 		ProvisioningPath: provisioningPath,
-		K8sTestHelper:    helper,
+		K8sTestHelper:    k8sHelper,
 
 		Repositories:       repositories,
 		Connections:        connections,
@@ -1003,6 +987,188 @@ func RunGrafana(t *testing.T, options ...GrafanaOption) *ProvisioningTestHelper 
 		DashboardsV2alpha1: dashboardsV2alpha1Client,
 		DashboardsV2beta1:  dashboardsV2beta1Client,
 	}
+
+	h.CleanupAllResources(t, context.Background())
+
+	return h
+}
+
+func RunGrafana(t *testing.T, options ...GrafanaOption) *ProvisioningTestHelper {
+	provisioningPath := t.TempDir()
+	opts := defaultGrafanaOpts(provisioningPath)
+	for _, o := range options {
+		o(&opts)
+	}
+	k8sHelper := apis.NewK8sTestHelper(t, opts)
+	return buildProvisioningHelper(t, k8sHelper, provisioningPath)
+}
+
+// RunGrafanaShared is like RunGrafana but the server shutdown is not tied to
+// t.Cleanup. The caller is responsible for invoking the returned shutdown
+// function (typically in TestMain after m.Run). The provisioning path uses
+// os.MkdirTemp so it survives beyond the initializing test's lifetime.
+func RunGrafanaShared(t *testing.T, options ...GrafanaOption) (*ProvisioningTestHelper, func()) {
+	provisioningPath, err := os.MkdirTemp("", "grafana-provisioning-*")
+	require.NoError(t, err, "failed to create shared provisioning temp dir")
+
+	opts := defaultGrafanaOpts(provisioningPath)
+	for _, o := range options {
+		o(&opts)
+	}
+	k8sHelper, serverShutdown := apis.NewK8sTestHelperShared(t, apis.K8sTestHelperOpts{GrafanaOpts: opts})
+	shutdownFunc := func() {
+		serverShutdown()
+		_ = os.RemoveAll(provisioningPath)
+	}
+	return buildProvisioningHelper(t, k8sHelper, provisioningPath), shutdownFunc
+}
+
+// deleteAndWait deletes all resources from a dynamic client and polls until
+// none remain. It retries deletes on each iteration to handle transient
+// resource-version conflicts from concurrent controller updates.
+func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeout time.Duration) error {
+	list, err := client.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("deleteAndWait: initial list: %w", err)
+	}
+	if len(list.Items) == 0 {
+		return nil
+	}
+
+	var firstErr error
+	for _, item := range list.Items {
+		if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			if firstErr == nil {
+				firstErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
+			}
+		}
+	}
+
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		remaining, err := client.List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return fmt.Errorf("deleteAndWait: list while polling: %w", err)
+		}
+		if len(remaining.Items) == 0 {
+			return nil
+		}
+		for _, item := range remaining.Items {
+			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+				if firstErr == nil {
+					firstErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
+				}
+			}
+		}
+		select {
+		case <-ctx.Done():
+			if firstErr != nil {
+				return fmt.Errorf("deleteAndWait: context cancelled (first delete error: %v): %w", firstErr, ctx.Err())
+			}
+			return fmt.Errorf("deleteAndWait: context cancelled: %w", ctx.Err())
+		case <-timer.C:
+			if firstErr != nil {
+				return fmt.Errorf("deleteAndWait: timed out with %d items remaining (first delete error: %v)", len(remaining.Items), firstErr)
+			}
+			return fmt.Errorf("deleteAndWait: timed out with %d items remaining", len(remaining.Items))
+		case <-ticker.C:
+		}
+	}
+}
+
+// CleanupAllResources deletes resources in dependency order: repositories
+// reference connections, so they go first; dashboards/folders are cleaned last.
+// It also clears the shared provisioning directory so leftover files from
+// a previous test don't leak into the next one.
+// Failures are fatal because cleanup is the primary test-isolation mechanism.
+func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
+	t.Helper()
+	for _, c := range []struct {
+		name   string
+		client dynamic.ResourceInterface
+	}{
+		{"repositories", h.Repositories.Resource},
+		{"connections", h.Connections.Resource},
+		{"dashboards", h.DashboardsV1.Resource},
+		{"folders", h.Folders.Resource},
+	} {
+		if err := deleteAndWait(ctx, c.client, 10*time.Second); err != nil {
+			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
+		}
+	}
+	h.CleanProvisioningDir(t)
+}
+
+// SharedEnv manages a single shared Grafana server for a test package.
+// It encapsulates the sync.Once init, server shutdown, and TestMain lifecycle
+// so that individual packages only need to define their per-test cleanup.
+type SharedEnv struct {
+	Helper       *ProvisioningTestHelper
+	shutdownFunc func()
+	once         sync.Once
+	initErr      string // non-empty if initialization failed
+	options      []GrafanaOption
+}
+
+// NewSharedEnv creates a SharedEnv that will lazily start a Grafana server
+// with the given options on the first call to GetHelper.
+func NewSharedEnv(options ...GrafanaOption) *SharedEnv {
+	return &SharedEnv{options: options}
+}
+
+// GetHelper returns the shared ProvisioningTestHelper, starting the Grafana
+// server on the first call (via sync.Once). Subsequent calls reuse the same
+// server. The test is skipped automatically when running in short mode.
+//
+// If initialization fails (panic or t.FailNow/runtime.Goexit), the error is
+// persisted and every subsequent caller gets a clear t.Fatal rather than a
+// nil-pointer crash.
+func (e *SharedEnv) GetHelper(t *testing.T) *ProvisioningTestHelper {
+	t.Helper()
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	e.once.Do(func() {
+		defer func() {
+			if r := recover(); r != nil {
+				e.initErr = fmt.Sprintf("shared server init panicked: %v", r)
+			} else if e.Helper == nil && e.initErr == "" {
+				e.initErr = "shared server init failed (FailNow/Goexit called; see first test output)"
+			}
+		}()
+		e.Helper, e.shutdownFunc = RunGrafanaShared(t, e.options...)
+	})
+
+	if e.initErr != "" {
+		t.Fatalf("SharedEnv: %s", e.initErr)
+	}
+
+	return e.Helper
+}
+
+// GetCleanHelper returns the shared helper after cleaning up all resources
+// from the previous test. This is the standard per-test entry point.
+func (e *SharedEnv) GetCleanHelper(t *testing.T) *ProvisioningTestHelper {
+	t.Helper()
+	h := e.GetHelper(t)
+	h.CleanupAllResources(t, context.Background())
+	return h
+}
+
+// RunTestMain replaces testsuite.Run(m) for packages that share a Grafana
+// server. It handles DB setup, runs all tests, shuts down the shared server,
+// cleans up the DB, and exits.
+func (e *SharedEnv) RunTestMain(m *testing.M) {
+	db.SetupTestDB()
+	code := m.Run()
+	if e.shutdownFunc != nil {
+		e.shutdownFunc()
+	}
+	db.CleanupTestDB()
+	os.Exit(code)
 }
 
 func MustNestedString(obj map[string]interface{}, fields ...string) string {
@@ -1385,6 +1551,16 @@ func PostHelper(t *testing.T, helper apis.K8sTestHelper, path string, body inter
 
 func PatchHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
 	return requestHelper(t, helper, http.MethodPatch, path, body, user)
+}
+
+func DeleteHelper(t *testing.T, helper apis.K8sTestHelper, path string, user apis.User) {
+	t.Helper()
+	resp := apis.DoRequest(&helper, apis.RequestParams{
+		User:   user,
+		Method: http.MethodDelete,
+		Path:   path,
+	}, &struct{}{})
+	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "DELETE %s failed: %s", path, string(resp.Body))
 }
 
 func requestHelper(

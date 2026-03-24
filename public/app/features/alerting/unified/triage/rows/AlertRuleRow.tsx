@@ -68,8 +68,10 @@ export const AlertRuleRow = ({
         }
         content={<AlertRuleSummary ruleUID={ruleUID} />}
         depth={depth}
+        showIndentBorder
+        expandable={false}
       >
-        <AlertRuleInstances ruleUID={ruleUID} depth={depth + 1} />
+        <AlertRuleInstances ruleUID={ruleUID} depth={depth} />
       </GenericRow>
 
       {isDrawerOpen && <RuleDetailsDrawer ruleUID={ruleUID} onClose={handleDrawerClose} />}

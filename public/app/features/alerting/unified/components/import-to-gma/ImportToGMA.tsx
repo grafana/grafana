@@ -23,6 +23,7 @@ import {
   trackImportToGMAWizardStepSkipped,
 } from '../../Analytics';
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
+import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { Folder } from '../../types/rule-form';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -32,16 +33,16 @@ import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
 
 import { RenamedResourcesList } from './CollapsibleRenameList';
+import { PolicyTreeNameHelp } from './PolicyTreeNameHelp';
 import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
-import { MERGE_MATCHERS_LABEL_NAME, getPauseRulesLabel } from './Wizard/constants';
+import { getPauseRulesLabel } from './Wizard/constants';
 import { StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
 import { DryRunValidationResult } from './types';
-import { useExtraConfigState } from './useExtraConfigState';
 import {
   buildRoutingParams,
   filterRulerRulesConfig,
@@ -86,7 +87,7 @@ export interface ImportFormValues {
 const ImportToGMA = () => {
   return (
     <AlertingPageWrapper
-      navId="alert-list"
+      navId={getAlertRulesNavId()}
       pageNav={{
         text: t('alerting.import-to-gma-tool.pageTitle', 'Import to Grafana Alerting'),
       }}
@@ -177,9 +178,6 @@ function ImportWizardContent() {
   const canImportRules =
     contextSrv.hasPermission(AccessControlAction.AlertingRuleCreate) &&
     contextSrv.hasPermission(AccessControlAction.AlertingProvisioningSetStatus);
-
-  // Check for existing extra config that will be replaced
-  const { existingIdentifier } = useExtraConfigState();
 
   // Trigger dry-run validation (called automatically by Step1 when source changes)
   const handleTriggerDryRun = useCallback(() => {
@@ -401,7 +399,6 @@ function ImportWizardContent() {
               dryRunState={dryRunState}
               dryRunResult={dryRunResult}
               onTriggerDryRun={handleTriggerDryRun}
-              existingIdentifier={existingIdentifier}
             />
           )}
 
@@ -452,8 +449,6 @@ interface Step1WrapperProps {
   dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
   dryRunResult?: DryRunValidationResult;
   onTriggerDryRun: () => void;
-  /** Identifier of an existing imported config that will be replaced, if any */
-  existingIdentifier?: string;
 }
 
 function Step1Wrapper({
@@ -464,7 +459,6 @@ function Step1Wrapper({
   dryRunState,
   dryRunResult,
   onTriggerDryRun,
-  existingIdentifier,
 }: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
   // Can proceed if form is valid and dry-run passed (existing config will be force-replaced)
@@ -491,7 +485,6 @@ function Step1Wrapper({
         dryRunState={dryRunState}
         dryRunResult={dryRunResult}
         onTriggerDryRun={onTriggerDryRun}
-        existingIdentifier={existingIdentifier}
       />
     </WizardStep>
   );
@@ -695,7 +688,7 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
         </Text>
         <Text color="secondary">
           <Trans i18nKey="alerting.import-to-gma.review.subtitle">
-            Review each section and once you are happy, start the migration.
+            Review each section and once you are happy, start the import.
           </Trans>
         </Text>
       </Box>
@@ -737,9 +730,10 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                   </div>
                   <div className={styles.row}>
                     <Text color="secondary">{t('alerting.import-to-gma.review.policy-tree', 'Policy tree')}</Text>
-                    <Text weight="medium">
-                      {MERGE_MATCHERS_LABEL_NAME}={formData.policyTreeName}
-                    </Text>
+                    <Stack direction="row" gap={1} alignItems="center" wrap="wrap">
+                      <Text weight="medium">{formData.policyTreeName}</Text>
+                      <PolicyTreeNameHelp />
+                    </Stack>
                   </div>
                   {dryRunResult && (
                     <Box marginTop={1}>

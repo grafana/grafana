@@ -10,8 +10,10 @@ import (
 
 // managedResourceIndex is a path index over the current managed resources so
 // the rebuilder can find existing folders and direct children efficiently.
+// Multiple items may share the same path (orphaned resources from previous
+// metadata.name changes); the index preserves all of them.
 type managedResourceIndex struct {
-	byPath map[string]*provisioning.ResourceListItem
+	byPath map[string][]*provisioning.ResourceListItem
 }
 
 // newManagedResourceIndex builds a normalized path index over the current
@@ -19,7 +21,7 @@ type managedResourceIndex struct {
 // repository path.
 func newManagedResourceIndex(target *provisioning.ResourceList) managedResourceIndex {
 	index := managedResourceIndex{
-		byPath: make(map[string]*provisioning.ResourceListItem),
+		byPath: make(map[string][]*provisioning.ResourceListItem),
 	}
 	if target == nil {
 		return index
@@ -27,20 +29,23 @@ func newManagedResourceIndex(target *provisioning.ResourceList) managedResourceI
 
 	for i := range target.Items {
 		item := &target.Items[i]
-		index.byPath[normalizeManagedResourcePath(item)] = item
+		path := normalizeManagedResourcePath(item)
+		index.byPath[path] = append(index.byPath[path], item)
 	}
 
 	return index
 }
 
-// ExistingAt returns the managed resource currently tracked at the given
-// normalized repository path, if any.
-func (index managedResourceIndex) ExistingAt(path string) *provisioning.ResourceListItem {
+// ExistingAt returns all managed resources currently tracked at the given
+// normalized repository path. Multiple items at the same path indicate
+// orphaned duplicates (e.g. from previous metadata.name changes).
+func (index managedResourceIndex) ExistingAt(path string) []*provisioning.ResourceListItem {
 	return index.byPath[path]
 }
 
 // DirectChildrenOf lists the managed resources whose direct parent is the
-// provided folder path. The returned paths are sorted for deterministic output.
+// provided folder path. Each path is returned once even if multiple items
+// share the same path. The returned paths are sorted for deterministic output.
 func (index managedResourceIndex) DirectChildrenOf(parentPath string) []string {
 	childrenPaths := make([]string, 0)
 	for path := range index.byPath {

@@ -1,4 +1,4 @@
-package foldermetadataincremental
+package git
 
 import (
 	"context"
@@ -16,8 +16,8 @@ import (
 
 // TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange verifies
 // that when a resource's metadata.name (uid) changes in a file at the same
-// path, incremental sync creates a new resource with the new name and deletes
-// the old one to prevent orphans.
+// path, incremental sync creates the new resource and deletes the old one so
+// no orphan is left behind.
 func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -54,8 +54,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 		}
 	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "dashboard with new name should be created")
 
-	// The old dashboard should be deleted — ReplaceResourceFromFileByRef detects
-	// the name change and removes the previous resource.
+	// The old dashboard should be deleted — no orphan left behind.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "name-change-incr-001", metav1.GetOptions{})
 		assert.True(c, apierrors.IsNotFound(err), "old dashboard should be NotFound, got: %v", err)
