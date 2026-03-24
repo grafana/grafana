@@ -192,6 +192,12 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resourcepb.Reso
 		case resource.SEARCH_FIELD_TAGS:
 			query.Tags = field.GetValues()
 		case resource.SEARCH_FIELD_NAME:
+			// NotIn is not supported by legacy search; ignore it and let the
+			// caller post-filter the results. This avoids misinterpreting
+			// NotIn as In, which would break the query entirely.
+			if field.Operator == string(selection.NotIn) {
+				continue
+			}
 			query.DashboardUIDs = field.GetValues()
 			query.DashboardIds = nil
 		case resource.SEARCH_FIELD_FOLDER:

@@ -749,7 +749,7 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 }
 
 // jitterForKey returns a deterministic jitter duration for the given key,
-// bounded to [0, maxAge/5). This spreads index rebuilds across scan intervals
+// bounded to [0, maxAge/2). This spreads index rebuilds across scan intervals
 // to avoid thundering herd CPU spikes when many indexes become stale at once.
 func jitterForKey(key NamespacedResource, maxAge time.Duration) time.Duration {
 	if maxAge <= 0 {
@@ -757,7 +757,7 @@ func jitterForKey(key NamespacedResource, maxAge time.Duration) time.Duration {
 	}
 	h := fnv.New64a()
 	_, _ = h.Write([]byte(key.String()))
-	jitterRange := uint64(maxAge / 5)
+	jitterRange := uint64(maxAge / 2)
 	if jitterRange == 0 {
 		return 0
 	}

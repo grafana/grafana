@@ -27,11 +27,12 @@ import (
 // ErrUserRequired is returned when a nil user is passed to protected field authorization checks.
 var ErrUserRequired = errors.New("user is required to check protected field authorization")
 
-// ProtectedFieldsAuthz defines the interface for checking protected field authorization.
-// This is implemented by receiver access control services.
-type ProtectedFieldsAuthz interface {
+type receiverAuthz interface {
 	HasUpdateProtected(ctx context.Context, user identity.Requester, receiver *models.Receiver) (bool, error)
 	AuthorizeUpdateProtected(ctx context.Context, user identity.Requester, receiver *models.Receiver) error
+	AuthorizeCreate(context.Context, identity.Requester) error
+	AuthorizeUpdateByUID(context.Context, identity.Requester, string) error
+	AuthorizeDeleteByUID(context.Context, identity.Requester, string) error
 }
 
 type AlertRuleNotificationSettingsStore interface {
@@ -41,7 +42,7 @@ type AlertRuleNotificationSettingsStore interface {
 }
 
 type ContactPointService struct {
-	authz                     ProtectedFieldsAuthz
+	authz                     receiverAuthz
 	configStore               alertmanagerConfigStore
 	encryptionService         secrets.Service
 	provenanceStore           ProvisioningStore
@@ -59,7 +60,7 @@ type receiverService interface {
 }
 
 func NewContactPointService(
-	authz ProtectedFieldsAuthz,
+	authz receiverAuthz,
 	store alertmanagerConfigStore,
 	encryptionService secrets.Service,
 	provenanceStore ProvisioningStore,
@@ -218,10 +219,16 @@ func (ecp *ContactPointService) CreateContactPoint(
 		if receiver.Name == contactPoint.Name {
 			receiver.GrafanaManagedReceivers = append(receiver.GrafanaManagedReceivers, grafanaReceiver)
 			receiverFound = true
+			if err := ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(receiver.Name)); err != nil {
+				return apimodels.EmbeddedContactPoint{}, err
+			}
 		}
 	}
 
 	if !receiverFound {
+		if err := ecp.authz.AuthorizeCreate(ctx, user); err != nil {
+			return apimodels.EmbeddedContactPoint{}, err
+		}
 		revision.Config.AlertmanagerConfig.Receivers = append(revision.Config.AlertmanagerConfig.Receivers, &apimodels.PostableApiReceiver{
 			Receiver: apimodels.Receiver{
 				Name: grafanaReceiver.Name,
@@ -334,6 +341,10 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	}
 	oldReceiverName := *oldReceiverNameRef
 
+	if err := ecp.authorizeUpdate(ctx, user, mergedReceiver.Name, oldReceiverName, fullRemoval, newReceiverCreated); err != nil {
+		return err
+	}
+
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if mergedReceiver.Name != oldReceiverName && oldReceiverName != "" {
 			if newReceiverCreated {
@@ -367,7 +378,31 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	return nil
 }
 
-func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, uid string) error {
+// authorizeUpdate checks authorization for a contact point update, handling the
+// different cases: simple update, rename into existing receiver, and rename creating a new receiver.
+func (ecp *ContactPointService) authorizeUpdate(ctx context.Context, user identity.Requester, newName, oldName string, fullRemoval, newReceiverCreated bool) error {
+	renamed := newName != oldName && oldName != ""
+	if !renamed {
+		return ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(newName))
+	}
+
+	// Authorize the target: create if it's a new receiver group, update otherwise.
+	if newReceiverCreated {
+		if err := ecp.authz.AuthorizeCreate(ctx, user); err != nil {
+			return err
+		}
+	} else if err := ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(newName)); err != nil {
+		return err
+	}
+
+	// Authorize the source: delete if fully removed, update otherwise.
+	if fullRemoval {
+		return ecp.authz.AuthorizeDeleteByUID(ctx, user, models.NameToUid(oldName))
+	}
+	return ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(oldName))
+}
+
+func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID int64, user identity.Requester, uid string) error {
 	revision, err := ecp.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -395,6 +430,16 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	}
 	if fullRemoval && name != "" && ecp.receiverService.ReceiverNameUsedByRoutes(ctx, revision, name) {
 		return ErrContactPointReferenced.Errorf("")
+	}
+
+	if fullRemoval {
+		if err := ecp.authz.AuthorizeDeleteByUID(ctx, user, models.NameToUid(name)); err != nil {
+			return err
+		}
+	} else {
+		if err := ecp.authz.AuthorizeUpdateByUID(ctx, user, models.NameToUid(name)); err != nil {
+			return err
+		}
 	}
 
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {

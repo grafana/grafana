@@ -152,7 +152,9 @@ func (r ResourceInfo) GroupResourceIdent() string {
 }
 
 func (r ResourceInfo) ResourceIdent() string {
-	if r.name == "" {
+	// Treat "*" the same as "". Wildcard access ("can access all resources of this type")
+	// is handled at the group-resource level.
+	if r.name == "" || r.name == "*" {
 		return ""
 	}
 

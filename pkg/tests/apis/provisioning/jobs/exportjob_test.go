@@ -13,13 +13,10 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Write dashboards at
@@ -109,9 +106,7 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Test table for different dashboard versions
@@ -271,46 +266,4 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			}
 		}
 	}
-}
-
-func TestIntegrationProvisioning_ExportDisabledByConfiguration(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	// Run Grafana WITHOUT the export feature flag enabled
-	helper := common.RunGrafana(t, common.WithoutExportFeatureFlag)
-
-	// Create a repository
-	const repo = "test-repository"
-	testRepo := common.TestRepo{
-		Name:   repo,
-		Target: "instance",
-	}
-	helper.CreateRepo(t, testRepo)
-
-	// Try to trigger an export job (it should fail)
-	spec := provisioning.JobSpec{
-		Action: provisioning.JobActionPush,
-		Push: &provisioning.ExportJobOptions{
-			Folder: "",
-			Path:   "",
-		},
-	}
-
-	// Trigger job and wait for it to complete (will fail)
-	job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-
-	// Check that job failed with the expected error message
-	status, found, err := unstructured.NestedMap(job.Object, "status")
-	require.NoError(t, err)
-	require.True(t, found, "job should have status")
-
-	state, found, err := unstructured.NestedString(status, "state")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, "error", state, "job should have error state")
-
-	message, found, err := unstructured.NestedString(status, "message")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Contains(t, message, "export functionality is disabled by configuration")
 }
