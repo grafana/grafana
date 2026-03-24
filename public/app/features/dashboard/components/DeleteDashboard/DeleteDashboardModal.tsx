@@ -4,6 +4,7 @@ import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { Modal, Button, Text, Space, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { cleanUpDashboardAndVariables } from 'app/features/dashboard/state/actions';
@@ -39,7 +40,7 @@ const DeleteDashboardModalUnconnected = ({ hideModal, cleanUpDashboardAndVariabl
     await deleteDashboards({ dashboardUIDs: [dashboard.uid] });
     cleanUpDashboardAndVariables();
     hideModal();
-    locationService.replace('/');
+    locationService.replace(appendOrgId('/'));
   }, [hideModal]);
 
   if (isProvisioned) {

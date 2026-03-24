@@ -21,6 +21,7 @@ import { appEvents } from 'app/core/app_events';
 import { ScrollRefElement } from 'app/core/components/NativeScrollbar';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -991,7 +992,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public async onDashboardDelete() {
     // Need to mark it non dirty to navigate away without unsaved changes warning
     this.setState({ isDirty: false });
-    locationService.replace('/');
+    locationService.replace(appendOrgId('/'));
   }
 
   public getDashboardPanels() {

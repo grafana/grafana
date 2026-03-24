@@ -3,6 +3,7 @@ import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent, locationUtil } from
 import { LocationService, config } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { appendOrgId } from 'app/core/utils/navigationUrl';
 import { toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal/ShareModal';
@@ -101,23 +102,23 @@ export class KeybindingSrv {
   }
 
   private openAlerting() {
-    this.locationService.push('/alerting');
+    this.locationService.push(appendOrgId('/alerting'));
   }
 
   private goToDashboards() {
-    this.locationService.push('/dashboards');
+    this.locationService.push(appendOrgId('/dashboards'));
   }
 
   private goToHome() {
-    this.locationService.push('/');
+    this.locationService.push(appendOrgId('/'));
   }
 
   private goToProfile() {
-    this.locationService.push('/profile');
+    this.locationService.push(appendOrgId('/profile'));
   }
 
   private goToExplore() {
-    this.locationService.push('/explore');
+    this.locationService.push(appendOrgId('/explore'));
   }
 
   private showHelpModal() {
