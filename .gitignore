@@ -70,10 +70,7 @@ public/css/*.min.css
 !.vscode/launch.json
 .vs/
 .cursor/*
-!.cursor/rules/
 !.cursor/skills/
-.cursor/rules/*
-!.cursor/rules/test-git-sync-provisioning-cloud.mdc
 .cursor/skills/*
 !.cursor/skills/test-git-sync-provisioning/
 .devcontainer/
