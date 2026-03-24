@@ -1640,6 +1640,33 @@ describe('ElasticDatasource', () => {
       expect(result.query).toContain('WHERE @timestamp >=');
     });
 
+    it('should insert time filter right after TS command', () => {
+      const testDs = createDsWithTimeRange();
+      const result = testDs.applyTemplateVariables(
+        {
+          refId: 'A',
+          query: 'TS metrics-generic.otel-default | STATS AVG(cpu) BY BUCKET(@timestamp, 100, "${__from:date:iso}", "${__to:date:iso}")',
+          queryType: 'esql',
+        },
+        {}
+      );
+      expect(result.query).toMatch(/TS metrics-generic.otel-default \| WHERE @timestamp >=.*\| STATS/);
+    });
+
+    it('should NOT add time filter to TS query when WHERE on time field already exists', () => {
+      const testDs = createDsWithTimeRange();
+      const result = testDs.applyTemplateVariables(
+        {
+          refId: 'A',
+          query: 'TS metrics-generic.otel-default | WHERE @timestamp >= "2024-01-01T00:00:00Z" | STATS AVG(cpu)',
+          queryType: 'esql',
+        },
+        {}
+      );
+      const whereCount = (result.query!.match(/WHERE/g) || []).length;
+      expect(whereCount).toBe(1);
+    });
+
     it('should return empty query unchanged', () => {
       const testDs = createDsWithTimeRange();
       const result = testDs.applyTemplateVariables({ refId: 'A', query: '', queryType: 'esql' }, {});

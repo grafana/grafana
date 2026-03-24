@@ -1201,8 +1201,8 @@ export class ElasticDatasource
         }
       }
 
-      const fromCmdIndex = root.commands.findIndex((cmd) => cmd.name === 'from');
-      if (fromCmdIndex === -1) {
+      const headerCmdIndex = root.commands.findIndex((cmd) => cmd.name === 'from' || cmd.name === 'ts');
+      if (headerCmdIndex === -1) {
         return esqlQuery;
       }
 
@@ -1210,8 +1210,8 @@ export class ElasticDatasource
         `WHERE ${this.timeField} >= "\${__from:date:iso}" AND ${this.timeField} <= "\${__to:date:iso}"`
       );
 
-      // Insert right after FROM so the time filter runs before LIMIT or other commands
-      mutate.generic.commands.insert(root, whereCmd, fromCmdIndex + 1);
+      // Insert right after FROM/TS so the time filter runs before LIMIT or other commands
+      mutate.generic.commands.insert(root, whereCmd, headerCmdIndex + 1);
 
       return BasicPrettyPrinter.print(root);
     } catch {
