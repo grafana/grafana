@@ -83,7 +83,7 @@ func ProvideDashboardPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardService dashboards.DashboardService, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
-	dashboardPermissionsRegistration dashboards.PermissionsRegistrationService, restConfigProvider apiserver.RestConfigProvider,
+	dashboardPermissionsRegistration dashboards.PermissionsRegistrationService, restConfigProvider apiserver.DirectRestConfigProvider,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
 		query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}

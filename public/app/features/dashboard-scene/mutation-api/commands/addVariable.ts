@@ -25,6 +25,7 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
 
   payloadSchema: payloads.addVariable,
   permission: requiresEdit,
+  readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
@@ -58,10 +59,8 @@ export const addVariableCommand: MutationCommand<AddVariablePayload> = {
 
       return {
         success: true,
-        data: { name, kind: variableKind.kind },
-        changes: [
-          { path: `/variables/${name}`, previousValue: undefined, newValue: { kind: variableKind.kind, name } },
-        ],
+        data: { variable: variableKind },
+        changes: [{ path: `/variables/${name}`, previousValue: null, newValue: variableKind }],
       };
     } catch (error) {
       return {

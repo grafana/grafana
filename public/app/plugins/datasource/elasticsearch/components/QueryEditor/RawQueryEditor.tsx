@@ -1,23 +1,52 @@
 import { css } from '@emotion/css';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { CodeEditor, Monaco, CodeEditorMonacoOptions, monacoTypes, useStyles2, Box } from '@grafana/ui';
 
 interface Props {
   value?: string;
+  language?: string;
   onChange: (value: string) => void;
   onRunQuery: () => void;
+  onFocusPopulate?: (currentValue: string) => string | undefined;
+  onBeforeEditorMount?: (monaco: Monaco) => void;
+  onEditorDidMount?: (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => void;
   onFormatReady?: (formatFn: () => void) => void;
 }
 
 // This offset was chosen by testing to match Prometheus behavior
 const EDITOR_HEIGHT_OFFSET = 2;
+export type RawQueryEditorProps = Props;
 
-export function RawQueryEditor({ value, onChange, onRunQuery, onFormatReady }: Props) {
+export function RawQueryEditor({
+  value,
+  language = 'json',
+  onChange,
+  onRunQuery,
+  onFocusPopulate,
+  onBeforeEditorMount,
+  onEditorDidMount,
+  onFormatReady,
+}: Props) {
   const styles = useStyles2(getStyles);
   const editorRef = useRef<monacoTypes.editor.IStandaloneCodeEditor | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const onRunQueryRef = useRef(onRunQuery);
+  const onFocusPopulateRef = useRef(onFocusPopulate);
+  const onEditorDidMountRef = useRef(onEditorDidMount);
+
+  useEffect(() => {
+    onRunQueryRef.current = onRunQuery;
+  }, [onRunQuery]);
+
+  useEffect(() => {
+    onFocusPopulateRef.current = onFocusPopulate;
+  }, [onFocusPopulate]);
+
+  useEffect(() => {
+    onEditorDidMountRef.current = onEditorDidMount;
+  }, [onEditorDidMount]);
 
   const handleEditorDidMount = useCallback(
     (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
@@ -25,7 +54,18 @@ export function RawQueryEditor({ value, onChange, onRunQuery, onFormatReady }: P
 
       // Add keyboard shortcut for running query (Ctrl/Cmd+Enter)
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-        onRunQuery();
+        onRunQueryRef.current();
+      });
+
+      editor.onDidFocusEditorText(() => {
+        const currentValue = editor.getValue();
+        const populatedValue = onFocusPopulateRef.current?.(currentValue);
+        if (!populatedValue || currentValue.trim() !== '') {
+          return;
+        }
+
+        // Populate editor text without dispatching query changes on focus.
+        editor.setValue(populatedValue);
       });
 
       // Make the editor resize itself so that the content fits (grows taller when necessary)
@@ -44,11 +84,12 @@ export function RawQueryEditor({ value, onChange, onRunQuery, onFormatReady }: P
       editor.onDidContentSizeChange(updateElementHeight);
       updateElementHeight();
 
+      onEditorDidMountRef.current?.(editor, monaco);
       onFormatReady?.(() => {
         editorRef.current?.getAction('editor.action.formatDocument')?.run();
       });
     },
-    [onRunQuery, onFormatReady]
+    [onFormatReady]
   );
 
   const handleQueryChange = useCallback(
@@ -87,11 +128,12 @@ export function RawQueryEditor({ value, onChange, onRunQuery, onFormatReady }: P
       <div ref={containerRef} className={styles.editorContainer}>
         <CodeEditor
           value={value ?? ''}
-          language="json"
+          language={language}
           width="100%"
           onBlur={handleQueryChange}
           monacoOptions={monacoOptions}
           onEditorDidMount={handleEditorDidMount}
+          onBeforeEditorMount={onBeforeEditorMount}
         />
       </div>
     </Box>

@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
@@ -49,9 +49,10 @@ function renderVariablesList(variables: SceneVariable[] = []) {
     user,
     elements: {
       dashboardScene,
-      aboveListItems: () => renderResult.getAllByTestId('variables-list-visible-variable-name'),
-      controlsMenuListItems: () => renderResult.getAllByTestId('variables-list-controls-menu-variable-name'),
-      hiddenListItems: () => renderResult.getAllByTestId('variables-list-hidden-variable-name'),
+      aboveListItems: () => within(renderResult.getByTestId('variables-list-visible')).getAllByTestId('variable-name'),
+      controlsMenuListItems: () =>
+        within(renderResult.getByTestId('variables-list-controls-menu')).getAllByTestId('variable-name'),
+      hiddenListItems: () => within(renderResult.getByTestId('variables-list-hidden')).getAllByTestId('variable-name'),
     },
   };
 }

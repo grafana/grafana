@@ -215,6 +215,85 @@ func TestK8sHandlerWithFallback_Get(t *testing.T) {
 	})
 }
 
+func TestK8sHandlerWithFallback_GetWithPreferredAPIVersion(t *testing.T) {
+	t.Run("empty preferred delegates to Get", func(t *testing.T) {
+		setup := setupTest(t)
+		ctx := context.Background()
+		name := "d"
+		orgID := int64(1)
+		options := metav1.GetOptions{}
+		expected := &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": name}}}
+		setup.mockClientV1Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(expected, nil).Once()
+
+		result, err := setup.handler.GetWithPreferredAPIVersion(ctx, name, orgID, options, "")
+		require.NoError(t, err)
+		require.Equal(t, expected, result)
+		setup.mockClientV1Beta1.AssertExpectations(t)
+	})
+
+	t.Run("uses requested version", func(t *testing.T) {
+		setup := setupTest(t)
+		ctx := context.Background()
+		name := "d2"
+		orgID := int64(1)
+		options := metav1.GetOptions{}
+		expected := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "dashboard.grafana.app/v2beta1"}}
+		setup.mockClientV2Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(expected, nil).Once()
+
+		result, err := setup.handler.GetWithPreferredAPIVersion(ctx, name, orgID, options, v2beta1.VERSION)
+		require.NoError(t, err)
+		require.Equal(t, expected, result)
+		require.Equal(t, 1, setup.mockFactoryCalls[v2beta1.VERSION])
+		setup.mockClientV2Beta1.AssertExpectations(t)
+	})
+
+	t.Run("preferred Get error falls back to default Get", func(t *testing.T) {
+		setup := setupTest(t)
+		ctx := context.Background()
+		name := "d-fallback-err"
+		orgID := int64(1)
+		options := metav1.GetOptions{}
+		fallbackResult := &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": name}}}
+		setup.mockClientV2Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(nil, errors.New("preferred get failed")).Once()
+		setup.mockClientV1Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(fallbackResult, nil).Once()
+
+		result, err := setup.handler.GetWithPreferredAPIVersion(ctx, name, orgID, options, v2beta1.VERSION)
+		require.NoError(t, err)
+		require.Equal(t, fallbackResult, result)
+		setup.mockClientV2Beta1.AssertExpectations(t)
+		setup.mockClientV1Beta1.AssertExpectations(t)
+	})
+
+	t.Run("fallback on conversion failure", func(t *testing.T) {
+		setup := setupTest(t)
+		ctx := context.Background()
+		name := "d3"
+		orgID := int64(2)
+		options := metav1.GetOptions{}
+		storedVersion := v2alpha1.VERSION
+		bad := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"status": map[string]interface{}{
+					"conversion": map[string]interface{}{
+						"failed":        true,
+						"storedVersion": storedVersion,
+						"error":         "conv err",
+					},
+				},
+			},
+		}
+		ok := &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": name}}}
+		setup.mockClientV2Beta1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(bad, nil).Once()
+		setup.mockClientV2Alpha1.On("Get", mock.Anything, name, orgID, options, mock.Anything).Return(ok, nil).Once()
+
+		result, err := setup.handler.GetWithPreferredAPIVersion(ctx, name, orgID, options, v2beta1.VERSION)
+		require.NoError(t, err)
+		require.Equal(t, ok, result)
+		setup.mockClientV2Beta1.AssertExpectations(t)
+		setup.mockClientV2Alpha1.AssertExpectations(t)
+	})
+}
+
 func TestK8sHandlerWithFallback_List(t *testing.T) {
 	// Helper function to create a dashboard item
 	createDashboard := func(name, resourceVersion string, status map[string]interface{}) unstructured.Unstructured {

@@ -799,6 +799,61 @@ func (a apiClient) DeleteDatasource(t *testing.T, uid string) {
 	}
 }
 
+func (a apiClient) GetTemplatesWithStatus(t *testing.T) (apimodels.NotificationTemplates, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/templates", a.url), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.NotificationTemplates](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetTemplateByNameWithStatus(t *testing.T, name string) (apimodels.NotificationTemplate, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/templates/%s", a.url, name), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.NotificationTemplate](t, req, http.StatusOK)
+}
+
+func (a apiClient) PutTemplateWithStatus(t *testing.T, name string, tmpl apimodels.NotificationTemplateContent) (apimodels.NotificationTemplate, int, string) {
+	t.Helper()
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(tmpl)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/provisioning/templates/%s", a.url, name), &buf)
+	req.Header.Add("Content-Type", "application/json")
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.NotificationTemplate](t, req, http.StatusAccepted)
+}
+
+func (a apiClient) DeleteTemplateWithStatus(t *testing.T, name string) (int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/v1/provisioning/templates/%s", a.url, name), nil)
+	require.NoError(t, err)
+
+	body, statusCode, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+	return statusCode, string(body)
+}
+
+func (a apiClient) DeleteRouteWithStatus(t *testing.T) (int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/v1/provisioning/policies", a.url), nil)
+	require.NoError(t, err)
+
+	body, statusCode, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+	return statusCode, string(body)
+}
+
 func (a apiClient) GetAllMuteTimingsWithStatus(t *testing.T) (apimodels.MuteTimings, int, string) {
 	t.Helper()
 
@@ -989,12 +1044,19 @@ func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.
 	return sendRequestJSON[data.Frame](t, req, http.StatusOK)
 }
 
-func (a apiClient) CreateReceiverWithStatus(t *testing.T, receiver apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, int, string) {
+func (a apiClient) EnsureReceiver(t *testing.T, receiver apimodels.EmbeddedContactPoint) {
+	t.Helper()
+
+	_, status, body := a.CreateContactPointWithStatus(t, receiver)
+	require.Equalf(t, http.StatusAccepted, status, body)
+}
+
+func (a apiClient) CreateContactPointWithStatus(t *testing.T, contactPoint apimodels.EmbeddedContactPoint) (apimodels.EmbeddedContactPoint, int, string) {
 	t.Helper()
 
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
-	err := enc.Encode(receiver)
+	err := enc.Encode(contactPoint)
 	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/v1/provisioning/contact-points", a.url), &buf)
@@ -1004,11 +1066,56 @@ func (a apiClient) CreateReceiverWithStatus(t *testing.T, receiver apimodels.Emb
 	return sendRequestJSON[apimodels.EmbeddedContactPoint](t, req, http.StatusAccepted)
 }
 
-func (a apiClient) EnsureReceiver(t *testing.T, receiver apimodels.EmbeddedContactPoint) {
+func (a apiClient) GetContactPointsWithStatus(t *testing.T) ([]apimodels.EmbeddedContactPoint, int, string) {
 	t.Helper()
 
-	_, status, body := a.CreateReceiverWithStatus(t, receiver)
-	require.Equalf(t, http.StatusAccepted, status, body)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/provisioning/contact-points", a.url), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[[]apimodels.EmbeddedContactPoint](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetContactPointsByNameWithStatus(t *testing.T, name string) ([]apimodels.EmbeddedContactPoint, int, string) {
+	t.Helper()
+
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/provisioning/contact-points", a.url))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("name", name)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[[]apimodels.EmbeddedContactPoint](t, req, http.StatusOK)
+}
+
+func (a apiClient) UpdateContactPointWithStatus(t *testing.T, uid string, receiver apimodels.EmbeddedContactPoint) (int, string) {
+	t.Helper()
+
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	err := enc.Encode(receiver)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/v1/provisioning/contact-points/%s", a.url, uid), &buf)
+	req.Header.Add("Content-Type", "application/json")
+	require.NoError(t, err)
+
+	body, statusCode, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+	return statusCode, string(body)
+}
+
+func (a apiClient) DeleteContactPointWithStatus(t *testing.T, uid string) (int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/v1/provisioning/contact-points/%s", a.url, uid), nil)
+	require.NoError(t, err)
+
+	body, statusCode, err := sendRequestRaw(t, req)
+	require.NoError(t, err)
+	return statusCode, string(body)
 }
 
 func (a apiClient) ExportReceiver(t *testing.T, name string, format string, decrypt bool) string {
@@ -1498,7 +1605,7 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		db, orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(),
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 
