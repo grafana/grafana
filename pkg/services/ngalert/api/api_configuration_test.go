@@ -124,8 +124,7 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 }
 
 func createAPIAdminSut(t *testing.T,
-	datasources []*datasources.DataSource, features featuremgmt.FeatureToggles,
-) ConfigSrv {
+	datasources []*datasources.DataSource, features featuremgmt.FeatureToggles) ConfigSrv {
 	return ConfigSrv{
 		datasourceService: &fakeDatasources.FakeDataSourceService{
 			DataSources: datasources,
