@@ -107,7 +107,7 @@ test.describe(
 
       // select the variable in the dashboard and set the Auto option
       const variableDropdown = dashboardPage.getByGrafanaSelector(
-        selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.name!)
+        selectors.pages.Dashboard.SubMenu.submenuItemLabels(variable.label)
       );
       const nextElement = variableDropdown.locator('+ *');
       await expect(nextElement).toHaveText('1m');
