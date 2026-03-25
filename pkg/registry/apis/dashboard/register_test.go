@@ -119,6 +119,26 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			expectedError: false,
 		},
 		{
+			name: "should fail closed on non-404 storage error",
+			inputObj: &dashv1.Dashboard{
+				Spec: common.Unstructured{},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Dashboard",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+			},
+			deletionOptions: metav1.DeleteOptions{
+				GracePeriodSeconds: nil,
+			},
+			readResponse: &resourcepb.ReadResponse{
+				Error: &resourcepb.ErrorResult{Code: 500, Message: "internal server error"},
+			},
+			checkRan:      true,
+			expectedError: true,
+		},
+		{
 			name: "should allow deletion of non-provisioned dashboard",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{},

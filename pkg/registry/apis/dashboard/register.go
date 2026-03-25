@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net/http"
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -353,8 +354,12 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 		return fmt.Errorf("delete hook failed to check if dashboard is provisioned: %w", err)
 	}
 	if readResp.Error != nil {
-		// Dashboard not found or other storage error — nothing to protect
-		return nil
+		// Not found means there's nothing to protect — allow deletion
+		if readResp.Error.Code == http.StatusNotFound {
+			return nil
+		}
+		// Any other in-band error: fail closed to preserve provisioning protection
+		return fmt.Errorf("delete hook failed to check if dashboard is provisioned: %s", readResp.Error.Message)
 	}
 
 	var dashObj unstructured.Unstructured
