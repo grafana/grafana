@@ -14,7 +14,7 @@ import {
   cacheFieldDisplayNames,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import { Select, usePanelContext, useTheme2 } from '@grafana/ui';
+import { Combobox, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
 import { getConfig } from 'app/core/config';
@@ -124,7 +124,7 @@ export function TablePanel(props: Props) {
     <div className={tableStyles.wrapper}>
       {tableElement}
       <div className={tableStyles.selectWrapper}>
-        <Select
+        <Combobox
           tabIndex={options.disableKeyboardEvents ? -1 : 0}
           options={names}
           value={names[currentIndex]}

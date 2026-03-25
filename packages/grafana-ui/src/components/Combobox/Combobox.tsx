@@ -26,7 +26,7 @@ import { isNewGroup } from './utils';
 interface ComboboxStaticProps<T extends string | number>
   extends Pick<
     InputProps,
-    'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
+    'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid' | 'tabIndex'
   > {
   /**
    * Allows the user to set a value which is not in the list of options.
@@ -157,6 +157,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     invalid,
     prefixIcon,
     noOptionsMessage,
+    tabIndex,
   } = props;
 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
@@ -372,7 +373,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
           name="times"
           className={styles.clear}
           title={t('combobox.clear.title', 'Clear value')}
-          tabIndex={0}
+          tabIndex={tabIndex ?? 0}
           role="button"
           onClick={() => {
             selectItem(null);
