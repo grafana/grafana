@@ -4167,7 +4167,14 @@
           "status": {
             "default": {}
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Connection",
+            "version": "v1beta1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ConnectionInfo": {
         "type": "object",
@@ -4651,7 +4658,14 @@
           "status": {
             "default": {}
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "HistoricJob",
+            "version": "v1beta1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.HistoricJobList": {
         "type": "object",
@@ -4754,7 +4768,14 @@
           "status": {
             "default": {}
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Job",
+            "version": "v1beta1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.JobList": {
         "type": "object",
@@ -5131,7 +5152,14 @@
           "status": {
             "default": {}
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Repository",
+            "version": "v1beta1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.RepositoryList": {
         "type": "object",
@@ -5687,7 +5715,14 @@
             },
             "x-kubernetes-list-type": "atomic"
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceStats",
+            "version": "v1beta1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ResourceType": {
         "type": "object",
@@ -5767,7 +5802,14 @@
           "urls": {
             "description": "Typed links for this file (only supported by external systems, github etc)"
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceWrapper",
+            "version": "v1beta1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.SecureValues": {
         "type": "object",
@@ -5914,7 +5956,14 @@
             "type": "boolean",
             "default": false
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "TestResults",
+            "version": "v1beta1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.TokenStatus": {
         "type": "object",
@@ -5961,7 +6010,14 @@
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
             "type": "string"
           }
-        }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "WebhookResponse",
+            "version": "v1beta1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.WebhookStatus": {
         "type": "object",

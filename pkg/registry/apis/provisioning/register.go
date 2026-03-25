@@ -1487,6 +1487,8 @@ spec:
 	case "v1beta1":
 		// For v1beta1, replace all v0alpha1 references with v1beta1 and remove old schemas
 		ReplaceOpenAPISpecVersion(oas, "provisioning", "v0alpha1", "v1beta1")
+		// Ensure GVK extensions are present for top-level resources
+		ensureGVKForVersion(oas, "provisioning.grafana.app", "v1beta1")
 	case "v0alpha1":
 		// For v0alpha1, remove any v1beta1 schemas and filter GVK metadata
 		ReplaceOpenAPISpecVersion(oas, "provisioning", "v1beta1", "v0alpha1")

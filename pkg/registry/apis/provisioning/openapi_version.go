@@ -149,7 +149,30 @@ func replaceSchemaVersion(schema spec.Schema, oldVersion, newVersion string) spe
 		schema.Definitions = newDefs
 	}
 
+	// Update x-kubernetes-group-version-kind extension
+	if schema.Extensions != nil {
+		if gvkExt, exists := schema.Extensions["x-kubernetes-group-version-kind"]; exists {
+			// Extract just the version part (e.g., "v0alpha1" from ".provisioning.v0alpha1.")
+			oldVer := extractVersion(oldVersion)
+			newVer := extractVersion(newVersion)
+			schema.Extensions["x-kubernetes-group-version-kind"] = replaceGVKExtension(gvkExt, oldVer, newVer)
+		}
+	}
+
 	return schema
+}
+
+// extractVersion extracts the version string from a full version pattern
+// e.g., ".provisioning.v0alpha1." -> "v0alpha1"
+func extractVersion(versionPattern string) string {
+	// Remove leading and trailing dots
+	versionPattern = strings.Trim(versionPattern, ".")
+	// Split by dots and get the last part (the version)
+	parts := strings.Split(versionPattern, ".")
+	if len(parts) > 0 {
+		return parts[len(parts)-1]
+	}
+	return versionPattern
 }
 
 // replaceInStringSlice replaces all occurrences of oldVersion with newVersion in a string slice
@@ -163,6 +186,65 @@ func replaceInStringSlice(slice []string, oldVersion, newVersion string) []strin
 		result[i] = strings.ReplaceAll(s, oldVersion, newVersion)
 	}
 	return result
+}
+
+// replaceGVKExtension replaces the version in x-kubernetes-group-version-kind extension
+// and ensures it's always in array format
+func replaceGVKExtension(gvkExt interface{}, oldVersion, newVersion string) interface{} {
+	switch gvk := gvkExt.(type) {
+	case map[string]interface{}:
+		// Single GVK object - replace version and wrap in array
+		if version, ok := gvk["version"].(string); ok && version == oldVersion {
+			newGVK := map[string]interface{}{
+				"group":   gvk["group"],
+				"kind":    gvk["kind"],
+				"version": newVersion,
+			}
+			return []interface{}{newGVK}
+		}
+		// Version doesn't match, keep as array
+		return []interface{}{gvk}
+	case []map[string]interface{}:
+		// Typed array - replace version in each item
+		result := make([]interface{}, 0, len(gvk))
+		for _, item := range gvk {
+			if version, ok := item["version"].(string); ok {
+				newItem := map[string]interface{}{
+					"group": item["group"],
+					"kind":  item["kind"],
+				}
+				if version == oldVersion {
+					newItem["version"] = newVersion
+				} else {
+					newItem["version"] = version
+				}
+				result = append(result, newItem)
+			}
+		}
+		return result
+	case []interface{}:
+		// Interface array - process each item
+		result := make([]interface{}, 0, len(gvk))
+		for _, item := range gvk {
+			if gvkMap, ok := item.(map[string]interface{}); ok {
+				if version, ok := gvkMap["version"].(string); ok {
+					newItem := map[string]interface{}{
+						"group": gvkMap["group"],
+						"kind":  gvkMap["kind"],
+					}
+					if version == oldVersion {
+						newItem["version"] = newVersion
+					} else {
+						newItem["version"] = version
+					}
+					result = append(result, newItem)
+				}
+			}
+		}
+		return result
+	}
+	// Unknown type, return as-is
+	return gvkExt
 }
 
 // ReplaceOpenAPISpecVersion updates all version references in an OpenAPI v3 spec and removes old version schemas.
@@ -258,12 +340,13 @@ func replaceGVKVersion(oas *spec3.OpenAPI, oldVersion, newVersion string) {
 					"kind":    gvk["kind"],
 					"version": newVersion,
 				}
-				schema.Extensions["x-kubernetes-group-version-kind"] = []map[string]interface{}{newGVK}
+				// Use []interface{} to match k8s OpenAPI expectations
+				schema.Extensions["x-kubernetes-group-version-kind"] = []interface{}{newGVK}
 			}
 		case []map[string]interface{}:
 			// Typed array - replace version in each item (deduplicate if needed)
 			seen := make(map[string]bool)
-			result := []map[string]interface{}{}
+			result := []interface{}{}
 			for _, item := range gvk {
 				if version, ok := item["version"].(string); ok {
 					newItem := map[string]interface{}{
@@ -289,7 +372,7 @@ func replaceGVKVersion(oas *spec3.OpenAPI, oldVersion, newVersion string) {
 		case []interface{}:
 			// Interface array - convert and process
 			seen := make(map[string]bool)
-			result := []map[string]interface{}{}
+			result := []interface{}{}
 			for _, item := range gvk {
 				if gvkMap, ok := item.(map[string]interface{}); ok {
 					if version, ok := gvkMap["version"].(string); ok {
@@ -396,6 +479,89 @@ func updateGVKExtension(schema *spec.Schema, filtered interface{}, count int) {
 		// Keep as array (even with single element) to support multi-version APIs
 		schema.Extensions["x-kubernetes-group-version-kind"] = filtered
 	}
+}
+
+// ensureGVKForVersion ensures that all top-level resource schemas have x-kubernetes-group-version-kind
+// extensions with the correct version. This is needed for multi-version APIs where types are shared
+// between versions but the OpenAPI definitions need version-specific GVK metadata.
+func ensureGVKForVersion(oas *spec3.OpenAPI, group, version string) {
+	if oas == nil || oas.Components == nil || oas.Components.Schemas == nil {
+		return
+	}
+
+	groupVersion := fmt.Sprintf(".%s.", version)
+
+	for schemaName, schema := range oas.Components.Schemas {
+		if schema == nil {
+			continue
+		}
+
+		// Only process schemas for this version
+		if !strings.Contains(schemaName, groupVersion) {
+			continue
+		}
+
+		// Check if this is a top-level resource (has apiVersion and kind fields)
+		if !isTopLevelResource(schema) {
+			continue
+		}
+
+		// Extract the kind from the schema name (last component)
+		kind := extractKindFromSchemaName(schemaName)
+		if kind == "" {
+			continue
+		}
+
+		// Add or update the GVK extension
+		if schema.Extensions == nil {
+			schema.Extensions = make(spec.Extensions)
+		}
+
+		schema.Extensions["x-kubernetes-group-version-kind"] = []interface{}{
+			map[string]interface{}{
+				"group":   group,
+				"kind":    kind,
+				"version": version,
+			},
+		}
+	}
+}
+
+// isTopLevelResource checks if a schema represents a top-level Kubernetes resource
+// by checking for apiVersion and kind fields
+func isTopLevelResource(schema *spec.Schema) bool {
+	if schema.Properties == nil {
+		return false
+	}
+
+	hasAPIVersion := false
+	hasKind := false
+
+	for propName := range schema.Properties {
+		if propName == "apiVersion" {
+			hasAPIVersion = true
+		}
+		if propName == "kind" {
+			hasKind = true
+		}
+	}
+
+	return hasAPIVersion && hasKind
+}
+
+// extractKindFromSchemaName extracts the Kind from a schema name
+// e.g., "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.Connection" -> "Connection"
+func extractKindFromSchemaName(schemaName string) string {
+	parts := strings.Split(schemaName, ".")
+	if len(parts) > 0 {
+		lastPart := parts[len(parts)-1]
+		// Skip List types - they're not top-level resources
+		if strings.HasSuffix(lastPart, "List") {
+			return ""
+		}
+		return lastPart
+	}
+	return ""
 }
 
 // updateOperationRefs updates all $ref references in an operation (request/response schemas)

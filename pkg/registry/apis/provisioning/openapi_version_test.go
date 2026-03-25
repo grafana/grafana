@@ -299,6 +299,52 @@ func TestReplaceOpenAPIVersion(t *testing.T) {
 			},
 		},
 		{
+			name: "updates x-kubernetes-group-version-kind extension",
+			input: map[string]common.OpenAPIDefinition{
+				"com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Connection": {
+					Schema: spec.Schema{
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+						},
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-group-version-kind": []interface{}{
+									map[string]interface{}{
+										"group":   "provisioning.grafana.app",
+										"kind":    "Connection",
+										"version": "v0alpha1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			group:      "provisioning",
+			oldVersion: "v0alpha1",
+			newVersion: "v1beta1",
+			want: map[string]common.OpenAPIDefinition{
+				"com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.Connection": {
+					Schema: spec.Schema{
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+						},
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-group-version-kind": []interface{}{
+									map[string]interface{}{
+										"group":   "provisioning.grafana.app",
+										"kind":    "Connection",
+										"version": "v1beta1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "preserves non-matching refs",
 			input: map[string]common.OpenAPIDefinition{
 				"com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Repository": {
