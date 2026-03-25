@@ -10,6 +10,38 @@ description: >
 
 Drive the Grafana provisioning wizard through the browser using `mcp_chrome_devtools_*` tools with PAT (Personal Access Token) authentication.
 
+## Execution Rules
+
+**This is a test-only run. You MUST follow these rules:**
+
+1. **No code changes.** Do not modify any Grafana source code, configuration files, or test files. You are testing the product as-is, not fixing it.
+2. **Do not stop on failure.** When a step fails, encounters a bug, or produces unexpected behavior -- document it and move on to the next step. Do not attempt to debug, fix, or work around the issue.
+3. **Complete the entire flow.** Execute every step from start to finish, including cleanup. Skipping steps after a failure loses coverage.
+4. **Produce a final report.** After completing all steps (or reaching the end), output a structured report:
+
+   ### Report Format
+
+   ```
+   ## Test Run Report
+
+   **Skill:** <skill name>
+   **Date:** <date>
+   **Status:** PASS | PARTIAL | FAIL
+
+   ### Steps Completed
+   - Step N: <description> -- PASS | FAIL
+     - [if FAIL] **Issue:** <what happened, expected vs actual>
+
+   ### Summary
+   - Total steps: N
+   - Passed: N
+   - Failed: N
+   - Blocked (could not attempt due to prior failure state): N
+
+   ### Issues Found
+   1. **[Step N] <title>**: <description of the bug or unexpected behavior>
+   ```
+
 ## Prerequisites
 
 ### Required Feature Toggles
