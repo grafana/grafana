@@ -35,6 +35,12 @@ export const getMockLokiFrame = (override?: Partial<DataFrame>) => {
       },
       {
         config: {},
+        name: 'severity',
+        type: FieldType.string,
+        values: ['info', 'info', 'info'],
+      },
+      {
+        config: {},
         name: 'tsNs',
         type: FieldType.string,
         values: ['1697561006608165746', '1697560998869868000', '1697561010006578474'],
@@ -94,6 +100,12 @@ export const getMockLokiFrameDataPlane = (override?: Partial<DataFrame>, howMany
           'log message 5',
           'log message 6',
         ].slice(0, howManyValues),
+      },
+      {
+        config: {},
+        name: 'severity',
+        type: FieldType.string,
+        values: Array.from({ length: howManyValues }, () => 'info'),
       },
       {
         config: {},
