@@ -783,7 +783,9 @@
         "unknown-rule": "Unknown",
         "value-in-transition": "Value in transition"
       },
-      "error": "Something went wrong loading the alert state history",
+      "error": {
+        "server-error": "The alert state history query failed — the server returned an error"
+      },
       "filter": {
         "clear": "Clear filters",
         "info": {
@@ -794,6 +796,10 @@
         }
       },
       "filterBy": "Filter by:",
+      "slow-query": {
+        "text": "This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.",
+        "title": "Query is taking longer than expected"
+      },
       "tab": {
         "alert-events": "Alert events",
         "notifications": "Notifications"
@@ -2021,6 +2027,10 @@
       "error-unable-to-fetch": "Unable to fetch alert state history",
       "loading": "Loading...",
       "no-transitions-match-filters": "No state transitions match the selected filters",
+      "slow-query": {
+        "text": "This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.",
+        "title": "Query is taking longer than expected"
+      },
       "start-state": "Start state",
       "timeline-hidden": "Timeline is hidden when state filters are active",
       "title-error-fetching-the-state-history": "Error fetching the state history",
