@@ -274,7 +274,8 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	// now, get children of the parent folder
 	out, err := ss.k8sclient.Search(ctx, q.OrgID, req)
 	if err != nil {
-		return nil, err
+		ss.log.Warn("search failed in GetChildren, falling back to list", "error", err)
+		return ss.getChildrenFallback(ctx, q, allowK6Folder)
 	}
 
 	res, err := dashboardsearch.ParseResults(out, 0)
@@ -298,6 +299,66 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 			ManagedBy: item.ManagedBy.Kind,
 		}
 		hits = append(hits, f)
+	}
+
+	return hits, nil
+}
+
+// getChildrenFallback lists all folders from storage (without field selectors) and filters
+// in-memory by parent UID. This is used when Search() is unavailable.
+func (ss *FolderUnifiedStoreImpl) getChildrenFallback(ctx context.Context, q folder.GetChildrenQuery, allowK6Folder bool) ([]*folder.FolderReference, error) {
+	out, err := ss.list(ctx, q.OrgID, v1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	folders, err := ss.UnstructuredToLegacyFolderList(ctx, out)
+	if err != nil {
+		return nil, err
+	}
+
+	folderUIDSet := make(map[string]struct{}, len(q.FolderUIDs))
+	for _, uid := range q.FolderUIDs {
+		folderUIDSet[uid] = struct{}{}
+	}
+
+	// Filter by parent UID and optional folder UID set
+	var filtered []*folder.Folder
+	for _, f := range folders {
+		if f.ParentUID != q.UID {
+			continue
+		}
+		if len(folderUIDSet) > 0 {
+			if _, ok := folderUIDSet[f.UID]; !ok {
+				continue
+			}
+		}
+		if f.UID == accesscontrol.K6FolderUID && !allowK6Folder {
+			continue
+		}
+		filtered = append(filtered, f)
+	}
+
+	// Apply pagination
+	offset := int(q.Limit * (q.Page - 1))
+	if offset > len(filtered) {
+		offset = len(filtered)
+	}
+	end := offset + int(q.Limit)
+	if end > len(filtered) {
+		end = len(filtered)
+	}
+	page := filtered[offset:end]
+
+	hits := make([]*folder.FolderReference, 0, len(page))
+	for _, f := range page {
+		hits = append(hits, &folder.FolderReference{
+			ID:        f.ID,
+			UID:       f.UID,
+			Title:     f.Title,
+			ParentUID: f.ParentUID,
+			ManagedBy: f.ManagedBy,
+		})
 	}
 
 	return hits, nil

@@ -663,35 +663,9 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 		}
 		// We need a list of dashboard uids inside the folder to delete related dashboards & public dashboards -
 		// we cannot use the dashboard service directly due to circular dependencies, so use the search client to get the dashboards
-		request := &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{
-				Labels: []*resourcepb.Requirement{},
-				Fields: []*resourcepb.Requirement{
-					{
-						Key:      resource.SEARCH_FIELD_FOLDER,
-						Operator: string(selection.In),
-						Values:   folders,
-					},
-				},
-			},
-			Limit: folderSearchLimit}
-
-		res, err := s.dashboardK8sClient.Search(ctx, cmd.OrgID, request)
+		dashboardUIDs, err := s.findAndDeleteDashboardsInFolders(ctx, cmd.OrgID, folders)
 		if err != nil {
-			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-		}
-
-		hits, err := dashboardsearch.ParseResults(res, 0)
-		if err != nil {
-			return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err)
-		}
-		dashboardUIDs := make([]string, len(hits.Hits))
-		for i, dashboard := range hits.Hits {
-			dashboardUIDs[i] = dashboard.Name
-			err = s.dashboardK8sClient.Delete(ctx, dashboard.Name, cmd.OrgID, metav1.DeleteOptions{})
-			if err != nil {
-				return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
-			}
+			return err
 		}
 		// Delete all public dashboards in the folders
 		err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
@@ -706,6 +680,90 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 	}
 
 	return nil
+}
+
+// findAndDeleteDashboardsInFolders finds all dashboards in the given folders using Search,
+// falling back to List (without field selectors) + in-memory filtering when search is unavailable.
+// It deletes each matched dashboard and returns the list of deleted dashboard UIDs.
+func (s *Service) findAndDeleteDashboardsInFolders(ctx context.Context, orgID int64, folders []string) ([]string, error) {
+	request := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Labels: []*resourcepb.Requirement{},
+			Fields: []*resourcepb.Requirement{
+				{
+					Key:      resource.SEARCH_FIELD_FOLDER,
+					Operator: string(selection.In),
+					Values:   folders,
+				},
+			},
+		},
+		Limit: folderSearchLimit,
+	}
+
+	res, err := s.dashboardK8sClient.Search(ctx, orgID, request)
+	if err != nil {
+		s.log.Warn("dashboard search failed, falling back to list", "error", err)
+		return s.findAndDeleteDashboardsInFoldersFallback(ctx, orgID, folders)
+	}
+
+	hits, err := dashboardsearch.ParseResults(res, 0)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to parse dashboard search results: %w", err)
+	}
+
+	dashboardUIDs := make([]string, 0, len(hits.Hits))
+	for _, dashboard := range hits.Hits {
+		dashboardUIDs = append(dashboardUIDs, dashboard.Name)
+		if err := s.dashboardK8sClient.Delete(ctx, dashboard.Name, orgID, metav1.DeleteOptions{}); err != nil {
+			return nil, folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
+		}
+	}
+
+	return dashboardUIDs, nil
+}
+
+// findAndDeleteDashboardsInFoldersFallback lists all dashboards from storage (without field selectors)
+// and filters in-memory by folder UID. Used when Search() is unavailable.
+func (s *Service) findAndDeleteDashboardsInFoldersFallback(ctx context.Context, orgID int64, folders []string) ([]string, error) {
+	folderSet := make(map[string]struct{}, len(folders))
+	for _, f := range folders {
+		folderSet[f] = struct{}{}
+	}
+
+	var dashboardUIDs []string
+	listOpts := metav1.ListOptions{Limit: folderListLimit}
+
+	for {
+		out, err := s.dashboardK8sClient.List(ctx, orgID, listOpts)
+		if err != nil {
+			return nil, folder.ErrInternal.Errorf("failed to list dashboards: %w", err)
+		}
+		if out == nil {
+			return nil, folder.ErrInternal.Errorf("dashboard list returned nil")
+		}
+
+		for i := range out.Items {
+			meta, err := utils.MetaAccessor(&out.Items[i])
+			if err != nil {
+				return nil, folder.ErrInternal.Errorf("failed to get meta accessor for dashboard: %w", err)
+			}
+			if _, ok := folderSet[meta.GetFolder()]; !ok {
+				continue
+			}
+			name := out.Items[i].GetName()
+			dashboardUIDs = append(dashboardUIDs, name)
+			if err := s.dashboardK8sClient.Delete(ctx, name, orgID, metav1.DeleteOptions{}); err != nil {
+				return nil, folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
+			}
+		}
+
+		if out.GetContinue() == "" {
+			break
+		}
+		listOpts.Continue = out.GetContinue()
+	}
+
+	return dashboardUIDs, nil
 }
 
 func (s *Service) moveOnApiServer(ctx context.Context, cmd *folder.MoveFolderCommand) (*folder.Folder, error) {
