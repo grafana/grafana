@@ -31,9 +31,10 @@ export function getAnnoRegionStyle(
 ) {
   const clampedRight = Math.min(plotWidth, right);
   const width = clampedRight - left;
-  const clusteredAnnoTooSmall = vals.clusterIdx?.[i] != null && width <= ANNOTATION_REGION_MIN_WIDTH;
+  const clusteredAnnoTooSmall = vals.clusterIdx?.[i] != null && width < ANNOTATION_REGION_MIN_WIDTH;
   // If the clustered anno is too small to see/click, adjust the left offset and set a minWidth
-  const adjustedLeft = clusteredAnnoTooSmall ? left - ANNOTATION_REGION_MIN_WIDTH / 2 : left;
+  const widthOffset = (ANNOTATION_REGION_MIN_WIDTH - width) / 2;
+  const adjustedLeft = clusteredAnnoTooSmall ? left - widthOffset : left;
   const clampedLeft = Math.max(0, adjustedLeft);
 
   return {
