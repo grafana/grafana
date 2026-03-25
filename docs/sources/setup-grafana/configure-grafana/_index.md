@@ -2920,10 +2920,6 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise](../
 
 ### `[feature_toggles]`
 
-#### `feature_name = true|false`
-
-Set each feature toggle to `true` to enable it or `false` to disable it. Some feature toggles are on by default, so set the toggle to `false` to disable that default behavior, for example, `exploreMixedDatasource = false`.
-
 #### `FEATURE_NAME = <value>`
 
 Use a key-value pair to set feature flag values explicitly, overriding any default values. A few different types are supported, following the OpenFeature specification. See the defaults.ini file for more details.
