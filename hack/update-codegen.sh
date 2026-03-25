@@ -41,11 +41,6 @@ grafana::codegen:run() {
       ${generate_root}/apis/${api_pkg}
 
    for pkg_version in $(grafana:codegen:lsdirs ./${generate_root}/apis/${api_pkg}); do
-      # v1beta1 aliases v1; OpenAPI defs come from v1 (dashboard-style); hand-maintained defaults.go; no +k8s:openapi-gen.
-      if [[ "${generate_root}/apis/${api_pkg}" == "apps/folder/pkg/apis/folder" && "${pkg_version}" == "v1beta1" ]]; then
-        echo "Skipping openapi-gen for apps/folder/pkg/apis/folder/v1beta1 (thin wrapper package)"
-        continue
-      fi
       grafana::codegen::gen_openapi \
         --input-pkg-single ${generate_root}/apis/${api_pkg}/${pkg_version} \
         --output-base "${OUTDIR}" \
