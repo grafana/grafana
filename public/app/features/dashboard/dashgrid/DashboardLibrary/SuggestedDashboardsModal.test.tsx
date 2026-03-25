@@ -5,7 +5,7 @@ import { setDataSourceSrv } from '@grafana/runtime';
 import { DashboardJson, InputType } from 'app/features/manage-dashboards/types';
 
 import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
-import { CONTENT_KINDS, EVENT_LOCATIONS } from './constants';
+import { CONTENT_KINDS } from './constants';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
 
 let capturedOnShowMapping: ((context: MappingContext) => void) | null = null;
