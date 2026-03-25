@@ -249,7 +249,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
 
 	if b.cfg.EnableResourceEndpoint {
-		storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
+		storage[ds.StoragePath("resources")] = &subResourceREST{builder: b}
 	}
 
 	if b.cfg.EnableHealthEndpoint {

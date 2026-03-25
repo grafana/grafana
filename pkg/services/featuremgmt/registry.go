@@ -540,8 +540,8 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:            "datasourcesApiServerEnableResourceEndpointFrontend",
-			Description:     "Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.",
+			Name:            "datasourcesApiserverEnableResourceEndpointRedirect",
+			Description:     "redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: false,
@@ -710,6 +710,14 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
+		},
+		{
+			Name:         "feedbackButton",
+			Description:  "Enables the feedback button in the dashboard edit sidebar",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "true",
 		},
 		{
 			Name:         "panelFilterVariable",
@@ -2418,10 +2426,10 @@ var (
 		{
 			Name:         "multiPropsVariables",
 			Description:  "Enables support for variables whose values can have multiple properties",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardSectionVariables",
@@ -2760,6 +2768,14 @@ var (
 			FrontendOnly: true,
 			Expression:   "false",
 			HideFromDocs: true,
+		},
+		{
+			Name:         "frontendServiceSSOAutoLogin",
+			Description:  "Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
 		},
 	}
 )
