@@ -75,9 +75,12 @@ export const SuggestedDashboardsModal = ({
       const view: ModalView =
         communityDashboards?.length && !provisionedDashboards?.length ? 'community' : 'datasource';
       setActiveView(view);
-    } else {
+    }
+
+    if (!isOpen) {
       // Reset when modal closes
       setMappingContext(null);
+      setActiveView(undefined);
     }
   }, [initialMappingContext, isOpen, communityDashboards, provisionedDashboards, activeView]);
 
