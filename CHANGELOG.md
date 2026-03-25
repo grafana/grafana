@@ -2,6 +2,15 @@
 
 # 12.1.10 (2026-03-25)
 
+### Bug fixes
+
+- **Security**: Fix CVE-2026-27876
+- **Security**: Fix CVE-2026-27877
+- **Security**: Fix CVE-2026-28375
+- **Security**: Fix CVE-2026-27879
+- **Security**: Fix CVE-2026-27880
+- **Security**: Fix CVE-2026-27876
+
 <!-- 12.1.10 END -->
 <!-- 12.1.9 START -->
 
