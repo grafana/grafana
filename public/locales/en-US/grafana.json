@@ -5997,6 +5997,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": "Open assistant for this panel"
+      },
       "prompt-card": {
         "placeholder": "Ask Assistant about this panel...",
         "placeholder-multi": "Ask Assistant about these panels..."
