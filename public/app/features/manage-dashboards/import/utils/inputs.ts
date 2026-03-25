@@ -597,9 +597,9 @@ function resolveInputDatasource(
   inputs: { dataSources: DataSourceInput[] },
   form: ImportDashboardDTO
 ): Panel['datasource'] {
-  const templateUid = getDSUid(datasource);
-  if (templateUid) {
-    const userInput = checkUserInputMatch(templateUid, inputs.dataSources, form.dataSources);
+  const dsUid = getDSUid(datasource);
+  if (dsUid) {
+    const userInput = checkUserInputMatch(dsUid, inputs.dataSources, form.dataSources);
     if (userInput) {
       return { ...(isRecord(datasource) ? datasource : {}), uid: userInput.uid };
     }
@@ -614,9 +614,9 @@ function resolveInputTargets(
 ): Panel['targets'] {
   return targets?.map((target) => {
     const ds = target.datasource;
-    const templateUid = getDSUid(ds);
-    if (templateUid) {
-      const userInput = checkUserInputMatch(templateUid, inputs.dataSources, form.dataSources);
+    const dsUid = getDSUid(ds);
+    if (dsUid) {
+      const userInput = checkUserInputMatch(dsUid, inputs.dataSources, form.dataSources);
       if (userInput) {
         return {
           ...target,
