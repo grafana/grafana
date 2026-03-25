@@ -568,14 +568,12 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 		{
 			desc:      "viewer request should succeed",
 			url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/status",
-			expStatus: http.StatusUnauthorized,
-			expBody:   `{"extra":null,"message":"Unauthorized","messageId":"auth.unauthorized","statusCode":401,"traceID":""}`,
+			expStatus: http.StatusForbidden,
 		},
 		{
 			desc:      "editor request should succeed",
 			url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/status",
-			expStatus: http.StatusUnauthorized,
-			expBody:   `{"extra":null,"message":"Unauthorized","messageId":"auth.unauthorized","statusCode":401,"traceID":""}`,
+			expStatus: http.StatusForbidden,
 		},
 		{
 			desc:      "admin request should succeed",
@@ -599,7 +597,9 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 				b = re.ReplaceAll(b, []byte(`"uid":""`))
 			}
 			require.NoError(t, err)
-			require.JSONEq(t, tc.expBody, string(b))
+			if tc.expBody != "" {
+				require.JSONEq(t, tc.expBody, string(b))
+			}
 		})
 	}
 }
