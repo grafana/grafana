@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"net/http"
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -339,8 +338,7 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 		return nil
 	}
 
-	// Read the dashboard directly from storage (not search) to check provisioning status.
-	// This avoids the search dependency that previously caused 500s when search was unavailable.
+	// Try to read from unified storage, fallback to search if not found
 	dashboardUID := a.GetName()
 	readResp, err := b.unified.Read(ctx, &resourcepb.ReadRequest{
 		Key: &resourcepb.ResourceKey{
@@ -353,27 +351,43 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 	if err != nil {
 		return fmt.Errorf("delete hook failed to check if dashboard is provisioned: %w", err)
 	}
-	if readResp.Error != nil {
-		// Not found means there's nothing to protect — allow deletion
-		if readResp.Error.Code == http.StatusNotFound {
+	if readResp.Error == nil {
+		var dashObj unstructured.Unstructured
+		if err := dashObj.UnmarshalJSON(readResp.Value); err != nil {
+			return fmt.Errorf("delete hook failed to parse dashboard: %w", err)
+		}
+
+		accessor, err := utils.MetaAccessor(&dashObj)
+		if err != nil {
+			return fmt.Errorf("delete hook failed to get meta accessor: %w", err)
+		}
+
+		mgr, managed := accessor.GetManagerProperties()
+		if managed && mgr.Kind == utils.ManagerKindClassicFP { //nolint:staticcheck
+			return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
+		}
+		return nil
+	}
+
+	// Fallback to the provisioning service if not found in unified storage
+	// TODO: remove when legacy dashboard service is not used anymore (when only mode 5 is used)
+	nsInfo, err := authlib.ParseNamespace(a.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
+	}
+
+	provisioningData, err := b.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, dashboardUID)
+	if err != nil {
+		if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) ||
+			errors.Is(err, dashboards.ErrDashboardNotFound) ||
+			apierrors.IsNotFound(err) {
 			return nil
 		}
-		// Any other in-band error: fail closed to preserve provisioning protection
-		return fmt.Errorf("delete hook failed to check if dashboard is provisioned: %s", readResp.Error.Message)
+
+		return fmt.Errorf("%v: %w", "delete hook failed to check if dashboard is provisioned", err)
 	}
 
-	var dashObj unstructured.Unstructured
-	if err := dashObj.UnmarshalJSON(readResp.Value); err != nil {
-		return fmt.Errorf("delete hook failed to parse dashboard: %w", err)
-	}
-
-	accessor, err := utils.MetaAccessor(&dashObj)
-	if err != nil {
-		return fmt.Errorf("delete hook failed to get meta accessor: %w", err)
-	}
-
-	mgr, managed := accessor.GetManagerProperties()
-	if managed && mgr.Kind == utils.ManagerKindClassicFP { //nolint:staticcheck
+	if provisioningData != nil {
 		return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 	}
 
