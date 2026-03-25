@@ -1,16 +1,25 @@
-import { screen } from '@testing-library/react';
+import { screen, act } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { setDataSourceSrv } from '@grafana/runtime';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { DashboardJson, InputType } from 'app/features/manage-dashboards/types';
 
-import { SuggestedDashboardsModal } from './SuggestedDashboardsModal';
+import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
 import { CONTENT_KINDS, EVENT_LOCATIONS } from './constants';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
 
 jest.mock('./SuggestedDashboardsList/SuggestedDashboardsList', () => ({
   SuggestedDashboardsList: () => <div data-testid="suggested-dashboards-list">Suggested Dashboards List</div>,
 }));
+
+let capturedOnShowMapping: ((context: MappingContext) => void) | null = null;
+
+// jest.mock('./CommunityDashboardSection', () => ({
+//   CommunityDashboardSection: ({ onShowMapping }: { onShowMapping: (context: MappingContext) => void }) => {
+//     capturedOnShowMapping = onShowMapping;
+//     return <div data-testid="community-dashboard-section">Community Dashboard Section</div>;
+//   },
+// }));
 
 jest.mock('./CommunityDashboardMappingForm', () => ({
   CommunityDashboardMappingForm: () => (
@@ -30,6 +39,7 @@ describe('SuggestedDashboardsModal', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    capturedOnShowMapping = null;
   });
 
   it('should render when isOpen is true', () => {
@@ -88,7 +98,9 @@ describe('SuggestedDashboardsModal', () => {
       />
     );
 
-    expect(screen.getByTestId('suggested-dashboards-list')).toBeInTheDocument();
+    expect(screen.getByTestId('dashboard-library-section')).toBeInTheDocument();
+    expect(screen.queryByTestId('community-dashboard-section')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Data-source provided' })).toHaveAttribute('aria-selected', 'true');
   });
 
   describe('modal title', () => {
@@ -110,12 +122,51 @@ describe('SuggestedDashboardsModal', () => {
 
       expect(screen.getByText('Suggested dashboards for your prometheus datasource')).toBeInTheDocument();
     });
+  });
+
+  describe('CommunityDashboardMappingForm', () => {
+    const mappingContext: MappingContext = {
+      dashboardName: 'Test Dashboard',
+      dashboardJson: { title: 'Test Dashboard', panels: [], schemaVersion: 41 } as DashboardJson,
+      unmappedDsInputs: [],
+      constantInputs: [],
+      existingMappings: [],
+      onInterpolateAndNavigate: jest.fn(),
+      eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+      contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+    };
+
+    it('should render CommunityDashboardMappingForm when activeView is mapping', () => {
+      render(<SuggestedDashboardsModal {...defaultProps} initialMappingContext={mappingContext} />);
+
+      expect(screen.getByTestId('community-dashboard-mapping-form')).toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-library-section')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('community-dashboard-section')).not.toBeInTheDocument();
+    });
+
+    it('should hide tabs when in mapping view', () => {
+      render(
+        <SuggestedDashboardsModal
+          {...defaultProps}
+          initialMappingContext={{
+            ...mappingContext,
+            dashboardName: 'Mapping Dashboard',
+            dashboardJson: { title: 'Mapping Dashboard', panels: [], schemaVersion: 41 } as DashboardJson,
+          }}
+        />
+      );
+
+      expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Data-source provided' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: 'Community' })).not.toBeInTheDocument();
+    });
 
     it('should show mapping title with dashboard name when in mapping view', () => {
       render(
         <SuggestedDashboardsModal
           {...defaultProps}
           initialMappingContext={{
+            ...mappingContext,
             dashboardName: 'My Custom Dashboard',
             dashboardJson: { title: 'My Custom Dashboard', panels: [], schemaVersion: 41 } as DashboardJson,
             unmappedDsInputs: [],
@@ -129,6 +180,50 @@ describe('SuggestedDashboardsModal', () => {
       );
 
       expect(screen.getByText('Configure datasources for My Custom Dashboard')).toBeInTheDocument();
+    });
+
+    it('should switch from community tab to mapping form when onShowMapping is called', () => {
+      render(<SuggestedDashboardsModal {...defaultProps} communityDashboards={[createMockGnetDashboard()]} />);
+
+      // Modal should start in community tab since only community dashboards are provided
+      expect(screen.getByTestId('community-dashboard-section')).toBeInTheDocument();
+      expect(screen.queryByTestId('community-dashboard-mapping-form')).not.toBeInTheDocument();
+      expect(capturedOnShowMapping).not.toBeNull();
+
+      // Simulate CommunityDashboardSection calling onShowMapping (happens when a dashboard
+      // needs mapping because unmappedDsInputs.length > 0 or constantInputs.length > 0)
+      act(() => {
+        capturedOnShowMapping!({
+          dashboardName: 'Community Dashboard Needing Mapping',
+          dashboardJson: {
+            title: 'Community Dashboard Needing Mapping',
+            panels: [],
+            schemaVersion: 41,
+          } as DashboardJson,
+          unmappedDsInputs: [
+            {
+              name: 'DS_PROMETHEUS',
+              label: 'Prometheus',
+              info: 'Select a Prometheus datasource',
+              value: '',
+              type: InputType.DataSource,
+              pluginId: 'prometheus',
+            },
+          ],
+          constantInputs: [],
+          existingMappings: [],
+          onInterpolateAndNavigate: jest.fn(),
+          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+          contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+        });
+      });
+
+      // Mapping form should now be rendered
+      expect(screen.getByTestId('community-dashboard-mapping-form')).toBeInTheDocument();
+      // Community section should be gone
+      expect(screen.queryByTestId('community-dashboard-section')).not.toBeInTheDocument();
+      // Tabs should be hidden in mapping view
+      expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
     });
   });
 });
