@@ -1876,104 +1876,101 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			break
 		}
 
-		{
+		rsp.Processed++
 
-			rsp.Processed++
-
-			var action kv.DataAction
-			switch resourcepb.WatchEvent_Type(req.Action) {
-			case resourcepb.WatchEvent_ADDED:
-				action = DataActionCreated
-				// Check if resource already exists for create operations
-				_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
-					Group:     req.Key.Group,
-					Resource:  req.Key.Resource,
-					Namespace: req.Key.Namespace,
-					Name:      req.Key.Name,
-				})
-				if err == nil {
-					rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-						Key:    req.Key,
-						Action: req.Action,
-						Error:  "resource already exists",
-					})
-					continue
-				}
-				if !errors.Is(err, ErrNotFound) {
-					rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-						Key:    req.Key,
-						Action: req.Action,
-						Error:  fmt.Sprintf("failed to check if resource exists: %s", err),
-					})
-					continue
-				}
-			case resourcepb.WatchEvent_MODIFIED:
-				action = DataActionUpdated
-			case resourcepb.WatchEvent_DELETED:
-				action = DataActionDeleted
-			default:
+		var action kv.DataAction
+		switch resourcepb.WatchEvent_Type(req.Action) {
+		case resourcepb.WatchEvent_ADDED:
+			action = DataActionCreated
+			// Check if resource already exists for create operations
+			_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+				Group:     req.Key.Group,
+				Resource:  req.Key.Resource,
+				Namespace: req.Key.Namespace,
+				Name:      req.Key.Name,
+			})
+			if err == nil {
 				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
 					Key:    req.Key,
 					Action: req.Action,
-					Error:  "invalid event type",
+					Error:  "resource already exists",
 				})
 				continue
 			}
-
-			obj := &unstructured.Unstructured{}
-			err := obj.UnmarshalJSON(req.Value)
-			if err != nil {
+			if !errors.Is(err, ErrNotFound) {
 				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
 					Key:    req.Key,
 					Action: req.Action,
-					Error:  "unable to unmarshal json",
+					Error:  fmt.Sprintf("failed to check if resource exists: %s", err),
 				})
 				continue
 			}
+		case resourcepb.WatchEvent_MODIFIED:
+			action = DataActionUpdated
+		case resourcepb.WatchEvent_DELETED:
+			action = DataActionDeleted
+		default:
+			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+				Key:    req.Key,
+				Action: req.Action,
+				Error:  "invalid event type",
+			})
+			continue
+		}
 
-			dataKey := DataKey{
-				Group:           req.Key.Group,
-				Resource:        req.Key.Resource,
-				Namespace:       req.Key.Namespace,
-				Name:            req.Key.Name,
-				ResourceVersion: bulkRvGenerator.next(obj),
-				Action:          action,
-				Folder:          req.Folder,
+		obj := &unstructured.Unstructured{}
+		err := obj.UnmarshalJSON(req.Value)
+		if err != nil {
+			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+				Key:    req.Key,
+				Action: req.Action,
+				Error:  "unable to unmarshal json",
+			})
+			continue
+		}
+
+		dataKey := DataKey{
+			Group:           req.Key.Group,
+			Resource:        req.Key.Resource,
+			Namespace:       req.Key.Namespace,
+			Name:            req.Key.Name,
+			ResourceVersion: bulkRvGenerator.next(obj),
+			Action:          action,
+			Folder:          req.Folder,
+		}
+		err = b.dataStore.Save(ctx, dataKey, bytes.NewReader(req.Value))
+		if err != nil {
+			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+				Key:    req.Key,
+				Action: req.Action,
+				Error:  fmt.Sprintf("failed to save resource: %s", err),
+			})
+			continue
+		}
+
+		saved = append(saved, dataKey)
+		updatedResources[NamespacedResource{Namespace: dataKey.Namespace, Group: dataKey.Group, Resource: dataKey.Resource}] = true
+
+		// Fill in legacy columns on the resource_history row that was just inserted with only key_path and value.
+		if rvManagerDB != nil {
+			microRV := rvmanager.RVFromBulkSnowflake(dataKey.ResourceVersion)
+			generation := obj.GetGeneration()
+			if action == DataActionDeleted {
+				generation = 0
 			}
-			err = b.dataStore.Save(ctx, dataKey, bytes.NewReader(req.Value))
-			if err != nil {
-				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
-					Key:    req.Key,
-					Action: req.Action,
-					Error:  fmt.Sprintf("failed to save resource: %s", err),
-				})
-				continue
+
+			// For creates, previous RV is 0. For updates/deletes, it's the RV of the previous event for this resource.
+			nameKey := dataKey.Group + "/" + dataKey.Resource + "/" + dataKey.Namespace + "/" + dataKey.Name
+			var previousRV int64
+			if action != DataActionCreated {
+				previousRV = lastMicroRV[nameKey]
 			}
 
-			saved = append(saved, dataKey)
-			updatedResources[NamespacedResource{Namespace: dataKey.Namespace, Group: dataKey.Group, Resource: dataKey.Resource}] = true
-
-			// Fill in legacy columns on the resource_history row that was just inserted with only key_path and value.
-			if rvManagerDB != nil {
-				microRV := rvmanager.RVFromBulkSnowflake(dataKey.ResourceVersion)
-				generation := obj.GetGeneration()
-				if action == DataActionDeleted {
-					generation = 0
-				}
-
-				// For creates, previous RV is 0. For updates/deletes, it's the RV of the previous event for this resource.
-				nameKey := dataKey.Group + "/" + dataKey.Resource + "/" + dataKey.Namespace + "/" + dataKey.Name
-				var previousRV int64
-				if action != DataActionCreated {
-					previousRV = lastMicroRV[nameKey]
-				}
-
-				if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, rvManagerDB, dataKey, microRV, previousRV, generation); err != nil {
-					b.log.Error("failed to update legacy resource_history for bulk", "error", err)
-					return rsp
-				}
-				lastMicroRV[nameKey] = microRV
+			if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, rvManagerDB, dataKey, microRV, previousRV, generation); err != nil {
+				b.log.Error("failed to update legacy resource_history for bulk", "error", err)
+				return rsp
 			}
+			lastMicroRV[nameKey] = microRV
 		}
 	}
 
