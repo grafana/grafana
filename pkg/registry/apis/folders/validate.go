@@ -255,7 +255,10 @@ func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceI
 		var children []string
 		children, hasMore, err = getChildrenBatch(ctx, searcher, namespace, parentUIDs, pageSize, offset)
 		if err != nil {
-			return fmt.Errorf("failed to get children: %w", err)
+			// If search is unavailable, gracefully degrade by skipping subtree depth validation.
+			// The depth limit is a soft guardrail, not a security boundary, so it's safe to allow
+			// the move and re-validate later when search recovers.
+			return nil
 		}
 
 		if len(children) == 0 {

@@ -1422,3 +1422,54 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 		})
 	})
 }
+
+func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous:            true,
+		SearchInjectFailuresPercent: 100,
+	})
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
+
+	// Create a dashboard via the K8s API
+	createBody := `{
+		"metadata": {"generateName": "integ-test-", "annotations": {"grafana.app/grant-permissions": "default"}},
+		"spec": {"title": "test-dashboard", "schemaVersion": 42}
+	}`
+	createURL := fmt.Sprintf("http://%s/apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards?fieldValidation=Ignore", grafanaListedAddr)
+	req, err := http.NewRequest(http.MethodPost, createURL, bytes.NewBufferString(createBody))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.SetBasicAuth("admin", "admin")
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusCreated, resp.StatusCode, "create dashboard failed: %s", string(body))
+
+	var created map[string]interface{}
+	err = json.Unmarshal(body, &created)
+	require.NoError(t, err)
+
+	metadata := created["metadata"].(map[string]interface{})
+	name := metadata["name"].(string)
+	require.NotEmpty(t, name)
+
+	// Delete the dashboard — should succeed even with search down
+	deleteURL := fmt.Sprintf("http://%s/apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/%s", grafanaListedAddr, name)
+	req, err = http.NewRequest(http.MethodDelete, deleteURL, nil)
+	require.NoError(t, err)
+	req.SetBasicAuth("admin", "admin")
+
+	resp2, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() { _ = resp2.Body.Close() }()
+
+	body2, err := io.ReadAll(resp2.Body)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp2.StatusCode, "delete dashboard should succeed with search down: %s", string(body2))
+}
