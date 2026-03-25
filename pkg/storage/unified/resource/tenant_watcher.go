@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -245,6 +247,10 @@ func (tw *TenantWatcher) reconcileTenantPendingDelete(name string, deleteAfter s
 	// Fast path: if the record exists and labelling is complete, nothing to do.
 	record, err := tw.pendingDeleteStore.Get(tw.ctx, name)
 	if err == nil && record.LabelingComplete {
+		return
+	}
+	if err != nil && !errors.Is(err, kvpkg.ErrNotFound) {
+		tw.log.Error("failed to read pending delete record, skipping reconcile to avoid overwriting existing state", "tenant", name, "error", err)
 		return
 	}
 
