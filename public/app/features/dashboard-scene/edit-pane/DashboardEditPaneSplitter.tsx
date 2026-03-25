@@ -78,26 +78,41 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   });
 
   // --- Assistant popover state (decoupled from selection system) ---
-  // Stores both the VizPanel reference and the panel's DOM element directly,
-  // avoiding findByKey/containerRef ambiguity with repeated/cloned panels.
-  const [popoverTarget, setPopoverTarget] = useState<PopoverTarget | null>(null);
+  // Stores an array of PopoverTargets to support multi-panel context.
+  // Once the popover is open, clicking another sparkle adds that panel;
+  // clicking the same sparkle again removes it (toggle).
+  const [popoverTargets, setPopoverTargets] = useState<PopoverTarget[]>([]);
 
   // Close popover when entering edit mode
   useEffect(() => {
     if (isEditing) {
-      setPopoverTarget(null);
+      setPopoverTargets([]);
     }
   }, [isEditing]);
 
-  const clearPopover = useCallback(() => setPopoverTarget(null), []);
-  usePopoverDismissOnClickOutside(popoverTarget, clearPopover);
+  const clearPopover = useCallback(() => setPopoverTargets([]), []);
+  usePopoverDismissOnClickOutside(popoverTargets.length > 0, clearPopover);
 
   const popoverContextValue = useMemo(
     () => ({
-      openPopover: (panel: VizPanel, anchorEl: HTMLElement) => {
-        // Always show the popover — clicking the sparkle button is an intentional action.
-        // The AssistantPromptCard will send the prompt to the already-open sidebar if present.
-        setPopoverTarget((prev) => (prev?.panel === panel ? null : { panel, anchorEl }));
+      openPopover: (panel: VizPanel, anchorEl: HTMLElement, multi: boolean) => {
+        setPopoverTargets((prev) => {
+          const exists = prev.findIndex((t) => t.panel === panel);
+
+          if (multi) {
+            // Shift+click: toggle panel in/out of the selection
+            if (exists >= 0) {
+              return prev.filter((_, i) => i !== exists);
+            }
+            return [...prev, { panel, anchorEl }];
+          }
+
+          // Plain click: replace selection, or toggle off if already the only one
+          if (exists >= 0 && prev.length === 1) {
+            return [];
+          }
+          return [{ panel, anchorEl }];
+        });
       },
     }),
     []
@@ -204,7 +219,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     );
   }
 
-  const showPopover = !isEditing && isAssistantEnabled && popoverTarget !== null;
+  const showPopover = !isEditing && isAssistantEnabled && popoverTargets.length > 0;
 
   return (
     <AssistantPopoverContext.Provider value={popoverContextValue}>
@@ -214,13 +229,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
             {controls}
           </div>
           {renderBody()}
-          {showPopover && (
-            <ViewModePanelPromptCard
-              panel={popoverTarget.panel}
-              hintEl={popoverTarget.anchorEl}
-              onClose={clearPopover}
-            />
-          )}
+          {showPopover && <ViewModePanelPromptCard targets={popoverTargets} onClose={clearPopover} />}
         </ElementSelectionContext.Provider>
       </div>
     </AssistantPopoverContext.Provider>

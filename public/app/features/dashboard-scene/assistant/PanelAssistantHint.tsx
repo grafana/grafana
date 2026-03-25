@@ -46,7 +46,7 @@ function PanelAssistantHintRenderer({ model }: SceneComponentProps<PanelAssistan
         // from it to find the panel container for positioning.
         const target: HTMLElement | null = e.currentTarget instanceof HTMLElement ? e.currentTarget : null;
         if (target) {
-          popoverContext.openPopover(current, target);
+          popoverContext.openPopover(current, target, e.shiftKey);
         }
       }
     },
