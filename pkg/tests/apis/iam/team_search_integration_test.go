@@ -258,11 +258,11 @@ func doTeamSearchMemberCountTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 
 	// Create teamA with 3 members
-	teamA, err := teamClient.Resource.Create(ctx, createTeamObject(helper, "mc-team-a", "Team A", "mc-team-a@example.com"), metav1.CreateOptions{})
+	teamA, err := teamClient.Resource.Create(ctx, createTeamObject(helper, "mc-team-a", "MemberCount Team A", "mc-team-a@example.com"), metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	// Create teamB with 0 members
-	teamB, err := teamClient.Resource.Create(ctx, createTeamObject(helper, "mc-team-b", "Team B", "mc-team-b@example.com"), metav1.CreateOptions{})
+	teamB, err := teamClient.Resource.Create(ctx, createTeamObject(helper, "mc-team-b", "MemberCount Team B", "mc-team-b@example.com"), metav1.CreateOptions{})
 	require.NoError(t, err)
 
 	// Create 3 users and bind them to teamA
@@ -281,7 +281,7 @@ func doTeamSearchMemberCountTests(t *testing.T, helper *apis.K8sTestHelper) {
 	}
 
 	t.Run("should return correct member counts for teams with and without members", func(t *testing.T) {
-		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?query=mc-team&membercount=true", namespace)
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?query=MemberCount&membercount=true", namespace)
 		var result iamv0alpha1.GetSearchTeamsResponse
 
 		rsp := apis.DoRequest(helper, apis.RequestParams{
