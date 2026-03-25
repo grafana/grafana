@@ -347,10 +347,22 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 	ctx := context.Background()
 	helper := getTestHelper(t)
 
-	org := helper.Org1
-
-	admin := org.Admin
+	admin := helper.Org1.Admin
 	adminClient, err := v1beta1.NewTimeIntervalClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
+	require.NoError(t, err)
+
+	// A user with write permissions but without alert.provisioning.provenance:write.
+	// Used to verify that provisioned resources are protected from callers that lack the permission.
+	writer := helper.CreateUser("IntervalsWriter", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsWrite,
+				accesscontrol.ActionAlertingNotificationsTimeIntervalsDelete,
+			},
+		},
+	})
+	writerClient, err := v1beta1.NewTimeIntervalClientFromGenerator(writer.GetClientRegistry())
 	require.NoError(t, err)
 
 	env := helper.GetEnv()
@@ -375,23 +387,37 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 			MuteTimeInterval: config.MuteTimeInterval{
 				Name: created.Spec.Name,
 			},
-		}, admin.Identity.GetOrgID(), "API"))
+		}, admin.Identity.GetOrgID(), ngmodels.ProvenanceAPI))
 
 		got, err := adminClient.Get(ctx, created.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
-		require.Equal(t, "API", got.GetProvenanceStatus())
+		require.Equal(t, string(ngmodels.ProvenanceAPI), got.GetProvenanceStatus())
 	})
-	t.Run("should not let update if provisioned", func(t *testing.T) {
+	t.Run("should not let update if provisioned without set-status permission", func(t *testing.T) {
 		updated := created.Copy().(*v1beta1.TimeInterval)
 		updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
 
-		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
+		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
 		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 	})
 
-	t.Run("should not let delete if provisioned", func(t *testing.T) {
-		err := adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+	t.Run("should not let delete if provisioned without set-status permission", func(t *testing.T) {
+		err := writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
+	})
+
+	t.Run("should let update if provisioned with set-status permission", func(t *testing.T) {
+		updated := created.Copy().(*v1beta1.TimeInterval)
+		updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
+		updated.SetProvenanceStatus(string(ngmodels.ProvenanceAPI))
+
+		_, err := adminClient.Update(ctx, updated, resource.UpdateOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("should let delete if provisioned with set-status permission", func(t *testing.T) {
+		err := adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+		require.NoError(t, err)
 	})
 }
 
