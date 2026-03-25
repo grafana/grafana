@@ -155,16 +155,16 @@ export const LokiQueryEditor = memo<LokiQueryEditorProps>((props) => {
         timeRange={timeRange}
       />
       <EditorHeader>
-        {showAssistant && (
-          <QueryWithAssistantButton
-            currentQuery={query}
-            queries={queries ?? [query]}
-            dataSourceInstanceSettings={datasource.instanceSettings}
-            datasourceApi={null}
-            app={app}
-          />
-        )}
         <Stack gap={1}>
+          {showAssistant && (
+            <QueryWithAssistantButton
+              currentQuery={query}
+              queries={queries ?? [query]}
+              dataSourceInstanceSettings={datasource.instanceSettings}
+              datasourceApi={null}
+              app={app}
+            />
+          )}
           <Button
             data-testid={selectors.components.QueryBuilder.queryPatterns}
             variant="secondary"
