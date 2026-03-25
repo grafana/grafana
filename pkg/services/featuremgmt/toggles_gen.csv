@@ -229,8 +229,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-04-22,alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
 2025-04-24,alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
 2026-02-18,kubernetesAuthZResourcePermissionsRedirect,experimental,@grafana/identity-access-team,false,false,false
-2026-02-18,kubernetesAuthZRolesRedirect,experimental,@grafana/identity-access-team,false,false,false
-2026-03-06,kubernetesAuthZRoleBindingsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2025-08-01,kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
 2025-10-13,kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 2026-01-15,kubernetesAuthzGlobalRolesApi,experimental,@grafana/identity-access-team,false,false,false
@@ -302,7 +300,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-19,rudderstackUpgrade,experimental,@grafana/grafana-frontend-platform,false,false,true
 2025-11-27,kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
 2025-12-05,useMTPlugins,experimental,@grafana/plugins-platform-backend,false,false,true
-2025-12-09,multiPropsVariables,experimental,@grafana/dashboards-squad,false,false,true
+2025-12-09,multiPropsVariables,GA,@grafana/dashboards-squad,false,false,true
 2026-03-02,dashboardSectionVariables,experimental,@grafana/dashboards-squad,false,false,true
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
