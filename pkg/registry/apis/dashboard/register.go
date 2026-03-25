@@ -277,6 +277,20 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		return err
 	}
 
+	if err := scheme.AddFieldLabelConversionFunc(
+		dashv2beta1.GlobalVariableResourceInfo.GroupVersionKind(),
+		func(label, value string) (string, string, error) {
+			switch label {
+			case "metadata.name", "metadata.namespace", "spec.spec.name":
+				return label, value, nil
+			default:
+				return "", "", fmt.Errorf("field label not supported for GlobalVariable: %s", label)
+			}
+		},
+	); err != nil {
+		return err
+	}
+
 	// Register the explicit conversions
 	if err := conversion.RegisterConversions(scheme, migration.GetDataSourceIndexProvider(), migration.GetLibraryElementIndexProvider()); err != nil {
 		return err
@@ -778,7 +792,14 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			EnableFolderSupport: true,
 		})
 
-		gvStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.GlobalVariableResourceInfo, opts.OptsGetter)
+		gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
+			opts.Scheme,
+			dashv2beta1.GlobalVariableResourceInfo,
+			opts.OptsGetter,
+			grafanaregistry.SelectableFieldsOptions{
+				GetAttrs: GlobalVariableGetAttrs,
+			},
+		)
 		if err != nil {
 			return err
 		}

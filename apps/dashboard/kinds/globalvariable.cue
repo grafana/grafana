@@ -7,6 +7,9 @@ import (
 globalVariableV2beta1: {
 	kind:       "GlobalVariable"
 	pluralName: "GlobalVariables"
+	selectableFields: [
+		"spec.spec.name",
+	]
 	validation: {
 		operations: ["CREATE", "UPDATE"]
 	}

@@ -126,9 +126,12 @@ var appManifestData = app.ManifestData{
 				},
 
 				{
-					Kind:       "GlobalVariable",
-					Plural:     "GlobalVariables",
-					Scope:      "Namespaced",
+					Kind:   "GlobalVariable",
+					Plural: "GlobalVariables",
+					Scope:  "Namespaced",
+					SelectableFields: []string{
+						"spec.spec.name",
+					},
 					Conversion: false,
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{

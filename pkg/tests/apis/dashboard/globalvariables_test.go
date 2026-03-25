@@ -66,6 +66,37 @@ func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 	require.Equal(t, "folder-region", createdFolderVariable.GetName())
 	require.Equal(t, createdFolder1.GetName(), createdFolderVariable.GetAnnotations()[utils.AnnoKeyFolder])
 
+	serviceVariable := buildGlobalVariableObject("global-service", "service", "")
+	createdServiceVariable, err := globalVariableClient.Resource.Create(ctx, serviceVariable, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "global-service", createdServiceVariable.GetName())
+
+	t.Run("should filter by global variable spec name", func(t *testing.T) {
+		list, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.spec.name=service",
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, "global-service", list.Items[0].GetName())
+	})
+
+	t.Run("should filter by multiple field selectors", func(t *testing.T) {
+		list, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "metadata.name=global-service,spec.spec.name=service",
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, "global-service", list.Items[0].GetName())
+	})
+
+	t.Run("should return empty when spec name filter does not match", func(t *testing.T) {
+		list, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.spec.name=does-not-exist",
+		})
+		require.NoError(t, err)
+		require.Empty(t, list.Items)
+	})
+
 	annotations := createdFolderVariable.GetAnnotations()
 	annotations[utils.AnnoKeyFolder] = createdFolder2.GetName()
 	createdFolderVariable.SetAnnotations(annotations)
@@ -86,6 +117,8 @@ func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 	err = globalVariableClient.Resource.Delete(ctx, "global-region", metav1.DeleteOptions{})
 	require.NoError(t, err)
 	err = globalVariableClient.Resource.Delete(ctx, "folder-region", metav1.DeleteOptions{})
+	require.NoError(t, err)
+	err = globalVariableClient.Resource.Delete(ctx, "global-service", metav1.DeleteOptions{})
 	require.NoError(t, err)
 }
 
