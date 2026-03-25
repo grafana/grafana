@@ -1712,13 +1712,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -3522,20 +3522,27 @@
       }
     },
     "triage": {
-      "alert-instances": "알림 인스턴스",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "규칙 로딩 중 오류 발생",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "인스턴스 세부 정보",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "선택한 시간 범위에서 발생 또는 보류 중인 알림 인스턴스가 없습니다.",
       "no-instances-found": "규칙에 대한 알림 인스턴스를 찾을 수 없음: {{ruleUID}}",
       "no-labels": "레이블 없음",
@@ -3557,10 +3564,13 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_other": "",
       "show-all-values_other": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "표현식 추가"
@@ -4227,6 +4237,9 @@
     "browse-view": {
       "this-folder-is-empty": "이 폴더는 비어 있습니다"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "취소",
       "button-delete": "삭제",
@@ -4324,6 +4337,7 @@
       "dashboards": "대시보드",
       "panels": "패널"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "항목 없음"
     },
@@ -6049,8 +6063,8 @@
       "name": "행",
       "new-row-title": "새 행",
       "row": {
-        "collapse": "행 접기",
-        "expand": "행 펼치기",
+        "collapse": "",
+        "expand": "",
         "new": "새 행",
         "repeat": {
           "learn-more": "자세히 알아보기",
@@ -6590,11 +6604,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "임시 옵션",
       "alert-not-supported": "이 데이터 소스는 임시 필터를 지원하지 않습니다",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "사용자가 목록에 사용자 지정 값을 추가할 수 있습니다",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "차원에 대한 다음 정보를 CSV로 제공: {{name}}, {{value}}",
       "label-data-source": "데이터 소스",
       "label-use-static-key-dimensions": "고정 키 차원 사용",
-      "name-allow-custom-values": "사용자 지정 값 허용"
+      "name-allow-custom-values": "사용자 지정 값 허용",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -10211,6 +10227,9 @@
       "group": "그룹",
       "group-tooltip": "누적 그룹의 이름"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "값 필터링하여 포함",
       "cell-filter-out": "값 필터링하여 제외",
@@ -10259,6 +10278,10 @@
       },
       "no-values-label": "값 없음",
       "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "데이터 없음"
       },
@@ -11364,7 +11387,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "옵션을 찾을 수 없습니다"
@@ -12252,6 +12276,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "이름"
       }
     },
@@ -12948,6 +12973,7 @@
       "error-delete-connection": "연결 삭제 실패",
       "error-required": "필수 입력 사항입니다",
       "error-save-connection": "연결 저장 실패",
+      "error-submit": "",
       "grafana-repositories": "이 연결을 사용하는 리포지토리",
       "label-app-id": "GitHub 앱 ID",
       "label-description": "설명",
@@ -13461,6 +13487,9 @@
       },
       "go-to": "다음으로 이동",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "경고",
     "watch-stream": {

@@ -1712,13 +1712,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -3522,20 +3522,27 @@
       }
     },
     "triage": {
-      "alert-instances": "アラートインスタンス",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "ルールの読み込みエラー",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "インスタンスの詳細",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "選択した時間範囲に、発生中または保留状態のアラートインスタンスはありません。",
       "no-instances-found": "ルールに対するアラートインスタンスが見つかりません：{{ruleUID}}",
       "no-labels": "ラベルなし",
@@ -3557,10 +3564,13 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_other": "",
       "show-all-values_other": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "式を追加"
@@ -4227,6 +4237,9 @@
     "browse-view": {
       "this-folder-is-empty": "このフォルダは空です"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "キャンセル",
       "button-delete": "削除",
@@ -4324,6 +4337,7 @@
       "dashboards": "ダッシュボード",
       "panels": "パネル"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "項目がありません"
     },
@@ -6049,8 +6063,8 @@
       "name": "行",
       "new-row-title": "新しい行",
       "row": {
-        "collapse": "行を折りたたむ",
-        "expand": "行を展開する",
+        "collapse": "",
+        "expand": "",
         "new": "新しい行",
         "repeat": {
           "learn-more": "もっと詳しく",
@@ -6590,11 +6604,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "アドホックオプション",
       "alert-not-supported": "このデータソースはアドホックフィルターをサポートしていません",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "ユーザーがリストにカスタム値を追加できるようにします",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "CSV形式で次のように次元を指定：{{name}}, {{value}}",
       "label-data-source": "データソース",
       "label-use-static-key-dimensions": "静的キー次元を使用",
-      "name-allow-custom-values": "カスタム値の入力を許可"
+      "name-allow-custom-values": "カスタム値の入力を許可",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -10211,6 +10227,9 @@
       "group": "グループ",
       "group-tooltip": "スタッキンググループの名前"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "値でフィルタリング",
       "cell-filter-out": "値を除外してフィルタリング",
@@ -10259,6 +10278,10 @@
       },
       "no-values-label": "値がありません",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "データなし"
       },
@@ -11364,7 +11387,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "オプションが見つかりません"
@@ -12252,6 +12276,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "名前"
       }
     },
@@ -12948,6 +12973,7 @@
       "error-delete-connection": "接続の削除に失敗しました",
       "error-required": "このフィールドは必須です",
       "error-save-connection": "接続の保存に失敗しました",
+      "error-submit": "",
       "grafana-repositories": "この接続を使用するリポジトリ",
       "label-app-id": "GitHubアプリID",
       "label-description": "説明",
@@ -13461,6 +13487,9 @@
       },
       "go-to": "進む",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "警告",
     "watch-stream": {
