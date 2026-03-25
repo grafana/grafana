@@ -454,7 +454,18 @@ func (k *SqlKV) batchUniform(ctx context.Context, qb *queryBuilder, section stri
 		for i, op := range ops {
 			keys[i] = op.Key
 		}
-		return k.BatchDelete(ctx, section, keys)
+		// Chunk to stay within dialect parameter limits (e.g. SQLite's 999).
+		maxKeys := batchDeleteMaxKeys(k.dialect)
+		for start := 0; start < len(keys); start += maxKeys {
+			end := start + maxKeys
+			if end > len(keys) {
+				end = len(keys)
+			}
+			if err := k.BatchDelete(ctx, section, keys[start:end]); err != nil {
+				return err
+			}
+		}
+		return nil
 	default:
 		return fmt.Errorf("unknown operation mode: %d", mode)
 	}
@@ -633,6 +644,16 @@ func keyExistsTx(ctx context.Context, tx *sql.Tx, qb *queryBuilder, keyPath stri
 		return false, err
 	}
 	return true, nil
+}
+
+// batchDeleteMaxKeys returns the max keys per DELETE WHERE IN chunk for the dialect.
+func batchDeleteMaxKeys(dialect Dialect) int {
+	switch dialect.Name() {
+	case "sqlite":
+		return 999 // SQLITE_MAX_VARIABLE_NUMBER
+	default:
+		return MaxBatchOps
+	}
 }
 
 func (k *SqlKV) batchInsertDatastore(ctx context.Context, tx *sql.Tx, qb *queryBuilder, section string, ops []BatchOp) error {
