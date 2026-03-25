@@ -21,10 +21,11 @@ const NESTED_MESSAGE_PATHS: Array<{ parent: string; child: string }> = [{ parent
 
 export interface MessageExtractionResult {
   message: string | null;
+  messageFieldName: string | null;
   parsed: Record<string, unknown> | null;
 }
 
-const NULL_RESULT: MessageExtractionResult = { message: null, parsed: null };
+const NULL_RESULT: MessageExtractionResult = { message: null, messageFieldName: null, parsed: null };
 
 export function extractMessageFromJSON(raw: string): MessageExtractionResult {
   // Pre-check: skip parse if it doesn't look like JSON
@@ -52,7 +53,7 @@ export function extractMessageFromJSON(raw: string): MessageExtractionResult {
     const value = obj[fieldName];
     const message = coerceToMessage(value);
     if (message !== null) {
-      return { message, parsed: obj };
+      return { message, messageFieldName: fieldName, parsed: obj };
     }
   }
 
@@ -63,7 +64,7 @@ export function extractMessageFromJSON(raw: string): MessageExtractionResult {
       const nested: unknown = Object(parentValue)[child];
       const message = coerceToMessage(nested);
       if (message !== null) {
-        return { message, parsed: obj };
+        return { message, messageFieldName: parent, parsed: obj };
       }
     }
   }

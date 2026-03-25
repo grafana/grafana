@@ -73,6 +73,7 @@ export class LogListModel implements LogRowModel {
   private _wrapLogMessage: boolean;
   private _json = false;
   private _summaryMessage: string | null | undefined = undefined;
+  private _messageFieldName: string | null = null;
   private _parsedJSON: Record<string, unknown> | null | undefined = undefined;
 
   constructor(
@@ -199,6 +200,7 @@ export class LogListModel implements LogRowModel {
     if (this._summaryMessage === undefined) {
       const result = extractMessageFromJSON(this.raw);
       this._summaryMessage = result.message;
+      this._messageFieldName = result.messageFieldName;
       this._parsedJSON = result.parsed;
     }
     return this._summaryMessage;
@@ -215,16 +217,17 @@ export class LogListModel implements LogRowModel {
     }
     const result: Record<string, string> = {};
     const excludeKeys = new Set(['level', 'time', 'timestamp', 'severity', 'ts', '@t', '@l']);
-    // Find the message field key to exclude it
+    if (this._messageFieldName) {
+      excludeKeys.add(this._messageFieldName);
+    }
+    // Build set of datasource-provided field names to avoid duplicates
+    const dsFieldKeys = new Set(this.fields.map((f) => f.keys[0]));
     for (const [key, value] of Object.entries(parsed)) {
       if (excludeKeys.has(key)) {
         continue;
       }
-      if (typeof value === 'string' && value === this._summaryMessage) {
-        continue;
-      }
-      // Skip fields already in labels
-      if (this.labels[key] != null) {
+      // Skip fields already in labels or datasource fields
+      if (this.labels[key] != null || dsFieldKeys.has(key)) {
         continue;
       }
       result[key] = typeof value === 'string' ? value : JSON.stringify(value);

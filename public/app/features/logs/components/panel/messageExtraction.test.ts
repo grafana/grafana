@@ -5,6 +5,7 @@ describe('extractMessageFromJSON', () => {
     const raw = JSON.stringify({ level: 'info', message: 'HTTP request completed', method: 'GET' });
     const result = extractMessageFromJSON(raw);
     expect(result.message).toBe('HTTP request completed');
+    expect(result.messageFieldName).toBe('message');
     expect(result.parsed).toEqual({ level: 'info', message: 'HTTP request completed', method: 'GET' });
   });
 
@@ -60,6 +61,7 @@ describe('extractMessageFromJSON', () => {
     const raw = JSON.stringify({ level: 'info', status: 200, path: '/api/users' });
     const result = extractMessageFromJSON(raw);
     expect(result.message).toBeNull();
+    expect(result.messageFieldName).toBeNull();
     expect(result.parsed).toEqual({ level: 'info', status: 200, path: '/api/users' });
   });
 
@@ -91,6 +93,7 @@ describe('extractMessageFromJSON', () => {
     const raw = JSON.stringify({ event: { message: 'Nested event message', code: 42 }, ts: 123 });
     const result = extractMessageFromJSON(raw);
     expect(result.message).toBe('Nested event message');
+    expect(result.messageFieldName).toBe('event');
   });
 
   it('does NOT use nested lookup when parent is a string', () => {

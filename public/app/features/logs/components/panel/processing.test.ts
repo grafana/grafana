@@ -584,6 +584,15 @@ Value"
       });
     });
 
+    test('parsedFields excludes message field by key, not by value', () => {
+      const entry = '{"message":"User logged in","description":"User logged in","status":200}';
+      const log = createLogLine({ entry }, summaryOptions);
+      expect(log.parsedFields).toEqual({
+        description: 'User logged in',
+        status: '200',
+      });
+    });
+
     test('parsedFields returns null for non-JSON or when no fields remain', () => {
       const plainText = createLogLine({ entry: 'plain text' }, summaryOptions);
       expect(plainText.parsedFields).toBeNull();
