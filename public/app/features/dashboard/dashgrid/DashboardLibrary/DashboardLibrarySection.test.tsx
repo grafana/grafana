@@ -7,7 +7,6 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardLibrarySection } from './DashboardLibrarySection';
 import { NewDashboardLibraryInteractions } from './analytics/main';
-import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
 import { DashboardLibraryInteractions } from './interactions';
 import { createMockPluginDashboard } from './utils/test-utils';
 

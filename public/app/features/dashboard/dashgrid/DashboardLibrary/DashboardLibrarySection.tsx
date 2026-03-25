@@ -64,7 +64,7 @@ export const DashboardLibrarySection = ({
           });
       hasTrackedLoaded.current = true;
     }
-  }, [isDashboardsLoading, dashboards, datasourceType]);
+  }, [isDashboardsLoading, dashboards, datasourceType, isAnalyticsFrameworkEnabled]);
 
   // Calculate pagination
   const totalPages = Math.ceil(dashboards.length / PAGE_SIZE);

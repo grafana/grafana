@@ -53,17 +53,3 @@ export const NewSuggestedDashboardInteractions = {
       featureVariant: FEATURE_VARIANTS.SUGGESTED_DASHBOARDS,
     }),
 };
-
-export const NewBasicProvisionedDashboardInteractions = {
-  ...NewDashboardLibraryInteractions,
-  itemClicked: (props: ItemClickedProperties) =>
-    newDashboardLibraryInteraction<ItemClickedProperties>('item_clicked')({
-      ...props,
-      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
-    }),
-  loaded: (props: LoadedProperties) =>
-    newDashboardLibraryInteraction<LoadedProperties>('loaded')({
-      ...props,
-      featureVariant: FEATURE_VARIANTS.BASIC_PROVISIONED_DASHBOARDS,
-    }),
-};
