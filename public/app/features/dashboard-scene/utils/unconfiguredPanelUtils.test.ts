@@ -65,19 +65,19 @@ describe('unconfiguredPanelUtils', () => {
 
     describe('initial state', () => {
       it('starts as QuietInitial when isActive is false', () => {
-        const { result } = renderHook(() => useViewPhase(false, false));
+        const { result } = renderHook(() => useViewPhase(false));
         expect(result.current).toBe(VIEW_PHASE.QuietInitial);
       });
 
       it('starts as Active when isActive is true', () => {
-        const { result } = renderHook(() => useViewPhase(true, false));
+        const { result } = renderHook(() => useViewPhase(true));
         expect(result.current).toBe(VIEW_PHASE.Active);
       });
     });
 
     describe('transitioning to active (false → true)', () => {
       it('immediately enters TransitioningToActive', () => {
-        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive, false), {
+        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive), {
           initialProps: { isActive: false },
         });
 
@@ -86,7 +86,7 @@ describe('unconfiguredPanelUtils', () => {
       });
 
       it('settles to Active after TRANSITION_MS', () => {
-        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive, false), {
+        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive), {
           initialProps: { isActive: false },
         });
 
@@ -96,7 +96,7 @@ describe('unconfiguredPanelUtils', () => {
       });
 
       it('does not settle before TRANSITION_MS elapses', () => {
-        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive, false), {
+        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive), {
           initialProps: { isActive: false },
         });
 
@@ -108,7 +108,7 @@ describe('unconfiguredPanelUtils', () => {
 
     describe('transitioning to quiet (true → false)', () => {
       it('immediately enters TransitioningToQuiet', () => {
-        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive, false), {
+        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive), {
           initialProps: { isActive: true },
         });
 
@@ -117,7 +117,7 @@ describe('unconfiguredPanelUtils', () => {
       });
 
       it('settles to Quiet after TRANSITION_MS', () => {
-        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive, false), {
+        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive), {
           initialProps: { isActive: true },
         });
 
@@ -127,7 +127,7 @@ describe('unconfiguredPanelUtils', () => {
       });
 
       it('does not settle before TRANSITION_MS elapses', () => {
-        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive, false), {
+        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive), {
           initialProps: { isActive: true },
         });
 
@@ -139,7 +139,7 @@ describe('unconfiguredPanelUtils', () => {
 
     describe('mid-transition reversal', () => {
       it('cancels a pending to-active transition when flipped back', () => {
-        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive, false), {
+        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive), {
           initialProps: { isActive: false },
         });
 
@@ -156,7 +156,7 @@ describe('unconfiguredPanelUtils', () => {
       });
 
       it('cancels a pending to-quiet transition when flipped back', () => {
-        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive, false), {
+        const { result, rerender } = renderHook(({ isActive }) => useViewPhase(isActive), {
           initialProps: { isActive: true },
         });
 

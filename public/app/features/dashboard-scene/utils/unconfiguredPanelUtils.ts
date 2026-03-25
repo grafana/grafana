@@ -37,7 +37,7 @@ export const gearFrames = fadeSlide(-30, 3);
 export const textFrames = fadeSlide(20, 3);
 export const buttonFrames = fadeSlide(8);
 
-export function useViewPhase(isActive: boolean, queryLibraryEnabled: boolean): ViewPhase {
+export function useViewPhase(isActive: boolean): ViewPhase {
   const [phase, setPhase] = useState<ViewPhase>(() => (isActive ? VIEW_PHASE.Active : VIEW_PHASE.QuietInitial));
   const isMountedRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

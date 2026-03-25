@@ -2,7 +2,7 @@ import { css, cx, keyframes } from '@emotion/css';
 import { type ReactNode, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
-import { CoreApp, GrafanaTheme2, PanelPlugin, PanelProps } from '@grafana/data';
+import { AppEvents, CoreApp, GrafanaTheme2, PanelPlugin, PanelProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { sceneGraph, sceneUtils } from '@grafana/scenes';
@@ -18,6 +18,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
 
@@ -65,7 +66,7 @@ function UnconfiguredPanelComp(props: PanelProps) {
       setIsFocused(false);
     }
   };
-  const phase = useViewPhase(isActive, queryLibraryEnabled);
+  const phase = useViewPhase(isActive);
 
   const onConfigure = () => {
     locationService.partial({ editPanel: props.id });
@@ -84,12 +85,29 @@ function UnconfiguredPanelComp(props: PanelProps) {
           return;
         }
 
-        const timeRange = sceneGraph.getTimeRange(dashboard).state.value;
-        const suggestion = await getVizSuggestionForQuery(query, timeRange);
-        if (!suggestion) {
-          return;
+        try {
+          const timeRange = sceneGraph.getTimeRange(dashboard).state.value;
+          const suggestion = await getVizSuggestionForQuery(query, timeRange);
+          if (!suggestion) {
+            appEvents.emit(AppEvents.alertWarning, [
+              t('dashboard.new-panel.saved-query-no-suggestion', 'No visualization found'),
+              t(
+                'dashboard.new-panel.saved-query-no-suggestion-detail',
+                'The query did not return enough data to suggest a visualization type.'
+              ),
+            ]);
+            return;
+          }
+          await applyQueryToPanel(panel, dashboard, query, suggestion, title);
+        } catch {
+          appEvents.emit(AppEvents.alertError, [
+            t('dashboard.new-panel.saved-query-apply-error', 'Failed to apply saved query'),
+            t(
+              'dashboard.new-panel.saved-query-apply-error-detail',
+              'An error occurred while applying the saved query. Please try again.'
+            ),
+          ]);
         }
-        await applyQueryToPanel(panel, dashboard, query, suggestion, title);
       },
       options: { context: 'dashboard' },
     });

@@ -1,4 +1,4 @@
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { LoadingState, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
@@ -130,6 +130,25 @@ describe('getVizSuggestionForQuery', () => {
     expect(result).toBe(suggestion);
     // getAllSuggestions should only have been called once (for the Done emission)
     expect(mockGetAllSuggestions).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects with TimeoutError when the request never emits a terminal state', async () => {
+    jest.useFakeTimers();
+
+    // A Subject that never emits Done or Error
+    const subject = new Subject<never>();
+    mockRunRequest.mockReturnValue(subject);
+
+    const promise = getVizSuggestionForQuery(makeQuery());
+    // Attach the rejection handler before advancing timers to avoid unhandled rejection
+    const expectation = expect(promise).rejects.toThrow();
+
+    // Advance past the 5s timeout, flushing microtasks between each tick
+    await jest.advanceTimersByTimeAsync(5_001);
+
+    await expectation;
+
+    jest.useRealTimers();
   });
 
   it('passes the query to the request targets', async () => {

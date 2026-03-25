@@ -1,4 +1,4 @@
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, timeout } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
 import {
@@ -19,6 +19,8 @@ import { runRequest } from 'app/features/query/state/runRequest';
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { getQueryRunnerFor } from './utils';
+
+const SUGGESTION_TIMEOUT_MS = 5_000;
 
 /**
  * Executes a saved query against its datasource and returns the top visualization suggestion
@@ -45,7 +47,8 @@ export async function getVizSuggestionForQuery(
 
   const panelData = await firstValueFrom(
     runRequest(datasource, request).pipe(
-      filter((data) => data.state === LoadingState.Done || data.state === LoadingState.Error)
+      filter((data) => data.state === LoadingState.Done || data.state === LoadingState.Error),
+      timeout(SUGGESTION_TIMEOUT_MS)
     )
   );
 
