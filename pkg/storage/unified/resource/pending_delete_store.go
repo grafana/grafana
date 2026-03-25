@@ -21,6 +21,7 @@ const (
 type PendingDeleteRecord struct {
 	DeleteAfter      string `json:"deleteAfter"`
 	LabelingComplete bool   `json:"labelingComplete"`
+	Force            bool   `json:"force,omitempty"`
 }
 
 // PendingDeleteStore manages pending-delete records in the KV store and keeps

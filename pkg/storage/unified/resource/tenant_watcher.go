@@ -253,6 +253,7 @@ func (tw *TenantWatcher) reconcileTenantPendingDelete(name string, deleteAfter s
 	record = PendingDeleteRecord{
 		DeleteAfter:      deleteAfter,
 		LabelingComplete: false,
+		Force:            record.Force,
 	}
 	if err := tw.pendingDeleteStore.Upsert(tw.ctx, name, record); err != nil {
 		tw.log.Error("failed to save pending delete record", "tenant", name, "error", err)
@@ -422,11 +423,21 @@ func (tw *TenantWatcher) clearTenantPendingDelete(name string) {
 		return
 	}
 
+	record, err := tw.pendingDeleteStore.Get(tw.ctx, name)
+	if err != nil {
+		tw.log.Warn("failed to get pending delete record for clearing", "tenant", name, "error", err)
+		return
+	}
+
+	if record.Force {
+		tw.log.Warn("tenant has force pending-delete record, skipping clear", "tenant", name)
+		return
+	}
+
 	// Mark labelling as incomplete before unlabelling. If unlabelling fails
 	// partway and the tenant is re-marked as pending-delete before we retry,
 	// reconcileTenantPendingDelete will see LabelingComplete=false and re-label.
-	record, err := tw.pendingDeleteStore.Get(tw.ctx, name)
-	if err == nil && record.LabelingComplete {
+	if record.LabelingComplete {
 		record.LabelingComplete = false
 		if err := tw.pendingDeleteStore.Upsert(tw.ctx, name, record); err != nil {
 			tw.log.Error("failed to mark labeling incomplete before unlabelling", "tenant", name, "error", err)
