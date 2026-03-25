@@ -320,7 +320,7 @@ The following data sources support ad hoc filters:
 To create an ad hoc filter, follow these steps:
 
 1. [Enter general options](#enter-general-options).
-1. Under the **Ad-hoc options** section of the page, select a target data source in the **Data source** drop-down list.
+1. Under the **Filter options** section of the page, select a target data source in the **Data source** drop-down list.
 
    You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
    For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
