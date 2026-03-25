@@ -124,7 +124,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
               active={selectedObject === dashboard ? true : false}
             />
-            {config.featureToggles.feedbackButton !== false && (
+            {config.featureToggles.feedbackButton && (
               <Sidebar.Button
                 style={{ color: '#ff671d' }}
                 icon="comment-alt-message"
