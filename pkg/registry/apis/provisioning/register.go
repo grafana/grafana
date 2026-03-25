@@ -300,8 +300,8 @@ func RegisterAPIService(
 			Group:   provisioning.GROUP,
 			Version: provisioning.VERSION, // v0alpha1
 		},
-		OnlyApiServer:                       true,
-		IsPreferredVersion:                  false,
+		OnlyApiServer:                       cfg.DisableControllers,
+		IsPreferredVersion:                  true,
 		RepoFactory:                         repoFactory,
 		ConnectionFactory:                   connectionFactory,
 		Features:                            features,
@@ -332,8 +332,8 @@ func RegisterAPIService(
 	apiregistration.RegisterAPI(builder)
 
 	// Register additional API version
-	opts.OnlyApiServer = cfg.DisableControllers
-	opts.IsPreferredVersion = true        // this is the preferred version
+	opts.OnlyApiServer = true
+	opts.IsPreferredVersion = false       // this is the preferred version
 	opts.GroupVersion.Version = "v1beta1" // preferred version
 	builder, err = NewAPIBuilder(opts)
 	if err != nil {
