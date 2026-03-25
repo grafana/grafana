@@ -124,6 +124,10 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				}
 			}
 		}
+		// Explicitly disable migrations for all resources enabled by default that are not
+		// covered by the test cases. Without this, applyMigrationEnforcements would enforce
+		// Mode5 for any enabled-by-default resource absent from cfg.UnifiedStorage.
+		disableMigrationsForDefaultResources(unifiedConfig)
 
 		// Set up test environment with Mode0 (writes only to legacy)
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -181,6 +185,7 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				}
 			}
 		}
+		disableMigrationsForDefaultResources(unifiedConfig)
 
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
@@ -422,6 +427,23 @@ func verifyTablesRenamed(t *testing.T, helper *apis.K8sTestHelper, testCases []t
 			require.True(t, exists, "renamed table %q should exist after migration", legacyName)
 
 			t.Logf("Verified table %q was renamed to %q", table, legacyName)
+		}
+	}
+}
+
+// disableMigrationsForDefaultResources ensures that all resources which are enabled by
+// default in MigratedUnifiedResources have an explicit entry in unifiedConfig with
+// EnableMigration: false. Without this, applyMigrationEnforcements would enforce Mode5
+// for any enabled-by-default resource that is absent from cfg.UnifiedStorage (i.e. not
+// covered by the current test cases).
+func disableMigrationsForDefaultResources(unifiedConfig map[string]setting.UnifiedStorageConfig) {
+	for resource, enabledByDefault := range setting.MigratedUnifiedResources {
+		if enabledByDefault {
+			if _, exists := unifiedConfig[resource]; !exists {
+				unifiedConfig[resource] = setting.UnifiedStorageConfig{
+					EnableMigration: false,
+				}
+			}
 		}
 	}
 }
