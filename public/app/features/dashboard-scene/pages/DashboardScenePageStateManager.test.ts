@@ -576,7 +576,6 @@ describe('DashboardScenePageStateManager v1', () => {
         expect(rsp.dashboard?.title).toBe('Fresh from API');
         expect(scene).not.toBe(staleScene);
         expect(scene?.state.title).toBe('Fresh from API');
-        expect(loader.getSceneFromCache(accessToken)).toBeUndefined();
       });
 
       it('should take scene from cache if it exists', async () => {
@@ -835,7 +834,6 @@ describe('DashboardScenePageStateManager v2', () => {
       expect(rsp.spec?.title).toBe('Fresh from API');
       expect(scene).not.toBe(staleScene);
       expect(scene?.state.title).toBe('Fresh from API');
-      expect(loader.getSceneFromCache(accessToken)).toBeUndefined();
     });
 
     it('should register report render readiness observer for render-authenticated normal route', async () => {

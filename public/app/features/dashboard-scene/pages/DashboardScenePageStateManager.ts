@@ -520,10 +520,6 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     // Public dashboards are not part of a session and therefore should not use the cache
     const skipSceneCache = options.route === DashboardRoutes.Public;
 
-    if (skipSceneCache && options.uid) {
-      this.removeSceneCache(options.uid);
-    }
-
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
 
@@ -929,10 +925,6 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
   ): DashboardScene | null {
     // Public dashboards are not part of a session and therefore should not use the cache
     const skipSceneCache = options.route === DashboardRoutes.Public;
-
-    if (skipSceneCache && options.uid) {
-      this.removeSceneCache(options.uid);
-    }
 
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
