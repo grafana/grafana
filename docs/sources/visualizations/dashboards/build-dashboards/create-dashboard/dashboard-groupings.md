@@ -190,4 +190,4 @@ If you have a panel that includes grouped panels already and you want some panel
 In view mode, the row header is hidden, so that the panels in that row appear ungrouped.
 In the following image, the panels are grouped into two rows, but the header of the second row is hidden:
 
-{{< figure src="placeholder-1.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
+{{< figure src="../placeholder-1.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
