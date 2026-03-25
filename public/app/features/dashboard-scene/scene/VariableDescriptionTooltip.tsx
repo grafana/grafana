@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { sanitizeUrl } from '@grafana/data/internal';
+import { t } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 const MARKDOWN_LINK_REGEX = /\[([^\]]+)\]\(([^)\s]+)\)/g;
@@ -23,7 +24,7 @@ export function VariableDescriptionTooltip({ description, placement }: VariableD
       placement={placement}
       interactive
     >
-      <Icon name="info-circle" size="sm" className={styles.icon} />
+      <Icon name="info-circle" size="sm" className={styles.icon} aria-label={t('dashboard.variable.description-tooltip', 'Variable description')} />
     </Tooltip>
   );
 }
