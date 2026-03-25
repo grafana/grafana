@@ -329,6 +329,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "reportingHeaderSettings",
+			Description:  "Enables configuration of PDF report settings",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
+		},
+		{
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
@@ -2737,20 +2745,21 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "rbacIAMClient",
-			Description:  "Enables the IAM client integration for fetching remote IAM global roles",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "logsTablePanelNG",
 			Description:  "Enables the logs tableNG panel to replace existing tableRT",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaObservabilityLogsSquad,
 			HideFromDocs: true,
 			Expression:   "false",
+		},
+		{
+			Name:         "useMTPluginSettings",
+			Description:  "Enables plugins setting from new apis",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+			HideFromDocs: true,
 		},
 	}
 )

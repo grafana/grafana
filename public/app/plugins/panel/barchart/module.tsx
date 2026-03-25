@@ -8,7 +8,6 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { GraphTransform, GraphThresholdsStyleMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { getGraphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
 import { optsWithHideZeros } from '@grafana/ui/internal';
@@ -256,7 +255,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarChartPanel)
     });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, false, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder, true, true, config.featureToggles.vizLegendSeriesLimit);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
     commonOptionsBuilder.addTextSizeOptions(builder, { withValue: true });
   })
   .setSuggestionsSupplier(barchartSuggestionsSupplier)

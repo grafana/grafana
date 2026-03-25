@@ -1718,13 +1718,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -3541,20 +3541,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Instancias de alerta",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Error al cargar la regla",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "Detalles de la instancia",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "No tienes instancias de alerta en estado de activación o pendientes para el intervalo de tiempo seleccionado.",
       "no-instances-found": "No se han encontrado instancias de alerta para la regla: {{ruleUID}}",
       "no-labels": "Ninguna etiqueta",
@@ -3576,14 +3583,16 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_one": "",
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_one": "",
       "show-all-labels_other": "",
       "show-all-values_one": "",
       "show-all-values_other": "",
-      "tooltip-more-values_one": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_one": "",
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "Añadir expresión"
@@ -4250,6 +4259,9 @@
     "browse-view": {
       "this-folder-is-empty": "Esta carpeta está vacía"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
@@ -4352,6 +4364,7 @@
       "dashboards": "Paneles de control",
       "panels": "Paneles"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Sin elementos "
     },
@@ -6081,8 +6094,8 @@
       "name": "Filas",
       "new-row-title": "Fila nueva",
       "row": {
-        "collapse": "Contraer fila",
-        "expand": "Expandir fila",
+        "collapse": "",
+        "expand": "",
         "new": "Fila nueva",
         "repeat": {
           "learn-more": "Más información",
@@ -6623,11 +6636,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Opciones específicas",
       "alert-not-supported": "Esta fuente de datos no admite filtros específicos",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Permite a los usuarios añadir valores personalizados a la lista",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Proporcionar dimensiones como CSV: {{name}}, {{value}}",
       "label-data-source": "Fuente de datos",
       "label-use-static-key-dimensions": "Usar dimensiones de clave estática",
-      "name-allow-custom-values": "Permitir valores personalizados"
+      "name-allow-custom-values": "Permitir valores personalizados",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -10267,6 +10282,9 @@
       "group": "Grupo",
       "group-tooltip": "Nombre del grupo de apilamiento"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Filtrar por valor",
       "cell-filter-out": "Filtrar valor",
@@ -10315,6 +10333,10 @@
       },
       "no-values-label": "Sin valores",
       "pagination-summary": "{{itemsRangeStart}}-{{displayedEnd}} de {{numRows}} filas",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "no hay datos"
       },
@@ -11428,7 +11450,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No se han encontrado opciones"
@@ -12319,6 +12342,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Nombre"
       }
     },
@@ -13018,6 +13042,7 @@
       "error-delete-connection": "Error al eliminar la conexión",
       "error-required": "Este campo es obligatorio",
       "error-save-connection": "Error al guardar la conexión",
+      "error-submit": "",
       "grafana-repositories": "Repositorios que utilizan esta conexión",
       "label-app-id": "ID de la aplicación de GitHub",
       "label-description": "Descripción",
@@ -13542,6 +13567,9 @@
       },
       "go-to": "Ir a",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "Advertencia",
     "watch-stream": {

@@ -219,6 +219,11 @@ export interface FeatureToggles {
   */
   reportingCsvEncodingOptions?: boolean;
   /**
+  * Enables configuration of PDF report settings
+  * @default false
+  */
+  reportingHeaderSettings?: boolean;
+  /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   * @default false
   */
@@ -1726,13 +1731,13 @@ export interface FeatureToggles {
   */
   yAxisTickControl?: boolean;
   /**
-  * Enables the IAM client integration for fetching remote IAM global roles
-  * @default false
-  */
-  rbacIAMClient?: boolean;
-  /**
   * Enables the logs tableNG panel to replace existing tableRT
   * @default false
   */
   logsTablePanelNG?: boolean;
+  /**
+  * Enables plugins setting from new apis
+  * @default false
+  */
+  useMTPluginSettings?: boolean;
 }
