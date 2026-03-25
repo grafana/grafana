@@ -329,6 +329,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "reportingHeaderSettings",
+			Description:  "Enables configuration of PDF report settings",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
+		},
+		{
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
