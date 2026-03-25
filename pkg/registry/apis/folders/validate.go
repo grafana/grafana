@@ -13,7 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -322,9 +324,15 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		return children, hasMore, nil
 	}
 
-	// Fallback: list all folders from storage and filter by parent UIDs in-memory.
-	// This handles the case when search/indexer is unavailable.
-	return getChildrenFromStorage(ctx, lister, parentUIDs)
+	// Search is unavailable. Fall back to listing folders from storage.
+	// Use a service identity context to ensure unfiltered access to all folders,
+	// since the dualwriter's List may be user-scoped in legacy mode.
+	nsInfo, nsErr := authlib.ParseNamespace(namespace)
+	if nsErr != nil {
+		return nil, false, fmt.Errorf("failed to parse namespace for service identity: %w", nsErr)
+	}
+	svcCtx := identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
+	return getChildrenFromStorage(svcCtx, lister, parentUIDs)
 }
 
 // getChildrenFromStorage lists all folders from storage (without field selectors,
