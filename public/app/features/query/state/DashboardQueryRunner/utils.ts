@@ -85,10 +85,10 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
 
   for (const item of results) {
     item.source = annotation;
-    item.color = config.theme2.visualization.getColorByName(annotation.iconColor);
     item.type = annotation.name;
     item.isRegion = Boolean(item.timeEnd && item.time !== item.timeEnd);
 
+    // Color priority: newState mapping > event-level color from datasource > annotation iconColor fallback
     switch (item.newState?.toLowerCase()) {
       case 'pending':
         item.color = 'yellow';
@@ -97,16 +97,17 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
         item.color = 'red';
         break;
       case 'ok':
-        item.color = 'green';
-        break;
       case 'normal': // ngalert ("normal" instead of "ok")
         item.color = 'green';
         break;
       case 'no_data':
-        item.color = 'gray';
-        break;
       case 'nodata': // ngalert
         item.color = 'gray';
+        break;
+      default:
+        if (!item.color) {
+          item.color = config.theme2.visualization.getColorByName(annotation.iconColor);
+        }
         break;
     }
   }
