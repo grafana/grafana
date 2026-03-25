@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { useAsync, useAsyncFn } from 'react-use';
@@ -11,6 +12,7 @@ import { PluginDashboard } from 'app/types/plugins';
 
 import { DashboardCard } from './DashboardCard';
 import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
+import { NewSuggestedDashboardInteractions } from './analytics/main';
 import { fetchCommunityDashboards, fetchProvisionedDashboards } from './api/dashboardLibraryApi';
 import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
 import { SuggestedDashboardInteractions } from './interactions';
@@ -50,6 +52,7 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
   const hasTrackedLoaded = useRef(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const showLibraryModal = searchParams.get('dashboardLibraryModal') === 'open';
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
 
   // Validate and get default tab from URL params
   const tabParam = searchParams.get('dashboardLibraryTab');
@@ -157,17 +160,24 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
           )
         ),
       ];
-
-      SuggestedDashboardInteractions.loaded({
-        numberOfItems: result.dashboards.length,
-        contentKinds,
-        datasourceTypes: [datasourceType],
-        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-        eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-      });
+      isAnalyticsFrameworkEnabled
+        ? NewSuggestedDashboardInteractions.loaded({
+            numberOfItems: result.dashboards.length,
+            contentKinds,
+            datasourceTypes: [datasourceType],
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+          })
+        : SuggestedDashboardInteractions.loaded({
+            numberOfItems: result.dashboards.length,
+            contentKinds,
+            datasourceTypes: [datasourceType],
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+          });
       hasTrackedLoaded.current = true;
     }
-  }, [loading, result, datasourceType]);
+  }, [loading, result, datasourceType, isAnalyticsFrameworkEnabled]);
 
   const onModalDismiss = () => {
     // Remove modal-related query params while keeping datasourceUid
@@ -202,16 +212,25 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
     if (!ds) {
       return;
     }
-
-    SuggestedDashboardInteractions.itemClicked({
-      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
-      datasourceTypes: [ds.type],
-      libraryItemId: dashboard.uid,
-      libraryItemTitle: dashboard.title,
-      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-      discoveryMethod: DISCOVERY_METHODS.BROWSE,
-    });
+    isAnalyticsFrameworkEnabled
+      ? NewSuggestedDashboardInteractions.itemClicked({
+          contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
+          datasourceTypes: [ds.type],
+          libraryItemId: dashboard.uid,
+          libraryItemTitle: dashboard.title,
+          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+          discoveryMethod: DISCOVERY_METHODS.BROWSE,
+        })
+      : SuggestedDashboardInteractions.itemClicked({
+          contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
+          datasourceTypes: [ds.type],
+          libraryItemId: dashboard.uid,
+          libraryItemTitle: dashboard.title,
+          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+          discoveryMethod: DISCOVERY_METHODS.BROWSE,
+        });
 
     // Navigate to template route (existing flow)
     const params = new URLSearchParams({
@@ -241,15 +260,25 @@ export const SuggestedDashboards = ({ datasourceUid }: Props) => {
       }
 
       // Track item click
-      SuggestedDashboardInteractions.itemClicked({
-        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-        datasourceTypes: [ds.type],
-        libraryItemId: String(dashboard.id),
-        libraryItemTitle: dashboard.name,
-        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-        eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-        discoveryMethod: DISCOVERY_METHODS.BROWSE,
-      });
+      isAnalyticsFrameworkEnabled
+        ? NewSuggestedDashboardInteractions.itemClicked({
+            contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+            datasourceTypes: [ds.type],
+            libraryItemId: String(dashboard.id),
+            libraryItemTitle: dashboard.name,
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+            discoveryMethod: DISCOVERY_METHODS.BROWSE,
+          })
+        : SuggestedDashboardInteractions.itemClicked({
+            contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+            datasourceTypes: [ds.type],
+            libraryItemId: String(dashboard.id),
+            libraryItemTitle: dashboard.name,
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+            discoveryMethod: DISCOVERY_METHODS.BROWSE,
+          });
 
       await onUseCommunityDashboard({
         dashboard,

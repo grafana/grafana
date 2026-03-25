@@ -58,6 +58,7 @@ const FIXED_BLUE_FIELD_CONFIG: FieldConfigSource<Partial<GraphFieldConfig>> = {
 const thresholdValuePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('stat.presets.threshold-value', 'Threshold value'),
+    description: t('stat.presets.threshold-value-desc', 'Value color from thresholds, no sparkline'),
     options: {
       ...AUTO_OPTIONS,
       colorMode: BigValueColorMode.Value,
@@ -73,6 +74,7 @@ const thresholdValuePreset = (): VisualizationSuggestion<Options, GraphFieldConf
 const thresholdValueSparklinePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('stat.presets.threshold-value-sparkline', 'Threshold value with sparkline'),
+    description: t('stat.presets.threshold-value-sparkline-desc', 'Value color from thresholds, area sparkline'),
     options: {
       ...AUTO_OPTIONS,
       colorMode: BigValueColorMode.Value,
@@ -88,6 +90,7 @@ const thresholdValueSparklinePreset = (): VisualizationSuggestion<Options, Graph
 const thresholdBackgroundPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('stat.presets.threshold-background', 'Threshold background'),
+    description: t('stat.presets.threshold-background-desc', 'Background color from thresholds, no sparkline'),
     options: {
       ...AUTO_OPTIONS,
       colorMode: BigValueColorMode.Background,
@@ -103,6 +106,10 @@ const thresholdBackgroundPreset = (): VisualizationSuggestion<Options, GraphFiel
 const thresholdBackgroundSparklinePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('stat.presets.threshold-background-sparkline', 'Threshold background with sparkline'),
+    description: t(
+      'stat.presets.threshold-background-sparkline-desc',
+      'Background color from thresholds, area sparkline'
+    ),
     options: {
       ...AUTO_OPTIONS,
       colorMode: BigValueColorMode.Background,
@@ -118,7 +125,7 @@ const thresholdBackgroundSparklinePreset = (): VisualizationSuggestion<Options, 
 const wideListPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('stat.presets.wide-list', 'Wide list'),
-    // description: t('stat.presets.wide-list-desc', 'Color mode none, text mode value and name, text align center, single color'),
+    description: t('stat.presets.wide-list-desc', 'Horizontal, name and value, area sparkline, single color'),
     options: {
       ...HORIZONTAL_OPTIONS,
       textMode: BigValueTextMode.ValueAndName,
@@ -135,7 +142,7 @@ const wideListPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> =>
 const listPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('stat.presets.list', 'List'),
-    // description: t('stat.presets.list_desc', 'Color mode none, text mode value and name, text align center, single color'),
+    description: t('stat.presets.list_desc', 'Compact horizontal list, centered, name and value, sparkline'),
     options: {
       ...HORIZONTAL_OPTIONS,
       textMode: BigValueTextMode.ValueAndName,
@@ -156,10 +163,10 @@ const listPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
 const horizontalThresholdValuePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('stat.presets.horizontal-threshold-value', 'Horizontal threshold value'),
-    // description: t(
-    //   'stat.presets.horizontal-threshold-value-desc',
-    //   'Color from thresholds, horizontal, no graph'
-    // ),
+    description: t(
+      'stat.presets.horizontal-threshold-value-desc',
+      'Horizontal, value color from thresholds, no sparkline'
+    ),
     options: {
       ...HORIZONTAL_OPTIONS,
       colorMode: BigValueColorMode.Value,
@@ -175,10 +182,10 @@ const horizontalThresholdValuePreset = (): VisualizationSuggestion<Options, Grap
 const horizontalThresholdValueSparklinePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('stat.presets.horizontal-threshold-value-sparkline', 'Horizontal threshold value with sparkline'),
-    // description: t(
-    //   'stat.presets.horizontal-threshold-value-sparkline-desc',
-    //   'Color from thresholds, horizontal'
-    // ),
+    description: t(
+      'stat.presets.horizontal-threshold-value-sparkline-desc',
+      'Horizontal, value color from thresholds, area sparkline'
+    ),
     options: {
       ...HORIZONTAL_OPTIONS,
       colorMode: BigValueColorMode.Value,
