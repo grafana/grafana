@@ -285,7 +285,6 @@ export type Renderers = Array<{
   init: (config: UPlotConfigBuilder, fieldIndices: Record<string, number>) => void;
 }>;
 
-/** @alpha */
 type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   frame: DataFrame;
   theme: GrafanaTheme2;
@@ -300,5 +299,4 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   xAxisConfig?: Pick<AxisProps, 'size' | 'gap' | 'ticks'>;
 } & T;
 
-/** @alpha */
 export type UPlotConfigPrepFn<T extends {} = {}> = (opts: UPlotConfigPrepOpts<T>) => UPlotConfigBuilder;

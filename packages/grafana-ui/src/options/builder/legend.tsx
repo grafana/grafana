@@ -2,9 +2,7 @@ import { PanelOptionsEditorBuilder, standardEditorsRegistry, StatsPickerConfigSe
 import { t } from '@grafana/i18n';
 import { LegendDisplayMode, OptionsWithLegend } from '@grafana/schema';
 
-/**
- * @alpha
- */
+/** @public */
 export function addLegendOptions<T extends OptionsWithLegend>(
   builder: PanelOptionsEditorBuilder<T>,
   includeLegendCalcs = true,

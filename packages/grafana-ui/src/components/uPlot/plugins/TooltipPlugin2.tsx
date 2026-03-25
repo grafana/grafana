@@ -115,9 +115,6 @@ const getAdHocFiltersFallback: GetAdHocFiltersCallback = () => [];
 
 const userAgentIsMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
 
-/**
- * @alpha
- */
 export const TooltipPlugin2 = ({
   config,
   hoverMode,

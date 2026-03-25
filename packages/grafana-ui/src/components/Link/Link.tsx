@@ -5,9 +5,6 @@ import { locationUtil, textUtil } from '@grafana/data';
 
 export interface Props extends AnchorHTMLAttributes<HTMLAnchorElement> {}
 
-/**
- * @alpha
- */
 export const Link = forwardRef<HTMLAnchorElement, Props>(({ href, children, ...rest }, ref) => {
   const validUrl = locationUtil.stripBaseFromUrl(textUtil.sanitizeUrl(href ?? ''));
 

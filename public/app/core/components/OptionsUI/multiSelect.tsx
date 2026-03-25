@@ -12,7 +12,6 @@ type Props<T> = StandardEditorProps<T[], SelectFieldConfigSettings<T>>;
 
 /**
  * MultiSelect for options UI
- * @alpha
  */
 export class MultiSelectValueEditor<T> extends PureComponent<Props<T>, State<T>> {
   state: State<T> = {

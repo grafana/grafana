@@ -23,8 +23,7 @@ export enum FieldType {
   other = 'other', // Object, Array, etc
   frame = 'frame', // DataFrame
 
-  // @alpha Nested DataFrames. This is for example used with tables where expanding a row will show a nested table.
-  // The value should be DataFrame[] even if it is a single frame.
+  // Used for nested data (e.g. expandable table rows). Value must be DataFrame[], even for a single frame.
   nestedFrames = 'nestedFrames',
 }
 

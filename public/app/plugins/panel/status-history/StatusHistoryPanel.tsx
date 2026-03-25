@@ -32,9 +32,6 @@ import { Options } from './panelcfg.gen';
 
 interface TimelinePanelProps extends PanelProps<Options> {}
 
-/**
- * @alpha
- */
 export const StatusHistoryPanel = ({
   data,
   timeRange,
