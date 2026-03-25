@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -168,11 +167,8 @@ func (s *legacyStorage) Create(ctx context.Context,
 	switch v := obj.(type) {
 	case *foldersv1beta1.Folder:
 		p = v
-	case *foldersv1.Folder:
-		p = &foldersv1beta1.Folder{}
-		if err := s.convertor.Convert(v, p, nil); err != nil {
-			return nil, fmt.Errorf("convert folder list: %w", err)
-		}
+	default:
+		return nil, fmt.Errorf("expected folder, got %T", obj)
 	}
 
 	accessor, err := utils.MetaAccessor(p)
@@ -243,11 +239,6 @@ func (s *legacyStorage) Update(ctx context.Context,
 	switch v := obj.(type) {
 	case *foldersv1beta1.Folder:
 		f = v
-	case *foldersv1.Folder:
-		f = &foldersv1beta1.Folder{}
-		if err := s.convertor.Convert(v, f, nil); err != nil {
-			return nil, created, fmt.Errorf("convert folder for update: %w", err)
-		}
 	default:
 		return nil, created, fmt.Errorf("expected folder after update, got %T", obj)
 	}
@@ -256,11 +247,6 @@ func (s *legacyStorage) Update(ctx context.Context,
 	switch v := oldObj.(type) {
 	case *foldersv1beta1.Folder:
 		old = v
-	case *foldersv1.Folder:
-		old = &foldersv1beta1.Folder{}
-		if err := s.convertor.Convert(v, old, nil); err != nil {
-			return nil, created, fmt.Errorf("convert old folder: %w", err)
-		}
 	default:
 		return nil, created, fmt.Errorf("expected old object to be a folder, got %T", oldObj)
 	}

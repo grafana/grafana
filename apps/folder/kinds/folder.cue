@@ -1,28 +1,12 @@
 package folder
 
-foldersV1beta1: {
-	kind:       "Folder"
-	pluralName: "Folders"
-
-	schema: {
-		spec: {
-			title:        string
-			description?: string
-		}
-	}
-
-	selectableFields: [
-		"spec.title",
-	]
-}
-
 foldersV1: {
 	kind:       "Folder"
 	pluralName: "Folders"
 
 	schema: {
 		spec: {
-			title:    string
+			title:          string
 			description?: string
 		}
 	}
@@ -31,3 +15,5 @@ foldersV1: {
 		"spec.title",
 	]
 }
+
+foldersV1beta1: foldersV1

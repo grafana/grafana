@@ -17,7 +17,7 @@ manifest: {
 		"v1beta1": {
 			codegen: {
 				ts: {enabled: false}
-				go: {enabled: true}
+				go: {enabled: false} // v1beta1 is a thin wrapper around v1
 			}
 			kinds: [
 				foldersV1beta1,

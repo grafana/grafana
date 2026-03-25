@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -67,11 +66,8 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, opts runtime
 	switch v := obj.(type) {
 	case *foldersv1beta1.FolderList:
 		allFolders = v
-	case *foldersv1.FolderList:
-		allFolders = &foldersv1beta1.FolderList{}
-		if err := r.convertor.Convert(v, allFolders, nil); err != nil {
-			return nil, fmt.Errorf("convert folder list: %w", err)
-		}
+	default:
+		return nil, fmt.Errorf("expected folder list, got %T", obj)
 	}
 
 	if allFolders.Continue != "" {
