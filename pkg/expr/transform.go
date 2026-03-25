@@ -3,14 +3,12 @@ package expr
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -90,28 +88,17 @@ func (s *Service) TransformData(ctx context.Context, now time.Time, req *Request
 
 	// Build the pipeline from the request, checking for ordering issues (e.g. loops)
 	// and parsing graph nodes from the queries.
-	pipeline, brokenNodes, err := s.buildPipeline(ctx, req)
+	pipeline, err := s.buildPipeline(ctx, req)
 	if err != nil {
 		return nil, err
 	}
 
-	// Execute the pipeline
+	// Execute the pipeline. Disabled nodes (e.g. those with missing dependencies)
+	// inject their errors into the result vars during execution; downstream nodes
+	// fail via the existing Mode 1 dependency-error path.
 	responses, err := s.ExecutePipeline(ctx, now, pipeline)
 	if err != nil {
 		return nil, err
-	}
-
-	// Pre-populate error entries for broken nodes (degraded pipeline).
-	// These are nodes that were removed during pipeline building because
-	// they referenced nonexistent dependencies.
-	for refID, nodeErr := range brokenNodes {
-		responses.Responses[refID] = backend.DataResponse{
-			Error: nodeErr,
-		}
-		var sqlErr *sql.ErrorWithCategory
-		if errors.As(nodeErr, &sqlErr) {
-			s.metrics.SqlCommandCount.WithLabelValues("error", sqlErr.Category()).Inc()
-		}
 	}
 
 	// Get which queries have the Hide property so those queries' results

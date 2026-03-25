@@ -5,14 +5,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
-	"gonum.org/v1/gonum/graph/simple"
 
 	"github.com/grafana/grafana/pkg/expr/metrics"
-	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -266,7 +263,7 @@ func TestServicebuildPipeLine(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			nodes, _, err := s.buildPipeline(t.Context(), tt.req)
+			nodes, err := s.buildPipeline(t.Context(), tt.req)
 			if tt.expectErrContains != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.expectErrContains)
@@ -321,102 +318,8 @@ func getRefIDOrder(nodes []Node) []string {
 	return ids
 }
 
-func TestCollectBrokenNodes(t *testing.T) {
-	t.Run("single node with missing dependency", func(t *testing.T) {
-		graph := simple.NewDirectedGraph()
-		mathCmd, err := NewMathCommand("A", "$B")
-		require.NoError(t, err)
-		mathNode := &CMDNode{
-			baseNode: baseNode{id: 0, refID: "A"},
-			CMDType:  TypeMath,
-			Command:  mathCmd,
-		}
-		graph.AddNode(mathNode)
-		registry := buildNodeRegistry(graph)
-
-		broken := collectBrokenNodes(graph, registry)
-
-		require.Len(t, broken, 1)
-		require.Contains(t, broken, "A")
-		require.ErrorContains(t, broken["A"], "B")
-	})
-
-	t.Run("transitive dependent is also broken", func(t *testing.T) {
-		graph := simple.NewDirectedGraph()
-		dsNode := &DSNode{baseNode: baseNode{id: 0, refID: "A"}}
-		mathCmd, err := NewMathCommand("B", "$NONEXISTENT")
-		require.NoError(t, err)
-		mathNode := &CMDNode{
-			baseNode: baseNode{id: 1, refID: "B"},
-			CMDType:  TypeMath,
-			Command:  mathCmd,
-		}
-		reduceCmd, err := NewReduceCommand("C", "mean", "B", nil)
-		require.NoError(t, err)
-		reduceNode := &CMDNode{
-			baseNode: baseNode{id: 2, refID: "C"},
-			CMDType:  TypeReduce,
-			Command:  reduceCmd,
-		}
-		graph.AddNode(dsNode)
-		graph.AddNode(mathNode)
-		graph.AddNode(reduceNode)
-		registry := buildNodeRegistry(graph)
-
-		broken := collectBrokenNodes(graph, registry)
-
-		require.Len(t, broken, 2)
-		require.Contains(t, broken, "B")
-		require.Contains(t, broken, "C")
-		require.NotNil(t, graph.Node(dsNode.ID()))
-		require.Nil(t, graph.Node(mathNode.ID()))
-		require.Nil(t, graph.Node(reduceNode.ID()))
-	})
-
-	t.Run("no broken nodes returns empty map", func(t *testing.T) {
-		graph := simple.NewDirectedGraph()
-		dsNode := &DSNode{baseNode: baseNode{id: 0, refID: "A"}}
-		reduceCmd, err := NewReduceCommand("B", "mean", "A", nil)
-		require.NoError(t, err)
-		reduceNode := &CMDNode{
-			baseNode: baseNode{id: 1, refID: "B"},
-			CMDType:  TypeReduce,
-			Command:  reduceCmd,
-		}
-		graph.AddNode(dsNode)
-		graph.AddNode(reduceNode)
-		registry := buildNodeRegistry(graph)
-
-		broken := collectBrokenNodes(graph, registry)
-
-		require.Empty(t, broken)
-		require.NotNil(t, graph.Node(dsNode.ID()))
-		require.NotNil(t, graph.Node(reduceNode.ID()))
-	})
-
-	t.Run("SQL node with missing table gets categorized error", func(t *testing.T) {
-		graph := simple.NewDirectedGraph()
-		sqlCmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "C", "table", "SELECT * FROM nonexistent", 0, 0, 0)
-		require.NoError(t, err)
-		sqlNode := &CMDNode{
-			baseNode: baseNode{id: 0, refID: "C"},
-			CMDType:  TypeSQL,
-			Command:  sqlCmd,
-		}
-		graph.AddNode(sqlNode)
-		registry := buildNodeRegistry(graph)
-
-		broken := collectBrokenNodes(graph, registry)
-
-		require.Len(t, broken, 1)
-		require.Contains(t, broken, "C")
-		var catErr *sql.ErrorWithCategory
-		require.ErrorAs(t, broken["C"], &catErr)
-	})
-}
-
 func TestBuildPipelineDegraded(t *testing.T) {
-	t.Run("missing dep produces degraded pipeline when toggle ON", func(t *testing.T) {
+	t.Run("missing dep marks node disabled when toggle ON", func(t *testing.T) {
 		setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
 		s := Service{
 			cfg:    setting.NewCfg(),
@@ -442,12 +345,16 @@ func TestBuildPipelineDegraded(t *testing.T) {
 			},
 		}
 
-		pipeline, brokenNodes, err := s.buildPipeline(t.Context(), req)
+		pipeline, err := s.buildPipeline(t.Context(), req)
 		require.NoError(t, err)
-		require.Len(t, pipeline, 1, "only valid node A should be in pipeline")
-		require.Equal(t, "A", pipeline[0].RefID())
-		require.Len(t, brokenNodes, 1)
-		require.Contains(t, brokenNodes, "B")
+		require.Len(t, pipeline, 2, "both nodes should be in pipeline (B is disabled, not removed)")
+		nodeByRefID := make(map[string]Node, len(pipeline))
+		for _, n := range pipeline {
+			nodeByRefID[n.RefID()] = n
+		}
+		require.Nil(t, nodeByRefID["A"].DisabledErr(), "node A should be enabled")
+		require.Error(t, nodeByRefID["B"].DisabledErr(), "node B should be disabled")
+		require.Contains(t, nodeByRefID["B"].DisabledErr().Error(), "NONEXISTENT")
 	})
 
 	t.Run("missing dep still hard-fails when toggle OFF", func(t *testing.T) {
@@ -475,7 +382,7 @@ func TestBuildPipelineDegraded(t *testing.T) {
 			},
 		}
 
-		_, _, err := s.buildPipeline(t.Context(), req)
+		_, err := s.buildPipeline(t.Context(), req)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "find dependent")
 	})
@@ -499,7 +406,7 @@ func TestBuildPipelineDegraded(t *testing.T) {
 			},
 		}
 
-		_, _, err := s.buildPipeline(t.Context(), req)
+		_, err := s.buildPipeline(t.Context(), req)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "cannot reference itself")
 	})

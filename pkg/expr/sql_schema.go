@@ -22,7 +22,7 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (queryV0.SQLSc
 		}
 	}
 	req.Queries = filtered
-	pipeline, _, err := s.buildPipeline(ctx, &req)
+	pipeline, err := s.buildPipeline(ctx, &req)
 	if err != nil {
 		return nil, err
 	}
