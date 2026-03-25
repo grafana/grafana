@@ -16,7 +16,6 @@ import {
   useElementSelection,
   usePanelContext,
   useStyles2,
-  useTheme2,
 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
@@ -45,7 +44,6 @@ const UnconfiguredPanel = new PanelPlugin(UnconfiguredPanelComp);
 
 function UnconfiguredPanelComp(props: PanelProps) {
   const panelContext = usePanelContext();
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { openDrawer, queryLibraryEnabled = false } = useQueryLibraryContext();
 
@@ -54,7 +52,7 @@ function UnconfiguredPanelComp(props: PanelProps) {
   const isEditing = dashboard instanceof DashboardScene ? dashboard.state.isEditing : false;
 
   const [measureRef, { width, height }] = useMeasure<HTMLDivElement>();
-  const isCompact = width < theme.breakpoints.values.sm && height < 150;
+  const isCompact = width < 175 && height < 150;
 
   const { isSelected } = useElementSelection(panelKey);
   const [isHovered, setIsHovered] = useState(false);
