@@ -115,6 +115,33 @@ describe('useCorrelationsK8s', () => {
         uid: 'testUid',
       });
     });
+    it('marks a correlation with a manager as provisioned', () => {
+      const correlation = toEnrichedCorrelationDataK8s({
+        apiVersion: 'testApiVer',
+        kind: 'testKind',
+        metadata: { name: 'testUid', annotations: { 'grafana.app/managedBy': 'something' } },
+        spec: {
+          label: 'testLabel',
+          description: 'testDesc',
+          source: { group: 'notFoundGroup', name: 'foundUid' },
+          target: { group: 'notFoundGroup', name: 'foundUid' },
+          type: 'query',
+          config: { field: 'testField', target: { url: 'testUrl' } },
+        },
+      });
+
+      expect(correlation).toStrictEqual({
+        config: { field: 'testField', target: { url: 'testUrl' }, transformations: undefined },
+        description: 'testDesc',
+        label: 'testLabel',
+        provisioned: true,
+        source: { type: 'foundUid', uid: 'foundUid' },
+        target: { type: 'foundUid', uid: 'foundUid' },
+        targetUID: 'foundUid',
+        type: 'query',
+        uid: 'testUid',
+      });
+    });
   });
 
   it('should pass the right limit based on page size', async () => {
