@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
@@ -19,8 +19,7 @@ type subChildrenREST struct {
 	getter rest.Getter
 	lister rest.Lister
 
-	convertor runtime.ObjectConvertor
-	newFunc   func() runtime.Object
+	newFunc func() runtime.Object
 }
 
 var _ = rest.Connecter(&subChildrenREST{})
@@ -61,15 +60,10 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, opts runtime
 	if err != nil {
 		return nil, err
 	}
-
-	var allFolders *foldersv1beta1.FolderList
-	switch v := obj.(type) {
-	case *foldersv1beta1.FolderList:
-		allFolders = v
-	default:
-		return nil, fmt.Errorf("expected folder list, got %T", obj)
+	allFolders, ok := obj.(*folders.FolderList)
+	if !ok {
+		return nil, fmt.Errorf("could not list folders")
 	}
-
 	if allFolders.Continue != "" {
 		return nil, fmt.Errorf("found too many folders to process")
 	}
@@ -79,7 +73,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, opts runtime
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		children := &foldersv1beta1.FolderList{}
+		children := &folders.FolderList{}
 		for _, folder := range allFolders.Items {
 			v, err := utils.MetaAccessor(folder)
 			if err != nil {

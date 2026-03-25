@@ -216,9 +216,8 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	b.parents = newParentsGetter(b.storage, b.maxNestedFolderDepth) // used for validation
 	storage[folders.StoragePath("parents")] = &subParentsREST{
-		getter:    b.storage,
-		parents:   b.parents,
-		convertor: opts.Scheme,
+		getter:  b.storage,
+		parents: b.parents,
 
 		newFunc: newFuncParents,
 	}
@@ -237,9 +236,8 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	// Adds a path to return children of a given folder
 	storage[folders.StoragePath("children")] = &subChildrenREST{
-		getter:    b.storage,
-		lister:    b.storage,
-		convertor: opts.Scheme,
+		getter: b.storage,
+		lister: b.storage,
 
 		newFunc: newFuncChildren,
 	}
