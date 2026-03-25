@@ -29,7 +29,8 @@ GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
 
-CUE = cue
+CUE_VERSION = v0.16.0
+CUE = $(shell go env GOPATH)/bin/cue
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
@@ -265,11 +266,18 @@ gen-app-manifests-unistore: ## Generate unified storage app manifests list
 		echo "Generated app manifests code is up to date."; \
 	fi
 
+.PHONY: install-cue
+install-cue:
+	go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
+
 .PHONY: fix-cue
-fix-cue:
-	@echo "formatting cue files"
-	$(CUE) fix kinds/**/*.cue
-	$(CUE) fix public/app/plugins/**/**/*.cue
+fix-cue: install-cue
+	@find . -type d -name 'cue.mod' | while read -r mod_dir; do \
+		project_dir="$$(dirname $$mod_dir)"; \
+		echo "Fixing: $$project_dir"; \
+		(cd "$$project_dir" && $(CUE) fmt ./...); \
+		(cd "$$project_dir" && $(CUE) fix ./...); \
+	done
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
