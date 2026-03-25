@@ -1022,11 +1022,7 @@ func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	if b.gv.Version == "v1beta1" {
 		return func(rc common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 			defs := provisioning.GetOpenAPIDefinitions(rc)
-			for k, v := range defs {
-				k = strings.Replace(k, ".provisioning.v0alpha1.", ".provisioning.v1beta1.", 1)
-				defs[k] = v
-			}
-			return defs
+			return ReplaceOpenAPIVersion(defs, "provisioning", "v0alpha1", "v1beta1")
 		}
 	}
 	return provisioning.GetOpenAPIDefinitions
@@ -1051,11 +1047,16 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	refsBase := provisioning.OpenAPIPrefix
 	compBase := refsBase
 
+	// For v1beta1, update the component base to use the correct version
+	if b.gv.Version == "v1beta1" {
+		compBase = strings.Replace(compBase, ".v0alpha1.", ".v1beta1.", 1)
+	}
+
 	// TODO: Remove this endpoint when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	sub := oas.Paths.Paths[repoprefix+"/test"]
 	if sub != nil {
-		repoSchema := defs[refsBase+"Repository"].Schema
+		repoSchema := defs[compBase+"Repository"].Schema
 		sub.Post.Description = "Check if the configuration is valid. Deprecated: this will go away in favour of fieldErrors from status"
 		sub.Post.Deprecated = true
 		sub.Post.RequestBody = &spec3.RequestBody{
@@ -1126,7 +1127,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[refsBase+"RefList"].Schema
+		s := defs[compBase+"RefList"].Schema
 		mt["*/*"].Schema = &s
 	}
 
@@ -1144,7 +1145,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[refsBase+"FileList"].Schema
+		s := defs[compBase+"FileList"].Schema
 		mt["*/*"].Schema = &s
 	}
 
@@ -1338,7 +1339,7 @@ spec:
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[refsBase+"ExternalRepositoryList"].Schema
+		s := defs[compBase+"ExternalRepositoryList"].Schema
 		mt["*/*"].Schema = &s
 	}
 
