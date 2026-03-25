@@ -77,6 +77,10 @@ export function ruleMatches(rule: PromRuleDTO, filterState: RulesFilter, filterC
     return false;
   }
 
+  if (filterConfig.policy && filterConfig.policy(rule, filterState) === false) {
+    return false;
+  }
+
   if (filterConfig.dashboardUid && filterConfig.dashboardUid(rule, filterState) === false) {
     return false;
   }
@@ -193,6 +197,24 @@ export function contactPointFilter(rule: PromRuleDTO, filterState: RulesFilter):
     }
 
     if (filterState.contactPoint !== rule.notificationSettings.receiver) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function policyFilter(rule: PromRuleDTO, filterState: RulesFilter): boolean {
+  if (filterState.policy) {
+    if (!prometheusRuleType.grafana.alertingRule(rule)) {
+      return false;
+    }
+
+    if (!rule.notificationSettings) {
+      return false;
+    }
+
+    if (filterState.policy !== rule.notificationSettings.policy) {
       return false;
     }
   }
