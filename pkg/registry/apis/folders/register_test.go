@@ -7,9 +7,11 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -714,4 +716,12 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 			require.Equal(t, tt.input, tt.expected)
 		})
 	}
+}
+
+func TestFolderAPIBuilder_GetGroupVersions(t *testing.T) {
+	b := &FolderAPIBuilder{}
+	require.Equal(t, []schema.GroupVersion{
+		folderv1.FolderResourceInfo.GroupVersion(),
+		folders.FolderResourceInfo.GroupVersion(),
+	}, b.GetGroupVersions())
 }

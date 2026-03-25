@@ -107,9 +107,11 @@ func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, fe
 }
 
 func (b *FolderAPIBuilder) GetGroupVersions() []schema.GroupVersion {
+	// Same pattern as dashboards: stable version first, then compatibility alias.
+	// This order feeds LegacyCodec(groupVersions...) and must match SetVersionPriority below.
 	return []schema.GroupVersion{
-		foldersv1beta1.FolderResourceInfo.GroupVersion(),
 		foldersv1.FolderResourceInfo.GroupVersion(),
+		foldersv1beta1.FolderResourceInfo.GroupVersion(),
 	}
 }
 
@@ -160,7 +162,7 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	if err != nil {
 		return err
 	}
-	return scheme.SetVersionPriority(gvv1, gvv1beta1)
+	return scheme.SetVersionPriority(b.GetGroupVersions()...)
 }
 
 func (b *FolderAPIBuilder) AllowedV0Alpha1Resources() []string {
@@ -249,6 +251,9 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	opts.StorageOptsRegister(foldersv1.FolderResourceInfo.GroupResource(), apistore.StorageOptions{
+		// Preserve apiVersion/kind from the client on write. Without Scheme, apistore.encode
+		// uses the global LegacyCodec and converts to a single preferred external version.
+		Scheme:                      opts.Scheme,
 		EnableFolderSupport:         true,
 		RequireDeprecatedInternalID: true,
 		Permissions:                 b.setDefaultFolderPermissions,
