@@ -50,7 +50,9 @@ Complete the **General settings** fields:
 
 ## Sign Requests
 
-Toggle **Sign requests** to specify whether you want the outgoing requests to be signed. If you select to sign them:
+Toggle **Sign requests** to specify whether you want the outgoing requests to be signed. Although optional, requesting signatures provides a more secure approach to SAML.
+
+If you select to sign them:
 
 - Provide a certificate and a private key that'll be used by the service provider (Grafana) and the SAML IdP.
 
