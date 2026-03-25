@@ -232,9 +232,7 @@ describe('SuggestedDashboardsModal', () => {
     });
 
     it('should switch from community tab to mapping form when onShowMapping is called', () => {
-      render(
-        <SuggestedDashboardsModal {...defaultProps} communityDashboards={[createMockGnetDashboard()]} />
-      );
+      render(<SuggestedDashboardsModal {...defaultProps} communityDashboards={[createMockGnetDashboard()]} />);
 
       // Modal should start in community tab since only community dashboards are provided
       expect(screen.getByTestId('community-dashboard-section')).toBeInTheDocument();
