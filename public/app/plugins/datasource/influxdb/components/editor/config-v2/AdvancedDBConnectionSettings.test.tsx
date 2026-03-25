@@ -26,8 +26,8 @@ describe('AdvancedDbConnectionSettings', () => {
 
   it('toggles visibility of advanced settings', () => {
     render(<AdvancedDbConnectionSettings {...defaultProps} />);
-    const toggle = screen.getByTestId('influxdb-v2-config-toggle-switch');
-    fireEvent.click(toggle);
+    const button = screen.getByTestId('influxdb-v2-config-toggle-button');
+    fireEvent.click(button);
   });
 
   it('renders HTTP Method field for InfluxQL version', () => {
@@ -40,7 +40,7 @@ describe('AdvancedDbConnectionSettings', () => {
     };
 
     render(<AdvancedDbConnectionSettings {...props} />);
-    const toggle = screen.getByTestId('influxdb-v2-config-toggle-switch');
+    const toggle = screen.getByTestId('influxdb-v2-config-toggle-button');
     fireEvent.click(toggle);
     expect(screen.getByTestId('influxdb-v2-config-http-method-select')).toBeInTheDocument();
   });
@@ -55,12 +55,12 @@ describe('AdvancedDbConnectionSettings', () => {
     };
 
     render(<AdvancedDbConnectionSettings {...props} />);
-    const toggle = screen.getByTestId('influxdb-v2-config-toggle-switch');
+    const toggle = screen.getByTestId('influxdb-v2-config-toggle-button');
     fireEvent.click(toggle);
 
-    const switchEl = screen.getByTestId('influxdb-v2-config-insecure-switch');
-    expect(switchEl).toBeInTheDocument();
-    fireEvent.click(switchEl);
+    const insecureCheckbox = screen.getByTestId('influxdb-v2-config-insecure-checkbox');
+    expect(insecureCheckbox).toBeInTheDocument();
+    fireEvent.click(insecureCheckbox);
     expect(onOptionsChangeMock).toHaveBeenCalled();
   });
 
@@ -74,7 +74,7 @@ describe('AdvancedDbConnectionSettings', () => {
     };
 
     render(<AdvancedDbConnectionSettings {...props} />);
-    const toggle = screen.getByTestId('influxdb-v2-config-toggle-switch');
+    const toggle = screen.getByTestId('influxdb-v2-config-toggle-button');
     fireEvent.click(toggle);
 
     const input = screen.getByTestId('influxdb-v2-config-time-interval');
@@ -93,7 +93,7 @@ describe('AdvancedDbConnectionSettings', () => {
     };
 
     render(<AdvancedDbConnectionSettings {...props} />);
-    const toggle = screen.getByTestId('influxdb-v2-config-toggle-switch');
+    const toggle = screen.getByTestId('influxdb-v2-config-toggle-button');
     fireEvent.click(toggle);
 
     const input = screen.getByTestId('influxdb-v2-config-time-interval');

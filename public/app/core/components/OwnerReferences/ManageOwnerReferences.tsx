@@ -45,7 +45,7 @@ export const ManageOwnerReferences = ({
       setOwnerRef(null);
       onSave();
     } catch (error) {
-      const errorMessage = extractErrorMessage(error);
+      const errorMessage = extractErrorMessage(error, t('manage-owner-references.unknown-error', 'Unknown error'));
       setApiErrorMessage(errorMessage);
       notify.error(t('manage-owner-references.folder-owner-error', 'Error updating folder owner'));
     }
