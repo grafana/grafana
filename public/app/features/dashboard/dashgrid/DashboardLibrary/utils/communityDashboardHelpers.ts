@@ -120,6 +120,7 @@ interface UseCommunityDashboardParams {
   dashboard: GnetDashboard;
   datasourceUid: string;
   sourceEntryPoint: SourceEntryPoint;
+  datasourceType: string;
   eventLocation: EventLocation;
   onShowMapping?: (context: MappingContext) => void;
 }
