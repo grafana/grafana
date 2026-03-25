@@ -466,6 +466,7 @@ export const handyTestingSchema: Spec = {
           },
         ],
         description: 'An adhoc variable',
+        enableGroupBy: false,
         filters: [
           {
             condition: 'AND',
