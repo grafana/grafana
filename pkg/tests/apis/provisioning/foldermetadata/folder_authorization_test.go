@@ -1,4 +1,4 @@
-package authorization
+package foldermetadata
 
 import (
 	"context"
@@ -93,8 +93,4 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		parentUID2, _, _ := unstructured.NestedString(parentMeta2.Object, "resource", "file", "metadata", "name")
 		require.NotEqual(t, parentUID2, childUID, "parent and child should have different UIDs")
 	})
-}
-
-func TestMain(m *testing.M) {
-	env.RunTestMain(m)
 }
