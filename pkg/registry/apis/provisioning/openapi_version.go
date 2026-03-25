@@ -3,6 +3,7 @@
 package provisioning
 
 import (
+	"fmt"
 	"strings"
 
 	"k8s.io/kube-openapi/pkg/common"
@@ -249,30 +250,70 @@ func replaceGVKVersion(oas *spec3.OpenAPI, oldVersion, newVersion string) {
 		// Handle different GVK types
 		switch gvk := gvkExt.(type) {
 		case map[string]interface{}:
-			// Single GVK object - replace version and convert to array
+			// Single GVK object - replace version and keep as array
 			if version, ok := gvk["version"].(string); ok && version == oldVersion {
-				gvk["version"] = newVersion
-				// Keep as array with single element
-				schema.Extensions["x-kubernetes-group-version-kind"] = []map[string]interface{}{gvk}
+				// Create new map to avoid modifying original
+				newGVK := map[string]interface{}{
+					"group":   gvk["group"],
+					"kind":    gvk["kind"],
+					"version": newVersion,
+				}
+				schema.Extensions["x-kubernetes-group-version-kind"] = []map[string]interface{}{newGVK}
 			}
 		case []map[string]interface{}:
-			// Typed array - replace version in each item
-			for i := range gvk {
-				if version, ok := gvk[i]["version"].(string); ok && version == oldVersion {
-					gvk[i]["version"] = newVersion
-				}
-			}
-			schema.Extensions["x-kubernetes-group-version-kind"] = gvk
-		case []interface{}:
-			// Interface array - replace version in each item
-			for i := range gvk {
-				if gvkMap, ok := gvk[i].(map[string]interface{}); ok {
-					if version, ok := gvkMap["version"].(string); ok && version == oldVersion {
-						gvkMap["version"] = newVersion
+			// Typed array - replace version in each item (deduplicate if needed)
+			seen := make(map[string]bool)
+			result := []map[string]interface{}{}
+			for _, item := range gvk {
+				if version, ok := item["version"].(string); ok {
+					newItem := map[string]interface{}{
+						"group": item["group"],
+						"kind":  item["kind"],
+					}
+					if version == oldVersion {
+						newItem["version"] = newVersion
+					} else {
+						newItem["version"] = version
+					}
+					// Deduplicate based on group+kind+version
+					key := fmt.Sprintf("%v-%v-%v", newItem["group"], newItem["kind"], newItem["version"])
+					if !seen[key] {
+						seen[key] = true
+						result = append(result, newItem)
 					}
 				}
 			}
-			schema.Extensions["x-kubernetes-group-version-kind"] = gvk
+			if len(result) > 0 {
+				schema.Extensions["x-kubernetes-group-version-kind"] = result
+			}
+		case []interface{}:
+			// Interface array - convert and process
+			seen := make(map[string]bool)
+			result := []map[string]interface{}{}
+			for _, item := range gvk {
+				if gvkMap, ok := item.(map[string]interface{}); ok {
+					if version, ok := gvkMap["version"].(string); ok {
+						newItem := map[string]interface{}{
+							"group": gvkMap["group"],
+							"kind":  gvkMap["kind"],
+						}
+						if version == oldVersion {
+							newItem["version"] = newVersion
+						} else {
+							newItem["version"] = version
+						}
+						// Deduplicate based on group+kind+version
+						key := fmt.Sprintf("%v-%v-%v", newItem["group"], newItem["kind"], newItem["version"])
+						if !seen[key] {
+							seen[key] = true
+							result = append(result, newItem)
+						}
+					}
+				}
+			}
+			if len(result) > 0 {
+				schema.Extensions["x-kubernetes-group-version-kind"] = result
+			}
 		}
 	}
 }
