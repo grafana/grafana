@@ -29,7 +29,8 @@ GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
 
-CUE = cue
+CUE_VERSION = v0.16.0
+CUE = $(shell go env GOPATH)/bin/cue
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
@@ -193,7 +194,7 @@ APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | so
 app ?=
 
 .PHONY: gen-apps
-gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt. Use app=<name> to generate for a specific app.
+gen-apps: fix-cue do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt and fix-cue. Use app=<name> to generate for a specific app.
 ## NOTE: codegen produces some openapi files that result in circular dependencies
 ## for now, we revert the zz_openapi_gen.go files before comparison
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
@@ -265,11 +266,26 @@ gen-app-manifests-unistore: ## Generate unified storage app manifests list
 		echo "Generated app manifests code is up to date."; \
 	fi
 
+.PHONY: install-cue
+install-cue:
+	go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
+
 .PHONY: fix-cue
-fix-cue:
-	@echo "formatting cue files"
-	$(CUE) fix kinds/**/*.cue
-	$(CUE) fix public/app/plugins/**/**/*.cue
+fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specific app.
+	@root_dir="."; \
+	if [ -n "$(app)" ]; then \
+		root_dir="./apps/$(app)"; \
+		if [ ! -d "$$root_dir" ]; then \
+			echo "Error: App '$(app)' not found at $$root_dir"; \
+			exit 1; \
+		fi; \
+	fi; \
+	find "$$root_dir" -type d -name 'cue.mod' | while read -r mod_dir; do \
+		project_dir="$$(dirname $$mod_dir)"; \
+		echo "Fixing: $$project_dir"; \
+		(cd "$$project_dir" && $(CUE) fmt ./...); \
+		(cd "$$project_dir" && $(CUE) fix ./...); \
+	done \
 
 .PHONY: gen-jsonnet
 gen-jsonnet:

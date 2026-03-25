@@ -11,14 +11,14 @@ manifest: {
 			}
 			kinds: [
 				checkv0alpha1,
-                checktypev0alpha1,
+				checktypev0alpha1,
 			]
 			routes: {
 				namespaced: {
 					"/register": {
 						"POST": {
 							response: {
-								message:	string
+								message: string
 							}
 						}
 					}
