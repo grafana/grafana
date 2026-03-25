@@ -373,7 +373,7 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 	}
 
 	mgr, managed := accessor.GetManagerProperties()
-	if managed && mgr.Kind == utils.ManagerKindClassicFP {
+	if managed && mgr.Kind == utils.ManagerKindClassicFP { //nolint:staticcheck
 		return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 	}
 

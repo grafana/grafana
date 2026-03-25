@@ -209,7 +209,7 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 					switch tt.name {
 					case "should block deletion of provisioned dashboard (classic file provisioning)":
 						resp.Value = newDashboardJSON(t, "test", map[string]string{
-							utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP),
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
 							utils.AnnoKeyManagerIdentity: "some-provisioner",
 						})
 					default:
