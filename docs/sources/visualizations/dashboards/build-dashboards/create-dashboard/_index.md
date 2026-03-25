@@ -151,17 +151,23 @@ Hover your cursor over the numbers to display descriptions of the toolbar option
 The toolbar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** icons aren't available in view mode.
 {{< /admonition >}}
 
-When the dashboard is in edit mode, you can dock and undock.
-The following table describes how the sidebar behaves when docked or undocked:
+You can choose to use the sidebar docked or undocked by clicking the Dock/Undock icon in the toolbar.
+When the sidebar is docked, the content of the dashboard resizes to accommodate the sidebar.
+When it's undocked, the sidebar floats on top of the dashboard content.
+In edit mode, the sidebar is docked by default and in view mode, it's undocked.
 
-| Undocked | Docked |
+The following table describes how the sidebar behaves when docked or undocked in _edit mode_:
+
+| Docked | Undocked |
 | --------- | ---------|
-| The sidebar opens when you click a dashboard element, and closes if no element is selected | Sidebar stays open regardless of where you click |
-| Panels can be hidden by the sidebar | Panels resize to the space left available by the sidebar |
-| Dashboard options are only displayed in the sidebar when you click the **Dashboard options** icon | Dashboard options are displayed in the sidebar when you click the dashboard canvas |
+| After the sidebar is open, it remains open regardless of where you click. | The sidebar closes if you don't select a dashboard element. |
+| The sidebar displays dashboard options when you click the dashboard canvas. | The sidebar only displays dashboard options when you click the **Dashboard options** icon. |
 
-When you dock the sidebar, even if you close it, it remains docked the next time you open it.
-This choice persists when you change it.
+When you dock or undock the sidebar, your choice is persisted for all dashboards you use in that Grafana instance, across sessions, by way of your browser's local storage.
+You can clear this selection by clearing the following keys in your local storage:
+
+- For view mode: `grafana.ui.sidebar.dashboard-view.docked`
+- For edit mode: `grafana.ui.sidebar.dashboard.docked`
 
 {{< video-embed src="/media/docs/grafana/dashboards/screenrecord-edit-side-v12.4.mp4" >}}
 
