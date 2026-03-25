@@ -1,3 +1,17 @@
+<!-- 12.2.8 START -->
+
+# 12.2.8 (2026-03-25)
+
+### Bug fixes
+
+- **Security:** Fixes CVE-2026-27876
+- **Security:** Fixes CVE-2026-27877
+- **Security:** Fixes CVE-2026-28375
+- **Security:** Fixes CVE-2026-27879
+- **Security:** Fixes CVE-2026-27880
+- **Security:** Fixes CVE-2026-27876
+
+<!-- 12.2.8 END -->
 <!-- 12.2.7 START -->
 
 # 12.2.7 (2026-03-09)
