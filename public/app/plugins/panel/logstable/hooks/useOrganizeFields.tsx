@@ -17,6 +17,7 @@ import { BuildLinkToLogLine, isBuildLinkToLogLine } from '../types';
 interface Props {
   extractedFrame: DataFrame | null;
   timeFieldName: string;
+  levelFieldName: string;
   bodyFieldName: string;
   options: LogsTableOptions;
   logsFrame: LogsFrame | null;
@@ -28,6 +29,7 @@ interface Props {
 export function useOrganizeFields({
   extractedFrame,
   timeFieldName,
+  levelFieldName,
   bodyFieldName,
   logsFrame,
   supportsPermalink,
@@ -51,6 +53,7 @@ export function useOrganizeFields({
       options,
       logsFrame,
       timeFieldName,
+      levelFieldName,
       bodyFieldName,
       supportsPermalink,
       onPermalinkClick,
@@ -66,6 +69,7 @@ export function useOrganizeFields({
       });
   }, [
     bodyFieldName,
+    levelFieldName,
     extractedFrame,
     options,
     timeFieldName,
@@ -84,6 +88,7 @@ const organizeFields = async (
   options: LogsTableOptions,
   logsFrame: LogsFrame,
   timeFieldName: string,
+  levelFieldName: string,
   bodyFieldName: string,
   supportsPermalink: boolean,
   onPermalinkClick: BuildLinkToLogLine,
@@ -93,7 +98,7 @@ const organizeFields = async (
     return Promise.resolve(null);
   }
 
-  const displayedFields = getDisplayedFields(options, timeFieldName, bodyFieldName);
+  const displayedFields = getDisplayedFields(options, timeFieldName, levelFieldName, bodyFieldName);
 
   let indexByName: Record<string, number> = {};
   let includeByName: Record<string, boolean> = {};
