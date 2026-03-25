@@ -288,13 +288,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:        "queryCacheRequestDeduplication",
-			Description: "Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight",
-			Stage:       FeatureStageExperimental,
-			Expression:  "false", // enabled by default
-			Owner:       grafanaOperatorExperienceSquad,
-		},
-		{
 			Name:            "configurableSchedulerTick",
 			Description:     "Enable changing the scheduler base interval via configuration option unified_alerting.scheduler_tick_interval",
 			Stage:           FeatureStageExperimental,
