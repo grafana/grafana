@@ -272,26 +272,20 @@ install-cue:
 
 .PHONY: fix-cue
 fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specific app.
-	@if [ -n "$(app)" ]; then \
-		app_dir="./apps/$(app)"; \
-		find "$$app_dir" -type d -name 'cue.mod' | while read -r mod_dir; do \
-			project_dir="$$(dirname $$mod_dir)"; \
-			echo "Fixing: $$project_dir"; \
-			(cd "$$project_dir" && $(CUE) fmt ./...); \
-			(cd "$$project_dir" && $(CUE) fix ./...); \
-		done; \
-		if [ $$? -ne 0 ] || [ ! -d "$$app_dir" ]; then \
-			echo "Error: App '$(app)' not found at $$app_dir"; \
+	@root_dir="."; \
+	if [ -n "$(app)" ]; then \
+		root_dir="./apps/$(app)"; \
+		if [ ! -d "$$root_dir" ]; then \
+			echo "Error: App '$(app)' not found at $$root_dir"; \
 			exit 1; \
 		fi; \
-	else \
-		find . -type d -name 'cue.mod' | while read -r mod_dir; do \
-			project_dir="$$(dirname $$mod_dir)"; \
-			echo "Fixing: $$project_dir"; \
-			(cd "$$project_dir" && $(CUE) fmt ./...); \
-			(cd "$$project_dir" && $(CUE) fix ./...); \
-		done; \
-	fi
+	fi; \
+	find "$$root_dir" -type d -name 'cue.mod' | while read -r mod_dir; do \
+		project_dir="$$(dirname $$mod_dir)"; \
+		echo "Fixing: $$project_dir"; \
+		(cd "$$project_dir" && $(CUE) fmt ./...); \
+		(cd "$$project_dir" && $(CUE) fix ./...); \
+	done \
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
