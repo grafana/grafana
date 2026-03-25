@@ -333,31 +333,42 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 		return nil
 	}
 
-	nsInfo, err := authlib.ParseNamespace(a.GetNamespace())
-	if err != nil {
-		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
-	}
-
 	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
 	if b.isStandalone && util.IsInterfaceNil(b.dashboardProvisioningService) {
 		return nil
 	}
 
-	// The name of the resource is the dashboard UID
+	// Read the dashboard directly from storage (not search) to check provisioning status.
+	// This avoids the search dependency that previously caused 500s when search was unavailable.
 	dashboardUID := a.GetName()
-
-	provisioningData, err := b.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, dashboardUID)
+	readResp, err := b.unified.Read(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Namespace: a.GetNamespace(),
+			Group:     a.GetResource().Group,
+			Resource:  a.GetResource().Resource,
+			Name:      dashboardUID,
+		},
+	})
 	if err != nil {
-		if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) ||
-			errors.Is(err, dashboards.ErrDashboardNotFound) ||
-			apierrors.IsNotFound(err) {
-			return nil
-		}
-
-		return fmt.Errorf("%v: %w", "delete hook failed to check if dashboard is provisioned", err)
+		return fmt.Errorf("delete hook failed to check if dashboard is provisioned: %w", err)
+	}
+	if readResp.Error != nil {
+		// Dashboard not found or other storage error — nothing to protect
+		return nil
 	}
 
-	if provisioningData != nil {
+	var dashObj unstructured.Unstructured
+	if err := dashObj.UnmarshalJSON(readResp.Value); err != nil {
+		return fmt.Errorf("delete hook failed to parse dashboard: %w", err)
+	}
+
+	accessor, err := utils.MetaAccessor(&dashObj)
+	if err != nil {
+		return fmt.Errorf("delete hook failed to get meta accessor: %w", err)
+	}
+
+	mgr, managed := accessor.GetManagerProperties()
+	if managed && mgr.Kind == utils.ManagerKindClassicFP {
 		return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 	}
 

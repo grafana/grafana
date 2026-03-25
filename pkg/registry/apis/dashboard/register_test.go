@@ -2,12 +2,14 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 
@@ -16,25 +18,49 @@ import (
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// newDashboardJSON builds a minimal K8s-style JSON for a dashboard with optional manager annotations.
+func newDashboardJSON(t *testing.T, name string, annotations map[string]string) []byte {
+	t.Helper()
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "dashboard.grafana.app/v1beta1",
+			"kind":       "Dashboard",
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": "stacks-123",
+			},
+		},
+	}
+	if annotations != nil {
+		obj.SetAnnotations(annotations)
+	}
+	data, err := json.Marshal(obj)
+	require.NoError(t, err)
+	return data
+}
 
 func TestDashboardAPIBuilder_Validate(t *testing.T) {
 	oneInt64 := int64(1)
 	zeroInt64 := int64(0)
+
 	tests := []struct {
-		name                   string
-		inputObj               *dashv1.Dashboard
-		deletionOptions        metav1.DeleteOptions
-		dashboardResponse      *dashboards.DashboardProvisioning
-		dashboardErrorResponse error
-		checkRan               bool
-		expectedError          bool
+		name            string
+		inputObj        *dashv1.Dashboard
+		deletionOptions metav1.DeleteOptions
+		readResponse    *resourcepb.ReadResponse
+		readError       error
+		checkRan        bool
+		expectedError   bool
 	}{
 		{
-			name: "should return an error if data is found",
+			name: "should block deletion of provisioned dashboard (classic file provisioning)",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
@@ -47,13 +73,14 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			deletionOptions: metav1.DeleteOptions{
 				GracePeriodSeconds: nil,
 			},
-			dashboardResponse:      &dashboards.DashboardProvisioning{ID: 1},
-			dashboardErrorResponse: nil,
-			checkRan:               true,
-			expectedError:          true,
+			readResponse: &resourcepb.ReadResponse{
+				Value: nil, // set per-test in t.Run
+			},
+			checkRan:      true,
+			expectedError: true,
 		},
 		{
-			name: "should return an error if unable to check",
+			name: "should return an error if Read fails",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
@@ -66,13 +93,13 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			deletionOptions: metav1.DeleteOptions{
 				GracePeriodSeconds: nil,
 			},
-			dashboardResponse:      nil,
-			dashboardErrorResponse: fmt.Errorf("generic error"),
-			checkRan:               true,
-			expectedError:          true,
+			readResponse:  nil,
+			readError:     fmt.Errorf("generic error"),
+			checkRan:      true,
+			expectedError: true,
 		},
 		{
-			name: "should be okay if error is provisioned dashboard not found",
+			name: "should allow deletion if dashboard is not found",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
@@ -85,13 +112,34 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			deletionOptions: metav1.DeleteOptions{
 				GracePeriodSeconds: nil,
 			},
-			dashboardResponse:      nil,
-			dashboardErrorResponse: dashboards.ErrProvisionedDashboardNotFound,
-			checkRan:               true,
-			expectedError:          false,
+			readResponse: &resourcepb.ReadResponse{
+				Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"},
+			},
+			checkRan:      true,
+			expectedError: false,
 		},
 		{
-			name: "Should still run the check for delete if grace period is not 0",
+			name: "should allow deletion of non-provisioned dashboard",
+			inputObj: &dashv1.Dashboard{
+				Spec: common.Unstructured{},
+				TypeMeta: metav1.TypeMeta{
+					Kind: "Dashboard",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+			},
+			deletionOptions: metav1.DeleteOptions{
+				GracePeriodSeconds: nil,
+			},
+			readResponse: &resourcepb.ReadResponse{
+				Value: nil, // set per-test in t.Run
+			},
+			checkRan:      true,
+			expectedError: false,
+		},
+		{
+			name: "should still run the check for delete if grace period is not 0",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{},
 				TypeMeta: metav1.TypeMeta{
@@ -104,10 +152,11 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			deletionOptions: metav1.DeleteOptions{
 				GracePeriodSeconds: &oneInt64,
 			},
-			dashboardResponse:      nil,
-			dashboardErrorResponse: nil,
-			checkRan:               true,
-			expectedError:          false,
+			readResponse: &resourcepb.ReadResponse{
+				Value: nil, // set per-test in t.Run
+			},
+			checkRan:      true,
+			expectedError: false,
 		},
 		{
 			name: "should not run the check for delete if grace period is set to 0",
@@ -123,18 +172,36 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			deletionOptions: metav1.DeleteOptions{
 				GracePeriodSeconds: &zeroInt64,
 			},
-			dashboardResponse:      nil,
-			dashboardErrorResponse: nil,
-			checkRan:               false,
-			expectedError:          false,
+			readResponse:  nil,
+			readError:     nil,
+			checkRan:      false,
+			expectedError: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fakeService := &dashboards.FakeDashboardProvisioning{}
-			fakeService.On("GetProvisionedDashboardDataByDashboardUID", mock.Anything, mock.Anything, mock.Anything).Return(tt.dashboardResponse, tt.dashboardErrorResponse).Once()
+			mockClient := resource.NewMockResourceClient(t)
+
+			if tt.checkRan {
+				// Set the Value field for tests that need dashboard JSON
+				resp := tt.readResponse
+				if resp != nil && resp.Error == nil {
+					switch tt.name {
+					case "should block deletion of provisioned dashboard (classic file provisioning)":
+						resp.Value = newDashboardJSON(t, "test", map[string]string{
+							utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP),
+							utils.AnnoKeyManagerIdentity: "some-provisioner",
+						})
+					default:
+						// Non-provisioned dashboard (no manager annotations)
+						resp.Value = newDashboardJSON(t, "test", nil)
+					}
+				}
+				mockClient.On("Read", mock.Anything, mock.Anything).Return(resp, tt.readError)
+			}
+
 			b := &DashboardsAPIBuilder{
-				dashboardProvisioningService: fakeService,
+				unified: mockClient,
 			}
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
 				tt.inputObj,
@@ -157,9 +224,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			}
 
 			if tt.checkRan {
-				fakeService.AssertCalled(t, "GetProvisionedDashboardDataByDashboardUID", mock.Anything, mock.Anything, mock.Anything)
+				mockClient.AssertCalled(t, "Read", mock.Anything, mock.Anything)
 			} else {
-				fakeService.AssertNotCalled(t, "GetProvisionedDashboardDataByDashboardUID", mock.Anything, mock.Anything, mock.Anything)
+				mockClient.AssertNotCalled(t, "Read", mock.Anything, mock.Anything)
 			}
 		})
 	}
