@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -31,7 +31,6 @@ var (
 
 type legacyStorage struct {
 	resourceInfo utils.ResourceInfo
-	convertor    runtime.ObjectConvertor
 
 	service        folder.LegacyService
 	namespacer     request.NamespaceMapper
@@ -101,7 +100,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &foldersv1beta1.FolderList{}
+	list := &folders.FolderList{}
 	for _, v := range hits {
 		r, err := convertToK8sResource(v, s.namespacer)
 		if err != nil {
@@ -163,12 +162,9 @@ func (s *legacyStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	var p *foldersv1beta1.Folder
-	switch v := obj.(type) {
-	case *foldersv1beta1.Folder:
-		p = v
-	default:
-		return nil, fmt.Errorf("expected folder, got %T", obj)
+	p, ok := obj.(*folders.Folder)
+	if !ok {
+		return nil, fmt.Errorf("expected folder?")
 	}
 
 	accessor, err := utils.MetaAccessor(p)
@@ -234,21 +230,13 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return oldObj, created, err
 	}
-
-	var f *foldersv1beta1.Folder
-	switch v := obj.(type) {
-	case *foldersv1beta1.Folder:
-		f = v
-	default:
-		return nil, created, fmt.Errorf("expected folder after update, got %T", obj)
+	f, ok := obj.(*folders.Folder)
+	if !ok {
+		return nil, created, fmt.Errorf("expected folder after update")
 	}
-
-	var old *foldersv1beta1.Folder
-	switch v := oldObj.(type) {
-	case *foldersv1beta1.Folder:
-		old = v
-	default:
-		return nil, created, fmt.Errorf("expected old object to be a folder, got %T", oldObj)
+	old, ok := oldObj.(*folders.Folder)
+	if !ok {
+		return nil, created, fmt.Errorf("expected old object to be a folder also")
 	}
 
 	changed := false
@@ -308,7 +296,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	if err != nil {
 		return nil, false, err
 	}
-	p, ok := v.(*foldersv1beta1.Folder)
+	p, ok := v.(*folders.Folder)
 	if !ok {
 		return v, false, fmt.Errorf("expected a folder response from Get")
 	}

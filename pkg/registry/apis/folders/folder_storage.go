@@ -12,6 +12,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -108,7 +109,12 @@ func (s *folderStorage) Create(ctx context.Context,
 		return nil, err
 	}
 
-	accessor, err := utils.MetaAccessor(obj)
+	p, ok := obj.(*folders.Folder)
+	if !ok {
+		return nil, fmt.Errorf("expected folder?")
+	}
+
+	accessor, err := utils.MetaAccessor(p)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +125,7 @@ func (s *folderStorage) Create(ctx context.Context,
 	// /apis directly (to set AnnoKeyGrantPermissions on root level folders), the below should be removed
 	// and we should instead initialize resourcePermissionsSvc in the RegisterAPIService function
 	// and rely on StorageOptions.Permissions.
-	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, accessor.GetName(), parentUid)
+	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, p.Name, parentUid)
 	if err != nil {
 		return nil, err
 	}
