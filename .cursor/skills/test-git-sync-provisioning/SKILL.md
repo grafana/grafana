@@ -302,6 +302,10 @@ The Chrome DevTools MCP `wait_for` tool has a **hard 30-second internal timeout*
 
 The `agent-test` branch (or whatever branch you configure in Step 2) must already exist on the remote repository. The wizard validates the branch and will error with `branch "X" not found` if it does not exist.
 
+### Path Conflicts Across Repositories
+
+When connecting more than one repository in different runs, use different path names in Step 2 to avoid conflicts. If two repositories sync to the same path (e.g., both use `dev`), the second connection may fail or overwrite the first. Use distinct paths per auth type (e.g., `dev/pat-test` for PAT, `dev/app-test` for GitHub App).
+
 ## Wizard Step 5 Configuration for Full Testing
 
 When setting up the repo in Step 5, to test all save workflows later, enable both workflow options:
@@ -369,32 +373,220 @@ After the wizard completes and the repo is synced, the following operations can 
 
 **Tabs:** The drawer has "Details" (default) and "Changes" tabs. `click` the "Changes" tab to verify the diff before saving.
 
-### Full Test Matrix
+### Bulk Moving Resources
 
-The CRUD operations above must be tested against **both** repository auth types (PAT and GitHub App). Each connected repository is independent — a folder or dashboard created in the PAT repo does not appear in the GitHub App repo.
+**Entry point:** Navigate to the provisioned folder browse page (`/dashboards/f/{folderUid}/`). Select items via their checkboxes — use `take_snapshot` to find each item's checkbox by `data-testid="${uid} checkbox"` (aria-label: "Select"). An action bar replaces the filter bar when items are selected (`data-testid="manage-actions"`), showing "Move" and "Delete" buttons.
 
-For each auth type, run the complete wizard (Steps 1–5) with both `prWorkflow` and `enablePushToConfiguredBranch` enabled, then execute the CRUD tests:
+**Important:** You cannot mix provisioned and non-provisioned items in a selection. If you select items from different sources, a warning modal appears and blocks the operation. Also, repo root folder checkboxes are disabled — you can only select items inside the provisioned folder, not the folder itself.
 
-**Per repository (PAT repo first, then GitHub App repo):**
+1. `take_snapshot` to identify item checkboxes. `click` each item's checkbox to select it.
+2. `click` the "Move" button in the action bar.
+3. **Drawer opens with title "Bulk Move Provisioned Resources":**
+   - Target Folder: `click` the folder picker (label: "Target Folder") and select the destination folder.
+   - Branch (id: `provisioned-ref`): Same combobox as other provisioned operations. Use the configured branch for direct write.
+   - Comment (id: `provisioned-resource-form-comment`): Optional.
+4. `click` the "Move" button (shows "Moving..." while in progress).
+5. **Wait for job completion:** The move creates an async job. Poll with `take_snapshot` every 10-15s until "Job completed successfully" appears, or an error message. Do not use `wait_for` — it has a 30s timeout cap (see Gotchas).
+6. **Verify:** Navigate to the target folder and confirm the moved items appear there.
 
-1. **Push to configured branch (`write` workflow):**
-   1. Create a folder using the configured branch → direct write.
-   2. Create a dashboard in that folder using the configured branch → direct write.
-   3. Modify the dashboard using the configured branch → direct write.
-   4. Verify: Resources are visible in Grafana. API confirms they exist.
+### Deleting a Single Dashboard
 
-2. **PR workflow (`branch` workflow):**
-   1. Create another folder, selecting a new branch name (e.g., `pr-test-branch`) → PR workflow.
-   2. Verify: PR banner appears with PR URL.
-   3. Modify the dashboard, selecting a new branch (e.g., `dashboard-edit-branch`) → PR workflow.
-   4. Verify: Preview page shows PR banner with "View branch", "Compare branch", and "Open pull request" buttons.
+**Entry point:** Navigate to the provisioned dashboard. Open dashboard settings via the gear icon or navigate to `/dashboard/edit/{uid}/settings`. Click the "Delete dashboard" button (`data-testid` from `selectors.pages.Dashboard.Settings.General.deleteDashBoard`).
 
-3. **Cleanup** the repository (see Cleanup section below) before moving to the next auth type.
+**Drawer opens with title "Delete Provisioned Dashboard" (subtitle: dashboard title):**
 
-**Concrete sequence:**
+1. Branch (id: `provisioned-ref`): Same combobox. Use the configured branch.
+2. Comment (id: `provisioned-resource-form-comment`): Optional.
+3. `click` the "Delete dashboard" button (shows "Deleting..." while in progress).
+4. **Wait for completion:** Poll with `take_snapshot` until the job completes or the page navigates to `/dashboards`.
 
-1. Run PAT wizard → CRUD tests (write + branch workflows) → cleanup PAT repo
-2. Run GitHub App wizard → CRUD tests (write + branch workflows) → cleanup GitHub App repo
+### Deleting a Single Folder
+
+**Entry point:** Navigate to the parent folder in browse view. Find the target folder's row. Click the "Folder actions" dropdown button on that row, then click "Delete this folder" from the menu (destructive styling).
+
+**Drawer opens with title "Delete provisioned folder" (subtitle: folder title):**
+
+- Warning: "This will delete this folder and all its descendants. In total, this will affect:" followed by a count of affected dashboards, folders, and panels.
+
+1. Branch (id: `provisioned-ref`): Same combobox.
+2. Comment (id: `provisioned-resource-form-comment`): Optional.
+3. `click` the "Delete" button (destructive, shows "Deleting..." while in progress).
+4. **Wait for completion:** Poll with `take_snapshot` until the job completes.
+5. **Verify:** Navigate back to the parent folder and confirm the folder and all its descendants are gone.
+
+### Bulk Deleting Resources
+
+**Entry point:** Same as bulk move — select items via checkboxes in the browse view, then click "Delete" in the action bar.
+
+**Drawer opens with title "Bulk Delete Provisioned Resources":**
+
+- Warning: "This will delete selected folders and their descendants. In total, this will affect:" followed by a descendant count showing dashboards, folders, and panels.
+
+1. Branch (id: `provisioned-ref`): Same combobox.
+2. Comment (id: `provisioned-resource-form-comment`): Optional.
+3. `click` the "Delete" button (destructive, shows "Deleting..." while in progress).
+4. **Wait for job completion:** Poll with `take_snapshot` every 10-15s until "Job completed successfully" or an error.
+5. **Verify:** Navigate to the parent folder and confirm all selected items and their descendants are gone.
+
+### Removing the Repository
+
+**Entry point:** Navigate to `/admin/provisioning/{repoName}/edit`.
+
+1. `take_snapshot` to find the "Delete" dropdown button (destructive variant with angle-down icon).
+2. `click` the "Delete" dropdown button.
+3. `click` "Delete and remove resources (default)" from the dropdown menu.
+4. **Confirmation modal** appears with title "Delete repository configuration and resources" and body "Are you sure you want to delete the repository configuration and all its resources?"
+5. `click` the "Delete" button in the modal to confirm.
+6. **Wait:** A notification "Repository settings queued for deletion" appears and the page navigates to `/admin/provisioning`.
+7. **Verify cleanup:**
+   ```bash
+   curl -s -u admin:admin \
+     http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
+     jq '.items | length'
+   # Should return 0 (or one less than before)
+   ```
+
+### Self-Contained Test Lifecycle
+
+The operations above must be tested against **both** repository auth types (PAT and GitHub App). Each connected repository is independent. The lifecycle below creates resources, exercises all operations (create, move, delete), and removes the repository at the end — leaving zero artifacts.
+
+**Run this lifecycle once for PAT, then again for GitHub App.**
+
+#### Setup
+
+Run the complete wizard (Steps 1–5) with both `prWorkflow` and `enablePushToConfiguredBranch` enabled (see "Wizard Step 5 Configuration for Full Testing" above).
+
+**Use a distinct path in Step 2 for each auth type** to avoid conflicts (see "Path Conflicts Across Repositories" gotcha):
+
+- PAT: path `dev/pat-test`
+- GitHub App: path `dev/app-test`
+
+All operations below use the **configured branch** (`write` workflow / direct commit).
+
+#### Step 1: Create Resources (3-Level Tree)
+
+Build the following folder/dashboard tree inside the provisioned root. Use "Creating a New Folder" and "Creating a New Dashboard" from the sections above for each resource.
+
+```
+<provisioned root>/
+├─ team-alpha/                        (folder, level 1)
+│  ├─ Dashboard Alpha-1                (dashboard)
+│  ├─ Dashboard Alpha-2                (dashboard)
+│  └─ alpha-services/                  (folder, level 2)
+│     ├─ Dashboard Alpha-Svc-1          (dashboard)
+│     └─ alpha-monitoring/               (folder, level 3)
+│        └─ Dashboard Alpha-Mon-1        (dashboard)
+├─ team-beta/                         (folder, level 1)
+│  ├─ Dashboard Beta-1                 (dashboard)
+│  └─ Dashboard Beta-2                 (dashboard)
+└─ staging/                           (folder, level 1)
+   └─ Dashboard Staging-1              (dashboard)
+```
+
+**Creation order** (12 resources: 6 folders counting provisioned root's children, 6 dashboards):
+
+1. Create folder `team-alpha` in provisioned root
+2. Create `Dashboard Alpha-1` in `team-alpha`
+3. Create `Dashboard Alpha-2` in `team-alpha`
+4. Create folder `alpha-services` inside `team-alpha`
+5. Create `Dashboard Alpha-Svc-1` in `alpha-services`
+6. Create folder `alpha-monitoring` inside `alpha-services` (level 3)
+7. Create `Dashboard Alpha-Mon-1` in `alpha-monitoring`
+8. Create folder `team-beta` in provisioned root
+9. Create `Dashboard Beta-1` in `team-beta`
+10. Create `Dashboard Beta-2` in `team-beta`
+11. Create folder `staging` in provisioned root
+12. Create `Dashboard Staging-1` in `staging`
+
+#### Step 2: Verify Creation
+
+Navigate through all 3 levels. Confirm:
+
+- 3 top-level folders (`team-alpha`, `team-beta`, `staging`) in the provisioned root
+- Dashboards at each level
+- `alpha-monitoring` is 3 levels deep (provisioned root → `team-alpha` → `alpha-services` → `alpha-monitoring`)
+
+#### Step 3: Bulk Move (2 Folders)
+
+1. Navigate to the provisioned root folder.
+2. Select the `team-beta` and `staging` folder checkboxes (2 folders containing 3 dashboards total).
+3. Click "Move" in the action bar.
+4. In the drawer, pick `team-alpha` as the target folder. Use configured branch.
+5. Click "Move". Wait for "Job completed successfully".
+
+#### Step 4: Verify Move
+
+Navigate to `team-alpha`. Confirm it now contains:
+
+- `Dashboard Alpha-1`, `Dashboard Alpha-2` (original)
+- `alpha-services/` with its nested content (original)
+- `team-beta/` with `Dashboard Beta-1` and `Dashboard Beta-2` (moved)
+- `staging/` with `Dashboard Staging-1` (moved)
+
+#### Step 5: Delete Single Dashboard
+
+1. Navigate to `Dashboard Beta-1` inside `team-alpha/team-beta/`.
+2. Open dashboard settings. Click "Delete dashboard".
+3. In the drawer, use configured branch. Click "Delete dashboard". Wait for completion.
+
+#### Step 6: Verify Single Dashboard Delete
+
+Navigate to `team-alpha/team-beta/`. Confirm `Dashboard Beta-1` is gone but `Dashboard Beta-2` still exists.
+
+#### Step 7: Delete Single Folder
+
+1. Navigate to `team-alpha` in the browse view.
+2. Find the `staging` folder row. Click "Folder actions" → "Delete this folder".
+3. In the drawer, use configured branch. Click "Delete". Wait for completion.
+
+#### Step 8: Verify Single Folder Delete
+
+Navigate to `team-alpha`. Confirm:
+
+- `staging` folder is gone **and** `Dashboard Staging-1` (its child) is also gone (cascade delete).
+- `team-beta` (with `Dashboard Beta-2`) and `alpha-services` subtree still exist.
+
+#### Step 9: Bulk Delete (All Remaining)
+
+1. Navigate to the provisioned root folder.
+2. Select the `team-alpha` checkbox (selects the folder and all its descendants — the entire remaining tree).
+3. Click "Delete" in the action bar.
+4. In the drawer, use configured branch. Click "Delete". Wait for "Job completed successfully".
+
+#### Step 10: Verify Bulk Delete
+
+Provisioned root folder should be empty (no folders or dashboards remain).
+
+#### Step 11: Remove Repository
+
+Follow "Removing the Repository" above:
+
+1. Navigate to `/admin/provisioning/{repoName}/edit`.
+2. Click "Delete" dropdown → "Delete and remove resources (default)".
+3. Confirm in modal. Wait for navigation to `/admin/provisioning`.
+
+#### Step 12: Verify Cleanup
+
+```bash
+curl -s -u admin:admin \
+  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
+  jq '.items | length'
+# Should return 0
+```
+
+For the GitHub App flow, also delete the connection after removing the repository:
+
+```bash
+BASE="http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default"
+for name in $(curl -s -u admin:admin "$BASE/connections" | jq -r '.items[].metadata.name // empty'); do
+  curl -s -X DELETE -u admin:admin "$BASE/connections/$name"
+done
+```
+
+#### Concrete Sequence
+
+1. **PAT**: Setup (wizard with path `dev/pat-test`) → Create 3-level tree (12 resources) → Verify → Bulk Move (2 folders) → Verify → Single Delete Dashboard → Verify → Single Delete Folder → Verify → Bulk Delete (all) → Verify → Remove Repo → Verify Clean
+2. **GitHub App**: Same lifecycle (wizard with path `dev/app-test`) → Remove Repo + Delete Connection → Verify Clean
 
 ## Cleanup
 
