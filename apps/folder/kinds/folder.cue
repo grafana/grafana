@@ -6,7 +6,7 @@ foldersV1: {
 
 	schema: {
 		spec: {
-			title:          string
+			title:        string
 			description?: string
 		}
 	}
