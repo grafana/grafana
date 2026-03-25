@@ -79,7 +79,7 @@ describe('ManagedDashboardNavBarBadge', () => {
 
     render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
 
-    const badgeIcon = screen.getByTestId('icon-exchange-alt');
+    const badgeIcon = screen.getByTestId('icon-exclamation-triangle');
     await user.hover(badgeIcon);
 
     expect(await screen.findByText('Repository not found')).toBeInTheDocument();
