@@ -62,7 +62,10 @@ export function useBulkActionJob(): UseBulkActionJobResult {
     } catch (error) {
       return {
         success: false,
-        error: extractErrorMessage(error, t('browse-dashboards.bulk-actions.error-generic', 'Unexpected error')),
+        error: extractErrorMessage(
+          error,
+          t('browse-dashboards.bulk-actions.error-generic', 'Unexpected error happened when creating job')
+        ),
       };
     }
   };

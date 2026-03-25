@@ -25,9 +25,9 @@ export function generatePath({ timestamp, pathFromAnnotation, slug, folderPath =
   const pathSlug = slug || `new-dashboard-${timestamp}`;
   path = `${pathSlug}.json`;
 
-  // Add folder path if it exists
+  // Add folder path if it exists (folder annotations may use trailing slashes; avoid "//" in repo paths)
   if (folderPath) {
-    return `${folderPath}/${path}`;
+    return joinPath(folderPath, path);
   }
 
   return path;

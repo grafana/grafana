@@ -1,4 +1,4 @@
-package v1beta1
+package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,5 +50,5 @@ func (d *Dashboard) SetAPIVersion(version string) {
 }
 
 func (d *Dashboard) EnsureDefaultSpec() {
-	// v1beta1 doesn't require default spec setup
+	// v1 doesn't require default spec setup
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestConvertAnnotationMappings_V1beta1_to_V2alpha1(t *testing.T) {
+func TestConvertAnnotationMappings_V1_to_V2alpha1(t *testing.T) {
 	t.Run("should convert mappings with all fields", func(t *testing.T) {
 		mappingsMap := map[string]interface{}{
 			"title": map[string]interface{}{
@@ -30,7 +30,7 @@ func TestConvertAnnotationMappings_V1beta1_to_V2alpha1(t *testing.T) {
 			},
 		}
 
-		result := convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap)
+		result := convertAnnotationMappings_V1_to_V2alpha1(mappingsMap)
 
 		require.Len(t, result, 4)
 
@@ -70,7 +70,7 @@ func TestConvertAnnotationMappings_V1beta1_to_V2alpha1(t *testing.T) {
 			},
 		}
 
-		result := convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap)
+		result := convertAnnotationMappings_V1_to_V2alpha1(mappingsMap)
 
 		require.Len(t, result, 1)
 		titleMapping, ok := result["title"]
@@ -87,7 +87,7 @@ func TestConvertAnnotationMappings_V1beta1_to_V2alpha1(t *testing.T) {
 			},
 		}
 
-		result := convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap)
+		result := convertAnnotationMappings_V1_to_V2alpha1(mappingsMap)
 
 		require.Len(t, result, 1)
 		titleMapping, ok := result["title"]
@@ -102,7 +102,7 @@ func TestConvertAnnotationMappings_V1beta1_to_V2alpha1(t *testing.T) {
 			},
 		}
 
-		result := convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap)
+		result := convertAnnotationMappings_V1_to_V2alpha1(mappingsMap)
 
 		require.Len(t, result, 1)
 		titleMapping, ok := result["title"]
@@ -125,7 +125,7 @@ func TestConvertAnnotationMappings_V1beta1_to_V2alpha1(t *testing.T) {
 			},
 		}
 
-		result := convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap)
+		result := convertAnnotationMappings_V1_to_V2alpha1(mappingsMap)
 
 		// Should have 2 valid mappings (title and text)
 		// String values are now treated as valid legacy format mappings
@@ -141,7 +141,7 @@ func TestConvertAnnotationMappings_V1beta1_to_V2alpha1(t *testing.T) {
 	t.Run("should handle empty mappings map", func(t *testing.T) {
 		mappingsMap := map[string]interface{}{}
 
-		result := convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap)
+		result := convertAnnotationMappings_V1_to_V2alpha1(mappingsMap)
 
 		assert.Empty(t, result)
 	})

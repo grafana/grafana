@@ -10,7 +10,7 @@ import (
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 )
 
-func TestConvertAnnotationMappings_V2alpha1_to_V1beta1(t *testing.T) {
+func TestConvertAnnotationMappings_V2alpha1_to_V1(t *testing.T) {
 	t.Run("should convert simple field mappings to structured format with source and value", func(t *testing.T) {
 		mappings := map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping{
 			"title": {
@@ -27,7 +27,7 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1beta1(t *testing.T) {
 			},
 		}
 
-		result := convertAnnotationMappings_V2alpha1_to_V1beta1(mappings)
+		result := convertAnnotationMappings_V2alpha1_to_V1(mappings)
 
 		require.Len(t, result, 3)
 		// All mappings should be in structured format with source and value
@@ -55,7 +55,7 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1beta1(t *testing.T) {
 			},
 		}
 
-		result := convertAnnotationMappings_V2alpha1_to_V1beta1(mappings)
+		result := convertAnnotationMappings_V2alpha1_to_V1(mappings)
 
 		require.Len(t, result, 1)
 		titleMapping, ok := result["title"].(map[string]interface{})
@@ -73,7 +73,7 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1beta1(t *testing.T) {
 			},
 		}
 
-		result := convertAnnotationMappings_V2alpha1_to_V1beta1(mappings)
+		result := convertAnnotationMappings_V2alpha1_to_V1(mappings)
 
 		require.Len(t, result, 1)
 		tagsMapping, ok := result["tags"].(map[string]interface{})
@@ -91,7 +91,7 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1beta1(t *testing.T) {
 			},
 		}
 
-		result := convertAnnotationMappings_V2alpha1_to_V1beta1(mappings)
+		result := convertAnnotationMappings_V2alpha1_to_V1(mappings)
 
 		require.Len(t, result, 1)
 		textMapping, ok := result["text"].(map[string]interface{})
@@ -111,7 +111,7 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1beta1(t *testing.T) {
 			},
 		}
 
-		result := convertAnnotationMappings_V2alpha1_to_V1beta1(mappings)
+		result := convertAnnotationMappings_V2alpha1_to_V1(mappings)
 
 		require.Len(t, result, 2)
 		// Skip mapping should be preserved as structured format
@@ -141,7 +141,7 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1beta1(t *testing.T) {
 			},
 		}
 
-		result := convertAnnotationMappings_V2alpha1_to_V1beta1(mappings)
+		result := convertAnnotationMappings_V2alpha1_to_V1(mappings)
 
 		require.Len(t, result, 1)
 		_, ok := result["title"]
@@ -155,7 +155,7 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1beta1(t *testing.T) {
 	t.Run("should handle empty mappings map", func(t *testing.T) {
 		mappings := map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping{}
 
-		result := convertAnnotationMappings_V2alpha1_to_V1beta1(mappings)
+		result := convertAnnotationMappings_V2alpha1_to_V1(mappings)
 
 		assert.Empty(t, result)
 	})
@@ -177,7 +177,7 @@ func TestConvertAnnotationMappings_V2alpha1_to_V1beta1(t *testing.T) {
 			},
 		}
 
-		result := convertAnnotationMappings_V2alpha1_to_V1beta1(mappings)
+		result := convertAnnotationMappings_V2alpha1_to_V1(mappings)
 
 		require.Len(t, result, 3)
 		// All mappings should be in structured format
