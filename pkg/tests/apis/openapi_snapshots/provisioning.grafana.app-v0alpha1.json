@@ -4188,11 +4188,18 @@
             ]
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "Connection",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Connection",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Connection",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionInfo": {
         "type": "object",
@@ -4241,11 +4248,18 @@
             ]
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "ConnectionList",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ConnectionList",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ConnectionList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ConnectionSecure": {
         "type": "object",
@@ -4529,11 +4543,18 @@
             ]
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "ExternalRepositoryList",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ExternalRepositoryList",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ExternalRepositoryList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.FileItem": {
         "type": "object",
@@ -4772,11 +4793,18 @@
             ]
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "HistoricJob",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "HistoricJob",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "HistoricJob",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HistoricJobList": {
         "type": "object",
@@ -4809,11 +4837,18 @@
             ]
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "HistoricJobList",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "HistoricJobList",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "HistoricJobList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HistoryItem": {
         "type": "object",
@@ -4910,11 +4945,18 @@
             ]
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "Job",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Job",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Job",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobList": {
         "type": "object",
@@ -4950,11 +4992,18 @@
             ]
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "JobList",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "JobList",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "JobList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.JobResourceSummary": {
         "type": "object",
@@ -5338,11 +5387,18 @@
             ]
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "RefList",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "RefList",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "RefList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Repository": {
         "description": "When this code is changed, make sure to update the code generation. As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.",
@@ -5389,11 +5445,18 @@
             ]
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "Repository",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Repository",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Repository",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RepositoryList": {
         "type": "object",
@@ -5430,11 +5493,18 @@
             ]
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "RepositoryList",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "RepositoryList",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "RepositoryList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.RepositorySpec": {
         "type": "object",
@@ -5870,11 +5940,18 @@
             ]
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "ResourceList",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceList",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceList",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.ResourceListItem": {
         "type": "object",
@@ -6185,11 +6262,18 @@
             ]
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "ResourceWrapper",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceWrapper",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceWrapper",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.SecureValues": {
         "type": "object",
@@ -6352,11 +6436,18 @@
             "default": false
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "TestResults",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "TestResults",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "TestResults",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.TokenStatus": {
         "type": "object",
@@ -6409,11 +6500,18 @@
             "type": "string"
           }
         },
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "kind": "WebhookResponse",
-          "version": "v0alpha1"
-        }
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "WebhookResponse",
+            "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "WebhookResponse",
+            "version": "v0alpha1"
+          }
+        ]
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.WebhookStatus": {
         "type": "object",

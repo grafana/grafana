@@ -226,12 +226,59 @@ func ReplaceOpenAPISpecVersion(oas *spec3.OpenAPI, group, oldVersion, newVersion
 		}
 	}
 
-	// Filter x-kubernetes-group-version-kind arrays to only include the new version
-	filterGVKExtensions(oas, newVersion)
+	// Replace old version with new version in x-kubernetes-group-version-kind arrays
+	replaceGVKVersion(oas, oldVersion, newVersion)
+}
+
+// replaceGVKVersion replaces the old version with the new version in x-kubernetes-group-version-kind arrays
+func replaceGVKVersion(oas *spec3.OpenAPI, oldVersion, newVersion string) {
+	if oas.Components == nil || oas.Components.Schemas == nil {
+		return
+	}
+
+	for _, schema := range oas.Components.Schemas {
+		if schema == nil || schema.Extensions == nil {
+			continue
+		}
+
+		gvkExt, exists := schema.Extensions["x-kubernetes-group-version-kind"]
+		if !exists {
+			continue
+		}
+
+		// Handle different GVK types
+		switch gvk := gvkExt.(type) {
+		case map[string]interface{}:
+			// Single GVK object - replace version and convert to array
+			if version, ok := gvk["version"].(string); ok && version == oldVersion {
+				gvk["version"] = newVersion
+				// Keep as array with single element
+				schema.Extensions["x-kubernetes-group-version-kind"] = []map[string]interface{}{gvk}
+			}
+		case []map[string]interface{}:
+			// Typed array - replace version in each item
+			for i := range gvk {
+				if version, ok := gvk[i]["version"].(string); ok && version == oldVersion {
+					gvk[i]["version"] = newVersion
+				}
+			}
+			schema.Extensions["x-kubernetes-group-version-kind"] = gvk
+		case []interface{}:
+			// Interface array - replace version in each item
+			for i := range gvk {
+				if gvkMap, ok := gvk[i].(map[string]interface{}); ok {
+					if version, ok := gvkMap["version"].(string); ok && version == oldVersion {
+						gvkMap["version"] = newVersion
+					}
+				}
+			}
+			schema.Extensions["x-kubernetes-group-version-kind"] = gvk
+		}
+	}
 }
 
 // filterGVKExtensions filters x-kubernetes-group-version-kind extensions in all component schemas
-// to only include the specified version. Arrays with a single matching version are converted to objects.
+// to only include the specified version. The result is always kept as an array.
 func filterGVKExtensions(oas *spec3.OpenAPI, targetVersion string) {
 	if oas.Components == nil || oas.Components.Schemas == nil {
 		return
@@ -304,16 +351,8 @@ func updateGVKExtension(schema *spec.Schema, filtered interface{}, count int) {
 	case 0:
 		// No matching versions, remove the extension
 		delete(schema.Extensions, "x-kubernetes-group-version-kind")
-	case 1:
-		// Convert single-element array to object (Kubernetes convention)
-		switch f := filtered.(type) {
-		case []map[string]interface{}:
-			schema.Extensions["x-kubernetes-group-version-kind"] = f[0]
-		case []interface{}:
-			schema.Extensions["x-kubernetes-group-version-kind"] = f[0]
-		}
 	default:
-		// Multiple versions, keep as array
+		// Keep as array (even with single element) to support multi-version APIs
 		schema.Extensions["x-kubernetes-group-version-kind"] = filtered
 	}
 }
