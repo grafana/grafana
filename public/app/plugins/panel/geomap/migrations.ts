@@ -13,6 +13,8 @@ import {
 } from '@grafana/data';
 import { ResourceDimensionMode } from '@grafana/schema';
 
+import { COUNTRIES_GAZETTEER_PATH, USA_STATES_GAZETTEER_PATH } from '../../../features/geo/gazetteer/gazetteer';
+
 import { defaultMarkersConfig, MarkersConfig } from './layers/data/markersLayer';
 import { type Options, TooltipMode } from './panelcfg.gen';
 import { getMarkerAsPath } from './style/markers';
@@ -97,7 +99,7 @@ export function worldmapToGeomapOptions(angular: any): {
       case 'countries_3letter':
         markersLayer.location = {
           mode: FrameGeometrySourceMode.Lookup,
-          gazetteer: 'public/gazetteer/countries.json',
+          gazetteer: COUNTRIES_GAZETTEER_PATH,
           lookup: undefined, // will default to first string field from reducer
         };
         break;
@@ -105,7 +107,7 @@ export function worldmapToGeomapOptions(angular: any): {
       case 'states':
         markersLayer.location = {
           mode: FrameGeometrySourceMode.Lookup,
-          gazetteer: 'public/gazetteer/usa-states.json',
+          gazetteer: USA_STATES_GAZETTEER_PATH,
           lookup: undefined, // will default to first string field from reducer
         };
         break;

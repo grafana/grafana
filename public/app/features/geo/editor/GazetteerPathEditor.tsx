@@ -4,7 +4,13 @@ import { useMemo, useState, useEffect } from 'react';
 import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
 
-import { COUNTRIES_GAZETTEER_PATH, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
+import {
+  AIRPORTS_GAZETTEER_PATH,
+  COUNTRIES_GAZETTEER_PATH,
+  Gazetteer,
+  getGazetteer,
+  USA_STATES_GAZETTEER_PATH,
+} from '../gazetteer/gazetteer';
 
 const defaultPaths: Array<SelectableValue<string>> = [
   {
@@ -14,13 +20,13 @@ const defaultPaths: Array<SelectableValue<string>> = [
   },
   {
     label: 'USA States',
-    description: 'Lookup states by name or 2 ',
-    value: 'public/gazetteer/usa-states.json',
+    description: 'Lookup states by name or 2-letter code',
+    value: USA_STATES_GAZETTEER_PATH,
   },
   {
     label: 'Airports',
     description: 'Lookup airports by id or code',
-    value: 'public/gazetteer/airports.geojson',
+    value: AIRPORTS_GAZETTEER_PATH,
   },
 ];
 

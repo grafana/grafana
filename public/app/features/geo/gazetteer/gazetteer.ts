@@ -180,7 +180,10 @@ export function frameAsGazetter(frame: DataFrame, opts: { path: string; keys?: s
 
 const registry: KeyValue<Gazetteer> = {};
 
-export const COUNTRIES_GAZETTEER_PATH = `${window.__grafana_public_path__}build/gazetteer/countries.json`;
+export const GAZETTEER_BASE_PATH = `${window.__grafana_public_path__}build/gazetteer/`;
+export const COUNTRIES_GAZETTEER_PATH = `${GAZETTEER_BASE_PATH}countries.json`;
+export const USA_STATES_GAZETTEER_PATH = `${GAZETTEER_BASE_PATH}usa-states.json`;
+export const AIRPORTS_GAZETTEER_PATH = `${GAZETTEER_BASE_PATH}airports.geojson`;
 
 /**
  * Given a path to a file return a cached lookup function
@@ -189,6 +192,12 @@ export async function getGazetteer(path?: string): Promise<Gazetteer> {
   // When not specified, use the default path
   if (!path) {
     path = COUNTRIES_GAZETTEER_PATH;
+  }
+
+  // Rewrite legacy relative paths (e.g. "public/gazetteer/usa-states.json") saved by older
+  // dashboards to the correct absolute build URL, matching how geojsonLayer resolves URLs.
+  if (!path.startsWith('http') && path.startsWith('public/gazetteer/')) {
+    path = `${GAZETTEER_BASE_PATH}${path.slice('public/gazetteer/'.length)}`;
   }
 
   let lookup = registry[path];
