@@ -26,7 +26,7 @@ manifest: {
 						spec:   v1.DashboardSpec
 						status: DashboardStatus
 					}
-				}
+				},
 			]
 		}
 		"v0alpha1": {
