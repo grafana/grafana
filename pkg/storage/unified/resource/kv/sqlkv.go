@@ -466,12 +466,22 @@ func (k *SqlKV) batchPut(ctx context.Context, qb *queryBuilder, section string, 
 	}
 	defer tx.Rollback() //nolint:errcheck
 
+	// Multi-row INSERT fast path: safe when all keys are unique both within the
+	// batch and in storage. This is the normal case for ProcessBulk where keys
+	// include resource version. Falls back to per-item upsert otherwise.
 	if section == DataSection && !hasDuplicateKeys(ops) {
-		if err := k.batchInsertDatastore(ctx, tx, qb, section, ops); err != nil {
+		hasExisting, err := anyKeyExistsTx(ctx, tx, qb, section, ops)
+		if err != nil {
 			return err
 		}
-	} else if section == DataSection {
-		// Duplicate keys in batch: fall back to per-item upsert for correct Put semantics.
+		if !hasExisting {
+			if err := k.batchInsertDatastore(ctx, tx, qb, section, ops); err != nil {
+				return err
+			}
+			return tx.Commit()
+		}
+	}
+	if section == DataSection {
 		for i, op := range ops {
 			keyPath := getKeyPath(section, op.Key)
 			exists, err := keyExistsTx(ctx, tx, qb, keyPath)
@@ -636,6 +646,39 @@ func (k *SqlKV) batchMixed(ctx context.Context, qb *queryBuilder, section string
 	}
 
 	return tx.Commit()
+}
+
+// anyKeyExistsTx checks whether any of the batch keys already exist in storage.
+// Uses a single SELECT ... IN query per chunk, returning as soon as a match is found.
+func anyKeyExistsTx(ctx context.Context, tx *sql.Tx, qb *queryBuilder, section string, ops []BatchOp) (bool, error) {
+	const maxParams = 999 // safe for all dialects including SQLite
+	for start := 0; start < len(ops); start += maxParams {
+		end := start + maxParams
+		if end > len(ops) {
+			end = len(ops)
+		}
+		chunk := ops[start:end]
+		placeholders := make([]string, len(chunk))
+		args := make([]interface{}, len(chunk))
+		for i, op := range chunk {
+			placeholders[i] = qb.dialect.Placeholder(i + 1)
+			args[i] = getKeyPath(section, op.Key)
+		}
+		query := fmt.Sprintf("SELECT 1 FROM %s WHERE %s IN (%s) LIMIT 1",
+			qb.dialect.QuoteIdent(qb.tableName),
+			qb.dialect.QuoteIdent("key_path"),
+			strings.Join(placeholders, ", "),
+		)
+		var dummy int
+		err := tx.QueryRowContext(ctx, query, args...).Scan(&dummy)
+		if err == nil {
+			return true, nil
+		}
+		if !errors.Is(err, sql.ErrNoRows) {
+			return false, fmt.Errorf("failed to check existing keys: %w", err)
+		}
+	}
+	return false, nil
 }
 
 func keyExistsTx(ctx context.Context, tx *sql.Tx, qb *queryBuilder, keyPath string) (bool, error) {

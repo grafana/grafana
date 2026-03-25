@@ -2012,8 +2012,6 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			action = DataActionUpdated
 		case resourcepb.WatchEvent_DELETED:
 			action = DataActionDeleted
-			createID := req.Key.Group + "/" + req.Key.Resource + "/" + req.Key.Namespace + "/" + req.Key.Name
-			delete(seenCreates, createID)
 		default:
 			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
 				Key:    req.Key,
@@ -2053,11 +2051,13 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			continue
 		}
 
-		// Mark creates as seen only after all validation passes, so a rejected
-		// item doesn't block future valid ADDEDs for the same resource.
+		// Update seenCreates only after all validation passes, so a rejected
+		// item doesn't corrupt the duplicate-detection state.
+		createID := req.Key.Group + "/" + req.Key.Resource + "/" + req.Key.Namespace + "/" + req.Key.Name
 		if action == DataActionCreated {
-			createID := req.Key.Group + "/" + req.Key.Resource + "/" + req.Key.Namespace + "/" + req.Key.Name
 			seenCreates[createID] = true
+		} else if action == DataActionDeleted {
+			delete(seenCreates, createID)
 		}
 
 		pending = append(pending, pendingItem{dataKey: dataKey, value: req.Value, obj: obj, action: action})
