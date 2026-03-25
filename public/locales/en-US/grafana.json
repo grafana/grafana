@@ -783,7 +783,9 @@
         "unknown-rule": "Unknown",
         "value-in-transition": "Value in transition"
       },
-      "error": "Something went wrong loading the alert state history",
+      "error": {
+        "server-error": "The alert state history query failed — the server returned an error"
+      },
       "filter": {
         "clear": "Clear filters",
         "info": {
@@ -794,6 +796,10 @@
         }
       },
       "filterBy": "Filter by:",
+      "slow-query": {
+        "text": "This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.",
+        "title": "Query is taking longer than expected"
+      },
       "tab": {
         "alert-events": "Alert events",
         "notifications": "Notifications"
@@ -2021,6 +2027,10 @@
       "error-unable-to-fetch": "Unable to fetch alert state history",
       "loading": "Loading...",
       "no-transitions-match-filters": "No state transitions match the selected filters",
+      "slow-query": {
+        "text": "This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.",
+        "title": "Query is taking longer than expected"
+      },
       "start-state": "Start state",
       "timeline-hidden": "Timeline is hidden when state filters are active",
       "title-error-fetching-the-state-history": "Error fetching the state history",
@@ -6309,7 +6319,6 @@
         "label": "Exit edit",
         "tooltip": "Exits edit mode and discards unsaved changes"
       },
-      "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "new": {
         "back-to-dashboard": "Back to dashboard",
@@ -6379,8 +6388,7 @@
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
       "star-removed": "Removed from starred",
-      "unlink-library-panel": "Unlink library panel",
-      "unmark-favorite": "Unmark as favorite"
+      "unlink-library-panel": "Unlink library panel"
     },
     "transformation-editor": {
       "input-data": "Input data",
@@ -8926,7 +8934,8 @@
     "select-placeholder": "Filter by folder"
   },
   "folder-repo": {
-    "read-only-badge": "Read only"
+    "read-only-badge": "Read only",
+    "repository-not-found-tooltip": "Repository not found"
   },
   "folders": {
     "api": {
@@ -12202,12 +12211,10 @@
       "description": "Notifications you have received will appear here",
       "title": "You're all caught up!"
     },
-    "starred-dashboard": "Dashboard starred",
     "stored-notifications": {
       "dismiss-notifications": "Dismiss notifications",
       "title-alert": "This page displays past errors and warnings. Once dismissed, they cannot be retrieved."
-    },
-    "unstarred-dashboard": "Dashboard unstarred"
+    }
   },
   "oauth": {
     "form": {
@@ -12494,11 +12501,13 @@
       "description-customize-dashboard-elements-visibility": "Customize dashboard elements visibility",
       "description-hide-logo": "Hide the branding footer from the dashboard",
       "description-panel-heights-adjusted-screen": "Panel heights will be adjusted to fit screen size",
+      "description-playlist-nav": "Show previous and next buttons to manually navigate between dashboards",
       "label-autofit": "Autofit",
       "label-dashboard-links": "Dashboard links",
       "label-display-dashboard-controls": "Display dashboard controls",
       "label-hide-logo": "Hide logo",
       "label-mode": "Mode",
+      "label-playlist-nav": "Navigation buttons",
       "label-time-and-refresh": "Time and refresh",
       "label-variables": "Variables",
       "modes": {
@@ -13339,6 +13348,28 @@
         "label": "Sync all resources with external storage",
         "subtitle": "Use this option if you want to sync and manage your entire Grafana instance through external storage."
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "Save, move, and delete through the Git workflow are not available. Use the warning at the top of the dashboard to release or delete this dashboard if you are an administrator, or contact your Grafana administrator.",
+      "title": "Provisioning repository no longer exists"
+    },
+    "orphaned-repository-tooltip": "Repository not found",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "This will permanently delete all dashboards and folders managed by the missing repository. This action cannot be undone.",
+      "confirm-delete-button": "Delete",
+      "confirm-delete-title": "Delete all resources from this repository?",
+      "confirm-release-body": "This will remove provisioning annotations from all dashboards and folders managed by the missing repository, converting them to regular resources that can be saved and deleted normally.",
+      "confirm-release-button": "Convert to local",
+      "confirm-release-title": "Convert all resources to local from this repository?",
+      "contact-admin": "Contact your Grafana administrator to convert this resource to local or delete all resources from the missing repository.",
+      "convert-to-local-button": "Convert to local",
+      "delete-button": "Delete",
+      "job-error": "An error occurred while processing orphaned resources",
+      "job-success": "Orphaned resources processed successfully",
+      "job-warning": "Some resources were processed with warnings. Please review the results.",
+      "message": "This resource cannot be saved or modified until it is converted to local. Converting to local or deleting it will affect all resources managed by that repository.",
+      "submit-error": "Failed to create job for orphaned resources",
+      "title": "This resource is managed by a repository that no longer exists"
     },
     "provisioning-wizard": {
       "on-submit": {

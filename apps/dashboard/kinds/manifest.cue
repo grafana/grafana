@@ -26,7 +26,7 @@ manifest: {
 						spec:   v1.DashboardSpec
 						status: DashboardStatus
 					}
-				}
+				},
 			]
 		}
 		"v0alpha1": {
@@ -59,7 +59,7 @@ manifest: {
 						spec:   v1.DashboardSpec
 						status: DashboardStatus
 					}
-				}
+				},
 			]
 		}
 		"v2alpha1": {
@@ -80,7 +80,7 @@ manifest: {
 						spec:   v2alpha1.DashboardSpec
 						status: DashboardStatus
 					}
-				}
+				},
 			]
 		}
 		"v2beta1": {
@@ -101,7 +101,7 @@ manifest: {
 						spec:   v2beta1.DashboardSpec
 						status: DashboardStatus
 					}
-				}
+				},
 			]
 		}
 	}
