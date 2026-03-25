@@ -12,7 +12,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "12.4.2";
+export const pluginVersion = "12.4.3";
 
 export enum VizDisplayMode {
   Candles = 'candles',

@@ -10,7 +10,7 @@
 
 // Generated from public/app/plugins/panel/datagrid/panelcfg.cue file.
 
-export const pluginVersion = "12.4.2";
+export const pluginVersion = "12.4.3";
 
 export interface Options {
   selectedSeries: number;

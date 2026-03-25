@@ -12,7 +12,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "12.4.2";
+export const pluginVersion = "12.4.3";
 
 export interface Options extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones, ui.OptionsWithAnnotations {
   /**
