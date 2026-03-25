@@ -3,12 +3,15 @@ package app
 import (
 	"fmt"
 
-	restful "github.com/emicklei/go-restful/v3"
+	"github.com/emicklei/go-restful/v3"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericserver "k8s.io/apiserver/pkg/server"
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 var _ appsdkapiserver.GenericAPIServer = (*customStorageWrapper)(nil)
@@ -25,14 +28,12 @@ func (c *customStorageWrapper) InstallAPIGroup(
 		return fmt.Errorf("apiGroupInfo cannot be nil")
 	}
 
-	// Override NegotiatedSerializer to only support JSON encoding
-	// This prevents protobuf marshalling errors since our generated types
-	// don't implement the protobuf marshalling interface
-	if apiGroupInfo.NegotiatedSerializer != nil && apiGroupInfo.Scheme != nil {
-		apiGroupInfo.NegotiatedSerializer = NewJSONOnlyNegotiatedSerializer(
-			apiGroupInfo.Scheme,
-			apiGroupInfo.NegotiatedSerializer,
-		)
+	// Override NegotiatedSerializer to exclude protobuf support.
+	// Our generated types do not implement protobuf encoding, so we exclude protobuf
+	// to prevent namespace deletion failures and marshalling errors.
+	// See: https://github.com/kubernetes/kubernetes/issues/86666
+	if apiGroupInfo.NegotiatedSerializer != nil {
+		apiGroupInfo.NegotiatedSerializer = &noProtobufWrapper{apiGroupInfo.NegotiatedSerializer}
 	}
 
 	for gvr, storage := range c.replace {
@@ -42,6 +43,21 @@ func (c *customStorageWrapper) InstallAPIGroup(
 		apiGroupInfo.VersionedResourcesStorageMap[gvr.Version][gvr.Resource] = storage
 	}
 	return c.wrapped.InstallAPIGroup(apiGroupInfo)
+}
+
+type noProtobufWrapper struct {
+	runtime.NegotiatedSerializer
+}
+
+func (w *noProtobufWrapper) SupportedMediaTypes() []runtime.SerializerInfo {
+	base := w.NegotiatedSerializer.SupportedMediaTypes()
+	var supported []runtime.SerializerInfo
+	for _, info := range base {
+		if grafanarest.NoProtobuf(info) {
+			supported = append(supported, info)
+		}
+	}
+	return supported
 }
 
 // RegisteredWebServices implements apiserver.GenericAPIServer.
