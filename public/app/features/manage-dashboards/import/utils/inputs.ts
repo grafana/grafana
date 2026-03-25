@@ -619,7 +619,7 @@ function processPanel(
   return {
     ...panel,
     ...(panel.datasource && { datasource: resolveInputDatasource(panel.datasource, inputs, form) }),
-    // nested panels of collapsed row panels
+    // nested panels of collapsed rows
     ...('panels' in panel && {
       panels: panel.panels.map((nestedPanel) => processPanel(nestedPanel, inputs, form)),
     }),
