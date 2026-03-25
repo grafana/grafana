@@ -54,6 +54,9 @@ func (m *mockServerInternal) GetStore(context.Context, string) (*zanzana.StoreIn
 func (m *mockServerInternal) GetOrCreateStore(context.Context, string) (*zanzana.StoreInfo, error) {
 	return &zanzana.StoreInfo{ID: "test"}, nil
 }
+func (m *mockServerInternal) DeleteStore(context.Context, string) error {
+	return nil
+}
 func (m *mockServerInternal) ListAllStores(context.Context) ([]zanzana.StoreInfo, error) {
 	return nil, nil
 }

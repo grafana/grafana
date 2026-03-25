@@ -580,6 +580,191 @@ func TestChanges(t *testing.T) {
 	})
 }
 
+func TestChanges_DuplicatePaths(t *testing.T) {
+	t.Run("duplicate path with matching hash keeps primary and deletes orphan", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "dashboard.json", Hash: "current-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "dashboard.json", Hash: "current-hash", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "real-dash"},
+				{Path: "dashboard.json", Hash: "old-hash", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "orphan-dash"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Len(t, changes, 1, "only the orphan should be deleted, primary untouched")
+		require.Equal(t, repository.FileActionDeleted, changes[0].Action)
+		require.Equal(t, "orphan-dash", changes[0].Existing.Name)
+	})
+
+	t.Run("duplicate path with no matching hash deletes orphan and updates primary", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "dashboard.json", Hash: "new-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "dashboard.json", Hash: "hash-a", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"},
+				{Path: "dashboard.json", Hash: "hash-b", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-b"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Len(t, changes, 2)
+
+		actionsByName := make(map[string]repository.FileAction)
+		for _, c := range changes {
+			actionsByName[c.Existing.Name] = c.Action
+		}
+		require.Equal(t, repository.FileActionUpdated, actionsByName["dash-a"], "first item should be updated")
+		require.Equal(t, repository.FileActionDeleted, actionsByName["dash-b"], "second item should be deleted as orphan")
+	})
+
+	t.Run("duplicate path where source file is deleted removes all items", func(t *testing.T) {
+		source := []repository.FileTreeEntry{}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "dashboard.json", Hash: "hash-a", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"},
+				{Path: "dashboard.json", Hash: "hash-b", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-b"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Len(t, changes, 2, "both items should be deleted")
+		for _, c := range changes {
+			require.Equal(t, repository.FileActionDeleted, c.Action)
+		}
+	})
+
+	t.Run("three or more items at same path", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "dashboard.json", Hash: "current", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "dashboard.json", Hash: "old-1", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "orphan-1"},
+				{Path: "dashboard.json", Hash: "current", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "real"},
+				{Path: "dashboard.json", Hash: "old-2", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "orphan-2"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Len(t, changes, 2, "two orphans should be deleted, primary untouched")
+
+		deletedNames := make([]string, 0, 2)
+		for _, c := range changes {
+			require.Equal(t, repository.FileActionDeleted, c.Action)
+			deletedNames = append(deletedNames, c.Existing.Name)
+		}
+		require.Contains(t, deletedNames, "orphan-1")
+		require.Contains(t, deletedNames, "orphan-2")
+	})
+
+	t.Run("duplicate path does not affect other non-duplicate paths", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "dashboard.json", Hash: "current", Blob: true},
+			{Path: "other.json", Hash: "other-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "dashboard.json", Hash: "current", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "real"},
+				{Path: "dashboard.json", Hash: "stale", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "orphan"},
+				{Path: "other.json", Hash: "other-hash", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "other"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Len(t, changes, 1, "only the orphan should be deleted")
+		require.Equal(t, "orphan", changes[0].Existing.Name)
+		require.Equal(t, repository.FileActionDeleted, changes[0].Action)
+	})
+
+	t.Run("duplicate folder paths are not cleaned up by Changes (handled downstream)", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "myfolder", Hash: "tree-hash", Blob: false},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "myfolder/", Hash: "meta-hash-1", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "folder-uid-1"},
+				{Path: "myfolder/", Hash: "meta-hash-2", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "folder-uid-2"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		for _, c := range changes {
+			require.NotEqual(t, repository.FileActionDeleted, c.Action,
+				"folder duplicates should not be deleted by Changes(); orphan cleanup is deferred to augmentChangesForFolderMetadata")
+		}
+	})
+
+	t.Run("_folder.json with multiple parent folders keeps best-match and deletes orphan", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "myfolder", Hash: "tree-hash", Blob: false},
+			{Path: "myfolder/_folder.json", Hash: "new-meta-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "myfolder/", Hash: "old-meta-hash", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "orphan-uid"},
+				{Path: "myfolder/", Hash: "new-meta-hash", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "current-uid"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+
+		// No update for the best-match (hash matches _folder.json).
+		for _, c := range changes {
+			if c.Path == "myfolder/" && c.Action == repository.FileActionUpdated {
+				t.Fatalf("should not emit folder update when best-match hash equals _folder.json hash, got Existing=%s", c.Existing.Name)
+			}
+		}
+		// The orphan should be deleted.
+		var deleted []string
+		for _, c := range changes {
+			if c.Path == "myfolder/" && c.Action == repository.FileActionDeleted {
+				deleted = append(deleted, c.Existing.Name)
+			}
+		}
+		require.Equal(t, []string{"orphan-uid"}, deleted, "orphan folder should be deleted")
+	})
+
+	t.Run("_folder.json with multiple parent folders emits update and deletes orphan", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "myfolder", Hash: "tree-hash", Blob: false},
+			{Path: "myfolder/_folder.json", Hash: "brand-new-hash", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "myfolder/", Hash: "old-hash-a", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "folder-a"},
+				{Path: "myfolder/", Hash: "old-hash-b", Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource, Name: "folder-b"},
+			},
+		}
+
+		changes, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+
+		var folderUpdate *ResourceFileChange
+		var deletedNames []string
+		for i := range changes {
+			if changes[i].Path == "myfolder/" && changes[i].Action == repository.FileActionUpdated {
+				folderUpdate = &changes[i]
+			}
+			if changes[i].Path == "myfolder/" && changes[i].Action == repository.FileActionDeleted {
+				deletedNames = append(deletedNames, changes[i].Existing.Name)
+			}
+		}
+		require.NotNil(t, folderUpdate, "should emit folder update when no parent hash matches")
+		require.Equal(t, "folder-a", folderUpdate.Existing.Name, "should fall back to first item when no hash matches")
+		require.Equal(t, []string{"folder-b"}, deletedNames, "non-primary folder should be deleted as orphan")
+	})
+}
+
 func TestChanges_FolderMetadataFlagDisabled(t *testing.T) {
 	t.Run("_folder.json is kept but not treated as resource or metadata when flag off", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
@@ -1643,5 +1828,20 @@ func TestDetectRenames(t *testing.T) {
 		require.Equal(t, repository.FileActionDeleted, result[0].Action)
 		require.Equal(t, repository.FileActionDeleted, result[1].Action)
 		require.Equal(t, repository.FileActionCreated, result[2].Action)
+	})
+
+	t.Run("orphan cleanup deletions are excluded from rename detection", func(t *testing.T) {
+		changes := []ResourceFileChange{
+			{Action: repository.FileActionDeleted, Path: "dashboard.json",
+				Existing:      &provisioning.ResourceListItem{Hash: "abc123"},
+				OrphanCleanup: true},
+			{Action: repository.FileActionCreated, Path: "new-location/dashboard.json", Hash: "abc123"},
+		}
+
+		result := DetectRenames(changes)
+		require.Len(t, result, 2, "orphan delete should not be consumed as rename")
+		require.Equal(t, repository.FileActionDeleted, result[0].Action)
+		require.True(t, result[0].OrphanCleanup)
+		require.Equal(t, repository.FileActionCreated, result[1].Action)
 	})
 }

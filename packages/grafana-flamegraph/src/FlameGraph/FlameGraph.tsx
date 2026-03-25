@@ -312,7 +312,6 @@ const getStylesNew = (theme: GrafanaTheme2) => ({
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: theme.spacing(1),
   }),
   controls: css({
     label: 'controls',

@@ -1718,13 +1718,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -3541,20 +3541,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Uyarı örnekleri",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Kural yüklenirken hata oluştu",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "Örnek ayrıntıları",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "Seçilen zaman aralığında tetiklenen veya beklemede olan hiçbir uyarı örneğiniz yok.",
       "no-instances-found": "{{ruleUID}} kuralı için uyarı örneği bulunamadı",
       "no-labels": "Etiket yok",
@@ -3576,14 +3583,16 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_one": "",
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_one": "",
       "show-all-labels_other": "",
       "show-all-values_one": "",
       "show-all-values_other": "",
-      "tooltip-more-values_one": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_one": "",
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "İfade ekle"
@@ -4250,6 +4259,9 @@
     "browse-view": {
       "this-folder-is-empty": "Klasör boş"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "İptal et",
       "button-delete": "Sil",
@@ -4352,6 +4364,7 @@
       "dashboards": "Panolar",
       "panels": "Paneller"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Öge yok"
     },
@@ -6081,8 +6094,8 @@
       "name": "Satırlar",
       "new-row-title": "Yeni satır",
       "row": {
-        "collapse": "Satırı daralt",
-        "expand": "Satırı genişlet",
+        "collapse": "",
+        "expand": "",
         "new": "Yeni satır",
         "repeat": {
           "learn-more": "Daha fazla bilgi edinin",
@@ -6623,11 +6636,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Geçici seçenekler",
       "alert-not-supported": "Bu veri kaynağı geçici filtreleri desteklemiyor",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Kullanıcıların listeye özel değerler eklemesine olanak tanır",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Boyutları CSV biçiminde girin: {{name}}, {{value}}",
       "label-data-source": "Veri kaynağı",
       "label-use-static-key-dimensions": "Statik anahtar boyutları kullan",
-      "name-allow-custom-values": "Özel değer girişine izin ver"
+      "name-allow-custom-values": "Özel değer girişine izin ver",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -10267,6 +10282,9 @@
       "group": "Grup",
       "group-tooltip": "Yığın grubunun adı"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Değere göre filtrele",
       "cell-filter-out": "Değeri filtre dışı bırak",
@@ -10315,6 +10333,10 @@
       },
       "no-values-label": "Değer yok",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}/{{numRows}} satır",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "veri yok"
       },
@@ -11428,7 +11450,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Seçenek bulunamadı"
@@ -12319,6 +12342,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Ad"
       }
     },
@@ -13018,6 +13042,7 @@
       "error-delete-connection": "Bağlantı silinemedi",
       "error-required": "Bu alan zorunludur",
       "error-save-connection": "Bağlantı kaydedilemedi",
+      "error-submit": "",
       "grafana-repositories": "Bu bağlantıyı kullanan depolar",
       "label-app-id": "GitHub Uygulama Kimliği",
       "label-description": "Açıklama",
@@ -13542,6 +13567,9 @@
       },
       "go-to": "Şuraya git:",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "Uyarı",
     "watch-stream": {
