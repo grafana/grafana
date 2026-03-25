@@ -242,3 +242,86 @@ Note: `visibleStepIndex` is 0-based, but displayed as 1-based. If the synchroniz
 | "View branch" button         | Links to branch in remote repo                             |
 | "Compare branch" button      | Links to branch comparison in remote repo                  |
 | "Open pull request" button   | Links to PR creation URL                                   |
+
+## Browse View Selection
+
+| Element             | Selector                                      | Notes                                                           |
+| ------------------- | --------------------------------------------- | --------------------------------------------------------------- |
+| Item checkbox       | `data-testid="${uid} checkbox"`               | Aria-label: "Select". Disabled for repo roots, read-only repos. |
+| Select-all checkbox | Header checkbox, aria-label: "Select all"     | Three states: selected, unselected, mixed (indeterminate).      |
+| Action bar          | `data-testid="manage-actions"`                | Appears when items selected, replaces filter bar.               |
+| Move button         | Button text: "Move"                           | In action bar.                                                  |
+| Delete button       | Button text: "Delete"                         | In action bar. Destructive variant.                             |
+| Table body          | `data-testid="browse-dashboards-table"`       | Virtual scrolled table.                                         |
+| Table row           | `data-testid="browse dashboards row ${name}"` | Per-item row.                                                   |
+
+## Bulk Move Provisioned Resources (Drawer)
+
+| Element       | Text/ID                              | Notes         |
+| ------------- | ------------------------------------ | ------------- |
+| Drawer title  | "Bulk Move Provisioned Resources"    |               |
+| Target Folder | FolderPicker, label: "Target Folder" |               |
+| Branch        | `provisioned-ref`                    | Same combobox |
+| Comment       | `provisioned-resource-form-comment`  | Same textarea |
+| Cancel        | "Cancel"                             | Secondary     |
+| Move          | "Move" / "Moving..."                 | Primary       |
+
+## Bulk Delete Provisioned Resources (Drawer)
+
+| Element          | Text/ID                                                                                | Notes                                 |
+| ---------------- | -------------------------------------------------------------------------------------- | ------------------------------------- |
+| Drawer title     | "Bulk Delete Provisioned Resources"                                                    |                                       |
+| Warning text     | "This will delete selected folders and their descendants. In total, this will affect:" |                                       |
+| Descendant count | Dynamic                                                                                | Shows dashboards/folders/panels count |
+| Branch           | `provisioned-ref`                                                                      | Same combobox                         |
+| Comment          | `provisioned-resource-form-comment`                                                    | Same textarea                         |
+| Cancel           | "Cancel"                                                                               | Secondary                             |
+| Delete           | "Delete" / "Deleting..."                                                               | Destructive                           |
+
+## Single Dashboard Delete (Drawer)
+
+| Element                  | Text/ID                                                                         | Notes                      |
+| ------------------------ | ------------------------------------------------------------------------------- | -------------------------- |
+| Delete button (settings) | `data-testid` from `selectors.pages.Dashboard.Settings.General.deleteDashBoard` | In dashboard settings page |
+| Drawer title             | "Delete Provisioned Dashboard"                                                  | Subtitle: dashboard title  |
+| Branch                   | `provisioned-ref`                                                               |                            |
+| Comment                  | `provisioned-resource-form-comment`                                             |                            |
+| Cancel                   | "Cancel"                                                                        | Secondary                  |
+| Delete                   | "Delete dashboard" / "Deleting..."                                              | Destructive                |
+
+## Single Folder Delete (Drawer)
+
+| Element               | Text/ID                                                   | Notes                          |
+| --------------------- | --------------------------------------------------------- | ------------------------------ |
+| Folder actions button | "Folder actions"                                          | Dropdown trigger on folder row |
+| Delete menu item      | "Delete this folder"                                      | Destructive styling            |
+| Move menu item        | "Move this folder"                                        |                                |
+| Drawer title          | "Delete provisioned folder"                               | Subtitle: folder title         |
+| Warning               | "This will delete this folder and all its descendants..." |                                |
+| Branch                | `provisioned-ref`                                         |                                |
+| Comment               | `provisioned-resource-form-comment`                       |                                |
+| Cancel                | "Cancel"                                                  | Secondary                      |
+| Delete                | "Delete" / "Deleting..."                                  | Destructive                    |
+
+## Repository Removal
+
+| Element                | Text                                                                                  | Notes                                   |
+| ---------------------- | ------------------------------------------------------------------------------------- | --------------------------------------- |
+| Delete dropdown        | "Delete"                                                                              | Destructive button with angle-down icon |
+| Menu: remove resources | "Delete and remove resources (default)"                                               |                                         |
+| Menu: keep resources   | "Delete and keep resources"                                                           |                                         |
+| Modal title (remove)   | "Delete repository configuration and resources"                                       |                                         |
+| Modal body (remove)    | "Are you sure you want to delete the repository configuration and all its resources?" |                                         |
+| Modal title (keep)     | "Delete repository configuration only"                                                |                                         |
+| Confirm button         | "Delete"                                                                              | Destructive                             |
+| Cancel button          | "Cancel"                                                                              |                                         |
+
+## Job Status States
+
+| State    | Display                              | Notes                            |
+| -------- | ------------------------------------ | -------------------------------- |
+| Starting | "Starting..." + Spinner              | Initial state                    |
+| Working  | Spinner + message + ProgressBar      | `job.status.message` is dynamic  |
+| Success  | "Job completed successfully"         | May show PR buttons or repo link |
+| Error    | "Error running job" + "Retry" button |                                  |
+| Warning  | "Job completed with warnings"        |                                  |
