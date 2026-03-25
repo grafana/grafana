@@ -1,37 +1,28 @@
-'use strict';
-const { getPackagesSync } = require('@manypkg/get-packages');
-const browserslist = require('browserslist');
-const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
-const ESLintPlugin = require('eslint-webpack-plugin');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
-const fs = require('fs');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const path = require('path');
-const { DefinePlugin, EnvironmentPlugin } = require('webpack');
-const WebpackAssetsManifest = require('webpack-assets-manifest');
-const LiveReloadPlugin = require('webpack-livereload-plugin');
-const { merge } = require('webpack-merge');
-const WebpackBar = require('webpackbar');
+import { getPackagesSync } from '@manypkg/get-packages';
+import ESLintPlugin from 'eslint-webpack-plugin';
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import fs from 'node:fs';
+import path from 'node:path';
+import { DefinePlugin, EnvironmentPlugin } from 'webpack';
+import WebpackAssetsManifest from 'webpack-assets-manifest';
+import LiveReloadPlugin from 'webpack-livereload-plugin';
+import { merge } from 'webpack-merge';
+import WebpackBar from 'webpackbar';
 
-const getEnvConfig = require('./env-util.js');
-const common = require('./webpack.common.js');
-const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
-// esbuild-loader 3.0.0+ requires format to be set to prevent it
-// from defaulting to 'iife' which breaks monaco/loader once minified.
-const esbuildOptions = {
-  target: esbuildTargets,
-  format: undefined,
-  jsx: 'automatic',
-};
+import getEnvConfig from './env-util.ts';
+import esbuildOptions from './esbuild.ts';
+import sassRule from './sass.rule.ts';
+import common, { type Env } from './webpack.common.ts';
 
 // To speed up webpack and prevent unnecessary rebuilds we ignore decoupled packages
-function getDecoupledPlugins() {
+function getDecoupledPlugins(): string[] {
   const { packages } = getPackagesSync(process.cwd());
   return packages.filter((pkg) => pkg.dir.includes('plugins/datasource')).map((pkg) => `${pkg.dir}/**`);
 }
 
 // When linking scenes for development, resolve the path to the src directory for sourcemaps
-function scenesModule() {
+function scenesModule(): string {
   const scenesPath = path.resolve('./node_modules/@grafana/scenes');
   try {
     const status = fs.lstatSync(scenesPath);
@@ -40,23 +31,17 @@ function scenesModule() {
       return path.resolve(scenesPath + '/src');
     }
   } catch (error) {
-    console.error(`Error checking scenes path: ${error.message}`);
+    console.error(`Error checking scenes path: ${error instanceof Error ? error.message : String(error)}`);
   }
   return scenesPath;
 }
 
 const envConfig = getEnvConfig();
 
-module.exports = (env = {}) => {
+export default (env: Env = {}) => {
   return merge(common(env), {
     devtool: 'source-map',
     mode: 'development',
-
-    entry: {
-      app: './public/app/index.ts',
-      dark: './public/sass/grafana.dark.scss',
-      light: './public/sass/grafana.light.scss',
-    },
 
     // If we enabled watch option via CLI
     watchOptions: {
@@ -85,14 +70,9 @@ module.exports = (env = {}) => {
             options: esbuildOptions,
           },
         },
-        require('./sass.rule.js')({
-          sourceMap: false,
-          preserveUrl: true,
-        }),
+        sassRule({ sourceMap: false, preserveUrl: true }),
       ],
     },
-
-    // infrastructureLogging: { level: 'error' },
 
     // https://webpack.js.org/guides/build-performance/#output-without-path-info
     output: {
@@ -113,12 +93,12 @@ module.exports = (env = {}) => {
       type: 'filesystem',
       name: 'grafana-default-development',
       buildDependencies: {
-        config: [__filename],
+        config: [import.meta.filename],
       },
     },
 
     plugins: [
-      ...(parseInt(env.liveReload, 10)
+      ...(Number(env.liveReload)
         ? [
             new LiveReloadPlugin({
               appendScriptTag: true,
@@ -129,7 +109,7 @@ module.exports = (env = {}) => {
             }),
           ]
         : []),
-      parseInt(env.noTsCheck, 10)
+      Number(env.noTsCheck)
         ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ForkTsCheckerWebpackPlugin({
             async: true, // don't block webpack emit
@@ -142,7 +122,7 @@ module.exports = (env = {}) => {
               },
             },
           }),
-      parseInt(env.noLint, 10)
+      Number(env.noLint)
         ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
         : new ESLintPlugin({
             cache: true,
