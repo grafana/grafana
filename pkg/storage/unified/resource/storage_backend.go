@@ -1693,12 +1693,6 @@ func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.
 
 //nolint:gocyclo
 func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
-	// On SQLite, the migration framework holds a write transaction on the database.
-	// To avoid lock contention between the migration's read cursors and KV's writes,
-	// we buffer all requests in memory to separate read and write phases:
-	// 1. Read phase: consume the entire gRPC stream into memory (no DB writes)
-	// 2. Write phase: replay buffered requests and write to KV tables using the migration's *sql.Tx
-	// This ensures the migration tx is never accessed concurrently from multiple goroutines.
 	// compatDB is used for compat layer operations (deleteLegacyResourceCollection, etc.)
 	// Normally it's the rvManager's DB, but during SQLite migrations we use the migration's tx.
 	var compatDB db.ContextExecer
@@ -1707,30 +1701,12 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 		if externalTx := TransactionFromContext(clientCtx); externalTx != nil {
-			b.log.Info("KV ProcessBulk: buffering requests for SQLite migration")
-
-			// Read phase: consume the entire iterator into memory.
-			var buffered []*resourcepb.BulkRequest
-			for iter.Next() {
-				if iter.RollbackRequested() {
-					return &resourcepb.BulkResponse{}
-				}
-				req := iter.Request()
-				if req != nil {
-					buffered = append(buffered, req)
-				}
-			}
-
-			b.log.Info("KV ProcessBulk: buffer complete", "requests", len(buffered))
-
-			// Replace the iterator with a replay iterator.
-			iter = &sliceBulkRequestIterator{requests: buffered, index: -1}
-
-			// Route all sqlkv operations through the migration's transaction.
+			// On SQLite, the migration framework holds a write transaction. Route all
+			// KV and compat layer operations through it to avoid SQLITE_BUSY.
 			ctx = kv.ContextWithDBTX(ctx, externalTx)
-
-			// Also use the migration tx for compat layer operations.
-			compatDB = dbimpl.NewTx(externalTx)
+			if b.rvManager != nil {
+				compatDB = dbimpl.NewTx(externalTx)
+			}
 		}
 	}
 
@@ -2000,29 +1976,6 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 
 	return rsp
-}
-
-// sliceBulkRequestIterator replays a pre-buffered slice of BulkRequests.
-// Used to separate read and write phases during SQLite migrations.
-type sliceBulkRequestIterator struct {
-	requests []*resourcepb.BulkRequest
-	index    int
-}
-
-func (s *sliceBulkRequestIterator) Next() bool {
-	s.index++
-	return s.index < len(s.requests)
-}
-
-func (s *sliceBulkRequestIterator) Request() *resourcepb.BulkRequest {
-	if s.index < 0 || s.index >= len(s.requests) {
-		return nil
-	}
-	return s.requests[s.index]
-}
-
-func (s *sliceBulkRequestIterator) RollbackRequested() bool {
-	return false
 }
 
 // readAndClose reads all data from a ReadCloser and ensures it's closed,
