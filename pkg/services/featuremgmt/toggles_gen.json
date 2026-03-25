@@ -2149,6 +2149,20 @@
     },
     {
       "metadata": {
+        "name": "globalDashboardVariables",
+        "resourceVersion": "1774390852180",
+        "creationTimestamp": "2026-03-24T22:20:52Z"
+      },
+      "spec": {
+        "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafanaAPIServerEnsureKubectlAccess",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-12-06T20:21:21Z"

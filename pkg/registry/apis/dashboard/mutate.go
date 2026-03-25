@@ -30,6 +30,8 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	switch a.GetResource().Resource {
 	case dashboardV0.DASHBOARD_RESOURCE:
 		return b.mutateDashboard(ctx, a)
+	case dashboardV2beta1.GlobalVariableResourceInfo.GroupVersionResource().Resource:
+		return mutateGlobalVariable(a)
 
 	case dashboardV0.LIBRARY_PANEL_RESOURCE:
 		return nil // nothing needed
@@ -128,6 +130,14 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		if len(validationErrorList) > 0 {
 			return apierrors.NewInvalid(resourceInfo.GroupVersionKind().GroupKind(), meta.GetName(), validationErrorList)
 		}
+	}
+
+	return nil
+}
+
+func mutateGlobalVariable(a admission.Attributes) error {
+	if _, ok := a.GetObject().(*dashboardV2beta1.GlobalVariable); !ok {
+		return fmt.Errorf("mutation error: expected global variable, got %T", a.GetObject())
 	}
 
 	return nil

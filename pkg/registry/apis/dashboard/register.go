@@ -315,6 +315,15 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		return nil // OK for now
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
+	case dashv2beta1.GlobalVariableResourceInfo.GroupVersionResource().Resource:
+		switch op {
+		case admission.Create:
+			return b.validateGlobalVariableCreate(ctx, a)
+		case admission.Update:
+			return b.validateGlobalVariableUpdate(ctx, a)
+		case admission.Delete, admission.Connect:
+			return nil
+		}
 	}
 
 	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
@@ -494,6 +503,83 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	// Validate refresh interval
 	if err := b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, refresh); err != nil {
 		return apierrors.NewBadRequest(err.Error())
+	}
+
+	return nil
+}
+
+func (b *DashboardsAPIBuilder) validateGlobalVariableCreate(ctx context.Context, a admission.Attributes) error {
+	globalVariable, ok := a.GetObject().(*dashv2beta1.GlobalVariable)
+	if !ok {
+		return fmt.Errorf("unsupported global variable version: %T", a.GetObject())
+	}
+
+	if err := validateGlobalVariable(globalVariable); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	accessor, err := utils.MetaAccessor(globalVariable)
+	if err != nil {
+		return fmt.Errorf("error getting global variable meta accessor: %w", err)
+	}
+
+	if !a.IsDryRun() && accessor.GetFolder() != "" {
+		id, err := identity.GetRequester(ctx)
+		if err != nil {
+			return fmt.Errorf("error getting requester: %w", err)
+		}
+
+		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (b *DashboardsAPIBuilder) validateGlobalVariableUpdate(ctx context.Context, a admission.Attributes) error {
+	newGlobalVariable, ok := a.GetObject().(*dashv2beta1.GlobalVariable)
+	if !ok {
+		return fmt.Errorf("unsupported global variable version: %T", a.GetObject())
+	}
+
+	oldGlobalVariable, ok := a.GetOldObject().(*dashv2beta1.GlobalVariable)
+	if !ok {
+		return fmt.Errorf("unsupported old global variable version: %T", a.GetOldObject())
+	}
+
+	if err := validateGlobalVariable(newGlobalVariable); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	oldAccessor, err := utils.MetaAccessor(oldGlobalVariable)
+	if err != nil {
+		return fmt.Errorf("error getting old global variable meta accessor: %w", err)
+	}
+
+	newAccessor, err := utils.MetaAccessor(newGlobalVariable)
+	if err != nil {
+		return fmt.Errorf("error getting new global variable meta accessor: %w", err)
+	}
+
+	if !a.IsDryRun() && newAccessor.GetFolder() != oldAccessor.GetFolder() && newAccessor.GetFolder() != "" {
+		id, err := identity.GetRequester(ctx)
+		if err != nil {
+			return fmt.Errorf("error getting requester: %w", err)
+		}
+
+		if err := b.verifyFolderAccessPermissions(ctx, id, newAccessor.GetFolder()); err != nil {
+			return err
+		}
+
+		nsInfo, err := authlib.ParseNamespace(newAccessor.GetNamespace())
+		if err != nil {
+			return fmt.Errorf("failed to parse namespace: %w", err)
+		}
+
+		if _, err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID); err != nil {
+			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), newAccessor.GetFolder())
+		}
 	}
 
 	return nil
@@ -685,6 +771,20 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return dto, err
 		}); err != nil {
 		return err
+	}
+
+	if b.features.IsEnabledGlobally(featuremgmt.FlagGlobalDashboardVariables) {
+		opts.StorageOptsRegister(dashv2beta1.GlobalVariableResourceInfo.GroupResource(), apistore.StorageOptions{
+			EnableFolderSupport: true,
+		})
+
+		gvStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.GlobalVariableResourceInfo, opts.OptsGetter)
+		if err != nil {
+			return err
+		}
+
+		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
+		storage[dashv2beta1.GlobalVariableResourceInfo.StoragePath()] = gvStore
 	}
 
 	return nil

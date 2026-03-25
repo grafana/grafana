@@ -85,7 +85,8 @@ manifest: {
 						spec:   v2beta1.DashboardSpec
 						status: DashboardStatus
 					}
-				}
+				},
+				globalVariableV2beta1,
 			]
 		}
 	}
