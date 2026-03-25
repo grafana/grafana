@@ -6633,6 +6633,10 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "This data source does not support filters.",
+      "message-supported": "Filters are applied automatically to all queries that target this data source"
+    },
     "ad-hoc-variable-form": {
       "adhoc-options": "Filter options",
       "alert-not-supported": "This data source does not support filters",
