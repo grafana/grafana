@@ -45,6 +45,17 @@ jest.mock('@grafana/assistant', () => ({
   }),
 }));
 
+jest.mock('app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider', () => ({
+  useExtensionSidebarContext: jest.fn().mockReturnValue({
+    isOpen: false,
+    dockedComponentId: undefined,
+    setDockedComponentId: jest.fn(),
+    availableComponents: new Map(),
+    extensionSidebarWidth: 400,
+    setExtensionSidebarWidth: jest.fn(),
+  }),
+}));
+
 export function buildTestScene() {
   const testScene = new DashboardScene({
     $variables: new SceneVariableSet({ variables: [] }),

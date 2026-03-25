@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
@@ -39,7 +39,7 @@ func (p *RequestHandler) HandleReceiverTestingRequest(ctx context.Context, w app
 	if err != nil {
 		return err
 	}
-	var req v0alpha1.CreateReceiverIntegrationTestRequestBody
+	var req v1beta1.CreateReceiverIntegrationTestRequestBody
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return err
@@ -51,15 +51,15 @@ func (p *RequestHandler) HandleReceiverTestingRequest(ctx context.Context, w app
 		return nil
 	}
 
-	responseBody := v0alpha1.CreateReceiverIntegrationTestBody{
+	responseBody := v1beta1.CreateReceiverIntegrationTestBody{
 		Duration: result.LastNotifyAttemptDuration,
-		Status:   v0alpha1.CreateReceiverIntegrationTestBodyStatusSuccess,
+		Status:   v1beta1.CreateReceiverIntegrationTestBodyStatusSuccess,
 	}
 	if result.LastNotifyAttemptError != "" {
-		responseBody.Status = v0alpha1.CreateReceiverIntegrationTestBodyStatusFailure
+		responseBody.Status = v1beta1.CreateReceiverIntegrationTestBodyStatusFailure
 		responseBody.Error = &result.LastNotifyAttemptError
 	}
-	jsonData, err := json.Marshal(v0alpha1.CreateReceiverIntegrationTestResponse{
+	jsonData, err := json.Marshal(v1beta1.CreateReceiverIntegrationTestResponse{
 		TypeMeta:                          metav1.TypeMeta{},
 		CreateReceiverIntegrationTestBody: responseBody,
 	})
@@ -76,7 +76,7 @@ func (p *RequestHandler) HandleReceiverTestingRequest(ctx context.Context, w app
 	return nil
 }
 
-func (p *RequestHandler) TestReceiver(ctx context.Context, user identity.Requester, receiverUID string, body v0alpha1.CreateReceiverIntegrationTestRequestBody) (notifier.IntegrationTestResult, error) {
+func (p *RequestHandler) TestReceiver(ctx context.Context, user identity.Requester, receiverUID string, body v1beta1.CreateReceiverIntegrationTestRequestBody) (notifier.IntegrationTestResult, error) {
 	if receiverUID == newReceiverNamePlaceholder {
 		receiverUID = ""
 	}
@@ -84,7 +84,7 @@ func (p *RequestHandler) TestReceiver(ctx context.Context, user identity.Request
 		return notifier.IntegrationTestResult{}, models.ErrReceiverTestingInvalidIntegration(err.Error())
 	}
 	alert := notifier.Alert(body.Alert)
-	integration, secure, err := convertReceiverIntegrationToIntegration("", v0alpha1.ReceiverIntegration(body.Integration))
+	integration, secure, err := convertReceiverIntegrationToIntegration("", v1beta1.ReceiverIntegration(body.Integration))
 	if err != nil {
 		return notifier.IntegrationTestResult{}, err
 	}
@@ -94,7 +94,7 @@ func (p *RequestHandler) TestReceiver(ctx context.Context, user identity.Request
 	return p.testingSvc.PatchIntegrationAndTest(ctx, user, alert, receiverUID, integration, secure)
 }
 
-func validateCreateReceiverIntegrationTestRequestBody(receiverUID string, body v0alpha1.CreateReceiverIntegrationTestRequestBody) error {
+func validateCreateReceiverIntegrationTestRequestBody(receiverUID string, body v1beta1.CreateReceiverIntegrationTestRequestBody) error {
 	// validate new receiver
 	if receiverUID == "" {
 		if body.Integration.Uid != nil {

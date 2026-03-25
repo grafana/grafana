@@ -4,8 +4,8 @@ import { memo, ReactNode, useMemo } from 'react';
 import { LogRowModel } from '@grafana/data';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
-import { LOG_LINE_BODY_FIELD_NAME } from './LogDetailsBody';
 import { LogRowMenuCell } from './LogRowMenuCell';
+import { LOG_LINE_BODY_FIELD_NAME } from './fieldSelector/logFields';
 import { LogRowStyles } from './getLogRowStyles';
 import { getAllFields } from './logParser';
 

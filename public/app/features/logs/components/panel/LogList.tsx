@@ -164,7 +164,7 @@ export const LogList = ({
   setDisplayedFields,
   showControls,
   showFieldSelector,
-  showLevel = true,
+  showLevel,
   showLogAttributes,
   showTime,
   showUniqueLabels,

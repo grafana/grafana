@@ -27,7 +27,8 @@ import (
 	manifestdata "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
@@ -250,11 +251,13 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 			dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 			dashv0.DashboardResourceInfo.GroupVersion(),
 			dashv1.DashboardResourceInfo.GroupVersion(),
+			dashv1beta1.DashboardResourceInfo.GroupVersion(),
 		}
 	}
 
 	return []schema.GroupVersion{
 		dashv1.DashboardResourceInfo.GroupVersion(),
+		dashv1beta1.DashboardResourceInfo.GroupVersion(),
 		dashv0.DashboardResourceInfo.GroupVersion(),
 		dashv2beta1.DashboardResourceInfo.GroupVersion(),
 		dashv2alpha1.DashboardResourceInfo.GroupVersion(),
@@ -264,6 +267,9 @@ func (b *DashboardsAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	b.scheme = scheme
 	if err := dashv0.AddToScheme(scheme); err != nil {
+		return err
+	}
+	if err := dashv1beta1.AddToScheme(scheme); err != nil {
 		return err
 	}
 	if err := dashv1.AddToScheme(scheme); err != nil {
@@ -631,7 +637,26 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		return err
 	}
 
-	// v1alpha1
+	// v1beta1
+	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
+		dashv1beta1.DashboardResourceInfo,
+		nil, // do not register library panel
+		nil,
+		func(obj runtime.Object, access *internal.DashboardAccess) (v runtime.Object, err error) {
+			dto := &dashv1beta1.DashboardWithAccessInfo{}
+			dash, ok := obj.(*dashv1beta1.Dashboard)
+			if ok {
+				dto.Dashboard = *dash
+			}
+			if access != nil {
+				err = b.scheme.Convert(access, &dto.Access, nil)
+			}
+			return dto, err
+		}); err != nil {
+		return err
+	}
+
+	// v1 (identical schema to v1beta1, thin wrapper)
 	if err := b.storageForVersion(apiGroupInfo, opts, largeObjects,
 		dashv1.DashboardResourceInfo,
 		nil, // do not register library panel
