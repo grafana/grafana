@@ -6,6 +6,15 @@
 
 - **Public Dashboards:** Prevent unintended CRUD operations from different orgs [#120459](https://github.com/grafana/grafana/pull/120459), [@mmandrus](https://github.com/mmandrus)
 
+### Bug fixes
+
+- **Security:** Fixes CVE-2026-27876
+- **Security:** Fixes CVE-2026-27877
+- **Security:** Fixes CVE-2026-28375
+- **Security:** Fixes CVE-2026-27879
+- **Security:** Fixes CVE-2026-27880
+- **Security:** Fixes CVE-2026-27876
+
 <!-- 12.3.6 END -->
 <!-- 12.3.5 START -->
 
