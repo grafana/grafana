@@ -684,7 +684,6 @@ func (s *Service) deleteFromApiServer(ctx context.Context, cmd *folder.DeleteFol
 
 // findAndDeleteDashboardsInFolders finds all dashboards in the given folders using Search,
 // falling back to List (without field selectors) + in-memory filtering when search is unavailable.
-// It deletes each matched dashboard and returns the list of deleted dashboard UIDs.
 func (s *Service) findAndDeleteDashboardsInFolders(ctx context.Context, orgID int64, folders []string) ([]string, error) {
 	request := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{

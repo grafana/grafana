@@ -1081,43 +1081,24 @@ func TestIntegrationDeleteFoldersFromApiServer(t *testing.T) {
 
 	t.Run("Should fall back to list when dashboard search fails and still delete dashboards", func(t *testing.T) {
 		fakeFolderStore.ExpectedFolders = nil
-		// Search fails
 		dashboardK8sclient.On("Search", mock.Anything, int64(1), mock.Anything).Return(nil, fmt.Errorf("search unavailable")).Once()
-
-		// Fallback: List returns dashboards, some in the target folder and some not
 		dashboardK8sclient.On("List", mock.Anything, int64(1), metav1.ListOptions{
 			Limit:    folderListLimit,
 			TypeMeta: metav1.TypeMeta{},
 		}).Return(&unstructured.UnstructuredList{
 			Items: []unstructured.Unstructured{
-				{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name":        "dash-in-folder",
-							"annotations": map[string]interface{}{"grafana.app/folder": "uid3"},
-						},
-					},
-				},
-				{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name":        "dash-outside",
-							"annotations": map[string]interface{}{"grafana.app/folder": "other-folder"},
-						},
-					},
-				},
+				{Object: map[string]interface{}{
+					"metadata": map[string]interface{}{"name": "dash-in-folder", "annotations": map[string]interface{}{"grafana.app/folder": "uid3"}},
+				}},
+				{Object: map[string]interface{}{
+					"metadata": map[string]interface{}{"name": "dash-outside", "annotations": map[string]interface{}{"grafana.app/folder": "other-folder"}},
+				}},
 			},
 		}, nil).Once()
-
-		// Only the dashboard in the target folder should be deleted
 		dashboardK8sclient.On("Delete", mock.Anything, "dash-in-folder", int64(1), mock.Anything).Return(nil).Once()
 		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"dash-in-folder"}).Return(nil).Once()
 
-		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{
-			UID:          "uid3",
-			OrgID:        1,
-			SignedInUser: user,
-		})
+		err := service.deleteFromApiServer(ctx, &folder.DeleteFolderCommand{UID: "uid3", OrgID: 1, SignedInUser: user})
 		require.NoError(t, err)
 		dashboardK8sclient.AssertExpectations(t)
 		publicDashboardFakeService.AssertExpectations(t)

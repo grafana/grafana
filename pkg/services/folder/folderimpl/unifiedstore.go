@@ -322,7 +322,6 @@ func (ss *FolderUnifiedStoreImpl) getChildrenFallback(ctx context.Context, q fol
 		folderUIDSet[uid] = struct{}{}
 	}
 
-	// Filter by parent UID and optional folder UID set
 	var filtered []*folder.Folder
 	for _, f := range folders {
 		if f.ParentUID != q.UID {
@@ -339,7 +338,6 @@ func (ss *FolderUnifiedStoreImpl) getChildrenFallback(ctx context.Context, q fol
 		filtered = append(filtered, f)
 	}
 
-	// Apply pagination
 	offset := int(q.Limit * (q.Page - 1))
 	if offset > len(filtered) {
 		offset = len(filtered)

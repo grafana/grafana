@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -199,6 +200,7 @@ func TestGetChildren(t *testing.T) {
 	tracer := noop.NewTracerProvider().Tracer("TestGetChildren")
 	store := FolderUnifiedStoreImpl{
 		k8sclient:   mockCli,
+		log:         log.New("test"),
 		userService: usertest.NewUserServiceFake(),
 		tracer:      tracer,
 	}
@@ -506,71 +508,38 @@ func TestGetChildren(t *testing.T) {
 	})
 
 	t.Run("should fall back to list when search fails", func(t *testing.T) {
-		// Parent existence check succeeds
 		mockCli.On("Get", mock.Anything, "parent1", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"metadata": map[string]interface{}{"name": "parent1"},
 			},
 		}, nil).Once()
-
-		// Search fails
 		mockCli.On("Search", mock.Anything, orgID, mock.Anything).Return(nil, fmt.Errorf("search unavailable")).Once()
-
-		// Fallback: List returns all folders (no field selectors)
 		mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
 			Limit:    folderListLimit,
 			TypeMeta: metav1.TypeMeta{},
 		}).Return(&unstructured.UnstructuredList{
 			Items: []unstructured.Unstructured{
-				{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name":        "child1",
-							"uid":         "child1",
-							"annotations": map[string]interface{}{"grafana.app/folder": "parent1"},
-						},
-						"spec": map[string]interface{}{"title": "Child1"},
-					},
-				},
-				{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name":        "child2",
-							"uid":         "child2",
-							"annotations": map[string]interface{}{"grafana.app/folder": "parent1"},
-						},
-						"spec": map[string]interface{}{"title": "Child2"},
-					},
-				},
-				{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name":        "other",
-							"uid":         "other",
-							"annotations": map[string]interface{}{"grafana.app/folder": "other_parent"},
-						},
-						"spec": map[string]interface{}{"title": "Other"},
-					},
-				},
-				{
-					Object: map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"name":        accesscontrol.K6FolderUID,
-							"uid":         accesscontrol.K6FolderUID,
-							"annotations": map[string]interface{}{"grafana.app/folder": "parent1"},
-						},
-						"spec": map[string]interface{}{"title": "K6"},
-					},
-				},
+				{Object: map[string]interface{}{
+					"metadata": map[string]interface{}{"name": "child1", "uid": "child1", "annotations": map[string]interface{}{"grafana.app/folder": "parent1"}},
+					"spec":     map[string]interface{}{"title": "Child1"},
+				}},
+				{Object: map[string]interface{}{
+					"metadata": map[string]interface{}{"name": "child2", "uid": "child2", "annotations": map[string]interface{}{"grafana.app/folder": "parent1"}},
+					"spec":     map[string]interface{}{"title": "Child2"},
+				}},
+				{Object: map[string]interface{}{
+					"metadata": map[string]interface{}{"name": "other", "uid": "other", "annotations": map[string]interface{}{"grafana.app/folder": "other_parent"}},
+					"spec":     map[string]interface{}{"title": "Other"},
+				}},
+				{Object: map[string]interface{}{
+					"metadata": map[string]interface{}{"name": accesscontrol.K6FolderUID, "uid": accesscontrol.K6FolderUID, "annotations": map[string]interface{}{"grafana.app/folder": "parent1"}},
+					"spec":     map[string]interface{}{"title": "K6"},
+				}},
 			},
 		}, nil).Once()
 
-		result, err := store.GetChildren(ctx, folder.GetChildrenQuery{
-			UID:   "parent1",
-			OrgID: orgID,
-		})
+		result, err := store.GetChildren(ctx, folder.GetChildrenQuery{UID: "parent1", OrgID: orgID})
 		require.NoError(t, err)
-		// Should return child1 and child2, but NOT "other" (wrong parent) or K6 folder (excluded)
 		require.Len(t, result, 2)
 		require.Equal(t, "child1", result[0].UID)
 		require.Equal(t, "child2", result[1].UID)
