@@ -2007,10 +2007,10 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				// ExecWithRV would deadlock because it opens its own connection.
 				nextRV, err := b.rvManager.Lock(ctx, rvManagerDB, key.Group, key.Resource)
 				if err != nil {
-					b.log.Error("error locking RV", "error", err, "key", NSGR(key))
+					b.log.Warn("error locking RV", "error", err, "key", NSGR(key))
 				} else {
 					if err := b.rvManager.SaveRV(ctx, rvManagerDB, key.Group, key.Resource, nextRV); err != nil {
-						b.log.Error("error saving RV", "error", err, "key", NSGR(key))
+						b.log.Warn("error saving RV", "error", err, "key", NSGR(key))
 					}
 				}
 			} else {
