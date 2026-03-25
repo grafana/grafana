@@ -97,7 +97,7 @@ export const getEditableVariables: () => Record<EditableVariableType, EditableVa
     getOptions: getDataSourceVariableOptions,
   },
   adhoc: {
-    name: t('dashboard-scene.get-editable-variables.name.ad-hoc-filters', 'Filters'),
+    name: t('dashboard-scene.get-editable-variables.name.ad-hoc-filters', 'Filter'),
     description: t(
       'dashboard-scene.get-editable-variables.description.add-keyvalue-filters-on-the-fly',
       'Add key/value filters on the fly'

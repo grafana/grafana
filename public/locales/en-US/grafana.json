@@ -6999,7 +6999,7 @@
         "values-timespans": "Values are timespans, ex 1m, 1h, 1d"
       },
       "name": {
-        "ad-hoc-filters": "Filters",
+        "ad-hoc-filters": "Filter",
         "constant": "Constant",
         "custom": "Custom",
         "data-source": "Data source",
