@@ -16,7 +16,6 @@ import (
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -80,9 +79,8 @@ func triggerExport(t *testing.T, helper *common.ProvisioningTestHelper, repo str
 // TestIntegrationProvisioning_ExportJob_FolderMetadataFlag verifies that the
 // _folder.json files are written during an export (push) job.
 func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("flag disabled does not create folder metadata", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
 		helper := common.RunGrafana(t)
 
 		const repo = "export-no-meta-repo"
@@ -107,7 +105,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 	})
 
 	t.Run("flag enabled creates metadata for newly exported folder", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 
 		const repo = "export-meta-new-repo"
 		helper.CreateRepo(t, common.TestRepo{
@@ -141,7 +139,7 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 	})
 
 	t.Run("flag enabled does not create metadata for already-existing folder directory", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 
 		const repo = "export-existing-folder-repo"
 		helper.CreateRepo(t, common.TestRepo{
@@ -173,8 +171,6 @@ func TestIntegrationProvisioning_ExportJob_FolderMetadataFlag(t *testing.T) {
 // TestIntegrationProvisioning_ExportJob_NestedFolders verifies that export correctly
 // handles nested folder hierarchies: paths, _folder.json placement, and UID/title content.
 func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	readFolderManifest := func(t *testing.T, path string) foldersV1.Folder {
 		t.Helper()
 		data, err := os.ReadFile(path) //nolint:gosec
@@ -185,6 +181,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	}
 
 	t.Run("flag disabled does not create folder metadata for nested folders", func(t *testing.T) {
+		testutil.SkipIntegrationTestInShortMode(t)
 		helper := common.RunGrafana(t)
 
 		const repo = "nested-no-meta-repo"
@@ -218,7 +215,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	})
 
 	t.Run("flag enabled skips metadata for all pre-existing folder directories but creates it for new child", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 
 		const repo = "nested-middle-existing-repo"
 		helper.CreateRepo(t, common.TestRepo{
@@ -270,7 +267,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	})
 
 	t.Run("flag enabled creates metadata for parent-child folder hierarchy", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 
 		const repo = "nested-two-level-repo"
 		helper.CreateRepo(t, common.TestRepo{
@@ -307,7 +304,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	})
 
 	t.Run("flag enabled creates metadata for three-level folder hierarchy", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 
 		const repo = "nested-three-level-repo"
 		helper.CreateRepo(t, common.TestRepo{
@@ -353,7 +350,7 @@ func TestIntegrationProvisioning_ExportJob_NestedFolders(t *testing.T) {
 	})
 
 	t.Run("flag enabled creates metadata for sibling folders under a common parent", func(t *testing.T) {
-		helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+		helper := sharedHelper(t)
 
 		const repo = "nested-siblings-repo"
 		helper.CreateRepo(t, common.TestRepo{
@@ -466,5 +463,5 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderFiles(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	testsuite.Run(m)
+	env.RunTestMain(m)
 }

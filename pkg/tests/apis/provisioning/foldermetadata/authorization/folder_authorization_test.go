@@ -12,13 +12,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	tests := []struct {
 		name                  string
 		folderMetadataEnabled bool
@@ -43,8 +40,9 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var helper *common.ProvisioningTestHelper
 			if tt.folderMetadataEnabled {
-				helper = common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+				helper = sharedHelper(t)
 			} else {
+				testutil.SkipIntegrationTestInShortMode(t)
 				helper = common.RunGrafana(t)
 			}
 			ctx := context.Background()
@@ -129,5 +127,5 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	testsuite.Run(m)
+	env.RunTestMain(m)
 }
