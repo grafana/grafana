@@ -1,29 +1,38 @@
-const fs = require('fs');
+import fs from 'fs';
+import type { Compiler } from 'webpack';
 
 const STATS_PATH = 'public/build/bundle-stats.html';
 const STATS_PATH_FILT = 'public/build/bundle-stats-filtered.html';
 
-class FilterStatsPlugin {
+interface BundleNode {
+  label: string;
+  parsedSize: number;
+  groups?: BundleNode[];
+}
+
+export class FilterStatsPlugin {
   // exclusion regexp
-  exclude = null;
+  exclude: RegExp | null = null;
 
   // we should only filter out bundles where the matched descendent occupies more than 75% of the bundle's size
   // this way we don't ignore a composite bundle when some previously-decoupled & excluded component accidentally moves into it
   minDominance = 0.75;
 
-  constructor({ exclude = null, minDominance = 0.75 }) {
+  constructor({ exclude = null, minDominance = 0.75 }: { exclude?: RegExp | null; minDominance?: number } = {}) {
     this.exclude = exclude;
     this.minDominance = minDominance;
   }
-  apply(compiler) {
+
+  apply(compiler: Compiler) {
     compiler.hooks.done.tap('FilterStatsPlugin', () => {
       if (this.exclude == null) {
         fs.copyFileSync(STATS_PATH, STATS_PATH_FILT);
       } else {
-        let statsHTML = fs.readFileSync(STATS_PATH, 'utf8');
-        let filteredStatsHTML = statsHTML.replace(/(window.chartData = )(\[.*?\])(;)/, (m, head, data, tail) => {
-          let nodes = JSON.parse(data);
-          let filtered = nodes.filter((node) => !this.pathContains(node, node.parsedSize));
+        const exclude = this.exclude;
+        const statsHTML = fs.readFileSync(STATS_PATH, 'utf8');
+        const filteredStatsHTML = statsHTML.replace(/(window.chartData = )(\[.*?\])(;)/, (_, head, data, tail) => {
+          const nodes: BundleNode[] = JSON.parse(data);
+          const filtered = nodes.filter((node) => !this.pathContains(node, node.parsedSize, exclude));
           return head + JSON.stringify(filtered) + tail;
         });
 
@@ -31,15 +40,16 @@ class FilterStatsPlugin {
       }
     });
   }
-  pathContains(node, rootParsedSize) {
+
+  pathContains(node: BundleNode, rootParsedSize: number, exclude: RegExp): boolean {
     if (node.parsedSize / rootParsedSize >= this.minDominance) {
-      if (this.exclude.test(node.label)) {
+      if (exclude.test(node.label)) {
         return true;
       }
 
       if (node.groups != null) {
         for (let i = 0; i < node.groups.length; i++) {
-          if (this.pathContains(node.groups[i], rootParsedSize)) {
+          if (this.pathContains(node.groups[i], rootParsedSize, exclude)) {
             return true;
           }
         }
@@ -49,5 +59,3 @@ class FilterStatsPlugin {
     return false;
   }
 }
-
-exports.FilterStatsPlugin = FilterStatsPlugin;
