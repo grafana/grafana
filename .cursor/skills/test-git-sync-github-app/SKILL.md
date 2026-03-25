@@ -1,13 +1,13 @@
 ---
 name: test-git-sync-github-app
 description: >
-  Use when asked to test the GitHub App flow of Git Sync provisioning. Runs
-  the 5-step wizard with GitHub App auth (connection creation, PEM injection),
-  then exercises the full lifecycle: create resources, move, delete, remove
-  repository, and delete the connection.
+  Use when asked to test the GitHub App wizard flow of Git Sync provisioning.
+  Runs the 5-step wizard with GitHub App auth (connection creation, PEM
+  injection), verifies the repository was created, and cleans up the repository
+  and connection.
 ---
 
-# Git Sync GitHub App Flow E2E Testing
+# Git Sync GitHub App Wizard E2E Testing
 
 Drive the Grafana provisioning wizard through the browser using `mcp_chrome_devtools_*` tools with GitHub App authentication.
 
@@ -123,7 +123,7 @@ echo "Cleanup complete."
 
 Read these files during execution for detailed operation steps, gotchas, and selectors:
 
-- **Operations** (Steps 2–5, create/move/delete, cleanup): `../git-sync-shared/operations.md`
+- **Operations** (Steps 2-5, create/move/delete, cleanup): `../git-sync-shared/operations.md`
 - **Gotchas** (reconciliation delays, combobox quirks, timeouts): `../git-sync-shared/gotchas.md`
 - **Selectors** (element IDs, roles, placeholders): `../git-sync-shared/selectors.md`
 - **API reference** (cleanup & verification endpoints): `../git-sync-shared/api.md`
@@ -175,173 +175,60 @@ Requires `$GIT_SYNC_TEST_APP_REPO_URL`, `$GIT_SYNC_TEST_GITHUB_APP_ID`, `$GIT_SY
 **After connection is selected/created:**
 
 11. The repository URL field becomes a combobox populated from the connection's repos.
-12. `take_snapshot` to find the repo combobox. `click` it, then `type_text` to filter for the repo matching `$GIT_SYNC_TEST_APP_REPO_URL`. **Options may not appear in the a11y snapshot** — use `evaluate_script` to inspect and click the correct `[role="option"]` by DOM id (same technique as step 6 above).
+12. `take_snapshot` to find the repo combobox. `click` it, then `type_text` to filter for the repo matching `$GIT_SYNC_TEST_APP_REPO_URL`. **Options may not appear in the a11y snapshot** -- use `evaluate_script` to inspect and click the correct `[role="option"]` by DOM id (same technique as step 6 above).
 13. `click` "Configure repository"
 
 **Wait:** Same as PAT flow -- `wait_for` step 2 heading with **30s timeout**.
 
-**Continue with Steps 2–5** from `../git-sync-shared/operations.md`. Steps 2–5 are identical to the PAT flow.
-
-## Self-Contained Test Lifecycle
-
-The operations must be tested end-to-end. This lifecycle creates resources, exercises all operations (create, move, delete), and removes the repository and connection — leaving zero artifacts.
-
-### Setup
-
-Run the complete wizard (Steps 1–5) with both `prWorkflow` and `enablePushToConfiguredBranch` enabled (see "Wizard Step 5 Configuration for Full Testing" in operations.md).
+**Continue with Steps 2-5** from `../git-sync-shared/operations.md`. Steps 2-5 are identical to the PAT flow.
 
 **Use path `dev/app-test` in Step 2** to avoid conflicts with other flows (see "Path Conflicts Across Repositories" gotcha).
 
-Unless stated otherwise, operations use the **configured branch** (`write` workflow / direct commit). Steps explicitly marked **Branch Workflow** use a new branch name to exercise the PR creation flow.
+## Post-Wizard Verification
 
-### Step 1: Create Resources (3-Level Tree) — Write Workflow
+After Step 5 completes and the page navigates to `/admin/provisioning/{repoName}`:
 
-Build the following folder/dashboard tree inside the provisioned root using the **configured branch**. Use "Creating a New Folder" and "Creating a New Dashboard" from operations.md for each resource.
+1. Verify the repository was created via API:
 
+   ```bash
+   curl -s -u admin:admin \
+     http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
+     jq '.items[] | {name: .metadata.name, type: .spec.type, url: .spec.github.url}'
+   ```
+
+2. Navigate to the provisioned folder in the browse view and confirm it exists.
+
+## Cleanup
+
+Remove the repository and connection, then verify no artifacts remain:
+
+```bash
+BASE="http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default"
+AUTH="admin:admin"
+
+# Delete repositories first (must be deleted before their connections)
+for name in $(curl -s -u "$AUTH" "$BASE/repositories" | jq -r '.items[].metadata.name'); do
+  echo "Deleting repository: $name"
+  curl -s -X DELETE -u "$AUTH" "$BASE/repositories/$name"
+done
+
+# Then delete connections (GitHub App flow creates connections)
+for name in $(curl -s -u "$AUTH" "$BASE/connections" | jq -r '.items[].metadata.name // empty'); do
+  echo "Deleting connection: $name"
+  curl -s -X DELETE -u "$AUTH" "$BASE/connections/$name"
+done
+
+echo "Cleanup complete."
 ```
-<provisioned root>/
-├─ team-alpha/                        (folder, level 1)
-│  ├─ Dashboard Alpha-1                (dashboard)
-│  ├─ Dashboard Alpha-2                (dashboard)
-│  └─ alpha-services/                  (folder, level 2)
-│     ├─ Dashboard Alpha-Svc-1          (dashboard)
-│     └─ alpha-monitoring/               (folder, level 3)
-│        └─ Dashboard Alpha-Mon-1        (dashboard)
-├─ team-beta/                         (folder, level 1)
-│  ├─ Dashboard Beta-1                 (dashboard)
-│  └─ Dashboard Beta-2                 (dashboard)
-└─ staging/                           (folder, level 1)
-   └─ Dashboard Staging-1              (dashboard)
-```
 
-**Creation order** (12 resources: 6 folders counting provisioned root's children, 6 dashboards):
-
-1. Create folder `team-alpha` in provisioned root
-2. Create `Dashboard Alpha-1` in `team-alpha`
-3. Create `Dashboard Alpha-2` in `team-alpha`
-4. Create folder `alpha-services` inside `team-alpha`
-5. Create `Dashboard Alpha-Svc-1` in `alpha-services`
-6. Create folder `alpha-monitoring` inside `alpha-services` (level 3)
-7. Create `Dashboard Alpha-Mon-1` in `alpha-monitoring`
-8. Create folder `team-beta` in provisioned root
-9. Create `Dashboard Beta-1` in `team-beta`
-10. Create `Dashboard Beta-2` in `team-beta`
-11. Create folder `staging` in provisioned root
-12. Create `Dashboard Staging-1` in `staging`
-
-### Step 2: Verify Creation
-
-Navigate through all 3 levels. Confirm:
-
-- 3 top-level folders (`team-alpha`, `team-beta`, `staging`) in the provisioned root
-- Dashboards at each level
-- `alpha-monitoring` is 3 levels deep (provisioned root → `team-alpha` → `alpha-services` → `alpha-monitoring`)
-
-### Step 3: Test Branch (PR) Workflow
-
-Exercise the `branch` workflow (PR creation) to confirm it works alongside the `write` workflow. Both sub-steps below are mandatory.
-
-**3a. Modify a dashboard via PR:**
-
-1. Navigate to `Dashboard Alpha-1` in `team-alpha`.
-2. Edit the dashboard — change the panel title or add a text panel.
-3. Click "Save".
-4. In the save drawer, **use a new branch name**: click the branch combobox (id: `provisioned-ref`) "Clear value" button, `click` the combobox, `type_text` a new branch name (e.g., `pr-test-modify`), then `press_key` `Enter`. The workflow auto-switches to `branch`.
-5. Optionally fill the comment.
-6. Click "Save".
-7. **Verify:** The page navigates to a preview page with a PR banner showing "View branch", "Compare branch", and/or "Open pull request" buttons. This confirms the `branch` workflow works for dashboard saves.
-
-**3b. Create a folder via PR:**
-
-1. Navigate back to the provisioned root folder browse page.
-2. Click "New" dropdown → "New folder".
-3. Fill the folder name (e.g., `pr-test-folder`).
-4. **Use a new branch name**: click the branch combobox "Clear value" button, `click` the combobox, `type_text` a new branch name (e.g., `pr-test-folder-branch`), then `press_key` `Enter`. The workflow auto-switches to `branch`.
-5. Click "Create".
-6. **Verify:** A "Pull request created" alert banner appears with a link. This confirms the `branch` workflow works for folder creation.
-
-**Note:** Resources created/modified via the `branch` workflow exist on PR branches, not the configured branch. They do not appear in the main browse view and do not affect subsequent steps. No cleanup needed — they are removed when the repository is deleted.
-
-### Step 4: Bulk Move (2 Folders) — Write Workflow
-
-1. Navigate to the provisioned root folder.
-2. Select the `team-beta` and `staging` folder checkboxes (2 folders containing 3 dashboards total).
-3. Click "Move" in the action bar.
-4. In the drawer, pick `team-alpha` as the target folder. Use configured branch.
-5. Click "Move". Wait for "Job completed successfully".
-
-### Step 5: Verify Move
-
-Navigate to `team-alpha`. Confirm it now contains:
-
-- `Dashboard Alpha-1`, `Dashboard Alpha-2` (original)
-- `alpha-services/` with its nested content (original)
-- `team-beta/` with `Dashboard Beta-1` and `Dashboard Beta-2` (moved)
-- `staging/` with `Dashboard Staging-1` (moved)
-
-### Step 6: Delete Single Dashboard — Write Workflow
-
-1. Navigate to `Dashboard Beta-1` inside `team-alpha/team-beta/`.
-2. Open dashboard settings. Click "Delete dashboard".
-3. In the drawer, use configured branch. Click "Delete dashboard". Wait for completion.
-
-### Step 7: Verify Single Dashboard Delete
-
-Navigate to `team-alpha/team-beta/`. Confirm `Dashboard Beta-1` is gone but `Dashboard Beta-2` still exists.
-
-### Step 8: Delete Single Folder — Write Workflow
-
-1. Navigate to `team-alpha` in the browse view.
-2. Find the `staging` folder row. Click "Folder actions" → "Delete this folder".
-3. In the drawer, use configured branch. Click "Delete". Wait for completion.
-
-### Step 9: Verify Single Folder Delete
-
-Navigate to `team-alpha`. Confirm:
-
-- `staging` folder is gone **and** `Dashboard Staging-1` (its child) is also gone (cascade delete).
-- `team-beta` (with `Dashboard Beta-2`) and `alpha-services` subtree still exist.
-
-### Step 10: Bulk Delete (All Remaining) — Write Workflow
-
-1. Navigate to the provisioned root folder.
-2. Select the `team-alpha` checkbox (selects the folder and all its descendants — the entire remaining tree).
-3. Click "Delete" in the action bar.
-4. In the drawer, use configured branch. Click "Delete". Wait for "Job completed successfully".
-
-### Step 11: Verify Bulk Delete
-
-Provisioned root folder should be empty (no folders or dashboards remain).
-
-### Step 12: Remove Repository
-
-Follow "Removing the Repository" from operations.md:
-
-1. Navigate to `/admin/provisioning/{repoName}/edit`.
-2. Click "Delete" dropdown → "Delete and remove resources (default)".
-3. Confirm in modal. Wait for navigation to `/admin/provisioning`.
-
-### Step 13: Verify Cleanup
+Verify:
 
 ```bash
 curl -s -u admin:admin \
   http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
   jq '.items | length'
 # Should return 0
-```
 
-**Also delete the GitHub App connection** (PAT flow does not create connections, but GitHub App does):
-
-```bash
-BASE="http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default"
-for name in $(curl -s -u admin:admin "$BASE/connections" | jq -r '.items[].metadata.name // empty'); do
-  curl -s -X DELETE -u admin:admin "$BASE/connections/$name"
-done
-```
-
-Verify no connections remain:
-
-```bash
 curl -s -u admin:admin \
   http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/connections | \
   jq '.items | length'

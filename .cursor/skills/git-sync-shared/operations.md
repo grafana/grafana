@@ -236,3 +236,128 @@ curl -s -u admin:admin \
 
 1. Navigate to `/admin/provisioning/{repoName}` -> "Delete" dropdown -> "Delete and remove resources" -> Confirm modal
 2. For connections: `/admin/provisioning?tab=connections` -> find connection -> Delete
+
+## User Management
+
+### Create Test Users via API
+
+Create users with specific roles for permission testing. New users default to the Admin org role — you must explicitly downgrade them.
+
+**Create a Viewer user:**
+
+```bash
+VIEWER_ID=$(curl -s -X POST -u admin:admin -H 'Content-Type: application/json' \
+  http://localhost:3000/api/admin/users \
+  -d '{"login":"viewer-test","password":"viewer-test","email":"viewer@test.com","name":"Viewer Test"}' | jq -r '.id')
+
+curl -s -X PATCH -u admin:admin -H 'Content-Type: application/json' \
+  http://localhost:3000/api/org/users/$VIEWER_ID \
+  -d '{"role":"Viewer"}'
+```
+
+**Create an Editor user:**
+
+```bash
+EDITOR_ID=$(curl -s -X POST -u admin:admin -H 'Content-Type: application/json' \
+  http://localhost:3000/api/admin/users \
+  -d '{"login":"editor-test","password":"editor-test","email":"editor@test.com","name":"Editor Test"}' | jq -r '.id')
+
+curl -s -X PATCH -u admin:admin -H 'Content-Type: application/json' \
+  http://localhost:3000/api/org/users/$EDITOR_ID \
+  -d '{"role":"Editor"}'
+```
+
+### Switch Browser User
+
+To test as a different user, log out and log back in:
+
+1. `navigate_page` to `http://localhost:3000/logout` — destroys session cookie, redirects to `/login`
+2. `wait_for` text `["Log in"]` or `["Welcome to Grafana"]`
+3. `fill` username input (`data-testid="data-testid Username input field"`) with the username
+4. `fill` password input (`data-testid="data-testid Password input field"`) with the password
+5. `click` login button (`data-testid="data-testid Login button"`)
+6. If prompted, `click` skip password change (`data-testid="data-testid Skip change password button"`)
+7. `wait_for` the Grafana home page or navigate to the target URL
+
+### Delete Test Users
+
+```bash
+curl -X DELETE -u admin:admin http://localhost:3000/api/admin/users/$VIEWER_ID
+curl -X DELETE -u admin:admin http://localhost:3000/api/admin/users/$EDITOR_ID
+```
+
+## API Repository Setup
+
+Create a repository and sync it without using the wizard.
+
+### Step 1: Create the Repository
+
+```bash
+curl -s -X POST -u admin:admin \
+  -H 'Content-Type: application/json' \
+  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories \
+  -d '{
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "kind": "Repository",
+  "metadata": {
+    "name": "REPO_NAME"
+  },
+  "spec": {
+    "title": "REPO_TITLE",
+    "description": "API-created repo for testing",
+    "type": "github",
+    "github": {
+      "url": "$GIT_SYNC_TEST_PAT_REPO_URL",
+      "branch": "agent-test",
+      "generateDashboardPreviews": false,
+      "path": "PATH"
+    },
+    "sync": {
+      "enabled": true,
+      "target": "folder",
+      "intervalSeconds": 60
+    },
+    "workflows": ["write", "branch"]
+  },
+  "secure": {
+    "token": { "create": "$GIT_SYNC_TEST_PAT" }
+  }
+}'
+```
+
+Replace `REPO_NAME`, `REPO_TITLE`, and `PATH` with desired values.
+
+### Step 2: Trigger Initial Sync
+
+```bash
+JOB_NAME=$(curl -s -X POST -u admin:admin \
+  -H 'Content-Type: application/json' \
+  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/REPO_NAME/jobs \
+  -d '{"action":"pull","pull":{}}' | jq -r '.metadata.name')
+```
+
+### Step 3: Wait for Sync Completion
+
+Poll the job status every 5s until `state` is `success`:
+
+```bash
+for i in $(seq 1 30); do
+  STATE=$(curl -s -u admin:admin \
+    "http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/REPO_NAME/jobs/$JOB_NAME" | \
+    jq -r '.status.state')
+  echo "Job state: $STATE ($i/30)"
+  if [ "$STATE" = "success" ]; then break; fi
+  if [ "$STATE" = "error" ]; then echo "ERROR: Sync failed"; break; fi
+  sleep 5
+done
+```
+
+### Step 4: Verify
+
+Browse to the provisioned folder in Grafana to confirm resources are visible, or check via API:
+
+```bash
+curl -s -u admin:admin \
+  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories | \
+  jq '.items[] | {name: .metadata.name, type: .spec.type, url: .spec.github.url}'
+```

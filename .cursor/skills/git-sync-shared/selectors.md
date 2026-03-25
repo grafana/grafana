@@ -325,3 +325,12 @@ Note: `visibleStepIndex` is 0-based, but displayed as 1-based. If the synchroniz
 | Success  | "Job completed successfully"         | May show PR buttons or repo link |
 | Error    | "Error running job" + "Retry" button |                                  |
 | Warning  | "Job completed with warnings"        |                                  |
+
+## Login Page
+
+| Element              | Selector Strategy                                       | Notes                                           |
+| -------------------- | ------------------------------------------------------- | ----------------------------------------------- |
+| Username input       | `data-testid="data-testid Username input field"`        | Standard login page                             |
+| Password input       | `data-testid="data-testid Password input field"`        | Standard login page                             |
+| Login button         | `data-testid="data-testid Login button"`                | Submit button                                   |
+| Skip password change | `data-testid="data-testid Skip change password button"` | Appears on first login with default credentials |
