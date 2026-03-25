@@ -184,6 +184,7 @@ export const LogsTable = ({
             height={height}
             logsFrame={logsFrame}
             timeFieldName={timeFieldName}
+            levelFieldName={levelFieldName}
             bodyFieldName={bodyFieldName}
             dataFrame={extractedFrame}
             onDisplayedFieldsChange={(displayedFields: string[]) => handleLogsTableOptionChange({ displayedFields })}
