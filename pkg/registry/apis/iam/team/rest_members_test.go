@@ -322,7 +322,6 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 		require.NotNil(t, responder.err)
 		require.Contains(t, responder.err.Error(), "functionality not available")
 	})
-
 }
 
 func TestTeamMembersREST_parseResults(t *testing.T) {
