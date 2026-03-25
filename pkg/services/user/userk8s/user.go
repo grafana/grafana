@@ -30,24 +30,20 @@ var userGVR = schema.GroupVersionResource{
 }
 
 type UserK8sService struct {
-	logger            log.Logger
-	namespaceMapper   request.NamespaceMapper
-	configProvider    apiserver.DirectRestConfigProvider
-	autoAssignOrgRole string
+	logger          log.Logger
+	namespaceMapper request.NamespaceMapper
+	configProvider  apiserver.DirectRestConfigProvider
+	config          *setting.Cfg
 }
 
 var _ user.Service = (*UserK8sService)(nil)
 
 func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider) *UserK8sService {
-	autoAssignOrgRole := ""
-	if cfg != nil {
-		autoAssignOrgRole = cfg.AutoAssignOrgRole
-	}
 	return &UserK8sService{
-		logger:            logger,
-		namespaceMapper:   request.GetNamespaceMapper(cfg),
-		configProvider:    configProvider,
-		autoAssignOrgRole: autoAssignOrgRole,
+		logger:          logger,
+		namespaceMapper: request.GetNamespaceMapper(cfg),
+		configProvider:  configProvider,
+		config:          cfg,
 	}
 }
 
@@ -71,10 +67,8 @@ func (s *UserK8sService) getClient(ctx context.Context, namespace string) (dynam
 
 func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 	orgID := cmd.OrgID
-	if orgID == 0 || cmd.IsProvisioned {
-		if requester, err := identity.GetRequester(ctx); err == nil {
-			orgID = requester.GetOrgID()
-		}
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		orgID = requester.GetOrgID()
 	}
 
 	namespace := s.namespaceMapper(orgID)
@@ -91,8 +85,8 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 	}
 
 	role := cmd.DefaultOrgRole
-	if role == "" {
-		role = s.autoAssignOrgRole
+	if role == "" && s.config != nil {
+		role = s.config.AutoAssignOrgRole
 	}
 
 	if cmd.Email == "" {
