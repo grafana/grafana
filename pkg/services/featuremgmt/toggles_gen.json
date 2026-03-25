@@ -4216,7 +4216,8 @@
       "metadata": {
         "name": "rbacIAMClient",
         "resourceVersion": "1774034789603",
-        "creationTimestamp": "2026-03-20T19:26:29Z"
+        "creationTimestamp": "2026-03-20T19:26:29Z",
+        "deletionTimestamp": "2026-03-24T14:31:02Z"
       },
       "spec": {
         "description": "Enables the IAM client integration for fetching remote IAM global roles",

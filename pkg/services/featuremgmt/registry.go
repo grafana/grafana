@@ -2745,14 +2745,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "rbacIAMClient",
-			Description:  "Enables the IAM client integration for fetching remote IAM global roles",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "logsTablePanelNG",
 			Description:  "Enables the logs tableNG panel to replace existing tableRT",
 			Stage:        FeatureStageExperimental,
