@@ -18,10 +18,6 @@ import (
 
 const folderMetadataFileName = "_folder.json"
 
-func TestMain(m *testing.M) {
-	env.RunTestMain(m)
-}
-
 // TestIntegrationProvisioning_FixFolderMetadata_MissingFile verifies that the
 // fix-folder-metadata job creates _folder.json files for folders that don't
 // have them yet.
