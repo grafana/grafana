@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/tempo/pkg/tempopb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"google.golang.org/grpc/metadata"
 )
 
 const SearchPathPrefix = "search/"
