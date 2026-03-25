@@ -13,7 +13,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
 	"github.com/grafana/grafana/pkg/services/team"
+	teamsortopts "github.com/grafana/grafana/pkg/services/team/sortopts"
 	res "github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -23,6 +25,11 @@ const (
 	TeamResource      = "teams"
 	TeamResourceGroup = "iam.grafana.com"
 )
+
+var teamSortFieldMapping = map[string]string{
+	res.SEARCH_FIELD_TITLE: "name",
+	fmt.Sprintf("%s%s", res.SEARCH_FIELD_PREFIX, builders.TEAM_SEARCH_EMAIL): "email",
+}
 
 // LegacyTeamSearchClient is a client for searching for teams in the legacy search engine.
 type LegacyTeamSearchClient struct {
@@ -68,6 +75,7 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		Page:         int(req.Page),
 		Query:        req.Query,
 		OrgID:        signedInUser.GetOrgID(),
+		SortOpts:     legacysort.ConvertToSortOptions(req.SortBy, teamSortFieldMapping, teamsortopts.SortOptionsByQueryParam),
 	}
 
 	res, err := c.teamService.SearchTeams(ctx, query)

@@ -14,6 +14,7 @@ import {
   Resource,
   ResourceClient,
   ResourceForCreate,
+  ResourceList,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -21,6 +22,7 @@ import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisi
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { VERSIONS_FETCH_LIMIT } from '../types/revisionModels';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import {
@@ -180,13 +182,28 @@ export class K8sDashboardV2API
     };
   }
 
-  async listDashboardHistory(uid: string, options?: ListDashboardHistoryOptions) {
-    return this.client.list({
-      labelSelector: 'grafana.app/get-history=true',
-      fieldSelector: `metadata.name=${uid}`,
-      limit: options?.limit ?? 10,
-      continue: options?.continueToken,
-    });
+  async listDashboardHistory(
+    uid: string,
+    options?: ListDashboardHistoryOptions
+  ): Promise<ResourceList<DashboardV2Spec>> {
+    const limit = options?.limit ?? VERSIONS_FETCH_LIMIT;
+    let continueToken = options?.continueToken;
+    const items: Array<Resource<DashboardV2Spec>> = [];
+
+    let lastPage: ResourceList<DashboardV2Spec> | undefined;
+
+    do {
+      lastPage = await this.client.list({
+        labelSelector: 'grafana.app/get-history=true',
+        fieldSelector: `metadata.name=${uid}`,
+        limit: limit - items.length,
+        continue: continueToken,
+      });
+      items.push(...lastPage.items);
+      continueToken = lastPage.metadata.continue;
+    } while (items.length < limit && continueToken);
+
+    return { ...lastPage!, metadata: { ...lastPage!.metadata, continue: continueToken }, items };
   }
 
   async getDashboardHistoryVersions(uid: string, versions: number[]) {

@@ -1,6 +1,5 @@
 import { PanelPlugin, VizOrientation } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeSizing, BarGaugeValueMode } from '@grafana/schema';
 import { commonOptionsBuilder, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 
@@ -18,7 +17,7 @@ export const plugin = new PanelPlugin<Options>(BarGaugePanel)
     const category = [t('bargauge.category-bar-gauge', 'Bar gauge')];
     addStandardDataReduceOptions(builder);
     addOrientationOption(builder, category);
-    commonOptionsBuilder.addLegendOptions(builder, true, false, config.featureToggles.vizLegendSeriesLimit);
+    commonOptionsBuilder.addLegendOptions(builder, true, false);
     commonOptionsBuilder.addTextSizeOptions(builder, { withTitle: true, withValue: true });
 
     builder

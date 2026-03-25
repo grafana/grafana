@@ -129,17 +129,20 @@ export const browseDashboardsAPI = createApi({
           parentUid,
         },
       }),
-      onQueryStarted: ({ parentUid }, { queryFulfilled, dispatch }) => {
-        queryFulfilled.then(async ({ data: folder }) => {
-          dispatch(
-            refetchChildren({
-              parentUID: parentUid,
-              pageSize: PAGE_SIZE,
-            })
-          );
-          // Refetch quota usage after mutations that change the total number of dashboards or folders
-          invalidateQuotaUsage(dispatch);
-        });
+      onQueryStarted: async ({ parentUid }, { queryFulfilled, dispatch }) => {
+        try {
+          await queryFulfilled;
+        } catch {
+          return; // Error handled by mutation caller
+        }
+        dispatch(
+          refetchChildren({
+            parentUID: parentUid,
+            pageSize: PAGE_SIZE,
+          })
+        );
+        // Refetch quota usage after mutations that change the total number of dashboards or folders
+        invalidateQuotaUsage(dispatch);
       },
     }),
 

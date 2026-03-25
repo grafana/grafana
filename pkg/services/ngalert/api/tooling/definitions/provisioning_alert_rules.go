@@ -10,6 +10,8 @@ import (
 //
 // Get all the alert rules.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: ProvisionedAlertRules
 //       403: ForbiddenError
@@ -33,6 +35,8 @@ import (
 // swagger:route GET /v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
 //
 // Get a specific alert rule by UID.
+//
+// Deprecated: true
 //
 //     Responses:
 //       200: ProvisionedAlertRule
@@ -59,6 +63,8 @@ import (
 //
 // Create a new alert rule.
 //
+// Deprecated: true
+//
 //     Consumes:
 //     - application/json
 //
@@ -71,6 +77,8 @@ import (
 //
 // Update an existing alert rule.
 //
+// Deprecated: true
+//
 //     Consumes:
 //     - application/json
 //
@@ -82,6 +90,8 @@ import (
 // swagger:route DELETE /v1/provisioning/alert-rules/{UID} provisioning stable RouteDeleteAlertRule
 //
 // Delete a specific alert rule by UID.
+//
+// Deprecated: true
 //
 //     Responses:
 //       204: description: The alert rule was deleted successfully.
@@ -188,6 +198,8 @@ type ProvisionedAlertRule struct {
 //
 // Get a rule group.
 //
+// Deprecated: true
+//
 //     Responses:
 //       200: AlertRuleGroup
 //       403: ForbiddenError
@@ -196,6 +208,8 @@ type ProvisionedAlertRule struct {
 // swagger:route DELETE /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteDeleteAlertRuleGroup
 //
 // Delete rule group
+//
+// Deprecated: true
 //
 //     Responses:
 //       204: description: The alert rule group was deleted successfully.
@@ -221,6 +235,8 @@ type ProvisionedAlertRule struct {
 // swagger:route PUT /v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
 //
 // Create or update alert rule group.
+//
+// Deprecated: true
 //
 //     Consumes:
 //     - application/json
