@@ -1483,10 +1483,11 @@ spec:
 	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
 
 	// Clean up version-specific schemas and metadata
-	if b.gv.Version == "v1beta1" {
+	switch b.gv.Version {
+	case "v1beta1":
 		// For v1beta1, replace all v0alpha1 references with v1beta1 and remove old schemas
 		ReplaceOpenAPISpecVersion(oas, "provisioning", "v0alpha1", "v1beta1")
-	} else if b.gv.Version == "v0alpha1" {
+	case "v0alpha1":
 		// For v0alpha1, remove any v1beta1 schemas and filter GVK metadata
 		ReplaceOpenAPISpecVersion(oas, "provisioning", "v1beta1", "v0alpha1")
 	}
