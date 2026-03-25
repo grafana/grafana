@@ -7,7 +7,7 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
 
-func getGlobalVariableName(spec dashv2beta1.GlobalVariableSpec) string {
+func getVariableName(spec dashv2beta1.VariableSpec) string {
 	switch {
 	case spec.QueryVariableKind != nil:
 		return spec.QueryVariableKind.Spec.Name
@@ -32,7 +32,7 @@ func getGlobalVariableName(spec dashv2beta1.GlobalVariableSpec) string {
 	}
 }
 
-func countGlobalVariableKinds(spec dashv2beta1.GlobalVariableSpec) int {
+func countVariableKinds(spec dashv2beta1.VariableSpec) int {
 	count := 0
 	if spec.QueryVariableKind != nil {
 		count++
@@ -64,16 +64,16 @@ func countGlobalVariableKinds(spec dashv2beta1.GlobalVariableSpec) int {
 	return count
 }
 
-func validateGlobalVariable(globalVariable *dashv2beta1.GlobalVariable) error {
-	if globalVariable == nil {
-		return fmt.Errorf("global variable payload is required")
+func validateVariable(variable *dashv2beta1.Variable) error {
+	if variable == nil {
+		return fmt.Errorf("variable payload is required")
 	}
 
-	if countGlobalVariableKinds(globalVariable.Spec) != 1 {
-		return fmt.Errorf("global variable spec must include exactly one variable kind")
+	if countVariableKinds(variable.Spec) != 1 {
+		return fmt.Errorf("variable spec must include exactly one variable kind")
 	}
 
-	name := getGlobalVariableName(globalVariable.Spec)
+	name := getVariableName(variable.Spec)
 	if name == "" {
 		return fmt.Errorf("variable name must not be empty")
 	}

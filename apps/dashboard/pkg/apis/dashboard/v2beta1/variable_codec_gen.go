@@ -11,18 +11,18 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
-// GlobalVariableJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
-type GlobalVariableJSONCodec struct{}
+// VariableJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding
+type VariableJSONCodec struct{}
 
 // Read reads JSON-encoded bytes from `reader` and unmarshals them into `into`
-func (*GlobalVariableJSONCodec) Read(reader io.Reader, into resource.Object) error {
+func (*VariableJSONCodec) Read(reader io.Reader, into resource.Object) error {
 	return json.NewDecoder(reader).Decode(into)
 }
 
 // Write writes JSON-encoded bytes into `writer` marshaled from `from`
-func (*GlobalVariableJSONCodec) Write(writer io.Writer, from resource.Object) error {
+func (*VariableJSONCodec) Write(writer io.Writer, from resource.Object) error {
 	return json.NewEncoder(writer).Encode(from)
 }
 
 // Interface compliance checks
-var _ resource.Codec = &GlobalVariableJSONCodec{}
+var _ resource.Codec = &VariableJSONCodec{}

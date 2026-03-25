@@ -30,8 +30,8 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	switch a.GetResource().Resource {
 	case dashboardV0.DASHBOARD_RESOURCE:
 		return b.mutateDashboard(ctx, a)
-	case dashboardV2beta1.GlobalVariableResourceInfo.GroupVersionResource().Resource:
-		return mutateGlobalVariable(a)
+	case dashboardV2beta1.VariableResourceInfo.GroupVersionResource().Resource:
+		return mutateVariable(a)
 
 	case dashboardV0.LIBRARY_PANEL_RESOURCE:
 		return nil // nothing needed
@@ -135,28 +135,28 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 	return nil
 }
 
-func mutateGlobalVariable(a admission.Attributes) error {
-	globalVariable, ok := a.GetObject().(*dashboardV2beta1.GlobalVariable)
+func mutateVariable(a admission.Attributes) error {
+	variable, ok := a.GetObject().(*dashboardV2beta1.Variable)
 	if !ok {
-		return fmt.Errorf("mutation error: expected global variable, got %T", a.GetObject())
+		return fmt.Errorf("mutation error: expected variable, got %T", a.GetObject())
 	}
 
-	meta, err := utils.MetaAccessor(globalVariable)
+	meta, err := utils.MetaAccessor(variable)
 	if err != nil {
 		return err
 	}
 
-	labels := globalVariable.GetLabels()
+	labels := variable.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)
 	}
 
 	if folderUID := meta.GetFolder(); folderUID != "" {
-		labels[globalVariableFolderLabelKey] = folderUID
+		labels[variableFolderLabelKey] = folderUID
 	} else {
-		delete(labels, globalVariableFolderLabelKey)
+		delete(labels, variableFolderLabelKey)
 	}
-	globalVariable.SetLabels(labels)
+	variable.SetLabels(labels)
 
 	return nil
 }

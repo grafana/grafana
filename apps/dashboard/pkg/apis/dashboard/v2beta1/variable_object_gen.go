@@ -15,26 +15,26 @@ import (
 )
 
 // +k8s:openapi-gen=true
-type GlobalVariable struct {
+type Variable struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
 
-	// Spec is the spec of the GlobalVariable
-	Spec GlobalVariableSpec `json:"spec" yaml:"spec"`
+	// Spec is the spec of the Variable
+	Spec VariableSpec `json:"spec" yaml:"spec"`
 }
 
-func NewGlobalVariable() *GlobalVariable {
-	return &GlobalVariable{
-		Spec: *NewGlobalVariableSpec(),
+func NewVariable() *Variable {
+	return &Variable{
+		Spec: *NewVariableSpec(),
 	}
 }
 
-func (o *GlobalVariable) GetSpec() any {
+func (o *Variable) GetSpec() any {
 	return o.Spec
 }
 
-func (o *GlobalVariable) SetSpec(spec any) error {
-	cast, ok := spec.(GlobalVariableSpec)
+func (o *Variable) SetSpec(spec any) error {
+	cast, ok := spec.(VariableSpec)
 	if !ok {
 		return fmt.Errorf("cannot set spec type %#v, not of type Spec", spec)
 	}
@@ -42,25 +42,25 @@ func (o *GlobalVariable) SetSpec(spec any) error {
 	return nil
 }
 
-func (o *GlobalVariable) GetSubresources() map[string]any {
+func (o *Variable) GetSubresources() map[string]any {
 	return map[string]any{}
 }
 
-func (o *GlobalVariable) GetSubresource(name string) (any, bool) {
+func (o *Variable) GetSubresource(name string) (any, bool) {
 	switch name {
 	default:
 		return nil, false
 	}
 }
 
-func (o *GlobalVariable) SetSubresource(name string, value any) error {
+func (o *Variable) SetSubresource(name string, value any) error {
 	switch name {
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
 	}
 }
 
-func (o *GlobalVariable) GetStaticMetadata() resource.StaticMetadata {
+func (o *Variable) GetStaticMetadata() resource.StaticMetadata {
 	gvk := o.GroupVersionKind()
 	return resource.StaticMetadata{
 		Name:      o.ObjectMeta.Name,
@@ -71,7 +71,7 @@ func (o *GlobalVariable) GetStaticMetadata() resource.StaticMetadata {
 	}
 }
 
-func (o *GlobalVariable) SetStaticMetadata(metadata resource.StaticMetadata) {
+func (o *Variable) SetStaticMetadata(metadata resource.StaticMetadata) {
 	o.Name = metadata.Name
 	o.Namespace = metadata.Namespace
 	o.SetGroupVersionKind(schema.GroupVersionKind{
@@ -81,7 +81,7 @@ func (o *GlobalVariable) SetStaticMetadata(metadata resource.StaticMetadata) {
 	})
 }
 
-func (o *GlobalVariable) GetCommonMetadata() resource.CommonMetadata {
+func (o *Variable) GetCommonMetadata() resource.CommonMetadata {
 	dt := o.DeletionTimestamp
 	var deletionTimestamp *time.Time
 	if dt != nil {
@@ -113,7 +113,7 @@ func (o *GlobalVariable) GetCommonMetadata() resource.CommonMetadata {
 	}
 }
 
-func (o *GlobalVariable) SetCommonMetadata(metadata resource.CommonMetadata) {
+func (o *Variable) SetCommonMetadata(metadata resource.CommonMetadata) {
 	o.UID = types.UID(metadata.UID)
 	o.ResourceVersion = metadata.ResourceVersion
 	o.Generation = metadata.Generation
@@ -158,7 +158,7 @@ func (o *GlobalVariable) SetCommonMetadata(metadata resource.CommonMetadata) {
 	}
 }
 
-func (o *GlobalVariable) GetCreatedBy() string {
+func (o *Variable) GetCreatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -166,7 +166,7 @@ func (o *GlobalVariable) GetCreatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/createdBy"]
 }
 
-func (o *GlobalVariable) SetCreatedBy(createdBy string) {
+func (o *Variable) SetCreatedBy(createdBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -174,7 +174,7 @@ func (o *GlobalVariable) SetCreatedBy(createdBy string) {
 	o.ObjectMeta.Annotations["grafana.com/createdBy"] = createdBy
 }
 
-func (o *GlobalVariable) GetUpdateTimestamp() time.Time {
+func (o *Variable) GetUpdateTimestamp() time.Time {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -183,7 +183,7 @@ func (o *GlobalVariable) GetUpdateTimestamp() time.Time {
 	return parsed
 }
 
-func (o *GlobalVariable) SetUpdateTimestamp(updateTimestamp time.Time) {
+func (o *Variable) SetUpdateTimestamp(updateTimestamp time.Time) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -191,7 +191,7 @@ func (o *GlobalVariable) SetUpdateTimestamp(updateTimestamp time.Time) {
 	o.ObjectMeta.Annotations["grafana.com/updateTimestamp"] = updateTimestamp.Format(time.RFC3339)
 }
 
-func (o *GlobalVariable) GetUpdatedBy() string {
+func (o *Variable) GetUpdatedBy() string {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -199,7 +199,7 @@ func (o *GlobalVariable) GetUpdatedBy() string {
 	return o.ObjectMeta.Annotations["grafana.com/updatedBy"]
 }
 
-func (o *GlobalVariable) SetUpdatedBy(updatedBy string) {
+func (o *Variable) SetUpdatedBy(updatedBy string) {
 	if o.ObjectMeta.Annotations == nil {
 		o.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -207,60 +207,60 @@ func (o *GlobalVariable) SetUpdatedBy(updatedBy string) {
 	o.ObjectMeta.Annotations["grafana.com/updatedBy"] = updatedBy
 }
 
-func (o *GlobalVariable) Copy() resource.Object {
+func (o *Variable) Copy() resource.Object {
 	return resource.CopyObject(o)
 }
 
-func (o *GlobalVariable) DeepCopyObject() runtime.Object {
+func (o *Variable) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *GlobalVariable) DeepCopy() *GlobalVariable {
-	cpy := &GlobalVariable{}
+func (o *Variable) DeepCopy() *Variable {
+	cpy := &Variable{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *GlobalVariable) DeepCopyInto(dst *GlobalVariable) {
+func (o *Variable) DeepCopyInto(dst *Variable) {
 	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
 	dst.TypeMeta.Kind = o.TypeMeta.Kind
 	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
 	o.Spec.DeepCopyInto(&dst.Spec)
 }
 
-func (GlobalVariable) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.GlobalVariable"
+func (Variable) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.Variable"
 }
 
 // Interface compliance compile-time check
-var _ resource.Object = &GlobalVariable{}
+var _ resource.Object = &Variable{}
 
 // +k8s:openapi-gen=true
-type GlobalVariableList struct {
+type VariableList struct {
 	metav1.TypeMeta `json:",inline" yaml:",inline"`
 	metav1.ListMeta `json:"metadata" yaml:"metadata"`
-	Items           []GlobalVariable `json:"items" yaml:"items"`
+	Items           []Variable `json:"items" yaml:"items"`
 }
 
-func (o *GlobalVariableList) DeepCopyObject() runtime.Object {
+func (o *VariableList) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
-func (o *GlobalVariableList) Copy() resource.ListObject {
-	cpy := &GlobalVariableList{
+func (o *VariableList) Copy() resource.ListObject {
+	cpy := &VariableList{
 		TypeMeta: o.TypeMeta,
-		Items:    make([]GlobalVariable, len(o.Items)),
+		Items:    make([]Variable, len(o.Items)),
 	}
 	o.ListMeta.DeepCopyInto(&cpy.ListMeta)
 	for i := 0; i < len(o.Items); i++ {
-		if item, ok := o.Items[i].Copy().(*GlobalVariable); ok {
+		if item, ok := o.Items[i].Copy().(*Variable); ok {
 			cpy.Items[i] = *item
 		}
 	}
 	return cpy
 }
 
-func (o *GlobalVariableList) GetItems() []resource.Object {
+func (o *VariableList) GetItems() []resource.Object {
 	items := make([]resource.Object, len(o.Items))
 	for i := 0; i < len(o.Items); i++ {
 		items[i] = &o.Items[i]
@@ -268,40 +268,40 @@ func (o *GlobalVariableList) GetItems() []resource.Object {
 	return items
 }
 
-func (o *GlobalVariableList) SetItems(items []resource.Object) {
-	o.Items = make([]GlobalVariable, len(items))
+func (o *VariableList) SetItems(items []resource.Object) {
+	o.Items = make([]Variable, len(items))
 	for i := 0; i < len(items); i++ {
-		o.Items[i] = *items[i].(*GlobalVariable)
+		o.Items[i] = *items[i].(*Variable)
 	}
 }
 
-func (o *GlobalVariableList) DeepCopy() *GlobalVariableList {
-	cpy := &GlobalVariableList{}
+func (o *VariableList) DeepCopy() *VariableList {
+	cpy := &VariableList{}
 	o.DeepCopyInto(cpy)
 	return cpy
 }
 
-func (o *GlobalVariableList) DeepCopyInto(dst *GlobalVariableList) {
+func (o *VariableList) DeepCopyInto(dst *VariableList) {
 	resource.CopyObjectInto(dst, o)
 }
 
-func (GlobalVariableList) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.GlobalVariableList"
+func (VariableList) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.VariableList"
 }
 
 // Interface compliance compile-time check
-var _ resource.ListObject = &GlobalVariableList{}
+var _ resource.ListObject = &VariableList{}
 
 // Copy methods for all subresource types
 
 // DeepCopy creates a full deep copy of Spec
-func (s *GlobalVariableSpec) DeepCopy() *GlobalVariableSpec {
-	cpy := &GlobalVariableSpec{}
+func (s *VariableSpec) DeepCopy() *VariableSpec {
+	cpy := &VariableSpec{}
 	s.DeepCopyInto(cpy)
 	return cpy
 }
 
 // DeepCopyInto deep copies Spec into another Spec object
-func (s *GlobalVariableSpec) DeepCopyInto(dst *GlobalVariableSpec) {
+func (s *VariableSpec) DeepCopyInto(dst *VariableSpec) {
 	resource.CopyObjectInto(dst, s)
 }

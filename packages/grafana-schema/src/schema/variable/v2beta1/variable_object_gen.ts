@@ -39,7 +39,7 @@ export interface ManagedFieldsEntry {
     subresource?: string;
 }
 
-export interface GlobalVariable {
+export interface Variable {
     kind: string;
     apiVersion: string;
     metadata: Metadata;

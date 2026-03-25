@@ -18,7 +18,7 @@ import (
 
 const folderLabelSelectorKey = "dashboard.grafana.app/folder"
 
-func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
+func TestIntegrationVariablesV2beta1(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -31,26 +31,26 @@ func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 	ctx := context.Background()
 	admin := helper.Org1.Admin
 
-	globalVariableClient := helper.GetResourceClient(apis.ResourceClientArgs{
+	variableClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: admin,
-		GVR:  dashv2beta1.GlobalVariableResourceInfo.GroupVersionResource(),
+		GVR:  dashv2beta1.VariableResourceInfo.GroupVersionResource(),
 	})
 	folderClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: admin,
 		GVR:  foldersV1.FolderResourceInfo.GroupVersionResource(),
 	})
 
-	listRsp, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{})
+	listRsp, err := variableClient.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Empty(t, listRsp.Items)
 
-	rootVariable := buildGlobalVariableObject("global-region", "region", "")
-	createdRootVariable, err := globalVariableClient.Resource.Create(ctx, rootVariable, metav1.CreateOptions{})
+	rootVariable := buildVariableObject("global-region", "region", "")
+	createdRootVariable, err := variableClient.Resource.Create(ctx, rootVariable, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "global-region", createdRootVariable.GetName())
 
 	createdRootVariable.Object["spec"].(map[string]any)["spec"].(map[string]any)["query"] = "us-east-1,us-west-2,eu-west-1"
-	updatedRootVariable, err := globalVariableClient.Resource.Update(ctx, createdRootVariable, metav1.UpdateOptions{})
+	updatedRootVariable, err := variableClient.Resource.Update(ctx, createdRootVariable, metav1.UpdateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "us-east-1,us-west-2,eu-west-1", updatedRootVariable.Object["spec"].(map[string]any)["spec"].(map[string]any)["query"])
 
@@ -62,32 +62,32 @@ func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 	createdFolder2, err := folderClient.Resource.Create(ctx, folder2, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	folderVariable := buildGlobalVariableObject("folder-region", "region", createdFolder1.GetName())
-	createdFolderVariable, err := globalVariableClient.Resource.Create(ctx, folderVariable, metav1.CreateOptions{})
+	folderVariable := buildVariableObject("folder-region", "region", createdFolder1.GetName())
+	createdFolderVariable, err := variableClient.Resource.Create(ctx, folderVariable, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "folder-region", createdFolderVariable.GetName())
 	require.Equal(t, createdFolder1.GetName(), createdFolderVariable.GetAnnotations()[utils.AnnoKeyFolder])
 
-	duplicateGlobalVariable := buildGlobalVariableObject("global-region-duplicate", "region", "")
-	_, err = globalVariableClient.Resource.Create(ctx, duplicateGlobalVariable, metav1.CreateOptions{})
+	duplicateVariable := buildVariableObject("global-region-duplicate", "region", "")
+	_, err = variableClient.Resource.Create(ctx, duplicateVariable, metav1.CreateOptions{})
 	require.Error(t, err)
 
-	duplicateFolderVariable := buildGlobalVariableObject("folder-region-duplicate", "region", createdFolder1.GetName())
-	_, err = globalVariableClient.Resource.Create(ctx, duplicateFolderVariable, metav1.CreateOptions{})
+	duplicateFolderVariable := buildVariableObject("folder-region-duplicate", "region", createdFolder1.GetName())
+	_, err = variableClient.Resource.Create(ctx, duplicateFolderVariable, metav1.CreateOptions{})
 	require.Error(t, err)
 
-	folderVariableInDifferentFolder := buildGlobalVariableObject("folder-region-folder2", "region", createdFolder2.GetName())
-	createdFolderVariableInDifferentFolder, err := globalVariableClient.Resource.Create(ctx, folderVariableInDifferentFolder, metav1.CreateOptions{})
+	folderVariableInDifferentFolder := buildVariableObject("folder-region-folder2", "region", createdFolder2.GetName())
+	createdFolderVariableInDifferentFolder, err := variableClient.Resource.Create(ctx, folderVariableInDifferentFolder, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "folder-region-folder2", createdFolderVariableInDifferentFolder.GetName())
 
-	serviceVariable := buildGlobalVariableObject("global-service", "service", "")
-	createdServiceVariable, err := globalVariableClient.Resource.Create(ctx, serviceVariable, metav1.CreateOptions{})
+	serviceVariable := buildVariableObject("global-service", "service", "")
+	createdServiceVariable, err := variableClient.Resource.Create(ctx, serviceVariable, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "global-service", createdServiceVariable.GetName())
 
-	t.Run("should filter by global variable spec name", func(t *testing.T) {
-		list, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{
+	t.Run("should filter by variable spec name", func(t *testing.T) {
+		list, err := variableClient.Resource.List(ctx, metav1.ListOptions{
 			FieldSelector: "spec.spec.name=service",
 		})
 		require.NoError(t, err)
@@ -96,7 +96,7 @@ func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 	})
 
 	t.Run("should filter by multiple field selectors", func(t *testing.T) {
-		list, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{
+		list, err := variableClient.Resource.List(ctx, metav1.ListOptions{
 			FieldSelector: "metadata.name=global-service,spec.spec.name=service",
 		})
 		require.NoError(t, err)
@@ -105,7 +105,7 @@ func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 	})
 
 	t.Run("should return empty when spec name filter does not match", func(t *testing.T) {
-		list, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{
+		list, err := variableClient.Resource.List(ctx, metav1.ListOptions{
 			FieldSelector: "spec.spec.name=does-not-exist",
 		})
 		require.NoError(t, err)
@@ -113,7 +113,7 @@ func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 	})
 
 	t.Run("should filter by folder label and spec name in a single call", func(t *testing.T) {
-		list, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{
+		list, err := variableClient.Resource.List(ctx, metav1.ListOptions{
 			FieldSelector: "spec.spec.name=region",
 			LabelSelector: folderLabelSelectorKey + "=" + createdFolder1.GetName(),
 		})
@@ -125,25 +125,25 @@ func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 	annotations := createdFolderVariable.GetAnnotations()
 	annotations[utils.AnnoKeyFolder] = createdFolder2.GetName()
 	createdFolderVariable.SetAnnotations(annotations)
-	_, err = globalVariableClient.Resource.Update(ctx, createdFolderVariable, metav1.UpdateOptions{})
+	_, err = variableClient.Resource.Update(ctx, createdFolderVariable, metav1.UpdateOptions{})
 	require.Error(t, err)
 
-	err = globalVariableClient.Resource.Delete(ctx, createdFolderVariableInDifferentFolder.GetName(), metav1.DeleteOptions{})
+	err = variableClient.Resource.Delete(ctx, createdFolderVariableInDifferentFolder.GetName(), metav1.DeleteOptions{})
 	require.NoError(t, err)
 
-	movedFolderVariable, err := globalVariableClient.Resource.Update(ctx, createdFolderVariable, metav1.UpdateOptions{})
+	movedFolderVariable, err := variableClient.Resource.Update(ctx, createdFolderVariable, metav1.UpdateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, createdFolder2.GetName(), movedFolderVariable.GetAnnotations()[utils.AnnoKeyFolder])
 
 	t.Run("should reflect folder move in label selector results", func(t *testing.T) {
-		oldFolderList, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{
+		oldFolderList, err := variableClient.Resource.List(ctx, metav1.ListOptions{
 			FieldSelector: "spec.spec.name=region",
 			LabelSelector: folderLabelSelectorKey + "=" + createdFolder1.GetName(),
 		})
 		require.NoError(t, err)
 		require.Empty(t, oldFolderList.Items)
 
-		newFolderList, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{
+		newFolderList, err := variableClient.Resource.List(ctx, metav1.ListOptions{
 			FieldSelector: "spec.spec.name=region",
 			LabelSelector: folderLabelSelectorKey + "=" + createdFolder2.GetName(),
 		})
@@ -155,18 +155,18 @@ func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 	annotations = movedFolderVariable.GetAnnotations()
 	annotations[utils.AnnoKeyFolder] = "non-existent-folder"
 	movedFolderVariable.SetAnnotations(annotations)
-	_, err = globalVariableClient.Resource.Update(ctx, movedFolderVariable, metav1.UpdateOptions{})
+	_, err = variableClient.Resource.Update(ctx, movedFolderVariable, metav1.UpdateOptions{})
 	require.Error(t, err)
 
-	invalidFolderVariable := buildGlobalVariableObject("service-missing-folder", "service", "missing-folder")
-	_, err = globalVariableClient.Resource.Create(ctx, invalidFolderVariable, metav1.CreateOptions{})
+	invalidFolderVariable := buildVariableObject("service-missing-folder", "service", "missing-folder")
+	_, err = variableClient.Resource.Create(ctx, invalidFolderVariable, metav1.CreateOptions{})
 	require.Error(t, err)
 
-	err = globalVariableClient.Resource.Delete(ctx, "global-region", metav1.DeleteOptions{})
+	err = variableClient.Resource.Delete(ctx, "global-region", metav1.DeleteOptions{})
 	require.NoError(t, err)
-	err = globalVariableClient.Resource.Delete(ctx, "folder-region", metav1.DeleteOptions{})
+	err = variableClient.Resource.Delete(ctx, "folder-region", metav1.DeleteOptions{})
 	require.NoError(t, err)
-	err = globalVariableClient.Resource.Delete(ctx, "global-service", metav1.DeleteOptions{})
+	err = variableClient.Resource.Delete(ctx, "global-service", metav1.DeleteOptions{})
 	require.NoError(t, err)
 }
 
@@ -186,7 +186,7 @@ func buildFolderObject(namespace string, title string) *unstructured.Unstructure
 	}
 }
 
-func buildGlobalVariableObject(metadataName string, variableName string, folderUID string) *unstructured.Unstructured {
+func buildVariableObject(metadataName string, variableName string, folderUID string) *unstructured.Unstructured {
 	annotations := map[string]any{}
 	if folderUID != "" {
 		annotations[utils.AnnoKeyFolder] = folderUID
@@ -194,8 +194,8 @@ func buildGlobalVariableObject(metadataName string, variableName string, folderU
 
 	return &unstructured.Unstructured{
 		Object: map[string]any{
-			"apiVersion": dashv2beta1.GlobalVariableResourceInfo.GroupVersion().String(),
-			"kind":       dashv2beta1.GlobalVariableResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashv2beta1.VariableResourceInfo.GroupVersion().String(),
+			"kind":       dashv2beta1.VariableResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]any{
 				"name":        metadataName,
 				"annotations": annotations,

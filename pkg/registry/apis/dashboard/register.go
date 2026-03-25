@@ -88,7 +88,7 @@ type simpleFolderClientProvider struct {
 	handler client.K8sHandler
 }
 
-type simpleGlobalVariableClientProvider struct {
+type simpleVariableClientProvider struct {
 	handler client.K8sHandler
 }
 
@@ -96,15 +96,15 @@ func newSimpleFolderClientProvider(handler client.K8sHandler) client.K8sHandlerP
 	return &simpleFolderClientProvider{handler: handler}
 }
 
-func newSimpleGlobalVariableClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
-	return &simpleGlobalVariableClientProvider{handler: handler}
+func newSimpleVariableClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
+	return &simpleVariableClientProvider{handler: handler}
 }
 
 func (p *simpleFolderClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
 	return p.handler
 }
 
-func (p *simpleGlobalVariableClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
+func (p *simpleVariableClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
 	return p.handler
 }
 
@@ -129,7 +129,7 @@ type DashboardsAPIBuilder struct {
 	minRefreshInterval           string
 	dualWriter                   dualwrite.Service
 	folderClientProvider         client.K8sHandlerProvider
-	globalVariableClientProvider client.K8sHandlerProvider
+	variableClientProvider client.K8sHandlerProvider
 	libraryPanels                libraryelements.Service // for legacy library panels
 	publicDashboardService       publicdashboards.Service
 	snapshotService              dashboardsnapshots.Service
@@ -178,7 +178,7 @@ func RegisterAPIService(
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
-	globalVariableClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), dashv2beta1.GlobalVariableResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
+	variableClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), dashv2beta1.VariableResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
 		SnapshotsEnabled:     cfg.SnapshotEnabled,
@@ -203,7 +203,7 @@ func RegisterAPIService(
 		minRefreshInterval:           cfg.MinRefreshInterval,
 		dualWriter:                   dual,
 		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
-		globalVariableClientProvider: newSimpleGlobalVariableClientProvider(globalVariableClient),
+		variableClientProvider:       newSimpleVariableClientProvider(variableClient),
 		libraryPanels:                libraryPanels,
 		publicDashboardService:       publicDashboardService,
 		snapshotService:              snapshotService,
@@ -293,13 +293,13 @@ func (b *DashboardsAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	}
 
 	if err := scheme.AddFieldLabelConversionFunc(
-		dashv2beta1.GlobalVariableResourceInfo.GroupVersionKind(),
+		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
 		func(label, value string) (string, string, error) {
 			switch label {
 			case "metadata.name", "metadata.namespace", "spec.spec.name":
 				return label, value, nil
 			default:
-				return "", "", fmt.Errorf("field label not supported for GlobalVariable: %s", label)
+				return "", "", fmt.Errorf("field label not supported for Variable: %s", label)
 			}
 		},
 	); err != nil {
@@ -344,12 +344,12 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		return nil // OK for now
 	case dashv0.SNAPSHOT_RESOURCE:
 		return nil // OK for now
-	case dashv2beta1.GlobalVariableResourceInfo.GroupVersionResource().Resource:
+	case dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource:
 		switch op {
 		case admission.Create:
-			return b.validateGlobalVariableCreate(ctx, a)
+			return b.validateVariableCreate(ctx, a)
 		case admission.Update:
-			return b.validateGlobalVariableUpdate(ctx, a)
+			return b.validateVariableUpdate(ctx, a)
 		case admission.Delete, admission.Connect:
 			return nil
 		}
@@ -537,19 +537,19 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	return nil
 }
 
-func (b *DashboardsAPIBuilder) validateGlobalVariableCreate(ctx context.Context, a admission.Attributes) error {
-	globalVariable, ok := a.GetObject().(*dashv2beta1.GlobalVariable)
+func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a admission.Attributes) error {
+	variable, ok := a.GetObject().(*dashv2beta1.Variable)
 	if !ok {
-		return fmt.Errorf("unsupported global variable version: %T", a.GetObject())
+		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
 	}
 
-	if err := validateGlobalVariable(globalVariable); err != nil {
+	if err := validateVariable(variable); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	accessor, err := utils.MetaAccessor(globalVariable)
+	accessor, err := utils.MetaAccessor(variable)
 	if err != nil {
-		return fmt.Errorf("error getting global variable meta accessor: %w", err)
+		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
 	if !a.IsDryRun() && accessor.GetFolder() != "" {
@@ -569,7 +569,7 @@ func (b *DashboardsAPIBuilder) validateGlobalVariableCreate(ctx context.Context,
 			namespace = a.GetNamespace()
 		}
 
-		if err := b.validateGlobalVariableNameUniqueness(ctx, namespace, globalVariable, globalVariable.GetName()); err != nil {
+		if err := b.validateVariableNameUniqueness(ctx, namespace, variable, variable.GetName()); err != nil {
 			return apierrors.NewBadRequest(err.Error())
 		}
 	}
@@ -577,29 +577,29 @@ func (b *DashboardsAPIBuilder) validateGlobalVariableCreate(ctx context.Context,
 	return nil
 }
 
-func (b *DashboardsAPIBuilder) validateGlobalVariableUpdate(ctx context.Context, a admission.Attributes) error {
-	newGlobalVariable, ok := a.GetObject().(*dashv2beta1.GlobalVariable)
+func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a admission.Attributes) error {
+	newVariable, ok := a.GetObject().(*dashv2beta1.Variable)
 	if !ok {
-		return fmt.Errorf("unsupported global variable version: %T", a.GetObject())
+		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
 	}
 
-	oldGlobalVariable, ok := a.GetOldObject().(*dashv2beta1.GlobalVariable)
+	oldVariable, ok := a.GetOldObject().(*dashv2beta1.Variable)
 	if !ok {
-		return fmt.Errorf("unsupported old global variable version: %T", a.GetOldObject())
+		return fmt.Errorf("unsupported old variable version: %T", a.GetOldObject())
 	}
 
-	if err := validateGlobalVariable(newGlobalVariable); err != nil {
+	if err := validateVariable(newVariable); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	oldAccessor, err := utils.MetaAccessor(oldGlobalVariable)
+	oldAccessor, err := utils.MetaAccessor(oldVariable)
 	if err != nil {
-		return fmt.Errorf("error getting old global variable meta accessor: %w", err)
+		return fmt.Errorf("error getting old variable meta accessor: %w", err)
 	}
 
-	newAccessor, err := utils.MetaAccessor(newGlobalVariable)
+	newAccessor, err := utils.MetaAccessor(newVariable)
 	if err != nil {
-		return fmt.Errorf("error getting new global variable meta accessor: %w", err)
+		return fmt.Errorf("error getting new variable meta accessor: %w", err)
 	}
 
 	if !a.IsDryRun() && newAccessor.GetFolder() != oldAccessor.GetFolder() && newAccessor.GetFolder() != "" {
@@ -628,7 +628,7 @@ func (b *DashboardsAPIBuilder) validateGlobalVariableUpdate(ctx context.Context,
 			namespace = a.GetNamespace()
 		}
 
-		if err := b.validateGlobalVariableNameUniqueness(ctx, namespace, newGlobalVariable, newGlobalVariable.GetName()); err != nil {
+		if err := b.validateVariableNameUniqueness(ctx, namespace, newVariable, newVariable.GetName()); err != nil {
 			return apierrors.NewBadRequest(err.Error())
 		}
 	}
@@ -825,16 +825,16 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	}
 
 	if b.features.IsEnabledGlobally(featuremgmt.FlagGlobalDashboardVariables) {
-		opts.StorageOptsRegister(dashv2beta1.GlobalVariableResourceInfo.GroupResource(), apistore.StorageOptions{
+		opts.StorageOptsRegister(dashv2beta1.VariableResourceInfo.GroupResource(), apistore.StorageOptions{
 			EnableFolderSupport: true,
 		})
 
 		gvStore, err := grafanaregistry.NewRegistryStoreWithSelectableFields(
 			opts.Scheme,
-			dashv2beta1.GlobalVariableResourceInfo,
+			dashv2beta1.VariableResourceInfo,
 			opts.OptsGetter,
 			grafanaregistry.SelectableFieldsOptions{
-				GetAttrs: GlobalVariableGetAttrs,
+				GetAttrs: VariableGetAttrs,
 			},
 		)
 		if err != nil {
@@ -842,7 +842,7 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		}
 
 		storage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
-		storage[dashv2beta1.GlobalVariableResourceInfo.StoragePath()] = gvStore
+		storage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 	}
 
 	return nil

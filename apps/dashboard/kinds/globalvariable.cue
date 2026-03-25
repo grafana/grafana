@@ -5,8 +5,8 @@ import (
 )
 
 globalVariableV2beta1: {
-	kind:       "GlobalVariable"
-	pluralName: "GlobalVariables"
+	kind:       "Variable"
+	pluralName: "Variables"
 	selectableFields: [
 		"spec.spec.name",
 	]

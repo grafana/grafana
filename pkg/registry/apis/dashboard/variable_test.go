@@ -12,48 +12,48 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
 
-func TestValidateGlobalVariable(t *testing.T) {
+func TestValidateVariable(t *testing.T) {
 	t.Run("valid custom variable", func(t *testing.T) {
-		gv := newCustomGlobalVariable("region", "region")
-		require.NoError(t, validateGlobalVariable(gv))
+		v := newCustomVariable("region", "region")
+		require.NoError(t, validateVariable(v))
 	})
 
 	t.Run("metadata and spec names can differ", func(t *testing.T) {
-		gv := newCustomGlobalVariable("region", "env")
-		require.NoError(t, validateGlobalVariable(gv))
+		v := newCustomVariable("region", "env")
+		require.NoError(t, validateVariable(v))
 	})
 
 	t.Run("empty variable name is rejected", func(t *testing.T) {
-		gv := newCustomGlobalVariable("", "")
-		require.ErrorContains(t, validateGlobalVariable(gv), "variable name must not be empty")
+		v := newCustomVariable("", "")
+		require.ErrorContains(t, validateVariable(v), "variable name must not be empty")
 	})
 
 	t.Run("reserved prefix is rejected", func(t *testing.T) {
-		gv := newCustomGlobalVariable("__region", "__region")
-		require.ErrorContains(t, validateGlobalVariable(gv), "must not start with '__'")
+		v := newCustomVariable("__region", "__region")
+		require.ErrorContains(t, validateVariable(v), "must not start with '__'")
 	})
 
 	t.Run("multiple variable kinds are rejected", func(t *testing.T) {
-		gv := newCustomGlobalVariable("region", "region")
+		v := newCustomVariable("region", "region")
 		queryVariable := dashv2beta1.NewDashboardQueryVariableKind()
 		queryVariable.Spec.Name = "region"
-		gv.Spec.QueryVariableKind = queryVariable
+		v.Spec.QueryVariableKind = queryVariable
 
-		require.ErrorContains(t, validateGlobalVariable(gv), "exactly one variable kind")
+		require.ErrorContains(t, validateVariable(v), "exactly one variable kind")
 	})
 }
 
-func TestDashboardsAPIBuilderValidateGlobalVariable(t *testing.T) {
+func TestDashboardsAPIBuilderValidateVariable(t *testing.T) {
 	builder := &DashboardsAPIBuilder{}
-	gv := newCustomGlobalVariable("region", "region")
+	v := newCustomVariable("region", "region")
 
 	err := builder.Validate(context.Background(), admission.NewAttributesRecord(
-		gv,
+		v,
 		nil,
-		dashv2beta1.GlobalVariableResourceInfo.GroupVersionKind(),
+		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
 		"stacks-1",
-		gv.GetName(),
-		dashv2beta1.GlobalVariableResourceInfo.GroupVersionResource(),
+		v.GetName(),
+		dashv2beta1.VariableResourceInfo.GroupVersionResource(),
 		"",
 		admission.Create,
 		&metav1.CreateOptions{},
@@ -64,14 +64,14 @@ func TestDashboardsAPIBuilderValidateGlobalVariable(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func newCustomGlobalVariable(variableName, metadataName string) *dashv2beta1.GlobalVariable {
+func newCustomVariable(variableName, metadataName string) *dashv2beta1.Variable {
 	customVariable := dashv2beta1.NewDashboardCustomVariableKind()
 	customVariable.Spec.Name = variableName
 
-	spec := dashv2beta1.NewGlobalVariableSpec()
+	spec := dashv2beta1.NewVariableSpec()
 	spec.CustomVariableKind = customVariable
 
-	return &dashv2beta1.GlobalVariable{
+	return &dashv2beta1.Variable{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: metadataName,
 		},
@@ -79,15 +79,15 @@ func newCustomGlobalVariable(variableName, metadataName string) *dashv2beta1.Glo
 	}
 }
 
-func TestGlobalVariableNameUniquenessHelpers(t *testing.T) {
+func TestVariableNameUniquenessHelpers(t *testing.T) {
 	t.Run("list options include folder label only for folder scope", func(t *testing.T) {
-		globalScope := buildGlobalVariableNameListOptions("region", "")
+		globalScope := buildVariableNameListOptions("region", "")
 		require.Equal(t, "spec.spec.name=region", globalScope.FieldSelector)
 		require.Empty(t, globalScope.LabelSelector)
 
-		folderScope := buildGlobalVariableNameListOptions("region", "folder-a")
+		folderScope := buildVariableNameListOptions("region", "folder-a")
 		require.Equal(t, "spec.spec.name=region", folderScope.FieldSelector)
-		require.Equal(t, globalVariableFolderLabelKey+"=folder-a", folderScope.LabelSelector)
+		require.Equal(t, variableFolderLabelKey+"=folder-a", folderScope.LabelSelector)
 	})
 
 	t.Run("global scope ignores folder-scoped matches", func(t *testing.T) {
@@ -98,7 +98,7 @@ func TestGlobalVariableNameUniquenessHelpers(t *testing.T) {
 						"metadata": map[string]any{
 							"name": "folder-only",
 							"labels": map[string]any{
-								globalVariableFolderLabelKey: "folder-a",
+								variableFolderLabelKey: "folder-a",
 							},
 						},
 					},
@@ -106,7 +106,7 @@ func TestGlobalVariableNameUniquenessHelpers(t *testing.T) {
 			},
 		}
 
-		require.Empty(t, findGlobalVariableNameConflict(list, "", ""))
+		require.Empty(t, findVariableNameConflict(list, "", ""))
 	})
 
 	t.Run("folder scope checks only same folder and excludes current object", func(t *testing.T) {
@@ -117,7 +117,7 @@ func TestGlobalVariableNameUniquenessHelpers(t *testing.T) {
 						"metadata": map[string]any{
 							"name": "same-folder-conflict",
 							"labels": map[string]any{
-								globalVariableFolderLabelKey: "folder-a",
+								variableFolderLabelKey: "folder-a",
 							},
 						},
 					},
@@ -127,7 +127,7 @@ func TestGlobalVariableNameUniquenessHelpers(t *testing.T) {
 						"metadata": map[string]any{
 							"name": "different-folder",
 							"labels": map[string]any{
-								globalVariableFolderLabelKey: "folder-b",
+								variableFolderLabelKey: "folder-b",
 							},
 						},
 					},
@@ -135,7 +135,7 @@ func TestGlobalVariableNameUniquenessHelpers(t *testing.T) {
 			},
 		}
 
-		require.Equal(t, "same-folder-conflict", findGlobalVariableNameConflict(list, "folder-a", ""))
-		require.Empty(t, findGlobalVariableNameConflict(list, "folder-a", "same-folder-conflict"))
+		require.Equal(t, "same-folder-conflict", findVariableNameConflict(list, "folder-a", ""))
+		require.Empty(t, findVariableNameConflict(list, "folder-a", "same-folder-conflict"))
 	})
 }

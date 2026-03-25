@@ -43,10 +43,10 @@ var DashboardResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 	},
 )
 
-var GlobalVariableResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
-	"globalvariables", "globalvariable", "GlobalVariable",
-	func() runtime.Object { return &GlobalVariable{} },
-	func() runtime.Object { return &GlobalVariableList{} },
+var VariableResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
+	"variables", "variable", "Variable",
+	func() runtime.Object { return &Variable{} },
+	func() runtime.Object { return &VariableList{} },
 	utils.TableColumns{
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
@@ -54,17 +54,17 @@ var GlobalVariableResourceInfo = utils.NewResourceInfo(GROUP, VERSION,
 			{Name: "Created At", Type: "date"},
 		},
 		Reader: func(obj any) ([]interface{}, error) {
-			globalVariable, ok := obj.(*GlobalVariable)
+			variable, ok := obj.(*Variable)
 			if ok {
-				if globalVariable != nil {
+				if variable != nil {
 					return []interface{}{
-						globalVariable.Name,
-						getVariableKindName(globalVariable.Spec),
-						globalVariable.CreationTimestamp.UTC().Format(time.RFC3339),
+						variable.Name,
+						getVariableKindName(variable.Spec),
+						variable.CreationTimestamp.UTC().Format(time.RFC3339),
 					}, nil
 				}
 			}
-			return nil, fmt.Errorf("expected global variable")
+			return nil, fmt.Errorf("expected variable")
 		},
 	},
 )
@@ -86,8 +86,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&Dashboard{},
 		&DashboardList{},
 		&DashboardWithAccessInfo{},
-		&GlobalVariable{},
-		&GlobalVariableList{},
+		&Variable{},
+		&VariableList{},
 		&metav1.PartialObjectMetadata{},
 		&metav1.PartialObjectMetadataList{},
 	)
@@ -95,7 +95,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	return nil
 }
 
-func getVariableKindName(spec GlobalVariableSpec) string {
+func getVariableKindName(spec VariableSpec) string {
 	switch {
 	case spec.QueryVariableKind != nil:
 		return spec.QueryVariableKind.Kind

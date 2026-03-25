@@ -12,20 +12,20 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func TestDashboardsAPIBuilderMutateGlobalVariable(t *testing.T) {
+func TestDashboardsAPIBuilderMutateVariable(t *testing.T) {
 	builder := &DashboardsAPIBuilder{}
 
-	gv := newCustomGlobalVariable("region", "wrong-name")
-	gv.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-a"})
-	require.Equal(t, "wrong-name", gv.GetName())
+	v := newCustomVariable("region", "wrong-name")
+	v.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "folder-a"})
+	require.Equal(t, "wrong-name", v.GetName())
 
 	err := builder.Mutate(context.Background(), admission.NewAttributesRecord(
-		gv,
+		v,
 		nil,
-		dashv2beta1.GlobalVariableResourceInfo.GroupVersionKind(),
+		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
 		"stacks-1",
-		gv.GetName(),
-		dashv2beta1.GlobalVariableResourceInfo.GroupVersionResource(),
+		v.GetName(),
+		dashv2beta1.VariableResourceInfo.GroupVersionResource(),
 		"",
 		admission.Create,
 		&metav1.CreateOptions{},
@@ -34,18 +34,18 @@ func TestDashboardsAPIBuilderMutateGlobalVariable(t *testing.T) {
 	), nil)
 
 	require.NoError(t, err)
-	require.Equal(t, "wrong-name", gv.GetName())
-	require.Equal(t, "folder-a", gv.GetLabels()[globalVariableFolderLabelKey])
+	require.Equal(t, "wrong-name", v.GetName())
+	require.Equal(t, "folder-a", v.GetLabels()[variableFolderLabelKey])
 
 	// Clearing folder annotation should remove the mirrored folder label.
-	gv.SetAnnotations(map[string]string{})
+	v.SetAnnotations(map[string]string{})
 	err = builder.Mutate(context.Background(), admission.NewAttributesRecord(
-		gv,
+		v,
 		nil,
-		dashv2beta1.GlobalVariableResourceInfo.GroupVersionKind(),
+		dashv2beta1.VariableResourceInfo.GroupVersionKind(),
 		"stacks-1",
-		gv.GetName(),
-		dashv2beta1.GlobalVariableResourceInfo.GroupVersionResource(),
+		v.GetName(),
+		dashv2beta1.VariableResourceInfo.GroupVersionResource(),
 		"",
 		admission.Update,
 		&metav1.UpdateOptions{},
@@ -53,5 +53,5 @@ func TestDashboardsAPIBuilderMutateGlobalVariable(t *testing.T) {
 		nil,
 	), nil)
 	require.NoError(t, err)
-	require.NotContains(t, gv.GetLabels(), globalVariableFolderLabelKey)
+	require.NotContains(t, v.GetLabels(), variableFolderLabelKey)
 }

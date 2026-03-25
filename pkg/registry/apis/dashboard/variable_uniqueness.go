@@ -14,19 +14,19 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-func buildGlobalVariableNameListOptions(variableName, folderUID string) metav1.ListOptions {
+func buildVariableNameListOptions(variableName, folderUID string) metav1.ListOptions {
 	listOptions := metav1.ListOptions{
 		FieldSelector: fields.OneTermEqualSelector("spec.spec.name", variableName).String(),
 	}
 
 	if folderUID != "" {
-		listOptions.LabelSelector = labels.Set{globalVariableFolderLabelKey: folderUID}.String()
+		listOptions.LabelSelector = labels.Set{variableFolderLabelKey: folderUID}.String()
 	}
 
 	return listOptions
 }
 
-func findGlobalVariableNameConflict(list *unstructured.UnstructuredList, folderUID, excludeMetadataName string) string {
+func findVariableNameConflict(list *unstructured.UnstructuredList, folderUID, excludeMetadataName string) string {
 	if list == nil {
 		return ""
 	}
@@ -36,7 +36,7 @@ func findGlobalVariableNameConflict(list *unstructured.UnstructuredList, folderU
 			continue
 		}
 
-		itemFolderUID := item.GetLabels()[globalVariableFolderLabelKey]
+		itemFolderUID := item.GetLabels()[variableFolderLabelKey]
 		if folderUID == "" {
 			// Global scope ignores folder-scoped entries.
 			if itemFolderUID != "" {
@@ -53,37 +53,37 @@ func findGlobalVariableNameConflict(list *unstructured.UnstructuredList, folderU
 	return ""
 }
 
-func (b *DashboardsAPIBuilder) validateGlobalVariableNameUniqueness(
+func (b *DashboardsAPIBuilder) validateVariableNameUniqueness(
 	ctx context.Context,
 	namespace string,
-	globalVariable *dashv2beta1.GlobalVariable,
+	variable *dashv2beta1.Variable,
 	excludeMetadataName string,
 ) error {
-	if b.globalVariableClientProvider == nil {
+	if b.variableClientProvider == nil {
 		// Standalone builder paths used in unit tests do not configure this provider.
 		return nil
 	}
 
-	accessor, err := utils.MetaAccessor(globalVariable)
+	accessor, err := utils.MetaAccessor(variable)
 	if err != nil {
-		return fmt.Errorf("error getting global variable meta accessor: %w", err)
+		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
-	variableName := getGlobalVariableName(globalVariable.Spec)
+	variableName := getVariableName(variable.Spec)
 	folderUID := accessor.GetFolder()
-	listOptions := buildGlobalVariableNameListOptions(variableName, folderUID)
+	listOptions := buildVariableNameListOptions(variableName, folderUID)
 	nsInfo, err := authlib.ParseNamespace(namespace)
 	if err != nil {
 		return fmt.Errorf("failed to parse namespace: %w", err)
 	}
 
-	globalVariableClient := b.globalVariableClientProvider.GetOrCreateHandler(namespace)
-	list, err := globalVariableClient.List(ctx, nsInfo.OrgID, listOptions)
+	variableClient := b.variableClientProvider.GetOrCreateHandler(namespace)
+	list, err := variableClient.List(ctx, nsInfo.OrgID, listOptions)
 	if err != nil {
-		return fmt.Errorf("error listing global variables for uniqueness check: %w", err)
+		return fmt.Errorf("error listing variables for uniqueness check: %w", err)
 	}
 
-	if conflict := findGlobalVariableNameConflict(list, folderUID, excludeMetadataName); conflict != "" {
+	if conflict := findVariableNameConflict(list, folderUID, excludeMetadataName); conflict != "" {
 		if folderUID == "" {
 			return fmt.Errorf("variable name %q already exists in global scope", variableName)
 		}
