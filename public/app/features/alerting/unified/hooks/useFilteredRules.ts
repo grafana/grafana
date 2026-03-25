@@ -216,6 +216,7 @@ const reduceGroups = (filterState: RulesFilter) => {
           'plugins',
           'contactPoint',
           'ruleSource',
+          'policy',
         ])
         .omitBy(isEmpty)
         .mapValues(() => false)
@@ -237,6 +238,17 @@ const reduceGroups = (filterState: RulesFilter) => {
 
         if (hasContactPoint) {
           matchesFilterFor.contactPoint = true;
+        }
+      }
+
+      if ('policy' in matchesFilterFor) {
+        const policy = filterState.policy;
+        const hasPolicy =
+          rulerRuleType.grafana.rule(rule.rulerRule) &&
+          rule.rulerRule.grafana_alert.notification_settings?.policy === policy;
+
+        if (hasPolicy) {
+          matchesFilterFor.policy = true;
         }
       }
 
@@ -348,6 +360,7 @@ const RULES_FILTER_KEYS: Set<keyof RulesFilter> = new Set([
   'plugins',
   'contactPoint',
   'ruleSource',
+  'policy',
 ]);
 
 const isRuleFilterKey = (key: string): key is keyof RulesFilter => RULES_FILTER_KEYS.has(key as keyof RulesFilter);
