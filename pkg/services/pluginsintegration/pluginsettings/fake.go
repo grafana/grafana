@@ -38,7 +38,7 @@ func (ps *FakePluginSettings) GetPluginSettingByPluginID(ctx context.Context, ar
 func (ps *FakePluginSettings) UpdatePluginSetting(ctx context.Context, args *UpdateArgs) error {
 	var secureData map[string][]byte
 	if args.SecureJSONData != nil {
-		secureData := map[string][]byte{}
+		secureData = map[string][]byte{}
 		for k, v := range args.SecureJSONData {
 			secureData[k] = ([]byte)(v)
 		}

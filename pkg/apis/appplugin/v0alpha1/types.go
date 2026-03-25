@@ -36,6 +36,7 @@ type SettingsSpec struct {
 	Enabled          bool                `json:"enabled"`
 	Pinned           bool                `json:"pinned"`
 	JsonData         common.Unstructured `json:"jsonData"`
+	SecureJsonData   map[string]string   `json:"secureJsonData,omitempty"`
 	SecureJsonFields map[string]bool     `json:"secureJsonFields"`
 }
 

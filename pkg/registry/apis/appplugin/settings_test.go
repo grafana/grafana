@@ -112,6 +112,29 @@ func TestSettingsCreate(t *testing.T) {
 	require.True(t, settings.Spec.Pinned)
 }
 
+func TestSettingsCreate_WithSecureJsonData(t *testing.T) {
+	storage := newTestStorage(map[string]*pluginsettings.DTO{})
+
+	ctx := request.WithNamespace(context.Background(), "default")
+	input := &apppluginv0alpha1.Settings{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-app", Namespace: "default"},
+		Spec: apppluginv0alpha1.SettingsSpec{
+			Enabled:        true,
+			Pinned:         true,
+			SecureJsonData: map[string]string{"apiToken": "secret-value"},
+		},
+	}
+
+	obj, err := storage.Create(ctx, input, nil, nil)
+	require.NoError(t, err)
+
+	settings := obj.(*apppluginv0alpha1.Settings)
+	require.True(t, settings.Spec.Enabled)
+	require.True(t, settings.Spec.Pinned)
+	require.Equal(t, map[string]bool{"apiToken": true}, settings.Spec.SecureJsonFields)
+	require.Nil(t, settings.Spec.SecureJsonData)
+}
+
 func TestSettingsCreate_WithValidation(t *testing.T) {
 	storage := newTestStorage(map[string]*pluginsettings.DTO{})
 

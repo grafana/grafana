@@ -151,11 +151,12 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object) (runtime
 	}
 
 	if err := s.pluginSettings.UpdatePluginSetting(ctx, &pluginsettings.UpdateArgs{
-		PluginID: s.pluginID,
-		OrgID:    nsInfo.OrgID,
-		Enabled:  p.Spec.Enabled,
-		Pinned:   p.Spec.Pinned,
-		JSONData: p.Spec.JsonData.Object,
+		PluginID:       s.pluginID,
+		OrgID:          nsInfo.OrgID,
+		Enabled:        p.Spec.Enabled,
+		Pinned:         p.Spec.Pinned,
+		JSONData:       p.Spec.JsonData.Object,
+		SecureJSONData: p.Spec.SecureJsonData,
 	}); err != nil {
 		return nil, fmt.Errorf("failed to save plugin settings: %w", err)
 	}

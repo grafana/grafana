@@ -134,6 +134,21 @@ func schema_pkg_apis_appplugin_v0alpha1_SettingsSpec(ref common.ReferenceCallbac
 							Ref: ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
+					"secureJsonData": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"secureJsonFields": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},

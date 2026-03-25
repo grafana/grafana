@@ -75,6 +75,13 @@ func (in *SettingsList) DeepCopyObject() runtime.Object {
 func (in *SettingsSpec) DeepCopyInto(out *SettingsSpec) {
 	*out = *in
 	in.JsonData.DeepCopyInto(&out.JsonData)
+	if in.SecureJsonData != nil {
+		in, out := &in.SecureJsonData, &out.SecureJsonData
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.SecureJsonFields != nil {
 		in, out := &in.SecureJsonFields, &out.SecureJsonFields
 		*out = make(map[string]bool, len(*in))
