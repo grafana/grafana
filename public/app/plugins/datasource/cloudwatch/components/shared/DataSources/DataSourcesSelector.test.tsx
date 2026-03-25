@@ -184,14 +184,7 @@ describe('DataSourcesSelector', () => {
   });
 
   it('shows indeterminate select-listed state when some listed data sources are selected', async () => {
-    render(
-      <DataSourcesSelector
-        {...defaultProps}
-        selectedDataSources={[
-          { name: 'amazon_vpc', type: 'flow' },
-        ]}
-      />
-    );
+    render(<DataSourcesSelector {...defaultProps} selectedDataSources={[{ name: 'amazon_vpc', type: 'flow' }]} />);
 
     await userEvent.click(screen.getByText('Select data sources'));
     await waitFor(() => expect(screen.getByLabelText('amazon_vpc.flow')).toBeInTheDocument());
@@ -202,14 +195,7 @@ describe('DataSourcesSelector', () => {
   });
 
   it('clears selected data sources when bulk checkbox is clicked in indeterminate state', async () => {
-    render(
-      <DataSourcesSelector
-        {...defaultProps}
-        selectedDataSources={[
-          { name: 'amazon_vpc', type: 'flow' },
-        ]}
-      />
-    );
+    render(<DataSourcesSelector {...defaultProps} selectedDataSources={[{ name: 'amazon_vpc', type: 'flow' }]} />);
 
     await userEvent.click(screen.getByText('Select data sources'));
     await waitFor(() => expect(screen.getByLabelText('amazon_vpc.flow')).toBeInTheDocument());
@@ -236,8 +222,8 @@ describe('DataSourcesSelector', () => {
     await userEvent.click(screen.getByText('Select data sources'));
     await waitFor(() => expect(screen.getByLabelText('amazon_vpc.flow')).toBeInTheDocument());
 
-    expect((screen.getByLabelText('amazon_vpc.flow') as HTMLInputElement)).toBeChecked();
-    expect((screen.getByLabelText('amazon_eks.audit') as HTMLInputElement)).not.toBeChecked();
+    expect(screen.getByLabelText('amazon_vpc.flow') as HTMLInputElement).toBeChecked();
+    expect(screen.getByLabelText('amazon_eks.audit') as HTMLInputElement).not.toBeChecked();
 
     await userEvent.click(screen.getByLabelText('amazon_eks.audit'));
     expect(screen.getByText('2 data sources selected')).toBeInTheDocument();
@@ -248,8 +234,8 @@ describe('DataSourcesSelector', () => {
     await userEvent.click(screen.getByText('Select data sources'));
     await waitFor(() => expect(screen.getByLabelText('amazon_eks.audit')).toBeInTheDocument());
 
-    expect((screen.getByLabelText('amazon_vpc.flow') as HTMLInputElement)).toBeChecked();
-    expect((screen.getByLabelText('amazon_eks.audit') as HTMLInputElement)).not.toBeChecked();
+    expect(screen.getByLabelText('amazon_vpc.flow') as HTMLInputElement).toBeChecked();
+    expect(screen.getByLabelText('amazon_eks.audit') as HTMLInputElement).not.toBeChecked();
     expect(screen.getByText('1 data source selected')).toBeInTheDocument();
   });
 });

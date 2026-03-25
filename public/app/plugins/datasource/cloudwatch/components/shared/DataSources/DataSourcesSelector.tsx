@@ -1,16 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { EditorField } from '@grafana/plugin-ui';
-import {
-  Alert,
-  Button,
-  Checkbox,
-  Label,
-  LoadingPlaceholder,
-  Modal,
-  Space,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, Button, Checkbox, Label, LoadingPlaceholder, Modal, Space, useStyles2 } from '@grafana/ui';
 
 import { LogDataSource } from '../../../dataquery.gen';
 import { ListDataSourcesRequest, ResourceResponse, LogDataSourceResponse } from '../../../resources/types';
@@ -20,7 +11,9 @@ import Search from './Search';
 
 type DataSourcesSelectorProps = {
   selectedDataSources?: LogDataSource[];
-  fetchDataSources: (params: Partial<ListDataSourcesRequest>) => Promise<Array<ResourceResponse<LogDataSourceResponse>>>;
+  fetchDataSources: (
+    params: Partial<ListDataSourcesRequest>
+  ) => Promise<Array<ResourceResponse<LogDataSourceResponse>>>;
   onChange: (selectedDataSources: LogDataSource[]) => void;
   onBeforeOpen?: () => void;
 };
@@ -106,15 +99,15 @@ export const DataSourcesSelector = ({
       return;
     }
 
-    setDraftSelectedDataSources(
-      draftSelectedDataSources.filter((ds) => ds.name !== row.name || ds.type !== row.type)
-    );
+    setDraftSelectedDataSources(draftSelectedDataSources.filter((ds) => ds.name !== row.name || ds.type !== row.type));
     setSelectionError(undefined);
   };
 
   const handleSelectAllListed = () => {
     const selectedKeys = new Set(draftSelectedDataSources.map(toDataSourceKey));
-    const unselectedListed = selectableDataSources.filter((dataSource) => !selectedKeys.has(toDataSourceKey(dataSource)));
+    const unselectedListed = selectableDataSources.filter(
+      (dataSource) => !selectedKeys.has(toDataSourceKey(dataSource))
+    );
     const remainingSlots = MAX_DATA_SOURCES - draftSelectedDataSources.length;
 
     if (remainingSlots <= 0) {
@@ -180,7 +173,9 @@ export const DataSourcesSelector = ({
           value={allListedSelected}
           indeterminate={listedSelectionMixed}
           onChange={handleListedSelectionChange}
-          disabled={isLoading || selectableDataSources.length === 0 || (selectionLimitReached && listedSelectionCount === 0)}
+          disabled={
+            isLoading || selectableDataSources.length === 0 || (selectionLimitReached && listedSelectionCount === 0)
+          }
           label="Select listed data sources"
         />
         <Space layout="block" v={1} />
@@ -207,7 +202,9 @@ export const DataSourcesSelector = ({
                 )}
                 {!isLoading &&
                   selectableDataSources.map((row) => {
-                    const isSelected = draftSelectedDataSources.some((ds) => ds.name === row.name && ds.type === row.type);
+                    const isSelected = draftSelectedDataSources.some(
+                      (ds) => ds.name === row.name && ds.type === row.type
+                    );
                     return (
                       <tr className={styles.row} key={`${row.name}.${row.type}`}>
                         <td className={styles.cell}>
