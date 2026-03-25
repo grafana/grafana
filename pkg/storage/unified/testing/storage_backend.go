@@ -1748,18 +1748,26 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 
 		// Count successes and failures
 		var successes int
-		var errorMessages []string
+		var errors []error
 		for _, res := range results {
 			if res.err == nil {
 				successes++
 				require.Greater(t, res.rv, int64(0), "successful create should have positive RV")
+			} else {
+				errors = append(errors, res.err)
 			}
 		}
 
 		// Verify that exactly one create succeeded
 		// Note: Due to timing, it's possible that all creates detect each other and all fail.
 		// The important thing is that at most one succeeds (race condition is prevented).
-		require.LessOrEqual(t, successes, 1, "at most one create should succeed (errors: %v)", errorMessages)
+		require.LessOrEqual(t, successes, 1, "at most one create should succeed")
+
+		if successes == 0 {
+			for _, err := range errors {
+				require.NotErrorIs(t, err, resource.ErrResourceAlreadyExists, "should not receive ErrResourceAlreadyExists when no resource is created")
+			}
+		}
 	})
 }
 
