@@ -7251,6 +7251,9 @@
         }
       }
     },
+    "panel-non-applicable-drilldowns-sub-header": {
+      "default-reason": "Filter is not applicable"
+    },
     "panel-styles": {
       "title": "Panel styles"
     },
