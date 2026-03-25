@@ -582,14 +582,14 @@ function processAnnotation(
   return annotation;
 }
 
-function getDSUid(datasource: unknown): string | undefined {
+function getDSUid(datasource: unknown): string | null {
   if (typeof datasource === 'string' && datasource.startsWith('$')) {
     return datasource;
   }
   if (hasUid(datasource) && datasource.uid.startsWith('$')) {
     return datasource.uid;
   }
-  return undefined;
+  return null;
 }
 
 function resolveInputDatasource(
@@ -598,6 +598,7 @@ function resolveInputDatasource(
   form: ImportDashboardDTO
 ): Panel['datasource'] {
   const dsUid = getDSUid(datasource);
+
   if (dsUid) {
     const userInput = checkUserInputMatch(dsUid, inputs.dataSources, form.dataSources);
     if (userInput) {
