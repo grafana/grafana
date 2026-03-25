@@ -20,7 +20,7 @@ type FolderMetadataIncrementalDiffBuilder interface {
 		currentRef string,
 		repoDiff []repository.VersionedFileChange,
 		resourcesList *provisioning.ResourceList,
-	) ([]repository.VersionedFileChange, []replacedFolder, []*resources.InvalidFolderMetadata, error)
+	) ([]repository.VersionedFileChange, []replacedFolder, []replacedFolder, []*resources.InvalidFolderMetadata, error)
 }
 
 type folderMetadataIncrementalDiffBuilder struct {
@@ -47,17 +47,18 @@ func NewFolderMetadataIncrementalDiffBuilder(
 // events into synthetic folder changes plus direct-child updates.
 //
 // The rebuilder keeps unrelated git changes intact, preserves real diff paths,
-// and returns any old folder UIDs that must be deleted after the rewritten diff
-// is applied.
+// and returns old folder UIDs split into two lists:
+//   - displaced: all UIDs evicted from their old tree position (for tree cleanup)
+//   - replaced: the subset scheduled for K8s deletion (excludes UIDs still active elsewhere)
 func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	ctx context.Context,
 	currentRef string,
 	repoDiff []repository.VersionedFileChange,
 	resourcesList *provisioning.ResourceList,
-) ([]repository.VersionedFileChange, []replacedFolder, []*resources.InvalidFolderMetadata, error) {
+) ([]repository.VersionedFileChange, []replacedFolder, []replacedFolder, []*resources.InvalidFolderMetadata, error) {
 	input := splitMetadataChanges(repoDiff)
 	if !input.HasMetadataChanges() {
-		return repoDiff, nil, nil, nil
+		return repoDiff, nil, nil, nil, nil
 	}
 
 	index := newManagedResourceIndex(resourcesList)
@@ -67,12 +68,12 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	for _, change := range input.MetadataChanges() {
 		warnings, err := d.rewriteMetadataChange(ctx, currentRef, input, index, diffTracker, change)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, nil, err
 		}
 		invalid = append(invalid, warnings...)
 	}
 
-	return diffTracker.IncrementalDiff(), diffTracker.ReplacedFolders(), invalid, nil
+	return diffTracker.IncrementalDiff(), diffTracker.DisplacedFolders(), diffTracker.ReplacedFolders(), invalid, nil
 }
 
 // rewriteMetadataChange dispatches each handled metadata action to the

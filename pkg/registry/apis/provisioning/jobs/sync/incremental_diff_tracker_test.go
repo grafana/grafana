@@ -79,3 +79,21 @@ func TestIncrementalDiffTrackerActiveUIDFiltersReplaced(t *testing.T) {
 	require.Equal(t, []replacedFolder{{Path: "dst/", OldUID: "uid-gone"}}, replaced,
 		"UID actively written to another path must not be scheduled for deletion")
 }
+
+func TestIncrementalDiffTrackerDisplacedFoldersReturnsAll(t *testing.T) {
+	tracker := newRebuiltIncrementalDiffTracker(nil)
+
+	tracker.AppendReplaced(replacedFolder{Path: "src/", OldUID: "uid-moved"})
+	tracker.AppendReplaced(replacedFolder{Path: "dst/", OldUID: "uid-gone"})
+	tracker.TrackActiveUID("uid-moved")
+
+	displaced := tracker.DisplacedFolders()
+	require.Equal(t, []replacedFolder{
+		{Path: "src/", OldUID: "uid-moved"},
+		{Path: "dst/", OldUID: "uid-gone"},
+	}, displaced, "displaced includes all entries regardless of active UIDs, for tree cleanup")
+
+	replaced := tracker.ReplacedFolders()
+	require.Equal(t, []replacedFolder{{Path: "dst/", OldUID: "uid-gone"}}, replaced,
+		"replaced excludes active UIDs, for K8s deletion only")
+}

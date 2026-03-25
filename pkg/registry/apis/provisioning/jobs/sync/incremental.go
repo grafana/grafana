@@ -67,7 +67,8 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		}
 
 		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo)
-		diff, replaced, invalidFolderMetadata, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff, target)
+		var displaced []replacedFolder
+		diff, displaced, replaced, invalidFolderMetadata, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff, target)
 		if err != nil {
 			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
 		}
@@ -76,9 +77,12 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		// metadata handling needs the current managed path->UID state before apply:
 		// - invalid `_folder.json` falls back to the existing folder at that path
 		// - valid metadata replacements remove old UIDs from that same tree before replay
+		// displaced includes all UIDs evicted from their old position (both moved
+		// and truly replaced), so moved UIDs can be re-registered at their new path
+		// without triggering CheckIDConflict.
 		tree := resources.NewFolderTreeFromResourceList(target)
-		for _, replacedFolder := range replaced {
-			tree.Remove(replacedFolder.OldUID)
+		for _, d := range displaced {
+			tree.Remove(d.OldUID)
 		}
 		repositoryResources.SetTree(tree)
 	}

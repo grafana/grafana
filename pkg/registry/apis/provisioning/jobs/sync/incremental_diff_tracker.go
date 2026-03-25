@@ -54,6 +54,14 @@ func (result *rebuiltIncrementalDiffTracker) IncrementalDiff() []repository.Vers
 	return result.filteredDiff
 }
 
+// DisplacedFolders returns all folder identities that must be evicted from
+// their old tree position, regardless of whether the UID is still active
+// elsewhere. Callers use this to clean the in-memory folder tree before
+// applying changes, so that moved UIDs can be re-registered at their new path.
+func (result *rebuiltIncrementalDiffTracker) DisplacedFolders() []replacedFolder {
+	return result.replaced
+}
+
 // ReplacedFolders returns folder identities scheduled for deletion, excluding
 // any whose UID is being actively written to another path in the same diff.
 func (result *rebuiltIncrementalDiffTracker) ReplacedFolders() []replacedFolder {
