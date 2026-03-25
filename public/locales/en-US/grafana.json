@@ -4259,6 +4259,9 @@
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
+    "bulk-actions": {
+      "error-generic": "Unexpected error"
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
@@ -10279,6 +10282,9 @@
       "group": "Group",
       "group-tooltip": "Name of the stacking group"
     },
+    "stats-picker": {
+      "placeholder": "Choose"
+    },
     "table": {
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
@@ -11035,7 +11041,7 @@
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
       "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
-      "log-level": "Log level",
+      "log-level": "Show log level",
       "placeholder-search-fields-by-name": "Search fields by name",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },
@@ -11444,7 +11450,8 @@
     "save-owner": "Save owner",
     "select-owner": "Select an owner",
     "selected-team-not-found": "Selected team not found, or you do not have the necessary permissions to view it.",
-    "team-not-found": "[Unknown team]"
+    "team-not-found": "[Unknown team]",
+    "unknown-error": "Unknown error"
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"

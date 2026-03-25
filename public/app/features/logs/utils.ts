@@ -40,7 +40,7 @@ import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/uti
 import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';
 import { getDataframeFields } from './components/logParser';
 import { GetRowContextQueryFn } from './components/panel/LogLineMenu';
-import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME } from './logsFrame';
+import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } from './logsFrame';
 
 /**
  * Returns the log level of a log line.
@@ -492,21 +492,26 @@ export const downloadLogs = async (
       const fileName = `Logs-${dateTimeFormat(new Date())}.json`;
       saveAs(blob, fileName);
       break;
-    case DownloadFormat.CSV:
+    case DownloadFormat.CSV: {
       const dataFrameMap = new Map<string, DataFrame>();
       logRows.forEach((row) => {
         if (row.dataFrame?.refId && !dataFrameMap.has(row.dataFrame?.refId)) {
           dataFrameMap.set(row.dataFrame?.refId, row.dataFrame);
         }
       });
-      dataFrameMap.forEach(async (dataFrame) => {
+      for (const dataFrame of dataFrameMap.values()) {
         const transforms: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
         if (fields.length) {
+          const logsFrame = parseLogsFrame(dataFrame);
+          const bodyFieldName = logsFrame?.bodyField.name;
+          const csvFieldNames = fields.map((name) =>
+            name === LOG_LINE_BODY_FIELD_NAME && bodyFieldName ? bodyFieldName : name
+          );
           transforms.push(addISODateTransformation, {
             id: 'filterFieldsByName',
             options: {
               include: {
-                names: ['Date', ...fields],
+                names: ['Date', ...csvFieldNames],
               },
             },
           });
@@ -526,7 +531,9 @@ export const downloadLogs = async (
         }
         const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
         downloadDataFrameAsCsv(transformedDataFrame[0], `Logs-${dataFrame.refId}`);
-      });
+      }
+      break;
+    }
   }
 };
 

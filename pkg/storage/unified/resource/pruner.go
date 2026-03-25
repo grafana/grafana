@@ -18,7 +18,7 @@ type PruningKey struct {
 }
 
 func (k PruningKey) Validate() bool {
-	return k.Namespace != "" && k.Group != "" && k.Resource != "" && k.Name != ""
+	return k.Group != "" && k.Resource != "" && k.Name != ""
 }
 
 type NoopPruner struct{}

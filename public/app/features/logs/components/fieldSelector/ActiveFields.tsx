@@ -74,76 +74,79 @@ export const ActiveFields = ({
     [toggle]
   );
 
-  if (active.length || suggested.length) {
-    return (
-      <>
-        <div className={styles.columnHeader}>
-          <Trans i18nKey="explore.logs-table-multi-select.selected-fields">Selected fields</Trans>
-          {active.length > 0 && (
-            <button onClick={clear} className={styles.columnHeaderButton}>
-              <Trans i18nKey="explore.logs-table-multi-select.reset">Reset</Trans>
-            </button>
-          )}
+  return (
+    <>
+      {logLevelActive !== undefined && toggleLevel && (
+        <div className={styles.columnWrapper}>
+          <LogLevelField active={Boolean(logLevelActive)} toggle={toggleLevel} />
         </div>
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Droppable droppableId="order-fields" direction="vertical">
-            {(provided) => (
-              <div className={styles.columnWrapper} {...provided.droppableProps} ref={provided.innerRef}>
-                {logLevelActive && toggleLevel && <LogLevelField active toggle={toggleLevel} />}
-                {active.map((field, index) => (
-                  <Draggable
-                    draggableId={field.name}
-                    key={field.name}
-                    index={index}
-                    isDragDisabled={!activeFields.includes(field.name)}
-                  >
-                    {(provided: DraggableProvided, snapshot) => (
-                      <div
-                        className={cx(styles.wrap, snapshot.isDragging ? styles.dragging : undefined)}
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        title={t(
-                          'logs.field-selector.label-title',
-                          `{{fieldName}} appears in {{percentage}}% of log lines`,
-                          { fieldName: field.name, percentage: field.stats.percentOfLinesWithLabel }
-                        )}
-                      >
-                        <Field
-                          active={activeFields.includes(field.name)}
-                          field={field}
-                          toggle={toggle}
-                          draggable={activeFields.includes(field.name)}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
+      )}
+      {(active.length || suggested.length) && (
+        <>
+          <div className={styles.columnHeader}>
+            <Trans i18nKey="explore.logs-table-multi-select.selected-fields">Selected fields</Trans>
+            {active.length > 0 && (
+              <button onClick={clear} className={styles.columnHeaderButton}>
+                <Trans i18nKey="explore.logs-table-multi-select.reset">Reset</Trans>
+              </button>
             )}
-          </Droppable>
-        </DragDropContext>
-        {suggested.length > 0 && (
-          <>
-            <div className={styles.columnSubHeader}>
-              <Trans i18nKey="explore.logs-table-multi-select.suggested-fields">Suggested</Trans>
-            </div>
-            <div className={styles.columnWrapper}>
-              {logLevelActive === false && toggleLevel && <LogLevelField active={false} toggle={toggleLevel} />}
-              {suggested.map((field) => (
-                <div className={styles.wrap} key={field.name}>
-                  <Field field={field} toggle={toggleSelectedField} />
+          </div>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="order-fields" direction="vertical">
+              {(provided) => (
+                <div className={styles.columnWrapper} {...provided.droppableProps} ref={provided.innerRef}>
+                  {active.map((field, index) => (
+                    <Draggable
+                      draggableId={field.name}
+                      key={field.name}
+                      index={index}
+                      isDragDisabled={!activeFields.includes(field.name)}
+                    >
+                      {(provided: DraggableProvided, snapshot) => (
+                        <div
+                          className={cx(styles.wrap, snapshot.isDragging ? styles.dragging : undefined)}
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          title={t(
+                            'logs.field-selector.label-title',
+                            `{{fieldName}} appears in {{percentage}}% of log lines`,
+                            { fieldName: field.name, percentage: field.stats.percentOfLinesWithLabel }
+                          )}
+                        >
+                          <Field
+                            active={activeFields.includes(field.name)}
+                            field={field}
+                            toggle={toggle}
+                            draggable={activeFields.includes(field.name)}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
                 </div>
-              ))}
-            </div>
-          </>
-        )}
-      </>
-    );
-  }
-
-  return null;
+              )}
+            </Droppable>
+          </DragDropContext>
+          {suggested.length > 0 && (
+            <>
+              <div className={styles.columnSubHeader}>
+                <Trans i18nKey="explore.logs-table-multi-select.suggested-fields">Suggested</Trans>
+              </div>
+              <div className={styles.columnWrapper}>
+                {suggested.map((field) => (
+                  <div className={styles.wrap} key={field.name}>
+                    <Field field={field} toggle={toggleSelectedField} />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </>
+  );
 };
 
 export function getLogsFieldsStyles(theme: GrafanaTheme2) {

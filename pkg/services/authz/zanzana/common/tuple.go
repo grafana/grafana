@@ -75,6 +75,13 @@ const (
 	RelationSubresourceDelete         string = "resource_" + RelationDelete
 	RelationSubresourceGetPermissions string = "resource_" + RelationGetPermissions
 	RelationSubresourceSetPermissions string = "resource_" + RelationSetPermissions
+
+	RelationCanSubresourceGet            string = "can_resource_" + RelationGet
+	RelationCanSubresourceCreate         string = "can_resource_" + RelationCreate
+	RelationCanSubresourceUpdate         string = "can_resource_" + RelationUpdate
+	RelationCanSubresourceDelete         string = "can_resource_" + RelationDelete
+	RelationCanSubresourceGetPermissions string = "can_resource_" + RelationGetPermissions
+	RelationCanSubresourceSetPermissions string = "can_resource_" + RelationSetPermissions
 )
 
 // RelationsGroupResource are relations that can be added on type "group_resource".
@@ -156,6 +163,26 @@ func FolderPermissionRelation(relation string) string {
 		return RelationCanGetPermissions
 	case RelationSetPermissions:
 		return RelationCanSetPermissions
+	default:
+		return relation
+	}
+}
+
+// SubresourcePermissionRelation returns computed subresource relations that include escalation.
+func SubresourcePermissionRelation(relation string) string {
+	switch relation {
+	case RelationSubresourceGet:
+		return RelationCanSubresourceGet
+	case RelationSubresourceCreate:
+		return RelationCanSubresourceCreate
+	case RelationSubresourceUpdate:
+		return RelationCanSubresourceUpdate
+	case RelationSubresourceDelete:
+		return RelationCanSubresourceDelete
+	case RelationSubresourceGetPermissions:
+		return RelationCanSubresourceGetPermissions
+	case RelationSubresourceSetPermissions:
+		return RelationCanSubresourceSetPermissions
 	default:
 		return relation
 	}
