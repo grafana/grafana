@@ -13,26 +13,27 @@ import { getAppEvents } from '@grafana/runtime';
 import { TableOptions } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
+import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
 import { getDefaultControlsExpandedMode } from 'app/features/logs/components/panel/LogListContext';
 import { CONTROLS_WIDTH_EXPANDED } from 'app/features/logs/components/panel/LogListControls';
 import { LogTableControls } from 'app/features/logs/components/panel/LogTableControls';
 import { LOG_LIST_CONTROLS_WIDTH } from 'app/features/logs/components/panel/virtualization';
+import { dataFrameToLogsModel } from 'app/features/logs/logsModel';
+import { DownloadFormat, downloadLogs as download } from 'app/features/logs/utils';
 
 import { TablePanel } from '../table/TablePanel';
 
 import { Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 
-interface Props extends PanelProps<Options> {
+interface Props extends Omit<PanelProps<Options>, 'timeRange'> {
   initialRowIndex?: number;
   logOptionsStorageKey: string;
   containerElement: HTMLDivElement;
-  fieldSelectorWidth: number;
 }
 
 export function TableNGWrap({
   timeZone,
-  timeRange,
   id,
   data,
   options,
@@ -47,11 +48,11 @@ export function TableNGWrap({
   onFieldConfigChange,
   replaceVariables,
   onChangeTimeRange,
-  fieldSelectorWidth,
   initialRowIndex,
   logOptionsStorageKey,
   containerElement,
 }: Props) {
+  const fieldSelectorWidth = options.fieldSelectorWidth ?? getDefaultFieldSelectorWidth();
   const showControls = options.showControls ?? defaultOptions.showControls ?? true;
   const controlsExpandedFromStore = store.getBool(
     `${logOptionsStorageKey}.controlsExpanded`,
@@ -89,6 +90,15 @@ export function TableNGWrap({
     [onFieldConfigChange]
   );
 
+  const downloadLogs = useCallback(
+    (format: DownloadFormat) => {
+      // converting to logsModel is a lot of unnecessary compute, but since this is only called on user action it should work as a short-term solution
+      const { meta, rows } = dataFrameToLogsModel(data.series);
+      download(format, rows, meta, options.displayedFields);
+    },
+    [data.series, options.displayedFields]
+  );
+
   return (
     <div className={styles.tableWrapper}>
       {showControls && (
@@ -99,6 +109,7 @@ export function TableNGWrap({
             setControlsExpanded={setControlsExpanded}
             sortOrder={options.sortOrder ?? LogsSortOrder.Descending}
             setSortOrder={handleSortOrderChange}
+            downloadLogs={downloadLogs}
           />
         </div>
       )}
@@ -107,10 +118,10 @@ export function TableNGWrap({
         sortByBehavior={'managed'}
         initialRowIndex={initialRowIndex}
         data={data}
+        timeRange={data.timeRange}
         width={Math.max(tableWidth - fieldSelectorWidth - controlsWidth, 0)}
         height={height}
         id={id}
-        timeRange={timeRange}
         timeZone={timeZone}
         options={{ ...options }}
         transparent={transparent}

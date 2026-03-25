@@ -4259,6 +4259,9 @@
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
+    "bulk-actions": {
+      "error-generic": "Unexpected error"
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
@@ -4361,6 +4364,7 @@
       "dashboards": "Dashboards",
       "panels": "Panels"
     },
+    "my-team-folders": "My team folders",
     "name-cell": {
       "no-items": "No items"
     },
@@ -6632,11 +6636,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Ad-hoc options",
       "alert-not-supported": "This data source does not support ad hoc filters",
+      "description-enable-group-by": "Enables group by operator in the ad hoc filter combobox",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
       "label-use-static-key-dimensions": "Use static key dimensions",
-      "name-allow-custom-values": "Allow custom values"
+      "name-allow-custom-values": "Allow custom values",
+      "name-enable-group-by": "Enable group by"
     },
     "add-filters": {
       "label": "Filter and Group by"
@@ -10280,6 +10286,9 @@
       "group": "Group",
       "group-tooltip": "Name of the stacking group"
     },
+    "stats-picker": {
+      "placeholder": "Choose"
+    },
     "table": {
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
@@ -10328,6 +10337,10 @@
       },
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "sort-by-column": "Sort by column {{column}}",
+      "sort-by-column-ascending": "Sort by column {{column}}, ascending",
+      "sort-by-column-descending": "Sort by column {{column}}, descending",
+      "sort-column": "Sort column",
       "sparkline": {
         "no-data": "no data"
       },
@@ -11032,7 +11045,7 @@
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
       "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
-      "log-level": "Log level",
+      "log-level": "Show log level",
       "placeholder-search-fields-by-name": "Search fields by name",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },
@@ -11441,7 +11454,8 @@
     "save-owner": "Save owner",
     "select-owner": "Select an owner",
     "selected-team-not-found": "Selected team not found, or you do not have the necessary permissions to view it.",
-    "team-not-found": "[Unknown team]"
+    "team-not-found": "[Unknown team]",
+    "unknown-error": "Unknown error"
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
@@ -12332,6 +12346,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "Display name",
         "name": "Name"
       }
     },
@@ -13031,6 +13046,7 @@
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
+      "error-submit": "Failed to save connection",
       "grafana-repositories": "Repositories using this connection",
       "label-app-id": "GitHub App ID",
       "label-description": "Description",
@@ -13555,6 +13571,9 @@
       },
       "go-to": "Go to",
       "make-sure": "Create a token with these permissions"
+    },
+    "validation": {
+      "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again."
     },
     "warning-title-default": "Warning",
     "watch-stream": {

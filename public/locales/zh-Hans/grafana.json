@@ -1712,13 +1712,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -3522,20 +3522,27 @@
       }
     },
     "triage": {
-      "alert-instances": "警报实例",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "加载规则时出错",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "实例详情",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "在所选时间范围内，您没有处于触发或待处理状态的警报实例。",
       "no-instances-found": "找不到此规则的警报实例：{{ruleUID}}",
       "no-labels": "无标签",
@@ -3557,10 +3564,13 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_other": "",
       "show-all-values_other": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "添加表达式"
@@ -4227,6 +4237,9 @@
     "browse-view": {
       "this-folder-is-empty": "此文件夹为空"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "取消",
       "button-delete": "删除",
@@ -4324,6 +4337,7 @@
       "dashboards": "仪表板",
       "panels": "面板"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "无项目"
     },
@@ -6049,8 +6063,8 @@
       "name": "行",
       "new-row-title": "新行",
       "row": {
-        "collapse": "折叠行",
-        "expand": "展开行",
+        "collapse": "",
+        "expand": "",
         "new": "新行",
         "repeat": {
           "learn-more": "了解更多",
@@ -6590,11 +6604,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "临时选项",
       "alert-not-supported": "此数据源不支持临时筛选条件",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "允许用户向列表中添加自定义值",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "以 CSV 格式提供维度：{{name}}, {{value}}",
       "label-data-source": "数据源",
       "label-use-static-key-dimensions": "使用静态键维度",
-      "name-allow-custom-values": "允许自定义值"
+      "name-allow-custom-values": "允许自定义值",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -10211,6 +10227,9 @@
       "group": "组",
       "group-tooltip": "堆叠组的名称"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "筛选值",
       "cell-filter-out": "筛除值",
@@ -10259,6 +10278,10 @@
       },
       "no-values-label": "没有值",
       "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "无数据"
       },
@@ -11364,7 +11387,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "未找到选项"
@@ -12252,6 +12276,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "名称"
       }
     },
@@ -12948,6 +12973,7 @@
       "error-delete-connection": "删除连接失败",
       "error-required": "此字段为必填",
       "error-save-connection": "保存连接失败",
+      "error-submit": "",
       "grafana-repositories": "使用此连接的存储库",
       "label-app-id": "GitHub 应用 ID",
       "label-description": "描述",
@@ -13461,6 +13487,9 @@
       },
       "go-to": "前往",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "警告",
     "watch-stream": {

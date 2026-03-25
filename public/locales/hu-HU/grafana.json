@@ -1718,13 +1718,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -3541,20 +3541,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Riasztáspéldányok",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Hiba történt a szabály betöltésekor",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "Példány részletei",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "Nincsenek aktív vagy függő állapotú riasztáspéldányok a kiválasztott időtartományban.",
       "no-instances-found": "Nem találhatók riasztáspéldányok ehhez a szabályhoz: {{ruleUID}}",
       "no-labels": "Nincs címke",
@@ -3576,14 +3583,16 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_one": "",
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_one": "",
       "show-all-labels_other": "",
       "show-all-values_one": "",
       "show-all-values_other": "",
-      "tooltip-more-values_one": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_one": "",
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "Kifejezés hozzáadása"
@@ -4250,6 +4259,9 @@
     "browse-view": {
       "this-folder-is-empty": "A mappa üres"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Mégse",
       "button-delete": "Törlés",
@@ -4352,6 +4364,7 @@
       "dashboards": "Irányítópultok",
       "panels": "Panelek"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Nincsenek elemek"
     },
@@ -6081,8 +6094,8 @@
       "name": "Sorok",
       "new-row-title": "Új sor",
       "row": {
-        "collapse": "Sor összecsukása",
-        "expand": "Sor kibontása",
+        "collapse": "",
+        "expand": "",
         "new": "Új sor",
         "repeat": {
           "learn-more": "További információk",
@@ -6623,11 +6636,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Eseti beállítások",
       "alert-not-supported": "Ez az adatforrás nem támogatja az alkalmi szűrőket",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Lehetővé teszi a felhasználók számára, hogy egyéni értékeket adjanak a listához",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Méretek megadása CSV-ként: {{name}}, {{value}}",
       "label-data-source": "Adatforrás",
       "label-use-static-key-dimensions": "Statikus kulcsméretek használata",
-      "name-allow-custom-values": "Egyéni értékek engedélyezése"
+      "name-allow-custom-values": "Egyéni értékek engedélyezése",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -10267,6 +10282,9 @@
       "group": "Csoport",
       "group-tooltip": "A stackcsoport neve"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Érték szűrése",
       "cell-filter-out": "Érték kiszűrése",
@@ -10315,6 +10333,10 @@
       },
       "no-values-label": "Nincsenek értékek",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} / {{numRows}} sor",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "nincs adat"
       },
@@ -11428,7 +11450,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nem található beállítás"
@@ -12319,6 +12342,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Név"
       }
     },
@@ -13018,6 +13042,7 @@
       "error-delete-connection": "A kapcsolat törlése nem sikerült",
       "error-required": "A mező kitöltése kötelező",
       "error-save-connection": "A kapcsolat mentése sikertelen volt",
+      "error-submit": "",
       "grafana-repositories": "Ezt a kapcsolatot használó adattárak",
       "label-app-id": "GitHub-alkalmazásazonosító",
       "label-description": "Leírás",
@@ -13542,6 +13567,9 @@
       },
       "go-to": "Tovább ide:",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "Figyelmeztetés",
     "watch-stream": {
