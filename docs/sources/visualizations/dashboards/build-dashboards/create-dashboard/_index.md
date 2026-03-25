@@ -151,6 +151,12 @@ Hover your cursor over the numbers to display descriptions of the toolbar option
 The toolbar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** icons aren't available in view mode.
 {{< /admonition >}}
 
+You can close the sidebar by clicking the following icons in the toolbar a second time:
+
+- Add new element (if you're in the configuration options for a dashboard element, it takes two clicks to close the sidebar)
+- Edit as code
+- Content outline
+
 You can choose to use the sidebar docked or undocked by clicking the Dock/Undock icon in the toolbar.
 When the sidebar is docked, the content of the dashboard resizes to accommodate the sidebar.
 When it's undocked, the sidebar floats on top of the dashboard content.
