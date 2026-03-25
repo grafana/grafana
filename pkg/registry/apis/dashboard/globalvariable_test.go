@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/admission"
 
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -76,4 +77,65 @@ func newCustomGlobalVariable(variableName, metadataName string) *dashv2beta1.Glo
 		},
 		Spec: *spec,
 	}
+}
+
+func TestGlobalVariableNameUniquenessHelpers(t *testing.T) {
+	t.Run("list options include folder label only for folder scope", func(t *testing.T) {
+		globalScope := buildGlobalVariableNameListOptions("region", "")
+		require.Equal(t, "spec.spec.name=region", globalScope.FieldSelector)
+		require.Empty(t, globalScope.LabelSelector)
+
+		folderScope := buildGlobalVariableNameListOptions("region", "folder-a")
+		require.Equal(t, "spec.spec.name=region", folderScope.FieldSelector)
+		require.Equal(t, globalVariableFolderLabelKey+"=folder-a", folderScope.LabelSelector)
+	})
+
+	t.Run("global scope ignores folder-scoped matches", func(t *testing.T) {
+		list := &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				{
+					Object: map[string]any{
+						"metadata": map[string]any{
+							"name": "folder-only",
+							"labels": map[string]any{
+								globalVariableFolderLabelKey: "folder-a",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		require.Empty(t, findGlobalVariableNameConflict(list, "", ""))
+	})
+
+	t.Run("folder scope checks only same folder and excludes current object", func(t *testing.T) {
+		list := &unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				{
+					Object: map[string]any{
+						"metadata": map[string]any{
+							"name": "same-folder-conflict",
+							"labels": map[string]any{
+								globalVariableFolderLabelKey: "folder-a",
+							},
+						},
+					},
+				},
+				{
+					Object: map[string]any{
+						"metadata": map[string]any{
+							"name": "different-folder",
+							"labels": map[string]any{
+								globalVariableFolderLabelKey: "folder-b",
+							},
+						},
+					},
+				},
+			},
+		}
+
+		require.Equal(t, "same-folder-conflict", findGlobalVariableNameConflict(list, "folder-a", ""))
+		require.Empty(t, findGlobalVariableNameConflict(list, "folder-a", "same-folder-conflict"))
+	})
 }

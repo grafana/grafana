@@ -88,11 +88,23 @@ type simpleFolderClientProvider struct {
 	handler client.K8sHandler
 }
 
+type simpleGlobalVariableClientProvider struct {
+	handler client.K8sHandler
+}
+
 func newSimpleFolderClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
 	return &simpleFolderClientProvider{handler: handler}
 }
 
+func newSimpleGlobalVariableClientProvider(handler client.K8sHandler) client.K8sHandlerProvider {
+	return &simpleGlobalVariableClientProvider{handler: handler}
+}
+
 func (p *simpleFolderClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
+	return p.handler
+}
+
+func (p *simpleGlobalVariableClientProvider) GetOrCreateHandler(namespace string) client.K8sHandler {
 	return p.handler
 }
 
@@ -117,6 +129,7 @@ type DashboardsAPIBuilder struct {
 	minRefreshInterval           string
 	dualWriter                   dualwrite.Service
 	folderClientProvider         client.K8sHandlerProvider
+	globalVariableClientProvider client.K8sHandlerProvider
 	libraryPanels                libraryelements.Service // for legacy library panels
 	publicDashboardService       publicdashboards.Service
 	snapshotService              dashboardsnapshots.Service
@@ -165,6 +178,7 @@ func RegisterAPIService(
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
+	globalVariableClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), dashv2beta1.GlobalVariableResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
 		SnapshotsEnabled:     cfg.SnapshotEnabled,
@@ -189,6 +203,7 @@ func RegisterAPIService(
 		minRefreshInterval:           cfg.MinRefreshInterval,
 		dualWriter:                   dual,
 		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
+		globalVariableClientProvider: newSimpleGlobalVariableClientProvider(globalVariableClient),
 		libraryPanels:                libraryPanels,
 		publicDashboardService:       publicDashboardService,
 		snapshotService:              snapshotService,
@@ -548,6 +563,17 @@ func (b *DashboardsAPIBuilder) validateGlobalVariableCreate(ctx context.Context,
 		}
 	}
 
+	if !a.IsDryRun() {
+		namespace := accessor.GetNamespace()
+		if namespace == "" {
+			namespace = a.GetNamespace()
+		}
+
+		if err := b.validateGlobalVariableNameUniqueness(ctx, namespace, globalVariable, globalVariable.GetName()); err != nil {
+			return apierrors.NewBadRequest(err.Error())
+		}
+	}
+
 	return nil
 }
 
@@ -593,6 +619,17 @@ func (b *DashboardsAPIBuilder) validateGlobalVariableUpdate(ctx context.Context,
 
 		if _, err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID); err != nil {
 			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), newAccessor.GetFolder())
+		}
+	}
+
+	if !a.IsDryRun() {
+		namespace := newAccessor.GetNamespace()
+		if namespace == "" {
+			namespace = a.GetNamespace()
+		}
+
+		if err := b.validateGlobalVariableNameUniqueness(ctx, namespace, newGlobalVariable, newGlobalVariable.GetName()); err != nil {
+			return apierrors.NewBadRequest(err.Error())
 		}
 	}
 

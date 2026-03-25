@@ -68,6 +68,19 @@ func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 	require.Equal(t, "folder-region", createdFolderVariable.GetName())
 	require.Equal(t, createdFolder1.GetName(), createdFolderVariable.GetAnnotations()[utils.AnnoKeyFolder])
 
+	duplicateGlobalVariable := buildGlobalVariableObject("global-region-duplicate", "region", "")
+	_, err = globalVariableClient.Resource.Create(ctx, duplicateGlobalVariable, metav1.CreateOptions{})
+	require.Error(t, err)
+
+	duplicateFolderVariable := buildGlobalVariableObject("folder-region-duplicate", "region", createdFolder1.GetName())
+	_, err = globalVariableClient.Resource.Create(ctx, duplicateFolderVariable, metav1.CreateOptions{})
+	require.Error(t, err)
+
+	folderVariableInDifferentFolder := buildGlobalVariableObject("folder-region-folder2", "region", createdFolder2.GetName())
+	createdFolderVariableInDifferentFolder, err := globalVariableClient.Resource.Create(ctx, folderVariableInDifferentFolder, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "folder-region-folder2", createdFolderVariableInDifferentFolder.GetName())
+
 	serviceVariable := buildGlobalVariableObject("global-service", "service", "")
 	createdServiceVariable, err := globalVariableClient.Resource.Create(ctx, serviceVariable, metav1.CreateOptions{})
 	require.NoError(t, err)
@@ -112,6 +125,12 @@ func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 	annotations := createdFolderVariable.GetAnnotations()
 	annotations[utils.AnnoKeyFolder] = createdFolder2.GetName()
 	createdFolderVariable.SetAnnotations(annotations)
+	_, err = globalVariableClient.Resource.Update(ctx, createdFolderVariable, metav1.UpdateOptions{})
+	require.Error(t, err)
+
+	err = globalVariableClient.Resource.Delete(ctx, createdFolderVariableInDifferentFolder.GetName(), metav1.DeleteOptions{})
+	require.NoError(t, err)
+
 	movedFolderVariable, err := globalVariableClient.Resource.Update(ctx, createdFolderVariable, metav1.UpdateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, createdFolder2.GetName(), movedFolderVariable.GetAnnotations()[utils.AnnoKeyFolder])
