@@ -2,7 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 
 import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
-import { Badge, BadgeColor } from '@grafana/ui';
+import { Badge, BadgeColor, IconName } from '@grafana/ui';
 import { useGetRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { getManagedByRepositoryTooltip, getOrphanedRepositoryTooltip } from 'app/features/provisioning/utils/tooltip';
@@ -22,6 +22,7 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
 
   let text;
   let color: BadgeColor = 'purple';
+  let icon: IconName = 'exchange-alt';
 
   switch (kind) {
     case ManagerKind.Terraform:
@@ -38,11 +39,12 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
       const isOrphaned = isError && isFetchError(error) && error.status === 404;
       text = isOrphaned ? getOrphanedRepositoryTooltip() : getManagedByRepositoryTooltip(repoData?.spec?.title || id);
       color = isOrphaned ? 'orange' : 'purple';
+      icon = isOrphaned ? 'exclamation-triangle' : 'exchange-alt';
       break;
     }
     default:
       text = t('dashboard-scene.managed-badge.provisioned', 'Provisioned');
   }
 
-  return <Badge color={color} icon="exchange-alt" tooltip={text} key="provisioned-dashboard-button-badge" />;
+  return <Badge color={color} icon={icon} tooltip={text} key="provisioned-dashboard-button-badge" />;
 };

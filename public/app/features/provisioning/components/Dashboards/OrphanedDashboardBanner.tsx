@@ -16,12 +16,12 @@ interface Props {
  */
 export function OrphanedDashboardBanner({ dashboard }: Props) {
   const kind = dashboard.getManagerKind();
-  const id = dashboard.getManagerIdentity();
+  const name = dashboard.getManagerIdentity();
 
-  const shouldSkip = !config.featureToggles.provisioning || kind !== ManagerKind.Repo || !id;
+  const shouldSkip = !config.featureToggles.provisioning || kind !== ManagerKind.Repo || !name;
 
   const { status } = useGetResourceRepositoryView({
-    name: shouldSkip ? undefined : id,
+    name: shouldSkip ? undefined : name,
     skipQuery: shouldSkip,
   });
 
@@ -29,5 +29,5 @@ export function OrphanedDashboardBanner({ dashboard }: Props) {
     return null;
   }
 
-  return <OrphanedResourceBanner repositoryName={id!} />;
+  return <OrphanedResourceBanner repositoryName={name!} />;
 }
