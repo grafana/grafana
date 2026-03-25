@@ -104,9 +104,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "provisioning.grafana.app",
 		Version: "v0alpha1",
 	}, {
-		Group:   "provisioning.grafana.app",
-		Version: "v1beta1",
-	}, {
 		Group:   "iam.grafana.app",
 		Version: "v0alpha1",
 	}, {
