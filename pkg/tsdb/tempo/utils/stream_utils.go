@@ -16,7 +16,7 @@ const (
 	TeamHttpHeaderKeyCamel = "X-Prom-Label-Policy"
 )
 
-// SetHeadersFromIncomingContext returns HTTP header key/value pairs for the outgoing Tempo streaming gRPC call.
+// returns HTTP header key/value pairs for the outgoing Tempo streaming gRPC call.
 // It always includes datasource HTTP client option headers. When forwardTeamHeadersTempo is enabled, it also merges
 // outgoing gRPC metadata: X-Prom-Label-Policy is set from the x-prom-label-policy metadata values, and every other
 // metadata entry is copied under its existing key.
