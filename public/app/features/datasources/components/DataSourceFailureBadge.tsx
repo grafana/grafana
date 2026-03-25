@@ -37,6 +37,9 @@ export function DataSourceFailureBadge({ severity, message }: Props) {
 
 const getStyles = () => ({
   trigger: css({
+    display: 'inline-flex',
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
     position: 'relative',
     zIndex: 1,
     cursor: 'help',
