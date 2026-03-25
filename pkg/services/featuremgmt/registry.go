@@ -2059,6 +2059,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "logsSummaryDisplay",
+			Description:  "Enables summary display mode for JSON logs, showing auto-detected message field instead of full JSON",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "false",
+		},
+		{
 			Name:         "alertingNotificationHistory",
 			Description:  "Enables the notification history feature",
 			Stage:        FeatureStageExperimental,

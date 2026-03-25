@@ -173,6 +173,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     fontSize,
     syntaxHighlighting,
     detailsMode: detailsModeProp,
+    logLineDisplayMode,
     noInteractions,
     timestampResolution,
     showLogAttributes,
@@ -601,6 +602,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
               getFieldLinks={getFieldLinks}
               grammar={isGrammar(grammar) ? grammar : undefined}
               isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
+              logLineDisplayMode={logLineDisplayMode}
               initialScrollPosition={initialScrollPosition}
               loading={infiniteScrolling}
               logLineMenuCustomItems={

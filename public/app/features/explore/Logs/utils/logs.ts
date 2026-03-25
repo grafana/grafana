@@ -4,6 +4,7 @@ export const SETTINGS_KEYS = {
   wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
   prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
   logsSortOrder: 'grafana.explore.logs.sortOrder',
+  logLineDisplayMode: 'grafana.explore.logs.logLineDisplayMode',
   logContextWrapLogMessage: 'grafana.explore.logs.logContext.wrapLogMessage',
   commonLabels: 'grafana.explore.logs.commonLabels',
 };

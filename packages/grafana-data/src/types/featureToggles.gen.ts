@@ -1306,6 +1306,11 @@ export interface FeatureToggles {
   */
   otelLogsFormatting?: boolean;
   /**
+  * Enables summary display mode for JSON logs, showing auto-detected message field instead of full JSON
+  * @default false
+  */
+  logsSummaryDisplay?: boolean;
+  /**
   * Enables the notification history feature
   * @default false
   */

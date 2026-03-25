@@ -17,6 +17,7 @@ export interface Options {
   dedupStrategy: common.LogsDedupStrategy;
   detailsMode?: ('inline' | 'sidebar');
   displayedFields?: Array<string>;
+  logLineDisplayMode?: ('full' | 'summary');
   enableInfiniteScrolling?: boolean;
   enableLogDetails: boolean;
   fontSize?: ('default' | 'small');

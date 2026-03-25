@@ -50,6 +50,8 @@ export const LogListContext = createContext<LogListContextData>({
   openAssistantByLog: () => {},
   controlsExpanded: false,
   setControlsExpanded: () => {},
+  logLineDisplayMode: 'full',
+  setLogLineDisplayMode: () => {},
 });
 
 export const useLogListContextData = (key: keyof LogListContextData) => {
@@ -105,6 +107,8 @@ export const defaultValue: LogListContextData = {
   timestampResolution: 'ns',
   controlsExpanded: false,
   setControlsExpanded: jest.fn(),
+  logLineDisplayMode: 'full',
+  setLogLineDisplayMode: jest.fn(),
 };
 
 export const defaultProps: Props = {

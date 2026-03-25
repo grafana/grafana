@@ -25,6 +25,10 @@
                   "interceptDismissed": {
                     "type": "boolean"
                   },
+                  "logLineDisplayMode": {
+                    "enum": ["full", "summary"],
+                    "type": "string"
+                  },
                   "prettifyJSON": {
                     "type": "boolean"
                   },

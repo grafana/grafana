@@ -58,6 +58,7 @@ export interface Props {
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   loading?: boolean;
   loadMore?: LoadMoreLogsType;
+  logLineDisplayMode?: LogLineDisplayMode;
   logLineMenuCustomItems?: LogLineMenuCustomItem[];
   logOptionsStorageKey?: string;
   logs: LogRowModel[];
@@ -101,8 +102,9 @@ export interface Props {
 }
 
 export type LogListFontSize = 'default' | 'small';
+export type LogLineDisplayMode = 'full' | 'summary';
 
-export type LogListOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyLogMessage' | 'defaultDisplayedFields';
+export type LogListOptions = keyof LogListState | 'wrapLogMessage' | 'prettifyLogMessage' | 'logLineDisplayMode' | 'defaultDisplayedFields';
 
 type LogListComponentProps = Omit<
   Props,
@@ -140,6 +142,7 @@ export const LogList = ({
   isLabelFilterActive,
   loading,
   loadMore,
+  logLineDisplayMode,
   logLineMenuCustomItems,
   logs,
   logsMeta,
@@ -189,6 +192,7 @@ export const LogList = ({
       isLabelFilterActive={isLabelFilterActive}
       logs={logs}
       logsMeta={logsMeta}
+      logLineDisplayMode={logLineDisplayMode}
       logLineMenuCustomItems={logLineMenuCustomItems}
       logOptionsStorageKey={logOptionsStorageKey}
       logSupportsContext={logSupportsContext}
@@ -280,6 +284,7 @@ const LogListComponent = ({
     hasSampledLogs,
     onClickFilterString,
     onClickFilterOutString,
+    logLineDisplayMode,
     permalinkedLogId,
     prettifyJSON,
     showLevel,
@@ -379,6 +384,7 @@ const LogListComponent = ({
         {
           getFieldLinks,
           escape: forceEscape ?? false,
+          logLineDisplayMode,
           prettifyJSON,
           order: sortOrder,
           timeZone,
@@ -390,7 +396,7 @@ const LogListComponent = ({
     );
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, getFieldLinks, grammar, logs, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
+  }, [forceEscape, getFieldLinks, grammar, logLineDisplayMode, logs, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);

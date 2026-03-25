@@ -4,7 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { DataFrameType, DataSourceApi, GrafanaTheme2, hasLogsLabelTypesSupport, store, TimeRange } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { Box, ControlledCollapse, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
@@ -31,8 +31,14 @@ interface LogLineDetailsComponentProps {
 
 export const LogLineDetailsComponent = memo(
   ({ log, logs, search = '', timeRange, timeZone }: LogLineDetailsComponentProps) => {
-    const { displayedFields, noInteractions, logOptionsStorageKey, setDisplayedFields, syntaxHighlighting } =
-      useLogListContext();
+    const {
+      displayedFields,
+      logLineDisplayMode,
+      noInteractions,
+      logOptionsStorageKey,
+      setDisplayedFields,
+      syntaxHighlighting,
+    } = useLogListContext();
 
     const [ds, setDs] = useState<DataSourceApi | null | undefined>(undefined);
     const styles = useStyles2(getStyles);
@@ -121,11 +127,31 @@ export const LogLineDetailsComponent = memo(
       [logOptionsStorageKey, noInteractions]
     );
 
+    const parsedFieldLabels: LabelWithLinks[] = useMemo(() => {
+      if (!config.featureToggles.logsSummaryDisplay || logLineDisplayMode !== 'summary') {
+        return [];
+      }
+      const parsed = log.parsedFields;
+      if (!parsed) {
+        return [];
+      }
+      return Object.entries(parsed).map(([key, value]) => ({
+        key,
+        value,
+        links: undefined,
+      }));
+    }, [log, logLineDisplayMode]);
+
+    const parsedFieldsOpen = logOptionsStorageKey
+      ? store.getBool(`${logOptionsStorageKey}.log-details.parsedFieldsOpen`, true)
+      : true;
+
     const noDetails =
       !fieldsWithLinks.links.length &&
       !fieldsWithLinks.linksFromVariableMap.length &&
       !labelGroups.length &&
-      !fieldsWithoutLinks.length;
+      !fieldsWithoutLinks.length &&
+      !parsedFieldLabels.length;
 
     const allLinks = useMemo(
       () => [...fieldsWithLinks.links, ...fieldsWithLinks.linksFromVariableMap],
@@ -230,6 +256,16 @@ export const LogLineDetailsComponent = memo(
             onToggle={(isOpen: boolean) => handleToggle('fieldsOpen', isOpen)}
           >
             <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
+          </ControlledCollapse>
+        )}
+        {parsedFieldLabels.length > 0 && (
+          <ControlledCollapse
+            className={styles.collapsable}
+            label={t('logs.log-line-details.parsed-fields-section', 'Parsed')}
+            isOpen={parsedFieldsOpen}
+            onToggle={(isOpen: boolean) => handleToggle('parsedFieldsOpen', isOpen)}
+          >
+            <LogLineDetailsLabelFields log={log} logs={logs} fields={parsedFieldLabels} search={search} />
           </ControlledCollapse>
         )}
         {noDetails && (

@@ -5,7 +5,7 @@ import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '.
 import { createLogLine, createLogRow } from '../mocks/logRow';
 import { OTEL_PROBE_FIELD } from '../otel/formats';
 
-import { LogListFontSize } from './LogList';
+import { LogLineDisplayMode, LogListFontSize } from './LogList';
 import { LogListModel, preProcessLogs } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
@@ -518,6 +518,79 @@ Value"
     expect(processedLogs[0].getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME)).toBe(processedLogs[0].body);
     expect(processedLogs[1].getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME)).toBe(processedLogs[1].body);
     expect(processedLogs[2].getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME)).toBe(processedLogs[2].body);
+  });
+
+  describe('Summary display mode', () => {
+    const summaryOptions = {
+      escape: false,
+      order: LogsSortOrder.Descending,
+      timeZone: 'browser',
+      wrapLogMessage: true,
+      logLineDisplayMode: 'summary' as LogLineDisplayMode,
+    };
+
+    test('Body shows extracted message instead of full JSON', () => {
+      const entry = '{"level":"info","message":"HTTP request completed","status":200}';
+      const log = createLogLine({ entry }, summaryOptions);
+      expect(log.body).toBe('HTTP request completed');
+      expect(log.isJSON).toBe(false);
+    });
+
+    test('Body falls back to full display when no message field or non-JSON', () => {
+      const noMsgField = createLogLine({ entry: '{"status":200,"path":"/api"}' }, summaryOptions);
+      expect(noMsgField.body).toBe('{"status":200,"path":"/api"}');
+
+      const plainText = createLogLine({ entry: 'level=info msg="logfmt"' }, summaryOptions);
+      expect(plainText.body).toBe('level=info msg="logfmt"');
+    });
+
+    test('Default mode and full mode show full JSON', () => {
+      const entry = '{"level":"info","message":"HTTP request completed","status":200}';
+      const defaultMode = createLogLine({ entry }, {
+        escape: false,
+        order: LogsSortOrder.Descending,
+        timeZone: 'browser',
+        wrapLogMessage: true,
+      });
+      expect(defaultMode.body).toBe(entry);
+      expect(defaultMode.isJSON).toBe(true);
+    });
+
+    test('Summary mode respects wrapLogMessage for newlines', () => {
+      const entry = '{"message":"line1\\nline2"}';
+      const wrapped = createLogLine({ entry }, summaryOptions);
+      expect(wrapped.body).toBe('line1\nline2');
+
+      const unwrapped = createLogLine({ entry }, { ...summaryOptions, wrapLogMessage: false });
+      expect(unwrapped.body).not.toContain('\n');
+    });
+
+    test('Clone forces full mode for details view', () => {
+      const entry = '{"level":"info","message":"HTTP request completed","status":200}';
+      const log = createLogLine({ entry }, summaryOptions);
+      expect(log.body).toBe('HTTP request completed');
+
+      const cloned = log.clone();
+      expect(cloned.body).toBe(entry);
+      expect(cloned.isJSON).toBe(true);
+    });
+
+    test('parsedFields excludes metadata, message field, and existing labels', () => {
+      const entry = '{"level":"info","time":123,"message":"test","method":"GET","app":"myapp","count":42}';
+      const log = createLogLine({ entry, labels: { app: 'myapp' } }, summaryOptions);
+      expect(log.parsedFields).toEqual({
+        method: 'GET',
+        count: '42',
+      });
+    });
+
+    test('parsedFields returns null for non-JSON or when no fields remain', () => {
+      const plainText = createLogLine({ entry: 'plain text' }, summaryOptions);
+      expect(plainText.parsedFields).toBeNull();
+
+      const onlyMeta = createLogLine({ entry: '{"message":"test","level":"info","time":123}' }, summaryOptions);
+      expect(onlyMeta.parsedFields).toBeNull();
+    });
   });
 
   describe.each(fontSizes)('Collapsible log lines', (fontSize: LogListFontSize) => {

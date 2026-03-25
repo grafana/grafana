@@ -2,6 +2,7 @@
 
 export interface Spec {
 	defaultFields: string[];
+	logLineDisplayMode?: 'full' | 'summary';
 	prettifyJSON: boolean;
 	wrapLogMessage: boolean;
 	interceptDismissed: boolean;

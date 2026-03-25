@@ -256,6 +256,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-10-13,enableDashboardEmptyExtensions,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-03,foldersAppPlatformAPI,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2025-07-16,otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
+2026-03-24,logsSummaryDisplay,experimental,@grafana/observability-logs,false,false,true
 2025-07-17,alertingNotificationHistory,experimental,@grafana/alerting-squad,false,false,false
 2025-07-18,unifiedStorageSearchDualReaderEnabled,experimental,@grafana/search-and-storage,false,false,false
 2025-07-31,dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true

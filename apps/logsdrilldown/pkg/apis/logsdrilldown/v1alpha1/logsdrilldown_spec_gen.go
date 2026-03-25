@@ -5,6 +5,7 @@ package v1alpha1
 // +k8s:openapi-gen=true
 type LogsDrilldownSpec struct {
 	DefaultFields      []string `json:"defaultFields"`
+	LogLineDisplayMode *string  `json:"logLineDisplayMode,omitempty"`
 	PrettifyJSON       bool     `json:"prettifyJSON"`
 	WrapLogMessage     bool     `json:"wrapLogMessage"`
 	InterceptDismissed bool     `json:"interceptDismissed"`

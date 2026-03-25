@@ -11160,6 +11160,7 @@
       "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
       "open-assistant": "Explain log line in Assistant",
+      "parsed-fields-section": "Parsed",
       "pin-line": "Pin log",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
@@ -11267,7 +11268,9 @@
         "disable-highlighting": "Highlight text",
         "enable-highlighting": "Plain text",
         "escape-newlines": "Escape newlines",
-        "expand": "Collapsed"
+        "expand": "Collapsed",
+        "full-view": "Full view",
+        "summary-view": "Summary view"
       },
       "labels": {
         "font-large": "Large font",
@@ -11313,7 +11316,9 @@
         "disable-highlighting": "Disable highlighting",
         "download": "Download",
         "enable-highlighting": "Enable highlighting",
-        "filter-level": "Filter logs result by level"
+        "filter-level": "Filter logs result by level",
+        "full-view": "Show full log line",
+        "summary-view": "Show summary of JSON logs"
       },
       "unwrap-lines": "Unwrap lines",
       "unwrapped-columns": {

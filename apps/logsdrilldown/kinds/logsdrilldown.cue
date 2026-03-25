@@ -6,6 +6,7 @@ import (
 
 LogsDrilldownSpecv1alpha1: {
 	defaultFields: [...string] | *[]
+	logLineDisplayMode?: "full" | "summary"
 	prettifyJSON:       bool
 	wrapLogMessage:     bool
 	interceptDismissed: bool

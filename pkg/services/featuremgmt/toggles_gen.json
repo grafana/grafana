@@ -3762,6 +3762,20 @@
     },
     {
       "metadata": {
+        "name": "logsSummaryDisplay",
+        "resourceVersion": "1771434338561",
+        "creationTimestamp": "2026-03-24T00:00:00Z"
+      },
+      "spec": {
+        "description": "Enables summary display mode for JSON logs, showing auto-detected message field instead of full JSON",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "panelFilterVariable",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-11-03T12:15:54Z"

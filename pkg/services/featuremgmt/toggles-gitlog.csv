@@ -496,6 +496,7 @@ provisioningSecretsService,2025-07-15T13:43:17Z,2025-07-31T22:56:50Z,d39a47a89b9
 sharingDashboardImage,2025-07-15T21:07:39Z,,b691b3288d5d18366e405ad4e881e7e9d9d6de96,Nathan Marrs
 enablePluginImporter,2025-07-16T04:42:28Z,2025-10-23T04:18:23Z,5b82e056972f959908cd42c9934ba56e8adbf143,Hugo Häggmark
 otelLogsFormatting,2025-07-16T15:42:14Z,,974103c6fa20701c5467c67fb24f173aea9113fb,Matias Chomicki
+logsSummaryDisplay,2026-03-24T00:00:00Z,,,
 alertingAIAnalyzeCentralStateHistory,2025-07-16T16:42:42Z,,9c15662cf6337b37f2932cf7b20fe5e05d310153,Sonia Aguilar
 alertingAIGenAlertRules,2025-07-16T16:42:42Z,,9c15662cf6337b37f2932cf7b20fe5e05d310153,Sonia Aguilar
 alertingAIGenTemplates,2025-07-16T16:42:42Z,,9c15662cf6337b37f2932cf7b20fe5e05d310153,Sonia Aguilar

@@ -57,6 +57,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     fontSize,
     forceEscape,
     hasUnescapedContent,
+    logLineDisplayMode,
     logOptionsStorageKey,
     prettifyJSON,
     setControlsExpanded,
@@ -64,6 +65,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     setFilterLevels,
     setFontSize,
     setForceEscape,
+    setLogLineDisplayMode,
     setPrettifyJSON,
     setShowTime,
     setShowUniqueLabels,
@@ -162,6 +164,14 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     });
     setPrettifyJSON(!prettifyJSON);
   }, [prettifyJSON, setPrettifyJSON]);
+
+  const onLogLineDisplayModeClick = useCallback(() => {
+    const newMode = logLineDisplayMode === 'summary' ? 'full' : 'summary';
+    reportInteraction('logs_log_list_controls_summary_display_clicked', {
+      state: newMode,
+    });
+    setLogLineDisplayMode(newMode);
+  }, [logLineDisplayMode, setLogLineDisplayMode]);
 
   const onSyntaxHightlightingClick = useCallback(() => {
     reportInteraction('logs_log_list_controls_syntax_clicked', {
@@ -478,6 +488,26 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                     syntaxHighlighting
                       ? t('logs.logs-controls.tooltip.disable-highlighting', 'Disable highlighting')
                       : t('logs.logs-controls.tooltip.enable-highlighting', 'Enable highlighting')
+                  }
+                  size="lg"
+                />
+              )}
+              {config.featureToggles.logsSummaryDisplay && (
+                <LogListControlsOption
+                  expanded={controlsExpanded}
+                  name="file-alt"
+                  aria-pressed={logLineDisplayMode === 'summary'}
+                  className={logLineDisplayMode === 'summary' ? styles.controlButtonActive : styles.controlButton}
+                  onClick={onLogLineDisplayModeClick}
+                  label={
+                    logLineDisplayMode === 'summary'
+                      ? t('logs.logs-controls.label.full-view', 'Full view')
+                      : t('logs.logs-controls.label.summary-view', 'Summary view')
+                  }
+                  tooltip={
+                    logLineDisplayMode === 'summary'
+                      ? t('logs.logs-controls.tooltip.full-view', 'Show full log line')
+                      : t('logs.logs-controls.tooltip.summary-view', 'Show summary of JSON logs')
                   }
                   size="lg"
                 />

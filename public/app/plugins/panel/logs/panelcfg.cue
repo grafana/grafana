@@ -46,6 +46,7 @@ composableKinds: PanelCfg: {
 					showLogAttributes?:       bool
 					fontSize?:                "default" | "small"  @cuetsy(kind="enum", memberNames="default|small")
 					detailsMode?:             "inline" | "sidebar" @cuetsy(kind="enum", memberNames="inline|sidebar")
+					logLineDisplayMode?:      "full" | "summary"   @cuetsy(kind="enum", memberNames="full|summary")
 					timestampResolution?:     "ms" | "ns"          @cuetsy(kind="enum", memberNames="ms|ns")
 					// TODO: figure out how to define callbacks
 					onClickFilterLabel?:     _

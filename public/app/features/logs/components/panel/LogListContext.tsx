@@ -33,7 +33,7 @@ import { getDisplayedFieldsForLogs } from '../otel/formats';
 import { getDefaultDetailsMode, getDetailsWidth } from './LogDetailsContext';
 import { LogLineTimestampResolution } from './LogLine';
 import { GetRowContextQueryFn, LogLineMenuCustomItem } from './LogLineMenu';
-import { LogListOptions, LogListFontSize } from './LogList';
+import { LogLineDisplayMode, LogListOptions, LogListFontSize } from './LogList';
 import { collectInsights } from './analytics';
 import { LogListModel } from './processing';
 
@@ -54,6 +54,7 @@ export interface LogListContextData
   setForceEscape: (forceEscape: boolean) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
+  setLogLineDisplayMode: (mode: LogLineDisplayMode) => void;
   setPrettifyJSON: (prettifyJSON: boolean) => void;
   setSyntaxHighlighting: (syntaxHighlighting: boolean) => void;
   setShowLevel: (showLevel: boolean) => void;
@@ -63,6 +64,7 @@ export interface LogListContextData
   setTimestampResolution: (format: LogLineTimestampResolution) => void;
   setUnwrappedColumns: (unwrappedColumns: boolean) => void;
   setWrapLogMessage: (showTime: boolean) => void;
+  logLineDisplayMode: LogLineDisplayMode;
   showLevel: boolean;
   timestampResolution: LogLineTimestampResolution;
   isAssistantAvailable: boolean;
@@ -86,6 +88,7 @@ export const LogListContext = createContext<LogListContextData>({
   setFilterLevels: () => {},
   setFontSize: () => {},
   setForceEscape: () => {},
+  setLogLineDisplayMode: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
   setPrettifyJSON: () => {},
@@ -97,6 +100,7 @@ export const LogListContext = createContext<LogListContextData>({
   setTimestampResolution: () => {},
   setUnwrappedColumns: () => {},
   setWrapLogMessage: () => {},
+  logLineDisplayMode: 'full',
   showLevel: true,
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
@@ -174,6 +178,7 @@ export interface Props {
   permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  logLineDisplayMode?: LogLineDisplayMode;
   prettifyJSON?: boolean;
   setDisplayedFields?: (displayedFields: string[]) => void;
   showControls: boolean;
@@ -219,6 +224,7 @@ export const LogListContextProvider = ({
   onUnpinLine,
   permalinkedLogId,
   pinLineButtonTooltipTitle,
+  logLineDisplayMode: logLineDisplayModeProp,
   pinnedLogs,
   prettifyJSON: prettifyJSONProp,
   setDisplayedFields,
@@ -249,6 +255,12 @@ export const LogListContextProvider = ({
     timestampResolution,
   });
   const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
+  const storedDisplayMode = logOptionsStorageKey
+    ? (store.get(`${logOptionsStorageKey}.logLineDisplayMode`) ?? 'full')
+    : 'full';
+  const [logLineDisplayMode, setLogLineDisplayModeState] = useState<LogLineDisplayMode>(
+    logLineDisplayModeProp ?? (storedDisplayMode === 'summary' ? 'summary' : 'full')
+  );
   const [prettifyJSON, setPrettifyJSONState] = useState(prettifyJSONProp);
   const [wrapLogMessage, setWrapLogMessageState] = useState(wrapLogMessageProp);
   const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
@@ -345,6 +357,13 @@ export const LogListContextProvider = ({
       setLogListState({ ...logListState, pinnedLogs });
     }
   }, [logListState, pinnedLogs]);
+
+  // Sync logLineDisplayMode
+  useEffect(() => {
+    if (logLineDisplayModeProp !== undefined) {
+      setLogLineDisplayModeState(logLineDisplayModeProp);
+    }
+  }, [logLineDisplayModeProp]);
 
   // Sync prettifyJSON
   useEffect(() => {
@@ -468,6 +487,17 @@ export const LogListContextProvider = ({
       }
     },
     [logListState, logOptionsStorageKey, onLogOptionsChange]
+  );
+
+  const setLogLineDisplayMode = useCallback(
+    (mode: LogLineDisplayMode) => {
+      setLogLineDisplayModeState(mode);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.logLineDisplayMode`, mode);
+      }
+      onLogOptionsChange?.('logLineDisplayMode', mode);
+    },
+    [logOptionsStorageKey, onLogOptionsChange]
   );
 
   const setPrettifyJSON = useCallback(
@@ -623,10 +653,12 @@ export const LogListContextProvider = ({
         permalinkedLogId,
         pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
+        logLineDisplayMode,
         prettifyJSON,
         setControlsExpanded,
         setDedupStrategy,
         setDisplayedFields,
+        setLogLineDisplayMode,
         setFilterLevels,
         setFontSize,
         setForceEscape,

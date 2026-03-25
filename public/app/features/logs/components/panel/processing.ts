@@ -20,7 +20,9 @@ import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '.
 import { FieldDef, getAllFields } from '../logParser';
 import { identifyOTelLanguage, getOtelAttributesField } from '../otel/formats';
 
+import { LogLineDisplayMode } from './LogList';
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
+import { extractMessageFromJSON } from './messageExtraction';
 import { LogLineVirtualization } from './virtualization';
 
 const TRUNCATION_DEFAULT_LENGTH = 50000;
@@ -65,14 +67,26 @@ export class LogListModel implements LogRowModel {
   private _escapeUnescapedString = false;
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
+  private _logLineDisplayMode: LogLineDisplayMode;
   private _prettifyJSON: boolean;
   private _virtualization?: LogLineVirtualization;
   private _wrapLogMessage: boolean;
   private _json = false;
+  private _summaryMessage: string | null | undefined = undefined;
+  private _parsedJSON: Record<string, unknown> | null | undefined = undefined;
 
   constructor(
     log: LogRowModel,
-    { escape, getFieldLinks, grammar, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessLogOptions
+    {
+      escape,
+      getFieldLinks,
+      grammar,
+      logLineDisplayMode,
+      prettifyJSON,
+      timeZone,
+      virtualization,
+      wrapLogMessage,
+    }: PreProcessLogOptions
   ) {
     // LogRowModel
     this.datasourceType = log.datasourceType;
@@ -103,6 +117,7 @@ export class LogListModel implements LogRowModel {
     this.displayLevel = logLevelToDisplayLevel(log.logLevel);
     this._getFieldLinks = getFieldLinks;
     this._grammar = grammar;
+    this._logLineDisplayMode = logLineDisplayMode ?? 'full';
     this._prettifyJSON = Boolean(prettifyJSON);
     this.timestamp = dateTimeFormat(log.timeEpochMs, {
       timeZone,
@@ -126,6 +141,7 @@ export class LogListModel implements LogRowModel {
     const clone = Object.assign(Object.create(Object.getPrototypeOf(this)), this);
     // Unless this function is required outside of <LogLineDetailsLog />, we create a wrapped clone, so new lines are not stripped.
     clone._wrapLogMessage = true;
+    clone._logLineDisplayMode = 'full';
     clone._body = undefined;
     clone._highlightTokens = undefined;
     clone.collapsed = false;
@@ -134,6 +150,23 @@ export class LogListModel implements LogRowModel {
 
   get body(): string {
     if (this._body === undefined) {
+      // Summary mode: show extracted message instead of full JSON
+      if (this._logLineDisplayMode === 'summary') {
+        const summary = this.summaryMessage;
+        if (summary !== null) {
+          let body = summary;
+          if (this._escapeUnescapedString) {
+            body = escapeUnescapedString(body);
+          }
+          if (!this._wrapLogMessage) {
+            body = body.replace(NEWLINES_REGEX, '');
+          }
+          this._body = body;
+          return this._body;
+        }
+        // Fallback: no message extracted, proceed with full display
+      }
+
       try {
         const parsed = parse(this.raw, undefined, {
           onDuplicateKey: ({ newValue }) => newValue,
@@ -160,6 +193,43 @@ export class LogListModel implements LogRowModel {
       }
     }
     return this._body;
+  }
+
+  get summaryMessage(): string | null {
+    if (this._summaryMessage === undefined) {
+      const result = extractMessageFromJSON(this.raw);
+      this._summaryMessage = result.message;
+      this._parsedJSON = result.parsed;
+    }
+    return this._summaryMessage;
+  }
+
+  get parsedFields(): Record<string, string> | null {
+    // Trigger extraction if not done yet
+    if (this._parsedJSON === undefined) {
+      this.summaryMessage; // eslint-disable-line @typescript-eslint/no-unused-expressions
+    }
+    const parsed = this._parsedJSON;
+    if (parsed === null || parsed === undefined || this._summaryMessage === null) {
+      return null;
+    }
+    const result: Record<string, string> = {};
+    const excludeKeys = new Set(['level', 'time', 'timestamp', 'severity', 'ts', '@t', '@l']);
+    // Find the message field key to exclude it
+    for (const [key, value] of Object.entries(parsed)) {
+      if (excludeKeys.has(key)) {
+        continue;
+      }
+      if (typeof value === 'string' && value === this._summaryMessage) {
+        continue;
+      }
+      // Skip fields already in labels
+      if (this.labels[key] != null) {
+        continue;
+      }
+      result[key] = typeof value === 'string' ? value : JSON.stringify(value);
+    }
+    return Object.keys(result).length > 0 ? result : null;
   }
 
   get errorMessage(): string | undefined {
@@ -284,6 +354,7 @@ export class LogListModel implements LogRowModel {
 export interface PreProcessOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
+  logLineDisplayMode?: LogLineDisplayMode;
   order: LogsSortOrder;
   prettifyJSON?: boolean;
   timeZone: string;
@@ -293,7 +364,16 @@ export interface PreProcessOptions {
 
 export const preProcessLogs = (
   logs: LogRowModel[],
-  { escape, getFieldLinks, order, prettifyJSON, timeZone, virtualization, wrapLogMessage }: PreProcessOptions,
+  {
+    escape,
+    getFieldLinks,
+    logLineDisplayMode,
+    order,
+    prettifyJSON,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  }: PreProcessOptions,
   grammar?: Grammar
 ): LogListModel[] => {
   const orderedLogs = sortLogRows(logs, order);
@@ -302,6 +382,7 @@ export const preProcessLogs = (
       escape,
       getFieldLinks,
       grammar,
+      logLineDisplayMode,
       prettifyJSON,
       timeZone,
       virtualization,
@@ -314,6 +395,7 @@ interface PreProcessLogOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
   grammar?: Grammar;
+  logLineDisplayMode?: LogLineDisplayMode;
   prettifyJSON?: boolean;
   timeZone: string;
   virtualization?: LogLineVirtualization;
