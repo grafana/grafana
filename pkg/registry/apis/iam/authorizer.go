@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	authlib "github.com/grafana/authlib/types"
@@ -72,7 +73,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = externalGroupMappingApiInstaller.GetAuthorizer()
-	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = newTeamAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = allowAuthorizer
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
@@ -95,6 +96,43 @@ func (s *iamAuthorizer) Authorize(ctx context.Context, attr authorizer.Attribute
 	}
 
 	return authz.Authorize(ctx, attr)
+}
+
+// newTeamAuthorizer creates an authorizer for teams that handles the "members" subresource
+// with a get_permissions check on the parent team resource.
+func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
+	delegate := gfauthorizer.NewResourceAuthorizer(accessClient)
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		if !attr.IsResourceRequest() {
+			return authorizer.DecisionNoOpinion, "", nil
+		}
+
+		subresource := attr.GetSubresource()
+		if subresource == "members" {
+			ident, ok := authlib.AuthInfoFrom(ctx)
+			if !ok {
+				return authorizer.DecisionDeny, "", errors.New("no identity found")
+			}
+
+			res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
+				Verb:      utils.VerbGetPermissions,
+				Group:     attr.GetAPIGroup(),
+				Resource:  attr.GetResource(),
+				Namespace: attr.GetNamespace(),
+				Name:      attr.GetName(),
+			}, "")
+			if err != nil {
+				return authorizer.DecisionDeny, "", err
+			}
+			if !res.Allowed {
+				return authorizer.DecisionDeny, "requires team getpermissions", nil
+			}
+			return authorizer.DecisionAllow, "", nil
+		}
+
+		// Delegate to the standard ResourceAuthorizer for non-members subresources
+		return delegate.Authorize(ctx, attr)
+	})
 }
 
 func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyIdentityStore) authlib.AccessClient {

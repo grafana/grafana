@@ -194,7 +194,7 @@ APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | so
 app ?=
 
 .PHONY: gen-apps
-gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt. Use app=<name> to generate for a specific app.
+gen-apps: fix-cue do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt. Use app=<name> to generate for a specific app.
 ## NOTE: codegen produces some openapi files that result in circular dependencies
 ## for now, we revert the zz_openapi_gen.go files before comparison
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
