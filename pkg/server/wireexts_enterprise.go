@@ -470,7 +470,7 @@ var wireExtsBaseCLISet = wire.NewSet(
 	ossacimpl.ProvideAccessControl, wire.Bind(new(accesscontrol.AccessControl), new(*ossacimpl.AccessControl)),
 	acdatabase.ProvideService,
 	authz.WireSet,
-	zStore.ProvideDefaultStoreProvider,
+	entzanzanastore.ProvideEnterpriseStoreProvider,
 
 	// Authn service and dependencies (required by access control)
 	authnimpl.ProvideAuthnService,

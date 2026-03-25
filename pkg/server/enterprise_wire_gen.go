@@ -65,6 +65,7 @@ import (
 	idimpl2 "github.com/grafana/grafana/pkg/extensions/auth/idimpl"
 	"github.com/grafana/grafana/pkg/extensions/authn"
 	authz2 "github.com/grafana/grafana/pkg/extensions/authz"
+	store2 "github.com/grafana/grafana/pkg/extensions/authz/zanzana/store"
 	backgroundsvcs2 "github.com/grafana/grafana/pkg/extensions/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/extensions/bannersettings"
 	"github.com/grafana/grafana/pkg/extensions/billing"
@@ -221,7 +222,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/authz"
-	store2 "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	caching2 "github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/cloudmigration/cloudmigrationimpl"
@@ -623,7 +623,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts Options, apiOpts api
 	if err != nil {
 		return nil, err
 	}
-	storeProvider := store2.ProvideDefaultStoreProvider()
+	storeProvider := store2.ProvideEnterpriseStoreProvider()
 	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider)
 	if err != nil {
 		return nil, err
@@ -1534,7 +1534,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	storeProvider := store2.ProvideDefaultStoreProvider()
+	storeProvider := store2.ProvideEnterpriseStoreProvider()
 	server, err := authz.ProvideEmbeddedZanzanaServer(cfg, sqlStore, tracingService, featureToggles, registerer, eventualRestConfigProvider, storeProvider)
 	if err != nil {
 		return nil, err
@@ -2516,7 +2516,7 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	if err != nil {
 		return nil, err
 	}
-	storeProvider := store2.ProvideDefaultStoreProvider()
+	storeProvider := store2.ProvideEnterpriseStoreProvider()
 	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, registerer, gatherer, tracingService, licenseTokenService, moduleRegisterer, storageBackend, hooksService, storeProvider)
 	if err != nil {
 		return nil, err
