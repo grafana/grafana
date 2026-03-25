@@ -123,7 +123,7 @@ manifest: {
 						spec:   v2.DashboardSpec
 						status: DashboardStatus
 					}
-				}
+				},
 			]
 		}
 	}
