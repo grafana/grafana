@@ -423,8 +423,8 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Get("/uid/:uid", authorize(ac.EvalPermission(datasources.ActionRead, uidScope)), hs.getK8sDataSourceByUIDHandler())
 
 			datasourceRoute.Any("/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.CheckDatasourceHealthWithUID))
-			datasourceRoute.Any("/uid/:uid/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResourceWithUID)
-			datasourceRoute.Any("/uid/:uid/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.CallDatasourceResourceWithUID)
+			datasourceRoute.Any("/uid/:uid/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceResourceHandler())
+			datasourceRoute.Any("/uid/:uid/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceResourceHandler())
 			datasourceRoute.Any("/proxy/uid/:uid", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 			datasourceRoute.Any("/proxy/uid/:uid/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
 
