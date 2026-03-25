@@ -2013,6 +2013,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			action = DataActionUpdated
 		case resourcepb.WatchEvent_DELETED:
 			action = DataActionDeleted
+			createID := req.Key.Group + "/" + req.Key.Resource + "/" + req.Key.Namespace + "/" + req.Key.Name
+			delete(seenCreates, createID)
 		default:
 			rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
 				Key:    req.Key,

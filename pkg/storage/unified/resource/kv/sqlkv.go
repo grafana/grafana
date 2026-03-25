@@ -420,29 +420,158 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 		}
 	}
 
+	// Detect homogeneous batch for optimized paths
+	if mode, ok := uniformMode(ops); ok {
+		return k.batchUniform(ctx, qb, section, ops, mode)
+	}
+
+	// Mixed modes: sequential per-op processing in a transaction
+	return k.batchMixed(ctx, qb, section, ops)
+}
+
+// uniformMode returns the common mode if all ops share it.
+func uniformMode(ops []BatchOp) (BatchOpMode, bool) {
+	mode := ops[0].Mode
+	for _, op := range ops[1:] {
+		if op.Mode != mode {
+			return 0, false
+		}
+	}
+	return mode, true
+}
+
+// batchUniform handles batches where all ops have the same mode, enabling bulk SQL optimizations.
+func (k *SqlKV) batchUniform(ctx context.Context, qb *queryBuilder, section string, ops []BatchOp, mode BatchOpMode) error {
+	switch mode {
+	case BatchOpPut:
+		return k.batchPut(ctx, qb, section, ops)
+	case BatchOpCreate:
+		return k.batchCreate(ctx, qb, section, ops)
+	case BatchOpUpdate:
+		return k.batchUpdate(ctx, qb, section, ops)
+	case BatchOpDelete:
+		keys := make([]string, len(ops))
+		for i, op := range ops {
+			keys[i] = op.Key
+		}
+		return k.BatchDelete(ctx, section, keys)
+	default:
+		return fmt.Errorf("unknown operation mode: %d", mode)
+	}
+}
+
+// batchPut handles all-Put batches. DataSection uses multi-row INSERT (keys include
+// resource version, so they're unique by construction). Other sections use individual upserts.
+func (k *SqlKV) batchPut(ctx context.Context, qb *queryBuilder, section string, ops []BatchOp) error {
 	tx, err := k.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback() //nolint:errcheck
 
-	// Fast path: all BatchOpPut on DataSection → multi-row INSERT.
-	// Safe because DataSection key_paths include the resource version, making them unique.
-	if section == DataSection && allBatchOpPut(ops) {
+	if section == DataSection {
 		if err := k.batchInsertDatastore(ctx, tx, qb, section, ops); err != nil {
 			return err
 		}
-		return tx.Commit()
+	} else {
+		for i, op := range ops {
+			keyPath := getKeyPath(section, op.Key)
+			query, args := qb.buildUpsertQuery(keyPath, op.Value)
+			if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+		}
 	}
 
-	// General path: process ops in order within a single transaction
+	return tx.Commit()
+}
+
+// batchCreate handles all-Create batches with existence checks.
+func (k *SqlKV) batchCreate(ctx context.Context, qb *queryBuilder, section string, ops []BatchOp) error {
+	tx, err := k.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck
+
+	for i, op := range ops {
+		keyPath := getKeyPath(section, op.Key)
+		exists, err := keyExistsTx(ctx, tx, qb, keyPath)
+		if err != nil {
+			return &BatchError{Err: err, Index: i, Op: op}
+		}
+		if exists {
+			return &BatchError{Err: ErrKeyAlreadyExists, Index: i, Op: op}
+		}
+		if section == DataSection {
+			query, args := qb.buildInsertDatastoreQuery(keyPath, op.Value, uuid.New().String())
+			if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+		} else {
+			query, args := qb.buildInsertQuery(keyPath, op.Value)
+			if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+		}
+	}
+
+	return tx.Commit()
+}
+
+// batchUpdate handles all-Update batches with existence checks.
+func (k *SqlKV) batchUpdate(ctx context.Context, qb *queryBuilder, section string, ops []BatchOp) error {
+	tx, err := k.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck
+
+	for i, op := range ops {
+		keyPath := getKeyPath(section, op.Key)
+		exists, err := keyExistsTx(ctx, tx, qb, keyPath)
+		if err != nil {
+			return &BatchError{Err: err, Index: i, Op: op}
+		}
+		if !exists {
+			return &BatchError{Err: ErrNotFound, Index: i, Op: op}
+		}
+		query, args := qb.buildUpdateDatastoreQuery(keyPath, op.Value)
+		if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+			return &BatchError{Err: err, Index: i, Op: op}
+		}
+	}
+
+	return tx.Commit()
+}
+
+// batchMixed handles batches with different op modes via sequential per-op processing.
+func (k *SqlKV) batchMixed(ctx context.Context, qb *queryBuilder, section string, ops []BatchOp) error {
+	tx, err := k.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck
+
 	for i, op := range ops {
 		keyPath := getKeyPath(section, op.Key)
 		switch op.Mode {
 		case BatchOpPut:
 			if section == DataSection {
-				if err := putDataSectionTx(ctx, tx, qb, keyPath, op.Value); err != nil {
+				exists, err := keyExistsTx(ctx, tx, qb, keyPath)
+				if err != nil {
 					return &BatchError{Err: err, Index: i, Op: op}
+				}
+				if exists {
+					query, args := qb.buildUpdateDatastoreQuery(keyPath, op.Value)
+					if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+						return &BatchError{Err: err, Index: i, Op: op}
+					}
+				} else {
+					query, args := qb.buildInsertDatastoreQuery(keyPath, op.Value, uuid.New().String())
+					if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+						return &BatchError{Err: err, Index: i, Op: op}
+					}
 				}
 			} else {
 				query, args := qb.buildUpsertQuery(keyPath, op.Value)
@@ -464,7 +593,7 @@ func (k *SqlKV) Batch(ctx context.Context, section string, ops []BatchOp) error 
 					return &BatchError{Err: err, Index: i, Op: op}
 				}
 			} else {
-				query, args := qb.buildUpsertQuery(keyPath, op.Value)
+				query, args := qb.buildInsertQuery(keyPath, op.Value)
 				if _, err := tx.ExecContext(ctx, query, args...); err != nil {
 					return &BatchError{Err: err, Index: i, Op: op}
 				}
@@ -504,30 +633,6 @@ func keyExistsTx(ctx context.Context, tx *sql.Tx, qb *queryBuilder, keyPath stri
 		return false, err
 	}
 	return true, nil
-}
-
-func putDataSectionTx(ctx context.Context, tx *sql.Tx, qb *queryBuilder, keyPath string, value []byte) error {
-	exists, err := keyExistsTx(ctx, tx, qb, keyPath)
-	if err != nil {
-		return err
-	}
-	if exists {
-		query, args := qb.buildUpdateDatastoreQuery(keyPath, value)
-		_, err = tx.ExecContext(ctx, query, args...)
-		return err
-	}
-	query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.New().String())
-	_, err = tx.ExecContext(ctx, query, args...)
-	return err
-}
-
-func allBatchOpPut(ops []BatchOp) bool {
-	for _, op := range ops {
-		if op.Mode != BatchOpPut {
-			return false
-		}
-	}
-	return true
 }
 
 func (k *SqlKV) batchInsertDatastore(ctx context.Context, tx *sql.Tx, qb *queryBuilder, section string, ops []BatchOp) error {
