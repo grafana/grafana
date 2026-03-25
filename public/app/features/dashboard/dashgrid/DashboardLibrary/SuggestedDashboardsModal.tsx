@@ -74,7 +74,9 @@ export const SuggestedDashboardsModal = ({
     if (isOpen) {
       setActiveView('list');
     } else {
+      // Reset when modal closes
       setMappingContext(null);
+      setActiveView('list');
     }
   }, [initialMappingContext, isOpen]);
 
