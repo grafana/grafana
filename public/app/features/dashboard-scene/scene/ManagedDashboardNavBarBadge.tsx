@@ -36,6 +36,8 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
       break;
     case ManagerKind.Repo: {
       // Repository-managed dashboard where the repo no longer exists
+      // All other places where we check for orphaned resources (e.g. OrphanedResourceBanner) are using useGetResourceRepositoryView
+      // Reason we don't here is because useGetResourceRepositoryView its much heavier than what's needed here and that hook also fetches folder data
       const isOrphaned = isError && isFetchError(error) && error.status === 404;
       text = isOrphaned ? getOrphanedRepositoryTooltip() : getManagedByRepositoryTooltip(repoData?.spec?.title || id);
       color = isOrphaned ? 'orange' : 'purple';
