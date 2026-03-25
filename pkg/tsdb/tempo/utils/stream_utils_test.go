@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/useragent"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
@@ -18,25 +17,30 @@ func testLogger() log.Logger {
 	return backend.NewLoggerWith("stream_utils_test")
 }
 
-func TestAppendHeadersToOutgoingContext_AppendsHeadersAndUserAgent(t *testing.T) {
-	ctx := context.TODO()
-	ua, err := useragent.New("10.0.0", "linux", "amd64")
-	require.NoError(t, err)
-	ctx = backend.WithUserAgent(ctx, ua)
-	ctx = metadata.NewOutgoingContext(ctx, metadata.Pairs("Existing", "one"))
-
-	req := &backend.RunStreamRequest{
-		Headers: map[string]string{
-			"X-Test": "value",
-		},
+func TestGetTeamHeaders_NoOutgoingMetadata_ReturnsNil(t *testing.T) {
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
 	}
+	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
 
-	out := AppendHeadersToOutgoingContext(ctx, req)
-	outgoingMD, ok := metadata.FromOutgoingContext(out)
-	require.True(t, ok)
-	assert.Equal(t, []string{"value"}, outgoingMD.Get("x-test"))
-	assert.Equal(t, []string{ua.String()}, outgoingMD.Get("user-agent"))
-	assert.Equal(t, []string{"one"}, outgoingMD.Get("existing"))
+	assert.Nil(t, getTeamHeaders(ctx, testLogger(), pluginCtx))
+}
+
+// getTeamHeaders does not consult the feature toggle; SetHeadersFromIncomingContext gates calling it.
+func TestGetTeamHeaders_MapsOutgoingMetadataToHeaderStrings(t *testing.T) {
+	pluginCtx := backend.PluginContext{
+		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{JSONData: []byte(`{}`)},
+	}
+	ctx := backend.WithPluginContext(context.Background(), pluginCtx)
+	ctx = metadata.AppendToOutgoingContext(ctx,
+		TeamHttpHeaderKeyLower, "policy-a", TeamHttpHeaderKeyLower, "policy-b",
+		"x-custom-forward", "extra",
+	)
+
+	got := getTeamHeaders(ctx, testLogger(), pluginCtx)
+	require.NotNil(t, got)
+	assert.Equal(t, "policy-a,policy-b", got[TeamHttpHeaderKeyCamel])
+	assert.Equal(t, "extra", got["x-custom-forward"])
 }
 
 func TestSetHeadersFromIncomingContext_FeatureToggleOff_OnlyClientHeaders(t *testing.T) {

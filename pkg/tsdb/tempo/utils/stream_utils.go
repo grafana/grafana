@@ -32,26 +32,39 @@ func SetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[
 		return headers, nil
 	}
 
+	// fetch team headers from outgoing context.
+	teamHeaders := getTeamHeaders(ctx, logger, plugin)
+	for k, v := range teamHeaders {
+		headers[k] = v
+	}
+	return headers, nil
+}
+
+// getTeamHeaders maps outgoing gRPC metadata to HTTP-style header strings (comma-joined values per key).
+// x-prom-label-policy is exposed as X-Prom-Label-Policy. Callers must enforce forwardTeamHeadersTempo;
+// SetHeadersFromIncomingContext does that before invoking this function.
+func getTeamHeaders(ctx context.Context, logger log.Logger, plugin backend.PluginContext) map[string]string {
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if !ok {
 		if plugin.DataSourceInstanceSettings != nil {
 			logger.Debug("No outgoing gRPC metadata for team header forwarding", "datasource_uid", plugin.DataSourceInstanceSettings.UID)
 		}
-		return headers, nil
+		return nil
 	}
 
-	for k, vals := range md {
-		if len(vals) == 0 {
+	headers := map[string]string{}
+	for headerKey, headerVals := range md {
+		if len(headerVals) == 0 {
 			continue
 		}
-		joined := strings.Join(vals, ",")
-		if k == TeamHttpHeaderKeyLower {
+		joined := strings.Join(headerVals, ",")
+		if headerKey == TeamHttpHeaderKeyLower {
 			headers[TeamHttpHeaderKeyCamel] = joined
 			continue
 		}
-		headers[k] = joined
+		headers[headerKey] = joined
 	}
-	return headers, nil
+	return headers
 }
 
 func getClientOptionsHeaders(ctx context.Context, plugin backend.PluginContext) (map[string]string, error) {
