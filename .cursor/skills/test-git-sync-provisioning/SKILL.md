@@ -585,8 +585,10 @@ done
 
 #### Concrete Sequence
 
+Both flows execute the **identical** 12-step lifecycle. Do not abbreviate or collapse steps for the second run.
+
 1. **PAT**: Setup (wizard with path `dev/pat-test`) → Create 3-level tree (12 resources) → Verify → Bulk Move (2 folders) → Verify → Single Delete Dashboard → Verify → Single Delete Folder → Verify → Bulk Delete (all) → Verify → Remove Repo → Verify Clean
-2. **GitHub App**: Same lifecycle (wizard with path `dev/app-test`) → Remove Repo + Delete Connection → Verify Clean
+2. **GitHub App**: Setup (wizard with path `dev/app-test`) → Create 3-level tree (12 resources) → Verify → Bulk Move (2 folders) → Verify → Single Delete Dashboard → Verify → Single Delete Folder → Verify → Bulk Delete (all) → Verify → Remove Repo + Delete Connection → Verify Clean
 
 ## Cleanup
 
