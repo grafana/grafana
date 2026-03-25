@@ -63,8 +63,8 @@ function isLibraryElementExport(value: unknown): value is LibraryElementExport {
   );
 }
 
-function hasUid(query: Record<string, unknown> | {}): query is { uid: string } {
-  return 'uid' in query && typeof query['uid'] === 'string';
+function hasUid(query: unknown): query is { uid: string } {
+  return isRecord(query) && typeof query['uid'] === 'string';
 }
 
 function getExportLabel(labels?: { [ExportLabel]?: string }): string | undefined {
@@ -582,18 +582,26 @@ function processAnnotation(
   return annotation;
 }
 
+function getDSUid(datasource: unknown): string | undefined {
+  if (typeof datasource === 'string' && datasource.startsWith('$')) {
+    return datasource;
+  }
+  if (hasUid(datasource) && datasource.uid.startsWith('$')) {
+    return datasource.uid;
+  }
+  return undefined;
+}
+
 function resolveInputDatasource(
   datasource: Panel['datasource'],
   inputs: { dataSources: DataSourceInput[] },
   form: ImportDashboardDTO
 ): Panel['datasource'] {
-  if (datasource && hasUid(datasource) && datasource.uid.startsWith('$')) {
-    const userInput = checkUserInputMatch(datasource.uid, inputs.dataSources, form.dataSources);
+  const templateUid = getDSUid(datasource);
+  if (templateUid) {
+    const userInput = checkUserInputMatch(templateUid, inputs.dataSources, form.dataSources);
     if (userInput) {
-      return {
-        ...datasource,
-        uid: userInput.uid,
-      };
+      return { ...(hasUid(datasource) ? datasource : {}), uid: userInput.uid, type: userInput.type };
     }
   }
   return datasource;
@@ -605,15 +613,14 @@ function resolveInputTargets(
   form: ImportDashboardDTO
 ): Panel['targets'] {
   return targets?.map((target) => {
-    if (target.datasource && hasUid(target.datasource) && target.datasource.uid.startsWith('$')) {
-      const userInput = checkUserInputMatch(target.datasource.uid, inputs.dataSources, form.dataSources);
+    const ds = target.datasource;
+    const templateUid = getDSUid(ds);
+    if (templateUid) {
+      const userInput = checkUserInputMatch(templateUid, inputs.dataSources, form.dataSources);
       if (userInput) {
         return {
           ...target,
-          datasource: {
-            ...target.datasource,
-            uid: userInput.uid,
-          },
+          datasource: { ...(hasUid(ds) ? ds : {}), uid: userInput.uid, type: userInput.type },
         };
       }
     }
