@@ -568,8 +568,7 @@ describe('Logs', () => {
         },
       });
       await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
-      const logs = screen.queryByTestId('logRows');
-      expect(logs).not.toBeInTheDocument();
+      expect(screen.getByTestId('logRowsTable')).toBeInTheDocument();
     });
 
     it('should show logs', async () => {
@@ -581,7 +580,7 @@ describe('Logs', () => {
         },
       });
 
-      await waitFor(() => expect(screen.getByText('Download')).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByRole('button', { name: /download/i })).toBeInTheDocument());
       const logs = await screen.findByTestId('logRows');
       expect(logs).toBeInTheDocument();
       expect(screen.getByText('log message 3')).toBeVisible();
