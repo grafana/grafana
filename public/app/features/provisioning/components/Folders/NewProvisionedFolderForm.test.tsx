@@ -1,7 +1,6 @@
 import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
-import { getAppEvents } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
@@ -22,7 +21,6 @@ jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
     ...actual,
-    getAppEvents: jest.fn(),
     config: {
       ...actual.config,
     },
@@ -143,7 +141,6 @@ describe('NewProvisionedFolderForm', () => {
   beforeEach(() => {
     capturedRequest = null;
     jest.clearAllMocks();
-    (getAppEvents as jest.Mock).mockReturnValue({ publish: jest.fn() });
     (usePullRequestParam as jest.Mock).mockReturnValue({});
     (validationSrv.validateNewFolderName as jest.Mock).mockResolvedValue(true);
   });
