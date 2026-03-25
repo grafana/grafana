@@ -48,6 +48,11 @@ composableKinds: DataQuery: {
 				includeExemplars: bool | *false
 				// Specifies the query profile id selectors.
 				profileIdSelector?: [...string]
+				// If set to true, heatmap data will be requested
+				includeHeatmap: bool | *false
+				// Specifies the type of heatmap query
+				heatmapType: #HeatmapQueryType | *"individual"
+				#HeatmapQueryType: "individual" | "span" @cuetsy(kind="type")
 			}
 		}]
 		lenses: []
