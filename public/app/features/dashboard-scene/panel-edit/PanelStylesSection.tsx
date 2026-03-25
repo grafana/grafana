@@ -16,6 +16,10 @@ export interface PanelStylesSectionProps {
   onApplyPreset: (preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) => void;
 }
 
+function presetModifiesThresholds(preset: PanelPluginVisualizationSuggestion): boolean {
+  return Boolean(preset.fieldConfig?.defaults?.thresholds);
+}
+
 export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionProps) {
   const styles = useStyles2(getStyles);
   const [selectedPreset, setSelectedPreset] = useState<string | undefined>(undefined);
@@ -39,27 +43,22 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
     [onApplyPreset, panel]
   );
 
-  const presetModifiesThresholds = (preset: PanelPluginVisualizationSuggestion): boolean => {
-    return Boolean(preset.fieldConfig?.defaults?.thresholds);
-  };
-
   const getThresholdBadge = useCallback(
     (preset: PanelPluginVisualizationSuggestion) => {
+      if (!presetModifiesThresholds(preset)) {
+        return null;
+      }
       return (
-        <>
-          {presetModifiesThresholds(preset) && (
-            <Tooltip
-              content={t('dashboard-scene.panel-styles.threshold-badge-tooltip', 'This preset will modify thresholds')}
-            >
-              <div
-                className={styles.thresholdBadge}
-                aria-label={t('dashboard-scene.panel-styles.threshold-badge-label', 'Modifies thresholds')}
-              >
-                <Icon name="sliders-v-alt" size="xs" />
-              </div>
-            </Tooltip>
-          )}
-        </>
+        <Tooltip
+          content={t('dashboard-scene.panel-styles.threshold-badge-tooltip', 'This preset will modify thresholds')}
+        >
+          <div
+            className={styles.thresholdBadge}
+            aria-label={t('dashboard-scene.panel-styles.threshold-badge-label', 'Modifies thresholds')}
+          >
+            <Icon name="sliders-v-alt" size="xs" />
+          </div>
+        </Tooltip>
       );
     },
     [styles.thresholdBadge]
