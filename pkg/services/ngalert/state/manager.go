@@ -365,6 +365,9 @@ func (st *Manager) updateLastSentAt(states StateTransitions, evaluatedAt time.Ti
 }
 
 func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger) []StateTransition {
+	// Extract the configured threshold once per rule evaluation, not per result.
+	threshold := extractConfiguredThreshold(alertRule)
+
 	if st.applyNoDataAndErrorToAllStates && results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK || alertRule.NoDataState == ngModels.KeepLast) { // If it is no data, check the mapping and switch all results to the new state
 		// aggregate UID of datasources that returned NoData into one and provide as auxiliary info via annotationa. See: https://github.com/grafana/grafana/issues/88184
 		var refIds strings.Builder
@@ -392,14 +395,14 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 			"datasource_uid": datasourceUIDs.String(),
 			"ref_id":         refIds.String(),
 		}
-		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger, annotations)
+		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger, annotations, threshold)
 		if len(transitions) > 0 {
 			return transitions // if there are no current states for the rule. Create ones for each result
 		}
 	}
 	if st.applyNoDataAndErrorToAllStates && results.IsError() && (alertRule.ExecErrState == ngModels.AlertingErrState || alertRule.ExecErrState == ngModels.OkErrState || alertRule.ExecErrState == ngModels.KeepLastErrState) {
 		// TODO squash all errors into one, and provide as annotation
-		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger, nil)
+		transitions := st.setNextStateForAll(ctx, alertRule, results[0], logger, nil, threshold)
 		if len(transitions) > 0 {
 			return transitions // if there are no current states for the rule. Create ones for each result
 		}
@@ -407,14 +410,14 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 	transitions := make([]StateTransition, 0, len(results))
 	for _, result := range results {
 		currentState := st.cache.create(ctx, logger, alertRule, result, extraLabels, st.externalURL)
-		s := st.setNextState(ctx, alertRule, currentState, result, nil, logger)
+		s := st.setNextState(ctx, alertRule, currentState, result, nil, logger, threshold)
 		st.cache.set(currentState) // replace the existing state with the new one
 		transitions = append(transitions, s)
 	}
 	return transitions
 }
 
-func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, logger log.Logger, extraAnnotations data.Labels) []StateTransition {
+func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.AlertRule, result eval.Result, logger log.Logger, extraAnnotations data.Labels, threshold *float64) []StateTransition {
 	currentStates := st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID, false)
 	transitions := make([]StateTransition, 0, len(currentStates))
 	updated := ruleStates{
@@ -422,7 +425,7 @@ func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.A
 	}
 	for _, currentState := range currentStates {
 		newState := currentState.Copy()
-		t := st.setNextState(ctx, alertRule, newState, result, extraAnnotations, logger)
+		t := st.setNextState(ctx, alertRule, newState, result, extraAnnotations, logger, threshold)
 		updated.states[newState.CacheID] = newState
 		transitions = append(transitions, t)
 	}
@@ -431,12 +434,17 @@ func (st *Manager) setNextStateForAll(ctx context.Context, alertRule *ngModels.A
 }
 
 // Set the current state based on evaluation results
-func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, currentState *State, result eval.Result, extraAnnotations data.Labels, logger log.Logger) StateTransition {
+func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRule, currentState *State, result eval.Result, extraAnnotations data.Labels, logger log.Logger, threshold *float64) StateTransition {
 	start := st.clock.Now()
 
 	currentState.LastEvaluationTime = result.EvaluatedAt
 	currentState.EvaluationDuration = result.EvaluationDuration
 	currentState.SetNextValues(result)
+
+	if threshold != nil {
+		currentState.Values[gcConfiguredThresholdKey] = *threshold
+	}
+
 	currentState.LatestResult = &Evaluation{
 		EvaluationTime:  result.EvaluatedAt,
 		EvaluationState: result.State,
