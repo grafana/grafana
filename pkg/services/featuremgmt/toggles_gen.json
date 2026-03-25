@@ -4953,6 +4953,21 @@
     },
     {
       "metadata": {
+        "name": "useMTPluginSettings",
+        "resourceVersion": "1774424916561",
+        "creationTimestamp": "2026-03-25T07:48:36Z"
+      },
+      "spec": {
+        "description": "Enables plugins setting from new apis",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "useMTPlugins",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-12-05T07:09:41Z"
