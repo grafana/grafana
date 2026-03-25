@@ -45,10 +45,10 @@ describe('DashboardEditPane', () => {
     const editPane = scene.state.editPane;
     editPane.setState({ isDocked: true });
 
-    editPane.selectObject(scene, scene.state.key!);
+    editPane.toggleDashboardOptionsPane();
     expect(editPane.state.selection).toBeDefined();
 
-    editPane.selectObject(scene, scene.state.key!);
+    editPane.toggleDashboardOptionsPane();
     expect(editPane.state.selection).toBeUndefined();
   });
 
