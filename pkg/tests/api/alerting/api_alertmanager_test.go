@@ -88,9 +88,6 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 			}
 		}
 		`
-		cfgWithoutAutogen := fmt.Sprintf(cfgTemplate, `{
-			"receiver": "empty"
-		}`)
 		cfgWithAutogen := fmt.Sprintf(cfgTemplate, `{
 					"receiver": "empty",
 					"routes": [{
@@ -112,16 +109,16 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				expBody:   `{"extra":null,"message":"Unauthorized","messageId":"auth.unauthorized","statusCode":401,"traceID":""}`,
 			},
 			{
-				desc:      "viewer request should succeed",
+				desc:      "viewer request should fail",
 				url:       "http://viewer:viewer@%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusOK,
-				expBody:   cfgWithoutAutogen,
+				expStatus: http.StatusForbidden,
+				expBody:   `"title":"Access denied"`,
 			},
 			{
-				desc:      "editor request should succeed",
+				desc:      "editor request should fail",
 				url:       "http://editor:editor@%s/api/alertmanager/grafana/config/api/v1/alerts",
-				expStatus: http.StatusOK,
-				expBody:   cfgWithoutAutogen,
+				expStatus: http.StatusForbidden,
+				expBody:   `"title":"Access denied"`,
 			},
 			{
 				desc:      "admin request should succeed",
@@ -140,12 +137,14 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tc.expStatus, resp.StatusCode)
 				b, err := io.ReadAll(resp.Body)
+				require.NoError(t, err)
 				if tc.expStatus == http.StatusOK {
 					re := regexp.MustCompile(`"uid":"([\w|-]+)"`)
 					b = re.ReplaceAll(b, []byte(`"uid":""`))
+					require.JSONEq(t, tc.expBody, string(b))
+				} else {
+					require.Contains(t, string(b), tc.expBody)
 				}
-				require.NoError(t, err)
-				require.JSONEq(t, tc.expBody, string(b))
 			})
 		}
 	})
@@ -545,10 +544,6 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 	}
 }
 `
-	cfgWithoutAutogen := fmt.Sprintf(cfgTemplate, `{
-			"receiver": "empty",
-			"group_by": ["grafana_folder", "alertname"]
-		}`)
 	cfgWithAutogen := fmt.Sprintf(cfgTemplate, `{
 					"receiver": "empty",
 					"routes": [{
@@ -573,14 +568,12 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 		{
 			desc:      "viewer request should succeed",
 			url:       "http://viewer:viewer@%s/api/alertmanager/grafana/api/v2/status",
-			expStatus: http.StatusOK,
-			expBody:   cfgWithoutAutogen,
+			expStatus: http.StatusForbidden,
 		},
 		{
 			desc:      "editor request should succeed",
 			url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/status",
-			expStatus: http.StatusOK,
-			expBody:   cfgWithoutAutogen,
+			expStatus: http.StatusForbidden,
 		},
 		{
 			desc:      "admin request should succeed",
@@ -604,7 +597,9 @@ func TestIntegrationAlertmanagerStatus(t *testing.T) {
 				b = re.ReplaceAll(b, []byte(`"uid":""`))
 			}
 			require.NoError(t, err)
-			require.JSONEq(t, tc.expBody, string(b))
+			if tc.expBody != "" {
+				require.JSONEq(t, tc.expBody, string(b))
+			}
 		})
 	}
 }

@@ -329,6 +329,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "reportingHeaderSettings",
+			Description:  "Enables configuration of PDF report settings",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaOperatorExperienceSquad,
+			Expression:   "false",
+		},
+		{
 			Name:        "sseGroupByDatasource",
 			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
@@ -532,8 +540,8 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:            "datasourcesApiServerEnableResourceEndpointFrontend",
-			Description:     "Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.",
+			Name:            "datasourcesApiserverEnableResourceEndpointRedirect",
+			Description:     "redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: false,
@@ -702,6 +710,14 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",
+		},
+		{
+			Name:         "feedbackButton",
+			Description:  "Enables the feedback button in the dashboard edit sidebar",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "true",
 		},
 		{
 			Name:         "panelFilterVariable",
@@ -992,6 +1008,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "playlistsRBAC",
+			Description:  "Enables RBAC for playlists",
+			Stage:        FeatureStageGeneralAvailability,
+			Owner:        grafanaSharingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
+		},
+		{
 			Name:         "savedQueriesRBAC",
 			Description:  "Enables Saved queries (query library) RBAC permissions",
 			Stage:        FeatureStagePublicPreview,
@@ -1074,10 +1098,10 @@ var (
 		{
 			Name:         "alertingNavigationV2",
 			Description:  "Enables the new Alerting navigation structure with improved menu grouping",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: false,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "alertingSavedSearches",
@@ -2189,14 +2213,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "newGauge",
-			Description:  "Enable new gauge visualization",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "true",
-		},
-		{
 			Name:         "newVizSuggestions",
 			Description:  "Enable new visualization suggestions",
 			Stage:        FeatureStagePublicPreview,
@@ -2410,10 +2426,10 @@ var (
 		{
 			Name:         "multiPropsVariables",
 			Description:  "Enables support for variables whose values can have multiple properties",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
-			Expression:   "false",
+			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "dashboardSectionVariables",
@@ -2728,6 +2744,38 @@ var (
 			HideFromDocs:    true,
 			RequiresRestart: true,
 			Expression:      "false",
+		}, {
+			Name:         "yAxisTickControl",
+			Description:  "Enables fine-grained Y-axis tick options beyond the auto-ticks",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Expression:   "false",
+		},
+		{
+			Name:         "logsTablePanelNG",
+			Description:  "Enables the logs tableNG panel to replace existing tableRT",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityLogsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "useMTPluginSettings",
+			Description:  "Enables plugins setting from new apis",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
+		{
+			Name:         "frontendServiceSSOAutoLogin",
+			Description:  "Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
 		},
 	}
 )

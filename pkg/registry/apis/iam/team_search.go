@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
@@ -137,6 +139,47 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 										Schema:      spec.BoolProperty(),
 									},
 								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "sort",
+										In:          "query",
+										Description: "sortable field",
+										Examples: map[string]*spec3.Example{
+											"default": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "default sorting",
+													Value:   "",
+												},
+											},
+											"title": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "title ascending",
+													Value:   "title",
+												},
+											},
+											"-title": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "title descending",
+													Value:   "-title",
+												},
+											},
+											"email": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "email ascending",
+													Value:   "email",
+												},
+											},
+											"-email": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "email descending",
+													Value:   "-email",
+												},
+											},
+										},
+										Required: false,
+										Schema:   spec.StringProperty(),
+									},
+								},
 							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
@@ -215,6 +258,33 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_PROVISIONED,
 			resource.SEARCH_FIELD_PREFIX + builders.TEAM_SEARCH_EXTERNAL_UID,
 		},
+	}
+
+	if queryParams.Has("sort") {
+		for _, sortParam := range queryParams["sort"] {
+			currField := sortParam
+			desc := false
+			if strings.HasPrefix(sortParam, "-") {
+				currField = sortParam[1:]
+				desc = true
+			}
+
+			if currField != resource.SEARCH_FIELD_TITLE && !slices.Contains(builders.TeamSortableExtraFields, currField) {
+				http.Error(w, fmt.Sprintf("invalid sort field: %s", currField), http.StatusBadRequest)
+				return
+			}
+
+			sortField := currField
+			if slices.Contains(builders.TeamSortableExtraFields, currField) {
+				sortField = resource.SEARCH_FIELD_PREFIX + currField
+			}
+
+			s := &resourcepb.ResourceSearchRequest_Sort{
+				Field: sortField,
+				Desc:  desc,
+			}
+			searchRequest.SortBy = append(searchRequest.SortBy, s)
+		}
 	}
 
 	result, err := s.client.Search(ctx, searchRequest)

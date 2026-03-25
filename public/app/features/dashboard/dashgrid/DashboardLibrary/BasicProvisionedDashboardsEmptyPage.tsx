@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useState } from 'react';
 import { useAsync } from 'react-use';
 
@@ -10,6 +11,7 @@ import { PluginDashboard } from 'app/types/plugins';
 
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
+import { NewBasicProvisionedDashboardInteractions } from './analytics/main';
 import { fetchProvisionedDashboards } from './api/dashboardLibraryApi';
 import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
 import { BasicProvisionedDashboardInteractions } from './interactions';
@@ -21,6 +23,7 @@ interface Props {
 
 export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) => {
   const [showAll, setShowAll] = useState(false);
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
 
   const { value: templateDashboards } = useAsync(async (): Promise<PluginDashboard[]> => {
     if (!datasourceUid) {
@@ -35,13 +38,21 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
     const dashboards = await fetchProvisionedDashboards(ds.type);
 
     if (dashboards.length > 0) {
-      BasicProvisionedDashboardInteractions.loaded({
-        numberOfItems: dashboards.length,
-        contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
-        datasourceTypes: [ds.type],
-        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-        eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-      });
+      isAnalyticsFrameworkEnabled
+        ? NewBasicProvisionedDashboardInteractions.loaded({
+            numberOfItems: dashboards.length,
+            contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
+            datasourceTypes: [ds.type],
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+          })
+        : BasicProvisionedDashboardInteractions.loaded({
+            numberOfItems: dashboards.length,
+            contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
+            datasourceTypes: [ds.type],
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+          });
     }
 
     return dashboards;
@@ -53,15 +64,25 @@ export const BasicProvisionedDashboardsEmptyPage = ({ datasourceUid }: Props) =>
   const styles = useStyles2(getStyles);
 
   const onImportDashboardClick = async (dashboard: PluginDashboard) => {
-    BasicProvisionedDashboardInteractions.itemClicked({
-      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
-      datasourceTypes: [dashboard.pluginId],
-      libraryItemId: dashboard.uid,
-      libraryItemTitle: dashboard.title,
-      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-      eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
-      discoveryMethod: DISCOVERY_METHODS.BROWSE,
-    });
+    isAnalyticsFrameworkEnabled
+      ? NewBasicProvisionedDashboardInteractions.itemClicked({
+          contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
+          datasourceTypes: [dashboard.pluginId],
+          libraryItemId: dashboard.uid,
+          libraryItemTitle: dashboard.title,
+          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+          discoveryMethod: DISCOVERY_METHODS.BROWSE,
+        })
+      : BasicProvisionedDashboardInteractions.itemClicked({
+          contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
+          datasourceTypes: [dashboard.pluginId],
+          libraryItemId: dashboard.uid,
+          libraryItemTitle: dashboard.title,
+          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          eventLocation: EVENT_LOCATIONS.EMPTY_DASHBOARD,
+          discoveryMethod: DISCOVERY_METHODS.BROWSE,
+        });
 
     const params = new URLSearchParams({
       datasource: datasourceUid || '',

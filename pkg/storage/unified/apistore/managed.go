@@ -19,6 +19,7 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -44,6 +45,15 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 	// Removing a manager: the caller must be authorized for the *old* manager.
 	if !hasNew && hasOld {
 		if err := enforceManagerProperties(auth, old); err != nil {
+			// Allow admins to release repo-managed resources. There is no
+			// reconciliation loop that automatically releases orphaned
+			// resources, so admins need the ability to detach manually.
+			if errors.Is(err, errResourceIsManagedInRepository) {
+				if requester, ok := auth.(identity.Requester); ok &&
+					(requester.GetIsGrafanaAdmin() || requester.HasRole(identity.RoleAdmin)) {
+					return nil
+				}
+			}
 			return &apierrors.StatusError{ErrStatus: metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    http.StatusForbidden,
@@ -67,6 +77,36 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 
 	// Adding a manager or updating flags on the same owner.
 	return enforceManagerProperties(auth, obj)
+}
+
+func ensureSameRepoManager(folder utils.GrafanaMetaAccessor, resource utils.GrafanaMetaAccessor) error {
+	folderManager, ok := folder.GetManagerProperties()
+	if !ok || folderManager.Kind != utils.ManagerKindRepo {
+		return nil
+	}
+
+	resourceManager, resourceManaged := resource.GetManagerProperties()
+	if !resourceManaged {
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    http.StatusForbidden,
+			Reason:  metav1.StatusReasonForbidden,
+			Message: fmt.Sprintf("folder is managed by %s:%s, but the resource is not managed", folderManager.Kind, folderManager.Identity),
+		}}
+	}
+
+	if resourceManager.Kind != folderManager.Kind || resourceManager.Identity != folderManager.Identity {
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status: metav1.StatusFailure,
+			Code:   http.StatusForbidden,
+			Reason: metav1.StatusReasonForbidden,
+			Message: fmt.Sprintf("resource manager (%s:%s) does not match folder manager (%s:%s); resources must be managed by the same manager as their containing folder",
+				resourceManager.Kind, resourceManager.Identity,
+				folderManager.Kind, folderManager.Identity),
+		}}
+	}
+
+	return nil
 }
 
 func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {

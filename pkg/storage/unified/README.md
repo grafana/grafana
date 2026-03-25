@@ -1353,15 +1353,6 @@ Built-in validators ensure data integrity after migration:
 - **CountValidator**: Verifies resource counts match between legacy and unified storage
 - **FolderTreeValidator**: Validates folder parent-child relationships are preserved
 
-### Configuration
-
-Enable migrations in `grafana.ini`:
-
-```ini
-[unified_storage]
-disable_data_migrations = false
-```
-
 ### Documentation
 
 For detailed information about migration architecture, validators, and troubleshooting, refer to [migrations/README.md](./migrations/README.md).

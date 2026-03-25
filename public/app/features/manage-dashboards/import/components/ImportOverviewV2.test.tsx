@@ -91,7 +91,7 @@ describe('ImportOverviewV2', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     saveDashboard = jest.fn().mockResolvedValue({ url: '/d/test-uid/test-dashboard' });
-    mockGetDashboardAPI.mockReturnValue({
+    mockGetDashboardAPI.mockResolvedValue({
       saveDashboard,
       getDashboardDTO: jest.fn(),
       deleteDashboard: jest.fn(),
