@@ -1,4 +1,4 @@
-package limits
+package quota
 
 import (
 	"context"
@@ -11,11 +11,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
 func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	helper := sharedHelper(t)
+	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 10})
 	ctx := context.Background()
 
 	originalName := "original-repo"
@@ -29,7 +31,7 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	helper.CreateRepo(t, originalRepo)
 
 	t.Run("folder sync is rejected when instance sync exists", func(t *testing.T) {
-		folderRepo := helper.RenderObject(t, "../../testdata/local-write.json.tmpl", map[string]any{
+		folderRepo := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
 			"Name":        "folder-blocked-by-instance",
 			"SyncEnabled": true,
 			"SyncTarget":  "folder",
@@ -72,7 +74,7 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 	})
 
 	t.Run("instance sync rejected when any other repository exists", func(t *testing.T) {
-		instanceRepo := helper.RenderObject(t, "../../testdata/local-write.json.tmpl", map[string]any{
+		instanceRepo := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
 			"Name":        "instance-repo-blocked",
 			"SyncEnabled": true,
 			"SyncTarget":  "instance",
@@ -116,7 +118,7 @@ func TestIntegrationProvisioning_RepositoryLimits(t *testing.T) {
 		}
 
 		eleventhRepoName := "limit-test-repo-11"
-		eleventhRepo := helper.RenderObject(t, "../../testdata/local-write.json.tmpl", map[string]any{
+		eleventhRepo := helper.RenderObject(t, "../testdata/local-write.json.tmpl", map[string]any{
 			"Name":        eleventhRepoName,
 			"SyncEnabled": true,
 			"SyncTarget":  "folder",

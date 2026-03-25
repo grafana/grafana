@@ -577,7 +577,7 @@ describe('LogList', () => {
       expect(screen.getByText('debug')).toBeInTheDocument();
 
       // Click the "Log Level" checkbox in the field selector to hide log level
-      const logLevelCheckbox = screen.getByRole('checkbox', { name: 'Log level' });
+      const logLevelCheckbox = screen.getByRole('checkbox', { name: 'Show log level' });
       expect(logLevelCheckbox).toBeChecked();
       await userEvent.click(logLevelCheckbox);
 
@@ -589,13 +589,13 @@ describe('LogList', () => {
       expect(screen.getByText('backend')).toBeInTheDocument();
 
       // Click again to show log level (checkbox is now in Suggested section)
-      const logLevelCheckboxAfter = screen.getByRole('checkbox', { name: 'Log level' });
+      const logLevelCheckboxAfter = screen.getByRole('checkbox', { name: 'Show log level' });
       await userEvent.click(logLevelCheckboxAfter);
 
       // Level is shown again (wait for list to re-render)
       expect(await screen.findByText('info')).toBeInTheDocument();
       expect(screen.getByText('debug')).toBeInTheDocument();
-      expect(screen.getByRole('checkbox', { name: 'Log level' })).toBeChecked();
+      expect(screen.getByRole('checkbox', { name: 'Show log level' })).toBeChecked();
     });
   });
 

@@ -70,6 +70,7 @@ func setup(t *testing.T, srv *Server) *Server {
 		common.NewFolderTuple("user:17", common.RelationSetView, "4"),
 		common.NewFolderTuple("user:18", common.RelationCreate, "general"),
 		common.NewFolderResourceTuple("user:18", common.RelationCreate, dashboardGroup, dashboardResource, "", "general"),
+		common.NewGroupResourceTuple("user:19", common.RelationGetPermissions, userGroup, userResource, ""),
 	}
 
 	return setupOpenFGADatabase(t, srv, tuples)
