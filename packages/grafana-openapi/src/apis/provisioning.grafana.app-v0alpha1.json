@@ -3862,6 +3862,11 @@
             "group": "provisioning.grafana.app",
             "kind": "Connection",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Connection",
+            "version": "v1beta1"
           }
         ]
       },
@@ -3913,6 +3918,11 @@
             "group": "provisioning.grafana.app",
             "kind": "ConnectionList",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ConnectionList",
+            "version": "v1beta1"
           }
         ]
       },
@@ -4184,6 +4194,11 @@
             "group": "provisioning.grafana.app",
             "kind": "ExternalRepositoryList",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ExternalRepositoryList",
+            "version": "v1beta1"
           }
         ]
       },
@@ -4409,6 +4424,11 @@
             "group": "provisioning.grafana.app",
             "kind": "HistoricJob",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "HistoricJob",
+            "version": "v1beta1"
           }
         ]
       },
@@ -4448,6 +4468,11 @@
             "group": "provisioning.grafana.app",
             "kind": "HistoricJobList",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "HistoricJobList",
+            "version": "v1beta1"
           }
         ]
       },
@@ -4544,6 +4569,11 @@
             "group": "provisioning.grafana.app",
             "kind": "Job",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Job",
+            "version": "v1beta1"
           }
         ]
       },
@@ -4584,6 +4614,11 @@
             "group": "provisioning.grafana.app",
             "kind": "JobList",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "JobList",
+            "version": "v1beta1"
           }
         ]
       },
@@ -4960,6 +4995,11 @@
             "group": "provisioning.grafana.app",
             "kind": "RefList",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "RefList",
+            "version": "v1beta1"
           }
         ]
       },
@@ -5013,6 +5053,11 @@
             "group": "provisioning.grafana.app",
             "kind": "Repository",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "Repository",
+            "version": "v1beta1"
           }
         ]
       },
@@ -5054,6 +5099,11 @@
             "group": "provisioning.grafana.app",
             "kind": "RepositoryList",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "RepositoryList",
+            "version": "v1beta1"
           }
         ]
       },
@@ -5438,6 +5488,11 @@
             "group": "provisioning.grafana.app",
             "kind": "ResourceList",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceList",
+            "version": "v1beta1"
           }
         ]
       },
@@ -5723,6 +5778,11 @@
             "group": "provisioning.grafana.app",
             "kind": "ResourceWrapper",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ResourceWrapper",
+            "version": "v1beta1"
           }
         ]
       },
@@ -5872,6 +5932,11 @@
             "group": "provisioning.grafana.app",
             "kind": "TestResults",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "TestResults",
+            "version": "v1beta1"
           }
         ]
       },
@@ -5931,6 +5996,11 @@
             "group": "provisioning.grafana.app",
             "kind": "WebhookResponse",
             "version": "v0alpha1"
+          },
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "WebhookResponse",
+            "version": "v1beta1"
           }
         ]
       },
