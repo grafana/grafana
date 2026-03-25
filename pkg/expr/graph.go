@@ -404,7 +404,7 @@ nextNode:
 					if cmdNode.CMDType == TypeSQL {
 						nodeErr = sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
 					} else {
-						nodeErr = fmt.Errorf("unable to find dependent node '%v'", neededVar)
+						nodeErr = MakeMissingDependentNodeError(cmdNode.refID, neededVar)
 					}
 					cmdNode.Disable(nodeErr)
 					continue nextNode
@@ -412,7 +412,7 @@ nextNode:
 				if cmdNode.CMDType == TypeSQL {
 					return sql.MakeTableNotFoundError(cmdNode.refID, neededVar)
 				}
-				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
+				return MakeMissingDependentNodeError(cmdNode.refID, neededVar)
 			}
 
 			// If the input is SQL, conversion is handled differently
