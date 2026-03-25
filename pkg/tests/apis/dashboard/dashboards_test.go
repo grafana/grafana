@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -870,47 +871,65 @@ func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {
 		DisableAnonymous: true,
 	})
 
-	// Step 2: Restart with search down — both create and delete go through storage, not search
-	helper2 := env.RestartWithSearchDown(t)
-	client := helper2.GetResourceClient(apis.ResourceClientArgs{
-		User: helper2.Org1.Admin,
+	// Step 2: Restart with search down
+	helper := env.RestartWithSearchDown(t)
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
 		GVR:  dashboardV1.DashboardResourceInfo.GroupVersionResource(),
 	})
 
 	// Verify search is actually down
-	searchClient := helper2.GetResourceClient(apis.ResourceClientArgs{
-		User: helper2.Org1.Admin,
-		GVR:  dashboardV0.DashboardResourceInfo.GroupVersionResource(),
-	})
-	cfg := dynamic.ConfigFor(helper2.Org1.Admin.NewRestConfig())
-	cfg.GroupVersion = &dashboardV0.GroupVersion
-	restClient, err := k8srest.RESTClientFor(cfg)
+	searchCfg := dynamic.ConfigFor(helper.Org1.Admin.NewRestConfig())
+	searchCfg.GroupVersion = &dashboardV0.GroupVersion
+	restClient, err := k8srest.RESTClientFor(searchCfg)
 	require.NoError(t, err)
-	_ = searchClient
 	var statusCode int
 	restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", "default", "search").
 		Param("query", "*").Param("limit", "1").
 		Do(ctx).StatusCode(&statusCode)
 	require.Equal(t, http.StatusInternalServerError, statusCode, "search should be down")
 
-	// Create a dashboard (goes to storage, doesn't need search)
-	dash := &unstructured.Unstructured{Object: map[string]interface{}{
-		"spec": map[string]interface{}{
-			"title":         "graceful-degradation-test",
-			"schemaVersion": 42,
-		},
-	}}
-	dash.SetGenerateName("gd-test-")
-	created, err := client.Resource.Create(ctx, dash, metav1.CreateOptions{})
-	require.NoError(t, err)
-	require.NotEmpty(t, created.GetName())
+	t.Run("non-provisioned dashboard can be deleted", func(t *testing.T) {
+		dash := &unstructured.Unstructured{Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"title":         "gd-test-regular",
+				"schemaVersion": 42,
+			},
+		}}
+		dash.SetGenerateName("gd-test-")
+		created, err := client.Resource.Create(ctx, dash, metav1.CreateOptions{})
+		require.NoError(t, err)
 
-	// Delete the dashboard — should succeed even with search down
-	err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
-	require.NoError(t, err, "dashboard delete should succeed when search is down")
+		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err, "non-provisioned dashboard delete should succeed when search is down")
 
-	// Verify the dashboard is gone via Get (not search)
-	_, err = client.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
-	require.Error(t, err, "dashboard should not exist after deletion")
-	require.True(t, errors.IsNotFound(err), "expected NotFound error, got: %v", err)
+		_, err = client.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.True(t, errors.IsNotFound(err), "dashboard should be gone after deletion")
+	})
+
+	t.Run("provisioned dashboard is still protected from deletion", func(t *testing.T) {
+		dash := &unstructured.Unstructured{Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"title":         "gd-test-provisioned",
+				"schemaVersion": 42,
+			},
+		}}
+		dash.SetGenerateName("gd-prov-")
+		created, err := client.Resource.Create(ctx, dash, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		// Mark as classic file provisioned
+		meta, err := utils.MetaAccessor(created)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindClassicFP, //nolint:staticcheck
+			Identity: "test-provisioner",
+		})
+		_, err = client.Resource.Update(ctx, created, metav1.UpdateOptions{})
+		require.NoError(t, err)
+
+		// Delete should be blocked even without search
+		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.Error(t, err, "provisioned dashboard delete should be blocked")
+	})
 }
