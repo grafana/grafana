@@ -1701,9 +1701,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 		if externalTx := TransactionFromContext(clientCtx); externalTx != nil {
-            // Wrap and swap DB with external transaction (SQLite migration) 
 			ctx = kv.ContextWithDBTX(ctx, externalTx)
-			if b.rvManager != nil {
+			if rvManagerDB != nil {
 				rvManagerDB = dbimpl.NewTx(externalTx)
 			}
 		}
@@ -1899,7 +1898,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			updatedResources[NamespacedResource{Namespace: dataKey.Namespace, Group: dataKey.Group, Resource: dataKey.Resource}] = true
 
 			// Fill in legacy columns on the resource_history row that was just inserted with only key_path and value.
-			if b.rvManager != nil {
+			if rvManagerDB != nil {
 				microRV := rvmanager.RVFromBulkSnowflake(dataKey.ResourceVersion)
 				generation := obj.GetGeneration()
 				if action == DataActionDeleted {
