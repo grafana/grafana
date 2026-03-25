@@ -16,18 +16,6 @@ const (
 	TeamHttpHeaderKeyCamel = "X-Prom-Label-Policy"
 )
 
-// Appends incoming request headers to the outgoing context to make sure none are lost when we make the request to tempo.
-func AppendHeadersToOutgoingContext(ctx context.Context, req *backend.RunStreamRequest) context.Context {
-	for key, value := range req.Headers {
-		ctx = metadata.AppendToOutgoingContext(ctx, key, value)
-	}
-	// Setting the user agent for the gRPC call. When DS is decoupled we don't recreate instance when grafana config
-	// changes or updates, so we have to get it from context.
-	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
-	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
-	return ctx
-}
-
 // SetHeadersFromIncomingContext returns HTTP header key/value pairs for the outgoing Tempo streaming gRPC call.
 // It always includes datasource HTTP client option headers. When forwardTeamHeadersTempo is enabled, it also merges
 // outgoing gRPC metadata: X-Prom-Label-Policy is set from the x-prom-label-policy metadata values, and every other
