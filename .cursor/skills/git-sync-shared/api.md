@@ -117,3 +117,90 @@ done
 
 echo "Cleanup complete."
 ```
+
+## Create Repository via API
+
+### Create PAT Repository
+
+```bash
+curl -s -X POST -u admin:admin \
+  -H 'Content-Type: application/json' \
+  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories \
+  -d '{
+  "apiVersion": "provisioning.grafana.app/v0alpha1",
+  "kind": "Repository",
+  "metadata": {
+    "name": "REPO_NAME"
+  },
+  "spec": {
+    "title": "REPO_TITLE",
+    "description": "API-created repo for testing",
+    "type": "github",
+    "github": {
+      "url": "$GIT_SYNC_TEST_PAT_REPO_URL",
+      "branch": "agent-test",
+      "generateDashboardPreviews": false,
+      "path": "PATH"
+    },
+    "sync": {
+      "enabled": true,
+      "target": "folder",
+      "intervalSeconds": 60
+    },
+    "workflows": ["write", "branch"]
+  },
+  "secure": {
+    "token": { "create": "$GIT_SYNC_TEST_PAT" }
+  }
+}'
+```
+
+Replace `REPO_NAME`, `REPO_TITLE`, and `PATH` with your values. `$GIT_SYNC_TEST_PAT_REPO_URL` and `$GIT_SYNC_TEST_PAT` are environment variables.
+
+### Create Sync Job
+
+After creating a repository, trigger an initial sync:
+
+```bash
+curl -s -X POST -u admin:admin \
+  -H 'Content-Type: application/json' \
+  http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/{name}/jobs \
+  -d '{"action":"pull","pull":{}}'
+```
+
+Poll job status until `state` is `success` or `error`:
+
+```bash
+curl -s -u admin:admin \
+  "http://localhost:3000/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/{name}/jobs/{jobName}" | \
+  jq '.status.state'
+```
+
+## User Management
+
+### Create User
+
+```bash
+curl -s -X POST -u admin:admin -H 'Content-Type: application/json' \
+  http://localhost:3000/api/admin/users \
+  -d '{"login":"USERNAME","password":"PASSWORD","email":"EMAIL","name":"DISPLAY_NAME"}'
+# Returns: {"id": N, ...}
+```
+
+### Set Org Role
+
+New users default to Admin — downgrade to Viewer or Editor:
+
+```bash
+curl -s -X PATCH -u admin:admin -H 'Content-Type: application/json' \
+  http://localhost:3000/api/org/users/{userId} \
+  -d '{"role":"Viewer"}'
+```
+
+Valid roles: `Viewer`, `Editor`, `Admin`.
+
+### Delete User
+
+```bash
+curl -X DELETE -u admin:admin http://localhost:3000/api/admin/users/{userId}
+```
