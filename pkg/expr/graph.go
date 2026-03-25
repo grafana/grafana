@@ -91,9 +91,9 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 			continue // already executed via executeDSNodesGrouped
 		}
 
-		// Skip nodes disabled at build time (e.g. missing dependency). Injecting
-		// the error into vars causes downstream dependents to fail via the existing
-		// Mode 1 dependency-error path — no separate transitive propagation needed.
+		// Skip disabled nodes (e.g. missing dependency). Injecting the error
+		// into vars causes downstream dependents to fail via the existing
+		// dependency-error path — no separate transitive propagation needed.
 		if disabledErr := node.DisabledErr(); disabledErr != nil {
 			if node.NodeType() == TypeCMDNode && node.(*CMDNode).CMDType == TypeSQL {
 				var sqlErr *sql.ErrorWithCategory
