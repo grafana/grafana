@@ -120,7 +120,7 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 			srv = srv.WithIncludeImported()
 		}
-		return timeinterval.NewStorage(srv, namespacer)
+		return timeinterval.NewStorage(srv, namespacer, api.AccessControl)
 	case templategroup.ResourceInfo.GroupResource().Resource:
 		srv := api.Templates
 		//nolint:staticcheck // not yet migrated to OpenFeature

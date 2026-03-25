@@ -11,15 +11,15 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-var (
-	_ grafanarest.Storage = (*legacyStorage)(nil)
-)
+var _ grafanarest.Storage = (*legacyStorage)(nil)
 
 type TimeIntervalService interface {
 	GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error)
@@ -32,6 +32,24 @@ type legacyStorage struct {
 	service        TimeIntervalService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
+	ac             accesscontrol.AccessControl
+}
+
+// checkProvisioningStatusPermission verifies the caller holds
+// alert.provisioning.provenance:write. This is required whenever a write
+// involves a non-None provenance — either because the resource is already
+// provisioned (old provenance != None) or because the caller is explicitly
+// claiming provenance ownership (new provenance != None).
+func (s *legacyStorage) checkProvisioningStatusPermission(ctx context.Context, user identity.Requester) error {
+	ok, err := s.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningSetStatus))
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errors.NewForbidden(ResourceInfo.GroupResource(), "",
+			fmt.Errorf("missing permission: %s", accesscontrol.ActionAlertingProvisioningSetStatus))
+	}
+	return nil
 }
 
 func (s *legacyStorage) New() runtime.Object {
@@ -110,11 +128,22 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if p.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, errors.NewBadRequest("object's metadata.name should be empty")
 	}
-	model, err := convertToDomainModel(p)
+	mt, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, err
 	}
-	out, err := s.service.CreateMuteTiming(ctx, model, info.OrgID)
+	// Provenance is opt-in: callers must explicitly set grafana.com/provenance: api
+	// to claim ownership. If set, require SetProvisioningStatus permission
+	if mt.Provenance != definitions.Provenance(ngmodels.ProvenanceNone) {
+		user, err := identity.GetRequester(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if err := s.checkProvisioningStatusPermission(ctx, user); err != nil {
+			return nil, err
+		}
+	}
+	out, err := s.service.CreateMuteTiming(ctx, mt, info.OrgID)
 	if err != nil {
 		return nil, err
 	}
@@ -160,6 +189,28 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, errors.NewBadRequest("title of cannot be changed. Consider creating a new resource.")
 	}
 
+	oldInterval, ok := old.(*model.TimeInterval)
+	if !ok {
+		return nil, false, fmt.Errorf("expected time-interval but got %s", old.GetObjectKind().GroupVersionKind())
+	}
+	oldProv, err := provenanceFromAnnotation(oldInterval.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, errors.NewBadRequest(err.Error())
+	}
+	// Gate on either side being non-None:
+	//   old != None — resource is already provisioned; protect it from unintentional overwrites.
+	//   new != None — caller is (re-)claiming provenance ownership; requires explicit permission.
+	// If both are None the resource is unprovisioned and freely editable by all callers.
+	if interval.Provenance != definitions.Provenance(ngmodels.ProvenanceNone) || oldProv != definitions.Provenance(ngmodels.ProvenanceNone) {
+		user, err := identity.GetRequester(ctx)
+		if err != nil {
+			return nil, false, err
+		}
+		if err := s.checkProvisioningStatusPermission(ctx, user); err != nil {
+			return nil, false, err
+		}
+	}
+
 	updated, err := s.service.UpdateMuteTiming(ctx, interval, info.OrgID)
 	if err != nil {
 		return nil, false, err
@@ -193,8 +244,23 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 		return nil, false, fmt.Errorf("expected time-interval but got %s", old.GetObjectKind().GroupVersionKind())
 	}
 
-	err = s.service.DeleteMuteTiming(ctx, p.Name, info.OrgID, definitions.Provenance(ngmodels.ProvenanceNone), version) // TODO add support for dry-run option
-	return old, false, err                                                                                              // false - will be deleted async
+	storedProv, err := provenanceFromAnnotation(p.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, errors.NewBadRequest(err.Error())
+	}
+	// Prevent deletion of provisioned resources by callers without explicit permission.
+	if storedProv != definitions.Provenance(ngmodels.ProvenanceNone) {
+		user, err := identity.GetRequester(ctx)
+		if err != nil {
+			return nil, false, err
+		}
+		if err := s.checkProvisioningStatusPermission(ctx, user); err != nil {
+			return nil, false, err
+		}
+	}
+
+	err = s.service.DeleteMuteTiming(ctx, p.Name, info.OrgID, storedProv, version) // TODO add support for dry-run option
+	return old, false, err                                                         // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error) {
