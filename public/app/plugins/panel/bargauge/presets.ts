@@ -27,7 +27,6 @@ const defaultPresetThresholds = {
 const basicHorizontalPreset = (): VisualizationSuggestion<Options> => {
   return {
     name: t('bargauge.presets.basic', 'Basic'),
-    // description: 'Basic, color from thresholds'
     description: t('bargauge.presets.basic_desc', 'Horizontal bars, value color from thresholds'),
     options: {
       ...defaultOptions,
@@ -71,7 +70,6 @@ const basicHorizontalPreset = (): VisualizationSuggestion<Options> => {
 const basicVerticalPreset = (): VisualizationSuggestion<Options> => {
   return {
     name: t('bargauge.presets.basic-vertical', 'Basic vertical'),
-    // description: 'Basic, color from thresholds, vertical'
     description: t('bargauge.presets.basic-vertical_desc', 'Vertical bars, threshold color, text value'),
     options: {
       ...defaultOptions,
@@ -115,7 +113,6 @@ const basicVerticalPreset = (): VisualizationSuggestion<Options> => {
 const gradientHorizontalPreset = (): VisualizationSuggestion<Options> => {
   return {
     name: t('bargauge.presets.gradient', 'Gradient'),
-    // description: 'Gradient, color from thresholds, text color'
     description: t('bargauge.presets.gradient_desc', 'Horizontal bars, gradient fill from thresholds'),
     options: {
       ...defaultOptions,
@@ -159,7 +156,6 @@ const gradientHorizontalPreset = (): VisualizationSuggestion<Options> => {
 const lcdHorizontalPreset = (): VisualizationSuggestion<Options> => {
   return {
     name: t('bargauge.presets.retro-lcd', 'Retro LCD'),
-    // description: 'Color scale, text color'
     description: t('bargauge.presets.retro-lcd_desc', 'Horizontal, LCD style, green-yellow-red scale'),
     options: {
       ...defaultOptions,
@@ -202,7 +198,6 @@ const lcdHorizontalPreset = (): VisualizationSuggestion<Options> => {
 const gradientBlYlRdPreset = (): VisualizationSuggestion<Options> => {
   return {
     name: t('bargauge.presets.gradient-BlYlRd', 'Gradient blue-red'),
-    // description: 'Color scale, value color'
     description: t('bargauge.presets.gradient-BlYlRd_desc', 'Horizontal, gradient fill, blue-yellow-red scale'),
     options: {
       ...defaultOptions,
@@ -245,7 +240,6 @@ const gradientBlYlRdPreset = (): VisualizationSuggestion<Options> => {
 const gradientVerticalPreset = (): VisualizationSuggestion<Options> => {
   return {
     name: t('bargauge.presets.gradient-vertical', 'Gradient vertical'),
-    // description: 'color scale, unchecked show unfilled'
     description: t('bargauge.presets.gradient-vertical_desc', 'Vertical, gradient fill, no unfilled track'),
     options: {
       ...defaultOptions,

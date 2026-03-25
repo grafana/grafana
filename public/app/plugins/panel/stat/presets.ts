@@ -125,7 +125,6 @@ const thresholdBackgroundSparklinePreset = (): VisualizationSuggestion<Options, 
 const wideListPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('stat.presets.wide-list', 'Wide list'),
-    // description: 'Color mode none, text mode value and name, text align center, single color'
     description: t('stat.presets.wide-list-desc', 'Horizontal, name and value, area sparkline, single color'),
     options: {
       ...HORIZONTAL_OPTIONS,
@@ -143,7 +142,6 @@ const wideListPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> =>
 const listPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('stat.presets.list', 'List'),
-    // description: 'Color mode none, text mode value and name, text align center, single color'
     description: t('stat.presets.list_desc', 'Compact horizontal list, centered, name and value, sparkline'),
     options: {
       ...HORIZONTAL_OPTIONS,
@@ -165,7 +163,6 @@ const listPreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
 const horizontalThresholdValuePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('stat.presets.horizontal-threshold-value', 'Horizontal threshold value'),
-    // description: 'Color from thresholds, horizontal, no graph'
     description: t(
       'stat.presets.horizontal-threshold-value-desc',
       'Horizontal, value color from thresholds, no sparkline'
@@ -185,7 +182,6 @@ const horizontalThresholdValuePreset = (): VisualizationSuggestion<Options, Grap
 const horizontalThresholdValueSparklinePreset = (): VisualizationSuggestion<Options, GraphFieldConfig> => {
   return {
     name: t('stat.presets.horizontal-threshold-value-sparkline', 'Horizontal threshold value with sparkline'),
-    // description: 'Color from thresholds, horizontal'
     description: t(
       'stat.presets.horizontal-threshold-value-sparkline-desc',
       'Horizontal, value color from thresholds, area sparkline'
