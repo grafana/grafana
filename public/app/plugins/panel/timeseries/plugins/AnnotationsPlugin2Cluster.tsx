@@ -19,7 +19,7 @@ import { AnnotationMarker2 } from './annotations2-cluster/AnnotationMarker2';
 import { AnnotationVals, XYAnnoVals } from './annotations2-cluster/types';
 import { ClusteringMode, useAnnotationClustering } from './annotations2-cluster/useAnnotationClustering';
 import { useAnnotations } from './annotations2-cluster/useAnnotations';
-import { ANNOTATION_LANE_SIZE, getAnnoRegionStyle } from './utils';
+import { ANNOTATION_LANE_SIZE, getAnnoRegionBoxStyle } from './utils';
 
 interface AnnotationsPlugin2ClusterProps {
   config: UPlotConfigBuilder;
@@ -266,7 +266,7 @@ export const AnnotationsPlugin2Cluster = ({
           isVisible = left < plotWidth && right > 0;
 
           if (isVisible) {
-            style = getAnnoRegionStyle(plotWidth, right, left, vals, i, color, top);
+            style = { ...getAnnoRegionBoxStyle(plotWidth, right, left), background: color, top };
           }
         } else {
           isVisible = left >= 0 && left <= plotWidth;

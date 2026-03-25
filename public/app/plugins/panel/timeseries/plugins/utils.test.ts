@@ -1,7 +1,11 @@
 import { arrayToDataFrame, createDataFrame, DataFrame, DataTopic, FieldType } from '@grafana/data';
 
-import { AnnotationVals } from './annotations2-cluster/types';
-import { ANNOTATION_REGION_MIN_WIDTH, getAnnoRegionStyle, getXAnnotationFrames, getXYAnnotationFrames } from './utils';
+import {
+  ANNOTATION_REGION_MIN_WIDTH,
+  getAnnoRegionBoxStyle,
+  getXAnnotationFrames,
+  getXYAnnotationFrames,
+} from './utils';
 
 const exemplarFrame = createDataFrame({
   refId: 'A',
@@ -165,60 +169,34 @@ describe('getXYAnnotationFrames', () => {
   });
 });
 
-describe('getAnnoRegionStyle', () => {
+describe('getAnnoRegionBoxStyle', () => {
   it.each([
     {
-      name: 'clustered narrow region applies min width and shifts left by half min width',
+      name: 'narrow region applies min width and centers',
       plotWidth: 600,
       left: 100,
       right: 102,
-      vals: { clusterIdx: [0] } as AnnotationVals,
-      i: 0,
       expected: { left: 100 - (ANNOTATION_REGION_MIN_WIDTH - 2) / 2, width: 2, minWidth: ANNOTATION_REGION_MIN_WIDTH },
     },
     {
-      name: 'clustered region with width equal to threshold still expands',
+      name: 'region with width less than threshold',
       plotWidth: 600,
       left: 100,
       right: 104,
-      vals: { clusterIdx: [0] } as AnnotationVals,
-      i: 0,
       expected: { left: 100 - (ANNOTATION_REGION_MIN_WIDTH - 4) / 2, width: 4, minWidth: ANNOTATION_REGION_MIN_WIDTH },
     },
     {
-      name: 'clustered but wide enough has no min width',
+      name: 'enough has no min width',
       plotWidth: 600,
       left: 100,
       right: 105,
-      vals: { clusterIdx: [0] } as AnnotationVals,
-      i: 0,
       expected: { left: 100, width: 5, minWidth: undefined },
-    },
-    {
-      name: 'narrow region without cluster index has no min width',
-      plotWidth: 600,
-      left: 100,
-      right: 102,
-      vals: { clusterIdx: [null] } as AnnotationVals,
-      i: 0,
-      expected: { left: 100, width: 2, minWidth: undefined },
-    },
-    {
-      name: 'narrow region without clusterIdx field has no min width',
-      plotWidth: 600,
-      left: 100,
-      right: 102,
-      vals: {} as AnnotationVals,
-      i: 0,
-      expected: { left: 100, width: 2, minWidth: undefined },
     },
     {
       name: 'clamps left to 0 when shift would be negative',
       plotWidth: 600,
       left: 2,
       right: 3,
-      vals: { clusterIdx: [0] } as AnnotationVals,
-      i: 0,
       expected: { left: 0, width: 1, minWidth: ANNOTATION_REGION_MIN_WIDTH },
     },
     {
@@ -226,25 +204,12 @@ describe('getAnnoRegionStyle', () => {
       plotWidth: 600,
       left: 598,
       right: 700,
-      vals: { clusterIdx: [0] } as AnnotationVals,
-      i: 0,
       expected: { left: 598 - (ANNOTATION_REGION_MIN_WIDTH - 2) / 2, width: 2, minWidth: ANNOTATION_REGION_MIN_WIDTH },
     },
-    {
-      name: 'cluster index on another row does not apply to this row',
-      plotWidth: 600,
-      left: 100,
-      right: 102,
-      vals: { clusterIdx: [0, null] } as AnnotationVals,
-      i: 1,
-      expected: { left: 100, width: 2, minWidth: undefined },
-    },
-  ])('$name', ({ plotWidth, left, right, vals, i, expected }) => {
-    const style = getAnnoRegionStyle(plotWidth, right, left, vals, i, '#F00', 4);
+  ])('$name', ({ plotWidth, left, right, expected }) => {
+    const style = getAnnoRegionBoxStyle(plotWidth, right, left);
     expect(style.left).toBe(expected.left);
     expect(style.width).toBe(expected.width);
     expect(style.minWidth).toBe(expected.minWidth);
-    expect(style.background).toBe('#F00');
-    expect(style.top).toBe(4);
   });
 });
