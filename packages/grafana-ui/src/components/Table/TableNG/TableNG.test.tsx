@@ -91,6 +91,72 @@ const createBasicDataFrame = (): DataFrame => {
   })[0];
 };
 
+const createEmptyDataFrame = (): DataFrame => {
+  const frame = toDataFrame({
+    name: 'EmptyData',
+    length: 0,
+    fields: [
+      {
+        name: 'Column A',
+        type: FieldType.string,
+        values: [] as string[],
+        config: {
+          custom: {
+            width: 150,
+            cellOptions: {
+              type: TableCellDisplayMode.Auto,
+              wrapText: false,
+            },
+          },
+        },
+        display: (value: unknown) => ({
+          text: String(value),
+          numeric: 0,
+          color: undefined,
+          prefix: undefined,
+          suffix: undefined,
+        }),
+        state: {},
+        getLinks: () => [],
+      },
+      {
+        name: 'Column B',
+        type: FieldType.number,
+        values: [] as number[],
+        config: {
+          custom: {
+            width: 150,
+            cellOptions: {
+              type: TableCellDisplayMode.Auto,
+              wrapText: false,
+            },
+          },
+        },
+        display: (value: unknown) => ({
+          text: String(value),
+          numeric: Number(value),
+          color: undefined,
+          prefix: undefined,
+          suffix: undefined,
+        }),
+        state: {},
+        getLinks: () => [],
+      },
+    ],
+  });
+
+  return applyFieldOverrides({
+    data: [frame],
+    fieldConfig: {
+      defaults: {},
+      overrides: [],
+    },
+    replaceVariables: (value) => value,
+    timeZone: 'utc',
+    theme: createTheme(),
+  })[0];
+};
+
 // Create a nested data frame for testing expandable rows
 const createNestedDataFrame = (): DataFrame => {
   const nestedFrame = toDataFrame({
@@ -828,6 +894,59 @@ describe('TableNG', () => {
           expect(container).toHaveTextContent(/of 100 rows/);
         }
       }
+    });
+
+    it('does not show pagination when there are no rows even if pagination is enabled', () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createEmptyDataFrame()}
+          width={800}
+          height={300}
+          enablePagination={true}
+        />
+      );
+
+      expect(container.querySelector('.table-ng-pagination')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Empty state', () => {
+    it('displays the default no rows message when there are no rows', () => {
+      render(<TableNG enableVirtualization={false} data={createEmptyDataFrame()} width={800} height={600} />);
+
+      expect(screen.getByText('No rows')).toBeInTheDocument();
+    });
+
+    it('displays the custom noValue message when provided', () => {
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createEmptyDataFrame()}
+          width={800}
+          height={600}
+          noValue="Custom empty table message"
+        />
+      );
+
+      expect(screen.getByText('Custom empty table message')).toBeInTheDocument();
+      expect(screen.queryByText('No rows')).not.toBeInTheDocument();
+    });
+
+    it('does not display the noValue message when there is at least one row', () => {
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          noValue="Custom empty table message"
+        />
+      );
+
+      expect(screen.queryByText('Custom empty table message')).not.toBeInTheDocument();
+      expect(screen.queryByText('No rows')).not.toBeInTheDocument();
+      expect(screen.getByText('A1')).toBeInTheDocument();
     });
   });
 
