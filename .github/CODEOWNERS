@@ -318,7 +318,7 @@
 /devenv/docker/blocks/sensugo/ @grafana/grafana-backend-group
 /devenv/docker/blocks/slow_proxy/ @bergquist
 /devenv/docker/blocks/smtp/ @bergquist
-/devenv/docker/blocks/tempo/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
+/devenv/docker/blocks/tempo/ @grafana/oss-big-tent
 /devenv/docker/blocks/traefik/ @mckn
 /devenv/docker/blocks/zipkin/ @grafana/oss-big-tent
 /devenv/docker/blocks/webdav/ @grafana/alerting-backend
@@ -481,7 +481,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/templating-dashboard-links-and-variables.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/textbox-variables.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/utils/makeDashboard.ts @grafana/grafana-frontend-navigation
-/e2e-playwright/fixtures/exemplars-query-response.json @grafana/observability-traces-and-profiling
+/e2e-playwright/fixtures/exemplars-query-response.json @grafana/oss-big-tent
 /e2e-playwright/fixtures/long-trace-response.json @grafana/observability-traces-and-profiling
 /e2e-playwright/fixtures/tempo-response.json @grafana/oss-big-tent
 /e2e-playwright/fixtures/prometheus-response.json @grafana/datapro
@@ -503,7 +503,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/advisor.spec.ts @grafana/plugins-platform-frontend
 /e2e-playwright/various-suite/bar-gauge.spec.ts @grafana/dataviz-squad
 /e2e-playwright/various-suite/bookmarks.spec.ts @grafana/grafana-frontend-navigation
-/e2e-playwright/various-suite/exemplars.spec.ts @grafana/observability-traces-and-profiling
+/e2e-playwright/various-suite/exemplars.spec.ts @grafana/oss-big-tent
 /e2e-playwright/various-suite/explore.spec.ts @grafana/observability-traces-and-profiling
 /e2e-playwright/various-suite/filter-annotations.spec.ts @grafana/dashboards-squad
 /e2e-playwright/various-suite/frontend-sandbox-app.spec.ts @grafana/grafana-frontend-platform
@@ -621,13 +621,13 @@ i18next.config.ts @grafana/grafana-frontend-platform
 
 # @grafana/o11y-ds-frontend
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs
-/packages/grafana-o11y-ds-frontend/src/IntervalInput/ @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/NodeGraph/ @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/pyroscope/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/SpanBar/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/TraceToLogs/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/TraceToMetrics/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
-/packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/oss-big-tent @grafana/observability-traces-and-profiling
+/packages/grafana-o11y-ds-frontend/src/IntervalInput/ @grafana/oss-big-tent
+/packages/grafana-o11y-ds-frontend/src/NodeGraph/ @grafana/oss-big-tent
+/packages/grafana-o11y-ds-frontend/src/pyroscope/ @grafana/oss-big-tent @grafana/oss-big-tent
+/packages/grafana-o11y-ds-frontend/src/SpanBar/ @grafana/oss-big-tent @grafana/oss-big-tent
+/packages/grafana-o11y-ds-frontend/src/TraceToLogs/ @grafana/oss-big-tent @grafana/oss-big-tent
+/packages/grafana-o11y-ds-frontend/src/TraceToMetrics/ @grafana/oss-big-tent @grafana/oss-big-tent
+/packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/oss-big-tent @grafana/oss-big-tent
 
 # @grafana/plugin-configs
 /packages/grafana-plugin-configs/ @grafana/grafana-frontend-platform
@@ -716,7 +716,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/statetimeline @grafana/dataviz-squad
 /packages/grafana-schema/src/**/statushistory @grafana/dataviz-squad
 /packages/grafana-schema/src/**/table @grafana/dataviz-squad
-/packages/grafana-schema/src/**/tempo @grafana/oss-big-tent @grafana/observability-traces-and-profiling
+/packages/grafana-schema/src/**/tempo @grafana/oss-big-tent
 /packages/grafana-schema/src/**/text @grafana/dataviz-squad
 /packages/grafana-schema/src/**/timeseries @grafana/dataviz-squad
 /packages/grafana-schema/src/**/trend @grafana/dataviz-squad

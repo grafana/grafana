@@ -4795,7 +4795,7 @@
       "spec": {
         "description": "Enables creating alerts from Tempo data source",
         "stage": "experimental",
-        "codeowner": "@grafana/observability-traces-and-profiling",
+        "codeowner": "@grafana/oss-big-tent",
         "expression": "false"
       }
     },
