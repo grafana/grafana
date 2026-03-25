@@ -15,7 +15,7 @@ Drive the Grafana provisioning wizard through the browser using `mcp_chrome_devt
 **This is a test-only run. You MUST follow these rules:**
 
 1. **No code changes.** Do not modify any Grafana source code or test files. Configuration files (e.g., feature toggles) may be changed only as directed by the Prerequisites section. You are testing the product as-is, not fixing it.
-2. **Do not stop on failure.** When a step fails, encounters a bug, or produces unexpected behavior -- document it and move on to the next step. Do not attempt to debug, fix, or work around the issue.
+2. **Do not stop on failure.** When a step fails, encounters a bug, or produces unexpected behavior -- document it and move on to the next step. Do not attempt to debug or fix the root cause. If a failure blocks subsequent steps, apply a minimal workaround to unblock the flow (e.g., create a resource via API if the UI failed) and note it in the report.
 3. **Complete the entire flow.** Execute every step from start to finish, including cleanup. Skipping steps after a failure loses coverage.
 4. **Produce a final report.** After completing all steps (or reaching the end), output a structured report:
 
