@@ -392,7 +392,7 @@ class DataSourceWithBackend<
       // example:
       // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
       const apiVersion = 'v0alpha1';
-      return `/apis/${this.type}.grafana.app/${apiVersion}/namespaces/${config.namespace}/datasources/${this.uid}/resources/${path}`;
+      return `/apis/${this.type}.datasource.grafana.app/${apiVersion}/namespaces/${config.namespace}/datasources/${this.uid}/resources/${path}`;
     }
     return `/api/datasources/uid/${this.uid}/resources/${path}`;
   }

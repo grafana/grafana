@@ -148,6 +148,12 @@ const getFieldVars = (dataFrames: DataFrame[]) => {
       documentation: 'Field name of the clicked datapoint (in ms epoch)',
       origin: VariableOrigin.Field,
     },
+    {
+      value: `${DataLinkBuiltInVars.fieldDisplayName}`,
+      label: t('panel.get-field-vars.label.display-name', 'Display name'),
+      documentation: 'Display name of the field (includes overrides and transformations)',
+      origin: VariableOrigin.Field,
+    },
     ...labels.map((label) => ({
       value: `__field.labels${buildLabelPath(label)}`,
       label: `labels.${label}`,

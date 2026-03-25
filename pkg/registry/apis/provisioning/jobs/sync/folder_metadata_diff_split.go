@@ -57,7 +57,7 @@ func (input folderMetadataDiffSplit) MetadataChanges() []repository.VersionedFil
 }
 
 // HasMetadataChanges reports whether the diff contains any handled
-// `_folder.json` create, update, or delete entries.
+// `_folder.json` create, update, delete, or rename entries.
 func (input folderMetadataDiffSplit) HasMetadataChanges() bool {
 	return len(input.metadataChanges) > 0
 }
