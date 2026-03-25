@@ -261,7 +261,7 @@ const HeatmapPanelViz = ({
             <AnnotationsPlugin
               replaceVariables={replaceVariables}
               options={options.annotations}
-              annotations={data.annotations ?? []}
+              annotations={data.annotations}
               config={builder}
               timeZone={timeZone}
               newRange={newAnnotationRange}

@@ -234,16 +234,14 @@ func (api *API) authorize(method, path string) web.Handler {
 	// Notification Policies, Contact Points and Templates
 
 	// Grafana Paths
-	case http.MethodDelete + "/api/alertmanager/grafana/config/api/v1/alerts": // reset alertmanager config to the default
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsWrite)
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/alerts":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsConfigHistoryRead)
 	case http.MethodGet + "/api/alertmanager/grafana/config/history":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsConfigHistoryRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/status":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
 	case http.MethodPost + "/api/alertmanager/grafana/config/history/{id}/_activate":
-		eval = ac.EvalAny(ac.EvalPermission(ac.ActionAlertingNotificationsWrite))
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationsConfigHistoryWrite)
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/receivers":
 		eval = ac.EvalAny(
 			ac.EvalPermission(ac.ActionAlertingNotificationsRead),

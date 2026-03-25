@@ -167,7 +167,6 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
 
         {config?.operation === GroupByOperationID.aggregate && (
           <StatsPicker
-            className={styles.aggregations}
             placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
             allowMultiple
             stats={config.aggregations}
@@ -191,9 +190,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexShrink: 0,
       height: '100%',
       width: theme.spacing(24),
-    }),
-    aggregations: css({
-      flexGrow: 1,
     }),
   };
 };
