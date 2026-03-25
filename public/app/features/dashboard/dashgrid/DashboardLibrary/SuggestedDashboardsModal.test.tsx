@@ -125,7 +125,6 @@ describe('SuggestedDashboardsModal', () => {
       constantInputs: [],
       existingMappings: [],
       onInterpolateAndNavigate: jest.fn(),
-      eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
       contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
     };
 
@@ -204,7 +203,6 @@ describe('SuggestedDashboardsModal', () => {
           constantInputs: [],
           existingMappings: [],
           onInterpolateAndNavigate: jest.fn(),
-          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
           contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         });
       });
