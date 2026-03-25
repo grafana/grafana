@@ -2091,6 +2091,24 @@
     },
     {
       "metadata": {
+        "name": "feedbackButton",
+        "resourceVersion": "1774358691923",
+        "creationTimestamp": "2024-12-02T17:08:15Z",
+        "deletionTimestamp": "2025-11-20T10:18:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-24 13:24:51.923401 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the feedback button in the dashboard edit sidebar",
+        "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "fetchRulesInCompactMode",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2025-12-18T09:06:39Z"
