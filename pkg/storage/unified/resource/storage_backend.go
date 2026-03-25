@@ -1760,6 +1760,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	// rvManagerDB is the database handle for rvManager and legacy compat operations.
 	// During SQLite migrations it's swapped to the migration's tx to avoid SQLITE_BUSY.
 	var rvManagerDB db.ContextExecer
+	var usingMigrationTx bool
 	if b.rvManager != nil {
 		rvManagerDB = b.rvManager.DB()
 	}
@@ -1768,6 +1769,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			ctx = kv.ContextWithDBTX(ctx, externalTx)
 			if rvManagerDB != nil {
 				rvManagerDB = dbimpl.NewTx(externalTx)
+				usingMigrationTx = true
 			}
 		}
 	}
@@ -1993,7 +1995,6 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	// Sync legacy resource table and bump RV counter for each collection.
 	if rvManagerDB != nil && rsp.Error == nil {
 		// Check whether we're using the migration tx (no ExecWithRV — it uses its own connection).
-		usingMigrationTx := rvManagerDB != b.rvManager.DB()
 		for _, key := range setting.Collection {
 			if err := b.dataStore.syncLegacyResourceFromHistory(ctx, rvManagerDB, key.Namespace, key.Group, key.Resource); err != nil {
 				b.log.Error("failed to sync legacy resource from history", "error", err)
