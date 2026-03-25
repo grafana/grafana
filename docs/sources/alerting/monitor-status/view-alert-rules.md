@@ -105,7 +105,7 @@ You can view the notification history or an alert rule from a Rule view page. To
 
 1. Navigate to **Alerts & IRM** -> **Alerting** -> **Alert rules**.
 1. Select an alert rule and click **View**.
-1. Click the **Notifications** tab.  
+1. Click the **Notifications** tab.
 
 From the **Notifications** tab you can view the history of your alert notifications and evaluate how many times you've been notified, verify that [contact points](ref:manage-contact-points) are functioning properly, and troubleshoot issues such as webhook failure or email delivery failure.
 

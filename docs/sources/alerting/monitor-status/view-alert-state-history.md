@@ -96,7 +96,7 @@ You can also [view state history for individual alert rules](ref:view-alert-rule
 
 In the Alerting History page, click on the **Notifications** tab to view the notifications history. The Notifications tab shows the logs for whenever a notification was sent to  a [contact point](ref:manage-contact-points) such as Slack or an email. You can filter by **Group labels**, **Status**, **Outcome**, and **Contact point** at the top of the page. You can adjust the time of the graph of the notification history as well.
 
-The notifications are displayed on the top of the page with a list of alert groups which contain multiple alerts. Click the right chevron next to a notification in the list to display the associated firing alerts. 
+The notifications are displayed on the top of the page with a list of alert groups which contain multiple alerts. Click the right chevron next to a notification in the list to display the associated firing alerts.
 
 {{< figure src="/media/docs/alerting/alert-notification-history.png" max-width="750px" alt="Alert Notification tab in Grafana Alerting History page" >}}
 
