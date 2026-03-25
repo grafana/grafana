@@ -1,3 +1,12 @@
+<!-- 12.3.6 START -->
+
+# 12.3.6 (2026-03-25)
+
+### Features and enhancements
+
+- **Public Dashboards:** Prevent unintended CRUD operations from different orgs [#120459](https://github.com/grafana/grafana/pull/120459), [@mmandrus](https://github.com/mmandrus)
+
+<!-- 12.3.6 END -->
 <!-- 12.3.5 START -->
 
 # 12.3.5 (2026-03-09)
