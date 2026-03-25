@@ -1,9 +1,12 @@
-'use strict';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import type { RuleSetRule } from 'webpack';
 
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const path = require('path');
+interface SassRuleOptions {
+  sourceMap: boolean;
+  preserveUrl: boolean;
+}
 
-module.exports = function (options) {
+export default function sassRule(options: SassRuleOptions): RuleSetRule {
   return {
     test: /\.(sa|sc|c)ss$/,
     use: [
@@ -26,7 +29,7 @@ module.exports = function (options) {
         options: {
           sourceMap: options.sourceMap,
           postcssOptions: {
-            config: path.resolve(__dirname),
+            config: import.meta.dirname,
           },
         },
       },
@@ -42,4 +45,4 @@ module.exports = function (options) {
       },
     ],
   };
-};
+}
