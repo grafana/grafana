@@ -74,7 +74,7 @@ describe('ManagedDashboardNavBarBadge', () => {
       error: { status: 404 },
     });
 
-    const dashboard = buildDashboard(ManagerKind.Repo, 'repo-404');
+    const dashboard = buildDashboard(ManagerKind.Repo, undefined);
     const user = userEvent.setup();
 
     render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
@@ -82,7 +82,7 @@ describe('ManagedDashboardNavBarBadge', () => {
     const badgeIcon = screen.getByTestId('icon-exchange-alt');
     await user.hover(badgeIcon);
 
-    expect(await screen.findByText('Repository not found: repo-404')).toBeInTheDocument();
+    expect(await screen.findByText('Repository not found')).toBeInTheDocument();
   });
 
   it('renders managed repository tooltip when repo exists', async () => {
