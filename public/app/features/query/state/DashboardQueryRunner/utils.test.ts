@@ -27,9 +27,16 @@ describe('translateQueryResult', () => {
     expect(translated[0].color).toBe('purple');
   });
 
-  it('should preserve event-level color from datasource when no newState is set', () => {
+  it('should prefer iconColor over event-level color from datasource', () => {
     const results: AnnotationEvent[] = [{ time: 1, color: 'blue' }];
     const translated = translateQueryResult(annotation, results);
+    expect(translated[0].color).toBe('purple');
+  });
+
+  it('should use event-level color from datasource when no iconColor is set', () => {
+    const noIconColor: AnnotationQuery = { ...annotation, iconColor: '' };
+    const results: AnnotationEvent[] = [{ time: 1, color: 'blue' }];
+    const translated = translateQueryResult(noIconColor, results);
     expect(translated[0].color).toBe('blue');
   });
 

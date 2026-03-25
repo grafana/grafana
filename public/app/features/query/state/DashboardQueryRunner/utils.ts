@@ -88,7 +88,7 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
     item.type = annotation.name;
     item.isRegion = Boolean(item.timeEnd && item.time !== item.timeEnd);
 
-    // Color priority: newState mapping > event-level color from datasource > annotation iconColor fallback
+    // Color priority: newState mapping > annotation iconColor > event-level color from datasource
     switch (item.newState?.toLowerCase()) {
       case 'pending':
         item.color = 'yellow';
@@ -105,9 +105,10 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
         item.color = 'gray';
         break;
       default:
-        if (!item.color) {
+        if (annotation.iconColor) {
           item.color = config.theme2.visualization.getColorByName(annotation.iconColor);
         }
+        // otherwise keep item.color from the datasource if present
         break;
     }
   }
