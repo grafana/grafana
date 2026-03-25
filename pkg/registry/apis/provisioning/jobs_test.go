@@ -107,6 +107,106 @@ func TestFixFolderMetadataFeatureGate(t *testing.T) {
 	})
 }
 
+func TestValidateWriteAccess_FixFolderMetadata(t *testing.T) {
+	c := &jobsConnector{}
+
+	t.Run("allowed with write workflow and no ref", func(t *testing.T) {
+		cfg := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			},
+		}
+		spec := provisioning.JobSpec{
+			Action:            provisioning.JobActionFixFolderMetadata,
+			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{},
+		}
+		err := c.validateWriteAccess(cfg, spec)
+		require.NoError(t, err)
+	})
+
+	t.Run("allowed with branch workflow and feature branch ref", func(t *testing.T) {
+		cfg := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type:      provisioning.GitHubRepositoryType,
+				Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+				GitHub:    &provisioning.GitHubRepositoryConfig{Branch: "main"},
+			},
+		}
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionFixFolderMetadata,
+			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
+				Ref: "add-folder-metadata",
+			},
+		}
+		err := c.validateWriteAccess(cfg, spec)
+		require.NoError(t, err)
+	})
+
+	t.Run("rejected with branch-only workflow and no ref", func(t *testing.T) {
+		cfg := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type:      provisioning.GitHubRepositoryType,
+				Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+				GitHub:    &provisioning.GitHubRepositoryConfig{Branch: "main"},
+			},
+		}
+		spec := provisioning.JobSpec{
+			Action:            provisioning.JobActionFixFolderMetadata,
+			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{},
+		}
+		err := c.validateWriteAccess(cfg, spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("rejected with no workflows", func(t *testing.T) {
+		cfg := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Workflows: []provisioning.Workflow{},
+			},
+		}
+		spec := provisioning.JobSpec{
+			Action:            provisioning.JobActionFixFolderMetadata,
+			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{},
+		}
+		err := c.validateWriteAccess(cfg, spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("rejected with branch-only workflow and ref matching configured branch", func(t *testing.T) {
+		cfg := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type:      provisioning.GitHubRepositoryType,
+				Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+				GitHub:    &provisioning.GitHubRepositoryConfig{Branch: "main"},
+			},
+		}
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionFixFolderMetadata,
+			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
+				Ref: "main",
+			},
+		}
+		err := c.validateWriteAccess(cfg, spec)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err))
+	})
+
+	t.Run("nil options treated as empty ref", func(t *testing.T) {
+		cfg := &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+			},
+		}
+		spec := provisioning.JobSpec{
+			Action: provisioning.JobActionFixFolderMetadata,
+		}
+		err := c.validateWriteAccess(cfg, spec)
+		require.NoError(t, err)
+	})
+}
+
 func TestAuthorizeResourceJob(t *testing.T) {
 	ctx := context.Background()
 	cfg := newTestRepo("my-repo", "default")

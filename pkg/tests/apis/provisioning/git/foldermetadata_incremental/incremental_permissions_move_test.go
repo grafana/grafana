@@ -26,7 +26,7 @@ import (
 func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 

@@ -1718,13 +1718,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -3541,20 +3541,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Waarschuwingsinstanties",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Fout bij het laden van de regel",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "Instantiedetails",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "U heeft geen waarschuwingsinstanties in een actieve of in behandeling zijnde status voor het geselecteerde tijdsbereik.",
       "no-instances-found": "Geen waarschuwingsinstanties gevonden voor regel: {{ruleUID}}",
       "no-labels": "Geen labels",
@@ -3576,14 +3583,16 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_one": "",
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_one": "",
       "show-all-labels_other": "",
       "show-all-values_one": "",
       "show-all-values_other": "",
-      "tooltip-more-values_one": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_one": "",
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "Expressie toevoegen"
@@ -4250,6 +4259,9 @@
     "browse-view": {
       "this-folder-is-empty": "Deze map is leeg"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Annuleren",
       "button-delete": "Verwijderen",
@@ -4352,6 +4364,7 @@
       "dashboards": "Dashboards",
       "panels": "Panelen"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Geen items"
     },
@@ -6081,8 +6094,8 @@
       "name": "Rijen",
       "new-row-title": "Nieuwe rij",
       "row": {
-        "collapse": "Rij samenvouwen",
-        "expand": "Rij uitvouwen",
+        "collapse": "",
+        "expand": "",
         "new": "Nieuwe rij",
         "repeat": {
           "learn-more": "Meer informatie",
@@ -6623,11 +6636,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Ad hoc-opties",
       "alert-not-supported": "Deze gegevensbron ondersteunt geen ad-hocfilters",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Stelt gebruikers in staat om aangepaste waarden aan de lijst toe te voegen",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Geef afmetingen op als csv: {{name}}, {{value}}",
       "label-data-source": "Gegevensbron",
       "label-use-static-key-dimensions": "Gebruik statische sleutelafmetingen",
-      "name-allow-custom-values": "Aangepaste waarden toestaan"
+      "name-allow-custom-values": "Aangepaste waarden toestaan",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -10267,6 +10282,9 @@
       "group": "Groep",
       "group-tooltip": "Naam van de stapelgroep"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Filter op waarde",
       "cell-filter-out": "Waarde uitfilteren",
@@ -10315,6 +10333,10 @@
       },
       "no-values-label": "Geen waarden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "geen gegevens"
       },
@@ -11428,7 +11450,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Geen opties gevonden"
@@ -12319,6 +12342,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Naam"
       }
     },
@@ -13018,6 +13042,7 @@
       "error-delete-connection": "Kan de verbinding niet verwijderen",
       "error-required": "Dit veld is verplicht",
       "error-save-connection": "Kan verbinding niet opslaan",
+      "error-submit": "",
       "grafana-repositories": "Repositories die deze verbinding gebruiken",
       "label-app-id": "GitHub-app-ID",
       "label-description": "Beschrijving",
@@ -13542,6 +13567,9 @@
       },
       "go-to": "Ga naar",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "Waarschuwing",
     "watch-stream": {
