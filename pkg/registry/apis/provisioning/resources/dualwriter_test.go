@@ -454,6 +454,40 @@ func TestCreateFolder(t *testing.T) {
 			errContains: "failed to read folder metadata",
 		},
 		{
+			name: "flag enabled: ref not found is treated as file not found (new branch)",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Spec: provisioning.RepositorySpec{
+						Type:      provisioning.GitRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
+						Sync:      provisioning.SyncOptions{Enabled: false},
+					},
+				}
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "new-branch").Return(nil, repository.ErrRefNotFound)
+				rw.On("Create", mock.Anything, "newfolder/_folder.json", "new-branch", mock.MatchedBy(func(b []byte) bool {
+					var res folders.Folder
+					if err := json.Unmarshal(b, &res); err != nil {
+						return false
+					}
+					return res.APIVersion == "folder.grafana.app/v1beta1" &&
+						res.Kind == "Folder" &&
+						res.Name != "" &&
+						res.Spec.Title == "newfolder"
+				}), "").Return(nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, false), folderMetadataEnabled: true}
+				return dw, DualWriteOptions{Path: "newfolder/", Ref: "new-branch"}
+			},
+			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
+				assert.Equal(t, "newfolder/", result.Path)
+				assert.Equal(t, "new-branch", result.Ref)
+			},
+		},
+		{
 			name: "sync enabled, flag disabled: GetFolder not found → no Upsert",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := newSyncEnabledConfig("test-repo")

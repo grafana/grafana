@@ -100,7 +100,7 @@ client_secret = 0ldS3cretKey
 rendering_ignore_https_errors = true
 
 [feature_toggles]
-enable = newNavigation
+newNavigation = true
 ```
 
 You can override variables on Linux machines with:
@@ -2920,15 +2920,23 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise](../
 
 ### `[feature_toggles]`
 
-#### `enable`
+#### `feature_name = true|false`
 
-Keys of features to enable, separated by space.
+Set each feature toggle to `true` to enable it or `false` to disable it. Some feature toggles are on by default, so set the toggle to `false` to disable that default behavior, for example, `exploreMixedDatasource = false`.
 
 #### `FEATURE_NAME = <value>`
 
 Use a key-value pair to set feature flag values explicitly, overriding any default values. A few different types are supported, following the OpenFeature specification. See the defaults.ini file for more details.
 
 For example, to disable an on-by-default feature toggle named `exploreMixedDatasource`, specify `exploreMixedDatasource = false`.
+
+#### `enable`
+
+{{< admonition type="note" >}}
+This option is deprecated and will be removed in a future major release. Use individual toggle entries instead.
+{{< /admonition >}}
+
+Keys of features to enable, separated by spaces.
 
 <hr>
 

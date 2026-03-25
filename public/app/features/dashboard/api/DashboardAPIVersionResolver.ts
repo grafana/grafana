@@ -69,7 +69,9 @@ class DashboardAPIVersionResolver {
   }
 
   private async discover(): Promise<ResolvedDashboardVersions> {
-    const group = await getBackendSrv().get<K8sAPIGroup>(`/apis/${DASHBOARD_API_GROUP}/`);
+    const group = await getBackendSrv().get<K8sAPIGroup>(`/apis/${DASHBOARD_API_GROUP}/`, undefined, undefined, {
+      showErrorAlert: false,
+    });
     const availableVersions = new Set(group.versions.map((v) => v.version));
 
     const v1: DashboardV1Version = availableVersions.has('v1') ? 'v1' : BETA_V1;
