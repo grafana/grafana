@@ -1693,19 +1693,18 @@ func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.
 
 //nolint:gocyclo
 func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
-	// compatDB is used for compat layer operations (deleteLegacyResourceCollection, etc.)
-	// Normally it's the rvManager's DB, but during SQLite migrations we use the migration's tx.
-	var compatDB db.ContextExecer
+	// rvManagerDB is the database handle for rvManager and legacy compat operations.
+	// During SQLite migrations it's swapped to the migration's tx to avoid SQLITE_BUSY.
+	var rvManagerDB db.ContextExecer
 	if b.rvManager != nil {
-		compatDB = b.rvManager.DB()
+		rvManagerDB = b.rvManager.DB()
 	}
 	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 		if externalTx := TransactionFromContext(clientCtx); externalTx != nil {
-			// On SQLite, the migration framework holds a write transaction. Route all
-			// KV and compat layer operations through it to avoid SQLITE_BUSY.
+            // Wrap and swap DB with external transaction (SQLite migration) 
 			ctx = kv.ContextWithDBTX(ctx, externalTx)
 			if b.rvManager != nil {
-				compatDB = dbimpl.NewTx(externalTx)
+				rvManagerDB = dbimpl.NewTx(externalTx)
 			}
 		}
 	}
@@ -1771,8 +1770,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		// Delete legacy resource rows for this collection so they can be re-synced after import.
-		if compatDB != nil {
-			if err := b.dataStore.deleteLegacyResourceCollection(ctx, compatDB, key.Namespace, key.Group, key.Resource); err != nil {
+		if rvManagerDB != nil {
+			if err := b.dataStore.deleteLegacyResourceCollection(ctx, rvManagerDB, key.Namespace, key.Group, key.Resource); err != nil {
 				b.log.Error("failed to delete legacy resource collection", "error", err)
 				return rsp
 			}
@@ -1914,7 +1913,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 					previousRV = lastMicroRV[nameKey]
 				}
 
-				if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, compatDB, dataKey, microRV, previousRV, generation); err != nil {
+				if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, rvManagerDB, dataKey, microRV, previousRV, generation); err != nil {
 					b.log.Error("failed to update legacy resource_history for bulk", "error", err)
 					return rsp
 				}
@@ -1929,11 +1928,11 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 
 	// Sync legacy resource table and bump RV counter for each collection.
-	if compatDB != nil && rsp.Error == nil {
+	if rvManagerDB != nil && rsp.Error == nil {
 		// Check whether we're using the migration tx (no ExecWithRV — it uses its own connection).
-		usingMigrationTx := compatDB != b.rvManager.DB()
+		usingMigrationTx := rvManagerDB != b.rvManager.DB()
 		for _, key := range setting.Collection {
-			if err := b.dataStore.syncLegacyResourceFromHistory(ctx, compatDB, key.Namespace, key.Group, key.Resource); err != nil {
+			if err := b.dataStore.syncLegacyResourceFromHistory(ctx, rvManagerDB, key.Namespace, key.Group, key.Resource); err != nil {
 				b.log.Error("failed to sync legacy resource from history", "error", err)
 				return rsp
 			}
@@ -1943,11 +1942,11 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 			if usingMigrationTx {
 				// On SQLite, Lock+SaveRV through the migration tx (same as SQL backend).
 				// ExecWithRV would deadlock because it opens its own connection.
-				nextRV, err := b.rvManager.Lock(ctx, compatDB, key.Group, key.Resource)
+				nextRV, err := b.rvManager.Lock(ctx, rvManagerDB, key.Group, key.Resource)
 				if err != nil {
 					b.log.Error("error locking RV", "error", err, "key", NSGR(key))
 				} else {
-					if err := b.rvManager.SaveRV(ctx, compatDB, key.Group, key.Resource, nextRV); err != nil {
+					if err := b.rvManager.SaveRV(ctx, rvManagerDB, key.Group, key.Resource, nextRV); err != nil {
 						b.log.Error("error saving RV", "error", err, "key", NSGR(key))
 					}
 				}
