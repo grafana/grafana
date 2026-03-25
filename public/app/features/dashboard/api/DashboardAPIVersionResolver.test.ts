@@ -51,6 +51,19 @@ describe('DashboardAPIVersionResolver', () => {
       expect(result).toEqual(expected);
     });
 
+    it('should call discovery endpoint with showErrorAlert disabled', async () => {
+      mockDiscoveryResponse(['v2beta1', 'v1beta1']);
+      await dashboardAPIVersionResolver.resolve();
+
+      const mockGet = mockGetBackendSrv()?.get as jest.Mock;
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining('/apis/dashboard.grafana.app/'),
+        undefined,
+        undefined,
+        expect.objectContaining({ showErrorAlert: false })
+      );
+    });
+
     it('should retry discovery after a transient failure', async () => {
       mockDiscoveryFailure();
       expect(await dashboardAPIVersionResolver.resolve()).toEqual(BETA_FALLBACK);

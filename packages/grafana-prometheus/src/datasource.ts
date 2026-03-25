@@ -99,7 +99,7 @@ export class PrometheusDatasource
   defaultEditor?: QueryEditorMode;
 
   constructor(
-    instanceSettings: DataSourceInstanceSettings<PromOptions>,
+    public readonly instanceSettings: DataSourceInstanceSettings<PromOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv(),
     languageProvider?: PrometheusLanguageProviderInterface
   ) {
