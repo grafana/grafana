@@ -19,6 +19,7 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -56,8 +57,11 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		deletionOptions metav1.DeleteOptions
 		readResponse    *resourcepb.ReadResponse
 		readError       error
-		checkRan        bool
-		expectedError   bool
+		// legacyProvResponse/Error are used when Read() returns an error (fallback to legacy provisioning service)
+		legacyProvResponse *dashboards.DashboardProvisioning
+		legacyProvError    error
+		checkRan           bool
+		expectedError      bool
 	}{
 		{
 			name: "should block deletion of provisioned dashboard (classic file provisioning)",
@@ -115,8 +119,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			readResponse: &resourcepb.ReadResponse{
 				Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"},
 			},
-			checkRan:      true,
-			expectedError: false,
+			legacyProvError: dashboards.ErrProvisionedDashboardNotFound,
+			checkRan:        true,
+			expectedError:   false,
 		},
 		{
 			name: "should fail closed on non-404 storage error",
@@ -135,8 +140,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			readResponse: &resourcepb.ReadResponse{
 				Error: &resourcepb.ErrorResult{Code: 500, Message: "internal server error"},
 			},
-			checkRan:      true,
-			expectedError: true,
+			legacyProvError: fmt.Errorf("generic error"),
+			checkRan:        true,
+			expectedError:   true,
 		},
 		{
 			name: "should allow deletion of non-provisioned dashboard",
@@ -222,6 +228,14 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 
 			b := &DashboardsAPIBuilder{
 				unified: mockClient,
+			}
+
+			// Set up legacy provisioning service mock for fallback path
+			if tt.legacyProvResponse != nil || tt.legacyProvError != nil {
+				fakeService := &dashboards.FakeDashboardProvisioning{}
+				fakeService.On("GetProvisionedDashboardDataByDashboardUID", mock.Anything, mock.Anything, mock.Anything).
+					Return(tt.legacyProvResponse, tt.legacyProvError)
+				b.dashboardProvisioningService = fakeService
 			}
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
 				tt.inputObj,
