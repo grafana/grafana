@@ -131,6 +131,7 @@
   "dev-dashboards-output/panel-xychart/xychart-demo.v42.json": "8282712cf4e3b5ba4ecf16fac530f1e86d4ef05eb0745970bc0325c6eab4775f",
   "dev-dashboards-output/panel-xychart/xychart-migrations.v42.json": "88c8d37023a79c808f6ccc9806f76588c771be3fd97e3d64d5eda788da27e2ba",
   "dev-dashboards-output/panel-xychart/xychart-tooltip-color-test.v42.json": "f74048f3dd37d288c6519cd7e1b866330b91f22dc273b73cccbc210945136b35",
+  "dev-dashboards-output/scenarios/all-colapsed-rows-public.v42.json": "67eab32852a56a53db5db2343065a02acfa0c983e2e291c7d39db54a10b260b9",
   "dev-dashboards-output/scenarios/mostly-blank-dashboard.v42.json": "7a2b5f83d088d7ae78269b855a3eb1f67b33c945fff9fa7e30acedf39e79681b",
   "dev-dashboards-output/scenarios/relative_time_zone_support.v42.json": "c20108836c4cb57c47b7a73c453efb7700fa7d8d1ffd58130b4a54dc0b616dc7",
   "dev-dashboards-output/scenarios/slow_queries_and_annotations.v42.json": "8ad301c5a8f43e0c68080e0058509e413b177d98f850bd6bda936393a926c01f",

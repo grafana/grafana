@@ -274,18 +274,18 @@ export const timeseriesPresetsSupplier: VisualizationPresetsSupplier<Options, Gr
   } else if (isMultiSeries) {
     if (hasFewPoints) {
       return [
-        makePreset(t('timeseries.presets.multi-points', 'Points'), FC_MULTI_POINTS),
+        makePreset(t('timeseries.presets.multi-points', 'Lines with points'), FC_MULTI_POINTS),
         makePreset(
-          t('timeseries.presets.multi-stacked-points', 'Stacked points'),
+          t('timeseries.presets.multi-stacked-points', 'Stacked lines'),
           makeMultiStackedConfig(StackingMode.Normal)
         ),
         makePreset(t('timeseries.presets.multi-stacked-bars', 'Stacked bars'), FC_MULTI_STACKED_BARS),
       ];
     } else {
       return [
-        makePreset(t('timeseries.presets.multi-many-points', 'Points'), FC_MULTI_POINTS),
+        makePreset(t('timeseries.presets.multi-many-points', 'Lines with points'), FC_MULTI_POINTS),
         makePreset(
-          t('timeseries.presets.multi-many-points-stacked', 'Stacked points'),
+          t('timeseries.presets.multi-many-points-stacked', 'Stacked lines'),
           makeMultiStackedConfig(StackingMode.Normal)
         ),
         makePreset(
