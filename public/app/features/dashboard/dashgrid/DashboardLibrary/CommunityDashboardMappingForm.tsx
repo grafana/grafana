@@ -9,9 +9,8 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/types';
 
 import { useTrackingContext } from './TrackingContext';
-import { ContentKind } from './constants';
 import { NewDashboardLibraryInteractions } from './analytics/main';
-import { ContentKind, EventLocation, SOURCE_ENTRY_POINTS } from './constants';
+import { ContentKind } from './constants';
 import { DashboardLibraryInteractions } from './interactions';
 import { InputMapping, mapConstantInputs, mapUserSelectedDatasources } from './utils/autoMapDatasources';
 
