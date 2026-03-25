@@ -18,7 +18,7 @@ import {
   FieldValidationMessage,
   RadioButtonGroup,
 } from '@grafana/ui';
-import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
+import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import darkImage from '../images/dark/partitionByValues.svg';
@@ -32,7 +32,7 @@ export function PartitionByValuesEditor({
   onChange,
 }: TransformerUIProps<PartitionByValuesTransformerOptions>) {
   const names = useFieldDisplayNames(input);
-  const allSelectOptions = useSelectOptions(names);
+  const allSelectOptions = useMatcherSelectOptions(names);
   const selectOptions = useMemo(() => {
     const fieldNames = new Set(options.fields);
 

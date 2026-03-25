@@ -92,6 +92,9 @@ export const versionedComponents = {
     duplicate: {
       '12.1.0': 'data-testid EditPaneHeader duplicate',
     },
+    paste: {
+      '12.1.0': 'data-testid EditPaneHeader paste',
+    },
   },
   LayoutContainer: {
     '12.4.0': (identifier: string) => `data-testid Layout container ${identifier}`,
@@ -702,6 +705,9 @@ export const versionedComponents = {
       },
       addAnnotationButton: {
         '12.6.0': 'data-testid add annotation button',
+      },
+      addLinkButton: {
+        '12.6.0': 'data-testid add link button',
       },
       variableNameInput: {
         '12.0.0': 'data-testid variable name input',

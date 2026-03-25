@@ -271,11 +271,15 @@ DynamicConfigValue: {
 	value?: _
 }
 
+MatcherScope: "series" | "nested" | "annotation" | "exemplar"
+
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
 // It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 MatcherConfig: {
 	// The matcher id. This is used to find the matcher implementation from registry.
 	id: string | *""
+	// If set, limits this matcher to fields of that type. If not set, "series" mode is used.
+	scope?: MatcherScope
 	// The matcher options. This is specific to the matcher implementation.
 	options?: _
 }
@@ -988,6 +992,8 @@ AdhocVariableSpec: {
 	skipUrlSync:  bool | *false
 	description?: string
 	allowCustomValue: bool | *true
+	// Whether the group-by operator is enabled in the ad hoc filter combobox.
+	enableGroupBy?: bool | *false
 }
 
 // Define the MetricFindValue type

@@ -190,6 +190,12 @@ export const mockIRMAnnotation: DataFrame = {
       values: [0, 4665, 4683],
     },
     {
+      name: 'dashboardUID',
+      config: {},
+      type: FieldType.string,
+      values: ['abc-123', 'def-456', 'jkl-789'],
+    },
+    {
       name: 'source',
       config: {},
       type: FieldType.other,
@@ -323,6 +329,12 @@ export const mockIRMAnnotationRegion: DataFrame = {
       values: [0, 4665, 4683],
     },
     {
+      name: 'dashboardUID',
+      config: {},
+      type: FieldType.string,
+      values: ['abc-123', 'def-456', 'jkl-789'],
+    },
+    {
       name: 'source',
       config: {},
       type: FieldType.other,
@@ -377,6 +389,147 @@ export const mockIRMAnnotationRegion: DataFrame = {
       config: {},
       type: FieldType.boolean,
       values: [true, true, true],
+    },
+  ],
+};
+
+export const mockIRMClusteringAnnotation: DataFrame = {
+  length: 4,
+  meta: {
+    dataTopic: DataTopic.Annotations,
+  },
+  fields: [
+    {
+      name: 'type',
+      config: {},
+      type: FieldType.string,
+      values: [
+        'Show `squad:loki` Incidents',
+        'Show `squad:loki` Incidents',
+        'Show `squad:loki` Incidents',
+        'Show `squad:loki` Incidents',
+      ],
+    },
+    {
+      name: 'color',
+      config: {},
+      type: FieldType.string,
+      values: ['#F00', '#F0F', '#00F', '#DDD'],
+    },
+    {
+      name: 'time',
+      config: {},
+      type: FieldType.time,
+      values: [1759388895560, 1759388896560, 1759388995560, 1759389995560],
+    },
+    {
+      name: 'title',
+      config: {},
+      type: FieldType.string,
+      values: [
+        "<a data-testid='mock-annotation-title' target='_blank' href='/a/grafana-irm-app/incidents/4655'><b>prod-000-writes-error</b></a>",
+        "<a data-testid='mock-annotation-title' target='_blank' href='/a/grafana-irm-app/incidents/4656'><b>prod-001-writes-error</b></a>",
+        "<a data-testid='mock-annotation-title' target='_blank' href='/a/grafana-irm-app/incidents/4667'><b>LogsDeleteRequestProcessingStuck (dev-us-west-0, notify)</b></a>",
+        "<a data-testid='mock-annotation-title' target='_blank' href='/a/grafana-irm-app/incidents/4683'><b>Vendor BYOC cell Failed to get annotations</b></a>",
+      ],
+    },
+    {
+      name: 'text',
+      config: {},
+      type: FieldType.string,
+      values: [
+        "<div data-testid='mock-annotation-text' style='max-width: 230px;'><p>A very large label value payload (>16MB) triggered a panic in the code. We disabled the gateway as a temporary mitigation.</p> Declared by <img height='100%' width='14' style='border-radius: 6px; margin-right:4px;' src='https://www.gravatar.com/avatar/4edf116c0e3ee9af875ea934d417c899?s=512&d=https%3A%2F%2Favatars.slack-edge.com%2F2021-10-04%2F2555752049286_b9cf6475b53000b437ea_192.jpg'>your mom</div>",
+        "<div data-testid='mock-annotation-text' style='max-width: 230px;'><p>A very large label value payload (>32MB) triggered a panic in the code. We disabled the gateway as a temporary mitigation.</p> Declared by <img height='100%' width='14' style='border-radius: 6px; margin-right:4px;' src='https://www.gravatar.com/avatar/4edf116c0e3ee9af875ea934d417c899?s=512&d=https%3A%2F%2Favatars.slack-edge.com%2F2021-10-04%2F2555752049286_b9cf6475b53000b437ea_192.jpg'>Alfred</div>",
+        "<div data-testid='mock-annotation-text' style='max-width: 230px;'><p></p> Declared by <img height='100%' width='14' style='border-radius: 6px; margin-right:4px;' src='https://www.gravatar.com/avatar/07f61391eab846fb5c7fbc035dbb3091?s=512&d=https%3A%2F%2Favatars.slack-edge.com%2F2025-09-01%2F9442928521986_e04cf65c19859e880ef1_192.jpg'>Ada</div>",
+        "<div data-testid='mock-annotation-text' style='max-width: 230px;'><p>The vendor BYOC cell experienced annotation retrieval failures due to a DNS misconfiguration where the hostname was resolving to the wrong regional endpoint, causing 530 status code errors on alert state history queries. The team identified the root cause as a recent DNS name format change and merged a fix, which was rolled out to resolve the issue.</p> Declared by <img height='100%' width='14' style='border-radius: 6px; margin-right:4px;' src='https://www.gravatar.com/avatar/592723e91b4f16fa4241f6818e601000?s=512&d=https%3A%2F%2Favatars.slack-edge.com%2F2024-07-01%2F7363759362996_d8a231a9ad749aac0a19_192.png'>Theo</div>",
+      ],
+    },
+    {
+      name: 'tags',
+      config: {},
+      type: FieldType.other,
+      values: [
+        ['squad:adaptive-telemetry', 'squad:loki', 'team_name:loki'],
+        ['squad:adaptive-telemetry', 'squad:loki', 'team_name:loki'],
+        ['squad:loki'],
+        [
+          'service:dashboard-service',
+          'service:datasources',
+          'squad:alerting',
+          'squad:databases-sre',
+          'squad:insights',
+          'squad:loki',
+        ],
+      ],
+    },
+    {
+      name: 'id',
+      config: {},
+      type: FieldType.number,
+      values: [4655, 4656, 4665, 4683],
+    },
+    {
+      name: 'dashboardUID',
+      config: {},
+      type: FieldType.string,
+      values: ['abc-123', 'def-456', 'jkl-789', 'ccc-ddd'],
+    },
+    {
+      name: 'source',
+      config: {},
+      type: FieldType.other,
+      values: [
+        {
+          enable: true,
+          hide: false,
+          iconColor: 'yellow',
+          name: 'Show `squad:loki` Incidents',
+          mappings: {
+            id: {
+              source: 'field',
+              value: 'Incident ID',
+            },
+            tags: {
+              source: 'field',
+              value: 'Labels',
+            },
+            text: {
+              source: 'field',
+              value: 'Incident Description',
+            },
+            time: {
+              source: 'field',
+              value: 'Incident started',
+            },
+            timeEnd: {
+              source: 'field',
+              value: 'Incident ended',
+            },
+            title: {
+              source: 'field',
+              value: 'Incident Title',
+            },
+          },
+          target: {
+            queryString: "label:'squad:loki'",
+            queryType: 'incidents',
+            refId: 'Anno',
+          },
+          datasource: {
+            uid: 'a12a4bc8-78ce-4d25-b28b-2fd6b1a88691',
+            type: 'grafana-incident-datasource',
+          },
+        },
+        null,
+        null,
+        null,
+      ],
+    },
+    {
+      name: 'isRegion',
+      config: {},
+      type: FieldType.boolean,
+      values: [false, false, false, false],
     },
   ],
 };

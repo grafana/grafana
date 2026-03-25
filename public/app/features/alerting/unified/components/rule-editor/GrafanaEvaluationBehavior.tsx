@@ -50,9 +50,6 @@ import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 
-export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
-export const MAX_GROUP_RESULTS = 1000;
-
 const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProvisionedGroups: boolean) => {
   const folderGroups = Object.values(rulerNamespace).flat();
 
@@ -456,7 +453,7 @@ export function GrafanaEvaluationBehaviorStep({
   );
 }
 
-function EvaluationGroupCreationModal({
+export function EvaluationGroupCreationModal({
   onClose,
   onCreate,
 }: {

@@ -35,7 +35,10 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, withRvManager bool) 
 	require.NoError(t, err)
 
 	kvOpts := resource.KVBackendOptions{
-		KvStore: kv,
+		KvStore:        kv,
+		SearchLookback: time.Second,
+		// keep it low in tests as most of them don't exercise concurrent writes
+		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
 	}
 
 	if dbConn.DriverName() == "sqlite3" {
@@ -78,6 +81,9 @@ func RunSQLStorageBackendCompatibilityTest(t *testing.T, newSqlBackend NewBacken
 		{"cross backend consistency", runTestCrossBackendConsistency},
 		{"concurrent operations stress", runTestConcurrentOperationsStress},
 		{"optimistic locking database integrity", runTestOptimisticLockingDatabaseIntegrity},
+		{"bulk import compatibility", runTestBulkImportCompatibility},
+		{"last import time cross backend", runTestLastImportTimeCrossBackend},
+		{"cluster scoped resources compatibility", runTestClusterScopedResources},
 	}
 
 	for _, tc := range cases {
@@ -768,6 +774,248 @@ func runTestOptimisticLockingDatabaseIntegrity(t *testing.T, sqlBackend, kvBacke
 		ctx := newIntegrationTestContext(t)
 		runOptimisticLockingDatabaseIntegrityForBackend(t, kvBackend, baseNamespace+"-kv", db, ctx)
 	})
+}
+
+// runTestBulkImportCompatibility verifies that ProcessBulk on the KV backend produces
+// the same legacy SQL table state as the SQL backend's ProcessBulk.
+func runTestBulkImportCompatibility(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	ctx := newIntegrationTestContext(t)
+
+	group := "playlist.grafana.app"
+	resourceType := "playlists"
+
+	// Build shared bulk data: 5 adds, 2 modifies, 1 delete
+	buildBulkRequests := func(ns string) []*resourcepb.BulkRequest {
+		return []*resourcepb.BulkRequest{
+			// 5 ADDED
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: "playlist-1"},
+				Action: resourcepb.BulkRequest_ADDED,
+				Value:  createPlaylistJSON(PlaylistResourceOptions{Name: "playlist-1", Namespace: ns, UID: "uid-1", Generation: 1, Title: "First Playlist", Folder: "folder-a"}),
+				Folder: "folder-a",
+			},
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: "playlist-2"},
+				Action: resourcepb.BulkRequest_ADDED,
+				Value:  createPlaylistJSON(PlaylistResourceOptions{Name: "playlist-2", Namespace: ns, UID: "uid-2", Generation: 1, Title: "Second Playlist", Folder: "folder-b"}),
+				Folder: "folder-b",
+			},
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: "playlist-3"},
+				Action: resourcepb.BulkRequest_ADDED,
+				Value:  createPlaylistJSON(PlaylistResourceOptions{Name: "playlist-3", Namespace: ns, UID: "uid-3", Generation: 1, Title: "Third Playlist"}),
+			},
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: "playlist-4"},
+				Action: resourcepb.BulkRequest_ADDED,
+				Value:  createPlaylistJSON(PlaylistResourceOptions{Name: "playlist-4", Namespace: ns, UID: "uid-4", Generation: 1, Title: "Fourth Playlist", Folder: "folder-a"}),
+				Folder: "folder-a",
+			},
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: "playlist-5"},
+				Action: resourcepb.BulkRequest_ADDED,
+				Value:  createPlaylistJSON(PlaylistResourceOptions{Name: "playlist-5", Namespace: ns, UID: "uid-5", Generation: 1, Title: "Fifth Playlist"}),
+			},
+			// 2 MODIFIED (update playlist-1 and playlist-2)
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: "playlist-1"},
+				Action: resourcepb.BulkRequest_MODIFIED,
+				Value:  createPlaylistJSON(PlaylistResourceOptions{Name: "playlist-1", Namespace: ns, UID: "uid-1", Generation: 2, Title: "First Playlist Updated", Folder: "folder-c"}),
+				Folder: "folder-c",
+			},
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: "playlist-2"},
+				Action: resourcepb.BulkRequest_MODIFIED,
+				Value:  createPlaylistJSON(PlaylistResourceOptions{Name: "playlist-2", Namespace: ns, UID: "uid-2", Generation: 2, Title: "Second Playlist Updated"}),
+			},
+			// 1 DELETED (delete playlist-5)
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: "playlist-5"},
+				Action: resourcepb.BulkRequest_DELETED,
+				Value:  createPlaylistJSON(PlaylistResourceOptions{Name: "playlist-5", Namespace: ns, UID: "uid-5", Generation: 0, Title: "Fifth Playlist"}),
+			},
+		}
+	}
+
+	sqlNS := nsPrefix + "-bk-sql"
+	kvNS := nsPrefix + "-bk-kv"
+
+	// Run ProcessBulk on SQL backend
+	sqlBulk, ok := sqlBackend.(resource.BulkProcessingBackend)
+	require.True(t, ok, "SQL backend must support BulkProcessingBackend")
+	sqlResp := sqlBulk.ProcessBulk(ctx, resource.BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{Namespace: sqlNS, Group: group, Resource: resourceType}},
+	}, toBulkIterator(buildBulkRequests(sqlNS)))
+	require.Nil(t, sqlResp.Error)
+	require.Empty(t, sqlResp.Rejected)
+
+	// Run ProcessBulk on KV backend
+	kvBulk, ok := kvBackend.(resource.BulkProcessingBackend)
+	require.True(t, ok, "KV backend must support BulkProcessingBackend")
+	kvResp := kvBulk.ProcessBulk(ctx, resource.BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{Namespace: kvNS, Group: group, Resource: resourceType}},
+	}, toBulkIterator(buildBulkRequests(kvNS)))
+	require.Nil(t, kvResp.Error)
+	require.Empty(t, kvResp.Rejected)
+
+	// Compare resource_history for each resource name
+	names := []string{"playlist-1", "playlist-2", "playlist-3", "playlist-4", "playlist-5"}
+	for _, name := range names {
+		t.Run("resource_history/"+name, func(t *testing.T) {
+			sqlRows := queryResourceHistoryRows(t, db, sqlNS, group, resourceType, name)
+			kvRows := queryResourceHistoryRows(t, db, kvNS, group, resourceType, name)
+
+			require.Equal(t, len(sqlRows), len(kvRows), "history row count mismatch for %s", name)
+
+			for i := range sqlRows {
+				sqlRow := sqlRows[i]
+				kvRow := kvRows[i]
+
+				require.Equal(t, sqlRow.Group, kvRow.Group, "group mismatch for %s row %d", name, i)
+				require.Equal(t, sqlRow.Resource, kvRow.Resource, "resource mismatch for %s row %d", name, i)
+				require.Equal(t, sqlRow.Name, kvRow.Name, "name mismatch for %s row %d", name, i)
+				require.Equal(t, sqlRow.Action, kvRow.Action, "action mismatch for %s row %d", name, i)
+				require.Equal(t, sqlRow.Folder, kvRow.Folder, "folder mismatch for %s row %d", name, i)
+				// value contains metadata.namespace which differs between backends — verify non-empty instead.
+				require.NotEmpty(t, sqlRow.Value, "sql value should not be empty for %s row %d", name, i)
+				require.NotEmpty(t, kvRow.Value, "kv value should not be empty for %s row %d", name, i)
+				require.Greater(t, kvRow.ResourceVersion, int64(0), "kv resource_version should be positive for %s row %d", name, i)
+				require.Greater(t, sqlRow.ResourceVersion, int64(0), "sql resource_version should be positive for %s row %d", name, i)
+				require.NotEmpty(t, kvRow.GUID, "kv guid should not be empty for %s row %d", name, i)
+				require.NotEmpty(t, sqlRow.GUID, "sql guid should not be empty for %s row %d", name, i)
+
+				// KV backend sets proper previous_resource_version: 0 for creates, actual previous RV for updates/deletes.
+				if kvRow.Action == 1 { // ADDED
+					require.Equal(t, int64(0), kvRow.PreviousResourceVersion, "kv previous_resource_version should be 0 for creates, %s row %d", name, i)
+				} else {
+					require.Greater(t, kvRow.PreviousResourceVersion, int64(0), "kv previous_resource_version should be positive for updates/deletes, %s row %d", name, i)
+				}
+			}
+		})
+	}
+
+	// Compare resource table for non-deleted resources
+	activeNames := []string{"playlist-1", "playlist-2", "playlist-3", "playlist-4"}
+	for _, name := range activeNames {
+		t.Run("resource/"+name, func(t *testing.T) {
+			sqlRow, sqlOk := queryResourceRow(t, db, sqlNS, group, resourceType, name)
+			kvRow, kvOk := queryResourceRow(t, db, kvNS, group, resourceType, name)
+
+			require.True(t, sqlOk, "sql resource row should exist for %s", name)
+			require.True(t, kvOk, "kv resource row should exist for %s", name)
+
+			require.Equal(t, sqlRow.Group, kvRow.Group, "group mismatch for %s", name)
+			require.Equal(t, sqlRow.Resource, kvRow.Resource, "resource mismatch for %s", name)
+			// Namespaces are intentionally different between backends (-bk-sql vs -bk-kv).
+			require.Equal(t, sqlNS, sqlRow.Namespace, "sql namespace should match for %s", name)
+			require.Equal(t, kvNS, kvRow.Namespace, "kv namespace should match for %s", name)
+			require.Equal(t, sqlRow.Name, kvRow.Name, "name mismatch for %s", name)
+			require.Equal(t, sqlRow.Action, kvRow.Action, "action mismatch for %s", name)
+			require.Equal(t, sqlRow.Folder, kvRow.Folder, "folder mismatch for %s", name)
+			// value contains metadata.namespace which differs between backends — verify non-empty instead.
+			require.NotEmpty(t, sqlRow.Value, "sql value should not be empty for %s", name)
+			require.NotEmpty(t, kvRow.Value, "kv value should not be empty for %s", name)
+			require.Greater(t, kvRow.ResourceVersion, int64(0), "kv resource_version should be positive for %s", name)
+			require.Greater(t, sqlRow.ResourceVersion, int64(0), "sql resource_version should be positive for %s", name)
+			require.NotEmpty(t, kvRow.GUID, "kv guid should not be empty for %s", name)
+		})
+	}
+
+	// Deleted resource should not exist in resource table
+	t.Run("resource/playlist-5-deleted", func(t *testing.T) {
+		_, sqlOk := queryResourceRow(t, db, sqlNS, group, resourceType, "playlist-5")
+		_, kvOk := queryResourceRow(t, db, kvNS, group, resourceType, "playlist-5")
+
+		require.False(t, sqlOk, "sql resource row should not exist for deleted playlist-5")
+		require.False(t, kvOk, "kv resource row should not exist for deleted playlist-5")
+	})
+
+	// Compare resource_version table
+	t.Run("resource_version", func(t *testing.T) {
+		query := buildCrossDatabaseQuery(db.DriverName(), `
+			SELECT "group", resource, resource_version
+			FROM resource_version
+			WHERE "group" = ? AND resource = ?
+		`)
+
+		// Check SQL namespace has a resource_version entry
+		rows, err := db.QueryContext(ctx, query, group, resourceType)
+		require.NoError(t, err)
+
+		var records []ResourceVersionRecord
+		for rows.Next() {
+			var record ResourceVersionRecord
+			err := rows.Scan(&record.Group, &record.Resource, &record.ResourceVersion)
+			require.NoError(t, err)
+			records = append(records, record)
+		}
+		require.NoError(t, rows.Err())
+		require.NoError(t, rows.Close())
+
+		// Both backends share the same resource_version table (same group+resource).
+		// There should be at least one record with a positive resource_version.
+		require.GreaterOrEqual(t, len(records), 1, "Expected at least 1 resource_version record")
+		require.Greater(t, records[0].ResourceVersion, int64(0), "resource_version should be positive")
+	})
+}
+
+// runTestLastImportTimeCrossBackend verifies that last import times written by one backend
+// can be read by the other backend (SQL → KV and KV → SQL).
+func runTestLastImportTimeCrossBackend(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, db sqldb.DB) {
+	ctx := newIntegrationTestContext(t)
+
+	group := "playlist.grafana.app"
+	resourceType := "playlists"
+
+	buildSingleBulkRequest := func(ns string) []*resourcepb.BulkRequest {
+		return []*resourcepb.BulkRequest{
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: ns, Group: group, Resource: resourceType, Name: "lit-playlist-1"},
+				Action: resourcepb.BulkRequest_ADDED,
+				Value:  createPlaylistJSON(PlaylistResourceOptions{Name: "lit-playlist-1", Namespace: ns, UID: "lit-uid-1", Generation: 1, Title: "LIT Playlist"}),
+			},
+		}
+	}
+
+	// Phase 1: Write via SQL backend, read from both
+	sqlNS := nsPrefix + "-lit-sql"
+	sqlBulk, ok := sqlBackend.(resource.BulkProcessingBackend)
+	require.True(t, ok, "SQL backend must support BulkProcessingBackend")
+	sqlResp := sqlBulk.ProcessBulk(ctx, resource.BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{Namespace: sqlNS, Group: group, Resource: resourceType}},
+	}, toBulkIterator(buildSingleBulkRequest(sqlNS)))
+	require.Nil(t, sqlResp.Error)
+
+	// SQL backend should be able to read its own last import time
+	sqlTimes := collectLastImportedTimes(t, sqlBackend, ctx)
+	sqlNSR := resource.NamespacedResource{Namespace: sqlNS, Group: group, Resource: resourceType}
+	require.Contains(t, sqlTimes, sqlNSR, "SQL backend should return last import time for SQL-written namespace")
+	require.False(t, sqlTimes[sqlNSR].IsZero(), "SQL backend last import time should not be zero")
+
+	// KV backend should also be able to read the SQL-written last import time
+	kvTimes := collectLastImportedTimes(t, kvBackend, ctx)
+	require.Contains(t, kvTimes, sqlNSR, "KV backend should return last import time written by SQL backend")
+	require.False(t, kvTimes[sqlNSR].IsZero(), "KV backend last import time for SQL-written namespace should not be zero")
+
+	// Phase 2: Write via KV backend, read from both
+	kvNS := nsPrefix + "-lit-kv"
+	kvBulk, ok := kvBackend.(resource.BulkProcessingBackend)
+	require.True(t, ok, "KV backend must support BulkProcessingBackend")
+	kvResp := kvBulk.ProcessBulk(ctx, resource.BulkSettings{
+		Collection: []*resourcepb.ResourceKey{{Namespace: kvNS, Group: group, Resource: resourceType}},
+	}, toBulkIterator(buildSingleBulkRequest(kvNS)))
+	require.Nil(t, kvResp.Error)
+
+	// KV backend should be able to read its own last import time
+	kvNSR := resource.NamespacedResource{Namespace: kvNS, Group: group, Resource: resourceType}
+	kvTimes2 := collectLastImportedTimes(t, kvBackend, ctx)
+	require.Contains(t, kvTimes2, kvNSR, "KV backend should return last import time for KV-written namespace")
+	require.False(t, kvTimes2[kvNSR].IsZero(), "KV backend last import time should not be zero")
+
+	// SQL backend should also be able to read the KV-written last import time
+	sqlTimes2 := collectLastImportedTimes(t, sqlBackend, ctx)
+	require.Contains(t, sqlTimes2, kvNSR, "SQL backend should return last import time written by KV backend")
+	require.False(t, sqlTimes2[kvNSR].IsZero(), "SQL backend last import time for KV-written namespace should not be zero")
 }
 
 type optimisticResourceState struct {
@@ -1788,6 +2036,223 @@ func verifySearchServerResults(t *testing.T, searchServer resource.ResourceServe
 		queryDesc = "(all)"
 	}
 	t.Logf("Search OK: query=%s, hits=%d", queryDesc, expectedHits)
+}
+
+// runTestClusterScopedResources tests cluster-scoped resources (empty namespace)
+// with both SQL and KV backends to verify cross-backend compatibility.
+func runTestClusterScopedResources(t *testing.T, sqlBackend, kvBackend resource.StorageBackend, nsPrefix string, dbConn sqldb.DB) {
+	ctx := newIntegrationTestContext(t)
+
+	sqlServer := createStorageServer(t, sqlBackend)
+	kvServer := createStorageServer(t, kvBackend)
+
+	clusterKey := func(name string) *resourcepb.ResourceKey {
+		return &resourcepb.ResourceKey{
+			Group:     "playlist.grafana.app",
+			Resource:  "playlists",
+			Namespace: "",
+			Name:      name,
+		}
+	}
+
+	clusterResourceJSON := func(name, uid, title string) []byte {
+		return fmt.Appendf(nil, `{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {
+				"name": "%s",
+				"namespace": "",
+				"uid": "%s",
+				"generation": 1
+			},
+			"spec": {
+				"title": "%s"
+			}
+		}`, name, uid, title)
+	}
+
+	listClusterResources := func(t *testing.T, server resource.ResourceServer) *resourcepb.ListResponse {
+		t.Helper()
+		resp, err := server.List(ctx, &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{
+					Group:     "playlist.grafana.app",
+					Resource:  "playlists",
+					Namespace: "",
+				},
+			},
+		})
+		require.NoError(t, err)
+		return resp
+	}
+
+	t.Run("Write to SQL backend, read from both", func(t *testing.T) {
+		name := nsPrefix + "-cluster-sql-1"
+		created, err := sqlServer.Create(ctx, &resourcepb.CreateRequest{
+			Key:   clusterKey(name),
+			Value: clusterResourceJSON(name, "uid-sql-1", "SQL Cluster Resource"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error, "SQL Create error: %v", created.Error)
+		require.Greater(t, created.ResourceVersion, int64(0))
+
+		// Read from SQL backend
+		sqlResp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, sqlResp.Error, "SQL Read error: %v", sqlResp.Error)
+		t.Logf("SQL backend: read cluster-scoped resource OK, rv=%d", sqlResp.ResourceVersion)
+
+		// Read from KV backend
+		kvResp, err := kvServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, kvResp.Error, "KV Read error: %v", kvResp.Error)
+		t.Logf("KV backend: read cluster-scoped resource OK, rv=%d", kvResp.ResourceVersion)
+
+		require.JSONEq(t, string(sqlResp.Value), string(kvResp.Value), "payload mismatch between backends")
+	})
+
+	t.Run("Write to KV backend, read from both", func(t *testing.T) {
+		name := nsPrefix + "-cluster-kv-1"
+		created, err := kvServer.Create(ctx, &resourcepb.CreateRequest{
+			Key:   clusterKey(name),
+			Value: clusterResourceJSON(name, "uid-kv-1", "KV Cluster Resource"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error, "KV Create error: %v", created.Error)
+		require.Greater(t, created.ResourceVersion, int64(0))
+
+		// Read from KV backend
+		kvResp, err := kvServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, kvResp.Error, "KV Read error: %v", kvResp.Error)
+		t.Logf("KV backend: read cluster-scoped resource OK, rv=%d", kvResp.ResourceVersion)
+
+		// Read from SQL backend
+		sqlResp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, sqlResp.Error, "SQL Read error: %v", sqlResp.Error)
+		t.Logf("SQL backend: read cluster-scoped resource OK, rv=%d", sqlResp.ResourceVersion)
+
+		require.JSONEq(t, string(kvResp.Value), string(sqlResp.Value), "payload mismatch between backends")
+	})
+
+	t.Run("List from both backends", func(t *testing.T) {
+		sqlList := listClusterResources(t, sqlServer)
+		require.Nil(t, sqlList.Error, "SQL List error: %v", sqlList.Error)
+		kvList := listClusterResources(t, kvServer)
+		require.Nil(t, kvList.Error, "KV List error: %v", kvList.Error)
+		require.Equal(t, len(sqlList.Items), len(kvList.Items), "list count mismatch between backends")
+
+		// Verify items match
+		sqlItems := make(map[string][]byte)
+		for _, item := range sqlList.Items {
+			name := extractResourceNameFromJSON(t, item.Value)
+			sqlItems[name] = item.Value
+		}
+		for _, item := range kvList.Items {
+			name := extractResourceNameFromJSON(t, item.Value)
+			sqlVal, exists := sqlItems[name]
+			require.True(t, exists, "item %s from KV not found in SQL list", name)
+			require.JSONEq(t, string(sqlVal), string(item.Value), "payload mismatch for %s", name)
+		}
+	})
+
+	t.Run("Update and delete cluster-scoped resources", func(t *testing.T) {
+		name := nsPrefix + "-cluster-sql-1"
+
+		resp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+
+		// Update via SQL backend
+		updated, err := sqlServer.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             clusterKey(name),
+			Value:           clusterResourceJSON(name, "uid-sql-1", "Updated SQL Cluster Resource"),
+			ResourceVersion: resp.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error, "SQL Update error: %v", updated.Error)
+
+		// Read updated resource from KV backend
+		kvResp, err := kvServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.Nil(t, kvResp.Error, "KV Read after update error: %v", kvResp.Error)
+		require.Contains(t, string(kvResp.Value), "Updated SQL Cluster Resource")
+
+		// Delete via KV backend
+		deleted, err := kvServer.Delete(ctx, &resourcepb.DeleteRequest{
+			Key:             clusterKey(name),
+			ResourceVersion: kvResp.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, deleted.Error, "KV Delete error: %v", deleted.Error)
+
+		// Verify deleted from SQL backend
+		sqlResp, err := sqlServer.Read(ctx, &resourcepb.ReadRequest{Key: clusterKey(name)})
+		require.NoError(t, err)
+		require.NotNil(t, sqlResp.Error, "resource should be deleted")
+		require.Equal(t, int32(404), sqlResp.Error.Code)
+	})
+
+	t.Run("List history for cluster-scoped resources", func(t *testing.T) {
+		name := nsPrefix + "-cluster-history-1"
+
+		// Create resource
+		created, err := sqlServer.Create(ctx, &resourcepb.CreateRequest{
+			Key:   clusterKey(name),
+			Value: clusterResourceJSON(name, "uid-history-1", "History V1"),
+		})
+		require.NoError(t, err)
+		require.Nil(t, created.Error, "Create error: %v", created.Error)
+
+		// Update twice to build history
+		updated1, err := sqlServer.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             clusterKey(name),
+			Value:           clusterResourceJSON(name, "uid-history-1", "History V2"),
+			ResourceVersion: created.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, updated1.Error, "Update 1 error: %v", updated1.Error)
+
+		updated2, err := sqlServer.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             clusterKey(name),
+			Value:           clusterResourceJSON(name, "uid-history-1", "History V3"),
+			ResourceVersion: updated1.ResourceVersion,
+		})
+		require.NoError(t, err)
+		require.Nil(t, updated2.Error, "Update 2 error: %v", updated2.Error)
+
+		historyReq := &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{
+				Key: clusterKey(name),
+			},
+			Source: resourcepb.ListRequest_HISTORY,
+			Limit:  10,
+		}
+
+		// List history from SQL backend
+		sqlHistory, err := sqlServer.List(ctx, historyReq)
+		require.NoError(t, err)
+		require.Nil(t, sqlHistory.Error, "SQL ListHistory error: %v", sqlHistory.Error)
+		require.Len(t, sqlHistory.Items, 3, "SQL backend should have 3 history entries")
+
+		// List history from KV backend
+		kvHistory, err := kvServer.List(ctx, historyReq)
+		require.NoError(t, err)
+		require.Nil(t, kvHistory.Error, "KV ListHistory error: %v", kvHistory.Error)
+		require.Len(t, kvHistory.Items, 3, "KV backend should have 3 history entries")
+
+		// Verify both backends return the same history entries (order may differ
+		// between backends, so compare as unordered sets).
+		sqlValues := make([]string, len(sqlHistory.Items))
+		for i, item := range sqlHistory.Items {
+			sqlValues[i] = string(item.Value)
+		}
+		kvValues := make([]string, len(kvHistory.Items))
+		for i, item := range kvHistory.Items {
+			kvValues[i] = string(item.Value)
+		}
+		require.ElementsMatch(t, sqlValues, kvValues, "history entries should match between backends")
+	})
 }
 
 // SearchServerFactory is a function that creates a ResourceServer with search enabled

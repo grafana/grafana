@@ -130,6 +130,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       transformOrigin: 'left top',
       top: '6px',
       left: '6px',
+      '&& *': { scrollbarWidth: 'none' },
     }),
   };
 };

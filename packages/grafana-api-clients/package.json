@@ -31,16 +31,16 @@
       "import": "./dist/esm/clients/rtkq/index.mjs",
       "require": "./dist/cjs/clients/rtkq/index.cjs"
     },
-    "./rtkq/legacy": {
+    "./internal/rtkq/legacy": {
       "@grafana-app/source": "./src/clients/rtkq/legacy/index.ts"
     },
-    "./rtkq/legacy/migrate-to-cloud": {
+    "./internal/rtkq/legacy/migrate-to-cloud": {
       "@grafana-app/source": "./src/clients/rtkq/migrate-to-cloud/index.ts"
     },
-    "./rtkq/legacy/preferences": {
+    "./internal/rtkq/legacy/preferences": {
       "@grafana-app/source": "./src/clients/rtkq/preferences/user/index.ts"
     },
-    "./rtkq/legacy/user": {
+    "./internal/rtkq/legacy/user": {
       "@grafana-app/source": "./src/clients/rtkq/user/index.ts"
     },
     "./rtkq/advisor/v0alpha1": {
@@ -138,6 +138,12 @@
       "types": "./dist/types/clients/rtkq/quotas/v0alpha1/index.d.ts",
       "import": "./dist/esm/clients/rtkq/quotas/v0alpha1/index.mjs",
       "require": "./dist/cjs/clients/rtkq/quotas/v0alpha1/index.cjs"
+    },
+    "./rtkq/notifications.alerting/v1beta1": {
+      "@grafana-app/source": "./src/clients/rtkq/notifications.alerting/v1beta1/index.ts",
+      "types": "./dist/types/clients/rtkq/notifications.alerting/v1beta1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/notifications.alerting/v1beta1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/notifications.alerting/v1beta1/index.cjs"
     }
   },
   "publishConfig": {

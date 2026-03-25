@@ -1,20 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { autoUpdate, offset, useFloating, useHover, useInteractions, safePolygon } from '@floating-ui/react';
-import { cloneElement, useCallback, useState } from 'react';
+import { autoUpdate, offset, safePolygon, useFloating, useHover, useInteractions } from '@floating-ui/react';
+import { cloneElement, useCallback, useEffect, useState } from 'react';
 
-import { VariableHide, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
-  sceneGraph,
-  useSceneObjectState,
-  SceneVariable,
-  SceneVariableState,
-  SceneVariableSet,
   ControlsLabel,
   ControlsLayout,
+  sceneGraph,
   sceneUtils,
+  SceneVariable,
+  SceneVariableSet,
+  SceneVariableState,
+  SceneVariableValueChangedEvent,
+  useSceneObjectState,
 } from '@grafana/scenes';
 import { IconButton, Portal, useElementSelection, useStyles2 } from '@grafana/ui';
 
@@ -27,6 +28,17 @@ export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+
+  // Subscribe to variable value changes to track interactions
+  useEffect(() => {
+    const subscription = dashboard.subscribeToEvent(SceneVariableValueChangedEvent, () => {
+      reportInteraction('grafana_dashboards_variable_changed');
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [dashboard]);
 
   const visibleVariables = variables.filter(
     (v: SceneVariable) =>

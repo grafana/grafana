@@ -68,15 +68,15 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 				delete(previous, k)
 			}
 			if val.Remove {
+				delete(secure, k)
 				if before.Name == "" {
 					continue // no-op
 				}
-				delete(secure, k)
 				v.hasChanged = true
 				continue
 			}
 			if !val.Create.IsZero() {
-				n, err := store.CreateInline(ctx, v.ref, val.Create)
+				n, err := store.CreateInline(ctx, v.ref, val.Create, val.Description)
 				if err != nil {
 					return err
 				}
