@@ -223,6 +223,7 @@ type HTTPServer struct {
 	tlsCerts                        TLSCerts
 	htmlHandlerRequestsDuration     *prometheus.HistogramVec
 	dsConfigHandlerRequestsDuration *prometheus.HistogramVec
+	dsEndpointRedirects             *prometheus.CounterVec
 	dsConnectionClient              datasource.ConnectionClient
 	publicDashboardsService         publicdashboards.Service
 }
@@ -387,11 +388,17 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 			Name:      "ds_config_handler_requests_duration_seconds",
 			Help:      "Duration of requests handled by datasource configuration handlers",
 		}, []string{"handler"}),
+		dsEndpointRedirects: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "grafana",
+			Name:      "ds_endpoint_redirects_total",
+			Help:      "Total number of datasource endpoint redirects by route (local/remote) and plugin type",
+		}, []string{"route", "plugin_type", "target"}),
 		dsConnectionClient: datasource.NewLegacyConnectionClient(dataSourcesService),
 	}
 
 	promRegister.MustRegister(hs.htmlHandlerRequestsDuration)
 	promRegister.MustRegister(hs.dsConfigHandlerRequestsDuration)
+	promRegister.MustRegister(hs.dsEndpointRedirects)
 
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

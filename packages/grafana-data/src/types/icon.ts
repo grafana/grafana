@@ -45,6 +45,7 @@ export const availableIconsIndex = {
   ai: true,
   backward: true,
   bars: true,
+  'bars-clock': true,
   bell: true,
   'bell-slash': true,
   bolt: true,

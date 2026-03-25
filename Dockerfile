@@ -184,7 +184,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
   if grep -i -q alpine /etc/issue; then \
   addgroup -S -g $GF_GID grafana; \
   else \
-  addgroup --system --gid $GF_GID grafana; \
+  groupadd --system --gid $GF_GID grafana; \
   fi; \
   fi && \
   GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
@@ -192,7 +192,7 @@ RUN if [ ! $(getent group "$GF_GID") ]; then \
   if grep -i -q alpine /etc/issue; then \
   adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana; \
   else \
-  adduser --system --uid $GF_UID --ingroup "$GF_GID_NAME" grafana; \
+  useradd --system --uid $GF_UID --gid "$GF_GID_NAME" --no-create-home grafana; \
   fi && \
   mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
   "$GF_PATHS_PROVISIONING/dashboards" \

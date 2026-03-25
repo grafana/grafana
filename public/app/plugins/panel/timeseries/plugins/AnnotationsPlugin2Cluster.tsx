@@ -24,7 +24,7 @@ import { ANNOTATION_LANE_SIZE } from './utils';
 interface AnnotationsPlugin2ClusterProps {
   config: UPlotConfigBuilder;
   options: VizAnnotations | undefined;
-  annotations: DataFrame[];
+  annotations?: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
   setNewRange: (newRange: TimeRange2 | null) => void;

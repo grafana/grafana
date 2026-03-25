@@ -29,6 +29,7 @@ import {
   LoadingState,
   rangeUtil,
   transformDataFrame,
+  store,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
@@ -631,7 +632,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
               showControls={Boolean(showControls)}
               showFieldSelector={showFieldSelector}
               showLogAttributes={showLogAttributes}
-              showLevel={showLevel}
+              showLevel={storageKey ? store.getBool(`${storageKey}.showLevel`, showLevel ?? true) : showLevel}
               showTime={showTime}
               showUniqueLabels={showLabels}
               sortOrder={sortOrder}

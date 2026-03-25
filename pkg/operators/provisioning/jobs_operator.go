@@ -18,10 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
+	deleteresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/deleteresources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/fixfoldermetadata"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
+	releaseresourcespkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/releaseresources"
 	jobsync "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
@@ -335,6 +337,14 @@ func setupWorkers(
 	// Fix Metadata
 	fixMetadataWorker := fixfoldermetadata.NewWorker()
 	workers = append(workers, fixMetadataWorker)
+
+	// Release Resources (orphan cleanup — removes ownership annotations)
+	releaseResourcesWorker := releaseresourcespkg.NewWorker(resourceLister, clients, 10)
+	workers = append(workers, releaseResourcesWorker)
+
+	// Delete Resources (orphan cleanup — deletes managed resources)
+	deleteResourcesWorker := deleteresourcespkg.NewWorker(resourceLister, clients, 10)
+	workers = append(workers, deleteResourcesWorker)
 
 	// PullRequest
 	urlProvider, err := controllerCfg.URLProvider()
