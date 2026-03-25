@@ -15,7 +15,6 @@ import { useTheme2 } from '@grafana/ui';
 import { replaceVariables } from '@grafana-plugins/loki/querybuilder/parsingUtils';
 
 import { extractLogsFieldsTransform } from '../transforms/extractLogsFieldsTransform';
-import { rawDataFrameToLogsFrame } from '../transforms/logs';
 
 interface Props {
   rawTableFrame: DataFrame | null;
@@ -53,7 +52,7 @@ export function useExtractFields({ rawTableFrame, fieldConfig, timeZone }: Props
           dataLinkPostProcessor,
         });
         if (isMounted()) {
-          setExtractedFrame(rawDataFrameToLogsFrame(extractedFrames[0]));
+          setExtractedFrame(extractedFrames[0]);
         }
       })
       .catch((err) => {
