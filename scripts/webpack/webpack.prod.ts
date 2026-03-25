@@ -14,6 +14,18 @@ import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
 import sassRule from './sass.rule.ts';
 import common, { type Env } from './webpack.common.ts';
 
+interface EntrypointAssets {
+  assets: { js?: string[]; css?: string[] };
+}
+
+function isEntrypointsMap(value: unknown): value is Record<string, EntrypointAssets> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isAssetEntry(value: unknown): value is { src: string } {
+  return typeof value === 'object' && value !== null && 'src' in value;
+}
+
 const envConfig = getEnvConfig();
 
 export default (env: Env = {}) =>
@@ -73,15 +85,25 @@ export default (env: Env = {}) =>
         // This transform filters down the assets to only include the ones that are part of the entrypoints
         // this is all that the backend requires.
         transform(assets, manifest) {
-          const entrypointAssets = Object.values(assets[manifest.options.entrypointsKey]).flatMap((entry) => [
-            ...(entry.assets.js || []),
-            ...(entry.assets.css || []),
-          ]);
-          const filteredAssets = Object.entries(assets).filter(([assetFileName]) =>
-            entrypointAssets.includes(assets[assetFileName].src)
-          );
+          const entrypointsKey = manifest.options.entrypointsKey;
+          if (typeof entrypointsKey !== 'string') {
+            return assets;
+          }
+
+          const entrypointsValue = assets[entrypointsKey];
+          const entrypointAssets = isEntrypointsMap(entrypointsValue)
+            ? Object.values(entrypointsValue).flatMap((entry) => [
+                ...(entry.assets.js || []),
+                ...(entry.assets.css || []),
+              ])
+            : [];
+
+          const filteredAssets = Object.entries(assets).filter(([assetFileName]) => {
+            const asset = assets[assetFileName];
+            return isAssetEntry(asset) && entrypointAssets.includes(asset.src);
+          });
           const result = Object.fromEntries(filteredAssets);
-          result[manifest.options.entrypointsKey] = assets[manifest.options.entrypointsKey];
+          result[entrypointsKey] = entrypointsValue;
 
           return result;
         },
