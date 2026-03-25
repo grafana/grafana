@@ -107,7 +107,7 @@ export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
 
             <Sidebar.Button
               icon="cog"
-              onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}
+              onClick={() => editPane.toggleDashboardOptionsPane()}
               title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
               tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}

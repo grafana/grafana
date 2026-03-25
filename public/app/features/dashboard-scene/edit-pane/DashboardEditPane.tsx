@@ -265,7 +265,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
         }
       } else {
         if (this.state.selection?.getFirstObject() === obj) {
-          this.clearSelection(true);
+          this.clearSelection();
           return;
         }
       }
@@ -275,6 +275,17 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, !!multi);
 
     this.updateSelection(new ElementSelection(selection), selected);
+  }
+
+  public toggleDashboardOptionsPane() {
+    const dashboard = getDashboardSceneFor(this);
+
+    if (this.state.selection?.getFirstObject() === dashboard) {
+      this.clearSelection(true);
+      return;
+    }
+
+    this.selectObject(dashboard, dashboard.state.key!, { force: true });
   }
 
   private removeMultiSelectedObject(id: string) {
