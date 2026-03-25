@@ -219,6 +219,11 @@ export interface FeatureToggles {
   */
   reportingCsvEncodingOptions?: boolean;
   /**
+  * Enables configuration of PDF report settings
+  * @default false
+  */
+  reportingHeaderSettings?: boolean;
+  /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   * @default false
   */
@@ -690,7 +695,7 @@ export interface FeatureToggles {
   alertingAlertListPanelEnhancements?: boolean;
   /**
   * Enables the new Alerting navigation structure with improved menu grouping
-  * @default false
+  * @default true
   */
   alertingNavigationV2?: boolean;
   /**
@@ -1391,11 +1396,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable new gauge visualization
-  * @default true
-  */
-  newGauge?: boolean;
-  /**
   * Enable new visualization suggestions
   * @default false
   */
@@ -1725,4 +1725,19 @@ export interface FeatureToggles {
   * @default false
   */
   colorblindThemes?: boolean;
+  /**
+  * Enables fine-grained Y-axis tick options beyond the auto-ticks
+  * @default false
+  */
+  yAxisTickControl?: boolean;
+  /**
+  * Enables the logs tableNG panel to replace existing tableRT
+  * @default false
+  */
+  logsTablePanelNG?: boolean;
+  /**
+  * Enables plugins setting from new apis
+  * @default false
+  */
+  useMTPluginSettings?: boolean;
 }

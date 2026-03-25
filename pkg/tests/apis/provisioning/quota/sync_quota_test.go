@@ -15,15 +15,11 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	t.Run("out of limit repo works fine with deletions", func(t *testing.T) {
-		helper := common.RunGrafana(t)
+		helper := sharedHelper(t)
 
 		const repo = "quota-deletion-test-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -67,9 +63,8 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	})
 
 	t.Run("within limit repo syncs successfully and allows adding more resources", func(t *testing.T) {
-		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 5
-		})
+		helper := sharedHelper(t)
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 5})
 
 		const repo = "quota-within-limit-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -114,7 +109,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	})
 
 	t.Run("on the limit repo blocks new resource creation on subsequent sync", func(t *testing.T) {
-		helper := common.RunGrafana(t)
+		helper := sharedHelper(t)
 
 		const repo = "quota-blocks-creation-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -175,10 +170,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonQuotaExceeded)
 	})
 	t.Run("full sync that exceeds quota creates some resources and skips others with warnings", func(t *testing.T) {
-		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			// Allow 3 total resources: 1 folder + 2 dashboards
-			opts.ProvisioningMaxResourcesPerRepository = 3
-		})
+		// Allow 3 total resources: 1 folder + 2 dashboards
+		helper := sharedHelper(t)
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 3})
 
 		const repo = "quota-partial-sync-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -261,10 +255,9 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	})
 
 	t.Run("full sync with nested folders counts folders toward quota and skips resources", func(t *testing.T) {
-		helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-			// Allow 6 total resources: 1 root folder + 2 nested folders + 2 dashboards + 1 new folder = 6
-			opts.ProvisioningMaxResourcesPerRepository = 6
-		})
+		// Allow 6 total resources: 1 root folder + 2 nested folders + 2 dashboards + 1 new folder = 6
+		helper := sharedHelper(t)
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 6})
 
 		const repo = "quota-nested-folders-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -382,7 +375,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	})
 
 	t.Run("out of limit repo allows delete-only sync", func(t *testing.T) {
-		helper := common.RunGrafana(t)
+		helper := sharedHelper(t)
 
 		const repo = "quota-net-change-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)
@@ -430,7 +423,7 @@ func TestIntegrationProvisioning_SyncQuotaHandling(t *testing.T) {
 	})
 
 	t.Run("out of limit repo allows delete-only sync when result is still over quota", func(t *testing.T) {
-		helper := common.RunGrafana(t)
+		helper := sharedHelper(t)
 
 		const repo = "quota-net-change-repo"
 		repoPath := filepath.Join(helper.ProvisioningPath, repo)

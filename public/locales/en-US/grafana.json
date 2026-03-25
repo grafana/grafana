@@ -385,6 +385,7 @@
         "group-by": "Grouped by",
         "group-title": "Notification configuration",
         "mute-timings": "Mute timings",
+        "notification-policy": "Notification policy",
         "timing-options": "Timings"
       },
       "pending-period": "Pending period",
@@ -497,6 +498,15 @@
     },
     "alert-rule": {
       "term": "Alert rule"
+    },
+    "alert-rule-drawer": {
+      "error-title": "Failed to create alert rule",
+      "error-unexpected": "Received an unexpected response. Please try again.",
+      "error-unknown": "An unexpected error occurred.",
+      "success-message": "Your alert rule has been created successfully.",
+      "success-title": "Alert rule created",
+      "validation-error-message": "Please correct the errors in the form and try again.",
+      "validation-error-title": "Validation error"
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -880,6 +890,8 @@
       "export-all": "Export all",
       "learn-more": "Learn more",
       "loading": "Loading...",
+      "optional": "(optional)",
+      "refresh": "Refresh",
       "search-by-matchers": "Search by matchers",
       "titles": {
         "notification-templates": "Notification Templates"
@@ -1690,7 +1702,7 @@
         "skipped": "Skipped",
         "source": "Source",
         "start": "Start import",
-        "subtitle": "Review each section and once you are happy, start the migration.",
+        "subtitle": "Review each section and once you are happy, start the import.",
         "validation-error": "Validation failed.",
         "validation-ok": "No conflicts found. Ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts.",
@@ -1710,13 +1722,13 @@
       },
       "step1": {
         "datasource": "Alertmanager data source",
-        "extra-config-overwrite-desc": "An imported configuration named \"{{identifier}}\" already exists. Importing will replace it with the new configuration.",
-        "extra-config-overwrite-title": "Existing configuration will be replaced",
         "heading": "Import Notification Resources",
         "no-datasources": "No Alertmanager data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
-        "policy-tree-desc": "Name for the imported notification policy tree. Alerts with the label <2>__grafana_managed_route__</2> matching this name will be routed through this policy tree.",
+        "policy-tree-desc": "When you import, Grafana creates a separate notification policy tree. Enter a name you will recognize.",
+        "policy-tree-help": "When you import this Alertmanager configuration, Grafana will create a separate notification policy tree for it. The name you enter here will identify that tree in the UI and is what you select when you import alert rules that should use this routing. Use a label you will recognize — for example data source, team, cluster, or environment (such as prometheus-prod or platform-team).",
+        "policy-tree-help-title": "About policy tree names",
         "policy-tree-name": "Policy tree name",
         "policy-tree-placeholder": "prometheus-prod",
         "policy-tree-required": "Policy tree name is required",
@@ -1759,7 +1771,7 @@
         "policy-desc": "Choose how imported alerts should be routed to contact points.",
         "policy-title": "Notification Routing",
         "policy-tree": "Policy tree",
-        "policy-tree-desc": "Select a notification policy tree to route alerts",
+        "policy-tree-desc": "Select a notification policy tree to route the imported alerts",
         "select-group": "All groups",
         "select-namespace": "All namespaces",
         "select-policy": "Select a policy tree",
@@ -1849,7 +1861,7 @@
       },
       "history-error": "Failed to load state history",
       "history-error-desc": "Unable to fetch state transition history for this instance.",
-      "instance-timeline": "Instance Timeline",
+      "instance-history-heading": "History",
       "no-history": "No recent state changes",
       "notifications-error": "Could not load notification history",
       "notifications-error-desc": "The timeline will only show state changes. Check that notification history is enabled and try again.",
@@ -1861,6 +1873,8 @@
       "timeline-all-failed": "failed",
       "timeline-all-failed-plural": "all failed",
       "timeline-delivered": "Delivered",
+      "timeline-dot-all-failed": "All notifications failed",
+      "timeline-dot-some-failed": "Some notifications failed",
       "timeline-empty": "No events found for this time range",
       "timeline-failed": "Failed",
       "timeline-filter-all": "All",
@@ -1868,12 +1882,10 @@
       "timeline-filter-notifications": "Notifications",
       "timeline-filter-states": "State changes",
       "timeline-loading": "Loading timeline...",
-      "timeline-mixed-outcome": "{{successCount}} delivered, {{failedCount}} failed",
-      "timeline-n-notifications_one": "{{count}} notifications",
-      "timeline-n-notifications_other": "{{count}} notifications",
-      "timeline-n-receivers_one": "{{count}} receivers",
-      "timeline-n-receivers_other": "{{count}} receivers",
-      "timeline-one-notification": "1 notification",
+      "timeline-n-uniqueReceivers_one": "{{count}} uniqueReceivers",
+      "timeline-n-uniqueReceivers_other": "{{count}} uniqueReceivers",
+      "timeline-notification-label": "notification",
+      "timeline-partial-failure": "{{successCount}} delivered, {{failedCount}} failed",
       "timeline-status-firing": "Firing",
       "timeline-status-resolved": "Resolved",
       "timeline-toggle-notifications": "Toggle notification details",
@@ -2021,6 +2033,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "Contact point",
+          "notification-policy": "Notification policy",
           "select-contact-point": "Select contact point",
           "use-notification-policy": "Use notification policy"
         }
@@ -3276,12 +3290,57 @@
       "title-the-selected-alertmanager-has-no-configuration": "The selected Alertmanager has no configuration"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "Select reducer function",
+      "aria-label-threshold": "Threshold value",
+      "aria-label-threshold-from": "Threshold from value",
+      "aria-label-threshold-to": "Threshold to value",
       "label-of-query": "OF QUERY",
       "label-when": "WHEN",
       "label-when-query": "WHEN QUERY"
     },
     "simpleCondition": {
       "alertCondition": "Alert condition"
+    },
+    "simplified": {
+      "condition": {
+        "title": "Condition"
+      },
+      "continue-in-alerting": "Continue in Alerting",
+      "create": "Create",
+      "evaluation": {
+        "immediate-warning": "Immediate firing might lead to unnecessary alerts being sent for temporary issues"
+      },
+      "notification": {
+        "contact-point-selected": "Notifications for firing alerts are routed to a selected contact point.",
+        "description": {
+          "aria-label": "Description",
+          "label": "Description (optional)",
+          "placeholder": "Enter a description of what the alert rule does…"
+        },
+        "manual-routing": {
+          "aria": "Toggle manual routing"
+        },
+        "policy-selected": "Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.",
+        "recipient": {
+          "label": "Recipient"
+        },
+        "refresh-error": "Failed to refresh contact points",
+        "runbook-url": {
+          "aria-label": "Runbook URL",
+          "invalid-format": "Invalid URL format. Please enter a valid URL.",
+          "invalid-protocol": "Invalid URL protocol. Please use http or https.",
+          "label": "Runbook URL (optional)",
+          "placeholder": "Enter the webpage where you keep your runbook for the alert…"
+        },
+        "select-contact-point": "Select a contact point...",
+        "summary": {
+          "aria-label": "Summary",
+          "label": "Summary (optional)",
+          "placeholder": "Enter a summary of what happened and why…"
+        },
+        "title": "Notification"
+      },
+      "rule-definition": "Rule Definition"
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Data source-managed",
@@ -3482,20 +3541,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Alert instances",
-      "all-labels": "All labels",
-      "all-labels-drawer-title": "All labels",
+      "collapse": "Collapse",
+      "collapse-all": "Collapse all",
+      "collapse-sidebar": "Collapse sidebar",
       "compact-firing": "firing",
-      "compact-instances": "instances",
       "compact-pending": "pending",
       "compact-rules": "rules",
       "error-loading-rule": "Error loading rule",
-      "hidden-label-count_one": "and {{ count }} more",
-      "hidden-label-count_other": "and {{ count }} more",
-      "high-activity-labels": "High Activity Labels",
-      "instance-details-drawer": {
-        "instance-details": "Instance details"
+      "expand": "Expand",
+      "expand-all": "Expand all",
+      "expand-sidebar": "Expand sidebar",
+      "filter-labels": "Filter labels",
+      "filter-labels-placeholder": "Filter",
+      "group-row": {
+        "no-label": "No {{label}}"
       },
+      "instance-details-drawer": {
+        "declare-incident": "Declare incident",
+        "instance-details": "Instance details",
+        "silence-button": "Silence"
+      },
+      "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
       "no-labels": "No labels",
@@ -3521,8 +3587,12 @@
       "show-all-labels_other": "Show all ({{ count }})",
       "show-all-values_one": "Show all ({{ count }})",
       "show-all-values_other": "Show all ({{ count }})",
-      "tooltip-more-values_one": "and {{ count }} more",
-      "tooltip-more-values_other": "and {{ count }} more"
+      "show-fewer-values": "Show fewer",
+      "showing-groups-count_one": "Showing {{count}} groups",
+      "showing-groups-count_other": "Showing {{count}} groups",
+      "state-filter-title": "State",
+      "state-firing": "Firing",
+      "state-pending": "Pending"
     },
     "type-selector-button": {
       "add-expression": "Add expression"
@@ -4189,6 +4259,9 @@
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
+    "bulk-actions": {
+      "error-generic": "Unexpected error"
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
@@ -4291,6 +4364,7 @@
       "dashboards": "Dashboards",
       "panels": "Panels"
     },
+    "my-team-folders": "My team folders",
     "name-cell": {
       "no-items": "No items"
     },
@@ -6020,8 +6094,8 @@
       "name": "Rows",
       "new-row-title": "New row",
       "row": {
-        "collapse": "Collapse row",
-        "expand": "Expand row",
+        "collapse": "Collapse row {{title}}",
+        "expand": "Expand row {{title}}",
         "new": "New row",
         "repeat": {
           "learn-more": "Learn more",
@@ -6562,11 +6636,16 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Ad-hoc options",
       "alert-not-supported": "This data source does not support ad hoc filters",
+      "description-enable-group-by": "Enables group by operator in the ad hoc filter combobox",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
       "label-use-static-key-dimensions": "Use static key dimensions",
-      "name-allow-custom-values": "Allow custom values"
+      "name-allow-custom-values": "Allow custom values",
+      "name-enable-group-by": "Enable group by"
+    },
+    "add-filters": {
+      "label": "Filter and Group by"
     },
     "add-link": {
       "inline-instance-name": "New link",
@@ -8925,9 +9004,6 @@
     "data-links-actions-menu": "Open data links and actions menu",
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
-    "description-neutral": "Leave empty to use Min as neutral point",
-    "description-show-threshold-labels": "Render the threshold values around the gauge bar",
-    "description-show-threshold-markers": "Renders the thresholds as an outer bar",
     "gauge-size-options": {
       "label-auto": "Auto",
       "label-manual": "Manual"
@@ -8935,11 +9011,7 @@
     "name-gauge-size": "Gauge size",
     "name-min-height": "Min height",
     "name-min-width": "Min width",
-    "name-neutral": "Neutral",
-    "name-show-threshold-labels": "Show threshold labels",
-    "name-show-threshold-markers": "Show threshold markers",
     "neutral": "Neutral {{value}}",
-    "placeholder-neutral": "auto",
     "presets": {
       "circle": "Circle",
       "circle_desc": "plain round, from thresholds",
@@ -8956,8 +9028,7 @@
     },
     "suggestions": {
       "arc": "Gauge",
-      "circular": "Circular gauge",
-      "no-thresholds": "Gauge - no thresholds"
+      "circular": "Circular gauge"
     },
     "threshold": "Threshold {{value}}"
   },
@@ -10211,6 +10282,9 @@
       "group": "Group",
       "group-tooltip": "Name of the stacking group"
     },
+    "stats-picker": {
+      "placeholder": "Choose"
+    },
     "table": {
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
@@ -10259,6 +10333,10 @@
       },
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "sort-by-column": "Sort by column {{column}}",
+      "sort-by-column-ascending": "Sort by column {{column}}, ascending",
+      "sort-by-column-descending": "Sort by column {{column}}, descending",
+      "sort-column": "Sort column",
       "sparkline": {
         "no-data": "no data"
       },
@@ -10356,11 +10434,14 @@
       "remove-button": "Remove {{children}}"
     },
     "viz-legend": {
+      "all-series-selected": "All series selected",
       "clear-filters": "Clear all",
+      "color-picker": "Edit color for {{seriesName}}",
       "faceted-by-labels": "By labels",
       "faceted-by-name": "By name",
       "faceted-deselect-all": "Deselect all",
       "faceted-select-all": "Select all",
+      "only-this-series-selected": "Only {{label}} selected",
       "pin-filter": "Pin to sidebar",
       "right-axis-indicator": "(right y-axis)",
       "series-visibility": "Series visibility",
@@ -10960,6 +11041,7 @@
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
       "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
+      "log-level": "Show log level",
       "placeholder-search-fields-by-name": "Search fields by name",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },
@@ -11368,7 +11450,8 @@
     "save-owner": "Save owner",
     "select-owner": "Select an owner",
     "selected-team-not-found": "Selected team not found, or you do not have the necessary permissions to view it.",
-    "team-not-found": "[Unknown team]"
+    "team-not-found": "[Unknown team]",
+    "unknown-error": "Unknown error"
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
@@ -11995,8 +12078,9 @@
       "upgrade-tooltip": "Upgrade to add more users"
     },
     "item": {
-      "add-bookmark": "Add {{itemName}} to Bookmarks",
-      "remove-bookmark": "Remove {{itemName}} from Bookmarks"
+      "bookmark": {
+        "tooltip": "Bookmark {{itemName}}"
+      }
     },
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
@@ -12258,6 +12342,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "Display name",
         "name": "Name"
       }
     },
@@ -12957,6 +13042,7 @@
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
+      "error-submit": "Failed to save connection",
       "grafana-repositories": "Repositories using this connection",
       "label-app-id": "GitHub App ID",
       "label-description": "Description",
@@ -13482,6 +13568,9 @@
       "go-to": "Go to",
       "make-sure": "Create a token with these permissions"
     },
+    "validation": {
+      "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again."
+    },
     "warning-title-default": "Warning",
     "watch-stream": {
       "error-description": "Real-time updates could not be started. Refresh the page to see the latest data.",
@@ -13857,6 +13946,7 @@
     "sidebar": {
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
+      "add-expression-disabled": "Expressions are not supported with the Dashboard data source",
       "add-query": "Add query",
       "add-query-or-expression": "Add query or expression",
       "add-saved-query": "Add saved query",

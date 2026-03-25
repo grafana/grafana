@@ -71,7 +71,6 @@ export const ReduceRowOptionsEditor = (props: {
       >
         <StatsPicker
           allowMultiple={false}
-          className="width-18"
           stats={[reduce?.reducer || ReducerID.sum]}
           onChange={onStatsChange}
           defaultStat={ReducerID.sum}

@@ -15,13 +15,10 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "delete-job-test-repo"
