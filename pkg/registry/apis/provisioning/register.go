@@ -167,7 +167,22 @@ type Options struct {
 	FolderMetadataEnabled               bool
 }
 
-// NewAPIBuilder creates an API builder.
+// NewAPIBuilder creates an API builder for the provisioning API.
+//
+// This function supports registering multiple API versions (e.g., v0alpha1, v1beta1) by creating
+// separate API builders for each version. The same types are served under different versions using
+// OpenAPI schema transformation.
+//
+// Key parameters for multi-version support:
+//   - gv: The GroupVersion (group + version) this builder serves. This determines which API version
+//     the builder registers (e.g., "provisioning.grafana.app/v0alpha1" or "provisioning.grafana.app/v1beta1").
+//     The version is used to generate the correct API paths (/apis/{group}/{version}/...) and to
+//     transform OpenAPI schemas to match the version.
+//   - isPreferredVersion: Indicates whether this version is the preferred/default version for the API group.
+//     Only ONE version should be marked as preferred. The preferred version is used by kubectl and other
+//     clients when they query the API without specifying a version. It also controls which version runs
+//     the controllers and background workers (only the preferred version starts these to avoid duplicates).
+//
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
@@ -1467,74 +1482,12 @@ spec:
 	schema.Items = countSpec
 	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
 
-	// For v1beta1, remove any v0alpha1 schemas and update refs
+	// For v1beta1, replace all v0alpha1 references with v1beta1 and remove old schemas
 	if b.gv.Version == "v1beta1" {
-		oldVersionStr := ".provisioning.v0alpha1."
-		newVersionStr := ".provisioning.v1beta1."
-
-		// Update all $ref references in schemas
-		for k, v := range oas.Components.Schemas {
-			if v != nil && !strings.Contains(k, oldVersionStr) {
-				updated := replaceSchemaVersion(*v, oldVersionStr, newVersionStr)
-				oas.Components.Schemas[k] = &updated
-			}
-		}
-
-		// Update all $ref references in paths (API endpoint definitions)
-		for _, pathItem := range oas.Paths.Paths {
-			if pathItem.Get != nil {
-				updateOperationRefs(pathItem.Get, oldVersionStr, newVersionStr)
-			}
-			if pathItem.Post != nil {
-				updateOperationRefs(pathItem.Post, oldVersionStr, newVersionStr)
-			}
-			if pathItem.Put != nil {
-				updateOperationRefs(pathItem.Put, oldVersionStr, newVersionStr)
-			}
-			if pathItem.Patch != nil {
-				updateOperationRefs(pathItem.Patch, oldVersionStr, newVersionStr)
-			}
-			if pathItem.Delete != nil {
-				updateOperationRefs(pathItem.Delete, oldVersionStr, newVersionStr)
-			}
-		}
-
-		// Delete v0alpha1 schema definitions
-		for k := range oas.Components.Schemas {
-			if strings.Contains(k, oldVersionStr) {
-				delete(oas.Components.Schemas, k)
-			}
-		}
+		ReplaceOpenAPISpecVersion(oas, "provisioning", "v0alpha1", "v1beta1")
 	}
 
 	return oas, nil
-}
-
-// updateOperationRefs updates all $ref references in an operation (request/response schemas)
-func updateOperationRefs(op *spec3.Operation, oldVersion, newVersion string) {
-	// Update request body refs
-	if op.RequestBody != nil && op.RequestBody.Content != nil {
-		for _, mediaType := range op.RequestBody.Content {
-			if mediaType.Schema != nil {
-				updated := replaceSchemaVersion(*mediaType.Schema, oldVersion, newVersion)
-				mediaType.Schema = &updated
-			}
-		}
-	}
-
-	// Update response refs
-	if op.Responses != nil && op.Responses.StatusCodeResponses != nil {
-		for _, response := range op.Responses.StatusCodeResponses {
-			if response.Content != nil {
-				for _, mediaType := range response.Content {
-					if mediaType.Schema != nil {
-						updated := replaceSchemaVersion(*mediaType.Schema, oldVersion, newVersion)
-						mediaType.Schema = &updated
-					}
-				}
-			}
-		}
-	}
 }
 
 // Helpers for fetching valid Repository objects

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 )
 
@@ -161,4 +162,98 @@ func replaceInStringSlice(slice []string, oldVersion, newVersion string) []strin
 		result[i] = strings.ReplaceAll(s, oldVersion, newVersion)
 	}
 	return result
+}
+
+// ReplaceOpenAPISpecVersion updates all version references in an OpenAPI v3 spec and removes old version schemas.
+// This updates:
+// - Schema definition keys in Components.Schemas
+// - $ref references in all component schemas
+// - $ref references in all API path operations (GET/POST/PUT/PATCH/DELETE)
+//
+// After updating all references, it deletes the old version schema definitions to prevent duplicates.
+//
+// Parameters:
+//   - oas: The OpenAPI v3 spec to transform
+//   - group: The API group name (e.g., "provisioning")
+//   - oldVersion: The old API version (e.g., "v0alpha1")
+//   - newVersion: The new API version (e.g., "v1beta1")
+func ReplaceOpenAPISpecVersion(oas *spec3.OpenAPI, group, oldVersion, newVersion string) {
+	if oas == nil {
+		return
+	}
+
+	// Build the full version strings to replace
+	oldVersionStr := "." + group + "." + oldVersion + "."
+	newVersionStr := "." + group + "." + newVersion + "."
+
+	// Update all $ref references in component schemas
+	if oas.Components != nil && oas.Components.Schemas != nil {
+		for k, v := range oas.Components.Schemas {
+			if v != nil && !strings.Contains(k, oldVersionStr) {
+				updated := replaceSchemaVersion(*v, oldVersionStr, newVersionStr)
+				oas.Components.Schemas[k] = &updated
+			}
+		}
+	}
+
+	// Update all $ref references in paths (API endpoint definitions)
+	if oas.Paths != nil && oas.Paths.Paths != nil {
+		for _, pathItem := range oas.Paths.Paths {
+			if pathItem.Get != nil {
+				updateOperationRefs(pathItem.Get, oldVersionStr, newVersionStr)
+			}
+			if pathItem.Post != nil {
+				updateOperationRefs(pathItem.Post, oldVersionStr, newVersionStr)
+			}
+			if pathItem.Put != nil {
+				updateOperationRefs(pathItem.Put, oldVersionStr, newVersionStr)
+			}
+			if pathItem.Patch != nil {
+				updateOperationRefs(pathItem.Patch, oldVersionStr, newVersionStr)
+			}
+			if pathItem.Delete != nil {
+				updateOperationRefs(pathItem.Delete, oldVersionStr, newVersionStr)
+			}
+		}
+	}
+
+	// Delete old version schema definitions after updating all references
+	if oas.Components != nil && oas.Components.Schemas != nil {
+		for k := range oas.Components.Schemas {
+			if strings.Contains(k, oldVersionStr) {
+				delete(oas.Components.Schemas, k)
+			}
+		}
+	}
+}
+
+// updateOperationRefs updates all $ref references in an operation (request/response schemas)
+func updateOperationRefs(op *spec3.Operation, oldVersion, newVersion string) {
+	if op == nil {
+		return
+	}
+
+	// Update request body refs
+	if op.RequestBody != nil && op.RequestBody.Content != nil {
+		for _, mediaType := range op.RequestBody.Content {
+			if mediaType.Schema != nil {
+				updated := replaceSchemaVersion(*mediaType.Schema, oldVersion, newVersion)
+				mediaType.Schema = &updated
+			}
+		}
+	}
+
+	// Update response refs
+	if op.Responses != nil && op.Responses.StatusCodeResponses != nil {
+		for _, response := range op.Responses.StatusCodeResponses {
+			if response.Content != nil {
+				for _, mediaType := range response.Content {
+					if mediaType.Schema != nil {
+						updated := replaceSchemaVersion(*mediaType.Schema, oldVersion, newVersion)
+						mediaType.Schema = &updated
+					}
+				}
+			}
+		}
+	}
 }
