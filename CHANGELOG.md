@@ -15,6 +15,12 @@
 - **IAM:** Handle NULL team_member.external column to fix dashboard loading [#120179](https://github.com/grafana/grafana/pull/120179), [@difro](https://github.com/difro)
 - **Plugins:** Fix installer IsDisabled condition [#120568](https://github.com/grafana/grafana/pull/120568), [@andresmgot](https://github.com/andresmgot)
 - **Plugins:** Forward PLUGIN_UNIX_SOCKET_DIR to plugin processes to fix tmp dir in restricted environments [#120275](https://github.com/grafana/grafana/pull/120275), [@HarshadaGawas05](https://github.com/HarshadaGawas05)
+- **Security:** Fixes CVE-2026-27876
+- **Security:** Fixes CVE-2026-27877
+- **Security:** Fixes CVE-2026-28375
+- **Security:** Fixes CVE-2026-27879
+- **Security:** Fixes CVE-2026-27880
+- **Security:** Fixes CVE-2026-27876
 
 <!-- 12.4.2 END -->
 <!-- 12.4.1 START -->
