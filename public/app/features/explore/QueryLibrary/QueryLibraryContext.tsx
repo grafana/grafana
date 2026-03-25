@@ -74,7 +74,7 @@ export type QueryLibraryContextType = {
     contextOverride?: string
   ) => void;
   setNewQuery: (query?: SavedQuery) => void;
-  onSelectQuery: (query: DataQuery) => void;
+  onSelectQuery: OnSelectQueryType;
   onFavorite: (uid: string) => void;
   onUnfavorite: (uid: string) => void;
   userFavorites: { [key: string]: boolean };
