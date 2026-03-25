@@ -7,10 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/grpc"
-
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
@@ -52,6 +51,11 @@ func TestIntegrationMigrations(t *testing.T) {
 		testcases.NewFoldersAndDashboardsTestCase(),
 		testcases.NewPlaylistsTestCase(),
 		testcases.NewShortURLsTestCase(),
+	}
+	// TODO: fix datasource migration tests on sqlite, see:
+	// https://github.com/grafana/grafana-enterprise/issues/11313
+	if !db.IsTestDbSQLite() {
+		migrationTestCases = append(migrationTestCases, testcases.NewDataSourceTestCase())
 	}
 
 	runMigrationTestSuite(t, migrationTestCases)
@@ -120,16 +124,19 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				}
 			}
 		}
+		// Explicitly disable migrations for all resources enabled by default that are not
+		// covered by the test cases. Without this, applyMigrationEnforcements would enforce
+		// Mode5 for any enabled-by-default resource absent from cfg.UnifiedStorage.
+		disableMigrationsForDefaultResources(unifiedConfig)
 
 		// Set up test environment with Mode0 (writes only to legacy)
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     true,
-			DisableAnonymous:      true,
-			DisableDataMigrations: true,
-			DisableDBCleanup:      true,
-			APIServerStorageType:  "unified",
-			UnifiedStorageConfig:  unifiedConfig,
-			EnableFeatureToggles:  featureToggles,
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			DisableDBCleanup:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: unifiedConfig,
+			EnableFeatureToggles: featureToggles,
 		})
 		t.Cleanup(helper.Shutdown)
 		org1 = &helper.Org1
@@ -178,16 +185,16 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				}
 			}
 		}
+		disableMigrationsForDefaultResources(unifiedConfig)
 
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				DisableDataMigrations: true,
-				DisableDBCleanup:      true,
-				APIServerStorageType:  "unified",
-				UnifiedStorageConfig:  unifiedConfig,
-				EnableFeatureToggles:  featureToggles,
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				DisableDBCleanup:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: unifiedConfig,
+				EnableFeatureToggles: featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -242,12 +249,11 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		// Migrations enabled by default will run automatically at startup and mode 5 is enforced by the config
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				DisableDataMigrations: false, // Run migrations at startup
-				DisableDBCleanup:      true,
-				APIServerStorageType:  "unified",
-				EnableFeatureToggles:  featureToggles,
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				DisableDBCleanup:     true,
+				APIServerStorageType: "unified",
+				EnableFeatureToggles: featureToggles,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -287,10 +293,8 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				//EnableLog:              true,
 				AppModeProduction:      true,
 				DisableAnonymous:       true,
-				DisableDataMigrations:  false,
 				APIServerStorageType:   "unified",
 				UnifiedStorageConfig:   unifiedConfig,
 				MigrationParquetBuffer: true,
@@ -326,12 +330,14 @@ const (
 	playlistsID            = "playlists migration"
 	foldersAndDashboardsID = "folders and dashboards migration"
 	shorturlsID            = "shorturls migration"
+	datasourceID           = "datasources migration"
 )
 
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
 	shorturlsID:            false,
+	datasourceID:           false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {
@@ -343,6 +349,9 @@ func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDe
 			continue
 		}
 		if optOut {
+			continue
+		}
+		if db.IsTestDbSQLite() && id == datasourceID {
 			continue
 		}
 		expectedMigrationIDs = append(expectedMigrationIDs, id)
@@ -418,6 +427,23 @@ func verifyTablesRenamed(t *testing.T, helper *apis.K8sTestHelper, testCases []t
 			require.True(t, exists, "renamed table %q should exist after migration", legacyName)
 
 			t.Logf("Verified table %q was renamed to %q", table, legacyName)
+		}
+	}
+}
+
+// disableMigrationsForDefaultResources ensures that all resources which are enabled by
+// default in MigratedUnifiedResources have an explicit entry in unifiedConfig with
+// EnableMigration: false. Without this, applyMigrationEnforcements would enforce Mode5
+// for any enabled-by-default resource that is absent from cfg.UnifiedStorage (i.e. not
+// covered by the current test cases).
+func disableMigrationsForDefaultResources(unifiedConfig map[string]setting.UnifiedStorageConfig) {
+	for resource, enabledByDefault := range setting.MigratedUnifiedResources {
+		if enabledByDefault {
+			if _, exists := unifiedConfig[resource]; !exists {
+				unifiedConfig[resource] = setting.UnifiedStorageConfig{
+					EnableMigration: false,
+				}
+			}
 		}
 	}
 }

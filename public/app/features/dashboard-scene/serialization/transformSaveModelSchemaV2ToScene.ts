@@ -366,6 +366,9 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
       collapsible: config.featureToggles.dashboardAdHocAndGroupByWrapper,
+      enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+        ? (variable.spec.enableGroupBy ?? false)
+        : false,
     };
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
@@ -589,6 +592,9 @@ export function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVar
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
             ),
+            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+              ? (v.spec.enableGroupBy ?? false)
+              : false,
           });
         }
         // for other variable types we are using the SnapshotVariable

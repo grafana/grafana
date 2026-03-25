@@ -71,7 +71,8 @@ export function ImportOverviewV1({ dashboard, inputs, meta, source, folderUid, o
         },
       };
 
-      const result = await getDashboardAPI('v1').saveDashboard(dashboardK8SPayload);
+      const api = await getDashboardAPI('v1');
+      const result = await api.saveDashboard(dashboardK8SPayload);
 
       if (result.url) {
         const dashboardUrl = locationUtil.stripBaseFromUrl(result.url);

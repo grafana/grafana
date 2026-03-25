@@ -18,7 +18,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TimeSeriesPanel)
   .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions((builder) => {
     commonOptionsBuilder.addTooltipOptions(builder, false, true, optsWithHideZeros);
-    commonOptionsBuilder.addLegendOptions(builder, true, true, config.featureToggles.vizLegendSeriesLimit);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
 
     const legendCategory = [t('timeseries.legend.category', 'Legend')];
 

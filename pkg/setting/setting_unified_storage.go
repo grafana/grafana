@@ -19,18 +19,20 @@ var knownUnifiedStorageKeys = map[string]string{
 }
 
 const (
-	PlaylistResource  = "playlists.playlist.grafana.app"
-	FolderResource    = "folders.folder.grafana.app"
-	DashboardResource = "dashboards.dashboard.grafana.app"
-	ShortURLResource  = "shorturls.shorturl.grafana.app"
+	PlaylistResource    = "playlists.playlist.grafana.app"
+	FolderResource      = "folders.folder.grafana.app"
+	DashboardResource   = "dashboards.dashboard.grafana.app"
+	ShortURLResource    = "shorturls.shorturl.grafana.app"
+	DataSourceResources = "datasources.*.datasource.grafana.app" // All datasources
 )
 
 // MigratedUnifiedResources maps resources to a boolean indicating if migration is enabled by default
 var MigratedUnifiedResources = map[string]bool{
-	PlaylistResource:  true,  // Only Mode5!
-	FolderResource:    true,  // enabled by default
-	DashboardResource: true,  // enabled by default
-	ShortURLResource:  false, // Requires kubernetesShortURLs to be enabled by default
+	PlaylistResource:    true,  // Only Mode5!
+	FolderResource:      true,  // enabled by default
+	DashboardResource:   true,  // enabled by default
+	ShortURLResource:    false, // Requires kubernetesShortURLs to be enabled by default
+	DataSourceResources: false,
 }
 
 // applyUnifiedStorageEnvOverrides scans environment variables matching
@@ -41,7 +43,7 @@ var MigratedUnifiedResources = map[string]bool{
 //
 // Storage configs in the ini file look like:
 //
-//	[unified_storage.<group>.<resource>]
+//	[unified_storage.{resource}.{group}]
 //	<field> = <value>
 //
 // For example:
@@ -95,6 +97,12 @@ func (cfg *Cfg) applyUnifiedStorageEnvOverrides() {
 	}
 }
 
+// read storage configs from ini file. They look like:
+// [unified_storage.<group>.<resource>]
+// <field> = <value>
+// e.g.
+// [unified_storage.playlists.playlist.grafana.app]
+// dualWriterMode = 2
 func (cfg *Cfg) setUnifiedStorageConfig() {
 	// Pre-create sections from GF_UNIFIED_STORAGE_* env vars so that
 	// resource sections can be configured purely via environment variables.
@@ -128,7 +136,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
-	cfg.DisableDataMigrations = section.Key("disable_data_migrations").MustBool(false)
 	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(1000000)
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
@@ -182,11 +189,17 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.TenantWatcherAllowInsecureTLS = section.Key("tenant_watcher_allow_insecure_tls").MustBool(false)
 	cfg.TenantWatcherCAFile = section.Key("tenant_watcher_ca_file").String()
 
+	// tenant deleter
+	cfg.EnableTenantDeleter = section.Key("tenant_deleter_enabled").MustBool(false)
+	cfg.TenantDeleterDryRun = section.Key("tenant_deleter_dry_run").MustBool(true)
+	cfg.TenantDeleterInterval = section.Key("tenant_deleter_interval").MustDuration(1 * time.Hour)
+
 	// garbage collection
 	cfg.EnableGarbageCollection = section.Key("garbage_collection_enabled").MustBool(false)
 	cfg.GarbageCollectionDryRun = section.Key("garbage_collection_dry_run").MustBool(true)
 	cfg.GarbageCollectionInterval = section.Key("garbage_collection_interval").MustDuration(15 * time.Minute)
 	cfg.GarbageCollectionBatchSize = section.Key("garbage_collection_batch_size").MustInt(100)
+	cfg.GarbageCollectionBatchWait = section.Key("garbage_collection_batch_wait").MustDuration(1 * time.Second)
 	cfg.GarbageCollectionMaxAge = section.Key("garbage_collection_max_age").MustDuration(24 * time.Hour)
 	cfg.DashboardsGarbageCollectionMaxAge = section.Key("dashboards_garbage_collection_max_age").MustDuration(365 * 24 * time.Hour)
 
@@ -196,7 +209,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
 
 	// TTL for caching statusReader results in the dynamic dualwrite service. 0 = no expiration.
-	cfg.StorageModeCacheTTL = section.Key("storage_mode_cache_ttl").MustDuration(0)
+	cfg.StorageModeCacheTTL = section.Key("storage_mode_cache_ttl").MustDuration(5 * time.Second)
 
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
@@ -211,7 +224,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 // or disables local search when a remote search server is configured.
 func (cfg *Cfg) applyMigrationEnforcements() {
 	if !cfg.ShouldRunMigrations() {
-		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "disable_data_migrations", cfg.DisableDataMigrations, "target", cfg.Target)
+		cfg.Logger.Info("Unified migration configs enforcement disabled", "storage_type", cfg.UnifiedStorageType(), "target", cfg.Target)
 		if cfg.shouldProxySearchRemotely() {
 			cfg.EnableSearch = false
 		}
@@ -262,8 +275,7 @@ func (cfg *Cfg) shouldProxySearchRemotely() bool {
 
 // ShouldRunMigrations reports whether data migrations to unified storage should run.
 func (cfg *Cfg) ShouldRunMigrations() bool {
-	return !cfg.DisableDataMigrations &&
-		cfg.UnifiedStorageType() == "unified" &&
+	return cfg.UnifiedStorageType() == "unified" &&
 		isTargetEligibleForMigrations(cfg.Target)
 }
 

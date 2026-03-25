@@ -53,6 +53,8 @@ export interface MenuItemProps<T = unknown> {
   shortcut?: string;
   /** Test id for e2e tests and fullstory*/
   testId?: string;
+  /** CSS color for the icon. Ignored when `destructive` or `disabled` is true. */
+  iconColor?: string;
   /* Optional component that will be shown together with other options. Does not get passed any props. */
   component?: React.ComponentType;
 }
@@ -79,8 +81,11 @@ export const MenuItem = React.memo(
       customSubMenuContainerStyles,
       shortcut,
       testId,
+      iconColor,
     } = props;
     const styles = useStyles2(getStyles);
+    // Ignore iconColor when destructive or disabled — those states own the colors.
+    const resolvedIconColor = iconColor && !destructive && !disabled ? iconColor : undefined;
     const [isActive, setIsActive] = useState(active);
     const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
     const onMouseEnter = useCallback(() => {
@@ -182,7 +187,13 @@ export const MenuItem = React.memo(
         {...disabledProps}
       >
         <Stack direction="row" justifyContent="flex-start" alignItems="center">
-          {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
+          {icon && (
+            <Icon
+              name={icon}
+              className={cx(styles.icon, resolvedIconColor && css({ color: resolvedIconColor }))}
+              aria-hidden
+            />
+          )}
           <span className={cx(styles.ellipsis, styles.label)}>{label}</span>
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (

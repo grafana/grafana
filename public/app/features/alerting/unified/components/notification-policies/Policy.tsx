@@ -51,6 +51,7 @@ import { GrafanaPoliciesExporter } from '../export/GrafanaPoliciesExporter';
 
 import { Matchers } from './Matchers';
 import { useRoutesMatchingFilters } from './RoutesMatchingFiltersContext';
+import { trackNotificationPolicyExported } from './notificationPolicyAnalytics';
 import { TimingOptions } from './timingOptions';
 
 const POLICIES_PER_PAGE = 20;
@@ -642,7 +643,10 @@ export const useCreateDropdownMenuActions = (
         key="export-policy"
         icon="download-alt"
         label={t('alerting.use-create-dropdown-menu-actions.label-export', 'Export')}
-        onClick={toggleShowExportDrawer}
+        onClick={() => {
+          trackNotificationPolicyExported({ isDefaultPolicy: isActualDefaultPolicy });
+          toggleShowExportDrawer();
+        }}
       />
     );
   }

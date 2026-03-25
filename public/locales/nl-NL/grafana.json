@@ -385,6 +385,7 @@
         "group-by": "Gegroepeerd op",
         "group-title": "Instellingen voor meldingen",
         "mute-timings": "Demptimings",
+        "notification-policy": "",
         "timing-options": "Tijden"
       },
       "pending-period": "Wachttijd",
@@ -497,6 +498,15 @@
     },
     "alert-rule": {
       "term": "Waarschuwingsregel"
+    },
+    "alert-rule-drawer": {
+      "error-title": "",
+      "error-unexpected": "",
+      "error-unknown": "",
+      "success-message": "",
+      "success-title": "",
+      "validation-error-message": "",
+      "validation-error-title": ""
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -880,6 +890,8 @@
       "export-all": "Alles exporteren",
       "learn-more": "Meer informatie",
       "loading": "Bezig met laden ...",
+      "optional": "",
+      "refresh": "",
       "search-by-matchers": "Op matchers zoeken",
       "titles": {
         "notification-templates": "Meldingsjablonen"
@@ -1706,13 +1718,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -1849,7 +1861,7 @@
       },
       "history-error": "Kan statusgeschiedenis niet laden",
       "history-error-desc": "Kan de statusovergangsgeschiedenis voor deze instantie niet ophalen.",
-      "instance-timeline": "",
+      "instance-history-heading": "",
       "no-history": "Geen recente statuswijzigingen",
       "notifications-error": "",
       "notifications-error-desc": "",
@@ -1861,6 +1873,8 @@
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
+      "timeline-dot-all-failed": "",
+      "timeline-dot-some-failed": "",
       "timeline-empty": "",
       "timeline-failed": "",
       "timeline-filter-all": "",
@@ -1868,17 +1882,15 @@
       "timeline-filter-notifications": "",
       "timeline-filter-states": "",
       "timeline-loading": "",
-      "timeline-mixed-outcome": "",
-      "timeline-one-notification": "",
+      "timeline-notification-label": "",
+      "timeline-partial-failure": "",
       "timeline-status-firing": "",
       "timeline-status-resolved": "",
       "timeline-toggle-notifications": "",
       "view-notification-detail": "",
       "view-notification-tooltip": "",
-      "timeline-n-notifications_one": "",
-      "timeline-n-notifications_other": "",
-      "timeline-n-receivers_one": "",
-      "timeline-n-receivers_other": ""
+      "timeline-n-uniqueReceivers_one": "",
+      "timeline-n-uniqueReceivers_other": ""
     },
     "instance-match": {
       "non-matching-labels": "Niet-overeenkomende labels",
@@ -2021,6 +2033,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "",
+          "notification-policy": "",
           "select-contact-point": "Selecteer contactpunt",
           "use-notification-policy": "Meldingsbeleid gebruiken"
         }
@@ -2325,6 +2339,7 @@
     },
     "notifications-list": {
       "error-fetching": "",
+      "integration-tooltip": "",
       "no-error-details": "",
       "notification-error": "",
       "outcome-failed": "",
@@ -2358,8 +2373,9 @@
       "labels": "",
       "labels-filter-variable": {
         "label": {
-          "labels": ""
-        }
+          "group-labels": ""
+        },
+        "placeholder": ""
       },
       "no-notifications": "",
       "outcome-filter-variable": {
@@ -2418,9 +2434,6 @@
       "label-payload": "Laadvermogen",
       "label-use-existing-alert-instances": "Bestaande waarschuwingsinstanties gebruiken",
       "reference": "Reference"
-    },
-    "plugin-integrations": {
-      "tailored-apps": "Versnel nu het maken van waarschuwingen door een van onze op maat gemaakte apps te gebruiken"
     },
     "plugin-origin-badge": {
       "tooltip-managed-by-plugin": "Deze regel wordt beheerd door de plug-in {{pluginName}}"
@@ -2937,6 +2950,9 @@
       "error-button": "Fout",
       "export-all-grafana-rules": "Alle Grafana-regels exporteren",
       "export-group": "",
+      "filter-sidebar": {
+        "rule-name-placeholder": ""
+      },
       "filter-view": {
         "cancel-search": "Zoekopdracht annuleren",
         "no-more-results": "Geen resultaten - {{numberOfRules}} regels gevonden",
@@ -3086,8 +3102,6 @@
       "dashboard": "Dashboard",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "Zoeken op hulp bij gegevensbronnen",
       "filter-options": {
-        "aria-label": "Filteropties",
-        "aria-label-show-filters": "Filter",
         "placeholder-namespace": "Namespace selecteren",
         "placeholder-search-input": "Zoeken op naam of filterquery invoeren..."
       },
@@ -3119,6 +3133,9 @@
       "state": "Status",
       "title-search-help": "Help doorzoeken",
       "view-as": "Bekijk als"
+    },
+    "rules-filter-sidebar": {
+      "clear-filters": ""
     },
     "rules-group": {
       "deleting": "Verwijderen",
@@ -3273,12 +3290,57 @@
       "title-the-selected-alertmanager-has-no-configuration": "De geselecteerde Alertmanager heeft geen configuratie"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "",
+      "aria-label-threshold": "",
+      "aria-label-threshold-from": "",
+      "aria-label-threshold-to": "",
       "label-of-query": "VAN QUERY",
       "label-when": "WANNEER",
       "label-when-query": "WANNEER QUERY"
     },
     "simpleCondition": {
       "alertCondition": "Waarschuwingsvoorwaarde"
+    },
+    "simplified": {
+      "condition": {
+        "title": ""
+      },
+      "continue-in-alerting": "",
+      "create": "",
+      "evaluation": {
+        "immediate-warning": ""
+      },
+      "notification": {
+        "contact-point-selected": "",
+        "description": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "manual-routing": {
+          "aria": ""
+        },
+        "policy-selected": "",
+        "recipient": {
+          "label": ""
+        },
+        "refresh-error": "",
+        "runbook-url": {
+          "aria-label": "",
+          "invalid-format": "",
+          "invalid-protocol": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "select-contact-point": "",
+        "summary": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "title": ""
+      },
+      "rule-definition": ""
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Gevevensbron-beheerd",
@@ -3479,18 +3541,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Waarschuwingsinstanties",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Fout bij het laden van de regel",
-      "high-activity-labels": "",
-      "instance-details-drawer": {
-        "instance-details": "Instantiedetails"
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
       },
+      "instance-details-drawer": {
+        "declare-incident": "",
+        "instance-details": "Instantiedetails",
+        "silence-button": ""
+      },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "U heeft geen waarschuwingsinstanties in een actieve of in behandeling zijnde status voor het geselecteerde tijdsbereik.",
       "no-instances-found": "Geen waarschuwingsinstanties gevonden voor regel: {{ruleUID}}",
       "no-labels": "Geen labels",
@@ -3512,14 +3583,16 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_one": "",
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_one": "",
       "show-all-labels_other": "",
       "show-all-values_one": "",
       "show-all-values_other": "",
-      "tooltip-more-values_one": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_one": "",
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "Expressie toevoegen"
@@ -4186,6 +4259,9 @@
     "browse-view": {
       "this-folder-is-empty": "Deze map is leeg"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Annuleren",
       "button-delete": "Verwijderen",
@@ -4288,6 +4364,7 @@
       "dashboards": "Dashboards",
       "panels": "Panelen"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Geen items"
     },
@@ -4812,7 +4889,6 @@
     "all": "Alle",
     "apply": "Toepassen",
     "cancel": "Annuleren",
-    "clear": "Wissen",
     "collapse": "Samenvouwen",
     "disabled": "Uitgeschakeld",
     "discard": "Verwerpen",
@@ -5217,6 +5293,12 @@
       "paste-tab": "Tabblad plakken",
       "ungroup-rows": "Groepering van rijen opheffen",
       "ungroup-tabs": "Groepering van tabbladen opheffen"
+    },
+    "code-pane": {
+      "collapse": "",
+      "expand": "",
+      "header": "",
+      "modal-title": ""
     },
     "conditional-rendering": {
       "conditions": {
@@ -5912,6 +5994,12 @@
         "title": "Tijdinstellingen van paneel"
       }
     },
+    "panel-assistant": {
+      "prompt-card": {
+        "placeholder": "",
+        "placeholder-multi": ""
+      }
+    },
     "panel-edit": {
       "alerting-tab": {
         "dashboard-not-saved": "Dashboard moet worden opgeslagen voordat waarschuwingen kunnen worden toegevoegd.",
@@ -6006,8 +6094,8 @@
       "name": "Rijen",
       "new-row-title": "Nieuwe rij",
       "row": {
-        "collapse": "Rij samenvouwen",
-        "expand": "Rij uitvouwen",
+        "collapse": "",
+        "expand": "",
         "new": "Nieuwe rij",
         "repeat": {
           "learn-more": "Meer informatie",
@@ -6094,6 +6182,13 @@
       "save-json-to-file": "JSON opslaan naar bestand",
       "see-docs": "Bekijk de <2>documentatie</2> voor meer informatie over provisioning."
     },
+    "schema-editor": {
+      "apply-button": "",
+      "apply-button-disabled-tooltip": "",
+      "apply-button-disabled-tooltip-yaml": "",
+      "apply-error-title": "",
+      "undo-title": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6108,6 +6203,10 @@
       "dashboard-options": {
         "title": "Opties",
         "tooltip": "Dashboardopties"
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
       },
       "export": {
         "title": "Exporteren"
@@ -6451,11 +6550,14 @@
     "browse-plugins": "Plugins doorbladeren",
     "card": {
       "customize-with-assistant-button": "",
+      "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "Databron verstrekt",
       "details-tooltip": "Details",
       "no-preview": "",
-      "use-dashboard-button": "Dashboard gebruiken",
-      "view-template-button": ""
+      "view-dashboard-button": "",
+      "view-dashboard-button-label": "",
+      "view-template-button": "",
+      "view-template-button-label": ""
     },
     "community-empty-title": "Geen communitydashboards gevonden",
     "community-empty-title-with-datasource": "Geen {{datasourceType}} communitydashboards gevonden",
@@ -6534,16 +6636,32 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Ad hoc-opties",
       "alert-not-supported": "Deze gegevensbron ondersteunt geen ad-hocfilters",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Stelt gebruikers in staat om aangepaste waarden aan de lijst toe te voegen",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Geef afmetingen op als csv: {{name}}, {{value}}",
       "label-data-source": "Gegevensbron",
       "label-use-static-key-dimensions": "Gebruik statische sleutelafmetingen",
-      "name-allow-custom-values": "Aangepaste waarden toestaan"
+      "name-allow-custom-values": "Aangepaste waarden toestaan",
+      "name-enable-group-by": ""
+    },
+    "add-filters": {
+      "label": ""
     },
     "add-link": {
       "inline-instance-name": "",
       "label-link": "",
       "tooltip": ""
+    },
+    "add-new-edit-pane": {
+      "group-layouts": ""
+    },
+    "add-row": {
+      "add-label": "",
+      "group-label": ""
+    },
+    "add-tab": {
+      "add-label": "",
+      "group-label": ""
     },
     "add-to-dashboard": {
       "message": {
@@ -6744,6 +6862,9 @@
       "tooltip-move-link-down": "Link omlaag verplaatsen",
       "tooltip-move-link-up": "Link omhoog verplaatsen",
       "type": "Type"
+    },
+    "dashboard-links-list": {
+      "add-link": ""
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Er is een fout opgetreden bij het laden van het dashboard"
@@ -7025,6 +7146,13 @@
       "type-link": "",
       "with-tags": ""
     },
+    "links-list": {
+      "drag-end-description": "",
+      "title-above-dashboard_one": "",
+      "title-above-dashboard_other": "",
+      "title-controls-menu_one": "",
+      "title-controls-menu_other": ""
+    },
     "managed-badge": {
       "kubectl": "Beheerd door: Kubectl",
       "plugin": "Beheerd door: Plugin {{id}}",
@@ -7274,6 +7402,8 @@
       "cannot-be-saved": "Dit dashboard kan niet worden opgeslagen vanuit de Grafana-gebruikersinterface omdat het is geprovisioneerd vanuit een andere bron. Kopieer de JSON of sla deze op in een onderstaand bestand. Vervolgens kun je je dashboard bijwerken in de provisioningbron.",
       "copy-json-to-clipboard": "JSON kopiëren naar klembord",
       "file-path": "<strong>Bestandspad:</strong> {{filePath}}",
+      "form-loading-error": "",
+      "form-loading-error-unknown": "",
       "label-description": "Beschrijving",
       "label-target-folder": "Doelmap",
       "label-title": "Titel",
@@ -7381,6 +7511,13 @@
       "page-nav": {
         "text": {
           "settings": "Instellingen"
+        }
+      }
+    },
+    "use-links-category": {
+      "category": {
+        "title": {
+          "links": ""
         }
       }
     },
@@ -7551,6 +7688,11 @@
   "dashboard-scene-help-wizard": {
     "support-bundle": "Je kunt ook een ondersteuningsbundel ophalen met informatie over je Grafana-instantie en geconfigureerde gegevensbronnen in de sectie <1> ondersteuningsbundels </1>."
   },
+  "dashboard-schema-editor": {
+    "format-label": "",
+    "json-disabled-tooltip": "",
+    "yaml-disabled-tooltip": ""
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "Annotaties"
@@ -7581,6 +7723,8 @@
     },
     "json-editor": {
       "save-button": "Wijzigingen opslaan",
+      "save-button-disabled-tooltip": "",
+      "save-button-disabled-tooltip-yaml": "",
       "subtitle": "Het onderstaande JSON-model is de gegevensstructuur die het dashboard definieert. Dit omvat dashboardinstellingen, paneelinstellingen, indeling, query's, enzovoort.",
       "title": "JSON-model"
     },
@@ -7952,6 +8096,7 @@
       "fixed-value-options": {
         "label-fixed-values": "Vaste waarde"
       },
+      "label": "",
       "label-limit": "Limiet",
       "label-value": "Waarde",
       "noOptionsMessage-no-fields-found": "Geen velden gevonden",
@@ -8859,9 +9004,6 @@
     "data-links-actions-menu": "",
     "description-min-height": "Minimale rijhoogte (horizontale oriëntatie)",
     "description-min-width": "Minimale kolombreedte (verticale oriëntatie)",
-    "description-neutral": "Laat leeg om Min als neutraal punt te gebruiken",
-    "description-show-threshold-labels": "Geef de drempelwaarden rond de meetbalk weer",
-    "description-show-threshold-markers": "Geeft de drempels weer als een buitenste balk",
     "gauge-size-options": {
       "label-auto": "Automatisch",
       "label-manual": "Handmatig"
@@ -8869,11 +9011,7 @@
     "name-gauge-size": "Metergrootte",
     "name-min-height": "Minimale hoogte",
     "name-min-width": "Minimale breedte",
-    "name-neutral": "Neutraal",
-    "name-show-threshold-labels": "Drempellabels weergeven",
-    "name-show-threshold-markers": "Drempelmarkeringen weergeven",
     "neutral": "Neutraal {{value}}",
-    "placeholder-neutral": "automatisch",
     "presets": {
       "circle": "",
       "circle_desc": "",
@@ -8890,8 +9028,7 @@
     },
     "suggestions": {
       "arc": "Meter",
-      "circular": "Cirkelvormige meter",
-      "no-thresholds": "Meter - geen drempelwaarden"
+      "circular": "Cirkelvormige meter"
     },
     "threshold": "Drempelwaarde {{value}}"
   },
@@ -9983,7 +10120,9 @@
       "external-links-heading": "Externe links"
     },
     "field-name-by-regex-matcher": {
-      "input-placeholder": "Voer een reguliere expressie in"
+      "input-placeholder": "Voer een reguliere expressie in",
+      "scope": "",
+      "scope-tooltip": ""
     },
     "field-value-matcher": {
       "operator-label": "Vergelijkingsoperator",
@@ -10010,6 +10149,18 @@
       "expand-row-tooltip": "Rij in-/uitschakelen uitgevouwen",
       "tooltip-collapse-all": "Alle rijen samenvouwen",
       "tooltip-expand-all": "Alle rijen uitvouwen"
+    },
+    "matchers": {
+      "groups": {
+        "annotation": "",
+        "exemplar": "",
+        "nested": "",
+        "series": ""
+      },
+      "labels": {
+        "base-field-name": "",
+        "not-found": ""
+      }
     },
     "matchers-ui": {
       "description-field-name-by-regex-matcher": "Eigenschappen instellen voor velden met namen die overeenkomen met een regex",
@@ -10131,6 +10282,9 @@
       "group": "Groep",
       "group-tooltip": "Naam van de stapelgroep"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Filter op waarde",
       "cell-filter-out": "Waarde uitfilteren",
@@ -10179,6 +10333,10 @@
       },
       "no-values-label": "Geen waarden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "geen gegevens"
       },
@@ -10276,11 +10434,14 @@
       "remove-button": "{{children}} verwijderen"
     },
     "viz-legend": {
+      "all-series-selected": "",
       "clear-filters": "",
+      "color-picker": "",
       "faceted-by-labels": "",
       "faceted-by-name": "",
       "faceted-deselect-all": "",
       "faceted-select-all": "",
+      "only-this-series-selected": "",
       "pin-filter": "",
       "right-axis-indicator": "(rechter y-as)",
       "series-visibility": "",
@@ -10880,6 +11041,7 @@
       "collapse": "Zijbalk inklappen",
       "expand": "Zijbalk uitklappen",
       "label-title": "{{fieldName}} verschijnt in {{percentage}}% van de loglijnen",
+      "log-level": "",
       "placeholder-search-fields-by-name": "Velden zoeken op naam",
       "title-drag-and-drop-to-reorder": "Slepen en neerzetten om de volgorde te wijzigen"
     },
@@ -11237,7 +11399,7 @@
       "cancel": "Annuleren",
       "change-uid": "UID wijzigen",
       "description-library-panels-imported": "Lijst met nieuwe bibliotheekpanelen die worden geïmporteerd.",
-      "description-unique-identifier-uid": "De unieke id (UID) van een dashboard kan worden gebruikt voor het uniek identificeren van een dashboard tussen meerdere Grafana-installaties. Met de UID kunnen consistente URL's worden gebruikt voor toegang tot dashboards, dus als je de titel van een dashboard wijzigt, worden links naar dat dashboard met bladwijzers niet verbroken.",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "Bestaande bibliotheekpanelen",
       "label-folder": "Map",
       "label-name": "Naam",
@@ -11288,7 +11450,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Geen opties gevonden"
@@ -11915,8 +12078,9 @@
       "upgrade-tooltip": "Upgrade om meer gebruikers toe te voegen"
     },
     "item": {
-      "add-bookmark": "",
-      "remove-bookmark": ""
+      "bookmark": {
+        "tooltip": ""
+      }
     },
     "kiosk": {
       "tv-alert": "Druk op ESC om de kioskmodus te verlaten"
@@ -12178,6 +12342,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Naam"
       }
     },
@@ -12758,9 +12923,6 @@
     "title-loaded-pull-request-in-repo": "Deze bron wordt geladen vanuit de tak die je zojuist hebt gemaakt in {{repoType}} en is alleen zichtbaar voor jou"
   },
   "provisioning": {
-    "banner": {
-      "message": "Er wordt momenteel actief gewerkt aan de ontwikkeling van deze functie. Voor de beste ervaring en de nieuwste verbeteringen raden we je aan om de <2>nachtelijke versie</2> van Grafana te gebruiken."
-    },
     "bitbucket": {
       "branch-required": "Tak is vereist",
       "permissions": {
@@ -12786,6 +12948,7 @@
       "empty": "Leeg",
       "error-field-required": "Dit veld is verplicht.",
       "error-quota-exceeded-message": "",
+      "error-quota-exceeded-message-onprem": "",
       "error-quota-exceeded-title": "",
       "error-repository-status-unhealthy-message": "Er is een probleem opgetreden bij het verbinden met de repository. Controleer de repository-instellingen en probeer het opnieuw.",
       "error-repository-status-unhealthy-title": "Repository-status ongezond",
@@ -12795,6 +12958,7 @@
       "retry-action": "",
       "text-loading-resource-information": "Broninformatie laden...",
       "unmanaged-resources-label": "Niet-beheerde bronnen",
+      "update-configuration-action": "",
       "upgrade-action": "",
       "dashboards-count_one": "{{count}} dashboard",
       "dashboards-count_other": "{{count}} dashboard",
@@ -12847,7 +13011,8 @@
     "connect-repository-button": {
       "configure": "Configureren",
       "instance-fully-managed-tooltip": "Configuratie is uitgeschakeld omdat deze instantie volledig wordt beheerd",
-      "max-repos-reached-tooltip": ""
+      "max-repos-reached-tooltip": "",
+      "max-repos-reached-tooltip-onprem": ""
     },
     "connect-step": {
       "text-folders-not-available": "",
@@ -12877,6 +13042,7 @@
       "error-delete-connection": "Kan de verbinding niet verwijderen",
       "error-required": "Dit veld is verplicht",
       "error-save-connection": "Kan verbinding niet opslaan",
+      "error-submit": "",
       "grafana-repositories": "Repositories die deze verbinding gebruiken",
       "label-app-id": "GitHub-app-ID",
       "label-description": "Beschrijving",
@@ -13051,7 +13217,7 @@
       "token-label": "Toegangstoken",
       "token-required": "Git-token is vereist",
       "token-user-description": "De gebruikersnaam die zal worden gebruikt om toegang te krijgen tot de repository met het toegangstoken",
-      "url-description": "De Git-repository-URL",
+      "url-description": "",
       "url-pattern": "Moet een geldige Git-repository-URL zijn",
       "url-required": "Repository-URL is vereist"
     },
@@ -13177,23 +13343,25 @@
     },
     "quota-limit": {
       "note": "",
+      "to-increase-limits": "",
+      "update-configuration-link": "",
       "upgrade-link": "",
       "message-both-repositories_one": "",
       "message-both-repositories_other": "",
+      "message-both-repositories-onprem_one": "",
+      "message-both-repositories-onprem_other": "",
       "message-both-resources_one": "",
       "message-both-resources_other": "",
-      "message-repositories-info_one": "",
-      "message-repositories-info_other": "",
+      "message-both-resources-onprem_one": "",
+      "message-both-resources-onprem_other": "",
       "message-repository_one": "",
       "message-repository_other": "",
-      "note-message-both-repositories_one": "",
-      "note-message-both-repositories_other": "",
-      "note-message-both-resources_one": "",
-      "note-message-both-resources_other": "",
-      "note-message-repository_one": "",
-      "note-message-repository_other": "",
-      "note-message-resource_one": "",
-      "note-message-resource_other": ""
+      "message-repository-onprem_one": "",
+      "message-repository-onprem_other": "",
+      "message-resource_one": "",
+      "message-resource_other": "",
+      "message-resource-onprem_one": "",
+      "message-resource-onprem_other": ""
     },
     "read-only-local-tooltip": "Deze bron is alleen-lezen en wordt beheerd via bestandsvoorziening. Om wijzigingen aan te brengen, werkt u de verbonden repository bij. Om de instellingen te wijzigen gaat u naar Beheer > Voorziening > Repositories.",
     "read-only-remote-tooltip": "Deze bron is alleen-lezen en wordt beheerd via Git. Om wijzigingen aan te brengen, werkt u de verbonden repository bij. Om de instellingen te wijzigen gaat u naar Beheer > Voorziening > Repositories.",
@@ -13400,6 +13568,9 @@
       "go-to": "Ga naar",
       "make-sure": ""
     },
+    "validation": {
+      "hidden-characters": ""
+    },
     "warning-title-default": "Waarschuwing",
     "watch-stream": {
       "error-description": "",
@@ -13452,6 +13623,7 @@
       "github-app-select-connection": "",
       "github-enterprise-alert-body": "",
       "github-enterprise-alert-title": "",
+      "give-feedback-link": "",
       "step-bootstrap": "Kies wat je wilt synchroniseren",
       "step-configure-repo": "Repository configureren",
       "step-connect": "Verbinden",
@@ -13774,6 +13946,7 @@
     "sidebar": {
       "add-below": "",
       "add-expression": "",
+      "add-expression-disabled": "",
       "add-query": "",
       "add-query-or-expression": "",
       "add-saved-query": "",

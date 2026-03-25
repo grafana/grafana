@@ -11,6 +11,7 @@ import { generatedAPI as iamAPIv0alpha1 } from './iam/v0alpha1';
 import { generatedAPI as logsdrilldownAPIv1alpha1 } from './logsdrilldown/v1alpha1';
 import { generatedAPI as logsdrilldownAPIv1beta1 } from './logsdrilldown/v1beta1';
 import { generatedAPI as notificationsAlertingAPIv0alpha1 } from './notifications.alerting/v0alpha1';
+import { generatedAPI as notificationsAlertingAPIv1beta1 } from './notifications.alerting/v1beta1';
 import { generatedAPI as playlistAPIv1 } from './playlist/v1';
 import { generatedAPI as orgPreferencesAPI } from './preferences/org';
 import { generatedAPI as teamPreferencesAPI } from './preferences/team';
@@ -41,6 +42,7 @@ export const allMiddleware = [
   quotasAPIv0alpha1.middleware,
   orgPreferencesAPI.middleware,
   teamPreferencesAPI.middleware,
+  notificationsAlertingAPIv1beta1.middleware,
   // PLOP_INJECT_MIDDLEWARE
 ] as const;
 
@@ -64,6 +66,7 @@ export const allReducers = {
   [quotasAPIv0alpha1.reducerPath]: quotasAPIv0alpha1.reducer,
   [orgPreferencesAPI.reducerPath]: orgPreferencesAPI.reducer,
   [teamPreferencesAPI.reducerPath]: teamPreferencesAPI.reducer,
+  [notificationsAlertingAPIv1beta1.reducerPath]: notificationsAlertingAPIv1beta1.reducer,
   // PLOP_INJECT_REDUCER
 };
 
