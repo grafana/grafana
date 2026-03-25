@@ -24,6 +24,17 @@ func (c *customStorageWrapper) InstallAPIGroup(
 	if apiGroupInfo == nil || apiGroupInfo.VersionedResourcesStorageMap == nil {
 		return fmt.Errorf("apiGroupInfo cannot be nil")
 	}
+
+	// Override NegotiatedSerializer to only support JSON encoding
+	// This prevents protobuf marshalling errors since our generated types
+	// don't implement the protobuf marshalling interface
+	if apiGroupInfo.NegotiatedSerializer != nil && apiGroupInfo.Scheme != nil {
+		apiGroupInfo.NegotiatedSerializer = NewJSONOnlyNegotiatedSerializer(
+			apiGroupInfo.Scheme,
+			apiGroupInfo.NegotiatedSerializer,
+		)
+	}
+
 	for gvr, storage := range c.replace {
 		if _, ok := apiGroupInfo.VersionedResourcesStorageMap[gvr.Version]; !ok {
 			apiGroupInfo.VersionedResourcesStorageMap[gvr.Version] = map[string]rest.Storage{}
