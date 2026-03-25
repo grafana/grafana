@@ -2,7 +2,9 @@ package teamk8s
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -62,6 +65,22 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 	}
 
 	return dyn.Resource(teamGVR).Namespace(namespace), nil
+}
+
+func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, error) {
+	if s.configProvider == nil {
+		return nil, errors.New("config provider not initialized")
+	}
+
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return nil, errors.New("no request context")
+	}
+
+	cfg := s.configProvider.GetDirectRestConfig(reqCtx)
+	cfg = dynamic.ConfigFor(cfg)
+	cfg.GroupVersion = &iamv0alpha1.GroupVersion
+	return rest.RESTClientFor(cfg)
 }
 
 func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
@@ -165,7 +184,63 @@ func (s *TeamK8sService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCom
 }
 
 func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	return team.SearchTeamQueryResult{}, errors.New("not implemented")
+	if query.Name != "" || len(query.TeamIds) > 0 || len(query.UIDs) > 0 {
+		return s.legacyService.SearchTeams(ctx, query)
+	}
+
+	namespace := s.namespaceMapper(query.OrgID)
+	restClient, err := s.getRESTClient(ctx)
+	if err != nil {
+		return team.SearchTeamQueryResult{}, err
+	}
+
+	req := restClient.Get().
+		AbsPath("apis", iamv0alpha1.APIGroup, iamv0alpha1.APIVersion, "namespaces", namespace, "searchTeams")
+
+	if query.Query != "" {
+		req = req.Param("query", query.Query)
+	}
+	if query.Limit > 0 {
+		req = req.Param("limit", strconv.Itoa(query.Limit))
+	}
+	if query.Page > 0 {
+		req = req.Param("page", strconv.Itoa(query.Page))
+	}
+	if query.WithAccessControl {
+		req = req.Param("accesscontrol", "true")
+	}
+
+	result := req.Do(ctx)
+	if err := result.Error(); err != nil {
+		return team.SearchTeamQueryResult{}, err
+	}
+
+	body, _ := result.Raw()
+
+	var searchResp iamv0alpha1.GetSearchTeamsResponse
+	if err := json.Unmarshal(body, &searchResp); err != nil {
+		return team.SearchTeamQueryResult{}, err
+	}
+
+	teams := make([]*team.TeamDTO, 0, len(searchResp.Hits))
+	for _, hit := range searchResp.Hits {
+		teams = append(teams, &team.TeamDTO{
+			UID:           hit.Name,
+			OrgID:         query.OrgID,
+			Name:          hit.Title,
+			Email:         hit.Email,
+			IsProvisioned: hit.Provisioned,
+			ExternalUID:   hit.ExternalUID,
+			AccessControl: hit.AccessControl,
+		})
+	}
+
+	return team.SearchTeamQueryResult{
+		TotalCount: searchResp.TotalHits,
+		Teams:      teams,
+		Page:       query.Page,
+		PerPage:    query.Limit,
+	}, nil
 }
 
 func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
