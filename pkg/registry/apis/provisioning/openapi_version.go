@@ -225,6 +225,83 @@ func ReplaceOpenAPISpecVersion(oas *spec3.OpenAPI, group, oldVersion, newVersion
 			}
 		}
 	}
+
+	// Filter x-kubernetes-group-version-kind arrays to only include the new version
+	if oas.Components != nil && oas.Components.Schemas != nil {
+		for _, schema := range oas.Components.Schemas {
+			if schema == nil || schema.Extensions == nil {
+				continue
+			}
+
+			// Check for GVK metadata
+			gvkExt, exists := schema.Extensions["x-kubernetes-group-version-kind"]
+			if !exists {
+				continue
+			}
+
+			// The GVK extension can be one of several types:
+			// - []map[string]interface{} (from generated OpenAPI code)
+			// - []interface{} (from manual construction)
+			// - map[string]interface{} (single GVK)
+
+			// Try []map[string]interface{} first (most common from generated code)
+			if gvkArray, ok := gvkExt.([]map[string]interface{}); ok {
+				filtered := []map[string]interface{}{}
+				for _, item := range gvkArray {
+					if version, ok := item["version"].(string); ok && version == newVersion {
+						filtered = append(filtered, item)
+					}
+				}
+
+				// Update the extension
+				if len(filtered) == 1 {
+					// Convert single-element array to object (Kubernetes convention)
+					schema.Extensions["x-kubernetes-group-version-kind"] = filtered[0]
+				} else if len(filtered) > 1 {
+					schema.Extensions["x-kubernetes-group-version-kind"] = filtered
+				} else {
+					// No matching versions, remove the extension
+					delete(schema.Extensions, "x-kubernetes-group-version-kind")
+				}
+				continue
+			}
+
+			// Try []interface{} (less common but possible)
+			if gvkArray, ok := gvkExt.([]interface{}); ok {
+				filtered := []interface{}{}
+				for _, item := range gvkArray {
+					if gvkMap, ok := item.(map[string]interface{}); ok {
+						if version, ok := gvkMap["version"].(string); ok && version == newVersion {
+							filtered = append(filtered, item)
+						}
+					}
+				}
+
+				// Update the extension
+				if len(filtered) == 1 {
+					// Convert single-element array to object (Kubernetes convention)
+					schema.Extensions["x-kubernetes-group-version-kind"] = filtered[0]
+				} else if len(filtered) > 1 {
+					schema.Extensions["x-kubernetes-group-version-kind"] = filtered
+				} else {
+					// No matching versions, remove the extension
+					delete(schema.Extensions, "x-kubernetes-group-version-kind")
+				}
+				continue
+			}
+
+			// Handle single GVK object
+			if gvkMap, ok := gvkExt.(map[string]interface{}); ok {
+				if version, ok := gvkMap["version"].(string); ok {
+					if version != newVersion {
+						// Wrong version, remove it
+						delete(schema.Extensions, "x-kubernetes-group-version-kind")
+					}
+					// If version matches, keep it as-is
+				}
+			}
+		}
+	}
 }
 
 // updateOperationRefs updates all $ref references in an operation (request/response schemas)
