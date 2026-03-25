@@ -1446,7 +1446,7 @@ func (s *server) initWatcher() error {
 		return err
 	}
 
-	out := make(chan *WrittenEvent, chanBufferLen)
+	out := make(chan *WrittenEvent, 100)
 	go func() {
 		defer close(out)
 		for v := range events {
