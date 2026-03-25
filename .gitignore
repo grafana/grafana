@@ -72,7 +72,10 @@ public/css/*.min.css
 .cursor/*
 !.cursor/skills/
 .cursor/skills/*
-!.cursor/skills/test-git-sync-provisioning/
+!.cursor/skills/git-sync-shared/
+!.cursor/skills/test-git-sync-pat/
+!.cursor/skills/test-git-sync-github-app/
+!.cursor/skills/test-git-sync-all/
 .devcontainer/
 .claude/
 

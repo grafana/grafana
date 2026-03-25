@@ -1,6 +1,6 @@
 #!/bin/bash
 # Source .env from the project root and export all variables.
-# Usage: source .cursor/skills/test-git-sync-provisioning/scripts/load-env.sh
+# Usage: source .cursor/skills/git-sync-shared/scripts/load-env.sh
 
 set -euo pipefail
 
