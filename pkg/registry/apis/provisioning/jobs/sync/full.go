@@ -75,10 +75,18 @@ func FullSync(
 	}
 
 	if folderMetadataEnabled && len(missingFolderMetadata) > 0 {
+		changeActions := make(map[string]repository.FileAction, len(changes))
+		for _, c := range changes {
+			changeActions[c.Path] = c.Action
+		}
 		for _, p := range missingFolderMetadata {
 			builder := jobs.NewFolderResult(p).
-				WithWarning(resources.NewMissingFolderMetadata(p)).
-				WithAction(repository.FileActionIgnored)
+				WithWarning(resources.NewMissingFolderMetadata(p))
+			if action, ok := changeActions[p]; ok {
+				builder = builder.WithAction(action)
+			} else {
+				builder = builder.WithAction(repository.FileActionIgnored)
+			}
 			progress.Record(ctx, builder.Build())
 		}
 	}
