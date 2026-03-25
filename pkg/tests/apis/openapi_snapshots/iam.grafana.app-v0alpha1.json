@@ -4941,7 +4941,8 @@
           "title",
           "email",
           "provisioned",
-          "externalUID"
+          "externalUID",
+          "memberCount"
         ],
         "properties": {
           "accessControl": {
@@ -4958,6 +4959,11 @@
           "externalUID": {
             "type": "string",
             "default": ""
+          },
+          "memberCount": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           },
           "name": {
             "type": "string",

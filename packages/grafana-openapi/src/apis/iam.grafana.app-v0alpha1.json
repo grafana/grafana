@@ -4629,7 +4629,7 @@
       },
       "GetSearchTeamsTeamHit": {
         "type": "object",
-        "required": ["name", "title", "email", "provisioned", "externalUID"],
+        "required": ["name", "title", "email", "provisioned", "externalUID", "memberCount"],
         "properties": {
           "accessControl": {
             "type": "object",
@@ -4645,6 +4645,11 @@
           "externalUID": {
             "type": "string",
             "default": ""
+          },
+          "memberCount": {
+            "type": "integer",
+            "format": "int64",
+            "default": 0
           },
           "name": {
             "type": "string",
