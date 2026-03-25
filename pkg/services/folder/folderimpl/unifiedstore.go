@@ -360,7 +360,7 @@ func (ss *FolderUnifiedStoreImpl) getChildrenFallback(ctx context.Context, q fol
 	hits := make([]*folder.FolderReference, 0, len(page))
 	for _, f := range page {
 		hits = append(hits, &folder.FolderReference{
-			ID:        f.ID,
+			ID:        f.ID, //nolint:staticcheck
 			UID:       f.UID,
 			Title:     f.Title,
 			ParentUID: f.ParentUID,
