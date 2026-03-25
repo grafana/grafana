@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,6 +11,7 @@ import { PluginDashboard } from 'app/types/plugins';
 import { DASHBOARD_LIBRARY_ROUTES } from '../types';
 
 import { DashboardCard } from './DashboardCard';
+import { NewDashboardLibraryInteractions } from './analytics/main';
 import { CONTENT_KINDS, CREATION_ORIGINS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
 import { DashboardLibraryInteractions } from './interactions';
 import { getProvisionedDashboardImageUrl } from './utils/provisionedDashboardHelpers';
@@ -31,6 +33,8 @@ export const DashboardLibrarySection = ({
   const [currentPage, setCurrentPage] = useState(1);
   const hasTrackedLoaded = useRef(false);
 
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+
   // Get datasource info for empty state
   const datasourceType = useMemo(() => {
     if (!datasourceUid) {
@@ -43,13 +47,21 @@ export const DashboardLibrarySection = ({
   // Track analytics only once on first successful load
   useEffect(() => {
     if (!isDashboardsLoading && !hasTrackedLoaded.current && dashboards.length > 0) {
-      DashboardLibraryInteractions.loaded({
-        numberOfItems: dashboards.length,
-        contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
-        datasourceTypes: [datasourceType],
-        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-        eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
-      });
+      isAnalyticsFrameworkEnabled
+        ? NewDashboardLibraryInteractions.loaded({
+            numberOfItems: dashboards.length,
+            contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
+            datasourceTypes: [datasourceType],
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
+          })
+        : DashboardLibraryInteractions.loaded({
+            numberOfItems: dashboards.length,
+            contentKinds: [CONTENT_KINDS.DATASOURCE_DASHBOARD],
+            datasourceTypes: [datasourceType],
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
+          });
       hasTrackedLoaded.current = true;
     }
   }, [isDashboardsLoading, dashboards, datasourceType]);
@@ -65,15 +77,25 @@ export const DashboardLibrarySection = ({
   const showEmptyState = !isDashboardsLoading && dashboards.length === 0;
 
   const onUseProvisionedDashboard = async (dashboard: PluginDashboard) => {
-    DashboardLibraryInteractions.itemClicked({
-      contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
-      datasourceTypes: [dashboard.pluginId],
-      libraryItemId: dashboard.uid,
-      libraryItemTitle: dashboard.title,
-      sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-      eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
-      discoveryMethod: DISCOVERY_METHODS.BROWSE,
-    });
+    isAnalyticsFrameworkEnabled
+      ? NewDashboardLibraryInteractions.itemClicked({
+          contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
+          datasourceTypes: [dashboard.pluginId],
+          libraryItemId: dashboard.uid,
+          libraryItemTitle: dashboard.title,
+          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
+          discoveryMethod: DISCOVERY_METHODS.BROWSE,
+        })
+      : DashboardLibraryInteractions.itemClicked({
+          contentKind: CONTENT_KINDS.DATASOURCE_DASHBOARD,
+          datasourceTypes: [dashboard.pluginId],
+          libraryItemId: dashboard.uid,
+          libraryItemTitle: dashboard.title,
+          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+          eventLocation: EVENT_LOCATIONS.MODAL_PROVISIONED_TAB,
+          discoveryMethod: DISCOVERY_METHODS.BROWSE,
+        });
 
     const params = new URLSearchParams({
       datasource: datasourceUid || '',
