@@ -138,12 +138,6 @@
       "types": "./dist/types/clients/rtkq/quotas/v0alpha1/index.d.ts",
       "import": "./dist/esm/clients/rtkq/quotas/v0alpha1/index.mjs",
       "require": "./dist/cjs/clients/rtkq/quotas/v0alpha1/index.cjs"
-    },
-    "./rtkq/preferences/generic/v1alpha1": {
-      "@grafana-app/source": "./src/clients/rtkq/preferences/generic/v1alpha1/index.ts",
-      "types": "./dist/types/clients/rtkq/preferences/generic/v1alpha1/index.d.ts",
-      "import": "./dist/esm/clients/rtkq/preferences/generic/v1alpha1/index.mjs",
-      "require": "./dist/cjs/clients/rtkq/preferences/generic/v1alpha1/index.cjs"
     }
   },
   "publishConfig": {

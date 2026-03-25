@@ -12,7 +12,6 @@ import { generatedAPI as logsdrilldownAPIv1alpha1 } from './logsdrilldown/v1alph
 import { generatedAPI as logsdrilldownAPIv1beta1 } from './logsdrilldown/v1beta1';
 import { generatedAPI as notificationsAlertingAPIv0alpha1 } from './notifications.alerting/v0alpha1';
 import { generatedAPI as playlistAPIv1 } from './playlist/v1';
-import { generatedAPI as genericPreferencesAPI } from './preferences/generic/v1alpha1';
 import { generatedAPI as preferencesAPIv1alpha1 } from './preferences/v1alpha1';
 import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1';
 import { generatedAPI as quotasAPIv0alpha1 } from './quotas/v0alpha1';
@@ -38,7 +37,6 @@ export const allMiddleware = [
   logsdrilldownAPIv1beta1.middleware,
   logsdrilldownAPIv1alpha1.middleware,
   quotasAPIv0alpha1.middleware,
-  genericPreferencesAPI.middleware,
   // PLOP_INJECT_MIDDLEWARE
 ] as const;
 
@@ -60,7 +58,6 @@ export const allReducers = {
   [logsdrilldownAPIv1alpha1.reducerPath]: logsdrilldownAPIv1alpha1.reducer,
   [logsdrilldownAPIv1beta1.reducerPath]: logsdrilldownAPIv1beta1.reducer,
   [quotasAPIv0alpha1.reducerPath]: quotasAPIv0alpha1.reducer,
-  [genericPreferencesAPI.reducerPath]: genericPreferencesAPI.reducer,
   // PLOP_INJECT_REDUCER
 };
 
