@@ -64,6 +64,7 @@ describe('useOrganizeFields', () => {
         useOrganizeFields({
           extractedFrame,
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {},
@@ -75,9 +76,10 @@ describe('useOrganizeFields', () => {
 
       await waitFor(() => {
         expect(organizedFields.current.organizedFrame).not.toBeNull();
-        expect(organizedFields.current.organizedFrame?.fields.length).toBe(2);
+        expect(organizedFields.current.organizedFrame?.fields.length).toBe(3);
         expect(organizedFields.current.organizedFrame?.fields[0].name).toBe(LOGS_DATAPLANE_TIMESTAMP_NAME);
-        expect(organizedFields.current.organizedFrame?.fields[1].name).toBe(LOGS_DATAPLANE_BODY_NAME);
+        expect(organizedFields.current.organizedFrame?.fields[1].name).toBe('level');
+        expect(organizedFields.current.organizedFrame?.fields[2].name).toBe(LOGS_DATAPLANE_BODY_NAME);
       });
     });
     test('returns specified fields', async () => {
@@ -85,6 +87,7 @@ describe('useOrganizeFields', () => {
         useOrganizeFields({
           extractedFrame,
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {
@@ -110,6 +113,7 @@ describe('useOrganizeFields', () => {
         useOrganizeFields({
           extractedFrame,
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {
@@ -122,11 +126,12 @@ describe('useOrganizeFields', () => {
       );
       await waitFor(() => {
         expect(organizedFields.current.organizedFrame).not.toBeNull();
-        expect(organizedFields.current.organizedFrame?.fields.length).toBe(2);
+        expect(organizedFields.current.organizedFrame?.fields.length).toBe(3);
         expect(organizedFields.current.organizedFrame?.fields[0].config.custom.cellOptions.type).toBe(
           TableCellDisplayMode.Custom
         );
         expect(organizedFields.current.organizedFrame?.fields[1].config.custom.cellOptions).not.toBeDefined();
+        expect(organizedFields.current.organizedFrame?.fields[2].config.custom.cellOptions).not.toBeDefined();
       });
     });
     test('only used on first column - showCopyLogLink', async () => {
@@ -134,6 +139,7 @@ describe('useOrganizeFields', () => {
         useOrganizeFields({
           extractedFrame,
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {
@@ -146,11 +152,12 @@ describe('useOrganizeFields', () => {
       );
       await waitFor(() => {
         expect(organizedFields.current.organizedFrame).not.toBeNull();
-        expect(organizedFields.current.organizedFrame?.fields.length).toBe(2);
+        expect(organizedFields.current.organizedFrame?.fields.length).toBe(3);
         expect(organizedFields.current.organizedFrame?.fields[0].config.custom.cellOptions.type).toBe(
           TableCellDisplayMode.Custom
         );
         expect(organizedFields.current.organizedFrame?.fields[1].config.custom.cellOptions).not.toBeDefined();
+        expect(organizedFields.current.organizedFrame?.fields[2].config.custom.cellOptions).not.toBeDefined();
       });
     });
     test('not used if showInspectLogLine or showCopyLogLink is not defined', async () => {
@@ -158,6 +165,7 @@ describe('useOrganizeFields', () => {
         useOrganizeFields({
           extractedFrame,
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {},
@@ -178,6 +186,7 @@ describe('useOrganizeFields', () => {
         useOrganizeFields({
           extractedFrame,
           bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
           logsFrame: testLogsFrame,
           onPermalinkClick: () => null,
           options: {},

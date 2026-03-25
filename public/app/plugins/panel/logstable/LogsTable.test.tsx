@@ -127,11 +127,12 @@ describe('LogsTable', () => {
     await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
     expect(container.querySelector('[role="gridcell"]')).toBeVisible();
 
-    // Table headers
+    // Table headers (time, level from labels, body by default)
     const headers = container.querySelectorAll('[role="columnheader"]');
-    expect(headers).toHaveLength(2);
+    expect(headers).toHaveLength(3);
     expect(headers[0].textContent).toEqual('timestamp');
-    expect(headers[1].textContent).toEqual('body');
+    expect(headers[1].textContent).toEqual('level');
+    expect(headers[2].textContent).toEqual('body');
   });
 
   describe('Panel controls', () => {
@@ -167,13 +168,16 @@ describe('LogsTable', () => {
       const onOptionsChange = jest.fn().mockImplementation((options: Options) => {});
       setUp({ onOptionsChange });
       await waitFor(() => expect(screen.queryByText('Selected fields')).toBeInTheDocument());
-      expect(screen.getByRole('checkbox', { name: /level/i })).not.toBeChecked();
+      // Level is shown by default; `service` is extracted from labels and starts unchecked
+      expect(screen.getByRole('checkbox', { name: /service/i })).not.toBeChecked();
       expect(onOptionsChange).toBeCalledTimes(0);
 
-      await userEvent.click(screen.getByRole('checkbox', { name: /level/i }));
+      await userEvent.click(screen.getByRole('checkbox', { name: /service/i }));
       expect(onOptionsChange).toBeCalledTimes(1);
       expect(onOptionsChange).toBeCalledWith(
-        expect.objectContaining({ displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME, 'level'] })
+        expect.objectContaining({
+          displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'level', LOGS_DATAPLANE_BODY_NAME, 'service'],
+        })
       );
     });
 
