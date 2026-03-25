@@ -11,6 +11,7 @@ import { getFieldWidth } from '../fields/getFieldWidth';
 import { doesFieldSupportAdHocFiltering, doesFieldSupportInspector } from '../fields/supports';
 import { getDisplayedFields } from '../options/getDisplayedFields';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
+import { LOG_LEVEL_FIELD_NAME } from '../transforms/logs';
 import { organizeLogsFieldsTransform } from '../transforms/organizeLogsFieldsTransform';
 import { BuildLinkToLogLine, isBuildLinkToLogLine } from '../types';
 
@@ -93,7 +94,7 @@ const organizeFields = async (
     return Promise.resolve(null);
   }
 
-  const displayedFields = getDisplayedFields(options, timeFieldName, bodyFieldName);
+  const displayedFields = getDisplayedFields(options, timeFieldName, LOG_LEVEL_FIELD_NAME, bodyFieldName);
 
   let indexByName: Record<string, number> = {};
   let includeByName: Record<string, boolean> = {};
