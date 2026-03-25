@@ -8937,7 +8937,8 @@
     "select-placeholder": "Filter by folder"
   },
   "folder-repo": {
-    "read-only-badge": "Read only"
+    "read-only-badge": "Read only",
+    "repository-not-found-tooltip": "Repository not found"
   },
   "folders": {
     "api": {
@@ -13352,6 +13353,28 @@
         "label": "Sync all resources with external storage",
         "subtitle": "Use this option if you want to sync and manage your entire Grafana instance through external storage."
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "Save, move, and delete through the Git workflow are not available. Use the warning at the top of the dashboard to release or delete this dashboard if you are an administrator, or contact your Grafana administrator.",
+      "title": "Provisioning repository no longer exists"
+    },
+    "orphaned-repository-tooltip": "Repository not found",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "This will permanently delete all dashboards and folders managed by the missing repository. This action cannot be undone.",
+      "confirm-delete-button": "Delete",
+      "confirm-delete-title": "Delete all resources from this repository?",
+      "confirm-release-body": "This will remove provisioning annotations from all dashboards and folders managed by the missing repository, converting them to regular resources that can be saved and deleted normally.",
+      "confirm-release-button": "Convert to local",
+      "confirm-release-title": "Convert all resources to local from this repository?",
+      "contact-admin": "Contact your Grafana administrator to convert this resource to local or delete all resources from the missing repository.",
+      "convert-to-local-button": "Convert to local",
+      "delete-button": "Delete",
+      "job-error": "An error occurred while processing orphaned resources",
+      "job-success": "Orphaned resources processed successfully",
+      "job-warning": "Some resources were processed with warnings. Please review the results.",
+      "message": "This resource cannot be saved or modified until it is converted to local. Converting to local or deleting it will affect all resources managed by that repository.",
+      "submit-error": "Failed to create job for orphaned resources",
+      "title": "This resource is managed by a repository that no longer exists"
     },
     "provisioning-wizard": {
       "on-submit": {
