@@ -4,9 +4,9 @@
 
 ### Bug fixes
 
-- **Security:** Fix CVE-2026-27877
 - **Security:** Fix CVE-2026-27876
-- **Security:** Fix CVE-2026-33375
+- **Security:** Fix CVE-2026-27877
+- **Security:** Fix CVE-2026-28375
 - **Security:** Fix CVE-2026-27879
 
 <!-- 11.6.14 END -->
