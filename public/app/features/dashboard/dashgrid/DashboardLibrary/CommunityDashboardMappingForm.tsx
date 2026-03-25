@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useState } from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
@@ -9,6 +10,8 @@ import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/
 
 import { useTrackingContext } from './TrackingContext';
 import { ContentKind } from './constants';
+import { NewDashboardLibraryInteractions } from './analytics/main';
+import { ContentKind, EventLocation, SOURCE_ENTRY_POINTS } from './constants';
 import { DashboardLibraryInteractions } from './interactions';
 import { InputMapping, mapConstantInputs, mapUserSelectedDatasources } from './utils/autoMapDatasources';
 
@@ -41,20 +44,33 @@ export const CommunityDashboardMappingForm = ({
   contentKind,
   datasourceTypes,
 }: Props) => {
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+
   const { sourceEntryPoint, eventLocation } = useTrackingContext();
 
   // Track mapping form shown on mount
   useEffect(() => {
-    DashboardLibraryInteractions.mappingFormShown({
-      contentKind,
-      datasourceTypes,
-      libraryItemId,
-      libraryItemTitle: dashboardName,
-      sourceEntryPoint,
-      eventLocation,
-      unmappedDsInputsCount: unmappedDsInputs.length,
-      constantInputsCount: constantInputs.length,
-    });
+    isAnalyticsFrameworkEnabled
+      ? NewDashboardLibraryInteractions.mappingFormShown({
+          contentKind,
+          datasourceTypes,
+          libraryItemId,
+          libraryItemTitle: dashboardName,
+          sourceEntryPoint,
+          eventLocation,
+          unmappedDsInputsCount: unmappedDsInputs.length,
+          constantInputsCount: constantInputs.length,
+        })
+      : DashboardLibraryInteractions.mappingFormShown({
+          contentKind,
+          datasourceTypes,
+          libraryItemId,
+          libraryItemTitle: dashboardName,
+          sourceEntryPoint,
+          eventLocation,
+          unmappedDsInputsCount: unmappedDsInputs.length,
+          constantInputsCount: constantInputs.length,
+        });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -100,16 +116,27 @@ export const CommunityDashboardMappingForm = ({
 
   const onPreviewClick = () => {
     // Track mapping form completion
-    DashboardLibraryInteractions.mappingFormCompleted({
-      contentKind,
-      datasourceTypes,
-      libraryItemId,
-      libraryItemTitle: dashboardName,
-      sourceEntryPoint,
-      eventLocation,
-      userMappedCount: unmappedDsInputs.length,
-      autoMappedCount: existingMappings.length,
-    });
+    isAnalyticsFrameworkEnabled
+      ? NewDashboardLibraryInteractions.mappingFormCompleted({
+          contentKind,
+          datasourceTypes,
+          libraryItemId,
+          libraryItemTitle: dashboardName,
+          sourceEntryPoint,
+          eventLocation,
+          userMappedCount: unmappedDsInputs.length,
+          autoMappedCount: existingMappings.length,
+        })
+      : DashboardLibraryInteractions.mappingFormCompleted({
+          contentKind,
+          datasourceTypes,
+          libraryItemId,
+          libraryItemTitle: dashboardName,
+          sourceEntryPoint,
+          eventLocation,
+          userMappedCount: unmappedDsInputs.length,
+          autoMappedCount: existingMappings.length,
+        });
 
     // Combine all mappings:
     // 1. Existing auto-mapped datasources

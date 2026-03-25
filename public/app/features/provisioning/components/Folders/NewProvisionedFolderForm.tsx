@@ -20,6 +20,7 @@ import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { RepoInvalidStateBanner } from '../Shared/RepoInvalidStateBanner';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
+import { joinPath } from '../utils/path';
 
 interface FormProps extends Props {
   initialValues: BaseProvisionedFormData;
@@ -123,8 +124,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     }
 
     const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
-    const prefix = basePath ? `${basePath}/` : '';
-    const path = `${prefix}${title}/`;
+    const path = joinPath(basePath, `${title}/`);
 
     const folderModel = {
       title,
