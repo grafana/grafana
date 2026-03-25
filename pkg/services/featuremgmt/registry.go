@@ -1560,9 +1560,9 @@ var (
 		{
 			Name:        "grafanaAdvisor",
 			Description: "Enables Advisor app",
-			Stage:       FeatureStagePrivatePreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaPluginsPlatformSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "elasticsearchImprovedParsing",

@@ -996,7 +996,7 @@ export interface FeatureToggles {
   teamLBACApiReadFromAppPlatform?: boolean;
   /**
   * Enables Advisor app
-  * @default false
+  * @default true
   */
   grafanaAdvisor?: boolean;
   /**
