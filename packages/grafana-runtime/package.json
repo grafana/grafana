@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/runtime",
-  "version": "12.3.6",
+  "version": "12.3.7",
   "description": "Grafana Runtime Library",
   "keywords": [
     "grafana",
@@ -53,11 +53,11 @@
     "postpack": "mv package.json.bak package.json && rimraf ./unstable"
   },
   "dependencies": {
-    "@grafana/data": "12.3.6",
-    "@grafana/e2e-selectors": "12.3.6",
+    "@grafana/data": "12.3.7",
+    "@grafana/e2e-selectors": "12.3.7",
     "@grafana/faro-web-sdk": "^1.13.2",
-    "@grafana/schema": "12.3.6",
-    "@grafana/ui": "12.3.6",
+    "@grafana/schema": "12.3.7",
+    "@grafana/ui": "12.3.7",
     "@openfeature/core": "^1.9.0",
     "@openfeature/ofrep-web-provider": "^0.3.3",
     "@openfeature/web-sdk": "^1.6.1",
