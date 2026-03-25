@@ -54,6 +54,13 @@ post-generate-cleanup: ## Clean up the generated code
 	@echo "" >> ./pkg/apis/dashboard/v2beta1/dashboard_spec.cue
 	@cat ./kinds/v2beta1/dashboard_spec.cue >> ./pkg/apis/dashboard/v2beta1/dashboard_spec.cue
 
+	# Copy dashboard/v2 spec so we can use it for schema validation
+	@echo "// This file is managed by grafana-app-sdk - DO NOT EDIT MANUALLY" > ./pkg/apis/dashboard/v2/dashboard_spec.cue
+	@echo "// Source: apps/dashboard/kinds/v2/dashboard_spec.cue" >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
+	@echo "// To sync changes, run: make generate in apps/dashboard" >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
+	@echo "" >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
+	@cat ./kinds/v2/dashboard_spec.cue >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
+
 	@# Remove generated files for v1beta1 since it's a thin wrapper around v1
 	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_codec_gen.go
 	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go
