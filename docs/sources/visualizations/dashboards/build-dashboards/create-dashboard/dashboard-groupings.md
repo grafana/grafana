@@ -66,9 +66,9 @@ The following table describes the options you can set for a row or tab:
 | Title           | Title of the row or tab.                                                    |
 | Fill screen     | Toggle the switch on to make the row fill the screen. Rows only. |
 | Hide row header | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Rows only. |
-| Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](#panel-layouts) or [Grouping layouts](#grouping-layouts). |
-| Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
-| Show / hide rules > [Panel/Row/Tab visibility](#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variable values, a time range, or query results (panels only). |
+| Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts) or [Grouping layouts](#grouping-layouts). |
+| Repeat options > [Repeat by variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
+| Show / hide rules > [Panel/Row/Tab visibility](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variable values, a time range, or query results (panels only). |
 
 <!-- prettier-ignore-end -->
 
@@ -81,7 +81,7 @@ You can nest up to three levels deep, which means a dashboard can have a maximum
 - **Dashboard**: Layout options allow you to choose between rows and tabs or custom and auto layouts.
 - **Grouping 1 (outer)**: Layout options allow you to choose between rows and tabs.
 - **Grouping 2 (middle)**: Layout options allow you to choose between rows and tabs.
-- **Grouping 3 (inner)**: Layout options allow you to choose between custom and auto grid (refer to [Panel layouts](#panel-layouts)).
+- **Grouping 3 (inner)**: Layout options allow you to choose between custom and auto grid (refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts)).
 - **Panels**: No layout options
 
 You can switch between rows and tabs or update the panel layout by clicking the parent container and changing the layout selection.
