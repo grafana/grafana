@@ -83,7 +83,7 @@ export const CommunityDashboardSection = ({
   } = useAsyncRetry(async () => {
     // No active search: use pre-fetched data from parent (or show loading if not yet available)
     if (!debouncedSearchQuery.trim()) {
-      if (dashboards !== undefined) {
+      if (!isDashboardsLoading) {
         return { dashboards, datasourceType: datasourceType ?? '' };
       }
       return null; // dashboards not yet ready from parent — show loading state

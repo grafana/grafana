@@ -41,7 +41,6 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({ dashboard: simpleDashboard, meta: { url: '' } }),
-      post: jest.fn().mockResolvedValue(simpleDashboard),
     };
   },
   getDataSourceSrv: () => {
