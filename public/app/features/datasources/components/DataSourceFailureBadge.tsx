@@ -5,7 +5,7 @@ import { textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, useStyles2 } from '@grafana/ui';
 
-import { FailureSeverity } from '../../connections/hooks/useFailedDatasourcesUIDs';
+import { FailureSeverity } from '../../connections/hooks/useDatasourceAdvisorChecks';
 
 interface Props {
   severity: FailureSeverity;
@@ -27,7 +27,7 @@ export function DataSourceFailureBadge({ severity, message }: Props) {
   return (
     <Badge
       icon="exclamation-triangle"
-      text={isHigh ? t('datasources.list.failed-high', 'failed') : t('datasources.list.failed-low', 'warn')}
+      text={isHigh ? t('datasources.list.failed-high', 'failed') : t('datasources.list.failed-low', 'warning')}
       color={isHigh ? 'red' : 'orange'}
       tooltip={tooltipContent}
       className={styles.trigger}

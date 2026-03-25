@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react';
 import { Check, CheckType, useGetCheckTypeQuery, useListCheckQuery } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { config } from '@grafana/runtime';
 
-import { useLatestDatasourceCheck, useFailedDatasourcesUIDs } from './useFailedDatasourcesUIDs';
+import { useDatasourceFailureByUID, useLatestDatasourceCheck } from './useDatasourceAdvisorChecks';
 
 jest.mock('@grafana/api-clients/rtkq/advisor/v0alpha1', () => ({
   ...jest.requireActual('@grafana/api-clients/rtkq/advisor/v0alpha1'),
@@ -113,7 +113,7 @@ describe('useLatestDatasourceCheck', () => {
   });
 });
 
-describe('useFailedDatasourcesUIDs', () => {
+describe('useDatasourceFailureByUID', () => {
   const originalFeatureToggles = config.featureToggles;
 
   beforeEach(() => {
@@ -133,7 +133,7 @@ describe('useFailedDatasourcesUIDs', () => {
   it('returns empty map when there are no checks', () => {
     useListCheckMock.mockReturnValue({ data: { items: [] }, isLoading: false });
 
-    const { result } = renderHook(() => useFailedDatasourcesUIDs());
+    const { result } = renderHook(() => useDatasourceFailureByUID());
 
     expect(result.current.datasourceFailureByUID.size).toBe(0);
   });
@@ -155,7 +155,7 @@ describe('useFailedDatasourcesUIDs', () => {
 
     useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
 
-    const { result } = renderHook(() => useFailedDatasourcesUIDs());
+    const { result } = renderHook(() => useDatasourceFailureByUID());
 
     expect(result.current.datasourceFailureByUID.get('uid-1')?.severity).toBe('high');
     expect(result.current.datasourceFailureByUID.get('uid-2')?.severity).toBe('high');
@@ -179,7 +179,7 @@ describe('useFailedDatasourcesUIDs', () => {
 
     useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
 
-    const { result } = renderHook(() => useFailedDatasourcesUIDs());
+    const { result } = renderHook(() => useDatasourceFailureByUID());
 
     expect(result.current.datasourceFailureByUID.get('uid-1')?.severity).toBe('high');
     expect(result.current.datasourceFailureByUID.size).toBe(1);
@@ -197,7 +197,7 @@ describe('useFailedDatasourcesUIDs', () => {
 
     useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
 
-    const { result } = renderHook(() => useFailedDatasourcesUIDs());
+    const { result } = renderHook(() => useDatasourceFailureByUID());
 
     expect(result.current.datasourceFailureByUID.size).toBe(0);
   });
@@ -206,7 +206,7 @@ describe('useFailedDatasourcesUIDs', () => {
     config.featureToggles = { ...originalFeatureToggles, grafanaAdvisor: false };
     useListCheckMock.mockReturnValue({ data: undefined, isLoading: false });
 
-    const { result } = renderHook(() => useFailedDatasourcesUIDs());
+    const { result } = renderHook(() => useDatasourceFailureByUID());
 
     expect(result.current.datasourceFailureByUID.size).toBe(0);
     expect(result.current.isLoading).toBe(false);
@@ -237,7 +237,7 @@ describe('useFailedDatasourcesUIDs', () => {
       isLoading: false,
     });
 
-    const { result } = renderHook(() => useFailedDatasourcesUIDs());
+    const { result } = renderHook(() => useDatasourceFailureByUID());
 
     expect(result.current.datasourceFailureByUID.get('uid-1')?.message).toBe(
       'Health check failed: Go to datasource settings and fix the reported issue.'

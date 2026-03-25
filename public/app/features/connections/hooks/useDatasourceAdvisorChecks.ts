@@ -51,7 +51,7 @@ export type DatasourceFailuresResult = {
  * Returns a Map of datasource UIDs that have any failure in the latest datasource
  * advisor check, to the highest severity among their failures.
  */
-export function useFailedDatasourcesUIDs(): DatasourceFailuresResult {
+export function useDatasourceFailureByUID(): DatasourceFailuresResult {
   const { check, isLoading } = useLatestDatasourceCheck();
   const checkTypeName = check?.metadata.labels?.[CHECK_TYPE_LABEL];
   const { data: checkType, isLoading: isCheckTypeLoading } = useGetCheckTypeQuery(
