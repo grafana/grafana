@@ -27,6 +27,8 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
   const [jobResult, setJobResult] = useState<StepStatusInfo | null>(null);
 
   const isAdmin = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+  const hideJobStatus = jobResult?.status === 'success';
+  const result = jobResult ? getJobResultAlertByStatus()[jobResult.status] : undefined;
 
   const { submitRelease, submitDelete, isSubmitting, error, clearError } = useOrphanedResourceActions({
     repositoryName,
@@ -57,11 +59,10 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
   }, []);
 
   if (job && actionType) {
-    const result = jobResult ? getJobResultAlertByStatus()[jobResult.status] : undefined;
     // TODO: add action to dismiss result and navigate away or refresh page if needed
     return (
       <>
-        <JobStatus watch={job} jobType={actionType} onStatusChange={handleJobStatusChange} />
+        {!hideJobStatus && <JobStatus watch={job} jobType={actionType} onStatusChange={handleJobStatusChange} />}
         {result && <Alert severity={result.severity} title={result.title} />}
       </>
     );
