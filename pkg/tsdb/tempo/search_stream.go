@@ -6,9 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
-	"sort"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
@@ -68,7 +65,6 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	// changes or updates, so we have to get it from context.
 	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
 	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
-	s.logSearchStreamHeaders(ctx, req)
 
 	stream, err := datasource.StreamingClient.Search(ctx, sr)
 	if err != nil {
@@ -82,135 +78,6 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	}
 
 	return s.processStream(ctx, stream, sender)
-}
-
-func (s *Service) logSearchStreamHeaders(ctx context.Context, req *backend.RunStreamRequest) {
-
-	if incomingMD, ok := metadata.FromOutgoingContext(ctx); ok {
-		backend.Logger.Warn("Tempo streaming incoming gRPC metadata", "metadata", sanitizeMetadata(incomingMD))
-	} else {
-		backend.Logger.Warn("Tempo streaming incoming gRPC metadata missing")
-	}
-
-	if req == nil {
-		backend.Logger.Warn("Tempo streaming request missing")
-		return
-	}
-
-	backend.Logger.Warn(
-		"Tempo streaming request summary",
-		"path", req.Path,
-		"httpHeaders", sanitizeHTTPHeaders(req.GetHTTPHeaders()),
-		"rawHeaderKeys", sortedKeysFromStringMap(req.Headers),
-	)
-
-	pluginCtx := backend.PluginConfigFromContext(ctx)
-	backend.Logger.Warn(
-		"Tempo streaming plugin context summary",
-		"requestOrgID", req.PluginContext.OrgID,
-		"contextOrgID", pluginCtx.OrgID,
-		"pluginID", firstNonEmpty(req.PluginContext.PluginID, pluginCtx.PluginID),
-		"datasourceUID", datasourceUID(req.PluginContext, pluginCtx),
-		"userAgent", backend.UserAgentFromContext(ctx).String(),
-	)
-
-	if ds := req.PluginContext.DataSourceInstanceSettings; ds != nil {
-		backend.Logger.Warn(
-			"Tempo streaming datasource settings summary",
-			"name", ds.Name,
-			"uid", ds.UID,
-			"url", ds.URL,
-			"basicAuthEnabled", ds.BasicAuthEnabled,
-			"secureJSONKeys", sortedKeysFromStringMap(ds.DecryptedSecureJSONData),
-		)
-
-		opts, err := ds.HTTPClientOptions(ctx)
-		if err != nil {
-			backend.Logger.Warn("Tempo streaming datasource HTTP client options unavailable", "err", err)
-		} else {
-			backend.Logger.Warn(
-				"Tempo streaming datasource HTTP client options",
-				"forwardHTTPHeaders", opts.ForwardHTTPHeaders,
-				"headers", sanitizeHTTPHeaders(opts.Header),
-			)
-		}
-	}
-}
-
-func (s *Service) logSearchStreamOutgoingMetadata(ctx context.Context) {
-	ctxLogger := s.logger.FromContext(ctx)
-	if outgoingMD, ok := metadata.FromOutgoingContext(ctx); ok {
-		ctxLogger.Debug("Tempo streaming outgoing gRPC metadata", "metadata", sanitizeMetadata(outgoingMD))
-		return
-	}
-
-	ctxLogger.Debug("Tempo streaming outgoing gRPC metadata missing")
-}
-
-func sanitizeMetadata(md metadata.MD) map[string][]string {
-	sanitized := make(map[string][]string, len(md))
-	for key, values := range md {
-		sanitized[key] = sanitizeValues(key, values)
-	}
-	return sanitized
-}
-
-func sanitizeHTTPHeaders(headers http.Header) map[string][]string {
-	sanitized := make(map[string][]string, len(headers))
-	for key, values := range headers {
-		sanitized[key] = sanitizeValues(key, values)
-	}
-	return sanitized
-}
-
-func sanitizeValues(key string, values []string) []string {
-	sanitized := make([]string, 0, len(values))
-	for _, value := range values {
-		if isSensitiveHeader(key) {
-			sanitized = append(sanitized, "<redacted>")
-			continue
-		}
-
-		sanitized = append(sanitized, value)
-	}
-	return sanitized
-}
-
-func isSensitiveHeader(key string) bool {
-	switch strings.ToLower(key) {
-	case "authorization", "cookie", "set-cookie", "x-id-token":
-		return true
-	default:
-		return false
-	}
-}
-
-func sortedKeysFromStringMap(values map[string]string) []string {
-	keys := make([]string, 0, len(values))
-	for key := range values {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func datasourceUID(requestCtx backend.PluginContext, contextCtx backend.PluginContext) string {
-	if requestCtx.DataSourceInstanceSettings != nil && requestCtx.DataSourceInstanceSettings.UID != "" {
-		return requestCtx.DataSourceInstanceSettings.UID
-	}
-	if contextCtx.DataSourceInstanceSettings != nil {
-		return contextCtx.DataSourceInstanceSettings.UID
-	}
-	return ""
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if value != "" {
-			return value
-		}
-	}
-	return ""
 }
 
 func (s *Service) processStream(ctx context.Context, stream tempopb.StreamingQuerier_SearchClient, sender StreamSender) error {
