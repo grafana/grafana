@@ -57,6 +57,55 @@ func TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDTakeover(t *test
 	})
 }
 
+// TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDSwap verifies the
+// deleteOldResource sourcePath guard during a symmetric UID swap in incremental
+// sync. File A takes B's UID and file B takes A's UID simultaneously.
+//
+// Incremental sync processes files alphabetically, so the execution is
+// deterministic:
+//  1. A runs first: writes swap-uid-b (UPDATE → sourcePath becomes
+//     dashboard_a.json), then deletes swap-uid-a (sourcePath still points to
+//     dashboard_a.json → match → delete proceeds).
+//  2. B runs next: writes swap-uid-a (CREATE, since A just deleted it), then
+//     tries to delete swap-uid-b — but its sourcePath is now dashboard_a.json
+//     (set by A's write), which ≠ dashboard_b.json → guard fires, skip delete.
+//
+// Both dashboards survive with their UIDs swapped.
+func TestIntegrationProvisioning_IncrementalGitSync_MultiFileUIDSwap(t *testing.T) {
+	helper := sharedGitHelper(t)
+	ctx := context.Background()
+
+	const repoName = "git-incr-uid-swap"
+
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"dashboard_a.json": gitcommon.DashboardJSON("swap-uid-a", "Dashboard A", 1),
+		"dashboard_b.json": gitcommon.DashboardJSON("swap-uid-b", "Dashboard B", 1),
+	}, "write", "branch")
+
+	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		"swap-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
+		"swap-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
+	})
+
+	// Symmetric swap: A gets B's UID, B gets A's UID.
+	require.NoError(t, local.UpdateFile("dashboard_a.json", string(gitcommon.DashboardJSON("swap-uid-b", "Dashboard A Swapped", 2))))
+	require.NoError(t, local.UpdateFile("dashboard_b.json", string(gitcommon.DashboardJSON("swap-uid-a", "Dashboard B Swapped", 2))))
+	_, err := local.Git("add", ".")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "swap UIDs between A and B")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	helper.SyncAndWaitIncremental(t, repoName)
+
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		"swap-uid-a": {Title: "Dashboard B Swapped", SourcePath: "dashboard_b.json"},
+		"swap-uid-b": {Title: "Dashboard A Swapped", SourcePath: "dashboard_a.json"},
+	})
+}
+
 // TestIntegrationProvisioning_FullSync_MultiFileUIDTakeover_Recovery verifies
 // that a second full sync recovers the correct dashboard state after a
 // multi-file UID takeover.
@@ -114,5 +163,60 @@ func TestIntegrationProvisioning_FullSync_MultiFileUIDTakeover_Recovery(t *testi
 	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
 		"full-uid-b":   {Title: "Dashboard A Took B", SourcePath: "dashboard_a.json"},
 		"full-uid-new": {Title: "Dashboard B New UID", SourcePath: "dashboard_b.json"},
+	})
+}
+
+// TestIntegrationProvisioning_FullSync_MultiFileUIDSwap_Recovery verifies that
+// a second full sync recovers the correct dashboard state after a symmetric UID
+// swap (file A takes B's UID, file B takes A's UID).
+//
+// FIXME: The same parallel-processing race described in
+// TestIntegrationProvisioning_FullSync_MultiFileUIDTakeover_Recovery applies
+// here. With a symmetric swap, the race is even more pronounced: whichever
+// goroutine completes its write+delete first destroys the UID the other
+// goroutine needs. The first full sync may leave one or both dashboards in an
+// inconsistent state. This is a known bug.
+//
+// The second full sync recovers because it compares the git tree against the
+// current Grafana resources and re-creates any missing dashboards.
+func TestIntegrationProvisioning_FullSync_MultiFileUIDSwap_Recovery(t *testing.T) {
+	helper := sharedGitHelper(t)
+	ctx := context.Background()
+
+	const repoName = "git-full-uid-swap-recovery"
+
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"dashboard_a.json": gitcommon.DashboardJSON("fswap-uid-a", "Dashboard A", 1),
+		"dashboard_b.json": gitcommon.DashboardJSON("fswap-uid-b", "Dashboard B", 1),
+	}, "write", "branch")
+
+	common.SyncAndWaitWithSuccess(t, helper, repoName)
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		"fswap-uid-a": {Title: "Dashboard A", SourcePath: "dashboard_a.json"},
+		"fswap-uid-b": {Title: "Dashboard B", SourcePath: "dashboard_b.json"},
+	})
+
+	// Symmetric swap: A gets B's UID, B gets A's UID.
+	require.NoError(t, local.UpdateFile("dashboard_a.json", string(gitcommon.DashboardJSON("fswap-uid-b", "Dashboard A Swapped", 2))))
+	require.NoError(t, local.UpdateFile("dashboard_b.json", string(gitcommon.DashboardJSON("fswap-uid-a", "Dashboard B Swapped", 2))))
+	_, err := local.Git("add", ".")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "swap UIDs between A and B")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	// FIXME: The first full sync is non-deterministic due to parallel
+	// processing. The symmetric swap race may cause one or both dashboards
+	// to be lost. We do not assert state here.
+	helper.SyncAndWait(t, repoName)
+
+	// A second full sync re-compares the git tree and recovers any missing
+	// resources, converging to the correct state.
+	common.SyncAndWaitWithSuccess(t, helper, repoName)
+
+	common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+		"fswap-uid-a": {Title: "Dashboard B Swapped", SourcePath: "dashboard_b.json"},
+		"fswap-uid-b": {Title: "Dashboard A Swapped", SourcePath: "dashboard_a.json"},
 	})
 }
