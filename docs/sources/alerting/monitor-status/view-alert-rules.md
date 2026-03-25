@@ -61,6 +61,42 @@ You can also change how the rule list is displayed using the **View as** option.
 
 For details on how rule states and alert instance states are displayed, refer to [View alert state](ref:view-alert-state).
 
+## View from the State history view
+
+Use the State history view to get insight into how your individual alert instances behave over time.
+
+View information on when a state change occurred, what the previous state was, the current state, any other alert instances that changed their state at the same time as well as what the query value was that triggered the change.
+
+To access the State history view, complete the following steps.
+
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Alert rules**.
+1. Click an alert rule.
+1. Click the **History** tab.
+
+   {{< figure src="/media/docs/alerting/alerting-state-history-view.png" max-width="750px" alt="State history view in Grafana Alerting" >}}
+
+   The timeline view at the top displays a timeline of changes for the past hour, so you can track how your alert instances are behaving over time.
+
+   The bottom part shows the alert instances, their previous and current state, the value of each part of the expression and a unique set of labels.
+
+   Common labels are displayed at the top to make it easier to identify different alert instances.
+
+1. From the timeline view, hover over a time to get an automatic display of all the changes that happened at that particular moment.
+
+   These changes are displayed in real time in the timestamp view at the bottom of the page. The timestamp view is a list of all the alert instances that changed state at that point in time. The visualization only displays 12 instances by default.
+
+   The value shown for each instance is for each part of the expression that was evaluated.
+
+1. Click the labels to filter and narrow down the results.
+
+## View notification history
+
+You can view the notification history or an alert rule from a Rule view page. To view alert rule history, complete the following steps.
+
+1. Navigate to **Alerts & IRM** -> **Alerting** -> **Alert rules**.
+1. Select an alert rule and click **View**.
+1. Click the **Notifications** tab.  
+
 ## View, compare and restore alert rules versions.
 
 You can view, compare, and restore previous alert rule versions.
@@ -91,7 +127,7 @@ Admin users can delete all of the alert rules within a folder. To delete all the
 
 Only users with an Admin role can restore deleted Grafana-managed alert rules. After an alert rule is restored, it is restored with a new, different UID from the one it had before.
 
-1. Go to **Alerts & IRM** -> **Alerting** -> **Alert rules**, then click the **Recently deleted** tab.
+1. Go to **Alerts & IRM** -> **Alerting** -> **Recently deleted**.
 1. Click the **Restore** button to restore the alert rule or click **Delete permanently** to delete the alert rule.
 
 {{< admonition type="note" >}}
