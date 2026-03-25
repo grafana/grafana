@@ -1,29 +1,25 @@
-package authorization
+package provisioning
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// TestIntegrationProvisioning_FolderAuthorizationWithMetadata verifies folder
-// authorization when the provisioningFolderMetadata feature flag is enabled.
-// The flag-disabled counterpart lives in the core provisioning package.
-func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
+// TestIntegrationProvisioning_FolderAuthorizationWithoutMetadata verifies folder
+// authorization when the provisioningFolderMetadata feature flag is disabled
+// (hash-based IDs). The flag-enabled counterpart lives in the foldermetadata/authorization package.
+func TestIntegrationProvisioning_FolderAuthorizationWithoutMetadata(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
 
 	const (
-		repoName         = "folder-auth-metadata-enabled-repo"
-		folderPathPrefix = "parent-with-metadata"
+		repoName         = "folder-auth-hash-repo"
+		folderPathPrefix = "parent-hash"
 	)
 
 	helper.CreateRepo(t, common.TestRepo{
@@ -63,14 +59,8 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		defer resp.Body.Close()
 		require.Equal(t, http.StatusOK, resp.StatusCode, "Admin should be able to create parent folder")
 
-		// When metadata is enabled, verify _folder.json was created with stable UID
-		parentMeta, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", folderPathPrefix+"/_folder.json")
-		require.NoError(t, err, "parent _folder.json should exist when metadata is enabled")
-		parentUID, _, _ := unstructured.NestedString(parentMeta.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, parentUID, "parent should have stable UID")
-
 		// Editor should be able to create a child folder.
-		// Validates authorization uses stable UID from parent's _folder.json.
+		// Without metadata: validates authorization uses hash-based parent ID.
 		childPath := folderPathPrefix + "/child/"
 		childURL := fmt.Sprintf("http://editor:editor@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s", addr, repoName, childPath)
 		childReq, err := http.NewRequest(http.MethodPost, childURL, nil)
@@ -80,21 +70,5 @@ func TestIntegrationProvisioning_FolderAuthorizationWithMetadata(t *testing.T) {
 		// nolint:errcheck
 		defer childResp.Body.Close()
 		require.Equal(t, http.StatusOK, childResp.StatusCode, "Editor should be able to create child folder")
-
-		// Verify child _folder.json was created with its own stable UID
-		childMeta, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", folderPathPrefix+"/child/_folder.json")
-		require.NoError(t, err, "child _folder.json should exist when metadata is enabled")
-		childUID, _, _ := unstructured.NestedString(childMeta.Object, "resource", "file", "metadata", "name")
-		require.NotEmpty(t, childUID, "child should have stable UID")
-
-		// Get parent UID to verify they're different
-		parentMeta2, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", folderPathPrefix+"/_folder.json")
-		require.NoError(t, err)
-		parentUID2, _, _ := unstructured.NestedString(parentMeta2.Object, "resource", "file", "metadata", "name")
-		require.NotEqual(t, parentUID2, childUID, "parent and child should have different UIDs")
 	})
-}
-
-func TestMain(m *testing.M) {
-	env.RunTestMain(m)
 }
