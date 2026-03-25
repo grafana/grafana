@@ -360,11 +360,9 @@
           // - build info edition comes from the backend
           const { navTree, settings, user, redirect } = await loadBootData();
 
-          // If the backend indicates a redirect is needed (for SSO auto-login, or custom domain) do that
-          // only if there's no SSO login error to avoid redirect loops
+          // If the backend wants us to redirect, we reject this promise to avoid booting the rest of the app.
           if (redirect) {
-            window.location.href = redirect;
-            return;
+            return Promise.reject({ redirect });
           }
 
           window.grafanaBootData.settings = {
@@ -414,6 +412,12 @@
 
         window.__grafana_boot_data_promise = initGrafana()
         window.__grafana_boot_data_promise.catch((err) => {
+          // initGrafana can throw a `{ redirect: string }` object to indicate that the frontend should redirect without booting the app.
+          if (err && err.redirect && typeof err.redirect === 'string') {
+            window.location.href = err.redirect;
+            return;
+          }
+
           console.error("__grafana_boot_data_promise rejected", err);
           window.__grafana_load_failed(err);
         });
