@@ -281,7 +281,7 @@ func doTeamSearchMemberCountTests(t *testing.T, helper *apis.K8sTestHelper) {
 	}
 
 	t.Run("should return correct member counts for teams with and without members", func(t *testing.T) {
-		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?query=mc-team", namespace)
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?query=mc-team&membercount=true", namespace)
 		var result iamv0alpha1.GetSearchTeamsResponse
 
 		rsp := apis.DoRequest(helper, apis.RequestParams{

@@ -138,6 +138,15 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "membercount",
+										In:          "query",
+										Description: "when true, includes member count for each team in the response",
+										Required:    false,
+										Schema:      spec.BoolProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "accesscontrol",
 										In:          "query",
 										Description: "when true, includes access control metadata in the response",
@@ -305,9 +314,11 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := s.enrichWithMemberCounts(ctx, requester.GetNamespace(), searchResults.Hits); err != nil {
-		span.RecordError(err)
-		s.log.Warn("failed to get member counts", "error", err)
+	if queryParams.Get("membercount") == "true" && s.teamBindingStore != nil {
+		if err := s.enrichWithMemberCounts(ctx, requester.GetNamespace(), searchResults.Hits); err != nil {
+			span.RecordError(err)
+			s.log.Warn("failed to get member counts", "error", err)
+		}
 	}
 
 	if queryParams.Get("accesscontrol") == "true" && s.accessClient != nil {
@@ -367,7 +378,7 @@ func (s *TeamSearchHandler) stampAccessControl(ctx context.Context, requester id
 }
 
 func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
-	if s.teamBindingStore == nil || len(hits) == 0 {
+	if len(hits) == 0 {
 		return nil
 	}
 

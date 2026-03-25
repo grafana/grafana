@@ -441,6 +441,92 @@ func TestTeamAccessControl(t *testing.T) {
 	}
 }
 
+func TestTeamSearchMemberCount(t *testing.T) {
+	mockLister := &mockTeamBindingLister{
+		listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+			return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 3)}, nil
+		},
+	}
+
+	t.Run("membercount absent - no member counts on hits", func(t *testing.T) {
+		searchHandler := &TeamSearchHandler{
+			log:              log.New("grafana-apiserver.teams.search"),
+			client:           mockTeamClientWithHits(),
+			tracer:           tracing.NewNoopTracerService(),
+			features:         featuremgmt.WithFeatures(),
+			teamBindingStore: mockLister,
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "default"}))
+
+		searchHandler.DoTeamSearch(rr, req)
+
+		require.Equal(t, 200, rr.Code)
+
+		var resp iamv0alpha1.GetSearchTeamsResponse
+		require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+		require.Len(t, resp.Hits, 2)
+		for _, hit := range resp.Hits {
+			assert.Equal(t, int64(0), hit.MemberCount, "member count should be zero when membercount param is absent")
+		}
+	})
+
+	t.Run("membercount=false - no member counts on hits", func(t *testing.T) {
+		searchHandler := &TeamSearchHandler{
+			log:              log.New("grafana-apiserver.teams.search"),
+			client:           mockTeamClientWithHits(),
+			tracer:           tracing.NewNoopTracerService(),
+			features:         featuremgmt.WithFeatures(),
+			teamBindingStore: mockLister,
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search?membercount=false", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "default"}))
+
+		searchHandler.DoTeamSearch(rr, req)
+
+		require.Equal(t, 200, rr.Code)
+
+		var resp iamv0alpha1.GetSearchTeamsResponse
+		require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+		require.Len(t, resp.Hits, 2)
+		for _, hit := range resp.Hits {
+			assert.Equal(t, int64(0), hit.MemberCount, "member count should be zero when membercount=false")
+		}
+	})
+
+	t.Run("membercount=true - member counts populated", func(t *testing.T) {
+		searchHandler := &TeamSearchHandler{
+			log:              log.New("grafana-apiserver.teams.search"),
+			client:           mockTeamClientWithHits(),
+			tracer:           tracing.NewNoopTracerService(),
+			features:         featuremgmt.WithFeatures(),
+			teamBindingStore: mockLister,
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search?membercount=true", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "default"}))
+
+		searchHandler.DoTeamSearch(rr, req)
+
+		require.Equal(t, 200, rr.Code)
+
+		var resp iamv0alpha1.GetSearchTeamsResponse
+		require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+		require.Len(t, resp.Hits, 2)
+		for _, hit := range resp.Hits {
+			assert.Equal(t, int64(3), hit.MemberCount, "member count should be populated when membercount=true")
+		}
+	})
+}
+
 func TestEnrichWithMemberCounts(t *testing.T) {
 	t.Run("all succeed - sets correct member counts", func(t *testing.T) {
 		mockLister := &mockTeamBindingLister{

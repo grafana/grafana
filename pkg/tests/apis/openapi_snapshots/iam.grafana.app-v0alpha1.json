@@ -988,6 +988,14 @@
             }
           },
           {
+            "name": "membercount",
+            "in": "query",
+            "description": "when true, includes member count for each team in the response",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "accesscontrol",
             "in": "query",
             "description": "when true, includes access control metadata in the response",
