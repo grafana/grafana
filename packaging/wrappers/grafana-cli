@@ -1,9 +1,12 @@
 #! /usr/bin/env bash
 
-if ! command -v grafana >/dev/null 2>&1; then
-  echo "grafana command not installed or not executable"
+GRAFANA_HOME="${GRAFANA_HOME:-/usr/share/grafana}"
+EXECUTABLE="$GRAFANA_HOME/bin/grafana"
+
+if [ ! -x "$EXECUTABLE" ]; then
+  echo "$EXECUTABLE not installed or not executable"
   exit 5
 fi
 
 echo "Deprecation warning: 'grafana-cli' is deprecated and will be removed in a future release. Use 'grafana' instead." >&2
-exec grafana cli "$@"
+exec "$EXECUTABLE" cli "$@"

@@ -9,6 +9,8 @@ include .citools/Variables.mk
 
 GO = go
 GO_VERSION = 1.25.8
+GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
+GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -277,7 +279,7 @@ gen-jsonnet:
 
 .PHONY: gen-themes
 gen-themes:
-	go generate ./pkg/services/preference
+	GOOS=$(GO_HOST_OS) GOARCH=$(GO_HOST_ARCH) $(GO) generate ./pkg/services/preference
 
 .PHONY: update-workspace
 update-workspace: gen-go
