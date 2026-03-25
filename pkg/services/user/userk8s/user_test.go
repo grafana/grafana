@@ -24,15 +24,15 @@ import (
 
 func TestUserK8sService_Create(t *testing.T) {
 	tests := []struct {
-		name            string
-		cmd             *user.CreateUserCommand
-		cfg             *setting.Cfg
-		requesterOrgID  int64
-		serverResponse  func(w http.ResponseWriter, r *http.Request)
-		nilProvider     bool
-		noReqContext    bool
-		expectErr       bool
-		expectUser      *user.User
+		name           string
+		cmd            *user.CreateUserCommand
+		cfg            *setting.Cfg
+		requesterOrgID int64
+		serverResponse func(w http.ResponseWriter, r *http.Request)
+		nilProvider    bool
+		noReqContext   bool
+		expectErr      bool
+		expectUser     *user.User
 	}{
 		{
 			name: "successfully creates a user",
