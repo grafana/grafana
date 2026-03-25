@@ -3,7 +3,6 @@ package folders
 import (
 	"context"
 	"fmt"
-	"maps"
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -380,11 +379,8 @@ func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store)
 }
 
 func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-		defs := foldersv1beta1.GetOpenAPIDefinitions(ref)
-		maps.Copy(defs, foldersv1.GetOpenAPIDefinitions(ref))
-		return defs
-	}
+	// Same pattern as dashboards: v1beta1 aliases v1; kube-openapi definitions use v1 model keys only.
+	return foldersv1.GetOpenAPIDefinitions
 }
 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
