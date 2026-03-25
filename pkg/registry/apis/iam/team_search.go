@@ -144,9 +144,8 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 										Name:        "sort",
 										In:          "query",
 										Description: "sortable field",
-										Example:     "",
 										Examples: map[string]*spec3.Example{
-											"": {
+											"default": {
 												ExampleProps: spec3.ExampleProps{
 													Summary: "default sorting",
 													Value:   "",
@@ -262,20 +261,26 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 	}
 
 	if queryParams.Has("sort") {
-		for _, sort := range queryParams["sort"] {
-			currField := sort
+		for _, sortParam := range queryParams["sort"] {
+			currField := sortParam
 			desc := false
-			if strings.HasPrefix(sort, "-") {
-				currField = sort[1:]
+			if strings.HasPrefix(sortParam, "-") {
+				currField = sortParam[1:]
 				desc = true
 			}
-			if slices.Contains(builders.TeamSortableExtraFields, currField) {
-				sort = resource.SEARCH_FIELD_PREFIX + currField
-			} else {
-				sort = currField
+
+			if currField != resource.SEARCH_FIELD_TITLE && !slices.Contains(builders.TeamSortableExtraFields, currField) {
+				http.Error(w, fmt.Sprintf("invalid sort field: %s", currField), http.StatusBadRequest)
+				return
 			}
+
+			sortField := currField
+			if slices.Contains(builders.TeamSortableExtraFields, currField) {
+				sortField = resource.SEARCH_FIELD_PREFIX + currField
+			}
+
 			s := &resourcepb.ResourceSearchRequest_Sort{
-				Field: sort,
+				Field: sortField,
 				Desc:  desc,
 			}
 			searchRequest.SortBy = append(searchRequest.SortBy, s)

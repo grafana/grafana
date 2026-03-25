@@ -1003,9 +1003,6 @@
               "type": "string"
             },
             "examples": {
-              "": {
-                "summary": "default sorting"
-              },
               "-email": {
                 "summary": "email descending",
                 "value": "-email"
@@ -1013,6 +1010,9 @@
               "-title": {
                 "summary": "title descending",
                 "value": "-title"
+              },
+              "default": {
+                "summary": "default sorting"
               },
               "email": {
                 "summary": "email ascending",
