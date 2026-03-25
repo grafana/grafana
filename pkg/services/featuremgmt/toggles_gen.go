@@ -925,4 +925,8 @@ const (
 	// FlagLogsTablePanelNG
 	// Enables the logs tableNG panel to replace existing tableRT
 	FlagLogsTablePanelNG = "logsTablePanelNG"
+
+	// FlagFrontendServiceSSOAutoLogin
+	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
+	FlagFrontendServiceSSOAutoLogin = "frontendServiceSSOAutoLogin"
 )
