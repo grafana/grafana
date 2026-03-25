@@ -1718,13 +1718,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -3541,20 +3541,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Instances d’alerte",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Erreur lors du chargement de la règle",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "Détails de l’instance",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "Vous n’avez aucune instance d’alerte déclenchée ou en attente pour la plage temporelle sélectionnée.",
       "no-instances-found": "Aucune instance d’alerte trouvée pour la règle : {{ruleUID}}",
       "no-labels": "Aucune étiquette",
@@ -3576,14 +3583,16 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_one": "",
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_one": "",
       "show-all-labels_other": "",
       "show-all-values_one": "",
       "show-all-values_other": "",
-      "tooltip-more-values_one": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_one": "",
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "Ajouter une expression"
@@ -4250,6 +4259,9 @@
     "browse-view": {
       "this-folder-is-empty": "Ce dossier est vide"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Annuler",
       "button-delete": "Supprimer",
@@ -4352,6 +4364,7 @@
       "dashboards": "Tableaux de bord",
       "panels": "Panneaux"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Aucun objet"
     },
@@ -6081,8 +6094,8 @@
       "name": "Lignes",
       "new-row-title": "Nouvelle ligne",
       "row": {
-        "collapse": "Réduire la ligne",
-        "expand": "Développer la ligne",
+        "collapse": "",
+        "expand": "",
         "new": "Nouvelle ligne",
         "repeat": {
           "learn-more": "En savoir plus",
@@ -6623,11 +6636,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Options ad hoc",
       "alert-not-supported": "Cette source de données ne prend pas en charge les filtres ad hoc",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Permet aux utilisateurs d’ajouter des valeurs personnalisées à la liste",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Fournir les dimensions en tant que CSV : {{name}}, {{value}}",
       "label-data-source": "Source de données",
       "label-use-static-key-dimensions": "Utiliser des dimensions de clé statiques",
-      "name-allow-custom-values": "Autoriser les valeurs personnalisées"
+      "name-allow-custom-values": "Autoriser les valeurs personnalisées",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -10267,6 +10282,9 @@
       "group": "Groupe",
       "group-tooltip": "Nom du groupe de regroupement"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Filtrer par valeur",
       "cell-filter-out": "Filtrer la valeur",
@@ -10315,6 +10333,10 @@
       },
       "no-values-label": "Aucune valeur",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} sur {{numRows}} lignes",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "aucune donnée"
       },
@@ -11428,7 +11450,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Aucune option trouvée"
@@ -12319,6 +12342,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Nom"
       }
     },
@@ -13018,6 +13042,7 @@
       "error-delete-connection": "Échec de la suppression de la connexion",
       "error-required": "Ce champ est obligatoire",
       "error-save-connection": "Échec de l’enregistrement de la connexion",
+      "error-submit": "",
       "grafana-repositories": "Référentiels utilisant cette connexion",
       "label-app-id": "ID de l’application GitHub",
       "label-description": "Description",
@@ -13542,6 +13567,9 @@
       },
       "go-to": "Accéder à",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "Avertissement",
     "watch-stream": {
