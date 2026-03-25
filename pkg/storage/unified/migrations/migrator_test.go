@@ -221,7 +221,6 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				}
 			}
 		}
-		disableMigrationsForDefaultResources(unifiedConfig)
 
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
