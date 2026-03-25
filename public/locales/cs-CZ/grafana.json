@@ -1730,13 +1730,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -3579,20 +3579,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Instance výstrah",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Chyba při načítání pravidla",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "Podrobnosti o instanci",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "Pro vybraný časový rozsah nemáte žádné výskyty výstrah ve stavu spuštění nebo čekání.",
       "no-instances-found": "Nebyly nalezeny žádné instance výstrah pro pravidlo: {{ruleUID}}",
       "no-labels": "Žádné štítky",
@@ -3614,10 +3621,10 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_one": "",
-      "hidden-label-count_few": "",
-      "hidden-label-count_many": "",
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_one": "",
       "show-all-labels_few": "",
       "show-all-labels_many": "",
@@ -3626,10 +3633,10 @@
       "show-all-values_few": "",
       "show-all-values_many": "",
       "show-all-values_other": "",
-      "tooltip-more-values_one": "",
-      "tooltip-more-values_few": "",
-      "tooltip-more-values_many": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_one": "",
+      "showing-groups-count_few": "",
+      "showing-groups-count_many": "",
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "Přidat výraz"
@@ -4296,6 +4303,9 @@
     "browse-view": {
       "this-folder-is-empty": "Tato složka je prázdná"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Zrušit",
       "button-delete": "Odstranit",
@@ -4408,6 +4418,7 @@
       "dashboards": "Nástěnky",
       "panels": "Panely"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Žádné položky"
     },
@@ -6145,8 +6156,8 @@
       "name": "Řádky",
       "new-row-title": "Nový řádek",
       "row": {
-        "collapse": "Sbalit řádek",
-        "expand": "Rozbalit řádek",
+        "collapse": "",
+        "expand": "",
         "new": "Nový řádek",
         "repeat": {
           "learn-more": "Zjistěte víc",
@@ -6689,11 +6700,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Ad-hoc možnosti",
       "alert-not-supported": "Tento zdroj dat nepodporuje filtry ad hoc",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Umožňuje uživatelům přidávat vlastní hodnoty do seznamu",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Zadejte rozměry ve formátu CSV: {{name}}, {{value}}",
       "label-data-source": "Zdroj dat",
       "label-use-static-key-dimensions": "Použít dimenze statického klíče",
-      "name-allow-custom-values": "Povolit vlastní hodnoty"
+      "name-allow-custom-values": "Povolit vlastní hodnoty",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -10379,6 +10392,9 @@
       "group": "Skupina",
       "group-tooltip": "Název skupiny vrstvení"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Filtrovat podle hodnoty",
       "cell-filter-out": "Odfiltrovat hodnotu",
@@ -10427,6 +10443,10 @@
       },
       "no-values-label": "Žádné hodnoty",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} z {{numRows}} řádků",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "žádné údaje"
       },
@@ -11556,7 +11576,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nebyly nalezeny žádné možnosti"
@@ -12453,6 +12474,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Název"
       }
     },
@@ -13158,6 +13180,7 @@
       "error-delete-connection": "Připojení se nepodařilo odstranit",
       "error-required": "Toto pole je povinné",
       "error-save-connection": "Připojení se nepodařilo uložit",
+      "error-submit": "",
       "grafana-repositories": "Úložiště používající toto připojení",
       "label-app-id": "ID aplikace GitHub",
       "label-description": "Popis",
@@ -13704,6 +13727,9 @@
       },
       "go-to": "Přejít na",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "Varování",
     "watch-stream": {

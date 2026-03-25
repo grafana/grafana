@@ -783,7 +783,9 @@
         "unknown-rule": "Unknown",
         "value-in-transition": "Value in transition"
       },
-      "error": "Something went wrong loading the alert state history",
+      "error": {
+        "server-error": "The alert state history query failed — the server returned an error"
+      },
       "filter": {
         "clear": "Clear filters",
         "info": {
@@ -794,6 +796,10 @@
         }
       },
       "filterBy": "Filter by:",
+      "slow-query": {
+        "text": "This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.",
+        "title": "Query is taking longer than expected"
+      },
       "tab": {
         "alert-events": "Alert events",
         "notifications": "Notifications"
@@ -2021,6 +2027,10 @@
       "error-unable-to-fetch": "Unable to fetch alert state history",
       "loading": "Loading...",
       "no-transitions-match-filters": "No state transitions match the selected filters",
+      "slow-query": {
+        "text": "This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.",
+        "title": "Query is taking longer than expected"
+      },
       "start-state": "Start state",
       "timeline-hidden": "Timeline is hidden when state filters are active",
       "title-error-fetching-the-state-history": "Error fetching the state history",
@@ -4185,17 +4195,17 @@
     "name-value-display": "Value display",
     "presets": {
       "basic": "Basic",
-      "basic_desc": "Basic, color from thresholds",
+      "basic_desc": "Horizontal bars, value color from thresholds",
       "basic-vertical": "Basic vertical",
-      "basic-vertical_desc": "Basic, color from thresholds, vertical",
+      "basic-vertical_desc": "Vertical bars, threshold color, text value",
       "gradient": "Gradient",
-      "gradient_desc": "Gradient, color from thresholds, text color",
+      "gradient_desc": "Horizontal bars, gradient fill from thresholds",
       "gradient-BlYlRd": "Gradient blue-red",
-      "gradient-BlYlRd_desc": "Color scale, value color",
+      "gradient-BlYlRd_desc": "Horizontal, gradient fill, blue-yellow-red scale",
       "gradient-vertical": "Gradient vertical",
-      "gradient-vertical_desc": "color scale, unchecked show unfilled",
+      "gradient-vertical_desc": "Vertical, gradient fill, no unfilled track",
       "retro-lcd": "Retro LCD",
-      "retro-lcd_desc": "Color scale, text color"
+      "retro-lcd_desc": "Horizontal, LCD style, green-yellow-red scale"
     },
     "suggestions": {
       "basic": "Bar gauge",
@@ -4260,7 +4270,7 @@
       "this-folder-is-empty": "This folder is empty"
     },
     "bulk-actions": {
-      "error-generic": "Unexpected error"
+      "error-generic": "Unexpected error happened when creating job"
     },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
@@ -4325,6 +4335,7 @@
       "button-deleting": "Deleting...",
       "commit": "Delete folder",
       "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
+      "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
     },
     "descendant-count": {
@@ -4377,12 +4388,13 @@
       "name-label": "Folder name"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "Error creating folder",
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
       "error-invalid-characters": "Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.",
+      "error-missing-title-or-repo": "Missing folder name or repository information",
       "error-required": "Folder name is required",
+      "error-saving": "An error occurred while creating folder.",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
@@ -5995,6 +6007,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": "Open assistant for this panel"
+      },
       "prompt-card": {
         "placeholder": "Ask Assistant about this panel...",
         "placeholder-multi": "Ask Assistant about these panels..."
@@ -6308,7 +6323,6 @@
         "label": "Exit edit",
         "tooltip": "Exits edit mode and discards unsaved changes"
       },
-      "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "new": {
         "back-to-dashboard": "Back to dashboard",
@@ -6378,8 +6392,7 @@
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
       "star-removed": "Removed from starred",
-      "unlink-library-panel": "Unlink library panel",
-      "unmark-favorite": "Unmark as favorite"
+      "unlink-library-panel": "Unlink library panel"
     },
     "transformation-editor": {
       "input-data": "Input data",
@@ -6926,11 +6939,12 @@
       "placeholder": "Choose default values"
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Failed to delete dashboard",
       "cancel-action": "Cancel",
       "delete-action": "Delete dashboard",
+      "delete-error": "Failed to delete dashboard",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
+      "no-repository-selected": "Missing required repository for deletion",
       "success-message": "Dashboard deleted successfully"
     },
     "description-label": {
@@ -7397,16 +7411,17 @@
       "update-all": "Update all"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "Error saving dashboard",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
+      "error-saving": "An error occurred while saving.",
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "label-description": "Description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
+      "repo-path-required": "Missing required fields for saving",
       "save": "Save",
       "save-json-to-file": "Save JSON to file",
       "saving": "Saving...",
@@ -8920,7 +8935,8 @@
     "select-placeholder": "Filter by folder"
   },
   "folder-repo": {
-    "read-only-badge": "Read only"
+    "read-only-badge": "Read only",
+    "repository-not-found-tooltip": "Repository not found"
   },
   "folders": {
     "api": {
@@ -9014,17 +9030,17 @@
     "neutral": "Neutral {{value}}",
     "presets": {
       "circle": "Circle",
-      "circle_desc": "plain round, from thresholds",
+      "circle_desc": "Full circle, threshold color, with sparkline",
       "gradient": "Gradient",
-      "gradient_desc": "gradient color scale",
+      "gradient_desc": "Arc gauge, green-yellow-red gradient fill",
       "neon": "Neon",
-      "neon_desc": "round, single color endpoint glow",
+      "neon_desc": "Circle, rounded bar, glow effects, fixed red",
       "neonSegmented": "Neon segmented",
-      "neonSegmented_desc": "round, few segments",
+      "neonSegmented_desc": "Circle, 10 rounded segments, glow effects, fixed blue",
       "segmented": "Segmented",
-      "segmented_desc": "segmented thresholds",
+      "segmented_desc": "Dashed arc, threshold color, with sparkline",
       "standard": "Standard",
-      "standard_desc": "plain, from thresholds"
+      "standard_desc": "Arc gauge, threshold color, with sparkline"
     },
     "suggestions": {
       "arc": "Gauge",
@@ -12196,12 +12212,10 @@
       "description": "Notifications you have received will appear here",
       "title": "You're all caught up!"
     },
-    "starred-dashboard": "Dashboard starred",
     "stored-notifications": {
       "dismiss-notifications": "Dismiss notifications",
       "title-alert": "This page displays past errors and warnings. Once dismissed, they cannot be retrieved."
-    },
-    "unstarred-dashboard": "Dashboard unstarred"
+    }
   },
   "oauth": {
     "form": {
@@ -12488,11 +12502,13 @@
       "description-customize-dashboard-elements-visibility": "Customize dashboard elements visibility",
       "description-hide-logo": "Hide the branding footer from the dashboard",
       "description-panel-heights-adjusted-screen": "Panel heights will be adjusted to fit screen size",
+      "description-playlist-nav": "Show previous and next buttons to manually navigate between dashboards",
       "label-autofit": "Autofit",
       "label-dashboard-links": "Dashboard links",
       "label-display-dashboard-controls": "Display dashboard controls",
       "label-hide-logo": "Hide logo",
       "label-mode": "Mode",
+      "label-playlist-nav": "Navigation buttons",
       "label-time-and-refresh": "Time and refresh",
       "label-variables": "Variables",
       "modes": {
@@ -13120,6 +13136,10 @@
       "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks.",
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
     },
+    "error": {
+      "branch-not-found-dashboard": "You have selected a branch that does not contain this dashboard. Select another branch.",
+      "branch-not-found-folder": "You have selected a branch that does not contain this folder. Select another branch."
+    },
     "error-title-default": "Error",
     "expanded-row": {
       "job-specification": "Job Specification",
@@ -13330,6 +13350,28 @@
         "subtitle": "Use this option if you want to sync and manage your entire Grafana instance through external storage."
       }
     },
+    "orphaned-drawer-notice": {
+      "body": "Save, move, and delete through the Git workflow are not available. Use the warning at the top of the dashboard to release or delete this dashboard if you are an administrator, or contact your Grafana administrator.",
+      "title": "Provisioning repository no longer exists"
+    },
+    "orphaned-repository-tooltip": "Repository not found",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "This will permanently delete all dashboards and folders managed by the missing repository. This action cannot be undone.",
+      "confirm-delete-button": "Delete",
+      "confirm-delete-title": "Delete all resources from this repository?",
+      "confirm-release-body": "This will remove provisioning annotations from all dashboards and folders managed by the missing repository, converting them to regular resources that can be saved and deleted normally.",
+      "confirm-release-button": "Convert to local",
+      "confirm-release-title": "Convert all resources to local from this repository?",
+      "contact-admin": "Contact your Grafana administrator to convert this resource to local or delete all resources from the missing repository.",
+      "convert-to-local-button": "Convert to local",
+      "delete-button": "Delete",
+      "job-error": "An error occurred while processing orphaned resources",
+      "job-success": "Orphaned resources processed successfully",
+      "job-warning": "Some resources were processed with warnings. Please review the results.",
+      "message": "This resource cannot be saved or modified until it is converted to local. Converting to local or deleting it will affect all resources managed by that repository.",
+      "submit-error": "Failed to create job for orphaned resources",
+      "title": "This resource is managed by a repository that no longer exists"
+    },
     "provisioning-wizard": {
       "on-submit": {
         "error": {
@@ -13342,21 +13384,21 @@
       }
     },
     "quota-limit": {
-      "message-both-repositories_one": "Your account is limited to {{count}} connected repository",
+      "message-both-repositories_one": "Your account is limited to {{count}} connected repositories",
       "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
-      "message-both-repositories-onprem_one": "Your instance is limited to {{count}} connected repository",
+      "message-both-repositories-onprem_one": "Your instance is limited to {{count}} connected repositories",
       "message-both-repositories-onprem_other": "Your instance is limited to {{count}} connected repositories",
-      "message-both-resources_one": "and {{count}} synced resource per repository.",
+      "message-both-resources_one": "and {{count}} synced resources per repository.",
       "message-both-resources_other": "and {{count}} synced resources per repository.",
-      "message-both-resources-onprem_one": "and {{count}} synced resource per repository.",
+      "message-both-resources-onprem_one": "and {{count}} synced resources per repository.",
       "message-both-resources-onprem_other": "and {{count}} synced resources per repository.",
-      "message-repository_one": "Your account is limited to {{count}} connected repository.",
+      "message-repository_one": "Your account is limited to {{count}} connected repositories.",
       "message-repository_other": "Your account is limited to {{count}} connected repositories.",
-      "message-repository-onprem_one": "Your instance is limited to {{count}} connected repository.",
+      "message-repository-onprem_one": "Your instance is limited to {{count}} connected repositories.",
       "message-repository-onprem_other": "Your instance is limited to {{count}} connected repositories.",
-      "message-resource_one": "Your account is limited to {{count}} synced resource per repository.",
+      "message-resource_one": "Your account is limited to {{count}} synced resources per repository.",
       "message-resource_other": "Your account is limited to {{count}} synced resources per repository.",
-      "message-resource-onprem_one": "Your instance is limited to {{count}} synced resource per repository.",
+      "message-resource-onprem_one": "Your instance is limited to {{count}} synced resources per repository.",
       "message-resource-onprem_other": "Your instance is limited to {{count}} synced resources per repository.",
       "note": "Note:",
       "to-increase-limits": "To add more {{type}},",
@@ -14712,15 +14754,21 @@
     },
     "presets": {
       "horizontal-threshold-value": "Horizontal threshold value",
+      "horizontal-threshold-value-desc": "Horizontal, value color from thresholds, no sparkline",
       "horizontal-threshold-value-sparkline": "Horizontal threshold value with sparkline",
+      "horizontal-threshold-value-sparkline-desc": "Horizontal, value color from thresholds, area sparkline",
       "list": "List",
-      "list_desc": "Color mode none, text mode value and name, text align center, single color",
+      "list_desc": "Compact horizontal list, centered, name and value, sparkline",
       "threshold-background": "Threshold background",
+      "threshold-background-desc": "Background color from thresholds, no sparkline",
       "threshold-background-sparkline": "Threshold background with sparkline",
+      "threshold-background-sparkline-desc": "Background color from thresholds, area sparkline",
       "threshold-value": "Threshold value",
+      "threshold-value-desc": "Value color from thresholds, no sparkline",
       "threshold-value-sparkline": "Threshold value with sparkline",
+      "threshold-value-sparkline-desc": "Value color from thresholds, area sparkline",
       "wide-list": "Wide list",
-      "wide-list-desc": "Color mode none, text mode value and name, text align center, single color"
+      "wide-list-desc": "Horizontal, name and value, area sparkline, single color"
     },
     "suggestions": {
       "stat": "Stat",
@@ -14941,12 +14989,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "Auto-create a team folder",
       "create": "Create",
+      "description-create-team-folder": "This creates a folder associated with the team, where users can add resources like dashboards and schedules with the right permissions.",
       "description-email": "This is optional and is primarily used for allowing custom team avatars",
-      "failed-to-create": "Failed to create team",
+      "failed-to-create": "Failed to create team: ",
+      "folder-create-failed": "Failed to create folder: ",
+      "folder-create-failed-help": "You can create the folder and assign it to a team manually from dashboards browser.",
+      "folder-creation-link": "Open folder",
+      "folder-creation-loading": "Creating folder...",
+      "folder-creation-success": "Folder created successfully.",
+      "label-create-team-folder": "Team folder",
       "label-email": "Email",
       "label-name": "Name",
-      "label-role": "Role"
+      "label-role": "Role",
+      "role-creation-success": "Roles created successfully.",
+      "roles-create-failed": "Failed to create roles: ",
+      "roles-create-permission-issue": "You don't have permissions to set roles",
+      "roles-creation-loading": "Creating roles...",
+      "team-creation-link": "Open team details",
+      "team-creation-loading": "Creating team...",
+      "team-creation-success": "Team created successfully."
     },
     "empty-state": {
       "button-title": "New team",
@@ -15204,12 +15267,12 @@
       "zoom-to-data": "Zoom to data"
     },
     "presets": {
-      "multi-many-points": "Points",
-      "multi-many-points-stacked": "Stacked points",
+      "multi-many-points": "Lines with points",
+      "multi-many-points-stacked": "Stacked lines",
       "multi-many-points-stacked-pct": "Stacked 100%",
-      "multi-points": "Points",
+      "multi-points": "Lines with points",
       "multi-stacked-bars": "Stacked bars",
-      "multi-stacked-points": "Stacked points",
+      "multi-stacked-points": "Stacked lines",
       "single-bars": "Bars",
       "single-bars-scheme": "Bars scheme",
       "single-dashed-threshold": "Dashed threshold",
