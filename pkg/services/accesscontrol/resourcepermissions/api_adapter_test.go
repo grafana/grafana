@@ -587,6 +587,125 @@ func TestGetProvisionedPermissions(t *testing.T) {
 		assert.False(t, provisionedPerms[1].IsManaged, "provisioned permission should not be managed")
 		assert.False(t, provisionedPerms[1].IsInherited, "provisioned permission should not be inherited")
 	})
+
+	t.Run("dashboard inherits provisioned admin role from parent folder", func(t *testing.T) {
+		license := licensingtest.NewFakeLicensing()
+		license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
+
+		mockStore := &mockResourcePermissionStore{
+			permissions: []accesscontrol.ResourcePermission{
+				// Inherited Admin permission from parent folder (should be included)
+				{
+					RoleName:    "Admin",
+					BuiltInRole: "Admin",
+					IsManaged:   false,
+					IsInherited: true, // Inherited from parent folder
+					Actions:     []string{"dashboards:read", "dashboards:write", "dashboards:delete"},
+				},
+				// Direct provisioned permission (should be included)
+				{
+					UserID:      3,
+					UserLogin:   "provisioned-user",
+					Actions:     []string{"dashboards:read", "dashboards:write"},
+					IsManaged:   false,
+					IsInherited: false,
+				},
+			},
+		}
+
+		api := &api{
+			cfg:    &setting.Cfg{},
+			logger: log.New("test"),
+			service: &Service{
+				store: mockStore,
+				options: Options{
+					Resource:          "dashboards",
+					ResourceAttribute: "uid",
+					APIGroup:          dashboardv1.APIGroup,
+					PermissionsToActions: map[string][]string{
+						"View":  {"dashboards:read"},
+						"Edit":  {"dashboards:read", "dashboards:write"},
+						"Admin": {"dashboards:read", "dashboards:write", "dashboards:delete"},
+					},
+					InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
+						// Simulate returning parent folder scope
+						return []string{"folders:uid:parent-folder-uid"}, nil
+					},
+				},
+				actions:     []string{"dashboards:read", "dashboards:write", "dashboards:delete"},
+				permissions: []string{"Admin", "Edit", "View"},
+				license:     license,
+			},
+		}
+
+		provisionedPerms, err := api.getProvisionedPermissions(context.Background(), "stack-123-org-1", "dashboard-123")
+
+		require.NoError(t, err)
+		require.Len(t, provisionedPerms, 2, "should return both inherited and direct provisioned permissions")
+
+		// Find the inherited permission
+		var inheritedPerm *resourcePermissionDTO
+		var directPerm *resourcePermissionDTO
+		for i := range provisionedPerms {
+			if provisionedPerms[i].IsInherited {
+				inheritedPerm = &provisionedPerms[i]
+			} else {
+				directPerm = &provisionedPerms[i]
+			}
+		}
+
+		require.NotNil(t, inheritedPerm, "should have inherited permission")
+		assert.Equal(t, "Admin", inheritedPerm.RoleName)
+		assert.Equal(t, "Admin", inheritedPerm.Permission)
+		assert.True(t, inheritedPerm.IsInherited, "should be marked as inherited")
+		assert.False(t, inheritedPerm.IsManaged, "inherited permission should not be managed")
+
+		require.NotNil(t, directPerm, "should have direct permission")
+		assert.Equal(t, int64(3), directPerm.UserID)
+		assert.Equal(t, "provisioned-user", directPerm.UserLogin)
+		assert.False(t, directPerm.IsInherited, "direct permission should not be inherited")
+	})
+
+	t.Run("returns error when InheritedScopesSolver fails", func(t *testing.T) {
+		license := licensingtest.NewFakeLicensing()
+		license.On("FeatureEnabled", "accesscontrol.enforcement").Return(false).Maybe()
+
+		mockStore := &mockResourcePermissionStore{
+			permissions: []accesscontrol.ResourcePermission{},
+		}
+
+		expectedError := errors.New("dashboard not found")
+
+		api := &api{
+			cfg:    &setting.Cfg{},
+			logger: log.New("test"),
+			service: &Service{
+				store: mockStore,
+				options: Options{
+					Resource:          "dashboards",
+					ResourceAttribute: "uid",
+					APIGroup:          dashboardv1.APIGroup,
+					PermissionsToActions: map[string][]string{
+						"View": {"dashboards:read"},
+						"Edit": {"dashboards:read", "dashboards:write"},
+					},
+					InheritedScopesSolver: func(ctx context.Context, orgID int64, resourceID string) ([]string, error) {
+						// Simulate error (e.g., dashboard not found)
+						return nil, expectedError
+					},
+				},
+				actions:     []string{"dashboards:read", "dashboards:write"},
+				permissions: []string{"Edit", "View"},
+				license:     license,
+			},
+		}
+
+		_, err := api.getProvisionedPermissions(context.Background(), "stack-123-org-1", "dashboard-123")
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, expectedError, "should return error from InheritedScopesSolver")
+		assert.Contains(t, err.Error(), "failed to get inherited scopes for provisioned permissions")
+	})
 }
 
 // TestGetResourcePermissionsFromK8s_AdminRole tests that Admin role is added when access control enforcement is disabled
@@ -765,17 +884,19 @@ type mockResourcePermissionStore struct {
 }
 
 func (m *mockResourcePermissionStore) GetResourcePermissions(ctx context.Context, orgID int64, query GetResourcePermissionsQuery) ([]accesscontrol.ResourcePermission, error) {
-	// Apply ExcludeManaged filter if set (to match real store behavior)
-	if query.ExcludeManaged {
-		var filtered []accesscontrol.ResourcePermission
-		for _, perm := range m.permissions {
-			if !perm.IsManaged {
-				filtered = append(filtered, perm)
-			}
+	// Apply ExcludeManaged and InheritedScopes filters to match real store behavior
+	var filtered []accesscontrol.ResourcePermission
+	for _, perm := range m.permissions {
+		if query.ExcludeManaged && perm.IsManaged {
+			continue
 		}
-		return filtered, nil
+		// If no InheritedScopes provided, only return direct (non-inherited) permissions
+		if len(query.InheritedScopes) == 0 && perm.IsInherited {
+			continue
+		}
+		filtered = append(filtered, perm)
 	}
-	return m.permissions, nil
+	return filtered, nil
 }
 
 func (m *mockResourcePermissionStore) SetUserResourcePermission(ctx context.Context, orgID int64, user accesscontrol.User, cmd SetResourcePermissionCommand, hook UserResourceHookFunc) (*accesscontrol.ResourcePermission, error) {

@@ -10,7 +10,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // labelPendingDelete mirrors the constant defined in the repository controller
@@ -23,9 +22,7 @@ const labelPendingDelete = "cloud.grafana.com/pending-delete"
 // reconciliation – in particular it never reaches the quota-getter call that would
 // fail for a soft-deleted stack.
 func TestIntegrationProvisioning_PendingDeleteLabel_SkipsReconciliation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 
 	const repoName = "pending-delete-skip-test"
 	helper.CreateRepo(t, common.TestRepo{

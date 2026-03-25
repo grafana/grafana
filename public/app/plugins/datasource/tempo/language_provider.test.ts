@@ -295,6 +295,50 @@ describe('Language_provider', () => {
     });
   });
 
+  describe('getOptionsV2', () => {
+    it('sorts returned tag values alphabetically', async () => {
+      const metadataRequest = jest.fn().mockResolvedValue({
+        tagValues: [
+          { type: 'string', value: 'zebra' },
+          { type: 'string', value: 'api' },
+          { type: 'string', value: 'cache' },
+        ],
+      });
+      const datasource = {
+        metadataRequest,
+        instanceSettings: {
+          jsonData: {},
+        },
+      } as unknown as TempoDatasource;
+      const lp = new TempoLanguageProvider(datasource);
+
+      const options = await lp.getOptionsV2({ tag: 'resource.service.name' });
+
+      expect(options.map((option) => option.value)).toEqual(['api', 'cache', 'zebra']);
+    });
+
+    it('sorts returned tag values alphabetically regardless of case', async () => {
+      const metadataRequest = jest.fn().mockResolvedValue({
+        tagValues: [
+          { type: 'string', value: 'Hosted Grafana - Prod' },
+          { type: 'string', value: 'api' },
+          { type: 'string', value: 'beta' },
+        ],
+      });
+      const datasource = {
+        metadataRequest,
+        instanceSettings: {
+          jsonData: {},
+        },
+      } as unknown as TempoDatasource;
+      const lp = new TempoLanguageProvider(datasource);
+
+      const options = await lp.getOptionsV2({ tag: 'resource.service.name' });
+
+      expect(options.map((option) => option.value)).toEqual(['api', 'beta', 'Hosted Grafana - Prod']);
+    });
+  });
+
   const setup = (tagsV2?: Scope[]) => {
     const datasource: TempoDatasource = {
       search: {

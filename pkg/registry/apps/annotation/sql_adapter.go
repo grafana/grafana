@@ -13,23 +13,19 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type sqlAdapter struct {
-	repo     annotations.Repository
-	cleaner  annotations.Cleaner
-	nsMapper request.NamespaceMapper
-	cfg      *setting.Cfg
+	repo            annotations.Repository
+	cleaner         annotations.Cleaner
+	cleanupSettings annotations.CleanupSettings
 }
 
-func NewSQLAdapter(repo annotations.Repository, cleaner annotations.Cleaner, nsMapper request.NamespaceMapper, cfg *setting.Cfg) *sqlAdapter {
+func NewSQLAdapter(repo annotations.Repository, cleaner annotations.Cleaner, cleanupSettings annotations.CleanupSettings) *sqlAdapter {
 	return &sqlAdapter{
-		repo:     repo,
-		cleaner:  cleaner,
-		nsMapper: nsMapper,
-		cfg:      cfg,
+		repo:            repo,
+		cleaner:         cleaner,
+		cleanupSettings: cleanupSettings,
 	}
 }
 
@@ -194,7 +190,7 @@ func (a *sqlAdapter) Cleanup(ctx context.Context) (int64, error) {
 	if a.cleaner == nil {
 		return 0, nil
 	}
-	deleted, _, err := a.cleaner.Run(ctx, a.cfg)
+	deleted, _, err := a.cleaner.Run(ctx, a.cleanupSettings)
 	return deleted, err
 }
 
