@@ -3,9 +3,8 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { InlineFieldRow, InlineField, Input, SecretInput } from '@grafana/ui';
+import { Input, SecretInput, Field, Space, Box } from '@grafana/ui';
 
-import { DB_SETTINGS_LABEL_WIDTH } from './constants';
 import {
   trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField,
   trackInfluxDBConfigV2FluxDBDetailsOrgInputField,
@@ -19,41 +18,37 @@ export const InfluxFluxDBConnection = (props: Props) => {
   } = props;
 
   return (
-    <>
-      <InlineFieldRow>
-        <InlineField label="Organization" labelWidth={DB_SETTINGS_LABEL_WIDTH} grow required>
-          <Input
-            id="organization"
-            placeholder="myorg"
-            onBlur={trackInfluxDBConfigV2FluxDBDetailsOrgInputField}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'organization')}
-            value={jsonData.organization || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Default Bucket" grow required>
-          <Input
-            id="default-bucket"
-            onBlur={trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField}
-            onChange={onUpdateDatasourceJsonDataOption(props, 'defaultBucket')}
-            placeholder="mybucket"
-            value={jsonData.defaultBucket || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField labelWidth={DB_SETTINGS_LABEL_WIDTH} label="Token" grow required>
-          <SecretInput
-            id="token"
-            isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
-            onBlur={trackInfluxDBConfigV2FluxDBDetailsTokenInputField}
-            onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
-            onReset={() => updateDatasourcePluginResetOption(props, 'token')}
-            value={secureJsonData?.token || ''}
-          />
-        </InlineField>
-      </InlineFieldRow>
-    </>
+    <Box width="50%">
+      <Field label="Organization" required noMargin>
+        <Input
+          id="organization"
+          placeholder="myorg"
+          onBlur={trackInfluxDBConfigV2FluxDBDetailsOrgInputField}
+          onChange={onUpdateDatasourceJsonDataOption(props, 'organization')}
+          value={jsonData.organization || ''}
+        />
+      </Field>
+      <Space v={2} />
+      <Field label="Default bucket" required noMargin>
+        <Input
+          id="default-bucket"
+          onBlur={trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField}
+          onChange={onUpdateDatasourceJsonDataOption(props, 'defaultBucket')}
+          placeholder="mybucket"
+          value={jsonData.defaultBucket || ''}
+        />
+      </Field>
+      <Space v={2} />
+      <Field label="Token" required noMargin>
+        <SecretInput
+          id="token"
+          isConfigured={Boolean(secureJsonFields && secureJsonFields.token)}
+          onBlur={trackInfluxDBConfigV2FluxDBDetailsTokenInputField}
+          onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}
+          onReset={() => updateDatasourcePluginResetOption(props, 'token')}
+          value={secureJsonData?.token || ''}
+        />
+      </Field>
+    </Box>
   );
 };
