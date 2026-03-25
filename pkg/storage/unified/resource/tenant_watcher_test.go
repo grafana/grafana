@@ -134,27 +134,6 @@ func TestTenantClearPendingDelete(t *testing.T) {
 		assert.ErrorIs(t, err, ErrNotFound)
 	})
 
-	t.Run("does not clear force pending-delete record", func(t *testing.T) {
-		tw := newTestTenantWatcher(t)
-
-		require.NoError(t, tw.pendingDeleteStore.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
-			DeleteAfter:      "2026-03-01T00:00:00Z",
-			LabelingComplete: true,
-			Force:            true,
-		}))
-		tw.pendingDeleteStore.RefreshCache(t.Context())
-
-		restored := &unstructured.Unstructured{}
-		restored.SetName("tenant-1")
-		tw.handleTenant(restored)
-
-		record, err := tw.pendingDeleteStore.Get(t.Context(), "tenant-1")
-		require.NoError(t, err)
-		assert.True(t, record.Force)
-		assert.True(t, record.LabelingComplete)
-		assert.Equal(t, "2026-03-01T00:00:00Z", record.DeleteAfter)
-	})
-
 	t.Run("force record persists through reconcile and clear events", func(t *testing.T) {
 		tw := newTestTenantWatcher(t)
 
