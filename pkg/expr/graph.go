@@ -15,6 +15,8 @@ import (
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -226,8 +228,7 @@ func (s *Service) buildPipeline(ctx context.Context, req *Request) (DataPipeline
 		span.End()
 	}()
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	degraded := s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagSseExpressionErrorIsolation)
+	degraded := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagSseExpressionErrorIsolation, false, openfeature.TransactionContext(ctx))
 	graph, brokenNodes, err := s.buildDependencyGraph(ctx, req, degraded)
 	if err != nil {
 		return nil, nil, err

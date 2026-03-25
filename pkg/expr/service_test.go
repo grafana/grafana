@@ -300,6 +300,7 @@ func TestTransformDataDegradedPipeline(t *testing.T) {
 	)
 
 	t.Run("returns partial results for broken expressions", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
 		me := &mockEndpoint{
 			Responses: map[string]backend.DataResponse{
 				"A": {Frames: data.Frames{dsDF}},
@@ -308,7 +309,6 @@ func TestTransformDataDegradedPipeline(t *testing.T) {
 
 		cfg := setting.NewCfg()
 		cfg.ExpressionsEnabled = true
-		features := featuremgmt.WithFeatures(featuremgmt.FlagSseExpressionErrorIsolation)
 		pCtxProvider := plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "test"}},
@@ -318,13 +318,13 @@ func TestTransformDataDegradedPipeline(t *testing.T) {
 		s := Service{
 			cfg:                       cfg,
 			dataService:               me,
-			features:                  features,
+			features:                  featuremgmt.WithFeatures(),
 			tracer:                    tracing.NewNoopTracerService(),
 			metrics:                   metrics.NewSSEMetrics(prometheus.NewRegistry()),
 			pCtxProvider:              pCtxProvider,
 			qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
 			converter: &ResultConverter{
-				Features: features,
+				Features: featuremgmt.WithFeatures(),
 				Tracer:   tracing.NewNoopTracerService(),
 			},
 		}
@@ -406,6 +406,7 @@ func TestTransformDataDegradedPipeline(t *testing.T) {
 }
 
 func TestTransformDataDegradedHiddenBrokenNode(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
 	dsDF := data.NewFrame("test",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
 		data.NewField("value", data.Labels{"test": "label"}, []*float64{fp(2)}),
@@ -419,7 +420,6 @@ func TestTransformDataDegradedHiddenBrokenNode(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.ExpressionsEnabled = true
-	features := featuremgmt.WithFeatures(featuremgmt.FlagSseExpressionErrorIsolation)
 	pCtxProvider := plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{
 			{JSONData: plugins.JSONData{ID: "test"}},
@@ -429,13 +429,13 @@ func TestTransformDataDegradedHiddenBrokenNode(t *testing.T) {
 	s := Service{
 		cfg:                       cfg,
 		dataService:               me,
-		features:                  features,
+		features:                  featuremgmt.WithFeatures(),
 		tracer:                    tracing.NewNoopTracerService(),
 		metrics:                   metrics.NewSSEMetrics(prometheus.NewRegistry()),
 		pCtxProvider:              pCtxProvider,
 		qsDatasourceClientBuilder: dsquerierclient.NewNullQSDatasourceClientBuilder(),
 		converter: &ResultConverter{
-			Features: features,
+			Features: featuremgmt.WithFeatures(),
 			Tracer:   tracing.NewNoopTracerService(),
 		},
 	}

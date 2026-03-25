@@ -2,9 +2,12 @@ package expr
 
 import (
 	"encoding/json"
+	"sync"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 	"gonum.org/v1/gonum/graph/simple"
 
@@ -14,6 +17,26 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var openfeatureTestMutex sync.Mutex
+
+func setupOpenFeatureFlag(t *testing.T, flag string, value bool) {
+	t.Helper()
+	openfeatureTestMutex.Lock()
+
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		flag: setting.NewInMemoryFlag(flag, value),
+	})
+	require.NoError(t, err)
+
+	err = openfeature.SetProviderAndWait(provider)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+		openfeatureTestMutex.Unlock()
+	})
+}
 
 func TestServicebuildPipeLine(t *testing.T) {
 	var tests = []struct {
@@ -394,10 +417,10 @@ func TestCollectBrokenNodes(t *testing.T) {
 
 func TestBuildPipelineDegraded(t *testing.T) {
 	t.Run("missing dep produces degraded pipeline when toggle ON", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
 		s := Service{
-			cfg:      setting.NewCfg(),
-			tracer:   &testTracer{},
-			features: featuremgmt.WithFeatures(featuremgmt.FlagSseExpressionErrorIsolation),
+			cfg:    setting.NewCfg(),
+			tracer: &testTracer{},
 		}
 		req := &Request{
 			Queries: []Query{
@@ -429,9 +452,8 @@ func TestBuildPipelineDegraded(t *testing.T) {
 
 	t.Run("missing dep still hard-fails when toggle OFF", func(t *testing.T) {
 		s := Service{
-			cfg:      setting.NewCfg(),
-			tracer:   &testTracer{},
-			features: featuremgmt.WithFeatures(),
+			cfg:    setting.NewCfg(),
+			tracer: &testTracer{},
 		}
 		req := &Request{
 			Queries: []Query{
@@ -459,10 +481,10 @@ func TestBuildPipelineDegraded(t *testing.T) {
 	})
 
 	t.Run("structural errors remain fatal even with toggle ON", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
 		s := Service{
-			cfg:      setting.NewCfg(),
-			tracer:   &testTracer{},
-			features: featuremgmt.WithFeatures(featuremgmt.FlagSseExpressionErrorIsolation),
+			cfg:    setting.NewCfg(),
+			tracer: &testTracer{},
 		}
 		req := &Request{
 			Queries: []Query{
@@ -485,11 +507,11 @@ func TestBuildPipelineDegraded(t *testing.T) {
 
 func TestBuildPipelinePublicRejectsDegraded(t *testing.T) {
 	t.Run("BuildPipeline returns error for broken nodes even with toggle ON", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagSseExpressionErrorIsolation, true)
 		s := Service{
-			cfg:      setting.NewCfg(),
-			tracer:   &testTracer{},
-			features: featuremgmt.WithFeatures(featuremgmt.FlagSseExpressionErrorIsolation),
-			metrics:  metrics.NewSSEMetrics(nil),
+			cfg:     setting.NewCfg(),
+			tracer:  &testTracer{},
+			metrics: metrics.NewSSEMetrics(nil),
 		}
 		req := &Request{
 			Queries: []Query{
