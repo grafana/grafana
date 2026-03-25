@@ -2398,11 +2398,27 @@ Use a sampling server that supports the Jaeger remote sampling API, such as `jae
 
 ### `[tracing.opentelemetry.jaeger]`
 
-Configure Grafana with a Jaeger client for distributed tracing.
+Configure Grafana to send traces to a Jaeger backend using the OTLP HTTP protocol.
+
+{{< admonition type="note" >}}
+This exporter now uses the OTLP HTTP protocol instead of the deprecated Jaeger-native protocol.
+Jaeger v1.35+ natively supports OTLP on port `4318`.
+{{< /admonition >}}
 
 #### `address`
 
-The `<HOST>:<PORT>` destination for reporting spans. For example, `localhost:14268/api/traces`.
+The OTLP HTTP endpoint for reporting spans. This can be either:
+
+- A full URL: `http://localhost:4318/v1/traces`
+- A host:port: `localhost:4318`
+
+For example: `localhost:4318` or `http://jaeger.example.com:4318/v1/traces`.
+
+{{< admonition type="warning" >}}
+**Migration required for Jaeger agent users:** If you previously configured this with a Jaeger agent address (for example, `localhost:6831`), you must update to the OTLP HTTP receiver endpoint (typically `localhost:4318`). The old UDP-based agent protocol is no longer supported.
+
+**Migration for Jaeger collector users:** If you used the old Thrift HTTP collector URL (for example, `http://localhost:14268/api/traces`), update to the OTLP endpoint (for example, `http://localhost:4318/v1/traces`).
+{{< /admonition >}}
 
 #### `propagation`
 

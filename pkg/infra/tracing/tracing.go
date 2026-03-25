@@ -7,6 +7,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -16,9 +17,9 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
@@ -128,32 +129,67 @@ func (noopTracerProvider) Shutdown(ctx context.Context) error {
 }
 
 func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
-	var ep jaeger.EndpointOption
-	// Create the Jaeger exporter: address can be either agent address (host:port) or collector URL
+	// Jaeger exporter is deprecated, use OTLP HTTP exporter to send traces to Jaeger collector
+	// Jaeger supports OTLP natively: https://www.jaegertracing.io/docs/latest/apis/#opentelemetry-protocol-stable
+	var opts []otlptracehttp.Option
+
+	// Parse address: can be either collector URL or host:port
 	if strings.HasPrefix(ots.cfg.Address, "http://") || strings.HasPrefix(ots.cfg.Address, "https://") {
-		ots.log.Debug("using jaeger collector", "address", ots.cfg.Address)
-		ep = jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.cfg.Address))
+		ots.log.Debug("using OTLP HTTP exporter for Jaeger", "address", ots.cfg.Address)
+		u, err := url.Parse(ots.cfg.Address)
+		if err != nil {
+			return nil, fmt.Errorf("invalid tracer address %q: %w", ots.cfg.Address, err)
+		}
+
+		endpoint := u.Host
+		urlPath := u.Path
+
+		// Legacy Jaeger Thrift HTTP collector migration:
+		// - Old endpoint: http://host:14268/api/traces (Thrift protocol)
+		// - New endpoint: http://host:4318/v1/traces (OTLP protocol)
+		// These are incompatible protocols, so we auto-correct both port and path
+		// to ensure existing configurations continue to work after this migration.
+		if u.Path == "/api/traces" {
+			host := u.Hostname()
+			endpoint = fmt.Sprintf("%s:4318", host)
+			urlPath = "/v1/traces"
+			ots.log.Warn("detected legacy Jaeger collector URL - "+
+				"automatically correcting to OTLP endpoint; "+
+				"please update your configuration",
+				"original_address", ots.cfg.Address,
+				"corrected_endpoint", endpoint,
+				"corrected_path", urlPath)
+		}
+
+		opts = append(opts, otlptracehttp.WithEndpoint(endpoint))
+		if urlPath != "" && urlPath != "/" {
+			opts = append(opts, otlptracehttp.WithURLPath(urlPath))
+		}
+		if u.Scheme == "http" {
+			opts = append(opts, otlptracehttp.WithInsecure())
+		}
 	} else if host, port, err := net.SplitHostPort(ots.cfg.Address); err == nil {
-		ots.log.Debug("using jaeger agent", "host", host, "port", port)
-		ep = jaeger.WithAgentEndpoint(jaeger.WithAgentHost(host), jaeger.WithAgentPort(port), jaeger.WithMaxPacketSize(64000))
+		// Legacy Jaeger agent migration warning:
+		// Old Jaeger agent used UDP on ports 6831/6832/5775, but OTLP HTTP requires TCP on port 4318.
+		// We cannot auto-correct this because UDP→HTTP is a protocol change that requires
+		// the user to ensure their Jaeger deployment has OTLP enabled.
+		suggestedAddress := fmt.Sprintf("%s:4318", host)
+		switch port {
+		case "6831", "6832", "5775":
+			ots.log.Warn("detected legacy Jaeger agent port which used UDP - "+
+				"OTLP HTTP requires the Jaeger OTLP receiver (typically port 4318)",
+				"original_address", ots.cfg.Address,
+				"detected_port", port,
+				"suggested_address", suggestedAddress)
+		}
+		ots.log.Debug("using OTLP HTTP exporter for Jaeger", "address", ots.cfg.Address)
+		opts = append(opts, otlptracehttp.WithEndpoint(ots.cfg.Address), otlptracehttp.WithInsecure())
 	} else {
-		return nil, fmt.Errorf("invalid tracer address: %s", ots.cfg.Address)
-	}
-	exp, err := jaeger.New(ep)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid tracer address %q", ots.cfg.Address)
 	}
 
-	res, err := resource.New(
-		context.Background(),
-		resource.WithAttributes(
-			// TODO: why are these attributes different from ones added to the
-			// OTLP provider?
-			semconv.ServiceNameKey.String(ots.cfg.ServiceName),
-			attribute.String("environment", "production"),
-		),
-		resource.WithAttributes(ots.cfg.CustomAttribs...),
-	)
+	client := otlptracehttp.NewClient(opts...)
+	exp, err := otlptrace.New(context.Background(), client)
 	if err != nil {
 		return nil, err
 	}
@@ -163,13 +199,7 @@ func (ots *TracingService) initJaegerTracerProvider() (*tracesdk.TracerProvider,
 		return nil, err
 	}
 
-	tp := tracesdk.NewTracerProvider(
-		tracesdk.WithBatcher(exp),
-		tracesdk.WithResource(res),
-		tracesdk.WithSampler(sampler),
-	)
-
-	return tp, nil
+	return initTracerProvider(exp, ots.cfg.ServiceName, ots.cfg.ServiceVersion, sampler, ots.cfg.CustomAttribs...)
 }
 
 func (ots *TracingService) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
