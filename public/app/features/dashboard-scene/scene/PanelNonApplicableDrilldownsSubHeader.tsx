@@ -4,7 +4,7 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AdHocFiltersVariable, GroupByVariable, SceneQueryRunner } from '@grafana/scenes';
+import { AdHocFiltersVariable, isGroupByFilter, SceneQueryRunner } from '@grafana/scenes';
 import { Tooltip, measureText, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getDrilldownApplicability } from '../utils/drilldownUtils';
@@ -14,23 +14,19 @@ const FONT_SIZE = 12;
 
 interface Props {
   filtersVar?: AdHocFiltersVariable;
-  groupByVar?: GroupByVariable;
   queryRunner: SceneQueryRunner;
 }
 
-export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, queryRunner }: Props) {
+export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, queryRunner }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
 
-  // Subscribe to state changes (this triggers re-renders when state changes)
   const filtersState = filtersVar?.useState();
-  const groupByState = groupByVar?.useState();
 
   const [nonApplicable, setNonApplicable] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState<number>(0);
 
-  // Create stable string representations to detect actual changes
   const filterKey = useMemo(() => {
     const filters = filtersState?.filters ?? [];
     const originFilters = filtersState?.originFilters ?? [];
@@ -40,57 +36,39 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
     );
   }, [filtersState?.filters, filtersState?.originFilters]);
 
-  const groupByKey = useMemo(() => {
-    const value = groupByState?.value ?? [];
-    const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
-    // Include keysApplicability in the key so we re-fetch when it changes
-    const keysApplicabilityKey = JSON.stringify(groupByState?.keysApplicability?.map((keyApp) => keyApp.key) ?? []);
-    return JSON.stringify(groupByValues) + keysApplicabilityKey;
-  }, [groupByState?.value, groupByState?.keysApplicability]);
-
   useEffect(() => {
     const fetchApplicability = async () => {
       const filters = filtersState?.filters ?? [];
       const originFilters = filtersState?.originFilters ?? [];
-      const value = groupByState?.value ?? [];
+      const allFilters = [...filters, ...originFilters];
 
-      const filterValues = [...filters, ...originFilters];
-      const groupByValues = Array.isArray(value) ? value : value ? [value] : [];
+      const realFilters = allFilters.filter((f) => !isGroupByFilter(f));
+      const groupByFilters = allFilters.filter((f) => isGroupByFilter(f));
 
       const labels: string[] = [];
 
-      const applicability = await getDrilldownApplicability(queryRunner, filtersVar, groupByVar);
-      if (filterValues.length) {
-        const nonApplicableFilters = filterValues.filter((filter) => {
+      const applicability = await getDrilldownApplicability(queryRunner, filtersVar);
+
+      if (realFilters.length) {
+        const nonApplicableFilters = realFilters.filter((filter) => {
           const result = applicability?.find((entry) => entry.key === filter.key && entry.origin === filter.origin);
           return result && !result.applicable;
         });
         labels.push(
           ...nonApplicableFilters.map((filter) => {
-            // Use values array for multi-value operators, fall back to value for single-value
             const displayValue = filter.values?.length ? filter.values.join(', ') : filter.value;
             return `${filter.key} ${filter.operator} ${displayValue}`;
           })
         );
       }
 
-      if (groupByValues.length) {
-        // Use keysApplicability from groupByVar state as fallback if API call didn't include groupBy
-        // (this can happen if groupByVar's datasource doesn't match queryRunner's datasource)
-        const groupByApplicability = groupByState?.keysApplicability;
-
-        const nonApplicableKeys = groupByValues
-          .filter((groupByKey) => {
-            // First check API result, then fall back to variable's keysApplicability state
-            const apiResult = applicability?.find((entry) => entry.key === groupByKey);
-            if (apiResult) {
-              return !apiResult.applicable;
-            }
-            // Fallback to keysApplicability from the variable's state
-            const stateResult = groupByApplicability?.find((entry) => entry.key === groupByKey);
-            return stateResult && !stateResult.applicable;
+      if (groupByFilters.length) {
+        const nonApplicableKeys = groupByFilters
+          .filter((filter) => {
+            const result = applicability?.find((entry) => entry.key === filter.key);
+            return result && !result.applicable;
           })
-          .map((key) => String(key));
+          .map((filter) => filter.key);
 
         labels.push(...nonApplicableKeys);
       }
@@ -100,7 +78,7 @@ export function PanelNonApplicableDrilldownsSubHeader({ filtersVar, groupByVar, 
 
     fetchApplicability();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterKey, groupByKey, filtersVar, groupByVar, queryRunner]);
+  }, [filterKey, filtersVar, queryRunner]);
 
   useLayoutEffect(() => {
     if (!nonApplicable.length) {

@@ -1,6 +1,6 @@
 import { DrilldownsApplicability } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, GroupByVariable, sceneGraph, SceneObject, SceneQueryRunner } from '@grafana/scenes';
+import { AdHocFiltersVariable, isGroupByFilter, sceneGraph, SceneObject, SceneQueryRunner } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { getDatasourceFromQueryRunner } from './getDatasourceFromQueryRunner';
@@ -20,11 +20,9 @@ export function verifyDrilldownApplicability(
 
 export async function getDrilldownApplicability(
   queryRunner: SceneQueryRunner,
-  filtersVar?: AdHocFiltersVariable,
-  groupByVar?: GroupByVariable
+  filtersVar?: AdHocFiltersVariable
 ): Promise<DrilldownsApplicability[] | undefined> {
-  //if no drilldown vars return
-  if (!filtersVar && !groupByVar) {
+  if (!filtersVar) {
     return;
   }
 
@@ -40,37 +38,21 @@ export async function getDrilldownApplicability(
   }
 
   const dsUid = sceneGraph.interpolate(queryRunner, datasource?.uid);
-  const timeRange = sceneGraph.getTimeRange(queryRunner).state.value;
-  const groupByKeys = [];
-  const filters = [];
+  const hasFiltersApplicability = dsUid === sceneGraph.interpolate(filtersVar, filtersVar.state?.datasource?.uid);
 
-  const hasGroupByApplicability =
-    groupByVar && dsUid === sceneGraph.interpolate(groupByVar, groupByVar?.state.datasource?.uid);
-  const hasFiltersApplicability =
-    filtersVar && dsUid === sceneGraph.interpolate(filtersVar, filtersVar.state?.datasource?.uid);
-
-  // if neither vars use the ds from the queries, return
-  if (!hasGroupByApplicability && !hasFiltersApplicability) {
+  if (!hasFiltersApplicability) {
     return;
   }
 
-  if (hasGroupByApplicability) {
-    groupByKeys.push(
-      ...(Array.isArray(groupByVar.state.value)
-        ? groupByVar.state.value.map((v) => String(v))
-        : groupByVar.state.value
-          ? [String(groupByVar.state.value)]
-          : [])
-    );
-  }
+  const allFilters = [...filtersVar.state.filters, ...(filtersVar.state.originFilters ?? [])];
+  const filters = allFilters.filter((f) => !isGroupByFilter(f));
+  const groupByKeys = allFilters.filter((f) => isGroupByFilter(f)).map((f) => f.key);
 
-  if (hasFiltersApplicability) {
-    filters.push(...filtersVar.state.filters, ...(filtersVar.state.originFilters ?? []));
-  }
+  const timeRange = sceneGraph.getTimeRange(queryRunner).state.value;
 
   return await ds.getDrilldownsApplicability({
-    groupByKeys,
     filters,
+    groupByKeys,
     queries,
     timeRange,
     scopes: sceneGraph.getScopes(queryRunner),
