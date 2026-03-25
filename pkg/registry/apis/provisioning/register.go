@@ -167,62 +167,102 @@ type Options struct {
 	FolderMetadataEnabled               bool
 }
 
-// NewAPIBuilder creates an API builder.
+// NewAPIBuilder creates an API builder for the provisioning API.
+//
+// This function supports registering multiple API versions (e.g., v0alpha1, v1beta1) by creating
+// separate API builders for each version. The same types are served under different versions using
+// OpenAPI schema transformation.
+//
+// Key parameters for multi-version support:
+//   - gv: The GroupVersion (group + version) this builder serves. This determines which API version
+//     the builder registers (e.g., "provisioning.grafana.app/v0alpha1" or "provisioning.grafana.app/v1beta1").
+//     The version is used to generate the correct API paths (/apis/{group}/{version}/...) and to
+//     transform OpenAPI schemas to match the version.
+//   - isPreferredVersion: Indicates whether this version is the preferred/default version for the API group.
+//     Only ONE version should be marked as preferred. The preferred version is used by kubectl and other
+//     clients when they query the API without specifying a version. It also controls which version runs
+//     the controllers and background workers (only the preferred version starts these to avoid duplicates).
+//
 // It avoids anything that is core to Grafana, such that it can be used in a multi-tenant service down the line.
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
-func NewAPIBuilder(opts Options) (*APIBuilder, error) {
+func NewAPIBuilder(
+	gv schema.GroupVersion,
+	isPreferredVersion bool,
+	onlyApiServer bool,
+	repoFactory repository.Factory,
+	connectionFactory connection.Factory,
+	features featuremgmt.FeatureToggles,
+	unified resource.ResourceClient,
+	configProvider apiserver.RestConfigProvider,
+	storageStatus dualwrite.Service,
+	usageStats usagestats.Service,
+	access authlib.AccessChecker,
+	tracer tracing.Tracer,
+	extraBuilders []ExtraBuilder,
+	extraWorkers []jobs.Worker,
+	jobHistoryConfig *JobHistoryConfig,
+	allowedTargets []provisioning.SyncTargetType,
+	restConfigGetter func(context.Context) (*clientrest.Config, error),
+	allowImageRendering bool,
+	minSyncInterval time.Duration,
+	registry prometheus.Registerer,
+	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory,
+	useExclusivelyAccessCheckerForAuthz bool,
+	quotaGetter quotas.QuotaGetter,
+	folderMetadataEnabled bool,
+) (*APIBuilder, error) {
 	var clients resources.ClientFactory
-	if opts.NewStandaloneClientFactoryFunc != nil {
-		clients = opts.NewStandaloneClientFactoryFunc(opts.ConfigProvider)
+	if newStandaloneClientFactoryFunc != nil {
+		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
-		clients = resources.NewClientFactory(opts.ConfigProvider)
+		clients = resources.NewClientFactory(configProvider)
 	}
-	if opts.GroupVersion.Version == "" {
+	if gv.Version == "" {
 		return nil, fmt.Errorf("invalid provisioning group/version")
 	}
 
-	parsers := resources.NewParserFactory(clients, opts.FolderMetadataEnabled)
-	resourceLister := resources.NewResourceListerForMigrations(opts.Unified)
+	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
+	resourceLister := resources.NewResourceListerForMigrations(unified)
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker
-	if opts.UseExclusivelyAccessCheckerForAuthz {
-		accessChecker = auth.NewTokenAccessChecker(opts.Access)
+	if useExclusivelyAccessCheckerForAuthz {
+		accessChecker = auth.NewTokenAccessChecker(access)
 	} else {
-		accessChecker = auth.NewSessionAccessChecker(opts.Access)
+		accessChecker = auth.NewSessionAccessChecker(access)
 	}
 
 	b := &APIBuilder{
-		gv:                                  opts.GroupVersion,
-		onlyApiServer:                       opts.OnlyApiServer,
-		isPreferredVersion:                  opts.IsPreferredVersion,
-		minSyncInterval:                     opts.MinSyncInterval,
-		tracer:                              opts.Tracer,
-		usageStats:                          opts.UsageStats,
-		features:                            opts.Features,
-		repoFactory:                         opts.RepoFactory,
-		connectionFactory:                   opts.ConnectionFactory,
+		gv:                                  gv,
+		onlyApiServer:                       onlyApiServer,
+		isPreferredVersion:                  isPreferredVersion,
+		minSyncInterval:                     minSyncInterval,
+		tracer:                              tracer,
+		usageStats:                          usageStats,
+		features:                            features,
+		repoFactory:                         repoFactory,
+		connectionFactory:                   connectionFactory,
 		clients:                             clients,
 		parsers:                             parsers,
-		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, opts.Features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
+		repositoryResources:                 resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata)), //nolint:staticcheck
 		resourceLister:                      resourceLister,
-		unified:                             opts.Unified,
+		unified:                             unified,
 		access:                              accessChecker,
 		accessWithAdmin:                     accessChecker.WithFallbackRole(identity.RoleAdmin),
 		accessWithEditor:                    accessChecker.WithFallbackRole(identity.RoleEditor),
 		accessWithViewer:                    accessChecker.WithFallbackRole(identity.RoleViewer),
-		jobHistoryConfig:                    opts.JobHistoryConfig,
-		extraWorkers:                        opts.ExtraWorkers,
-		restConfigGetter:                    opts.RestConfigGetter,
-		allowedTargets:                      opts.AllowedTargets,
-		allowImageRendering:                 opts.AllowImageRendering,
-		registry:                            opts.Registry,
-		useExclusivelyAccessCheckerForAuthz: opts.UseExclusivelyAccessCheckerForAuthz,
-		quotaGetter:                         opts.QuotaGetter,
-		folderMetadataEnabled:               opts.FolderMetadataEnabled,
+		jobHistoryConfig:                    jobHistoryConfig,
+		extraWorkers:                        extraWorkers,
+		restConfigGetter:                    restConfigGetter,
+		allowedTargets:                      allowedTargets,
+		allowImageRendering:                 allowImageRendering,
+		registry:                            registry,
+		useExclusivelyAccessCheckerForAuthz: useExclusivelyAccessCheckerForAuthz,
+		quotaGetter:                         quotaGetter,
+		folderMetadataEnabled:               folderMetadataEnabled,
 	}
 
-	for _, builder := range opts.ExtraBuilders {
+	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
 	}
 
@@ -295,47 +335,74 @@ func RegisterAPIService(
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
 
-	opts := Options{
-		GroupVersion: schema.GroupVersion{
+	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
+	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
+
+	// Register v0alpha1 (preferred version)
+	builder, err := NewAPIBuilder(
+		schema.GroupVersion{
 			Group:   provisioning.GROUP,
 			Version: provisioning.VERSION, // v0alpha1
 		},
-		OnlyApiServer:                       cfg.DisableControllers,
-		IsPreferredVersion:                  true,
-		RepoFactory:                         repoFactory,
-		ConnectionFactory:                   connectionFactory,
-		Features:                            features,
-		Unified:                             client,
-		ConfigProvider:                      configProvider,
-		StorageStatus:                       storageStatus,
-		UsageStats:                          usageStats,
-		Access:                              access,
-		Tracer:                              tracer,
-		ExtraBuilders:                       extraBuilders,
-		ExtraWorkers:                        extraWorkers,
-		JobHistoryConfig:                    createJobHistoryConfigFromSettings(cfg),
-		AllowedTargets:                      allowedTargets,
-		RestConfigGetter:                    nil, // will use loopback instead
-		AllowImageRendering:                 cfg.ProvisioningAllowImageRendering,
-		MinSyncInterval:                     cfg.ProvisioningMinSyncInterval,
-		Registry:                            reg,
-		NewStandaloneClientFactoryFunc:      nil,
-		UseExclusivelyAccessCheckerForAuthz: false, // TODO: first, test this on the MT side before we enable it by default in ST as well
-		QuotaGetter:                         quotaGetter,
-		FolderMetadataEnabled:               features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata), //nolint:staticcheck
-	}
-
-	builder, err := NewAPIBuilder(opts)
+		true,                   // isPreferredVersion
+		cfg.DisableControllers, // onlyApiServer
+		repoFactory,
+		connectionFactory,
+		features,
+		client,
+		configProvider,
+		storageStatus,
+		usageStats,
+		access,
+		tracer,
+		extraBuilders,
+		extraWorkers,
+		jobHistoryConfig,
+		allowedTargets,
+		nil, // restConfigGetter - will use loopback instead
+		cfg.ProvisioningAllowImageRendering,
+		cfg.ProvisioningMinSyncInterval,
+		reg,
+		nil,   // newStandaloneClientFactoryFunc
+		false, // useExclusivelyAccessCheckerForAuthz - TODO: first, test this on the MT side before we enable it by default in ST as well
+		quotaGetter,
+		folderMetadataEnabled,
+	)
 	if err != nil {
 		return nil, err
 	}
 	apiregistration.RegisterAPI(builder)
 
-	// Register additional API version
-	opts.OnlyApiServer = true
-	opts.IsPreferredVersion = false       // this is the preferred version
-	opts.GroupVersion.Version = "v1beta1" // preferred version
-	builder, err = NewAPIBuilder(opts)
+	// Register v1beta1
+	builder, err = NewAPIBuilder(
+		schema.GroupVersion{
+			Group:   provisioning.GROUP,
+			Version: "v1beta1",
+		},
+		false, // isPreferredVersion
+		true,  // onlyApiServer
+		repoFactory,
+		connectionFactory,
+		features,
+		client,
+		configProvider,
+		storageStatus,
+		usageStats,
+		access,
+		tracer,
+		extraBuilders,
+		extraWorkers,
+		jobHistoryConfig,
+		allowedTargets,
+		nil, // restConfigGetter
+		cfg.ProvisioningAllowImageRendering,
+		cfg.ProvisioningMinSyncInterval,
+		reg,
+		nil,   // newStandaloneClientFactoryFunc
+		false, // useExclusivelyAccessCheckerForAuthz
+		quotaGetter,
+		folderMetadataEnabled,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1022,11 +1089,7 @@ func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	if b.gv.Version == "v1beta1" {
 		return func(rc common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 			defs := provisioning.GetOpenAPIDefinitions(rc)
-			for k, v := range defs {
-				k = strings.Replace(k, ".provisioning.v0alpha1.", ".provisioning.v1beta1.", 1)
-				defs[k] = v
-			}
-			return defs
+			return ReplaceOpenAPIVersion(defs, "provisioning", "v0alpha1", "v1beta1")
 		}
 	}
 	return provisioning.GetOpenAPIDefinitions
@@ -1051,11 +1114,16 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	refsBase := provisioning.OpenAPIPrefix
 	compBase := refsBase
 
+	// For v1beta1, update the component base to use the correct version
+	if b.gv.Version == "v1beta1" {
+		compBase = strings.Replace(compBase, ".v0alpha1.", ".v1beta1.", 1)
+	}
+
 	// TODO: Remove this endpoint when we deprecate the test endpoint
 	// We should use fieldErrors from status instead.
 	sub := oas.Paths.Paths[repoprefix+"/test"]
 	if sub != nil {
-		repoSchema := defs[refsBase+"Repository"].Schema
+		repoSchema := defs[compBase+"Repository"].Schema
 		sub.Post.Description = "Check if the configuration is valid. Deprecated: this will go away in favour of fieldErrors from status"
 		sub.Post.Deprecated = true
 		sub.Post.RequestBody = &spec3.RequestBody{
@@ -1126,7 +1194,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[refsBase+"RefList"].Schema
+		s := defs[compBase+"RefList"].Schema
 		mt["*/*"].Schema = &s
 	}
 
@@ -1144,7 +1212,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[refsBase+"FileList"].Schema
+		s := defs[compBase+"FileList"].Schema
 		mt["*/*"].Schema = &s
 	}
 
@@ -1338,7 +1406,7 @@ spec:
 
 		// Replace the content type for this response
 		mt := sub.Get.Responses.StatusCodeResponses[200].Content
-		s := defs[refsBase+"ExternalRepositoryList"].Schema
+		s := defs[compBase+"ExternalRepositoryList"].Schema
 		mt["*/*"].Schema = &s
 	}
 
@@ -1413,6 +1481,18 @@ spec:
 	schema = oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"]
 	schema.Items = countSpec
 	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
+
+	// Clean up version-specific schemas and metadata
+	switch b.gv.Version {
+	case "v1beta1":
+		// For v1beta1, replace all v0alpha1 references with v1beta1 and remove old schemas
+		ReplaceOpenAPISpecVersion(oas, "provisioning", "v0alpha1", "v1beta1")
+		// Ensure GVK extensions are present for top-level resources
+		ensureGVKForVersion(oas, "provisioning.grafana.app", "v1beta1")
+	case "v0alpha1":
+		// For v0alpha1, remove any v1beta1 schemas and filter GVK metadata
+		ReplaceOpenAPISpecVersion(oas, "provisioning", "v1beta1", "v0alpha1")
+	}
 
 	return oas, nil
 }

@@ -20,10 +20,11 @@ func TestRegisterJobMetrics(t *testing.T) {
 		})
 	})
 
-	t.Run("double registration panics", func(t *testing.T) {
+	t.Run("double registration is safe with sync.Once", func(t *testing.T) {
 		reg := prometheus.NewPedanticRegistry()
 		RegisterJobMetrics(reg)
-		require.Panics(t, func() {
+		// Should not panic - sync.Once prevents double registration
+		require.NotPanics(t, func() {
 			RegisterJobMetrics(reg)
 		})
 	})
