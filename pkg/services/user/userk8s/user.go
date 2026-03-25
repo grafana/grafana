@@ -3,17 +3,24 @@ package userk8s
 import (
 	"context"
 	"errors"
+	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var userGVR = schema.GroupVersionResource{
@@ -23,18 +30,24 @@ var userGVR = schema.GroupVersionResource{
 }
 
 type UserK8sService struct {
-	logger          log.Logger
-	namespaceMapper request.NamespaceMapper
-	configProvider  apiserver.DirectRestConfigProvider
+	logger            log.Logger
+	namespaceMapper   request.NamespaceMapper
+	configProvider    apiserver.DirectRestConfigProvider
+	autoAssignOrgRole string
 }
 
 var _ user.Service = (*UserK8sService)(nil)
 
 func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider) *UserK8sService {
+	autoAssignOrgRole := ""
+	if cfg != nil {
+		autoAssignOrgRole = cfg.AutoAssignOrgRole
+	}
 	return &UserK8sService{
-		logger:          logger,
-		namespaceMapper: request.GetNamespaceMapper(cfg),
-		configProvider:  configProvider,
+		logger:            logger,
+		namespaceMapper:   request.GetNamespaceMapper(cfg),
+		configProvider:    configProvider,
+		autoAssignOrgRole: autoAssignOrgRole,
 	}
 }
 
@@ -57,15 +70,86 @@ func (s *UserK8sService) getClient(ctx context.Context, namespace string) (dynam
 }
 
 func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	namespace := s.namespaceMapper(cmd.OrgID)
+	orgID := cmd.OrgID
+	if orgID == 0 || cmd.IsProvisioned {
+		if requester, err := identity.GetRequester(ctx); err == nil {
+			orgID = requester.GetOrgID()
+		}
+	}
 
-	// Call getClient to fix the linter error about unused function, the actual implementation will come in a future PR
-	_, err := s.getClient(ctx, namespace)
+	namespace := s.namespaceMapper(orgID)
+
+	client, err := s.getClient(ctx, namespace)
+	if err != nil {
+		s.logger.Error("failed to get k8s client", "namespace", namespace, "err", err)
+		return nil, err
+	}
+
+	uid := cmd.UID
+	if uid == "" {
+		uid = util.GenerateShortUID()
+	}
+
+	role := cmd.DefaultOrgRole
+	if role == "" {
+		role = s.autoAssignOrgRole
+	}
+
+	if cmd.Email == "" {
+		cmd.Email = cmd.Login
+	}
+
+	k8sUser := iamv0alpha1.User{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+			Kind:       "User",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      uid,
+			Namespace: namespace,
+		},
+		Spec: iamv0alpha1.UserSpec{
+			Login:         strings.ToLower(cmd.Login),
+			Email:         strings.ToLower(cmd.Email),
+			Title:         cmd.Name,
+			GrafanaAdmin:  cmd.IsAdmin,
+			Disabled:      cmd.IsDisabled,
+			EmailVerified: cmd.EmailVerified,
+			Provisioned:   cmd.IsProvisioned,
+			Role:          role,
+		},
+	}
+
+	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&k8sUser)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, errors.New("not implemented")
+	result, err := client.Create(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.CreateOptions{})
+	if err != nil {
+		s.logger.Error("k8s user create failed", "namespace", namespace, "orgID", orgID, "login", cmd.Login, "err", err)
+		return nil, err
+	}
+
+	var created iamv0alpha1.User
+	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(result.Object, &created); err != nil {
+		return nil, err
+	}
+
+	return &user.User{
+		ID:            getUserID(&created),
+		UID:           created.Name,
+		OrgID:         orgID,
+		Login:         created.Spec.Login,
+		Email:         created.Spec.Email,
+		Name:          created.Spec.Title,
+		IsAdmin:       created.Spec.GrafanaAdmin,
+		IsDisabled:    created.Spec.Disabled,
+		EmailVerified: created.Spec.EmailVerified,
+		IsProvisioned: created.Spec.Provisioned,
+		Created:       created.CreationTimestamp.Time,
+		Updated:       created.GetUpdateTimestamp(),
+	}, nil
 }
 
 func (s *UserK8sService) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
@@ -122,4 +206,11 @@ func (s *UserK8sService) GetProfile(ctx context.Context, cmd *user.GetUserProfil
 
 func (s *UserK8sService) GetUsageStats(ctx context.Context) map[string]any {
 	return map[string]any{}
+}
+
+func getUserID(u *iamv0alpha1.User) int64 {
+	if meta, err := utils.MetaAccessor(u); err == nil {
+		return meta.GetDeprecatedInternalID() // nolint:staticcheck
+	}
+	return 0
 }
