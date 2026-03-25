@@ -49,7 +49,8 @@ type ResourceServer interface {
 	resourcepb.BulkStoreServer
 	resourcepb.BlobStoreServer
 	resourcepb.QuotasServer
-	resourcepb.DiagnosticsServer
+	// Deprecated: clients should use grpc.health.v1.Health with modules.StorageServer service name instead
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 	ResourceServerStopper
 }
 
@@ -57,8 +58,10 @@ type ResourceServer interface {
 type SearchServer interface {
 	resourcepb.ResourceIndexServer
 	resourcepb.ManagedObjectIndexServer
-	resourcepb.DiagnosticsServer
+	// Deprecated: clients should use grpc.health.v1.Health with modules.SearchServer service name instead
+	resourcepb.DiagnosticsServer //nolint:staticcheck
 	ResourceServerStopper
+	Init(ctx context.Context) error
 }
 
 type ResourceServerStopper interface {
@@ -249,6 +252,10 @@ type ResourceServerOptions struct {
 	// Real storage backend
 	Backend StorageBackend
 
+	// BulkBatchOptions overrides the default BulkProcess batching thresholds.
+	// When nil, DefaultBulkBatchOptions is used.
+	BulkBatchOptions *BulkBatchOptions
+
 	// The blob configuration
 	Blob BlobConfig
 
@@ -262,7 +269,7 @@ type ResourceServerOptions struct {
 	OverridesService *OverridesService
 
 	// Diagnostics
-	Diagnostics resourcepb.DiagnosticsServer
+	Diagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 
 	// Check if a user has access to write folders
 	// When this is nil, no resources can have folders configured
@@ -297,8 +304,18 @@ type ResourceServerOptions struct {
 	QuotasConfig QuotasConfig
 }
 
-// NewSearchServer creates a standalone search server.
-func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
+func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
+	if opts.BulkBatchOptions == nil {
+		return DefaultBulkBatchOptions()
+	}
+
+	return *opts.BulkBatchOptions
+}
+
+// NewUninitializedSearchServer creates a standalone search server without calling Init.
+// The caller must call Init on the returned server before it handles requests.
+// This is useful when initialization must be deferred (e.g., until a ring reaches Running state).
+func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing backend implementation")
 	}
@@ -319,16 +336,27 @@ func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
 	}
 	searchServer.backendDiagnostics = opts.Diagnostics
 
-	// Initialize the search server
-	ctx := context.Background()
-	if err := searchServer.Init(ctx); err != nil {
+	return searchServer, nil
+}
+
+// NewSearchServer creates a standalone search server and initializes it immediately.
+func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
+	searchServer, err := NewUninitializedSearchServer(opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := searchServer.Init(context.Background()); err != nil {
 		return nil, fmt.Errorf("failed to initialize search server: %w", err)
 	}
 
 	return searchServer, nil
 }
 
-func NewResourceServer(opts ResourceServerOptions) (*server, error) {
+// NewUninitializedResourceServer creates a resource server without calling Init.
+// The caller must call Init on the returned server before it handles requests.
+// This is useful when initialization must be deferred (e.g., until a ring reaches Running state).
+func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
 	}
@@ -382,6 +410,7 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	s := &server{
 		log:                            logger,
 		backend:                        opts.Backend,
+		bulkBatchOptions:               opts.bulkBatchOptions(),
 		blob:                           blobstore,
 		diagnostics:                    opts.Diagnostics,
 		access:                         opts.AccessClient,
@@ -410,8 +439,16 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 		}
 	}
 
-	err = s.Init(ctx)
+	return s, nil
+}
+
+func NewResourceServer(opts ResourceServerOptions) (*server, error) {
+	s, err := NewUninitializedResourceServer(opts)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := s.Init(s.ctx); err != nil {
 		s.log.Error("resource server init failed", "error", err)
 		return nil, err
 	}
@@ -447,11 +484,12 @@ var _ ResourceServer = &server{}
 type server struct {
 	log              log.Logger
 	backend          StorageBackend
+	bulkBatchOptions BulkBatchOptions
 	blob             BlobSupport
 	secure           secrets.InlineSecureValueSupport
 	search           *searchServer
 	searchClient     resourcepb.ResourceIndexClient
-	diagnostics      resourcepb.DiagnosticsServer
+	diagnostics      resourcepb.DiagnosticsServer //nolint:staticcheck
 	access           claims.AccessClient
 	writeHooks       WriteAccessHooks
 	now              func() int64
@@ -1458,7 +1496,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	// Start listening -- this will buffer any changes that happen while we backfill.
 	// If events are generated faster than we can process them, then some events will be dropped.
 	// TODO: Think of a way to allow the client to catch up.
-	stream, err := s.broadcaster.Subscribe(ctx)
+	stream, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace))
 	if err != nil {
 		return err
 	}
@@ -1659,7 +1697,7 @@ func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountM
 
 // IsHealthy implements ResourceServer.
 func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckRequest) (*resourcepb.HealthCheckResponse, error) {
-	return s.diagnostics.IsHealthy(ctx, req)
+	return s.diagnostics.IsHealthy(ctx, req) //nolint:staticcheck
 }
 
 // GetBlob implements BlobStore.
@@ -1789,8 +1827,11 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	})
 
 	// Allow cluster-scoped resources to be enqueued with an empty tenantID.
+	// This is only used as a QOS queue key, not as a storage namespace.
 	if tenantID == "" {
-		tenantID = clusterScopeNamespace
+		// "cs" = cluster scoped. 2 characters on purpose as the min size of namespace is 3 characters, guaranteed not
+		// to clash
+		tenantID = "cs"
 	}
 
 	for {

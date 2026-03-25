@@ -164,7 +164,7 @@ export const LogList = ({
   setDisplayedFields,
   showControls,
   showFieldSelector,
-  showLevel = true,
+  showLevel,
   showLogAttributes,
   showTime,
   showUniqueLabels,
@@ -185,6 +185,7 @@ export const LogList = ({
       filterLevels={filterLevels}
       fontSize={fontSize}
       getRowContextQuery={getRowContextQuery}
+      isCustomGrammar={grammar !== undefined}
       isLabelFilterActive={isLabelFilterActive}
       logs={logs}
       logsMeta={logsMeta}

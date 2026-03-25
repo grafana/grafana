@@ -7,7 +7,10 @@ import (
 	"testing"
 	"time"
 
+	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -18,6 +21,7 @@ import (
 	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	shorturl "github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
@@ -29,9 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
-	mock "github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestMain(m *testing.M) {
@@ -50,6 +51,11 @@ func TestIntegrationMigrations(t *testing.T) {
 		testcases.NewFoldersAndDashboardsTestCase(),
 		testcases.NewPlaylistsTestCase(),
 		testcases.NewShortURLsTestCase(),
+	}
+	// TODO: fix datasource migration tests on sqlite, see:
+	// https://github.com/grafana/grafana-enterprise/issues/11313
+	if !db.IsTestDbSQLite() {
+		migrationTestCases = append(migrationTestCases, testcases.NewDataSourceTestCase())
 	}
 
 	runMigrationTestSuite(t, migrationTestCases)
@@ -75,8 +81,12 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 	}
 
 	// Clean up leftover state from previous test runs (e.g., renamed _legacy tables).
+	// Also register cleanup to run after this test, so other packages sharing the same
+	// MySQL/Postgres test DB don't see the renamed tables (e.g. short_url_legacy).
+	// Failing to do so may cause subsequent tests to fail in environments where the database is shared between tests.
 	if !db.IsTestDbSQLite() {
 		cleanupLegacyTables(t, testCases)
+		t.Cleanup(func() { cleanupLegacyTables(t, testCases) })
 	}
 
 	// Collect feature toggles required by all test cases
@@ -129,12 +139,23 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		org1 = &helper.Org1
 		orgB = &helper.OrgB
 
+		// create legacy tables (the ones that are no longer setup by default)
+		env := helper.GetEnv()
+		mg := migrator.NewScopedMigrator(env.SQLStore.GetEngine(), env.Cfg, "unified_migrator_tests")
+		mg.AddCreateMigration()
+		for _, v := range testStates {
+			v.tc.AddLegacySQLMigrations(mg)
+		}
+		err := mg.RunMigrations(t.Context(), false, 5000)
+		require.NoError(t, err, "error running migrations")
+
+		// Setup
 		for i := range testStates {
 			state := &testStates[i]
 			t.Run(state.tc.Name(), func(t *testing.T) {
-				state.tc.Setup(t, helper)
+				inK8s := state.tc.Setup(t, helper)
 				// Verify resources were created in legacy storage
-				state.tc.Verify(t, helper, true)
+				state.tc.Verify(t, helper, inK8s)
 			})
 		}
 	})
@@ -270,7 +291,6 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		}
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				//EnableLog:              true,
 				AppModeProduction:      true,
 				DisableAnonymous:       true,
 				DisableDataMigrations:  false,
@@ -309,12 +329,14 @@ const (
 	playlistsID            = "playlists migration"
 	foldersAndDashboardsID = "folders and dashboards migration"
 	shorturlsID            = "shorturls migration"
+	datasourceID           = "datasources migration"
 )
 
 var migrationIDsToDefault = map[string]bool{
 	playlistsID:            true,
 	foldersAndDashboardsID: true, // Auto-migrated when resource count is below threshold
 	shorturlsID:            false,
+	datasourceID:           false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool) {
@@ -326,6 +348,9 @@ func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDe
 			continue
 		}
 		if optOut {
+			continue
+		}
+		if db.IsTestDbSQLite() && id == datasourceID {
 			continue
 		}
 		expectedMigrationIDs = append(expectedMigrationIDs, id)

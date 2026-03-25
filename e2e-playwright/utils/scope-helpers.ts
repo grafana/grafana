@@ -1,4 +1,4 @@
-import { Page, Response } from '@playwright/test';
+import { expect, Page, Response } from '@playwright/test';
 
 import { ScopeDashboardBindingSpec, ScopeDashboardBindingStatus } from '@grafana/data';
 
@@ -289,6 +289,7 @@ export async function selectScope(page: Page, scopeName: string, selectedScope?:
       `[data-testid="scopes-tree-${scopeName}-checkbox"], [data-testid="scopes-tree-${scopeName}-radio"], [data-testid="scopes-tree-${scopeName}-link"]`
     );
     await element.scrollIntoViewIfNeeded();
+    await expect(element).toBeInViewport();
     await element.click({ force: true });
   };
 

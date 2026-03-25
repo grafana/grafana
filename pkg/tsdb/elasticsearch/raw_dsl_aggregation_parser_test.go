@@ -128,11 +128,11 @@ func TestTermsParser(t *testing.T) {
 		assert.False(t, parser.CanParse("histogram"))
 	})
 
-	t.Run("Parse", func(t *testing.T) {
+	t.Run("Parse with explicit order", func(t *testing.T) {
 		aggValue := map[string]any{
 			"field": "hostname.keyword",
 			"size":  10,
-			"order": map[string]any{"_count": "desc"},
+			"order": map[string]any{"_key": "desc"},
 		}
 
 		agg, err := parser.Parse("3", termsType, aggValue)
@@ -144,6 +144,23 @@ func TestTermsParser(t *testing.T) {
 		assert.Equal(t, termsType, bucket.Type)
 		assert.Equal(t, "hostname.keyword", bucket.Field)
 		assert.Equal(t, "10", bucket.Settings.Get("size").MustString())
+		assert.Equal(t, "_key", bucket.Settings.Get("orderBy").MustString())
+		assert.Equal(t, "desc", bucket.Settings.Get("order").MustString())
+	})
+
+	t.Run("Parse without order defaults to _key desc", func(t *testing.T) {
+		aggValue := map[string]any{
+			"field": "hostname.keyword",
+			"size":  10,
+		}
+
+		agg, err := parser.Parse("3", termsType, aggValue)
+		require.NoError(t, err)
+		require.NotNil(t, agg)
+
+		bucket := agg.toBucketAgg()
+		assert.Equal(t, "_key", bucket.Settings.Get("orderBy").MustString())
+		assert.Equal(t, "desc", bucket.Settings.Get("order").MustString())
 	})
 }
 
