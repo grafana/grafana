@@ -33,7 +33,6 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
     return null;
   }
 
-  const repoTooltipText = getManagedByRepositoryTooltip(repository?.title || repository?.name);
   const isOrphaned = status === RepoViewStatus.Orphaned;
 
   if (isOrphaned) {
@@ -45,6 +44,8 @@ export const FolderRepo = memo(function FolderRepo({ folder }: Props) {
       />
     );
   }
+
+  const repoTooltipText = getManagedByRepositoryTooltip(repository?.title || repository?.name);
 
   return (
     // badge with text and icon only has different height, we will need to adjust the layout using stretch

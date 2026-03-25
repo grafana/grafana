@@ -90,8 +90,8 @@ export const useGetResourceRepositoryView = ({
   // Check for orphaned resource first: name specified but no matching repo
   if (name) {
     const repository = items.find((repo) => repo.name === name);
+    const instanceRepo = items.find((repo) => repo.target === 'instance');
     if (repository) {
-      const instanceRepo = items.find((repo) => repo.target === 'instance');
       return {
         repository,
         folder,
@@ -101,8 +101,7 @@ export const useGetResourceRepositoryView = ({
       };
     }
 
-    // name specified but no matching repository found = orphaned resource
-    const instanceRepo = items.find((repo) => repo.target === 'instance');
+    // When name specified but no matching repository found = orphaned resource
     return {
       folder,
       isInstanceManaged: Boolean(instanceRepo),

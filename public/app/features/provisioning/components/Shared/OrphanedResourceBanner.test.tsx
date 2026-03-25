@@ -35,7 +35,7 @@ describe('OrphanedResourceBanner', () => {
     jest.restoreAllMocks();
   });
 
-  it('shows Release and Delete for admins', () => {
+  it('shows Convert to local and Delete for admins', () => {
     render(<OrphanedResourceBanner repositoryName="gone-repo" />);
 
     expect(screen.getByRole('button', { name: 'Convert to local' })).toBeInTheDocument();
@@ -66,9 +66,9 @@ describe('OrphanedResourceBanner', () => {
     await user.click(screen.getByRole('button', { name: 'Convert to local' }));
 
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByText('Release all resources from this repository?')).toBeInTheDocument();
+    expect(within(dialog).getByText('Convert all resources to local from this repository?')).toBeInTheDocument();
 
-    await user.click(within(dialog).getByRole('button', { name: 'Release' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Convert to local' }));
 
     expect(submitRelease).toHaveBeenCalledTimes(1);
   });

@@ -33,14 +33,13 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
     case ManagerKind.Plugin:
       text = t('dashboard-scene.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id });
       break;
-    case ManagerKind.Repo:
+    case ManagerKind.Repo: {
       // Repository-managed dashboard where the repo no longer exists
       const isOrphaned = isError && isFetchError(error) && error.status === 404;
-      text = isOrphaned
-        ? getOrphanedRepositoryTooltip(repoData?.spec?.title || id)
-        : getManagedByRepositoryTooltip(repoData?.spec?.title || id);
+      text = isOrphaned ? getOrphanedRepositoryTooltip() : getManagedByRepositoryTooltip(repoData?.spec?.title || id);
       color = isOrphaned ? 'orange' : 'purple';
       break;
+    }
     default:
       text = t('dashboard-scene.managed-badge.provisioned', 'Provisioned');
   }

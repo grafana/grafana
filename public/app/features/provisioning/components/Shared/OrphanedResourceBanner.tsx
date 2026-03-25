@@ -58,6 +58,7 @@ export function OrphanedResourceBanner({ repositoryName }: Props) {
 
   if (job && actionType) {
     const result = jobResult ? getJobResultAlertByStatus()[jobResult.status] : undefined;
+    // TODO: add action to dismiss result and navigate away or refresh page if needed
     return (
       <>
         <JobStatus watch={job} jobType={actionType} onStatusChange={handleJobStatusChange} />

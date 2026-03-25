@@ -27,12 +27,6 @@ export const getReadOnlyTooltipText = ({ isLocal = false }) => {
       );
 };
 
-export function getOrphanedRepositoryTooltip(title?: string): string {
-  if (!title) {
-    return t('provisioning.orphaned-repository-tooltip', 'Repository not found');
-  }
-  return t('provisioning.orphaned-repository-tooltip-with-title', 'Repository not found: {{title}}', {
-    title,
-    interpolation: { escapeValue: false },
-  });
+export function getOrphanedRepositoryTooltip(): string {
+  return t('provisioning.orphaned-repository-tooltip', 'Repository not found');
 }

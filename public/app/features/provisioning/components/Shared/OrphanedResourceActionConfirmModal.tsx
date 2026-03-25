@@ -18,13 +18,13 @@ function getModalConfig(action: OrphanedResourceAction) {
     return {
       title: t(
         'provisioning.orphaned-resource-banner.confirm-release-title',
-        'Release all resources from this repository?'
+        'Convert all resources to local from this repository?'
       ),
       body: t(
         'provisioning.orphaned-resource-banner.confirm-release-body',
         'This will remove provisioning annotations from all dashboards and folders managed by the missing repository, converting them to regular resources that can be saved and deleted normally.'
       ),
-      confirmText: t('provisioning.orphaned-resource-banner.confirm-release-button', 'Release'),
+      confirmText: t('provisioning.orphaned-resource-banner.confirm-release-button', 'Convert to local'),
     };
   }
 

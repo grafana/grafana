@@ -13333,14 +13333,13 @@
       "title": "Provisioning repository no longer exists"
     },
     "orphaned-repository-tooltip": "Repository not found",
-    "orphaned-repository-tooltip-with-title": "Repository not found: {{title}}",
     "orphaned-resource-banner": {
       "confirm-delete-body": "This will permanently delete all dashboards and folders managed by the missing repository. This action cannot be undone.",
       "confirm-delete-button": "Delete",
       "confirm-delete-title": "Delete all resources from this repository?",
       "confirm-release-body": "This will remove provisioning annotations from all dashboards and folders managed by the missing repository, converting them to regular resources that can be saved and deleted normally.",
-      "confirm-release-button": "Release",
-      "confirm-release-title": "Release all resources from this repository?",
+      "confirm-release-button": "Convert to local",
+      "confirm-release-title": "Convert all resources to local from this repository?",
       "contact-admin": "Contact your Grafana administrator to convert this resource to local or delete all resources from the missing repository.",
       "convert-to-local-button": "Convert to local",
       "delete-button": "Delete",
