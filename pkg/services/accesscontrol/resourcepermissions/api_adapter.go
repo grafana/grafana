@@ -83,10 +83,9 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 	// Get provisioned permissions from legacy API
 	provisionedDTO, err := a.getProvisionedPermissions(ctx, namespace, resourceID)
 	if err != nil {
-		a.logger.Warn("Failed to get provisioned permissions from legacy API", "error", err, "resourceID", resourceID, "resource", a.service.options.Resource)
-	} else {
-		dto = append(dto, provisionedDTO...)
+		return nil, fmt.Errorf("failed to get provisioned permissions: %w", err)
 	}
+	dto = append(dto, provisionedDTO...)
 
 	// Add default Admin role when access control enforcement is disabled
 	// This maintains parity with the legacy API behavior
@@ -109,17 +108,13 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 }
 
 func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePermission, namespace string, isInherited bool) (getResourcePermissionsResponse, error) {
-	permissions := resourcePerm.Spec.Permissions
-	if len(permissions) == 0 {
-		return getResourcePermissionsResponse{}, nil
-	}
-
 	namespaceInfo, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse namespace %q: %w", namespace, err)
 	}
 	orgID := namespaceInfo.OrgID
 
+	permissions := resourcePerm.Spec.Permissions
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
 
 	for _, perm := range permissions {
@@ -316,6 +311,15 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 	}
 	orgID := namespaceInfo.OrgID
 
+	var inheritedScopes []string
+	if a.service.options.InheritedScopesSolver != nil {
+		var err error
+		inheritedScopes, err = a.service.options.InheritedScopesSolver(ctx, orgID, resourceID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get inherited scopes for provisioned permissions: %w", err)
+		}
+	}
+
 	legacyPermissions, err := a.service.store.GetResourcePermissions(ctx, orgID, GetResourcePermissionsQuery{
 		Actions:              a.service.actions,
 		Resource:             a.service.options.Resource,
@@ -323,6 +327,7 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 		ResourceAttribute:    a.service.options.ResourceAttribute,
 		OnlyManaged:          false,
 		ExcludeManaged:       true, // SQL-level filter: exclude "managed:" roles to get only provisioned
+		InheritedScopes:      inheritedScopes,
 		EnforceAccessControl: false,
 		User:                 nil,
 	})
@@ -330,16 +335,9 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 		return nil, fmt.Errorf("failed to get legacy permissions: %w", err)
 	}
 
-	var provisionedPermissions []accesscontrol.ResourcePermission
-	for _, perm := range legacyPermissions {
-		if !perm.IsInherited {
-			provisionedPermissions = append(provisionedPermissions, perm)
-		}
-	}
-
 	// Convert to DTOs
-	dto := make(getResourcePermissionsResponse, 0, len(provisionedPermissions))
-	for _, p := range provisionedPermissions {
+	dto := make(getResourcePermissionsResponse, 0, len(legacyPermissions))
+	for _, p := range legacyPermissions {
 		if permission := a.service.MapActions(p); permission != "" {
 			teamAvatarUrl := ""
 			if p.TeamID != 0 {
@@ -361,7 +359,7 @@ func (a *api) getProvisionedPermissions(ctx context.Context, namespace string, r
 				Actions:          p.Actions,
 				Permission:       permission,
 				IsManaged:        false,
-				IsInherited:      false,
+				IsInherited:      p.IsInherited,
 				IsServiceAccount: p.IsServiceAccount,
 			})
 		}

@@ -4259,6 +4259,9 @@
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
+    "bulk-actions": {
+      "error-generic": "Unexpected error happened when creating job"
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
       "button-delete": "Delete",
@@ -4322,6 +4325,7 @@
       "button-deleting": "Deleting...",
       "commit": "Delete folder",
       "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
+      "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
     },
     "descendant-count": {
@@ -4374,12 +4378,13 @@
       "name-label": "Folder name"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "Error creating folder",
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
       "error-invalid-characters": "Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.",
+      "error-missing-title-or-repo": "Missing folder name or repository information",
       "error-required": "Folder name is required",
+      "error-saving": "An error occurred while creating folder.",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
@@ -5992,6 +5997,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": "Open assistant for this panel"
+      },
       "prompt-card": {
         "placeholder": "Ask Assistant about this panel...",
         "placeholder-multi": "Ask Assistant about these panels..."
@@ -6923,11 +6931,12 @@
       "placeholder": "Choose default values"
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Failed to delete dashboard",
       "cancel-action": "Cancel",
       "delete-action": "Delete dashboard",
+      "delete-error": "Failed to delete dashboard",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
+      "no-repository-selected": "Missing required repository for deletion",
       "success-message": "Dashboard deleted successfully"
     },
     "description-label": {
@@ -7394,16 +7403,17 @@
       "update-all": "Update all"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "Error saving dashboard",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
+      "error-saving": "An error occurred while saving.",
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "label-description": "Description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
+      "repo-path-required": "Missing required fields for saving",
       "save": "Save",
       "save-json-to-file": "Save JSON to file",
       "saving": "Saving...",
@@ -10279,6 +10289,9 @@
       "group": "Group",
       "group-tooltip": "Name of the stacking group"
     },
+    "stats-picker": {
+      "placeholder": "Choose"
+    },
     "table": {
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
@@ -11035,7 +11048,7 @@
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
       "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
-      "log-level": "Log level",
+      "log-level": "Show log level",
       "placeholder-search-fields-by-name": "Search fields by name",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },
@@ -11444,7 +11457,8 @@
     "save-owner": "Save owner",
     "select-owner": "Select an owner",
     "selected-team-not-found": "Selected team not found, or you do not have the necessary permissions to view it.",
-    "team-not-found": "[Unknown team]"
+    "team-not-found": "[Unknown team]",
+    "unknown-error": "Unknown error"
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
@@ -13112,6 +13126,10 @@
       "set-up-public-webhooks": "Set up public webhooks",
       "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks.",
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
+    },
+    "error": {
+      "branch-not-found-dashboard": "You have selected a branch that does not contain this dashboard. Select another branch.",
+      "branch-not-found-folder": "You have selected a branch that does not contain this folder. Select another branch."
     },
     "error-title-default": "Error",
     "expanded-row": {
@@ -14934,12 +14952,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "Auto-create a team folder",
       "create": "Create",
+      "description-create-team-folder": "This creates a folder associated with the team, where users can add resources like dashboards and schedules with the right permissions.",
       "description-email": "This is optional and is primarily used for allowing custom team avatars",
-      "failed-to-create": "Failed to create team",
+      "failed-to-create": "Failed to create team: ",
+      "folder-create-failed": "Failed to create folder: ",
+      "folder-create-failed-help": "You can create the folder and assign it to a team manually from dashboards browser.",
+      "folder-creation-link": "Open folder",
+      "folder-creation-loading": "Creating folder...",
+      "folder-creation-success": "Folder created successfully.",
+      "label-create-team-folder": "Team folder",
       "label-email": "Email",
       "label-name": "Name",
-      "label-role": "Role"
+      "label-role": "Role",
+      "role-creation-success": "Roles created successfully.",
+      "roles-create-failed": "Failed to create roles: ",
+      "roles-create-permission-issue": "You don't have permissions to set roles",
+      "roles-creation-loading": "Creating roles...",
+      "team-creation-link": "Open team details",
+      "team-creation-loading": "Creating team...",
+      "team-creation-success": "Team created successfully."
     },
     "empty-state": {
       "button-title": "New team",

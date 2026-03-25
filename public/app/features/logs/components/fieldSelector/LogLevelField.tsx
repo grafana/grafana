@@ -26,7 +26,7 @@ export function LogLevelField({ active, toggle }: Props): React.JSX.Element | un
     <div className={styles.contentWrap}>
       <Checkbox
         className={styles.checkboxLabel}
-        label={t('logs.field-selector.log-level', 'Log level')}
+        label={t('logs.field-selector.log-level', 'Show log level')}
         onChange={handleChange}
         checked={active}
       />

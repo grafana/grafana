@@ -105,7 +105,6 @@ export const WindowOptionsEditor = (props: {
       >
         <StatsPicker
           allowMultiple={false}
-          className="width-18"
           stats={[window?.reducer || ReducerID.mean]}
           onChange={onWindowStatsChange}
           defaultStat={ReducerID.mean}
