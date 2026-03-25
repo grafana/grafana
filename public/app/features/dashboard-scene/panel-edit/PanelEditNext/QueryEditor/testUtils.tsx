@@ -54,6 +54,32 @@ export const ds1SettingsMock: DataSourceInstanceSettings = {
   jsonData: {},
 };
 
+export const dashboardDsSettingsMock: DataSourceInstanceSettings = {
+  id: 99,
+  uid: '-- Dashboard --',
+  name: '-- Dashboard --',
+  type: 'datasource',
+  meta: {
+    id: 'dashboard',
+    name: '-- Dashboard --',
+    type: PluginType.datasource,
+    info: {
+      author: { name: '' },
+      description: '',
+      links: [],
+      logos: { small: '', large: '' },
+      screenshots: [],
+      updated: '',
+      version: '',
+    },
+    module: '',
+    baseUrl: '',
+  },
+  access: 'proxy',
+  readOnly: false,
+  jsonData: {},
+};
+
 export const mockActions: QueryEditorActions = {
   updateQueries: jest.fn(),
   updateSelectedQuery: jest.fn(),

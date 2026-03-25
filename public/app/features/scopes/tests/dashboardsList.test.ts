@@ -555,7 +555,7 @@ describe('Dashboards list', () => {
 
       // Wait for async fetchSubScopeItems to complete
       await waitFor(() => {
-        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
+        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'grafana' });
       });
       await jest.runOnlyPendingTimersAsync();
 
@@ -587,7 +587,7 @@ describe('Dashboards list', () => {
 
       // Verify fetch was called (loading happens asynchronously)
       await waitFor(() => {
-        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
+        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'grafana' });
       });
     });
 
@@ -608,7 +608,7 @@ describe('Dashboards list', () => {
 
       // Wait for fetch to complete
       await waitFor(() => {
-        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
+        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'grafana' });
       });
       await jest.runOnlyPendingTimersAsync();
 
@@ -655,7 +655,7 @@ describe('Dashboards list', () => {
       await jest.runOnlyPendingTimersAsync();
 
       // Verify fetch was called
-      expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
+      expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'grafana' });
 
       // Verify no content appears (error handled gracefully)
       expectDashboardNotInDocument('mimir-item-1');
@@ -692,7 +692,7 @@ describe('Dashboards list', () => {
 
       // Wait for fetch to complete
       await waitFor(() => {
-        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
+        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'grafana' });
       });
       await jest.runOnlyPendingTimersAsync();
 
@@ -731,7 +731,7 @@ describe('Dashboards list', () => {
 
       // Wait for fetch to complete
       await waitFor(() => {
-        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir']);
+        expect(fetchScopeNavigationsSpy).toHaveBeenCalledWith(['mimir'], { depth: 1, rootScope: 'grafana' });
       });
       await jest.runOnlyPendingTimersAsync();
 

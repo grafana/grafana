@@ -1,10 +1,8 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
-import { OrgRole } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Folder, useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyManagerIdentity } from 'app/features/apiserver/types';
 
 import { RepoType } from '../Wizard/types';
@@ -16,12 +14,22 @@ interface GetResourceRepositoryArgs {
   skipQuery?: boolean;
 }
 
+export enum RepoViewStatus {
+  Disabled = 'disabled',
+  Loading = 'loading',
+  Ready = 'ready',
+  Error = 'error',
+  Orphaned = 'orphaned',
+}
+
 interface RepositoryViewData {
   repository?: RepositoryView;
   repoType?: RepoType;
   folder?: Folder;
-  isLoading?: boolean;
-  isFetching?: boolean;
+  status: RepoViewStatus;
+  error?: unknown;
+  orphanedRepoName?: string; // Only present when status is RepoViewStatus.Orphaned
+  isLoading?: boolean; // TODO: status now contains loading state, this can be removed
   isInstanceManaged: boolean;
   isReadOnlyRepo: boolean;
 }
@@ -32,56 +40,83 @@ export const useGetResourceRepositoryView = ({
   folderName,
   skipQuery,
 }: GetResourceRepositoryArgs): RepositoryViewData => {
-  const hasNoRole = contextSrv.user.orgRole === OrgRole.None;
-
   const provisioningEnabled = config.featureToggles.provisioning;
-  const shouldSkipSettings = !provisioningEnabled || skipQuery || hasNoRole || (!name && !folderName);
+  const shouldSkipSettings = !provisioningEnabled || skipQuery || (!name && !folderName);
   const settingsQueryArg = shouldSkipSettings ? skipToken : undefined;
 
   const {
     data: settingsData,
     isLoading: isSettingsLoading,
-    isFetching: isSettingsFetching,
+    error: settingsError,
   } = useGetFrontendSettingsQuery(settingsQueryArg);
 
-  const skipFolderQuery = !folderName || !provisioningEnabled || skipQuery || hasNoRole;
+  const skipFolderQuery = !folderName || !provisioningEnabled || skipQuery;
   const {
     data: folder,
     isLoading: isFolderLoading,
-    isFetching: isFolderFetching,
+    error: folderError,
   } = useGetFolderQuery(skipFolderQuery ? skipToken : { name: folderName });
 
-  const isFetching = isSettingsFetching || isFolderFetching;
-
   if (!provisioningEnabled) {
-    return { isLoading: false, isFetching: false, isInstanceManaged: false, isReadOnlyRepo: false };
+    return {
+      isLoading: false,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      status: RepoViewStatus.Disabled,
+    };
   }
 
   if (isSettingsLoading || isFolderLoading) {
-    return { isLoading: true, isFetching: true, isInstanceManaged: false, isReadOnlyRepo: false };
+    return {
+      isLoading: true,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      status: RepoViewStatus.Loading,
+    };
+  }
+
+  if (settingsError || folderError) {
+    return {
+      isLoading: false,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      status: RepoViewStatus.Error,
+      error: settingsError || folderError,
+    };
   }
 
   const items = settingsData?.items ?? [];
 
-  if (!items.length) {
-    return { folder, isFetching, isInstanceManaged: false, isReadOnlyRepo: false };
-  }
-
-  const instanceRepo = items.find((repo) => repo.target === 'instance');
-  const isInstanceManaged = Boolean(instanceRepo);
-
+  // Check for orphaned resource first: name specified but no matching repo
   if (name) {
     const repository = items.find((repo) => repo.name === name);
+    const instanceRepo = items.find((repo) => repo.target === 'instance');
     if (repository) {
       return {
         repository,
         folder,
-        isFetching,
-        isInstanceManaged,
+        isInstanceManaged: Boolean(instanceRepo),
         isReadOnlyRepo: getIsReadOnlyRepo(repository),
+        status: RepoViewStatus.Ready,
       };
     }
+
+    // When name specified but no matching repository found = orphaned resource
+    return {
+      folder,
+      isInstanceManaged: Boolean(instanceRepo),
+      isReadOnlyRepo: false,
+      status: RepoViewStatus.Orphaned,
+      orphanedRepoName: name,
+    };
   }
+
+  if (!items.length) {
+    return { folder, isInstanceManaged: false, isReadOnlyRepo: false, status: RepoViewStatus.Ready };
+  }
+
+  const instanceRepo = items.find((repo) => repo.target === 'instance');
+  const isInstanceManaged = Boolean(instanceRepo);
 
   // Find the matching folder repository
   if (folderName) {
@@ -91,9 +126,9 @@ export const useGetResourceRepositoryView = ({
       return {
         repository,
         folder,
-        isFetching,
         isInstanceManaged,
         isReadOnlyRepo: getIsReadOnlyRepo(repository),
+        status: RepoViewStatus.Ready,
       };
     }
 
@@ -105,20 +140,29 @@ export const useGetResourceRepositoryView = ({
         return {
           repository,
           folder,
-          isFetching,
           isInstanceManaged,
           isReadOnlyRepo: getIsReadOnlyRepo(repository),
+          status: RepoViewStatus.Ready,
         };
       }
+
+      // Folder has a manager identity annotation but the repo no longer exists = orphaned
+      return {
+        folder,
+        isInstanceManaged,
+        isReadOnlyRepo: false,
+        status: RepoViewStatus.Orphaned,
+        orphanedRepoName: annotatedFolderName,
+      };
     }
   }
 
   return {
     repository: instanceRepo,
     folder,
-    isFetching,
     isInstanceManaged,
     isReadOnlyRepo: getIsReadOnlyRepo(instanceRepo),
     repoType: instanceRepo?.type,
+    status: RepoViewStatus.Ready,
   };
 };

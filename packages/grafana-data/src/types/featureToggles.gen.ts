@@ -139,11 +139,6 @@ export interface FeatureToggles {
   */
   faroDatasourceSelector?: boolean;
   /**
-  * Enables the edit functionality in the datagrid panel
-  * @default false
-  */
-  enableDatagridEditing?: boolean;
-  /**
   * Enable Faro session replay for Grafana
   * @default false
   */
@@ -223,6 +218,11 @@ export interface FeatureToggles {
   * @default false
   */
   reportingCsvEncodingOptions?: boolean;
+  /**
+  * Enables configuration of PDF report settings
+  * @default false
+  */
+  reportingHeaderSettings?: boolean;
   /**
   * Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
   * @default false
@@ -314,10 +314,10 @@ export interface FeatureToggles {
   */
   datasourceQueryTypes?: boolean;
   /**
-  * Does not register datasource apis that use the numeric id
+  * Register legacy datasource apis that use the numeric id
   * @default false
   */
-  datasourceDisableIdApi?: boolean;
+  datasourceLegacyIdApi?: boolean;
   /**
   * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
   * @default false
@@ -354,10 +354,10 @@ export interface FeatureToggles {
   */
   datasourcesApiServerEnableResourceEndpoint?: boolean;
   /**
-  * Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
+  * redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
   * @default false
   */
-  datasourcesApiServerEnableResourceEndpointFrontend?: boolean;
+  datasourcesApiserverEnableResourceEndpointRedirect?: boolean;
   /**
   * Runs CloudWatch metrics queries as separate batches
   * @default false
@@ -389,6 +389,11 @@ export interface FeatureToggles {
   */
   alertingUIUseFullyCompatBackendFilters?: boolean;
   /**
+  * Enables creating alert rules from a panel using a drawer UI
+  * @default false
+  */
+  createAlertRuleFromPanel?: boolean;
+  /**
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   * @default false
   */
@@ -398,6 +403,11 @@ export interface FeatureToggles {
   * @default true
   */
   annotationPermissionUpdate?: boolean;
+  /**
+  * Enables annotation clustering and switches to refactored annotation code
+  * @default false
+  */
+  annotationsClustering?: boolean;
   /**
   * Enables dashboard rendering using scenes for all roles
   * @default true
@@ -409,6 +419,11 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
+  * Enables the assistant prompt popover on panel click in dashboard view mode
+  * @default false
+  */
+  dashboardAssistantPopover?: boolean;
+  /**
   * Enables undo/redo in dynamic dashboards
   * @default false
   */
@@ -418,6 +433,11 @@ export interface FeatureToggles {
   * @default false
   */
   unlimitedLayoutsNesting?: boolean;
+  /**
+  * Enables CSV export using scenes dashboard architecture
+  * @default false
+  */
+  sceneCsvExport?: boolean;
   /**
   * Enables showing recently used drilldowns or recommendations given by the datasource in the AdHocFilters and GroupBy variables
   * @default false
@@ -443,6 +463,11 @@ export interface FeatureToggles {
   * @default false
   */
   dashboardFiltersOverview?: boolean;
+  /**
+  * Enables the feedback button in the dashboard edit sidebar
+  * @default true
+  */
+  feedbackButton?: boolean;
   /**
   * Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard
   * @default false
@@ -619,10 +644,20 @@ export interface FeatureToggles {
   */
   queryLibrary?: boolean;
   /**
+  * Enables RBAC for playlists
+  * @default false
+  */
+  playlistsRBAC?: boolean;
+  /**
   * Enables Saved queries (query library) RBAC permissions
   * @default false
   */
   savedQueriesRBAC?: boolean;
+  /**
+  * Enables the new Saved queries (query library) modal experience
+  * @default false
+  */
+  newSavedQueriesExperience?: boolean;
   /**
   * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
   * @default false
@@ -649,6 +684,11 @@ export interface FeatureToggles {
   */
   dashboardTemplatesAssistantButton?: boolean;
   /**
+  * Enables the 'Customize with Assistant' button on suggested dashboard cards
+  * @default false
+  */
+  suggestedDashboardsAssistantButton?: boolean;
+  /**
   * Enables the new alert list view design
   * @default false
   */
@@ -660,7 +700,7 @@ export interface FeatureToggles {
   alertingAlertListPanelEnhancements?: boolean;
   /**
   * Enables the new Alerting navigation structure with improved menu grouping
-  * @default false
+  * @default true
   */
   alertingNavigationV2?: boolean;
   /**
@@ -950,6 +990,11 @@ export interface FeatureToggles {
   */
   teamHttpHeadersFromAppPlatform?: boolean;
   /**
+  * Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
+  * @default false
+  */
+  teamLBACApiReadFromAppPlatform?: boolean;
+  /**
   * Enables Advisor app
   * @default false
   */
@@ -1126,32 +1171,10 @@ export interface FeatureToggles {
   */
   alertingBulkActionsInUI?: boolean;
   /**
-  * Deprecated: Use kubernetesAuthzCoreRolesApi, kubernetesAuthzRolesApi, and kubernetesAuthzRoleBindingsApi instead
-  * @deprecated
-  * @default false
-  */
-  kubernetesAuthzApis?: boolean;
-  /**
-  * Deprecated: Use kubernetesAuthZResourcePermissionsRedirect and kubernetesAuthZRolesRedirect instead
-  * @deprecated
-  * @default false
-  */
-  kubernetesAuthZHandlerRedirect?: boolean;
-  /**
   * Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
   * @default false
   */
   kubernetesAuthZResourcePermissionsRedirect?: boolean;
-  /**
-  * Redirects the traffic from the legacy roles endpoints to the new K8s AuthZ endpoints
-  * @default false
-  */
-  kubernetesAuthZRolesRedirect?: boolean;
-  /**
-  * Redirects the traffic from the legacy role bindings endpoints to the new K8s AuthZ endpoints
-  * @default false
-  */
-  kubernetesAuthZRoleBindingsRedirect?: boolean;
   /**
   * Registers AuthZ resource permission /apis endpoints
   * @default false
@@ -1162,11 +1185,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAuthzZanzanaSync?: boolean;
-  /**
-  * Registers AuthZ Core Roles /apis endpoint
-  * @default false
-  */
-  kubernetesAuthzCoreRolesApi?: boolean;
   /**
   * Registers AuthZ Global Roles /apis endpoint
   * @default false
@@ -1188,10 +1206,15 @@ export interface FeatureToggles {
   */
   kubernetesAuthzRoleBindingsApi?: boolean;
   /**
-  * Enables create, delete, and update mutations for resources owned by IAM identity
+  * Redirects the traffic from the legacy roles and role bindings endpoints to the new K8s AuthZ endpoints
   * @default false
   */
-  kubernetesAuthnMutation?: boolean;
+  kubernetesAuthzRolesAndRoleBindingsRedirect?: boolean;
+  /**
+  * Enables datasource resource permissions via the K8s IAM resource permission APIs
+  * @default false
+  */
+  kubernetesAuthzDatasourceResourcePermissions?: boolean;
   /**
   * Enables restore deleted dashboards feature
   * @default false
@@ -1227,6 +1250,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertEnrichmentConditional?: boolean;
+  /**
+  * Enable alert enrichment preview (notification-history-based) in view and edit drawers.
+  * @default false
+  */
+  alertEnrichmentPreview?: boolean;
   /**
   * Enables the API to import Alertmanager configuration
   * @default false
@@ -1373,11 +1401,6 @@ export interface FeatureToggles {
   */
   pluginInstallAPISync?: boolean;
   /**
-  * Enable new gauge visualization
-  * @default true
-  */
-  newGauge?: boolean;
-  /**
   * Enable new visualization suggestions
   * @default false
   */
@@ -1407,6 +1430,11 @@ export interface FeatureToggles {
   * @default false
   */
   nestedFramesFieldOverrides?: boolean;
+  /**
+  * Enable faceted labels filter for series visibility in the legend
+  * @default false
+  */
+  vizLegendFacetedFilter?: boolean;
   /**
   * Enable Y-axis scale configuration options for pre-bucketed heatmap data (heatmap-rows)
   * @default false
@@ -1458,6 +1486,11 @@ export interface FeatureToggles {
   */
   elasticsearchRawDSLQuery?: boolean;
   /**
+  * Enables the ES|QL query editor in the Elasticsearch data source
+  * @default false
+  */
+  elasticsearchESQLQuery?: boolean;
+  /**
   * Enables http proxy settings for aws datasources
   * @default false
   */
@@ -1499,7 +1532,7 @@ export interface FeatureToggles {
   useMTPlugins?: boolean;
   /**
   * Enables support for variables whose values can have multiple properties
-  * @default false
+  * @default true
   */
   multiPropsVariables?: boolean;
   /**
@@ -1551,7 +1584,7 @@ export interface FeatureToggles {
   * Redirects the request of the team endpoints to the app platform APIs
   * @default false
   */
-  kubernetesTeamsHandlerRedirect?: boolean;
+  kubernetesTeamsRedirect?: boolean;
   /**
   * Enables user APIs in the app platform
   * @default false
@@ -1568,6 +1601,11 @@ export interface FeatureToggles {
   */
   kubernetesServiceAccountTokensApi?: boolean;
   /**
+  * Enables SSO settings APIs in the app platform
+  * @default false
+  */
+  kubernetesSsoSettingsApi?: boolean;
+  /**
   * Enables external group mapping APIs in the app platform
   * @default false
   */
@@ -1583,10 +1621,20 @@ export interface FeatureToggles {
   */
   kubernetesTeamSync?: boolean;
   /**
+  * Redirects the requests of the user service to the app platform APIs
+  * @default false
+  */
+  kubernetesUsersRedirect?: boolean;
+  /**
   * Enables the ability to create multiple alerting policies
   * @default false
   */
   alertingMultiplePolicies?: boolean;
+  /**
+  * Use notification settings policy field instead of labels for named policy routing in alert rules
+  * @default false
+  */
+  alertingPolicyRoutingSettings?: boolean;
   /**
   * Registers an API server for each backend app plugin exposing a settings endpoint
   * @default false
@@ -1612,6 +1660,11 @@ export interface FeatureToggles {
   * @default false
   */
   alertingNotificationHistoryTriage?: boolean;
+  /**
+  * Enables the notification history detail page
+  * @default false
+  */
+  alertingNotificationHistoryDetail?: boolean;
   /**
   * Whether to use the new React 19 runtime
   * @default false
@@ -1663,8 +1716,38 @@ export interface FeatureToggles {
   */
   flameGraphWithCallTree?: boolean;
   /**
+  * Enables the advisor report integration with datasource pages
+  * @default false
+  */
+  advisorDatasourceIntegration?: boolean;
+  /**
   * Enables an inline version of Log Details that creates no new scrolls
   * @default false
   */
   inlineLogDetailsNoScrolls?: boolean;
+  /**
+  * Enables the new colorblind-friendly themes
+  * @default false
+  */
+  colorblindThemes?: boolean;
+  /**
+  * Enables fine-grained Y-axis tick options beyond the auto-ticks
+  * @default false
+  */
+  yAxisTickControl?: boolean;
+  /**
+  * Enables the logs tableNG panel to replace existing tableRT
+  * @default false
+  */
+  logsTablePanelNG?: boolean;
+  /**
+  * Enables plugins setting from new apis
+  * @default false
+  */
+  useMTPluginSettings?: boolean;
+  /**
+  * Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
+  * @default false
+  */
+  frontendServiceSSOAutoLogin?: boolean;
 }

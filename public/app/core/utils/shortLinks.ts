@@ -75,6 +75,7 @@ export const createShortLink = memoizeOne(async (path: string): Promise<string> 
   } catch (err) {
     console.error('Error when creating shortened link: ', err);
     dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    createShortLink.clear();
     throw err; // Re-throw so callers know it failed
   }
 });

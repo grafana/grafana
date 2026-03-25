@@ -68,8 +68,7 @@ func RegisterAPIService(
 	pluginSources sources.Registry,
 ) (*DataSourceAPIBuilder, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) &&
-		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
+	if !features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
 		return nil, nil
 	}
 
@@ -250,7 +249,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
 
 	if b.cfg.EnableResourceEndpoint {
-		storage[ds.StoragePath("resource")] = &subResourceREST{builder: b}
+		storage[ds.StoragePath("resources")] = &subResourceREST{builder: b}
 	}
 
 	if b.cfg.EnableHealthEndpoint {
