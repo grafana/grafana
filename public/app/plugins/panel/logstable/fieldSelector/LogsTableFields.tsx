@@ -52,7 +52,10 @@ export function LogsTableFields({
     setContainerRefState(node);
   }, []);
 
-  const defaultDisplayedFields = useMemo(() => [timeFieldName, levelFieldName, bodyFieldName], [timeFieldName, levelFieldName, bodyFieldName]);
+  const defaultDisplayedFields = useMemo(
+    () => [timeFieldName, levelFieldName, bodyFieldName],
+    [timeFieldName, levelFieldName, bodyFieldName]
+  );
   const [columnsWithMeta, setColumnsWithMeta] = useState<FieldNameMetaStore | null>(null);
 
   const handleSetColumnsWithMeta = useCallback((columnsWithMeta: FieldNameMetaStore) => {

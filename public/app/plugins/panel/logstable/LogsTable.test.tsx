@@ -211,7 +211,9 @@ describe('LogsTable', () => {
       await userEvent.click(screen.getByText('Reset'));
       expect(onOptionsChange).toBeCalledTimes(1);
       expect(onOptionsChange).toBeCalledWith(
-        expect.objectContaining({ displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, LOGS_DATAPLANE_BODY_NAME] })
+        expect.objectContaining({
+          displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'level', LOGS_DATAPLANE_BODY_NAME],
+        })
       );
     });
   });

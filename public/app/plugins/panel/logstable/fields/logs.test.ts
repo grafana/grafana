@@ -33,7 +33,7 @@ describe('detectLevelField', () => {
     expect(detectLevelField(frame)).toBe('detected_level');
   });
 
-  it("prefers detected_level over level when both appear across rows", () => {
+  it('prefers detected_level over level when both appear across rows', () => {
     const frame = makeLogsFrame([{ level: 'info' }, { detected_level: 'warn' }]);
     expect(detectLevelField(frame)).toBe('detected_level');
   });

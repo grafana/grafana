@@ -38,11 +38,7 @@ const setUp = (props?: Partial<React.ComponentProps<typeof LogsTableFields>>) =>
     <LogsTableFields
       fieldSelectorWidth={fieldSelectorWidth}
       onFieldSelectorWidthChange={onFieldSelectorWidthChange}
-      displayedFields={[
-        LOGS_DATAPLANE_TIMESTAMP_NAME,
-        DATAPLANE_SEVERITY_NAME,
-        LOGS_DATAPLANE_BODY_NAME,
-      ]}
+      displayedFields={[LOGS_DATAPLANE_TIMESTAMP_NAME, DATAPLANE_SEVERITY_NAME, LOGS_DATAPLANE_BODY_NAME]}
       onDisplayedFieldsChange={jest.fn()}
       dataFrame={testLogsDataFrame[0]}
       logsFrame={logsFrame}
@@ -62,16 +58,12 @@ describe('LogsTableFields', () => {
     expect(screen.getByText('Selected fields')).toBeVisible();
     expect(screen.getByPlaceholderText(/search fields by name/i)).toBeVisible();
 
-    [
-      LOGS_DATAPLANE_TIMESTAMP_NAME,
-      DATAPLANE_SEVERITY_NAME,
-      LOGS_DATAPLANE_BODY_NAME,
-      'service',
-      'backend',
-    ].forEach((label) => {
-      expect(screen.getByRole('checkbox', { name: label })).toBeInTheDocument();
-      expect(screen.getByText(label)).toBeVisible();
-    });
+    [LOGS_DATAPLANE_TIMESTAMP_NAME, DATAPLANE_SEVERITY_NAME, LOGS_DATAPLANE_BODY_NAME, 'service', 'backend'].forEach(
+      (label) => {
+        expect(screen.getByRole('checkbox', { name: label })).toBeInTheDocument();
+        expect(screen.getByText(label)).toBeVisible();
+      }
+    );
 
     expect(screen.getByRole('checkbox', { name: DATAPLANE_SEVERITY_NAME })).toBeChecked();
   });
