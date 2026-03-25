@@ -10,7 +10,12 @@ import {
 
 import { dataFrameToLogsModel } from '../../logsModel';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
-import { getDisplayedFieldsForLogs, identifyOTelLanguages } from '../otel/formats';
+import {
+  getDisplayedFieldsForLogs,
+  getOtelAttributesField,
+  identifyOTelLanguage,
+  identifyOTelLanguages,
+} from '../otel/formats';
 
 import { DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext';
 
@@ -741,5 +746,34 @@ describe('LogLineContext', () => {
         })
       ).not.toBeInTheDocument();
     });
+  });
+
+  test('uses otelLogsFormatting flag when building reference log model', async () => {
+    setBooleanFlags({ otelLogsFormatting: true });
+    jest.mocked(identifyOTelLanguage).mockReturnValue('go');
+    jest.mocked(getOtelAttributesField).mockReturnValue('foo=bar');
+
+    const otelLog = {
+      ...row,
+      labels: {
+        ...row.labels,
+        severity_number: '9',
+        foo: 'bar',
+      },
+      entry: 'otel test log',
+    };
+
+    render(
+      <LogLineContext
+        log={otelLog}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => expect(getOtelAttributesField).toHaveBeenCalled());
   });
 });

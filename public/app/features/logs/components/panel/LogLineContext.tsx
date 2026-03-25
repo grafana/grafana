@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { partition } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -108,6 +109,7 @@ export const LogLineContext = memo(
     const dispatch = useDispatch();
     const theme = useTheme2();
     const styles = getStyles(theme);
+    const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
 
     const timeRange = useMemo(() => {
       const fromMs =
@@ -327,10 +329,11 @@ export const LogLineContext = memo(
           ? log
           : new LogListModel(log, {
               escape: false,
+              otelLogsFormattingEnabled,
               timeZone,
               wrapLogMessage,
             }),
-      [log, timeZone, wrapLogMessage]
+      [log, otelLogsFormattingEnabled, timeZone, wrapLogMessage]
     );
 
     useEffect(() => {
