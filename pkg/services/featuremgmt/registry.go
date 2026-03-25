@@ -712,6 +712,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "feedbackButton",
+			Description:  "Enables the feedback button in the dashboard edit sidebar",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "true",
+		},
+		{
 			Name:         "panelFilterVariable",
 			Description:  "Enables use of the `systemPanelFilterVar` variable to filter panels in a dashboard",
 			Stage:        FeatureStageExperimental,
@@ -2760,6 +2768,14 @@ var (
 			FrontendOnly: true,
 			Expression:   "false",
 			HideFromDocs: true,
+		},
+		{
+			Name:         "frontendServiceSSOAutoLogin",
+			Description:  "Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
 		},
 	}
 )
