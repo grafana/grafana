@@ -450,29 +450,15 @@ func (k *SqlKV) batchUniform(ctx context.Context, qb *queryBuilder, section stri
 	case BatchOpUpdate:
 		return k.batchUpdate(ctx, qb, section, ops)
 	case BatchOpDelete:
-		keys := make([]string, len(ops))
-		for i, op := range ops {
-			keys[i] = op.Key
-		}
-		// Chunk to stay within dialect parameter limits (e.g. SQLite's 999).
-		maxKeys := batchDeleteMaxKeys(k.dialect)
-		for start := 0; start < len(keys); start += maxKeys {
-			end := start + maxKeys
-			if end > len(keys) {
-				end = len(keys)
-			}
-			if err := k.BatchDelete(ctx, section, keys[start:end]); err != nil {
-				return err
-			}
-		}
-		return nil
+		return k.batchDelete(ctx, qb, section, ops)
 	default:
 		return fmt.Errorf("unknown operation mode: %d", mode)
 	}
 }
 
-// batchPut handles all-Put batches. DataSection uses multi-row INSERT (keys include
-// resource version, so they're unique by construction). Other sections use individual upserts.
+// batchPut handles all-Put batches. DataSection uses multi-row INSERT when all keys
+// are unique (the normal case — DataSection keys include resource version). If duplicate
+// keys are detected, falls back to sequential upsert to preserve Put semantics.
 func (k *SqlKV) batchPut(ctx context.Context, qb *queryBuilder, section string, ops []BatchOp) error {
 	tx, err := k.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -480,9 +466,29 @@ func (k *SqlKV) batchPut(ctx context.Context, qb *queryBuilder, section string, 
 	}
 	defer tx.Rollback() //nolint:errcheck
 
-	if section == DataSection {
+	if section == DataSection && !hasDuplicateKeys(ops) {
 		if err := k.batchInsertDatastore(ctx, tx, qb, section, ops); err != nil {
 			return err
+		}
+	} else if section == DataSection {
+		// Duplicate keys in batch: fall back to per-item upsert for correct Put semantics.
+		for i, op := range ops {
+			keyPath := getKeyPath(section, op.Key)
+			exists, err := keyExistsTx(ctx, tx, qb, keyPath)
+			if err != nil {
+				return &BatchError{Err: err, Index: i, Op: op}
+			}
+			if exists {
+				query, args := qb.buildUpdateDatastoreQuery(keyPath, op.Value)
+				if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+					return &BatchError{Err: err, Index: i, Op: op}
+				}
+			} else {
+				query, args := qb.buildInsertDatastoreQuery(keyPath, op.Value, uuid.New().String())
+				if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+					return &BatchError{Err: err, Index: i, Op: op}
+				}
+			}
 		}
 	} else {
 		for i, op := range ops {
@@ -644,6 +650,46 @@ func keyExistsTx(ctx context.Context, tx *sql.Tx, qb *queryBuilder, keyPath stri
 		return false, err
 	}
 	return true, nil
+}
+
+// hasDuplicateKeys returns true if any two ops share the same key.
+func hasDuplicateKeys(ops []BatchOp) bool {
+	seen := make(map[string]struct{}, len(ops))
+	for _, op := range ops {
+		if _, exists := seen[op.Key]; exists {
+			return true
+		}
+		seen[op.Key] = struct{}{}
+	}
+	return false
+}
+
+// batchDelete handles all-Delete batches in a single transaction, chunking to
+// stay within dialect parameter limits (e.g. SQLite's 999).
+func (k *SqlKV) batchDelete(ctx context.Context, qb *queryBuilder, section string, ops []BatchOp) error {
+	tx, err := k.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck
+
+	maxKeys := batchDeleteMaxKeys(k.dialect)
+	for start := 0; start < len(ops); start += maxKeys {
+		end := start + maxKeys
+		if end > len(ops) {
+			end = len(ops)
+		}
+		keyPaths := make([]string, end-start)
+		for i, op := range ops[start:end] {
+			keyPaths[i] = getKeyPath(section, op.Key)
+		}
+		query, args := qb.buildBatchDeleteQuery(keyPaths)
+		if _, err := tx.ExecContext(ctx, query, args...); err != nil {
+			return fmt.Errorf("batch delete failed at keys %d-%d: %w", start, end-1, err)
+		}
+	}
+
+	return tx.Commit()
 }
 
 // batchDeleteMaxKeys returns the max keys per DELETE WHERE IN chunk for the dialect.
