@@ -542,7 +542,7 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 		resDB, err := eDB.Init(context.Background())
 		require.NoError(t, err)
 
-		kvStore, err := kv.NewSQLKV(resDB.SqlDB(), "sqlite3")
+		kvStore, err := kv.NewSQLKV(resDB.SqlDB(), resDB.DriverName())
 		require.NoError(t, err)
 
 		rvMgr, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{

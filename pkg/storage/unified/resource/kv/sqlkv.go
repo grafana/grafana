@@ -289,7 +289,7 @@ func (w *sqlWriteCloser) Close() error {
 	}
 
 	// Check if storage_backend injected a transaction (for backward-compatibility mode)
-	tx, ok := txFromCtx(w.ctx)
+	tx, ok := TxFromCtx(w.ctx)
 	if !ok {
 		// Non-backwards-compatible mode: simple insert/update
 		// This can be simplified once resource_history columns are dropped

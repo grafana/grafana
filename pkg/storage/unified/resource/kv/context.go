@@ -4,21 +4,27 @@ package kv
 // by different code paths. They use separate context keys and are never both
 // set in the same context.
 //
-// 1. ContextWithTx / txFromCtx — single-write compat path (WriteEvent → ExecWithRV).
-//    Carries the ExecWithRV transaction so the save writer inserts legacy columns.
+// 1. ContextWithTx / TxFromCtx (key: txKey)
+//    Single-write compat path (WriteEvent → ExecWithRV → Save).
+//    ExecWithRV opens its own db.Tx and stores it so the save writer can
+//    insert legacy resource_history columns within that transaction.
+//    Needs ExecContext only (TxExecer interface).
 //
-// 2. ContextWithDBTX / dbtxFromCtx — bulk import on SQLite.
-//    Routes conn() through the migration's *sql.Tx to avoid SQLITE_BUSY.
+// 2. ContextWithDBTX / dbtxFromCtx (key: dbtxContextKey{})
+//    Bulk import on SQLite. The migration framework holds a write
+//    transaction; ContextWithDBTX routes all conn() calls through it so
+//    KV operations avoid SQLITE_BUSY from separate connections.
+//    Needs ExecContext, QueryContext, QueryRowContext (dbtx interface).
 
 import (
 	"context"
 	"database/sql"
 )
 
-// txExecer is a minimal interface for executing SQL within a transaction.
+// TxExecer is a minimal interface for executing SQL within a transaction.
 // Both *sql.Tx and Grafana's db.Tx satisfy this interface because
 // db.Result is a type alias for sql.Result.
-type txExecer interface {
+type TxExecer interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 }
 
@@ -37,21 +43,30 @@ const txKey txContextKey = "kv_db_tx"
 
 type dbtxContextKey struct{}
 
-// ContextWithTx stores a transaction executor in the context for the
-// single-write backwards-compatibility path (WriteEvent → ExecWithRV).
-// The value must implement txExecer (e.g. *sql.Tx, db.Tx).
-func ContextWithTx(ctx context.Context, tx any) context.Context {
+// ContextWithTx stores a transaction executor in the context.
+// This is used by storage_backend.go to pass a transaction to sqlkv for
+// backwards-compatibility mode operations.
+// Note: We store the tx as-is. The caller should ensure the type implements TxExecer.
+func ContextWithTx(ctx context.Context, tx TxExecer) context.Context {
 	return context.WithValue(ctx, txKey, tx)
 }
 
-// txFromCtx retrieves a transaction executor stored by ContextWithTx.
-func txFromCtx(ctx context.Context) (txExecer, bool) {
+// TxFromCtx retrieves a transaction executor from the context.
+// Returns nil and false if no transaction is present.
+// Note: We attempt to assert to TxExecer. If the stored value is a db.Tx,
+// this will work because db.Tx.ExecContext returns sql.Result (via type alias).
+func TxFromCtx(ctx context.Context) (TxExecer, bool) {
 	val := ctx.Value(txKey)
 	if val == nil {
 		return nil, false
 	}
-	tx, ok := val.(txExecer)
-	return tx, ok
+	tx, ok := val.(TxExecer)
+	if !ok {
+		// The stored value doesn't implement TxExecer directly
+		// This shouldn't happen if ContextWithTx was called correctly
+		return nil, false
+	}
+	return tx, true
 }
 
 // ContextWithDBTX stores a *sql.Tx in the context for the bulk import path
