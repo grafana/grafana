@@ -162,6 +162,25 @@ describe('grafana-managed rules', () => {
       expect(frontendFilter.ruleMatches(ruleWithContactPoint)).toBe(false);
     });
 
+    it('should match rules using the default policy when filtering by user-defined', () => {
+      const ruleWithNoSettings = mockGrafanaPromAlertingRule({
+        name: 'Rule with no notification settings',
+      });
+      const ruleWithContactPoint = mockGrafanaPromAlertingRule({
+        name: 'Rule with Contact Point',
+        notificationSettings: { receiver: 'slack' },
+      });
+      const ruleWithExplicitPolicy = mockGrafanaPromAlertingRule({
+        name: 'Rule with Explicit Policy',
+        notificationSettings: { policy: 'team-a-policy' },
+      });
+
+      const { frontendFilter } = getGrafanaFilter(getFilter({ policy: 'user-defined' }));
+      expect(frontendFilter.ruleMatches(ruleWithNoSettings)).toBe(true);
+      expect(frontendFilter.ruleMatches(ruleWithContactPoint)).toBe(false);
+      expect(frontendFilter.ruleMatches(ruleWithExplicitPolicy)).toBe(false);
+    });
+
     describe('dataSourceNames filter', () => {
       it('should match rules that use the filtered datasource', () => {
         const ruleWithMatchingDatasource = mockGrafanaPromAlertingRule({

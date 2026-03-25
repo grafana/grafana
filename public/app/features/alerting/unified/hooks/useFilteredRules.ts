@@ -2,6 +2,7 @@ import { produce } from 'immer';
 import { chain, compact, isEmpty } from 'lodash';
 import { useCallback, useDeferredValue, useEffect, useMemo } from 'react';
 
+import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { type CombinedRuleGroup, type CombinedRuleNamespace, type Rule } from 'app/types/unified-alerting';
@@ -243,12 +244,19 @@ const reduceGroups = (filterState: RulesFilter) => {
 
       if ('policy' in matchesFilterFor) {
         const policy = filterState.policy;
-        const hasPolicy =
-          rulerRuleType.grafana.rule(rule.rulerRule) &&
-          rule.rulerRule.grafana_alert.notification_settings?.policy === policy;
+        if (rulerRuleType.grafana.rule(rule.rulerRule)) {
+          const ns = rule.rulerRule.grafana_alert.notification_settings;
+          const isDefaultPolicyFilter = policy === USER_DEFINED_TREE_NAME;
 
-        if (hasPolicy) {
-          matchesFilterFor.policy = true;
+          if (isDefaultPolicyFilter) {
+            // No notification_settings or no receiver/explicit non-default policy → default tree
+            const usesDefaultPolicy = !ns || (!ns.receiver && (!ns.policy || ns.policy === USER_DEFINED_TREE_NAME));
+            if (usesDefaultPolicy) {
+              matchesFilterFor.policy = true;
+            }
+          } else if (ns?.policy === policy) {
+            matchesFilterFor.policy = true;
+          }
         }
       }
 

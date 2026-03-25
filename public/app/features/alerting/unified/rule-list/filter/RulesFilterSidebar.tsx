@@ -2,9 +2,10 @@ import { css, cx } from '@emotion/css';
 import { type PropsOf } from '@emotion/react';
 import { Controller, useForm } from 'react-hook-form';
 
-import { ContactPointSelector } from '@grafana/alerting/unstable';
+import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   Button,
   Combobox,
@@ -360,6 +361,55 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                         const contactPoint = cp?.spec.title ?? null;
                         field.onChange(contactPoint);
                         applyFormValues({ contactPoint });
+                      }}
+                      portalContainer={portalContainer}
+                    />
+                  )}
+                />
+              </SidebarField>
+            </SidebarSection>
+            <div className={styles.divider} />
+          </>
+        )}
+
+        {config.featureToggles.alertingMultiplePolicies && (
+          <>
+            <SidebarSection>
+              <SidebarField
+                label={
+                  <Stack gap={0.5} alignItems="center">
+                    <span>
+                      <Trans i18nKey="alerting.policyFilter.label">Notification policy</Trans>
+                    </span>
+                    <Tooltip
+                      content={
+                        <Trans i18nKey="alerting.rules-filter.policy-tooltip">
+                          Filters alert rules which route to the selected notification policy tree. Alert rules using
+                          direct contact point routing will not be displayed.
+                        </Trans>
+                      }
+                    >
+                      <Icon
+                        name="info-circle"
+                        size="sm"
+                        title={t('alerting.rules-filter.policy-tooltip-title', 'Notification policy filter help')}
+                      />
+                    </Tooltip>
+                  </Stack>
+                }
+              >
+                <Controller
+                  name="policy"
+                  control={control}
+                  render={({ field }) => (
+                    <RoutingTreeSelector
+                      placeholder={t('alerting.rules-filter.placeholder-policy', 'Select policy')}
+                      value={field.value ?? undefined}
+                      isClearable
+                      onChange={(tree) => {
+                        const policy = tree?.metadata.name ?? null;
+                        field.onChange(policy);
+                        applyFormValues({ policy });
                       }}
                       portalContainer={portalContainer}
                     />
