@@ -194,7 +194,7 @@ APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | so
 app ?=
 
 .PHONY: gen-apps
-gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt. Use app=<name> to generate for a specific app.
+gen-apps: fix-cue do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt and fix-cue. Use app=<name> to generate for a specific app.
 ## NOTE: codegen produces some openapi files that result in circular dependencies
 ## for now, we revert the zz_openapi_gen.go files before comparison
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
@@ -271,13 +271,21 @@ install-cue:
 	go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
 
 .PHONY: fix-cue
-fix-cue: install-cue
-	@find . -type d -name 'cue.mod' | while read -r mod_dir; do \
+fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specific app.
+	@root_dir="."; \
+	if [ -n "$(app)" ]; then \
+		root_dir="./apps/$(app)"; \
+		if [ ! -d "$$root_dir" ]; then \
+			echo "Error: App '$(app)' not found at $$root_dir"; \
+			exit 1; \
+		fi; \
+	fi; \
+	find "$$root_dir" -type d -name 'cue.mod' | while read -r mod_dir; do \
 		project_dir="$$(dirname $$mod_dir)"; \
 		echo "Fixing: $$project_dir"; \
 		(cd "$$project_dir" && $(CUE) fmt ./...); \
 		(cd "$$project_dir" && $(CUE) fix ./...); \
-	done
+	done \
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
