@@ -2760,6 +2760,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "useMTPluginSettings",
+			Description:  "Enables plugins setting from new apis",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+			HideFromDocs: true,
+		},
 	}
 )
 

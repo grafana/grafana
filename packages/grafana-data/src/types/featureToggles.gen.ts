@@ -1740,4 +1740,9 @@ export interface FeatureToggles {
   * @default false
   */
   logsTablePanelNG?: boolean;
+  /**
+  * Enables plugins setting from new apis
+  * @default false
+  */
+  useMTPluginSettings?: boolean;
 }
