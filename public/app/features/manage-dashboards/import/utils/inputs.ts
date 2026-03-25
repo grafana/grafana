@@ -610,30 +610,6 @@ function resolveInputDatasource(
   return datasource;
 }
 
-function resolveInputTargets(
-  targets: Panel['targets'],
-  inputs: { dataSources: DataSourceInput[] },
-  form: ImportDashboardDTO
-): Panel['targets'] {
-  return targets?.map((target) => {
-    const ds = target.datasource;
-    const dsUid = getDSUid(ds);
-    if (dsUid) {
-      const userInput = checkUserInputMatch(dsUid, inputs.dataSources, form.dataSources);
-      if (userInput) {
-        return {
-          ...target,
-          datasource: {
-            ...(isRecord(ds) ? ds : {}),
-            uid: userInput.uid,
-          },
-        };
-      }
-    }
-    return target;
-  });
-}
-
 function processPanel(
   panel: Panel | RowPanel,
   inputs: { dataSources: DataSourceInput[] },
@@ -652,7 +628,16 @@ function processPanel(
   return {
     ...panel,
     ...(panel.datasource && { datasource: resolveInputDatasource(panel.datasource, inputs, form) }),
-    ...(panel.targets && { targets: resolveInputTargets(panel.targets, inputs, form) }),
+    ...(panel.targets && {
+      targets: panel.targets.map((target) =>
+        target.datasource
+          ? {
+              ...target,
+              datasource: resolveInputDatasource(target.datasource, inputs, form),
+            }
+          : target
+      ),
+    }),
   };
 }
 
