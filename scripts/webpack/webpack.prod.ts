@@ -1,41 +1,25 @@
-'use strict';
+import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
+import { EsbuildPlugin } from 'esbuild-loader';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import path from 'node:path';
+import { EnvironmentPlugin } from 'webpack';
+import WebpackAssetsManifest from 'webpack-assets-manifest';
+import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
+import { merge } from 'webpack-merge';
+import { SubresourceIntegrityPlugin } from 'webpack-subresource-integrity';
 
-const browserslist = require('browserslist');
-const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
-const { EsbuildPlugin } = require('esbuild-loader');
-const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const path = require('path');
-const { EnvironmentPlugin } = require('webpack');
-const WebpackAssetsManifest = require('webpack-assets-manifest');
-const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
-const { merge } = require('webpack-merge');
-const { SubresourceIntegrityPlugin } = require('webpack-subresource-integrity');
-
-const getEnvConfig = require('./env-util.js');
-const FeatureFlaggedSRIPlugin = require('./plugins/FeatureFlaggedSriPlugin');
-const common = require('./webpack.common.js');
-const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
-
-// esbuild-loader 3.0.0+ requires format to be set to prevent it
-// from defaulting to 'iife' which breaks monaco/loader once minified.
-const esbuildOptions = {
-  target: esbuildTargets,
-  format: undefined,
-  jsx: 'automatic',
-};
+import getEnvConfig from './env-util.ts';
+import esbuildOptions from './esbuild.ts';
+import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
+import sassRule from './sass.rule.ts';
+import common, { type Env } from './webpack.common.ts';
 
 const envConfig = getEnvConfig();
 
-module.exports = (env = {}) =>
+export default (env: Env = {}) =>
   merge(common(env), {
     mode: 'production',
     devtool: process.env.NO_SOURCEMAP === '1' ? false : 'source-map',
-
-    entry: {
-      dark: './public/sass/grafana.dark.scss',
-      light: './public/sass/grafana.light.scss',
-    },
 
     module: {
       // Note: order is bottom-to-top and/or right-to-left
@@ -47,10 +31,7 @@ module.exports = (env = {}) =>
             options: esbuildOptions,
           },
         },
-        require('./sass.rule.js')({
-          sourceMap: false,
-          preserveUrl: true,
-        }),
+        sassRule({ sourceMap: false, preserveUrl: true }),
       ],
     },
     output: {
@@ -58,19 +39,19 @@ module.exports = (env = {}) =>
     },
     optimization: {
       nodeEnv: 'production',
-      minimize: parseInt(env.noMinify, 10) !== 1,
+      minimize: Number(env.noMinify) !== 1,
       minimizer: [new EsbuildPlugin(esbuildOptions), new CssMinimizerPlugin()],
     },
 
     // enable persistent cache for faster builds
     cache:
-      parseInt(env.noMinify, 10) === 1
+      Number(env.noMinify) === 1
         ? false
         : {
             type: 'filesystem',
             name: 'grafana-default-production',
             buildDependencies: {
-              config: [__filename],
+              config: [import.meta.filename],
             },
           },
 
