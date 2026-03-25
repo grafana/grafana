@@ -21,13 +21,10 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationHealth(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 	repo := "test-repo-health"
 	helper.CreateRepo(t, common.TestRepo{
@@ -294,9 +291,7 @@ func parseTestResults(t *testing.T, obj runtime.Object) *provisioning.TestResult
 }
 
 func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
@@ -548,9 +543,7 @@ func TestIntegrationProvisioning_ConnectionTestEndpointWithPermissions(t *testin
 }
 
 func TestIntegrationProvisioning_GitRepositoryWritePermissions(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Use public GitHub repository (grafana-git-sync-demo) via git type - no token needed for read access

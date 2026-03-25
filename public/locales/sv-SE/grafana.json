@@ -1718,13 +1718,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -3541,20 +3541,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Larminstanser",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Fel vid laddning av regel",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "Instansdetaljer",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "Du har inga varningsinstanser i ett utlösande eller väntande tillstånd för det valda tidsintervallet.",
       "no-instances-found": "Inga larminstanser hittades för regeln: {{ruleUID}}",
       "no-labels": "Inga etiketter",
@@ -3576,14 +3583,16 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_one": "",
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_one": "",
       "show-all-labels_other": "",
       "show-all-values_one": "",
       "show-all-values_other": "",
-      "tooltip-more-values_one": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_one": "",
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "Lägg till uttryck"
@@ -4250,6 +4259,9 @@
     "browse-view": {
       "this-folder-is-empty": "Denna mapp är tom"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Avbryt",
       "button-delete": "Radera",
@@ -4352,6 +4364,7 @@
       "dashboards": "Instrumentpaneler",
       "panels": "Paneler"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Inga objekt"
     },
@@ -6081,8 +6094,8 @@
       "name": "Rader",
       "new-row-title": "Ny rad",
       "row": {
-        "collapse": "Dölj rad",
-        "expand": "Expandera rad",
+        "collapse": "",
+        "expand": "",
         "new": "Ny rad",
         "repeat": {
           "learn-more": "Läs mer",
@@ -6623,11 +6636,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Ad hoc-alternativ",
       "alert-not-supported": "Denna datakälla stöder inte ad hoc-filter",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Gör det möjligt för användare att lägga till anpassade värden i listan",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Tillhandahåll dimensioner som CSV: {{name}}, {{value}}",
       "label-data-source": "Datakälla",
       "label-use-static-key-dimensions": "Använd dimensioner för statiska nycklar",
-      "name-allow-custom-values": "Tillåt anpassade värden"
+      "name-allow-custom-values": "Tillåt anpassade värden",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -10267,6 +10282,9 @@
       "group": "Grupp",
       "group-tooltip": "Namn på staplingsgruppen"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Filtrera för värde",
       "cell-filter-out": "Filtrera bort värde",
@@ -10315,6 +10333,10 @@
       },
       "no-values-label": "Inga värden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "inga data"
       },
@@ -11428,7 +11450,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Inga alternativ hittades"
@@ -12319,6 +12342,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Namn"
       }
     },
@@ -13018,6 +13042,7 @@
       "error-delete-connection": "Det gick inte att radera anslutningen",
       "error-required": "Det här fältet är obligatoriskt",
       "error-save-connection": "Det gick inte att spara anslutningen",
+      "error-submit": "",
       "grafana-repositories": "Lagringsplatser som använder denna anslutning",
       "label-app-id": "GitHub-app-ID",
       "label-description": "Beskrivning",
@@ -13542,6 +13567,9 @@
       },
       "go-to": "Gå till",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "Varning",
     "watch-stream": {
