@@ -601,7 +601,7 @@ function resolveInputDatasource(
   if (templateUid) {
     const userInput = checkUserInputMatch(templateUid, inputs.dataSources, form.dataSources);
     if (userInput) {
-      return { ...(hasUid(datasource) ? datasource : {}), uid: userInput.uid, type: userInput.type };
+      return { ...(isRecord(datasource) ? datasource : {}), uid: userInput.uid };
     }
   }
   return datasource;
@@ -620,7 +620,7 @@ function resolveInputTargets(
       if (userInput) {
         return {
           ...target,
-          datasource: { ...(hasUid(ds) ? ds : {}), uid: userInput.uid, type: userInput.type },
+          datasource: { ...(isRecord(ds) ? ds : {}), uid: userInput.uid },
         };
       }
     }
