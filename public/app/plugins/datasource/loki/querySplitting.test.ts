@@ -818,13 +818,8 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
         { range: range1d }
       );
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        if (lokiAlignedQuerySplitting) {
-          // A, B * 2 because of midnight alignment
-          expect(datasource.runQuery).toHaveBeenCalledTimes(4);
-        } else {
-          // A, B
-          expect(datasource.runQuery).toHaveBeenCalledTimes(2);
-        }
+        // A, B
+        expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
     });
 
@@ -837,13 +832,8 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
         { range: range1d }
       );
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        if (lokiAlignedQuerySplitting) {
-          // A, B * 2 because of midnight alignment
-          expect(datasource.runQuery).toHaveBeenCalledTimes(4);
-        } else {
-          // A, B
-          expect(datasource.runQuery).toHaveBeenCalledTimes(2);
-        }
+        // A, B
+        expect(datasource.runQuery).toHaveBeenCalledTimes(2);
       });
     });
     test('Groups mixed queries by stepMs', async () => {
@@ -860,13 +850,8 @@ describe.each([false, true])('runSplitQuery(aligned = %s)', (lokiAlignedQuerySpl
         { range: range1d }
       );
       await expect(runSplitQuery(datasource, request)).toEmitValuesWith(() => {
-        // A, B, C, D, E, F+G
-        if (lokiAlignedQuerySplitting) {
-          expect(datasource.runQuery).toHaveBeenCalledTimes(8);
-        } else {
-          // A+B, G, C, D+F, E
-          expect(datasource.runQuery).toHaveBeenCalledTimes(5);
-        }
+        // A+B, G, C, D+F, E
+        expect(datasource.runQuery).toHaveBeenCalledTimes(5);
       });
     });
     test('Chunked groups mixed queries by stepMs', async () => {
