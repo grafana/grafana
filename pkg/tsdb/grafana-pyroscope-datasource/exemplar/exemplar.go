@@ -2,37 +2,49 @@ package exemplar
 
 import (
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type Exemplar struct {
-	Id        string
+	ProfileId string
+	SpanId    string
 	Value     float64
 	Timestamp int64
 	Labels    map[string]string
 }
 
-func CreateExemplarFrame(labels map[string]string, exemplars []*Exemplar, units string) *data.Frame {
+type ExemplarType string
+
+const (
+	ExemplarTypeProfile ExemplarType = "profile"
+	ExemplarTypeSpan    ExemplarType = "span"
+)
+
+func CreateExemplarFrame(labels map[string]string, exemplars []*Exemplar, exemplarType ExemplarType, units string) *data.Frame {
 	frame := data.NewFrame("exemplar")
 	frame.Meta = &data.FrameMeta{
 		DataTopic: data.DataTopicAnnotations,
 	}
+
+	// Determine display name and which ID to use based on exemplar type
+	displayName := "Profile ID"
+	if exemplarType == ExemplarTypeSpan {
+		displayName = "Span ID"
+	}
+
 	// Collect all unique label names across all exemplars
 	uniqLabelNames := make(map[string]struct{})
 	for _, e := range exemplars {
 		for name := range e.Labels {
-			if strings.HasPrefix(name, "__") {
-				continue
-			}
 			uniqLabelNames[name] = struct{}{}
 		}
 	}
 	for name := range labels {
 		uniqLabelNames[name] = struct{}{}
 	}
+
 	sortedLabelNames := make([]string, 0, len(uniqLabelNames))
 	for name := range uniqLabelNames {
 		sortedLabelNames = append(sortedLabelNames, name)
@@ -53,7 +65,7 @@ func CreateExemplarFrame(labels map[string]string, exemplars []*Exemplar, units 
 	}
 
 	fields[2].Config = &data.FieldConfig{
-		DisplayName: "Profile ID",
+		DisplayName: displayName,
 	}
 
 	// Create fields for all label names
@@ -67,7 +79,15 @@ func CreateExemplarFrame(labels map[string]string, exemplars []*Exemplar, units 
 	for _, e := range exemplars {
 		row[0] = time.UnixMilli(e.Timestamp)
 		row[1] = e.Value
-		row[2] = e.Id
+
+		// Use the appropriate ID based on exemplar type
+		switch exemplarType {
+		case ExemplarTypeSpan:
+			row[2] = e.SpanId
+		case ExemplarTypeProfile:
+			row[2] = e.ProfileId
+		}
+
 		// Append label values: prefer exemplar-specific values over series values
 		for idx, name := range sortedLabelNames {
 			// Check if this exemplar has this label

@@ -2748,11 +2748,12 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "queryServiceQueryCaching",
-			Description: "Enables the query service to do query caching",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
+			Name:         "profilesHeatmap",
+			Description:  "Enables heatmap visualization support for Pyroscope profiles",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			FrontendOnly: false,
+			Expression:   "false",
 		},
 		{
 			Name:         "tracesDrilldownTimeSeeker",

@@ -922,9 +922,9 @@ const (
 	// Enables the query service to fetch the configuration from the settings service
 	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
 
-	// FlagQueryServiceQueryCaching
-	// Enables the query service to do query caching
-	FlagQueryServiceQueryCaching = "queryServiceQueryCaching"
+	// FlagProfilesHeatmap
+	// Enables heatmap visualization support for Pyroscope profiles
+	FlagProfilesHeatmap = "profilesHeatmap"
 
 	// FlagCacheConfigUnifiedStorageMigration
 	// Enables cache configs data migration to unified storage
