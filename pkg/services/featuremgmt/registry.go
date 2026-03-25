@@ -540,8 +540,8 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:            "datasourcesApiServerEnableResourceEndpointFrontend",
-			Description:     "Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.",
+			Name:            "datasourcesApiserverEnableResourceEndpointRedirect",
+			Description:     "redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: false,
