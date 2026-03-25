@@ -598,3 +598,43 @@ func TestIntegrationFineGrainedPermissions(t *testing.T) {
 	_, err = noneClient.Folders.GetFolderByUID(parentResp.Payload.UID)
 	require.Error(t, err, "None user should not be able to access parent folder directly")
 }
+
+func TestIntegrationFolderMoveGracefulDegradation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting:       true,
+		EnableUnifiedAlerting:       true,
+		DisableAnonymous:            true,
+		AppModeProduction:           true,
+		SearchInjectFailuresPercent: 100,
+	})
+
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, p)
+	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
+
+	// Create two folders at root level
+	parentResp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
+		Title: "Move Target Parent",
+		UID:   "move-parent",
+	})
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, parentResp.Code())
+
+	childResp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
+		Title: "Move Child",
+		UID:   "move-child",
+	})
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, childResp.Code())
+
+	// Move child under parent — should succeed even with search down
+	moveBody, err := json.Marshal(map[string]string{"parentUID": parentResp.Payload.UID})
+	require.NoError(t, err)
+
+	moveURL := fmt.Sprintf("http://admin:admin@%s/api/folders/%s/move", grafanaListedAddr, childResp.Payload.UID)
+	resp, err := http.Post(moveURL, "application/json", bytes.NewBuffer(moveBody)) //nolint:gosec
+	require.NoError(t, err)
+	defer func() { _ = resp.Body.Close() }()
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "folder move should succeed when search is down")
+}
