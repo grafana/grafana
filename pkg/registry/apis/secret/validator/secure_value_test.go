@@ -10,7 +10,7 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/utils/ptr"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
@@ -20,14 +20,14 @@ func TestValidateSecureValue(t *testing.T) {
 
 	t.Run("when creating a new securevalue", func(t *testing.T) {
 		keeper := "keeper"
-		validSecureValue := &secretv1beta1.SecureValue{
+		validSecureValue := &secretv1.SecureValue{
 			ObjectMeta: objectMeta,
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "description",
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+				Value:       ptr.To(secretv1.NewExposedSecureValue("value")),
 				Decrypters:  []string{"app1", "app2"},
 			},
-			Status: secretv1beta1.SecureValueStatus{Keeper: keeper},
+			Status: secretv1.SecureValueStatus{Keeper: keeper},
 		}
 
 		t.Run("the `description` must be present", func(t *testing.T) {
@@ -50,7 +50,7 @@ func TestValidateSecureValue(t *testing.T) {
 			require.Equal(t, "spec", errs[0].Field)
 
 			// empty value
-			sv.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue(""))
+			sv.Spec.Value = ptr.To(secretv1.NewExposedSecureValue(""))
 			sv.Spec.Ref = nil
 
 			errs = validator.Validate(sv, nil, admission.Create)
@@ -59,7 +59,7 @@ func TestValidateSecureValue(t *testing.T) {
 
 			// present value and ref
 			ref := "value"
-			sv.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("value"))
+			sv.Spec.Value = ptr.To(secretv1.NewExposedSecureValue("value"))
 			sv.Spec.Ref = &ref
 
 			errs = validator.Validate(sv, nil, admission.Create)
@@ -69,7 +69,7 @@ func TestValidateSecureValue(t *testing.T) {
 
 		t.Run("`value` cannot exceed 24576 bytes", func(t *testing.T) {
 			sv := validSecureValue.DeepCopy()
-			sv.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue(strings.Repeat("a", contracts.SecureValueRawInputMaxSizeBytes+1)))
+			sv.Spec.Value = ptr.To(secretv1.NewExposedSecureValue(strings.Repeat("a", contracts.SecureValueRawInputMaxSizeBytes+1)))
 			sv.Spec.Ref = nil
 
 			errs := validator.Validate(sv, nil, admission.Create)
@@ -80,17 +80,17 @@ func TestValidateSecureValue(t *testing.T) {
 
 	t.Run("when updating a securevalue", func(t *testing.T) {
 		t.Run("when trying to switch from a `value` (old) to a `ref` (new), it returns an error", func(t *testing.T) {
-			oldSv := &secretv1beta1.SecureValue{
+			oldSv := &secretv1.SecureValue{
 				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
+				Spec: secretv1.SecureValueSpec{
 					Ref: nil, // empty `ref` means a `value` was present.
 				},
 			}
 
 			ref := "ref"
-			sv := &secretv1beta1.SecureValue{
+			sv := &secretv1.SecureValue{
 				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
+				Spec: secretv1.SecureValueSpec{
 					Ref: &ref,
 				},
 			}
@@ -103,17 +103,17 @@ func TestValidateSecureValue(t *testing.T) {
 
 		t.Run("when trying to switch from a `ref` (old) to a `value` (new), it returns an error", func(t *testing.T) {
 			ref := "non-empty"
-			oldSv := &secretv1beta1.SecureValue{
+			oldSv := &secretv1.SecureValue{
 				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
+				Spec: secretv1.SecureValueSpec{
 					Ref: &ref,
 				},
 			}
 
-			sv := &secretv1beta1.SecureValue{
+			sv := &secretv1.SecureValue{
 				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
-					Value: ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+				Spec: secretv1.SecureValueSpec{
+					Value: ptr.To(secretv1.NewExposedSecureValue("value")),
 				},
 			}
 
@@ -124,18 +124,18 @@ func TestValidateSecureValue(t *testing.T) {
 
 		t.Run("when both `value` and `ref` are set, it returns an error", func(t *testing.T) {
 			refNonEmpty := "non-empty"
-			oldSv := &secretv1beta1.SecureValue{
+			oldSv := &secretv1.SecureValue{
 				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
+				Spec: secretv1.SecureValueSpec{
 					Ref: &refNonEmpty,
 				},
 			}
 
 			ref := "ref"
-			sv := &secretv1beta1.SecureValue{
+			sv := &secretv1.SecureValue{
 				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
-					Value: ptr.To(secretv1beta1.NewExposedSecureValue("value")),
+				Spec: secretv1.SecureValueSpec{
+					Value: ptr.To(secretv1.NewExposedSecureValue("value")),
 					Ref:   &ref,
 				},
 			}
@@ -144,10 +144,10 @@ func TestValidateSecureValue(t *testing.T) {
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
 
-			oldSv = &secretv1beta1.SecureValue{
+			oldSv = &secretv1.SecureValue{
 				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
-					Value: ptr.To(secretv1beta1.NewExposedSecureValue("non-empty")),
+				Spec: secretv1.SecureValueSpec{
+					Value: ptr.To(secretv1.NewExposedSecureValue("non-empty")),
 				},
 			}
 
@@ -157,16 +157,16 @@ func TestValidateSecureValue(t *testing.T) {
 		})
 
 		t.Run("when no changes are made, it returns no errors", func(t *testing.T) {
-			oldSv := &secretv1beta1.SecureValue{
+			oldSv := &secretv1.SecureValue{
 				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
+				Spec: secretv1.SecureValueSpec{
 					Description: "old-description",
 				},
 			}
 
-			sv := &secretv1beta1.SecureValue{
+			sv := &secretv1.SecureValue{
 				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.SecureValueSpec{
+				Spec: secretv1.SecureValueSpec{
 					Description: "new-description",
 				},
 			}
@@ -176,7 +176,7 @@ func TestValidateSecureValue(t *testing.T) {
 		})
 
 		t.Run("when the old object is `nil` it returns an error", func(t *testing.T) {
-			sv := &secretv1beta1.SecureValue{ObjectMeta: objectMeta}
+			sv := &secretv1.SecureValue{ObjectMeta: objectMeta}
 
 			errs := validator.Validate(sv, nil, admission.Update)
 			require.Len(t, errs, 1)
@@ -186,9 +186,9 @@ func TestValidateSecureValue(t *testing.T) {
 
 	t.Run("`decrypters` must have unique items", func(t *testing.T) {
 		ref := "ref"
-		sv := &secretv1beta1.SecureValue{
+		sv := &secretv1.SecureValue{
 			ObjectMeta: objectMeta,
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "description", Ref: &ref,
 
 				Decrypters: []string{
@@ -205,9 +205,9 @@ func TestValidateSecureValue(t *testing.T) {
 
 	t.Run("`decrypters` list can be empty", func(t *testing.T) {
 		ref := "ref"
-		sv := &secretv1beta1.SecureValue{
+		sv := &secretv1.SecureValue{
 			ObjectMeta: objectMeta,
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "description", Ref: &ref,
 
 				Decrypters: []string{},
@@ -233,9 +233,9 @@ func TestValidateSecureValue(t *testing.T) {
 		}
 
 		ref := "ref"
-		sv := &secretv1beta1.SecureValue{
+		sv := &secretv1.SecureValue{
 			ObjectMeta: objectMeta,
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "description", Ref: &ref,
 
 				Decrypters: decrypters,
@@ -253,9 +253,9 @@ func TestValidateSecureValue(t *testing.T) {
 		}
 
 		ref := "ref"
-		sv := &secretv1beta1.SecureValue{
+		sv := &secretv1.SecureValue{
 			ObjectMeta: objectMeta,
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "description", Ref: &ref,
 
 				Decrypters: decrypters,
@@ -268,11 +268,11 @@ func TestValidateSecureValue(t *testing.T) {
 	})
 
 	t.Run("invalid name", func(t *testing.T) {
-		sv := &secretv1beta1.SecureValue{
+		sv := &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: objectMeta.Namespace,
 			},
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "description",
 				Ref:         ptr.To("ref"),
 			},
@@ -295,11 +295,11 @@ func TestValidateSecureValue(t *testing.T) {
 	})
 
 	t.Run("invalid namespace", func(t *testing.T) {
-		sv := &secretv1beta1.SecureValue{
+		sv := &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: objectMeta.Name,
 			},
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "description",
 				Ref:         ptr.To("ref"),
 			},

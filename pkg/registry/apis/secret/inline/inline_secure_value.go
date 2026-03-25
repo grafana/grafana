@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -138,8 +138,8 @@ func (s *LocalInlineSecureValueService) canIdentityReadSecureValue(ctx context.C
 
 	resp, err := s.accessChecker.Check(ctx, authInfo, authlib.CheckRequest{
 		Verb:      utils.VerbGet,
-		Group:     secretv1beta1.APIGroup,
-		Resource:  secretv1beta1.SecureValuesResourceInfo.GroupResource().Resource,
+		Group:     secretv1.APIGroup,
+		Resource:  secretv1.SecureValuesResourceInfo.GroupResource().Resource,
 		Namespace: namespace.String(),
 		Name:      name,
 	}, "")
@@ -193,7 +193,7 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 	}
 
 	// TODO(2025-07-31): when we migrate to using the common type, we don't need this conversion.
-	secret := secretv1beta1.ExposedSecureValue(value)
+	secret := secretv1.ExposedSecureValue(value)
 
 	// The owner group can always decrypt
 	decrypters := []string{owner.APIGroup}
@@ -203,13 +203,13 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 		decrypters = append(decrypters, serviceIdentity[0])
 	}
 
-	obj := &secretv1beta1.SecureValue{
+	obj := &secretv1.SecureValue{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName:    "inline-",
 			Namespace:       owner.Namespace,
 			OwnerReferences: []metav1.OwnerReference{owner.ToOwnerReference()},
 		},
-		Spec: secretv1beta1.SecureValueSpec{
+		Spec: secretv1.SecureValueSpec{
 			Description: fmt.Sprintf("Inline secure value for %s/%s in %s/%s", owner.Kind, owner.Name, owner.APIGroup, owner.APIVersion),
 			Value:       &secret,
 			Decrypters:  decrypters,

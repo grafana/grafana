@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"time"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
@@ -47,17 +47,17 @@ func SeedSecureValues(ctx context.Context, svc contracts.SecureValueService, num
 			name := "sv-" + randString(nsChars, 8, rng)
 			description := randString(nsChars, descLen, rng)
 			value := randString(nsChars, valueLen, rng)
-			sv := &secretv1beta1.SecureValue{
+			sv := &secretv1.SecureValue{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      name,
 					Namespace: namespace,
 				},
-				Spec: secretv1beta1.SecureValueSpec{
+				Spec: secretv1.SecureValueSpec{
 					Description: description,
-					Value:       ptr.To(secretv1beta1.NewExposedSecureValue(value)),
+					Value:       ptr.To(secretv1.NewExposedSecureValue(value)),
 					Decrypters:  []string{"decrypter1"},
 				},
-				Status: secretv1beta1.SecureValueStatus{},
+				Status: secretv1.SecureValueStatus{},
 			}
 			_, err := svc.Create(ctx, sv, seedActorUID)
 			if err != nil {

@@ -11,7 +11,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -37,7 +37,7 @@ func (m *mockDecryptService) Decrypt(ctx context.Context, group, namespace strin
 }
 
 func newDecryptResult(value string) decrypt.DecryptResult {
-	v := secretv1beta1.ExposedSecureValue(value)
+	v := secretv1.ExposedSecureValue(value)
 	return decrypt.NewDecryptResultValue(&v)
 }
 

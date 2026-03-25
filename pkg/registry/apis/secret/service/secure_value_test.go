@@ -3,7 +3,7 @@ package service_test
 import (
 	"testing"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -25,7 +25,7 @@ func TestCrud(t *testing.T) {
 		// Create the same secure value twice
 		input := sv1.DeepCopy()
 		input.Spec.Description = "d2"
-		input.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("v2"))
+		input.Spec.Value = ptr.To(secretv1.NewExposedSecureValue("v2"))
 
 		sv2, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(input))
 		require.NoError(t, err)
@@ -57,7 +57,7 @@ func TestCrud(t *testing.T) {
 		// Update the secure value
 		input := sv1.DeepCopy()
 		input.Spec.Description = "d2"
-		input.Spec.Value = ptr.To(secretv1beta1.NewExposedSecureValue("v3"))
+		input.Spec.Value = ptr.To(secretv1.NewExposedSecureValue("v3"))
 		sv2, err := sut.UpdateSv(t.Context(), input)
 		require.NoError(t, err)
 
@@ -101,17 +101,17 @@ func TestCrud(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		ref := "path-to-secret"
-		sv := &secretv1beta1.SecureValue{
+		sv := &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "sv1",
 				Namespace: "ns1",
 			},
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "desc1",
 				Ref:         &ref,
 				Decrypters:  []string{"decrypter1"},
 			},
-			Status: secretv1beta1.SecureValueStatus{},
+			Status: secretv1.SecureValueStatus{},
 		}
 
 		// Creating a secure value using ref with the system keeper
@@ -121,16 +121,16 @@ func TestCrud(t *testing.T) {
 		require.Contains(t, err.Error(), "tried to create secure value using reference with system keeper, references can only be used with 3rd party keepers")
 
 		// Create a 3rd party keeper
-		keeper := &secretv1beta1.Keeper{
+		keeper := &secretv1.Keeper{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "k1",
 				Namespace: "ns1",
 			},
-			Spec: secretv1beta1.KeeperSpec{
+			Spec: secretv1.KeeperSpec{
 				Description: "desc",
-				Aws: &secretv1beta1.KeeperAWSConfig{
+				Aws: &secretv1.KeeperAWSConfig{
 					Region: "us-east-1",
-					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+					AssumeRole: &secretv1.KeeperAWSAssumeRole{
 						AssumeRoleArn: "arn",
 						ExternalID:    "id",
 					},
@@ -157,13 +157,13 @@ func TestCrud(t *testing.T) {
 		sut := testutils.Setup(t)
 
 		// Create a keeper because references cannot be used with the system keeper
-		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1.Keeper{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "k1",
 			},
-			Spec: secretv1beta1.KeeperSpec{
-				Aws: &secretv1beta1.KeeperAWSConfig{},
+			Spec: secretv1.KeeperSpec{
+				Aws: &secretv1.KeeperAWSConfig{},
 			},
 		}, "actor-uid")
 		require.NoError(t, err)
@@ -187,14 +187,14 @@ func Test_SetAsActive(t *testing.T) {
 		namespace := "ns"
 
 		// Create a new keeper
-		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
+		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1.Keeper{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "ns",
 				Name:      "k1",
 			},
-			Spec: secretv1beta1.KeeperSpec{
+			Spec: secretv1.KeeperSpec{
 				Description: "description",
-				Aws:         &secretv1beta1.KeeperAWSConfig{},
+				Aws:         &secretv1.KeeperAWSConfig{},
 			},
 		}, "actor-uid")
 		require.NoError(t, err)

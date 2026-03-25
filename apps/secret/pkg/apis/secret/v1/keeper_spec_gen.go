@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v1beta1
+package v1
 
 // +k8s:openapi-gen=true
 type KeeperAWSConfig struct {
@@ -15,7 +15,7 @@ func NewKeeperAWSConfig() *KeeperAWSConfig {
 
 // OpenAPIModelName returns the OpenAPI model name for KeeperAWSConfig.
 func (KeeperAWSConfig) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperAWSConfig"
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1.KeeperAWSConfig"
 }
 
 // +k8s:openapi-gen=true
@@ -31,7 +31,7 @@ func NewKeeperAWSAssumeRole() *KeeperAWSAssumeRole {
 
 // OpenAPIModelName returns the OpenAPI model name for KeeperAWSAssumeRole.
 func (KeeperAWSAssumeRole) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperAWSAssumeRole"
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1.KeeperAWSAssumeRole"
 }
 
 // +k8s:openapi-gen=true
@@ -53,5 +53,5 @@ func NewKeeperSpec() *KeeperSpec {
 
 // OpenAPIModelName returns the OpenAPI model name for KeeperSpec.
 func (KeeperSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperSpec"
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1.KeeperSpec"
 }

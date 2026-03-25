@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	inlinev1beta1 "github.com/grafana/grafana/apps/secret/inline/v1beta1"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
@@ -186,7 +186,7 @@ func (g *GRPCInlineClient) getClient(namespace string) (inlinev1beta1.InlineSecu
 		g.tokenExchanger,
 		authnlib.WithClientInterceptorTracer(g.tracer),
 		authnlib.WithClientInterceptorNamespace(namespace),
-		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
+		authnlib.WithClientInterceptorAudience([]string{secretv1.APIGroup}),
 	)
 
 	clientConn := grpchan.InterceptClientConn(

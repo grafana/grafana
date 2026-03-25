@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -18,12 +18,12 @@ func TestValidateKeeper(t *testing.T) {
 
 	t.Run("when creating a new keeper", func(t *testing.T) {
 		t.Run("the `description` must be present", func(t *testing.T) {
-			keeper := &secretv1beta1.Keeper{
+			keeper := &secretv1.Keeper{
 				ObjectMeta: objectMeta,
-				Spec: secretv1beta1.KeeperSpec{
-					Aws: &secretv1beta1.KeeperAWSConfig{
+				Spec: secretv1.KeeperSpec{
+					Aws: &secretv1.KeeperAWSConfig{
 						Region: "us-east-1",
-						AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+						AssumeRole: &secretv1.KeeperAWSAssumeRole{
 							AssumeRoleArn: "arn",
 							ExternalID:    "id",
 						},
@@ -38,13 +38,13 @@ func TestValidateKeeper(t *testing.T) {
 	})
 
 	t.Run("aws keeper validation", func(t *testing.T) {
-		validKeeperAWS := &secretv1beta1.Keeper{
+		validKeeperAWS := &secretv1.Keeper{
 			ObjectMeta: objectMeta,
-			Spec: secretv1beta1.KeeperSpec{
+			Spec: secretv1.KeeperSpec{
 				Description: "description",
-				Aws: &secretv1beta1.KeeperAWSConfig{
+				Aws: &secretv1.KeeperAWSConfig{
 					Region: "us-east-1",
-					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+					AssumeRole: &secretv1.KeeperAWSAssumeRole{
 						AssumeRoleArn: "arn",
 						ExternalID:    "id",
 					},
@@ -76,15 +76,15 @@ func TestValidateKeeper(t *testing.T) {
 	})
 
 	t.Run("invalid name", func(t *testing.T) {
-		keeper := &secretv1beta1.Keeper{
+		keeper := &secretv1.Keeper{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: objectMeta.Namespace,
 			},
-			Spec: secretv1beta1.KeeperSpec{
+			Spec: secretv1.KeeperSpec{
 				Description: "description",
-				Aws: &secretv1beta1.KeeperAWSConfig{
+				Aws: &secretv1.KeeperAWSConfig{
 					Region: "us-east-1",
-					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+					AssumeRole: &secretv1.KeeperAWSAssumeRole{
 						AssumeRoleArn: "arn",
 						ExternalID:    "id",
 					},
@@ -109,15 +109,15 @@ func TestValidateKeeper(t *testing.T) {
 	})
 
 	t.Run("invalid namespace", func(t *testing.T) {
-		keeper := &secretv1beta1.Keeper{
+		keeper := &secretv1.Keeper{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: objectMeta.Name,
 			},
-			Spec: secretv1beta1.KeeperSpec{
+			Spec: secretv1.KeeperSpec{
 				Description: "description",
-				Aws: &secretv1beta1.KeeperAWSConfig{
+				Aws: &secretv1.KeeperAWSConfig{
 					Region: "us-east-1",
-					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+					AssumeRole: &secretv1.KeeperAWSAssumeRole{
 						AssumeRoleArn: "arn",
 						ExternalID:    "id",
 					},
@@ -142,16 +142,16 @@ func TestValidateKeeper(t *testing.T) {
 	})
 
 	t.Run("keeper name `system` is reserved", func(t *testing.T) {
-		keeper := &secretv1beta1.Keeper{
+		keeper := &secretv1.Keeper{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "system",
 				Namespace: "ns1",
 			},
-			Spec: secretv1beta1.KeeperSpec{
+			Spec: secretv1.KeeperSpec{
 				Description: "description",
-				Aws: &secretv1beta1.KeeperAWSConfig{
+				Aws: &secretv1.KeeperAWSConfig{
 					Region: "us-east-1",
-					AssumeRole: &secretv1beta1.KeeperAWSAssumeRole{
+					AssumeRole: &secretv1.KeeperAWSAssumeRole{
 						AssumeRoleArn: "arn",
 						ExternalID:    "id",
 					},

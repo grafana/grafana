@@ -18,7 +18,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
-	secret "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secret "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 

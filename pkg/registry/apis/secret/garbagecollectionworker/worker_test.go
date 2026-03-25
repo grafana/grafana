@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -105,12 +105,12 @@ func TestBasic(t *testing.T) {
 
 		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
 
-		sv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1beta1.SecureValue{
+		sv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: keeper.Namespace,
 				Name:      "sv1",
 			},
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: "desc1",
 				Ref:         ptr.To("ref1"),
 				Decrypters:  []string{"decrypter1"},
@@ -136,14 +136,14 @@ func TestGCDoesNotDeleteInFlightVersion(t *testing.T) {
 
 	// Create from metadata storage directly to insert v2 as *inactive*
 	// Here we do not call SetVersionToActive explicitly to simulate the in-flight window
-	sv2, err := sut.SecureValueMetadataStorage.Create(t.Context(), sv1.Status.Keeper, &secretv1beta1.SecureValue{
+	sv2, err := sut.SecureValueMetadataStorage.Create(t.Context(), sv1.Status.Keeper, &secretv1.SecureValue{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      sv1.Name,
 			Namespace: sv1.Namespace,
 		},
-		Spec: secretv1beta1.SecureValueSpec{
+		Spec: secretv1.SecureValueSpec{
 			Description: "v2",
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("new-value")),
+			Value:       ptr.To(secretv1.NewExposedSecureValue("new-value")),
 			Decrypters:  []string{"decrypter1"},
 		},
 	}, "actor-uid")
@@ -182,7 +182,7 @@ func TestProperty(t *testing.T) {
 
 		t.Repeat(map[string]func(*rapid.T){
 			"create": func(t *rapid.T) {
-				var sv *secretv1beta1.SecureValue
+				var sv *secretv1.SecureValue
 				if rapid.Bool().Draw(t, "withRef") {
 					sv = testutils.AnySecureValueWithRefGen.Draw(t, "sv")
 				} else {

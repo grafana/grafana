@@ -4,7 +4,7 @@ import (
 	"cmp"
 	"fmt"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/util"
 	"k8s.io/apiserver/pkg/admission"
@@ -18,7 +18,7 @@ func ProvideSecureValueMutator() contracts.SecureValueMutator {
 	return &secureValueMutator{}
 }
 
-func (*secureValueMutator) Mutate(sv *secretv1beta1.SecureValue, operation admission.Operation) error {
+func (*secureValueMutator) Mutate(sv *secretv1.SecureValue, operation admission.Operation) error {
 	if sv == nil {
 		return fmt.Errorf("expected SecureValue to be non-nil")
 	}

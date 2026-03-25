@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -26,7 +26,7 @@ func Test_SQLKeeperSetup(t *testing.T) {
 	plaintext1 := "very secret string in namespace 1"
 	plaintext2 := "very secret string in namespace 2"
 
-	keeperCfg := secretv1beta1.NewNamedKeeperConfig("k1", &secretv1beta1.SystemKeeperConfig{})
+	keeperCfg := secretv1.NewNamedKeeperConfig("k1", &secretv1.SystemKeeperConfig{})
 
 	t.Run("storing an encrypted value returns no error", func(t *testing.T) {
 		sut := testutils.Setup(t)

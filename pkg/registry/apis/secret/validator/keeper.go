@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -24,7 +24,7 @@ func ProvideKeeperValidator(features featuremgmt.FeatureToggles) contracts.Keepe
 	return &keeperValidator{features: features}
 }
 
-func (v *keeperValidator) Validate(keeper *secretv1beta1.Keeper, oldKeeper *secretv1beta1.Keeper, operation admission.Operation) field.ErrorList {
+func (v *keeperValidator) Validate(keeper *secretv1.Keeper, oldKeeper *secretv1.Keeper, operation admission.Operation) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
 	// General validations.
@@ -75,7 +75,7 @@ func (v *keeperValidator) Validate(keeper *secretv1beta1.Keeper, oldKeeper *secr
 	return errs
 }
 
-func validateAws(cfg *secretv1beta1.KeeperAWSConfig) field.ErrorList {
+func validateAws(cfg *secretv1.KeeperAWSConfig) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
 	if cfg.Region == "" {
@@ -98,7 +98,7 @@ func validateAws(cfg *secretv1beta1.KeeperAWSConfig) field.ErrorList {
 	return errs
 }
 
-func validateKeepers(keeper *secretv1beta1.Keeper) *field.Error {
+func validateKeepers(keeper *secretv1.Keeper) *field.Error {
 	availableKeepers := map[string]bool{
 		"aws": keeper.Spec.Aws != nil,
 	}

@@ -3,7 +3,7 @@ package testutils
 import (
 	"fmt"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"pgregory.net/rapid"
@@ -16,36 +16,36 @@ var (
 	NamespaceGen       = rapid.SampledFrom([]string{"ns1", "ns2", "ns3", "ns4", "ns5"})
 	SecretsToRefGen    = rapid.SampledFrom([]string{"ref1", "ref2", "ref3", "ref4", "ref5"})
 	// Generator for secure values that specify a secret value
-	AnySecureValueGen = rapid.Custom(func(t *rapid.T) *secretv1beta1.SecureValue {
-		return &secretv1beta1.SecureValue{
+	AnySecureValueGen = rapid.Custom(func(t *rapid.T) *secretv1.SecureValue {
+		return &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      SecureValueNameGen.Draw(t, "name"),
 				Namespace: NamespaceGen.Draw(t, "ns"),
 			},
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: rapid.SampledFrom([]string{"d1", "d2", "d3", "d4", "d5"}).Draw(t, "description"),
-				Value:       ptr.To(secretv1beta1.NewExposedSecureValue(rapid.SampledFrom([]string{"v1", "v2", "v3", "v4", "v5"}).Draw(t, "value"))),
+				Value:       ptr.To(secretv1.NewExposedSecureValue(rapid.SampledFrom([]string{"v1", "v2", "v3", "v4", "v5"}).Draw(t, "value"))),
 				Decrypters:  rapid.SliceOfDistinct(DecryptersGen, func(v string) string { return v }).Draw(t, "decrypters"),
 			},
-			Status: secretv1beta1.SecureValueStatus{},
+			Status: secretv1.SecureValueStatus{},
 		}
 	})
 	// Generator for secure values that reference values from 3rd party stores
-	AnySecureValueWithRefGen = rapid.Custom(func(t *rapid.T) *secretv1beta1.SecureValue {
-		return &secretv1beta1.SecureValue{
+	AnySecureValueWithRefGen = rapid.Custom(func(t *rapid.T) *secretv1.SecureValue {
+		return &secretv1.SecureValue{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      SecureValueNameGen.Draw(t, "name"),
 				Namespace: NamespaceGen.Draw(t, "ns"),
 			},
-			Spec: secretv1beta1.SecureValueSpec{
+			Spec: secretv1.SecureValueSpec{
 				Description: rapid.SampledFrom([]string{"d1", "d2", "d3", "d4", "d5"}).Draw(t, "description"),
 				Ref:         ptr.To(SecretsToRefGen.Draw(t, "ref")),
 				Decrypters:  rapid.SliceOfDistinct(DecryptersGen, func(v string) string { return v }).Draw(t, "decrypters"),
 			},
-			Status: secretv1beta1.SecureValueStatus{},
+			Status: secretv1.SecureValueStatus{},
 		}
 	})
-	UpdateSecureValueGen = rapid.Custom(func(t *rapid.T) *secretv1beta1.SecureValue {
+	UpdateSecureValueGen = rapid.Custom(func(t *rapid.T) *secretv1.SecureValue {
 		sv := AnySecureValueGen.Draw(t, "sv")
 		// Maybe update the secret value, maybe not
 		if !rapid.Bool().Draw(t, "should_update_value") {
@@ -60,20 +60,20 @@ var (
 			Decrypter: DecryptersGen.Draw(t, "decrypter"),
 		}
 	})
-	AnyKeeperGen = rapid.Custom(func(t *rapid.T) *secretv1beta1.Keeper {
-		spec := secretv1beta1.KeeperSpec{
+	AnyKeeperGen = rapid.Custom(func(t *rapid.T) *secretv1.Keeper {
+		spec := secretv1.KeeperSpec{
 			Description: rapid.String().Draw(t, "description"),
 		}
 
 		keeperType := rapid.SampledFrom([]string{"isAwsKeeper"}).Draw(t, "keeperType")
 		switch keeperType {
 		case "isAwsKeeper":
-			spec.Aws = &secretv1beta1.KeeperAWSConfig{}
+			spec.Aws = &secretv1.KeeperAWSConfig{}
 		default:
 			panic(fmt.Sprintf("unhandled keeper type '%+v', did you forget a switch case?", keeperType))
 		}
 
-		return &secretv1beta1.Keeper{
+		return &secretv1.Keeper{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      KeeperNameGen.Draw(t, "name"),
 				Namespace: NamespaceGen.Draw(t, "ns"),

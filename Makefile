@@ -199,7 +199,7 @@ gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run go
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
 	  git checkout HEAD -- apps/alerting/rules/pkg/apis/alerting/v0alpha1/zz_openapi_gen.go; \
 		git checkout HEAD -- apps/iam/pkg/apis/iam/v0alpha1/zz_openapi_gen.go; \
-    git checkout HEAD -- apps/secret/pkg/apis/secret/v1beta1/zz_openapi_gen.go; \
+    git checkout HEAD -- apps/secret/pkg/apis/secret/v1/zz_openapi_gen.go; \
 		echo "Verifying generated code is up to date..."; \
 		if ! git diff --quiet; then \
 			echo "Error: Generated code is not up to date. Please run 'make gen-apps' (optionally with app=<name>), 'make gen-cue', and 'make gen-jsonnet' to regenerate."; \

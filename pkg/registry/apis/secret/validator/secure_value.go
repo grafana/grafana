@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
 
@@ -21,7 +21,7 @@ func ProvideSecureValueValidator() contracts.SecureValueValidator {
 	return &secureValueValidator{}
 }
 
-func (v *secureValueValidator) Validate(sv, oldSv *secretv1beta1.SecureValue, operation admission.Operation) field.ErrorList {
+func (v *secureValueValidator) Validate(sv, oldSv *secretv1.SecureValue, operation admission.Operation) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
 	// Operation-specific field validation.
@@ -70,7 +70,7 @@ func (v *secureValueValidator) Validate(sv, oldSv *secretv1beta1.SecureValue, op
 }
 
 // validateSecureValueCreate does basic spec validation of a securevalue for the Create operation.
-func validateSecureValueCreate(sv *secretv1beta1.SecureValue) field.ErrorList {
+func validateSecureValueCreate(sv *secretv1.SecureValue) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
 	if sv.Spec.Description == "" {
@@ -89,7 +89,7 @@ func validateSecureValueCreate(sv *secretv1beta1.SecureValue) field.ErrorList {
 }
 
 // validateSecureValueUpdate does basic spec validation of a securevalue for the Update operation.
-func validateSecureValueUpdate(sv, oldSv *secretv1beta1.SecureValue) field.ErrorList {
+func validateSecureValueUpdate(sv, oldSv *secretv1.SecureValue) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
 	// For updates, an `old` object is required.

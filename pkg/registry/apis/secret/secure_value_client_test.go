@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -40,14 +40,14 @@ func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, nsClient)
 
-	sv := &secretv1beta1.SecureValue{
+	sv := &secretv1.SecureValue{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-sv",
 			Namespace: ns,
 		},
-		Spec: secretv1beta1.SecureValueSpec{
+		Spec: secretv1.SecureValueSpec{
 			Description: "test-description",
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("test-value")),
+			Value:       ptr.To(secretv1.NewExposedSecureValue("test-value")),
 		},
 	}
 
@@ -75,14 +75,14 @@ func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
 	require.EqualValues(t, createdSv, readSv)
 
 	// Update
-	updatedSv := &secretv1beta1.SecureValue{
+	updatedSv := &secretv1.SecureValue{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      createdSv.Name,
 			Namespace: createdSv.Namespace,
 		},
-		Spec: secretv1beta1.SecureValueSpec{
+		Spec: secretv1.SecureValueSpec{
 			Description: "test-description-updated",
-			Value:       ptr.To(secretv1beta1.NewExposedSecureValue("test-value-updated")),
+			Value:       ptr.To(secretv1.NewExposedSecureValue("test-value-updated")),
 		},
 	}
 
@@ -149,7 +149,7 @@ func Test_SecureValueClient_CRUD_NoPermissions(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, nsClient)
 
-			sv := &secretv1beta1.SecureValue{
+			sv := &secretv1.SecureValue{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-sv",
 					Namespace: ns,

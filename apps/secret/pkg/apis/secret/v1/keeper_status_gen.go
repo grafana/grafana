@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v1beta1
+package v1
 
 // +k8s:openapi-gen=true
 type KeeperstatusOperatorState struct {
@@ -22,7 +22,7 @@ func NewKeeperstatusOperatorState() *KeeperstatusOperatorState {
 
 // OpenAPIModelName returns the OpenAPI model name for KeeperstatusOperatorState.
 func (KeeperstatusOperatorState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperstatusOperatorState"
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1.KeeperstatusOperatorState"
 }
 
 // +k8s:openapi-gen=true
@@ -41,7 +41,7 @@ func NewKeeperStatus() *KeeperStatus {
 
 // OpenAPIModelName returns the OpenAPI model name for KeeperStatus.
 func (KeeperStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperStatus"
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1.KeeperStatus"
 }
 
 // +k8s:openapi-gen=true
@@ -55,5 +55,5 @@ const (
 
 // OpenAPIModelName returns the OpenAPI model name for KeeperStatusOperatorStateState.
 func (KeeperStatusOperatorStateState) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1beta1.KeeperStatusOperatorStateState"
+	return "com.github.grafana.grafana.apps.secret.pkg.apis.secret.v1.KeeperStatusOperatorStateState"
 }

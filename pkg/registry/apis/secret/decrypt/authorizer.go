@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
@@ -113,8 +113,8 @@ func (a *decryptAuthorizer) Authorize(
 // Changes: 1) we don't support `*` for verbs; 2) we support specific names in the permission.
 func hasPermissionInToken(tokenPermissions []string, name string) bool {
 	var (
-		group    = secretv1beta1.APIGroup
-		resource = secretv1beta1.SecureValuesResourceInfo.GetName()
+		group    = secretv1.APIGroup
+		resource = secretv1.SecureValuesResourceInfo.GetName()
 		verb     = "decrypt"
 	)
 

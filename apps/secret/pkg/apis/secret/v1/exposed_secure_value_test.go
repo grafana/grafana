@@ -2,7 +2,7 @@
 // THIS FILE IS MANUALLY GENERATED TO OVERCOME LIMITATIONS WITH CUE. FEEL FREE TO EDIT IT.
 //
 
-package v1beta1
+package v1
 
 import (
 	"bytes"

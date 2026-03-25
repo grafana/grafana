@@ -15,7 +15,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	secretv1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service/metrics"
@@ -57,7 +57,7 @@ func ProvideSecureValueService(
 	}
 }
 
-func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.SecureValue, actorUID string) (createdSv *secretv1beta1.SecureValue, createErr error) {
+func (s *SecureValueService) Create(ctx context.Context, sv *secretv1.SecureValue, actorUID string) (createdSv *secretv1.SecureValue, createErr error) {
 	start := time.Now()
 
 	ctx, span := s.tracer.Start(ctx, "SecureValueService.Create", trace.WithAttributes(
@@ -99,7 +99,7 @@ func (s *SecureValueService) Create(ctx context.Context, sv *secretv1beta1.Secur
 	return s.createNewVersion(ctx, keeperName, keeperCfg, sv, actorUID)
 }
 
-func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv1beta1.SecureValue, actorUID string) (_ *secretv1beta1.SecureValue, sync bool, updateErr error) {
+func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv1.SecureValue, actorUID string) (_ *secretv1.SecureValue, sync bool, updateErr error) {
 	start := time.Now()
 	name, namespace := newSecureValue.GetName(), newSecureValue.GetNamespace()
 
@@ -162,7 +162,7 @@ func (s *SecureValueService) Update(ctx context.Context, newSecureValue *secretv
 	return createdSv, updateIsSync, err
 }
 
-func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName string, keeperCfg secretv1beta1.KeeperConfig, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error) {
+func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName string, keeperCfg secretv1.KeeperConfig, sv *secretv1.SecureValue, actorUID string) (*secretv1.SecureValue, error) {
 	if keeperName == "" {
 		return nil, fmt.Errorf("keeper name is required, got empty string")
 	}
@@ -174,7 +174,7 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName st
 		return nil, contracts.NewErrValidateSecureValue(errorList)
 	}
 
-	if sv.Spec.Ref != nil && keeperCfg.Type() == secretv1beta1.SystemKeeperType {
+	if sv.Spec.Ref != nil && keeperCfg.Type() == secretv1.SystemKeeperType {
 		return nil, contracts.ErrReferenceWithSystemKeeper
 	}
 
@@ -183,7 +183,7 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName st
 		return nil, fmt.Errorf("creating secure value: %w", err)
 	}
 
-	createdSv.Status = secretv1beta1.SecureValueStatus{
+	createdSv.Status = secretv1.SecureValueStatus{
 		Version: createdSv.Status.Version,
 		Keeper:  keeperName,
 	}
@@ -228,7 +228,7 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName st
 	return createdSv, nil
 }
 
-func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace, name string) (_ *secretv1beta1.SecureValue, readErr error) {
+func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace, name string) (_ *secretv1.SecureValue, readErr error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
 	}
@@ -267,7 +267,7 @@ func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace
 	return s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: false})
 }
 
-func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace) (_ *secretv1beta1.SecureValueList, listErr error) {
+func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace) (_ *secretv1.SecureValueList, listErr error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
 	}
@@ -304,8 +304,8 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 
 	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	hasPermissionFor, _, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
-		Group:     secretv1beta1.APIGroup,
-		Resource:  secretv1beta1.SecureValuesResourceInfo.GetName(),
+		Group:     secretv1.APIGroup,
+		Resource:  secretv1.SecureValuesResourceInfo.GetName(),
 		Namespace: namespace.String(),
 		Verb:      utils.VerbGet, // Why not VerbList?
 	})
@@ -318,7 +318,7 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 		return nil, fmt.Errorf("fetching secure values from storage: %+w", err)
 	}
 
-	out := make([]secretv1beta1.SecureValue, 0)
+	out := make([]secretv1.SecureValue, 0)
 
 	for _, metadata := range secureValuesMetadata {
 		// Check whether the user has permission to access this specific SecureValue in the namespace.
@@ -329,12 +329,12 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 		out = append(out, metadata)
 	}
 
-	return &secretv1beta1.SecureValueList{
+	return &secretv1.SecureValueList{
 		Items: out,
 	}, nil
 }
 
-func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespace, name string) (_ *secretv1beta1.SecureValue, deleteErr error) {
+func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespace, name string) (_ *secretv1.SecureValue, deleteErr error) {
 	if namespace == "" {
 		return nil, fmt.Errorf("namespace cannot be empty")
 	}
