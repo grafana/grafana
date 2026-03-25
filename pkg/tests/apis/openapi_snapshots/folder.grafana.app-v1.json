@@ -1016,6 +1016,11 @@
             "group": "folder.grafana.app",
             "kind": "DescendantCounts",
             "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "DescendantCounts",
+            "version": "v1beta1"
           }
         ]
       },
@@ -1057,6 +1062,11 @@
             "group": "folder.grafana.app",
             "kind": "Folder",
             "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "Folder",
+            "version": "v1beta1"
           }
         ]
       },
@@ -1100,6 +1110,11 @@
             "group": "folder.grafana.app",
             "kind": "FolderAccessInfo",
             "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "FolderAccessInfo",
+            "version": "v1beta1"
           }
         ]
       },
@@ -1179,6 +1194,11 @@
             "group": "folder.grafana.app",
             "kind": "FolderInfoList",
             "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "FolderInfoList",
+            "version": "v1beta1"
           }
         ]
       },
@@ -1222,6 +1242,11 @@
             "group": "folder.grafana.app",
             "kind": "FolderList",
             "version": "v1"
+          },
+          {
+            "group": "folder.grafana.app",
+            "kind": "FolderList",
+            "version": "v1beta1"
           }
         ]
       },
