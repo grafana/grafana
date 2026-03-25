@@ -338,11 +338,20 @@ func (ss *FolderUnifiedStoreImpl) getChildrenFallback(ctx context.Context, q fol
 		filtered = append(filtered, f)
 	}
 
-	offset := int(q.Limit * (q.Page - 1))
+	// Clamp pagination inputs to prevent negative indices from malformed requests
+	limit := q.Limit
+	if limit < 1 {
+		limit = folderSearchLimit
+	}
+	pg := q.Page
+	if pg < 1 {
+		pg = 1
+	}
+	offset := int(limit * (pg - 1))
 	if offset > len(filtered) {
 		offset = len(filtered)
 	}
-	end := offset + int(q.Limit)
+	end := offset + int(limit)
 	if end > len(filtered) {
 		end = len(filtered)
 	}
