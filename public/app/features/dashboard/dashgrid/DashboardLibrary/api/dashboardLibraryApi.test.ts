@@ -147,10 +147,7 @@ describe('dashboardLibraryApi', () => {
     });
 
     it('should fetch community dashboards with correct query parameters', async () => {
-      const mockDashboards = [
-        createMockGnetDashboardSafe({ id: 1 }),
-        createMockGnetDashboardSafe({ id: 2 }),
-      ];
+      const mockDashboards = [createMockGnetDashboardSafe({ id: 1 }), createMockGnetDashboardSafe({ id: 2 })];
       const mockResponse = {
         page: 1,
         pages: 5,
@@ -205,10 +202,7 @@ describe('dashboardLibraryApi', () => {
     });
 
     it('should log info with fetch details on successful response', async () => {
-      const mockDashboards = [
-        createMockGnetDashboardSafe({ id: 1 }),
-        createMockGnetDashboardSafe({ id: 2 }),
-      ];
+      const mockDashboards = [createMockGnetDashboardSafe({ id: 1 }), createMockGnetDashboardSafe({ id: 2 })];
       mockGet.mockResolvedValue({ page: 2, pages: 5, items: mockDashboards });
 
       await fetchCommunityDashboards({ ...defaultFetchParams, page: 2, dataSourceSlugIn: 'prometheus' });
