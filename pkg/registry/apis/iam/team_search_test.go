@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
-	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -53,7 +52,7 @@ func TestTeamSearchFallback(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideStaticServiceForTests(cfg)
-			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil, nil, nil)
+			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockLegacyClient, mockClient, nil, nil)
 
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/teams/search", nil)
@@ -190,7 +189,7 @@ func TestTeamSearchHandler(t *testing.T) {
 				},
 			}
 			dual := dualwrite.ProvideStaticServiceForTests(cfg)
-			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil, nil, nil)
+			searchHandler := NewTeamSearchHandler(tracing.NewNoopTracerService(), dual, mockClient, mockClient, nil, nil)
 
 			rr := httptest.NewRecorder()
 			endpoint := fmt.Sprintf("/teams/search?limit=%d", limit)
@@ -441,24 +440,24 @@ func TestTeamAccessControl(t *testing.T) {
 
 func TestEnrichWithMemberCounts(t *testing.T) {
 	t.Run("all succeed - sets correct member counts", func(t *testing.T) {
-		lister := &mockTeamBindingLister{
-			listFunc: func(_ context.Context, _ string, opts sdkresource.ListOptions) (*iamv0alpha1.TeamBindingList, error) {
-				teamUID := opts.FieldSelectors[0][len("spec.teamRef.name="):]
-				switch teamUID {
+		mockSearchClient := &mockTeamBindingSearchClient{
+			searchFunc: func(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+				teamName := req.Options.Fields[0].Values[0]
+				switch teamName {
 				case "team-1":
-					return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 3)}, nil
+					return &resourcepb.ResourceSearchResponse{TotalHits: 3}, nil
 				case "team-2":
-					return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 0)}, nil
+					return &resourcepb.ResourceSearchResponse{TotalHits: 0}, nil
 				default:
-					return &iamv0alpha1.TeamBindingList{}, nil
+					return &resourcepb.ResourceSearchResponse{}, nil
 				}
 			},
 		}
 
 		handler := &TeamSearchHandler{
-			log:               log.New("test"),
-			tracer:            tracing.NewNoopTracerService(),
-			teamBindingClient: lister,
+			log:                     log.New("test"),
+			tracer:                  tracing.NewNoopTracerService(),
+			teamBindingSearchClient: mockSearchClient,
 		}
 
 		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
@@ -473,20 +472,20 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 	})
 
 	t.Run("one fails - other goroutines still complete", func(t *testing.T) {
-		lister := &mockTeamBindingLister{
-			listFunc: func(_ context.Context, _ string, opts sdkresource.ListOptions) (*iamv0alpha1.TeamBindingList, error) {
-				teamUID := opts.FieldSelectors[0][len("spec.teamRef.name="):]
-				if teamUID == "team-bad" {
+		mockSearchClient := &mockTeamBindingSearchClient{
+			searchFunc: func(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+				teamName := req.Options.Fields[0].Values[0]
+				if teamName == "team-bad" {
 					return nil, fmt.Errorf("teambinding list failed for team-bad")
 				}
-				return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 2)}, nil
+				return &resourcepb.ResourceSearchResponse{TotalHits: 2}, nil
 			},
 		}
 
 		handler := &TeamSearchHandler{
-			log:               log.New("test"),
-			tracer:            tracing.NewNoopTracerService(),
-			teamBindingClient: lister,
+			log:                     log.New("test"),
+			tracer:                  tracing.NewNoopTracerService(),
+			teamBindingSearchClient: mockSearchClient,
 		}
 
 		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
@@ -506,12 +505,20 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 	})
 }
 
-type mockTeamBindingLister struct {
-	listFunc func(ctx context.Context, namespace string, opts sdkresource.ListOptions) (*iamv0alpha1.TeamBindingList, error)
+type mockTeamBindingSearchClient struct {
+	searchFunc func(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error)
 }
 
-func (m *mockTeamBindingLister) List(ctx context.Context, namespace string, opts sdkresource.ListOptions) (*iamv0alpha1.TeamBindingList, error) {
-	return m.listFunc(ctx, namespace, opts)
+func (m *mockTeamBindingSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	return m.searchFunc(ctx, req, opts...)
+}
+
+func (m *mockTeamBindingSearchClient) GetStats(context.Context, *resourcepb.ResourceStatsRequest, ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	return nil, nil
+}
+
+func (m *mockTeamBindingSearchClient) RebuildIndexes(context.Context, *resourcepb.RebuildIndexesRequest, ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	return nil, nil
 }
 
 type mockTeamAccessClient struct {

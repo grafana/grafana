@@ -9,14 +9,12 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/k8s"
-	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
+	"k8s.io/apimachinery/pkg/selection"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -25,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
@@ -56,33 +53,24 @@ var teamAccessControlChecks = []teamAccessControlCheck{
 	{action: "teams.roles:read", group: iamv0alpha1.GROUP, resource: "rolebindings", verb: utils.VerbList},
 }
 
-type teamBindingLister interface {
-	List(ctx context.Context, namespace string, opts sdkresource.ListOptions) (*iamv0alpha1.TeamBindingList, error)
-}
-
 type TeamSearchHandler struct {
-	log                log.Logger
-	client             resourcepb.ResourceIndexClient
-	tracer             trace.Tracer
-	features           featuremgmt.FeatureToggles
-	accessClient       authlib.AccessClient
-	restConfigProvider apiserver.RestConfigProvider
-
-	teamBindingClient     teamBindingLister
-	teamBindingClientOnce sync.Once
-	teamBindingClientErr  error
+	log                    log.Logger
+	client                 resourcepb.ResourceIndexClient
+	tracer                 trace.Tracer
+	features               featuremgmt.FeatureToggles
+	accessClient           authlib.AccessClient
+	teamBindingSearchClient resourcepb.ResourceIndexClient
 }
 
-func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles, accessClient authlib.AccessClient, restConfigProvider apiserver.RestConfigProvider) *TeamSearchHandler {
+func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles, accessClient authlib.AccessClient) *TeamSearchHandler {
 	searchClient := resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0alpha1.TeamResourceInfo.GroupResource(), resourceClient, legacyTeamSearcher, features)
 
 	return &TeamSearchHandler{
-		client:             searchClient,
-		log:                log.New("grafana-apiserver.teams.search"),
-		tracer:             tracer,
-		features:           features,
-		accessClient:       accessClient,
-		restConfigProvider: restConfigProvider,
+		client:       searchClient,
+		log:          log.New("grafana-apiserver.teams.search"),
+		tracer:       tracer,
+		features:     features,
+		accessClient: accessClient,
 	}
 }
 
@@ -375,44 +363,38 @@ func (s *TeamSearchHandler) stampAccessControl(ctx context.Context, requester id
 	return nil
 }
 
-func (s *TeamSearchHandler) getTeamBindingClient(ctx context.Context) (teamBindingLister, error) {
-	s.teamBindingClientOnce.Do(func() {
-		if s.teamBindingClient != nil {
-			return
-		}
-		restConfig, err := s.restConfigProvider.GetRestConfig(ctx)
-		if err != nil {
-			s.teamBindingClientErr = fmt.Errorf("failed to get rest config: %w", err)
-			return
-		}
-		restConfig.APIPath = "apis"
-		clientRegistry := k8s.NewClientRegistry(*restConfig, k8s.DefaultClientConfig())
-		s.teamBindingClient, s.teamBindingClientErr = iamv0alpha1.NewTeamBindingClientFromGenerator(clientRegistry)
-	})
-	return s.teamBindingClient, s.teamBindingClientErr
-}
-
 func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
-	if (s.restConfigProvider == nil && s.teamBindingClient == nil) || len(hits) == 0 {
+	if s.teamBindingSearchClient == nil || len(hits) == 0 {
 		return nil
-	}
-
-	tbClient, err := s.getTeamBindingClient(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get team binding client: %w", err)
 	}
 
 	var g errgroup.Group
 
 	for i := range hits {
 		g.Go(func() error {
-			bindings, err := tbClient.List(ctx, namespace, sdkresource.ListOptions{
-				FieldSelectors: []string{fmt.Sprintf("spec.teamRef.name=%s", hits[i].Name)},
-			})
+			searchReq := &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key: &resourcepb.ResourceKey{
+						Group:     iamv0alpha1.TeamBindingResourceInfo.GroupResource().Group,
+						Resource:  iamv0alpha1.TeamBindingResourceInfo.GroupResource().Resource,
+						Namespace: namespace,
+					},
+					Fields: []*resourcepb.Requirement{
+						{
+							Key:      resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
+							Operator: string(selection.Equals),
+							Values:   []string{hits[i].Name},
+						},
+					},
+				},
+				Limit: 1,
+			}
+
+			result, err := s.teamBindingSearchClient.Search(ctx, searchReq)
 			if err != nil {
 				return fmt.Errorf("failed to list team bindings for team %s: %w", hits[i].Name, err)
 			}
-			hits[i].MemberCount = int64(len(bindings.Items))
+			hits[i].MemberCount = result.TotalHits
 			return nil
 		})
 	}

@@ -24,9 +24,10 @@ type ListTeamBindingsQuery struct {
 }
 
 type ListTeamBindingsResult struct {
-	Bindings []TeamMember
-	Continue int64
-	RV       int64
+	Bindings   []TeamMember
+	Continue   int64
+	RV         int64
+	TotalCount int64
 }
 
 type TeamMember struct {
@@ -51,6 +52,7 @@ func (m TeamMember) MemberID() string {
 }
 
 var sqlQueryTeamBindingsTemplate = mustTemplate("team_bindings_query.sql")
+var sqlCountTeamBindingsTemplate = mustTemplate("team_bindings_count.sql")
 
 type listTeamBindingsQuery struct {
 	sqltemplate.SQLTemplate
@@ -138,7 +140,20 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 		}
 	}
 
-	return res, err
+	// Run count query with the same filters (without pagination).
+	countQuery := query
+	countQuery.Pagination = common.Pagination{}
+	countReq := newListTeamBindings(sql, &countQuery)
+	countQ, err := sqltemplate.Execute(sqlCountTeamBindingsTemplate, countReq)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlCountTeamBindingsTemplate.Name(), err)
+	}
+
+	if err := sql.DB.GetSqlxSession().Get(ctx, &res.TotalCount, countQ, countReq.GetArgs()...); err != nil {
+		return nil, fmt.Errorf("count team bindings: %w", err)
+	}
+
+	return res, nil
 }
 
 type CreateTeamMemberCommand struct {
