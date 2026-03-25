@@ -1,4 +1,4 @@
-package jobs
+package foldermetadata
 
 import (
 	"testing"
@@ -7,20 +7,17 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, withProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 
 	const repo = "fix-folder-metadata-test-repo"
 	testRepo := common.TestRepo{
 		Name:   repo,
 		Target: "folder",
 		Copies: map[string]string{
-			"../testdata/all-panels.json": "dashboard1.json",
+			"../../testdata/all-panels.json": "dashboard1.json",
 		},
 		ExpectedDashboards: 1,
 		ExpectedFolders:    1,
@@ -35,7 +32,6 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
 		state := common.MustNestedString(job.Object, "status", "state")
 		if state != "success" {
-			// Print the error message for debugging
 			if msg, ok := job.Object["status"].(map[string]interface{})["message"].(string); ok {
 				t.Logf("Job error message: %s", msg)
 			}
@@ -47,12 +43,10 @@ func TestIntegrationProvisioning_FixFolderMetadataJob(t *testing.T) {
 	})
 
 	t.Run("job with explicit empty ref completes successfully", func(t *testing.T) {
-		// Note: Local repos don't support custom refs/branches
-		// This test verifies that explicit empty ref works
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionFixFolderMetadata,
 			FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
-				Ref: "", // Explicitly empty - let repository determine default
+				Ref: "",
 			},
 		}
 

@@ -3521,6 +3521,7 @@
         "name": "newGauge",
         "resourceVersion": "1772547614592",
         "creationTimestamp": "2025-10-20T16:33:19Z",
+        "deletionTimestamp": "2026-03-20T20:11:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-03-03 14:20:14.59296 +0000 UTC"
         }

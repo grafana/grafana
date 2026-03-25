@@ -1,4 +1,4 @@
-package foldermetadataincremental
+package git
 
 import (
 	"context"
