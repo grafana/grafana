@@ -2,6 +2,7 @@ package folders
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -10,13 +11,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	teamservice "github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
@@ -57,7 +61,7 @@ func validateOwnerReferencesOnManagedFolder(obj *folders.Folder, old *folders.Fo
 	return nil
 }
 
-func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int) error {
+func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int, teamSvc teamservice.Service) error {
 	id := f.Name
 
 	if slices.Contains([]string{
@@ -84,6 +88,10 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return dashboards.ErrFolderTitleEmpty
 	}
 
+	if err := validateTeamOwnerReferences(ctx, f, teamSvc); err != nil {
+		return err
+	}
+
 	parentName := meta.GetFolder()
 	if parentName == "" {
 		return nil // OK, we do not need to validate the tree
@@ -103,6 +111,60 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	// We need to add +1 as we also have the root folder as part of the parents.
 	if len(parents.Items) > maxDepth+1 {
 		return fmt.Errorf("folder max depth exceeded, max depth is %d", maxDepth)
+	}
+
+	return nil
+}
+
+// validateTeamOwnerReferences checks if the owner reference we are trying to save, references some existing resource
+// (right now only teams are allowed).
+func validateTeamOwnerReferences(ctx context.Context, f *folders.Folder, teamSvc teamservice.Service) error {
+	if len(f.OwnerReferences) == 0 {
+		return nil
+	}
+
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return apierrors.NewUnauthorized("no identity found")
+	}
+
+	// We check all the references to be nice and give all the info, but maybe it would be better to just fail quickly
+	// and not spend resources on it.
+	var errs field.ErrorList
+	for i, ref := range f.OwnerReferences {
+		refPath := field.NewPath("metadata", "ownerReferences").Index(i)
+
+		// For now, we only allow teams to be owners of folders, but that may change in the future
+		if ref.Kind != "Team" {
+			errs = append(errs, field.NotSupported(refPath.Child("kind"), ref.Kind, []string{"Team"}))
+			continue
+		}
+
+		if ref.Name == "" {
+			errs = append(errs, field.Required(refPath.Child("name"), "team owner reference name is required"))
+			continue
+		}
+		teamDTO, err := teamSvc.GetTeamByID(ctx, &teamservice.GetTeamByIDQuery{
+			OrgID: requester.GetOrgID(),
+			// This mapping looks weird, but the UID is eventually mapped to a resource name. We also have UID in the
+			// ownerRef which on FE we fill with the same value, so ref.UID but this should be ref.Name nevertheless.
+			UID: ref.Name,
+		})
+		if err != nil {
+			if errors.Is(err, teamservice.ErrTeamNotFound) {
+				errs = append(errs, field.NotFound(refPath.Child("name"), ref.Name))
+				continue
+			}
+			return fmt.Errorf("failed to validate team owner reference %q: %w", ref.Name, err)
+		}
+		if teamDTO == nil {
+			// This should not happen if we didn't have an error but just in case
+			return fmt.Errorf("team service returned empty result for owner reference name %q", ref.Name)
+		}
+	}
+
+	if len(errs) > 0 {
+		return apierrors.NewInvalid(folders.FolderResourceInfo.GroupVersionKind().GroupKind(), f.Name, errs)
 	}
 
 	return nil

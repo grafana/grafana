@@ -17,10 +17,12 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	k8srest "k8s.io/client-go/rest"
 
@@ -2175,6 +2177,8 @@ func TestIntegrationFolderSearchWithOwner(t *testing.T) {
 		User: helper.Org1.Admin,
 		GVR:  gvr,
 	})
+	engineering := helper.CreateTeam("engineering", "engineering@example.com", helper.Org1.OrgID)
+	testingTeam := helper.CreateTeam("testing", "testing@example.com", helper.Org1.OrgID)
 
 	// Without owner
 	folder := &unstructured.Unstructured{
@@ -2201,17 +2205,36 @@ func TestIntegrationFolderSearchWithOwner(t *testing.T) {
 	folder.SetOwnerReferences([]metav1.OwnerReference{{
 		APIVersion: "iam.grafana.app/v0alpha1",
 		Kind:       "Team",
-		Name:       "engineering",
-		UID:        "123456", // required by k8s
+		Name:       engineering.Name,
+		UID:        types.UID(engineering.UID),
 	}, {
 		APIVersion: "iam.grafana.app/v0alpha1",
 		Kind:       "Team",
-		Name:       "testing",
-		UID:        "123457", // required by k8s
+		Name:       testingTeam.Name,
+		UID:        types.UID(testingTeam.UID),
 	}})
 	out, err = client.Resource.Create(context.Background(), folder, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, folder.GetName(), out.GetName())
+
+	invalidOwnerFolder := &unstructured.Unstructured{
+		Object: map[string]any{
+			"spec": map[string]any{
+				"title": "Folder with invalid owner",
+			},
+		},
+	}
+	invalidOwnerFolder.SetName("folder-invalid-owner")
+	invalidOwnerFolder.SetOwnerReferences([]metav1.OwnerReference{{
+		APIVersion: "iam.grafana.app/v0alpha1",
+		Kind:       "Team",
+		Name:       "marketing",
+		UID:        types.UID(engineering.UID),
+	}})
+	_, err = client.Resource.Create(context.Background(), invalidOwnerFolder, metav1.CreateOptions{})
+	require.Error(t, err)
+	require.True(t, apierrors.IsInvalid(err), "expected invalid status error, got: %v", err)
+	require.Contains(t, err.Error(), "metadata.ownerReferences[0].name")
 
 	// Get everything
 	results, err := client.Resource.List(context.Background(), metav1.ListOptions{})
@@ -2223,12 +2246,12 @@ func TestIntegrationFolderSearchWithOwner(t *testing.T) {
 	require.NoError(t, err)
 	owners := folderB.GetOwnerReferences()
 	require.Len(t, owners, 2, "folderB should have 2 owner references")
-	require.Equal(t, "engineering", owners[0].Name)
+	require.Equal(t, engineering.Name, owners[0].Name)
 	require.Equal(t, "Team", owners[0].Kind)
 
 	// Find results with a specific owner (with trimming suffix)
 	suffixToTrim := " "
-	sr := callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/engineering"+suffixToTrim)
+	sr := callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/"+engineering.Name+suffixToTrim)
 	require.Len(t, sr.Hits, 1)
 	require.Equal(t, "folderB", sr.Hits[0].Name)
 
@@ -2237,7 +2260,7 @@ func TestIntegrationFolderSearchWithOwner(t *testing.T) {
 	require.Len(t, sr.Hits, 0)
 
 	// Find results using OR conditions and search by second owner reference
-	sr = callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/marketing&ownerReference=iam.grafana.app/Team/testing")
+	sr = callSearch(t, helper.Org1.Admin, "ownerReference=iam.grafana.app/Team/marketing&ownerReference=iam.grafana.app/Team/"+testingTeam.Name)
 	require.Len(t, sr.Hits, 1)
 	require.Equal(t, "folderB", sr.Hits[0].Name)
 }
