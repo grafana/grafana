@@ -1,5 +1,0 @@
-{
-  "plugins": [
-    { "id": "elasticsearch", "version": "12.4.2" }
-  ]
-}

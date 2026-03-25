@@ -55,7 +55,7 @@ jobs:
           cache-binary: "true"
           version: 0.18.8
           verb: run
-          args: go run ./pkg/build/cmd artifacts -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" --bundle-catalog-plugins-file="${PWD}/pkg/build/bundled-plugins.json" --cache-builders=${CACHE_BUILDERS} > out.txt
+          args: go run ./pkg/build/cmd artifacts -a docker:grafana:linux/amd64 --grafana-dir="${PWD}" --cache-builders=${CACHE_BUILDERS} > out.txt
       - name: Cat built artifact
         run: cat out.txt
       - name: Move built artifacts
