@@ -13,6 +13,8 @@ import {
   InlineFieldRow,
   Input,
   Label,
+  Portal,
+  PortalledRelativeTimeRangePicker,
   RelativeTimeRangePicker,
   Select,
   useStyles2,
@@ -200,7 +202,7 @@ export const ConfigureCorrelationTargetForm = () => {
                         )}
                       >
                         <RelativeTimeRangePicker
-                          timeRange={timeRange?.range || { from: -86400, to: 86400 }}
+                          timeRange={timeRange?.range || { from: 86400, to: -86400 }}
                           onChange={(e) => {
                             console.log(e);
                           }}

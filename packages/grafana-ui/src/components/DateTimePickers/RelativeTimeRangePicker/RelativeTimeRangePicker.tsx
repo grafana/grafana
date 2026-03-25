@@ -14,6 +14,7 @@ import { Button } from '../../Button/Button';
 import { Field } from '../../Forms/Field';
 import { Icon } from '../../Icon/Icon';
 import { getInputStyles, Input } from '../../Input/Input';
+import { Portal } from '../../Portal/Portal';
 import { ScrollContainer } from '../../ScrollContainer/ScrollContainer';
 import { TimePickerTitle } from '../TimeRangePicker/TimePickerTitle';
 import { TimeRangeList } from '../TimeRangePicker/TimeRangeList';
@@ -308,4 +309,22 @@ function calculateErrorHeight(theme: GrafanaTheme2, errorMessage?: string): numb
   }
 
   return theme.spacing.gridSize * 4;
+}
+
+/**
+ * Wrapper around RelativeTimeRangePicker that renders the popup through a Portal.
+ * Use this when the picker is inside containers with overflow/positioning constraints
+ * (e.g., InlineField, InlineFieldRow, modals).
+ *
+ * The Portal ensures the popup is rendered at the document root level, avoiding
+ * issues with parent container clipping and positioning contexts.
+ *
+ * @internal
+ */
+export function PortalledRelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
+  return (
+    <Portal>
+      <RelativeTimeRangePicker {...props} />
+    </Portal>
+  );
 }
