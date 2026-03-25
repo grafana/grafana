@@ -233,6 +233,10 @@ func (c *jobsConnector) validateWriteAccess(cfg *provisioning.Repository, spec p
 		if spec.Push != nil {
 			targetRef = spec.Push.Branch
 		}
+	case provisioning.JobActionFixFolderMetadata:
+		if spec.FixFolderMetadata != nil {
+			targetRef = spec.FixFolderMetadata.Ref
+		}
 	case provisioning.JobActionMigrate:
 		// no ref needed
 	default:
