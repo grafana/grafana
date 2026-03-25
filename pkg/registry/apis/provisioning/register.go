@@ -768,7 +768,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
-	if b.isPreferredVersion {
+	if !b.isPreferredVersion {
 		return nil, nil // TODO, flip the logic when the types actually change
 	}
 
@@ -1025,10 +1025,6 @@ func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 			for k, v := range defs {
 				k = strings.Replace(k, ".provisioning.v0alpha1.", ".provisioning.v1beta1.", 1)
 				defs[k] = v
-
-				if strings.HasSuffix(k, ".Repository") {
-					fmt.Printf("%+v\n", v)
-				}
 			}
 			return defs
 		}
