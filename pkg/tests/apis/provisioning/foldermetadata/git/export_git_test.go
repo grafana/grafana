@@ -1,4 +1,4 @@
-package gitexport
+package git
 
 import (
 	"context"
