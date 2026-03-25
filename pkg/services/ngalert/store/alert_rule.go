@@ -1010,35 +1010,13 @@ func matchersMatchLabels(matchers labels.Matchers, lbls map[string]string) bool 
 	return true
 }
 
-// nolint:gocyclo
-func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
-	q = sess.Table("alert_rule")
-	if query.OrgID >= 0 {
-		q = q.Where("org_id = ?", query.OrgID)
-	}
-
-	if query.DashboardUID != "" {
-		q = q.Where("dashboard_uid = ?", query.DashboardUID)
-		if query.PanelID != 0 {
-			q = q.Where("panel_id = ?", query.PanelID)
-		}
-	}
-
-	if len(query.NamespaceUIDs) > 0 {
-		args, in := getINSubQueryArgs(query.NamespaceUIDs)
-		q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
-	}
-
-	if len(query.RuleUIDs) > 0 {
-		args, in := getINSubQueryArgs(query.RuleUIDs)
-		q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
-	}
-
+// This will generate the appropriate uid filter for any groups with the no group prefix
+func buildRuleGroupFilter(q *xorm.Session, ruleGroups []string) (*xorm.Session, map[string]struct{}, error) {
 	var noGroupRuleGroupRuleUIDs []string
 	var realGroups []string
-	if len(query.RuleGroups) > 0 {
-		groupsSet = make(map[string]struct{})
-		for _, group := range query.RuleGroups {
+	if len(ruleGroups) > 0 {
+		groupsSet := make(map[string]struct{})
+		for _, group := range ruleGroups {
 			if ngmodels.IsNoGroupRuleGroup(group) {
 				noGroupRuleGroup, err := ngmodels.ParseNoRuleGroup(group)
 				if err != nil {
@@ -1067,6 +1045,40 @@ func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.Lis
 				fmt.Sprintf("uid IN (%s)", strings.Join(ruleUIDIn, ",")), ruleUIDArgs...,
 			)
 		}
+
+		return q, groupsSet, nil
+	}
+
+	return q, nil, nil
+}
+
+// nolint:gocyclo
+func (st DBstore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.ListAlertRulesExtendedQuery) (q *xorm.Session, groupsSet map[string]struct{}, err error) {
+	q = sess.Table("alert_rule")
+	if query.OrgID >= 0 {
+		q = q.Where("org_id = ?", query.OrgID)
+	}
+
+	if query.DashboardUID != "" {
+		q = q.Where("dashboard_uid = ?", query.DashboardUID)
+		if query.PanelID != 0 {
+			q = q.Where("panel_id = ?", query.PanelID)
+		}
+	}
+
+	if len(query.NamespaceUIDs) > 0 {
+		args, in := getINSubQueryArgs(query.NamespaceUIDs)
+		q = q.Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Join(in, ",")), args...)
+	}
+
+	if len(query.RuleUIDs) > 0 {
+		args, in := getINSubQueryArgs(query.RuleUIDs)
+		q = q.Where(fmt.Sprintf("uid IN (%s)", strings.Join(in, ",")), args...)
+	}
+
+	q, groupsSet, err = buildRuleGroupFilter(q, query.RuleGroups)
+	if err != nil {
+		return nil, groupsSet, err
 	}
 
 	if query.ReceiverName != "" {
@@ -1336,13 +1348,9 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			alertRulesSql.NotIn("org_id", disabledOrgs)
 		}
 
-		var groupsMap map[string]struct{}
-		if len(query.RuleGroups) > 0 {
-			alertRulesSql.In("rule_group", query.RuleGroups)
-			groupsMap = make(map[string]struct{}, len(query.RuleGroups))
-			for _, group := range query.RuleGroups {
-				groupsMap[group] = struct{}{}
-			}
+		alertRulesSql, groupsMap, err := buildRuleGroupFilter(alertRulesSql, query.RuleGroups)
+		if err != nil {
+			return err
 		}
 
 		rule := new(alertRule)
