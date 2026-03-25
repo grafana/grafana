@@ -10084,8 +10084,17 @@
             "format": "int64",
             "type": "integer"
           },
+          "pdfDashboardTitleEnabled": {
+            "type": "boolean"
+          },
+          "pdfHeaderEnabled": {
+            "type": "boolean"
+          },
           "pdfTheme": {
             "type": "string"
+          },
+          "pdfTimeRangeEnabled": {
+            "type": "boolean"
           },
           "userId": {
             "format": "int64",
