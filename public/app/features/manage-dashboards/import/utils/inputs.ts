@@ -616,29 +616,21 @@ function processPanel(
   inputs: { dataSources: DataSourceInput[] },
   form: ImportDashboardDTO
 ): Panel | RowPanel {
-  if ('panels' in panel) {
-    return {
-      ...panel,
-      ...(panel.datasource && { datasource: resolveInputDatasource(panel.datasource, inputs, form) }),
-      panels: panel.panels.map((nestedPanel) => {
-        return processPanel(nestedPanel, inputs, form);
-      }),
-    };
-  }
-
   return {
     ...panel,
     ...(panel.datasource && { datasource: resolveInputDatasource(panel.datasource, inputs, form) }),
-    ...(panel.targets && {
-      targets: panel.targets.map((target) =>
-        target.datasource
-          ? {
-              ...target,
-              datasource: resolveInputDatasource(target.datasource, inputs, form),
-            }
-          : target
-      ),
+    // nested panels of collapsed row panels
+    ...('panels' in panel && {
+      panels: panel.panels.map((nestedPanel) => processPanel(nestedPanel, inputs, form)),
     }),
+    ...('targets' in panel &&
+      panel.targets && {
+        targets: panel.targets.map((target) =>
+          target.datasource
+            ? { ...target, datasource: resolveInputDatasource(target.datasource, inputs, form) }
+            : target
+        ),
+      }),
   };
 }
 
