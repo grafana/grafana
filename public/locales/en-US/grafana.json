@@ -6323,7 +6323,6 @@
         "label": "Exit edit",
         "tooltip": "Exits edit mode and discards unsaved changes"
       },
-      "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "new": {
         "back-to-dashboard": "Back to dashboard",
@@ -6393,8 +6392,7 @@
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
       "star-removed": "Removed from starred",
-      "unlink-library-panel": "Unlink library panel",
-      "unmark-favorite": "Unmark as favorite"
+      "unlink-library-panel": "Unlink library panel"
     },
     "transformation-editor": {
       "input-data": "Input data",
@@ -12214,12 +12212,10 @@
       "description": "Notifications you have received will appear here",
       "title": "You're all caught up!"
     },
-    "starred-dashboard": "Dashboard starred",
     "stored-notifications": {
       "dismiss-notifications": "Dismiss notifications",
       "title-alert": "This page displays past errors and warnings. Once dismissed, they cannot be retrieved."
-    },
-    "unstarred-dashboard": "Dashboard unstarred"
+    }
   },
   "oauth": {
     "form": {
