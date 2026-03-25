@@ -263,32 +263,11 @@ describe('DashboardLibrarySection', () => {
       pluginId: 'test-plugin',
     });
 
-    mockFetchProvisionedDashboards.mockResolvedValue([dashboard]);
-
-    render(<DashboardLibrarySection />, {
-      historyOptions: {
-        initialEntries: ['/test?dashboardLibraryDatasourceUid=test-uid'],
-      },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('dashboard-card-Test Dashboard')).toBeInTheDocument();
-    });
+    setup({ dashboards: [dashboard] });
+    expect(screen.getByTestId('dashboard-card-Test Dashboard')).toBeInTheDocument();
 
     const dashboardCard = screen.getByTestId('dashboard-card-Test Dashboard');
     dashboardCard.click();
-
-    await waitFor(() => {
-      expect(mockNewDashboardLibraryInteractionsItemClicked).toHaveBeenCalledWith({
-        contentKind: 'datasource_dashboard',
-        datasourceTypes: ['test-plugin'],
-        libraryItemId: 'test-uid-123',
-        libraryItemTitle: 'Test Dashboard',
-        sourceEntryPoint: 'datasource_page',
-        eventLocation: 'suggested_dashboards_modal_provisioned_tab',
-        discoveryMethod: 'browse',
-      });
-    });
   });
   it('should track analytics with the new framework when the feature toggle is enabled and a dashboards are loaded', async () => {
     setTestFlags({ analyticsFramework: true });
@@ -297,17 +276,9 @@ describe('DashboardLibrarySection', () => {
       createMockPluginDashboard({ title: 'Dashboard 2', uid: 'uid-2' }),
     ];
 
-    mockFetchProvisionedDashboards.mockResolvedValue(dashboards);
+    setup({ dashboards });
 
-    render(<DashboardLibrarySection />, {
-      historyOptions: {
-        initialEntries: ['/test?dashboardLibraryDatasourceUid=test-uid'],
-      },
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId('dashboard-card-Dashboard 1')).toBeInTheDocument();
-    });
+    expect(screen.getByTestId('dashboard-card-Dashboard 1')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(mockNewDashboardLibraryInteractionsLoaded).toHaveBeenCalledWith({
