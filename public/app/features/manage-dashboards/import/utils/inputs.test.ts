@@ -588,7 +588,7 @@ describe('applyV1Inputs', () => {
     expect(dsVariable.current?.value).toBe('ds-uid');
   });
 
-  it('handles legacy string datasource format (e.g. Grafana 6.x dashboards)', () => {
+  it('handles legacy string datasource format', () => {
     const dashboard = {
       title: 'PostgreSQL Database',
       uid: '000000039',
