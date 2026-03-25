@@ -15,6 +15,7 @@ export function formAdvancedFiltersToRuleFilter(
     namespace: values.namespace || undefined,
     groupName: values.groupName || undefined,
     contactPoint: values.contactPoint || undefined,
+    policy: values.policy || undefined,
     ruleHealth: values.ruleHealth === '*' ? undefined : values.ruleHealth,
     ruleState: values.ruleState === '*' ? undefined : values.ruleState,
     ruleType: values.ruleType === '*' ? undefined : values.ruleType,
@@ -36,6 +37,7 @@ export const emptyAdvancedFilters: AdvancedFilters = {
   plugins: 'show',
   contactPoint: null,
   ruleSource: null,
+  policy: null,
 };
 
 export function advancedFiltersToRulesFilter(values: AdvancedFilters, freeFormWords: string[] = []): RulesFilter {
@@ -53,6 +55,7 @@ export function advancedFiltersToRulesFilter(values: AdvancedFilters, freeFormWo
     plugins: values.plugins === 'show' ? undefined : 'hide',
     contactPoint: values.contactPoint || undefined,
     ruleSource: values.ruleSource ?? undefined,
+    policy: values.policy || undefined,
   };
 }
 
@@ -70,6 +73,7 @@ export function searchQueryToDefaultValues(filterState: RulesFilter): AdvancedFi
     plugins: filterState.plugins ?? 'show',
     contactPoint: filterState.contactPoint ?? null,
     ruleSource: filterState.ruleSource ?? null,
+    policy: filterState.policy ?? null,
   };
 }
 
