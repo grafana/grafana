@@ -860,3 +860,57 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 		require.GreaterOrEqual(t, folders, 1)
 	})
 }
+
+func TestIntegrationDashboardDeleteGracefulDegradation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	// Step 1: Start Grafana normally so migrations complete
+	env := apis.NewSearchDownTestEnv(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+
+	// Step 2: Restart with search down — both create and delete go through storage, not search
+	helper2 := env.RestartWithSearchDown(t)
+	client := helper2.GetResourceClient(apis.ResourceClientArgs{
+		User: helper2.Org1.Admin,
+		GVR:  dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+	})
+
+	// Verify search is actually down
+	searchClient := helper2.GetResourceClient(apis.ResourceClientArgs{
+		User: helper2.Org1.Admin,
+		GVR:  dashboardV0.DashboardResourceInfo.GroupVersionResource(),
+	})
+	cfg := dynamic.ConfigFor(helper2.Org1.Admin.NewRestConfig())
+	cfg.GroupVersion = &dashboardV0.GroupVersion
+	restClient, err := k8srest.RESTClientFor(cfg)
+	require.NoError(t, err)
+	_ = searchClient
+	var statusCode int
+	restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", "default", "search").
+		Param("query", "*").Param("limit", "1").
+		Do(ctx).StatusCode(&statusCode)
+	require.Equal(t, http.StatusInternalServerError, statusCode, "search should be down")
+
+	// Create a dashboard (goes to storage, doesn't need search)
+	dash := &unstructured.Unstructured{Object: map[string]interface{}{
+		"spec": map[string]interface{}{
+			"title":         "graceful-degradation-test",
+			"schemaVersion": 42,
+		},
+	}}
+	dash.SetGenerateName("gd-test-")
+	created, err := client.Resource.Create(ctx, dash, metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.NotEmpty(t, created.GetName())
+
+	// Delete the dashboard — should succeed even with search down
+	err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+	require.NoError(t, err, "dashboard delete should succeed when search is down")
+
+	// Verify the dashboard is gone via Get (not search)
+	_, err = client.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+	require.Error(t, err, "dashboard should not exist after deletion")
+	require.True(t, errors.IsNotFound(err), "expected NotFound error, got: %v", err)
+}
