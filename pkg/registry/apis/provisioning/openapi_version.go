@@ -34,12 +34,18 @@ func ReplaceOpenAPIVersion(defs map[string]common.OpenAPIDefinition, group, oldV
 		// Replace in the key
 		newKey := strings.ReplaceAll(k, oldVersionStr, newVersionStr)
 
-		// Deep copy and update the definition
-		newDef := v
-		newDef.Schema = replaceSchemaVersion(v.Schema, oldVersionStr, newVersionStr)
-		newDef.Dependencies = replaceInStringSlice(v.Dependencies, oldVersionStr, newVersionStr)
-
-		result[newKey] = newDef
+		// Skip old version keys for this group - only include the new version
+		if strings.Contains(k, oldVersionStr) {
+			// Don't add the old key to result
+			// Only add the transformed version
+			newDef := v
+			newDef.Schema = replaceSchemaVersion(v.Schema, oldVersionStr, newVersionStr)
+			newDef.Dependencies = replaceInStringSlice(v.Dependencies, oldVersionStr, newVersionStr)
+			result[newKey] = newDef
+		} else {
+			// Keep keys that don't match (k8s types, etc.)
+			result[k] = v
+		}
 	}
 
 	return result

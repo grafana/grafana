@@ -75,30 +75,24 @@ func TestIntegrationV1Beta1OpenAPISchema(t *testing.T) {
 	schemas, ok := components["schemas"].(map[string]interface{})
 	require.True(t, ok, "schemas should exist in components")
 
-	// Verify that v1beta1 schemas exist (not v0alpha1)
+	// Verify that v1beta1 schemas exist (and no v0alpha1 schemas)
 	foundV1Beta1Schema := false
 	foundV0Alpha1Schema := false
 
 	for schemaName := range schemas {
-		// schemaName is already a string when iterating over map keys
 		if strings.Contains(schemaName, ".provisioning.v1beta1.") {
 			foundV1Beta1Schema = true
 			t.Logf("  Found v1beta1 schema: %s", schemaName)
 		}
 		if strings.Contains(schemaName, ".provisioning.v0alpha1.") {
 			foundV0Alpha1Schema = true
-			t.Logf("  WARNING: Found v0alpha1 schema in v1beta1 OpenAPI: %s", schemaName)
+			t.Errorf("  ERROR: Found v0alpha1 schema in v1beta1 OpenAPI: %s", schemaName)
 		}
 	}
 
 	require.True(t, foundV1Beta1Schema, "should have v1beta1 schemas in OpenAPI doc")
-
-	// Note: Some v0alpha1 schemas may appear as transitive dependencies in the OpenAPI spec
-	// This is acceptable as long as the main v1beta1 schemas are present
-	if foundV0Alpha1Schema {
-		t.Logf("⚠ Found some v0alpha1 schemas (likely transitive dependencies)")
-	}
-	t.Logf("✓ OpenAPI schema has v1beta1 types")
+	require.False(t, foundV0Alpha1Schema, "should not have v0alpha1 schemas in v1beta1 OpenAPI doc")
+	t.Logf("✓ OpenAPI schema has only v1beta1 types (no v0alpha1)")
 }
 
 // TestIntegrationV1Beta1RepositoryCRUD tests basic CRUD operations on the v1beta1 Repository resource
