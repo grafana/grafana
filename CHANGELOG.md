@@ -2,6 +2,13 @@
 
 # 11.6.14 (2026-03-25)
 
+### Bug fixes
+
+- **Security:** Fix CVE-2026-27877
+- **Security:** Fix CVE-2026-27876
+- **Security:** Fix CVE-2026-33375
+- **Security:** Fix CVE-2026-27879
+
 <!-- 11.6.14 END -->
 <!-- 11.6.13 START -->
 
