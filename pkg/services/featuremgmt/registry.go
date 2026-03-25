@@ -2777,6 +2777,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 		},
+		{
+			Name:         "splashScreen",
+			Description:  "Enables the splash screen modal for introducing new Grafana features on first session",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
 	}
 )
 

@@ -14639,6 +14639,11 @@
   "sort-picker": {
     "select-aria-label": "Sort"
   },
+  "splash-screen": {
+    "body": "Splash screen content will go here.",
+    "get-started": "Get started",
+    "title": "Welcome to Grafana"
+  },
   "sql-expressions": {
     "add-query-tooltip": "Add at least one data query to generate SQL suggestions",
     "ai-explain-title": "AI-powered SQL expression explanation",
