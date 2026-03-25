@@ -11,7 +11,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -43,10 +43,10 @@ func migrateV0Dashboard(ctx context.Context, dashboardObject map[string]interfac
 	return migration.Migrate(ctx, dashboardObject, targetVersion)
 }
 
-// ConvertDashboard_V0_to_V1beta1 converts a v0alpha1 dashboard to v1beta1 format.
+// ConvertDashboard_V0_to_V1 converts a v0alpha1 dashboard to v1 format.
 // This is an atomic single-step conversion that:
 // 1. Migrates the dashboard to the latest schema version
-// 2. Transforms the migrated dashboard to v1beta1 format
+// 2. Transforms the migrated dashboard to v1 format
 //
 // the scope passed into this function is used in k8s apimachinery for migrations, but we also need the context
 // to have what grafana expects in the request context, so that we can retrieve datasources for migrating
@@ -55,7 +55,7 @@ func migrateV0Dashboard(ctx context.Context, dashboardObject map[string]interfac
 // a background service identity is used here because the user who is reading the specific dashboard
 // may not have access to all the datasources in the dashboard, but the migration still needs to take place
 // in order to be able to convert between k8s versions (so that we have a guaranteed structure to convert between)
-func ConvertDashboard_V0_to_V1beta1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
+func ConvertDashboard_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv1.APIVERSION
 	out.Kind = in.Kind
@@ -90,7 +90,7 @@ func ConvertDashboard_V0_to_V1beta1(in *dashv0.Dashboard, out *dashv1.Dashboard,
 	}
 
 	sourceSchemaVersion := schemaversion.GetSchemaVersion(in.Spec.Object)
-	ctx, span := TracingStart(ctx, "dashboard.conversion.v0alpha1_to_v1beta1",
+	ctx, span := TracingStart(ctx, "dashboard.conversion.v0alpha1_to_v1",
 		attribute.String("dashboard.uid", in.Name),
 		attribute.String("dashboard.namespace", in.Namespace),
 		attribute.String("source.version", dashv0.APIVERSION),

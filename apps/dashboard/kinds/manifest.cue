@@ -10,9 +10,25 @@ import (
 manifest: {
 	appName:          "dashboard"
 	groupOverride:    "dashboard.grafana.app"
-	preferredVersion: "v1beta1"
+	preferredVersion: "v1"
 
 	versions: {
+		"v1": {
+			codegen: {
+				ts: {enabled: false}
+				go: {enabled: true}
+			}
+			kinds: [
+				{
+					kind:       "Dashboard"
+					pluralName: "Dashboards"
+					schema: {
+						spec:   v1.DashboardSpec
+						status: DashboardStatus
+					}
+				}
+			]
+		}
 		"v0alpha1": {
 			codegen: {
 				ts: {enabled: false}
@@ -33,7 +49,7 @@ manifest: {
 		"v1beta1": {
 			codegen: {
 				ts: {enabled: false}
-				go: {enabled: true}
+				go: {enabled: false} // v1beta1 is a thin wrapper around v1, so we don't need to generate it
 			}
 			kinds: [
 				{
