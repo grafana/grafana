@@ -128,12 +128,15 @@ export const createDashboardShareUrl = (dashboard: DashboardScene, opts: ShareLi
 
   const urlParamsUpdate = getShareUrlParams(opts, timeRange, panel);
 
+  const isSnapshot = dashboard.state.meta.isSnapshot;
+
   return getDashboardUrl({
-    uid: dashboard.state.uid,
-    slug: dashboard.state.meta.slug,
+    uid: isSnapshot ? (dashboard.state.meta.snapshotKey ?? dashboard.state.uid) : dashboard.state.uid,
+    slug: isSnapshot ? undefined : dashboard.state.meta.slug,
     currentQueryParams: location.search,
     updateQuery: urlParamsUpdate,
     absolute: !opts.useShortUrl,
+    isSnapshot,
   });
 };
 

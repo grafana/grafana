@@ -3,6 +3,7 @@ import { render } from 'test/test-utils';
 
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../../utils/dashboard';
@@ -187,6 +188,7 @@ describe('ProvisionedDashboardsEmptyPage feature toggle', () => {
 
   it('renders ProvisionedDashboardsEmptyPage when feature toggle is enabled and dashboardLibraryDatasourceUid param exists', async () => {
     config.featureToggles.dashboardLibrary = true;
+    setTestFlags({ analyticsFramework: false });
     mockSearchParams.set('dashboardLibraryDatasourceUid', 'test-uid');
 
     // Mock provisioned dashboards to return at least one dashboard so component renders
@@ -244,7 +246,7 @@ describe('wrapperMaxWidth CSS class', () => {
 
   it('applies wrapperMaxWidth class when dashboardLibrary feature is enabled but no dashboardLibraryDatasourceUid param', () => {
     config.featureToggles.dashboardLibrary = true;
-
+    setTestFlags({ analyticsFramework: false });
     mockSearchParams.delete('dashboardLibraryDatasourceUid');
 
     const { container } = render(
