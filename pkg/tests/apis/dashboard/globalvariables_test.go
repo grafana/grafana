@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+const folderLabelSelectorKey = "dashboard.grafana.app/folder"
+
 func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -97,12 +99,39 @@ func TestIntegrationGlobalVariablesV2beta1(t *testing.T) {
 		require.Empty(t, list.Items)
 	})
 
+	t.Run("should filter by folder label and spec name in a single call", func(t *testing.T) {
+		list, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.spec.name=region",
+			LabelSelector: folderLabelSelectorKey + "=" + createdFolder1.GetName(),
+		})
+		require.NoError(t, err)
+		require.Len(t, list.Items, 1)
+		require.Equal(t, "folder-region", list.Items[0].GetName())
+	})
+
 	annotations := createdFolderVariable.GetAnnotations()
 	annotations[utils.AnnoKeyFolder] = createdFolder2.GetName()
 	createdFolderVariable.SetAnnotations(annotations)
 	movedFolderVariable, err := globalVariableClient.Resource.Update(ctx, createdFolderVariable, metav1.UpdateOptions{})
 	require.NoError(t, err)
 	require.Equal(t, createdFolder2.GetName(), movedFolderVariable.GetAnnotations()[utils.AnnoKeyFolder])
+
+	t.Run("should reflect folder move in label selector results", func(t *testing.T) {
+		oldFolderList, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.spec.name=region",
+			LabelSelector: folderLabelSelectorKey + "=" + createdFolder1.GetName(),
+		})
+		require.NoError(t, err)
+		require.Empty(t, oldFolderList.Items)
+
+		newFolderList, err := globalVariableClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: "spec.spec.name=region",
+			LabelSelector: folderLabelSelectorKey + "=" + createdFolder2.GetName(),
+		})
+		require.NoError(t, err)
+		require.Len(t, newFolderList.Items, 1)
+		require.Equal(t, "folder-region", newFolderList.Items[0].GetName())
+	})
 
 	annotations = movedFolderVariable.GetAnnotations()
 	annotations[utils.AnnoKeyFolder] = "non-existent-folder"

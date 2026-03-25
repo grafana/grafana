@@ -136,9 +136,27 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 }
 
 func mutateGlobalVariable(a admission.Attributes) error {
-	if _, ok := a.GetObject().(*dashboardV2beta1.GlobalVariable); !ok {
+	globalVariable, ok := a.GetObject().(*dashboardV2beta1.GlobalVariable)
+	if !ok {
 		return fmt.Errorf("mutation error: expected global variable, got %T", a.GetObject())
 	}
+
+	meta, err := utils.MetaAccessor(globalVariable)
+	if err != nil {
+		return err
+	}
+
+	labels := globalVariable.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+
+	if folderUID := meta.GetFolder(); folderUID != "" {
+		labels[globalVariableFolderLabelKey] = folderUID
+	} else {
+		delete(labels, globalVariableFolderLabelKey)
+	}
+	globalVariable.SetLabels(labels)
 
 	return nil
 }

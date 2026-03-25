@@ -11,6 +11,8 @@ import (
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
 
+const globalVariableFolderLabelKey = "dashboard.grafana.app/folder"
+
 // GlobalVariableToSelectableFields returns fields available for selectors.
 func GlobalVariableToSelectableFields(obj *dashv2beta1.GlobalVariable) fields.Set {
 	objectMetaFields := generic.ObjectMetaFieldsSet(&obj.ObjectMeta, true)
