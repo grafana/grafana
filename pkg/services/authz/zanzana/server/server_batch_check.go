@@ -299,18 +299,20 @@ func (s *Server) runFolderSubresourcePhase(
 			continue
 		}
 
-		checkID := fmt.Sprintf("%s_fs", item.correlationID)
-		checkIDToCorrelation[checkID] = item.correlationID
-		checks = append(checks, &openfgav1.BatchCheckItem{
-			TupleKey: &openfgav1.CheckRequestTupleKey{
-				User:     subject,
-				Relation: folderRelation,
-				Object:   folderIdent,
-			},
-			ContextualTuples: contextuals,
-			Context:          item.resource.Context(),
-			CorrelationId:    checkID,
-		})
+		for idx, relation := range expandedSubresourcePermissionRelations(folderRelation) {
+			checkID := fmt.Sprintf("%s_fs_%d", item.correlationID, idx)
+			checkIDToCorrelation[checkID] = item.correlationID
+			checks = append(checks, &openfgav1.BatchCheckItem{
+				TupleKey: &openfgav1.CheckRequestTupleKey{
+					User:     subject,
+					Relation: relation,
+					Object:   folderIdent,
+				},
+				ContextualTuples: contextuals,
+				Context:          item.resource.Context(),
+				CorrelationId:    checkID,
+			})
+		}
 	}
 
 	if len(checks) == 0 {
@@ -322,21 +324,85 @@ func (s *Server) runFolderSubresourcePhase(
 		return err
 	}
 
-	// Process results
+	// Aggregate results per original correlation ID. A single allowed relation
+	// should allow the item; otherwise first OpenFGA error (if any) is surfaced.
+	type relationResult struct {
+		allowed bool
+		err     string
+	}
+	agg := make(map[string]relationResult, len(items))
+
 	for checkID, result := range results {
 		correlationID := checkIDToCorrelation[checkID]
-		item := items[correlationID]
-
+		cur := agg[correlationID]
+		if cur.allowed {
+			continue
+		}
 		if err := result.GetError(); err != nil {
-			item.err = err.GetMessage()
-			item.resolved = true
+			if cur.err == "" {
+				cur.err = err.GetMessage()
+			}
 		} else if result.GetAllowed() {
+			cur.allowed = true
+			cur.err = ""
+		}
+		agg[correlationID] = cur
+	}
+
+	for correlationID, res := range agg {
+		item := items[correlationID]
+		if res.allowed {
 			item.allowed = true
+			item.resolved = true
+		} else if res.err != "" {
+			item.err = res.err
 			item.resolved = true
 		}
 	}
 
 	return nil
+}
+
+func expandedSubresourcePermissionRelations(relation string) []string {
+	switch relation {
+	case common.RelationSubresourceGet:
+		return []string{
+			common.RelationSubresourceGet,
+			common.RelationSubresourceSetView,
+			common.RelationSubresourceSetEdit,
+			common.RelationSubresourceSetAdmin,
+		}
+	case common.RelationSubresourceCreate:
+		return []string{
+			common.RelationSubresourceCreate,
+			common.RelationSubresourceSetEdit,
+			common.RelationSubresourceSetAdmin,
+		}
+	case common.RelationSubresourceUpdate:
+		return []string{
+			common.RelationSubresourceUpdate,
+			common.RelationSubresourceSetEdit,
+			common.RelationSubresourceSetAdmin,
+		}
+	case common.RelationSubresourceDelete:
+		return []string{
+			common.RelationSubresourceDelete,
+			common.RelationSubresourceSetEdit,
+			common.RelationSubresourceSetAdmin,
+		}
+	case common.RelationSubresourceGetPermissions:
+		return []string{
+			common.RelationSubresourceGetPermissions,
+			common.RelationSubresourceSetAdmin,
+		}
+	case common.RelationSubresourceSetPermissions:
+		return []string{
+			common.RelationSubresourceSetPermissions,
+			common.RelationSubresourceSetAdmin,
+		}
+	default:
+		return []string{relation}
+	}
 }
 
 // runDirectResourcePhase checks direct access to specific resources.
@@ -438,7 +504,7 @@ func (s *Server) addTypedResourceDirectChecks(
 		checks = append(checks, &openfgav1.BatchCheckItem{
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     subject,
-				Relation: subresourceRelation,
+				Relation: common.SubresourcePermissionRelation(subresourceRelation),
 				Object:   resourceIdent,
 			},
 			ContextualTuples: contextuals,
