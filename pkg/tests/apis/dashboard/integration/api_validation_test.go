@@ -16,7 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -69,13 +69,15 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				DisableAnonymous:      true,
+				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesDashboards, // Enable FE-only dashboard feature flag
 				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+					"folders.folder.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
 				},
@@ -106,13 +108,15 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 		t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				DisableAnonymous:      true,
+				DisableAnonymous: true,
 				DisableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesDashboards,
 				},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
+						DualWriterMode: dualWriterMode,
+					},
+					"folders.folder.grafana.app": {
 						DualWriterMode: dualWriterMode,
 					},
 				},
@@ -135,7 +139,6 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations:               true,
 		AppModeProduction:                   true,
 		DisableAnonymous:                    true,
 		DisableAuthZClientCache:             true,
@@ -187,11 +190,10 @@ func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
-		AppModeProduction:     true,
-		DisableAnonymous:      true,
-		APIServerStorageType:  "unified",
-		DBMaxConns:            50,
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+		DBMaxConns:           50,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {
 				DualWriterMode: rest.Mode5,
@@ -226,8 +228,7 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				DisableAnonymous:      true,
+				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesDashboards,
 				},

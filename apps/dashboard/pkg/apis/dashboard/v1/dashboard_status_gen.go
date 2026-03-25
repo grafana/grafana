@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v1beta1
+package v1
 
 // ConversionStatus is the status of the conversion of the dashboard.
 // +k8s:openapi-gen=true
@@ -26,7 +26,7 @@ func NewDashboardConversionStatus() *DashboardConversionStatus {
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardConversionStatus.
 func (DashboardConversionStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.DashboardConversionStatus"
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1.DashboardConversionStatus"
 }
 
 // +k8s:openapi-gen=true
@@ -42,5 +42,5 @@ func NewDashboardStatus() *DashboardStatus {
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardStatus.
 func (DashboardStatus) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1beta1.DashboardStatus"
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v1.DashboardStatus"
 }
