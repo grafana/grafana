@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/snowflake"
+	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 	"github.com/grafana/grafana/pkg/util/debouncer"
 )
@@ -1691,6 +1693,47 @@ func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.
 
 //nolint:gocyclo
 func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings, iter BulkRequestIterator) *resourcepb.BulkResponse {
+	// On SQLite, the migration framework holds a write transaction on the database.
+	// To avoid lock contention between the migration's read cursors and KV's writes,
+	// we buffer all requests in memory to separate read and write phases:
+	// 1. Read phase: consume the entire gRPC stream into memory (no DB writes)
+	// 2. Write phase: replay buffered requests and write to KV tables using the migration's *sql.Tx
+	// This ensures the migration tx is never accessed concurrently from multiple goroutines.
+	// compatDB is used for compat layer operations (deleteLegacyResourceCollection, etc.)
+	// Normally it's the rvManager's DB, but during SQLite migrations we use the migration's tx.
+	var compatDB db.ContextExecer
+	if b.rvManager != nil {
+		compatDB = b.rvManager.DB()
+	}
+	if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
+		if externalTx := TransactionFromContext(clientCtx); externalTx != nil {
+			b.log.Info("KV ProcessBulk: buffering requests for SQLite migration")
+
+			// Read phase: consume the entire iterator into memory.
+			var buffered []*resourcepb.BulkRequest
+			for iter.Next() {
+				if iter.RollbackRequested() {
+					return &resourcepb.BulkResponse{}
+				}
+				req := iter.Request()
+				if req != nil {
+					buffered = append(buffered, req)
+				}
+			}
+
+			b.log.Info("KV ProcessBulk: buffer complete", "requests", len(buffered))
+
+			// Replace the iterator with a replay iterator.
+			iter = &sliceBulkRequestIterator{requests: buffered, index: -1}
+
+			// Route all sqlkv operations through the migration's transaction.
+			ctx = kv.ContextWithDBTX(ctx, externalTx)
+
+			// Also use the migration tx for compat layer operations.
+			compatDB = dbimpl.NewTx(externalTx)
+		}
+	}
+
 	// TODO cross-node lock
 	err := b.bulkLock.Start(setting.Collection)
 	if err != nil {
@@ -1752,8 +1795,8 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		// Delete legacy resource rows for this collection so they can be re-synced after import.
-		if b.rvManager != nil {
-			if err := b.dataStore.deleteLegacyResourceCollection(ctx, b.rvManager.DB(), key.Namespace, key.Group, key.Resource); err != nil {
+		if compatDB != nil {
+			if err := b.dataStore.deleteLegacyResourceCollection(ctx, compatDB, key.Namespace, key.Group, key.Resource); err != nil {
 				b.log.Error("failed to delete legacy resource collection", "error", err)
 				return rsp
 			}
@@ -1895,7 +1938,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 					previousRV = lastMicroRV[nameKey]
 				}
 
-				if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, b.rvManager.DB(), dataKey, microRV, previousRV, generation); err != nil {
+				if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, compatDB, dataKey, microRV, previousRV, generation); err != nil {
 					b.log.Error("failed to update legacy resource_history for bulk", "error", err)
 					return rsp
 				}
@@ -1910,20 +1953,35 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 
 	// Sync legacy resource table and bump RV counter for each collection.
-	if b.rvManager != nil && rsp.Error == nil {
+	if compatDB != nil && rsp.Error == nil {
+		// Check whether we're using the migration tx (no ExecWithRV — it uses its own connection).
+		usingMigrationTx := compatDB != b.rvManager.DB()
 		for _, key := range setting.Collection {
-			if err := b.dataStore.syncLegacyResourceFromHistory(ctx, b.rvManager.DB(), key.Namespace, key.Group, key.Resource); err != nil {
+			if err := b.dataStore.syncLegacyResourceFromHistory(ctx, compatDB, key.Namespace, key.Group, key.Resource); err != nil {
 				b.log.Error("failed to sync legacy resource from history", "error", err)
 				return rsp
 			}
 
 			// Bump the RV counter so subsequent WriteEvent calls generate RVs above the bulk-imported ones.
 			// Without this, ExecWithRV could produce colliding or lower RVs. Same pattern as SQL backend's ProcessBulk.
-			_, err := b.rvManager.ExecWithRV(ctx, key, func(tx db.Tx) (string, error) {
-				return "", nil
-			})
-			if err != nil {
-				b.log.Warn("error increasing RV for bulk", "error", err)
+			if usingMigrationTx {
+				// On SQLite, Lock+SaveRV through the migration tx (same as SQL backend).
+				// ExecWithRV would deadlock because it opens its own connection.
+				nextRV, err := b.rvManager.Lock(ctx, compatDB, key.Group, key.Resource)
+				if err != nil {
+					b.log.Error("error locking RV", "error", err, "key", NSGR(key))
+				} else {
+					if err := b.rvManager.SaveRV(ctx, compatDB, key.Group, key.Resource, nextRV); err != nil {
+						b.log.Error("error saving RV", "error", err, "key", NSGR(key))
+					}
+				}
+			} else {
+				_, err := b.rvManager.ExecWithRV(ctx, key, func(tx db.Tx) (string, error) {
+					return "", nil
+				})
+				if err != nil {
+					b.log.Warn("error increasing RV for bulk", "error", err)
+				}
 			}
 		}
 	}
@@ -1942,6 +2000,29 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 
 	return rsp
+}
+
+// sliceBulkRequestIterator replays a pre-buffered slice of BulkRequests.
+// Used to separate read and write phases during SQLite migrations.
+type sliceBulkRequestIterator struct {
+	requests []*resourcepb.BulkRequest
+	index    int
+}
+
+func (s *sliceBulkRequestIterator) Next() bool {
+	s.index++
+	return s.index < len(s.requests)
+}
+
+func (s *sliceBulkRequestIterator) Request() *resourcepb.BulkRequest {
+	if s.index < 0 || s.index >= len(s.requests) {
+		return nil
+	}
+	return s.requests[s.index]
+}
+
+func (s *sliceBulkRequestIterator) RollbackRequested() bool {
+	return false
 }
 
 // readAndClose reads all data from a ReadCloser and ensures it's closed,
