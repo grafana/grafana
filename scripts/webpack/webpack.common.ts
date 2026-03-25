@@ -1,10 +1,15 @@
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const path = require('path');
-const webpack = require('webpack');
+import CopyWebpackPlugin from 'copy-webpack-plugin';
+import { createRequire } from 'node:module';
+import path from 'node:path';
+import webpack, { type Configuration } from 'webpack';
 
-const CorsWorkerPlugin = require('./plugins/CorsWorkerPlugin');
+import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 
-module.exports = (env = {}) => ({
+const require = createRequire(import.meta.url);
+
+export type Env = Record<string, string | true | undefined>;
+
+export default (env: Env = {}): Configuration => ({
   target: 'web',
   entry: {
     app: './public/app/index.ts',
@@ -13,6 +18,8 @@ module.exports = (env = {}) => ({
       import: './public/boot/index.ts',
       runtime: false,
     },
+    dark: './public/sass/grafana.dark.scss',
+    light: './public/sass/grafana.light.scss',
   },
   experiments: {
     // Required to load WASM modules.
@@ -20,9 +27,9 @@ module.exports = (env = {}) => ({
   },
   output: {
     clean: env.react19 ? false : true,
-    path: path.resolve(__dirname, '../../public/build'),
+    path: path.resolve(import.meta.dirname, '../../public/build'),
     filename: (pathData) => {
-      if (pathData.chunk.name === 'boot') {
+      if (pathData.chunk?.name === 'boot') {
         return '[name].js';
       }
       return env.react19 ? '[name]-react19.[contenthash].js' : '[name].[contenthash].js';
@@ -94,18 +101,9 @@ module.exports = (env = {}) => ({
     }),
     new CopyWebpackPlugin({
       patterns: [
-        {
-          from: 'public/img',
-          to: 'img',
-        },
-        {
-          from: 'public/maps',
-          to: 'maps',
-        },
-        {
-          from: 'public/gazetteer',
-          to: 'gazetteer',
-        },
+        { from: 'public/img', to: 'img' },
+        { from: 'public/maps', to: 'maps' },
+        { from: 'public/gazetteer', to: 'gazetteer' },
       ],
     }),
   ],
