@@ -3,9 +3,16 @@ package sourcepathguard
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 )
 
+var env = gitcommon.NewSharedGitEnv()
+
+func sharedGitHelper(t *testing.T) *gitcommon.GitTestHelper {
+	t.Helper()
+	return env.GetCleanHelper(t)
+}
+
 func TestMain(m *testing.M) {
-	testsuite.Run(m)
+	env.RunTestMain(m)
 }
