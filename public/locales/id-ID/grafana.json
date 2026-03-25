@@ -1712,13 +1712,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -3522,20 +3522,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Instans peringatan",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Terjadi kesalahan saat memuat aturan",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "Detail instans",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "Anda tidak memiliki instans peringatan dalam status aktif atau tertunda untuk rentang waktu yang dipilih.",
       "no-instances-found": "Tidak ada instans peringatan yang ditemukan untuk aturan: {{ruleUID}}",
       "no-labels": "Tidak ada label",
@@ -3557,10 +3564,13 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_other": "",
       "show-all-values_other": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "Tambah pola"
@@ -4227,6 +4237,9 @@
     "browse-view": {
       "this-folder-is-empty": "Folder ini kosong"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Batal",
       "button-delete": "Hapus",
@@ -4324,6 +4337,7 @@
       "dashboards": "Dasbor",
       "panels": "Panel"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Tidak ada item"
     },
@@ -6049,8 +6063,8 @@
       "name": "Baris",
       "new-row-title": "Baris baru",
       "row": {
-        "collapse": "Ciutkan baris",
-        "expand": "Perbesar baris",
+        "collapse": "",
+        "expand": "",
         "new": "Baris baru",
         "repeat": {
           "learn-more": "Pelajari lebih lanjut",
@@ -6590,11 +6604,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Opsi ad-hoc",
       "alert-not-supported": "Sumber data ini tidak mendukung filter ad hoc",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Berikan dimensi sebagai CSV: {{name}}, {{value}}",
       "label-data-source": "Sumber data",
       "label-use-static-key-dimensions": "Gunakan dimensi kunci statis",
-      "name-allow-custom-values": "Izinkan nilai kustom"
+      "name-allow-custom-values": "Izinkan nilai kustom",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -10211,6 +10227,9 @@
       "group": "Grup",
       "group-tooltip": "Nama grup penumpukan"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Filter nilai",
       "cell-filter-out": "Filter nilai",
@@ -10259,6 +10278,10 @@
       },
       "no-values-label": "Tidak ada nilai",
       "pagination-summary": "{{itemsRangeStart}}—{{displayedEnd}} dari {{numRows}} baris",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "tidak ada data"
       },
@@ -11364,7 +11387,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Opsi tidak ditemukan"
@@ -12252,6 +12276,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Nama"
       }
     },
@@ -12948,6 +12973,7 @@
       "error-delete-connection": "Gagal menghapus koneksi",
       "error-required": "Bidang ini wajib diisi",
       "error-save-connection": "Gagal menyimpan koneksi",
+      "error-submit": "",
       "grafana-repositories": "Repositori menggunakan koneksi ini",
       "label-app-id": "ID Aplikasi GitHub",
       "label-description": "Deskripsi",
@@ -13461,6 +13487,9 @@
       },
       "go-to": "Buka",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "Peringatan",
     "watch-stream": {

@@ -29,12 +29,6 @@ func TestUnifiedStorageMigrationServiceImpl_Run_SkipsMigrations(t *testing.T) {
 			},
 		},
 		{
-			name: "data migrations disabled",
-			cfgFunc: func(cfg *setting.Cfg) {
-				cfg.DisableDataMigrations = true
-			},
-		},
-		{
 			name: "target is not all or core",
 			cfgFunc: func(cfg *setting.Cfg) {
 				cfg.Target = []string{"storage-server"}

@@ -1055,11 +1055,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/SplitPaneWrapper/SplitPaneWrapper.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/core/components/TagFilter/TagFilter.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -1818,11 +1813,6 @@
       "count": 7
     }
   },
-  "public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/components/DashboardPrompt/DashboardPrompt.test.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -2289,11 +2279,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/CanvasSpanGraph.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/ViewingLayer.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -2502,11 +2487,6 @@
   },
   "public/app/features/org/NewOrgPage.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/org/OrgDetailsPage.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2872,16 +2852,8 @@
       "count": 3
     }
   },
-  "public/app/features/variables/adhoc/AdHocVariableEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/adhoc/picker/AdHocFilter.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -2900,11 +2872,6 @@
       "count": 1
     }
   },
-  "public/app/features/variables/adhoc/picker/AdHocPicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/adhoc/picker/ConditionSegment.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -2915,18 +2882,8 @@
       "count": 1
     }
   },
-  "public/app/features/variables/custom/CustomVariableEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/custom/reducer.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/variables/datasource/DataSourceVariableEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
