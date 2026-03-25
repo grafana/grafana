@@ -37,7 +37,7 @@
     "./internal/rtkq/legacy/migrate-to-cloud": {
       "@grafana-app/source": "./src/clients/rtkq/migrate-to-cloud/index.ts"
     },
-    "./internal/rtkq/legacy/preferences": {
+    "./internal/rtkq/legacy/preferences/user": {
       "@grafana-app/source": "./src/clients/rtkq/preferences/user/index.ts"
     },
     "./internal/rtkq/legacy/user": {
