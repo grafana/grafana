@@ -1859,34 +1859,24 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 	}
 
-	batchIter, ok := iter.(BulkRequestBatchIterator)
-	if !ok {
-		batchIter = NewSingleRequestBatchIterator(iter)
-	}
-
 	updatedResources := make(map[NamespacedResource]bool)
 	// Track the last micro RV per resource name for computing previous_resource_version in compat mode.
 	lastMicroRV := make(map[string]int64)
 
-	for batchIter.NextBatch() {
-		if batchIter.RollbackRequested() {
+	for iter.Next() {
+		if iter.RollbackRequested() {
 			rollback()
 			break
 		}
 
-		batch := batchIter.Batch()
-		if len(batch) == 0 {
+		req := iter.Request()
+		if req == nil {
 			rollback()
-			rsp.Error = AsErrorResult(fmt.Errorf("missing request batch"))
+			rsp.Error = AsErrorResult(fmt.Errorf("missing request"))
 			break
 		}
 
-		for _, req := range batch {
-			if req == nil {
-				rollback()
-				rsp.Error = AsErrorResult(fmt.Errorf("missing request"))
-				break
-			}
+		{
 
 			rsp.Processed++
 
@@ -1984,11 +1974,6 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				}
 				lastMicroRV[nameKey] = microRV
 			}
-		}
-
-		// Break out of the batch loop if an error was set while processing individual requests.
-		if rsp.Error != nil {
-			break
 		}
 	}
 

@@ -683,3 +683,4 @@ func (s *singleRequestBatchIterator) Batch() []*resourcepb.BulkRequest {
 func (s *singleRequestBatchIterator) RollbackRequested() bool {
 	return s.iter.RollbackRequested()
 }
+
