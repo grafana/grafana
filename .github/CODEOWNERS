@@ -623,11 +623,11 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs
 /packages/grafana-o11y-ds-frontend/src/IntervalInput/ @grafana/oss-big-tent
 /packages/grafana-o11y-ds-frontend/src/NodeGraph/ @grafana/oss-big-tent
-/packages/grafana-o11y-ds-frontend/src/pyroscope/ @grafana/oss-big-tent @grafana/oss-big-tent
-/packages/grafana-o11y-ds-frontend/src/SpanBar/ @grafana/oss-big-tent @grafana/oss-big-tent
-/packages/grafana-o11y-ds-frontend/src/TraceToLogs/ @grafana/oss-big-tent @grafana/oss-big-tent
-/packages/grafana-o11y-ds-frontend/src/TraceToMetrics/ @grafana/oss-big-tent @grafana/oss-big-tent
-/packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/oss-big-tent @grafana/oss-big-tent
+/packages/grafana-o11y-ds-frontend/src/pyroscope/ @grafana/oss-big-tent
+/packages/grafana-o11y-ds-frontend/src/SpanBar/ @grafana/oss-big-tent
+/packages/grafana-o11y-ds-frontend/src/TraceToLogs/ @grafana/oss-big-tent
+/packages/grafana-o11y-ds-frontend/src/TraceToMetrics/ @grafana/oss-big-tent
+/packages/grafana-o11y-ds-frontend/src/TraceToProfiles/ @grafana/oss-big-tent
 
 # @grafana/plugin-configs
 /packages/grafana-plugin-configs/ @grafana/grafana-frontend-platform
