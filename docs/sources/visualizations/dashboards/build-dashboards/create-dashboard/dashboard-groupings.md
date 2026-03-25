@@ -114,6 +114,8 @@ To group panels already on a dashboard, follow these steps:
 1. Click **Save**.
 1. Click **Exit edit**.
 
+You can also start a grouping by adding a row or tab from the sidebar and then adding panels to that grouping.
+
 ### Add more groupings at the same level
 
 To add more groupings at the same level, follow these steps:
@@ -180,3 +182,12 @@ To remove groupings, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**.
+
+## Place panels outside of groupings with headerless rows
+
+If you have a panel that includes grouped panels already and you want some panels to appear ungrouped, you can use the **Hide row header** switch in the row configuration to achieve this.
+
+In view mode, the row header is hidden, so that the panels in that row appear ungrouped.
+In the following image, the panels are grouped into two rows, but the header of the second row is hidden:
+
+{{< figure src="placeholder-1.png" max-width="750px" alt="Dashboard including a row with a hidden header" >}}
