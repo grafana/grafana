@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	v0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	v2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	v2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	v2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"

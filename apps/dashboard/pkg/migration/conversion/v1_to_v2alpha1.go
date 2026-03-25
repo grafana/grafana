@@ -14,7 +14,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	schemaversion "github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
@@ -82,7 +82,7 @@ func getDatasourceTypeByUID(ctx context.Context, uid string, provider schemavers
 }
 
 // resolveGrafanaDatasourceUID resolves the Grafana datasource UID when type is "datasource" and UID is empty.
-// The Grafana datasource has type "datasource" and UID "grafana". When a v1beta1 dashboard has
+// The Grafana datasource has type "datasource" and UID "grafana". When a v1 dashboard has
 // datasource: { type: "datasource" } with no UID, it should resolve to uid: "grafana".
 func resolveGrafanaDatasourceUID(dsType, dsUID string) string {
 	if dsType == "datasource" && dsUID == "" {
@@ -91,13 +91,13 @@ func resolveGrafanaDatasourceUID(dsType, dsUID string) string {
 	return dsUID
 }
 
-// prepareV1beta1ConversionContext sets up the context with namespace and service identity
-// for v1beta1 dashboard conversions. This context is needed to retrieve datasources for
+// prepareV1ConversionContext sets up the context with namespace and service identity
+// for v1 dashboard conversions. This context is needed to retrieve datasources for
 // converting dashboard datasource references.
 // A background service identity is used because the user who is reading the specific dashboard
 // may not have access to all the datasources in the dashboard, but the conversion still needs to take place
 // in order to be able to convert between k8s versions.
-func prepareV1beta1ConversionContext(in *dashv1.Dashboard, dsIndexProvider schemaversion.DataSourceIndexProvider) (context.Context, *types.NamespaceInfo, error) {
+func prepareV1ConversionContext(in *dashv1.Dashboard, dsIndexProvider schemaversion.DataSourceIndexProvider) (context.Context, *types.NamespaceInfo, error) {
 	if dsIndexProvider == nil {
 		return nil, nil, fmt.Errorf("datasource index provider not initialized")
 	}
@@ -119,7 +119,7 @@ func prepareV1beta1ConversionContext(in *dashv1.Dashboard, dsIndexProvider schem
 	return ctx, &nsInfo, nil
 }
 
-func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
+func ConvertDashboard_V1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Dashboard, scope conversion.Scope, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
 	out.ObjectMeta = in.ObjectMeta
 	out.APIVersion = dashv2alpha1.APIVERSION
 	out.Kind = in.Kind
@@ -131,7 +131,7 @@ func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha
 			ctx = scopeCtx
 		}
 	}
-	ctxWithNamespace, _, err := prepareV1beta1ConversionContext(in, dsIndexProvider)
+	ctxWithNamespace, _, err := prepareV1ConversionContext(in, dsIndexProvider)
 	if err != nil {
 		return fmt.Errorf("failed to prepare conversion context: %w", err)
 	}
@@ -141,7 +141,7 @@ func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha
 		}
 	}
 
-	ctx, span := TracingStart(ctx, "dashboard.conversion.v1beta1_to_v2alpha1",
+	ctx, span := TracingStart(ctx, "dashboard.conversion.v1_to_v2alpha1",
 		attribute.String("dashboard.uid", in.Name),
 		attribute.String("dashboard.namespace", in.Namespace),
 	)
@@ -152,11 +152,11 @@ func ConvertDashboard_V1beta1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha
 		span.SetAttributes(attribute.Int("source.schema_version", schemaVer))
 	}
 
-	return convertDashboardSpec_V1beta1_to_V2alpha1(&in.Spec, &out.Spec, scope, ctx, dsIndexProvider, leIndexProvider)
+	return convertDashboardSpec_V1_to_V2alpha1(&in.Spec, &out.Spec, scope, ctx, dsIndexProvider, leIndexProvider)
 }
 
-func convertDashboardSpec_V1beta1_to_V2alpha1(in *dashv1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope, ctx context.Context, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
-	ctx, span := TracingStart(ctx, "dashboard.conversion.spec_v1beta1_to_v2alpha1")
+func convertDashboardSpec_V1_to_V2alpha1(in *dashv1.DashboardSpec, out *dashv2alpha1.DashboardSpec, scope conversion.Scope, ctx context.Context, dsIndexProvider schemaversion.DataSourceIndexProvider, leIndexProvider schemaversion.LibraryElementIndexProvider) error {
+	ctx, span := TracingStart(ctx, "dashboard.conversion.spec_v1_to_v2alpha1")
 	defer span.End()
 
 	// Parse the unstructured spec into a dashboard JSON structure
@@ -908,7 +908,7 @@ func yOffsetInRows(panelMap map[string]interface{}, rowY int64) int64 {
 // LEGACY_STRING_VALUE_KEY is used for QueryVariableKind's query prop. Historically, queries
 // could be defined as strings, but in schema V2 we've deprecated the string type and support
 // only DataQuery objects. When a query is a simple string (legacy format), it's stored under
-// this key in a map structure to preserve the value during migration from v1beta1 to v2alpha1.
+// this key in a map structure to preserve the value during migration from v1 to v2alpha1.
 const LEGACY_STRING_VALUE_KEY = "__legacyStringValue"
 
 // Variable enum transformation functions
@@ -1980,7 +1980,7 @@ func buildAnnotationQuery(annotationMap map[string]interface{}) (dashv2alpha1.Da
 	// Transform mappings
 	var mappings map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping
 	if mappingsMap, ok := annotationMap["mappings"].(map[string]interface{}); ok && mappingsMap != nil {
-		mappings = convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap)
+		mappings = convertAnnotationMappings_V1_to_V2alpha1(mappingsMap)
 	}
 
 	// Transform builtIn from float64 to bool
@@ -2066,13 +2066,13 @@ func buildAnnotationFilter(filterMap map[string]interface{}) *dashv2alpha1.Dashb
 	return filter
 }
 
-func convertAnnotationMappings_V1beta1_to_V2alpha1(mappingsMap map[string]interface{}) map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping {
+func convertAnnotationMappings_V1_to_V2alpha1(mappingsMap map[string]interface{}) map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping {
 	mappings := make(map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping)
 
 	for key, value := range mappingsMap {
 		mapping := dashv2alpha1.DashboardAnnotationEventFieldMapping{}
 
-		// Handle simple string format (v1beta1 legacy format: "fieldName": "targetFieldName")
+		// Handle simple string format (v1 legacy format: "fieldName": "targetFieldName")
 		if valueStr, ok := value.(string); ok && valueStr != "" {
 			// Simple string mapping: treat as field source with the value as the field name
 			defaultSource := "field"

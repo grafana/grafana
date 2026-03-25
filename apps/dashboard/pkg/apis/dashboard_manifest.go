@@ -17,6 +17,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	v1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	v2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	v2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
@@ -24,6 +25,9 @@ import (
 )
 
 var (
+	rawSchemaDashboardv1           = []byte(`{"ConversionStatus":{"additionalProperties":false,"description":"ConversionStatus is the status of the conversion of the dashboard.","properties":{"error":{"description":"The error message from the conversion.\nEmpty if the conversion has not failed.","type":"string"},"failed":{"description":"Whether from another version has failed.\nIf true, means that the dashboard is not valid,\nand the caller should instead fetch the stored version.","type":"boolean"},"source":{"additionalProperties":{},"description":"The original value map[string]any","type":"object"},"storedVersion":{"description":"The version which was stored when the dashboard was created / updated.\nFetching this version should always succeed.","type":"string"}},"required":["failed"],"type":"object"},"Dashboard":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":true,"type":"object"},"status":{"additionalProperties":false,"properties":{"conversion":{"$ref":"#/components/schemas/ConversionStatus","description":"Optional conversion status."}},"type":"object"}}`)
+	versionSchemaDashboardv1       app.VersionSchema
+	_                              = json.Unmarshal(rawSchemaDashboardv1, &versionSchemaDashboardv1)
 	rawSchemaDashboardv0alpha1     = []byte(`{"ConversionStatus":{"additionalProperties":false,"description":"ConversionStatus is the status of the conversion of the dashboard.","properties":{"error":{"description":"The error message from the conversion.\nEmpty if the conversion has not failed.","type":"string"},"failed":{"description":"Whether from another version has failed.\nIf true, means that the dashboard is not valid,\nand the caller should instead fetch the stored version.","type":"boolean"},"source":{"additionalProperties":{},"description":"The original value map[string]any","type":"object"},"storedVersion":{"description":"The version which was stored when the dashboard was created / updated.\nFetching this version should always succeed.","type":"string"}},"required":["failed"],"type":"object"},"Dashboard":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":true,"type":"object"},"status":{"additionalProperties":false,"properties":{"conversion":{"$ref":"#/components/schemas/ConversionStatus","description":"Optional conversion status."}},"type":"object"}}`)
 	versionSchemaDashboardv0alpha1 app.VersionSchema
 	_                              = json.Unmarshal(rawSchemaDashboardv0alpha1, &versionSchemaDashboardv0alpha1)
@@ -47,8 +51,27 @@ var (
 var appManifestData = app.ManifestData{
 	AppName:          "dashboard",
 	Group:            "dashboard.grafana.app",
-	PreferredVersion: "v1beta1",
+	PreferredVersion: "v1",
 	Versions: []app.ManifestVersion{
+		{
+			Name:   "v1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
+				{
+					Kind:       "Dashboard",
+					Plural:     "Dashboards",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Schema:     &versionSchemaDashboardv1,
+				},
+			},
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{},
+				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
+			},
+		},
+
 		{
 			Name:   "v0alpha1",
 			Served: true,
@@ -163,6 +186,7 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
+	"Dashboard/v1":       v1.DashboardKind(),
 	"Dashboard/v0alpha1": v0alpha1.DashboardKind(),
 	"Snapshot/v0alpha1":  v0alpha1.SnapshotKind(),
 	"Dashboard/v1beta1":  v1beta1.DashboardKind(),

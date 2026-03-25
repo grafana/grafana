@@ -7,17 +7,17 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"k8s.io/apimachinery/pkg/conversion"
 
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
-// ConvertDashboard_V2alpha1_to_V1beta1 converts a v2alpha1 dashboard to v1beta1 format.
-// The v1beta1 format uses an unstructured JSON structure, so we build a map[string]interface{}
+// ConvertDashboard_V2alpha1_to_V1 converts a v2alpha1 dashboard to v1 format.
+// The v1 format uses an unstructured JSON structure, so we build a map[string]interface{}
 // that represents the v1 dashboard JSON format.
 // The dsIndexProvider is used to resolve default datasources when queries/variables/annotations
 // don't have explicit datasource references.
-func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
+func ConvertDashboard_V2alpha1_to_V1(in *dashv2alpha1.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	// if available, use parent context from scope so tracing works
 	ctx := context.Background()
 	if scope != nil && scope.Meta() != nil && scope.Meta().Context != nil {
@@ -25,7 +25,7 @@ func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv
 			ctx = scopeCtx
 		}
 	}
-	ctx, span := TracingStart(ctx, "dashboard.conversion.v2alpha1_to_v1beta1",
+	ctx, span := TracingStart(ctx, "dashboard.conversion.v2alpha1_to_v1",
 		attribute.String("dashboard.uid", in.Name),
 		attribute.String("dashboard.namespace", in.Namespace),
 	)
@@ -35,8 +35,8 @@ func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv
 	out.APIVersion = dashv1.APIVERSION
 	out.Kind = in.Kind // Preserve the Kind from input (should be "Dashboard")
 
-	// Convert the spec to v1beta1 unstructured format
-	dashboardJSON, err := convertDashboardSpec_V2alpha1_to_V1beta1(ctx, &in.Spec)
+	// Convert the spec to v1 unstructured format
+	dashboardJSON, err := convertDashboardSpec_V2alpha1_to_V1(ctx, &in.Spec)
 	if err != nil {
 		return fmt.Errorf("failed to convert dashboard spec: %w", err)
 	}
@@ -53,8 +53,8 @@ func ConvertDashboard_V2alpha1_to_V1beta1(in *dashv2alpha1.Dashboard, out *dashv
 	return nil
 }
 
-func convertDashboardSpec_V2alpha1_to_V1beta1(ctx context.Context, in *dashv2alpha1.DashboardSpec) (map[string]interface{}, error) {
-	_, span := TracingStart(ctx, "dashboard.conversion.spec_v2alpha1_to_v1beta1")
+func convertDashboardSpec_V2alpha1_to_V1(ctx context.Context, in *dashv2alpha1.DashboardSpec) (map[string]interface{}, error) {
+	_, span := TracingStart(ctx, "dashboard.conversion.spec_v2alpha1_to_v1")
 	defer span.End()
 
 	dashboard := make(map[string]interface{})
@@ -1536,12 +1536,12 @@ func convertCustomVariableToV1(variable *dashv2alpha1.DashboardCustomVariableKin
 
 func convertConstantVariableToV1(variable *dashv2alpha1.DashboardConstantVariableKind) (map[string]interface{}, error) {
 	spec := variable.Spec
-	// Constant variables in v1beta1 must always be hidden (hide: 2),
+	// Constant variables in v1 must always be hidden (hide: 2),
 	// otherwise DashboardMigrator will convert them to textbox variables.
 	varMap := map[string]interface{}{
 		"name":        spec.Name,
 		"type":        "constant",
-		"hide":        2, // hideVariable - constant variables must always be hidden in v1beta1
+		"hide":        2, // hideVariable - constant variables must always be hidden in v1
 		"skipUrlSync": spec.SkipUrlSync,
 		"query":       spec.Query,
 		"current": map[string]interface{}{
@@ -1814,7 +1814,7 @@ func convertAnnotationsToV1(annotations []dashv2alpha1.DashboardAnnotationQueryK
 			"iconColor": annotation.Spec.IconColor,
 		}
 
-		// Convert builtIn boolean to integer (v1beta1 uses 1 for true, and omits for false)
+		// Convert builtIn boolean to integer (v1 uses 1 for true, and omits for false)
 		// Also add type: "dashboard" for built-in annotations
 		if annotation.Spec.BuiltIn != nil && *annotation.Spec.BuiltIn {
 			annotationMap["builtIn"] = 1
@@ -1861,9 +1861,9 @@ func convertAnnotationsToV1(annotations []dashv2alpha1.DashboardAnnotationQueryK
 			}
 		}
 
-		// Convert mappings from v2alpha1 format back to v1beta1 format
+		// Convert mappings from v2alpha1 format back to v1 format
 		if len(annotation.Spec.Mappings) > 0 {
-			mappings := convertAnnotationMappings_V2alpha1_to_V1beta1(annotation.Spec.Mappings)
+			mappings := convertAnnotationMappings_V2alpha1_to_V1(annotation.Spec.Mappings)
 			if len(mappings) > 0 {
 				annotationMap["mappings"] = mappings
 			}
@@ -1888,13 +1888,13 @@ func convertAnnotationsToV1(annotations []dashv2alpha1.DashboardAnnotationQueryK
 	return result
 }
 
-// convertAnnotationMappings_V2alpha1_to_V1beta1 converts mappings from v2alpha1 structured format
-// back to v1beta1 format. v1beta1 supports both simple string format and structured format with source/value/regex.
+// convertAnnotationMappings_V2alpha1_to_V1 converts mappings from v2alpha1 structured format
+// back to v1 format. v1 supports both simple string format and structured format with source/value/regex.
 // v2alpha1 format: map[string]DashboardAnnotationEventFieldMapping with Source, Value, Regex
-// v1beta1 format: map[string]interface{} where values can be either:
+// v1 format: map[string]interface{} where values can be either:
 //   - string (legacy simple format: "fieldName": "targetFieldName")
 //   - object (structured format: "fieldName": {"source": "field", "value": "...", "regex": "..."})
-func convertAnnotationMappings_V2alpha1_to_V1beta1(mappings map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping) map[string]interface{} {
+func convertAnnotationMappings_V2alpha1_to_V1(mappings map[string]dashv2alpha1.DashboardAnnotationEventFieldMapping) map[string]interface{} {
 	result := make(map[string]interface{})
 
 	for key, mapping := range mappings {

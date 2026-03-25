@@ -74,7 +74,7 @@ func TestIntegrationProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	// Check that each file was exported with its stored version and new UIDs
 	for _, test := range []props{
 		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1", name: "test-v0", fileName: "test-dashboard-created-at-v0.json"},
-		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1beta1", name: "test-v1", fileName: "test-dashboard-created-at-v1.json"},
+		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1", name: "test-v1", fileName: "test-dashboard-created-at-v1.json"},
 		{title: "Test dashboard. Created at v2alpha1", apiVersion: "dashboard.grafana.app/v2alpha1", name: "test-v2alpha1", fileName: "test-dashboard-created-at-v2alpha1.json"},
 		{title: "Test dashboard. Created at v2beta1", apiVersion: "dashboard.grafana.app/v2beta1", name: "test-v2beta1", fileName: "test-dashboard-created-at-v2beta1.json"},
 	} {
@@ -131,14 +131,14 @@ func TestIntegrationProvisioning_ExportDashboardsWithStoredVersions(t *testing.T
 			fileName:      "test-dashboard-created-at-v0.json",
 		},
 		{
-			name: "v1beta1",
+			name: "v1",
 			file: "../exportunifiedtorepository/dashboard-test-v1.yaml",
 			createFunc: func(dashboard *unstructured.Unstructured, opts metav1.CreateOptions) (*unstructured.Unstructured, error) {
 				return helper.DashboardsV1.Resource.Create(ctx, dashboard, opts)
 			},
 			expectedTitle: "Test dashboard. Created at v1",
 			expectedName:  "test-v1",
-			expectedVer:   "dashboard.grafana.app/v1beta1",
+			expectedVer:   "dashboard.grafana.app/v1",
 			fileName:      "test-dashboard-created-at-v1.json",
 		},
 		{
