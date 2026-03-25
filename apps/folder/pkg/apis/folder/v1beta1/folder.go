@@ -14,14 +14,11 @@ type (
 	FolderList      = v1.FolderList
 	FolderSpec      = v1.FolderSpec
 	FolderJSONCodec = v1.FolderJSONCodec
-	FolderClient    = v1.FolderClient
 )
 
 var (
-	NewFolder                    = v1.NewFolder
-	NewFolderSpec                = v1.NewFolderSpec
-	NewFolderClient              = v1.NewFolderClient
-	NewFolderClientFromGenerator = v1.NewFolderClientFromGenerator
+	NewFolder     = v1.NewFolder
+	NewFolderSpec = v1.NewFolderSpec
 )
 
 var (
