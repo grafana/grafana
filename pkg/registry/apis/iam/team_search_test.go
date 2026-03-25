@@ -13,6 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -440,24 +443,24 @@ func TestTeamAccessControl(t *testing.T) {
 
 func TestEnrichWithMemberCounts(t *testing.T) {
 	t.Run("all succeed - sets correct member counts", func(t *testing.T) {
-		mockSearchClient := &mockTeamBindingSearchClient{
-			searchFunc: func(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-				teamName := req.Options.Fields[0].Values[0]
+		mockLister := &mockTeamBindingLister{
+			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+				teamName, _ := options.FieldSelector.RequiresExactMatch("spec.teamRef.name")
 				switch teamName {
 				case "team-1":
-					return &resourcepb.ResourceSearchResponse{TotalHits: 3}, nil
+					return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 3)}, nil
 				case "team-2":
-					return &resourcepb.ResourceSearchResponse{TotalHits: 0}, nil
+					return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 0)}, nil
 				default:
-					return &resourcepb.ResourceSearchResponse{}, nil
+					return &iamv0alpha1.TeamBindingList{}, nil
 				}
 			},
 		}
 
 		handler := &TeamSearchHandler{
-			log:                     log.New("test"),
-			tracer:                  tracing.NewNoopTracerService(),
-			teamBindingSearchClient: mockSearchClient,
+			log:              log.New("test"),
+			tracer:           tracing.NewNoopTracerService(),
+			teamBindingStore: mockLister,
 		}
 
 		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
@@ -472,20 +475,20 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 	})
 
 	t.Run("one fails - other goroutines still complete", func(t *testing.T) {
-		mockSearchClient := &mockTeamBindingSearchClient{
-			searchFunc: func(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-				teamName := req.Options.Fields[0].Values[0]
+		mockLister := &mockTeamBindingLister{
+			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+				teamName, _ := options.FieldSelector.RequiresExactMatch("spec.teamRef.name")
 				if teamName == "team-bad" {
 					return nil, fmt.Errorf("teambinding list failed for team-bad")
 				}
-				return &resourcepb.ResourceSearchResponse{TotalHits: 2}, nil
+				return &iamv0alpha1.TeamBindingList{Items: make([]iamv0alpha1.TeamBinding, 2)}, nil
 			},
 		}
 
 		handler := &TeamSearchHandler{
-			log:                     log.New("test"),
-			tracer:                  tracing.NewNoopTracerService(),
-			teamBindingSearchClient: mockSearchClient,
+			log:              log.New("test"),
+			tracer:           tracing.NewNoopTracerService(),
+			teamBindingStore: mockLister,
 		}
 
 		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
@@ -505,19 +508,19 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 	})
 }
 
-type mockTeamBindingSearchClient struct {
-	searchFunc func(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error)
+type mockTeamBindingLister struct {
+	listFunc func(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error)
 }
 
-func (m *mockTeamBindingSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
-	return m.searchFunc(ctx, req, opts...)
+func (m *mockTeamBindingLister) NewList() runtime.Object {
+	return &iamv0alpha1.TeamBindingList{}
 }
 
-func (m *mockTeamBindingSearchClient) GetStats(context.Context, *resourcepb.ResourceStatsRequest, ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-	return nil, nil
+func (m *mockTeamBindingLister) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	return m.listFunc(ctx, options)
 }
 
-func (m *mockTeamBindingSearchClient) RebuildIndexes(context.Context, *resourcepb.RebuildIndexesRequest, ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+func (m *mockTeamBindingLister) ConvertToTable(_ context.Context, _ runtime.Object, _ runtime.Object) (*metav1.Table, error) {
 	return nil, nil
 }
 

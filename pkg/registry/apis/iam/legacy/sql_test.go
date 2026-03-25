@@ -297,28 +297,6 @@ func TestIdentityQueries(t *testing.T) {
 					}),
 				},
 			},
-			sqlCountTeamBindingsTemplate: {
-				{
-					Name: "count_team_bindings_all",
-					Data: listTeamBindings(&ListTeamBindingsQuery{
-						OrgID: 1,
-					}),
-				},
-				{
-					Name: "count_team_bindings_by_team",
-					Data: listTeamBindings(&ListTeamBindingsQuery{
-						OrgID:   1,
-						TeamUID: "team-1",
-					}),
-				},
-				{
-					Name: "count_team_bindings_external_true",
-					Data: listTeamBindings(&ListTeamBindingsQuery{
-						OrgID:    1,
-						External: boolPtr(true),
-					}),
-				},
-			},
 			sqlUpdateTeamMemberQuery: {
 				{
 					Name: "update_team_member_basic",

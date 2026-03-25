@@ -137,7 +137,7 @@ func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourc
 		})
 	}
 
-	resp.TotalHits = teamBindings.TotalCount
+	resp.TotalHits = int64(len(resp.Results.Rows))
 	return resp, nil
 }
 

@@ -14,7 +14,10 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
-	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apiserver/pkg/endpoints/request"
+	k8srest "k8s.io/apiserver/pkg/registry/rest"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -54,12 +57,12 @@ var teamAccessControlChecks = []teamAccessControlCheck{
 }
 
 type TeamSearchHandler struct {
-	log                    log.Logger
-	client                 resourcepb.ResourceIndexClient
-	tracer                 trace.Tracer
-	features               featuremgmt.FeatureToggles
-	accessClient           authlib.AccessClient
-	teamBindingSearchClient resourcepb.ResourceIndexClient
+	log              log.Logger
+	client           resourcepb.ResourceIndexClient
+	tracer           trace.Tracer
+	features         featuremgmt.FeatureToggles
+	accessClient     authlib.AccessClient
+	teamBindingStore k8srest.Lister
 }
 
 func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles, accessClient authlib.AccessClient) *TeamSearchHandler {
@@ -364,7 +367,7 @@ func (s *TeamSearchHandler) stampAccessControl(ctx context.Context, requester id
 }
 
 func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
-	if s.teamBindingSearchClient == nil || len(hits) == 0 {
+	if s.teamBindingStore == nil || len(hits) == 0 {
 		return nil
 	}
 
@@ -372,29 +375,18 @@ func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespac
 
 	for i := range hits {
 		g.Go(func() error {
-			searchReq := &resourcepb.ResourceSearchRequest{
-				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{
-						Group:     iamv0alpha1.TeamBindingResourceInfo.GroupResource().Group,
-						Resource:  iamv0alpha1.TeamBindingResourceInfo.GroupResource().Resource,
-						Namespace: namespace,
-					},
-					Fields: []*resourcepb.Requirement{
-						{
-							Key:      resource.SEARCH_FIELD_PREFIX + builders.TEAM_BINDING_TEAM,
-							Operator: string(selection.Equals),
-							Values:   []string{hits[i].Name},
-						},
-					},
-				},
-				Limit: 1,
-			}
-
-			result, err := s.teamBindingSearchClient.Search(ctx, searchReq)
+			outgoingCtx := request.WithNamespace(ctx, namespace)
+			obj, err := s.teamBindingStore.List(outgoingCtx, &internalversion.ListOptions{
+				FieldSelector: fields.OneTermEqualSelector("spec.teamRef.name", hits[i].Name),
+			})
 			if err != nil {
 				return fmt.Errorf("failed to list team bindings for team %s: %w", hits[i].Name, err)
 			}
-			hits[i].MemberCount = result.TotalHits
+			list, ok := obj.(*iamv0alpha1.TeamBindingList)
+			if !ok {
+				return fmt.Errorf("unexpected type %T from team binding list", obj)
+			}
+			hits[i].MemberCount = int64(len(list.Items))
 			return nil
 		})
 	}

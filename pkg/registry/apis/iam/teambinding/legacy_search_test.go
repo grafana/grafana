@@ -351,7 +351,7 @@ func TestLegacyTeamBindingSearchClient_Search(t *testing.T) {
 						{UID: "binding1", TeamUID: "team1", UserUID: "user1", Permission: team.PermissionTypeAdmin, External: false},
 						{UID: "binding2", TeamUID: "team2", UserUID: "user1", Permission: team.PermissionTypeMember, External: true},
 					},
-					Continue: 0,
+					Continue:   0,
 				}, nil
 			},
 		}
