@@ -457,7 +457,7 @@ const (
 	// (POST /config/history/{id}/_activate).
 	// Restricted to admin-only in v13; endpoint will be removed in v14.
 	ActionAlertingNotificationsConfigHistoryWrite = "alert.notifications.config-history:write"
-	// ActionAlertingNotificationsConfigHistoryDelete gates access to alertmanager status API
+	// ActionAlertingNotificationSystemStatus gates access to alertmanager status API
 	ActionAlertingNotificationSystemStatus = "alert.notifications.system-status:read"
 
 	// Alerting notifications template actions
