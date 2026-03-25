@@ -72,3 +72,17 @@ Use the Kubernetes-style resource APIs under `notifications.alerting.grafana.app
 | Templates             | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`  |
 | Mute timings          | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`   |
 | Inhibition rules      | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules` |
+
+### Alertmanager status endpoint requires a new permission
+
+#### You are affected if
+
+You use the `GET /api/alertmanager/grafana/api/v2/status` endpoint and rely on the `alert.notifications:read` permission to access it.
+
+#### Description
+
+The `GET /api/alertmanager/grafana/api/v2/status` endpoint previously required the legacy `alert.notifications:read` permission. It now requires a dedicated `alert.notifications.system-status:read` permission. This new permission is included in the `fixed:alerting.notifications:writer` role, which is granted to Admin users by default.
+
+#### Migration
+
+If you have custom roles that need access to this endpoint, add the `alert.notifications.system-status:read` action to those roles. Admin users are unaffected as they receive this permission automatically through the built-in alerting notifications writer role.
