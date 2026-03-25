@@ -3,7 +3,6 @@ package iam
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/types"
 
@@ -90,7 +89,6 @@ type IdentityAccessManagementAPIBuilder struct {
 	unified                           resource.ResourceClient
 	userSearchClient                  resourcepb.ResourceIndexClient
 	userSearchHandler                 *user.SearchHandler
-	teamBindingStore                  k8srest.Lister
 	teamSearch                        *TeamSearchHandler
 	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
 	externalGroupMappingSearchHandler externalgroupmapping.SearchHandler
