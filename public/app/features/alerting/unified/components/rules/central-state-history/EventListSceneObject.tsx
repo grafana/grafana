@@ -29,6 +29,7 @@ import { trackUseCentralHistoryFilterByClicking, trackUseCentralHistoryMaxEvents
 import { stateHistoryApi } from '../../../api/stateHistoryApi';
 import { AITriageButtonComponent } from '../../../enterprise-components/AI/AIGenTriageButton/addAITriageButton';
 import { usePagination } from '../../../hooks/usePagination';
+import { useSlowQuery } from '../../../hooks/useSlowQuery';
 import { combineMatcherStrings } from '../../../utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { createRelativeUrl } from '../../../utils/url';
@@ -86,6 +87,8 @@ export const HistoryEventsList = ({
     previous: stateFrom !== 'all' ? stateFrom : undefined,
   });
 
+  const isSlowQuery = useSlowQuery(isLoading, { threshold: 5_000 });
+
   const { historyRecords: historyRecordsNotSorted } = useRuleHistoryRecords(stateHistory, {
     labels: valueInLabelFilter.toString(),
   });
@@ -111,6 +114,17 @@ export const HistoryEventsList = ({
           {t(
             'alerting.central-alert-history.too-many-events.text',
             'The selected time period has too many events to display. Displaying the latest 5000 events. Try using a shorter time period.'
+          )}
+        </Alert>
+      )}
+      {isSlowQuery && (
+        <Alert
+          severity="warning"
+          title={t('alerting.central-alert-history.slow-query.title', 'Query is taking longer than expected')}
+        >
+          {t(
+            'alerting.central-alert-history.slow-query.text',
+            'This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.'
           )}
         </Alert>
       )}
