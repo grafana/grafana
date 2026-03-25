@@ -1527,7 +1527,7 @@ export interface FeatureToggles {
   useMTPlugins?: boolean;
   /**
   * Enables support for variables whose values can have multiple properties
-  * @default false
+  * @default true
   */
   multiPropsVariables?: boolean;
   /**
