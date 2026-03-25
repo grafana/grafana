@@ -16,7 +16,7 @@ Tests provisioned resource operations across Admin, Editor, and Viewer roles. Se
 **This is a test-only run. You MUST follow these rules:**
 
 1. **No code changes.** Do not modify any Grafana source code or test files. Configuration files (e.g., feature toggles) may be changed only as directed by the Prerequisites section. You are testing the product as-is, not fixing it.
-2. **Do not stop on failure.** When a step fails, encounters a bug, or produces unexpected behavior -- document it and move on to the next step. Do not attempt to debug or fix the root cause. If a failure blocks subsequent steps, apply a minimal workaround to unblock the flow (e.g., create a resource via API if the UI failed) and note it in the report.
+2. **Do not stop on failure.** When a step fails, encounters a bug, or produces unexpected behavior -- document it and move on to the next step. Do not attempt to debug or fix the root cause. If a failure blocks subsequent steps, apply a minimal workaround to unblock the flow and note it in the report. **Workaround must use the same mechanism as the original step** (e.g., retry with slightly different input, skip to a later step that creates the needed state). Do not switch to a different API or creation method -- the resource may not behave the same way in subsequent steps.
 3. **Complete the entire flow.** Execute every step from start to finish, including cleanup. Skipping steps after a failure loses coverage.
 4. **Produce a final report.** After completing all steps (or reaching the end), output a structured report:
 
@@ -42,6 +42,8 @@ Tests provisioned resource operations across Admin, Editor, and Viewer roles. Se
    ### Issues Found
    1. **[Step N] <title>**: <description of the bug or unexpected behavior>
    ```
+
+5. **Budget your time.** Allocate effort across all phases, not just the first. If a phase is consuming disproportionate time due to repeated failures or workarounds, document what you've observed and advance to the next phase. Partial coverage of every phase is more valuable than exhaustive coverage of one.
 
 ## Prerequisites
 
@@ -307,6 +309,14 @@ Logged in as **admin**. Build the following folder/dashboard tree inside the pro
 11. Create folder `staging` in provisioned root
 12. Create `Dashboard Staging-1` in `staging`
 
+**Important:** All resources MUST be created through the provisioned folder UI ("New" dropdown in the provisioned folder browse page). Do not use the Grafana REST API (`POST /api/dashboards/db` or `POST /api/folders`) -- those create regular (non-provisioned) resources that won't appear in the provisioned folder tree and won't work with branch-based move/delete in later phases.
+
+**If creation repeatedly fails:** If the same bug blocks multiple resources after 2-3 successful creations, document the bug and move to Step 4 with whatever exists. The minimum viable set for later phases is:
+
+- 2 top-level folders (needed for bulk move in Step 13)
+- 1 dashboard in each folder (needed for bulk delete verification)
+- 1 nested subfolder (needed for depth verification)
+
 ### Step 4: Verify Creation
 
 Navigate through all 3 levels. Confirm:
@@ -329,6 +339,7 @@ Log out and log in as `viewer-test` / `viewer-test`. See "Switch Browser User" i
 4. `fill` password input (`data-testid="data-testid Password input field"`) with `viewer-test`
 5. `click` login button (`data-testid="data-testid Login button"`)
 6. If prompted, `click` skip password change (`data-testid="data-testid Skip change password button"`)
+7. **Verify login:** Navigate to the provisioned root. Before checking restrictions, confirm you are logged in as `viewer-test` -- the user menu (bottom-left avatar) or `/profile` page should show the username. If you see admin-only controls (e.g., "New" button, checkboxes), you are not logged in as the correct user.
 
 ### Step 6: Verify Viewer Restrictions
 
@@ -353,6 +364,7 @@ Log out and log in as `editor-test` / `editor-test`. Same procedure as Step 5.
 4. `fill` password input with `editor-test`
 5. `click` login button
 6. If prompted, `click` skip password change
+7. **Verify login:** Navigate to the provisioned root and confirm you are logged in as `editor-test` via the user menu or `/profile` page.
 
 ### Step 8: Editor Creates Resources (Write Workflow)
 
