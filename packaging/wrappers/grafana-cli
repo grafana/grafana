@@ -8,5 +8,5 @@ if [ ! -x "$EXECUTABLE" ]; then
   exit 5
 fi
 
-echo "Deprecation warning: 'grafana-cli' is deprecated and will be removed in a future release. Use 'grafana' instead." >&2
+echo "Deprecation warning: 'grafana-cli' is deprecated and will be removed in a future release. Use the 'grafana cli' subcommand instead." >&2
 exec "$EXECUTABLE" cli "$@"
