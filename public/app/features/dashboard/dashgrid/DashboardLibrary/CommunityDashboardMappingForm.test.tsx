@@ -3,8 +3,8 @@ import { render } from 'test/test-utils';
 
 import { DataSourceInput, DashboardInput, InputType } from 'app/features/manage-dashboards/types';
 
-import { TrackingProvider } from './TrackingContext';
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
+import { TrackingProvider } from './TrackingContext';
 import { CONTENT_KINDS, ContentKind, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
 import { InputMapping } from './utils/autoMapDatasources';
 

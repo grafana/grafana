@@ -1,14 +1,17 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
-import { PAGE_SIZE } from 'app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsList/SuggestedDashboardsList';
 import { SuggestedDashboardsModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsModal';
 import { TrackingProvider } from 'app/features/dashboard/dashgrid/DashboardLibrary/TrackingContext';
 import {
   fetchCommunityDashboards,
   fetchProvisionedDashboards,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/api/dashboardLibraryApi';
-import { EVENT_LOCATIONS, SourceEntryPoint } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import {
+  EVENT_LOCATIONS,
+  PAGE_SIZE,
+  SourceEntryPoint,
+} from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { GnetDashboard } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 import { PluginDashboard } from 'app/types/plugins';
 

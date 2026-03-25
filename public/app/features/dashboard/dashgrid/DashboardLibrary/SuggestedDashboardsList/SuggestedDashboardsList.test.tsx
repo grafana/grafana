@@ -4,12 +4,13 @@ import { render } from 'test/test-utils';
 import { locationService } from '@grafana/runtime';
 
 import { TrackingProvider } from '../TrackingContext';
-import { SuggestedDashboardsList } from '../SuggestedDashboardsList/SuggestedDashboardsList';
 import { fetchCommunityDashboards } from '../api/dashboardLibraryApi';
 import { EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../constants';
 import { GnetDashboard } from '../types';
 import { onUseCommunityDashboard } from '../utils/communityDashboardHelpers';
 import { createMockGnetDashboard, createMockPluginDashboard } from '../utils/test-utils';
+
+import { SuggestedDashboardsList } from './SuggestedDashboardsList';
 
 jest.mock('../api/dashboardLibraryApi', () => ({
   fetchCommunityDashboards: jest.fn(),
