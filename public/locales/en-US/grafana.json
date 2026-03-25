@@ -6801,6 +6801,10 @@
       "label-value": "Value",
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
+    "control-edit-actions": {
+      "aria-label-delete": "Delete",
+      "aria-label-edit": "Edit"
+    },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
       "detail-grids": "All auto-grids will be shown as custom grids",
@@ -6941,10 +6945,6 @@
     },
     "draggable-items-list": {
       "select": "Select"
-    },
-    "edit-actions": {
-      "aria-label-delete-variable": "Delete variable",
-      "aria-label-edit-variable": "Edit variable"
     },
     "edit-link-view": {
       "edit-link-page-nav": {
