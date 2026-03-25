@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
-import { FeatureState, FieldConfigSource, PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { FeatureState, FieldConfigSource, GrafanaTheme2, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
-import { FeatureBadge, Stack } from '@grafana/ui';
+import { FeatureBadge, Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { VisualizationCardGrid } from 'app/features/panel/components/VizTypePicker/VisualizationCardGrid';
 import { VizSuggestionsInteractions } from 'app/features/panel/components/VizTypePicker/interactions';
@@ -16,6 +17,7 @@ export interface PanelStylesSectionProps {
 }
 
 export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionProps) {
+  const styles = useStyles2(getStyles);
   const [selectedPreset, setSelectedPreset] = useState<string | undefined>(undefined);
   const { data } = sceneGraph.getData(panel).useState();
 
@@ -35,6 +37,32 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
       }
     },
     [onApplyPreset, panel]
+  );
+
+  const presetModifiesThresholds = (preset: PanelPluginVisualizationSuggestion): boolean => {
+    return Boolean(preset.fieldConfig?.defaults?.thresholds);
+  };
+
+  const getThresholdBadge = useCallback(
+    (preset: PanelPluginVisualizationSuggestion) => {
+      return (
+        <>
+          {presetModifiesThresholds(preset) && (
+            <Tooltip
+              content={t('dashboard-scene.panel-styles.threshold-badge-tooltip', 'This preset will modify thresholds')}
+            >
+              <div
+                className={styles.thresholdBadge}
+                aria-label={t('dashboard-scene.panel-styles.threshold-badge-label', 'Modifies thresholds')}
+              >
+                <Icon name="sliders-v-alt" size="xs" />
+              </div>
+            </Tooltip>
+          )}
+        </>
+      );
+    },
+    [styles.thresholdBadge]
   );
 
   if (!presets || presets.length === 0 || !data || data.series.length === 0) {
@@ -61,7 +89,31 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
         selectedKey={selectedPreset}
         minColumnWidth={120}
         maxCardWidth={MIN_MULTI_COLUMN_SIZE}
+        getBadge={getThresholdBadge}
       />
     </OptionsPaneCategory>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  thresholdBadge: css({
+    position: 'absolute',
+    top: theme.spacing(0.5),
+    right: theme.spacing(0.5),
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: theme.spacing(2.5),
+    height: theme.spacing(2.5),
+    borderRadius: theme.shape.radius.circle,
+    background: theme.colors.background.canvas,
+    border: `1px solid ${theme.colors.border.medium}`,
+    color: theme.colors.text.secondary,
+    pointerEvents: 'auto',
+    zIndex: 1,
+    '&:hover': {
+      color: theme.colors.text.primary,
+      borderColor: theme.colors.border.strong,
+    },
+  }),
+});
