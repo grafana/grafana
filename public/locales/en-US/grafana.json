@@ -385,6 +385,7 @@
         "group-by": "Grouped by",
         "group-title": "Notification configuration",
         "mute-timings": "Mute timings",
+        "notification-policy": "Notification policy",
         "timing-options": "Timings"
       },
       "pending-period": "Pending period",
@@ -497,6 +498,15 @@
     },
     "alert-rule": {
       "term": "Alert rule"
+    },
+    "alert-rule-drawer": {
+      "error-title": "Failed to create alert rule",
+      "error-unexpected": "Received an unexpected response. Please try again.",
+      "error-unknown": "An unexpected error occurred.",
+      "success-message": "Your alert rule has been created successfully.",
+      "success-title": "Alert rule created",
+      "validation-error-message": "Please correct the errors in the form and try again.",
+      "validation-error-title": "Validation error"
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -773,7 +783,9 @@
         "unknown-rule": "Unknown",
         "value-in-transition": "Value in transition"
       },
-      "error": "Something went wrong loading the alert state history",
+      "error": {
+        "server-error": "The alert state history query failed — the server returned an error"
+      },
       "filter": {
         "clear": "Clear filters",
         "info": {
@@ -784,6 +796,10 @@
         }
       },
       "filterBy": "Filter by:",
+      "slow-query": {
+        "text": "This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.",
+        "title": "Query is taking longer than expected"
+      },
       "tab": {
         "alert-events": "Alert events",
         "notifications": "Notifications"
@@ -880,6 +896,8 @@
       "export-all": "Export all",
       "learn-more": "Learn more",
       "loading": "Loading...",
+      "optional": "(optional)",
+      "refresh": "Refresh",
       "search-by-matchers": "Search by matchers",
       "titles": {
         "notification-templates": "Notification Templates"
@@ -1690,7 +1708,7 @@
         "skipped": "Skipped",
         "source": "Source",
         "start": "Start import",
-        "subtitle": "Review each section and once you are happy, start the migration.",
+        "subtitle": "Review each section and once you are happy, start the import.",
         "validation-error": "Validation failed.",
         "validation-ok": "No conflicts found. Ready to import.",
         "validation-warning": "Some resources will be renamed to avoid conflicts.",
@@ -1710,13 +1728,13 @@
       },
       "step1": {
         "datasource": "Alertmanager data source",
-        "extra-config-overwrite-desc": "An imported configuration named \"{{identifier}}\" already exists. Importing will replace it with the new configuration.",
-        "extra-config-overwrite-title": "Existing configuration will be replaced",
         "heading": "Import Notification Resources",
         "no-datasources": "No Alertmanager data sources found",
         "no-permission-desc": "You do not have permission to import notification resources. You need the <strong>alerting.notifications:write</strong> permission. You can skip this step.",
         "no-permission-title": "Insufficient permissions",
-        "policy-tree-desc": "Name for the imported notification policy tree. Alerts with the label <2>__grafana_managed_route__</2> matching this name will be routed through this policy tree.",
+        "policy-tree-desc": "When you import, Grafana creates a separate notification policy tree. Enter a name you will recognize.",
+        "policy-tree-help": "When you import this Alertmanager configuration, Grafana will create a separate notification policy tree for it. The name you enter here will identify that tree in the UI and is what you select when you import alert rules that should use this routing. Use a label you will recognize — for example data source, team, cluster, or environment (such as prometheus-prod or platform-team).",
+        "policy-tree-help-title": "About policy tree names",
         "policy-tree-name": "Policy tree name",
         "policy-tree-placeholder": "prometheus-prod",
         "policy-tree-required": "Policy tree name is required",
@@ -1759,7 +1777,7 @@
         "policy-desc": "Choose how imported alerts should be routed to contact points.",
         "policy-title": "Notification Routing",
         "policy-tree": "Policy tree",
-        "policy-tree-desc": "Select a notification policy tree to route alerts",
+        "policy-tree-desc": "Select a notification policy tree to route the imported alerts",
         "select-group": "All groups",
         "select-namespace": "All namespaces",
         "select-policy": "Select a policy tree",
@@ -2009,6 +2027,10 @@
       "error-unable-to-fetch": "Unable to fetch alert state history",
       "loading": "Loading...",
       "no-transitions-match-filters": "No state transitions match the selected filters",
+      "slow-query": {
+        "text": "This query is taking longer than expected. This can happen when a regex or negation label filter matches too many alert instances. Consider using a shorter time range or a more specific filter.",
+        "title": "Query is taking longer than expected"
+      },
       "start-state": "Start state",
       "timeline-hidden": "Timeline is hidden when state filters are active",
       "title-error-fetching-the-state-history": "Error fetching the state history",
@@ -2021,6 +2043,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "Contact point",
+          "notification-policy": "Notification policy",
           "select-contact-point": "Select contact point",
           "use-notification-policy": "Use notification policy"
         }
@@ -3276,12 +3300,57 @@
       "title-the-selected-alertmanager-has-no-configuration": "The selected Alertmanager has no configuration"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "Select reducer function",
+      "aria-label-threshold": "Threshold value",
+      "aria-label-threshold-from": "Threshold from value",
+      "aria-label-threshold-to": "Threshold to value",
       "label-of-query": "OF QUERY",
       "label-when": "WHEN",
       "label-when-query": "WHEN QUERY"
     },
     "simpleCondition": {
       "alertCondition": "Alert condition"
+    },
+    "simplified": {
+      "condition": {
+        "title": "Condition"
+      },
+      "continue-in-alerting": "Continue in Alerting",
+      "create": "Create",
+      "evaluation": {
+        "immediate-warning": "Immediate firing might lead to unnecessary alerts being sent for temporary issues"
+      },
+      "notification": {
+        "contact-point-selected": "Notifications for firing alerts are routed to a selected contact point.",
+        "description": {
+          "aria-label": "Description",
+          "label": "Description (optional)",
+          "placeholder": "Enter a description of what the alert rule does…"
+        },
+        "manual-routing": {
+          "aria": "Toggle manual routing"
+        },
+        "policy-selected": "Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.",
+        "recipient": {
+          "label": "Recipient"
+        },
+        "refresh-error": "Failed to refresh contact points",
+        "runbook-url": {
+          "aria-label": "Runbook URL",
+          "invalid-format": "Invalid URL format. Please enter a valid URL.",
+          "invalid-protocol": "Invalid URL protocol. Please use http or https.",
+          "label": "Runbook URL (optional)",
+          "placeholder": "Enter the webpage where you keep your runbook for the alert…"
+        },
+        "select-contact-point": "Select a contact point...",
+        "summary": {
+          "aria-label": "Summary",
+          "label": "Summary (optional)",
+          "placeholder": "Enter a summary of what happened and why…"
+        },
+        "title": "Notification"
+      },
+      "rule-definition": "Rule Definition"
     },
     "smart-alert-type-detector": {
       "data-source-managed": "Data source-managed",
@@ -3482,22 +3551,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Alert instances",
-      "all-labels": "All labels",
-      "all-labels-drawer-title": "All labels",
+      "collapse": "Collapse",
+      "collapse-all": "Collapse all",
+      "collapse-sidebar": "Collapse sidebar",
       "compact-firing": "firing",
-      "compact-instances": "instances",
       "compact-pending": "pending",
       "compact-rules": "rules",
       "error-loading-rule": "Error loading rule",
-      "hidden-label-count_one": "and {{ count }} more",
-      "hidden-label-count_other": "and {{ count }} more",
-      "high-activity-labels": "High Activity Labels",
+      "expand": "Expand",
+      "expand-all": "Expand all",
+      "expand-sidebar": "Expand sidebar",
+      "filter-labels": "Filter labels",
+      "filter-labels-placeholder": "Filter",
+      "group-row": {
+        "no-label": "No {{label}}"
+      },
       "instance-details-drawer": {
         "declare-incident": "Declare incident",
         "instance-details": "Instance details",
         "silence-button": "Silence"
       },
+      "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
       "no-instances-found": "No alert instances found for rule: {{ruleUID}}",
       "no-labels": "No labels",
@@ -3523,8 +3597,12 @@
       "show-all-labels_other": "Show all ({{ count }})",
       "show-all-values_one": "Show all ({{ count }})",
       "show-all-values_other": "Show all ({{ count }})",
-      "tooltip-more-values_one": "and {{ count }} more",
-      "tooltip-more-values_other": "and {{ count }} more"
+      "show-fewer-values": "Show fewer",
+      "showing-groups-count_one": "Showing {{count}} groups",
+      "showing-groups-count_other": "Showing {{count}} groups",
+      "state-filter-title": "State",
+      "state-firing": "Firing",
+      "state-pending": "Pending"
     },
     "type-selector-button": {
       "add-expression": "Add expression"
@@ -4117,17 +4195,17 @@
     "name-value-display": "Value display",
     "presets": {
       "basic": "Basic",
-      "basic_desc": "Basic, color from thresholds",
+      "basic_desc": "Horizontal bars, value color from thresholds",
       "basic-vertical": "Basic vertical",
-      "basic-vertical_desc": "Basic, color from thresholds, vertical",
+      "basic-vertical_desc": "Vertical bars, threshold color, text value",
       "gradient": "Gradient",
-      "gradient_desc": "Gradient, color from thresholds, text color",
+      "gradient_desc": "Horizontal bars, gradient fill from thresholds",
       "gradient-BlYlRd": "Gradient blue-red",
-      "gradient-BlYlRd_desc": "Color scale, value color",
+      "gradient-BlYlRd_desc": "Horizontal, gradient fill, blue-yellow-red scale",
       "gradient-vertical": "Gradient vertical",
-      "gradient-vertical_desc": "color scale, unchecked show unfilled",
+      "gradient-vertical_desc": "Vertical, gradient fill, no unfilled track",
       "retro-lcd": "Retro LCD",
-      "retro-lcd_desc": "Color scale, text color"
+      "retro-lcd_desc": "Horizontal, LCD style, green-yellow-red scale"
     },
     "suggestions": {
       "basic": "Bar gauge",
@@ -4190,6 +4268,9 @@
     },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
+    },
+    "bulk-actions": {
+      "error-generic": "Unexpected error happened when creating job"
     },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancel",
@@ -4254,6 +4335,7 @@
       "button-deleting": "Deleting...",
       "commit": "Delete folder",
       "delete-warning": "This will delete this folder and all its descendants. In total, this will affect:",
+      "missing-info": "Missing required fields",
       "success-message": "Folder deleted successfully"
     },
     "descendant-count": {
@@ -4293,6 +4375,7 @@
       "dashboards": "Dashboards",
       "panels": "Panels"
     },
+    "my-team-folders": "My team folders",
     "name-cell": {
       "no-items": "No items"
     },
@@ -4305,12 +4388,13 @@
       "name-label": "Folder name"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "Error creating folder",
       "button-create": "Create",
       "button-creating": "Creating...",
       "cancel": "Cancel",
       "error-invalid-characters": "Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.",
+      "error-missing-title-or-repo": "Missing folder name or repository information",
       "error-required": "Folder name is required",
+      "error-saving": "An error occurred while creating folder.",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
@@ -5923,6 +6007,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": "Open assistant for this panel"
+      },
       "prompt-card": {
         "placeholder": "Ask Assistant about this panel...",
         "placeholder-multi": "Ask Assistant about these panels..."
@@ -6022,8 +6109,8 @@
       "name": "Rows",
       "new-row-title": "New row",
       "row": {
-        "collapse": "Collapse row",
-        "expand": "Expand row",
+        "collapse": "Collapse row {{title}}",
+        "expand": "Expand row {{title}}",
         "new": "New row",
         "repeat": {
           "learn-more": "Learn more",
@@ -6236,7 +6323,6 @@
         "label": "Exit edit",
         "tooltip": "Exits edit mode and discards unsaved changes"
       },
-      "mark-favorite": "Mark as favorite",
       "more-save-options": "More save options",
       "new": {
         "back-to-dashboard": "Back to dashboard",
@@ -6306,8 +6392,7 @@
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
       "star-removed": "Removed from starred",
-      "unlink-library-panel": "Unlink library panel",
-      "unmark-favorite": "Unmark as favorite"
+      "unlink-library-panel": "Unlink library panel"
     },
     "transformation-editor": {
       "input-data": "Input data",
@@ -6564,11 +6649,16 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Ad-hoc options",
       "alert-not-supported": "This data source does not support ad hoc filters",
+      "description-enable-group-by": "Enables group by operator in the ad hoc filter combobox",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
       "label-use-static-key-dimensions": "Use static key dimensions",
-      "name-allow-custom-values": "Allow custom values"
+      "name-allow-custom-values": "Allow custom values",
+      "name-enable-group-by": "Enable group by"
+    },
+    "add-filters": {
+      "label": "Filter and Group by"
     },
     "add-link": {
       "inline-instance-name": "New link",
@@ -6849,11 +6939,12 @@
       "placeholder": "Choose default values"
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Failed to delete dashboard",
       "cancel-action": "Cancel",
       "delete-action": "Delete dashboard",
+      "delete-error": "Failed to delete dashboard",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
+      "no-repository-selected": "Missing required repository for deletion",
       "success-message": "Dashboard deleted successfully"
     },
     "description-label": {
@@ -7320,16 +7411,17 @@
       "update-all": "Update all"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "Error saving dashboard",
       "cancel": "Cancel",
       "cannot-be-saved": "This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy the JSON or save it to a file below, then you can update your dashboard in the provisioning source.",
       "copy-json-to-clipboard": "Copy JSON to clipboard",
+      "error-saving": "An error occurred while saving.",
       "file-path": "<strong>File path:</strong> {{filePath}}",
       "form-loading-error": "Error loading form",
       "form-loading-error-unknown": "An unexpected error occurred while loading the form.",
       "label-description": "Description",
       "label-target-folder": "Target folder",
       "label-title": "Title",
+      "repo-path-required": "Missing required fields for saving",
       "save": "Save",
       "save-json-to-file": "Save JSON to file",
       "saving": "Saving...",
@@ -8843,7 +8935,8 @@
     "select-placeholder": "Filter by folder"
   },
   "folder-repo": {
-    "read-only-badge": "Read only"
+    "read-only-badge": "Read only",
+    "repository-not-found-tooltip": "Repository not found"
   },
   "folders": {
     "api": {
@@ -8927,9 +9020,6 @@
     "data-links-actions-menu": "Open data links and actions menu",
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
-    "description-neutral": "Leave empty to use Min as neutral point",
-    "description-show-threshold-labels": "Render the threshold values around the gauge bar",
-    "description-show-threshold-markers": "Renders the thresholds as an outer bar",
     "gauge-size-options": {
       "label-auto": "Auto",
       "label-manual": "Manual"
@@ -8937,29 +9027,24 @@
     "name-gauge-size": "Gauge size",
     "name-min-height": "Min height",
     "name-min-width": "Min width",
-    "name-neutral": "Neutral",
-    "name-show-threshold-labels": "Show threshold labels",
-    "name-show-threshold-markers": "Show threshold markers",
     "neutral": "Neutral {{value}}",
-    "placeholder-neutral": "auto",
     "presets": {
       "circle": "Circle",
-      "circle_desc": "plain round, from thresholds",
+      "circle_desc": "Full circle, threshold color, with sparkline",
       "gradient": "Gradient",
-      "gradient_desc": "gradient color scale",
+      "gradient_desc": "Arc gauge, green-yellow-red gradient fill",
       "neon": "Neon",
-      "neon_desc": "round, single color endpoint glow",
+      "neon_desc": "Circle, rounded bar, glow effects, fixed red",
       "neonSegmented": "Neon segmented",
-      "neonSegmented_desc": "round, few segments",
+      "neonSegmented_desc": "Circle, 10 rounded segments, glow effects, fixed blue",
       "segmented": "Segmented",
-      "segmented_desc": "segmented thresholds",
+      "segmented_desc": "Dashed arc, threshold color, with sparkline",
       "standard": "Standard",
-      "standard_desc": "plain, from thresholds"
+      "standard_desc": "Arc gauge, threshold color, with sparkline"
     },
     "suggestions": {
       "arc": "Gauge",
-      "circular": "Circular gauge",
-      "no-thresholds": "Gauge - no thresholds"
+      "circular": "Circular gauge"
     },
     "threshold": "Threshold {{value}}"
   },
@@ -10213,6 +10298,9 @@
       "group": "Group",
       "group-tooltip": "Name of the stacking group"
     },
+    "stats-picker": {
+      "placeholder": "Choose"
+    },
     "table": {
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
@@ -10261,6 +10349,10 @@
       },
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "sort-by-column": "Sort by column {{column}}",
+      "sort-by-column-ascending": "Sort by column {{column}}, ascending",
+      "sort-by-column-descending": "Sort by column {{column}}, descending",
+      "sort-column": "Sort column",
       "sparkline": {
         "no-data": "no data"
       },
@@ -10358,11 +10450,14 @@
       "remove-button": "Remove {{children}}"
     },
     "viz-legend": {
+      "all-series-selected": "All series selected",
       "clear-filters": "Clear all",
+      "color-picker": "Edit color for {{seriesName}}",
       "faceted-by-labels": "By labels",
       "faceted-by-name": "By name",
       "faceted-deselect-all": "Deselect all",
       "faceted-select-all": "Select all",
+      "only-this-series-selected": "Only {{label}} selected",
       "pin-filter": "Pin to sidebar",
       "right-axis-indicator": "(right y-axis)",
       "series-visibility": "Series visibility",
@@ -10962,6 +11057,7 @@
       "collapse": "Collapse sidebar",
       "expand": "Expand sidebar",
       "label-title": "{{fieldName}} appears in {{percentage}}% of log lines",
+      "log-level": "Show log level",
       "placeholder-search-fields-by-name": "Search fields by name",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder"
     },
@@ -11370,7 +11466,8 @@
     "save-owner": "Save owner",
     "select-owner": "Select an owner",
     "selected-team-not-found": "Selected team not found, or you do not have the necessary permissions to view it.",
-    "team-not-found": "[Unknown team]"
+    "team-not-found": "[Unknown team]",
+    "unknown-error": "Unknown error"
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "No options found"
@@ -11997,8 +12094,9 @@
       "upgrade-tooltip": "Upgrade to add more users"
     },
     "item": {
-      "add-bookmark": "Add {{itemName}} to Bookmarks",
-      "remove-bookmark": "Remove {{itemName}} from Bookmarks"
+      "bookmark": {
+        "tooltip": "Bookmark {{itemName}}"
+      }
     },
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
@@ -12114,12 +12212,10 @@
       "description": "Notifications you have received will appear here",
       "title": "You're all caught up!"
     },
-    "starred-dashboard": "Dashboard starred",
     "stored-notifications": {
       "dismiss-notifications": "Dismiss notifications",
       "title-alert": "This page displays past errors and warnings. Once dismissed, they cannot be retrieved."
-    },
-    "unstarred-dashboard": "Dashboard unstarred"
+    }
   },
   "oauth": {
     "form": {
@@ -12260,6 +12356,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "Display name",
         "name": "Name"
       }
     },
@@ -12405,11 +12502,13 @@
       "description-customize-dashboard-elements-visibility": "Customize dashboard elements visibility",
       "description-hide-logo": "Hide the branding footer from the dashboard",
       "description-panel-heights-adjusted-screen": "Panel heights will be adjusted to fit screen size",
+      "description-playlist-nav": "Show previous and next buttons to manually navigate between dashboards",
       "label-autofit": "Autofit",
       "label-dashboard-links": "Dashboard links",
       "label-display-dashboard-controls": "Display dashboard controls",
       "label-hide-logo": "Hide logo",
       "label-mode": "Mode",
+      "label-playlist-nav": "Navigation buttons",
       "label-time-and-refresh": "Time and refresh",
       "label-variables": "Variables",
       "modes": {
@@ -12959,6 +13058,7 @@
       "error-delete-connection": "Failed to delete connection",
       "error-required": "This field is required",
       "error-save-connection": "Failed to save connection",
+      "error-submit": "Failed to save connection",
       "grafana-repositories": "Repositories using this connection",
       "label-app-id": "GitHub App ID",
       "label-description": "Description",
@@ -13035,6 +13135,10 @@
       "set-up-public-webhooks": "Set up public webhooks",
       "title-instant-updates-requests-webhooks": "Instant updates and pull requests with webhooks.",
       "title-visual-previews-in-pull-requests": "Visual previews in pull requests with image rendering"
+    },
+    "error": {
+      "branch-not-found-dashboard": "You have selected a branch that does not contain this dashboard. Select another branch.",
+      "branch-not-found-folder": "You have selected a branch that does not contain this folder. Select another branch."
     },
     "error-title-default": "Error",
     "expanded-row": {
@@ -13246,6 +13350,28 @@
         "subtitle": "Use this option if you want to sync and manage your entire Grafana instance through external storage."
       }
     },
+    "orphaned-drawer-notice": {
+      "body": "Save, move, and delete through the Git workflow are not available. Use the warning at the top of the dashboard to release or delete this dashboard if you are an administrator, or contact your Grafana administrator.",
+      "title": "Provisioning repository no longer exists"
+    },
+    "orphaned-repository-tooltip": "Repository not found",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "This will permanently delete all dashboards and folders managed by the missing repository. This action cannot be undone.",
+      "confirm-delete-button": "Delete",
+      "confirm-delete-title": "Delete all resources from this repository?",
+      "confirm-release-body": "This will remove provisioning annotations from all dashboards and folders managed by the missing repository, converting them to regular resources that can be saved and deleted normally.",
+      "confirm-release-button": "Convert to local",
+      "confirm-release-title": "Convert all resources to local from this repository?",
+      "contact-admin": "Contact your Grafana administrator to convert this resource to local or delete all resources from the missing repository.",
+      "convert-to-local-button": "Convert to local",
+      "delete-button": "Delete",
+      "job-error": "An error occurred while processing orphaned resources",
+      "job-success": "Orphaned resources processed successfully",
+      "job-warning": "Some resources were processed with warnings. Please review the results.",
+      "message": "This resource cannot be saved or modified until it is converted to local. Converting to local or deleting it will affect all resources managed by that repository.",
+      "submit-error": "Failed to create job for orphaned resources",
+      "title": "This resource is managed by a repository that no longer exists"
+    },
     "provisioning-wizard": {
       "on-submit": {
         "error": {
@@ -13258,21 +13384,21 @@
       }
     },
     "quota-limit": {
-      "message-both-repositories_one": "Your account is limited to {{count}} connected repository",
+      "message-both-repositories_one": "Your account is limited to {{count}} connected repositories",
       "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
-      "message-both-repositories-onprem_one": "Your instance is limited to {{count}} connected repository",
+      "message-both-repositories-onprem_one": "Your instance is limited to {{count}} connected repositories",
       "message-both-repositories-onprem_other": "Your instance is limited to {{count}} connected repositories",
-      "message-both-resources_one": "and {{count}} synced resource per repository.",
+      "message-both-resources_one": "and {{count}} synced resources per repository.",
       "message-both-resources_other": "and {{count}} synced resources per repository.",
-      "message-both-resources-onprem_one": "and {{count}} synced resource per repository.",
+      "message-both-resources-onprem_one": "and {{count}} synced resources per repository.",
       "message-both-resources-onprem_other": "and {{count}} synced resources per repository.",
-      "message-repository_one": "Your account is limited to {{count}} connected repository.",
+      "message-repository_one": "Your account is limited to {{count}} connected repositories.",
       "message-repository_other": "Your account is limited to {{count}} connected repositories.",
-      "message-repository-onprem_one": "Your instance is limited to {{count}} connected repository.",
+      "message-repository-onprem_one": "Your instance is limited to {{count}} connected repositories.",
       "message-repository-onprem_other": "Your instance is limited to {{count}} connected repositories.",
-      "message-resource_one": "Your account is limited to {{count}} synced resource per repository.",
+      "message-resource_one": "Your account is limited to {{count}} synced resources per repository.",
       "message-resource_other": "Your account is limited to {{count}} synced resources per repository.",
-      "message-resource-onprem_one": "Your instance is limited to {{count}} synced resource per repository.",
+      "message-resource-onprem_one": "Your instance is limited to {{count}} synced resources per repository.",
       "message-resource-onprem_other": "Your instance is limited to {{count}} synced resources per repository.",
       "note": "Note:",
       "to-increase-limits": "To add more {{type}},",
@@ -13483,6 +13609,9 @@
       },
       "go-to": "Go to",
       "make-sure": "Create a token with these permissions"
+    },
+    "validation": {
+      "hidden-characters": "This field contains hidden characters that may have been introduced by copying and pasting. Please retype or clean the value and try again."
     },
     "warning-title-default": "Warning",
     "watch-stream": {
@@ -13859,6 +13988,7 @@
     "sidebar": {
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
+      "add-expression-disabled": "Expressions are not supported with the Dashboard data source",
       "add-query": "Add query",
       "add-query-or-expression": "Add query or expression",
       "add-saved-query": "Add saved query",
@@ -14624,15 +14754,21 @@
     },
     "presets": {
       "horizontal-threshold-value": "Horizontal threshold value",
+      "horizontal-threshold-value-desc": "Horizontal, value color from thresholds, no sparkline",
       "horizontal-threshold-value-sparkline": "Horizontal threshold value with sparkline",
+      "horizontal-threshold-value-sparkline-desc": "Horizontal, value color from thresholds, area sparkline",
       "list": "List",
-      "list_desc": "Color mode none, text mode value and name, text align center, single color",
+      "list_desc": "Compact horizontal list, centered, name and value, sparkline",
       "threshold-background": "Threshold background",
+      "threshold-background-desc": "Background color from thresholds, no sparkline",
       "threshold-background-sparkline": "Threshold background with sparkline",
+      "threshold-background-sparkline-desc": "Background color from thresholds, area sparkline",
       "threshold-value": "Threshold value",
+      "threshold-value-desc": "Value color from thresholds, no sparkline",
       "threshold-value-sparkline": "Threshold value with sparkline",
+      "threshold-value-sparkline-desc": "Value color from thresholds, area sparkline",
       "wide-list": "Wide list",
-      "wide-list-desc": "Color mode none, text mode value and name, text align center, single color"
+      "wide-list-desc": "Horizontal, name and value, area sparkline, single color"
     },
     "suggestions": {
       "stat": "Stat",
@@ -14853,12 +14989,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "Auto-create a team folder",
       "create": "Create",
+      "description-create-team-folder": "This creates a folder associated with the team, where users can add resources like dashboards and schedules with the right permissions.",
       "description-email": "This is optional and is primarily used for allowing custom team avatars",
-      "failed-to-create": "Failed to create team",
+      "failed-to-create": "Failed to create team: ",
+      "folder-create-failed": "Failed to create folder: ",
+      "folder-create-failed-help": "You can create the folder and assign it to a team manually from dashboards browser.",
+      "folder-creation-link": "Open folder",
+      "folder-creation-loading": "Creating folder...",
+      "folder-creation-success": "Folder created successfully.",
+      "label-create-team-folder": "Team folder",
       "label-email": "Email",
       "label-name": "Name",
-      "label-role": "Role"
+      "label-role": "Role",
+      "role-creation-success": "Roles created successfully.",
+      "roles-create-failed": "Failed to create roles: ",
+      "roles-create-permission-issue": "You don't have permissions to set roles",
+      "roles-creation-loading": "Creating roles...",
+      "team-creation-link": "Open team details",
+      "team-creation-loading": "Creating team...",
+      "team-creation-success": "Team created successfully."
     },
     "empty-state": {
       "button-title": "New team",
@@ -15116,12 +15267,12 @@
       "zoom-to-data": "Zoom to data"
     },
     "presets": {
-      "multi-many-points": "Points",
-      "multi-many-points-stacked": "Stacked points",
+      "multi-many-points": "Lines with points",
+      "multi-many-points-stacked": "Stacked lines",
       "multi-many-points-stacked-pct": "Stacked 100%",
-      "multi-points": "Points",
+      "multi-points": "Lines with points",
       "multi-stacked-bars": "Stacked bars",
-      "multi-stacked-points": "Stacked points",
+      "multi-stacked-points": "Stacked lines",
       "single-bars": "Bars",
       "single-bars-scheme": "Bars scheme",
       "single-dashed-threshold": "Dashed threshold",

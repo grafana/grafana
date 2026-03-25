@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { SceneComponentProps, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
+import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectRef, sceneUtils } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { Alert, Box, Button, CodeEditor, Stack, Tooltip, useStyles2 } from '@grafana/ui';
@@ -22,7 +22,7 @@ import {
   isVersionMismatchError,
 } from '../saving/shared';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
-import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -81,6 +81,8 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
 
       dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(dto.spec, dto.metadata);
+      this._updateTimeRangeInURL(dashboard, newState);
+
       dashboard.setState(newState);
     } else {
       jsonModel.version = result.version;
@@ -88,10 +90,14 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
         dashboard: jsonModel,
         meta: dashboard.state.meta,
       });
+
       const newState = sceneUtils.cloneSceneObjectState(newDashboardScene.state, { key: dashboard.state.key });
 
       dashboard.pauseTrackingChanges();
       dashboard.setInitialSaveModel(jsonModel, dashboard.state.meta);
+
+      this._updateTimeRangeInURL(dashboard, newState);
+
       dashboard.setState(newState);
     }
 
@@ -100,6 +106,20 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     // We also need to resume tracking changes since the change handler won't see any later edit
     dashboard.resumeTrackingChanges();
   };
+
+  private _updateTimeRangeInURL(dashboard: DashboardScene, newState: DashboardSceneState) {
+    const oldFrom = dashboard.state.$timeRange?.state.from;
+    const oldTo = dashboard.state.$timeRange?.state.to;
+
+    const nextFrom = newState.$timeRange?.state.from;
+    const nextTo = newState.$timeRange?.state.to;
+    const nextRangeValue = newState.$timeRange?.state.value;
+
+    if (nextFrom && nextTo && nextRangeValue && (oldFrom !== nextFrom || oldTo !== nextTo)) {
+      const timeRange = sceneGraph.getTimeRange(this);
+      timeRange.onTimeRangeChange(nextRangeValue);
+    }
+  }
 
   static Component = JsonModelEditViewComponent;
 }

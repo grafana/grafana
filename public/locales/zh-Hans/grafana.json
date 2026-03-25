@@ -385,6 +385,7 @@
         "group-by": "分组方式",
         "group-title": "通知配置",
         "mute-timings": "静音时间设定",
+        "notification-policy": "",
         "timing-options": "计时"
       },
       "pending-period": "待处理时段",
@@ -494,6 +495,15 @@
     },
     "alert-rule": {
       "term": "警报规则"
+    },
+    "alert-rule-drawer": {
+      "error-title": "",
+      "error-unexpected": "",
+      "error-unknown": "",
+      "success-message": "",
+      "success-title": "",
+      "validation-error-message": "",
+      "validation-error-title": ""
     },
     "alert-rule-form": {
       "action-buttons": {
@@ -877,6 +887,8 @@
       "export-all": "导出全部",
       "learn-more": "了解更多",
       "loading": "加载中...",
+      "optional": "",
+      "refresh": "",
       "search-by-matchers": "通过匹配器搜索",
       "titles": {
         "notification-templates": "通知模板"
@@ -1700,13 +1712,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -1841,7 +1853,7 @@
       },
       "history-error": "加载状态历史记录失败",
       "history-error-desc": "无法获取此实例的状态转换历史记录。",
-      "instance-timeline": "",
+      "instance-history-heading": "",
       "no-history": "没有最近的状态变更",
       "notifications-error": "",
       "notifications-error-desc": "",
@@ -1853,6 +1865,8 @@
       "timeline-all-failed": "",
       "timeline-all-failed-plural": "",
       "timeline-delivered": "",
+      "timeline-dot-all-failed": "",
+      "timeline-dot-some-failed": "",
       "timeline-empty": "",
       "timeline-failed": "",
       "timeline-filter-all": "",
@@ -1860,15 +1874,14 @@
       "timeline-filter-notifications": "",
       "timeline-filter-states": "",
       "timeline-loading": "",
-      "timeline-mixed-outcome": "",
-      "timeline-one-notification": "",
+      "timeline-notification-label": "",
+      "timeline-partial-failure": "",
       "timeline-status-firing": "",
       "timeline-status-resolved": "",
       "timeline-toggle-notifications": "",
       "view-notification-detail": "",
       "view-notification-tooltip": "",
-      "timeline-n-notifications_other": "",
-      "timeline-n-receivers_other": ""
+      "timeline-n-uniqueReceivers_other": ""
     },
     "instance-match": {
       "non-matching-labels": "不匹配的标签",
@@ -2010,6 +2023,8 @@
     "manual-and-automatic-routing": {
       "routing-options": {
         "label": {
+          "contact-point": "",
+          "notification-policy": "",
           "select-contact-point": "选择联络点",
           "use-notification-policy": "使用通知策略"
         }
@@ -3256,12 +3271,57 @@
       "title-the-selected-alertmanager-has-no-configuration": "所选 Alertmanager 没有配置"
     },
     "simple-condition-editor": {
+      "aria-label-reducer": "",
+      "aria-label-threshold": "",
+      "aria-label-threshold-from": "",
+      "aria-label-threshold-to": "",
       "label-of-query": "查询",
       "label-when": "满足以下条件时",
       "label-when-query": "当查询"
     },
     "simpleCondition": {
       "alertCondition": "提醒条件"
+    },
+    "simplified": {
+      "condition": {
+        "title": ""
+      },
+      "continue-in-alerting": "",
+      "create": "",
+      "evaluation": {
+        "immediate-warning": ""
+      },
+      "notification": {
+        "contact-point-selected": "",
+        "description": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "manual-routing": {
+          "aria": ""
+        },
+        "policy-selected": "",
+        "recipient": {
+          "label": ""
+        },
+        "refresh-error": "",
+        "runbook-url": {
+          "aria-label": "",
+          "invalid-format": "",
+          "invalid-protocol": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "select-contact-point": "",
+        "summary": {
+          "aria-label": "",
+          "label": "",
+          "placeholder": ""
+        },
+        "title": ""
+      },
+      "rule-definition": ""
     },
     "smart-alert-type-detector": {
       "data-source-managed": "由数据源管理",
@@ -3462,18 +3522,27 @@
       }
     },
     "triage": {
-      "alert-instances": "警报实例",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "加载规则时出错",
-      "high-activity-labels": "",
-      "instance-details-drawer": {
-        "instance-details": "实例详情"
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
       },
+      "instance-details-drawer": {
+        "declare-incident": "",
+        "instance-details": "实例详情",
+        "silence-button": ""
+      },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "在所选时间范围内，您没有处于触发或待处理状态的警报实例。",
       "no-instances-found": "找不到此规则的警报实例：{{ruleUID}}",
       "no-labels": "无标签",
@@ -3495,10 +3564,13 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_other": "",
       "show-all-values_other": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "添加表达式"
@@ -4165,6 +4237,9 @@
     "browse-view": {
       "this-folder-is-empty": "此文件夹为空"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "取消",
       "button-delete": "删除",
@@ -4262,6 +4337,7 @@
       "dashboards": "仪表板",
       "panels": "面板"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "无项目"
     },
@@ -5188,6 +5264,12 @@
       "ungroup-rows": "取消行分组",
       "ungroup-tabs": "取消选项卡分组"
     },
+    "code-pane": {
+      "collapse": "",
+      "expand": "",
+      "header": "",
+      "modal-title": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5981,8 +6063,8 @@
       "name": "行",
       "new-row-title": "新行",
       "row": {
-        "collapse": "折叠行",
-        "expand": "展开行",
+        "collapse": "",
+        "expand": "",
         "new": "新行",
         "repeat": {
           "learn-more": "了解更多",
@@ -6069,6 +6151,13 @@
       "save-json-to-file": "将 JSON 保存到文件",
       "see-docs": "有关预配的更多信息，请参阅<2>文档<2/>。"
     },
+    "schema-editor": {
+      "apply-button": "",
+      "apply-button-disabled-tooltip": "",
+      "apply-button-disabled-tooltip-yaml": "",
+      "apply-error-title": "",
+      "undo-title": ""
+    },
     "search-panel": {
       "no-match": ""
     },
@@ -6083,6 +6172,10 @@
       "dashboard-options": {
         "title": "选项",
         "tooltip": "数据面板选项"
+      },
+      "edit-schema": {
+        "title": "",
+        "tooltip": ""
       },
       "export": {
         "title": "导出"
@@ -6426,11 +6519,14 @@
     "browse-plugins": "浏览插件",
     "card": {
       "customize-with-assistant-button": "",
+      "customize-with-assistant-button-label": "",
       "datasource-provided-badge": "提供的数据源",
       "details-tooltip": "详情",
       "no-preview": "",
-      "use-dashboard-button": "使用数据面板",
-      "view-template-button": ""
+      "view-dashboard-button": "",
+      "view-dashboard-button-label": "",
+      "view-template-button": "",
+      "view-template-button-label": ""
     },
     "community-empty-title": "未找到社区数据面板",
     "community-empty-title-with-datasource": "未找到 {{datasourceType}} 社区数据面板",
@@ -6508,11 +6604,16 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "临时选项",
       "alert-not-supported": "此数据源不支持临时筛选条件",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "允许用户向列表中添加自定义值",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "以 CSV 格式提供维度：{{name}}, {{value}}",
       "label-data-source": "数据源",
       "label-use-static-key-dimensions": "使用静态键维度",
-      "name-allow-custom-values": "允许自定义值"
+      "name-allow-custom-values": "允许自定义值",
+      "name-enable-group-by": ""
+    },
+    "add-filters": {
+      "label": ""
     },
     "add-link": {
       "inline-instance-name": "",
@@ -7544,6 +7645,11 @@
   "dashboard-scene-help-wizard": {
     "support-bundle": "您还可以在<1>支持包部分</1>中检索包含有关 Grafana 实例和已配置数据源信息的支持包。"
   },
+  "dashboard-schema-editor": {
+    "format-label": "",
+    "json-disabled-tooltip": "",
+    "yaml-disabled-tooltip": ""
+  },
   "dashboard-settings": {
     "annotations": {
       "title": "注释"
@@ -7574,6 +7680,8 @@
     },
     "json-editor": {
       "save-button": "保存更改",
+      "save-button-disabled-tooltip": "",
+      "save-button-disabled-tooltip-yaml": "",
       "subtitle": "下面的 JSON 模型是定义仪表板的数据结构。这包括仪表板设置、面板设置、布局和查询等等。",
       "title": "JSON 模型"
     },
@@ -8851,9 +8959,6 @@
     "data-links-actions-menu": "",
     "description-min-height": "最小行高（水平方向）",
     "description-min-width": "最小列宽（垂直方向）",
-    "description-neutral": "留空以使用最小值作为中性点",
-    "description-show-threshold-labels": "在仪表条周围渲染阈值",
-    "description-show-threshold-markers": "将阈值渲染为外部条",
     "gauge-size-options": {
       "label-auto": "自动",
       "label-manual": "手动"
@@ -8861,11 +8966,7 @@
     "name-gauge-size": "仪表大小",
     "name-min-height": "最小高度",
     "name-min-width": "最小宽度",
-    "name-neutral": "中性",
-    "name-show-threshold-labels": "显示阈值标签",
-    "name-show-threshold-markers": "显示阈值标记",
     "neutral": "中性 {{value}}",
-    "placeholder-neutral": "自动",
     "presets": {
       "circle": "",
       "circle_desc": "",
@@ -8882,8 +8983,7 @@
     },
     "suggestions": {
       "arc": "仪表",
-      "circular": "圆形仪表",
-      "no-thresholds": "仪表 - 无阈值"
+      "circular": "圆形仪表"
     },
     "threshold": "阈值 {{value}}"
   },
@@ -10127,6 +10227,9 @@
       "group": "组",
       "group-tooltip": "堆叠组的名称"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "筛选值",
       "cell-filter-out": "筛除值",
@@ -10175,6 +10278,10 @@
       },
       "no-values-label": "没有值",
       "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "无数据"
       },
@@ -10272,11 +10379,14 @@
       "remove-button": "移除 {{children}}"
     },
     "viz-legend": {
+      "all-series-selected": "",
       "clear-filters": "",
+      "color-picker": "",
       "faceted-by-labels": "",
       "faceted-by-name": "",
       "faceted-deselect-all": "",
       "faceted-select-all": "",
+      "only-this-series-selected": "",
       "pin-filter": "",
       "right-axis-indicator": "（右侧 Y 轴）",
       "series-visibility": "",
@@ -10871,6 +10981,7 @@
       "collapse": "收起侧边栏",
       "expand": "展开侧边栏",
       "label-title": "{{fieldName}} 出现在 {{percentage}}% 的日志行中",
+      "log-level": "",
       "placeholder-search-fields-by-name": "按名称搜索字段",
       "title-drag-and-drop-to-reorder": "拖放以重新排序"
     },
@@ -11276,7 +11387,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "未找到选项"
@@ -11903,8 +12015,9 @@
       "upgrade-tooltip": "升级以添加更多用户"
     },
     "item": {
-      "add-bookmark": "",
-      "remove-bookmark": ""
+      "bookmark": {
+        "tooltip": ""
+      }
     },
     "kiosk": {
       "tv-alert": "按 ESC 退出 kiosk 模式"
@@ -12163,6 +12276,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "名称"
       }
     },
@@ -12859,6 +12973,7 @@
       "error-delete-connection": "删除连接失败",
       "error-required": "此字段为必填",
       "error-save-connection": "保存连接失败",
+      "error-submit": "",
       "grafana-repositories": "使用此连接的存储库",
       "label-app-id": "GitHub 应用 ID",
       "label-description": "描述",
@@ -13373,6 +13488,9 @@
       "go-to": "前往",
       "make-sure": ""
     },
+    "validation": {
+      "hidden-characters": ""
+    },
     "warning-title-default": "警告",
     "watch-stream": {
       "error-description": "",
@@ -13747,6 +13865,7 @@
     "sidebar": {
       "add-below": "",
       "add-expression": "",
+      "add-expression-disabled": "",
       "add-query": "",
       "add-query-or-expression": "",
       "add-saved-query": "",
