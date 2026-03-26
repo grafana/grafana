@@ -129,7 +129,7 @@ type DashboardsAPIBuilder struct {
 	minRefreshInterval           string
 	dualWriter                   dualwrite.Service
 	folderClientProvider         client.K8sHandlerProvider
-	variableClientProvider client.K8sHandlerProvider
+	variableClientProvider       client.K8sHandlerProvider
 	libraryPanels                libraryelements.Service // for legacy library panels
 	publicDashboardService       publicdashboards.Service
 	snapshotService              dashboardsnapshots.Service
@@ -350,7 +350,9 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 			return b.validateVariableCreate(ctx, a)
 		case admission.Update:
 			return b.validateVariableUpdate(ctx, a)
-		case admission.Delete, admission.Connect:
+		case admission.Delete:
+			return b.validateVariableDelete(ctx)
+		case admission.Connect:
 			return nil
 		}
 	}
@@ -538,6 +540,10 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 }
 
 func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a admission.Attributes) error {
+	if err := b.validateVariableMutationPermissions(ctx); err != nil {
+		return err
+	}
+
 	variable, ok := a.GetObject().(*dashv2beta1.Variable)
 	if !ok {
 		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
@@ -578,6 +584,10 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 }
 
 func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a admission.Attributes) error {
+	if err := b.validateVariableMutationPermissions(ctx); err != nil {
+		return err
+	}
+
 	newVariable, ok := a.GetObject().(*dashv2beta1.Variable)
 	if !ok {
 		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
@@ -631,6 +641,24 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		if err := b.validateVariableNameUniqueness(ctx, namespace, newVariable, newVariable.GetName()); err != nil {
 			return apierrors.NewBadRequest(err.Error())
 		}
+	}
+
+	return nil
+}
+
+func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context) error {
+	return b.validateVariableMutationPermissions(ctx)
+}
+
+func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context) error {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
+	}
+
+	role := requester.GetOrgRole()
+	if role != identity.RoleEditor && role != identity.RoleAdmin {
+		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
 	}
 
 	return nil

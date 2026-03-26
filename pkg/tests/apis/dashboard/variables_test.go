@@ -30,9 +30,19 @@ func TestIntegrationVariablesV2beta1(t *testing.T) {
 
 	ctx := context.Background()
 	admin := helper.Org1.Admin
+	editor := helper.Org1.Editor
+	viewer := helper.Org1.Viewer
 
 	variableClient := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: admin,
+		GVR:  dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+	})
+	editorVariableClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: editor,
+		GVR:  dashv2beta1.VariableResourceInfo.GroupVersionResource(),
+	})
+	viewerVariableClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: viewer,
 		GVR:  dashv2beta1.VariableResourceInfo.GroupVersionResource(),
 	})
 	folderClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -43,6 +53,21 @@ func TestIntegrationVariablesV2beta1(t *testing.T) {
 	listRsp, err := variableClient.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
 	require.Empty(t, listRsp.Items)
+
+	t.Run("editor can mutate variables", func(t *testing.T) {
+		editorVariable := buildVariableObject("editor-region", "editorRegion", "")
+		createdEditorVariable, err := editorVariableClient.Resource.Create(ctx, editorVariable, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		err = editorVariableClient.Resource.Delete(ctx, createdEditorVariable.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("viewer cannot mutate variables", func(t *testing.T) {
+		viewerVariable := buildVariableObject("viewer-region", "viewerRegion", "")
+		_, err := viewerVariableClient.Resource.Create(ctx, viewerVariable, metav1.CreateOptions{})
+		require.Error(t, err)
+	})
 
 	rootVariable := buildVariableObject("global-region", "region", "")
 	createdRootVariable, err := variableClient.Resource.Create(ctx, rootVariable, metav1.CreateOptions{})
@@ -160,6 +185,11 @@ func TestIntegrationVariablesV2beta1(t *testing.T) {
 
 	invalidFolderVariable := buildVariableObject("service-missing-folder", "service", "missing-folder")
 	_, err = variableClient.Resource.Create(ctx, invalidFolderVariable, metav1.CreateOptions{})
+	require.Error(t, err)
+
+	_, err = viewerVariableClient.Resource.Update(ctx, movedFolderVariable, metav1.UpdateOptions{})
+	require.Error(t, err)
+	err = viewerVariableClient.Resource.Delete(ctx, movedFolderVariable.GetName(), metav1.DeleteOptions{})
 	require.Error(t, err)
 
 	err = variableClient.Resource.Delete(ctx, "global-region", metav1.DeleteOptions{})
