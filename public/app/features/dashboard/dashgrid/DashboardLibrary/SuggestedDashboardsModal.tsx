@@ -150,7 +150,7 @@ function getStyles(theme: GrafanaTheme2) {
     modal: css({
       width: '90%',
       maxWidth: '1200px',
-      height: '80vh',
+      maxHeight: '80vh',
       display: 'flex',
       flexDirection: 'column',
     }),

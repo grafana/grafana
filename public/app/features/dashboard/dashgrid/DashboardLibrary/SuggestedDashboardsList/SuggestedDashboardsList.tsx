@@ -130,6 +130,20 @@ export const SuggestedDashboardsList = ({
       return;
     }
 
+    // The loader pre-fetches page 1, but the cache may not have it yet (useState
+    // initializer ran when the prop was still empty). Sync it from the prop to
+    // avoid a duplicate fetch — this triggers a re-render and the effect re-runs
+    // with the cache populated.
+    if (!communityCache.cachedPages.has(1) && communityDashboards.length > 0 && !debouncedSearchQuery.trim()) {
+      setCommunityCache({
+        searchQuery: '',
+        items: communityDashboards,
+        cachedPages: new Set<number>([1]),
+        totalApiPages: communityTotalPages,
+      });
+      return;
+    }
+
     const fetchNeeded = async () => {
       // Community items are fetched in pages of PAGE_SIZE from the API.
       // communityStartIndex is the offset into the flat community list (e.g. 8 means "start at the 9th community item").
@@ -154,38 +168,47 @@ export const SuggestedDashboardsList = ({
       setIsCommunityLoading(true);
 
       try {
+        const responses = await Promise.all(
+          pagesToFetch.map((page) =>
+            fetchCommunityDashboards({
+              orderBy: DEFAULT_SORT_ORDER,
+              direction: DEFAULT_SORT_DIRECTION,
+              page,
+              pageSize: PAGE_SIZE,
+              includeLogo: INCLUDE_LOGO,
+              includeScreenshots: INCLUDE_SCREENSHOTS,
+              dataSourceSlugIn: datasourceType,
+              filter: debouncedSearchQuery.trim() || undefined,
+            })
+          )
+        );
+
         let totalFetched = 0;
 
-        for (const page of pagesToFetch) {
-          const response = await fetchCommunityDashboards({
-            orderBy: DEFAULT_SORT_ORDER,
-            direction: DEFAULT_SORT_DIRECTION,
-            page,
-            pageSize: PAGE_SIZE,
-            includeLogo: INCLUDE_LOGO,
-            includeScreenshots: INCLUDE_SCREENSHOTS,
-            dataSourceSlugIn: datasourceType,
-            filter: debouncedSearchQuery.trim() || undefined,
-          });
+        setCommunityCache((prev) => {
+          const newItems = [...prev.items];
+          const newCachedPages = new Set(prev.cachedPages);
+          let totalApiPages = prev.totalApiPages;
 
-          totalFetched += response.items.length;
-
-          setCommunityCache((prev) => {
-            const newItems = [...prev.items];
+          // Place each page's items at their correct offset in the sparse items array
+          responses.forEach((response, idx) => {
+            const page = pagesToFetch[idx];
             const offset = (page - 1) * PAGE_SIZE;
             response.items.forEach((item, i) => {
               newItems[offset + i] = item;
             });
-            const newCachedPages = new Set(prev.cachedPages);
             newCachedPages.add(page);
-            return {
-              ...prev,
-              items: newItems,
-              cachedPages: newCachedPages,
-              totalApiPages: response.pages,
-            };
+            totalFetched += response.items.length;
+            totalApiPages = response.pages;
           });
-        }
+
+          return {
+            ...prev,
+            items: newItems,
+            cachedPages: newCachedPages,
+            totalApiPages,
+          };
+        });
 
         if (debouncedSearchQuery.trim()) {
           DashboardLibraryInteractions.searchPerformed({
@@ -212,6 +235,8 @@ export const SuggestedDashboardsList = ({
     datasourceType,
     isDashboardsLoading,
     communityCache.cachedPages,
+    communityDashboards,
+    communityTotalPages,
     sourceEntryPoint,
     eventLocation,
   ]);
@@ -464,7 +489,6 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     resultsContainer: css({
       width: '100%',
-      flex: 1,
       overflow: 'auto',
       paddingBottom: theme.spacing(2),
     }),
@@ -476,6 +500,7 @@ function getStyles(theme: GrafanaTheme2) {
       justifyContent: 'center',
       alignItems: 'center',
       zIndex: 2,
+      paddingTop: theme.spacing(2),
     }),
   };
 }

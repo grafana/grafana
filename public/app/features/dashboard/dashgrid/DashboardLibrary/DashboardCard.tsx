@@ -67,11 +67,7 @@ function DashboardCardComponent({
 
   const detailsButton = details && (
     <Tooltip interactive={true} content={<DetailsTooltipContent details={details} />} placement="right">
-      <IconButton
-        name="info-circle"
-        size={isCompatibilityAppEnabled ? 'sm' : 'xl'}
-        aria-label={t('dashboard-library.card.details-tooltip', 'Details')}
-      />
+      <IconButton name="info-circle" size="md" aria-label={t('dashboard-library.card.details-tooltip', 'Details')} />
     </Tooltip>
   );
 
@@ -143,7 +139,7 @@ function DashboardCardComponent({
         )}
         {showCommunityBadge && (
           <div className={styles.badgeContainer}>
-            <Badge text={t('dashboard-library.card.community-badge', 'Community')} icon="info-circle" color="blue" />
+            <Badge text={t('dashboard-library.card.community-badge', 'Community')} color="blue" />
           </div>
         )}
         <div className={styles.thumbnailOverlay}>
@@ -276,6 +272,7 @@ function getStyles(theme: GrafanaTheme2) {
       gridTemplateRows: 'auto auto 1fr',
       gridTemplateColumns: '1fr auto',
       width: '350px',
+      height: '100%',
       background: 'transparent',
       border: `1px solid ${theme.colors.border.strong}`,
       borderRadius: theme.shape.radius.default,
@@ -304,8 +301,8 @@ function getStyles(theme: GrafanaTheme2) {
         bottom: 0,
         left: 0,
         right: 0,
-        height: '50%',
-        background: 'linear-gradient(to bottom, rgba(6, 6, 6, 0) 26%, #060606 100%)',
+        height: '100%',
+        background: 'linear-gradient(to bottom, rgba(6, 6, 6, 0) 50%, #060606 100%)',
         pointerEvents: 'none',
         zIndex: 0,
       },
