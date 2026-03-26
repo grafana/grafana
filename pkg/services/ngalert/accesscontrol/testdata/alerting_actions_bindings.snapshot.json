@@ -232,14 +232,14 @@
   {
     "action": "alert.notifications.routes:read",
     "roles": [
-      "fixed:alerting.legacy:reader",
-      "fixed:alerting.legacy:writer"
+      "fixed:alerting.legacy.config:reader",
+      "fixed:alerting.legacy.config:writer"
     ]
   },
   {
     "action": "alert.notifications.routes:write",
     "roles": [
-      "fixed:alerting.legacy:writer"
+      "fixed:alerting.legacy.config:writer"
     ]
   },
   {

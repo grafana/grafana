@@ -480,9 +480,6 @@ var (
 				{
 					Action: accesscontrol.ActionAlertingNotificationsRead, // TODO remove when we decide tò limit access to raw config API
 				},
-				{
-					Action: accesscontrol.ActionAlertingRoutesRead,
-				},
 			},
 		},
 		Grants: []string{string(org.RoleViewer)},
@@ -498,9 +495,6 @@ var (
 			Permissions: accesscontrol.ConcatPermissions(legacyReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingNotificationsWrite, // TODO remove when we decide tò limit access to raw config API
-				},
-				{
-					Action: accesscontrol.ActionAlertingRoutesWrite,
 				},
 			}),
 		},
@@ -521,6 +515,9 @@ var (
 				{
 					Action: accesscontrol.ActionAlertingNotificationsConfigHistoryRead,
 				},
+				{
+					Action: accesscontrol.ActionAlertingRoutesRead,
+				},
 			},
 		},
 		Grants: []string{string(org.RoleAdmin)},
@@ -539,6 +536,9 @@ var (
 			Permissions: accesscontrol.ConcatPermissions(legacyAdminReaderRole.Role.Permissions, []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionAlertingNotificationsConfigHistoryWrite,
+				},
+				{
+					Action: accesscontrol.ActionAlertingRoutesWrite,
 				},
 			}),
 		},

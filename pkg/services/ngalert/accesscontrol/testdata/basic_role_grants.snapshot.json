@@ -114,6 +114,12 @@
         "scope": "routes:*"
       },
       {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.routes:write"
+      },
+      {
         "action": "alert.notifications.system-status:read"
       },
       {
@@ -304,12 +310,6 @@
         "action": "alert.notifications.routes.managed:create"
       },
       {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.routes:write"
-      },
-      {
         "action": "alert.notifications.templates.test:write"
       },
       {
@@ -411,9 +411,6 @@
       {
         "action": "alert.notifications.receivers:read",
         "scope": "receivers:*"
-      },
-      {
-        "action": "alert.notifications.routes:read"
       },
       {
         "action": "alert.notifications.templates:read"

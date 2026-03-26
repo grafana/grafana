@@ -833,9 +833,6 @@
     "hidden": true,
     "permissions": [
       {
-        "action": "alert.notifications.routes:read"
-      },
-      {
         "action": "alert.notifications:read"
       }
     ],
@@ -850,12 +847,6 @@
     "group": "Alerting",
     "hidden": true,
     "permissions": [
-      {
-        "action": "alert.notifications.routes:read"
-      },
-      {
-        "action": "alert.notifications.routes:write"
-      },
       {
         "action": "alert.notifications:read"
       },
@@ -876,6 +867,9 @@
     "permissions": [
       {
         "action": "alert.notifications.config-history:read"
+      },
+      {
+        "action": "alert.notifications.routes:read"
       }
     ],
     "grants": [
@@ -894,6 +888,12 @@
       },
       {
         "action": "alert.notifications.config-history:write"
+      },
+      {
+        "action": "alert.notifications.routes:read"
+      },
+      {
+        "action": "alert.notifications.routes:write"
       }
     ],
     "grants": [
