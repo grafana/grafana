@@ -555,7 +555,7 @@ describe('Logs', () => {
     beforeEach(() => {
       setBooleanFlags({
         newLogsPanel: false,
-        logsPanelControls: false,
+        logsPanelControls: true,
         logsTablePanelNG: false,
       });
     });
