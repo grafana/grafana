@@ -47,9 +47,12 @@ func NewFolderMetadataIncrementalDiffBuilder(
 // events into synthetic folder changes plus direct-child updates.
 //
 // The rebuilder keeps unrelated git changes intact, preserves real diff paths,
-// and returns old folder UIDs split into two lists:
-//   - displaced: all UIDs evicted from their old tree position (for tree cleanup)
-//   - replaced: the subset scheduled for K8s deletion (excludes UIDs still active elsewhere)
+// and returns:
+//   - a rebuilt incremental diff of repository changes,
+//   - a relocations map summarizing folder UID relocations, and
+//   - a list of folders whose UID was replaced,
+// along with any invalid folder metadata warnings. Tree cleanup based on these
+// results is handled by callers; this method does not perform it directly.
 func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	ctx context.Context,
 	currentRef string,
