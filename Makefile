@@ -274,7 +274,8 @@ install-cue:
 
 .PHONY: fix-cue
 fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specific app.
-	@root_dir="."; \
+	@set -e; \
+	root_dir="."; \
 	if [ -n "$(app)" ]; then \
 		root_dir="./apps/$(app)"; \
 		if [ ! -d "$$root_dir" ]; then \
@@ -282,12 +283,12 @@ fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specif
 			exit 1; \
 		fi; \
 	fi; \
-	find "$$root_dir" -type d -name 'cue.mod' | while read -r mod_dir; do \
+	for mod_dir in $$(find "$$root_dir" -type d -name 'cue.mod'); do \
 		project_dir="$$(dirname $$mod_dir)"; \
 		echo "Fixing: $$project_dir"; \
 		(cd "$$project_dir" && $(CUE) fmt ./...); \
 		(cd "$$project_dir" && $(CUE) fix ./...); \
-	done \
+	done
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
