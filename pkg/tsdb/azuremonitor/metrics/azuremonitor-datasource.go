@@ -50,8 +50,11 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
 func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
-	result := backend.NewQueryDataResponse()
+	if dsInfo.Settings.BatchAPIEnabled {
+		return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client)
+	}
 
+	result := backend.NewQueryDataResponse()
 	for _, query := range originalQueries {
 		azureQuery, err := e.buildQuery(query, dsInfo)
 		if err != nil {
@@ -64,6 +67,189 @@ func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, ori
 			continue
 		}
 		result.Responses[query.RefID] = *res
+	}
+
+	return result, nil
+}
+
+// buildQueriesForBatch is like buildQuery but splits multi-resource queries into
+// separate AzureMonitorQuery objects per (subscription, region) pair so that
+// groupQueriesForBatch can correctly route each resource to the right batch endpoint.
+// Single-resource and legacy queries are passed through unchanged.
+func (e *AzureMonitorDatasource) buildQueriesForBatch(query backend.DataQuery, dsInfo types.DatasourceInfo) ([]*types.AzureMonitorQuery, error) {
+	queryJSONModel := dataquery.AzureMonitorQuery{}
+	if err := json.Unmarshal(query.JSON, &queryJSONModel); err != nil {
+		return nil, fmt.Errorf("failed to decode the Azure Monitor query object from JSON: %w", err)
+	}
+
+	azJSONModel := queryJSONModel.AzureMonitor
+
+	// Single-resource or legacy queries need no splitting.
+	if hasOne, _, _ := hasOneResource(queryJSONModel); hasOne || len(azJSONModel.Resources) == 0 {
+		q, err := e.buildQuery(query, dsInfo)
+		if err != nil {
+			return nil, err
+		}
+		return []*types.AzureMonitorQuery{q}, nil
+	}
+
+	// Determine the query-level defaults for subscription and region.
+	defaultSub := dsInfo.Settings.SubscriptionId
+	if queryJSONModel.Subscription != nil && *queryJSONModel.Subscription != "" {
+		defaultSub = *queryJSONModel.Subscription
+	}
+	defaultRegion := ""
+	if azJSONModel.Region != nil {
+		defaultRegion = *azJSONModel.Region
+	}
+
+	// Group resources by their effective (subscription, region) pair.
+	type subRegionKey struct{ sub, region string }
+	groupedResources := make(map[subRegionKey][]dataquery.AzureMonitorResource)
+	var orderedKeys []subRegionKey
+
+	for _, r := range azJSONModel.Resources {
+		sub := defaultSub
+		if r.Subscription != nil && *r.Subscription != "" {
+			sub = *r.Subscription
+		}
+		region := defaultRegion
+		if r.Region != nil && *r.Region != "" {
+			region = *r.Region
+		}
+		key := subRegionKey{sub: sub, region: region}
+		if _, exists := groupedResources[key]; !exists {
+			orderedKeys = append(orderedKeys, key)
+		}
+		groupedResources[key] = append(groupedResources[key], r)
+	}
+
+	// All resources share the same (subscription, region) — no splitting needed.
+	if len(orderedKeys) == 1 {
+		q, err := e.buildQuery(query, dsInfo)
+		if err != nil {
+			return nil, err
+		}
+		return []*types.AzureMonitorQuery{q}, nil
+	}
+
+	// Build one AzureMonitorQuery per (subscription, region) group.
+	var result []*types.AzureMonitorQuery
+	for _, key := range orderedKeys {
+		// Shallow-copy the model and override the fields that differ per group.
+		azCopy := *azJSONModel
+		azCopy.Resources = groupedResources[key]
+		region := key.region
+		azCopy.Region = &region
+		sub := key.sub
+		modelCopy := queryJSONModel
+		modelCopy.Subscription = &sub
+		modelCopy.AzureMonitor = &azCopy
+
+		copyJSON, err := json.Marshal(modelCopy)
+		if err != nil {
+			return nil, fmt.Errorf("failed to re-encode split query for subscription %q region %q: %w", key.sub, key.region, err)
+		}
+		queryCopy := query
+		queryCopy.JSON = copyJSON
+
+		q, err := e.buildQuery(queryCopy, dsInfo)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, q)
+	}
+	return result, nil
+}
+
+// isBatchableQuery reports whether a backend query can be sent to the Metrics
+// Batch API. Queries that use a custom namespace (custom metrics, Application
+// Insights custom telemetry) or that appear to use Guest OS metrics must fall
+// back to the legacy ARM metrics endpoint.
+func isBatchableQuery(query backend.DataQuery) bool {
+	var model dataquery.AzureMonitorQuery
+	if err := json.Unmarshal(query.JSON, &model); err != nil {
+		return false
+	}
+	az := model.AzureMonitor
+	if az == nil {
+		return false
+	}
+	if az.CustomNamespace != nil && *az.CustomNamespace != "" {
+		return false
+	}
+	return true
+}
+
+// executeBatchTimeSeriesQuery groups all queries into Metrics Batch API requests,
+// executes them in parallel, and distributes the resulting frames back to their
+// original RefIDs. Queries that cannot use the batch API (custom metrics, Guest
+// OS metrics) are executed individually via the legacy ARM endpoint.
+func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client) (*backend.QueryDataResponse, error) {
+	result := backend.NewQueryDataResponse()
+
+	armURL := dsInfo.Routes["Azure Monitor"].URL
+
+	// Separate batchable from non-batchable (custom namespace / Guest OS) queries.
+	// Non-batchable queries are executed individually via the legacy ARM endpoint.
+	var batchableQueries []backend.DataQuery
+	for _, query := range originalQueries {
+		if !isBatchableQuery(query) {
+			azureQuery, err := e.buildQuery(query, dsInfo)
+			if err != nil {
+				result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+				continue
+			}
+			res, err := e.executeQuery(ctx, azureQuery, dsInfo, client, armURL)
+			if err != nil {
+				result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+				continue
+			}
+			result.Responses[query.RefID] = *res
+		} else {
+			batchableQueries = append(batchableQueries, query)
+		}
+	}
+
+	// Build all batchable queries, splitting multi-resource queries by
+	// (subscription, region) so that each AzureMonitorQuery targets a single
+	// batch endpoint.
+	var azureQueries []*types.AzureMonitorQuery
+	for _, query := range batchableQueries {
+		splitQueries, err := e.buildQueriesForBatch(query, dsInfo)
+		if err != nil {
+			result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+			continue
+		}
+		azureQueries = append(azureQueries, splitQueries...)
+	}
+
+	if len(azureQueries) == 0 {
+		return result, nil
+	}
+
+	// Group into batches and execute all in parallel.
+	batches := createBatches(groupQueriesForBatch(azureQueries))
+	batchResults := executeBatchRequests(ctx, batches, client)
+
+	// Map batch-level errors to every query in the failed batch.
+	for _, br := range batchResults {
+		if br.Err != nil {
+			for _, q := range br.Batch.Queries {
+				if _, exists := result.Responses[q.RefID]; !exists {
+					result.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(br.Err)
+				}
+			}
+		}
+	}
+
+	// Distribute successful frames into per-RefID responses.
+	azurePortalURL := dsInfo.Routes["Azure Portal"].URL
+	frames, _ := distributeBatchResults(batchResults, azurePortalURL, dsInfo.Settings.SubscriptionId)
+	for _, frame := range frames {
+		dr := result.Responses[frame.RefID]
+		dr.Frames = append(dr.Frames, frame)
+		result.Responses[frame.RefID] = dr
 	}
 
 	return result, nil

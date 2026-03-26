@@ -189,7 +189,7 @@ export function setResources(
     azureMonitor: {
       ...query.azureMonitor,
       metricNamespace: parsedResource.metricNamespace?.toLocaleLowerCase(),
-      region: parsedResource.region,
+      region: resources.map((r) => parseResourceDetails(r).region).find(Boolean) || parsedResource.region,
       resources: parseMultipleResourceDetails(resources).filter(
         (resource) =>
           resource.resourceName !== '' &&

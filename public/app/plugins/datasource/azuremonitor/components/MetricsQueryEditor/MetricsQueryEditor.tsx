@@ -63,13 +63,9 @@ const MetricsQueryEditor = ({
     const rowResource = parseResourceDetails(row.uri, row.location);
     const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
     // Only resources:
-    // - in the same subscription
-    // - in the same region
     // - with the same metric namespace
     // - with a metric namespace that is compatible with multi-resource queries
     return (
-      rowResource.subscription !== selectedRowSample.subscription ||
-      rowResource.region !== selectedRowSample.region ||
       rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase() ||
       !supportMultipleResource(rowResource.metricNamespace)
     );
@@ -81,7 +77,7 @@ const MetricsQueryEditor = ({
     }
     const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
     return supportMultipleResource(selectedRowSample.metricNamespace)
-      ? 'You can select items of the same resource type and location. To select resources of a different resource type or location, please first uncheck your current selection.'
+      ? 'You can select items of the same resource type across any subscription. To select resources of a different resource type, please first uncheck your current selection.'
       : '';
   };
 

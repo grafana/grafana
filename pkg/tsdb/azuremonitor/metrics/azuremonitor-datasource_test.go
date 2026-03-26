@@ -909,6 +909,99 @@ func TestExtractResourceNameFromMetricsURL(t *testing.T) {
 	})
 }
 
+func TestBuildQueriesForBatch(t *testing.T) {
+	ds := &AzureMonitorDatasource{}
+	dsInfo := types.DatasourceInfo{
+		Settings: types.AzureMonitorSettings{SubscriptionId: "default-sub"},
+	}
+
+	makeBackendQuery := func(sub, region string, resources []dataquery.AzureMonitorResource) backend.DataQuery {
+		model := dataquery.AzureMonitorQuery{
+			Subscription: &sub,
+			AzureMonitor: &dataquery.AzureMetricQuery{
+				MetricNamespace: strPtr("Microsoft.Compute/virtualMachines"),
+				MetricName:      strPtr("Percentage CPU"),
+				Aggregation:     strPtr("Average"),
+				TimeGrain:       strPtr("PT1M"),
+				Region:          &region,
+				Resources:       resources,
+			},
+		}
+		raw, _ := json.Marshal(model)
+		return backend.DataQuery{RefID: "A", JSON: raw, TimeRange: backend.TimeRange{From: time.Now(), To: time.Now().Add(time.Hour)}}
+	}
+
+	t.Run("single resource produces one query", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		assert.Len(t, queries, 1)
+	})
+
+	t.Run("multiple resources with same subscription and region produce one query", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		assert.Len(t, queries, 1)
+		assert.Len(t, queries[0].Resources, 2)
+	})
+
+	t.Run("resources across different subscriptions produce separate queries", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, queries, 2)
+		assert.Equal(t, "sub1", queries[0].Subscription)
+		assert.Equal(t, "sub2", queries[1].Subscription)
+	})
+
+	t.Run("resources across different regions produce separate queries", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm2"), Region: strPtr("westus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, queries, 2)
+		assert.Equal(t, "eastus", queries[0].Params.Get("region"))
+		assert.Equal(t, "westus", queries[1].Params.Get("region"))
+	})
+
+	t.Run("resources grouped by subscription and region preserve all resources", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("westus")},
+			{Subscription: strPtr("sub1"), ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm3"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, queries, 2)
+		// sub1/eastus group has 2 resources, sub2/westus has 1
+		assert.Len(t, queries[0].Resources, 2)
+		assert.Len(t, queries[1].Resources, 1)
+	})
+
+	t.Run("resources without explicit subscription fall back to query-level subscription", func(t *testing.T) {
+		q := makeBackendQuery("sub1", "eastus", []dataquery.AzureMonitorResource{
+			{ResourceGroup: strPtr("rg1"), ResourceName: strPtr("vm1"), Region: strPtr("eastus")},
+			{Subscription: strPtr("sub2"), ResourceGroup: strPtr("rg2"), ResourceName: strPtr("vm2"), Region: strPtr("eastus")},
+		})
+		queries, err := ds.buildQueriesForBatch(q, dsInfo)
+		require.NoError(t, err)
+		require.Len(t, queries, 2)
+		assert.Equal(t, "sub1", queries[0].Subscription)
+		assert.Equal(t, "sub2", queries[1].Subscription)
+	})
+}
+
 func strPtr(s string) *string {
 	return &s
 }
