@@ -808,10 +808,6 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
-	if !b.isPreferredVersion {
-		return nil, nil // TODO, flip the logic when the types actually change
-	}
-
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
 			var config *clientrest.Config
@@ -844,8 +840,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// but that leads to possible race conditions when the repository is created/updated and violating some rules.
 			b.healthChecker = controller.NewRepositoryHealthChecker(b.statusPatcher, repository.NewTester(b.repoValidator), healthMetricsRecorder)
 
-			// if running solely CRUD, skip the rest of the setup
-			if b.onlyApiServer {
+			// if running solely CRUD or not the preferred version, skip controllers/workers setup
+			if b.onlyApiServer || !b.isPreferredVersion {
 				return nil
 			}
 
