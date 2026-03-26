@@ -274,7 +274,8 @@ install-cue:
 
 .PHONY: fix-cue
 fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specific app.
-	@root_dir="."; \
+	@set -e; \
+	root_dir="."; \
 	if [ -n "$(app)" ]; then \
 		root_dir="./apps/$(app)"; \
 		if [ ! -d "$$root_dir" ]; then \
@@ -282,12 +283,12 @@ fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specif
 			exit 1; \
 		fi; \
 	fi; \
-	find "$$root_dir" -type d -name 'cue.mod' | while read -r mod_dir; do \
+	for mod_dir in $$(find "$$root_dir" -type d -name 'cue.mod'); do \
 		project_dir="$$(dirname $$mod_dir)"; \
 		echo "Fixing: $$project_dir"; \
 		(cd "$$project_dir" && $(CUE) fmt ./...); \
 		(cd "$$project_dir" && $(CUE) fix ./...); \
-	done \
+	done
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
@@ -494,8 +495,7 @@ endif
 .PHONY: build-docker-full
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
-	tar -ch . | \
-	docker buildx build - \
+	docker buildx build \
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
@@ -506,13 +506,13 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
 	--build-arg BUILD_BRANCH=$$(git rev-parse --abbrev-ref HEAD) \
 	--tag grafana/grafana$(TAG_SUFFIX):dev \
-	$(DOCKER_BUILD_ARGS)
+	$(DOCKER_BUILD_ARGS) \
+	.
 
 .PHONY: build-docker-full-ubuntu
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	@echo "build docker container mode=($(DOCKER_JS_NODE_ENV_FLAG))"
-	tar -ch . | \
-	docker buildx build - \
+	docker buildx build \
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
@@ -525,7 +525,8 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg BASE_IMAGE=ubuntu:24.04 \
 	--build-arg GO_IMAGE=golang:$(GO_VERSION) \
 	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
-	$(DOCKER_BUILD_ARGS)
+	$(DOCKER_BUILD_ARGS) \
+	.
 
 ##@ Services
 
