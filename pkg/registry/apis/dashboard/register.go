@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"net/http"
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -127,7 +126,8 @@ type DashboardsAPIBuilder struct {
 	snapshotStorage              rest.Storage // for dual-write support in routes
 	namespacer                   request.NamespaceMapper
 	dashboardActivityChannel     live.DashboardActivityChannel
-	isStandalone                 bool // skips any handling including anything to do with legacy storage
+	dashboardK8sClient           client.K8sHandler // for provisioning checks during delete validation
+	isStandalone                 bool              // skips any handling including anything to do with legacy storage
 }
 
 func RegisterAPIService(
@@ -168,6 +168,7 @@ func RegisterAPIService(
 	namespacer := request.GetNamespaceMapper(cfg)
 	legacyDashboardSearcher := legacysearcher.NewDashboardSearchClient(dashStore, sorter)
 	folderClient := client.NewK8sHandler(dual, request.GetNamespaceMapper(cfg), folders.FolderResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
+	dashboardClient := client.NewK8sHandler(dual, namespacer, dashv1.DashboardResourceInfo.GroupVersionResource(), restConfigProvider.GetRestConfig, dashStore, userService, unified, sorter, features)
 
 	snapshotOptions := dashv0.SnapshotSharingOptions{
 		SnapshotsEnabled:     cfg.SnapshotEnabled,
@@ -191,6 +192,7 @@ func RegisterAPIService(
 		ProvisioningService:          provisioning,
 		minRefreshInterval:           cfg.MinRefreshInterval,
 		dualWriter:                   dual,
+		dashboardK8sClient:           dashboardClient,
 		folderClientProvider:         newSimpleFolderClientProvider(folderClient),
 		libraryPanels:                libraryPanels,
 		publicDashboardService:       publicDashboardService,
@@ -347,7 +349,7 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 	}
 
 	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
-	if b.isStandalone && util.IsInterfaceNil(b.dashboardProvisioningService) {
+	if b.isStandalone && util.IsInterfaceNil(b.dashboardK8sClient) {
 		return nil
 	}
 
@@ -356,55 +358,24 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
 	}
 
-	// Try to read from unified storage, fallback to search if not found
+	// Try to get the dashboard via the K8s API
 	svcCtx := identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
 	dashboardUID := a.GetName()
-	readResp, err := b.unified.Read(svcCtx, &resourcepb.ReadRequest{
-		Key: &resourcepb.ResourceKey{
-			Namespace: a.GetNamespace(),
-			Group:     a.GetResource().Group,
-			Resource:  a.GetResource().Resource,
-			Name:      dashboardUID,
-		},
-	})
+	dashObj, err := b.dashboardK8sClient.Get(svcCtx, dashboardUID, nsInfo.OrgID, metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("delete hook failed to check if dashboard is provisioned: %w", err)
-	}
-	if readResp.Error == nil {
-		var dashObj unstructured.Unstructured
-		if err := dashObj.UnmarshalJSON(readResp.Value); err != nil {
-			return fmt.Errorf("delete hook failed to parse dashboard: %w", err)
-		}
-
-		accessor, err := utils.MetaAccessor(&dashObj)
-		if err != nil {
-			return fmt.Errorf("delete hook failed to get meta accessor: %w", err)
-		}
-
-		mgr, managed := accessor.GetManagerProperties()
-		if managed && mgr.Kind == utils.ManagerKindClassicFP { //nolint:staticcheck
-			return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
-		}
-		return nil
-	}
-	if readResp.Error.Code != http.StatusNotFound {
-		return fmt.Errorf("delete hook failed to check if dashboard is provisioned: %s", readResp.Error.Message)
-	}
-
-	// Fallback to the provisioning service if not found in unified storage
-	// TODO: remove when legacy dashboard service is not used anymore (when only mode 5 is used)
-	provisioningData, err := b.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, dashboardUID)
-	if err != nil {
-		if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) ||
-			errors.Is(err, dashboards.ErrDashboardNotFound) ||
-			apierrors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return nil
 		}
-
-		return fmt.Errorf("%v: %w", "delete hook failed to check if dashboard is provisioned", err)
+		return fmt.Errorf("delete hook failed to check if dashboard is provisioned: %w", err)
 	}
 
-	if provisioningData != nil {
+	accessor, err := utils.MetaAccessor(dashObj)
+	if err != nil {
+		return fmt.Errorf("delete hook failed to get meta accessor: %w", err)
+	}
+
+	mgr, managed := accessor.GetManagerProperties()
+	if managed && mgr.Kind == utils.ManagerKindClassicFP { //nolint:staticcheck
 		return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 	}
 
