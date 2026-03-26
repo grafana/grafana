@@ -706,6 +706,7 @@ export const TooltipPlugin2 = ({
 
   useLayoutEffect(() => {
     const size = sizeRef.current!;
+    const _plot = plotRef.current!;
 
     if (domRef.current != null) {
       size.observer.disconnect();
@@ -717,7 +718,7 @@ export const TooltipPlugin2 = ({
       size.width = width;
       size.height = height;
 
-      let event = plotRef.current!.cursor.event;
+      let event = _plot.cursor.event;
 
       // if not viaSync, re-dispatch real event
       if (event != null) {
@@ -742,12 +743,12 @@ export const TooltipPlugin2 = ({
         // it would end up re-dispatching mouseleave
         const isStaleEvent = isMobile ? false : performance.now() - event.timeStamp > 16;
 
-        !isStaleEvent && plotRef.current?.over.dispatchEvent(event);
+        !isStaleEvent && _plot.over.dispatchEvent(event);
       } else {
-        plotRef.current?.setCursor(
+        _plot.setCursor(
           {
-            left: plotRef.current?.cursor.left!,
-            top: plotRef.current?.cursor.top!,
+            left: _plot.cursor.left!,
+            top: _plot.cursor.top!,
           },
           true
         );
