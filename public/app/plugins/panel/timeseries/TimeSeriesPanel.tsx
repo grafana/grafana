@@ -17,6 +17,7 @@ import {
   KeyboardPlugin,
   TooltipPlugin2,
   usePanelContext,
+  useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
@@ -60,6 +61,7 @@ export const TimeSeriesPanel = ({
   } = usePanelContext();
 
   const { dataLinkPostProcessor } = useDataLinksContext();
+  const theme = useTheme2();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
   // Vertical orientation is not available for users through config.
@@ -111,143 +113,148 @@ export const TimeSeriesPanel = ({
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
+  const annotationLanes = options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined;
 
-  if (!frames || suggestions) {
+  return useMemo(() => {
+    if (!frames || suggestions) {
+      return (
+        <PanelDataErrorView
+          panelId={id}
+          message={suggestions?.message}
+          fieldConfig={fieldConfig}
+          data={data}
+          needsTimeField={true}
+          needsNumberField={true}
+          suggestions={suggestions?.suggestions}
+        />
+      );
+    }
+
     return (
-      <PanelDataErrorView
-        panelId={id}
-        message={suggestions?.message}
-        fieldConfig={fieldConfig}
-        data={data}
-        needsTimeField={true}
-        needsNumberField={true}
-        suggestions={suggestions?.suggestions}
-      />
-    );
-  }
-
-  return (
-    <TimeSeries
-      frames={frames}
-      structureRev={data.structureRev}
-      timeRange={timeRange}
-      timeZone={timezones}
-      width={width}
-      height={height}
-      legend={options.legend}
-      options={options}
-      replaceVariables={replaceVariables}
-      dataLinkPostProcessor={dataLinkPostProcessor}
-      cursorSync={cursorSync}
-      annotationLanes={options.annotations?.multiLane ? getXAnnotationFrames(data.annotations).length : undefined}
-    >
-      {(uplotConfig, alignedFrame) => {
-        return (
-          <>
-            {!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}
-            {cursorSync !== DashboardCursorSync.Off && (
-              <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
-            )}
-            <XAxisInteractionAreaPlugin config={uplotConfig} queryZoom={onChangeTimeRange} />
-            {options.tooltip.mode !== TooltipDisplayMode.None && (
-              <TooltipPlugin2
-                config={uplotConfig}
-                hoverMode={
-                  options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
-                }
-                queryZoom={onChangeTimeRange}
-                clientZoom={true}
-                syncMode={cursorSync}
-                syncScope={eventsScope}
-                getDataLinks={(seriesIdx, dataIdx) =>
-                  alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
-                }
-                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
-                  if (enableAnnotationCreation && timeRange2 != null) {
-                    setNewAnnotationRange(timeRange2);
-                    dismiss();
-                    return;
-                  }
-
-                  const annotate = () => {
-                    let xVal = u.posToVal(u.cursor.left!, 'x');
-
-                    setNewAnnotationRange({ from: xVal, to: xVal });
-                    dismiss();
-                  };
-
-                  const groupingFilters =
-                    seriesIdx !== null && config.featureToggles.perPanelFiltering && getFiltersBasedOnGrouping
-                      ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
-                      : [];
-
-                  return (
-                    // not sure it header time here works for annotations, since it's taken from nearest datapoint index
-                    <TimeSeriesTooltip
-                      series={alignedFrame}
-                      dataIdxs={dataIdxs}
-                      seriesIdx={seriesIdx}
-                      mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
-                      sortOrder={options.tooltip.sort}
-                      hideZeros={options.tooltip.hideZeros}
-                      isPinned={isPinned}
-                      annotate={enableAnnotationCreation ? annotate : undefined}
-                      maxHeight={options.tooltip.maxHeight}
-                      replaceVariables={replaceVariables}
-                      dataLinks={dataLinks}
-                      filterByGroupedLabels={
-                        config.featureToggles.perPanelFiltering && groupingFilters.length && onAddAdHocFilters
-                          ? {
-                              onFilterForGroupedLabels: () => onAddAdHocFilters(groupingFilters),
-                              onFilterOutGroupedLabels: () =>
-                                onAddAdHocFilters(
-                                  groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
-                                ),
-                            }
-                          : undefined
-                      }
-                      canExecuteActions={userCanExecuteActions}
-                      compareDiffMs={compareDiffMs}
-                    />
-                  );
-                }}
-                maxWidth={options.tooltip.maxWidth}
-              />
-            )}
-            {!isVerticallyOriented && (
-              <>
-                <AnnotationsPlugin
-                  replaceVariables={replaceVariables}
-                  options={options.annotations}
-                  annotations={data.annotations}
+      <TimeSeries
+        frames={frames}
+        structureRev={data.structureRev}
+        timeRange={timeRange}
+        timeZone={timezones}
+        width={width}
+        height={height}
+        legend={options.legend}
+        options={options}
+        replaceVariables={replaceVariables}
+        dataLinkPostProcessor={dataLinkPostProcessor}
+        cursorSync={cursorSync}
+        annotationLanes={annotationLanes}
+      >
+        {(uplotConfig, alignedFrame) => {
+          return (
+            <>
+              {!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}
+              {cursorSync !== DashboardCursorSync.Off && (
+                <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
+              )}
+              <XAxisInteractionAreaPlugin config={uplotConfig} queryZoom={onChangeTimeRange} />
+              {options.tooltip.mode !== TooltipDisplayMode.None && (
+                <TooltipPlugin2
                   config={uplotConfig}
-                  timeZone={timeZone}
-                  newRange={newAnnotationRange}
-                  setNewRange={setNewAnnotationRange}
+                  hoverMode={
+                    options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+                  }
+                  queryZoom={onChangeTimeRange}
+                  clientZoom={true}
+                  syncMode={cursorSync}
+                  syncScope={eventsScope}
+                  getDataLinks={(seriesIdx, dataIdx) =>
+                    alignedFrame.fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
+                  }
+                  render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync, dataLinks) => {
+                    if (enableAnnotationCreation && timeRange2 != null) {
+                      setNewAnnotationRange(timeRange2);
+                      dismiss();
+                      return;
+                    }
+
+                    const annotate = () => {
+                      let xVal = u.posToVal(u.cursor.left!, 'x');
+
+                      setNewAnnotationRange({ from: xVal, to: xVal });
+                      dismiss();
+                    };
+
+                    const groupingFilters =
+                      seriesIdx !== null && config.featureToggles.perPanelFiltering && getFiltersBasedOnGrouping
+                        ? getGroupedFilters(alignedFrame, seriesIdx, getFiltersBasedOnGrouping)
+                        : [];
+
+                    return (
+                      // not sure it header time here works for annotations, since it's taken from nearest datapoint index
+                      <TimeSeriesTooltip
+                        series={alignedFrame}
+                        dataIdxs={dataIdxs}
+                        seriesIdx={seriesIdx}
+                        mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
+                        sortOrder={options.tooltip.sort}
+                        hideZeros={options.tooltip.hideZeros}
+                        isPinned={isPinned}
+                        annotate={enableAnnotationCreation ? annotate : undefined}
+                        maxHeight={options.tooltip.maxHeight}
+                        replaceVariables={replaceVariables}
+                        dataLinks={dataLinks}
+                        filterByGroupedLabels={
+                          config.featureToggles.perPanelFiltering && groupingFilters.length && onAddAdHocFilters
+                            ? {
+                                onFilterForGroupedLabels: () => onAddAdHocFilters(groupingFilters),
+                                onFilterOutGroupedLabels: () =>
+                                  onAddAdHocFilters(
+                                    groupingFilters.map((item) => ({ ...item, operator: FILTER_OUT_OPERATOR }))
+                                  ),
+                              }
+                            : undefined
+                        }
+                        canExecuteActions={userCanExecuteActions}
+                        compareDiffMs={compareDiffMs}
+                      />
+                    );
+                  }}
+                  maxWidth={options.tooltip.maxWidth}
                 />
-                <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
-                {data.annotations && (
-                  <ExemplarsPlugin
-                    visibleSeries={getVisibleLabels(uplotConfig, frames)}
+              )}
+              {!isVerticallyOriented && (
+                <>
+                  <AnnotationsPlugin
+                    replaceVariables={replaceVariables}
+                    options={options.annotations}
+                    annotations={data.annotations}
                     config={uplotConfig}
-                    exemplars={data.annotations}
                     timeZone={timeZone}
-                    maxHeight={options.tooltip.maxHeight}
-                    maxWidth={options.tooltip.maxWidth}
+                    newRange={newAnnotationRange}
+                    setNewRange={setNewAnnotationRange}
                   />
-                )}
-                {((canEditThresholds && onThresholdsChange) || showThresholds) && (
-                  <ThresholdControlsPlugin
-                    config={uplotConfig}
-                    fieldConfig={fieldConfig}
-                    onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}
-                  />
-                )}
-              </>
-            )}
-          </>
-        );
-      }}
-    </TimeSeries>
-  );
+                  <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
+                  {data.annotations && (
+                    <ExemplarsPlugin
+                      visibleSeries={getVisibleLabels(uplotConfig, frames)}
+                      config={uplotConfig}
+                      exemplars={data.annotations}
+                      timeZone={timeZone}
+                      maxHeight={options.tooltip.maxHeight}
+                      maxWidth={options.tooltip.maxWidth}
+                    />
+                  )}
+                  {((canEditThresholds && onThresholdsChange) || showThresholds) && (
+                    <ThresholdControlsPlugin
+                      config={uplotConfig}
+                      fieldConfig={fieldConfig}
+                      onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}
+                    />
+                  )}
+                </>
+              )}
+            </>
+          );
+        }}
+      </TimeSeries>
+    );
+    // we only want to re-render when we have changes to the objects defined in the TimeSeries.tsx::propsToDiff  array
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options.legend, options, theme, annotationLanes, newAnnotationRange, setNewAnnotationRange, data.annotations]);
 };
