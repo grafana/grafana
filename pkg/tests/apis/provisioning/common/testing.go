@@ -2242,3 +2242,21 @@ func FromUnstructuredToRepository(obj *unstructured.Unstructured) (*provisioning
 	err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, repo)
 	return repo, err
 }
+
+// NewDefaultSharedEnv creates a SharedEnv with default options for provisioning tests
+func NewDefaultSharedEnv() *SharedEnv {
+	return NewSharedEnv(
+		func(opts *testinfra.GrafanaOpts) {
+			opts.SecretsManagerEnableDBMigrations = true
+		},
+	)
+}
+
+// SharedHelper returns a clean provisioning test helper with a mocked GitHub client.
+// This is the standard helper used across provisioning integration tests.
+func SharedHelper(t *testing.T, env *SharedEnv) *ProvisioningTestHelper {
+	t.Helper()
+	helper := env.GetCleanHelper(t)
+	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient()
+	return helper
+}

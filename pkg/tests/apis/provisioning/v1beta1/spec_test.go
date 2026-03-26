@@ -10,13 +10,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	provisioningtests "github.com/grafana/grafana/pkg/tests/apis/provisioning"
 )
 
 // TestIntegrationV1Beta1APIAvailable verifies that the v1beta1 API group/version is available
 func TestIntegrationV1Beta1APIAvailable(t *testing.T) {
-	helper := provisioningtests.SharedHelper(t)
+	helper := sharedHelper(t)
 
 	// Use the REST client to get API groups
 	result := helper.AdminREST.Get().AbsPath("/apis").Do(context.Background())
@@ -52,7 +50,7 @@ func TestIntegrationV1Beta1APIAvailable(t *testing.T) {
 
 // TestIntegrationV1Beta1OpenAPISchema verifies that the v1beta1 OpenAPI schema is properly generated
 func TestIntegrationV1Beta1OpenAPISchema(t *testing.T) {
-	helper := provisioningtests.SharedHelper(t)
+	helper := sharedHelper(t)
 
 	// Get the OpenAPI v3 spec for v1beta1
 	result := helper.AdminREST.Get().AbsPath("/openapi/v3/apis/provisioning.grafana.app/v1beta1").Do(context.Background())
