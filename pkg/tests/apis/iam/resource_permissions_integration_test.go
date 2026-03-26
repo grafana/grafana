@@ -111,7 +111,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 
 			// Provisioning requires dashboards/folders in unified storage (Mode4+).
 			var disableFlags []string
-			if mode < rest.Mode4 {
+			if mode < rest.Mode5 {
 				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
 			}
 

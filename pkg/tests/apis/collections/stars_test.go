@@ -43,7 +43,7 @@ func TestIntegrationStars(t *testing.T) {
 		// Provisioning requires dashboards/folders in unified storage (Mode4+).
 		// Disable it for legacy modes to avoid startup failures.
 		var disableFlags []string
-		if mode < grafanarest.Mode4 {
+		if mode < grafanarest.Mode5 {
 			disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
 		}
 

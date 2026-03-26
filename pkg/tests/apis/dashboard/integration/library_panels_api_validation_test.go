@@ -516,7 +516,7 @@ func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		var disableFlags []string
-		if dualWriterMode < rest.Mode4 {
+		if dualWriterMode < rest.Mode5 {
 			disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
 		}
 

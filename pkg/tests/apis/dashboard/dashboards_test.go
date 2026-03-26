@@ -35,7 +35,7 @@ func TestMain(m *testing.M) {
 }
 
 func disableProvisioningForLegacyModes(mode rest.DualWriterMode) []string {
-	if mode < rest.Mode4 {
+	if mode < rest.Mode5 {
 		return []string{featuremgmt.FlagProvisioning}
 	}
 	return nil

@@ -68,7 +68,7 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			var disableFlags []string
-			if dualWriterMode < rest.Mode4 {
+			if dualWriterMode < rest.Mode5 {
 				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
 			}
 
@@ -113,7 +113,7 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
 			disableFlags := []string{featuremgmt.FlagKubernetesDashboards}
-			if dualWriterMode < rest.Mode4 {
+			if dualWriterMode < rest.Mode5 {
 				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
 			}
 
@@ -236,7 +236,7 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			var disableFlags []string
-			if dualWriterMode < rest.Mode4 {
+			if dualWriterMode < rest.Mode5 {
 				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
 			}
 
