@@ -241,6 +241,7 @@ export const AnnotationsPlugin2Cluster = ({
   }, [xAnnos]);
 
   if (plotRef.current && xAxisRef.current) {
+    const plot = plotRef.current;
     const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
     const wipVals = wipFrame ? getVals<AnnotationVals>(wipFrame) : null;
     const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time?.[0] && wipVals?.time?.[0] > 0;
@@ -253,71 +254,69 @@ export const AnnotationsPlugin2Cluster = ({
       // Top offset for multi-lane annotations
       const top = options?.multiLane ? frameIdx * ANNOTATION_LANE_SIZE : undefined;
 
-      if (plotRef.current) {
-        for (let i = 0; i < vals.time.length; i++) {
-          if (skipClusteredAnno(vals, i)) {
-            continue;
-          }
-          const isRegion = vals.isRegion?.[i];
-          const timeEnd = vals.timeEnd?.[i];
-          const color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
-          const left = Math.round(plotRef.current.valToPos(vals.time[i], 'x')) || 0; // handles -0
+      for (let i = 0; i < vals.time.length; i++) {
+        if (skipClusteredAnno(vals, i)) {
+          continue;
+        }
+        const isRegion = vals.isRegion?.[i];
+        const timeEnd = vals.timeEnd?.[i];
+        const color = getColorByName(vals.color?.[i] || DEFAULT_ANNOTATION_COLOR);
+        const left = Math.round(plot.valToPos(vals.time[i], 'x')) || 0; // handles -0
 
-          let style: React.CSSProperties | null = null;
-          let isVisible = true;
-          const plotWidth = plotRef.current.rect.width;
+        let style: React.CSSProperties | null = null;
+        let isVisible = true;
+        const plotWidth = plot.rect.width;
 
-          if (isRegion && timeEnd != null) {
-            const valPos = plotRef.current.valToPos(timeEnd, 'x');
-            const right = Math.round(valPos ?? 0) || 0; // handles -0
-            isVisible = left < plotWidth && right > 0;
+        if (isRegion && timeEnd != null) {
+          const valPos = plot.valToPos(timeEnd, 'x');
+          const right = Math.round(valPos ?? 0) || 0; // handles -0
+          isVisible = left < plotWidth && right > 0;
 
-            if (isVisible) {
-              style = { ...getAnnoRegionBoxStyle(plotWidth, right, left), background: color, top };
-            }
-          } else {
-            isVisible = left >= 0 && left <= plotWidth;
-
-            if (isVisible) {
-              style = { left, borderBottomColor: color, top };
-            }
-          }
-
-          // @TODO: Reset newRange after annotation is saved
           if (isVisible) {
-            const annotationKey = getAnnotationKey(frameIdx, i);
-            const setPinned = (active: boolean) => {
-              if (active) {
-                setPinnedAnnotationId(annotationKey);
-              } else {
-                setPinnedAnnotationId(undefined);
-              }
-            };
-
-            // Do not let other tooltips render if one is already pinned, or the wip is being edited
-            const showTooltipOnHover = !pinnedAnnotationId && !isWipVisible;
-
-            // The tooltip should render as pinned if the pinned state index matches this annotation
-            const isPinned = pinnedAnnotationId === annotationKey;
-
-            markers.push(
-              <AnnotationMarker2
-                key={annotationKey}
-                setPinned={setPinned}
-                isPinned={isPinned}
-                showTooltipOnHover={showTooltipOnHover}
-                frame={frame}
-                annoIdx={i}
-                annoVals={vals}
-                style={style}
-                timeZone={timeZone}
-                exitWipEdit={isWipFrame ? exitWipEdit : null}
-                portalRoot={portalRoot}
-                canExecuteActions={userCanExecuteActions}
-                replaceVariables={replaceVariables}
-              />
-            );
+            style = { ...getAnnoRegionBoxStyle(plotWidth, right, left), background: color, top };
           }
+        } else {
+          isVisible = left >= 0 && left <= plotWidth;
+
+          if (isVisible) {
+            style = { left, borderBottomColor: color, top };
+          }
+        }
+
+        // @TODO: Reset newRange after annotation is saved
+        if (isVisible) {
+          const annotationKey = getAnnotationKey(frameIdx, i);
+          const setPinned = (active: boolean) => {
+            if (active) {
+              setPinnedAnnotationId(annotationKey);
+            } else {
+              setPinnedAnnotationId(undefined);
+            }
+          };
+
+          // Do not let other tooltips render if one is already pinned, or the wip is being edited
+          const showTooltipOnHover = !pinnedAnnotationId && !isWipVisible;
+
+          // The tooltip should render as pinned if the pinned state index matches this annotation
+          const isPinned = pinnedAnnotationId === annotationKey;
+
+          markers.push(
+            <AnnotationMarker2
+              key={annotationKey}
+              setPinned={setPinned}
+              isPinned={isPinned}
+              showTooltipOnHover={showTooltipOnHover}
+              frame={frame}
+              annoIdx={i}
+              annoVals={vals}
+              style={style}
+              timeZone={timeZone}
+              exitWipEdit={isWipFrame ? exitWipEdit : null}
+              portalRoot={portalRoot}
+              canExecuteActions={userCanExecuteActions}
+              replaceVariables={replaceVariables}
+            />
+          );
         }
       }
 
