@@ -59,7 +59,7 @@ interface BulkQueryActionsProps {
 }
 
 function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
-  const { selectedQueryRefIds, clearSelection } = useQueryEditorUIContext();
+  const { selectedQueryRefIds, clearSelection, isStackedView, setStackedView } = useQueryEditorUIContext();
   const { bulkDeleteQueries, bulkToggleQueriesHide, bulkChangeDataSource } = useActionsContext();
   const { queries } = useQueryRunnerContext();
 
@@ -69,7 +69,7 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
   const selectedQueries = queries.filter(({ refId }) => selectedQueryRefIds.includes(refId));
   const allHidden = selectedQueries.length > 0 && selectedQueries.every(({ hide }) => hide);
   const canChangeDatasource = selectedQueries.every(({ datasource }) => !isExpressionReference(datasource));
-  const compact = canChangeDatasource && barWidth > 0 && barWidth < 280;
+  const compact = barWidth > 0 && barWidth < 340;
 
   const handleConfirmedDelete = () => {
     bulkDeleteQueries(selectedQueryRefIds);
@@ -112,6 +112,24 @@ function BulkQueryActions({ barWidth }: BulkQueryActionsProps) {
             {compact ? undefined : t('query-editor-next.bulk-actions.datasource', 'Data source')}
           </Button>
         )}
+        <Button
+          size="sm"
+          variant={isStackedView ? 'primary' : 'secondary'}
+          fill="text"
+          icon="layers-alt"
+          onClick={() => setStackedView(!isStackedView)}
+          tooltip={
+            isStackedView
+              ? t('query-editor-next.bulk-actions.exit-stacked-tooltip', 'Exit stacked view')
+              : t('query-editor-next.bulk-actions.view-stacked-tooltip', 'View selected queries stacked')
+          }
+        >
+          {compact
+            ? undefined
+            : isStackedView
+              ? t('query-editor-next.bulk-actions.exit-stacked', 'Unstacked')
+              : t('query-editor-next.bulk-actions.view-stacked', 'View stacked')}
+        </Button>
       </BulkActionButtons>
 
       {showDsModal && (

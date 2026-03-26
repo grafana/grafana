@@ -86,6 +86,9 @@ export interface QueryEditorUIState {
   toggleQuerySelection: (query: DataQuery | ExpressionQuery, modifiers?: SelectionModifiers) => void;
   toggleTransformationSelection: (transformation: Transformation, modifiers?: SelectionModifiers) => void;
   clearSelection: () => void;
+  /** When true and 2+ queries are selected, the editor area renders all selected queries stacked vertically. */
+  isStackedView: boolean;
+  setStackedView: (stacked: boolean) => void;
   queryOptions: QueryOptionsState;
   selectedQueryDsData: {
     datasource?: DataSourceApi;

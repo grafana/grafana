@@ -14,15 +14,17 @@ import { useAlertingContext, useQueryEditorUIContext } from './QueryEditorContex
 export function QueryEditorContent() {
   const styles = useStyles2(getStyles);
 
-  const { cardType, showingDatasourceHelp, pendingExpression, pendingTransformation } = useQueryEditorUIContext();
+  const { cardType, showingDatasourceHelp, pendingExpression, pendingTransformation, isStackedView, selectedQueryRefIds } =
+    useQueryEditorUIContext();
   const { alertRules } = useAlertingContext();
   const hasPendingPicker = !!pendingExpression || !!pendingTransformation;
   const isAlertView = cardType === QueryEditorType.Alert;
   const isAlertEmptyState = isAlertView && alertRules.length === 0;
+  const isInStackedView = isStackedView && selectedQueryRefIds.length >= 2;
 
-  const shouldShowHeader = !isAlertEmptyState;
-  const shouldShowFooter = !hasPendingPicker && !isAlertView;
-  const shouldShowDatasourceHelp = !hasPendingPicker && showingDatasourceHelp;
+  const shouldShowHeader = !isAlertEmptyState && !isInStackedView;
+  const shouldShowFooter = !hasPendingPicker && !isAlertView && !isInStackedView;
+  const shouldShowDatasourceHelp = !hasPendingPicker && showingDatasourceHelp && !isInStackedView;
 
   return (
     <div className={styles.container}>

@@ -229,6 +229,39 @@ describe('BulkActionsBar', () => {
     });
   });
 
+  describe('view stacked', () => {
+    it('shows the "View stacked" button when 2+ queries are selected', () => {
+      renderBar({ uiStateOverrides: { selectedQueryRefIds: ['A', 'B'] } });
+      expect(screen.getByRole('button', { name: /view stacked/i })).toBeInTheDocument();
+    });
+
+    it('calls setStackedView(true) when "View stacked" is clicked and not already stacked', async () => {
+      const setStackedView = jest.fn();
+      const { user } = renderBar({
+        uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], isStackedView: false, setStackedView },
+      });
+
+      await user.click(screen.getByRole('button', { name: /view stacked/i }));
+      expect(setStackedView).toHaveBeenCalledWith(true);
+    });
+
+    it('calls setStackedView(false) when button is clicked while already stacked', async () => {
+      const setStackedView = jest.fn();
+      const { user } = renderBar({
+        uiStateOverrides: { selectedQueryRefIds: ['A', 'B'], isStackedView: true, setStackedView },
+      });
+
+      await user.click(screen.getByRole('button', { name: /unstacked/i }));
+      expect(setStackedView).toHaveBeenCalledWith(false);
+    });
+
+    it('does not show the "View stacked" button for transformation selection', () => {
+      renderBar({ uiStateOverrides: { selectedTransformationIds: ['tx-0', 'tx-1'] } });
+      expect(screen.queryByRole('button', { name: /view stacked/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /unstacked/i })).not.toBeInTheDocument();
+    });
+  });
+
   describe('transformation bulk actions', () => {
     describe('delete', () => {
       it('opens a confirmation modal when Delete is clicked', async () => {

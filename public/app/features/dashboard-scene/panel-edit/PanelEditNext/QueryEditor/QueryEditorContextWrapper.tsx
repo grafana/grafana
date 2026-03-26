@@ -83,6 +83,7 @@ export function QueryEditorContextWrapper({
 
   const clearSideEffectsRef = useRef<() => void>(() => {});
   const [selectedAlertId, setSelectedAlertId] = useState<string | null>(null);
+  const [isStackedView, setStackedView] = useState(false);
 
   const {
     selectedQueryRefIds,
@@ -126,6 +127,7 @@ export function QueryEditorContextWrapper({
 
   const clearSelection = useCallback(() => {
     setSelectedAlertId(null);
+    setStackedView(false);
     clearSelectionRaw();
   }, [clearSelectionRaw]);
 
@@ -234,6 +236,8 @@ export function QueryEditorContextWrapper({
       toggleQuerySelection,
       toggleTransformationSelection,
       clearSelection,
+      isStackedView,
+      setStackedView,
       setSelectedQuery: (query: DataQuery | ExpressionQuery | null) => {
         onCardSelectionChange(query ? query.refId : null, null);
         clearSideEffects();
@@ -303,6 +307,7 @@ export function QueryEditorContextWrapper({
       toggleQuerySelection,
       toggleTransformationSelection,
       clearSelection,
+      isStackedView,
       onCardSelectionChange,
       selectAlert,
       clearSideEffects,

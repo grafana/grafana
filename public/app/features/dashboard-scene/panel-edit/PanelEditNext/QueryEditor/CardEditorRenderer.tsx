@@ -13,11 +13,14 @@ import {
   useQueryRunnerContext,
 } from './QueryEditorContext';
 import { QueryEditorRenderer } from './QueryEditorRenderer';
+import { StackedQueryEditorRenderer } from './StackedQueryEditorRenderer';
 import { TransformationEditorRenderer } from './TransformationEditorRenderer';
 
 export function CardEditorRenderer() {
   const {
     cardType,
+    isStackedView,
+    selectedQueryRefIds,
     pendingExpression,
     pendingTransformation,
     setPendingTransformation,
@@ -59,6 +62,10 @@ export function CardEditorRenderer() {
 
   if (cardType === QueryEditorType.Transformation) {
     return <TransformationEditorRenderer />;
+  }
+
+  if (isStackedView && selectedQueryRefIds.length >= 2) {
+    return <StackedQueryEditorRenderer />;
   }
 
   return <QueryEditorRenderer />;

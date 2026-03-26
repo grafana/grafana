@@ -114,6 +114,8 @@ export const mockUIStateBase = {
   toggleQuerySelection: jest.fn(),
   toggleTransformationSelection: jest.fn(),
   clearSelection: jest.fn(),
+  isStackedView: false,
+  setStackedView: jest.fn(),
 };
 
 export const mockTransformToggles = {
@@ -194,6 +196,8 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     toggleQuerySelection: jest.fn(),
     toggleTransformationSelection: jest.fn(),
     clearSelection: jest.fn(),
+    isStackedView: false,
+    setStackedView: jest.fn(),
     queryOptions: mockQueryOptionsState,
     selectedQueryDsData: null,
     selectedQueryDsLoading: false,
