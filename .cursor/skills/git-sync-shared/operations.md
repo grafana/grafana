@@ -74,6 +74,7 @@ After the wizard completes and the repo is synced, the following operations can 
 
 - **Configured branch** (e.g., `agent-test`) → `write` workflow → direct commit to the synced branch.
 - **New/different branch** → `branch` workflow → creates a PR.
+- Before clicking Create/Save/Move/Delete, take a fresh snapshot and confirm `provisioned-ref` shows the intended full value exactly. For `write` workflow it should still be `agent-test`; for `branch` workflow it must match the full new branch name. If the value is truncated or changed unexpectedly, clear it and re-enter it before submitting.
 
 ### Creating a New Folder
 
@@ -83,12 +84,12 @@ After the wizard completes and the repo is synced, the following operations can 
 
 1. `take_snapshot` to find the folder name input.
 2. `fill` the folder name input (id: `folder-name-input`, placeholder: `Enter folder name`) with a test name (e.g., `test-subfolder`). Only alphanumeric characters, spaces, underscores, and hyphens are allowed.
-3. **Branch selection (push to configured branch):** The branch combobox (id: `provisioned-ref`) defaults to the configured branch (e.g., `agent-test`). Leave it as-is for direct write. The workflow auto-selects `write`.
+3. **Branch selection (push to configured branch):** The branch combobox (id: `provisioned-ref`) defaults to the configured branch (e.g., `agent-test`). Leave it as-is for direct write, then take a fresh snapshot and verify the committed value is still exactly `agent-test` before clicking Create. The workflow auto-selects `write`.
 4. Optionally `fill` the comment textarea (id: `provisioned-resource-form-comment`).
 5. `click` the "Create" button.
 6. **Wait:** Button shows "Creating...". `wait_for` navigation to `/dashboards/f/{newFolderUid}/`.
 
-**For PR workflow variant:** In step 3, click the branch combobox "Clear value" button, `click` the combobox, `type_text` a new branch name (e.g., `folder-test-branch`), then `press_key` `Enter`. Workflow auto-switches to `branch`. After clicking Create, a PR alert banner appears with a link. The URL updates with `new_pull_request_url` parameter.
+**For PR workflow variant:** In step 3, click the branch combobox "Clear value" button, `click` the combobox, `type_text` the full new branch name (e.g., `folder-test-branch`), then `press_key` `Enter` as a separate action. Take a fresh snapshot and verify the committed combobox value matches the full branch name exactly. Workflow auto-switches to `branch`. After clicking Create, the intended success state is a PR success banner with an `Open pull request in GitHub` button. If local/dev instead only shows `A new resource has been created in a branch in GitHub.` plus branch/base links and the URL gains `new_pull_request_url`, use those as diagnostic cues and record the missing button/text as a mismatch.
 
 ### Creating a New Dashboard
 
@@ -102,11 +103,11 @@ After the wizard completes and the repo is synced, the following operations can 
 2. `fill` the Title input (id: `dashboard-title`) with a test name (e.g., `Test Dashboard`).
 3. Optionally `fill` Description (id: `dashboard-description`).
 4. Target folder is pre-selected from the URL's `folderUid`.
-5. **Branch selection:** Same as folder creation -- configured branch for `write` workflow, new branch name for `branch` (PR) workflow.
+5. **Branch selection:** Same as folder creation. For `write` workflow, verify `provisioned-ref` still shows the configured branch (`agent-test`) before saving. For `branch` workflow, clear the combobox, type the full new branch name, press `Enter`, then verify the committed value matches exactly before saving.
 6. Folder path (id: `folder-path`) and Filename (id: `dashboard-filename`) are auto-populated. Adjust if needed.
 7. Optionally `fill` Comment (id: `provisioned-resource-form-comment`).
 8. `click` the "Save" button.
-9. **Wait:** Button shows "Saving...". For `write` workflow, a success notification appears and the page navigates to the new dashboard URL. For `branch` workflow, the page navigates to a preview page with a PR banner.
+9. **Wait:** Button shows "Saving...". For `write` workflow, a success notification appears and the page navigates to the new dashboard URL. For `branch` workflow, the page navigates to a preview page and the PR banner should include `Open pull request in GitHub`. If local/dev instead only shows the generic `A new resource has been created in a branch in GitHub.` banner plus branch/base links, record that mismatch while still using preview-page navigation as diagnostic evidence that the drawer submitted.
 
 ### Modifying an Existing Dashboard
 
@@ -117,11 +118,11 @@ After the wizard completes and the repo is synced, the following operations can 
 **Save drawer opens with `SaveProvisionedDashboardForm` (existing dashboard):**
 
 1. `take_snapshot` to see the save form. Title, Description, and Target folder are NOT shown for existing dashboards.
-2. **Branch selection:** Same as above. Configured branch for direct write, new branch name for PR workflow.
+2. **Branch selection:** Same as above. For direct write, verify `provisioned-ref` still shows `agent-test` before saving. For PR workflow, clear the combobox, type the full new branch name, press `Enter`, then verify the committed value matches exactly before saving.
 3. Path (id: `dashboard-path`) is shown read-only.
 4. Optionally `fill` Comment (id: `provisioned-resource-form-comment`).
 5. `click` the "Save" button.
-6. **Wait:** Same as new dashboard -- notification for `write` workflow, preview page for `branch` workflow.
+6. **Wait:** Same as new dashboard -- notification for `write` workflow; for `branch` workflow, a preview page plus an `Open pull request in GitHub` button is the intended result. If only the generic GitHub branch-created banner appears, record that as a mismatch and use the preview navigation only as a diagnostic cue.
 
 **Tabs:** The drawer has "Details" (default) and "Changes" tabs. `click` the "Changes" tab to verify the diff before saving.
 
@@ -135,22 +136,22 @@ After the wizard completes and the repo is synced, the following operations can 
 2. `click` the "Move" button in the action bar.
 3. **Drawer opens with title "Bulk Move Provisioned Resources":**
    - Target Folder: `click` the folder picker (label: "Target Folder") and select the destination folder.
-   - Branch (id: `provisioned-ref`): Same combobox as other provisioned operations. Use the configured branch for direct write.
+   - Branch (id: `provisioned-ref`): Same combobox as other provisioned operations. Use the configured branch for direct write, then take a fresh snapshot and verify the committed value is still exactly `agent-test` before clicking Move.
    - Comment (id: `provisioned-resource-form-comment`): Optional.
 4. `click` the "Move" button (shows "Moving..." while in progress).
-5. **Wait for job completion:** The move creates an async job. Poll with `take_snapshot` every 10-15s until "Job completed successfully" appears, or an error message. Do not use `wait_for` — it has a 30s timeout cap (see Gotchas).
+5. **Wait for job completion:** The move creates an async job. Poll with `take_snapshot` every 10-15s until the final summary table appears or an error is shown. The summary view is the canonical completion signal; do not require literal `Job completed successfully` text. Do not use `wait_for` -- it has a 30s timeout cap (see Gotchas).
 6. **Verify:** Navigate to the target folder and confirm the moved items appear there.
 
 ### Deleting a Single Dashboard
 
-**Entry point:** Navigate to the provisioned dashboard. Open dashboard settings via the gear icon or navigate to `/dashboard/edit/{uid}/settings`. Click the "Delete dashboard" button (`data-testid` from `selectors.pages.Dashboard.Settings.General.deleteDashBoard`).
+**Entry point:** Navigate to the provisioned dashboard. Open dashboard settings via the gear icon in the toolbar or by appending `?editview=settings` to the current dashboard URL. Click the "Delete dashboard" button (`data-testid` from `selectors.pages.Dashboard.Settings.General.deleteDashBoard`).
 
 **Drawer opens with title "Delete Provisioned Dashboard" (subtitle: dashboard title):**
 
-1. Branch (id: `provisioned-ref`): Same combobox. Use the configured branch.
+1. Branch (id: `provisioned-ref`): Same combobox. Use the configured branch, then take a fresh snapshot and verify the committed value is still exactly `agent-test` before deleting.
 2. Comment (id: `provisioned-resource-form-comment`): Optional.
 3. `click` the "Delete dashboard" button (shows "Deleting..." while in progress).
-4. **Wait for completion:** Poll with `take_snapshot` until the job completes or the page navigates to `/dashboards`.
+4. **Wait for completion:** Poll with `take_snapshot` until the job completes, the page navigates to `/dashboards`, or an error appears.
 
 ### Deleting a Single Folder
 
@@ -160,24 +161,24 @@ After the wizard completes and the repo is synced, the following operations can 
 
 - Warning: "This will delete this folder and all its descendants. In total, this will affect:" followed by a count of affected dashboards, folders, and panels.
 
-1. Branch (id: `provisioned-ref`): Same combobox.
+1. Branch (id: `provisioned-ref`): Same combobox. Use the configured branch, then take a fresh snapshot and verify the committed value is still exactly `agent-test` before deleting.
 2. Comment (id: `provisioned-resource-form-comment`): Optional.
 3. `click` the "Delete" button (destructive, shows "Deleting..." while in progress).
-4. **Wait for completion:** Poll with `take_snapshot` until the job completes.
+4. **Wait for completion:** Poll with `take_snapshot` until the job completes or an error appears.
 5. **Verify:** Navigate back to the parent folder and confirm the folder and all its descendants are gone.
 
 ### Bulk Deleting Resources
 
-**Entry point:** Same as bulk move — select items via checkboxes in the browse view, then click "Delete" in the action bar.
+**Entry point:** Same as bulk move -- select items via checkboxes in the browse view, then click "Delete" in the action bar.
 
 **Drawer opens with title "Bulk Delete Provisioned Resources":**
 
 - Warning: "This will delete selected folders and their descendants. In total, this will affect:" followed by a descendant count showing dashboards, folders, and panels.
 
-1. Branch (id: `provisioned-ref`): Same combobox.
+1. Branch (id: `provisioned-ref`): Same combobox. Use the configured branch, then take a fresh snapshot and verify the committed value is still exactly `agent-test` before clicking Delete.
 2. Comment (id: `provisioned-resource-form-comment`): Optional.
 3. `click` the "Delete" button (destructive, shows "Deleting..." while in progress).
-4. **Wait for job completion:** Poll with `take_snapshot` every 10-15s until "Job completed successfully" or an error.
+4. **Wait for job completion:** Poll with `take_snapshot` every 10-15s until the final summary table appears or an error is shown. The summary view is the canonical completion signal; do not require literal `Job completed successfully` text.
 5. **Verify:** Navigate to the parent folder and confirm all selected items and their descendants are gone.
 
 ### Removing the Repository

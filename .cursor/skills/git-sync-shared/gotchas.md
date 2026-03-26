@@ -21,9 +21,11 @@ Each step loads data asynchronously. Take a snapshot and check for these loading
 
 Branch, path, and repository URL (in GitHub App mode) use `Combobox` components, not plain `input` elements. In the snapshot, they appear as `combobox` role. To interact:
 
-1. `click` the combobox to open the dropdown
-2. Either `type_text` to filter, then `click` the desired option from the dropdown
-3. Or for **free-text entry** (e.g., a branch not in the pre-populated list): click the "Clear value" button if a value is pre-filled, `click` the combobox, `type_text` the value, then press `Enter`. The dropdown may appear empty — this is expected; `Enter` commits the typed value.
+1. `click` the combobox to open the dropdown.
+2. Either `type_text` to filter, then `click` the desired option from the dropdown.
+3. For **free-text entry** (especially branch names in `provisioned-ref`): if a value is pre-filled, click the "Clear value" button first.
+4. `click` the combobox again to focus it, `type_text` the full value, then `press_key` `Enter` as a separate action to commit it. The dropdown may appear empty -- this is expected.
+5. Take a fresh snapshot and verify the combobox now shows the exact full committed value before submitting. If the value is truncated, treat that as a browser automation/input problem, clear it, and re-enter it. Do not treat truncation as expected product behavior.
 
 ## Step Heading as Navigation Confirmation
 
@@ -43,6 +45,10 @@ Always `take_snapshot` to verify the button is enabled before clicking.
 ## `wait_for` Timeout Cap
 
 The Chrome DevTools MCP `wait_for` tool has a **hard 30-second internal timeout** regardless of the `timeout` value you pass. Any `wait_for` call that needs more than 30s will fail. For short waits (step transitions, button states), `wait_for` works fine. For long-running operations (sync jobs on large repos), **poll with `take_snapshot`** every 10-15s instead.
+
+## Transient Connection-Loss Alerts
+
+Local/dev runs may occasionally show `Connection to server is lost...` during save or submit flows even when the backend is still healthy. Record the alert, wait for the page to recover, and retry the same UI action once if needed. Only treat it as a product failure when the banner persists or blocks progress while `/api/health` still reports OK.
 
 ## Branch Must Exist
 
