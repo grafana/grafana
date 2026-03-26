@@ -73,10 +73,6 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     return this.state.versions ?? [];
   }
 
-  public get limit(): number {
-    return this._limit;
-  }
-
   public getUrlKey(): string {
     return 'versions';
   }

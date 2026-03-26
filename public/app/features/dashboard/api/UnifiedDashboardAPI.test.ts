@@ -190,8 +190,8 @@ describe('UnifiedDashboardAPI', () => {
 
       const result = await api.listDashboardHistory('dash-1');
 
-      expect(v1Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 10, continueToken: undefined });
-      expect(v2Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 10, continueToken: undefined });
+      expect(v1Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 20, continueToken: undefined });
+      expect(v2Client.listDashboardHistory).toHaveBeenCalledWith('dash-1', { limit: 20, continueToken: undefined });
       expect(result.items).toHaveLength(2);
       expect(result.items).toEqual(mockV2Response.items);
 

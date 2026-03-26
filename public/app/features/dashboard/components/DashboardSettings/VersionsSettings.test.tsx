@@ -166,7 +166,7 @@ describe('VersionSettings', () => {
     const compareButton = screen.getByRole('button', { name: /compare versions/i });
     const tableBody = screen.getAllByRole('rowgroup')[1];
     await user.click(within(tableBody).getAllByRole('checkbox')[0]);
-    await user.click(within(tableBody).getAllByRole('checkbox')[versionsResourceList.items.length - 1]);
+    await user.click(within(tableBody).getAllByRole('checkbox')[versionsResourceList.items.length - 2]);
 
     expect(compareButton).toBeEnabled();
 

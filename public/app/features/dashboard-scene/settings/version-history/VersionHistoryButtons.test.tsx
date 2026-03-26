@@ -20,10 +20,4 @@ describe('VersionHistoryButtons', () => {
     const compareButton = screen.getByRole('button', { name: /compare versions/i });
     expect(compareButton).toBeDisabled();
   });
-
-  it('does not render a show more versions button', () => {
-    render(<VersionsHistoryButtons canCompare={false} getDiff={jest.fn()} />);
-
-    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
-  });
 });
