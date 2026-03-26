@@ -2,7 +2,10 @@ package notifications
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -46,6 +49,30 @@ func TestProvideService(t *testing.T) {
 
 		require.NoError(t, err)
 	})
+}
+
+func TestCompiledEmailTemplatesDoNotReferenceRemoteFontsOrDefaultLogo(t *testing.T) {
+	templates, err := filepath.Glob("../../../public/emails/*.html")
+	require.NoError(t, err)
+	require.NotEmpty(t, templates)
+
+	blockedRefs := []string{
+		"https://fonts.googleapis.com/css?family=Inter",
+		"@import url(https://fonts.googleapis.com/css?family=Inter);",
+		"https://grafana.com/static/assets/img/logo_new_transparent_light_400x100.png",
+	}
+
+	for _, templatePath := range templates {
+		t.Run(filepath.Base(templatePath), func(t *testing.T) {
+			content, err := os.ReadFile(templatePath)
+			require.NoError(t, err)
+
+			template := string(content)
+			for _, blockedRef := range blockedRefs {
+				assert.Falsef(t, strings.Contains(template, blockedRef), "%s should not contain %s", templatePath, blockedRef)
+			}
+		})
+	}
 }
 
 func TestSendEmailSync(t *testing.T) {
