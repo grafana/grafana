@@ -21,6 +21,7 @@
 - **Security:** Fixes CVE-2026-27879
 - **Security:** Fixes CVE-2026-27880
 - **Security:** Fixes CVE-2026-27876
+- **Security:** Fixes CVE-2026-33375
 
 <!-- 12.4.2 END -->
 <!-- 12.4.1 START -->
