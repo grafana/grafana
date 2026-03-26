@@ -98,7 +98,7 @@ export const SuggestedDashboardsLoader = ({
           }),
         ])
           .then(([provisioned, communityResponse]) => {
-            const result: DashboardFetchResult = { provisioned, community: communityResponse.items };
+            const result: DashboardFetchResult = { provisioned, community: communityResponse.items.slice(0, COMMUNITY_RESULT_SIZE) };
             dashboardCache.set(ds.type, result);
             return result;
           })
@@ -110,7 +110,7 @@ export const SuggestedDashboardsLoader = ({
 
       const { provisioned, community } = await pending;
       setProvisionedDashboards(provisioned);
-      setCommunityDashboards(community.slice(0, COMMUNITY_RESULT_SIZE));
+      setCommunityDashboards(community);
       setFetchStatus('done');
       onFetchCompletedRef.current?.(provisioned.length > 0 || community.length > 0);
     } catch {
