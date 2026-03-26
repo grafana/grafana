@@ -1,4 +1,4 @@
-package foldermetadatafull
+package full
 
 import (
 	"context"
@@ -16,16 +16,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationProvisioning_FullSync_MetadataNameChange verifies that when a
 // resource's metadata.name (uid) changes in a file at the same path, full sync
 // creates the new resource and deletes the old one so no orphan is left behind.
 func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-full-name-change"
@@ -70,9 +67,7 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 // TestIntegrationProvisioning_FullSync_ChainedNameChanges verifies that
 // sequential metadata.name changes never accumulate orphaned resources.
 func TestIntegrationProvisioning_FullSync_ChainedNameChanges(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-full-chained-name"
@@ -130,9 +125,7 @@ func TestIntegrationProvisioning_FullSync_ChainedNameChanges(t *testing.T) {
 // TestIntegrationProvisioning_FullSync_MultipleFilesNameChange verifies that
 // simultaneous metadata.name changes across multiple files all get cleaned up.
 func TestIntegrationProvisioning_FullSync_MultipleFilesNameChange(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-full-multi-name"
@@ -185,9 +178,7 @@ func TestIntegrationProvisioning_FullSync_MultipleFilesNameChange(t *testing.T) 
 // client) to bypass the K8s API layer's managed-resource routing, which would
 // otherwise refuse to create a second resource at the same sourcePath.
 func TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-full-orphan-cleanup"

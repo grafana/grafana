@@ -1,28 +1,24 @@
-package foldermetadatafix
+package fix
 
 import (
 	"context"
 	"strings"
 	"testing"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 )
 
 // TestIntegrationGit_FixFolderMetadata_Branch verifies that the fix-folder-metadata
 // job creates _folder.json files on a feature branch when a Ref is specified, and
 // leaves the default branch untouched.
 func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	// FlagProvisioningFolderMetadata is required so the files API allows reading
-	// _folder.json files back for verification.
-	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "fix-meta-git-branch"
@@ -67,9 +63,7 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 // than trying to create it, write the missing _folder.json files there, and
 // leave the default branch untouched.
 func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "fix-meta-git-existing-branch"
@@ -117,9 +111,7 @@ func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 // workflow (no "write"). Without a Ref targeting a feature branch, the job
 // would push directly to main, which is not allowed.
 func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "fix-meta-readonly-main"
@@ -159,9 +151,7 @@ func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch(t *testing.T) {
 // branch is provided. The _folder.json files are committed to the feature
 // branch and the default branch stays untouched.
 func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch_WithRef(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "fix-meta-readonly-branch"
@@ -192,9 +182,8 @@ func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch_WithRef(t *testi
 	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/child/_folder.json")
 }
 
-// requireFolderMetadataOnRef reads the _folder.json at filePath from the given
-// branch via the repository files API and asserts it is a valid Folder resource.
-// It returns the folder UID so callers can compare across files.
+// ── helpers ────────────────────────────────────────────────────────────────
+
 func requireFolderMetadataOnRef(t *testing.T, h *gitcommon.GitTestHelper, ctx context.Context, repoName, filePath, ref string) string {
 	t.Helper()
 
@@ -229,8 +218,6 @@ func requireFolderMetadataOnRef(t *testing.T, h *gitcommon.GitTestHelper, ctx co
 	return uid
 }
 
-// requireFileAbsentOnDefaultBranch asserts that filePath does not exist on the
-// repository's default branch (no ref param → default branch is used).
 func requireFileAbsentOnDefaultBranch(t *testing.T, h *gitcommon.GitTestHelper, ctx context.Context, repoName, filePath string) {
 	t.Helper()
 
