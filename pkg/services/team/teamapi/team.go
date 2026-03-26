@@ -183,7 +183,7 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 		openfeature.TransactionContext(ctx),
 	)
 
-	hasUnsupportedFilters := c.Query("name") != "" || len(c.QueryStrings("teamId")) > 0
+	hasUnsupportedFilters := c.Query("name") != "" || len(c.QueryStrings("teamId")) > 0 || c.Query("sort") != ""
 	if shouldRedirect && !hasUnsupportedFilters {
 		return tapi.searchTeamsViaK8s(c, page, perPage)
 	}
@@ -239,7 +239,11 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 }
 
 func (tapi *TeamAPI) searchTeamsViaK8s(c *contextmodel.ReqContext, page, perPage int) response.Response {
-	namespace := tapi.namespaceMapper(c.GetOrgID())
+	ctx := c.Req.Context()
+	ctx, span := tracer.Start(ctx, "searchTeamsViaK8s")
+	defer span.End()
+
+	namespace := c.Namespace
 
 	cfg := tapi.clientConfigProvider.GetDirectRestConfig(c)
 	cfg = dynamic.ConfigFor(cfg)
@@ -263,12 +267,12 @@ func (tapi *TeamAPI) searchTeamsViaK8s(c *contextmodel.ReqContext, page, perPage
 		req = req.Param("page", strconv.Itoa(page))
 	}
 
-	result := req.Do(c.Req.Context())
+	result := req.Do(ctx)
 	if err := result.Error(); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to search Teams", err)
 	}
 
-	body, _ := result.Raw()
+	body, _ := result.Raw() // err has already been checked
 
 	var searchResp iamv0alpha1.GetSearchTeamsResponse
 	if err := json.Unmarshal(body, &searchResp); err != nil {
