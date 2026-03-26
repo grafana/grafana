@@ -2,7 +2,6 @@ package foldermetadata
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -33,8 +32,7 @@ func TestIntegrationProvisioning_UpdateFolderMetadata(t *testing.T) {
 	require.Equal(t, "update-test", originalTitle, "setup: folder should have initial title")
 
 	t.Run("update folder title via PUT to folder path succeeds", func(t *testing.T) {
-		body := fmt.Sprintf(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"%s"},"spec":{"title":"Updated Title"}}`, originalUID)
-		resp := files.Put(t, "update-test/", []byte(body))
+		resp := files.Put(t, "update-test/", common.FolderBody(t, originalUID, "Updated Title"))
 		require.Equal(t, http.StatusOK, resp.StatusCode, "PUT to folder path should update title: %s", resp.BodyString())
 
 		newTitle := files.ReadFolderTitle(t, ctx, "update-test/_folder.json")
@@ -45,8 +43,7 @@ func TestIntegrationProvisioning_UpdateFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("update folder title updates Grafana folder object", func(t *testing.T) {
-		body := fmt.Sprintf(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"%s"},"spec":{"title":"Grafana Updated"}}`, originalUID)
-		resp := files.Put(t, "update-test/", []byte(body))
+		resp := files.Put(t, "update-test/", common.FolderBody(t, originalUID, "Grafana Updated"))
 		require.Equal(t, http.StatusOK, resp.StatusCode, "updating folder title should succeed: %s", resp.BodyString())
 
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -61,8 +58,7 @@ func TestIntegrationProvisioning_UpdateFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("update with omitted ID succeeds (uses existing ID)", func(t *testing.T) {
-		body := `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{},"spec":{"title":"No ID Provided"}}`
-		resp := files.Put(t, "update-test/", []byte(body))
+		resp := files.Put(t, "update-test/", common.FolderBody(t, "", "No ID Provided"))
 		require.Equal(t, http.StatusOK, resp.StatusCode, "update with omitted ID should succeed: %s", resp.BodyString())
 
 		newTitle := files.ReadFolderTitle(t, ctx, "update-test/_folder.json")
@@ -73,8 +69,7 @@ func TestIntegrationProvisioning_UpdateFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("changing folder ID is rejected", func(t *testing.T) {
-		body := `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"different-uid"},"spec":{"title":"ID Changed"}}`
-		resp := files.Put(t, "update-test/", []byte(body))
+		resp := files.Put(t, "update-test/", common.FolderBody(t, "different-uid", "ID Changed"))
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "changing folder ID must be rejected: %s", resp.BodyString())
 		require.Contains(t, resp.BodyString(), "folder ID change is not allowed")
 
@@ -83,27 +78,23 @@ func TestIntegrationProvisioning_UpdateFolderMetadata(t *testing.T) {
 	})
 
 	t.Run("empty title is rejected", func(t *testing.T) {
-		body := fmt.Sprintf(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"%s"},"spec":{"title":""}}`, originalUID)
-		resp := files.Put(t, "update-test/", []byte(body))
+		resp := files.Put(t, "update-test/", common.FolderBody(t, originalUID, ""))
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "empty title must be rejected: %s", resp.BodyString())
 		require.Contains(t, resp.BodyString(), "title must not be empty")
 	})
 
 	t.Run("missing spec title is rejected", func(t *testing.T) {
-		body := fmt.Sprintf(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"%s"},"spec":{}}`, originalUID)
-		resp := files.Put(t, "update-test/", []byte(body))
+		resp := files.Put(t, "update-test/", common.FolderBody(t, originalUID, ""))
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "missing title must be rejected: %s", resp.BodyString())
 	})
 
 	t.Run("invalid JSON body is rejected", func(t *testing.T) {
-		body := `{not valid json}`
-		resp := files.Put(t, "update-test/", []byte(body))
+		resp := files.Put(t, "update-test/", []byte(`{not valid json}`))
 		require.Equal(t, http.StatusBadRequest, resp.StatusCode, "invalid JSON must be rejected")
 	})
 
 	t.Run("PUT to non-existent folder path fails", func(t *testing.T) {
-		body := `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"some-uid"},"spec":{"title":"ghost"}}`
-		resp := files.Put(t, "no-such-folder/", []byte(body))
+		resp := files.Put(t, "no-such-folder/", common.FolderBody(t, "some-uid", "ghost"))
 		require.NotEqual(t, http.StatusOK, resp.StatusCode, "PUT to non-existent folder should fail")
 	})
 
@@ -114,8 +105,7 @@ func TestIntegrationProvisioning_UpdateFolderMetadata(t *testing.T) {
 		childUID := files.ReadFolderUID(t, ctx, "nested-parent/nested-child/_folder.json")
 		require.NotEmpty(t, childUID)
 
-		body := fmt.Sprintf(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"%s"},"spec":{"title":"Child Renamed"}}`, childUID)
-		resp = files.Put(t, "nested-parent/nested-child/", []byte(body))
+		resp = files.Put(t, "nested-parent/nested-child/", common.FolderBody(t, childUID, "Child Renamed"))
 		require.Equal(t, http.StatusOK, resp.StatusCode, "nested title update should succeed: %s", resp.BodyString())
 
 		newTitle := files.ReadFolderTitle(t, ctx, "nested-parent/nested-child/_folder.json")
@@ -123,11 +113,5 @@ func TestIntegrationProvisioning_UpdateFolderMetadata(t *testing.T) {
 
 		newUID := files.ReadFolderUID(t, ctx, "nested-parent/nested-child/_folder.json")
 		require.Equal(t, childUID, newUID, "nested folder UID must not change")
-	})
-
-	t.Run("PUT to folder path without flag is method not supported", func(t *testing.T) {
-		// This is covered by the existing behavior for repos without the flag,
-		// but we verify that PUT to a directory on this repo (with flag) works.
-		// The non-flag case is tested in the main files_test.go.
 	})
 }

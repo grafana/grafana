@@ -1384,6 +1384,25 @@ func (c *FilesClient) Delete(t *testing.T, filePath string) *FilesResponse {
 	return c.Do(t, http.MethodDelete, filePath, nil)
 }
 
+// FolderBody builds a JSON-encoded Folder resource for PUT requests.
+// uid and title are optional — pass empty strings to omit them.
+func FolderBody(t *testing.T, uid, title string) []byte {
+	t.Helper()
+	f := folder.Folder{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "folder.grafana.app/v1beta1",
+			Kind:       "Folder",
+		},
+		Spec: folder.FolderSpec{Title: title},
+	}
+	if uid != "" {
+		f.Name = uid
+	}
+	data, err := json.Marshal(f)
+	require.NoError(t, err)
+	return data
+}
+
 // ReadFolderUID reads the folder UID (metadata.name) from the _folder.json at the given path.
 func (c *FilesClient) ReadFolderUID(t *testing.T, ctx context.Context, metadataPath string) string {
 	t.Helper()

@@ -24,14 +24,12 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.StatusCode, "setup: creating protected-folder should succeed")
 
 	t.Run("POST to _folder.json is blocked", func(t *testing.T) {
-		body := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"some-uid"},"spec":{"title":"attempt"}}`)
-		resp := files.Do(t, http.MethodPost, "new-folder/_folder.json", body)
+		resp := files.Do(t, http.MethodPost, "new-folder/_folder.json", common.FolderBody(t, "some-uid", "attempt"))
 		require.Equal(t, http.StatusForbidden, resp.StatusCode, "direct POST to _folder.json must be blocked")
 	})
 
 	t.Run("PUT to existing _folder.json is blocked", func(t *testing.T) {
-		body := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"tampered-uid"},"spec":{"title":"tampered"}}`)
-		resp := files.Put(t, "protected-folder/_folder.json", body)
+		resp := files.Put(t, "protected-folder/_folder.json", common.FolderBody(t, "tampered-uid", "tampered"))
 		require.Equal(t, http.StatusForbidden, resp.StatusCode, "PUT to _folder.json must be blocked")
 	})
 
@@ -45,15 +43,15 @@ func TestIntegrationProvisioning_FolderMetadataFileProtection(t *testing.T) {
 		require.NotEmpty(t, uid)
 	})
 
-	rootFolderBody := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"root-uid"},"spec":{"title":"root"}}`)
+	rootBody := common.FolderBody(t, "root-uid", "root")
 
 	for _, tc := range []struct {
 		name   string
 		method string
 		body   []byte
 	}{
-		{name: "POST to root _folder.json is blocked", method: http.MethodPost, body: rootFolderBody},
-		{name: "PUT to root _folder.json is blocked", method: http.MethodPut, body: rootFolderBody},
+		{name: "POST to root _folder.json is blocked", method: http.MethodPost, body: rootBody},
+		{name: "PUT to root _folder.json is blocked", method: http.MethodPut, body: rootBody},
 		{name: "DELETE of root _folder.json is blocked", method: http.MethodDelete},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
