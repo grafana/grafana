@@ -783,7 +783,9 @@
         "unknown-rule": "Unbekannt",
         "value-in-transition": "Wert im Übergang"
       },
-      "error": "Beim Laden des Warnstatusverlaufs ist ein Fehler aufgetreten",
+      "error": {
+        "server-error": ""
+      },
       "filter": {
         "clear": "Filter zurücksetzen",
         "info": {
@@ -794,6 +796,10 @@
         }
       },
       "filterBy": "Filtern nach:",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "tab": {
         "alert-events": "",
         "notifications": ""
@@ -1718,13 +1724,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -2021,6 +2027,10 @@
       "error-unable-to-fetch": "Der Warnstatusverlauf kann nicht abgerufen werden",
       "loading": "Wird geladen ...",
       "no-transitions-match-filters": "",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "start-state": "",
       "timeline-hidden": "",
       "title-error-fetching-the-state-history": "Fehler beim Abrufen des Statusverlaufs",
@@ -3541,20 +3551,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Warnungsinstanzen",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Fehler beim Laden der Regel",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "Instanzdetails",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "Sie haben für den ausgewählten Zeitbereich keine Warnungsinstanzen im Status Auslösen oder Ausstehend.",
       "no-instances-found": "Keine Warnungsinstanzen für folgende Regel gefunden: {{ruleUID}}",
       "no-labels": "Keine Labels",
@@ -3576,14 +3593,16 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_one": "",
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_one": "",
       "show-all-labels_other": "",
       "show-all-values_one": "",
       "show-all-values_other": "",
-      "tooltip-more-values_one": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_one": "",
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "Ausdruck hinzufügen"
@@ -4250,6 +4269,9 @@
     "browse-view": {
       "this-folder-is-empty": "Dieser Ordner ist leer"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Abbrechen",
       "button-delete": "Löschen",
@@ -4313,6 +4335,7 @@
       "button-deleting": "Wird gelöscht …",
       "commit": "Ordner löschen",
       "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht. Insgesamt betrifft dies:",
+      "missing-info": "",
       "success-message": "Ordner erfolgreich gelöscht"
     },
     "descendant-count": {
@@ -4352,6 +4375,7 @@
       "dashboards": "Dashboards",
       "panels": "Fenster"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Keine Elemente"
     },
@@ -4364,12 +4388,13 @@
       "name-label": "Ordnername"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "Fehler beim Erstellen des Ordners",
       "button-create": "Erstellen",
       "button-creating": "Wird erstellt ...",
       "cancel": "Abbrechen",
       "error-invalid-characters": "Der Ordnername enthält ungültige Zeichen. Nur Buchstaben, Zahlen, Leerzeichen, Unterstriche und Bindestriche sind zulässig.",
+      "error-missing-title-or-repo": "",
       "error-required": "Ordnername erforderlich",
+      "error-saving": "",
       "folder-name-input-placeholder-enter-folder-name": "Ordnernamen eingeben",
       "label-folder-name": "Ordnername",
       "text-pull-request-created": "Ein Pull-Request wurde erstellt, mit Änderungen an diesem Ordner:",
@@ -5982,6 +6007,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": ""
+      },
       "prompt-card": {
         "placeholder": "",
         "placeholder-multi": ""
@@ -6081,8 +6109,8 @@
       "name": "Zeilen",
       "new-row-title": "Neue Zeile",
       "row": {
-        "collapse": "Zeile einklappen",
-        "expand": "Zeile ausklappen",
+        "collapse": "",
+        "expand": "",
         "new": "Neue Zeile",
         "repeat": {
           "learn-more": "Mehr erfahren",
@@ -6295,7 +6323,6 @@
         "label": "Bearbeitung beenden",
         "tooltip": "Beendet den Bearbeitungsmodus und verwirft nicht gespeicherte Änderungen"
       },
-      "mark-favorite": "Als Favorit markieren",
       "more-save-options": "Weitere Speicheroptionen",
       "new": {
         "back-to-dashboard": "Zurück zum Dashboard",
@@ -6365,8 +6392,7 @@
       "star-added": "Zu Favoriten hinzugefügt",
       "star-remove-error": "Entfernen von Favoriten fehlgeschlagen",
       "star-removed": "Aus Favoriten entfernt",
-      "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben",
-      "unmark-favorite": "Markierung als Favorit entfernen"
+      "unlink-library-panel": "Verknüpfung mit der Bibliotheksleiste aufheben"
     },
     "transformation-editor": {
       "input-data": "Eingabedaten",
@@ -6623,11 +6649,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Ad-hoc-Optionen",
       "alert-not-supported": "Diese Datenquelle unterstützt keine Ad-hoc-Filter",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Ermöglicht Nutzern, individuelle Werte zur Liste hinzuzufügen",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Dimensionen als CSV angeben: {{name}}, {{value}}",
       "label-data-source": "Datenquelle",
       "label-use-static-key-dimensions": "Statische Key-Dimensionen verwenden",
-      "name-allow-custom-values": "Benutzerdefinierte Werte zulassen"
+      "name-allow-custom-values": "Benutzerdefinierte Werte zulassen",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -6911,11 +6939,12 @@
       "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Das Dashboard konnte nicht gelöscht werden",
       "cancel-action": "Abbrechen",
       "delete-action": "Dashboard löschen",
+      "delete-error": "",
       "deleting": "Löschen...",
       "drawer-title": "Bereitgestelltes Dashboard löschen",
+      "no-repository-selected": "",
       "success-message": "Dashboard erfolgreich gelöscht"
     },
     "description-label": {
@@ -7382,16 +7411,17 @@
       "affected-dashboards_other": "Dieses Update wirkt sich auf <1>{{count}} Dashboards aus.</1> Die folgenden Dashboards, die das Panel nutzen, sind betroffen:"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "Fehler beim Speichern des Dashboards",
       "cancel": "Abbrechen",
       "cannot-be-saved": "Dieses Dashboard kann nicht über die Grafana-Benutzeroberfläche gespeichert werden, da es von einer anderen Quelle bereitgestellt wurde. Kopieren Sie JSON oder speichern Sie es unten in einer Datei. Anschließend können Sie Ihr Dashboard in der Bereitstellungsquelle aktualisieren.",
       "copy-json-to-clipboard": "JSON in die Zwischenablage kopieren",
+      "error-saving": "",
       "file-path": "<strong>Dateipfad:</strong> {{filePath}}",
       "form-loading-error": "",
       "form-loading-error-unknown": "",
       "label-description": "Beschreibung",
       "label-target-folder": "Zielordner",
       "label-title": "Titel",
+      "repo-path-required": "",
       "save": "Speichern",
       "save-json-to-file": "JSON in Datei speichern",
       "saving": "Wird gespeichert …",
@@ -8905,7 +8935,8 @@
     "select-placeholder": "Nach Ordner filtern"
   },
   "folder-repo": {
-    "read-only-badge": "Schreibgeschützt"
+    "read-only-badge": "Schreibgeschützt",
+    "repository-not-found-tooltip": ""
   },
   "folders": {
     "api": {
@@ -10267,6 +10298,9 @@
       "group": "Gruppe",
       "group-tooltip": "Name der Stapelgruppe"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Nach Wert filtern",
       "cell-filter-out": "Wert herausfiltern",
@@ -10315,6 +10349,10 @@
       },
       "no-values-label": "Keine Werte",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} von {{numRows}} Zeilen",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "Keine Daten"
       },
@@ -11428,7 +11466,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Keine Optionen gefunden"
@@ -12173,12 +12212,10 @@
       "description": "Benachrichtigungen, die Sie erhalten haben, werden hier angezeigt",
       "title": "Sie sind auf dem neuesten Stand!"
     },
-    "starred-dashboard": "Dashboard markiert",
     "stored-notifications": {
       "dismiss-notifications": "Benachrichtigungen verwerfen",
       "title-alert": "Diese Seite zeigt vergangene Fehler und Warnungen an. Sobald sie verworfen wurden, können sie nicht wiederhergestellt werden."
-    },
-    "unstarred-dashboard": "Dashboard nicht markiert"
+    }
   },
   "oauth": {
     "form": {
@@ -12319,6 +12356,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Name"
       }
     },
@@ -12464,11 +12502,13 @@
       "description-customize-dashboard-elements-visibility": "Sichtbarkeit der Dashboard-Elemente anpassen",
       "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Fensterhöhen werden an die Bildschirmgröße angepasst",
+      "description-playlist-nav": "",
       "label-autofit": "Autofit",
       "label-dashboard-links": "Dashboard-Links",
       "label-display-dashboard-controls": "Dashboard-Steuerelemente anzeigen",
       "label-hide-logo": "",
       "label-mode": "Modus",
+      "label-playlist-nav": "",
       "label-time-and-refresh": "Zeit und Aktualisierung",
       "label-variables": "Variable",
       "modes": {
@@ -13018,6 +13058,7 @@
       "error-delete-connection": "Verbindung konnte nicht gelöscht werden",
       "error-required": "Dieses Feld ist notwendig",
       "error-save-connection": "Speichern der Verbindung fehlgeschlagen",
+      "error-submit": "",
       "grafana-repositories": "Repositorys, die diese Verbindung nutzen",
       "label-app-id": "ID der GitHub-App",
       "label-description": "Beschreibung",
@@ -13094,6 +13135,10 @@
       "set-up-public-webhooks": "Öffentliche Webhooks einrichten",
       "title-instant-updates-requests-webhooks": "Sofortige Updates und Pull-Requests mit Webhooks.",
       "title-visual-previews-in-pull-requests": "Visuelle Vorschauen in Pull-Requests mit Bildwiedergabe"
+    },
+    "error": {
+      "branch-not-found-dashboard": "",
+      "branch-not-found-folder": ""
     },
     "error-title-default": "Fehler",
     "expanded-row": {
@@ -13304,6 +13349,28 @@
         "label": "Synchronisieren Sie alle Ressourcen mit externem Speicher",
         "subtitle": "Nutzen Sie diese Option, wenn Sie Ihre gesamte Grafana-Instanz über einen externen Speicher synchronisieren und verwalten möchten."
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "",
+      "title": ""
+    },
+    "orphaned-repository-tooltip": "",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "",
+      "confirm-delete-button": "",
+      "confirm-delete-title": "",
+      "confirm-release-body": "",
+      "confirm-release-button": "",
+      "confirm-release-title": "",
+      "contact-admin": "",
+      "convert-to-local-button": "",
+      "delete-button": "",
+      "job-error": "",
+      "job-success": "",
+      "job-warning": "",
+      "message": "",
+      "submit-error": "",
+      "title": ""
     },
     "provisioning-wizard": {
       "on-submit": {
@@ -13542,6 +13609,9 @@
       },
       "go-to": "Weiter zu",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "Warnung",
     "watch-stream": {
@@ -14684,13 +14754,19 @@
     },
     "presets": {
       "horizontal-threshold-value": "",
+      "horizontal-threshold-value-desc": "",
       "horizontal-threshold-value-sparkline": "",
+      "horizontal-threshold-value-sparkline-desc": "",
       "list": "",
       "list_desc": "",
       "threshold-background": "",
+      "threshold-background-desc": "",
       "threshold-background-sparkline": "",
+      "threshold-background-sparkline-desc": "",
       "threshold-value": "",
+      "threshold-value-desc": "",
       "threshold-value-sparkline": "",
+      "threshold-value-sparkline-desc": "",
       "wide-list": "",
       "wide-list-desc": ""
     },
@@ -14913,12 +14989,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "",
       "create": "Erstellen",
+      "description-create-team-folder": "",
       "description-email": "Dies ist optional und wird hauptsächlich genutzt, um individuelle Team-Avatare zu ermöglichen",
-      "failed-to-create": "Team konnte nicht erstellt werden",
+      "failed-to-create": "",
+      "folder-create-failed": "",
+      "folder-create-failed-help": "",
+      "folder-creation-link": "",
+      "folder-creation-loading": "",
+      "folder-creation-success": "",
+      "label-create-team-folder": "",
       "label-email": "E-Mail-Adresse",
       "label-name": "Name",
-      "label-role": "Rolle"
+      "label-role": "Rolle",
+      "role-creation-success": "",
+      "roles-create-failed": "",
+      "roles-create-permission-issue": "",
+      "roles-creation-loading": "",
+      "team-creation-link": "",
+      "team-creation-loading": "",
+      "team-creation-success": ""
     },
     "empty-state": {
       "button-title": "Neues Team",

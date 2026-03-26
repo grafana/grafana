@@ -783,7 +783,9 @@
         "unknown-rule": "Desconhecido",
         "value-in-transition": "Valor em transição"
       },
-      "error": "Ocorreu um erro ao carregar o histórico do estado de alerta",
+      "error": {
+        "server-error": ""
+      },
       "filter": {
         "clear": "Limpar filtros",
         "info": {
@@ -794,6 +796,10 @@
         }
       },
       "filterBy": "Filtrar por:",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "tab": {
         "alert-events": "",
         "notifications": ""
@@ -1718,13 +1724,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -2021,6 +2027,10 @@
       "error-unable-to-fetch": "Não foi possível obter o histórico do estado de alerta",
       "loading": "A carregar...",
       "no-transitions-match-filters": "",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "start-state": "",
       "timeline-hidden": "",
       "title-error-fetching-the-state-history": "Erro ao obter o histórico do estado",
@@ -3541,20 +3551,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Instâncias de alerta",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Erro ao carregar a regra",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "Detalhes da instância",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "Não tem instâncias de alerta num estado de disparo ou pendente para o intervalo de tempo selecionado.",
       "no-instances-found": "Nenhuma instância de alerta encontrada para a regra: {{ruleUID}}",
       "no-labels": "Sem etiquetas",
@@ -3576,14 +3593,16 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_one": "",
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_one": "",
       "show-all-labels_other": "",
       "show-all-values_one": "",
       "show-all-values_other": "",
-      "tooltip-more-values_one": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_one": "",
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "Adicionar expressão"
@@ -4250,6 +4269,9 @@
     "browse-view": {
       "this-folder-is-empty": "Esta pasta está vazia"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Cancelar",
       "button-delete": "Eliminar",
@@ -4313,6 +4335,7 @@
       "button-deleting": "A eliminar...",
       "commit": "Eliminar pasta",
       "delete-warning": "Isto eliminará esta pasta e todas as suas descendentes. No total, isto afetará:",
+      "missing-info": "",
       "success-message": "Pasta eliminada com sucesso"
     },
     "descendant-count": {
@@ -4352,6 +4375,7 @@
       "dashboards": "Painéis de controlo",
       "panels": "Painéis"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Sem artigos "
     },
@@ -4364,12 +4388,13 @@
       "name-label": "Nome da pasta"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "Erro ao criar a pasta",
       "button-create": "Criar",
       "button-creating": "A criar...",
       "cancel": "Cancelar",
       "error-invalid-characters": "O nome da pasta contém carateres inválidos. Só são permitidas letras, números, espaços, sublinhados e hífenes.",
+      "error-missing-title-or-repo": "",
       "error-required": "O nome da pasta é obrigatório",
+      "error-saving": "",
       "folder-name-input-placeholder-enter-folder-name": "Introduza o nome da pasta",
       "label-folder-name": "Nome da pasta",
       "text-pull-request-created": "Foi criado um pedido de extração com alterações a esta pasta:",
@@ -5982,6 +6007,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": ""
+      },
       "prompt-card": {
         "placeholder": "",
         "placeholder-multi": ""
@@ -6081,8 +6109,8 @@
       "name": "Linhas",
       "new-row-title": "Nova linha",
       "row": {
-        "collapse": "Recolher linha",
-        "expand": "Expandir linha",
+        "collapse": "",
+        "expand": "",
         "new": "Nova linha",
         "repeat": {
           "learn-more": "Saiba mais",
@@ -6295,7 +6323,6 @@
         "label": "Sair da edição",
         "tooltip": "Sai do modo de edição e descarta as alterações não guardadas"
       },
-      "mark-favorite": "Marcar com o favorito",
       "more-save-options": "Mais opções de guardar",
       "new": {
         "back-to-dashboard": "Voltar ao painel de controlo",
@@ -6365,8 +6392,7 @@
       "star-added": "Adicionado aos favoritos",
       "star-remove-error": "Falha ao remover dos favoritos",
       "star-removed": "Removido dos favoritos",
-      "unlink-library-panel": "Desassociar painel de biblioteca",
-      "unmark-favorite": "Desmarcar como favorito"
+      "unlink-library-panel": "Desassociar painel de biblioteca"
     },
     "transformation-editor": {
       "input-data": "Dados de entrada",
@@ -6623,11 +6649,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Opções ad-hoc",
       "alert-not-supported": "Esta fonte de dados não suporta filtros ad hoc",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Permite que os utilizadores adicionem valores personalizados à lista",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Forneça dimensões como CSV: {{name}}, {{value}}",
       "label-data-source": "Origem dos dados",
       "label-use-static-key-dimensions": "Utilizar dimensões de chave estática",
-      "name-allow-custom-values": "Permitir valores personalizados"
+      "name-allow-custom-values": "Permitir valores personalizados",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -6911,11 +6939,12 @@
       "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Não foi possível eliminar o painel de controlo",
       "cancel-action": "Cancelar",
       "delete-action": "Eliminar painel de controlo",
+      "delete-error": "",
       "deleting": "A eliminar...",
       "drawer-title": "Eliminar o painel de controlo disponibilizado",
+      "no-repository-selected": "",
       "success-message": "Painel de controlo eliminado com sucesso"
     },
     "description-label": {
@@ -7382,16 +7411,17 @@
       "affected-dashboards_other": "Esta atualização afetará <1>{{count}} painéis de controlo.</1> Os seguintes painéis de controlo que utilizam o painel serão afetados:"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "Erro ao guardar o painel de controlo",
       "cancel": "Cancelar",
       "cannot-be-saved": "Este painel de controlo não pode ser guardado a partir da interface do utilizador da Grafana porque foi aprovisionado a partir de outra fonte. Copie o JSON ou guarde-o num ficheiro abaixo. Posteriormente, poderá atualizar o seu painel de controlo na fonte de aprovisionamento.",
       "copy-json-to-clipboard": "Copiar JSON para a área de transferência",
+      "error-saving": "",
       "file-path": "<strong>Caminho do ficheiro:</strong> {{filePath}}",
       "form-loading-error": "",
       "form-loading-error-unknown": "",
       "label-description": "Descrição",
       "label-target-folder": "Pasta de destino",
       "label-title": "Título",
+      "repo-path-required": "",
       "save": "Guardar",
       "save-json-to-file": "Guardar JSON no ficheiro",
       "saving": "A guardar...",
@@ -8905,7 +8935,8 @@
     "select-placeholder": "Filtrar por pasta"
   },
   "folder-repo": {
-    "read-only-badge": "Apenas para leitura"
+    "read-only-badge": "Apenas para leitura",
+    "repository-not-found-tooltip": ""
   },
   "folders": {
     "api": {
@@ -10267,6 +10298,9 @@
       "group": "Grupo",
       "group-tooltip": "Nome do grupo de empilhamento"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Filtrar por valor",
       "cell-filter-out": "Retirar o filtro de valor",
@@ -10315,6 +10349,10 @@
       },
       "no-values-label": "Nenhum valor",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} de {{numRows}} linhas",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "sem dados"
       },
@@ -11428,7 +11466,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nenhuma opção encontrada"
@@ -12173,12 +12212,10 @@
       "description": "As notificações que recebeu aparecerão aqui",
       "title": "Tem tudo em dia! "
     },
-    "starred-dashboard": "Painel de controlo adicionado aos favoritos",
     "stored-notifications": {
       "dismiss-notifications": "Ignorar notificações",
       "title-alert": "Esta página exibe erros e avisos anteriores. Uma vez dispensados, não podem ser recuperados."
-    },
-    "unstarred-dashboard": "Painel de controlo removido dos favoritos"
+    }
   },
   "oauth": {
     "form": {
@@ -12319,6 +12356,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Nome"
       }
     },
@@ -12464,11 +12502,13 @@
       "description-customize-dashboard-elements-visibility": "Personalizar a visibilidade dos elementos do painel de controlo",
       "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "As alturas do painel serão ajustadas ao tamanho do ecrã",
+      "description-playlist-nav": "",
       "label-autofit": "Ajuste automático",
       "label-dashboard-links": "Links do painel de controlo",
       "label-display-dashboard-controls": "Mostrar os controlos do painel de controlo",
       "label-hide-logo": "",
       "label-mode": "Modo",
+      "label-playlist-nav": "",
       "label-time-and-refresh": "Tempo e atualização",
       "label-variables": "Variáveis",
       "modes": {
@@ -13018,6 +13058,7 @@
       "error-delete-connection": "Não foi possível eliminar a ligação",
       "error-required": "Este campo é obrigatório",
       "error-save-connection": "Não foi possível guardar a ligação",
+      "error-submit": "",
       "grafana-repositories": "Repositórios que usam esta ligação",
       "label-app-id": "ID da aplicação GitHub",
       "label-description": "Descrição",
@@ -13094,6 +13135,10 @@
       "set-up-public-webhooks": "Configurar webhooks públicos",
       "title-instant-updates-requests-webhooks": "Atualizações instantâneas e pedidos de extração com webhooks.",
       "title-visual-previews-in-pull-requests": "Pré-visualizações em pedidos de extração com renderização de imagens"
+    },
+    "error": {
+      "branch-not-found-dashboard": "",
+      "branch-not-found-folder": ""
     },
     "error-title-default": "Erro",
     "expanded-row": {
@@ -13304,6 +13349,28 @@
         "label": "Sincronizar recursos com o armazenamento externo ",
         "subtitle": "Utilize esta opção se pretender sincronizar e gerir toda a sua instância Grafana através de um armazenamento externo."
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "",
+      "title": ""
+    },
+    "orphaned-repository-tooltip": "",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "",
+      "confirm-delete-button": "",
+      "confirm-delete-title": "",
+      "confirm-release-body": "",
+      "confirm-release-button": "",
+      "confirm-release-title": "",
+      "contact-admin": "",
+      "convert-to-local-button": "",
+      "delete-button": "",
+      "job-error": "",
+      "job-success": "",
+      "job-warning": "",
+      "message": "",
+      "submit-error": "",
+      "title": ""
     },
     "provisioning-wizard": {
       "on-submit": {
@@ -13542,6 +13609,9 @@
       },
       "go-to": "Aceda a",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "Aviso",
     "watch-stream": {
@@ -14684,13 +14754,19 @@
     },
     "presets": {
       "horizontal-threshold-value": "",
+      "horizontal-threshold-value-desc": "",
       "horizontal-threshold-value-sparkline": "",
+      "horizontal-threshold-value-sparkline-desc": "",
       "list": "",
       "list_desc": "",
       "threshold-background": "",
+      "threshold-background-desc": "",
       "threshold-background-sparkline": "",
+      "threshold-background-sparkline-desc": "",
       "threshold-value": "",
+      "threshold-value-desc": "",
       "threshold-value-sparkline": "",
+      "threshold-value-sparkline-desc": "",
       "wide-list": "",
       "wide-list-desc": ""
     },
@@ -14913,12 +14989,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "",
       "create": "Criar",
+      "description-create-team-folder": "",
       "description-email": "Isto é opcional e é utilizado principalmente para permitir avatares de equipa personalizados",
-      "failed-to-create": "Falha ao criar equipa",
+      "failed-to-create": "",
+      "folder-create-failed": "",
+      "folder-create-failed-help": "",
+      "folder-creation-link": "",
+      "folder-creation-loading": "",
+      "folder-creation-success": "",
+      "label-create-team-folder": "",
       "label-email": "E-mail",
       "label-name": "Nome",
-      "label-role": "Função"
+      "label-role": "Função",
+      "role-creation-success": "",
+      "roles-create-failed": "",
+      "roles-create-permission-issue": "",
+      "roles-creation-loading": "",
+      "team-creation-link": "",
+      "team-creation-loading": "",
+      "team-creation-success": ""
     },
     "empty-state": {
       "button-title": "Nova equipa",

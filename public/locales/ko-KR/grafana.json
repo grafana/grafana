@@ -780,7 +780,9 @@
         "unknown-rule": "알 수 없음",
         "value-in-transition": "전환 중인 값"
       },
-      "error": "경고 상태 이력 로딩 중 오류 발생",
+      "error": {
+        "server-error": ""
+      },
       "filter": {
         "clear": "필터 초기화",
         "info": {
@@ -791,6 +793,10 @@
         }
       },
       "filterBy": "필터링 기준:",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "tab": {
         "alert-events": "",
         "notifications": ""
@@ -1712,13 +1718,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -2011,6 +2017,10 @@
       "error-unable-to-fetch": "경고 상태 이력을 가져올 수 없습니다",
       "loading": "로딩 중...",
       "no-transitions-match-filters": "",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "start-state": "",
       "timeline-hidden": "",
       "title-error-fetching-the-state-history": "상태 이력을 가져오는 중에 오류 발생",
@@ -3522,20 +3532,27 @@
       }
     },
     "triage": {
-      "alert-instances": "알림 인스턴스",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "규칙 로딩 중 오류 발생",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "인스턴스 세부 정보",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "선택한 시간 범위에서 발생 또는 보류 중인 알림 인스턴스가 없습니다.",
       "no-instances-found": "규칙에 대한 알림 인스턴스를 찾을 수 없음: {{ruleUID}}",
       "no-labels": "레이블 없음",
@@ -3557,10 +3574,13 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_other": "",
       "show-all-values_other": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "표현식 추가"
@@ -4227,6 +4247,9 @@
     "browse-view": {
       "this-folder-is-empty": "이 폴더는 비어 있습니다"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "취소",
       "button-delete": "삭제",
@@ -4285,6 +4308,7 @@
       "button-deleting": "삭제 중…",
       "commit": "폴더 삭제",
       "delete-warning": "이 작업을 수행하면 이 폴더와 모든 하위 폴더가 삭제됩니다. 이는 전체적으로 다음에 영향을 미칩니다.",
+      "missing-info": "",
       "success-message": "폴더가 삭제되었습니다"
     },
     "descendant-count": {
@@ -4324,6 +4348,7 @@
       "dashboards": "대시보드",
       "panels": "패널"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "항목 없음"
     },
@@ -4336,12 +4361,13 @@
       "name-label": "폴더 이름"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "폴더 생성 중 오류 발생",
       "button-create": "생성",
       "button-creating": "생성 중...",
       "cancel": "취소",
       "error-invalid-characters": "폴더 이름에 잘못된 문자가 포함되어 있습니다. 문자, 숫자, 공백, 밑줄, 하이픈만 허용됩니다.",
+      "error-missing-title-or-repo": "",
       "error-required": "폴더 이름은 필수 입력 항목입니다",
+      "error-saving": "",
       "folder-name-input-placeholder-enter-folder-name": "폴더 이름 입력",
       "label-folder-name": "폴더 이름",
       "text-pull-request-created": "이 폴더에 대한 변경 사항을 포함하는 풀 요청이 생성되었습니다.",
@@ -5950,6 +5976,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": ""
+      },
       "prompt-card": {
         "placeholder": "",
         "placeholder-multi": ""
@@ -6049,8 +6078,8 @@
       "name": "행",
       "new-row-title": "새 행",
       "row": {
-        "collapse": "행 접기",
-        "expand": "행 펼치기",
+        "collapse": "",
+        "expand": "",
         "new": "새 행",
         "repeat": {
           "learn-more": "자세히 알아보기",
@@ -6263,7 +6292,6 @@
         "label": "편집 종료",
         "tooltip": "편집 모드를 종료하고 저장되지 않은 변경 사항을 삭제합니다."
       },
-      "mark-favorite": "즐겨찾기로 표시",
       "more-save-options": "저장 옵션 더 보기",
       "new": {
         "back-to-dashboard": "대시보드로 돌아가기",
@@ -6333,8 +6361,7 @@
       "star-added": "별표에 추가됨",
       "star-remove-error": "별표에서 제거하지 못함",
       "star-removed": "별표에서 제거됨",
-      "unlink-library-panel": "라이브러리 패널 연결 해제",
-      "unmark-favorite": "즐겨찾기 표시 취소"
+      "unlink-library-panel": "라이브러리 패널 연결 해제"
     },
     "transformation-editor": {
       "input-data": "입력 데이터",
@@ -6590,11 +6617,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "임시 옵션",
       "alert-not-supported": "이 데이터 소스는 임시 필터를 지원하지 않습니다",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "사용자가 목록에 사용자 지정 값을 추가할 수 있습니다",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "차원에 대한 다음 정보를 CSV로 제공: {{name}}, {{value}}",
       "label-data-source": "데이터 소스",
       "label-use-static-key-dimensions": "고정 키 차원 사용",
-      "name-allow-custom-values": "사용자 지정 값 허용"
+      "name-allow-custom-values": "사용자 지정 값 허용",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -6875,11 +6904,12 @@
       "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "대시보드 삭제 실패",
       "cancel-action": "취소",
       "delete-action": "대시보드 삭제",
+      "delete-error": "",
       "deleting": "삭제 중…",
       "drawer-title": "프로비저닝된 대시보드 삭제",
+      "no-repository-selected": "",
       "success-message": "대시보드가 성공적으로 삭제되었습니다"
     },
     "description-label": {
@@ -7342,16 +7372,17 @@
       "affected-dashboards_other": "이 업데이트는 <1>{{count}}개의 대시보드에 영향을 미칩니다.</1> 패널을 사용하는 다음 대시보드가 영향을 받습니다."
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "대시보드 저장 중 오류 발생",
       "cancel": "취소",
       "cannot-be-saved": "이 대시보드는 다른 소스에서 프로비저닝되었으므로 Grafana UI에서 저장할 수 없습니다. JSON을 복사하거나 아래 파일에 저장하면 프로비저닝 소스에서 대시보드를 업데이트할 수 있습니다.",
       "copy-json-to-clipboard": "JSON을 클립보드로 복사",
+      "error-saving": "",
       "file-path": "<strong>파일 경로:</strong> {{filePath}}",
       "form-loading-error": "",
       "form-loading-error-unknown": "",
       "label-description": "설명",
       "label-target-folder": "대상 폴더",
       "label-title": "제목",
+      "repo-path-required": "",
       "save": "저장",
       "save-json-to-file": "JSON을 파일에 저장",
       "saving": "저장 중...",
@@ -8859,7 +8890,8 @@
     "select-placeholder": "폴더별로 필터링"
   },
   "folder-repo": {
-    "read-only-badge": "읽기 전용"
+    "read-only-badge": "읽기 전용",
+    "repository-not-found-tooltip": ""
   },
   "folders": {
     "api": {
@@ -10211,6 +10243,9 @@
       "group": "그룹",
       "group-tooltip": "누적 그룹의 이름"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "값 필터링하여 포함",
       "cell-filter-out": "값 필터링하여 제외",
@@ -10259,6 +10294,10 @@
       },
       "no-values-label": "값 없음",
       "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "데이터 없음"
       },
@@ -11364,7 +11403,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "옵션을 찾을 수 없습니다"
@@ -12106,12 +12146,10 @@
       "description": "받은 알림이 여기에 표시됩니다.",
       "title": "모두 확인했습니다!"
     },
-    "starred-dashboard": "대시보드 별표 표시됨",
     "stored-notifications": {
       "dismiss-notifications": "알림 무시",
       "title-alert": "이 페이지는 과거의 오류와 경고를 표시합니다. 한 번 무시한 경고는 검색할 수 없습니다."
-    },
-    "unstarred-dashboard": "대시보드 별표 표시 해제됨"
+    }
   },
   "oauth": {
     "form": {
@@ -12252,6 +12290,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "이름"
       }
     },
@@ -12397,11 +12436,13 @@
       "description-customize-dashboard-elements-visibility": "대시보드 요소 가시성 사용자 지정",
       "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "패널 높이는 화면 크기에 맞게 조정됩니다.",
+      "description-playlist-nav": "",
       "label-autofit": "자동 맞춤",
       "label-dashboard-links": "대시보드 링크",
       "label-display-dashboard-controls": "대시보드 제어 표시",
       "label-hide-logo": "",
       "label-mode": "모드",
+      "label-playlist-nav": "",
       "label-time-and-refresh": "시간 및 새로 고침",
       "label-variables": "변수",
       "modes": {
@@ -12948,6 +12989,7 @@
       "error-delete-connection": "연결 삭제 실패",
       "error-required": "필수 입력 사항입니다",
       "error-save-connection": "연결 저장 실패",
+      "error-submit": "",
       "grafana-repositories": "이 연결을 사용하는 리포지토리",
       "label-app-id": "GitHub 앱 ID",
       "label-description": "설명",
@@ -13023,6 +13065,10 @@
       "set-up-public-webhooks": "공개 웹훅 설정",
       "title-instant-updates-requests-webhooks": "웹훅을 통한 즉시 업데이트 및 풀 요청.",
       "title-visual-previews-in-pull-requests": "이미지 렌더링을 통해 풀 요청을 시각적으로 미리 보기"
+    },
+    "error": {
+      "branch-not-found-dashboard": "",
+      "branch-not-found-folder": ""
     },
     "error-title-default": "오류",
     "expanded-row": {
@@ -13231,6 +13277,28 @@
         "label": "외부 스토리지와 모든 리소스를 동기화",
         "subtitle": "외부 스토리지를 통해 전체 Grafana 인스턴스를 동기화하고 관리하려면 이 옵션을 사용하세요."
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "",
+      "title": ""
+    },
+    "orphaned-repository-tooltip": "",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "",
+      "confirm-delete-button": "",
+      "confirm-delete-title": "",
+      "confirm-release-body": "",
+      "confirm-release-button": "",
+      "confirm-release-title": "",
+      "contact-admin": "",
+      "convert-to-local-button": "",
+      "delete-button": "",
+      "job-error": "",
+      "job-success": "",
+      "job-warning": "",
+      "message": "",
+      "submit-error": "",
+      "title": ""
     },
     "provisioning-wizard": {
       "on-submit": {
@@ -13461,6 +13529,9 @@
       },
       "go-to": "다음으로 이동",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "경고",
     "watch-stream": {
@@ -14596,13 +14667,19 @@
     },
     "presets": {
       "horizontal-threshold-value": "",
+      "horizontal-threshold-value-desc": "",
       "horizontal-threshold-value-sparkline": "",
+      "horizontal-threshold-value-sparkline-desc": "",
       "list": "",
       "list_desc": "",
       "threshold-background": "",
+      "threshold-background-desc": "",
       "threshold-background-sparkline": "",
+      "threshold-background-sparkline-desc": "",
       "threshold-value": "",
+      "threshold-value-desc": "",
       "threshold-value-sparkline": "",
+      "threshold-value-sparkline-desc": "",
       "wide-list": "",
       "wide-list-desc": ""
     },
@@ -14824,12 +14901,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "",
       "create": "생성",
+      "description-create-team-folder": "",
       "description-email": "이 항목은 선택 사항이며 주로 사용자 지정 팀 아바타를 허용하는 데 사용됩니다",
-      "failed-to-create": "팀을 생성하지 못했습니다",
+      "failed-to-create": "",
+      "folder-create-failed": "",
+      "folder-create-failed-help": "",
+      "folder-creation-link": "",
+      "folder-creation-loading": "",
+      "folder-creation-success": "",
+      "label-create-team-folder": "",
       "label-email": "이메일",
       "label-name": "이름",
-      "label-role": "역할"
+      "label-role": "역할",
+      "role-creation-success": "",
+      "roles-create-failed": "",
+      "roles-create-permission-issue": "",
+      "roles-creation-loading": "",
+      "team-creation-link": "",
+      "team-creation-loading": "",
+      "team-creation-success": ""
     },
     "empty-state": {
       "button-title": "새 팀",

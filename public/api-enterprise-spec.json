@@ -7073,8 +7073,17 @@
           "type": "integer",
           "format": "int64"
         },
+        "pdfDashboardTitleEnabled": {
+          "type": "boolean"
+        },
+        "pdfHeaderEnabled": {
+          "type": "boolean"
+        },
         "pdfTheme": {
           "type": "string"
+        },
+        "pdfTimeRangeEnabled": {
+          "type": "boolean"
         },
         "userId": {
           "type": "integer",

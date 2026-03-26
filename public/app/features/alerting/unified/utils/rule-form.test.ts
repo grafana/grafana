@@ -23,6 +23,7 @@ import {
   cleanAnnotations,
   cleanLabels,
   fixMissingRefIdsInExpressionModel,
+  folderFromDashboardMeta,
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
@@ -31,6 +32,34 @@ import {
   getNotificationSettingsForDTO,
   rulerRuleToFormValues,
 } from './rule-form';
+
+describe('folderFromDashboardMeta', () => {
+  it('returns undefined when no folder metadata', () => {
+    expect(folderFromDashboardMeta({})).toBeUndefined();
+    expect(folderFromDashboardMeta({ folderUid: '', folderTitle: '' })).toBeUndefined();
+  });
+
+  it('returns folder uid and title for nested dashboards', () => {
+    expect(folderFromDashboardMeta({ folderUid: 'f1', folderTitle: 'Infra' })).toEqual({
+      uid: 'f1',
+      title: 'Infra',
+    });
+  });
+
+  it('returns root folder when only title is set (e.g. Dashboards)', () => {
+    expect(folderFromDashboardMeta({ folderUid: '', folderTitle: 'Dashboards' })).toEqual({
+      uid: '',
+      title: 'Dashboards',
+    });
+  });
+
+  it('uses uid as display title when title is missing but uid is set', () => {
+    expect(folderFromDashboardMeta({ folderUid: 'abc', folderTitle: '' })).toEqual({
+      uid: 'abc',
+      title: 'abc',
+    });
+  });
+});
 
 describe('formValuesToRulerGrafanaRuleDTO', () => {
   it('should correctly convert rule form values for grafana alerting rule', () => {

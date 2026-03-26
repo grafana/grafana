@@ -5,7 +5,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { CompletionItemKind, LanguageDefinition, SQLEditor, TableIdentifier } from '@grafana/plugin-ui';
+import { CompletionItemKind, type LanguageDefinition, type TableIdentifier } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { formatSQL } from '@grafana/sql';
@@ -33,6 +33,11 @@ const GenAISuggestionsDrawer = lazy(() =>
 const GenAIExplanationDrawer = lazy(() =>
   import('./GenAI/GenAIExplanationDrawer').then((module) => ({
     default: module.GenAIExplanationDrawer,
+  }))
+);
+const SQLEditor = lazy(() =>
+  import('@grafana/plugin-ui').then((module) => ({
+    default: module.SQLEditor,
   }))
 );
 
@@ -249,19 +254,21 @@ LIMIT
       <div className={styles.editorContainer}>
         <AutoSizer>
           {({ width, height }) => (
-            <SQLEditor
-              query={query.expression || initialQuery}
-              onChange={onEditorChange}
-              language={EDITOR_LANGUAGE_DEFINITION}
-              width={width}
-              height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
-            >
-              {({ formatQuery }) => (
-                <div ref={toolboxRef}>
-                  <QueryToolbox query={query} onFormatCode={formatQuery} />
-                </div>
-              )}
-            </SQLEditor>
+            <Suspense fallback={null}>
+              <SQLEditor
+                query={query.expression || initialQuery}
+                onChange={onEditorChange}
+                language={EDITOR_LANGUAGE_DEFINITION}
+                width={width}
+                height={height - EDITOR_BORDER_ADJUSTMENT - toolboxMeasure.height}
+              >
+                {({ formatQuery }) => (
+                  <div ref={toolboxRef}>
+                    <QueryToolbox query={query} onFormatCode={formatQuery} />
+                  </div>
+                )}
+              </SQLEditor>
+            </Suspense>
           )}
         </AutoSizer>
       </div>

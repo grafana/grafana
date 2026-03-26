@@ -10,11 +10,9 @@ import {
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { getFormattedThresholds } from '../Gauge/utils';
-
 import { DEFAULT_DECIMALS } from './constants';
 import { GradientStop } from './types';
-import { getThresholdPercentageValue, getValuePercentageForValue } from './utils';
+import { getThresholdPercentageValue, getValuePercentageForValue, getFormattedThresholds } from './utils';
 
 export function buildGradientColors(
   theme: GrafanaTheme2,

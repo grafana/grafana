@@ -89,7 +89,7 @@ func (s *legacySQLStore) ListTeamBindings(ctx context.Context, ns claims.Namespa
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (s *legacySQLStore) CreateTeamMember(ctx context.Context, ns claims.Namespa
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func (s *legacySQLStore) ListTeamMembers(ctx context.Context, ns claims.Namespac
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +355,7 @@ func (s *legacySQLStore) UpdateTeamMember(ctx context.Context, ns claims.Namespa
 	now := time.Now().UTC()
 	cmd.Updated = legacysql.NewDBTime(now)
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +411,7 @@ func (r deleteTeamMemberQuery) Validate() error {
 }
 
 func (s *legacySQLStore) DeleteTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteTeamMemberCommand) error {
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return err
 	}
