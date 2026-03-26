@@ -48,11 +48,14 @@ func NewFolderMetadataIncrementalDiffBuilder(
 //
 // The rebuilder keeps unrelated git changes intact, preserves real diff paths,
 // and returns:
+//
 //   - a rebuilt incremental diff of repository changes,
-//   - a relocations map summarizing folder UID relocations, and
-//   - a list of folders whose UID was replaced,
-// along with any invalid folder metadata warnings. Tree cleanup based on these
-// results is handled by callers; this method does not perform it directly.
+//   - a relocations map summarizing folder UID relocations,
+//   - a list of folders whose UID was replaced, and
+//   - any invalid folder metadata warnings.
+//
+// Tree cleanup based on these results is handled by callers; this method does
+// not perform it directly.
 func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	ctx context.Context,
 	currentRef string,
