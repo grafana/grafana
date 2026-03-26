@@ -191,6 +191,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "queryHistoryLocalOnly",
+			Description: "Store query history in browser IndexedDB instead of server-side",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,

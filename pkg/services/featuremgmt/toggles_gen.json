@@ -4781,6 +4781,20 @@
     },
     {
       "metadata": {
+        "name": "queryHistoryLocalOnly",
+        "resourceVersion": "1774558005873",
+        "creationTimestamp": "2026-03-26T20:46:45Z"
+      },
+      "spec": {
+        "description": "Store query history in browser IndexedDB instead of server-side",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "queryLibrary",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2022-10-07T18:31:45Z",
