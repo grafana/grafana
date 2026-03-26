@@ -7,7 +7,9 @@ import { CustomCellRendererProps, TableCellDisplayMode } from '@grafana/ui';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { LogsTableCustomCellRenderer } from '../cells/LogsTableCustomCellRenderer';
+import { getLogLevelColumnEnhancements } from '../fields/defaultLogLevelColumnConfig';
 import { getFieldWidth } from '../fields/getFieldWidth';
+import { normalizeLogLevelFieldInPlace } from '../fields/normalizeLogLevelField';
 import { doesFieldSupportAdHocFiltering, doesFieldSupportInspector } from '../fields/supports';
 import { getDisplayedFields } from '../options/getDisplayedFields';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
@@ -113,17 +115,37 @@ const organizeFields = async (
 
   for (let frameIndex = 0; frameIndex < organizedFrame.length; frameIndex++) {
     const frame = organizedFrame[frameIndex];
+
+    const levelField = frame.fields.find((f) => f.name === levelFieldName);
+    if (levelField) {
+      normalizeLogLevelFieldInPlace(levelField);
+    }
+
     for (const [fieldIndex, field] of frame.fields.entries()) {
       const isFirstField = fieldIndex === 0;
-      field.config = {
+      const baseConfig = {
         ...fieldConfig.defaults,
         ...field.config,
+      };
+
+      const levelEnhancements = getLogLevelColumnEnhancements(field, levelFieldName, baseConfig);
+
+      const configAfterLevel = {
+        ...baseConfig,
+        ...(levelEnhancements?.mappings ? { mappings: levelEnhancements.mappings } : {}),
+        custom: {
+          ...baseConfig.custom,
+          ...(levelEnhancements?.cellOptions ? { cellOptions: levelEnhancements.cellOptions } : {}),
+        },
+      };
+
+      field.config = {
+        ...configAfterLevel,
         filterable: field.config?.filterable ?? doesFieldSupportAdHocFiltering(field, timeFieldName, bodyFieldName),
         custom: {
-          ...fieldConfig.defaults.custom,
-          ...field.config.custom,
-          width: getFieldWidth(field.config.custom?.width, fieldIndex, options),
-          inspect: field.config?.custom?.inspect ?? doesFieldSupportInspector(field),
+          ...configAfterLevel.custom,
+          width: getFieldWidth(configAfterLevel.custom?.width, fieldIndex, options),
+          inspect: configAfterLevel.custom?.inspect ?? doesFieldSupportInspector(field),
           cellOptions:
             isFirstField && bodyFieldName && (supportsPermalink || options.showInspectLogLine)
               ? {
@@ -140,7 +162,7 @@ const organizeFields = async (
                     />
                   ),
                 }
-              : undefined,
+              : configAfterLevel.custom?.cellOptions,
         },
       };
     }
