@@ -52,7 +52,7 @@ export async function getDrilldownApplicability(
 
   return await ds.getDrilldownsApplicability({
     filters,
-    groupByKeys,
+    ...(groupByKeys.length > 0 ? { groupByKeys } : {}),
     queries,
     timeRange,
     scopes: sceneGraph.getScopes(queryRunner),
