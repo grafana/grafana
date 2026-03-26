@@ -33,7 +33,7 @@ export const DashboardResultsGrid = ({
   onClickCommunityDashboard,
   onCheckCompatibility,
 }: DashboardResultsGridProps) => (
-  <Grid gap={4} columns={{ xs: 1, lg: 3 }} alignItems="center">
+  <Grid gap={4} columns={{ xs: 1, lg: 3 }} alignItems="start">
     {provisionedSlice.map((dashboard, index) => {
       const globalIndex = (currentPage - 1) * PAGE_SIZE + index;
       const imageUrl = getProvisionedDashboardImageUrl(globalIndex);

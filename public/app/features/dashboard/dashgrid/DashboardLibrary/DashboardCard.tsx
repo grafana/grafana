@@ -176,28 +176,27 @@ function DashboardCardComponent({
           )}
         </div>
       </div>
-      {(dashboard.description || hasCompatActions) && (
-        <div className={styles.bottomSection}>
-          {dashboard.description && (
-            <div title={dashboard.description}>
-              <Card.Description data-testid="dashboard-card-description" className={styles.description}>
-                {dashboard.description}
-              </Card.Description>
-            </div>
-          )}
-          {hasCompatActions && (
-            <div className={styles.actionsContainer}>
-              {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
-                <CompatibilityBadge
-                  state={compatibilityState ?? { status: 'idle' }}
-                  onCheck={onCompatibilityCheck}
-                  onRetry={onCompatibilityCheck}
-                />
-              )}
-            </div>
-          )}
+      <div className={styles.bottomSection}>
+        <div title={dashboard.description}>
+          <Card.Description
+            data-testid="dashboard-card-description"
+            className={cx(styles.description, { [styles.noDescription]: !dashboard.description })}
+          >
+            {dashboard.description || 'No description available'}
+          </Card.Description>
         </div>
-      )}
+        {hasCompatActions && (
+          <div className={styles.actionsContainer}>
+            {isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck && (
+              <CompatibilityBadge
+                state={compatibilityState ?? { status: 'idle' }}
+                onCheck={onCompatibilityCheck}
+                onRetry={onCompatibilityCheck}
+              />
+            )}
+          </div>
+        )}
+      </div>
     </Card>
   );
 }
@@ -396,6 +395,9 @@ function getStyles(theme: GrafanaTheme2) {
       textOverflow: 'ellipsis',
       margin: 0,
       fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    noDescription: css({
+      fontStyle: 'italic',
     }),
     actionsContainer: css({
       display: 'flex',
