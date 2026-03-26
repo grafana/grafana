@@ -130,7 +130,9 @@ describe('useOrganizeFields', () => {
         expect(organizedFields.current.organizedFrame?.fields[0].config.custom.cellOptions.type).toBe(
           TableCellDisplayMode.Custom
         );
-        expect(organizedFields.current.organizedFrame?.fields[1].config.custom.cellOptions).not.toBeDefined();
+        expect(organizedFields.current.organizedFrame?.fields[1].config.custom.cellOptions.type).toBe(
+          TableCellDisplayMode.Pill
+        );
         expect(organizedFields.current.organizedFrame?.fields[2].config.custom.cellOptions).not.toBeDefined();
       });
     });
@@ -156,7 +158,9 @@ describe('useOrganizeFields', () => {
         expect(organizedFields.current.organizedFrame?.fields[0].config.custom.cellOptions.type).toBe(
           TableCellDisplayMode.Custom
         );
-        expect(organizedFields.current.organizedFrame?.fields[1].config.custom.cellOptions).not.toBeDefined();
+        expect(organizedFields.current.organizedFrame?.fields[1].config.custom.cellOptions.type).toBe(
+          TableCellDisplayMode.Pill
+        );
         expect(organizedFields.current.organizedFrame?.fields[2].config.custom.cellOptions).not.toBeDefined();
       });
     });
@@ -199,6 +203,31 @@ describe('useOrganizeFields', () => {
       await waitFor(() => {
         expect(organizedFields.current.organizedFrame).not.toBeNull();
         expect(organizedFields.current.organizedFrame?.fields[0].config.custom.filterable).toBe(true);
+      });
+    });
+  });
+
+  describe('log level column enhancements', () => {
+    test('applies default level mapping and pill cell mode for level field', async () => {
+      const { result: organizedFields } = renderHook(() =>
+        useOrganizeFields({
+          extractedFrame,
+          bodyFieldName: LOGS_DATAPLANE_BODY_NAME,
+          levelFieldName: 'level',
+          logsFrame: testLogsFrame,
+          onPermalinkClick: () => null,
+          options: {},
+          supportsPermalink: false,
+          timeFieldName: LOGS_DATAPLANE_TIMESTAMP_NAME,
+          fieldConfig: { defaults: {}, overrides: [] },
+        })
+      );
+
+      await waitFor(() => {
+        const levelField = organizedFields.current.organizedFrame?.fields.find((f) => f.name === 'level');
+        expect(levelField).toBeDefined();
+        expect(levelField?.config.custom?.cellOptions?.type).toBe(TableCellDisplayMode.Pill);
+        expect(levelField?.config.mappings?.[0]?.options?.['critical']).toBeDefined();
       });
     });
   });
