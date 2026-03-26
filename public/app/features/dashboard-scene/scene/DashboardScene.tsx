@@ -47,7 +47,6 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { setDashboardMutationClient } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
 import { VariablesChanged } from 'app/features/variables/types';
 import { defaultGraphStyleConfig } from 'app/plugins/panel/timeseries/config';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types/dashboard';
@@ -63,7 +62,6 @@ import {
 } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
 import { dashboardEditActions } from '../edit-pane/shared';
-import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { getUpdatedHoverHeader } from '../panel-edit/getPanelFrameOptions';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -99,11 +97,11 @@ import {
   getPanelIdForVizPanel,
   hasActualSaveChanges,
 } from '../utils/utils';
-import { SchemaV2EditorDrawer } from '../v2schema/SchemaV2EditorDrawer';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
 import { DashboardControls } from './DashboardControls';
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
+import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -281,18 +279,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
-    let mutationClient: DashboardMutationClient | undefined;
-    try {
-      mutationClient = new DashboardMutationClient(this);
-      setDashboardMutationClient(mutationClient);
-    } catch (error) {
-      console.error('Failed to register Dashboard Mutation API:', error);
-    }
+    const destroyMutationClient = createMutationClient(this);
 
-    // Deactivation logic
     return () => {
-      setDashboardMutationClient(null);
-      mutationClient = undefined;
+      destroyMutationClient();
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
@@ -536,7 +526,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
-    const api = getDashboardAPI();
+    const api = await getDashboardAPI();
     // the id here is the resource version in k8s, use this instead to get the specific version
     const versionRsp = await api.restoreDashboardVersion(version.uid, version.id);
 
@@ -548,7 +538,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     if (isDashboardV2Spec(version.data as Dashboard | DashboardV2Spec)) {
-      const dto = await getDashboardAPI('v2').getDashboardDTO(version.uid);
+      const api = await getDashboardAPI('v2');
+      const dto = await api.getDashboardDTO(version.uid);
       dashScene = transformSaveModelSchemaV2ToScene(dto);
     } else {
       const dashboardDTO: DashboardDTO = {
@@ -580,14 +571,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         saveAsCopy,
         onSaveSuccess,
         showVariablesWarning: this.hasVariableErrors(),
-      }),
-    });
-  }
-
-  public openV2SchemaEditor() {
-    this.setState({
-      overlay: new SchemaV2EditorDrawer({
-        dashboardRef: this.getRef(),
       }),
     });
   }
@@ -959,26 +942,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public closeModal() {
     this.setState({ overlay: undefined });
-  }
-
-  public async onStarDashboard(isStarred?: boolean) {
-    const { meta, uid } = this.state;
-    isStarred = isStarred ?? Boolean(meta.isStarred);
-    if (!uid) {
-      return;
-    }
-    try {
-      const result = await getDashboardSrv().starDashboard(uid, isStarred);
-
-      this.setState({
-        meta: {
-          ...meta,
-          isStarred: result,
-        },
-      });
-    } catch (err) {
-      console.error('Failed to star dashboard', err);
-    }
   }
 
   public onOpenSettings = () => {

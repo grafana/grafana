@@ -1,9 +1,8 @@
 import { DataSourceInstanceSettings, VariableModel } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { Panel, RowPanel } from '@grafana/schema';
+import { AnnotationQuery, Dashboard, Panel, RowPanel } from '@grafana/schema';
 import { AnnotationQueryKind, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { AnnotationQuery, Dashboard } from '@grafana/schema/dist/esm/veneer/dashboard.types';
 import { isRecord } from 'app/core/utils/isRecord';
 import { ExportFormat } from 'app/features/dashboard/api/types';
 import { isDashboardV1Resource, isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -64,12 +63,8 @@ function isLibraryElementExport(value: unknown): value is LibraryElementExport {
   );
 }
 
-function hasUid(query: Record<string, unknown> | {}): query is { uid: string } {
-  return 'uid' in query && typeof query['uid'] === 'string';
-}
-
-function isRowPanel(panel: Panel | RowPanel): panel is RowPanel {
-  return panel.type === 'row';
+function hasUid(query: unknown): query is { uid: string } {
+  return isRecord(query) && typeof query['uid'] === 'string';
 }
 
 function getExportLabel(labels?: { [ExportLabel]?: string }): string | undefined {
@@ -313,12 +308,7 @@ export function applyV1Inputs(
     return processAnnotation(annotation, inputs, form);
   });
 
-  // Row panels with collapsed=true store their child panels in panel.panels[] rather than
-  // dashboard.panels[]. We recurse one level deep — v1 dashboards do not nest rows further.
-  const panels = (dashboard.panels ?? []).map((panel: Panel | RowPanel) => {
-    if (isRowPanel(panel)) {
-      return { ...panel, panels: panel.panels.map((p: Panel) => processPanel(p, inputs, form)) };
-    }
+  const panels = (dashboard.panels ?? []).map((panel: Panel) => {
     return processPanel(panel, inputs, form);
   });
 
@@ -592,37 +582,55 @@ function processAnnotation(
   return annotation;
 }
 
-function processPanel(panel: Panel, inputs: { dataSources: DataSourceInput[] }, form: ImportDashboardDTO): Panel {
-  const queries = panel.targets?.map((target) => {
-    if (target.datasource && hasUid(target.datasource) && target.datasource.uid.startsWith('$')) {
-      const userInput = checkUserInputMatch(target.datasource.uid, inputs.dataSources, form.dataSources);
-      if (userInput) {
-        return {
-          ...target,
-          datasource: {
-            ...target.datasource,
-            uid: userInput.uid,
-          },
-        };
-      }
+function getDSUid(datasource: unknown): string | null {
+  if (typeof datasource === 'string' && datasource.startsWith('$')) {
+    return datasource;
+  }
+  if (hasUid(datasource) && datasource.uid.startsWith('$')) {
+    return datasource.uid;
+  }
+  return null;
+}
+
+function resolveInputDatasource(
+  datasource: Panel['datasource'],
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+): Panel['datasource'] {
+  const dsUid = getDSUid(datasource);
+
+  if (dsUid) {
+    const userInput = checkUserInputMatch(dsUid, inputs.dataSources, form.dataSources);
+    if (userInput) {
+      return {
+        ...(isRecord(datasource) ? datasource : {}),
+        uid: userInput.uid,
+      };
     }
-    return target;
-  });
+  }
+  return datasource;
+}
 
-  const panelDs =
-    panel.datasource && panel.datasource.uid && panel.datasource.uid.startsWith('$')
-      ? checkUserInputMatch(panel.datasource.uid, inputs.dataSources, form.dataSources)
-      : undefined;
-
+function processPanel(
+  panel: Panel | RowPanel,
+  inputs: { dataSources: DataSourceInput[] },
+  form: ImportDashboardDTO
+): Panel | RowPanel {
   return {
     ...panel,
-    ...(queries && { targets: queries }),
-    ...(panelDs && {
-      datasource: {
-        ...panel.datasource,
-        uid: panelDs.uid,
-      },
+    ...(panel.datasource && { datasource: resolveInputDatasource(panel.datasource, inputs, form) }),
+    // nested panels of collapsed rows
+    ...('panels' in panel && {
+      panels: panel.panels.map((nestedPanel) => processPanel(nestedPanel, inputs, form)),
     }),
+    ...('targets' in panel &&
+      panel.targets && {
+        targets: panel.targets.map((target) =>
+          target.datasource
+            ? { ...target, datasource: resolveInputDatasource(target.datasource, inputs, form) }
+            : target
+        ),
+      }),
   };
 }
 

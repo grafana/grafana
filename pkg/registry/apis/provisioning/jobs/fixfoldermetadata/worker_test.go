@@ -396,4 +396,152 @@ func TestWorker_Process(t *testing.T) {
 		err := w.Process(ctx, mockRepo, job, mockProgress)
 		require.NoError(t, err)
 	})
+
+	t.Run("deletes .keep file after creating _folder.json", func(t *testing.T) {
+		ctx := context.Background()
+		w := NewWorker()
+
+		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
+		mockStaged := repository.NewMockStagedRepository(t)
+		mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+		job := makeTestJob("")
+
+		tree := []repository.FileTreeEntry{
+			treeEntry("myfolder", false),
+			treeEntry("myfolder/.keep", true),
+		}
+
+		myFolder := resources.ParseFolder("myfolder/", "test-repo")
+
+		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
+
+		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(tree, nil)
+		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
+		mockStaged.EXPECT().Create(mock.Anything, "myfolder/_folder.json", "", mock.Anything, mock.Anything).Return(nil)
+		mockStaged.EXPECT().Delete(mock.Anything, "myfolder/.keep", "", mock.Anything).Return(nil)
+
+		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
+		mockProgress.EXPECT().SetTotal(mock.Anything, 1).Return()
+		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionCreated && r.Name() == myFolder.ID
+		})).Return()
+		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
+
+		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
+		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
+
+		err := w.Process(ctx, mockRepo, job, mockProgress)
+		require.NoError(t, err)
+	})
+
+	t.Run("deletes .keep file from folder that already has _folder.json", func(t *testing.T) {
+		ctx := context.Background()
+		w := NewWorker()
+
+		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
+		mockStaged := repository.NewMockStagedRepository(t)
+		mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+		job := makeTestJob("")
+
+		tree := []repository.FileTreeEntry{
+			treeEntry("myfolder", false),
+			treeEntry("myfolder/_folder.json", true),
+			treeEntry("myfolder/.keep", true),
+		}
+
+		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
+
+		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(tree, nil)
+		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
+		// No Create expected — _folder.json already exists
+		mockStaged.EXPECT().Delete(mock.Anything, "myfolder/.keep", "", mock.Anything).Return(nil)
+
+		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
+		mockProgress.EXPECT().SetTotal(mock.Anything, 0).Return()
+		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
+
+		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
+		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
+
+		err := w.Process(ctx, mockRepo, job, mockProgress)
+		require.NoError(t, err)
+	})
+
+	t.Run("tolerates .keep file already absent when deleting", func(t *testing.T) {
+		ctx := context.Background()
+		w := NewWorker()
+
+		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
+		mockStaged := repository.NewMockStagedRepository(t)
+		mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+		job := makeTestJob("")
+
+		tree := []repository.FileTreeEntry{
+			treeEntry("myfolder", false),
+			treeEntry("myfolder/.keep", true),
+		}
+
+		myFolder := resources.ParseFolder("myfolder/", "test-repo")
+
+		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
+
+		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(tree, nil)
+		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
+		mockStaged.EXPECT().Create(mock.Anything, "myfolder/_folder.json", "", mock.Anything, mock.Anything).Return(nil)
+		mockStaged.EXPECT().Delete(mock.Anything, "myfolder/.keep", "", mock.Anything).Return(repository.ErrFileNotFound)
+
+		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
+		mockProgress.EXPECT().SetTotal(mock.Anything, 1).Return()
+		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionCreated && r.Name() == myFolder.ID
+		})).Return()
+		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
+
+		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
+		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
+
+		err := w.Process(ctx, mockRepo, job, mockProgress)
+		require.NoError(t, err)
+	})
+
+	t.Run("does not attempt .keep deletion when folder has no .keep", func(t *testing.T) {
+		ctx := context.Background()
+		w := NewWorker()
+
+		mockRepo := &mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)}
+		mockStaged := repository.NewMockStagedRepository(t)
+		mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+		job := makeTestJob("")
+
+		tree := []repository.FileTreeEntry{
+			treeEntry("myfolder", false),
+			treeEntry("myfolder/dashboard.json", true),
+		}
+
+		myFolder := resources.ParseFolder("myfolder/", "test-repo")
+
+		mockRepo.MockStageableRepository.EXPECT().Stage(mock.Anything, mock.Anything).Return(mockStaged, nil)
+
+		mockStaged.EXPECT().ReadTree(mock.Anything, "").Return(tree, nil)
+		mockStaged.EXPECT().Config().Return(repoConfig("test-repo"))
+		mockStaged.EXPECT().Create(mock.Anything, "myfolder/_folder.json", "", mock.Anything, mock.Anything).Return(nil)
+		// No Delete expected — there is no .keep file
+
+		mockProgress.EXPECT().SetMessage(mock.Anything, "Writing folder metadata files on default branch").Return()
+		mockProgress.EXPECT().SetTotal(mock.Anything, 1).Return()
+		mockProgress.EXPECT().Record(mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionCreated && r.Name() == myFolder.ID
+		})).Return()
+		mockProgress.EXPECT().SetFinalMessage(mock.Anything, "Folder metadata fixed on default branch").Return()
+
+		mockStaged.EXPECT().Push(mock.Anything).Return(nil)
+		mockStaged.EXPECT().Remove(mock.Anything).Return(nil)
+
+		err := w.Process(ctx, mockRepo, job, mockProgress)
+		require.NoError(t, err)
+	})
 }

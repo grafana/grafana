@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/stretchr/testify/assert"
@@ -62,6 +62,18 @@ func TestReadFolderMetadata(t *testing.T) {
 		_, _, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
 
 		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidFolderMetadata)
+	})
+
+	t.Run("missing metadata.name returns invalid folder metadata error", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1","kind":"Folder","metadata":{"name":""},"spec":{"title":"My Folder"}}`)}, nil)
+
+		_, _, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
+
+		require.Error(t, err)
+		require.ErrorIs(t, err, ErrInvalidFolderMetadata)
 	})
 }
 
@@ -122,7 +134,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 			if err := json.Unmarshal(b, &f); err != nil {
 				return false
 			}
-			return f.APIVersion == "folder.grafana.app/v1beta1" &&
+			return f.APIVersion == "folder.grafana.app/v1" &&
 				f.Kind == "Folder" &&
 				f.Name == uid &&
 				f.Spec.Title == "myfolder"
@@ -214,6 +226,53 @@ func TestFolderMetadataConflict_SentinelError(t *testing.T) {
 	})
 }
 
+func TestInvalidFolderMetadata_SentinelError(t *testing.T) {
+	t.Run("errors.Is matches ErrInvalidFolderMetadata", func(t *testing.T) {
+		err := &InvalidFolderMetadata{Path: "x/", Err: errors.New("missing metadata.name")}
+		assert.True(t, errors.Is(err, ErrInvalidFolderMetadata))
+	})
+
+	t.Run("errors.Is does not match unrelated error", func(t *testing.T) {
+		assert.False(t, errors.Is(errors.New("other"), ErrInvalidFolderMetadata))
+	})
+
+	t.Run("errors.As extracts InvalidFolderMetadata from wrapped error", func(t *testing.T) {
+		original := &InvalidFolderMetadata{Path: "x/", Err: errors.New("bad manifest")}
+		wrapped := fmt.Errorf("wrap: %w", original)
+
+		var target *InvalidFolderMetadata
+		require.True(t, errors.As(wrapped, &target))
+		assert.Equal(t, "x/", target.Path)
+		assert.EqualError(t, target.Err, "bad manifest")
+	})
+}
+
+func TestNewInvalidFolderMetadata(t *testing.T) {
+	err := NewInvalidFolderMetadata("team-a/dashboards/", errors.New("missing metadata.name"))
+	require.NotNil(t, err)
+	assert.Equal(t, "team-a/dashboards/", err.Path)
+	assert.Empty(t, err.Action)
+	assert.EqualError(t, err.Err, "missing metadata.name")
+}
+
+func TestInvalidFolderMetadata_Error(t *testing.T) {
+	err := &InvalidFolderMetadata{Path: "team-a/dashboards/", Err: errors.New("missing metadata.name")}
+	assert.Contains(t, err.Error(), "team-a/dashboards/")
+	assert.Contains(t, err.Error(), "invalid folder metadata")
+	assert.Contains(t, err.Error(), "missing metadata.name")
+}
+
+func TestInvalidFolderMetadata_WithAction(t *testing.T) {
+	err := NewInvalidFolderMetadata("team-a/dashboards/", errors.New("missing metadata.name"))
+
+	got := err.WithAction(repository.FileActionCreated)
+
+	require.Same(t, err, got)
+	assert.Equal(t, "team-a/dashboards/", err.Path)
+	assert.Equal(t, repository.FileActionCreated, err.Action)
+	assert.EqualError(t, err.Err, "missing metadata.name")
+}
+
 func TestFolderMetadataConflict_Error(t *testing.T) {
 	err := &FolderMetadataConflict{Path: "team-a/dashboards/", Reason: "user deleted folder"}
 	assert.Contains(t, err.Error(), "team-a/dashboards/")
@@ -229,7 +288,7 @@ func TestNewFolderManifest(t *testing.T) {
 
 	gvk := f.GetObjectKind().GroupVersionKind()
 	assert.Equal(t, "folder.grafana.app", gvk.Group)
-	assert.Equal(t, "v1beta1", gvk.Version)
+	assert.Equal(t, "v1", gvk.Version)
 	assert.Equal(t, "Folder", gvk.Kind)
 }
 
@@ -571,7 +630,7 @@ func TestParseFolderResource(t *testing.T) {
 
 			// Verify GVK and GVR
 			assert.Equal(t, "folder.grafana.app", result.GVK.Group)
-			assert.Equal(t, "v1beta1", result.GVK.Version)
+			assert.Equal(t, "v1", result.GVK.Version)
 			assert.Equal(t, "Folder", result.GVK.Kind)
 		})
 	}
@@ -638,7 +697,7 @@ func TestGetFolderID(t *testing.T) {
 			description: "When metadata read fails with non-NotFound error, propagate the error",
 		},
 		{
-			name:                  "metadata enabled but empty UID - returns hash-based ID",
+			name:                  "metadata enabled but empty UID - returns invalid folder metadata error",
 			folderMetadataEnabled: true,
 			setupMock: func(reader *repository.MockReader) {
 				reader.On("Config").Return(testRepoConfig)
@@ -650,9 +709,9 @@ func TestGetFolderID(t *testing.T) {
 						Path: "team-a/project-x/_folder.json",
 					}, nil)
 			},
-			expectedID:  ParseFolder(testPath, testRepoConfig.Name).ID,
-			expectedErr: false,
-			description: "When metadata exists but UID is empty, fall back to hash-based ID",
+			expectedID:  "",
+			expectedErr: true,
+			description: "When metadata exists but UID is empty, return invalid folder metadata error",
 		},
 		{
 			name:                  "metadata disabled - returns hash-based ID",

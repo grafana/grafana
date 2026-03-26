@@ -64,7 +64,7 @@ class DeletedDashboardsCache {
 
   private async fetchResourceList(): Promise<ResourceList<DashboardDataDTO>> {
     try {
-      const api = getDashboardAPI();
+      const api = await getDashboardAPI();
       const deletedResponse = await api.listDeletedDashboards({ limit: 1000 });
 
       if (isResourceList<DashboardDataDTO>(deletedResponse)) {

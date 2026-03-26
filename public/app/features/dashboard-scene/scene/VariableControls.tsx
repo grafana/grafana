@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
+import { useEffect } from 'react';
 
 import { VariableHide, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   sceneGraph,
   useSceneObjectState,
@@ -11,16 +12,29 @@ import {
   ControlsLabel,
   ControlsLayout,
   sceneUtils,
+  SceneVariableValueChangedEvent,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
+import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
   const { isEditing } = dashboard.useState();
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
+
+  // Subscribe to variable value changes to track interactions
+  useEffect(() => {
+    const subscription = dashboard.subscribeToEvent(SceneVariableValueChangedEvent, () => {
+      reportInteraction('grafana_dashboards_variable_changed');
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [dashboard]);
 
   const visibleVariables = variables.filter(
     (v: SceneVariable) =>
@@ -172,6 +186,14 @@ function VariableLabel({
   }
 
   const labelOrName = state.label || state.name;
+  const controlsLayout = layout ?? 'horizontal';
+  const descriptionSuffix =
+    state.description != null && state.description !== '' ? (
+      <VariableDescriptionTooltip
+        description={state.description}
+        placement={controlsLayout === 'vertical' ? 'top' : 'bottom'}
+      />
+    ) : undefined;
 
   return (
     <ControlsLabel
@@ -180,8 +202,9 @@ function VariableLabel({
       onCancel={() => variable.onCancel?.()}
       label={labelOrName}
       error={state.error}
-      layout={layout ?? 'horizontal'}
-      description={state.description ?? undefined}
+      layout={controlsLayout}
+      description={undefined}
+      suffix={descriptionSuffix}
       className={className}
     />
   );

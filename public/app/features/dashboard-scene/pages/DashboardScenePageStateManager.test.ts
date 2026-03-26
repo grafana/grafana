@@ -134,15 +134,17 @@ const setupDashboardAPI = (
   spy: jest.Mock,
   effect?: () => void
 ) => {
-  (getDashboardAPI as jest.Mock).mockImplementation(() => ({
-    getDashboardDTO: async () => {
-      spy();
-      effect?.();
-      return d;
-    },
-    deleteDashboard: jest.fn(),
-    saveDashboard: jest.fn(),
-  }));
+  (getDashboardAPI as jest.Mock).mockImplementation(() =>
+    Promise.resolve({
+      getDashboardDTO: async () => {
+        spy();
+        effect?.();
+        return d;
+      },
+      deleteDashboard: jest.fn(),
+      saveDashboard: jest.fn(),
+    })
+  );
 };
 
 const setupV1FailureV2Success = (
@@ -454,6 +456,15 @@ describe('DashboardScenePageStateManager v1', () => {
 
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
       expect(loader.state.isLoading).toBe(false);
+    });
+
+    it('should store the snapshot key in meta.snapshotKey', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadSnapshot('fake-slug');
+
+      expect(loader.state.dashboard?.state.meta.snapshotKey).toBe('fake-slug');
     });
 
     describe('AssistantPreview', () => {
@@ -941,6 +952,22 @@ describe('DashboardScenePageStateManager v2', () => {
 
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
       expect(loader.state.isLoading).toBe(false);
+    });
+
+    it('should store the snapshot key in meta.snapshotKey', async () => {
+      jest.spyOn(getDashboardSnapshotSrv(), 'getSnapshot').mockResolvedValue({
+        dashboard: {
+          uid: 'fake-dash',
+          title: 'Fake dashboard',
+          schemaVersion: 40,
+        },
+        meta: { isSnapshot: true },
+      });
+
+      const loader = new DashboardScenePageStateManagerV2({});
+      await loader.loadSnapshot('fake-slug');
+
+      expect(loader.state.dashboard?.state.meta.snapshotKey).toBe('fake-slug');
     });
 
     describe('AssistantPreview', () => {
@@ -1543,11 +1570,13 @@ describe('DashboardScenePageStateManager v2', () => {
           spec: { ...defaultDashboardV2Spec() },
         });
 
-        (getDashboardAPI as jest.Mock).mockImplementation(() => ({
-          getDashboardDTO: getDashboardDTOMock,
-          deleteDashboard: jest.fn(),
-          saveDashboard: jest.fn(),
-        }));
+        (getDashboardAPI as jest.Mock).mockImplementation(() =>
+          Promise.resolve({
+            getDashboardDTO: getDashboardDTOMock,
+            deleteDashboard: jest.fn(),
+            saveDashboard: jest.fn(),
+          })
+        );
 
         return getDashboardDTOMock;
       };
