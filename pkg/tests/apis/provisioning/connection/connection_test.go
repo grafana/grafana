@@ -13,7 +13,6 @@ import (
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/go-github/v82/github"
-	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,7 +21,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -526,7 +526,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		restConfig := helper.Org1.Admin.NewRestConfig()
 		provisioningClient, err := clientset.NewForConfig(restConfig)
 		require.NoError(t, err)
-		connClient := provisioningClient.ProvisioningV0alpha1().Connections("default")
+		connClient := provisioningClient.ProvisioningV1beta1().Connections("default")
 
 		require.Eventually(t, func() bool {
 			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
@@ -621,7 +621,7 @@ func TestIntegrationProvisioning_ConnectionValidation(t *testing.T) {
 		restConfig := helper.Org1.Admin.NewRestConfig()
 		provisioningClient, err := clientset.NewForConfig(restConfig)
 		require.NoError(t, err)
-		connClient := provisioningClient.ProvisioningV0alpha1().Connections("default")
+		connClient := provisioningClient.ProvisioningV1beta1().Connections("default")
 
 		require.Eventually(t, func() bool {
 			conn, err := connClient.Get(ctx, connName, metav1.GetOptions{})
@@ -676,7 +676,7 @@ func TestIntegrationConnectionController_TokenCreation(t *testing.T) {
 	restConfig := helper.Org1.Admin.NewRestConfig()
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
-	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
+	connClient := provisioningClient.ProvisioningV1beta1().Connections(namespace)
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	decryptService := helper.GetEnv().DecryptService
@@ -883,7 +883,7 @@ func TestIntegrationConnectionController_HealthCheckUpdates(t *testing.T) {
 	restConfig := helper.Org1.Admin.NewRestConfig()
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
-	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
+	connClient := provisioningClient.ProvisioningV1beta1().Connections(namespace)
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("health check gets updated after initial creation", func(t *testing.T) {
@@ -1052,7 +1052,7 @@ func TestIntegrationConnectionController_UnhealthyWithValidationErrors(t *testin
 	restConfig := helper.Org1.Admin.NewRestConfig()
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
-	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
+	connClient := provisioningClient.ProvisioningV1beta1().Connections(namespace)
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("connection with invalid installation ID becomes unhealthy with fieldErrors", func(t *testing.T) {
@@ -1290,7 +1290,7 @@ func TestIntegrationConnectionController_FieldErrorsCleared(t *testing.T) {
 	restConfig := helper.Org1.Admin.NewRestConfig()
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
-	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
+	connClient := provisioningClient.ProvisioningV1beta1().Connections(namespace)
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("connection fieldErrors are cleared when connection becomes healthy", func(t *testing.T) {
@@ -1767,7 +1767,7 @@ func TestIntegrationConnectionController_GranularConditionReasons(t *testing.T) 
 	restConfig := helper.Org1.Admin.NewRestConfig()
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
-	connClient := provisioningClient.ProvisioningV0alpha1().Connections(namespace)
+	connClient := provisioningClient.ProvisioningV1beta1().Connections(namespace)
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	t.Run("ServiceUnavailable reason when GitHub API returns 503", func(t *testing.T) {
@@ -2103,7 +2103,7 @@ func TestIntegrationProvisioning_GithubAppPermissionValidation(t *testing.T) {
 			restConfig := helper.Org1.Admin.NewRestConfig()
 			provisioningClient, err := clientset.NewForConfig(restConfig)
 			require.NoError(t, err)
-			connClient := provisioningClient.ProvisioningV0alpha1().Connections("default")
+			connClient := provisioningClient.ProvisioningV1beta1().Connections("default")
 
 			// Wait for health check to complete
 			var conn *provisioning.Connection
@@ -2320,7 +2320,7 @@ func TestIntegrationProvisioning_GithubAppInstallationPermissionValidation(t *te
 			restConfig := helper.Org1.Admin.NewRestConfig()
 			provisioningClient, err := clientset.NewForConfig(restConfig)
 			require.NoError(t, err)
-			connClient := provisioningClient.ProvisioningV0alpha1().Connections("default")
+			connClient := provisioningClient.ProvisioningV1beta1().Connections("default")
 
 			// Wait for health check to complete
 			var conn *provisioning.Connection

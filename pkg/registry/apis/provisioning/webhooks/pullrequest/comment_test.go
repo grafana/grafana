@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioningV1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
@@ -41,7 +41,7 @@ func TestGenerateComment(t *testing.T) {
 							Path: "file.json",
 						},
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
-						Action: v0alpha1.ResourceActionCreate,
+						Action: provisioningV1.ResourceActionCreate,
 					},
 					Title:                "New Dashboard",
 					PreviewURL:           "http://grafana/admin/preview",
@@ -57,7 +57,7 @@ func TestGenerateComment(t *testing.T) {
 						Info: &repository.FileInfo{
 							Path: "file.json",
 						},
-						Action: v0alpha1.ResourceActionUpdate,
+						Action: provisioningV1.ResourceActionUpdate,
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Existing Dashboard",
@@ -77,7 +77,7 @@ func TestGenerateComment(t *testing.T) {
 						Info: &repository.FileInfo{
 							Path: "file.json",
 						},
-						Action: v0alpha1.ResourceActionUpdate,
+						Action: provisioningV1.ResourceActionUpdate,
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Existing Dashboard",
@@ -96,7 +96,7 @@ func TestGenerateComment(t *testing.T) {
 						Info: &repository.FileInfo{
 							Path: "aaa.json",
 						},
-						Action: v0alpha1.ResourceActionCreate,
+						Action: provisioningV1.ResourceActionCreate,
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Dash A",
@@ -107,7 +107,7 @@ func TestGenerateComment(t *testing.T) {
 						Info: &repository.FileInfo{
 							Path: "bbb.json",
 						},
-						Action: v0alpha1.ResourceActionUpdate,
+						Action: provisioningV1.ResourceActionUpdate,
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Dash B",
@@ -119,7 +119,7 @@ func TestGenerateComment(t *testing.T) {
 						Info: &repository.FileInfo{
 							Path: "bbb.json",
 						},
-						Action: v0alpha1.ResourceActionCreate,
+						Action: provisioningV1.ResourceActionCreate,
 						GVK:    schema.GroupVersionKind{Kind: "Playlist"},
 					},
 					Title: "My Playlist",
@@ -156,7 +156,7 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 						Info: &repository.FileInfo{
 							Path: "file.json",
 						},
-						Action: v0alpha1.ResourceActionUpdate,
+						Action: provisioningV1.ResourceActionUpdate,
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Existing Dashboard",
@@ -190,7 +190,7 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 						Info: &repository.FileInfo{
 							Path: "file.json",
 						},
-						Action: v0alpha1.ResourceActionUpdate,
+						Action: provisioningV1.ResourceActionUpdate,
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Existing Dashboard",

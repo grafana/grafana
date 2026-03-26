@@ -7,7 +7,7 @@ import (
 	"time"
 
 	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
-	provisioningv1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioningv1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"

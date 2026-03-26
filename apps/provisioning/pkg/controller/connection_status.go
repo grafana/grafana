@@ -5,19 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
 )
 
 // ConnectionStatusPatcher provides methods to patch Connection status subresources.
 type ConnectionStatusPatcher struct {
-	client client.ProvisioningV0alpha1Interface
+	client client.ProvisioningV1beta1Interface
 }
 
 // NewConnectionStatusPatcher creates a new ConnectionStatusPatcher.
-func NewConnectionStatusPatcher(client client.ProvisioningV0alpha1Interface) *ConnectionStatusPatcher {
+func NewConnectionStatusPatcher(client client.ProvisioningV1beta1Interface) *ConnectionStatusPatcher {
 	return &ConnectionStatusPatcher{
 		client: client,
 	}

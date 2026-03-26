@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,19 +16,23 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/logging"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+
+	"github.com/prometheus/client_golang/prometheus"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
+	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v1beta1"
+	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 const loggerName = "provisioning-repository-controller"
@@ -52,7 +54,7 @@ type finalizerProcessor interface {
 
 // RepositoryController controls how and when CRD is established.
 type RepositoryController struct {
-	client     client.ProvisioningV0alpha1Interface
+	client     client.ProvisioningV1beta1Interface
 	repoLister listers.RepositoryLister
 	repoSynced cache.InformerSynced
 	logger     logging.Logger
@@ -87,7 +89,7 @@ type RepositoryController struct {
 
 // NewRepositoryController creates new RepositoryController.
 func NewRepositoryController(
-	provisioningClient client.ProvisioningV0alpha1Interface,
+	provisioningClient client.ProvisioningV1beta1Interface,
 	repoInformer informer.RepositoryInformer,
 	repoFactory repository.Factory,
 	connectionFactory connection.Factory,

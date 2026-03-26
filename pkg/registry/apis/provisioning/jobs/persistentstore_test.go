@@ -9,15 +9,15 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
-	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-func newTestClientset() provisioningv0alpha1.ProvisioningV0alpha1Interface {
+func newTestClientset() provisioningv0alpha1.ProvisioningV1beta1Interface {
 	//nolint:staticcheck // NewSimpleClientset is needed; NewClientset requires schema registration not available for this type.
-	return fakeclientset.NewSimpleClientset().ProvisioningV0alpha1()
+	return fakeclientset.NewSimpleClientset().ProvisioningV1beta1()
 }
 
 // TestRenewLease_StaleResourceVersion verifies that after RenewLease, the

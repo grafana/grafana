@@ -6,16 +6,17 @@ import (
 	"fmt"
 	"testing"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1/fake"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8testing "k8s.io/client-go/testing"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1/fake"
 )
 
 func TestNewRepositoryStatusPatcher(t *testing.T) {
-	client := &fake.FakeProvisioningV0alpha1{}
+	client := &fake.FakeProvisioningV1beta1{}
 	patcher := NewRepositoryStatusPatcher(client)
 	require.NotNil(t, patcher)
 	require.Equal(t, client, patcher.client)
@@ -95,7 +96,7 @@ func TestRepositoryStatusPatcher_Patch(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := fake.FakeProvisioningV0alpha1{
+			client := fake.FakeProvisioningV1beta1{
 				Fake: &k8testing.Fake{},
 			}
 

@@ -29,7 +29,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	githubRepository "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"

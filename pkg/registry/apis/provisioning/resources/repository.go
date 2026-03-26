@@ -9,8 +9,8 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -160,12 +160,12 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 
 type RepositoryGetter struct {
 	factory repository.Factory
-	client  provisioningv0alpha1.ProvisioningV0alpha1Interface
+	client  provisioningv0alpha1.ProvisioningV1beta1Interface
 }
 
 func NewRepositoryGetter(
 	factory repository.Factory,
-	client provisioningv0alpha1.ProvisioningV0alpha1Interface,
+	client provisioningv0alpha1.ProvisioningV1beta1Interface,
 ) *RepositoryGetter {
 	return &RepositoryGetter{
 		factory: factory,

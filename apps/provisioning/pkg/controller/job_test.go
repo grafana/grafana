@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	provisioningfake "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	provisioninginformers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 )
@@ -18,7 +18,7 @@ func TestJobController_New(t *testing.T) {
 	//nolint:staticcheck
 	client := provisioningfake.NewSimpleClientset()
 	informerFactory := provisioninginformers.NewSharedInformerFactory(client, time.Second)
-	jobInformer := informerFactory.Provisioning().V0alpha1().Jobs()
+	jobInformer := informerFactory.Provisioning().V1beta1().Jobs()
 
 	controller, err := NewJobController(jobInformer)
 
@@ -31,7 +31,7 @@ func TestJobController_InsertNotifications(t *testing.T) {
 	//nolint:staticcheck
 	client := provisioningfake.NewSimpleClientset()
 	informerFactory := provisioninginformers.NewSharedInformerFactory(client, time.Second)
-	jobInformer := informerFactory.Provisioning().V0alpha1().Jobs()
+	jobInformer := informerFactory.Provisioning().V1beta1().Jobs()
 
 	controller, err := NewJobController(jobInformer)
 	require.NoError(t, err)
@@ -54,7 +54,7 @@ func TestJobController_NotificationOnJobCreate(t *testing.T) {
 	//nolint:staticcheck
 	client := provisioningfake.NewSimpleClientset()
 	informerFactory := provisioninginformers.NewSharedInformerFactory(client, time.Second)
-	jobInformer := informerFactory.Provisioning().V0alpha1().Jobs()
+	jobInformer := informerFactory.Provisioning().V1beta1().Jobs()
 
 	controller, err := NewJobController(jobInformer)
 	require.NoError(t, err)
@@ -70,7 +70,7 @@ func TestJobController_NotificationOnJobCreate(t *testing.T) {
 	notifications := controller.InsertNotifications()
 
 	// Create a job - this should trigger a notification
-	_, err = client.ProvisioningV0alpha1().Jobs("default").Create(ctx, &provisioning.Job{
+	_, err = client.ProvisioningV1beta1().Jobs("default").Create(ctx, &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-job",
 			Namespace: "default",

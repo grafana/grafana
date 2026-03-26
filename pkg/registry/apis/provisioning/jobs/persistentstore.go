@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,11 +17,10 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -67,7 +67,7 @@ var (
 
 // persistentStore is a job queue implementation that uses the API client instead of rest.Storage.
 type persistentStore struct {
-	client client.ProvisioningV0alpha1Interface
+	client client.ProvisioningV1beta1Interface
 
 	// clock is a function that returns the current time.
 	clock func() time.Time
@@ -80,7 +80,7 @@ type persistentStore struct {
 }
 
 // NewJobStore creates a new job queue implementation using the API client.
-func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry time.Duration, registry prometheus.Registerer) (*persistentStore, error) {
+func NewJobStore(provisioningClient client.ProvisioningV1beta1Interface, expiry time.Duration, registry prometheus.Registerer) (*persistentStore, error) {
 	if expiry <= 0 {
 		expiry = time.Second * 30
 	}

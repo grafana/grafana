@@ -7,8 +7,8 @@ package fake
 import (
 	applyconfiguration "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
-	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	fakeprovisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1/fake"
+	provisioningv1beta1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
+	fakeprovisioningv1beta1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
@@ -122,7 +122,7 @@ var (
 	_ testing.FakeClient  = &Clientset{}
 )
 
-// ProvisioningV0alpha1 retrieves the ProvisioningV0alpha1Client
-func (c *Clientset) ProvisioningV0alpha1() provisioningv0alpha1.ProvisioningV0alpha1Interface {
-	return &fakeprovisioningv0alpha1.FakeProvisioningV0alpha1{Fake: &c.Fake}
+// ProvisioningV1beta1 retrieves the ProvisioningV1beta1Client
+func (c *Clientset) ProvisioningV1beta1() provisioningv1beta1.ProvisioningV1beta1Interface {
+	return &fakeprovisioningv1beta1.FakeProvisioningV1beta1{Fake: &c.Fake}
 }

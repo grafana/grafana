@@ -24,7 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -1095,7 +1095,7 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 	restConfig := helper.Org1.Admin.NewRestConfig()
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
-	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories("default")
+	repoClient := provisioningClient.ProvisioningV1beta1().Repositories("default")
 
 	require.Eventually(t, func() bool {
 		repo, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
@@ -1959,7 +1959,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 	restConfig := helper.Org1.Admin.NewRestConfig()
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
-	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories(namespace)
+	repoClient := provisioningClient.ProvisioningV1beta1().Repositories(namespace)
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	// Create a connection first
@@ -2143,7 +2143,7 @@ func TestIntegrationRepositoryController_FieldErrorsCleared(t *testing.T) {
 	restConfig := helper.Org1.Admin.NewRestConfig()
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
-	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories(namespace)
+	repoClient := provisioningClient.ProvisioningV1beta1().Repositories(namespace)
 
 	t.Run("repository fieldErrors are cleared when repository becomes healthy", func(t *testing.T) {
 		// Create a local repository that will be healthy
@@ -2297,7 +2297,7 @@ func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 	restConfig := helper.Org1.Admin.NewRestConfig()
 	provisioningClient, err := clientset.NewForConfig(restConfig)
 	require.NoError(t, err)
-	repoClient := provisioningClient.ProvisioningV0alpha1().Repositories(namespace)
+	repoClient := provisioningClient.ProvisioningV1beta1().Repositories(namespace)
 
 	t.Run("default branch gets retrieved for repository", func(t *testing.T) {
 		repoName := "repo-with-empty-branch"

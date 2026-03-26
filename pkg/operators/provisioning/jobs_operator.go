@@ -10,6 +10,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"k8s.io/client-go/tools/cache"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
@@ -30,8 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/client-go/tools/cache"
 )
 
 func RunJobController(deps server.OperatorDependencies) error {
@@ -80,7 +81,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 		provisioningClient,
 		controllerCfg.ResyncInterval(),
 	)
-	jobInformer := jobInformerFactory.Provisioning().V0alpha1().Jobs()
+	jobInformer := jobInformerFactory.Provisioning().V1beta1().Jobs()
 	jobController, err := controller.NewJobController(jobInformer)
 	if err != nil {
 		return fmt.Errorf("failed to create job controller: %w", err)
@@ -93,9 +94,9 @@ func RunJobController(deps server.OperatorDependencies) error {
 			provisioningClient,
 			controllerCfg.historyExpiration,
 		)
-		historyJobInformer := historyInformerFactory.Provisioning().V0alpha1().HistoricJobs()
+		historyJobInformer := historyInformerFactory.Provisioning().V1beta1().HistoricJobs()
 		_, err = controller.NewHistoryJobController(
-			provisioningClient.ProvisioningV0alpha1(),
+			provisioningClient.ProvisioningV1beta1(),
 			historyJobInformer,
 			controllerCfg.historyExpiration,
 		)
@@ -114,11 +115,11 @@ func RunJobController(deps server.OperatorDependencies) error {
 	// if b.jobHistoryLoki != nil {
 	// 	jobHistoryWriter = b.jobHistoryLoki
 	// } else {
-	// 	jobHistoryWriter = jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
+	// 	jobHistoryWriter = jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV1beta1())
 	// }
 
-	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
-	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
+	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV1beta1())
+	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV1beta1(), 30*time.Second, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -135,7 +136,7 @@ func RunJobController(deps server.OperatorDependencies) error {
 
 	repoGetter := resources.NewRepositoryGetter(
 		repoFactory,
-		provisioningClient.ProvisioningV0alpha1(),
+		provisioningClient.ProvisioningV1beta1(),
 	)
 	// This is basically our own JobQueue system
 	driver, err := jobs.NewConcurrentJobDriver(
@@ -273,7 +274,7 @@ func setupWorkers(
 	}
 
 	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled)
-	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
+	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV1beta1())
 
 	workers := make([]jobs.Worker, 0)
 

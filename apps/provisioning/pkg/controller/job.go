@@ -4,7 +4,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
+	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v1beta1"
 )
 
 const (

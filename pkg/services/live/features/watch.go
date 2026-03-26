@@ -12,14 +12,12 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
-
+	provisioningV1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/live/model"
@@ -79,8 +77,8 @@ func (b *WatchRunner) OnSubscribe(_ context.Context, u identity.Requester, e mod
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusNotFound, err
 	}
 
-	// Test this with only provisiong support -- then we can evaluate a broader rollout
-	if gvr.Group != provisioning.GROUP {
+	// Test this with only provisioning support -- then we can evaluate a broader rollout
+	if gvr.Group != provisioningV1.GROUP {
 		return model.SubscribeReply{}, backend.SubscribeStreamStatusPermissionDenied,
 			fmt.Errorf("watching provisioned resources is OK allowed (for now)")
 	}

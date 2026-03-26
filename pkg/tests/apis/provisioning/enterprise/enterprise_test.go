@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -436,7 +436,7 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 		restConfig := helper.Org1.Admin.NewRestConfig()
 		provClient, err := clientset.NewForConfig(restConfig)
 		require.NoError(t, err, "failed to create provisioning client")
-		connClient := provClient.ProvisioningV0alpha1().Connections("default")
+		connClient := provClient.ProvisioningV1beta1().Connections("default")
 
 		require.Eventually(t, func() bool {
 			updated, err := connClient.Get(ctx, connectionName, metav1.GetOptions{})
@@ -508,7 +508,7 @@ func TestIntegrationConnectionController_EnterpriseWiring(t *testing.T) {
 		restConfig := helper.Org1.Admin.NewRestConfig()
 		provClient, err := clientset.NewForConfig(restConfig)
 		require.NoError(t, err, "failed to create provisioning client")
-		connClient := provClient.ProvisioningV0alpha1().Connections("default")
+		connClient := provClient.ProvisioningV1beta1().Connections("default")
 
 		require.Eventually(t, func() bool {
 			updated, err := connClient.Get(ctx, connectionName, metav1.GetOptions{})
@@ -623,7 +623,7 @@ func TestIntegrationRepositoryController_EnterpriseWiring(t *testing.T) {
 		restConfig := helper.Org1.Admin.NewRestConfig()
 		provClient, err := clientset.NewForConfig(restConfig)
 		require.NoError(t, err, "failed to create provisioning client")
-		repoClient := provClient.ProvisioningV0alpha1().Repositories("default")
+		repoClient := provClient.ProvisioningV1beta1().Repositories("default")
 
 		require.Eventually(t, func() bool {
 			updated, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})
@@ -696,7 +696,7 @@ func TestIntegrationRepositoryController_EnterpriseWiring(t *testing.T) {
 		restConfig := helper.Org1.Admin.NewRestConfig()
 		provClient, err := clientset.NewForConfig(restConfig)
 		require.NoError(t, err, "failed to create provisioning client")
-		repoClient := provClient.ProvisioningV0alpha1().Repositories("default")
+		repoClient := provClient.ProvisioningV1beta1().Repositories("default")
 
 		require.Eventually(t, func() bool {
 			updated, err := repoClient.Get(ctx, repoName, metav1.GetOptions{})

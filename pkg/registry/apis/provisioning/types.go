@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
@@ -21,5 +21,5 @@ type ConnectionGetter interface {
 }
 
 type ClientGetter interface {
-	GetClient() client.ProvisioningV0alpha1Interface
+	GetClient() client.ProvisioningV1beta1Interface
 }
