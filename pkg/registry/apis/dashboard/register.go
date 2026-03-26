@@ -339,9 +339,15 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 		return nil
 	}
 
+	nsInfo, err := authlib.ParseNamespace(a.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
+	}
+
 	// Try to read from unified storage, fallback to search if not found
+	svcCtx := identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
 	dashboardUID := a.GetName()
-	readResp, err := b.unified.Read(ctx, &resourcepb.ReadRequest{
+	readResp, err := b.unified.Read(svcCtx, &resourcepb.ReadRequest{
 		Key: &resourcepb.ResourceKey{
 			Namespace: a.GetNamespace(),
 			Group:     a.GetResource().Group,
@@ -375,11 +381,6 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 
 	// Fallback to the provisioning service if not found in unified storage
 	// TODO: remove when legacy dashboard service is not used anymore (when only mode 5 is used)
-	nsInfo, err := authlib.ParseNamespace(a.GetNamespace())
-	if err != nil {
-		return fmt.Errorf("%v: %w", "failed to parse namespace", err)
-	}
-
 	provisioningData, err := b.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(ctx, nsInfo.OrgID, dashboardUID)
 	if err != nil {
 		if errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) ||
