@@ -126,7 +126,7 @@ describe('ExploreLogsTable', () => {
     const headers = container.querySelectorAll('[role="columnheader"]');
     expect(headers).toHaveLength(3);
     expect(headers[0].textContent).toBe('Time');
-    expect(headers[1].textContent).toBe('severity');
+    expect(headers[1].textContent).toBe('detected_level');
     expect(headers[2].textContent).toBe('Line');
   });
 
