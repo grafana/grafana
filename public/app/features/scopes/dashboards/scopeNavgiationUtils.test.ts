@@ -1,6 +1,7 @@
 import {
   buildSubScopePath,
   deserializeFolderPath,
+  getAppPathForComparison,
   getDashboardPathForComparison,
   isCurrentPath,
   serializeFolderPath,
@@ -34,6 +35,60 @@ describe('scopeNavgiationUtils', () => {
   it('should return the correct path for a navigation with hash', () => {
     expect(isCurrentPath('/d/dashboardId/slug', '/d/dashboardId#hash')).toBe(true);
     expect(isCurrentPath('/d/dashboardId', '/d/dashboardId#hash')).toBe(true);
+  });
+
+  describe('getAppPathForComparison', () => {
+    it('should return the correct path for an app plugin with subpath', () => {
+      expect(getAppPathForComparison('/a/grafana-metricsdrilldown-app/drilldown')).toBe(
+        '/a/grafana-metricsdrilldown-app'
+      );
+      expect(getAppPathForComparison('/a/grafana-lokiexplore-app/explore')).toBe('/a/grafana-lokiexplore-app');
+      expect(getAppPathForComparison('/a/grafana-pyroscope-app/explore')).toBe('/a/grafana-pyroscope-app');
+    });
+
+    it('should return the correct path for an app plugin without subpath', () => {
+      expect(getAppPathForComparison('/a/grafana-metricsdrilldown-app')).toBe('/a/grafana-metricsdrilldown-app');
+      expect(getAppPathForComparison('/a/grafana-lokiexplore-app')).toBe('/a/grafana-lokiexplore-app');
+    });
+
+    it('should handle deeply nested app paths', () => {
+      expect(getAppPathForComparison('/a/grafana-metricsdrilldown-app/drilldown/nested/path')).toBe(
+        '/a/grafana-metricsdrilldown-app'
+      );
+    });
+  });
+
+  describe('isCurrentPath with app plugins', () => {
+    it('should match app plugin paths with subpaths', () => {
+      expect(isCurrentPath('/a/grafana-metricsdrilldown-app/drilldown', '/a/grafana-metricsdrilldown-app')).toBe(true);
+      expect(isCurrentPath('/a/grafana-lokiexplore-app/explore', '/a/grafana-lokiexplore-app')).toBe(true);
+      expect(isCurrentPath('/a/grafana-pyroscope-app/explore', '/a/grafana-pyroscope-app')).toBe(true);
+    });
+
+    it('should match app plugin paths without subpaths', () => {
+      expect(isCurrentPath('/a/grafana-metricsdrilldown-app', '/a/grafana-metricsdrilldown-app')).toBe(true);
+    });
+
+    it('should match app plugin paths with query params in the link', () => {
+      expect(
+        isCurrentPath('/a/grafana-metricsdrilldown-app/drilldown', '/a/grafana-metricsdrilldown-app?from=now-1h&to=now')
+      ).toBe(true);
+    });
+
+    it('should not match different app plugins', () => {
+      expect(isCurrentPath('/a/grafana-metricsdrilldown-app/drilldown', '/a/grafana-lokiexplore-app')).toBe(false);
+      expect(isCurrentPath('/a/grafana-lokiexplore-app/explore', '/a/grafana-metricsdrilldown-app')).toBe(false);
+    });
+
+    it('should handle deeply nested app paths', () => {
+      expect(
+        isCurrentPath('/a/grafana-metricsdrilldown-app/drilldown/nested/path', '/a/grafana-metricsdrilldown-app')
+      ).toBe(true);
+    });
+
+    it('should match when link has trailing slash', () => {
+      expect(isCurrentPath('/a/grafana-metricsdrilldown-app/drilldown', '/a/grafana-metricsdrilldown-app/')).toBe(true);
+    });
   });
 
   describe('deserializeFolderPath', () => {

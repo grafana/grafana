@@ -111,6 +111,39 @@ describe('ScopesNavigationTreeLink', () => {
     expect(link).not.toHaveAttribute('aria-current');
   });
 
+  it('matches app plugin paths with subpaths (e.g., /drilldown)', () => {
+    mockUseLocation.mockReturnValue({ pathname: '/a/grafana-metricsdrilldown-app/drilldown' });
+
+    renderWithRouter(
+      <ScopesNavigationTreeLink to="/a/grafana-metricsdrilldown-app" title="Metrics Drilldown" id="metrics-drilldown" />
+    );
+
+    const link = screen.getByTestId('scopes-dashboards-metrics-drilldown');
+    expect(link).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('matches lokiexplore app with explore subpath', () => {
+    mockUseLocation.mockReturnValue({ pathname: '/a/grafana-lokiexplore-app/explore' });
+
+    renderWithRouter(
+      <ScopesNavigationTreeLink to="/a/grafana-lokiexplore-app" title="Loki Explore" id="loki-explore" />
+    );
+
+    const link = screen.getByTestId('scopes-dashboards-loki-explore');
+    expect(link).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('does not match different app plugins', () => {
+    mockUseLocation.mockReturnValue({ pathname: '/a/grafana-lokiexplore-app/explore' });
+
+    renderWithRouter(
+      <ScopesNavigationTreeLink to="/a/grafana-metricsdrilldown-app" title="Metrics Drilldown" id="metrics-drilldown" />
+    );
+
+    const link = screen.getByTestId('scopes-dashboards-metrics-drilldown');
+    expect(link).not.toHaveAttribute('aria-current');
+  });
+
   it('only highlights the matching link when multiple links are present', () => {
     mockUseLocation.mockReturnValue({ pathname: '/test-path' });
 
