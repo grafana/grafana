@@ -24,6 +24,8 @@ export type DashboardPageRouteSearchParams = {
   ref?: string; // used for repo preview
   // Used by template dashboards to identify the specific dashboard file
   path?: string;
+  // Used by community template dashboards to identify the Grafana.com dashboard
+  gnetId?: string;
 };
 
 export type PublicDashboardPageRouteParams = {

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/stretchr/testify/assert"
@@ -68,7 +68,7 @@ func TestReadFolderMetadata(t *testing.T) {
 	t.Run("missing metadata.name returns invalid folder metadata error", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Read", mock.Anything, "my-folder/_folder.json", "").
-			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":""},"spec":{"title":"My Folder"}}`)}, nil)
+			Return(&repository.FileInfo{Data: []byte(`{"apiVersion":"folder.grafana.app/v1","kind":"Folder","metadata":{"name":""},"spec":{"title":"My Folder"}}`)}, nil)
 
 		_, _, err := ReadFolderMetadata(context.Background(), rw, "my-folder/", "")
 
@@ -134,7 +134,7 @@ func TestWriteFolderMetadata(t *testing.T) {
 			if err := json.Unmarshal(b, &f); err != nil {
 				return false
 			}
-			return f.APIVersion == "folder.grafana.app/v1beta1" &&
+			return f.APIVersion == "folder.grafana.app/v1" &&
 				f.Kind == "Folder" &&
 				f.Name == uid &&
 				f.Spec.Title == "myfolder"
@@ -288,7 +288,7 @@ func TestNewFolderManifest(t *testing.T) {
 
 	gvk := f.GetObjectKind().GroupVersionKind()
 	assert.Equal(t, "folder.grafana.app", gvk.Group)
-	assert.Equal(t, "v1beta1", gvk.Version)
+	assert.Equal(t, "v1", gvk.Version)
 	assert.Equal(t, "Folder", gvk.Kind)
 }
 
@@ -630,7 +630,7 @@ func TestParseFolderResource(t *testing.T) {
 
 			// Verify GVK and GVR
 			assert.Equal(t, "folder.grafana.app", result.GVK.Group)
-			assert.Equal(t, "v1beta1", result.GVK.Version)
+			assert.Equal(t, "v1", result.GVK.Version)
 			assert.Equal(t, "Folder", result.GVK.Kind)
 		})
 	}

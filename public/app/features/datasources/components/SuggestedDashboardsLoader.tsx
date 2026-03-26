@@ -13,9 +13,26 @@ import {
   SourceEntryPoint,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { GnetDashboard } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
+import {
+  DEFAULT_SORT_ORDER,
+  DEFAULT_SORT_DIRECTION,
+  COMMUNITY_PAGE_SIZE_QUERY,
+  INCLUDE_LOGO,
+  INCLUDE_SCREENSHOTS,
+  COMMUNITY_RESULT_SIZE,
+} from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/communityDashboardHelpers';
 import { PluginDashboard } from 'app/types/plugins';
 
 type FetchStatus = 'idle' | 'loading' | 'done' | 'error';
+
+interface DashboardFetchResult {
+  provisioned: PluginDashboard[];
+  community: GnetDashboard[];
+}
+
+// Module-level cache keyed by datasource type — shared across all instances
+const dashboardCache = new Map<string, DashboardFetchResult>();
+const pendingFetches = new Map<string, Promise<DashboardFetchResult>>();
 
 export interface SuggestedDashboardsLoaderChildProps {
   fetchStatus: FetchStatus;
@@ -47,6 +64,9 @@ export const SuggestedDashboardsLoader = ({
   const hasFetchedRef = useRef(false);
 
   const hasDashboards = (provisionedDashboards?.length ?? 0) > 0 || (communityDashboards?.length ?? 0) > 0;
+  //extract dependency
+  const onFetchCompletedRef = useRef<((hasDashboards: boolean) => void) | undefined>(undefined);
+  onFetchCompletedRef.current = onFetchComplete;
 
   const triggerFetch = useCallback(async () => {
     if (hasFetchedRef.current) {
@@ -59,32 +79,56 @@ export const SuggestedDashboardsLoader = ({
       const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
       if (!ds) {
         setFetchStatus('done');
-        onFetchComplete?.(false);
+        onFetchCompletedRef.current?.(false);
         return;
       }
 
-      const [provisioned, communityResponse] = await Promise.all([
-        fetchProvisionedDashboards(ds.type),
-        fetchCommunityDashboards({
-          orderBy: 'downloads',
-          direction: 'desc',
-          page: 1,
-          pageSize: PAGE_SIZE,
-          includeScreenshots: true,
-          dataSourceSlugIn: ds.type,
-          includeLogo: true,
-        }),
-      ]);
+      const cached = dashboardCache.get(ds.type);
+      if (cached) {
+        setProvisionedDashboards(cached.provisioned);
+        setCommunityDashboards(cached.community);
+        setFetchStatus('done');
+        onFetchCompletedRef.current?.(cached.provisioned.length > 0 || cached.community.length > 0);
+        return;
+      }
 
+      let pending = pendingFetches.get(ds.type);
+      if (!pending) {
+        pending = Promise.all([
+          fetchProvisionedDashboards(ds.type),
+          fetchCommunityDashboards({
+            orderBy: DEFAULT_SORT_ORDER,
+            direction: DEFAULT_SORT_DIRECTION,
+            page: 1,
+            pageSize: COMMUNITY_PAGE_SIZE_QUERY,
+            includeLogo: INCLUDE_LOGO,
+            includeScreenshots: INCLUDE_SCREENSHOTS,
+            dataSourceSlugIn: ds.type,
+          }),
+        ])
+          .then(([provisioned, communityResponse]) => {
+            const result: DashboardFetchResult = {
+              provisioned,
+              community: communityResponse.items.slice(0, COMMUNITY_RESULT_SIZE),
+            };
+            dashboardCache.set(ds.type, result);
+            return result;
+          })
+          .finally(() => {
+            pendingFetches.delete(ds.type);
+          });
+        pendingFetches.set(ds.type, pending);
+      }
+
+      const { provisioned, community } = await pending;
       setProvisionedDashboards(provisioned);
-      setCommunityDashboards(communityResponse.items);
-      setCommunityTotalPages(communityResponse.pages);
+      setCommunityDashboards(community);
       setFetchStatus('done');
-      onFetchComplete?.(provisioned.length > 0 || communityResponse.items.length > 0);
+      onFetchCompletedRef.current?.(provisioned.length > 0 || community.length > 0);
     } catch {
       setFetchStatus('error');
     }
-  }, [datasourceUid, onFetchComplete]);
+  }, [datasourceUid]);
 
   useEffect(() => {
     if (fetchOnMount) {

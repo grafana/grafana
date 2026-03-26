@@ -63,11 +63,12 @@ v0alpha1: {
 					}
 					response: {
 						#TeamHit: {
-							name:        string
-							title:       string
-							email:       string
-							provisioned: bool
-							externalUID: string
+							name:         string
+							title:        string
+							email:        string
+							provisioned:  bool
+							externalUID:  string
+							memberCount?: int64
 							accessControl?: {[string]: bool}
 						}
 						offset:    int64
