@@ -34,6 +34,12 @@ interface DashboardFetchResult {
 const dashboardCache = new Map<string, DashboardFetchResult>();
 const pendingFetches = new Map<string, Promise<DashboardFetchResult>>();
 
+/** Visible for testing only — clears the module-level dashboard cache */
+export function clearDashboardCache() {
+  dashboardCache.clear();
+  pendingFetches.clear();
+}
+
 export interface SuggestedDashboardsLoaderChildProps {
   fetchStatus: FetchStatus;
   hasDashboards: boolean;

@@ -12,7 +12,6 @@ import { trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
 import { BuildDashboardButton } from './BuildDashboardButton';
-
 import { DataSourceFailureBadge } from './DataSourceFailureBadge';
 
 export interface Props {
