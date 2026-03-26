@@ -112,6 +112,7 @@ export const SuggestedDashboardsLoader = ({
               community: communityResponse.items.slice(0, COMMUNITY_RESULT_SIZE),
             };
             dashboardCache.set(ds.type, result);
+            setCommunityTotalPages(communityResponse.pages);
             return result;
           })
           .finally(() => {
