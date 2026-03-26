@@ -41,7 +41,7 @@ export {
 } from '../services/pluginMeta/hooks';
 export type { AppPluginMetas, PanelPluginMetas } from '../services/pluginMeta/types';
 export { getCachedPromise, invalidateCache, setLogger } from '../utils/getCachedPromise';
-export { createInteractionEvent } from './analyticsFramework/main';
+export { defineFeatureEvents } from './analyticsFramework/main';
 export type { EventProperty, Event } from './analyticsFramework/types';
 export {
   getListedPanelPluginMetas,
