@@ -607,8 +607,6 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage map[string]UnifiedStorageConfig
-	// DisableDataMigrations will disable resources data migration to unified storage at startup
-	DisableDataMigrations bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -657,7 +655,7 @@ type Cfg struct {
 	EnableSearchClient                         bool
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
-	EnforceQuotas                              bool
+	EnforcedQuotaResources                     []string
 	QuotasErrorMessageSupportInfo              string
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool

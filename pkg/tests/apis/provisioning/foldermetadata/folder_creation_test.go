@@ -11,13 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_CreateFolder_FolderMetadataFlag(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repo = "folder-metadata-test-repo"

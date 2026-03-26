@@ -22,6 +22,7 @@ import { dashboardEditActions } from '../edit-pane/shared';
 import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
+import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
@@ -196,6 +197,14 @@ function VariableLabel({
   }
 
   const labelOrName = state.label || state.name;
+  const controlsLayout = layout ?? 'horizontal';
+  const descriptionSuffix =
+    state.description != null && state.description !== '' ? (
+      <VariableDescriptionTooltip
+        description={state.description}
+        placement={controlsLayout === 'vertical' ? 'top' : 'bottom'}
+      />
+    ) : undefined;
 
   return (
     <ControlsLabel
@@ -204,8 +213,9 @@ function VariableLabel({
       onCancel={() => variable.onCancel?.()}
       label={labelOrName}
       error={state.error}
-      layout={layout ?? 'horizontal'}
-      description={state.description ?? undefined}
+      layout={controlsLayout}
+      description={undefined}
+      suffix={descriptionSuffix}
       className={className}
     />
   );

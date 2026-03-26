@@ -28,6 +28,7 @@ import { EventState } from '../../components/rules/central-state-history/EventLi
 import { LogRecord, historyDataFrameToLogRecords } from '../../components/rules/state-history/common';
 import { isAlertQueryOfAlertData } from '../../rule-editor/formProcessing';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { labelsToMatchersParam } from '../../utils/matchers';
 import { stringifyErrorLike } from '../../utils/misc';
 import { groups, rulesNav } from '../../utils/navigation';
 import { useWorkbenchContext } from '../WorkbenchContext';
@@ -79,7 +80,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, onClose }: Inst
     isError: stateHistoryError,
   } = useGetRuleHistoryQuery({
     ruleUid: ruleUID,
-    labels: instanceLabels,
+    matchers: labelsToMatchersParam(instanceLabels),
     from: timeRange.from.unix(),
     to: timeRange.to.unix(),
   });
