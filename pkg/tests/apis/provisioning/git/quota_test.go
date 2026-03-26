@@ -6,7 +6,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -22,18 +21,18 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 		const repo = "incr-quota-blocks-repo"
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
-			"dashboard1.json": gitcommon.DashboardJSON("incr-quota-dash-001", "Dashboard One", 1),
-			"dashboard2.json": gitcommon.DashboardJSON("incr-quota-dash-002", "Dashboard Two", 1),
+			"dashboard1.json": common.DashboardJSON("incr-quota-dash-001", "Dashboard One", 1),
+			"dashboard2.json": common.DashboardJSON("incr-quota-dash-002", "Dashboard Two", 1),
 		})
 
 		// Initial full sync fills the quota (2/2).
 		common.SyncAndWaitWithSuccess(t, helper, repo)
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
 		// Create dashboard3
 		require.NoError(t, local.CreateFile("dashboard3.json",
-			string(gitcommon.DashboardJSON("incr-quota-dash-003", "Dashboard Three", 1))))
+			string(common.DashboardJSON("incr-quota-dash-003", "Dashboard Three", 1))))
 		_, err := local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "add dashboard3 (quota-blocked by sync)")
@@ -63,7 +62,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 			"quota warning should identify the skipped file")
 
 		// Quota is still at 2/2 — dashboard3 was never created.
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
 
@@ -75,11 +74,11 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 		const repo = "incr-quota-swap-repo"
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
-			"dashboard1.json": gitcommon.DashboardJSON("incr-swap-dash-001", "Dashboard One", 1),
+			"dashboard1.json": common.DashboardJSON("incr-swap-dash-001", "Dashboard One", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repo)
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
 		// Commit A — remove dashboard1.json from the git tree.
@@ -96,7 +95,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		// Grafana's perspective until the deletion is synced), so we push
 		// directly to git and let the incremental sync sort it out.
 		require.NoError(t, local.CreateFile("dashboard2.json",
-			string(gitcommon.DashboardJSON("incr-swap-dash-002", "Dashboard Two", 1))))
+			string(common.DashboardJSON("incr-swap-dash-002", "Dashboard Two", 1))))
 		_, err = local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "add dashboard2")
@@ -121,7 +120,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		require.Empty(t, jobObj.Status.Warnings, "no quota warnings expected when the delete frees room for the create")
 
 		// dashboard1 deleted, dashboard2 created — net zero, still at 1/1.
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
 
@@ -133,12 +132,12 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 		const repo = "incr-quota-release-repo"
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
-			"dashboard1.json": gitcommon.DashboardJSON("incr-rel-dash-001", "Dashboard One", 1),
-			"dashboard2.json": gitcommon.DashboardJSON("incr-rel-dash-002", "Dashboard Two", 1),
+			"dashboard1.json": common.DashboardJSON("incr-rel-dash-001", "Dashboard One", 1),
+			"dashboard2.json": common.DashboardJSON("incr-rel-dash-002", "Dashboard Two", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repo)
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
 		// Incremental sync 1 — commit a deletion of dashboard1 to the git repo,
@@ -152,13 +151,13 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		require.NoError(t, err)
 
 		common.SyncAndWaitSuccessfulIncremental(t, helper, repo)
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
 		// Incremental sync 2 — commit dashboard3 to the git repo; the freed slot
 		// should be picked up during the incremental sync.
 		require.NoError(t, local.CreateFile("dashboard3.json",
-			string(gitcommon.DashboardJSON("incr-rel-dash-003", "Dashboard Three", 1))))
+			string(common.DashboardJSON("incr-rel-dash-003", "Dashboard Three", 1))))
 		_, err = local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "add dashboard3")
@@ -167,7 +166,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		require.NoError(t, err)
 
 		common.SyncAndWaitSuccessfulIncremental(t, helper, repo)
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
 
@@ -181,19 +180,19 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 		const repo = "incr-quota-folder-block-repo"
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
-			"folder1/dashboard1.json": gitcommon.DashboardJSON("incr-fblock-dash-001", "Dashboard One", 1),
-			"folder1/dashboard2.json": gitcommon.DashboardJSON("incr-fblock-dash-002", "Dashboard Two", 1),
+			"folder1/dashboard1.json": common.DashboardJSON("incr-fblock-dash-001", "Dashboard One", 1),
+			"folder1/dashboard2.json": common.DashboardJSON("incr-fblock-dash-002", "Dashboard Two", 1),
 		})
 
 		// Initial full sync: 2 dashboards + 1 implicit folder = 3/3 resources.
 		common.SyncAndWaitWithSuccess(t, helper, repo)
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
-		gitcommon.RequireRepoFolderCount(t, helper, ctx, repo, 1)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
+		common.RequireRepoFolderCount(t, helper, ctx, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
 		// Push a new dashboard inside a brand-new subfolder.
 		require.NoError(t, local.CreateFile("folder2/dashboard3.json",
-			string(gitcommon.DashboardJSON("incr-fblock-dash-003", "Dashboard Three", 1))))
+			string(common.DashboardJSON("incr-fblock-dash-003", "Dashboard Three", 1))))
 		_, err := local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "add folder2/dashboard3 (quota-blocked)")
@@ -221,8 +220,8 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 			"quota warning should identify the skipped file")
 
 		// Still 2 dashboards and 1 folder — folder2 was never created.
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
-		gitcommon.RequireRepoFolderCount(t, helper, ctx, repo, 1)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
+		common.RequireRepoFolderCount(t, helper, ctx, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 	})
 
@@ -235,14 +234,14 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 		const repo = "incr-quota-folder-cleanup-repo"
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
-			"folder1/dashboard1.json": gitcommon.DashboardJSON("incr-fclean-dash-001", "Dashboard One", 1),
-			"dashboard2.json":         gitcommon.DashboardJSON("incr-fclean-dash-002", "Dashboard Two", 1),
+			"folder1/dashboard1.json": common.DashboardJSON("incr-fclean-dash-001", "Dashboard One", 1),
+			"dashboard2.json":         common.DashboardJSON("incr-fclean-dash-002", "Dashboard Two", 1),
 		})
 
 		// Initial full sync: folder1 + dash1 + dash2 = 3/3 resources.
 		common.SyncAndWaitWithSuccess(t, helper, repo)
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
-		gitcommon.RequireRepoFolderCount(t, helper, ctx, repo, 1)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 2)
+		common.RequireRepoFolderCount(t, helper, ctx, repo, 1)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
 		// Remove the only dashboard inside folder1 so the folder becomes orphaned.
@@ -258,8 +257,8 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		common.SyncAndWaitSuccessfulIncremental(t, helper, repo)
 
 		// dashboard1 and folder1 are gone; only dashboard2 remains.
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
-		gitcommon.RequireRepoFolderCount(t, helper, ctx, repo, 0)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
+		common.RequireRepoFolderCount(t, helper, ctx, repo, 0)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 	})
 
@@ -271,16 +270,16 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 		const repo = "incr-quota-unlimited-repo"
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
-			"dashboard1.json": gitcommon.DashboardJSON("incr-ulim-dash-001", "Dashboard One", 1),
+			"dashboard1.json": common.DashboardJSON("incr-ulim-dash-001", "Dashboard One", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repo)
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
 
 		// Add three more dashboards as separate git commits pushed to the remote.
 		for i, uid := range []string{"incr-ulim-dash-002", "incr-ulim-dash-003", "incr-ulim-dash-004"} {
 			require.NoError(t, local.CreateFile(uid+".json",
-				string(gitcommon.DashboardJSON(uid, "Dashboard "+uid, 1))),
+				string(common.DashboardJSON(uid, "Dashboard "+uid, 1))),
 				"create file %d should succeed", i+2)
 			_, err := local.Git("add", ".")
 			require.NoError(t, err)
@@ -302,7 +301,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 			"unlimited quota should allow all creates")
 		require.Empty(t, jobObj.Status.Warnings, "no quota warnings expected with unlimited quota")
 
-		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 4)
+		common.RequireRepoDashboardCount(t, helper, ctx, repo, 4)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaUnlimited)
 	})
 }

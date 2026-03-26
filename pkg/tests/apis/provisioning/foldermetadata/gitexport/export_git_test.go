@@ -12,10 +12,10 @@ import (
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-func createUnmanagedFolder(t *testing.T, helper *gitcommon.GitTestHelper, name, title string) {
+func createUnmanagedFolder(t *testing.T, helper *common.GitTestHelper, name, title string) {
 	t.Helper()
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -30,11 +30,11 @@ func createUnmanagedFolder(t *testing.T, helper *gitcommon.GitTestHelper, name, 
 			},
 		},
 	}
-	_, err := helper.FoldersV1.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
+	_, err := helper.Folders.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
 	require.NoError(t, err)
 }
 
-func triggerExport(t *testing.T, helper *gitcommon.GitTestHelper, repo string) *provisioning.Job {
+func triggerExport(t *testing.T, helper *common.GitTestHelper, repo string) *provisioning.Job {
 	t.Helper()
 	result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPush,
