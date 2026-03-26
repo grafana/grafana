@@ -1,6 +1,7 @@
 import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
 
-import { RadialGaugeDimensions } from './types';
+import { ARC_END } from './constants';
+import { RadialGaugeDimensions, RadialShape } from './types';
 
 // some utility transparent white colors for gradients
 const TRANSPARENT_WHITE = '#ffffff00';
@@ -37,11 +38,20 @@ export interface CenterGlowProps {
   dimensions: RadialGaugeDimensions;
   gaugeId: string;
   color?: string;
+  shape?: RadialShape;
 }
 
-export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps) {
+export function MiddleCircleGlow({ dimensions, gaugeId, color, shape }: CenterGlowProps) {
   const gradientId = `circle-glow-${gaugeId}`;
+  const clipId = `circle-glow-clip-${gaugeId}`;
   const transparentColor = color ? colorManipulator.alpha(color, CENTER_GLOW_OPACITY) : color;
+
+  // For the 'gauge' shape the arc ends at ARC_END degrees (110°) on the right side.
+  // Using toRad convention (0° = up, clockwise), the arc endpoint Y offset from center is:
+  //   radius * sin((ARC_END - 90) * π/180)  =  radius * sin(20°)  ≈  radius * 0.342
+  // The clip rect bottom sits at that Y so the glow matches the flat-bottom opening of the arc.
+  const isGaugeShape = shape === 'gauge';
+  const arcEndOffsetY = Math.sin(((ARC_END - 90) * Math.PI) / 180);
 
   return (
     <>
@@ -50,9 +60,26 @@ export function MiddleCircleGlow({ dimensions, gaugeId, color }: CenterGlowProps
           <stop offset="0%" stopColor={transparentColor} />
           <stop offset="90%" stopColor={TRANSPARENT_WHITE} />
         </radialGradient>
+        {isGaugeShape && (
+          <clipPath id={clipId}>
+            {/* Clip bottom at the Y where the arc endpoints sit: centerY + radius * sin(20°) */}
+            <rect
+              x={dimensions.centerX - dimensions.radius}
+              y={dimensions.centerY - dimensions.radius}
+              width={dimensions.radius * 2}
+              height={dimensions.radius * (1 + arcEndOffsetY)}
+            />
+          </clipPath>
+        )}
       </defs>
       <g>
-        <circle cx={dimensions.centerX} cy={dimensions.centerY} r={dimensions.radius} fill={`url(#${gradientId})`} />
+        <circle
+          cx={dimensions.centerX}
+          cy={dimensions.centerY}
+          r={dimensions.radius}
+          fill={`url(#${gradientId})`}
+          clipPath={isGaugeShape ? `url(#${clipId})` : undefined}
+        />
       </g>
     </>
   );

@@ -205,7 +205,9 @@ export function RadialGauge(props: RadialGaugeProps) {
       }
 
       if (glowCenter) {
-        graphics.push(<MiddleCircleGlow key="center-glow" gaugeId={gaugeId} color={color} dimensions={dimensions} />);
+        graphics.push(
+          <MiddleCircleGlow key="center-glow" gaugeId={gaugeId} color={color} dimensions={dimensions} shape={shape} />
+        );
       }
 
       graphics.push(
