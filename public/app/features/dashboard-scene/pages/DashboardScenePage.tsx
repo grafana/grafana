@@ -71,7 +71,16 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     //  the same dashboard with no slug in url
     // queryParams.path is used by template dashboards to identify the dashboard file; changing it means a new template was selected
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stateManager, uid, route.routeName, queryParams.folderUid, routeReloadCounter, type, queryParams.path]);
+  }, [
+    stateManager,
+    uid,
+    route.routeName,
+    queryParams.folderUid,
+    routeReloadCounter,
+    type,
+    queryParams.path,
+    queryParams.gnetId,
+  ]);
 
   useEffect(() => {
     // This use effect corrects URL without refresh when navigating to the same dashboard
