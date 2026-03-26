@@ -4,9 +4,9 @@ foldersV1beta1: {
 	kind:       "Folder"
 	pluralName: "Folders"
 
-  schema: {
+	schema: {
 		spec: {
-			title:    string
+			title:        string
 			description?: string
 		}
 	}

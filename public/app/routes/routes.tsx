@@ -306,7 +306,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/org/teams/new',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.ActionTeamsCreate]),
-      component: SafeDynamicImport(() => import(/* webpackChunkName: "CreateTeam" */ 'app/features/teams/CreateTeam')),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "CreateTeam" */ '../features/teams/create-team/CreateTeam')
+      ),
     },
     {
       path: '/org/teams/edit/:uid/:page?',

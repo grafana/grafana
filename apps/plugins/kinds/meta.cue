@@ -8,8 +8,8 @@ metaV0Alpha1: {
 			pluginJson: #JSONData
 			class:      "core" | "external"
 			module: {
-				path:             string
-				hash?:            string
+				path:            string
+				hash?:           string
 				loadingStrategy: "fetch" | "script"
 			}
 			baseURL: string

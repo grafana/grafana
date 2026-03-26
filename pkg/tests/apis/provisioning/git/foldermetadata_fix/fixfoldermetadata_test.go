@@ -112,6 +112,86 @@ func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/child/_folder.json")
 }
 
+// TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch verifies that the
+// fix-folder-metadata job is rejected when the repository only has the "branch"
+// workflow (no "write"). Without a Ref targeting a feature branch, the job
+// would push directly to main, which is not allowed.
+func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	ctx := context.Background()
+
+	const repoName = "fix-meta-readonly-main"
+
+	// Create a repo with only the "branch" workflow — no "write" means the
+	// default branch (main) is read-only and the worker must not push there.
+	helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"parent/child/dashboard.json": gitcommon.DashboardJSON("git-ro-dash", "Git ReadOnly Dashboard", 1),
+	}, "branch")
+
+	// Submitting a fix-folder-metadata job WITHOUT a Ref should be rejected
+	// because the repo does not have the "write" workflow, so targeting the
+	// default branch is forbidden.
+	body := common.AsJSON(provisioning.JobSpec{
+		Action: provisioning.JobActionFixFolderMetadata,
+	})
+	result := helper.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Name(repoName).
+		SubResource("jobs").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(ctx)
+
+	require.True(t, apierrors.IsForbidden(result.Error()),
+		"job targeting the default branch on a read-only repo should be forbidden; got: %v", result.Error())
+
+	// The default branch (main) must remain untouched.
+	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/_folder.json")
+	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/child/_folder.json")
+}
+
+// TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch_WithRef verifies
+// that when the repository only has the "branch" workflow (default branch is
+// read-only), the fix-folder-metadata job succeeds if a Ref targeting a feature
+// branch is provided. The _folder.json files are committed to the feature
+// branch and the default branch stays untouched.
+func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch_WithRef(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	ctx := context.Background()
+
+	const repoName = "fix-meta-readonly-branch"
+	const featureBranch = "fix-folders"
+
+	helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"parent/child/dashboard.json": gitcommon.DashboardJSON("git-ro-branch-dash", "Git ReadOnly Branch Dashboard", 1),
+	}, "branch")
+
+	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionFixFolderMetadata,
+		FixFolderMetadata: &provisioning.FixFolderMetadataJobOptions{
+			Ref: featureBranch,
+		},
+	})
+
+	state, _, _ := unstructured.NestedString(job.Object, "status", "state")
+	require.Equal(t, string(provisioning.JobStateSuccess), state,
+		"fix-folder-metadata job on branch %q should succeed even when the default branch is read-only", featureBranch)
+
+	parentUID := requireFolderMetadataOnRef(t, helper, ctx, repoName, "parent/_folder.json", featureBranch)
+	childUID := requireFolderMetadataOnRef(t, helper, ctx, repoName, "parent/child/_folder.json", featureBranch)
+
+	require.NotEqual(t, parentUID, childUID,
+		"parent and child folders should have different UIDs")
+
+	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/_folder.json")
+	requireFileAbsentOnDefaultBranch(t, helper, ctx, repoName, "parent/child/_folder.json")
+}
+
 // requireFolderMetadataOnRef reads the _folder.json at filePath from the given
 // branch via the repository files API and asserts it is a valid Folder resource.
 // It returns the folder UID so callers can compare across files.

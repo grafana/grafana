@@ -1,7 +1,7 @@
 package dashboard
 
 import (
-	v1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	v1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
@@ -10,7 +10,7 @@ import (
 
 func FoldersDashboardsMigration(migrator migrator.FoldersDashboardsMigrator) migrations.MigrationDefinition {
 	folderGR := schema.GroupResource{Group: folders.GROUP, Resource: folders.RESOURCE}
-	dashboardGR := schema.GroupResource{Group: v1beta1.GROUP, Resource: v1beta1.DASHBOARD_RESOURCE}
+	dashboardGR := schema.GroupResource{Group: v1.GROUP, Resource: v1.DASHBOARD_RESOURCE}
 
 	return migrations.MigrationDefinition{
 		ID:          "folders-dashboards",
