@@ -401,6 +401,7 @@ func processInvalidFolderMetadataChanges(
 
 		var invalidErr *resources.InvalidFolderMetadata
 		if errors.As(err, &invalidErr) {
+			logging.FromContext(ctx).Debug("invalid folder metadata", "path", change.Path, "action", change.Action, "error", err)
 			invalidErr = invalidErr.WithAction(change.Action)
 			invalidFolderMetadata = append(invalidFolderMetadata, invalidErr)
 			invalidPaths[change.Path] = true
@@ -422,9 +423,11 @@ func processInvalidFolderMetadataChanges(
 	// metadata is invalid — the hash-based primary selection is unreliable
 	// when the _folder.json content can't be parsed.
 	if len(invalidPaths) > 0 {
+		logger := logging.FromContext(ctx)
 		kept := make([]ResourceFileChange, 0, len(filtered))
 		for _, c := range filtered {
 			if c.OrphanCleanup && safepath.IsDir(c.Path) && invalidPaths[c.Path] {
+				logger.Debug("suppressing orphan cleanup for folder with invalid metadata", "path", c.Path)
 				continue
 			}
 			kept = append(kept, c)
@@ -539,6 +542,11 @@ func detectFolderUIDChanges(
 
 		// If the metadata file exists, check if the UID has changed.
 		if meta.Name != change.Existing.Name {
+			logging.FromContext(ctx).Debug("folder UID change detected",
+				"path", change.Path,
+				"oldUID", change.Existing.Name,
+				"newUID", meta.Name,
+			)
 			path := safepath.EnsureTrailingSlash(change.Path)
 			affectedFolders[path] = true
 			change.FolderRenamed = true
@@ -767,6 +775,11 @@ func augmentChangesForFolderMoves(
 		}
 
 		// Same UID at a different path: convert CREATE to UPDATE.
+		logging.FromContext(ctx).Debug("folder move detected",
+			"uid", meta.Name,
+			"oldPath", changes[idx].Path,
+			"newPath", create.Path,
+		)
 		create.Action = repository.FileActionUpdated
 		create.Existing = changes[idx].Existing
 		removedIndices[idx] = true

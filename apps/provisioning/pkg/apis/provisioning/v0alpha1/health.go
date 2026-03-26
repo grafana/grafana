@@ -75,6 +75,12 @@ const (
 	// ReasonFolderMetadataConflict indicates a conflict between folder metadata in the
 	// repository and the actual folder state in Grafana (e.g., ID mismatch, deleted folder).
 	ReasonFolderMetadataConflict = "FolderMetadataConflict"
+	// ReasonInvalidFolderMetadata indicates a _folder.json file exists but contains
+	// malformed or unparseable content; the folder falls back to hash-derived identity.
+	ReasonInvalidFolderMetadata = "InvalidFolderMetadata"
+	// ReasonFolderMetadataUIDMigration indicates the old folder was deleted because
+	// the _folder.json UID changed, triggering a replacement with a new identity.
+	ReasonFolderMetadataUIDMigration = "FolderMetadataUIDMigration"
 )
 
 // Condition reasons for the Quota condition

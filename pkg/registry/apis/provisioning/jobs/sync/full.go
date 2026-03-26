@@ -11,6 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -75,6 +77,7 @@ func FullSync(
 	}
 
 	if folderMetadataEnabled && len(missingFolderMetadata) > 0 {
+		logging.FromContext(ctx).Debug("missing folder metadata detected", "count", len(missingFolderMetadata))
 		changeActions := make(map[string]repository.FileAction, len(changes))
 		for _, c := range changes {
 			changeActions[c.Path] = c.Action
@@ -92,7 +95,10 @@ func FullSync(
 	}
 
 	if folderMetadataEnabled && len(invalidFolderMetadata) > 0 {
+		fmLogger := logging.FromContext(ctx)
+		fmLogger.Debug("invalid folder metadata detected", "count", len(invalidFolderMetadata))
 		for _, invalid := range invalidFolderMetadata {
+			fmLogger.Debug("invalid folder metadata", "path", invalid.Path, "error", invalid.Err)
 			action := invalid.Action
 			if action == "" {
 				action = repository.FileActionIgnored
@@ -221,6 +227,7 @@ func applyChange(
 			// full sync can recreate that folder at a new path when _folder.json
 			// preserves the UID.
 			if folderMetadataEnabled && safepath.IsDir(change.Path) {
+				logging.FromContext(deleteCtx).Debug("folder tree entry removed after delete", "path", change.Path, "uid", change.Existing.Name)
 				repositoryResources.RemoveFolderFromTree(change.Existing.Name)
 			}
 		}
@@ -238,6 +245,7 @@ func applyChange(
 		// For updated folders, remove the old UID from the tree so EnsureFolderPathExist
 		// doesn't skip it. This handles both title changes (hash mismatch) and UID changes.
 		if change.Action == repository.FileActionUpdated && change.Existing != nil {
+			logging.FromContext(ensureFolderCtx).Debug("folder tree entry removed for update", "path", change.Path, "oldUID", change.Existing.Name)
 			repositoryResources.RemoveFolderFromTree(change.Existing.Name)
 		}
 
@@ -416,6 +424,7 @@ func applyChanges(
 	}
 
 	if len(oldFolders) > 0 {
+		logging.FromContext(ctx).Debug("folder rename cleanup", "count", len(oldFolders))
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseOldFolderCleanup, func() error {
 			safepath.SortByDepth(oldFolders, func(f oldFolder) string { return f.Path }, false)
 			for _, old := range oldFolders {
@@ -438,9 +447,11 @@ func applyChanges(
 					continue
 				}
 
+				logging.FromContext(ctx).Debug("deleting old folder after UID change", "path", old.Path, "uid", old.UID)
 				resultBuilder := jobs.NewFolderResult(old.Path).
-					WithAction(repository.FileActionDeleted).
-					WithName(old.UID)
+					WithAction(repository.FileActionReplaced).
+					WithName(old.UID).
+					WithReason(provisioning.ReasonFolderMetadataUIDMigration)
 				if err := repositoryResources.RemoveFolder(ctx, old.UID); err != nil {
 					resultBuilder.WithError(fmt.Errorf("delete old folder %s after UID change: %w", old.UID, err))
 				}

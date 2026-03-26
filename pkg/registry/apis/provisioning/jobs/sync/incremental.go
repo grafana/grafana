@@ -7,6 +7,8 @@ import (
 	"slices"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -72,6 +74,13 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
 		}
 
+		logger := logging.FromContext(ctx)
+		logger.Debug("folder metadata diff built",
+			"replacedFolders", len(replaced),
+			"invalidMetadata", len(invalidFolderMetadata),
+			"diffSize", len(diff),
+		)
+
 		// Incremental sync normally starts with an empty folder tree, but folder
 		// metadata handling needs the current managed path->UID state before apply:
 		// - invalid `_folder.json` falls back to the existing folder at that path
@@ -106,7 +115,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 				Build())
 			continue
 		}
-		foldersToDelete = append(foldersToDelete, folderDeletion{Path: r.Path, UID: r.OldUID})
+		foldersToDelete = append(foldersToDelete, folderDeletion{Path: r.Path, UID: r.OldUID, Replacement: true})
 	}
 
 	foldersToDelete = deduplicateFolderDeletions(foldersToDelete)
@@ -335,8 +344,9 @@ func actionPriority(action repository.FileAction) int {
 // duplicate UIDs that share the same path (e.g. orphans from prior name
 // changes).
 type folderDeletion struct {
-	Path string
-	UID  string
+	Path        string
+	UID         string
+	Replacement bool // true when this deletion is part of a folder UID replacement
 }
 
 // deduplicateFolderDeletions removes duplicate (Path, UID) pairs from the
@@ -375,12 +385,14 @@ func findOrphanedFolders(
 		return nil
 	}
 
+	logger := logging.FromContext(ctx)
 	var orphaned []folderDeletion
 	for path, folderName := range affectedFolders {
 		span.SetAttributes(attribute.String("folder", folderName))
 
 		_, err := readerRepo.Read(ctx, path, currentRef)
 		if err != nil && (errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
+			logger.Debug("orphaned folder detected", "path", path, "uid", folderName)
 			span.AddEvent("folder not found in git, marking for deletion")
 			orphaned = append(orphaned, folderDeletion{Path: path, UID: folderName})
 			continue
@@ -424,9 +436,16 @@ func deleteFolders(
 			continue
 		}
 
+		action := repository.FileActionDeleted
+		if entry.Replacement {
+			action = repository.FileActionReplaced
+		}
 		resultBuilder := jobs.NewFolderResult(entry.Path).
-			WithAction(repository.FileActionDeleted).
+			WithAction(action).
 			WithName(entry.UID)
+		if entry.Replacement {
+			resultBuilder.WithReason(provisioning.ReasonFolderMetadataUIDMigration)
+		}
 		if err := repositoryResources.RemoveFolder(ctx, entry.UID); err != nil {
 			span.RecordError(err)
 			resultBuilder.WithError(fmt.Errorf("delete folder %s: %w", entry.UID, err))
@@ -438,7 +457,9 @@ func deleteFolders(
 // recordInvalidFolderMetadataWarnings writes collected invalid `_folder.json`
 // warnings to job progress after folder cleanup has completed.
 func recordInvalidFolderMetadataWarnings(ctx context.Context, invalid []*resources.InvalidFolderMetadata, progress jobs.JobProgressRecorder) {
+	logger := logging.FromContext(ctx)
 	for _, warning := range invalid {
+		logger.Debug("invalid folder metadata", "path", warning.Path, "error", warning.Err)
 		action := warning.Action
 		if action == "" {
 			action = repository.FileActionIgnored
@@ -474,6 +495,10 @@ func detectMissingFolderMetadata(ctx context.Context, repo repository.Versioned,
 	}
 
 	missing := resources.FindFoldersMissingMetadata(tree)
+	if len(missing) > 0 {
+		logger := logging.FromContext(ctx)
+		logger.Debug("missing folder metadata detected", "count", len(missing))
+	}
 	for _, p := range missing {
 		builder := jobs.NewFolderResult(p).
 			WithWarning(resources.NewMissingFolderMetadata(p))
