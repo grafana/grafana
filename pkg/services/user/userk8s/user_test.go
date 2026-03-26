@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -268,8 +269,9 @@ func TestUserK8sService_Create(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var svc *UserK8sService
 
+			tracer := tracing.InitializeTracerForTest()
 			if tt.nilProvider {
-				svc = NewUserK8sService(log.NewNopLogger(), nil, nil)
+				svc = NewUserK8sService(log.NewNopLogger(), nil, nil, tracer)
 			} else {
 				ts := httptest.NewServer(http.HandlerFunc(tt.serverResponse))
 				defer ts.Close()
@@ -277,7 +279,7 @@ func TestUserK8sService_Create(t *testing.T) {
 				provider := &mockDirectRestConfigProvider{
 					restConfig: &rest.Config{Host: ts.URL},
 				}
-				svc = NewUserK8sService(log.NewNopLogger(), tt.cfg, provider)
+				svc = NewUserK8sService(log.NewNopLogger(), tt.cfg, provider, tracer)
 			}
 
 			var ctx context.Context

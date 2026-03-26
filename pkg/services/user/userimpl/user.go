@@ -40,7 +40,7 @@ func ProvideService(db db.DB,
 		return nil, err
 	}
 
-	k8sService := userk8s.NewUserK8sService(log.New("user.k8s"), cfg, configProvider)
+	k8sService := userk8s.NewUserK8sService(log.New("user.k8s"), cfg, configProvider, tracer)
 
 	return &Service{
 		legacyService:     legacyService,

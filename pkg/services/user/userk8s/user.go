@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strings"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -34,16 +37,18 @@ type UserK8sService struct {
 	namespaceMapper request.NamespaceMapper
 	configProvider  apiserver.DirectRestConfigProvider
 	config          *setting.Cfg
+	tracer          tracing.Tracer
 }
 
 var _ user.Service = (*UserK8sService)(nil)
 
-func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider) *UserK8sService {
+func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *UserK8sService {
 	return &UserK8sService{
 		logger:          logger,
 		namespaceMapper: request.GetNamespaceMapper(cfg),
 		configProvider:  configProvider,
 		config:          cfg,
+		tracer:          tracer,
 	}
 }
 
@@ -66,6 +71,11 @@ func (s *UserK8sService) getClient(ctx context.Context, namespace string) (dynam
 }
 
 func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
+	ctx, span := s.tracer.Start(ctx, "user.create", trace.WithAttributes(
+		attribute.String("login", cmd.Login),
+	))
+	defer span.End()
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		s.logger.Error("failed to get requester from context", "err", err)
@@ -74,6 +84,7 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 
 	orgID := requester.GetOrgID()
 	namespace := s.namespaceMapper(orgID)
+	span.SetAttributes(attribute.Int64("orgID", orgID))
 
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
@@ -124,6 +135,7 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 	result, err := client.Create(ctx, &unstructured.Unstructured{Object: unstructuredObj}, metav1.CreateOptions{})
 	if err != nil {
 		s.logger.Error("k8s user create failed", "namespace", namespace, "orgID", orgID, "login", cmd.Login, "err", err)
+		span.RecordError(err)
 		return nil, err
 	}
 
