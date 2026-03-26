@@ -588,6 +588,7 @@ describe('sceneVariablesSetToVariables', () => {
       },
       "defaultKeys": undefined,
       "description": "test-desc",
+      "enableGroupBy": false,
       "filters": [
         {
           "key": "filterTest",
@@ -639,6 +640,7 @@ describe('sceneVariablesSetToVariables', () => {
         },
         "defaultKeys": undefined,
         "description": "test-desc",
+        "enableGroupBy": false,
         "filters": [],
         "hide": 3,
         "label": "test-label",
@@ -689,6 +691,7 @@ describe('sceneVariablesSetToVariables', () => {
         },
         "defaultKeys": undefined,
         "description": "test-desc",
+        "enableGroupBy": false,
         "filters": [
           {
             "key": "filterTest",
@@ -784,6 +787,7 @@ describe('sceneVariablesSetToVariables', () => {
         },
       ],
       "description": "test-desc",
+      "enableGroupBy": false,
       "filters": [
         {
           "key": "filterTest",
