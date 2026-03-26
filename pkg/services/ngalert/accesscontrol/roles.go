@@ -342,6 +342,7 @@ var (
 				{Action: accesscontrol.ActionAlertingReceiversPermissionsWrite, Scope: models.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversUpdateProtected, Scope: models.ScopeReceiversAll},
+				{Action: accesscontrol.ActionAlertingNotificationSystemStatus},
 			}),
 		},
 		Grants: []string{string(org.RoleAdmin)},

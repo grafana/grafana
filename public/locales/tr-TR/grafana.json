@@ -783,7 +783,9 @@
         "unknown-rule": "Bilinmeyen",
         "value-in-transition": "Geçişteki değer"
       },
-      "error": "Uyarı durumu geçmişi yüklenirken bir hata oluştu",
+      "error": {
+        "server-error": ""
+      },
       "filter": {
         "clear": "Filtreleri temizle",
         "info": {
@@ -794,6 +796,10 @@
         }
       },
       "filterBy": "Filtre ölçütü:",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "tab": {
         "alert-events": "",
         "notifications": ""
@@ -1718,13 +1724,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -2021,6 +2027,10 @@
       "error-unable-to-fetch": "Uyarı durumu geçmişi getirilemedi",
       "loading": "Yükleniyor...",
       "no-transitions-match-filters": "",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "start-state": "",
       "timeline-hidden": "",
       "title-error-fetching-the-state-history": "Durum geçmişi alınırken hata oluştu",
@@ -3541,20 +3551,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Uyarı örnekleri",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Kural yüklenirken hata oluştu",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "Örnek ayrıntıları",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "Seçilen zaman aralığında tetiklenen veya beklemede olan hiçbir uyarı örneğiniz yok.",
       "no-instances-found": "{{ruleUID}} kuralı için uyarı örneği bulunamadı",
       "no-labels": "Etiket yok",
@@ -3576,14 +3593,16 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_one": "",
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_one": "",
       "show-all-labels_other": "",
       "show-all-values_one": "",
       "show-all-values_other": "",
-      "tooltip-more-values_one": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_one": "",
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "İfade ekle"
@@ -4250,6 +4269,9 @@
     "browse-view": {
       "this-folder-is-empty": "Klasör boş"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "İptal et",
       "button-delete": "Sil",
@@ -4313,6 +4335,7 @@
       "button-deleting": "Siliniyor...",
       "commit": "Klasörü sil",
       "delete-warning": "Bu işlem, bu klasörü ve tüm alt klasörlerini silecektir. Bu işlem toplamda şunları etkileyecektir:",
+      "missing-info": "",
       "success-message": "Klasör başarıyla silindi"
     },
     "descendant-count": {
@@ -4352,6 +4375,7 @@
       "dashboards": "Panolar",
       "panels": "Paneller"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Öge yok"
     },
@@ -4364,12 +4388,13 @@
       "name-label": "Klasör adı"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "Klasör oluşturulurken hata oluştu",
       "button-create": "Oluştur",
       "button-creating": "Oluşturuluyor...",
       "cancel": "İptal",
       "error-invalid-characters": "Klasör adı geçersiz karakterler içeriyor. Yalnızca harf, sayı, boşluk, alt çizgi ve tireye izin verilir.",
+      "error-missing-title-or-repo": "",
       "error-required": "Klasör adı gereklidir",
+      "error-saving": "",
       "folder-name-input-placeholder-enter-folder-name": "Klasör adını girin",
       "label-folder-name": "Klasör adı",
       "text-pull-request-created": "Bu klasörde yapılan değişikliklerle bir çekme isteği oluşturuldu:",
@@ -5982,6 +6007,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": ""
+      },
       "prompt-card": {
         "placeholder": "",
         "placeholder-multi": ""
@@ -6081,8 +6109,8 @@
       "name": "Satırlar",
       "new-row-title": "Yeni satır",
       "row": {
-        "collapse": "Satırı daralt",
-        "expand": "Satırı genişlet",
+        "collapse": "",
+        "expand": "",
         "new": "Yeni satır",
         "repeat": {
           "learn-more": "Daha fazla bilgi edinin",
@@ -6295,7 +6323,6 @@
         "label": "Düzenlemeden çık",
         "tooltip": "Düzenleme kipinden çıkar ve kaydedilmemiş değişiklikleri iptal eder"
       },
-      "mark-favorite": "Favori olarak işaretle",
       "more-save-options": "Diğer kaydetme seçenekleri",
       "new": {
         "back-to-dashboard": "Panoya geri dön",
@@ -6365,8 +6392,7 @@
       "star-added": "Favorilere eklendi",
       "star-remove-error": "Favorilerden kaldırılamadı",
       "star-removed": "Favorilerden kaldırıldı",
-      "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
-      "unmark-favorite": "Favorilerden kaldır"
+      "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır"
     },
     "transformation-editor": {
       "input-data": "Girdi verisi",
@@ -6623,11 +6649,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Geçici seçenekler",
       "alert-not-supported": "Bu veri kaynağı geçici filtreleri desteklemiyor",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Kullanıcıların listeye özel değerler eklemesine olanak tanır",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Boyutları CSV biçiminde girin: {{name}}, {{value}}",
       "label-data-source": "Veri kaynağı",
       "label-use-static-key-dimensions": "Statik anahtar boyutları kullan",
-      "name-allow-custom-values": "Özel değer girişine izin ver"
+      "name-allow-custom-values": "Özel değer girişine izin ver",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -6911,11 +6939,12 @@
       "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Pano silinemedi",
       "cancel-action": "İptal et",
       "delete-action": "Panoyu sil",
+      "delete-error": "",
       "deleting": "Siliniyor...",
       "drawer-title": "Sağlanan Panoyu Sil",
+      "no-repository-selected": "",
       "success-message": "Pano başarıyla silindi"
     },
     "description-label": {
@@ -7382,16 +7411,17 @@
       "affected-dashboards_other": "Bu güncelleme <1>{{count}} panoyu etkileyecek.</1> Paneli kullanan aşağıdaki panolar etkilenecek:"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "Pano kaydedilirken hata oluştu",
       "cancel": "İptal",
       "cannot-be-saved": "Bu pano başka bir kaynaktan sağlandığı için Grafana kullanıcı arayüzünden kaydedilemez. JSON'u kopyalayın veya aşağıdan bir dosyaya kaydedin, ardından sağlama kaynağındaki panonuzu güncelleyebilirsiniz.",
       "copy-json-to-clipboard": "JSON'u panoya kopyala",
+      "error-saving": "",
       "file-path": "<strong>Dosya yolu:</strong> {{filePath}}",
       "form-loading-error": "",
       "form-loading-error-unknown": "",
       "label-description": "Açıklama",
       "label-target-folder": "Hedef klasör",
       "label-title": "Başlık",
+      "repo-path-required": "",
       "save": "Kaydet",
       "save-json-to-file": "JSON'u dosyaya kaydet",
       "saving": "Kaydediliyor…",
@@ -8905,7 +8935,8 @@
     "select-placeholder": "Klasöre göre filtrele"
   },
   "folder-repo": {
-    "read-only-badge": "Salt okunur"
+    "read-only-badge": "Salt okunur",
+    "repository-not-found-tooltip": ""
   },
   "folders": {
     "api": {
@@ -10267,6 +10298,9 @@
       "group": "Grup",
       "group-tooltip": "Yığın grubunun adı"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Değere göre filtrele",
       "cell-filter-out": "Değeri filtre dışı bırak",
@@ -10315,6 +10349,10 @@
       },
       "no-values-label": "Değer yok",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}/{{numRows}} satır",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "veri yok"
       },
@@ -11428,7 +11466,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Seçenek bulunamadı"
@@ -12173,12 +12212,10 @@
       "description": "Aldığınız bildirimler burada görünecek",
       "title": "Tüm bildirimleri gördünüz."
     },
-    "starred-dashboard": "Pano yıldızlandı",
     "stored-notifications": {
       "dismiss-notifications": "Bildirimleri kapat",
       "title-alert": "Bu sayfa geçmişteki hata ve uyarıları gösterir. Kapatıldıktan sonra geri getirilemezler."
-    },
-    "unstarred-dashboard": "Panonun yıldızı kaldırıldı"
+    }
   },
   "oauth": {
     "form": {
@@ -12319,6 +12356,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Ad"
       }
     },
@@ -12464,11 +12502,13 @@
       "description-customize-dashboard-elements-visibility": "Pano ögelerinin görünürlüğünü özelleştir",
       "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Panel yükseklikleri ekran boyutuna uyacak şekilde ayarlanacaktır",
+      "description-playlist-nav": "",
       "label-autofit": "Otomatik sığdır",
       "label-dashboard-links": "Pano bağlantıları",
       "label-display-dashboard-controls": "Pano kontrollerini göster",
       "label-hide-logo": "",
       "label-mode": "Mod",
+      "label-playlist-nav": "",
       "label-time-and-refresh": "Zaman ve yenileme",
       "label-variables": "Değişkenler",
       "modes": {
@@ -13018,6 +13058,7 @@
       "error-delete-connection": "Bağlantı silinemedi",
       "error-required": "Bu alan zorunludur",
       "error-save-connection": "Bağlantı kaydedilemedi",
+      "error-submit": "",
       "grafana-repositories": "Bu bağlantıyı kullanan depolar",
       "label-app-id": "GitHub Uygulama Kimliği",
       "label-description": "Açıklama",
@@ -13094,6 +13135,10 @@
       "set-up-public-webhooks": "Herkese açık Web kancalarını ayarlayın",
       "title-instant-updates-requests-webhooks": "Web kancalarıyla anlık güncellemeler ve çekme istekleri.",
       "title-visual-previews-in-pull-requests": "Çekme isteklerinde resimlerin işlenmesiyle birlikte görsel ön izleme"
+    },
+    "error": {
+      "branch-not-found-dashboard": "",
+      "branch-not-found-folder": ""
     },
     "error-title-default": "Hata",
     "expanded-row": {
@@ -13304,6 +13349,28 @@
         "label": "Tüm kaynakları haricî depolama ile senkronize et",
         "subtitle": "Tüm Grafana örneğinizi haricî depolama üzerinden senkronize edip yönetmek istiyorsanız bu seçeneği kullanın."
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "",
+      "title": ""
+    },
+    "orphaned-repository-tooltip": "",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "",
+      "confirm-delete-button": "",
+      "confirm-delete-title": "",
+      "confirm-release-body": "",
+      "confirm-release-button": "",
+      "confirm-release-title": "",
+      "contact-admin": "",
+      "convert-to-local-button": "",
+      "delete-button": "",
+      "job-error": "",
+      "job-success": "",
+      "job-warning": "",
+      "message": "",
+      "submit-error": "",
+      "title": ""
     },
     "provisioning-wizard": {
       "on-submit": {
@@ -13542,6 +13609,9 @@
       },
       "go-to": "Şuraya git:",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "Uyarı",
     "watch-stream": {
@@ -14684,13 +14754,19 @@
     },
     "presets": {
       "horizontal-threshold-value": "",
+      "horizontal-threshold-value-desc": "",
       "horizontal-threshold-value-sparkline": "",
+      "horizontal-threshold-value-sparkline-desc": "",
       "list": "",
       "list_desc": "",
       "threshold-background": "",
+      "threshold-background-desc": "",
       "threshold-background-sparkline": "",
+      "threshold-background-sparkline-desc": "",
       "threshold-value": "",
+      "threshold-value-desc": "",
       "threshold-value-sparkline": "",
+      "threshold-value-sparkline-desc": "",
       "wide-list": "",
       "wide-list-desc": ""
     },
@@ -14913,12 +14989,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "",
       "create": "Oluştur",
+      "description-create-team-folder": "",
       "description-email": "Bu isteğe bağlıdır ve esas olarak özel takım avatarlarına izin vermek için kullanılır",
-      "failed-to-create": "Ekip oluşturulamadı",
+      "failed-to-create": "",
+      "folder-create-failed": "",
+      "folder-create-failed-help": "",
+      "folder-creation-link": "",
+      "folder-creation-loading": "",
+      "folder-creation-success": "",
+      "label-create-team-folder": "",
       "label-email": "E-posta",
       "label-name": "Ad",
-      "label-role": "Rol"
+      "label-role": "Rol",
+      "role-creation-success": "",
+      "roles-create-failed": "",
+      "roles-create-permission-issue": "",
+      "roles-creation-loading": "",
+      "team-creation-link": "",
+      "team-creation-loading": "",
+      "team-creation-success": ""
     },
     "empty-state": {
       "button-title": "Yeni ekip",

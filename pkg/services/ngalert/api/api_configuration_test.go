@@ -112,7 +112,7 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			sut := createAPIAdminSut(t, test.datasources, test.features)
 			resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
-				AlertmanagersChoice: test.alertmanagerChoice,
+				AlertmanagersChoice: &test.alertmanagerChoice,
 			})
 			var res map[string]any
 			err := json.Unmarshal(resp.Body(), &res)

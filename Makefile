@@ -9,6 +9,8 @@ include .citools/Variables.mk
 
 GO = go
 GO_VERSION = 1.25.8
+GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
+GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -29,7 +31,8 @@ GO_LDFLAGS = -X main.version=$(BUILD_VERSION) \
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
 
-CUE = cue
+CUE_VERSION = v0.16.0
+CUE = $(shell go env GOPATH)/bin/cue
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
@@ -170,12 +173,12 @@ gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
-	@echo "// This file is managed by Grafana - DO NOT EDIT MANUALLY" > apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
-	@echo "// Source: kinds/dashboard/dashboard_kind.cue" >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
-	@echo "// To sync changes, run: make gen-cue" >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
-	@echo "" >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
-	@cat kinds/dashboard/dashboard_kind.cue >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
-	@cp apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	@echo "// This file is managed by Grafana - DO NOT EDIT MANUALLY" > apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	@echo "// Source: kinds/dashboard/dashboard_kind.cue" >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	@echo "// To sync changes, run: make gen-cue" >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	@echo "" >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	@cat kinds/dashboard/dashboard_kind.cue >> apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+	@cp apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue apps/dashboard/pkg/apis/dashboard/v1/dashboard_kind.cue
 
 
 .PHONY: gen-cuev2
@@ -193,7 +196,7 @@ APPS_DIRS=$(shell find ./apps -type d -exec test -f "{}/Makefile" \; -print | so
 app ?=
 
 .PHONY: gen-apps
-gen-apps: do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt. Use app=<name> to generate for a specific app.
+gen-apps: fix-cue do-gen-apps gofmt ## Generate code for Grafana App SDK apps and run gofmt and fix-cue. Use app=<name> to generate for a specific app.
 ## NOTE: codegen produces some openapi files that result in circular dependencies
 ## for now, we revert the zz_openapi_gen.go files before comparison
 	@if [ -n "$$CODEGEN_VERIFY" ]; then \
@@ -265,11 +268,26 @@ gen-app-manifests-unistore: ## Generate unified storage app manifests list
 		echo "Generated app manifests code is up to date."; \
 	fi
 
+.PHONY: install-cue
+install-cue:
+	go install cuelang.org/go/cmd/cue@$(CUE_VERSION)
+
 .PHONY: fix-cue
-fix-cue:
-	@echo "formatting cue files"
-	$(CUE) fix kinds/**/*.cue
-	$(CUE) fix public/app/plugins/**/**/*.cue
+fix-cue: install-cue ## Format and fix CUE files. Use app=<name> to fix a specific app.
+	@root_dir="."; \
+	if [ -n "$(app)" ]; then \
+		root_dir="./apps/$(app)"; \
+		if [ ! -d "$$root_dir" ]; then \
+			echo "Error: App '$(app)' not found at $$root_dir"; \
+			exit 1; \
+		fi; \
+	fi; \
+	find "$$root_dir" -type d -name 'cue.mod' | while read -r mod_dir; do \
+		project_dir="$$(dirname $$mod_dir)"; \
+		echo "Fixing: $$project_dir"; \
+		(cd "$$project_dir" && $(CUE) fmt ./...); \
+		(cd "$$project_dir" && $(CUE) fix ./...); \
+	done \
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
@@ -277,7 +295,7 @@ gen-jsonnet:
 
 .PHONY: gen-themes
 gen-themes:
-	go generate ./pkg/services/preference
+	GOOS=$(GO_HOST_OS) GOARCH=$(GO_HOST_ARCH) $(GO) generate ./pkg/services/preference
 
 .PHONY: update-workspace
 update-workspace: gen-go
@@ -285,7 +303,7 @@ update-workspace: gen-go
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: gen-themes ## Build all Go binaries (grafana, grafana-server, grafana-cli).
+build-go: gen-themes ## Build the Grafana binary.
 	@echo "build go binaries"
 	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) $(if $(GO_BUILD_OS),GOOS=$(GO_BUILD_OS)) $(if $(GO_BUILD_ARCH),GOARCH=$(GO_BUILD_ARCH)) $(GO) build -buildvcs=false $(if $(GO_BUILD_DEV),-gcflags "all=-N -l",-trimpath) $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS),-gcflags "$(GO_BUILD_GCFLAGS)") -ldflags "$(GO_LDFLAGS)" -o ./bin/grafana ./pkg/cmd/grafana
 

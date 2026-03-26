@@ -52,7 +52,6 @@ export const CumulativeOptionsEditor = (props: {
       >
         <StatsPicker
           allowMultiple={false}
-          className="width-18"
           stats={[cumulative?.reducer || ReducerID.sum]}
           onChange={onCumulativeStatsChange}
           defaultStat={ReducerID.sum}

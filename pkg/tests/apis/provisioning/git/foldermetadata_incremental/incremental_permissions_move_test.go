@@ -14,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -26,7 +25,7 @@ import (
 func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := gitcommon.RunGrafanaWithGitServer(t, common.WithProvisioningFolderMetadata)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
 
@@ -413,10 +412,10 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testin
 // requireGitFolderState asserts that a folder tracked by the gitTestHelper has the expected
 // title, sourcePath annotation, and parent annotation. It polls until the state matches or the
 // timeout expires, so it is safe to call immediately after triggering an incremental sync.
-func requireGitFolderState(t *testing.T, h *gitcommon.GitTestHelper, ctx context.Context, folderUID, expectedTitle, expectedSourcePath, expectedParent string) {
+func requireGitFolderState(t *testing.T, h *common.GitTestHelper, ctx context.Context, folderUID, expectedTitle, expectedSourcePath, expectedParent string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		obj, err := h.FoldersV1.Resource.Get(ctx, folderUID, metav1.GetOptions{})
+		obj, err := h.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
 		if !assert.NoError(c, err, "failed to get folder %s", folderUID) {
 			return
 		}
@@ -429,18 +428,18 @@ func requireGitFolderState(t *testing.T, h *gitcommon.GitTestHelper, ctx context
 			"folder %s sourcePath", folderUID)
 		assert.Equal(c, expectedParent, annotations["grafana.app/folder"],
 			"folder %s parent", folderUID)
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault,
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"folder %q should reach state: title=%q sourcePath=%q parent=%q",
 		folderUID, expectedTitle, expectedSourcePath, expectedParent)
 }
 
 // findGitFolderUIDBySourcePath returns the UID of the folder managed by repoName at sourcePath.
 // It polls until the folder appears or the timeout expires.
-func findGitFolderUIDBySourcePath(t *testing.T, h *gitcommon.GitTestHelper, ctx context.Context, repoName, sourcePath string) string {
+func findGitFolderUIDBySourcePath(t *testing.T, h *common.GitTestHelper, ctx context.Context, repoName, sourcePath string) string {
 	t.Helper()
 	var uid string
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		list, err := h.FoldersV1.Resource.List(ctx, metav1.ListOptions{})
+		list, err := h.Folders.Resource.List(ctx, metav1.ListOptions{})
 		if !assert.NoError(c, err, "failed to list folders") {
 			return
 		}
@@ -455,23 +454,23 @@ func findGitFolderUIDBySourcePath(t *testing.T, h *gitcommon.GitTestHelper, ctx 
 			}
 		}
 		c.Errorf("no folder managed by %q with sourcePath %q found", repoName, sourcePath)
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault,
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
 		"expected folder with sourcePath %q for repo %q", sourcePath, repoName)
 	return uid
 }
 
 // assertGitFolderAbsent asserts that the folder with the given UID no longer exists.
-func assertGitFolderAbsent(t *testing.T, h *gitcommon.GitTestHelper, ctx context.Context, folderUID string) {
+func assertGitFolderAbsent(t *testing.T, h *common.GitTestHelper, ctx context.Context, folderUID string) {
 	t.Helper()
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		_, err := h.FoldersV1.Resource.Get(ctx, folderUID, metav1.GetOptions{})
+		_, err := h.Folders.Resource.Get(ctx, folderUID, metav1.GetOptions{})
 		if err == nil {
 			c.Errorf("folder %q still exists, expected NotFound", folderUID)
 			return
 		}
 		assert.True(c, apierrors.IsNotFound(err),
 			"expected NotFound error for folder %q, got: %v", folderUID, err)
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "folder %q should be deleted", folderUID)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "folder %q should be deleted", folderUID)
 }
 
 // snapshotFolderPermissions performs a single GET to /api/folders/{uid}/permissions and
