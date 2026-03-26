@@ -6,6 +6,7 @@ import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboard
 
 import { FormLoadingErrorAlert } from './FormLoadingErrorAlert';
 import { MoveProvisionedDashboardForm } from './MoveProvisionedDashboardForm';
+import { OrphanedProvisionedDrawerNotice } from './OrphanedProvisionedDrawerNotice';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -35,6 +36,10 @@ export function MoveProvisionedDashboardDrawer({
 
   if (repoDataStatus === RepoViewStatus.Loading) {
     return <Spinner />;
+  }
+
+  if (repoDataStatus === RepoViewStatus.Orphaned) {
+    return <OrphanedProvisionedDrawerNotice />;
   }
 
   if (repoDataStatus === RepoViewStatus.Error || !defaultValues) {

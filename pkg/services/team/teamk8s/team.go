@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -65,7 +66,12 @@ func (s *TeamK8sService) getClient(ctx context.Context, namespace string) (dynam
 }
 
 func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
-	namespace := s.namespaceMapper(cmd.OrgID)
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return team.Team{}, err
+	}
+	orgID := requester.GetOrgID()
+	namespace := s.namespaceMapper(orgID)
 
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
@@ -108,7 +114,7 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 	return team.Team{
 		ID:            getTeamID(&created),
 		UID:           created.Name,
-		OrgID:         cmd.OrgID,
+		OrgID:         orgID,
 		Name:          created.Spec.Title,
 		Email:         created.Spec.Email,
 		ExternalUID:   created.Spec.ExternalUID,
@@ -119,11 +125,17 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 }
 
 func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return err
+	}
+	orgID := requester.GetOrgID()
+
 	uid, _ := ctx.Value(team.TeamUIDCtxKey{}).(string)
 	if uid == "" {
 		legacyTeam, err := s.legacyService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
 			ID:    cmd.ID,
-			OrgID: cmd.OrgID,
+			OrgID: orgID,
 		})
 		if err != nil {
 			return err
@@ -131,7 +143,7 @@ func (s *TeamK8sService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCom
 		uid = legacyTeam.UID
 	}
 
-	namespace := s.namespaceMapper(cmd.OrgID)
+	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return err
@@ -173,6 +185,12 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 		return nil, team.ErrTeamNotFound
 	}
 
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	orgID := requester.GetOrgID()
+
 	uid := query.UID
 	if uid == "" {
 		uid, _ = ctx.Value(team.TeamUIDCtxKey{}).(string)
@@ -185,7 +203,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 		uid = teamDTO.UID
 	}
 
-	namespace := s.namespaceMapper(query.OrgID)
+	namespace := s.namespaceMapper(orgID)
 	client, err := s.getClient(ctx, namespace)
 	if err != nil {
 		return nil, err
@@ -207,7 +225,7 @@ func (s *TeamK8sService) GetTeamByID(ctx context.Context, query *team.GetTeamByI
 	return &team.TeamDTO{
 		ID:            getTeamID(&fetched),
 		UID:           fetched.Name,
-		OrgID:         query.OrgID,
+		OrgID:         orgID,
 		Name:          fetched.Spec.Title,
 		Email:         fetched.Spec.Email,
 		ExternalUID:   fetched.Spec.ExternalUID,
