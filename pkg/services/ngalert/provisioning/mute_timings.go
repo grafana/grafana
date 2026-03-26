@@ -68,6 +68,19 @@ func (svc *MuteTimingService) WithIncludeImported() *MuteTimingService {
 	}
 }
 
+func (svc *MuteTimingService) WithProvenanceValidator(v validation.ProvenanceStatusTransitionValidator) *MuteTimingService {
+	return &MuteTimingService{
+		configStore:            svc.configStore,
+		provenanceStore:        svc.provenanceStore,
+		xact:                   svc.xact,
+		log:                    svc.log,
+		validator:              v,
+		ruleNotificationsStore: svc.ruleNotificationsStore,
+		routeService:           svc.routeService,
+		includeImported:        svc.includeImported,
+	}
+}
+
 // GetMuteTimings returns a slice of all mute timings within the specified org.
 func (svc *MuteTimingService) GetMuteTimings(ctx context.Context, orgID int64) ([]definitions.MuteTimeInterval, error) {
 	rev, err := svc.configStore.Get(ctx, orgID)

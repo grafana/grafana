@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -115,7 +116,11 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 	case receiver.ResourceInfo.GroupResource().Resource:
 		return receiver.NewStorage(api.ReceiverService, namespacer, api.ReceiverService)
 	case timeinterval.ResourceInfo.GroupResource().Resource:
-		srv := api.MuteTimings
+		// The k8s API enforces its own SetProvisioningStatus permission check before
+		// any provenance change reaches the service, so the service-level transition
+		// validator can be permissive — ValidateProvenanceRelaxed would otherwise
+		// block valid transitions like api→none for callers with explicit permission.
+		srv := api.MuteTimings.WithProvenanceValidator(validation.ValidateProvenancePermissive)
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 			srv = srv.WithIncludeImported()

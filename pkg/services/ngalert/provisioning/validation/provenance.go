@@ -41,6 +41,13 @@ func ValidateProvenanceRelaxed(from, to models.Provenance) error {
 	return nil
 }
 
+// ValidateProvenancePermissive allows any provenance transition. Use this when the caller has already
+// verified that the user holds the SetProvisioningStatus permission and should be free to set or
+// reset provenance (e.g. via the k8s API which enforces its own permission check).
+func ValidateProvenancePermissive(_, _ models.Provenance) error {
+	return nil
+}
+
 // ValidateProvenanceOfDependentResources returns a list of allowed provenance statuses for dependent resources
 // in the case when they need to be updated when the resource they depend on is changed.
 func ValidateProvenanceOfDependentResources(parentProvenance models.Provenance) func(childProvenance models.Provenance) bool {
