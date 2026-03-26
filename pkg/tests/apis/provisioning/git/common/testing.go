@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -64,14 +66,20 @@ func DashboardJSON(uid, title string, version int) []byte {
 // GitTestHelper wraps the standard test helper with git-specific functionality
 type GitTestHelper struct {
 	*apis.K8sTestHelper
-	gitServer    *gittest.Server
-	Repositories *apis.K8sResourceClient
-	Jobs         *apis.K8sResourceClient
-	AdminREST    *rest.RESTClient
-	EditorREST   *rest.RESTClient
-	ViewerREST   *rest.RESTClient
-	DashboardsV1 *apis.K8sResourceClient
-	FoldersV1    *apis.K8sResourceClient
+	gitServer       *gittest.Server
+	Repositories    *apis.K8sResourceClient
+	Jobs            *apis.K8sResourceClient
+	AdminREST       *rest.RESTClient
+	EditorREST      *rest.RESTClient
+	ViewerREST      *rest.RESTClient
+	DashboardsV1    *apis.K8sResourceClient
+	FoldersV1       *apis.K8sResourceClient
+	exportRepoInfos map[string]*exportRepoInfo
+}
+
+type exportRepoInfo struct {
+	user   *gittest.User
+	remote *gittest.RemoteRepository
 }
 
 // SharedGitEnv lazily starts and reuses one GitTestHelper across tests.
@@ -501,15 +509,16 @@ func newGitTestHelper(t *testing.T, k8s *apis.K8sTestHelper, gitServer *gittest.
 	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
 
 	return &GitTestHelper{
-		K8sTestHelper: k8s,
-		gitServer:     gitServer,
-		Repositories:  repositories,
-		Jobs:          jobsClient,
-		DashboardsV1:  dashboardsV1,
-		FoldersV1:     foldersV1,
-		AdminREST:     k8s.Org1.Admin.RESTClient(t, gv),
-		EditorREST:    k8s.Org1.Editor.RESTClient(t, gv),
-		ViewerREST:    k8s.Org1.Viewer.RESTClient(t, gv),
+		K8sTestHelper:   k8s,
+		gitServer:       gitServer,
+		Repositories:    repositories,
+		Jobs:            jobsClient,
+		DashboardsV1:    dashboardsV1,
+		FoldersV1:       foldersV1,
+		AdminREST:       k8s.Org1.Admin.RESTClient(t, gv),
+		EditorREST:      k8s.Org1.Editor.RESTClient(t, gv),
+		ViewerREST:      k8s.Org1.Viewer.RESTClient(t, gv),
+		exportRepoInfos: make(map[string]*exportRepoInfo),
 	}
 }
 
@@ -741,4 +750,123 @@ func RequireJobWarningContains(t *testing.T, jobObj *provisioning.Job, substr st
 		}
 	}
 	t.Errorf("expected at least one warning containing %q, got warnings: %v", substr, jobObj.Status.Warnings)
+}
+
+// ── Export helpers ──────────────────────────────────────────────────────────
+//
+// These methods let tests that push/export to a git repository reuse the
+// shared gittest server instead of requiring a standalone GitExportHelper.
+
+// CreateExportGitRepo creates a git repository configured for export (push)
+// workflows: sync disabled, target "instance", workflow "write".
+func (h *GitTestHelper) CreateExportGitRepo(t *testing.T, repoName string) {
+	t.Helper()
+
+	ctx := context.Background()
+
+	user, err := h.gitServer.CreateUser(ctx)
+	require.NoError(t, err, "failed to create git user")
+
+	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
+	require.NoError(t, err, "failed to create remote git repository")
+
+	h.exportRepoInfos[repoName] = &exportRepoInfo{user: user, remote: remote}
+
+	local, err := gittest.NewLocalRepo(ctx)
+	require.NoError(t, err, "failed to create local git repository")
+	t.Cleanup(func() {
+		if err := local.Cleanup(); err != nil {
+			t.Logf("failed to cleanup local repo: %v", err)
+		}
+	})
+
+	_, err = local.InitWithRemote(user, remote)
+	require.NoError(t, err, "failed to initialize local repo with remote")
+
+	spec := map[string]interface{}{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]interface{}{
+			"name":      repoName,
+			"namespace": "default",
+		},
+		"spec": map[string]interface{}{
+			"title": repoName,
+			"type":  "git",
+			"git": map[string]interface{}{
+				"url":       remote.URL,
+				"branch":    "main",
+				"tokenUser": user.Username,
+			},
+			"sync": map[string]interface{}{
+				"enabled": false,
+				"target":  "instance",
+			},
+			"workflows": []string{"write"},
+		},
+		"secure": map[string]interface{}{
+			"token": map[string]interface{}{
+				"create": user.Password,
+			},
+		},
+	}
+
+	body, err := json.Marshal(spec)
+	require.NoError(t, err)
+
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(ctx)
+	require.NoError(t, result.Error(), "failed to register export git repository %q with Grafana", repoName)
+
+	h.waitForReadyRepository(t, repoName)
+}
+
+// cloneExportRepo clones an export repository to a temp directory for inspection.
+func (h *GitTestHelper) cloneExportRepo(t *testing.T, ctx context.Context, repoName string) (string, func()) {
+	t.Helper()
+	info, ok := h.exportRepoInfos[repoName]
+	if !ok {
+		t.Fatalf("repo %q not registered as export repo – call CreateExportGitRepo first", repoName)
+	}
+
+	tmpDir, err := os.MkdirTemp("", "grafana-test-clone-*")
+	require.NoError(t, err, "failed to create temp dir for git clone")
+
+	cloneDir := filepath.Join(tmpDir, "repo")
+	cmd := exec.CommandContext(ctx, "git", "clone", info.remote.AuthURL, cloneDir) //nolint:gosec
+	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		_ = os.RemoveAll(tmpDir)
+		t.Fatalf("failed to clone repo %q: %v\n%s", repoName, err, out)
+	}
+
+	return cloneDir, func() { _ = os.RemoveAll(tmpDir) }
+}
+
+// GitFileExists reports whether filePath exists on the main branch of an export
+// repository. It clones the repo via git (bypassing the provisioning files
+// endpoint, which rejects hidden files such as .keep).
+func (h *GitTestHelper) GitFileExists(t *testing.T, ctx context.Context, repoName, filePath string) bool {
+	t.Helper()
+	cloneDir, cleanup := h.cloneExportRepo(t, ctx, repoName)
+	defer cleanup()
+
+	_, err := os.Stat(filepath.Join(cloneDir, filePath))
+	return err == nil
+}
+
+// GitReadFile returns the raw bytes of filePath on the main branch of an export
+// repository. It fails the test if the file does not exist.
+func (h *GitTestHelper) GitReadFile(t *testing.T, ctx context.Context, repoName, filePath string) []byte {
+	t.Helper()
+	cloneDir, cleanup := h.cloneExportRepo(t, ctx, repoName)
+	defer cleanup()
+
+	data, err := os.ReadFile(filepath.Join(cloneDir, filePath)) //nolint:gosec
+	require.NoError(t, err, "file %s not found in git repo %s", filePath, repoName)
+	return data
 }

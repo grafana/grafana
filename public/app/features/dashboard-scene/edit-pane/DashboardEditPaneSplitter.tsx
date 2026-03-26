@@ -133,7 +133,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   }, [isEditing, editPane]);
 
   const sidebarContext = useSidebar({
-    hasOpenPane: Boolean(openPane) && Boolean(isEditing),
+    hasOpenPane: Boolean(openPane),
     contentMargin: 1,
     position: 'right',
     persistanceKey: isEditing ? 'dashboard' : 'dashboard-view',

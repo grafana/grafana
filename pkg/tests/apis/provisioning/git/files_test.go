@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -17,9 +16,7 @@ import (
 )
 
 func TestIntegrationGitFiles_CreateFile(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-create-file"
@@ -109,9 +106,7 @@ func TestIntegrationGitFiles_CreateFile(t *testing.T) {
 }
 
 func TestIntegrationGitFiles_UpdateFile(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-update-file"
@@ -211,9 +206,7 @@ func TestIntegrationGitFiles_UpdateFile(t *testing.T) {
 }
 
 func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-delete-file"
@@ -300,9 +293,7 @@ func TestIntegrationGitFiles_DeleteFile(t *testing.T) {
 }
 
 func TestIntegrationGitFiles_MoveFile(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-move-file"
@@ -351,9 +342,7 @@ func TestIntegrationGitFiles_MoveFile(t *testing.T) {
 }
 
 func TestIntegrationGitFiles_ListFiles(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-list-files"
@@ -420,9 +409,7 @@ func TestIntegrationGitFiles_ListFiles(t *testing.T) {
 }
 
 func TestIntegrationGitFiles_BranchOperations(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-branch-ops"
