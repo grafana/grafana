@@ -23,7 +23,7 @@ jobs:
     permissions:
       contents: read
     outputs:
-      changed: ${{ steps.detect-changes.outputs.backend }}
+      changed: ${{ steps.detect-changes.outputs.backend == 'true' || steps.detect-changes.outputs.makefile == 'true' }}
     steps:
       - uses: actions/checkout@v6
         with:
