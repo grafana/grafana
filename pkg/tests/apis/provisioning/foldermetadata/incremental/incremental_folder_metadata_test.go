@@ -1602,7 +1602,6 @@ func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t
 			"dash-move": {Title: "Moving Dashboard", SourcePath: "dst/move.json", Folder: folderUID},
 			"dash-stay": {Title: "Staying Dashboard", SourcePath: "src/stay.json", Folder: srcAutoUID},
 		})
-
 	})
 
 	t.Run("dashboard from unrelated folder renamed into relocated metadata folder", func(t *testing.T) {
