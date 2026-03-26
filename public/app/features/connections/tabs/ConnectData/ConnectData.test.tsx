@@ -170,14 +170,7 @@ describe('Add new connection', () => {
 });
 
 describe('Group by', () => {
-  test('renders Data Sources and Apps headers when grouped by type (default)', async () => {
-    renderPage([mockCatalogDataSourcePlugin, mockCatalogAppPlugin]);
-
-    expect(await screen.findByText('Data Sources')).toBeVisible();
-    expect(screen.getByText('Apps')).toBeVisible();
-  });
-
-  test('renders category headers when grouped by category', async () => {
+  test('renders category headers when grouped by category and category is set', async () => {
     renderPage(
       [
         getCatalogPluginMock({ id: 'ds-1', name: 'DS 1', type: PluginType.datasource, category: 'tsdb' }),

@@ -63,7 +63,6 @@ export default {
   },
   hasUpdate: false,
   defaultNavUrl: '/plugins/alexanderzobnin-zabbix-app/',
-  category: '',
   state: '',
   signature: 'valid',
   signatureType: 'community',
