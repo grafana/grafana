@@ -5,9 +5,6 @@ import { RadialGaugeDimensions, RadialShape } from './types';
 
 // some utility transparent white colors for gradients
 const TRANSPARENT_WHITE = '#ffffff00';
-const MOSTLY_TRANSPARENT_WHITE = '#ffffff88';
-const MOSTLY_OPAQUE_WHITE = '#ffffffbb';
-const OPAQUE_WHITE = '#ffffff';
 
 const MIN_GLOW_SIZE = 0.75;
 const GLOW_FACTOR = 0.08;
@@ -46,10 +43,7 @@ export function MiddleCircleGlow({ dimensions, gaugeId, color, shape }: CenterGl
   const clipId = `circle-glow-clip-${gaugeId}`;
   const transparentColor = color ? colorManipulator.alpha(color, CENTER_GLOW_OPACITY) : color;
 
-  // For the 'gauge' shape the arc ends at ARC_END degrees (110°) on the right side.
-  // Using toRad convention (0° = up, clockwise), the arc endpoint Y offset from center is:
-  //   radius * sin((ARC_END - 90) * π/180)  =  radius * sin(20°)  ≈  radius * 0.342
-  // The clip rect bottom sits at that Y so the glow matches the flat-bottom opening of the arc.
+  // Clip the glow to the gauge arc's flat-bottom opening (arc endpoints sit at centerY + radius * sin(20°)).
   const isGaugeShape = shape === 'gauge';
   const arcEndOffsetY = Math.sin(((ARC_END - 90) * Math.PI) / 180);
 
@@ -62,7 +56,6 @@ export function MiddleCircleGlow({ dimensions, gaugeId, color, shape }: CenterGl
         </radialGradient>
         {isGaugeShape && (
           <clipPath id={clipId}>
-            {/* Clip bottom at the Y where the arc endpoints sit: centerY + radius * sin(20°) */}
             <rect
               x={dimensions.centerX - dimensions.radius}
               y={dimensions.centerY - dimensions.radius}
@@ -91,25 +84,27 @@ interface SpotlightGradientProps {
   angle: number;
   roundedBars: boolean;
   theme: GrafanaTheme2;
+  color: string;
 }
 
-export function SpotlightGradient({ id, dimensions, roundedBars, angle, theme }: SpotlightGradientProps) {
+export function SpotlightGradient({ id, dimensions, roundedBars, angle, theme, color }: SpotlightGradientProps) {
   if (theme.isLight) {
     return null;
   }
 
-  const angleRadian = ((angle - 90) * Math.PI) / 180;
+  // Shift the centre forward by the endcap's angular half-width so the bloom sits over the visual tip.
+  const endcapOffsetRad = roundedBars ? dimensions.barWidth / (2 * dimensions.radius) : 0;
+  const angleRadian = ((angle - 90) * Math.PI) / 180 + endcapOffsetRad;
 
-  let x1 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian - 0.2);
-  let y1 = dimensions.centerY + dimensions.radius * Math.sin(angleRadian - 0.2);
-  let x2 = dimensions.centerX + dimensions.radius * Math.cos(angleRadian);
-  let y2 = dimensions.centerY + dimensions.radius * Math.sin(angleRadian);
+  const cx = dimensions.centerX + dimensions.radius * Math.cos(angleRadian);
+  const cy = dimensions.centerY + dimensions.radius * Math.sin(angleRadian);
+  const glowRadius = dimensions.barWidth * 1.5;
+  const tintTip = colorManipulator.alpha(colorManipulator.lighten(color, 0.8), 0.85);
 
   return (
-    <linearGradient x1={x1} y1={y1} x2={x2} y2={y2} id={id} gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stopColor={TRANSPARENT_WHITE} />
-      <stop offset="95%" stopColor={MOSTLY_TRANSPARENT_WHITE} />
-      {roundedBars && <stop offset="100%" stopColor={roundedBars ? MOSTLY_OPAQUE_WHITE : OPAQUE_WHITE} />}
-    </linearGradient>
+    <radialGradient id={id} cx={cx} cy={cy} r={glowRadius} fx={cx} fy={cy} gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor={tintTip} />
+      <stop offset="100%" stopColor={TRANSPARENT_WHITE} />
+    </radialGradient>
   );
 }
