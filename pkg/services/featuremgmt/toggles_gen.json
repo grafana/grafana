@@ -4444,6 +4444,20 @@
     },
     {
       "metadata": {
+        "name": "reportingFooterSettings",
+        "resourceVersion": "1774457609263",
+        "creationTimestamp": "2026-03-25T16:53:29Z"
+      },
+      "spec": {
+        "description": "Enables the configurable footer settings for PDF reports",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reportingHeaderSettings",
         "resourceVersion": "1773744562248",
         "creationTimestamp": "2026-03-17T10:49:22Z"
