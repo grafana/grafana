@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -20,7 +19,6 @@ import (
 	"time"
 
 	"github.com/google/go-github/v82/github"
-	"github.com/grafana/nanogit/gittest"
 	ghmock "github.com/migueleliasweb/go-github-mock/src/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,7 +31,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashboardsV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardsV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -865,11 +863,6 @@ type GrafanaOption func(opts *testinfra.GrafanaOpts)
 
 // Useful for debugging a test in development.
 //
-//lint:ignore U1000 This is used when needed while debugging.
-//nolint:golint,unused
-func WithLogs(opts *testinfra.GrafanaOpts) {
-	opts.EnableLog = true
-}
 
 // WithProvisioningFolderMetadata enables the FlagProvisioningFolderMetadata feature toggle.
 func WithProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
@@ -1601,52 +1594,6 @@ func requestHelper(
 	return result, resp.Response.StatusCode, nil
 }
 
-// cloneRemote clones the remote into a fresh temporary directory (not git-init'd)
-// and returns the clone path along with a cleanup function.
-func (h *GitExportHelper) cloneRemote(t *testing.T, ctx context.Context, repoName string) (string, func()) {
-	t.Helper()
-	info, ok := h.repoInfos[repoName]
-	if !ok {
-		t.Fatalf("repo %q not registered with GitExportHelper – call CreateGitRepo first", repoName)
-	}
-
-	tmpDir, err := os.MkdirTemp("", "grafana-test-clone-*")
-	require.NoError(t, err, "failed to create temp dir for git clone")
-
-	cloneDir := filepath.Join(tmpDir, "repo")
-	cmd := exec.CommandContext(ctx, "git", "clone", info.remote.AuthURL, cloneDir) //nolint:gosec
-	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		_ = os.RemoveAll(tmpDir)
-		t.Fatalf("failed to clone repo %q: %v\n%s", repoName, err, out)
-	}
-
-	return cloneDir, func() { _ = os.RemoveAll(tmpDir) }
-}
-
-// GitFileExists reports whether filePath exists on the main branch of repoName.
-// It clones the repository via the git protocol (bypassing the provisioning files
-// endpoint, which rejects hidden files such as .keep).
-func (h *GitExportHelper) GitFileExists(t *testing.T, ctx context.Context, repoName, filePath string) bool {
-	t.Helper()
-	cloneDir, cleanup := h.cloneRemote(t, ctx, repoName)
-	defer cleanup()
-
-	_, err := os.Stat(filepath.Join(cloneDir, filePath))
-	return err == nil
-}
-
-// GitReadFile returns the raw bytes of filePath on the main branch of repoName.
-// It fails the test if the file does not exist.
-func (h *GitExportHelper) GitReadFile(t *testing.T, ctx context.Context, repoName, filePath string) []byte {
-	t.Helper()
-	cloneDir, cleanup := h.cloneRemote(t, ctx, repoName)
-	defer cleanup()
-
-	data, err := os.ReadFile(filepath.Join(cloneDir, filePath)) //nolint:gosec
-	require.NoError(t, err, "file %s not found in git repo %s", filePath, repoName)
-	return data
-}
 
 // ExpectedDashboard describes the expected state of a single dashboard.
 type ExpectedDashboard struct {
@@ -1915,21 +1862,6 @@ func GetFolderGeneration(t *testing.T, helper *ProvisioningTestHelper, folderUID
 	return obj.GetGeneration()
 }
 
-// GetDashboardGeneration returns the current generation of the dashboard with the given UID.
-func GetDashboardGeneration(t *testing.T, helper *ProvisioningTestHelper, dashboardUID string) int64 {
-	t.Helper()
-	obj, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
-	require.NoError(t, err, "failed to get dashboard %s", dashboardUID)
-	return obj.GetGeneration()
-}
-
-// GetDashboardCreationTimestamp returns the creation timestamp of the dashboard with the given UID.
-func GetDashboardCreationTimestamp(t *testing.T, helper *ProvisioningTestHelper, dashboardUID string) metav1.Time {
-	t.Helper()
-	obj, err := helper.DashboardsV1.Resource.Get(t.Context(), dashboardUID, metav1.GetOptions{})
-	require.NoError(t, err, "failed to get dashboard %s", dashboardUID)
-	return obj.GetCreationTimestamp()
-}
 
 // FindDashboardUIDBySourcePath returns the UID of the dashboard managed by repoName at sourcePath.
 func FindDashboardUIDBySourcePath(t *testing.T, helper *ProvisioningTestHelper, repoName, sourcePath string) string {
@@ -1987,17 +1919,6 @@ func RequireUpdatedInPlace(t *testing.T, label string, before, after ObjectSnaps
 		"%s: generation decreased — object was recreated instead of updated", label)
 }
 
-// RequireRecreated asserts that the object was deleted and recreated, not
-// updated in place. A different UID is the definitive signal. Generation
-// must reset to 1 on a fresh object. creationTimestamp is not checked
-// because sub-second delete+create can produce identical timestamps.
-func RequireRecreated(t *testing.T, label string, before, after ObjectSnapshot) {
-	t.Helper()
-	require.NotEqual(t, before.UID, after.UID,
-		"%s: UID unchanged — object was updated in place instead of recreated", label)
-	require.Equal(t, int64(1), after.Generation,
-		"%s: generation should reset to 1 after recreate", label)
-}
 
 func RequireFolderState(t *testing.T, folderClient *apis.K8sResourceClient, folderUID, expectedTitle, expectedSourcePath, expectedParent string) {
 	t.Helper()
@@ -2074,110 +1995,3 @@ func FindCondition(conditions []metav1.Condition, conditionType string) *metav1.
 	return nil
 }
 
-// ── Git-server helpers ──────────────────────────────────────────────────────
-
-// gitRepoInfo stores the user and remote repository created for a named git repository.
-type gitRepoInfo struct {
-	user   *gittest.User
-	remote *gittest.RemoteRepository
-}
-
-// GitExportHelper wraps ProvisioningTestHelper with an embedded gittest server
-// so that export jobs can target a real remote git repository.
-type GitExportHelper struct {
-	*ProvisioningTestHelper
-	gitServer *gittest.Server
-	repoInfos map[string]*gitRepoInfo
-}
-
-// RunGrafanaWithGitServerForExport starts a Grafana instance with git
-// repository support enabled alongside a local gittest server.
-func RunGrafanaWithGitServerForExport(t *testing.T, options ...GrafanaOption) *GitExportHelper {
-	t.Helper()
-
-	ctx := context.Background()
-	srv, err := gittest.NewServer(ctx, gittest.WithLogger(gittest.NewTestLogger(t)))
-	require.NoError(t, err, "failed to start git server")
-	t.Cleanup(func() {
-		if err := srv.Cleanup(); err != nil {
-			t.Logf("failed to cleanup git server: %v", err)
-		}
-	})
-
-	allOpts := append([]GrafanaOption{WithRepositoryTypes([]string{"git"})}, options...)
-	helper := RunGrafana(t, allOpts...)
-
-	return &GitExportHelper{
-		ProvisioningTestHelper: helper,
-		gitServer:              srv,
-		repoInfos:              make(map[string]*gitRepoInfo),
-	}
-}
-
-// CreateGitRepo registers a new git repository on the test server with
-// Grafana provisioning and waits for it to become healthy.
-func (h *GitExportHelper) CreateGitRepo(t *testing.T, repoName string) {
-	t.Helper()
-
-	ctx := context.Background()
-
-	user, err := h.gitServer.CreateUser(ctx)
-	require.NoError(t, err, "failed to create git user")
-
-	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
-	require.NoError(t, err, "failed to create remote git repository")
-
-	h.repoInfos[repoName] = &gitRepoInfo{user: user, remote: remote}
-
-	local, err := gittest.NewLocalRepo(ctx)
-	require.NoError(t, err, "failed to create local git repository")
-	t.Cleanup(func() {
-		if err := local.Cleanup(); err != nil {
-			t.Logf("failed to cleanup local repo: %v", err)
-		}
-	})
-
-	_, err = local.InitWithRemote(user, remote)
-	require.NoError(t, err, "failed to initialize local repo with remote")
-
-	spec := map[string]interface{}{
-		"apiVersion": "provisioning.grafana.app/v0alpha1",
-		"kind":       "Repository",
-		"metadata": map[string]interface{}{
-			"name":      repoName,
-			"namespace": "default",
-		},
-		"spec": map[string]interface{}{
-			"title": repoName,
-			"type":  "git",
-			"git": map[string]interface{}{
-				"url":       remote.URL,
-				"branch":    "main",
-				"tokenUser": user.Username,
-			},
-			"sync": map[string]interface{}{
-				"enabled": false,
-				"target":  "instance",
-			},
-			"workflows": []string{"write"},
-		},
-		"secure": map[string]interface{}{
-			"token": map[string]interface{}{
-				"create": user.Password,
-			},
-		},
-	}
-
-	body, err := json.Marshal(spec)
-	require.NoError(t, err)
-
-	result := h.AdminREST.Post().
-		Namespace("default").
-		Resource("repositories").
-		Body(body).
-		SetHeader("Content-Type", "application/json").
-		Do(ctx)
-	require.NoError(t, result.Error(), "failed to register git repository %q with Grafana", repoName)
-
-	h.WaitForHealthyRepository(t, repoName)
-}
