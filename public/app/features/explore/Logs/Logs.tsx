@@ -246,6 +246,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const newLogsPanelEnabled = useBooleanFlagValue('newLogsPanel', true);
   const newLogContextEnabled = useBooleanFlagValue('newLogContext', false);
   const logsPanelControlsEnabled = useBooleanFlagValue('logsPanelControls', true);
+  const logsTablePanelNGEnabled = useBooleanFlagValue('logsTablePanelNG', false);
 
   const tableHeight = getLogsTableHeight();
   const setWrapperLineWrapStyles = wrapLogMessage || visualisationType === 'table';
@@ -287,7 +288,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     getDefaultDisplayedFieldsFromExploreState(
       panelState?.logs,
       updatePanelState,
-      config.featureToggles.logsTablePanelNG ?? false
+      config.featureToggles.logsTablePanelNG ?? false // Use the old feature toggles on initial load, newer useBooleanFlagValue hooks can use default of first render
     )
   );
 
@@ -848,7 +849,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
   }, []);
 
-  const enableNewLogsTable = config.featureToggles.logsTablePanelNG;
+  const enableNewLogsTable = logsTablePanelNGEnabled;
   const panelData: PanelData = {
     state: loading ? LoadingState.Loading : LoadingState.Done,
     series: props.logsFrames ?? [],
