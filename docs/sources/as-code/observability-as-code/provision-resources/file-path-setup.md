@@ -62,7 +62,7 @@ To set up file provisioning, you need:
 
 ## Configure permitted paths
 
-The `provisioning` feature toggle is enabled by default starting in Grafana v13. No manual configuration of the feature toggle is required.
+The `provisioning` feature toggle is enabled by default in Grafana Cloud and starting in Grafana v13 for OSS and Enterprise. No manual configuration of the feature toggle is required.
 
 The local setting must be a relative path and its relative path must be configured in the `permitted_provisioned_paths` configuration option.
 The configuration option is relative to your working directory, i.e. where you are running Grafana from; this is usually `/usr/share/grafana` or similar.
