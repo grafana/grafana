@@ -174,7 +174,10 @@ export function createTabRepeats({
     let repeatedVariableSet: SceneVariableSet;
     if (isSourceTab && sourceVariables instanceof SceneVariableSet) {
       sourceVariables.setState({
-        variables: [...filterSectionRepeatLocalVariables(sourceVariables.state.variables, sourceVariables), ...localVariables],
+        variables: [
+          ...filterSectionRepeatLocalVariables(sourceVariables.state.variables, sourceVariables),
+          ...localVariables,
+        ],
       });
       repeatedVariableSet = sourceVariables;
     } else {

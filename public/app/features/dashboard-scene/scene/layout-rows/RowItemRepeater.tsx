@@ -120,7 +120,10 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
     let repeatedVariableSet: SceneVariableSet;
     if (isSourceRow && sourceVariables instanceof SceneVariableSet) {
       sourceVariables.setState({
-        variables: [...filterSectionRepeatLocalVariables(sourceVariables.state.variables, sourceVariables), ...localVariables],
+        variables: [
+          ...filterSectionRepeatLocalVariables(sourceVariables.state.variables, sourceVariables),
+          ...localVariables,
+        ],
       });
       repeatedVariableSet = sourceVariables;
     } else {
