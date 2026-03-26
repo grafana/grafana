@@ -17,8 +17,9 @@ Tests provisioned resource operations across Admin, Editor, and Viewer roles. Se
 
 1. **No code changes.** Do not modify any Grafana source code or test files. Configuration files (e.g., feature toggles) may be changed only as directed by the Prerequisites section. You are testing the product as-is, not fixing it.
 2. **Do not stop on failure.** When a step fails, encounters a bug, or produces unexpected behavior -- document it and move on to the next step. Do not attempt to debug or fix the root cause. If a failure blocks subsequent steps, apply a minimal workaround to unblock the flow and note it in the report. **Workaround must use the same mechanism as the original step** (e.g., retry with slightly different input, skip to a later step that creates the needed state). Do not switch to a different API or creation method -- the resource may not behave the same way in subsequent steps.
-3. **Complete the entire flow.** Execute every step from start to finish, including cleanup. Skipping steps after a failure loses coverage.
-4. **Produce a final report.** After completing all steps (or reaching the end), output a structured report:
+3. **Handle transient connection-loss alerts carefully.** Local/dev runs may occasionally show `Connection to server is lost...` during a save or drawer submit even when Grafana recovers on its own. Record the alert, wait for the page to recover or retry the same UI action once, and only treat it as a product failure if it persists or blocks progress while `/api/health` is still OK.
+4. **Complete the entire flow.** Execute every step from start to finish, including cleanup. Skipping steps after a failure loses coverage.
+5. **Produce a final report.** After completing all steps (or reaching the end), output a structured report:
 
    ### Report Format
 
@@ -43,7 +44,7 @@ Tests provisioned resource operations across Admin, Editor, and Viewer roles. Se
    1. **[Step N] <title>**: <description of the bug or unexpected behavior>
    ```
 
-5. **Budget your time.** Allocate effort across all phases, not just the first. If a phase is consuming disproportionate time due to repeated failures or workarounds, document what you've observed and advance to the next phase. Partial coverage of every phase is more valuable than exhaustive coverage of one.
+6. **Budget your time.** Allocate effort across all phases, not just the first. If a phase is consuming disproportionate time due to repeated failures or workarounds, document what you've observed and advance to the next phase. Partial coverage of every phase is more valuable than exhaustive coverage of one.
 
 ## Prerequisites
 
@@ -348,7 +349,7 @@ Log out and log in as `viewer-test` / `viewer-test`. See "Switch Browser User" i
 3. **No "New" button:** On the provisioned root folder browse page, confirm no "New" dropdown button is present.
 4. **No bulk checkboxes:** Confirm no item checkboxes are visible in the browse view.
 5. **No folder actions:** Confirm no "Folder actions" dropdown buttons on folder rows.
-6. **Admin pages blocked:** `navigate_page` to `http://localhost:3000/admin/provisioning`. Confirm a 403 Forbidden or access denied page -- Viewers cannot access provisioning admin.
+6. **Admin pages blocked:** `navigate_page` to `http://localhost:3000/admin/provisioning`. Confirm Grafana redirects to the Home page instead of showing provisioning admin content -- Viewers cannot access provisioning admin.
 
 ---
 
@@ -381,7 +382,7 @@ The Editor can create folders and dashboards in provisioned folders.
 
 ### Step 10: Editor Verifies Admin Restrictions
 
-1. **Admin pages blocked:** `navigate_page` to `http://localhost:3000/admin/provisioning`. Confirm a 403 Forbidden or access denied page -- Editors cannot access provisioning admin.
+1. **Admin pages blocked:** `navigate_page` to `http://localhost:3000/admin/provisioning`. Confirm Grafana redirects to the Home page instead of showing provisioning admin content -- Editors cannot access provisioning admin.
 
 ---
 
@@ -407,19 +408,19 @@ Exercise the `branch` workflow (PR creation) to confirm it works alongside the `
 1. Navigate to `Dashboard Alpha-1` in `team-alpha`.
 2. Edit the dashboard -- change the panel title or add a text panel.
 3. Click "Save".
-4. In the save drawer, **use a new branch name**: click the branch combobox (id: `provisioned-ref`) "Clear value" button, `click` the combobox, `type_text` a new branch name (e.g., `pr-test-modify`), then `press_key` `Enter`. The workflow auto-switches to `branch`.
+4. In the save drawer, **use a new branch name**: click the branch combobox (id: `provisioned-ref`) "Clear value" button, `click` the combobox, `type_text` the full branch name (e.g., `pr-test-modify`), then `press_key` `Enter` as a separate action. Before saving, verify the committed combobox value matches the full branch name exactly. The workflow auto-switches to `branch`.
 5. Optionally fill the comment.
 6. Click "Save".
-7. **Verify:** The page navigates to a preview page with a PR banner showing "View branch", "Compare branch", and/or "Open pull request" buttons.
+7. **Verify intended behavior:** The page should navigate to a preview page and the PR banner should include an `Open pull request in GitHub` button. If the local/dev run instead only shows the generic `A new resource has been created in a branch in GitHub.` banner plus branch/base links, record that mismatch and use it only as a diagnostic cue, not as the expected success state.
 
 **12b. Create a folder via PR:**
 
 1. Navigate back to the provisioned root folder browse page.
 2. Click "New" dropdown -> "New folder".
 3. Fill the folder name (e.g., `pr-test-folder`).
-4. **Use a new branch name**: click the branch combobox "Clear value" button, `click` the combobox, `type_text` a new branch name (e.g., `pr-test-folder-branch`), then `press_key` `Enter`. The workflow auto-switches to `branch`.
+4. **Use a new branch name**: click the branch combobox "Clear value" button, `click` the combobox, `type_text` the full branch name (e.g., `pr-test-folder-branch`), then `press_key` `Enter` as a separate action. Before clicking Create, verify the committed combobox value matches the full branch name exactly. The workflow auto-switches to `branch`.
 5. Click "Create".
-6. **Verify:** A "Pull request created" alert banner appears with a link.
+6. **Verify intended behavior:** The success banner should include `Open pull request in GitHub`. If the local/dev run instead only shows the generic GitHub branch-created banner and the URL gains a `new_pull_request_url` parameter, record that mismatch rather than treating it as the expected success UI.
 
 **Note:** Resources created/modified via the `branch` workflow exist on PR branches, not the configured branch. They do not appear in the main browse view and do not affect subsequent steps.
 
@@ -431,7 +432,7 @@ See "Bulk Moving Resources" in `../git-sync-shared/operations.md`.
 2. Select the `team-beta` and `staging` folder checkboxes (2 folders containing 3 dashboards total).
 3. Click "Move" in the action bar.
 4. In the drawer, pick `team-alpha` as the target folder. Use configured branch.
-5. Click "Move". Wait for "Job completed successfully".
+5. Click "Move". Wait for the bulk-job summary table described in the shared operations doc; do not require literal `Job completed successfully` text.
 
 ### Step 14: Verify Move
 
@@ -449,7 +450,7 @@ See "Bulk Deleting Resources" in `../git-sync-shared/operations.md`.
 1. Navigate to the provisioned root folder.
 2. Select the `team-alpha` checkbox (selects the folder and all its descendants -- the entire remaining tree).
 3. Click "Delete" in the action bar.
-4. In the drawer, use configured branch. Click "Delete". Wait for "Job completed successfully".
+4. In the drawer, use configured branch. Click "Delete". Wait for the bulk-delete summary table described in the shared operations doc; do not require literal `Job completed successfully` text.
 5. **Verify:** Provisioned root folder should be empty (no folders or dashboards remain).
 
 ### Step 16: Remove Repository
