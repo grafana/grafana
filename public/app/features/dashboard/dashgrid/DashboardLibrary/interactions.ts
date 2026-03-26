@@ -78,6 +78,10 @@ export const DashboardLibraryInteractions = {
     reportDashboardLibraryInteraction('compatibility_check_triggered', properties);
   },
 
+  createFromScratchClicked: (properties: { eventLocation: EventLocation }) => {
+    reportDashboardLibraryInteraction('create_from_scratch_clicked', properties);
+  },
+
   compatibilityCheckCompleted: (properties: {
     dashboardId: string;
     dashboardTitle: string;

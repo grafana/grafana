@@ -401,6 +401,9 @@ export const SuggestedDashboardsList = ({
   const hasNoResults = !showLoading && provisionedSlice.length === 0 && communitySlice.length === 0;
 
   const onCreateFromScratch = () => {
+    DashboardLibraryInteractions.createFromScratchClicked({
+      eventLocation,
+    });
     onDismiss();
     locationService.push('/dashboard/new');
   };

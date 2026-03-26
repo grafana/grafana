@@ -3,7 +3,11 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { Alert, TextLink } from '@grafana/ui';
-import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import {
+  CONTENT_KINDS,
+  EVENT_LOCATIONS,
+  SOURCE_ENTRY_POINTS,
+} from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { SuggestedDashboardsLoader } from 'app/features/datasources/components/SuggestedDashboardsLoader';
 import { DashboardRoutes } from 'app/types/dashboard';
@@ -36,6 +40,12 @@ export function SuggestedDashboardsBanner({ route, dashboard }: Props) {
     onClick();
   };
 
+  const onCreateFromScratchClick = () => {
+    DashboardLibraryInteractions.createFromScratchClicked({
+      eventLocation: EVENT_LOCATIONS.DASHBOARD_PAGE_SUGGESTED_DASHBOARDS_BANNER,
+    });
+  };
+
   return (
     <SuggestedDashboardsLoader
       datasourceUid={datasourceUid}
@@ -53,7 +63,11 @@ export function SuggestedDashboardsBanner({ route, dashboard }: Props) {
             <TextLink href={window.location.href} onClick={() => onSuggestedDashboardsClick(openModal)}>
               other suggested dashboards
             </TextLink>{' '}
-            or <TextLink href="/dashboard/new">create one from scratch</TextLink>.
+            or{' '}
+            <TextLink href="/dashboard/new" onClick={onCreateFromScratchClick}>
+              create one from scratch
+            </TextLink>
+            .
           </Trans>
         </Alert>
       )}
