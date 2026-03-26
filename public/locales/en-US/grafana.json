@@ -10352,6 +10352,7 @@
         "expander-column-name": "Expand nested rows",
         "no-data": "No data"
       },
+      "no-rows": "No rows",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
       "sort-by-column": "Sort by column {{column}}",
@@ -14945,6 +14946,7 @@
     "name-tooltip-placement": "Tooltip placement",
     "name-wrap-header-text": "Wrap header text",
     "name-wrap-text": "Wrap text",
+    "no-value-placeholder": "No rows",
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "none",
     "placeholder-max-height": "none",

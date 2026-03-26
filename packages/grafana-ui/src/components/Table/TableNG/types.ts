@@ -148,7 +148,9 @@ export interface BaseTableProps {
   maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
-  /** @alpha Used by SparklineCell when provided */
+  /* message to show when no rows are present */
+  noValue?: string;
+  /** Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
   // The index of the field value that the table will initialize scrolled to
