@@ -44,7 +44,7 @@ For further details on how Git Sync operates refer to [key concepts](https://gra
 
 ## Enable required feature toggles
 
-The `provisioning` feature toggle is enabled by default in Grafana Cloud and starting in Grafana v13 for OSS and Enterprise. No manual configuration is required.
+The `provisioning` feature toggle is enabled by default in Grafana Cloud and, starting in Grafana v13, for OSS and Enterprise as well. No manual configuration is required.
 
 For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
