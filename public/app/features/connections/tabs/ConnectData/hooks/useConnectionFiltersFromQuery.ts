@@ -16,11 +16,14 @@ export function useConnectionFiltersFromQuery(): ConnectionFilters {
   const location = useLocation();
   const locationSearch = locationSearchToObject(location.search);
 
-  return useMemo(() => ({
-    sortBy: (locationSearch.sortBy as unknown as Sorters) || Sorters.nameAsc, // eslint-disable-line @typescript-eslint/consistent-type-assertions
-    filterBy: locationSearch.filterBy?.toString() || 'all',
-    groupBy: (locationSearch.groupBy as unknown as 'type' | 'category') || 'type', // eslint-disable-line @typescript-eslint/consistent-type-assertions
-    categoryFilter: locationSearch.categoryFilter?.toString() || 'all',
-    typeFilter: locationSearch.typeFilter?.toString() || 'all',
-  }), [locationSearch]);
+  return useMemo(
+    () => ({
+      sortBy: (locationSearch.sortBy as unknown as Sorters) || Sorters.nameAsc, // eslint-disable-line @typescript-eslint/consistent-type-assertions
+      filterBy: locationSearch.filterBy?.toString() || 'all',
+      groupBy: (locationSearch.groupBy as unknown as 'type' | 'category') || 'type', // eslint-disable-line @typescript-eslint/consistent-type-assertions
+      categoryFilter: locationSearch.categoryFilter?.toString() || 'all',
+      typeFilter: locationSearch.typeFilter?.toString() || 'all',
+    }),
+    [locationSearch]
+  );
 }

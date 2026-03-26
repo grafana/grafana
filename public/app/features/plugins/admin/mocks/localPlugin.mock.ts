@@ -69,4 +69,5 @@ export default {
   signatureType: 'community',
   signatureOrg: 'Alexander Zobnin',
   angularDetected: false,
+  category: 'Custom category',
 } as LocalPlugin;
