@@ -180,6 +180,9 @@ func (s *AccessControlStore) GetTeamsPermissions(ctx context.Context, query acce
 		if err := rows.Scan(&action, &scope, &teamID); err != nil {
 			return nil, err
 		}
+		if _, ok := teamPermissions[teamID]; !ok {
+			teamPermissions[teamID] = make([]accesscontrol.Permission, 0, 32)
+		}
 		teamPermissions[teamID] = append(teamPermissions[teamID], accesscontrol.Permission{Action: action, Scope: scope})
 	}
 	if err := rows.Err(); err != nil {
