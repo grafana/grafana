@@ -477,11 +477,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         hidden={query.hide}
         onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
-        renderExtras={() => (
-          <>
-            {renderHeaderExtras && renderHeaderExtras()}
-          </>
-        )}
+        renderExtras={() => <>{renderHeaderExtras && renderHeaderExtras()}</>}
         alerting={app === CoreApp.UnifiedAlerting}
         hideRefId={hideRefId}
       />
