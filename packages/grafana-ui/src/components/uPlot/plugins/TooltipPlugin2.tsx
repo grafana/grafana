@@ -133,12 +133,13 @@ export const TooltipPlugin2 = ({
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
+  const plotRef = useRef<uPlot | null>(null);
 
   if (portalRoot.current == null) {
     portalRoot.current = getPortalContainer();
   }
 
-  const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, null, initState);
+  const [{ isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, null, initState);
 
   const sizeRef = useRef<TooltipContainerSize | undefined>(undefined);
   const styles = useStyles2(getStyles, maxWidth);
@@ -176,7 +177,7 @@ export const TooltipPlugin2 = ({
     let yZoomed = false;
     let yDrag = false;
 
-    let _plot = plot;
+    let _plot = plotRef.current;
     let _isHovering = isHovering;
     let _someSeriesIdx = false;
     let _isPinned = isPinned;
@@ -319,7 +320,7 @@ export const TooltipPlugin2 = ({
     };
 
     config.addHook('init', (u) => {
-      setState({ plot: (_plot = u) });
+      plotRef.current = _plot = u;
 
       // detect shiftKey and mutate drag mode from x-only to y-only
       if (clientZoom) {
@@ -718,7 +719,7 @@ export const TooltipPlugin2 = ({
       size.width = width;
       size.height = height;
 
-      let event = plot!.cursor.event;
+      let event = plotRef.current!.cursor.event;
 
       // if not viaSync, re-dispatch real event
       if (event != null) {
@@ -743,12 +744,12 @@ export const TooltipPlugin2 = ({
         // it would end up re-dispatching mouseleave
         const isStaleEvent = isMobile ? false : performance.now() - event.timeStamp > 16;
 
-        !isStaleEvent && plot!.over.dispatchEvent(event);
+        !isStaleEvent && plotRef.current?.over.dispatchEvent(event);
       } else {
-        plot!.setCursor(
+        plotRef.current?.setCursor(
           {
-            left: plot!.cursor.left!,
-            top: plot!.cursor.top!,
+            left: plotRef.current?.cursor.left!,
+            top: plotRef.current?.cursor.top!,
           },
           true
         );
@@ -759,7 +760,7 @@ export const TooltipPlugin2 = ({
     }
   }, [isHovering]);
 
-  if (plot && isHovering) {
+  if (plotRef.current && isHovering) {
     return createPortal(
       <div
         className={cx(styles.tooltipWrapper, isPinned && styles.pinned)}
