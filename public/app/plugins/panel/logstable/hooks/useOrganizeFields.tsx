@@ -136,6 +136,7 @@ const organizeFields = async (
         custom: {
           ...baseConfig.custom,
           ...(levelEnhancements?.cellOptions ? { cellOptions: levelEnhancements.cellOptions } : {}),
+          ...(levelEnhancements?.width !== undefined ? { width: levelEnhancements.width } : {}),
         },
       };
 

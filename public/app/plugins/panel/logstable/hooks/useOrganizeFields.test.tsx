@@ -7,6 +7,7 @@ import { TableCellDisplayMode } from '@grafana/ui';
 import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame } from 'app/features/logs/logsFrame';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
+import { DEFAULT_LOG_LEVEL_FIELD_WIDTH } from '../constants';
 import { useExtractFields } from './useExtractFields';
 import { useOrganizeFields } from './useOrganizeFields';
 
@@ -227,10 +228,11 @@ describe('useOrganizeFields', () => {
         const levelField = organizedFields.current.organizedFrame?.fields.find((f) => f.name === 'level');
         expect(levelField).toBeDefined();
         expect(levelField?.config.custom?.cellOptions?.type).toBe(TableCellDisplayMode.Pill);
+        expect(levelField?.config.custom?.width).toBe(DEFAULT_LOG_LEVEL_FIELD_WIDTH);
         if (levelField?.config.mappings?.[0]?.options && 'critical' in levelField?.config.mappings?.[0]?.options) {
           expect(levelField?.config.mappings?.[0]?.options?.['critical']).toBeDefined();
         }
-        expect.assertions(6);
+        expect.assertions(7);
       });
     });
   });

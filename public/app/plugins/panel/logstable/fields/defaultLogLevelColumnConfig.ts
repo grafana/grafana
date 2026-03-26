@@ -3,6 +3,8 @@ import { TableCellOptions, ValueMappingResult } from '@grafana/schema';
 import { TableCellDisplayMode } from '@grafana/ui';
 import { LogLevelColor } from 'app/features/logs/logsModel';
 
+import { DEFAULT_LOG_LEVEL_FIELD_WIDTH } from '../constants';
+
 /** Colors match LogLevelColor in logsModel.ts. */
 export function buildDefaultLogLevelValueMap(): ValueMap {
   const options: Record<string, ValueMappingResult> = {};
@@ -28,7 +30,7 @@ export function getLogLevelColumnEnhancements(field: Field, levelFieldName: stri
     return undefined;
   }
 
-  const out: { mappings?: ValueMap[]; cellOptions?: TableCellOptions } = {};
+  const out: { mappings?: ValueMap[]; cellOptions?: TableCellOptions; width?: number } = {};
 
   if (!baseFieldConfig.mappings?.length) {
     out.mappings = [buildDefaultLogLevelValueMap()];
@@ -40,6 +42,10 @@ export function getLogLevelColumnEnhancements(field: Field, levelFieldName: stri
       ...baseFieldConfig.custom?.cellOptions,
       type: TableCellDisplayMode.Pill,
     };
+  }
+
+  if (baseFieldConfig.custom?.width === undefined) {
+    out.width = DEFAULT_LOG_LEVEL_FIELD_WIDTH;
   }
 
   return Object.keys(out).length ? out : undefined;
