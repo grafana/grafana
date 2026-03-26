@@ -3,10 +3,10 @@ import { type PropsWithChildren, type ReactElement, useMemo } from 'react';
 import { type TypedVariableModel, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { sceneUtils } from '@grafana/scenes';
 import { Stack, Tooltip } from '@grafana/ui';
 
 import { variableAdapters } from '../adapters';
+import { VARIABLE_PREFIX } from '../constants';
 
 interface Props {
   variable: TypedVariableModel;
@@ -41,8 +41,7 @@ function PickerLabel({ variable }: PropsWithChildren<Props>): ReactElement | nul
     return null;
   }
 
-  const elementId = sceneUtils.getVariableControlId(variable.type, variable.id);
-
+  const elementId = VARIABLE_PREFIX + variable.id;
   if (variable.description) {
     return (
       <Tooltip content={variable.description} placement={'bottom'}>
