@@ -415,6 +415,252 @@ func TestV2alpha1ToV1LayoutErrors(t *testing.T) {
 	})
 }
 
+// TestExpandedRowYPositionNoOverlap verifies that panels inside expanded rows
+// get Y positions below their parent row panel, with no overlap.
+func TestExpandedRowYPositionNoOverlap(t *testing.T) {
+	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)
+	leProvider := migrationtestutil.NewLibraryElementProvider()
+	migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+
+	scheme := runtime.NewScheme()
+	err := RegisterConversions(scheme, dsProvider, leProvider)
+	require.NoError(t, err)
+
+	makeElement := func(name string, id float64) dashv2alpha1.DashboardElement {
+		return dashv2alpha1.DashboardElement{
+			PanelKind: &dashv2alpha1.DashboardPanelKind{
+				Kind: "Panel",
+				Spec: dashv2alpha1.DashboardPanelSpec{
+					Id:          id,
+					Title:       name,
+					Description: "",
+					Data: dashv2alpha1.DashboardQueryGroupKind{
+						Kind: "QueryGroup",
+						Spec: dashv2alpha1.DashboardQueryGroupSpec{
+							Queries:         []dashv2alpha1.DashboardPanelQueryKind{},
+							Transformations: []dashv2alpha1.DashboardTransformationKind{},
+							QueryOptions:    dashv2alpha1.DashboardQueryOptionsSpec{},
+						},
+					},
+					VizConfig: dashv2alpha1.DashboardVizConfigKind{
+						Kind: "graph",
+						Spec: dashv2alpha1.DashboardVizConfigSpec{},
+					},
+				},
+			},
+		}
+	}
+
+	t.Run("expanded row with GridLayout panels should not overlap with row panel", func(t *testing.T) {
+		elements := map[string]dashv2alpha1.DashboardElement{
+			"panel-1": makeElement("Panel A", 1),
+			"panel-2": makeElement("Panel B", 2),
+		}
+
+		v2alpha1 := dashv2alpha1.Dashboard{
+			Spec: dashv2alpha1.DashboardSpec{
+				Title:    "Test Dashboard",
+				Elements: elements,
+				Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+					RowsLayoutKind: &dashv2alpha1.DashboardRowsLayoutKind{
+						Kind: "RowsLayout",
+						Spec: dashv2alpha1.DashboardRowsLayoutSpec{
+							Rows: []dashv2alpha1.DashboardRowsLayoutRowKind{
+								{
+									Kind: "RowsLayoutRow",
+									Spec: dashv2alpha1.DashboardRowsLayoutRowSpec{
+										Title: ptr.To("Row A"),
+										Layout: dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{
+											GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
+												Kind: "GridLayout",
+												Spec: dashv2alpha1.DashboardGridLayoutSpec{
+													Items: []dashv2alpha1.DashboardGridLayoutItemKind{
+														{
+															Kind: "GridLayoutItem",
+															Spec: dashv2alpha1.DashboardGridLayoutItemSpec{
+																X:      0,
+																Y:      0,
+																Width:  12,
+																Height: 8,
+																Element: dashv2alpha1.DashboardElementReference{
+																	Kind: "ElementReference",
+																	Name: "panel-1",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+								{
+									Kind: "RowsLayoutRow",
+									Spec: dashv2alpha1.DashboardRowsLayoutRowSpec{
+										Title: ptr.To("Row B"),
+										Layout: dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{
+											GridLayoutKind: &dashv2alpha1.DashboardGridLayoutKind{
+												Kind: "GridLayout",
+												Spec: dashv2alpha1.DashboardGridLayoutSpec{
+													Items: []dashv2alpha1.DashboardGridLayoutItemKind{
+														{
+															Kind: "GridLayoutItem",
+															Spec: dashv2alpha1.DashboardGridLayoutItemSpec{
+																X:      0,
+																Y:      0,
+																Width:  12,
+																Height: 6,
+																Element: dashv2alpha1.DashboardElementReference{
+																	Kind: "ElementReference",
+																	Name: "panel-2",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		var v1beta1 dashv1.Dashboard
+		err := scheme.Convert(&v2alpha1, &v1beta1, nil)
+		require.NoError(t, err)
+
+		dashboard := v1beta1.Spec.Object
+		panels, ok := dashboard["panels"].([]any)
+		require.True(t, ok, "Panels should exist")
+		require.Len(t, panels, 4, "Should have Row A, Panel A, Row B, Panel B")
+
+		// Row A at y=0
+		rowA, ok := panels[0].(map[string]any)
+		require.True(t, ok, "Row A should be a map")
+		assert.Equal(t, "row", rowA["type"])
+		rowAGridPos, ok := rowA["gridPos"].(map[string]any)
+		require.True(t, ok, "Row A should have gridPos")
+		assert.Equal(t, int64(0), getIntValue(rowAGridPos["y"]), "Row A should be at y=0")
+
+		// Panel A at y=1 (directly below Row A at y=0)
+		panelA, ok := panels[1].(map[string]any)
+		require.True(t, ok, "Panel A should be a map")
+		panelAGridPos, ok := panelA["gridPos"].(map[string]any)
+		require.True(t, ok, "Panel A should have gridPos")
+		assert.Equal(t, int64(1), getIntValue(panelAGridPos["y"]), "Panel A should be at y=1, below its row at y=0")
+
+		// Row B at y=9 (after Panel A extent: y=1 + h=8 = 9)
+		rowB, ok := panels[2].(map[string]any)
+		require.True(t, ok, "Row B should be a map")
+		rowBGridPos, ok := rowB["gridPos"].(map[string]any)
+		require.True(t, ok, "Row B should have gridPos")
+		assert.Equal(t, int64(9), getIntValue(rowBGridPos["y"]), "Row B should be at y=9, after Panel A")
+
+		// Panel B at y=10 (directly below Row B at y=9)
+		panelB, ok := panels[3].(map[string]any)
+		require.True(t, ok, "Panel B should be a map")
+		panelBGridPos, ok := panelB["gridPos"].(map[string]any)
+		require.True(t, ok, "Panel B should have gridPos")
+		assert.Equal(t, int64(10), getIntValue(panelBGridPos["y"]), "Panel B should be at y=10, below its row at y=9")
+	})
+
+	t.Run("empty expanded row advances Y past row panel", func(t *testing.T) {
+		elements := map[string]dashv2alpha1.DashboardElement{
+			"panel-1": makeElement("Panel A", 1),
+		}
+
+		v2alpha1 := dashv2alpha1.Dashboard{
+			Spec: dashv2alpha1.DashboardSpec{
+				Title:    "Test Dashboard",
+				Elements: elements,
+				Layout: dashv2alpha1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind{
+					RowsLayoutKind: &dashv2alpha1.DashboardRowsLayoutKind{
+						Kind: "RowsLayout",
+						Spec: dashv2alpha1.DashboardRowsLayoutSpec{
+							Rows: []dashv2alpha1.DashboardRowsLayoutRowKind{
+								{
+									Kind: "RowsLayoutRow",
+									Spec: dashv2alpha1.DashboardRowsLayoutRowSpec{
+										Title: ptr.To("Empty Row"),
+										Layout: dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{
+											AutoGridLayoutKind: &dashv2alpha1.DashboardAutoGridLayoutKind{
+												Kind: "AutoGridLayout",
+												Spec: dashv2alpha1.DashboardAutoGridLayoutSpec{
+													RowHeightMode: dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeStandard,
+													Items:         []dashv2alpha1.DashboardAutoGridLayoutItemKind{},
+												},
+											},
+										},
+									},
+								},
+								{
+									Kind: "RowsLayoutRow",
+									Spec: dashv2alpha1.DashboardRowsLayoutRowSpec{
+										Title: ptr.To("Row With Panel"),
+										Layout: dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind{
+											AutoGridLayoutKind: &dashv2alpha1.DashboardAutoGridLayoutKind{
+												Kind: "AutoGridLayout",
+												Spec: dashv2alpha1.DashboardAutoGridLayoutSpec{
+													RowHeightMode: dashv2alpha1.DashboardAutoGridLayoutSpecRowHeightModeStandard,
+													Items: []dashv2alpha1.DashboardAutoGridLayoutItemKind{
+														{
+															Kind: "AutoGridLayoutItem",
+															Spec: dashv2alpha1.DashboardAutoGridLayoutItemSpec{
+																Element: dashv2alpha1.DashboardElementReference{
+																	Kind: "ElementReference",
+																	Name: "panel-1",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		var v1beta1 dashv1.Dashboard
+		err := scheme.Convert(&v2alpha1, &v1beta1, nil)
+		require.NoError(t, err)
+
+		dashboard := v1beta1.Spec.Object
+		panels, ok := dashboard["panels"].([]any)
+		require.True(t, ok, "Panels should exist")
+		require.Len(t, panels, 3, "Should have Empty Row, Row With Panel, Panel A")
+
+		// Empty Row at y=0
+		emptyRow, ok := panels[0].(map[string]any)
+		require.True(t, ok, "Empty row should be a map")
+		emptyRowGridPos, ok := emptyRow["gridPos"].(map[string]any)
+		require.True(t, ok, "Empty row should have gridPos")
+		assert.Equal(t, int64(0), getIntValue(emptyRowGridPos["y"]), "Empty row should be at y=0")
+
+		// Row With Panel at y=1 (directly below Empty Row at y=0)
+		rowWithPanel, ok := panels[1].(map[string]any)
+		require.True(t, ok, "Row with panel should be a map")
+		rowGridPos, ok := rowWithPanel["gridPos"].(map[string]any)
+		require.True(t, ok, "Row with panel should have gridPos")
+		assert.Equal(t, int64(1), getIntValue(rowGridPos["y"]), "Row should be at y=1, after empty row at y=0")
+
+		// Panel A at y=2 (below Row With Panel)
+		panelA, ok := panels[2].(map[string]any)
+		require.True(t, ok, "Panel A should be a map")
+		panelAGridPos, ok := panelA["gridPos"].(map[string]any)
+		require.True(t, ok, "Panel A should have gridPos")
+		assert.Equal(t, int64(2), getIntValue(panelAGridPos["y"]), "Panel should be at y=2, below its row at y=1")
+	})
+}
+
 // getIntValue converts interface{} to int64, handling both int and int64 types
 func getIntValue(v interface{}) int64 {
 	switch val := v.(type) {

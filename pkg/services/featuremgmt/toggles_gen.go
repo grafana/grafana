@@ -930,6 +930,10 @@ const (
 	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
 	FlagFrontendServiceSSOAutoLogin = "frontendServiceSSOAutoLogin"
 
+	// FlagLokiAlignedQuerySplitting
+	// Aligns query splitting chunks with UTC midnight
+	FlagLokiAlignedQuerySplitting = "lokiAlignedQuerySplitting"
+
 	// FlagQueryFetchConfigFromSettingsService
 	// Enables the query service to fetch the configuration from the settings service
 	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"

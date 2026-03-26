@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"testing"
 
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -95,7 +95,7 @@ func TestIntegrationGitFiles_CreateFolderWithFolderMetadata(t *testing.T) {
 // postFolderViaFilesAPI makes a raw HTTP POST to the files endpoint to create a folder.
 // We build the URL manually because the K8s REST client may strip the trailing
 // slash that the files endpoint needs to distinguish folders from files.
-func postFolderViaFilesAPI(t *testing.T, helper *gitcommon.GitTestHelper, repoName, folderPath, ref, message string) *http.Response {
+func postFolderViaFilesAPI(t *testing.T, helper *common.GitTestHelper, repoName, folderPath, ref, message string) *http.Response {
 	t.Helper()
 
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()

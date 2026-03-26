@@ -342,7 +342,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-04,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,false
 2026-02-06,colorblindThemes,GA,@grafana/grafana-frontend-platform,false,true,false
 2026-03-19,yAxisTickControl,experimental,@grafana/dataviz-squad,false,false,true
-2026-02-19,logsTablePanelNG,experimental,@grafana/observability-logs,false,false,false
+2026-03-25,logsTablePanelNG,experimental,@grafana/observability-logs,false,false,false
 2026-03-25,useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-03-24,frontendServiceSSOAutoLogin,experimental,@grafana/grafana-frontend-platform,false,false,false
+2026-03-19,lokiAlignedQuerySplitting,experimental,@grafana/observability-logs,false,false,false
 2026-03-16,queryFetchConfigFromSettingsService,experimental,@grafana/grafana-datasources-core-services,false,false,false

@@ -7,16 +7,20 @@ import { config } from '@grafana/runtime';
 import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
+import { DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
 import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
+
+import { DataSourceFailureBadge } from './DataSourceFailureBadge';
 
 export interface Props {
   dataSource: DataSourceSettings;
   hasWriteRights: boolean;
   hasExploreRights: boolean;
+  failure?: DatasourceFailureDetails;
 }
 
-export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights }: Props) {
+export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights, failure }: Props) {
   const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
 
@@ -31,6 +35,9 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
           dataSource.typeName,
           dataSource.url,
           dataSource.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
+          failure?.severity && (
+            <DataSourceFailureBadge key="unhealthy-badge" severity={failure.severity} message={failure.message} />
+          ),
         ]}
       </Card.Meta>
       <Card.Tags>
