@@ -91,27 +91,31 @@ func (s *AccessControlStore) GetUserPermissions(ctx context.Context, query acces
 	return result, nil
 }
 
-// getUserPermissionsRaw runs the permission query via sqlx (which rebinds ?
-// to the correct placeholders per driver, e.g. $1,$2 for Postgres) and scans
-// rows directly into []Permission. This avoids xorm's Find() reflection over
-// 10k+ rows, which was adding tens of ms after the DB had already returned.
+// getUserPermissionsRaw scans rows directly into []Permission. This avoids xorm's
+// Find() reflection over 10k+ rows, which was adding tens of ms after the DB had
+// already returned. The query runs inside WithDbSession so retryable errors
+// (e.g. SQLite lock contention) and transaction-bound sessions from context are honored.
 func (s *AccessControlStore) getUserPermissionsRaw(ctx context.Context, q string, params []any) ([]accesscontrol.Permission, error) {
-	rows, err := s.sql.GetSqlxSession().Query(ctx, q, params...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-
-	// Pre-allocate with a reasonable capacity to limit reallocations for large result sets.
-	out := make([]accesscontrol.Permission, 0, 512)
-	var action, scope string
-	for rows.Next() {
-		if err := rows.Scan(&action, &scope); err != nil {
-			return nil, err
+	var out []accesscontrol.Permission
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		rows, err := sess.QueryRows(q, params...)
+		if err != nil {
+			return err
 		}
-		out = append(out, accesscontrol.Permission{Action: action, Scope: scope})
-	}
-	if err := rows.Err(); err != nil {
+		defer func() { _ = rows.Close() }()
+
+		// Pre-allocate with a reasonable capacity to limit reallocations for large result sets.
+		out = make([]accesscontrol.Permission, 0, 512)
+		var action, scope string
+		for rows.Next() {
+			if err := rows.Scan(&action, &scope); err != nil {
+				return err
+			}
+			out = append(out, accesscontrol.Permission{Action: action, Scope: scope})
+		}
+		return rows.Err()
+	})
+	if err != nil {
 		return nil, err
 	}
 	return out, nil
@@ -167,25 +171,29 @@ func (s *AccessControlStore) GetTeamsPermissions(ctx context.Context, query acce
 		q += accesscontrol.ManagedPermissionsActionSetsFilter()
 	}
 
-	rows, err := s.sql.GetSqlxSession().Query(ctx, q, params...)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
+	var teamPermissions map[int64][]accesscontrol.Permission
+	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+		rows, err := sess.QueryRows(q, params...)
+		if err != nil {
+			return err
+		}
+		defer func() { _ = rows.Close() }()
 
-	teamPermissions := make(map[int64][]accesscontrol.Permission)
-	var action, scope string
-	var teamID int64
-	for rows.Next() {
-		if err := rows.Scan(&action, &scope, &teamID); err != nil {
-			return nil, err
+		teamPermissions = make(map[int64][]accesscontrol.Permission)
+		var action, scope string
+		var teamID int64
+		for rows.Next() {
+			if err := rows.Scan(&action, &scope, &teamID); err != nil {
+				return err
+			}
+			if _, ok := teamPermissions[teamID]; !ok {
+				teamPermissions[teamID] = make([]accesscontrol.Permission, 0, 32)
+			}
+			teamPermissions[teamID] = append(teamPermissions[teamID], accesscontrol.Permission{Action: action, Scope: scope})
 		}
-		if _, ok := teamPermissions[teamID]; !ok {
-			teamPermissions[teamID] = make([]accesscontrol.Permission, 0, 32)
-		}
-		teamPermissions[teamID] = append(teamPermissions[teamID], accesscontrol.Permission{Action: action, Scope: scope})
-	}
-	if err := rows.Err(); err != nil {
+		return rows.Err()
+	})
+	if err != nil {
 		return nil, err
 	}
 	return teamPermissions, nil
