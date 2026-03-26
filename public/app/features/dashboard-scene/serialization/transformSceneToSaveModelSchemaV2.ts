@@ -97,7 +97,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     const serialized = template.serialize();
     if (serialized.kind === 'AutoGridLayout' || serialized.kind === 'GridLayout') {
       preferences = {
-        defaultLayoutTemplate: serialized,
+        layout: serialized,
       };
     }
   }
