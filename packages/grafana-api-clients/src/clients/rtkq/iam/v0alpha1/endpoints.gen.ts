@@ -178,6 +178,7 @@ const injectedRtkApi = api
             offset: queryArg.offset,
             page: queryArg.page,
             accesscontrol: queryArg.accesscontrol,
+            sort: queryArg.sort,
           },
         }),
         providesTags: ['Search'],
@@ -919,6 +920,8 @@ export type GetSearchTeamsApiArg = {
   page?: number;
   /** when true, includes access control metadata in the response */
   accesscontrol?: boolean;
+  /** sortable field */
+  sort?: string;
 };
 export type GetSearchUsersApiResponse = unknown;
 export type GetSearchUsersApiArg = {

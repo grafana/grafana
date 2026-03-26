@@ -47,10 +47,6 @@ const (
 	// Registers a live apiserver
 	FlagLiveAPIServer = "liveAPIServer"
 
-	// FlagKubernetesStars
-	// Routes stars requests from /api to the /apis endpoint
-	FlagKubernetesStars = "kubernetesStars"
-
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
@@ -215,9 +211,9 @@ const (
 	// Handle datasource resource requests to the legacy API routes by querying the new datasource api group endpoints behind the scenes.
 	FlagDatasourcesApiServerEnableResourceEndpoint = "datasourcesApiServerEnableResourceEndpoint"
 
-	// FlagDatasourcesApiServerEnableResourceEndpointFrontend
-	// Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.
-	FlagDatasourcesApiServerEnableResourceEndpointFrontend = "datasourcesApiServerEnableResourceEndpointFrontend"
+	// FlagDatasourcesApiserverEnableResourceEndpointRedirect
+	// redirect datasource resource requests from the legacy API routes to the new datasource api group endpoints.
+	FlagDatasourcesApiserverEnableResourceEndpointRedirect = "datasourcesApiserverEnableResourceEndpointRedirect"
 
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
@@ -922,11 +918,19 @@ const (
 	// Enables the new colorblind-friendly themes
 	FlagColorblindThemes = "colorblindThemes"
 
-	// FlagRbacIAMClient
-	// Enables the IAM client integration for fetching remote IAM global roles
-	FlagRbacIAMClient = "rbacIAMClient"
-
 	// FlagLogsTablePanelNG
 	// Enables the logs tableNG panel to replace existing tableRT
 	FlagLogsTablePanelNG = "logsTablePanelNG"
+
+	// FlagFrontendServiceSSOAutoLogin
+	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
+	FlagFrontendServiceSSOAutoLogin = "frontendServiceSSOAutoLogin"
+
+	// FlagLokiAlignedQuerySplitting
+	// Aligns query splitting chunks with UTC midnight
+	FlagLokiAlignedQuerySplitting = "lokiAlignedQuerySplitting"
+
+	// FlagQueryFetchConfigFromSettingsService
+	// Enables the query service to fetch the configuration from the settings service
+	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
 )

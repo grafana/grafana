@@ -239,7 +239,7 @@ func (api *API) authorize(method, path string) web.Handler {
 	case http.MethodGet + "/api/alertmanager/grafana/config/history":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsConfigHistoryRead)
 	case http.MethodGet + "/api/alertmanager/grafana/api/v2/status":
-		eval = ac.EvalPermission(ac.ActionAlertingNotificationsRead)
+		eval = ac.EvalPermission(ac.ActionAlertingNotificationSystemStatus)
 	case http.MethodPost + "/api/alertmanager/grafana/config/history/{id}/_activate":
 		eval = ac.EvalPermission(ac.ActionAlertingNotificationsConfigHistoryWrite)
 	case http.MethodGet + "/api/alertmanager/grafana/config/api/v1/receivers":

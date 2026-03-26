@@ -702,16 +702,16 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("max_page_size_bytes", fmt.Sprintf("%d", opts.UnifiedStorageMaxPageSizeBytes))
 		require.NoError(t, err)
 	}
-	if opts.DisableDataMigrations {
-		section, err := getOrCreateSection("unified_storage")
-		require.NoError(t, err)
-		_, err = section.NewKey("disable_data_migrations", "true")
-		require.NoError(t, err)
-	}
 	if opts.MigrationParquetBuffer {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
 		_, err = section.NewKey("migration_parquet_buffer", "true")
+		require.NoError(t, err)
+	}
+	if opts.EnableSQLKVBackend {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_sqlkv_backend", "true")
 		require.NoError(t, err)
 	}
 	if opts.PermittedProvisioningPaths != "" {
@@ -871,8 +871,8 @@ type GrafanaOpts struct {
 	APIServerRuntimeConfig                string
 	DisableControllers                    bool
 	DisableDBCleanup                      bool
-	DisableDataMigrations                 bool
 	MigrationParquetBuffer                bool
+	EnableSQLKVBackend                    bool
 	SecretsManagerEnableDBMigrations      bool
 	OpenFeatureAPIEnabled                 bool
 	DisableAuthZClientCache               bool

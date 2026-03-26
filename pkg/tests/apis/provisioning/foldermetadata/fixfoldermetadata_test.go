@@ -14,23 +14,15 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 const folderMetadataFileName = "_folder.json"
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 // TestIntegrationProvisioning_FixFolderMetadata_MissingFile verifies that the
 // fix-folder-metadata job creates _folder.json files for folders that don't
 // have them yet.
 func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repoName = "fix-meta-no-metadata"
@@ -68,9 +60,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_MissingFile(t *testing.T) {
 // TestIntegrationProvisioning_FixFolderMetadata_ValidFile verifies that the
 // fix-folder-metadata job leaves already-correct _folder.json files unchanged.
 func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	const repoName = "fix-meta-valid-metadata"
@@ -108,9 +98,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_ValidFile(t *testing.T) {
 // that the fix-folder-metadata job does not overwrite a _folder.json that is
 // already present.
 func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 
 	const repoName = "fix-meta-skip-existing"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)
@@ -145,9 +133,7 @@ func TestIntegrationProvisioning_FixFolderMetadata_SkipsExistingMetadata(t *test
 // that the fix-folder-metadata job does not overwrite a _folder.json that is
 // already present, even when its content is not a valid Folder resource.
 func TestIntegrationProvisioning_FixFolderMetadata_SkipsMalformedMetadata(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 
 	const repoName = "fix-meta-skip-malformed"
 	repoPath := filepath.Join(helper.ProvisioningPath, repoName)

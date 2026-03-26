@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -240,25 +242,39 @@ func (tw *TenantWatcher) handleTenant(tenant *unstructured.Unstructured) {
 }
 
 // reconcileTenantPendingDelete ensures a pending-delete record exists for the
-// tenant and that all of its resources have been labelled. If the record
-// already exists this is a no-op cache lookup.
+// tenant and that all of its resources have been labelled.
 func (tw *TenantWatcher) reconcileTenantPendingDelete(name string, deleteAfter string) {
-	// if the record exists, then all its resources were successfully labelled.
-	if tw.pendingDeleteStore.Has(name) {
+	// Fast path: if the record exists and labelling is complete, nothing to do.
+	record, err := tw.pendingDeleteStore.Get(tw.ctx, name)
+	if err == nil && record.LabelingComplete {
+		return
+	}
+	if err != nil && !errors.Is(err, kvpkg.ErrNotFound) {
+		tw.log.Error("failed to read pending delete record, skipping reconcile to avoid overwriting existing state", "tenant", name, "error", err)
 		return
 	}
 
-	if err := tw.tenantResourcesEditPendingDeleteLabel(name, true); err != nil {
-		tw.log.Error("failed to label tenant resources, will not create pending delete record", "tenant", name, "error", err)
-		return
-	}
-
-	record := PendingDeleteRecord{
-		DeleteAfter: deleteAfter,
+	// Write the intent record BEFORE labelling so that clearTenantPendingDelete
+	// can clean up orphaned labels if labelling fails partway through.
+	record = PendingDeleteRecord{
+		DeleteAfter:      deleteAfter,
+		LabelingComplete: false,
+		Force:            record.Force,
 	}
 	if err := tw.pendingDeleteStore.Upsert(tw.ctx, name, record); err != nil {
 		tw.log.Error("failed to save pending delete record", "tenant", name, "error", err)
 		return
+	}
+
+	if err := tw.tenantResourcesEditPendingDeleteLabel(name, true); err != nil {
+		tw.log.Error("failed to label tenant resources", "tenant", name, "error", err)
+		return
+	}
+
+	// Mark labelling as complete.
+	record.LabelingComplete = true
+	if err := tw.pendingDeleteStore.Upsert(tw.ctx, name, record); err != nil {
+		tw.log.Error("failed to mark labeling complete", "tenant", name, "error", err)
 	}
 	tw.log.Info("reconciled tenant pending delete", "tenant", name, "delete_after", deleteAfter)
 }
@@ -411,6 +427,28 @@ func isConflictError(err error) bool {
 func (tw *TenantWatcher) clearTenantPendingDelete(name string) {
 	if !tw.pendingDeleteStore.Has(name) {
 		return
+	}
+
+	record, err := tw.pendingDeleteStore.Get(tw.ctx, name)
+	if err != nil {
+		tw.log.Warn("failed to get pending delete record for clearing", "tenant", name, "error", err)
+		return
+	}
+
+	if record.Force {
+		tw.log.Warn("tenant has force pending-delete record, skipping clear", "tenant", name)
+		return
+	}
+
+	// Mark labelling as incomplete before unlabelling. If unlabelling fails
+	// partway and the tenant is re-marked as pending-delete before we retry,
+	// reconcileTenantPendingDelete will see LabelingComplete=false and re-label.
+	if record.LabelingComplete {
+		record.LabelingComplete = false
+		if err := tw.pendingDeleteStore.Upsert(tw.ctx, name, record); err != nil {
+			tw.log.Error("failed to mark labeling incomplete before unlabelling", "tenant", name, "error", err)
+			return
+		}
 	}
 
 	if err := tw.tenantResourcesEditPendingDeleteLabel(name, false); err != nil {

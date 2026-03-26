@@ -397,6 +397,19 @@ func TestUnifiedStorageQueries(t *testing.T) {
 						HistoryLimit:          1,
 					},
 				},
+				{
+					Name: "cluster-scoped",
+					Data: &sqlPruneHistoryRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Key: &resourcepb.ResourceKey{
+							Namespace: "",
+							Group:     "cluster.example.io",
+							Resource:  "clusterresources",
+							Name:      "my-cluster-resource",
+						},
+						HistoryLimit: 10,
+					},
+				},
 			},
 
 			rvmanager.SqlResourceVersionGet: {

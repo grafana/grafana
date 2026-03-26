@@ -780,7 +780,9 @@
         "unknown-rule": "不明な",
         "value-in-transition": "移行中の値"
       },
-      "error": "アラートステート履歴の読み込み中に問題が発生しました",
+      "error": {
+        "server-error": ""
+      },
       "filter": {
         "clear": "フィルタをクリア",
         "info": {
@@ -791,6 +793,10 @@
         }
       },
       "filterBy": "フィルタ条件：",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "tab": {
         "alert-events": "",
         "notifications": ""
@@ -1712,13 +1718,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -2011,6 +2017,10 @@
       "error-unable-to-fetch": "アラート状態履歴を取得できません",
       "loading": "読み込み中...",
       "no-transitions-match-filters": "",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "start-state": "",
       "timeline-hidden": "",
       "title-error-fetching-the-state-history": "状態履歴の取得エラー",
@@ -3522,20 +3532,27 @@
       }
     },
     "triage": {
-      "alert-instances": "アラートインスタンス",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "ルールの読み込みエラー",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "インスタンスの詳細",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "選択した時間範囲に、発生中または保留状態のアラートインスタンスはありません。",
       "no-instances-found": "ルールに対するアラートインスタンスが見つかりません：{{ruleUID}}",
       "no-labels": "ラベルなし",
@@ -3557,10 +3574,13 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_other": "",
       "show-all-values_other": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "式を追加"
@@ -4227,6 +4247,9 @@
     "browse-view": {
       "this-folder-is-empty": "このフォルダは空です"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "キャンセル",
       "button-delete": "削除",
@@ -4285,6 +4308,7 @@
       "button-deleting": "削除中…",
       "commit": "フォルダを削除",
       "delete-warning": "このフォルダとその下位のすべてのフォルダやコンテンツが削除されます。全部で、次に影響します: ",
+      "missing-info": "",
       "success-message": "フォルダが正常に削除されました"
     },
     "descendant-count": {
@@ -4324,6 +4348,7 @@
       "dashboards": "ダッシュボード",
       "panels": "パネル"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "項目がありません"
     },
@@ -4336,12 +4361,13 @@
       "name-label": "フォルダ名"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "フォルダ作成時のエラー",
       "button-create": "作成",
       "button-creating": "作成中...",
       "cancel": "キャンセル",
       "error-invalid-characters": "フォルダ名に無効な文字が含まれています。使用できるのは、文字、数字、スペース、アンダースコア、ハイフンのみです。",
+      "error-missing-title-or-repo": "",
       "error-required": "フォルダ名は必須です",
+      "error-saving": "",
       "folder-name-input-placeholder-enter-folder-name": "フォルダ名を入力してください",
       "label-folder-name": "フォルダ名",
       "text-pull-request-created": "このフォルダへの変更を含むプルリクエストが作成されました。",
@@ -5950,6 +5976,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": ""
+      },
       "prompt-card": {
         "placeholder": "",
         "placeholder-multi": ""
@@ -6049,8 +6078,8 @@
       "name": "行",
       "new-row-title": "新しい行",
       "row": {
-        "collapse": "行を折りたたむ",
-        "expand": "行を展開する",
+        "collapse": "",
+        "expand": "",
         "new": "新しい行",
         "repeat": {
           "learn-more": "もっと詳しく",
@@ -6263,7 +6292,6 @@
         "label": "編集を終了",
         "tooltip": "編集モードを終了し、保存されていない変更を破棄します"
       },
-      "mark-favorite": "お気に入りに追加",
       "more-save-options": "その他の保存オプション",
       "new": {
         "back-to-dashboard": "ダッシュボードに戻る",
@@ -6333,8 +6361,7 @@
       "star-added": "お気に入りに追加されました",
       "star-remove-error": "お気に入りから削除できませんでした",
       "star-removed": "お気に入りから削除されました",
-      "unlink-library-panel": "ライブラリパネルのリンクを解除",
-      "unmark-favorite": "お気に入りを解除"
+      "unlink-library-panel": "ライブラリパネルのリンクを解除"
     },
     "transformation-editor": {
       "input-data": "入力データ",
@@ -6590,11 +6617,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "アドホックオプション",
       "alert-not-supported": "このデータソースはアドホックフィルターをサポートしていません",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "ユーザーがリストにカスタム値を追加できるようにします",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "CSV形式で次のように次元を指定：{{name}}, {{value}}",
       "label-data-source": "データソース",
       "label-use-static-key-dimensions": "静的キー次元を使用",
-      "name-allow-custom-values": "カスタム値の入力を許可"
+      "name-allow-custom-values": "カスタム値の入力を許可",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -6875,11 +6904,12 @@
       "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "ダッシュボードの削除に失敗しました",
       "cancel-action": "キャンセル",
       "delete-action": "ダッシュボードを削除する",
+      "delete-error": "",
       "deleting": "削除中…",
       "drawer-title": "プロビジョニングされたダッシュボードを削除",
+      "no-repository-selected": "",
       "success-message": "ダッシュボードが正常に削除されました"
     },
     "description-label": {
@@ -7342,16 +7372,17 @@
       "affected-dashboards_other": "この更新は<1>{{count}}件のダッシュボード</1>に影響します。このパネルを使用している次のダッシュボードが影響を受けます。"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "ダッシュボードの保存中にエラーが発生しました",
       "cancel": "キャンセル",
       "cannot-be-saved": "このダッシュボードは別のソースからプロビジョニングされているため、Grafana UIからは保存できません。JSONをコピーするか下記のファイルに保存した上で、プロビジョニング元でダッシュボードを更新できます。",
       "copy-json-to-clipboard": "JSONをクリップボードにコピー",
+      "error-saving": "",
       "file-path": "<strong>ファイルパス：</strong>{{filePath}}",
       "form-loading-error": "",
       "form-loading-error-unknown": "",
       "label-description": "説明",
       "label-target-folder": "ターゲットフォルダ",
       "label-title": "タイトル",
+      "repo-path-required": "",
       "save": "保存",
       "save-json-to-file": "JSONをファイルに保存",
       "saving": "保存中…",
@@ -8859,7 +8890,8 @@
     "select-placeholder": "フォルダでフィルタリング"
   },
   "folder-repo": {
-    "read-only-badge": "読み取り専用"
+    "read-only-badge": "読み取り専用",
+    "repository-not-found-tooltip": ""
   },
   "folders": {
     "api": {
@@ -10211,6 +10243,9 @@
       "group": "グループ",
       "group-tooltip": "スタッキンググループの名前"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "値でフィルタリング",
       "cell-filter-out": "値を除外してフィルタリング",
@@ -10259,6 +10294,10 @@
       },
       "no-values-label": "値がありません",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}（{{numRows}}行）",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "データなし"
       },
@@ -11364,7 +11403,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "オプションが見つかりません"
@@ -12106,12 +12146,10 @@
       "description": "受信した通知はここに表示されます",
       "title": "すべて既読になっています！"
     },
-    "starred-dashboard": "ダッシュボードにスターが付いています",
     "stored-notifications": {
       "dismiss-notifications": "通知を閉じる",
       "title-alert": "このページには過去のエラーと警告が表示されます。一度消去すると、復元できません。"
-    },
-    "unstarred-dashboard": "ダッシュボードのスターが外されました"
+    }
   },
   "oauth": {
     "form": {
@@ -12252,6 +12290,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "名前"
       }
     },
@@ -12397,11 +12436,13 @@
       "description-customize-dashboard-elements-visibility": "ダッシュボード要素の表示設定をカスタマイズ",
       "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "パネルの高さは画面サイズに合わせて調整されます",
+      "description-playlist-nav": "",
       "label-autofit": "自動調整",
       "label-dashboard-links": "ダッシュボードリンク",
       "label-display-dashboard-controls": "ダッシュボード操作を表示",
       "label-hide-logo": "",
       "label-mode": "モード",
+      "label-playlist-nav": "",
       "label-time-and-refresh": "時間と更新",
       "label-variables": "変数",
       "modes": {
@@ -12948,6 +12989,7 @@
       "error-delete-connection": "接続の削除に失敗しました",
       "error-required": "このフィールドは必須です",
       "error-save-connection": "接続の保存に失敗しました",
+      "error-submit": "",
       "grafana-repositories": "この接続を使用するリポジトリ",
       "label-app-id": "GitHubアプリID",
       "label-description": "説明",
@@ -13023,6 +13065,10 @@
       "set-up-public-webhooks": "公開Webhookを設定",
       "title-instant-updates-requests-webhooks": "Webhookによるリアルタイム更新とプルリクエスト。",
       "title-visual-previews-in-pull-requests": "画像レンダリングによるプルリクエストの視覚的プレビュー"
+    },
+    "error": {
+      "branch-not-found-dashboard": "",
+      "branch-not-found-folder": ""
     },
     "error-title-default": "エラー",
     "expanded-row": {
@@ -13231,6 +13277,28 @@
         "label": "すべてのリソースを外部ストレージと同期",
         "subtitle": "外部ストレージを通じてGrafanaインスタンス全体を同期・管理したい場合は、このオプションを使用してください。"
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "",
+      "title": ""
+    },
+    "orphaned-repository-tooltip": "",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "",
+      "confirm-delete-button": "",
+      "confirm-delete-title": "",
+      "confirm-release-body": "",
+      "confirm-release-button": "",
+      "confirm-release-title": "",
+      "contact-admin": "",
+      "convert-to-local-button": "",
+      "delete-button": "",
+      "job-error": "",
+      "job-success": "",
+      "job-warning": "",
+      "message": "",
+      "submit-error": "",
+      "title": ""
     },
     "provisioning-wizard": {
       "on-submit": {
@@ -13461,6 +13529,9 @@
       },
       "go-to": "進む",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "警告",
     "watch-stream": {
@@ -14596,13 +14667,19 @@
     },
     "presets": {
       "horizontal-threshold-value": "",
+      "horizontal-threshold-value-desc": "",
       "horizontal-threshold-value-sparkline": "",
+      "horizontal-threshold-value-sparkline-desc": "",
       "list": "",
       "list_desc": "",
       "threshold-background": "",
+      "threshold-background-desc": "",
       "threshold-background-sparkline": "",
+      "threshold-background-sparkline-desc": "",
       "threshold-value": "",
+      "threshold-value-desc": "",
       "threshold-value-sparkline": "",
+      "threshold-value-sparkline-desc": "",
       "wide-list": "",
       "wide-list-desc": ""
     },
@@ -14824,12 +14901,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "",
       "create": "作成",
+      "description-create-team-folder": "",
       "description-email": "これは任意であり、主にカスタムチームのアバターに使用されます",
-      "failed-to-create": "チームの作成に失敗しました",
+      "failed-to-create": "",
+      "folder-create-failed": "",
+      "folder-create-failed-help": "",
+      "folder-creation-link": "",
+      "folder-creation-loading": "",
+      "folder-creation-success": "",
+      "label-create-team-folder": "",
       "label-email": "メール",
       "label-name": "名前",
-      "label-role": "ロール"
+      "label-role": "ロール",
+      "role-creation-success": "",
+      "roles-create-failed": "",
+      "roles-create-permission-issue": "",
+      "roles-creation-loading": "",
+      "team-creation-link": "",
+      "team-creation-loading": "",
+      "team-creation-success": ""
     },
     "empty-state": {
       "button-title": "新しいチーム",
