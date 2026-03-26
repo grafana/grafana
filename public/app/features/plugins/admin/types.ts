@@ -69,6 +69,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
     enabled: boolean;
     strategy?: PluginUpdateStrategy;
   };
+  category?: string;
 }
 export interface Screenshots {
   path: string;
@@ -197,6 +198,7 @@ export type RemotePlugin = {
     enabled: boolean;
     strategy?: PluginUpdateStrategy;
   };
+  category?: string;
 };
 
 export enum PluginUpdateStrategy {
@@ -215,7 +217,6 @@ export enum RemotePluginStatus {
 }
 
 export type LocalPlugin = WithAccessControlMetadata & {
-  category: string;
   defaultNavUrl: string;
   dev?: boolean;
   enabled: boolean;
@@ -243,6 +244,7 @@ export type LocalPlugin = WithAccessControlMetadata & {
   dependencies: PluginDependencies;
   angularDetected: boolean;
   iam?: IdentityAccessManagement;
+  category?: string;
 };
 
 interface IdentityAccessManagement {
