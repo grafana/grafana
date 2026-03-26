@@ -1,4 +1,4 @@
-package gitexport
+package foldermetadata
 
 import (
 	"context"
@@ -6,45 +6,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
-
-func createUnmanagedFolder(t *testing.T, helper *common.GitTestHelper, name, title string) {
-	t.Helper()
-	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
-			"kind":       "Folder",
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": "default",
-			},
-			"spec": map[string]interface{}{
-				"title": title,
-			},
-		},
-	}
-	_, err := helper.Folders.Resource.Create(t.Context(), obj, metav1.CreateOptions{})
-	require.NoError(t, err)
-}
-
-func triggerExport(t *testing.T, helper *common.GitTestHelper, repo string) *provisioning.Job {
-	t.Helper()
-	result := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
-		Action: provisioning.JobActionPush,
-		Push:   &provisioning.ExportJobOptions{},
-	})
-	jobObj := &provisioning.Job{}
-	err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(result.Object, jobObj)
-	require.NoError(t, err, "should be able to decode job status")
-	return jobObj
-}
 
 // TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataEnabled verifies
 // that when the provisioningFolderMetadata feature flag is enabled, each
@@ -60,9 +25,9 @@ func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataEnabled(t *test
 	)
 	helper.CreateExportGitRepo(t, repoName)
 
-	createUnmanagedFolder(t, helper, folderUID, folderTitle)
+	createUnmanagedFolder(t, helper.ProvisioningTestHelper, folderUID, folderTitle)
 
-	job := triggerExport(t, helper, repoName)
+	job := triggerExport(t, helper.ProvisioningTestHelper, repoName)
 	require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
 
 	// With the feature flag enabled, a _folder.json manifest must be committed instead of
