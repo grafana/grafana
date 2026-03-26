@@ -1,16 +1,15 @@
-package gitexport
+package full
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 )
@@ -46,36 +45,28 @@ func triggerExport(t *testing.T, helper *gitcommon.GitTestHelper, repo string) *
 	return jobObj
 }
 
-// TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataEnabled verifies
-// that when the provisioningFolderMetadata feature flag is enabled, each
-// exported folder contains a _folder.json manifest (no .keep file).
-func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataEnabled(t *testing.T) {
+// TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataDisabled verifies
+// that when the provisioningFolderMetadata feature flag is disabled, each exported
+// folder contains a .keep placeholder (no _folder.json).
+func TestIntegrationProvisioning_ExportJob_GitRepo_FolderMetadataDisabled(t *testing.T) {
 	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
-	const (
-		repoName    = "git-export-with-meta"
-		folderUID   = "git-meta-uid"
-		folderTitle = "git-meta-folder"
-	)
+	const repoName = "git-export-no-meta"
 	helper.CreateExportGitRepo(t, repoName)
 
-	createUnmanagedFolder(t, helper, folderUID, folderTitle)
+	createUnmanagedFolder(t, helper, "git-no-meta-uid", "git-no-meta-folder")
 
 	job := triggerExport(t, helper, repoName)
 	require.Equal(t, provisioning.JobStateSuccess, job.Status.State, "export job should succeed")
 
-	// With the feature flag enabled, a _folder.json manifest must be committed instead of
-	// a bare .keep placeholder.  Read the file directly from the git server to avoid the
-	// ownership-conflict check that the provisioning files API performs on unmanaged resources.
-	data := helper.GitReadFile(t, ctx, repoName, folderTitle+"/_folder.json")
+	// Without the feature flag git cannot track an empty directory, so a
+	// .keep placeholder must be committed inside every exported folder.
+	// The files API rejects hidden-file paths, so we verify via the git clone.
+	require.True(t, helper.GitFileExists(t, ctx, repoName, "git-no-meta-folder/.keep"),
+		".keep file must be committed for an exported folder when the feature flag is disabled")
 
-	var manifest foldersV1.Folder
-	require.NoError(t, json.Unmarshal(data, &manifest), "_folder.json must be valid JSON")
-	require.Equal(t, folderUID, manifest.Name, "_folder.json must carry the folder's stable UID")
-	require.Equal(t, folderTitle, manifest.Spec.Title, "_folder.json must carry the folder's title")
-
-	// No .keep file must be present when _folder.json is written.
-	require.False(t, helper.GitFileExists(t, ctx, repoName, folderTitle+"/.keep"),
-		".keep must not exist when the feature flag is enabled")
+	// No _folder.json must be present when the flag is off.
+	_, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", "git-no-meta-folder/_folder.json")
+	require.True(t, apierrors.IsNotFound(err), "_folder.json must not exist when the feature flag is disabled")
 }
