@@ -1540,3 +1540,123 @@ func TestIntegrationProvisioning_IncrementalSync_RenamedFolderMetadataOrphanClea
 		common.RequireRepoFolderCount(t, helper, ctx, repoName, 1)
 	})
 }
+
+// TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder
+// verifies that file renames into a folder whose _folder.json was also renamed
+// in the same commit (without a directory-level rename entry) succeed.
+func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("dashboard renamed into folder whose metadata was also renamed", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-file-rename-into-relocated"
+		const folderUID = "relocated-folder-uid"
+
+		// Seed: a folder with _folder.json (stable UID), two dashboards,
+		// and a second folder with its own dashboard.
+		// The extra dashboard in src/ prevents git from detecting a
+		// directory rename when we partially move files out.
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"src/_folder.json": folderMetadataJSON(folderUID, "Source Folder"),
+			"src/move.json":    common.DashboardJSON("dash-move", "Moving Dashboard", 1),
+			"src/stay.json":    common.DashboardJSON("dash-stay", "Staying Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithSuccess(t, helper, repoName)
+		common.RequireFolderState(t, helper.Folders, folderUID, "Source Folder", "src", "")
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-move": {Title: "Moving Dashboard", SourcePath: "src/move.json", Folder: folderUID},
+			"dash-stay": {Title: "Staying Dashboard", SourcePath: "src/stay.json", Folder: folderUID},
+		})
+
+		// Move _folder.json and one dashboard to a new directory, but
+		// leave stay.json behind so git produces file-level renames
+		// instead of a directory rename.
+		require.NoError(t, local.CreateDirPath("dst"))
+		_, err := local.Git("mv", "src/_folder.json", "dst/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("mv", "src/move.json", "dst/move.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "partial move: metadata + dashboard to dst")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// The incremental sync should succeed (with a warning for the
+		// now-missing _folder.json in src/). The file rename of move.json
+		// into dst/ must not fail with CheckIDConflict.
+		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+
+		// dst/ should carry the stable UID.
+		common.RequireFolderState(t, helper.Folders, folderUID, "Source Folder", "dst", "")
+
+		// src/ should still exist with a hash-derived UID (has stay.json).
+		srcAutoUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "src")
+		require.NotEqual(t, folderUID, srcAutoUID, "src/ should have a hash-derived UID after losing _folder.json")
+
+		common.RequireRepoFolders(t, helper.Folders, ctx, repoName, []string{"src", "dst"})
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-move": {Title: "Moving Dashboard", SourcePath: "dst/move.json", Folder: folderUID},
+			"dash-stay": {Title: "Staying Dashboard", SourcePath: "src/stay.json", Folder: srcAutoUID},
+		})
+
+	})
+
+	t.Run("dashboard from unrelated folder renamed into relocated metadata folder", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-cross-folder-rename-reloc"
+		const srcUID = "cross-src-uid"
+
+		// Seed: one folder with _folder.json + a dashboard, and a second
+		// folder with a dashboard that will move into the first folder's
+		// new location.
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"teamA/_folder.json": folderMetadataJSON(srcUID, "Team A"),
+			"teamA/own.json":     common.DashboardJSON("dash-own", "Own Dashboard", 1),
+			"teamB/migrate.json": common.DashboardJSON("dash-migrate", "Migrate Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithWarning(t, helper, repoName)
+		common.RequireFolderState(t, helper.Folders, srcUID, "Team A", "teamA", "")
+		teamBUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "teamB")
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-own":     {Title: "Own Dashboard", SourcePath: "teamA/own.json", Folder: srcUID},
+			"dash-migrate": {Title: "Migrate Dashboard", SourcePath: "teamB/migrate.json", Folder: teamBUID},
+		})
+
+		// Move teamA's _folder.json to teamC/ and move the dashboard
+		// from teamB/ into teamC/ in the same commit. teamA/ keeps its
+		// dashboard (preventing directory rename detection), and teamB/
+		// becomes empty.
+		require.NoError(t, local.CreateDirPath("teamC"))
+		_, err := local.Git("mv", "teamA/_folder.json", "teamC/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("mv", "teamB/migrate.json", "teamC/migrate.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "move metadata to teamC and migrate dashboard")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// The dashboard rename into teamC/ must not fail with
+		// CheckIDConflict for srcUID (registered at teamA/ in the tree).
+		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+
+		// teamC/ should carry the stable UID from the moved _folder.json.
+		common.RequireFolderState(t, helper.Folders, srcUID, "Team A", "teamC", "")
+
+		// teamA/ should still exist with a hash-derived UID.
+		teamAAutoUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "teamA")
+		require.NotEqual(t, srcUID, teamAAutoUID)
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-own":     {Title: "Own Dashboard", SourcePath: "teamA/own.json", Folder: teamAAutoUID},
+			"dash-migrate": {Title: "Migrate Dashboard", SourcePath: "teamC/migrate.json", Folder: srcUID},
+		})
+	})
+}
