@@ -24,7 +24,6 @@ import { appEvents } from 'app/core/app_events';
 import { clearPanelPluginCache } from 'app/features/plugins/importPanelPlugin';
 import { pluginImporter } from 'app/features/plugins/importer/pluginImporter';
 
-import { panelsToCheckFirst } from './consts';
 import { getAllSuggestions, loadPlugins, sortSuggestions } from './getAllSuggestions';
 
 jest.mock('app/core/app_events', () => ({
@@ -66,9 +65,30 @@ function getPanelPluginMeta(pluginId: string) {
   };
 }
 
+const PANEL_IDS = [
+  'timeseries',
+  'barchart',
+  'gauge',
+  'stat',
+  'piechart',
+  'bargauge',
+  'table',
+  'state-timeline',
+  'status-history',
+  'logs',
+  'candlestick',
+  'flamegraph',
+  'traces',
+  'nodeGraph',
+  'heatmap',
+  'histogram',
+  'geomap',
+  'text',
+];
+
 function getPanelPlugins() {
   const plugins = [];
-  for (const pluginId of panelsToCheckFirst) {
+  for (const pluginId of PANEL_IDS) {
     if (pluginId === 'geomap') {
       continue;
     }
