@@ -10944,24 +10944,14 @@
     },
     "forgot-password": "비밀번호를 잊으셨나요?",
     "form": {
-      "confirmation-code": "확인 코드가 필요합니다.",
-      "confirmation-code-label": "확인 코드",
-      "confirmation-code-placeholder": "확인 코드",
-      "email-label": "이메일",
-      "email-placeholder": "이메일",
-      "email-required": "이메일은 필수 입력 사항입니다.",
-      "name-label": "이름",
       "password-label": "비밀번호",
       "password-placeholder": "비밀번호",
       "password-required": "비밀번호는 필수 입력 항목입니다.",
-      "passwordless-username-label": "사용자 이름",
       "submit-label": "로그인",
       "submit-loading-label": "로그인 중...",
       "username-label": "이메일 또는 사용자 이름",
       "username-placeholder": "이메일 또는 사용자 이름",
-      "username-required": "이메일 또는 사용자 이름은 필수 입력 항목입니다.",
-      "verify-email-label": "인증 이메일 전송",
-      "verify-email-loading-label": "이메일 전송 중..."
+      "username-required": "이메일 또는 사용자 이름은 필수 입력 항목입니다."
     },
     "layout": {
       "update-password": "비밀번호 업데이트"

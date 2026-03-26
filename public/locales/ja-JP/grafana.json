@@ -10944,24 +10944,14 @@
     },
     "forgot-password": "パスワードを忘れましたか？",
     "form": {
-      "confirmation-code": "確認コードが必要です",
-      "confirmation-code-label": "確認コード",
-      "confirmation-code-placeholder": "確認コード",
-      "email-label": "メール",
-      "email-placeholder": "メールアドレス",
-      "email-required": "メールアドレスを入力してください",
-      "name-label": "名前",
       "password-label": "パスワード",
       "password-placeholder": "パスワード",
       "password-required": "パスワードは必須です",
-      "passwordless-username-label": "ユーザー名",
       "submit-label": "ログイン",
       "submit-loading-label": "ログイン中…",
       "username-label": "メールアドレスまたはユーザー名",
       "username-placeholder": "メールアドレスまたはユーザー名",
-      "username-required": "メールアドレスまたはユーザー名が必要です",
-      "verify-email-label": "確認メールを送信",
-      "verify-email-loading-label": "メールを送信中…"
+      "username-required": "メールアドレスまたはユーザー名が必要です"
     },
     "layout": {
       "update-password": "パスワードを更新"

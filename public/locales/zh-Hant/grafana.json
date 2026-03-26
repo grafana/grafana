@@ -10944,24 +10944,14 @@
     },
     "forgot-password": "忘記密碼嗎？",
     "form": {
-      "confirmation-code": "必須輸入確認碼",
-      "confirmation-code-label": "確認碼",
-      "confirmation-code-placeholder": "確認碼",
-      "email-label": "電子郵件",
-      "email-placeholder": "電子郵件",
-      "email-required": "必須要有電子郵件",
-      "name-label": "名稱",
       "password-label": "密碼",
       "password-placeholder": "密碼",
       "password-required": "必須要有密碼",
-      "passwordless-username-label": "使用者名稱",
       "submit-label": "登入",
       "submit-loading-label": "正在登入…",
       "username-label": "電子郵件或使用者名稱",
       "username-placeholder": "電子郵件或使用者名稱",
-      "username-required": "電子郵件或使用者名稱為必填",
-      "verify-email-label": "傳送驗證電子郵件",
-      "verify-email-loading-label": "正在傳送電子郵件…"
+      "username-required": "電子郵件或使用者名稱為必填"
     },
     "layout": {
       "update-password": "更新您的密碼"

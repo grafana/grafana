@@ -11004,24 +11004,14 @@
     },
     "forgot-password": "Elfelejtette jelszavát?",
     "form": {
-      "confirmation-code": "Visszaigazolási kód megadása kötelező",
-      "confirmation-code-label": "Visszaigazolási kód",
-      "confirmation-code-placeholder": "visszaigazolási kód",
-      "email-label": "E-mail",
-      "email-placeholder": "e-mail",
-      "email-required": "Az e-mail-cím megadása kötelező",
-      "name-label": "Név",
       "password-label": "Jelszó",
       "password-placeholder": "jelszó",
       "password-required": "A jelszó megadása kötelező",
-      "passwordless-username-label": "Felhasználónév",
       "submit-label": "Bejelentkezés",
       "submit-loading-label": "Bejelentkezés...",
       "username-label": "E-mail-cím vagy felhasználónév",
       "username-placeholder": "e-mail vagy felhasználónév",
-      "username-required": "Az e-mail-cím vagy a felhasználónév megadása kötelező",
-      "verify-email-label": "Ellenőrző e-mail küldése",
-      "verify-email-loading-label": "E-mail küldése..."
+      "username-required": "Az e-mail-cím vagy a felhasználónév megadása kötelező"
     },
     "layout": {
       "update-password": "Frissítse a jelszavát"

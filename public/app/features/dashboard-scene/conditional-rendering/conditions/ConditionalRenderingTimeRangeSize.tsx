@@ -1,6 +1,7 @@
 import { ReactElement, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { rangeUtil, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { ConditionalRenderingTimeRangeSizeKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -246,6 +247,7 @@ function ConditionalRenderingTimeRangeSizeRenderer({ model }: SceneComponentProp
         noMargin
       >
         <Select
+          data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.timeRange.select}
           isClearable={false}
           allowCustomValue
           onCreateOption={(value) => handleChange(value)}
