@@ -4265,6 +4265,7 @@
       "new-folder-as-team-folder-label": "Team",
       "new-folder-name-required-phrase": "Folder name is required.",
       "new-folder-owner-selector-checkbox": "Assign an owner to the folder",
+      "rename-provisioned-folder": "Rename provisioned folder",
       "selected-mix-resources-modal-text": "You have selected both provisioned and non-provisioned resources. These cannot be processed together. Please select only provisioned resources or only non-provisioned resources and try again.",
       "selected-mix-resources-modal-title": "Mixed resource types selected"
     },
@@ -4428,6 +4429,20 @@
       "error": "Recently viewed dashboards couldn’t be loaded.",
       "retry": "Retry",
       "title": "Recently viewed"
+    },
+    "rename-folder": {
+      "read-only-message": "To rename this folder, please update the folder in your repository directly."
+    },
+    "rename-provisioned-folder-form": {
+      "button-cancel": "Cancel",
+      "button-rename": "Rename",
+      "button-renaming": "Renaming...",
+      "commit": "Rename folder",
+      "error-saving": "Failed to rename folder",
+      "label-folder-name": "Folder name",
+      "missing-info": "Missing required fields",
+      "success-message": "Folder renamed successfully",
+      "title-required": "Folder name is required"
     },
     "restore": {
       "all-failed_one": "Failed to restore {{count}} dashboard.",
