@@ -278,6 +278,7 @@ type Cfg struct {
 	AdminUser                     string
 	AdminPassword                 string
 	DisableLogin                  bool
+	DisableForgotPassword         bool
 	AdminEmail                    string
 	DisableLoginForm              bool
 	SignoutRedirectUrl            string
@@ -1927,6 +1928,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.OAuthSkipOrgRoleUpdateSync = false
 
 	cfg.DisableLogin = auth.Key("disable_login").MustBool(false)
+	cfg.DisableForgotPassword = auth.Key("disable_forgot_password").MustBool(false)
 
 	// SigV4
 	cfg.SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)

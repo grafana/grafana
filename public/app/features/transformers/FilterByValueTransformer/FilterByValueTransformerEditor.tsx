@@ -128,6 +128,10 @@ export const FilterByValueTransformerEditor = (props: TransformerUIProps<FilterB
         <InlineField
           label={t('transformers.filter-by-value-transformer-editor.label-conditions', 'Conditions')}
           labelWidth={16}
+          tooltip={t(
+            'transformers.filter-by-value-transformer-editor.tooltip-conditions',
+            'When multiple conditions are present, choose whether a row must match all conditions ("Match all") or at least one condition ("Match any") to be included or excluded.'
+          )}
         >
           <div className="width-15">
             <RadioButtonGroup options={filterMatch} value={options.match} onChange={onChangeMatch} fullWidth />

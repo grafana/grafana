@@ -57,6 +57,20 @@ describe('Login Page', () => {
     expect(screen.getByRole('link', { name: 'Sign up' })).toHaveAttribute('href', '/signup');
   });
 
+  it('hides the forgot password link when disableForgotPassword is true', () => {
+    jest.spyOn(runtimeMock, 'config', 'get').mockReturnValue({
+      ...runtimeMock.config,
+      auth: {
+        ...runtimeMock.config.auth,
+        disableForgotPassword: true,
+      },
+    });
+
+    render(<LoginPage />);
+
+    expect(screen.queryByRole('link', { name: 'Forgot your password?' })).not.toBeInTheDocument();
+  });
+
   it('should pass validation checks for username field', async () => {
     render(<LoginPage />);
 
