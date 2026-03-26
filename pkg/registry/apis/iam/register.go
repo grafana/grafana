@@ -152,7 +152,7 @@ func RegisterAPIService(
 		unified:                           unified,
 		userSearchClient: resource.NewSearchClient(dualwrite.NewSearchAdapter(dual), iamv0.UserResourceInfo.GroupResource(),
 			unified, user.NewUserLegacySearchClient(orgService, tracing, cfg), features),
-		teamSearch:                       NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(legacyTeamSearchService(teamService), tracing), unified, features, accessClient),
+		teamSearch:                       NewTeamSearchHandler(tracing, dual, team.NewLegacyTeamSearchClient(teamService, tracing), unified, features, accessClient),
 		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermsSearchBackend, resourcePermsSearchAuthorizer),
 		tracing:                          tracing,
 		cfgProvider:                      cfgProvider,
@@ -1049,22 +1049,4 @@ func mergeAPIRoutes(routes ...*builder.APIRoutes) *builder.APIRoutes {
 		merged.Namespace = append(merged.Namespace, r.Namespace...)
 	}
 	return merged
-}
-
-// legacySearchServiceProvider is implemented by team services that can expose
-// a legacy (non-redirected) service for use by search clients.
-type legacySearchServiceProvider interface {
-	LegacySearchService() teamservice.Service
-}
-
-// legacyTeamSearchService returns the legacy team service for use by LegacyTeamSearchClient.
-// This avoids a circular call where: TeamK8sService → REST /searchTeams → SearchClient →
-// LegacyTeamSearchClient → bridge.SearchTeams → TeamK8sService (loop).
-// If the service exposes a legacy-only implementation, use it; otherwise fall back to the
-// service as-is (for tests or non-bridge implementations).
-func legacyTeamSearchService(svc teamservice.Service) teamservice.Service {
-	if p, ok := svc.(legacySearchServiceProvider); ok {
-		return p.LegacySearchService()
-	}
-	return svc
 }

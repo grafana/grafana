@@ -38,10 +38,6 @@ func ProvideService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer, configPro
 	}, nil
 }
 
-func (s *Service) LegacySearchService() team.Service {
-	return s.legacyService
-}
-
 func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
 	if s.isKubernetesTeamServiceEnabled(ctx) {
 		return s.k8sService.CreateTeam(ctx, cmd)
@@ -68,9 +64,10 @@ func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) e
 }
 
 func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	if s.isKubernetesTeamServiceEnabled(ctx) {
-		return s.k8sService.SearchTeams(ctx, query)
-	}
+	// TODO enable Kubernetes team service for SearchTeams once the implementation is complete.
+	// if s.isKubernetesTeamServiceEnabled(ctx) {
+	// 	return s.k8sService.SearchTeams(ctx, query)
+	// }
 
 	return s.legacyService.SearchTeams(ctx, query)
 }

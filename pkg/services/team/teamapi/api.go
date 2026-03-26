@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -29,6 +30,8 @@ type TeamAPI struct {
 	logger                   log.Logger
 	features                 featuremgmt.FeatureToggles
 	teamBindingClientFactory teamBindingClientFactory
+	clientConfigProvider     apiserver.DirectRestConfigProvider
+	namespaceMapper          request.NamespaceMapper
 }
 
 func ProvideTeamAPI(
@@ -57,6 +60,8 @@ func ProvideTeamAPI(
 		logger:                   log.New("team-api"),
 		features:                 features,
 		teamBindingClientFactory: &directRestConfigClientFactory{clientConfigProvider: clientConfigProvider},
+		clientConfigProvider:     clientConfigProvider,
+		namespaceMapper:          request.GetNamespaceMapper(cfg),
 	}
 
 	tapi.registerRoutes(routeRegister, acEvaluator)

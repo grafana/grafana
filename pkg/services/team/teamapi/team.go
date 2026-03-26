@@ -1,16 +1,23 @@
 package teamapi
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	claims "github.com/grafana/authlib/types"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
+
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
@@ -168,6 +175,21 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 		page = 1
 	}
 
+	ctx := c.Req.Context()
+	shouldRedirect := openfeature.NewDefaultClient().Boolean(
+		ctx,
+		featuremgmt.FlagKubernetesTeamsRedirect,
+		false,
+		openfeature.TransactionContext(ctx),
+	)
+
+	// The IAM searchTeams endpoint doesn't support name or teamId filters.
+	// Fall through to legacy when those are set.
+	hasUnsupportedFilters := c.Query("name") != "" || len(c.QueryStrings("teamId")) > 0
+	if shouldRedirect && !hasUnsupportedFilters {
+		return tapi.searchTeamsViaK8s(c, page, perPage)
+	}
+
 	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
 	if err != nil {
 		return response.Err(err)
@@ -183,16 +205,15 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 	}
 
 	query := team.SearchTeamsQuery{
-		OrgID:             c.GetOrgID(),
-		Query:             c.Query("query"),
-		Name:              c.Query("name"),
-		TeamIds:           queryTeamIDs,
-		Page:              page,
-		Limit:             perPage,
-		SignedInUser:      c.SignedInUser,
-		HiddenUsers:       tapi.cfg.HiddenUsers,
-		SortOpts:          sortOpts,
-		WithAccessControl: true,
+		OrgID:        c.GetOrgID(),
+		Query:        c.Query("query"),
+		Name:         c.Query("name"),
+		TeamIds:      queryTeamIDs,
+		Page:         page,
+		Limit:        perPage,
+		SignedInUser: c.SignedInUser,
+		HiddenUsers:  tapi.cfg.HiddenUsers,
+		SortOpts:     sortOpts,
 	}
 
 	queryResult, err := tapi.teamService.SearchTeams(c.Req.Context(), &query)
@@ -203,17 +224,13 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 	teamIDs := map[string]bool{}
 	for _, team := range queryResult.Teams {
 		team.AvatarURL = dtos.GetGravatarUrlWithDefault(tapi.cfg, team.Email, team.Name)
-		if team.ID != 0 {
-			teamIDs[strconv.FormatInt(team.ID, 10)] = true
-		}
+		teamIDs[strconv.FormatInt(team.ID, 10)] = true
 	}
 
-	if len(teamIDs) > 0 {
-		metadata := tapi.getMultiAccessControlMetadata(c, "teams:id:", teamIDs)
-		if len(metadata) > 0 {
-			for _, team := range queryResult.Teams {
-				team.AccessControl = metadata[strconv.FormatInt(team.ID, 10)]
-			}
+	metadata := tapi.getMultiAccessControlMetadata(c, "teams:id:", teamIDs)
+	if len(metadata) > 0 {
+		for _, team := range queryResult.Teams {
+			team.AccessControl = metadata[strconv.FormatInt(team.ID, 10)]
 		}
 	}
 
@@ -221,6 +238,65 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 	queryResult.PerPage = perPage
 
 	return response.JSON(http.StatusOK, queryResult)
+}
+
+func (tapi *TeamAPI) searchTeamsViaK8s(c *contextmodel.ReqContext, page, perPage int) response.Response {
+	namespace := tapi.namespaceMapper(c.GetOrgID())
+
+	cfg := tapi.clientConfigProvider.GetDirectRestConfig(c)
+	cfg = dynamic.ConfigFor(cfg)
+	cfg.GroupVersion = &iamv0alpha1.GroupVersion
+	restClient, err := rest.RESTClientFor(cfg)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to create REST client", err)
+	}
+
+	req := restClient.Get().
+		AbsPath("apis", iamv0alpha1.APIGroup, iamv0alpha1.APIVersion, "namespaces", namespace, "searchTeams").
+		Param("accesscontrol", "true")
+
+	if query := c.Query("query"); query != "" {
+		req = req.Param("query", query)
+	}
+	if perPage > 0 {
+		req = req.Param("limit", strconv.Itoa(perPage))
+	}
+	if page > 0 {
+		req = req.Param("page", strconv.Itoa(page))
+	}
+
+	result := req.Do(c.Req.Context())
+	if err := result.Error(); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to search Teams", err)
+	}
+
+	body, _ := result.Raw()
+
+	var searchResp iamv0alpha1.GetSearchTeamsResponse
+	if err := json.Unmarshal(body, &searchResp); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to parse search response", err)
+	}
+
+	teams := make([]*team.TeamDTO, 0, len(searchResp.Hits))
+	for _, hit := range searchResp.Hits {
+		teams = append(teams, &team.TeamDTO{
+			UID:           hit.Name,
+			OrgID:         c.GetOrgID(),
+			Name:          hit.Title,
+			Email:         hit.Email,
+			AvatarURL:     dtos.GetGravatarUrlWithDefault(tapi.cfg, hit.Email, hit.Title),
+			IsProvisioned: hit.Provisioned,
+			ExternalUID:   hit.ExternalUID,
+			AccessControl: hit.AccessControl,
+		})
+	}
+
+	return response.JSON(http.StatusOK, team.SearchTeamQueryResult{
+		TotalCount: searchResp.TotalHits,
+		Teams:      teams,
+		Page:       page,
+		PerPage:    perPage,
+	})
 }
 
 // swagger:route GET /teams/{team_id} teams getTeamByID
