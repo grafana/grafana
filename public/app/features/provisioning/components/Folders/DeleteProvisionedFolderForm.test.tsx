@@ -16,13 +16,6 @@ import {
 import { DeleteProvisionedFolderForm } from './DeleteProvisionedFolderForm';
 
 // Mock dependencies
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppEvents: jest.fn(() => ({
-    publish: jest.fn(),
-  })),
-}));
-
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => ({
   useNavigate: () => mockNavigate,

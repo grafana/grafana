@@ -357,6 +357,7 @@ var (
 				{Action: accesscontrol.ActionAlertingReceiversPermissionsWrite, Scope: models.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversReadSecrets, Scope: models.ScopeReceiversAll},
 				{Action: accesscontrol.ActionAlertingReceiversUpdateProtected, Scope: models.ScopeReceiversAll},
+				{Action: accesscontrol.ActionAlertingNotificationSystemStatus},
 				{Action: accesscontrol.ActionAlertingRoutesPermissionsRead, Scope: models.ScopeRoutesAll},
 				{Action: accesscontrol.ActionAlertingRoutesPermissionsWrite, Scope: models.ScopeRoutesAll},
 			}),

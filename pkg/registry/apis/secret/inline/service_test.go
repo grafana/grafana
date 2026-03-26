@@ -143,7 +143,9 @@ func TestProvideInlineSecureValueService(t *testing.T) {
 			Name:       "test-resource",
 		}
 
-		name, err := inlineService.CreateInline(t.Context(), owner, common.NewSecretValue("test-value"))
+		desc := "custom desc"
+
+		name, err := inlineService.CreateInline(t.Context(), owner, common.NewSecretValue("test-value"), &desc)
 		require.NoError(t, err)
 		require.Equal(t, "test-value", name)
 

@@ -6,7 +6,7 @@ import (
 )
 
 receiverKind: {
-	kind: "Receiver"
+	kind:       "Receiver"
 	pluralName: "Receivers"
 }
 
@@ -66,17 +66,17 @@ receiverv1beta1: receiverKind & {
 }
 
 CreateReceiverTestRequestBody: {
-		integration: v0alpha1.#Integration
-		alert: #Alert
+	integration: v0alpha1.#Integration
+	alert:       #Alert
 }
 
 CreateReceiverTestRequestBodyV1beta1: {
-		integration: v1beta1.#Integration
-		alert: #Alert
+	integration: v1beta1.#Integration
+	alert:       #Alert
 }
 
 CreateReceiverTestResponse: {
-	status: "success" | "failure"
+	status:   "success" | "failure"
 	duration: string
-	error?: string
+	error?:   string
 }
