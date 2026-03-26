@@ -2,8 +2,11 @@ package apistore
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -100,6 +103,25 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		}
 
 		delete(previous, k)
+	}
+
+	// Replace the secure values with resolved names
+	// This avoids exposing the raw value in the last-applied-configuration annotation from kubectl
+	lastAppliedConfig := obj.GetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig)
+	if len(lastAppliedConfig) > 0 {
+		raw := []byte(lastAppliedConfig)
+		cfg := &unstructured.Unstructured{}
+		err = json.Unmarshal(raw, cfg)
+		if err == nil {
+			cfg.Object["secure"] = secure
+			raw, err = cfg.MarshalJSON()
+		}
+		if err == nil {
+			lastAppliedConfig = string(raw)
+		} else {
+			lastAppliedConfig = ""
+		}
+		obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, lastAppliedConfig)
 	}
 
 	// Keep all previous values that were not referenced in the update
