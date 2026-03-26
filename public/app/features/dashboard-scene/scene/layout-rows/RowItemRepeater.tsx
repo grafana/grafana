@@ -1,17 +1,12 @@
 import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
-import {
-  LocalValueVariable,
-  MultiValueVariable,
-  sceneGraph,
-  SceneVariableSet,
-  VariableValueSingle,
-} from '@grafana/scenes';
+import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
 import { getCloneKey, getRepeatVariableValueSet } from '../../utils/clone';
+import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { getSectionBaseVariables } from '../../variables/utils';
 
@@ -159,27 +154,4 @@ function getPrevRepeatValues(mainRow: RowItem, varName: string): VariableValueSi
   }
 
   return values;
-}
-
-function getRepeatLocalVariableValue(row: RowItem, varName: string): VariableValueSingle | undefined {
-  const variableSet = row.state.$variables;
-  if (variableSet instanceof SceneVariableSet) {
-    const localVariable = variableSet.state.variables.find(
-      (variable) => variable instanceof LocalValueVariable && variable.state.name === varName
-    );
-    if (localVariable instanceof LocalValueVariable) {
-      const localValue = localVariable.getValue();
-      if (localValue != null && !Array.isArray(localValue)) {
-        return localValue;
-      }
-      return undefined;
-    }
-  }
-
-  const value = sceneGraph.lookupVariable(varName, row)?.getValue();
-  if (value != null && !Array.isArray(value)) {
-    return value;
-  }
-
-  return undefined;
 }
