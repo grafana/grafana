@@ -7,27 +7,20 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
-	t.Skip("Skipping incremental sync git quota test (flaky)")
-	testutil.SkipIntegrationTestInShortMode(t)
+	helper := sharedGitHelper(t)
 
 	// ─── Skips creates when the repository is at its resource quota ──────────
 	t.Run("skips creates when at quota", func(t *testing.T) {
-		// Allow exactly 2 resources: no folder (target=instance), so the limit
-		// is hit after the 2 initial dashboards.
-		helper := gitcommon.RunGrafanaWithGitServer(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 2
-		})
+		helper.CleanupAllResources(t, context.Background())
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
 		ctx := context.Background()
 
 		const repo = "incr-quota-blocks-repo"
-		// No write workflow needed — we push directly via the local git repo.
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
 			"dashboard1.json": gitcommon.DashboardJSON("incr-quota-dash-001", "Dashboard One", 1),
 			"dashboard2.json": gitcommon.DashboardJSON("incr-quota-dash-002", "Dashboard Two", 1),
@@ -76,14 +69,11 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 	// ─── Delete-and-create in the same incremental window respects priority ──
 	t.Run("delete and create in same incremental window respects deletion-first priority", func(t *testing.T) {
-		// Limit = 1, so after the initial dashboard we are at full capacity.
-		helper := gitcommon.RunGrafanaWithGitServer(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 1
-		})
+		helper.CleanupAllResources(t, context.Background())
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
 		ctx := context.Background()
 
 		const repo = "incr-quota-swap-repo"
-		// Push directly via local git — no write workflow needed for this test.
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
 			"dashboard1.json": gitcommon.DashboardJSON("incr-swap-dash-001", "Dashboard One", 1),
 		})
@@ -93,8 +83,6 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaReached)
 
 		// Commit A — remove dashboard1.json from the git tree.
-		// The write API would also work for a delete, but using the local repo
-		// keeps the setup consistent with the create below.
 		require.NoError(t, local.DeleteFile("dashboard1.json"))
 		_, err := local.Git("add", ".")
 		require.NoError(t, err)
@@ -103,7 +91,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 		_, err = local.Git("push", "origin", "main")
 		require.NoError(t, err)
 
-		// Commit B — add dashboard2.json.  The write API would reject this while
+		// Commit B — add dashboard2.json. The write API would reject this while
 		// dashboard1 is still in Grafana's database (quota still 1/1 from
 		// Grafana's perspective until the deletion is synced), so we push
 		// directly to git and let the incremental sync sort it out.
@@ -139,13 +127,11 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 	// ─── Delete releases a slot for the *next* incremental sync ──────────────
 	t.Run("delete in one incremental sync releases quota for a subsequent sync", func(t *testing.T) {
-		helper := gitcommon.RunGrafanaWithGitServer(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 2
-		})
+		helper.CleanupAllResources(t, context.Background())
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
 		ctx := context.Background()
 
 		const repo = "incr-quota-release-repo"
-		// No write workflow needed — changes are committed directly to the local repo.
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
 			"dashboard1.json": gitcommon.DashboardJSON("incr-rel-dash-001", "Dashboard One", 1),
 			"dashboard2.json": gitcommon.DashboardJSON("incr-rel-dash-002", "Dashboard Two", 1),
@@ -187,11 +173,10 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 	// ─── Folder+dashboard pair skipped when at quota ───────────────
 	t.Run("folder and its dashboard creation are skipped when at quota", func(t *testing.T) {
+		helper.CleanupAllResources(t, context.Background())
 		// quota=3 accounts for exactly: 1 folder + 2 dashboards from the initial
 		// setup, so the repo starts at capacity.
-		helper := gitcommon.RunGrafanaWithGitServer(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 3
-		})
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 3})
 		ctx := context.Background()
 
 		const repo = "incr-quota-folder-block-repo"
@@ -243,10 +228,9 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 	// ─── Delete folder's last dashboard: orphaned folder cleaned up ───────────
 	t.Run("deleting folder's only dashboard releases quota and cleans up orphaned folder", func(t *testing.T) {
+		helper.CleanupAllResources(t, context.Background())
 		// quota=3: 1 folder (folder1) + 1 subfolder dashboard + 1 root dashboard = 3/3.
-		helper := gitcommon.RunGrafanaWithGitServer(t, func(opts *testinfra.GrafanaOpts) {
-			opts.ProvisioningMaxResourcesPerRepository = 3
-		})
+		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 3})
 		ctx := context.Background()
 
 		const repo = "incr-quota-folder-cleanup-repo"
@@ -281,18 +265,17 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 
 	// ─── Unlimited quota never blocks incremental creates ─────────────────────
 	t.Run("unlimited quota does not block incremental creates", func(t *testing.T) {
-		// Default — no quota limit configured (0 = unlimited).
-		helper := gitcommon.RunGrafanaWithGitServer(t)
+		helper.CleanupAllResources(t, context.Background())
+		helper.SetQuotaStatus(provisioning.QuotaStatus{})
 		ctx := context.Background()
 
 		const repo = "incr-quota-unlimited-repo"
-		// No write workflow needed — dashboards are committed directly to the local repo.
 		_, local := helper.CreateGitRepo(t, repo, map[string][]byte{
 			"dashboard1.json": gitcommon.DashboardJSON("incr-ulim-dash-001", "Dashboard One", 1),
 		})
 
 		common.SyncAndWaitWithSuccess(t, helper, repo)
-		common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 1)
 
 		// Add three more dashboards as separate git commits pushed to the remote.
 		for i, uid := range []string{"incr-ulim-dash-002", "incr-ulim-dash-003", "incr-ulim-dash-004"} {
@@ -319,7 +302,7 @@ func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {
 			"unlimited quota should allow all creates")
 		require.Empty(t, jobObj.Status.Warnings, "no quota warnings expected with unlimited quota")
 
-		common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 4)
+		gitcommon.RequireRepoDashboardCount(t, helper, ctx, repo, 4)
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonQuotaUnlimited)
 	})
 }

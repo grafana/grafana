@@ -11,15 +11,12 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/nanogit/gittest"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationGitTestEndpoint_EmptyRepository(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 
 	t.Run("test endpoint returns error for empty repository with no branch specified", func(t *testing.T) {
 		remote, user := createEmptyGitRepo(t, helper, "test-empty-repo-no-branch")

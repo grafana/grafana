@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange verifies
@@ -19,9 +18,7 @@ import (
 // path, incremental sync creates the new resource and deletes the old one so
 // no orphan is left behind.
 func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-name-change"
