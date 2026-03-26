@@ -1898,7 +1898,7 @@ func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
 
 	if len(stats) > 0 && stats[0].Count >= int64(quota.Limit) {
 		s.log.FromContext(ctx).Info("Quota exceeded on create", "namespace", nsr.Namespace, "group", nsr.Group, "resource", nsr.Resource, "quota", quota.Limit, "count", stats[0].Count, "stats_resource", stats[0].Resource)
-		if s.quotasConfig.EnforceQuotas {
+		if s.quotasConfig.ShouldEnforce(nsr.Group, nsr.Resource) {
 			return QuotaExceededError{
 				Resource:       nsr.Resource,
 				Used:           stats[0].Count,

@@ -82,6 +82,17 @@ func isWarningError(err error) bool {
 	return ok
 }
 
+// isNonFailingWarning reports whether the warning represents an informational
+// issue where the underlying resource operation still succeeded (e.g. missing
+// or invalid folder metadata).
+func isNonFailingWarning(err error) bool {
+	if err == nil {
+		return false
+	}
+	return errors.Is(err, resources.ErrMissingFolderMetadata) ||
+		errors.Is(err, resources.ErrInvalidFolderMetadata)
+}
+
 // JobResourceResult represents the result of a resource operation in a job.
 type JobResourceResult struct {
 	name         string

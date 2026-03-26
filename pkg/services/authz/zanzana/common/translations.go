@@ -5,7 +5,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
-	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 

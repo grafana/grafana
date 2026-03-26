@@ -54,6 +54,13 @@ export function useDefaultValues({
     };
   }
 
+  if (status === RepoViewStatus.Orphaned) {
+    return {
+      values: null,
+      status: RepoViewStatus.Orphaned,
+    };
+  }
+
   if (!repository) {
     return {
       values: null,

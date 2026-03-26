@@ -409,3 +409,34 @@ func TestDeleteTenant_MultipleGroupResources(t *testing.T) {
 	_, err = pds.Get(t.Context(), "tenant-1")
 	assert.ErrorIs(t, err, ErrNotFound)
 }
+
+// TestRunDeletionPass_DeletesExpiredForceRecord verifies that the deleter can
+// delete tenant data and remove the pending-delete record even when Force=true.
+func TestRunDeletionPass_DeletesExpiredForceRecord(t *testing.T) {
+	td, ds, pds := newTestTenantDeleter(t, false)
+
+	saveTestResource(t, ds, "tenant-1", "apps", "dashboards", "dash1", 100, nil)
+
+	require.NoError(t, pds.Upsert(t.Context(), "tenant-1", PendingDeleteRecord{
+		DeleteAfter:      pastTime(),
+		LabelingComplete: true,
+		Force:            true,
+	}))
+
+	td.runDeletionPass(t.Context())
+
+	listKey := ListRequestKey{Group: "apps", Resource: "dashboards", Namespace: "tenant-1"}
+	prefix := listKey.Prefix()
+	var count int
+	for _, err := range ds.kv.Keys(t.Context(), dataSection, ListOptions{
+		StartKey: prefix,
+		EndKey:   PrefixRangeEnd(prefix),
+	}) {
+		require.NoError(t, err)
+		count++
+	}
+	assert.Equal(t, 0, count, "force record resources should be deleted when expired")
+
+	_, err := pds.Get(t.Context(), "tenant-1")
+	assert.ErrorIs(t, err, ErrNotFound)
+}

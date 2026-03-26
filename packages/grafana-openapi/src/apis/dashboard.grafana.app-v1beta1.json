@@ -871,6 +871,11 @@
           {
             "group": "dashboard.grafana.app",
             "kind": "Dashboard",
+            "version": "v1"
+          },
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "Dashboard",
             "version": "v1beta1"
           }
         ]
@@ -976,6 +981,11 @@
           {
             "group": "dashboard.grafana.app",
             "kind": "DashboardList",
+            "version": "v1"
+          },
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DashboardList",
             "version": "v1beta1"
           }
         ]
@@ -1040,6 +1050,11 @@
           }
         },
         "x-kubernetes-group-version-kind": [
+          {
+            "group": "dashboard.grafana.app",
+            "kind": "DashboardWithAccessInfo",
+            "version": "v1"
+          },
           {
             "group": "dashboard.grafana.app",
             "kind": "DashboardWithAccessInfo",
