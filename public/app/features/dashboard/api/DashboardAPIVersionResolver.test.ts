@@ -39,10 +39,11 @@ describe('DashboardAPIVersionResolver', () => {
 
   describe('resolve', () => {
     it.each([
-      { versions: ['v2', 'v2beta1', 'v1', 'v1beta1'], expected: { v1: 'v1', v2: 'v2' }, desc: 'both stable' },
+      // v2 negotiation is temporarily disabled (#119474) — always resolves to v2beta1
+      { versions: ['v2', 'v2beta1', 'v1', 'v1beta1'], expected: { v1: 'v1', v2: 'v2beta1' }, desc: 'both stable' },
       { versions: ['v2beta1', 'v1beta1'], expected: BETA_FALLBACK, desc: 'beta only' },
       { versions: ['v2beta1', 'v1', 'v1beta1'], expected: { v1: 'v1', v2: 'v2beta1' }, desc: 'v1 stable only' },
-      { versions: ['v2', 'v2beta1', 'v1beta1'], expected: { v1: 'v1beta1', v2: 'v2' }, desc: 'v2 stable only' },
+      { versions: ['v2', 'v2beta1', 'v1beta1'], expected: { v1: 'v1beta1', v2: 'v2beta1' }, desc: 'v2 stable only' },
     ])('should resolve correctly when $desc are available', async ({ versions, expected }) => {
       mockDiscoveryResponse(versions);
 
@@ -69,7 +70,8 @@ describe('DashboardAPIVersionResolver', () => {
       expect(await dashboardAPIVersionResolver.resolve()).toEqual(BETA_FALLBACK);
 
       mockDiscoveryResponse(['v2', 'v1']);
-      expect(await dashboardAPIVersionResolver.resolve()).toEqual({ v1: 'v1', v2: 'v2' });
+      // v2 negotiation temporarily disabled (#119474)
+      expect(await dashboardAPIVersionResolver.resolve()).toEqual({ v1: 'v1', v2: 'v2beta1' });
     });
 
     it('should cache and deduplicate concurrent resolve calls', async () => {
@@ -81,7 +83,7 @@ describe('DashboardAPIVersionResolver', () => {
         dashboardAPIVersionResolver.resolve(),
       ]);
 
-      const expected = { v1: 'v1', v2: 'v2' };
+      const expected = { v1: 'v1', v2: 'v2beta1' };
       expect(r1).toEqual(expected);
       expect(r2).toEqual(expected);
       expect(r3).toEqual(expected);
@@ -143,7 +145,8 @@ describe('DashboardAPIVersionResolver', () => {
       mockDiscoveryResponse(['v2', 'v1']);
       await dashboardAPIVersionResolver.resolve();
       expect(dashboardAPIVersionResolver.getV1()).toBe('v1');
-      expect(dashboardAPIVersionResolver.getV2()).toBe('v2');
+      // v2 negotiation temporarily disabled (#119474)
+      expect(dashboardAPIVersionResolver.getV2()).toBe('v2beta1');
     });
   });
 });

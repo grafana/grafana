@@ -75,7 +75,10 @@ class DashboardAPIVersionResolver {
     const availableVersions = new Set(group.versions.map((v) => v.version));
 
     const v1: DashboardV1Version = availableVersions.has('v1') ? 'v1' : BETA_V1;
-    const v2: DashboardV2Version = availableVersions.has('v2') ? 'v2' : BETA_V2;
+    // TODO: Enable v2 negotiation once the frontend compat layer lands (#119474).
+    // The v2 API has a breaking change in TransformationKind shape that the frontend
+    // cannot handle yet. Until then, always use v2beta1.
+    const v2: DashboardV2Version = BETA_V2;
 
     debugLog(`Version negotiation: v1=${v1}, v2=${v2} (available: ${Array.from(availableVersions).join(', ')})`);
 
