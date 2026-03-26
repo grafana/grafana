@@ -390,7 +390,7 @@ func getNameBeforeLastDash(name string) string {
 // The values object is mutated to also include the helper property as `h`.
 func (h *ProvisioningTestHelper) RenderObject(t *testing.T, filePath string, values map[string]any) *unstructured.Unstructured {
 	t.Helper()
-	file := h.LoadFile(filePath)
+	file := readTestFile(t, filePath)
 
 	if values == nil {
 		values = make(map[string]any)
@@ -415,7 +415,7 @@ func (h *ProvisioningTestHelper) CopyToProvisioningPath(t *testing.T, from, to s
 	err := os.MkdirAll(path.Dir(fullPath), 0o750)
 	require.NoError(t, err, "failed to create directories for provisioning path")
 
-	file := h.LoadFile(from)
+	file := readTestFile(t, from)
 	err = os.WriteFile(fullPath, file, 0o600)
 	require.NoError(t, err, "failed to write file to provisioning path")
 }
@@ -430,6 +430,17 @@ func (h *ProvisioningTestHelper) WriteToProvisioningPath(t *testing.T, name stri
 	require.NoError(t, err, "failed to create directories for provisioning path")
 	err = os.WriteFile(fullPath, data, 0o600)
 	require.NoError(t, err, "failed to write file to provisioning path")
+}
+
+// readTestFile reads a file using the caller's testing.T instead of the shared
+// K8sTestHelper's stored t. This avoids goroutine panics when the shared
+// helper's t belongs to an already-completed test.
+func readTestFile(t *testing.T, fpath string) []byte {
+	t.Helper()
+	raw, err := os.ReadFile(fpath) //nolint:gosec
+	require.NoError(t, err, "failed to read test file %s", fpath)
+	require.NotEmpty(t, raw, "test file %s is empty", fpath)
+	return raw
 }
 
 // CleanProvisioningDir removes all entries from the provisioning directory
@@ -669,7 +680,7 @@ func (h *ProvisioningTestHelper) CreateRepo(t *testing.T, repo TestRepo) {
 			fullPath := path.Join(repoPath, to)
 			err := os.MkdirAll(path.Dir(fullPath), 0o750)
 			require.NoError(t, err, "failed to create directories for custom path")
-			file := h.LoadFile(from)
+			file := readTestFile(t, from)
 			err = os.WriteFile(fullPath, file, 0o600)
 			require.NoError(t, err, "failed to write file to custom path")
 		} else {
