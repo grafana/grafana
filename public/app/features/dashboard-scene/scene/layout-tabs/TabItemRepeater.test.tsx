@@ -3,13 +3,15 @@ import { render } from 'test/test-utils';
 
 import { VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import {
   CustomVariable,
   LocalValueVariable,
+  MultiValueVariable,
   SceneTimeRange,
   SceneVariableSet,
   TestVariable,
+  UrlSyncManager,
   VariableValueOption,
   PanelBuilders,
 } from '@grafana/scenes';
@@ -22,6 +24,7 @@ import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 
 import { TabItem } from './TabItem';
+import { performTabRepeats } from './TabItemRepeater';
 import { TabsLayoutManager } from './TabsLayoutManager';
 
 jest.mock('@grafana/runtime', () => ({
@@ -36,6 +39,10 @@ setPluginImportUtils({
 });
 
 describe('TabItemRepeater', () => {
+  beforeEach(() => {
+    locationService.replace({ search: '' });
+  });
+
   describe('Given scene with variable with 3 values', () => {
     it('Should repeat tab', async () => {
       const { tabToRepeat } = renderScene({ variableQueryTime: 0 });
@@ -167,6 +174,63 @@ describe('TabItemRepeater', () => {
         expect(variables![0].state.name).toBe('server');
         expect(variables![0].getValue()).toBe('row-scope');
       }
+    });
+  });
+
+  describe('URL sync for delayed repeats', () => {
+    it('hydrates source and clone section variable values from URL', () => {
+      locationService.replace({
+        search: 'var-section=blah&var-section-2=abc&var-section-3=de&var-section-4=moo',
+      });
+
+      const sectionVariable = new CustomVariable({
+        name: 'section',
+        query: 'default',
+        value: 'default',
+        text: 'default',
+      });
+      const repeatByVariable = new TestVariable({
+        name: 'server',
+        query: 'A.*',
+        value: ['A1', 'B1', 'C1', 'D1'],
+        text: ['A', 'B', 'C', 'D'],
+        isMulti: true,
+        includeAll: true,
+        optionsToReturn: [
+          { label: 'A', value: 'A1' },
+          { label: 'B', value: 'B1' },
+          { label: 'C', value: 'C1' },
+          { label: 'D', value: 'D1' },
+        ],
+      });
+      const tab = new TabItem({
+        key: 'tab-1',
+        title: 'Tab',
+        repeatByVariable: 'server',
+        $variables: new SceneVariableSet({ variables: [sectionVariable] }),
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+      const scene = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        $variables: new SceneVariableSet({ variables: [repeatByVariable] }),
+        body: new TabsLayoutManager({ tabs: [tab] }),
+      });
+      const urlSyncManager = new UrlSyncManager();
+
+      // Simulate refresh order: URL sync is initialized before repeats are built.
+      urlSyncManager.initSync(scene);
+      performTabRepeats(repeatByVariable as unknown as MultiValueVariable, tab, false);
+
+      const repeatedTabs = [tab, ...(tab.state.repeatedTabs ?? [])];
+      const sectionValues = repeatedTabs.map((repeatedTab) => {
+        const sectionVar = repeatedTab.state.$variables?.state.variables.find(
+          (variable) => variable instanceof CustomVariable
+        ) as CustomVariable;
+        return sectionVar.getValue();
+      });
+
+      expect(sectionValues).toEqual(['blah', 'abc', 'de', 'moo']);
+      expect(locationService.getLocation().search).toContain('var-section=blah');
     });
   });
 });

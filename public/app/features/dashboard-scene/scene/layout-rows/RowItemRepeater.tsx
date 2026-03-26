@@ -1,14 +1,20 @@
 import { isEqual } from 'lodash';
 import { useEffect } from 'react';
 
-import { MultiValueVariable, sceneGraph, VariableValueSingle } from '@grafana/scenes';
+import {
+  MultiValueVariable,
+  NewSceneObjectAddedEvent,
+  SceneVariableSet,
+  sceneGraph,
+  VariableValueSingle,
+} from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 
 import { DashboardStateChangedEvent } from '../../edit-pane/shared';
-import { getCloneKey, getRepeatVariableValueSet } from '../../utils/clone';
+import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
 import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
-import { getSectionBaseVariables } from '../../variables/utils';
+import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../../variables/utils';
 
 import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
@@ -108,14 +114,26 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
         });
 
     const layout = isSourceRow ? row.getLayout() : row.getLayout().cloneLayout(rowCloneKey, false);
-
-    rowClone.setState({
-      $variables: getRepeatVariableValueSet(
+    const sourceVariables = row.state.$variables;
+    const localSet = getLocalVariableValueSet(variable, variableValues[rowIndex], variableTexts[rowIndex]);
+    const localVariables = localSet.state.variables.map((v) => v.clone());
+    let repeatedVariableSet: SceneVariableSet;
+    if (isSourceRow && sourceVariables instanceof SceneVariableSet) {
+      sourceVariables.setState({
+        variables: [...filterSectionRepeatLocalVariables(sourceVariables.state.variables, sourceVariables), ...localVariables],
+      });
+      repeatedVariableSet = sourceVariables;
+    } else {
+      repeatedVariableSet = getRepeatVariableValueSet(
         variable,
         variableValues[rowIndex],
         variableTexts[rowIndex],
         baseSectionVariables
-      ),
+      );
+    }
+
+    rowClone.setState({
+      $variables: repeatedVariableSet,
       layout,
     });
 
@@ -128,6 +146,8 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
   }
 
   row.setState({ repeatedRows: clonedRows });
+  // Rehydrate from a stable parent subtree to keep duplicate var-* key mapping consistent.
+  row.publishEvent(new NewSceneObjectAddedEvent(row.parent ?? row), true);
 }
 
 /**

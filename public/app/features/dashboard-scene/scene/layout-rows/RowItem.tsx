@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { logWarning } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
+  NewSceneObjectAddedEvent,
   sceneGraph,
   SceneObject,
   SceneObjectBase,
@@ -132,9 +133,11 @@ export class RowItem
       source: this,
       perform: () => {
         this.setState({ layout });
+        this.publishEvent(new NewSceneObjectAddedEvent(this), true);
       },
       undo: () => {
         this.setState({ layout: currentLayout });
+        this.publishEvent(new NewSceneObjectAddedEvent(this), true);
       },
     });
   }
