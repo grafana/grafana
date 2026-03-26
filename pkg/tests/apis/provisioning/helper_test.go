@@ -22,6 +22,12 @@ func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
 	return helper
 }
 
+// SharedHelper returns a clean provisioning test helper with a mocked GitHub client.
+// Exported for use by subpackages (e.g., v1beta1 tests).
+func SharedHelper(t *testing.T) *common.ProvisioningTestHelper {
+	return sharedHelper(t)
+}
+
 func TestMain(m *testing.M) {
 	env.RunTestMain(m)
 }

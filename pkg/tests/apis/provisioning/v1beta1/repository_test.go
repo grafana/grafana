@@ -11,11 +11,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	provisioningtests "github.com/grafana/grafana/pkg/tests/apis/provisioning"
 )
 
 // TestIntegrationV1Beta1RepositoryCRUD tests basic CRUD operations on the v1beta1 Repository resource
 func TestIntegrationV1Beta1RepositoryCRUD(t *testing.T) {
-	helper := sharedHelper(t)
+	helper := provisioningtests.SharedHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-v1beta1-repo"
