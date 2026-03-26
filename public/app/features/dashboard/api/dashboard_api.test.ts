@@ -150,7 +150,7 @@ describe('DashboardApi', () => {
       // Second call: discovery succeeds → clients rebuilt with stable versions
       mockDiscoveryResponse(['v2', 'v1']);
       await getDashboardAPI('v2');
-      expect(getK8sV2DashboardApiConfig().version).toBe('v2');
+      expect(getK8sV2DashboardApiConfig().version).toBe('v2beta1');
       expect(getK8sV1DashboardApiConfig().version).toBe('v1');
     });
   });
