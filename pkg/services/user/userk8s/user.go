@@ -66,11 +66,13 @@ func (s *UserK8sService) getClient(ctx context.Context, namespace string) (dynam
 }
 
 func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	orgID := cmd.OrgID
-	if requester, err := identity.GetRequester(ctx); err == nil {
-		orgID = requester.GetOrgID()
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		s.logger.Error("failed to get requester from context", "err", err)
+		return nil, err
 	}
 
+	orgID := requester.GetOrgID()
 	namespace := s.namespaceMapper(orgID)
 
 	client, err := s.getClient(ctx, namespace)

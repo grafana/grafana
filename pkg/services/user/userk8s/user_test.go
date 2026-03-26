@@ -35,12 +35,12 @@ func TestUserK8sService_Create(t *testing.T) {
 		expectUser     *user.User
 	}{
 		{
-			name: "successfully creates a user",
+			name:           "successfully creates a user",
+			requesterOrgID: 1,
 			cmd: &user.CreateUserCommand{
 				Login: "jdoe",
 				Email: "jdoe@example.com",
 				Name:  "John Doe",
-				OrgID: 1,
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -73,11 +73,11 @@ func TestUserK8sService_Create(t *testing.T) {
 			},
 		},
 		{
-			name: "maps admin, disabled, emailVerified, provisioned and role fields",
+			name:           "maps admin, disabled, emailVerified, provisioned and role fields",
+			requesterOrgID: 2,
 			cmd: &user.CreateUserCommand{
 				Login:          "admin-user",
 				Email:          "admin@example.com",
-				OrgID:          2,
 				IsAdmin:        true,
 				IsDisabled:     false,
 				EmailVerified:  true,
@@ -117,11 +117,11 @@ func TestUserK8sService_Create(t *testing.T) {
 			},
 		},
 		{
-			name: "uses provided UID when set",
+			name:           "uses provided UID when set",
+			requesterOrgID: 1,
 			cmd: &user.CreateUserCommand{
 				UID:   "explicit-uid",
 				Login: "user2",
-				OrgID: 1,
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				var body map[string]any
@@ -150,10 +150,10 @@ func TestUserK8sService_Create(t *testing.T) {
 			},
 		},
 		{
-			name: "email is empty then email gets the login value",
+			name:           "email is empty then email gets the login value",
+			requesterOrgID: 1,
 			cmd: &user.CreateUserCommand{
 				Login: "jdoe",
-				OrgID: 1,
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				var body map[string]any
@@ -186,11 +186,11 @@ func TestUserK8sService_Create(t *testing.T) {
 			},
 		},
 		{
-			name: "role is empty then it is set to autoAssignOrgRole",
+			name:           "role is empty then it is set to autoAssignOrgRole",
+			requesterOrgID: 1,
 			cmd: &user.CreateUserCommand{
 				Login: "jdoe",
 				Email: "jdoe@example.com",
-				OrgID: 1,
 			},
 			cfg: &setting.Cfg{AutoAssignOrgRole: "Viewer"},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
@@ -225,38 +225,12 @@ func TestUserK8sService_Create(t *testing.T) {
 			},
 		},
 		{
-			name:           "orgId is empty then it is extracted from the requester",
-			requesterOrgID: 5,
+			name: "fails if there is no orgId in the context",
 			cmd: &user.CreateUserCommand{
 				Login: "jdoe",
 				Email: "jdoe@example.com",
 			},
-			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				assert.Contains(t, r.URL.Path, "org-5")
-
-				resp := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "some-uid",
-						Namespace: "org-5",
-					},
-					Spec: v0alpha1.UserSpec{
-						Login: "jdoe",
-						Email: "jdoe@example.com",
-					},
-				}
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(resp)
-			},
-			expectUser: &user.User{
-				UID:   "some-uid",
-				OrgID: 5,
-				Login: "jdoe",
-				Email: "jdoe@example.com",
-			},
+			expectErr: true,
 		},
 		{
 			name: "propagates error from k8s client",
