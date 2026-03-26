@@ -140,9 +140,8 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			readResponse: &resourcepb.ReadResponse{
 				Error: &resourcepb.ErrorResult{Code: 500, Message: "internal server error"},
 			},
-			legacyProvError: fmt.Errorf("generic error"),
-			checkRan:        true,
-			expectedError:   true,
+			checkRan:      true,
+			expectedError: true,
 		},
 		{
 			name: "should allow deletion of non-provisioned dashboard",

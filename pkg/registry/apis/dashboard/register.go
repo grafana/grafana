@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"net/http"
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -367,6 +368,9 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 			return apierrors.NewBadRequest(dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 		}
 		return nil
+	}
+	if readResp.Error.Code != http.StatusNotFound {
+		return fmt.Errorf("delete hook failed to check if dashboard is provisioned: %s", readResp.Error.Message)
 	}
 
 	// Fallback to the provisioning service if not found in unified storage
