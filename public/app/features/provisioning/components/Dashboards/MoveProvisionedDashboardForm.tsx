@@ -27,6 +27,7 @@ import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { getTargetFolderPathInRepo } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { joinPath } from '../utils/path';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -92,7 +93,7 @@ export function MoveProvisionedDashboardForm({
       repoName: repository?.name,
       hidePrependSlash: true,
     });
-    const newPath = `${targetFolderPath}${filename}`;
+    const newPath = joinPath(targetFolderPath ?? '', filename ?? '');
     setTargetPath(newPath);
   }, [currentFileData, targetFolder, targetFolderUID, targetFolderTitle, repository]);
 

@@ -588,6 +588,80 @@ describe('applyV1Inputs', () => {
     expect(dsVariable.current?.value).toBe('ds-uid');
   });
 
+  it('handles legacy string datasource format', () => {
+    const dashboard = {
+      title: 'PostgreSQL Database',
+      uid: '000000039',
+      schemaVersion: 19,
+      panels: [
+        {
+          datasource: '${DS_PROMETHEUS}',
+          targets: [{ expr: 'pg_static{instance="$instance"}', refId: 'A' }],
+        },
+        {
+          datasource: '${DS_PROMETHEUS}',
+          targets: [
+            { expr: 'rate(process_cpu_seconds_total[5m])', refId: 'A' },
+            { datasource: '${DS_PROMETHEUS}', expr: 'pg_up', refId: 'B' },
+          ],
+        },
+      ],
+      templating: {
+        list: [
+          {
+            type: 'datasource',
+            name: 'DS_PROMETHEUS',
+            query: 'prometheus',
+            current: { value: '${DS_PROMETHEUS}', text: '${DS_PROMETHEUS}', selected: true },
+          },
+          {
+            type: 'query',
+            name: 'namespace',
+            datasource: '${DS_PROMETHEUS}',
+            query: 'query_result(pg_exporter_last_scrape_duration_seconds)',
+          },
+        ],
+      },
+    } as unknown as Dashboard;
+
+    const inputs: DashboardInputs = {
+      dataSources: [
+        {
+          name: 'DS_PROMETHEUS',
+          label: 'DS_PROMETHEUS',
+          description: '',
+          info: '',
+          value: '',
+          type: InputType.DataSource,
+          pluginId: 'prometheus',
+        },
+      ],
+      constants: [],
+      libraryPanels: [],
+    };
+
+    const form: ImportDashboardDTO = {
+      title: 'PostgreSQL Database',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      dataSources: [{ uid: 'prom-uid', type: 'prometheus', name: 'grafanacloud-prom' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, inputs, form);
+
+    expect(result.panels?.[0].datasource?.uid).toBe('prom-uid');
+    expect(result.panels?.[1].datasource?.uid).toBe('prom-uid');
+
+    const panel2 = result.panels?.[1] as PanelWithTargets;
+    expect(panel2.targets?.[1].datasource?.uid).toBe('prom-uid');
+
+    const dsVariable = result.templating?.list?.[0] as DatasourceVariableModel;
+    expect(dsVariable.current?.value).toBe('prom-uid');
+  });
+
   it('replaces constant variable query, current, and options with user-provided values', () => {
     const dashboard = {
       title: 'old',
