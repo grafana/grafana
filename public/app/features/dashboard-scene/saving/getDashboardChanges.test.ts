@@ -1,8 +1,9 @@
 import { AdHocVariableFilter, AdHocVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Dashboard, VariableModel } from '@grafana/schema';
+import { Spec as DashboardV2Spec, VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { adHocVariableFiltersEqual, getRawDashboardChanges } from './getDashboardChanges';
+import { adHocVariableFiltersEqual, getRawDashboardChanges, getRawDashboardV2Changes } from './getDashboardChanges';
 
 describe('adHocVariableFiltersEqual', () => {
   it('should compare empty filters', () => {
@@ -523,5 +524,77 @@ describe('getDashboardChanges with adHocFilterDefaultValues', () => {
       const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
       expect(savedFilters).toEqual([{ key: 'a', operator: '=', value: '1' }]);
     });
+  });
+});
+
+describe('getRawDashboardV2Changes - custom variable query persistence', () => {
+  const makeV2Dashboard = (query: string, currentValue: string): DashboardV2Spec => ({
+    title: 'Dashboard V2',
+    description: '',
+    cursorSync: 'Crosshair',
+    editable: true,
+    links: [],
+    tags: [],
+    preload: false,
+    liveNow: false,
+    timeSettings: {
+      from: 'now-6h',
+      to: 'now',
+      autoRefresh: '5m',
+      autoRefreshIntervals: [],
+      hideTimepicker: false,
+      fiscalYearStartMonth: 0,
+    },
+    variables: [],
+    elements: {},
+    annotations: [],
+    layout: {
+      kind: 'RowsLayout',
+      spec: {
+        rows: [
+          {
+            kind: 'RowsLayoutRow',
+            spec: {
+              title: 'Row with vars',
+              collapse: false,
+              layout: { kind: 'GridLayout', spec: { items: [] } },
+              variables: [
+                {
+                  kind: 'CustomVariable',
+                  spec: {
+                    name: 'custom1',
+                    query,
+                    current: { text: currentValue, value: currentValue },
+                    options: [],
+                    multi: false,
+                    includeAll: false,
+                    hide: 'dontHide',
+                    skipUrlSync: false,
+                    allowCustomValue: true,
+                    valuesFormat: 'csv',
+                  },
+                } as VariableKind,
+              ],
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  it('updates CustomVariable query from current when saving variable defaults', () => {
+    const initial = makeV2Dashboard('section', 'section');
+    const changed = makeV2Dashboard('section', 'row1');
+
+    const result = getRawDashboardV2Changes(initial, changed, false, true, false);
+    const row =
+      result.changedSaveModel.layout.kind === 'RowsLayout' ? result.changedSaveModel.layout.spec.rows[0] : undefined;
+    const variable = row?.spec.variables?.[0];
+
+    expect(variable?.kind).toBe('CustomVariable');
+    if (variable?.kind === 'CustomVariable') {
+      expect(variable.spec.current?.value).toBe('row1');
+      expect(variable.spec.query).toBe('row1');
+    }
   });
 });

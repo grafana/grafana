@@ -153,6 +153,29 @@ export function adHocVariableFiltersEqual(filtersA?: AdHocFilterWithLabels[], fi
   return true;
 }
 
+function escapeCsvValue(value: string) {
+  return value.replace(/,/g, '\\,');
+}
+function customVariableQueryFromCurrent(
+  variable: Extract<VariableKind, { kind: 'CustomVariable' }>
+): string | undefined {
+  const current = variable.spec.current;
+  if (!current) {
+    return undefined;
+  }
+  if (variable.spec.valuesFormat === 'json') {
+    const values = Array.isArray(current.value) ? current.value : [current.value];
+    const texts = Array.isArray(current.text) ? current.text : [current.text];
+    const options = values.map((value, i) => ({
+      value: String(value),
+      text: String(texts[i] ?? value),
+    }));
+    return JSON.stringify(options);
+  }
+  const values = Array.isArray(current.value) ? current.value : [current.value];
+  return values.map((v) => escapeCsvValue(String(v))).join(',');
+}
+
 export function applyVariableChangesV2(
   saveModel: DashboardV2Spec,
   originalSaveModel: DashboardV2Spec,
@@ -206,6 +229,14 @@ export function applyVariableChangesV2(
       )
     ) {
       hasVariableValueChanges = true;
+    }
+
+    if (saveVariables && variable.kind === 'CustomVariable' && original.kind === 'CustomVariable') {
+      // CustomVariable runtime options are derived from query, so persist query from current selection.
+      const currentAsQuery = customVariableQueryFromCurrent(variable);
+      if (currentAsQuery !== undefined) {
+        variable.spec.query = currentAsQuery;
+      }
     }
 
     if (!saveVariables) {
