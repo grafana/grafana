@@ -173,10 +173,6 @@ func (b *FolderAPIBuilder) storageForVersion(
 	apiGroupInfo *genericapiserver.APIGroupInfo,
 	opts builder.APIGroupOptions,
 	folders utils.ResourceInfo,
-	newFuncAccess func() runtime.Object,
-	newFuncChildren func() runtime.Object,
-	newFuncCounts func() runtime.Object,
-	newFuncParents func() runtime.Object,
 	folderKind sdkres.Kind,
 ) error {
 	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
@@ -218,28 +214,20 @@ func (b *FolderAPIBuilder) storageForVersion(
 	storage[folders.StoragePath("parents")] = &subParentsREST{
 		getter:  b.storage,
 		parents: b.parents,
-
-		newFunc: newFuncParents,
 	}
 	storage[folders.StoragePath("counts")] = &subCountREST{
 		getter:   b.storage,
 		searcher: b.searcher,
-
-		newFunc: newFuncCounts,
 	}
 	storage[folders.StoragePath("access")] = &subAccessREST{
 		getter:       b.storage,
 		accessClient: b.accessClient,
-
-		newFunc: newFuncAccess,
 	}
 
 	// Adds a path to return children of a given folder
 	storage[folders.StoragePath("children")] = &subChildrenREST{
 		getter: b.storage,
 		lister: b.storage,
-
-		newFunc: newFuncChildren,
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[folders.GroupVersion().Version] = storage
@@ -261,10 +249,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		apiGroupInfo,
 		opts,
 		foldersv1.FolderResourceInfo,
-		func() runtime.Object { return &foldersv1.FolderAccessInfo{} },
-		func() runtime.Object { return &foldersv1.FolderList{} },
-		func() runtime.Object { return &foldersv1.DescendantCounts{} },
-		func() runtime.Object { return &foldersv1.FolderInfoList{} },
 		foldersv1.FolderKind(),
 	); err != nil {
 		return err
@@ -275,10 +259,6 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		apiGroupInfo,
 		opts,
 		foldersv1beta1.FolderResourceInfo,
-		func() runtime.Object { return &foldersv1beta1.FolderAccessInfo{} },
-		func() runtime.Object { return &foldersv1beta1.FolderList{} },
-		func() runtime.Object { return &foldersv1beta1.DescendantCounts{} },
-		func() runtime.Object { return &foldersv1beta1.FolderInfoList{} },
 		foldersv1beta1.FolderKind(),
 	); err != nil {
 		return err
@@ -399,18 +379,17 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 	verb := a.GetOperation()
 	if verb == admission.Create || verb == admission.Update {
 		obj := a.GetObject()
-		switch f := obj.(type) {
-		case *foldersv1beta1.Folder:
-			f.Spec.Title = strings.Trim(f.Spec.Title, " ")
-		default:
-			return fmt.Errorf("obj is not Folder (got %T)", obj)
+		f, ok := obj.(*foldersv1.Folder)
+		if !ok {
+			return fmt.Errorf("obj is not folders.Folder")
 		}
+		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
 		return nil
 	}
 	return nil
 }
 
-func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
 	var obj runtime.Object
 	verb := a.GetOperation()
 
@@ -428,12 +407,9 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		obj = a.GetObject()
 	}
 
-	var f *foldersv1beta1.Folder
-	switch v := obj.(type) {
-	case *foldersv1beta1.Folder:
-		f = v
-	default:
-		return fmt.Errorf("obj is not Folder (got %T)", obj)
+	f, ok := obj.(*foldersv1.Folder)
+	if !ok {
+		return fmt.Errorf("obj is not folders.Folder")
 	}
 
 	switch a.GetOperation() {
@@ -445,12 +421,9 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 	case admission.Delete:
 		return validateOnDelete(ctx, f, b.searcher)
 	case admission.Update:
-		var old *foldersv1beta1.Folder
-		switch v := a.GetOldObject().(type) {
-		case *foldersv1beta1.Folder:
-			old = v
-		default:
-			return fmt.Errorf("old obj is not Folder (got %T)", a.GetOldObject())
+		old, ok := a.GetOldObject().(*foldersv1.Folder)
+		if !ok {
+			return fmt.Errorf("obj is not folders.Folder")
 		}
 		if err := validateOwnerReferencesOnManagedFolder(f, old); err != nil {
 			return err

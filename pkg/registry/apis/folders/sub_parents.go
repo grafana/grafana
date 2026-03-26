@@ -16,15 +16,13 @@ import (
 type subParentsREST struct {
 	getter  rest.Getter
 	parents parentsGetter
-
-	newFunc func() runtime.Object
 }
 
 var _ = rest.Connecter(&subParentsREST{})
 var _ = rest.StorageMetadata(&subParentsREST{})
 
 func (r *subParentsREST) New() runtime.Object {
-	return r.newFunc()
+	return &folders.FolderInfoList{}
 }
 
 func (r *subParentsREST) Destroy() {
@@ -39,7 +37,7 @@ func (r *subParentsREST) ProducesMIMETypes(verb string) []string {
 }
 
 func (r *subParentsREST) ProducesObject(verb string) interface{} {
-	return r.newFunc()
+	return &folders.FolderInfoList{}
 }
 
 func (r *subParentsREST) NewConnectOptions() (runtime.Object, bool, string) {
