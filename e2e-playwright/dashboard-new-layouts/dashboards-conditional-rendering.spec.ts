@@ -19,12 +19,7 @@ test.describe(
   },
   () => {
     test('can hide tab according to variable value', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(
-        page,
-        selectors,
-        'Tab visibility - hide tab by variable',
-        JSON.stringify(V2DashboardWithTabs)
-      );
+      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - hide tab by variable');
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
 
@@ -41,12 +36,7 @@ test.describe(
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
     });
     test('can hide tab according to time range', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(
-        page,
-        selectors,
-        'Tab visibility - hide tab by time range',
-        JSON.stringify(V2DashboardWithTabs)
-      );
+      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - hide tab by time range');
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
 
@@ -65,12 +55,8 @@ test.describe(
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
     });
     test('can show tab according to variable value', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(
-        page,
-        selectors,
-        'Tab visibility - show tab by variable',
-        JSON.stringify(V2DashboardWithTabs)
-      );
+      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - show tab by variable');
+
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
 
@@ -87,12 +73,8 @@ test.describe(
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
     });
     test('can show tab according to time range', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(
-        page,
-        selectors,
-        'Tab visibility - show tab by time range',
-        JSON.stringify(V2DashboardWithTabs)
-      );
+      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - show tab by time range');
+
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
 
@@ -109,12 +91,8 @@ test.describe(
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
     });
     test('should hide tab when all conditional rendering rules are met', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(
-        page,
-        selectors,
-        'Tab visibility - hide tab when all rules are met',
-        JSON.stringify(V2DashboardWithTabs)
-      );
+      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - hide tab when all rules are met');
+
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
 
@@ -156,12 +134,8 @@ test.describe(
       selectors,
       page,
     }) => {
-      await importTestDashboard(
-        page,
-        selectors,
-        'Tab visibility - hide tab when one rule is met',
-        JSON.stringify(V2DashboardWithTabs)
-      );
+      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - hide tab when one rule is met');
+
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
 
@@ -176,31 +150,27 @@ test.describe(
 
       await switchTabAndSave(dashboardPage, selectors, page);
 
+      // make sure tab is visible when no conditions are met
+      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
+      await selectTimeRange(dashboardPage, selectors, page, 'Last 30 days');
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
+
       // make sure variable value is set to 1, which satisfies the 'any' rule condition
       await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '1');
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
 
-      // select time range more than 7 days, which should keep the tab hidden
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 30 days');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
-
-      // change variable value to make tab visible
+      // reset variable value to make tab visible again
       await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
 
-      // reset to hidden and check that changing just the time range rule also makes the tab visible
-      await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '1');
-      await selectTimeRange(dashboardPage, selectors, page, 'Last 5 minutes');
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).toBeVisible();
+      // select time range less than 7 days, which should hide the tab
+      await selectTimeRange(dashboardPage, selectors, page, 'Last 6 hours');
+      await expect(dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1'))).not.toBeVisible();
     });
 
     test('should show tab when all conditional rendering rules are met', async ({ dashboardPage, selectors, page }) => {
-      await importTestDashboard(
-        page,
-        selectors,
-        'Tab visibility - show tab when all rules are met',
-        JSON.stringify(V2DashboardWithTabs)
-      );
+      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - show tab when all rules are met');
+
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
 
@@ -238,12 +208,8 @@ test.describe(
       selectors,
       page,
     }) => {
-      await importTestDashboard(
-        page,
-        selectors,
-        'Tab visibility - show tab when at least one rule met',
-        JSON.stringify(V2DashboardWithTabs)
-      );
+      await importTestDashboardWithTabs(page, selectors, 'Tab visibility - show tab when at least one rule met');
+
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Tab 1')).click();
 
@@ -334,3 +300,9 @@ async function switchTabAndSave(dashboardPage: DashboardPage, selectors: E2ESele
   await saveDashboard(dashboardPage, page, selectors);
   await page.reload();
 }
+
+const importTestDashboardWithTabs = async (page: Page, selectors: E2ESelectorGroups, title: string) => {
+  await importTestDashboard(page, selectors, title, JSON.stringify(V2DashboardWithTabs), {
+    requiresDataSourceSelection: false,
+  });
+};
