@@ -9,7 +9,6 @@ import (
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schemabuilder"
-
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
@@ -23,18 +22,18 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				CodePath:    "./",
 			}},
 			Enums: []reflect.Type{
-				reflect.TypeOf(mathexp.ReducerSum),   // pick an example value (not the root)
-				reflect.TypeOf(mathexp.UpsamplerPad), // pick an example value (not the root)
-				reflect.TypeOf(ReduceModeDrop),       // pick an example value (not the root)
-				reflect.TypeOf(ThresholdIsAbove),
-				reflect.TypeOf(classic.ConditionOperatorAnd),
+				reflect.TypeFor[mathexp.ReducerID](),
+				reflect.TypeFor[mathexp.Upsampler](),
+				reflect.TypeFor[ReduceMode](),
+				reflect.TypeFor[ThresholdType](),
+				reflect.TypeFor[classic.ConditionOperatorType](),
 			},
 		})
 	require.NoError(t, err)
 	err = builder.AddQueries(
 		schemabuilder.QueryTypeInfo{
 			Discriminators: data.NewDiscriminators("type", QueryTypeMath),
-			GoType:         reflect.TypeOf(&MathQuery{}),
+			GoType:         reflect.TypeFor[*MathQuery](),
 			Examples: []data.QueryExample{
 				{
 					Name: "constant addition",
@@ -68,7 +67,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		},
 		schemabuilder.QueryTypeInfo{
 			Discriminators: data.NewDiscriminators("type", QueryTypeResample),
-			GoType:         reflect.TypeOf(&ResampleQuery{}),
+			GoType:         reflect.TypeFor[*ResampleQuery](),
 			Examples: []data.QueryExample{
 				{
 					Name: "resample at a every day",
@@ -83,7 +82,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		},
 		schemabuilder.QueryTypeInfo{
 			Discriminators: data.NewDiscriminators("type", QueryTypeSQL),
-			GoType:         reflect.TypeOf(&SQLExpression{}),
+			GoType:         reflect.TypeFor[*SQLExpression](),
 			Examples: []data.QueryExample{
 				{
 					Name: "Select the first row from A",

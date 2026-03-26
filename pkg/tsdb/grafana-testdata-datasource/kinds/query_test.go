@@ -19,11 +19,11 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				CodePath:    "./",
 			}},
 			Enums: []reflect.Type{
-				reflect.TypeOf(NodesQueryTypeRandom),         // pick an example value (not the root)
-				reflect.TypeOf(StreamingQueryTypeFetch),      // pick an example value (not the root)
-				reflect.TypeOf(ErrorTypeServerPanic),         // pick an example value (not the root)
-				reflect.TypeOf(ErrorSourcePlugin),            // pick an example value (not the root)
-				reflect.TypeOf(TestDataQueryTypeAnnotations), // pick an example value (not the root)
+				reflect.TypeFor[NodesQueryType](),
+				reflect.TypeFor[StreamingQueryType](),
+				reflect.TypeFor[ErrorType](),
+				reflect.TypeFor[ErrorSource](),
+				reflect.TypeFor[TestDataQueryType](),
 			},
 		})
 	require.NoError(t, err)
