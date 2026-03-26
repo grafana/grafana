@@ -87,6 +87,7 @@ export function TablePanel(props: Props) {
       width={width}
       data={main}
       noHeader={!options.showHeader}
+      noValue={fieldConfig.defaults.noValue}
       showTypeIcons={options.showTypeIcons}
       resizable={true}
       sortByBehavior={sortByBehavior}

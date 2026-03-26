@@ -37,6 +37,9 @@ const (
 // K8sHandlerWithFallback is a wrapper around the K8sHandler that provides a fallback to the stored version.
 type K8sHandlerWithFallback interface {
 	client.K8sHandler
+	// GetWithPreferredAPIVersion loads the dashboard using the given k8s API version (for example v1beta1).
+	// When preferredVersion is empty, it uses the default. On conversion failure, it also falls back to the default.
+	GetWithPreferredAPIVersion(ctx context.Context, name string, orgID int64, options metav1.GetOptions, preferredVersion string, subresources ...string) (*unstructured.Unstructured, error)
 }
 
 // K8sClientFactory creates a K8sHandler for a given version.
@@ -125,6 +128,48 @@ func (h *K8sClientWithFallback) Get(
 	)
 
 	span.AddEvent(fmt.Sprintf("%s Get", storedVersion))
+	return h.newClientFunc(spanCtx, storedVersion).Get(spanCtx, name, orgID, options, subresources...)
+}
+
+// GetWithPreferredAPIVersion loads using the requested API version first. When preferredVersion is empty, delegates to Get.
+func (h *K8sClientWithFallback) GetWithPreferredAPIVersion(
+	ctx context.Context, name string, orgID int64, options metav1.GetOptions, preferredVersion string, subresources ...string,
+) (*unstructured.Unstructured, error) {
+	if preferredVersion == "" {
+		return h.Get(ctx, name, orgID, options, subresources...)
+	}
+
+	spanCtx, span := tracing.Start(ctx, "K8sClientWithFallback.GetWithPreferredAPIVersion")
+	defer span.End()
+
+	span.SetAttributes(
+		attribute.String("dashboard.metadata.name", name),
+		attribute.Int64("org.id", orgID),
+		attribute.String("preferred_api_version", preferredVersion),
+		attribute.Bool("fallback", false),
+	)
+
+	result, err := h.newClientFunc(spanCtx, preferredVersion).Get(spanCtx, name, orgID, options, subresources...)
+	if err != nil {
+		h.log.Info("falling back to default API version after preferred get failed", "name", name, "preferredVersion", preferredVersion, "err", err)
+		span.SetAttributes(attribute.Bool("preferred_get_failed", true))
+		return h.Get(ctx, name, orgID, options, subresources...)
+	}
+
+	failed, storedVersion, conversionErr := getConversionStatus(result)
+	if !failed {
+		return result, nil
+	}
+
+	h.log.Info("falling back to stored version", "name", name, "storedVersion", storedVersion, "conversionErr", conversionErr)
+	h.metrics.fallbackCounter.WithLabelValues(storedVersion).Inc()
+
+	span.SetAttributes(
+		attribute.Bool("fallback", true),
+		attribute.String("fallback.stored_version", storedVersion),
+		attribute.String("fallback.conversion_error", conversionErr),
+	)
+
 	return h.newClientFunc(spanCtx, storedVersion).Get(spanCtx, name, orgID, options, subresources...)
 }
 

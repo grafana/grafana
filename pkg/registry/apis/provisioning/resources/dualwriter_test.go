@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -276,7 +276,7 @@ func TestEnsureFolderPathExist_UsesStableUID(t *testing.T) {
 	config := newTestRepoConfig("test-repo")
 	rw := repository.NewMockReaderWriter(t)
 	rw.On("Config").Return(config)
-	rw.On("Read", mock.Anything, "my-folder/_folder.json", "").Return(&repository.FileInfo{Data: data}, nil)
+	rw.On("Read", mock.Anything, "my-folder/_folder.json", "test-ref").Return(&repository.FileInfo{Data: data}, nil)
 
 	// Pre-populate the tree with the stable UID only — if effectiveFolderID is not
 	// called the hash-based UID won't match and EnsureFolderExists would be invoked
@@ -286,7 +286,7 @@ func TestEnsureFolderPathExist_UsesStableUID(t *testing.T) {
 
 	fm := NewFolderManager(rw, nil, tree, WithFolderMetadataEnabled(true))
 
-	parentID, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json")
+	parentID, err := fm.EnsureFolderPathExist(ctx, "my-folder/dashboard.json", "test-ref")
 	require.NoError(t, err)
 	require.Equal(t, stableUID, parentID)
 }
@@ -330,7 +330,7 @@ func TestCreateFolder(t *testing.T) {
 						return false
 					}
 					capturedUID = res.Name
-					return res.APIVersion == "folder.grafana.app/v1beta1" &&
+					return res.APIVersion == "folder.grafana.app/v1" &&
 						res.Kind == "Folder" &&
 						res.Name != "" &&
 						res.Spec.Title == "newfolder"
@@ -452,6 +452,40 @@ func TestCreateFolder(t *testing.T) {
 			},
 			wantErr:     true,
 			errContains: "failed to read folder metadata",
+		},
+		{
+			name: "flag enabled: ref not found is treated as file not found (new branch)",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Spec: provisioning.RepositorySpec{
+						Type:      provisioning.GitRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
+						Sync:      provisioning.SyncOptions{Enabled: false},
+					},
+				}
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Read", mock.Anything, "newfolder/_folder.json", "new-branch").Return(nil, repository.ErrRefNotFound)
+				rw.On("Create", mock.Anything, "newfolder/_folder.json", "new-branch", mock.MatchedBy(func(b []byte) bool {
+					var res folders.Folder
+					if err := json.Unmarshal(b, &res); err != nil {
+						return false
+					}
+					return res.APIVersion == "folder.grafana.app/v1" &&
+						res.Kind == "Folder" &&
+						res.Name != "" &&
+						res.Spec.Title == "newfolder"
+				}), "").Return(nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, false), folderMetadataEnabled: true}
+				return dw, DualWriteOptions{Path: "newfolder/", Ref: "new-branch"}
+			},
+			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
+				assert.Equal(t, "newfolder/", result.Path)
+				assert.Equal(t, "new-branch", result.Ref)
+			},
 		},
 		{
 			name: "sync enabled, flag disabled: GetFolder not found → no Upsert",

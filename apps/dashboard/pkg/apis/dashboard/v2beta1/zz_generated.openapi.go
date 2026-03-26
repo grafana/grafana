@@ -652,6 +652,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref common.Ref
 							Format:  "",
 						},
 					},
+					"enableGroupBy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the group-by operator is enabled in the ad hoc filter combobox.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"origin": {
 						SchemaProps: spec.SchemaProps{
 							Ref: ref(DashboardDatasourceControlSourceRef{}.OpenAPIModelName()),

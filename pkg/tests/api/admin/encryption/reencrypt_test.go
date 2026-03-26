@@ -105,17 +105,25 @@ func RunAdminApiReencryptTest(
 	require.NoError(t, err)
 
 	// Reencrypt with new data key.
-	ok, err := env.Server.HTTPServer.SecretsMigrator.ReEncryptSecrets(context.Background())
-	require.NoError(t, err)
-	assert.True(t, ok, "Failed to reencrypt all secrets")
+	require.Eventually(t, func() bool {
+		ok, err := env.Server.HTTPServer.SecretsMigrator.ReEncryptSecrets(context.Background())
+		if err != nil {
+			return false
+		}
+		return ok
+	}, 5*time.Second, time.Second)
 
 	afterReencrypt := getSecrets(t, secretsFns, env)
 	verifyAllSecrets(t, env, beforeReencrypt, afterReencrypt)
 
 	// Rollback from envelope to legacy encryption.
-	ok, err = env.Server.HTTPServer.SecretsMigrator.RollBackSecrets(context.Background())
-	require.NoError(t, err)
-	assert.True(t, ok, "Failed to rollback all secrets")
+	require.Eventually(t, func() bool {
+		ok, err := env.Server.HTTPServer.SecretsMigrator.RollBackSecrets(context.Background())
+		if err != nil {
+			return false
+		}
+		return ok
+	}, 5*time.Second, time.Second)
 
 	afterRollback := getSecrets(t, secretsFns, env)
 	verifyAllSecrets(t, env, afterReencrypt, afterRollback)
@@ -160,7 +168,7 @@ next:
 				require.NoError(t, err)
 				result[r.Id] = secret{
 					id:     r.Id,
-					secret: decoded,
+					secret: append([]byte(nil), decoded...),
 				}
 				continue next
 			}
@@ -234,7 +242,7 @@ func getSecureJsonSecrets(t *testing.T, store db.DB, table string, secureJsonDat
 	for _, r := range rows {
 		result[r.Id] = secret{
 			id:     r.Id,
-			secret: r.SecureJsonData[secureJsonDataKey],
+			secret: append([]byte(nil), r.SecureJsonData[secureJsonDataKey]...),
 			update: r.Updated,
 		}
 	}
@@ -259,7 +267,7 @@ func getBase64Secrets(t *testing.T, store db.DB, table, column string, enc *base
 		require.NoError(t, err)
 		result[r.Id] = secret{
 			id:     r.Id,
-			secret: d,
+			secret: append([]byte(nil), d...),
 			update: r.Updated,
 		}
 	}
@@ -283,7 +291,7 @@ func getSigningKeys(t *testing.T, store db.DB) map[int]secret {
 		require.NoError(t, err)
 		result[r.Id] = secret{
 			id:     r.Id,
-			secret: d,
+			secret: append([]byte(nil), d...),
 			// there's no update time, leave it at 0
 		}
 	}

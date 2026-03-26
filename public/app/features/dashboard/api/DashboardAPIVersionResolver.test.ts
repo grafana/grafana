@@ -39,10 +39,10 @@ describe('DashboardAPIVersionResolver', () => {
 
   describe('resolve', () => {
     it.each([
-      { versions: ['v2', 'v2beta1', 'v1', 'v1beta1'], expected: { v1: 'v1', v2: 'v2' }, desc: 'both stable' },
+      { versions: ['v2', 'v2beta1', 'v1', 'v1beta1'], expected: { v1: 'v1', v2: 'v2beta1' }, desc: 'both stable' },
       { versions: ['v2beta1', 'v1beta1'], expected: BETA_FALLBACK, desc: 'beta only' },
       { versions: ['v2beta1', 'v1', 'v1beta1'], expected: { v1: 'v1', v2: 'v2beta1' }, desc: 'v1 stable only' },
-      { versions: ['v2', 'v2beta1', 'v1beta1'], expected: { v1: 'v1beta1', v2: 'v2' }, desc: 'v2 stable only' },
+      { versions: ['v2', 'v2beta1', 'v1beta1'], expected: { v1: 'v1beta1', v2: 'v2beta1' }, desc: 'v2 stable only' },
     ])('should resolve correctly when $desc are available', async ({ versions, expected }) => {
       mockDiscoveryResponse(versions);
 
@@ -51,12 +51,25 @@ describe('DashboardAPIVersionResolver', () => {
       expect(result).toEqual(expected);
     });
 
+    it('should call discovery endpoint with showErrorAlert disabled', async () => {
+      mockDiscoveryResponse(['v2beta1', 'v1beta1']);
+      await dashboardAPIVersionResolver.resolve();
+
+      const mockGet = mockGetBackendSrv()?.get as jest.Mock;
+      expect(mockGet).toHaveBeenCalledWith(
+        expect.stringContaining('/apis/dashboard.grafana.app/'),
+        undefined,
+        undefined,
+        expect.objectContaining({ showErrorAlert: false })
+      );
+    });
+
     it('should retry discovery after a transient failure', async () => {
       mockDiscoveryFailure();
       expect(await dashboardAPIVersionResolver.resolve()).toEqual(BETA_FALLBACK);
 
       mockDiscoveryResponse(['v2', 'v1']);
-      expect(await dashboardAPIVersionResolver.resolve()).toEqual({ v1: 'v1', v2: 'v2' });
+      expect(await dashboardAPIVersionResolver.resolve()).toEqual({ v1: 'v1', v2: 'v2beta1' });
     });
 
     it('should cache and deduplicate concurrent resolve calls', async () => {
@@ -68,7 +81,7 @@ describe('DashboardAPIVersionResolver', () => {
         dashboardAPIVersionResolver.resolve(),
       ]);
 
-      const expected = { v1: 'v1', v2: 'v2' };
+      const expected = { v1: 'v1', v2: 'v2beta1' };
       expect(r1).toEqual(expected);
       expect(r2).toEqual(expected);
       expect(r3).toEqual(expected);
@@ -130,7 +143,7 @@ describe('DashboardAPIVersionResolver', () => {
       mockDiscoveryResponse(['v2', 'v1']);
       await dashboardAPIVersionResolver.resolve();
       expect(dashboardAPIVersionResolver.getV1()).toBe('v1');
-      expect(dashboardAPIVersionResolver.getV2()).toBe('v2');
+      expect(dashboardAPIVersionResolver.getV2()).toBe('v2beta1');
     });
   });
 });

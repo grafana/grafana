@@ -12,6 +12,7 @@ import { Button, useStyles2, Stack, Grid, EmptyState, Alert, FilterInput, Box } 
 import { CompatibilityState } from './CompatibilityBadge';
 import { DashboardCard } from './DashboardCard';
 import { MappingContext } from './SuggestedDashboardsModal';
+import { NewDashboardLibraryInteractions, NewSuggestedDashboardInteractions } from './analytics/main';
 import { checkDashboardCompatibility } from './api/compatibilityApi';
 import { fetchCommunityDashboards } from './api/dashboardLibraryApi';
 import { CONTENT_KINDS, DISCOVERY_METHODS, EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from './constants';
@@ -49,6 +50,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   const hasTrackedLoaded = useRef(false);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
   const isSuggestedDashboardsAssistantButtonEnabled = useBooleanFlagValue('suggestedDashboardsAssistantButton', false);
+  const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
 
   // New state for compatibility badge feature
   const [compatibilityMap, setCompatibilityMap] = useState<Map<number, CompatibilityState>>(new Map());
@@ -100,13 +102,21 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
 
       // Track search if query is present
       if (debouncedSearchQuery.trim()) {
-        DashboardLibraryInteractions.searchPerformed({
-          datasourceTypes: [ds.type],
-          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-          hasResults: apiResponse.items.length > 0,
-          resultCount: apiResponse.items.length,
-        });
+        isAnalyticsFrameworkEnabled
+          ? NewDashboardLibraryInteractions.searchPerformed({
+              datasourceTypes: [ds.type],
+              sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+              eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+              hasResults: apiResponse.items.length > 0,
+              resultCount: apiResponse.items.length,
+            })
+          : DashboardLibraryInteractions.searchPerformed({
+              datasourceTypes: [ds.type],
+              sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+              eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+              hasResults: apiResponse.items.length > 0,
+              resultCount: apiResponse.items.length,
+            });
       }
 
       return {
@@ -122,16 +132,25 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
   // Track analytics only once on first successful load
   useEffect(() => {
     if (!loading && !hasTrackedLoaded.current && response?.dashboards && response.dashboards.length > 0) {
-      SuggestedDashboardInteractions.loaded({
-        numberOfItems: response.dashboards.length,
-        contentKinds: [CONTENT_KINDS.COMMUNITY_DASHBOARD],
-        datasourceTypes: [response.datasourceType],
-        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-        eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-      });
+      isAnalyticsFrameworkEnabled
+        ? NewSuggestedDashboardInteractions.loaded({
+            numberOfItems: response.dashboards.length,
+            contentKinds: [CONTENT_KINDS.COMMUNITY_DASHBOARD],
+            datasourceTypes: [response.datasourceType],
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+          })
+        : SuggestedDashboardInteractions.loaded({
+            numberOfItems: response.dashboards.length,
+            contentKinds: [CONTENT_KINDS.COMMUNITY_DASHBOARD],
+            datasourceTypes: [response.datasourceType],
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+          });
+
       hasTrackedLoaded.current = true;
     }
-  }, [loading, response]);
+  }, [isAnalyticsFrameworkEnabled, loading, response]);
 
   const styles = useStyles2(getStyles);
 
@@ -147,16 +166,26 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       }
 
       // Track item click
-      SuggestedDashboardInteractions.itemClicked({
-        contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
-        datasourceTypes: [response.datasourceType],
-        libraryItemId: String(dashboard.id),
-        libraryItemTitle: dashboard.name,
-        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
-        eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-        discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
-        action: customizeWithAssistant ? 'assistant' : 'use_dashboard',
-      });
+      isAnalyticsFrameworkEnabled
+        ? NewSuggestedDashboardInteractions.itemClicked({
+            contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+            datasourceTypes: [response.datasourceType],
+            libraryItemId: String(dashboard.id),
+            libraryItemTitle: dashboard.name,
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+            discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
+          })
+        : SuggestedDashboardInteractions.itemClicked({
+            contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+            datasourceTypes: [response.datasourceType],
+            libraryItemId: String(dashboard.id),
+            libraryItemTitle: dashboard.name,
+            sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE,
+            eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+            discoveryMethod: debouncedSearchQuery.trim() ? DISCOVERY_METHODS.SEARCH : DISCOVERY_METHODS.BROWSE,
+            action: customizeWithAssistant ? 'assistant' : 'use_dashboard',
+          });
 
       await onUseCommunityDashboard({
         dashboard,
@@ -181,13 +210,21 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
       setCompatibilityMap((prev) => new Map(prev).set(dashboard.id, { status: 'loading' }));
 
       // Track analytics: check triggered
-      DashboardLibraryInteractions.compatibilityCheckTriggered({
-        dashboardId: String(dashboard.id),
-        dashboardTitle: dashboard.name,
-        datasourceType: response.datasourceType,
-        triggerMethod,
-        eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-      });
+      isAnalyticsFrameworkEnabled
+        ? NewDashboardLibraryInteractions.compatibilityCheckTriggered({
+            dashboardId: String(dashboard.id),
+            dashboardTitle: dashboard.name,
+            datasourceType: response.datasourceType,
+            triggerMethod,
+            eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+          })
+        : DashboardLibraryInteractions.compatibilityCheckTriggered({
+            dashboardId: String(dashboard.id),
+            dashboardTitle: dashboard.name,
+            datasourceType: response.datasourceType,
+            triggerMethod,
+            eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+          });
 
       try {
         const interpolatedDashboard = await interpolateDashboardForCompatibilityCheck(dashboard.id, datasourceUid);
@@ -218,16 +255,27 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         );
 
         // Track analytics: check completed
-        DashboardLibraryInteractions.compatibilityCheckCompleted({
-          dashboardId: String(dashboard.id),
-          dashboardTitle: dashboard.name,
-          datasourceType: response.datasourceType,
-          score,
-          metricsFound,
-          metricsTotal,
-          triggerMethod,
-          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
-        });
+        isAnalyticsFrameworkEnabled
+          ? NewDashboardLibraryInteractions.compatibilityCheckCompleted({
+              dashboardId: String(dashboard.id),
+              dashboardTitle: dashboard.name,
+              datasourceType: response.datasourceType,
+              score,
+              metricsFound,
+              metricsTotal,
+              triggerMethod,
+              eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+            })
+          : DashboardLibraryInteractions.compatibilityCheckCompleted({
+              dashboardId: String(dashboard.id),
+              dashboardTitle: dashboard.name,
+              datasourceType: response.datasourceType,
+              score,
+              metricsFound,
+              metricsTotal,
+              triggerMethod,
+              eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
+            });
       } catch (err) {
         console.error('Error checking dashboard compatibility:', err);
 
@@ -243,7 +291,7 @@ export const CommunityDashboardSection = ({ onShowMapping, datasourceType }: Pro
         );
       }
     },
-    [datasourceUid, response]
+    [datasourceUid, isAnalyticsFrameworkEnabled, response]
   );
 
   // Auto-trigger compatibility checks on initial load for Prometheus datasources
