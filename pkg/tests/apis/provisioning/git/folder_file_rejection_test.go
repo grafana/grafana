@@ -7,7 +7,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,9 +32,7 @@ func folderJSON(uid, title string) []byte {
 // TestIntegrationProvisioning_FullSync_FolderFileIsWarning verifies that a
 // folder-typed JSON file produces a warning (not an error) during full sync.
 func TestIntegrationProvisioning_FullSync_FolderFileIsWarning(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "full-folder-file-warning"
@@ -67,9 +64,7 @@ func TestIntegrationProvisioning_FullSync_FolderFileIsWarning(t *testing.T) {
 // verifies that when a folder-typed JSON file is added to git, incremental
 // sync produces a warning rather than an error.
 func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "incr-folder-file-create"
@@ -112,9 +107,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileCreateIsWarning(t *te
 // sync produces a warning rather than a hard error, because folder lifecycle is
 // managed by directory structure, not file content.
 func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "incr-folder-file-delete"
@@ -162,9 +155,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderFileDeletedIsWarning(t *t
 // TestIntegrationGitFiles_CreateFolderFileRejected verifies that creating a
 // folder-typed resource via the POST /files/ endpoint is rejected with BadRequest.
 func TestIntegrationGitFiles_CreateFolderFileRejected(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-create-folder-file"
@@ -188,9 +179,7 @@ func TestIntegrationGitFiles_CreateFolderFileRejected(t *testing.T) {
 // TestIntegrationGitFiles_DeleteFolderFileRejected verifies that deleting a
 // folder-typed file via the DELETE /files/ endpoint is rejected with BadRequest.
 func TestIntegrationGitFiles_DeleteFolderFileRejected(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-delete-folder-file"
@@ -214,9 +203,7 @@ func TestIntegrationGitFiles_DeleteFolderFileRejected(t *testing.T) {
 // TestIntegrationGitFiles_UpdateFolderFileRejected verifies that updating a
 // folder-typed file via the PUT /files/ endpoint is rejected with BadRequest.
 func TestIntegrationGitFiles_UpdateFolderFileRejected(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	repoName := "test-update-folder-file"

@@ -4,11 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	folderV1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -17,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/nanogit/gittest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,7 +29,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 )
 
 // GrafanaOpt is a functional option applied to GrafanaOpts before starting Grafana.
@@ -58,14 +66,36 @@ func DashboardJSON(uid, title string, version int) []byte {
 // GitTestHelper wraps the standard test helper with git-specific functionality
 type GitTestHelper struct {
 	*apis.K8sTestHelper
-	gitServer    *gittest.Server
-	Repositories *apis.K8sResourceClient
-	Jobs         *apis.K8sResourceClient
-	AdminREST    *rest.RESTClient
-	EditorREST   *rest.RESTClient
-	ViewerREST   *rest.RESTClient
-	DashboardsV1 *apis.K8sResourceClient
-	FoldersV1    *apis.K8sResourceClient
+	gitServer       *gittest.Server
+	Repositories    *apis.K8sResourceClient
+	Jobs            *apis.K8sResourceClient
+	AdminREST       *rest.RESTClient
+	EditorREST      *rest.RESTClient
+	ViewerREST      *rest.RESTClient
+	DashboardsV1    *apis.K8sResourceClient
+	FoldersV1       *apis.K8sResourceClient
+	exportRepoInfos map[string]*exportRepoInfo
+}
+
+type exportRepoInfo struct {
+	user   *gittest.User
+	remote *gittest.RemoteRepository
+}
+
+// SharedGitEnv lazily starts and reuses one GitTestHelper across tests.
+// Tests still create fresh repositories and local clones; only the Grafana
+// server and gittest server are shared.
+type SharedGitEnv struct {
+	Helper       *GitTestHelper
+	shutdownFunc func()
+	once         sync.Once
+	initErr      string
+	options      []GrafanaOpt
+}
+
+// NewSharedGitEnv creates a lazily initialized shared Git test environment.
+func NewSharedGitEnv(options ...GrafanaOpt) *SharedGitEnv {
+	return &SharedGitEnv{options: options}
 }
 
 // runGrafanaWithGitServer starts both a Grafana test instance and a git server.
@@ -85,79 +115,105 @@ func RunGrafanaWithGitServer(t *testing.T, options ...GrafanaOpt) *GitTestHelper
 		}
 	})
 
-	// Start Grafana with provisioning enabled
-	opts := testinfra.GrafanaOpts{
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagProvisioningExport,
-		},
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"dashboards.dashboard.grafana.app": {
-				DualWriterMode:  grafanarest.Mode5,
-				EnableMigration: true,
-			},
-			"folders.folder.grafana.app": {
-				DualWriterMode:  grafanarest.Mode5,
-				EnableMigration: true,
-			},
-		},
-		ProvisioningAllowedTargets:  []string{"folder", "instance"},
-		ProvisioningRepositoryTypes: []string{"git"},
-	}
-	for _, o := range options {
-		o(&opts)
-	}
+	return newGitTestHelper(t, apis.NewK8sTestHelper(t, gitGrafanaOpts(options...)), gitServer)
+}
 
-	k8s := apis.NewK8sTestHelper(t, opts)
+// RunGrafanaWithGitServerShared is like RunGrafanaWithGitServer but keeps the
+// servers alive until the returned shutdown function is called.
+func RunGrafanaWithGitServerShared(t *testing.T, options ...GrafanaOpt) (*GitTestHelper, func()) {
+	t.Helper()
 
-	// Set up K8s resource clients
-	repositories := k8s.GetResourceClient(apis.ResourceClientArgs{
-		User:      k8s.Org1.Admin,
-		Namespace: "default",
-		GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
+	ctx := context.Background()
+	gitServer, err := gittest.NewServer(ctx, gittest.WithLogger(gittest.NewWriterLogger(os.Stderr)))
+	require.NoError(t, err, "failed to start git server")
+
+	k8s, serverShutdown := apis.NewK8sTestHelperShared(t, apis.K8sTestHelperOpts{
+		GrafanaOpts: gitGrafanaOpts(options...),
 	})
-
-	jobsClient := k8s.GetResourceClient(apis.ResourceClientArgs{
-		User:      k8s.Org1.Admin,
-		Namespace: "default",
-		GVR:       provisioning.JobResourceInfo.GroupVersionResource(),
-	})
-
-	dashboardsV1 := k8s.GetResourceClient(apis.ResourceClientArgs{
-		User:      k8s.Org1.Admin,
-		Namespace: "default",
-		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
-	})
-
-	foldersV1 := k8s.GetResourceClient(apis.ResourceClientArgs{
-		User:      k8s.Org1.Admin,
-		Namespace: "default",
-		GVR:       folderV1beta1.FolderResourceInfo.GroupVersionResource(),
-	})
-
-	// Get REST clients for different roles
-	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
-	adminClient := k8s.Org1.Admin.RESTClient(t, gv)
-	editorClient := k8s.Org1.Editor.RESTClient(t, gv)
-	viewerClient := k8s.Org1.Viewer.RESTClient(t, gv)
-
-	helper := &GitTestHelper{
-		K8sTestHelper: k8s,
-		gitServer:     gitServer,
-		Repositories:  repositories,
-		Jobs:          jobsClient,
-		DashboardsV1:  dashboardsV1,
-		FoldersV1:     foldersV1,
-		AdminREST:     adminClient,
-		EditorREST:    editorClient,
-		ViewerREST:    viewerClient,
+	shutdown := func() {
+		if err := gitServer.Cleanup(); err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "failed to cleanup git server: %v\n", err)
+		}
+		serverShutdown()
 	}
 
-	return helper
+	return newGitTestHelper(t, k8s, gitServer), shutdown
+}
+
+// GetHelper returns the shared helper, starting it on first use.
+func (e *SharedGitEnv) GetHelper(t *testing.T) *GitTestHelper {
+	t.Helper()
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	e.once.Do(func() {
+		defer func() {
+			if r := recover(); r != nil {
+				e.initErr = fmt.Sprintf("shared git server init panicked: %v", r)
+			} else if e.Helper == nil && e.initErr == "" {
+				e.initErr = "shared git server init failed (FailNow/Goexit called; see first test output)"
+			}
+		}()
+		e.Helper, e.shutdownFunc = RunGrafanaWithGitServerShared(t, e.options...)
+	})
+
+	if e.initErr != "" {
+		t.Fatalf("SharedGitEnv: %s", e.initErr)
+	}
+
+	return e.Helper
+}
+
+// GetCleanHelper returns the shared helper after removing resources left by a
+// previous test from Grafana. Git server state is intentionally not reset.
+func (e *SharedGitEnv) GetCleanHelper(t *testing.T) *GitTestHelper {
+	t.Helper()
+	h := e.GetHelper(t)
+	h.CleanupAllResources(t, context.Background())
+	return h
+}
+
+// Shutdown stops the shared servers if they were started.
+func (e *SharedGitEnv) Shutdown() {
+	if e.shutdownFunc != nil {
+		e.shutdownFunc()
+	}
+}
+
+// RunTestMain replaces testsuite.Run(m) for packages that share one Git test
+// environment. It handles DB setup, executes the package tests, shuts down the
+// shared servers, cleans the DB, and exits.
+func (e *SharedGitEnv) RunTestMain(m *testing.M) {
+	db.SetupTestDB()
+	code := m.Run()
+	e.Shutdown()
+	db.CleanupTestDB()
+	os.Exit(code)
 }
 
 func (h *GitTestHelper) GitServer() *gittest.Server {
 	return h.gitServer
+}
+
+// CleanupAllResources removes Grafana-managed resources left by a previous
+// test. Remote git repositories are not deleted because the shared gittest
+// server does not expose repo/user cleanup and tests already isolate by using
+// fresh users and local clones per repository.
+func (h *GitTestHelper) CleanupAllResources(t *testing.T, ctx context.Context) {
+	t.Helper()
+	h.waitForNoActiveJobs(t)
+
+	for _, c := range []struct {
+		name   string
+		client dynamic.ResourceInterface
+	}{
+		{"repositories", h.Repositories.Resource},
+		{"dashboards", h.DashboardsV1.Resource},
+		{"folders", h.FoldersV1.Resource},
+	} {
+		if err := deleteAndWait(ctx, c.client, 10*time.Second); err != nil {
+			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
+		}
+	}
 }
 
 // CreateGitRepo creates a git repository with sync target "instance" and registers
@@ -388,6 +444,138 @@ func (h *GitTestHelper) waitForJobsComplete(t *testing.T, repoName string) {
 	}, WaitTimeoutDefault, WaitIntervalDefault, "jobs should complete for repository %s", repoName)
 }
 
+func (h *GitTestHelper) waitForNoActiveJobs(t *testing.T) {
+	t.Helper()
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		jobs, err := h.Jobs.Resource.List(context.Background(), metav1.ListOptions{})
+		if !assert.NoError(collect, err, "failed to list jobs") {
+			return
+		}
+		assert.Empty(collect, jobs.Items, "jobs still active from previous test")
+	}, WaitTimeoutDefault, WaitIntervalDefault, "jobs should complete before cleanup")
+}
+
+func gitGrafanaOpts(options ...GrafanaOpt) testinfra.GrafanaOpts {
+	opts := testinfra.GrafanaOpts{
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagProvisioning,
+			featuremgmt.FlagProvisioningExport,
+		},
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {
+				DualWriterMode:  grafanarest.Mode5,
+				EnableMigration: true,
+			},
+			"folders.folder.grafana.app": {
+				DualWriterMode:  grafanarest.Mode5,
+				EnableMigration: true,
+			},
+		},
+		ProvisioningAllowedTargets:  []string{"folder", "instance"},
+		ProvisioningRepositoryTypes: []string{"git"},
+	}
+	for _, o := range options {
+		o(&opts)
+	}
+	return opts
+}
+
+func newGitTestHelper(t *testing.T, k8s *apis.K8sTestHelper, gitServer *gittest.Server) *GitTestHelper {
+	repositories := k8s.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8s.Org1.Admin,
+		Namespace: "default",
+		GVR:       provisioning.RepositoryResourceInfo.GroupVersionResource(),
+	})
+
+	jobsClient := k8s.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8s.Org1.Admin,
+		Namespace: "default",
+		GVR:       provisioning.JobResourceInfo.GroupVersionResource(),
+	})
+
+	dashboardsV1 := k8s.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8s.Org1.Admin,
+		Namespace: "default",
+		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+	})
+
+	foldersV1 := k8s.GetResourceClient(apis.ResourceClientArgs{
+		User:      k8s.Org1.Admin,
+		Namespace: "default",
+		GVR:       folderV1beta1.FolderResourceInfo.GroupVersionResource(),
+	})
+
+	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
+
+	return &GitTestHelper{
+		K8sTestHelper:   k8s,
+		gitServer:       gitServer,
+		Repositories:    repositories,
+		Jobs:            jobsClient,
+		DashboardsV1:    dashboardsV1,
+		FoldersV1:       foldersV1,
+		AdminREST:       k8s.Org1.Admin.RESTClient(t, gv),
+		EditorREST:      k8s.Org1.Editor.RESTClient(t, gv),
+		ViewerREST:      k8s.Org1.Viewer.RESTClient(t, gv),
+		exportRepoInfos: make(map[string]*exportRepoInfo),
+	}
+}
+
+func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeout time.Duration) error {
+	list, err := client.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("deleteAndWait: initial list: %w", err)
+	}
+	if len(list.Items) == 0 {
+		return nil
+	}
+
+	var firstErr error
+	for _, item := range list.Items {
+		if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+			if firstErr == nil {
+				firstErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
+			}
+		}
+	}
+
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		remaining, err := client.List(ctx, metav1.ListOptions{})
+		if err != nil {
+			return fmt.Errorf("deleteAndWait: list while polling: %w", err)
+		}
+		if len(remaining.Items) == 0 {
+			return nil
+		}
+		for _, item := range remaining.Items {
+			if err := client.Delete(ctx, item.GetName(), metav1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
+				if firstErr == nil {
+					firstErr = fmt.Errorf("deleteAndWait: delete %q: %w", item.GetName(), err)
+				}
+			}
+		}
+		select {
+		case <-ctx.Done():
+			if firstErr != nil {
+				return fmt.Errorf("deleteAndWait: context cancelled (first delete error: %v): %w", firstErr, ctx.Err())
+			}
+			return fmt.Errorf("deleteAndWait: context cancelled: %w", ctx.Err())
+		case <-timer.C:
+			if firstErr != nil {
+				return fmt.Errorf("deleteAndWait: timed out with %d items remaining (first delete error: %v)", len(remaining.Items), firstErr)
+			}
+			return fmt.Errorf("deleteAndWait: timed out with %d items remaining", len(remaining.Items))
+		case <-ticker.C:
+		}
+	}
+}
+
 // asJSON serialises v to a JSON byte slice, panicking on encoding errors
 // (acceptable in test helpers where the input is always a known-good struct).
 func asJSON(v interface{}) []byte {
@@ -562,4 +750,123 @@ func RequireJobWarningContains(t *testing.T, jobObj *provisioning.Job, substr st
 		}
 	}
 	t.Errorf("expected at least one warning containing %q, got warnings: %v", substr, jobObj.Status.Warnings)
+}
+
+// ── Export helpers ──────────────────────────────────────────────────────────
+//
+// These methods let tests that push/export to a git repository reuse the
+// shared gittest server instead of requiring a standalone GitExportHelper.
+
+// CreateExportGitRepo creates a git repository configured for export (push)
+// workflows: sync disabled, target "instance", workflow "write".
+func (h *GitTestHelper) CreateExportGitRepo(t *testing.T, repoName string) {
+	t.Helper()
+
+	ctx := context.Background()
+
+	user, err := h.gitServer.CreateUser(ctx)
+	require.NoError(t, err, "failed to create git user")
+
+	remote, err := h.gitServer.CreateRepo(ctx, repoName, user)
+	require.NoError(t, err, "failed to create remote git repository")
+
+	h.exportRepoInfos[repoName] = &exportRepoInfo{user: user, remote: remote}
+
+	local, err := gittest.NewLocalRepo(ctx)
+	require.NoError(t, err, "failed to create local git repository")
+	t.Cleanup(func() {
+		if err := local.Cleanup(); err != nil {
+			t.Logf("failed to cleanup local repo: %v", err)
+		}
+	})
+
+	_, err = local.InitWithRemote(user, remote)
+	require.NoError(t, err, "failed to initialize local repo with remote")
+
+	spec := map[string]interface{}{
+		"apiVersion": "provisioning.grafana.app/v0alpha1",
+		"kind":       "Repository",
+		"metadata": map[string]interface{}{
+			"name":      repoName,
+			"namespace": "default",
+		},
+		"spec": map[string]interface{}{
+			"title": repoName,
+			"type":  "git",
+			"git": map[string]interface{}{
+				"url":       remote.URL,
+				"branch":    "main",
+				"tokenUser": user.Username,
+			},
+			"sync": map[string]interface{}{
+				"enabled": false,
+				"target":  "instance",
+			},
+			"workflows": []string{"write"},
+		},
+		"secure": map[string]interface{}{
+			"token": map[string]interface{}{
+				"create": user.Password,
+			},
+		},
+	}
+
+	body, err := json.Marshal(spec)
+	require.NoError(t, err)
+
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("repositories").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(ctx)
+	require.NoError(t, result.Error(), "failed to register export git repository %q with Grafana", repoName)
+
+	h.waitForReadyRepository(t, repoName)
+}
+
+// cloneExportRepo clones an export repository to a temp directory for inspection.
+func (h *GitTestHelper) cloneExportRepo(t *testing.T, ctx context.Context, repoName string) (string, func()) {
+	t.Helper()
+	info, ok := h.exportRepoInfos[repoName]
+	if !ok {
+		t.Fatalf("repo %q not registered as export repo – call CreateExportGitRepo first", repoName)
+	}
+
+	tmpDir, err := os.MkdirTemp("", "grafana-test-clone-*")
+	require.NoError(t, err, "failed to create temp dir for git clone")
+
+	cloneDir := filepath.Join(tmpDir, "repo")
+	cmd := exec.CommandContext(ctx, "git", "clone", info.remote.AuthURL, cloneDir) //nolint:gosec
+	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		_ = os.RemoveAll(tmpDir)
+		t.Fatalf("failed to clone repo %q: %v\n%s", repoName, err, out)
+	}
+
+	return cloneDir, func() { _ = os.RemoveAll(tmpDir) }
+}
+
+// GitFileExists reports whether filePath exists on the main branch of an export
+// repository. It clones the repo via git (bypassing the provisioning files
+// endpoint, which rejects hidden files such as .keep).
+func (h *GitTestHelper) GitFileExists(t *testing.T, ctx context.Context, repoName, filePath string) bool {
+	t.Helper()
+	cloneDir, cleanup := h.cloneExportRepo(t, ctx, repoName)
+	defer cleanup()
+
+	_, err := os.Stat(filepath.Join(cloneDir, filePath))
+	return err == nil
+}
+
+// GitReadFile returns the raw bytes of filePath on the main branch of an export
+// repository. It fails the test if the file does not exist.
+func (h *GitTestHelper) GitReadFile(t *testing.T, ctx context.Context, repoName, filePath string) []byte {
+	t.Helper()
+	cloneDir, cleanup := h.cloneExportRepo(t, ctx, repoName)
+	defer cleanup()
+
+	data, err := os.ReadFile(filepath.Join(cloneDir, filePath)) //nolint:gosec
+	require.NoError(t, err, "file %s not found in git repo %s", filePath, repoName)
+	return data
 }

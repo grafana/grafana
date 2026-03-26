@@ -780,7 +780,9 @@
         "unknown-rule": "未知",
         "value-in-transition": "转换中的值"
       },
-      "error": "加载提醒状态历史记录时出错",
+      "error": {
+        "server-error": ""
+      },
       "filter": {
         "clear": "清除筛选器",
         "info": {
@@ -791,6 +793,10 @@
         }
       },
       "filterBy": "筛选方式：",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "tab": {
         "alert-events": "",
         "notifications": ""
@@ -1712,13 +1718,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -2011,6 +2017,10 @@
       "error-unable-to-fetch": "无法获取警报状态历史记录",
       "loading": "加载中...",
       "no-transitions-match-filters": "",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "start-state": "",
       "timeline-hidden": "",
       "title-error-fetching-the-state-history": "获取状态历史记录时出错",
@@ -3522,20 +3532,27 @@
       }
     },
     "triage": {
-      "alert-instances": "警报实例",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "加载规则时出错",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "实例详情",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "在所选时间范围内，您没有处于触发或待处理状态的警报实例。",
       "no-instances-found": "找不到此规则的警报实例：{{ruleUID}}",
       "no-labels": "无标签",
@@ -3557,10 +3574,13 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_other": "",
       "show-all-values_other": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "添加表达式"
@@ -4227,6 +4247,9 @@
     "browse-view": {
       "this-folder-is-empty": "此文件夹为空"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "取消",
       "button-delete": "删除",
@@ -4285,6 +4308,7 @@
       "button-deleting": "正在删除...",
       "commit": "删除文件夹",
       "delete-warning": "这将删除此文件夹及其所有子文件夹。总体而言，这将影响：",
+      "missing-info": "",
       "success-message": "文件夹已成功删除"
     },
     "descendant-count": {
@@ -4324,6 +4348,7 @@
       "dashboards": "仪表板",
       "panels": "面板"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "无项目"
     },
@@ -4336,12 +4361,13 @@
       "name-label": "文件夹名称"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "创建文件夹时出错",
       "button-create": "创建",
       "button-creating": "正在创建...",
       "cancel": "取消",
       "error-invalid-characters": "文件夹名称包含无效字符。只允许使用字母、数字、空格、下划线和连字符。",
+      "error-missing-title-or-repo": "",
       "error-required": "文件夹名称为必填项",
+      "error-saving": "",
       "folder-name-input-placeholder-enter-folder-name": "输入文件夹名称",
       "label-folder-name": "文件夹名称",
       "text-pull-request-created": "已创建拉取请求，对此文件夹进行更改：",
@@ -5950,6 +5976,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": ""
+      },
       "prompt-card": {
         "placeholder": "",
         "placeholder-multi": ""
@@ -6049,8 +6078,8 @@
       "name": "行",
       "new-row-title": "新行",
       "row": {
-        "collapse": "折叠行",
-        "expand": "展开行",
+        "collapse": "",
+        "expand": "",
         "new": "新行",
         "repeat": {
           "learn-more": "了解更多",
@@ -6263,7 +6292,6 @@
         "label": "退出编辑",
         "tooltip": "退出编辑模式并丢弃未保存的更改"
       },
-      "mark-favorite": "标记为收藏",
       "more-save-options": "更多保存选项",
       "new": {
         "back-to-dashboard": "回到数据面板",
@@ -6333,8 +6361,7 @@
       "star-added": "已添加到星标",
       "star-remove-error": "从星标中移除失败",
       "star-removed": "已从星标中移除",
-      "unlink-library-panel": "取消链接库面板",
-      "unmark-favorite": "取消标记为收藏"
+      "unlink-library-panel": "取消链接库面板"
     },
     "transformation-editor": {
       "input-data": "输入数据",
@@ -6590,11 +6617,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "临时选项",
       "alert-not-supported": "此数据源不支持临时筛选条件",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "允许用户向列表中添加自定义值",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "以 CSV 格式提供维度：{{name}}, {{value}}",
       "label-data-source": "数据源",
       "label-use-static-key-dimensions": "使用静态键维度",
-      "name-allow-custom-values": "允许自定义值"
+      "name-allow-custom-values": "允许自定义值",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -6875,11 +6904,12 @@
       "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "删除数据面板失败",
       "cancel-action": "取消",
       "delete-action": "删除数据面板",
+      "delete-error": "",
       "deleting": "正在删除...",
       "drawer-title": "删除已预置的数据面板",
+      "no-repository-selected": "",
       "success-message": "数据面板已成功删除"
     },
     "description-label": {
@@ -7342,16 +7372,17 @@
       "affected-dashboards_other": "此更新将影响 <1>{{count}} 个数据面板。</1> 使用该面板的以下数据面板将受到影响："
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "保存数据面板时出错",
       "cancel": "取消",
       "cannot-be-saved": "此数据面板无法从 Grafana 用户界面保存，因为它已从其他来源预配。复制 JSON 或将其保存到下面的文件中，然后您可以在预配源中更新您的数据面板。",
       "copy-json-to-clipboard": "将 JSON 复制到剪贴板",
+      "error-saving": "",
       "file-path": "<strong>文件路径：</strong>{{filePath}}",
       "form-loading-error": "",
       "form-loading-error-unknown": "",
       "label-description": "描述",
       "label-target-folder": "目标文件夹",
       "label-title": "标题",
+      "repo-path-required": "",
       "save": "保存",
       "save-json-to-file": "将 JSON 保存到文件",
       "saving": "正在保存...",
@@ -8859,7 +8890,8 @@
     "select-placeholder": "按文件夹筛选"
   },
   "folder-repo": {
-    "read-only-badge": "只读"
+    "read-only-badge": "只读",
+    "repository-not-found-tooltip": ""
   },
   "folders": {
     "api": {
@@ -10211,6 +10243,9 @@
       "group": "组",
       "group-tooltip": "堆叠组的名称"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "筛选值",
       "cell-filter-out": "筛除值",
@@ -10259,6 +10294,10 @@
       },
       "no-values-label": "没有值",
       "pagination-summary": "第 {{itemsRangeStart}} - {{displayedEnd}} 行，共 {{numRows}} 行",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "无数据"
       },
@@ -11364,7 +11403,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "未找到选项"
@@ -12106,12 +12146,10 @@
       "description": "您收到的通知将显示在此处",
       "title": "都完成了！"
     },
-    "starred-dashboard": "仪表盘已加星标",
     "stored-notifications": {
       "dismiss-notifications": "关闭通知",
       "title-alert": "此页面显示过去的错误和警告。一旦被关闭，它们将无法检索。"
-    },
-    "unstarred-dashboard": "仪表板未加星标"
+    }
   },
   "oauth": {
     "form": {
@@ -12252,6 +12290,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "名称"
       }
     },
@@ -12397,11 +12436,13 @@
       "description-customize-dashboard-elements-visibility": "自定义数据面板元素可见性",
       "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "将调整面板高度以适应屏幕大小",
+      "description-playlist-nav": "",
       "label-autofit": "自动调整",
       "label-dashboard-links": "数据面板链接",
       "label-display-dashboard-controls": "显示数据面板控件",
       "label-hide-logo": "",
       "label-mode": "模式",
+      "label-playlist-nav": "",
       "label-time-and-refresh": "时间和刷新",
       "label-variables": "变量",
       "modes": {
@@ -12948,6 +12989,7 @@
       "error-delete-connection": "删除连接失败",
       "error-required": "此字段为必填",
       "error-save-connection": "保存连接失败",
+      "error-submit": "",
       "grafana-repositories": "使用此连接的存储库",
       "label-app-id": "GitHub 应用 ID",
       "label-description": "描述",
@@ -13023,6 +13065,10 @@
       "set-up-public-webhooks": "设置公共 Webhook",
       "title-instant-updates-requests-webhooks": "通过 Webhook 实现即时更新和拉取请求。",
       "title-visual-previews-in-pull-requests": "具有图像渲染功能的拉取请求可视化预览"
+    },
+    "error": {
+      "branch-not-found-dashboard": "",
+      "branch-not-found-folder": ""
     },
     "error-title-default": "错误",
     "expanded-row": {
@@ -13231,6 +13277,28 @@
         "label": "将所有资源与外部存储同步",
         "subtitle": "如果要通过外部存储来同步和管理整个 Grafana 实例，请使用此选项。"
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "",
+      "title": ""
+    },
+    "orphaned-repository-tooltip": "",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "",
+      "confirm-delete-button": "",
+      "confirm-delete-title": "",
+      "confirm-release-body": "",
+      "confirm-release-button": "",
+      "confirm-release-title": "",
+      "contact-admin": "",
+      "convert-to-local-button": "",
+      "delete-button": "",
+      "job-error": "",
+      "job-success": "",
+      "job-warning": "",
+      "message": "",
+      "submit-error": "",
+      "title": ""
     },
     "provisioning-wizard": {
       "on-submit": {
@@ -13461,6 +13529,9 @@
       },
       "go-to": "前往",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "警告",
     "watch-stream": {
@@ -14596,13 +14667,19 @@
     },
     "presets": {
       "horizontal-threshold-value": "",
+      "horizontal-threshold-value-desc": "",
       "horizontal-threshold-value-sparkline": "",
+      "horizontal-threshold-value-sparkline-desc": "",
       "list": "",
       "list_desc": "",
       "threshold-background": "",
+      "threshold-background-desc": "",
       "threshold-background-sparkline": "",
+      "threshold-background-sparkline-desc": "",
       "threshold-value": "",
+      "threshold-value-desc": "",
       "threshold-value-sparkline": "",
+      "threshold-value-sparkline-desc": "",
       "wide-list": "",
       "wide-list-desc": ""
     },
@@ -14824,12 +14901,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "",
       "create": "创建",
+      "description-create-team-folder": "",
       "description-email": "这是可选项，主要用于允许自定义团队头像",
-      "failed-to-create": "创建团队失败",
+      "failed-to-create": "",
+      "folder-create-failed": "",
+      "folder-create-failed-help": "",
+      "folder-creation-link": "",
+      "folder-creation-loading": "",
+      "folder-creation-success": "",
+      "label-create-team-folder": "",
       "label-email": "电子邮箱",
       "label-name": "名称",
-      "label-role": "角色"
+      "label-role": "角色",
+      "role-creation-success": "",
+      "roles-create-failed": "",
+      "roles-create-permission-issue": "",
+      "roles-creation-loading": "",
+      "team-creation-link": "",
+      "team-creation-loading": "",
+      "team-creation-success": ""
     },
     "empty-state": {
       "button-title": "新的团队",

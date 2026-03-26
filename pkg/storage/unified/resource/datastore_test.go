@@ -2826,7 +2826,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 	require.Equal(t, 243, totalEntries) // 3×3×3×3×3 = 243 total entries
 
 	t.Run("get stats for all namespaces", func(t *testing.T) {
-		stats, err := ds.GetResourceStats(ctx, "", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{}, 0)
 		require.NoError(t, err)
 
 		// Should have 27 resource types (3 namespaces × 3 groups × 3 resources)
@@ -2860,7 +2860,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 	})
 
 	t.Run("get stats for specific namespace ns1", func(t *testing.T) {
-		stats, err := ds.GetResourceStats(ctx, "ns1", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "ns1"}, 0)
 		require.NoError(t, err)
 
 		// Should have 9 resource types (3 groups × 3 resources for ns1)
@@ -2884,7 +2884,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 	})
 
 	t.Run("get stats for specific namespace ns2", func(t *testing.T) {
-		stats, err := ds.GetResourceStats(ctx, "ns2", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "ns2"}, 0)
 		require.NoError(t, err)
 
 		// Should have 9 resource types (3 groups × 3 resources for ns2)
@@ -2899,28 +2899,78 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 
 	t.Run("get stats with minCount filter", func(t *testing.T) {
 		// With minCount=0, all resources should be included (each has 3 items > 0)
-		stats, err := ds.GetResourceStats(ctx, "", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{}, 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 27) // All 27 resource types should be included
 
 		// With minCount=2, all resources should still be included (each has 3 items > 2)
-		stats, err = ds.GetResourceStats(ctx, "", 2)
+		stats, err = ds.GetResourceStats(ctx, NamespacedResource{}, 2)
 		require.NoError(t, err)
 		require.Len(t, stats, 27) // All 27 resource types should still be included
 
 		// With minCount=3, no resources should be included (each has exactly 3 items, not > 3)
-		stats, err = ds.GetResourceStats(ctx, "", 3)
+		stats, err = ds.GetResourceStats(ctx, NamespacedResource{}, 3)
 		require.NoError(t, err)
 		require.Len(t, stats, 0)
 
 		// With minCount=4, no resources should be included (each has only 3 items < 4)
-		stats, err = ds.GetResourceStats(ctx, "", 4)
+		stats, err = ds.GetResourceStats(ctx, NamespacedResource{}, 4)
 		require.NoError(t, err)
 		require.Len(t, stats, 0)
 	})
 
 	t.Run("get stats for non-existent namespace", func(t *testing.T) {
-		stats, err := ds.GetResourceStats(ctx, "non-existent", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "non-existent"}, 0)
+		require.NoError(t, err)
+		require.Len(t, stats, 0)
+	})
+
+	t.Run("filter by group only", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Group: "apps"}, 0)
+		require.NoError(t, err)
+		// 3 namespaces × 3 resources for the "apps" group
+		require.Len(t, stats, 9)
+		for _, stat := range stats {
+			require.Equal(t, "apps", stat.Group)
+			require.Equal(t, int64(3), stat.Count)
+		}
+	})
+
+	t.Run("filter by resource only", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Resource: "deployments"}, 0)
+		require.NoError(t, err)
+		// 3 namespaces × 3 groups for the "deployments" resource
+		require.Len(t, stats, 9)
+		for _, stat := range stats {
+			require.Equal(t, "deployments", stat.Resource)
+			require.Equal(t, int64(3), stat.Count)
+		}
+	})
+
+	t.Run("filter by group and resource", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Group: "apps", Resource: "deployments"}, 0)
+		require.NoError(t, err)
+		// 3 namespaces for apps/deployments
+		require.Len(t, stats, 3)
+		for _, stat := range stats {
+			require.Equal(t, "apps", stat.Group)
+			require.Equal(t, "deployments", stat.Resource)
+			require.Equal(t, int64(3), stat.Count)
+		}
+	})
+
+	t.Run("filter by namespace group and resource", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "ns1", Group: "apps", Resource: "deployments"}, 0)
+		require.NoError(t, err)
+		require.Len(t, stats, 1)
+		require.Equal(t, "ns1", stats[0].Namespace)
+		require.Equal(t, "apps", stats[0].Group)
+		require.Equal(t, "deployments", stats[0].Resource)
+		require.Equal(t, int64(3), stats[0].Count)
+	})
+
+	t.Run("filter by non-existent group", func(t *testing.T) {
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Group: "non-existent"}, 0)
 		require.NoError(t, err)
 		require.Len(t, stats, 0)
 	})
@@ -2942,7 +2992,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 		require.NoError(t, err)
 
 		// Get stats for ns1 - apps/deployments should now have 2 items instead of 3
-		stats, err := ds.GetResourceStats(ctx, "ns1", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "ns1"}, 0)
 		require.NoError(t, err)
 
 		// Find the apps/deployments stat
@@ -2968,7 +3018,7 @@ func testDataStoreGetResourceStatsComprehensive(t *testing.T, ctx context.Contex
 	})
 
 	t.Run("verify resource versions are meaningful", func(t *testing.T) {
-		stats, err := ds.GetResourceStats(ctx, "ns1", 0)
+		stats, err := ds.GetResourceStats(ctx, NamespacedResource{Namespace: "ns1"}, 0)
 		require.NoError(t, err)
 
 		// All ResourceVersions should be positive and reasonable

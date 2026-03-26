@@ -789,7 +789,9 @@
         "unknown-rule": "Nieznana",
         "value-in-transition": "Wartość w trakcie przejścia"
       },
-      "error": "Błąd podczas ładowania historii stanów alertów",
+      "error": {
+        "server-error": ""
+      },
       "filter": {
         "clear": "Wyczyść filtry",
         "info": {
@@ -800,6 +802,10 @@
         }
       },
       "filterBy": "Filtruj wg:",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "tab": {
         "alert-events": "",
         "notifications": ""
@@ -1730,13 +1736,13 @@
       },
       "step1": {
         "datasource": "",
-        "extra-config-overwrite-desc": "",
-        "extra-config-overwrite-title": "",
         "heading": "",
         "no-datasources": "",
         "no-permission-desc": "",
         "no-permission-title": "",
         "policy-tree-desc": "",
+        "policy-tree-help": "",
+        "policy-tree-help-title": "",
         "policy-tree-name": "",
         "policy-tree-placeholder": "",
         "policy-tree-required": "",
@@ -2041,6 +2047,10 @@
       "error-unable-to-fetch": "Nie można pobrać historii stanu alertów",
       "loading": "Ładowanie…",
       "no-transitions-match-filters": "",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "start-state": "",
       "timeline-hidden": "",
       "title-error-fetching-the-state-history": "Błąd podczas pobierania historii stanu",
@@ -3579,20 +3589,27 @@
       }
     },
     "triage": {
-      "alert-instances": "Instancje alertów",
-      "all-labels": "",
-      "all-labels-drawer-title": "",
+      "collapse": "",
+      "collapse-all": "",
+      "collapse-sidebar": "",
       "compact-firing": "",
-      "compact-instances": "",
       "compact-pending": "",
       "compact-rules": "",
       "error-loading-rule": "Błąd podczas wczytywania reguły",
-      "high-activity-labels": "",
+      "expand": "",
+      "expand-all": "",
+      "expand-sidebar": "",
+      "filter-labels": "",
+      "filter-labels-placeholder": "",
+      "group-row": {
+        "no-label": ""
+      },
       "instance-details-drawer": {
         "declare-incident": "",
         "instance-details": "Szczegóły instancji",
         "silence-button": ""
       },
+      "labels-column-title": "",
       "no-firing-or-pending-instances": "W wybranym zakresie czasu nie ma żadnych instancji alertów w stanie uruchomienia lub oczekiwania.",
       "no-instances-found": "Nie znaleziono instancji alertów dla reguły: {{ruleUID}}",
       "no-labels": "Brak etykiet",
@@ -3614,10 +3631,10 @@
           "folder-only": ""
         }
       },
-      "hidden-label-count_one": "",
-      "hidden-label-count_few": "",
-      "hidden-label-count_many": "",
-      "hidden-label-count_other": "",
+      "show-fewer-values": "",
+      "state-filter-title": "",
+      "state-firing": "",
+      "state-pending": "",
       "show-all-labels_one": "",
       "show-all-labels_few": "",
       "show-all-labels_many": "",
@@ -3626,10 +3643,10 @@
       "show-all-values_few": "",
       "show-all-values_many": "",
       "show-all-values_other": "",
-      "tooltip-more-values_one": "",
-      "tooltip-more-values_few": "",
-      "tooltip-more-values_many": "",
-      "tooltip-more-values_other": ""
+      "showing-groups-count_one": "",
+      "showing-groups-count_few": "",
+      "showing-groups-count_many": "",
+      "showing-groups-count_other": ""
     },
     "type-selector-button": {
       "add-expression": "Dodaj wyrażenie"
@@ -4296,6 +4313,9 @@
     "browse-view": {
       "this-folder-is-empty": "Ten folder jest pusty"
     },
+    "bulk-actions": {
+      "error-generic": ""
+    },
     "bulk-delete-resources-form": {
       "button-cancel": "Anuluj",
       "button-delete": "Usuń",
@@ -4369,6 +4389,7 @@
       "button-deleting": "Usuwanie…",
       "commit": "Usuń folder",
       "delete-warning": "Spowoduje to usunięcie folderu i elementów po nim dziedziczących. Łącznie wpłynie to na następujące elementy:",
+      "missing-info": "",
       "success-message": "Folder został usunięty"
     },
     "descendant-count": {
@@ -4408,6 +4429,7 @@
       "dashboards": "Pulpity",
       "panels": "Panele"
     },
+    "my-team-folders": "",
     "name-cell": {
       "no-items": "Brak elementów"
     },
@@ -4420,12 +4442,13 @@
       "name-label": "Nazwa folderu"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "Błąd podczas tworzenia folderu",
       "button-create": "Utwórz",
       "button-creating": "Tworzenie…",
       "cancel": "Anuluj",
       "error-invalid-characters": "Nazwa folderu zawiera nieprawidłowe znaki. Dozwolone są tylko litery, cyfry, spacje, znaki podkreślenia i łączniki.",
+      "error-missing-title-or-repo": "",
       "error-required": "Wymagana jest nazwa folderu",
+      "error-saving": "",
       "folder-name-input-placeholder-enter-folder-name": "Podaj nazwę folderu",
       "label-folder-name": "Nazwa folderu",
       "text-pull-request-created": "Utworzono żądanie pull ze zmianami w tym folderze:",
@@ -6046,6 +6069,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": ""
+      },
       "prompt-card": {
         "placeholder": "",
         "placeholder-multi": ""
@@ -6145,8 +6171,8 @@
       "name": "Wiersze",
       "new-row-title": "Nowy wiersz",
       "row": {
-        "collapse": "Zwiń wiersz",
-        "expand": "Rozwiń wiersz",
+        "collapse": "",
+        "expand": "",
         "new": "Nowy wiersz",
         "repeat": {
           "learn-more": "Dowiedz się więcej",
@@ -6359,7 +6385,6 @@
         "label": "Wyjdź z edytowania",
         "tooltip": "Wychodzi z trybu edycji i odrzuca niezapisane zmiany"
       },
-      "mark-favorite": "Oznacz jako ulubione",
       "more-save-options": "Więcej opcji zapisywania",
       "new": {
         "back-to-dashboard": "Wróć do pulpitu",
@@ -6429,8 +6454,7 @@
       "star-added": "Oznaczono gwiazdką",
       "star-remove-error": "Nie udało się usunąć z oznaczonych gwiazdką",
       "star-removed": "Usunięto z oznaczonych gwiazdką",
-      "unlink-library-panel": "Rozłącz panel biblioteki",
-      "unmark-favorite": "Usuń oznaczenie jako ulubione"
+      "unlink-library-panel": "Rozłącz panel biblioteki"
     },
     "transformation-editor": {
       "input-data": "Dane wejściowe",
@@ -6689,11 +6713,13 @@
     "ad-hoc-variable-form": {
       "adhoc-options": "Opcje ad hoc",
       "alert-not-supported": "To źródło danych nie obsługuje filtrów ad hoc",
+      "description-enable-group-by": "",
       "description-enables-users-custom-values": "Umożliwia użytkownikom dodawanie niestandardowych wartości do listy",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Podaj wymiary jako wartości rozdzielone przecinkami: {{name}}, {{value}}",
       "label-data-source": "Źródło danych",
       "label-use-static-key-dimensions": "Użyj statycznych wymiarów klucza",
-      "name-allow-custom-values": "Zezwalaj na wartości niestandardowe"
+      "name-allow-custom-values": "Zezwalaj na wartości niestandardowe",
+      "name-enable-group-by": ""
     },
     "add-filters": {
       "label": ""
@@ -6983,11 +7009,12 @@
       "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Nie udało się usunąć pulpitu",
       "cancel-action": "Anuluj",
       "delete-action": "Usuń pulpit",
+      "delete-error": "",
       "deleting": "Usuwanie…",
       "drawer-title": "Usuń pulpit aprowizowany",
+      "no-repository-selected": "",
       "success-message": "Pulpit został usunięty"
     },
     "description-label": {
@@ -7462,16 +7489,17 @@
       "affected-dashboards_other": "Ta aktualizacja wpłynie na <1>{{count}} pulpitu.</1> Będzie to miało wpływ na następujące pulpity korzystające z panelu:"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "Błąd podczas zapisywania pulpitu",
       "cancel": "Anuluj",
       "cannot-be-saved": "Nie można zapisać tego pulpitu z poziomu interfejsu Grafany, ponieważ został on skonfigurowany z innego źródła. Skopiuj treść JSON lub zapisz ją w poniższym pliku, a następnie zaktualizuj pulpit w źródle aprowizacji.",
       "copy-json-to-clipboard": "Kopiuj JSON do schowka",
+      "error-saving": "",
       "file-path": "<strong>Ścieżka do pliku:</strong> {{filePath}}",
       "form-loading-error": "",
       "form-loading-error-unknown": "",
       "label-description": "Opis",
       "label-target-folder": "Katalog docelowy",
       "label-title": "Tytuł",
+      "repo-path-required": "",
       "save": "Zapisz",
       "save-json-to-file": "Zapisz JSON w pliku",
       "saving": "Zapisywanie…",
@@ -8997,7 +9025,8 @@
     "select-placeholder": "Filtruj wg folderu"
   },
   "folder-repo": {
-    "read-only-badge": "Tylko do odczytu"
+    "read-only-badge": "Tylko do odczytu",
+    "repository-not-found-tooltip": ""
   },
   "folders": {
     "api": {
@@ -10379,6 +10408,9 @@
       "group": "Grupa",
       "group-tooltip": "Nazwa grupy stosu"
     },
+    "stats-picker": {
+      "placeholder": ""
+    },
     "table": {
       "cell-filter-on": "Filtruj wg wartości",
       "cell-filter-out": "Odfiltruj wartość",
@@ -10427,6 +10459,10 @@
       },
       "no-values-label": "Brak wartości",
       "pagination-summary": "{{itemsRangeStart}}–{{displayedEnd}} z {{numRows}} wierszy",
+      "sort-by-column": "",
+      "sort-by-column-ascending": "",
+      "sort-by-column-descending": "",
+      "sort-column": "",
       "sparkline": {
         "no-data": "b.d."
       },
@@ -11556,7 +11592,8 @@
     "save-owner": "",
     "select-owner": "",
     "selected-team-not-found": "",
-    "team-not-found": ""
+    "team-not-found": "",
+    "unknown-error": ""
   },
   "metric-select": {
     "noOptionsMessage-no-options-found": "Nie znaleziono opcji"
@@ -12307,12 +12344,10 @@
       "description": "Tutaj pojawią się otrzymane powiadomienia",
       "title": "Jesteś na bieżąco!"
     },
-    "starred-dashboard": "Panel oznaczony gwiazdką",
     "stored-notifications": {
       "dismiss-notifications": "Odrzuć powiadomienia",
       "title-alert": "Na tej stronie wyświetlane są wcześniejsze błędy i ostrzeżenia. Odrzuconych komunikatów nie można przywrócić."
-    },
-    "unstarred-dashboard": "Usunięto oznaczenie panelu gwiazdką"
+    }
   },
   "oauth": {
     "form": {
@@ -12453,6 +12488,7 @@
     },
     "get-field-vars": {
       "label": {
+        "display-name": "",
         "name": "Imię"
       }
     },
@@ -12598,11 +12634,13 @@
       "description-customize-dashboard-elements-visibility": "Dostosuj widoczność elementów pulpitu",
       "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Wysokości paneli zostaną dostosowane do rozmiaru ekranu",
+      "description-playlist-nav": "",
       "label-autofit": "Autodopasowanie",
       "label-dashboard-links": "Linki na pulpicie",
       "label-display-dashboard-controls": "Wyświetl elementy sterujące pulpitem",
       "label-hide-logo": "",
       "label-mode": "Tryb",
+      "label-playlist-nav": "",
       "label-time-and-refresh": "Czas i odświeżanie",
       "label-variables": "Zmienne",
       "modes": {
@@ -13158,6 +13196,7 @@
       "error-delete-connection": "Nie udało się usunąć połączenia",
       "error-required": "To pole jest wymagane",
       "error-save-connection": "Nie udało się zapisać połączenia",
+      "error-submit": "",
       "grafana-repositories": "Repozytoria korzystające z tego połączenia",
       "label-app-id": "Identyfikator aplikacji GitHub",
       "label-description": "Opis",
@@ -13236,6 +13275,10 @@
       "set-up-public-webhooks": "Skonfiguruj publiczne webhooki",
       "title-instant-updates-requests-webhooks": "Błyskawiczne aktualizacje i żądania pull dzięki webhookom.",
       "title-visual-previews-in-pull-requests": "Podglądy wizualne w żądaniach pull z renderowaniem obrazów"
+    },
+    "error": {
+      "branch-not-found-dashboard": "",
+      "branch-not-found-folder": ""
     },
     "error-title-default": "Błąd",
     "expanded-row": {
@@ -13450,6 +13493,28 @@
         "label": "Synchronizuj wszystkie zasoby z zewnętrzną pamięcią masową",
         "subtitle": "Użyj tej opcji, jeśli chcesz synchronizować całą instancję usługi Grafana i zarządzać nią za pośrednictwem zewnętrznej pamięci masowej."
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "",
+      "title": ""
+    },
+    "orphaned-repository-tooltip": "",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "",
+      "confirm-delete-button": "",
+      "confirm-delete-title": "",
+      "confirm-release-body": "",
+      "confirm-release-button": "",
+      "confirm-release-title": "",
+      "contact-admin": "",
+      "convert-to-local-button": "",
+      "delete-button": "",
+      "job-error": "",
+      "job-success": "",
+      "job-warning": "",
+      "message": "",
+      "submit-error": "",
+      "title": ""
     },
     "provisioning-wizard": {
       "on-submit": {
@@ -13704,6 +13769,9 @@
       },
       "go-to": "Przejdź do",
       "make-sure": ""
+    },
+    "validation": {
+      "hidden-characters": ""
     },
     "warning-title-default": "Ostrzeżenie",
     "watch-stream": {
@@ -14860,13 +14928,19 @@
     },
     "presets": {
       "horizontal-threshold-value": "",
+      "horizontal-threshold-value-desc": "",
       "horizontal-threshold-value-sparkline": "",
+      "horizontal-threshold-value-sparkline-desc": "",
       "list": "",
       "list_desc": "",
       "threshold-background": "",
+      "threshold-background-desc": "",
       "threshold-background-sparkline": "",
+      "threshold-background-sparkline-desc": "",
       "threshold-value": "",
+      "threshold-value-desc": "",
       "threshold-value-sparkline": "",
+      "threshold-value-sparkline-desc": "",
       "wide-list": "",
       "wide-list-desc": ""
     },
@@ -15091,12 +15165,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "",
       "create": "Utwórz",
+      "description-create-team-folder": "",
       "description-email": "Jest to ustawienie opcjonalne i służy przede wszystkim do zezwalania na niestandardowe awatary zespołu",
-      "failed-to-create": "Nie udało się utworzyć zespołu",
+      "failed-to-create": "",
+      "folder-create-failed": "",
+      "folder-create-failed-help": "",
+      "folder-creation-link": "",
+      "folder-creation-loading": "",
+      "folder-creation-success": "",
+      "label-create-team-folder": "",
       "label-email": "E-mail",
       "label-name": "Nazwa",
-      "label-role": "Rola"
+      "label-role": "Rola",
+      "role-creation-success": "",
+      "roles-create-failed": "",
+      "roles-create-permission-issue": "",
+      "roles-creation-loading": "",
+      "team-creation-link": "",
+      "team-creation-loading": "",
+      "team-creation-success": ""
     },
     "empty-state": {
       "button-title": "Nowy zespół",

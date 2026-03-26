@@ -954,6 +954,97 @@ func setupBackendTestStorageDisabled(t *testing.T) (testBackend, context.Context
 	}, ctx
 }
 
+func TestSqlPruneHistoryRequest_Validate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		req     sqlPruneHistoryRequest
+		wantErr string
+	}{
+		{
+			name: "valid namespaced key",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+		},
+		{
+			name: "valid cluster-scoped key (no namespace)",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "",
+					Group:     "cluster.example.io",
+					Resource:  "clusterresources",
+					Name:      "my-cluster-resource",
+				},
+				HistoryLimit: 10,
+			},
+		},
+		{
+			name: "missing key",
+			req: sqlPruneHistoryRequest{
+				HistoryLimit: 10,
+			},
+			wantErr: "missing key",
+		},
+		{
+			name: "missing group",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+			wantErr: "missing group",
+		},
+		{
+			name: "missing resource",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 10,
+			},
+			wantErr: "missing resource",
+		},
+		{
+			name: "invalid history limit",
+			req: sqlPruneHistoryRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "default",
+					Group:     "apps",
+					Resource:  "deployments",
+					Name:      "my-deploy",
+				},
+				HistoryLimit: 0,
+			},
+			wantErr: "history limit must be greater than zero",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := tc.req.Validate()
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestBackend_prunerHistoryLimit(t *testing.T) {
 	tests := []struct {
 		name     string

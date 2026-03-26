@@ -33,7 +33,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashboardsV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardsV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
@@ -1100,22 +1100,7 @@ func (h *ProvisioningTestHelper) CleanupAllResources(t *testing.T, ctx context.C
 			t.Fatalf("CleanupAllResources(%s): %v", c.name, err)
 		}
 	}
-	h.cleanProvisioningPath(t)
-}
-
-// cleanProvisioningPath removes all files and directories inside the shared
-// provisioning directory without removing the directory itself.
-func (h *ProvisioningTestHelper) cleanProvisioningPath(t *testing.T) {
-	t.Helper()
-	entries, err := os.ReadDir(h.ProvisioningPath)
-	if err != nil {
-		return
-	}
-	for _, entry := range entries {
-		if err := os.RemoveAll(filepath.Join(h.ProvisioningPath, entry.Name())); err != nil {
-			t.Fatalf("cleanProvisioningPath(%s): %v", entry.Name(), err)
-		}
-	}
+	h.CleanProvisioningDir(t)
 }
 
 // SharedEnv manages a single shared Grafana server for a test package.
@@ -1170,7 +1155,6 @@ func (e *SharedEnv) GetCleanHelper(t *testing.T) *ProvisioningTestHelper {
 	t.Helper()
 	h := e.GetHelper(t)
 	h.CleanupAllResources(t, context.Background())
-	h.CleanProvisioningDir(t)
 	return h
 }
 
@@ -1567,6 +1551,16 @@ func PostHelper(t *testing.T, helper apis.K8sTestHelper, path string, body inter
 
 func PatchHelper(t *testing.T, helper apis.K8sTestHelper, path string, body interface{}, user apis.User) (map[string]interface{}, int, error) {
 	return requestHelper(t, helper, http.MethodPatch, path, body, user)
+}
+
+func DeleteHelper(t *testing.T, helper apis.K8sTestHelper, path string, user apis.User) {
+	t.Helper()
+	resp := apis.DoRequest(&helper, apis.RequestParams{
+		User:   user,
+		Method: http.MethodDelete,
+		Path:   path,
+	}, &struct{}{})
+	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "DELETE %s failed: %s", path, string(resp.Body))
 }
 
 func requestHelper(

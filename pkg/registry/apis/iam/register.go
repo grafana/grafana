@@ -464,8 +464,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamsAPIGroup(opts builder.AP
 			b.features,
 		)
 
-		storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing,
-			b.features, b.accessClient)
+		storage[teamResource.StoragePath("members")] = team.NewTeamMembersREST(teamBindingSearchClient, b.tracing, b.features)
 	}
 
 	if enableExternalGroupMappingsApi && b.teamGroupsHandler != nil {
