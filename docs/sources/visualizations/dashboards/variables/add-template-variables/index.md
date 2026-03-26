@@ -125,7 +125,7 @@ To create a variable, follow these steps:
 
 1. (Optional) In the **Description** field, enter a description of the variable. The description appears as an info icon tooltip next to the variable name on the dashboard.
 
-   Descriptions support links. You can use markdown-style links (`[link text](https://example.com)`) or paste bare URLs (`https://example.com`). Only `http` and `https` URLs are rendered as clickable links — other protocols are displayed as plain text.
+   Descriptions support links. You can use Markdown-style links (`[link text](https://example.com)`) or paste bare URLs (`https://example.com`). Only `http` and `https` URLs are rendered as clickable links — other protocols are displayed as plain text.
 
 1. Choose a **Display** option:
    - **Above dashboard** - The variable drop-down list displays above the dashboard with the variable **Name** or **Label** value. This is the default.
