@@ -5676,7 +5676,7 @@
       "close": "Close",
       "empty": "No labels available",
       "groupby": "GroupBy",
-      "missing-adhoc": "No ad hoc filters available",
+      "missing-adhoc": "No filters available",
       "multi": {
         "value": {
           "aria-label": "Value",
@@ -6637,10 +6637,14 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "This data source does not support filters.",
+      "message-supported": "Filters are applied automatically to all queries that target this data source"
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Ad-hoc options",
-      "alert-not-supported": "This data source does not support ad hoc filters",
-      "description-enable-group-by": "Enables group by operator in the ad hoc filter combobox",
+      "adhoc-options": "Filter options",
+      "alert-not-supported": "This data source does not support filters",
+      "description-enable-group-by": "Enables group by operator in the filter combobox",
       "description-enables-users-custom-values": "Enables users to add custom values to the list",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Provide dimensions as CSV: {{name}}, {{value}}",
       "label-data-source": "Data source",
@@ -7004,7 +7008,7 @@
         "values-timespans": "Values are timespans, ex 1m, 1h, 1d"
       },
       "name": {
-        "ad-hoc-filters": "Ad hoc filters",
+        "ad-hoc-filters": "Filter",
         "constant": "Constant",
         "custom": "Custom",
         "data-source": "Data source",
