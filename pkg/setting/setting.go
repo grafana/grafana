@@ -656,7 +656,7 @@ type Cfg struct {
 	EnableSearchClient                         bool
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
-	EnforceQuotas                              bool
+	EnforcedQuotaResources                     []string
 	QuotasErrorMessageSupportInfo              string
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool

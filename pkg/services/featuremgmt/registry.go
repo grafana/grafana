@@ -141,14 +141,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:            "kubernetesStars",
-			Description:     "Routes stars requests from /api to the /apis endpoint",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-		},
-		{
 			Name:        "influxqlStreamingParser",
 			Description: "Enable streaming JSON parser for InfluxDB datasource InfluxQL query language",
 			Stage:       FeatureStageExperimental,
@@ -249,11 +241,11 @@ var (
 		},
 		{
 			Name:            "provisioning",
-			Description:     "Next generation provisioning... and git",
-			Stage:           FeatureStageExperimental,
+			Description:     "Enables Git Sync and as-code provisioning for Grafana resources",
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
-			Expression:      "false",
+			Expression:      "true",
 		},
 		{
 			Name:            "provisioningFolderMetadata",
@@ -286,13 +278,6 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
-		},
-		{
-			Name:        "queryCacheRequestDeduplication",
-			Description: "Enable request deduplication when query caching is enabled. Requests issuing the same query will be deduplicated, only the first request to arrive will be executed and the response will be shared with requests arriving while there is a request in-flight",
-			Stage:       FeatureStageExperimental,
-			Expression:  "false", // enabled by default
-			Owner:       grafanaOperatorExperienceSquad,
 		},
 		{
 			Name:            "configurableSchedulerTick",
@@ -877,10 +862,10 @@ var (
 		{
 			Name:         "sqlExpressions",
 			Description:  "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:        FeatureStagePublicPreview,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false,
 			Owner:        grafanaDatasourcesCoreServicesSquad,
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "sqlExpressionsColumnAutoComplete",
@@ -2736,7 +2721,8 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
-		}, {
+		},
+		{
 			Name:            "colorblindThemes",
 			Description:     "Enables the new colorblind-friendly themes",
 			Stage:           FeatureStageGeneralAvailability,
@@ -2776,6 +2762,20 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
+		},
+		{
+			Name:        "lokiAlignedQuerySplitting",
+			Description: "Aligns query splitting chunks with UTC midnight",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "queryFetchConfigFromSettingsService",
+			Description: "Enables the query service to fetch the configuration from the settings service",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDatasourcesCoreServicesSquad,
+			Expression:  "false",
 		},
 	}
 )

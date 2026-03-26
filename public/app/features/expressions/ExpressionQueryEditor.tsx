@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { lazy, Suspense, useCallback, useEffect, useRef } from 'react';
 
-import { DataSourceApi, FeatureState, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Button, FeatureBadge, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
+import { Button, IconButton, InlineField, PopoverContent, useStyles2 } from '@grafana/ui';
 
 import { ClassicConditions } from './components/ClassicConditions';
 import { ExpressionTypeDropdown } from './components/ExpressionTypeDropdown';
@@ -31,9 +31,7 @@ type ExpressionTypeConfigStorage = Partial<Record<NonClassicExpressionType, stri
  * @param type - The expression type.
  * @returns The configuration for the expression type.
  */
-const getExpressionTypeConfig = (
-  type: ExpressionQueryType
-): { helperText: PopoverContent; featureState: FeatureState | undefined } => {
+const getExpressionTypeConfig = (type: ExpressionQueryType): { helperText: PopoverContent } => {
   const description = expressionTypes.find(({ value }) => value === type)?.description;
 
   switch (type) {
@@ -46,12 +44,10 @@ const getExpressionTypeConfig = (
             columns, as returned from the data source.
           </Trans>
         ),
-        featureState: FeatureState.preview,
       };
     default:
       return {
         helperText: description ?? '',
-        featureState: undefined,
       };
   }
 };
@@ -149,7 +145,7 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
     }
   };
 
-  const { helperText, featureState } = getExpressionTypeConfig(query.type);
+  const { helperText } = getExpressionTypeConfig(query.type);
 
   return (
     <div>
@@ -165,7 +161,6 @@ export function ExpressionQueryEditor(props: ExpressionQueryEditorProps) {
           </ExpressionTypeDropdown>
         </InlineField>
         <div className={styles.fieldContainer}>
-          {featureState && <FeatureBadge featureState={featureState} />}
           {helperText && <IconButton name="info-circle" tooltip={helperText} />}
         </div>
       </div>

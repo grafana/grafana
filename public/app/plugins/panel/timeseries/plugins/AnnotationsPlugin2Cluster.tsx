@@ -19,7 +19,7 @@ import { AnnotationMarker2 } from './annotations2-cluster/AnnotationMarker2';
 import { AnnotationVals, XYAnnoVals } from './annotations2-cluster/types';
 import { ClusteringMode, useAnnotationClustering } from './annotations2-cluster/useAnnotationClustering';
 import { useAnnotations } from './annotations2-cluster/useAnnotations';
-import { ANNOTATION_LANE_SIZE } from './utils';
+import { ANNOTATION_LANE_SIZE, getAnnoRegionBoxStyle } from './utils';
 
 interface AnnotationsPlugin2ClusterProps {
   config: UPlotConfigBuilder;
@@ -259,20 +259,17 @@ export const AnnotationsPlugin2Cluster = ({
 
         let style: React.CSSProperties | null = null;
         let isVisible = true;
+        const plotWidth = plot.rect.width;
 
         if (isRegion && timeEnd != null) {
           const right = Math.round(plot.valToPos(timeEnd, 'x')) || 0; // handles -0
-
-          isVisible = left < plot.rect.width && right > 0;
+          isVisible = left < plotWidth && right > 0;
 
           if (isVisible) {
-            const clampedLeft = Math.max(0, left);
-            const clampedRight = Math.min(plot.rect.width, right);
-
-            style = { left: clampedLeft, background: color, width: clampedRight - clampedLeft, top };
+            style = { ...getAnnoRegionBoxStyle(plotWidth, right, left), background: color, top };
           }
         } else {
-          isVisible = left >= 0 && left <= plot.rect.width;
+          isVisible = left >= 0 && left <= plotWidth;
 
           if (isVisible) {
             style = { left, borderBottomColor: color, top };

@@ -896,26 +896,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.setState({ overlay: undefined });
   }
 
-  public async onStarDashboard(isStarred?: boolean) {
-    const { meta, uid } = this.state;
-    isStarred = isStarred ?? Boolean(meta.isStarred);
-    if (!uid) {
-      return;
-    }
-    try {
-      const result = await getDashboardSrv().starDashboard(uid, isStarred);
-
-      this.setState({
-        meta: {
-          ...meta,
-          isStarred: result,
-        },
-      });
-    } catch (err) {
-      console.error('Failed to star dashboard', err);
-    }
-  }
-
   public onOpenSettings = () => {
     locationService.partial({ editview: 'settings' });
   };

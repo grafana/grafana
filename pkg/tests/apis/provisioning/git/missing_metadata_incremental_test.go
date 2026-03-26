@@ -6,28 +6,24 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t) // no withProvisioningFolderMetadata
+	helper := sharedGitHelper(t) // no withProvisioningFolderMetadata
 
 	const repoName = "incr-missing-meta-disabled"
 
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard.json": gitcommon.DashboardJSON("disabled-dash", "Root Dashboard", 1),
+		"dashboard.json": common.DashboardJSON("disabled-dash", "Root Dashboard", 1),
 	})
 
 	// Full sync.
 	common.SyncAndWaitWithSuccess(t, helper, repoName)
 
 	// Add a dashboard inside a folder with no _folder.json.
-	require.NoError(t, local.CreateFile("myfolder/dashboard2.json", string(gitcommon.DashboardJSON("disabled-folder-dash", "Folder Dashboard", 1))))
+	require.NoError(t, local.CreateFile("myfolder/dashboard2.json", string(common.DashboardJSON("disabled-folder-dash", "Folder Dashboard", 1))))
 	_, err := local.Git("add", ".")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "add dashboard in folder without metadata")
