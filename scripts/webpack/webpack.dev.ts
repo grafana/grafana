@@ -4,6 +4,7 @@ import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import fs from 'node:fs';
 import path from 'node:path';
 import webpack, { type Configuration } from 'webpack';
+// webpack does not correctly export named ESM bindings — destructure from the default import
 const { DefinePlugin, EnvironmentPlugin } = webpack;
 import WebpackAssetsManifest from 'webpack-assets-manifest';
 import LiveReloadPlugin from 'webpack-livereload-plugin';

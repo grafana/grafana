@@ -1,9 +1,9 @@
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import { EsbuildPlugin } from 'esbuild-loader';
-import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import webpack, { type Configuration } from 'webpack';
+// webpack does not correctly export named ESM bindings — destructure from the default import
 const { EnvironmentPlugin } = webpack;
 import WebpackAssetsManifest from 'webpack-assets-manifest';
 import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
