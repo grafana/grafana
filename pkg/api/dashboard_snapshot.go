@@ -76,10 +76,11 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) {
 	}
 
 	cfg := snapshot.SnapshotSharingOptions{
-		SnapshotsEnabled:     hs.Cfg.SnapshotEnabled,
-		ExternalEnabled:      hs.Cfg.ExternalEnabled,
-		ExternalSnapshotName: hs.Cfg.ExternalSnapshotName,
-		ExternalSnapshotURL:  hs.Cfg.ExternalSnapshotUrl,
+		SnapshotsEnabled:      hs.Cfg.SnapshotEnabled,
+		ExternalEnabled:       hs.Cfg.ExternalEnabled,
+		ExternalSnapshotName:  hs.Cfg.ExternalSnapshotName,
+		ExternalSnapshotURL:   hs.Cfg.ExternalSnapshotUrl,
+		ExternalSnapshotToken: hs.Cfg.ExternalSnapshotToken,
 	}
 
 	if hs.Cfg.SnapshotPublicMode {
