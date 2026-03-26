@@ -554,8 +554,7 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 			{Name: "team-2"},
 		}
 
-		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
-		require.NoError(t, err)
+		handler.enrichWithMemberCounts(context.Background(), "default", hits)
 		assert.Equal(t, int64(3), hits[0].MemberCount)
 		assert.Equal(t, int64(0), hits[1].MemberCount)
 	})
@@ -583,11 +582,9 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 			{Name: "team-ok-2"},
 		}
 
-		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "team-bad")
+		handler.enrichWithMemberCounts(context.Background(), "default", hits)
 
-		// The other goroutines ran to completion despite the failure
+		// Errors are logged and skipped; successful goroutines still complete
 		assert.Equal(t, int64(2), hits[0].MemberCount, "team-ok-1 should still have its count")
 		assert.Equal(t, int64(0), hits[1].MemberCount, "team-bad should remain at zero")
 		assert.Equal(t, int64(2), hits[2].MemberCount, "team-ok-2 should still have its count")

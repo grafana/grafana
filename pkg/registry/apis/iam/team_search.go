@@ -315,10 +315,7 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 	}
 
 	if queryParams.Get("membercount") == "true" && s.teamBindingStore != nil {
-		if err := s.enrichWithMemberCounts(ctx, requester.GetNamespace(), searchResults.Hits); err != nil {
-			span.RecordError(err)
-			s.log.Warn("failed to get member counts", "error", err)
-		}
+		s.enrichWithMemberCounts(ctx, requester.GetNamespace(), searchResults.Hits)
 	}
 
 	if queryParams.Get("accesscontrol") == "true" && s.accessClient != nil {
@@ -377,12 +374,16 @@ func (s *TeamSearchHandler) stampAccessControl(ctx context.Context, requester id
 	return nil
 }
 
-func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
+// enrichWithMemberCounts fetches member counts for each team hit concurrently.
+// errgroup is used as a bounded concurrency pool (SetLimit); errors are handled
+// per-item (logged and skipped) so they are not propagated.
+func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) {
 	if len(hits) == 0 {
-		return nil
+		return
 	}
 
 	var g errgroup.Group
+	g.SetLimit(10)
 
 	for i := range hits {
 		g.Go(func() error {
@@ -391,18 +392,20 @@ func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespac
 				FieldSelector: fields.OneTermEqualSelector("spec.teamRef.name", hits[i].Name),
 			})
 			if err != nil {
-				return fmt.Errorf("failed to list team bindings for team %s: %w", hits[i].Name, err)
+				s.log.Warn("failed to list team bindings for team", "team", hits[i].Name, "error", err)
+				return nil
 			}
 			list, ok := obj.(*iamv0alpha1.TeamBindingList)
 			if !ok {
-				return fmt.Errorf("unexpected type %T from team binding list", obj)
+				s.log.Warn("unexpected type from team binding list", "team", hits[i].Name, "type", fmt.Sprintf("%T", obj))
+				return nil
 			}
 			hits[i].MemberCount = int64(len(list.Items))
 			return nil
 		})
 	}
 
-	return g.Wait()
+	g.Wait()
 }
 
 func (s *TeamSearchHandler) write(w http.ResponseWriter, obj any) error {
