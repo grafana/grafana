@@ -808,8 +808,10 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
+	// Use version-specific hook name to avoid conflicts when multiple versions are registered
+	hookName := fmt.Sprintf("grafana-provisioning-%s", b.gv.Version)
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
-		"grafana-provisioning": func(postStartHookCtx genericapiserver.PostStartHookContext) error {
+		hookName: func(postStartHookCtx genericapiserver.PostStartHookContext) error {
 			var config *clientrest.Config
 			var err error
 			if b.restConfigGetter == nil {
