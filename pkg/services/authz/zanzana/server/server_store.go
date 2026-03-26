@@ -98,7 +98,16 @@ func (s *Server) GetStore(ctx context.Context, namespace string) (*zanzana.Store
 func (s *Server) DeleteStore(ctx context.Context, namespace string) error {
 	info, ok := s.removeStore(namespace)
 	if !ok {
-		return nil
+		// Fallback: look up directly from OpenFGA in case the cache is stale.
+		store, err := s.GetStore(ctx, namespace)
+		if err != nil {
+			if errors.Is(err, zanzana.ErrStoreNotFound) {
+				return nil
+			}
+			return err
+		}
+		info = *store
+		s.removeStore(namespace)
 	}
 
 	_, err := s.openFGAClient.DeleteStore(ctx, &openfgav1.DeleteStoreRequest{StoreId: info.ID})
