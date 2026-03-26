@@ -25,6 +25,11 @@ import {
   interpolateDashboardForCompatibilityCheck,
   COMMUNITY_PAGE_SIZE_QUERY,
   COMMUNITY_RESULT_SIZE,
+  DEFAULT_SORT_ORDER,
+  DEFAULT_SORT_DIRECTION,
+  INCLUDE_LOGO,
+  INCLUDE_SCREENSHOTS,
+  SEARCH_DEBOUNCE_MS,
 } from './utils/communityDashboardHelpers';
 
 interface Props {
@@ -34,12 +39,6 @@ interface Props {
   datasourceUid?: string;
   isDashboardsLoading: boolean;
 }
-
-const SEARCH_DEBOUNCE_MS = 500;
-const DEFAULT_SORT_ORDER = 'downloads';
-const DEFAULT_SORT_DIRECTION = 'desc';
-const INCLUDE_LOGO = true;
-const INCLUDE_SCREENSHOTS = true;
 
 export const CommunityDashboardSection = ({
   onShowMapping,

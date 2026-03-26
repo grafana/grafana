@@ -7,6 +7,14 @@ import {
   fetchProvisionedDashboards,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/api/dashboardLibraryApi';
 import { GnetDashboard } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
+import {
+  DEFAULT_SORT_ORDER,
+  DEFAULT_SORT_DIRECTION,
+  COMMUNITY_PAGE_SIZE_QUERY,
+  INCLUDE_LOGO,
+  INCLUDE_SCREENSHOTS,
+  COMMUNITY_RESULT_SIZE,
+} from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/communityDashboardHelpers';
 import { PluginDashboard } from 'app/types/plugins';
 
 type FetchStatus = 'idle' | 'loading' | 'done' | 'error';
@@ -57,18 +65,18 @@ export const SuggestedDashboardsLoader = ({
       const [provisioned, communityResponse] = await Promise.all([
         fetchProvisionedDashboards(ds.type),
         fetchCommunityDashboards({
-          orderBy: 'downloads',
-          direction: 'desc',
+          orderBy: DEFAULT_SORT_ORDER,
+          direction: DEFAULT_SORT_DIRECTION,
           page: 1,
-          pageSize: 10,
-          includeScreenshots: true,
+          pageSize: COMMUNITY_PAGE_SIZE_QUERY,
+          includeLogo: INCLUDE_LOGO,
+          includeScreenshots: INCLUDE_SCREENSHOTS,
           dataSourceSlugIn: ds.type,
-          includeLogo: true,
         }),
       ]);
 
       setProvisionedDashboards(provisioned);
-      setCommunityDashboards(communityResponse.items);
+      setCommunityDashboards(communityResponse.items.slice(0, COMMUNITY_RESULT_SIZE));
       setFetchStatus('done');
       onFetchComplete?.(provisioned.length > 0 || communityResponse.items.length > 0);
     } catch {

@@ -20,6 +20,12 @@ import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceI
 export const COMMUNITY_PAGE_SIZE_QUERY = 12;
 export const COMMUNITY_RESULT_SIZE = 6;
 
+export const SEARCH_DEBOUNCE_MS = 500;
+export const DEFAULT_SORT_ORDER = 'downloads';
+export const DEFAULT_SORT_DIRECTION = 'desc';
+export const INCLUDE_LOGO = true;
+export const INCLUDE_SCREENSHOTS = true;
+
 /**
  * Extract thumbnail URL from dashboard screenshots
  */
