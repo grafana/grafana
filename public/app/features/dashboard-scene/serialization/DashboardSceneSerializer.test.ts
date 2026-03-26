@@ -577,7 +577,7 @@ describe('DashboardSceneSerializer', () => {
 
         expect(result.hasVariableValueChanges).toBe(true);
         expect(result.hasChanges).toBe(true);
-        expect(result.diffCount).toBe(2);
+        expect(result.diffCount).toBe(3);
       });
 
       describe('Experimental variables', () => {
