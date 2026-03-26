@@ -405,7 +405,7 @@ export async function fillVariableValue(
   selectors: E2ESelectorGroups,
   varName: string,
   text: string
-)  {
+) {
   const variable = dashboardPage
     .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(varName))
     .locator('..')
@@ -415,4 +415,4 @@ export async function fillVariableValue(
   await variable.fill(text);
   await variable.press('Enter');
   await page.waitForLoadState('networkidle');
-};
+}
