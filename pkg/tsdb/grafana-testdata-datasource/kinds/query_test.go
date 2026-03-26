@@ -19,18 +19,18 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				CodePath:    "./",
 			}},
 			Enums: []reflect.Type{
-				reflect.TypeFor[NodesQueryType](),     // pick an example value (not the root)
-				reflect.TypeFor[StreamingQueryType](), // pick an example value (not the root)
-				reflect.TypeFor[ErrorType](),          // pick an example value (not the root)
-				reflect.TypeFor[ErrorSource](),        // pick an example value (not the root)
-				reflect.TypeFor[TestDataQueryType](),  // pick an example value (not the root)
+				reflect.TypeOf(NodesQueryTypeRandom),         // pick an example value (not the root)
+				reflect.TypeOf(StreamingQueryTypeFetch),      // pick an example value (not the root)
+				reflect.TypeOf(ErrorTypeServerPanic),         // pick an example value (not the root)
+				reflect.TypeOf(ErrorSourcePlugin),            // pick an example value (not the root)
+				reflect.TypeOf(TestDataQueryTypeAnnotations), // pick an example value (not the root)
 			},
 		})
 	require.NoError(t, err)
 	err = builder.AddQueries(
 		schemabuilder.QueryTypeInfo{
 			Name:   "default",
-			GoType: reflect.TypeFor[*TestDataQuery](),
+			GoType: reflect.TypeOf(&TestDataQuery{}),
 			Examples: []data.QueryExample{
 				{
 					Name: "simple random walk",
