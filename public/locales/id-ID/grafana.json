@@ -10944,24 +10944,14 @@
     },
     "forgot-password": "Lupa kata sandi Anda?",
     "form": {
-      "confirmation-code": "Kode konfirmasi wajib diisi",
-      "confirmation-code-label": "Kode konfirmasi",
-      "confirmation-code-placeholder": "kode konfirmasi",
-      "email-label": "Email",
-      "email-placeholder": "email",
-      "email-required": "Email wajib diisi",
-      "name-label": "Nama",
       "password-label": "Kata sandi",
       "password-placeholder": "kata sandi",
       "password-required": "Kata sandi wajib diisi",
-      "passwordless-username-label": "Nama pengguna",
       "submit-label": "Login",
       "submit-loading-label": "Login...",
       "username-label": "Email atau nama pengguna",
       "username-placeholder": "rmail atau nama pengguna",
-      "username-required": "Email atau nama pengguna wajib diisi",
-      "verify-email-label": "Kirim email verifikasi",
-      "verify-email-loading-label": "Mengirim email..."
+      "username-required": "Email atau nama pengguna wajib diisi"
     },
     "layout": {
       "update-password": "Perbarui kata sandi Anda"
