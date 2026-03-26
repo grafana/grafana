@@ -789,7 +789,9 @@
         "unknown-rule": "Неизвестно",
         "value-in-transition": "Значение в процессе перехода"
       },
-      "error": "Ошибка при загрузке журнала состояний оповещений",
+      "error": {
+        "server-error": ""
+      },
       "filter": {
         "clear": "Очистка фильтров",
         "info": {
@@ -800,6 +802,10 @@
         }
       },
       "filterBy": "Фильтр по:",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "tab": {
         "alert-events": "",
         "notifications": ""
@@ -2041,6 +2047,10 @@
       "error-unable-to-fetch": "Не удалось получить журнал состояний оповещений",
       "loading": "Загрузка…",
       "no-transitions-match-filters": "",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "start-state": "",
       "timeline-hidden": "",
       "title-error-fetching-the-state-history": "Ошибка при получении журнала состояний",
@@ -4379,6 +4389,7 @@
       "button-deleting": "Удаление...",
       "commit": "Удалить папку",
       "delete-warning": "Эта папка и все дочерние папки будут удалены. Действие окажет влияние на следующие элементы:",
+      "missing-info": "",
       "success-message": "Папка удалена"
     },
     "descendant-count": {
@@ -4431,12 +4442,13 @@
       "name-label": "Имя папки"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "Ошибка при создании папки",
       "button-create": "Создание",
       "button-creating": "Создание...",
       "cancel": "Отмена",
       "error-invalid-characters": "Имя папки содержит недопустимые символы. Разрешены только буквы, цифры, пробелы, знаки подчеркивания и дефисы.",
+      "error-missing-title-or-repo": "",
       "error-required": "Требуется имя папки",
+      "error-saving": "",
       "folder-name-input-placeholder-enter-folder-name": "Ввести имя папки",
       "label-folder-name": "Имя папки",
       "text-pull-request-created": "Создан запрос на включение изменений в папке:",
@@ -6057,6 +6069,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": ""
+      },
       "prompt-card": {
         "placeholder": "",
         "placeholder-multi": ""
@@ -6370,7 +6385,6 @@
         "label": "Выйти из режима редактирования",
         "tooltip": "Выполняется выход из режима редактирования и отмена несохраненных изменений"
       },
-      "mark-favorite": "Отметить как избранное",
       "more-save-options": "Больше параметров сохранения",
       "new": {
         "back-to-dashboard": "Назад на дашборд",
@@ -6440,8 +6454,7 @@
       "star-added": "Добавлено в избранное",
       "star-remove-error": "Не удалось удалить из избранного",
       "star-removed": "Удалено из избранного",
-      "unlink-library-panel": "Отсоединить панель библиотеки",
-      "unmark-favorite": "Убрать из избранного"
+      "unlink-library-panel": "Отсоединить панель библиотеки"
     },
     "transformation-editor": {
       "input-data": "Ввод данных",
@@ -6996,11 +7009,12 @@
       "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Не удалось удалить дашборд",
       "cancel-action": "Отмена",
       "delete-action": "Удалить дашборд",
+      "delete-error": "",
       "deleting": "Удаление...",
       "drawer-title": "Удалить подготовленный дашборд",
+      "no-repository-selected": "",
       "success-message": "Дашборд удален"
     },
     "description-label": {
@@ -7475,16 +7489,17 @@
       "affected-dashboards_other": "Обновление затронет <1>{{count}} дашбордов.</1> Будут затронуты следующие дашборды, использующие панель:"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "Ошибка при сохранении дашборда",
       "cancel": "Отмена",
       "cannot-be-saved": "Дашборд невозможно сохранить из пользовательского интерфейса Grafana, поскольку он подготовлен в другом источнике. Скопируйте модель JSON или сохраните ее в файл ниже. Затем можно обновить свой дашборд в источнике подготовки.",
       "copy-json-to-clipboard": "Копировать JSON в буфер обмена",
+      "error-saving": "",
       "file-path": "<strong>Путь к файлу:</strong> {{filePath}}",
       "form-loading-error": "",
       "form-loading-error-unknown": "",
       "label-description": "Описание",
       "label-target-folder": "Целевая папка",
       "label-title": "Название",
+      "repo-path-required": "",
       "save": "Сохранить",
       "save-json-to-file": "Сохранить модель JSON в файл",
       "saving": "Сохранение...",
@@ -9010,7 +9025,8 @@
     "select-placeholder": "Фильтровать по папкам"
   },
   "folder-repo": {
-    "read-only-badge": "Только для чтения"
+    "read-only-badge": "Только для чтения",
+    "repository-not-found-tooltip": ""
   },
   "folders": {
     "api": {
@@ -12328,12 +12344,10 @@
       "description": "Полученные вами уведомления будут отображаться здесь.",
       "title": "Вы всё прочитали!"
     },
-    "starred-dashboard": "Дашборд помечен",
     "stored-notifications": {
       "dismiss-notifications": "Закрыть уведомления",
       "title-alert": "На этой странице отображаются предыдущие ошибки и предупреждения. После закрытия их невозможно восстановить"
-    },
-    "unstarred-dashboard": "Дашборд удален из помеченных"
+    }
   },
   "oauth": {
     "form": {
@@ -12620,11 +12634,13 @@
       "description-customize-dashboard-elements-visibility": "Настроить видимость элементов дашборда.",
       "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Высота панелей регулируется в соответствии с размером экрана.",
+      "description-playlist-nav": "",
       "label-autofit": "Автоподгонка",
       "label-dashboard-links": "Ссылки на дашборд",
       "label-display-dashboard-controls": "Показать элементы управления дашбордом",
       "label-hide-logo": "",
       "label-mode": "Режим",
+      "label-playlist-nav": "",
       "label-time-and-refresh": "Время и обновление",
       "label-variables": "Переменные",
       "modes": {
@@ -13260,6 +13276,10 @@
       "title-instant-updates-requests-webhooks": "Мгновенные обновления и запросы на включение изменений с помощью веб-перехватчиков",
       "title-visual-previews-in-pull-requests": "Просмотр в запросах на включение изменений с визуализацией изображений"
     },
+    "error": {
+      "branch-not-found-dashboard": "",
+      "branch-not-found-folder": ""
+    },
     "error-title-default": "Ошибка",
     "expanded-row": {
       "job-specification": "Спецификация задания",
@@ -13473,6 +13493,28 @@
         "label": "Синхронизировать ресурсы с внешним хранилищем",
         "subtitle": "Используйте этот параметр, если хотите синхронизировать весь экземпляр Grafana и управлять им через внешнее хранилище"
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "",
+      "title": ""
+    },
+    "orphaned-repository-tooltip": "",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "",
+      "confirm-delete-button": "",
+      "confirm-delete-title": "",
+      "confirm-release-body": "",
+      "confirm-release-button": "",
+      "confirm-release-title": "",
+      "contact-admin": "",
+      "convert-to-local-button": "",
+      "delete-button": "",
+      "job-error": "",
+      "job-success": "",
+      "job-warning": "",
+      "message": "",
+      "submit-error": "",
+      "title": ""
     },
     "provisioning-wizard": {
       "on-submit": {
@@ -14886,13 +14928,19 @@
     },
     "presets": {
       "horizontal-threshold-value": "",
+      "horizontal-threshold-value-desc": "",
       "horizontal-threshold-value-sparkline": "",
+      "horizontal-threshold-value-sparkline-desc": "",
       "list": "",
       "list_desc": "",
       "threshold-background": "",
+      "threshold-background-desc": "",
       "threshold-background-sparkline": "",
+      "threshold-background-sparkline-desc": "",
       "threshold-value": "",
+      "threshold-value-desc": "",
       "threshold-value-sparkline": "",
+      "threshold-value-sparkline-desc": "",
       "wide-list": "",
       "wide-list-desc": ""
     },
@@ -15117,12 +15165,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "",
       "create": "Создать",
+      "description-create-team-folder": "",
       "description-email": "Это необязательное действие, которое используется в основном для создания пользовательских аватаров команд.",
-      "failed-to-create": "Не удалось создать команду",
+      "failed-to-create": "",
+      "folder-create-failed": "",
+      "folder-create-failed-help": "",
+      "folder-creation-link": "",
+      "folder-creation-loading": "",
+      "folder-creation-success": "",
+      "label-create-team-folder": "",
       "label-email": "Адрес электронной почты",
       "label-name": "Имя",
-      "label-role": "Роль"
+      "label-role": "Роль",
+      "role-creation-success": "",
+      "roles-create-failed": "",
+      "roles-create-permission-issue": "",
+      "roles-creation-loading": "",
+      "team-creation-link": "",
+      "team-creation-loading": "",
+      "team-creation-success": ""
     },
     "empty-state": {
       "button-title": "Новая команда",
