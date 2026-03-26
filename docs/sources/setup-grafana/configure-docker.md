@@ -211,6 +211,31 @@ You can input confidential data like login credentials and secrets into Grafana 
 
 You can apply this technique to any configuration options in `conf/grafana.ini` by setting `GF_<SectionName>_<KeyName>__FILE` to the file path that contains the secret information. For more information about Docker secret command usage, refer to [docker secret](https://docs.docker.com/engine/reference/commandline/secret/).
 
+{{< admonition type="note" >}}
+The `GF_SECURITY_ADMIN_USER` and `GF_SECURITY_ADMIN_PASSWORD` environment variables (and their `__FILE` variants) are only used during the very first startup of Grafana, when no users exist in the database yet. If you use a persistent volume for `/var/lib/grafana`, changing these variables after the initial setup and restarting the container has no effect.
+
+To reset the admin password in a running container, use the Grafana CLI:
+
+```bash
+grafana cli admin reset-admin-password <new-password>
+```
+
+To automatically reset the admin password on every container startup, override the entrypoint:
+
+```yaml
+services:
+  grafana:
+    image: grafana/grafana-enterprise
+    entrypoint:
+      - "sh"
+      - "-c"
+      - "grafana cli admin reset-admin-password $${GF_SECURITY_ADMIN_PASSWORD} && /run.sh"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=mysecretpassword
+```
+
+{{< /admonition >}}
+
 The following example demonstrates how to set the admin password:
 
 - Admin password secret: `/run/secrets/admin_password`
