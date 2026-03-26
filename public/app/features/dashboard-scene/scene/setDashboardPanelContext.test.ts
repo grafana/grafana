@@ -118,7 +118,7 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAnnotationDelete', () => {
-    it('should update annotation', () => {
+    it('should delete annotation', () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
       context.onAnnotationDelete!(123);
