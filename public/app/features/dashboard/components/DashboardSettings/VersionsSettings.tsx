@@ -155,12 +155,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
         ) : (
           <VersionHistoryTable versions={versions} onCheck={this.onCheck} canCompare={canCompare} />
         )}
-        {showButtons && (
-          <VersionsHistoryButtons
-            canCompare={canCompare}
-            getDiff={this.getDiff}
-          />
-        )}
+        {showButtons && <VersionsHistoryButtons canCompare={canCompare} getDiff={this.getDiff} />}
       </Page>
     );
   }

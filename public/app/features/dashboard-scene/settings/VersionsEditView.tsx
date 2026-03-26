@@ -244,12 +244,7 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
           isLoadingUserDisplayNames={isLoadingUserDisplayNames}
         />
       )}
-      {showButtons && (
-        <VersionsHistoryButtons
-          canCompare={canCompare}
-          getDiff={model.getDiff}
-        />
-      )}
+      {showButtons && <VersionsHistoryButtons canCompare={canCompare} getDiff={model.getDiff} />}
     </>
   );
 

@@ -95,9 +95,39 @@ describe('VersionSettings', () => {
     mockListDashboardHistory.mockResolvedValue({
       metadata: { continue: '' },
       items: [
-        { apiVersion: 'v1', kind: 'Dashboard', metadata: { name: 'uid', generation: 1, creationTimestamp: '2021-01-01T00:00:00Z', annotations: { 'grafana.app/updatedBy': 'admin', 'grafana.app/message': '' } }, spec: {} },
-        { apiVersion: 'v1', kind: 'Dashboard', metadata: { name: 'uid', generation: 5, creationTimestamp: '2021-01-05T00:00:00Z', annotations: { 'grafana.app/updatedBy': 'admin', 'grafana.app/message': '' } }, spec: {} },
-        { apiVersion: 'v1', kind: 'Dashboard', metadata: { name: 'uid', generation: 3, creationTimestamp: '2021-01-03T00:00:00Z', annotations: { 'grafana.app/updatedBy': 'admin', 'grafana.app/message': '' } }, spec: {} },
+        {
+          apiVersion: 'v1',
+          kind: 'Dashboard',
+          metadata: {
+            name: 'uid',
+            generation: 1,
+            creationTimestamp: '2021-01-01T00:00:00Z',
+            annotations: { 'grafana.app/updatedBy': 'admin', 'grafana.app/message': '' },
+          },
+          spec: {},
+        },
+        {
+          apiVersion: 'v1',
+          kind: 'Dashboard',
+          metadata: {
+            name: 'uid',
+            generation: 5,
+            creationTimestamp: '2021-01-05T00:00:00Z',
+            annotations: { 'grafana.app/updatedBy': 'admin', 'grafana.app/message': '' },
+          },
+          spec: {},
+        },
+        {
+          apiVersion: 'v1',
+          kind: 'Dashboard',
+          metadata: {
+            name: 'uid',
+            generation: 3,
+            creationTimestamp: '2021-01-03T00:00:00Z',
+            annotations: { 'grafana.app/updatedBy': 'admin', 'grafana.app/message': '' },
+          },
+          spec: {},
+        },
       ],
     });
 
