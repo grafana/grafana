@@ -181,7 +181,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// quotas/limits config
 	cfg.OverridesFilePath = section.Key("overrides_path").String()
 	cfg.OverridesReloadInterval = section.Key("overrides_reload_period").MustDuration(30 * time.Second)
-	cfg.EnforceQuotas = section.Key("enforce_quotas").MustBool(false)
+	cfg.EnforcedQuotaResources = parseCommaSeparatedList(section.Key("enforce_quotas_resources").MustString(""))
 	cfg.QuotasErrorMessageSupportInfo = section.Key("quotas_error_message_support_info").MustString("Please contact your administrator to increase it.")
 
 	// tenant watcher
@@ -277,6 +277,21 @@ func (cfg *Cfg) shouldProxySearchRemotely() bool {
 func (cfg *Cfg) ShouldRunMigrations() bool {
 	return cfg.UnifiedStorageType() == "unified" &&
 		isTargetEligibleForMigrations(cfg.Target)
+}
+
+func parseCommaSeparatedList(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
 }
 
 // UnifiedStorageType returns the configured storage type without creating or mutating keys.

@@ -702,6 +702,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("migration_parquet_buffer", "true")
 		require.NoError(t, err)
 	}
+	if opts.EnableSQLKVBackend {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_sqlkv_backend", "true")
+		require.NoError(t, err)
+	}
 	if opts.PermittedProvisioningPaths != "" {
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
 		require.NoError(t, err)
@@ -859,6 +865,7 @@ type GrafanaOpts struct {
 	DisableControllers                    bool
 	DisableDBCleanup                      bool
 	MigrationParquetBuffer                bool
+	EnableSQLKVBackend                    bool
 	SecretsManagerEnableDBMigrations      bool
 	OpenFeatureAPIEnabled                 bool
 	DisableAuthZClientCache               bool

@@ -405,7 +405,7 @@ func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespac
 		})
 	}
 
-	g.Wait()
+	_ = g.Wait()
 }
 
 func (s *TeamSearchHandler) write(w http.ResponseWriter, obj any) error {

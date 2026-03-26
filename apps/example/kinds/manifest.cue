@@ -61,6 +61,7 @@ v1alpha1: {
 		namespaced: {
 			"/something": {
 				"GET": {
+					name: "getSomething"
 					response: {
 						namespace: string
 						message:   string
@@ -78,6 +79,7 @@ v1alpha1: {
 		cluster: {
 			"/other": {
 				"GET": {
+					name: "getOther"
 					response: {
 						message: string
 					}
