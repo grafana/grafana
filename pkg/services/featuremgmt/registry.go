@@ -2736,7 +2736,8 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
-		}, {
+		},
+		{
 			Name:            "colorblindThemes",
 			Description:     "Enables the new colorblind-friendly themes",
 			Stage:           FeatureStageGeneralAvailability,
@@ -2784,6 +2785,13 @@ var (
 			Owner:        grafanaOSSBigTent,
 			Expression:   "false",
 			HideFromDocs: true,
+		},
+		{
+			Name:        "lokiAlignedQuerySplitting",
+			Description: "Aligns query splitting chunks with UTC midnight",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
 		},
 	}
 )

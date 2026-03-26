@@ -1,4 +1,4 @@
-package foldermetadatafull
+package full
 
 import (
 	"context"
@@ -15,23 +15,19 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationProvisioning_FullSync_MetadataNameChange verifies that when a
 // resource's metadata.name (uid) changes in a file at the same path, full sync
 // creates the new resource and deletes the old one so no orphan is left behind.
 func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-full-name-change"
 
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard1.json": gitcommon.DashboardJSON("name-change-full-001", "Dashboard One", 1),
+		"dashboard1.json": common.DashboardJSON("name-change-full-001", "Dashboard One", 1),
 	}, "write", "branch")
 
 	helper.SyncAndWait(t, repoName)
@@ -39,7 +35,7 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "name-change-full-001", "Dashboard One")
 
 	// Change the metadata.name (uid) in the same file path.
-	require.NoError(t, local.UpdateFile("dashboard1.json", string(gitcommon.DashboardJSON("name-change-full-002", "Dashboard One Renamed", 2))))
+	require.NoError(t, local.UpdateFile("dashboard1.json", string(common.DashboardJSON("name-change-full-002", "Dashboard One Renamed", 2))))
 	_, err := local.Git("add", ".")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "change dashboard uid")
@@ -56,13 +52,13 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 		if d != nil {
 			assert.Equal(c, "name-change-full-002", d.GetName())
 		}
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "dashboard with new name should be created")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard with new name should be created")
 
 	// The old dashboard should be deleted — no orphan left behind.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "name-change-full-001", metav1.GetOptions{})
 		assert.True(c, apierrors.IsNotFound(err), "old dashboard should be NotFound, got: %v", err)
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault, "old dashboard should be deleted after name change")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "old dashboard should be deleted after name change")
 
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 }
@@ -70,22 +66,20 @@ func TestIntegrationProvisioning_FullSync_MetadataNameChange(t *testing.T) {
 // TestIntegrationProvisioning_FullSync_ChainedNameChanges verifies that
 // sequential metadata.name changes never accumulate orphaned resources.
 func TestIntegrationProvisioning_FullSync_ChainedNameChanges(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-full-chained-name"
 
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard.json": gitcommon.DashboardJSON("chained-v1", "Dashboard V1", 1),
+		"dashboard.json": common.DashboardJSON("chained-v1", "Dashboard V1", 1),
 	}, "write", "branch")
 
 	helper.SyncAndWait(t, repoName)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 
 	// First name change: v1 -> v2
-	require.NoError(t, local.UpdateFile("dashboard.json", string(gitcommon.DashboardJSON("chained-v2", "Dashboard V2", 2))))
+	require.NoError(t, local.UpdateFile("dashboard.json", string(common.DashboardJSON("chained-v2", "Dashboard V2", 2))))
 	_, err := local.Git("add", ".")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "rename v1 to v2")
@@ -98,15 +92,15 @@ func TestIntegrationProvisioning_FullSync_ChainedNameChanges(t *testing.T) {
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "chained-v2", metav1.GetOptions{})
 		assert.NoError(c, err, "v2 should exist")
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "chained-v1", metav1.GetOptions{})
 		assert.True(c, apierrors.IsNotFound(err), "v1 should be NotFound, got: %v", err)
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 
 	// Second name change: v2 -> v3
-	require.NoError(t, local.UpdateFile("dashboard.json", string(gitcommon.DashboardJSON("chained-v3", "Dashboard V3", 3))))
+	require.NoError(t, local.UpdateFile("dashboard.json", string(common.DashboardJSON("chained-v3", "Dashboard V3", 3))))
 	_, err = local.Git("add", ".")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "rename v2 to v3")
@@ -119,35 +113,33 @@ func TestIntegrationProvisioning_FullSync_ChainedNameChanges(t *testing.T) {
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "chained-v3", metav1.GetOptions{})
 		assert.NoError(c, err, "v3 should exist")
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "chained-v2", metav1.GetOptions{})
 		assert.True(c, apierrors.IsNotFound(err), "v2 should be NotFound, got: %v", err)
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
 }
 
 // TestIntegrationProvisioning_FullSync_MultipleFilesNameChange verifies that
 // simultaneous metadata.name changes across multiple files all get cleaned up.
 func TestIntegrationProvisioning_FullSync_MultipleFilesNameChange(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-full-multi-name"
 
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dash1.json": gitcommon.DashboardJSON("multi-a", "Dashboard A", 1),
-		"dash2.json": gitcommon.DashboardJSON("multi-b", "Dashboard B", 1),
+		"dash1.json": common.DashboardJSON("multi-a", "Dashboard A", 1),
+		"dash2.json": common.DashboardJSON("multi-b", "Dashboard B", 1),
 	}, "write", "branch")
 
 	helper.SyncAndWait(t, repoName)
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
 
 	// Change both names simultaneously.
-	require.NoError(t, local.UpdateFile("dash1.json", string(gitcommon.DashboardJSON("multi-c", "Dashboard C", 2))))
-	require.NoError(t, local.UpdateFile("dash2.json", string(gitcommon.DashboardJSON("multi-d", "Dashboard D", 2))))
+	require.NoError(t, local.UpdateFile("dash1.json", string(common.DashboardJSON("multi-c", "Dashboard C", 2))))
+	require.NoError(t, local.UpdateFile("dash2.json", string(common.DashboardJSON("multi-d", "Dashboard D", 2))))
 	_, err := local.Git("add", ".")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "change both dashboard uids")
@@ -163,7 +155,7 @@ func TestIntegrationProvisioning_FullSync_MultipleFilesNameChange(t *testing.T) 
 		assert.NoError(c, err, "dashboard C should exist")
 		_, err = helper.DashboardsV1.Resource.Get(ctx, "multi-d", metav1.GetOptions{})
 		assert.NoError(c, err, "dashboard D should exist")
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	// Old dashboards should be deleted.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -171,7 +163,7 @@ func TestIntegrationProvisioning_FullSync_MultipleFilesNameChange(t *testing.T) 
 		assert.True(c, apierrors.IsNotFound(err), "dashboard A should be NotFound, got: %v", err)
 		_, err = helper.DashboardsV1.Resource.Get(ctx, "multi-b", metav1.GetOptions{})
 		assert.True(c, apierrors.IsNotFound(err), "dashboard B should be NotFound, got: %v", err)
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 2)
 }
@@ -185,15 +177,13 @@ func TestIntegrationProvisioning_FullSync_MultipleFilesNameChange(t *testing.T) 
 // client) to bypass the K8s API layer's managed-resource routing, which would
 // otherwise refuse to create a second resource at the same sourcePath.
 func TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-full-orphan-cleanup"
 
 	helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dashboard.json": gitcommon.DashboardJSON("real-dash", "Real Dashboard", 1),
+		"dashboard.json": common.DashboardJSON("real-dash", "Real Dashboard", 1),
 	}, "write", "branch")
 
 	helper.SyncAndWait(t, repoName)
@@ -252,10 +242,10 @@ func TestIntegrationProvisioning_FullSync_OrphanCleanupOnSubsequentSync(t *testi
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "real-dash", metav1.GetOptions{})
 		assert.NoError(c, err, "real dashboard should survive cleanup")
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
 		_, err := helper.DashboardsV1.Resource.Get(ctx, "orphan-dash", metav1.GetOptions{})
 		assert.True(c, apierrors.IsNotFound(err), "orphan should be deleted, got: %v", err)
-	}, gitcommon.WaitTimeoutDefault, gitcommon.WaitIntervalDefault)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 }

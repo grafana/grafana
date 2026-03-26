@@ -506,6 +506,85 @@ func TestFrontendService_CSP(t *testing.T) {
 		assert.Contains(t, cspHeader, "'nonce-"+capturedNonce+"'", "Nonce in header should match context nonce")
 	})
 
+	t.Run("should expand $ALLOW_EMBEDDING_HOSTS in CSP template with specific hosts", func(t *testing.T) {
+		raw := ini.Empty()
+		raw.Section("security").Key("allow_embedding_hosts").SetValue("wiki.example.com,foo.example.com")
+		cfg := &setting.Cfg{
+			Raw:            raw,
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self' $NONCE; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "frame-ancestors wiki.example.com foo.example.com")
+	})
+
+	t.Run("should expand $ALLOW_EMBEDDING_HOSTS in CSP template with wildcard", func(t *testing.T) {
+		raw := ini.Empty()
+		raw.Section("security").Key("allow_embedding_hosts").SetValue("*")
+		cfg := &setting.Cfg{
+			Raw:            raw,
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self' $NONCE; frame-ancestors $ALLOW_EMBEDDING_HOSTS",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.Contains(t, cspHeader, "frame-ancestors *")
+	})
+
+	t.Run("should not add frame-ancestors to CSP when allow_embedding_hosts is empty", func(t *testing.T) {
+		cfg := &setting.Cfg{
+			Raw:            ini.Empty(),
+			HTTPPort:       "3000",
+			StaticRootPath: publicDir,
+			BuildVersion:   "10.3.0",
+			AppURL:         "https://grafana.example.com",
+			CSPEnabled:     true,
+			CSPTemplate:    "script-src 'self'",
+		}
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		cspHeader := recorder.Header().Get("Content-Security-Policy")
+		assert.NotContains(t, cspHeader, "frame-ancestors")
+	})
+
 	t.Run("should use base config when Tenant-ID header is present", func(t *testing.T) {
 		cfg := &setting.Cfg{
 			Raw:            ini.Empty(),

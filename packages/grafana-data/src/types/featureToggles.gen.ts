@@ -1035,7 +1035,7 @@ export interface FeatureToggles {
   */
   alertingJiraIntegration?: boolean;
   /**
-  *
+  * 
   * @default true
   */
   alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
@@ -1755,4 +1755,9 @@ export interface FeatureToggles {
   * @default false
   */
   forwardTeamHeadersTempo?: boolean;
+  /**
+  * Aligns query splitting chunks with UTC midnight
+  * @default false
+  */
+  lokiAlignedQuerySplitting?: boolean;
 }

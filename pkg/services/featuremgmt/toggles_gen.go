@@ -933,4 +933,8 @@ const (
 	// FlagForwardTeamHeadersTempo
 	// Enables forwarding team headers from tempo for streaming requests with LBAC rules
 	FlagForwardTeamHeadersTempo = "forwardTeamHeadersTempo"
+
+	// FlagLokiAlignedQuerySplitting
+	// Aligns query splitting chunks with UTC midnight
+	FlagLokiAlignedQuerySplitting = "lokiAlignedQuerySplitting"
 )
