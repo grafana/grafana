@@ -1596,7 +1596,6 @@ func requestHelper(
 	return result, resp.Response.StatusCode, nil
 }
 
-
 // ExpectedDashboard describes the expected state of a single dashboard.
 type ExpectedDashboard struct {
 	Title      string
@@ -1864,7 +1863,6 @@ func GetFolderGeneration(t *testing.T, helper *ProvisioningTestHelper, folderUID
 	return obj.GetGeneration()
 }
 
-
 // FindDashboardUIDBySourcePath returns the UID of the dashboard managed by repoName at sourcePath.
 func FindDashboardUIDBySourcePath(t *testing.T, helper *ProvisioningTestHelper, repoName, sourcePath string) string {
 	t.Helper()
@@ -1920,7 +1918,6 @@ func RequireUpdatedInPlace(t *testing.T, label string, before, after ObjectSnaps
 	require.GreaterOrEqual(t, after.Generation, before.Generation,
 		"%s: generation decreased — object was recreated instead of updated", label)
 }
-
 
 func RequireFolderState(t *testing.T, folderClient *apis.K8sResourceClient, folderUID, expectedTitle, expectedSourcePath, expectedParent string) {
 	t.Helper()
@@ -2544,4 +2541,3 @@ func (h *GitTestHelper) GitReadFile(t *testing.T, ctx context.Context, repoName,
 	require.NoError(t, err, "file %s not found in git repo %s", filePath, repoName)
 	return data
 }
-
