@@ -97,7 +97,6 @@ jest.mock('@grafana/runtime', () => {
     },
     featureToggles: {
       dashboardNewLayouts: true,
-      kubernetesDashboards: true,
     },
   };
 

@@ -40,9 +40,7 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
 
     customShareDrawerItem.forEach((d) => menuItems.push(d));
 
-    const label = config.featureToggles.kubernetesDashboards
-      ? t('dashboard.toolbar.new.export.tooltip.as-code', 'Export as code')
-      : t('share-dashboard.menu.export-json-title', 'Export as JSON');
+    const label = t('dashboard.toolbar.new.export.tooltip.as-code', 'Export as code');
 
     menuItems.push({
       shareId: shareDashboardType.export,

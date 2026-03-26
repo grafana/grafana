@@ -59,34 +59,16 @@ describe('DashboardApi', () => {
       config.featureToggles.dashboardScene = true;
     });
 
-    it('should use legacy api kubernetesDashboards toggle is disabled', async () => {
-      config.featureToggles.kubernetesDashboards = false;
-      expect(await getDashboardAPI()).toBeInstanceOf(LegacyDashboardAPI);
-    });
-
-    it('should use legacy when v1 is passed and kubernetesDashboards toggle is disabled', async () => {
-      config.featureToggles.kubernetesDashboards = false;
-      expect(await getDashboardAPI('v1')).toBeInstanceOf(LegacyDashboardAPI);
-    });
-
     it('should use unified api when and kubernetesDashboards toggle is enabled', async () => {
-      config.featureToggles.kubernetesDashboards = true;
       expect(await getDashboardAPI()).toBeInstanceOf(UnifiedDashboardAPI);
     });
 
     it('should return v1 if it is passed in the params', async () => {
-      config.featureToggles.kubernetesDashboards = true;
       expect(await getDashboardAPI('v1')).toBeInstanceOf(K8sDashboardAPI);
     });
 
     it('should return v2 if it is passed in the params', async () => {
-      config.featureToggles.kubernetesDashboards = true;
       expect(await getDashboardAPI('v2')).toBeInstanceOf(K8sDashboardV2API);
-    });
-
-    it('should throw an error if v2 is passed in the params and kubernetesDashboards toggle is disabled', async () => {
-      config.featureToggles.kubernetesDashboards = false;
-      await expect(getDashboardAPI('v2')).rejects.toThrow('v2 is not supported if kubernetes dashboards are disabled');
     });
   });
 
@@ -96,13 +78,7 @@ describe('DashboardApi', () => {
       config.featureToggles.dashboardNewLayouts = false;
     });
 
-    it.each([undefined, false])('should use legacy api when kubernetesDashboards is %s', async (value) => {
-      config.featureToggles.kubernetesDashboards = value;
-      expect(await getDashboardAPI()).toBeInstanceOf(LegacyDashboardAPI);
-    });
-
     it('should use v1 api when kubernetesDashboards toggle is enabled', async () => {
-      config.featureToggles.kubernetesDashboards = true;
       expect(await getDashboardAPI()).toBeInstanceOf(K8sDashboardAPI);
     });
 
@@ -122,7 +98,6 @@ describe('DashboardApi', () => {
     });
 
     it('should use v2 when v2 is passed in the params', async () => {
-      config.featureToggles.kubernetesDashboards = true;
       expect(await getDashboardAPI('v2')).toBeInstanceOf(K8sDashboardV2API);
     });
   });
@@ -132,7 +107,6 @@ describe('DashboardApi', () => {
       dashboardAPIVersionResolver.reset();
       setDashboardAPI(undefined);
       config.featureToggles.dashboardScene = true;
-      config.featureToggles.kubernetesDashboards = true;
       jest.spyOn(console, 'log').mockImplementation();
     });
 

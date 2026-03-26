@@ -360,14 +360,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:         "kubernetesDashboards",
-			Description:  "Use the kubernetes API in the frontend for dashboards",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDashboardsSquad,
-			FrontendOnly: false,  // The backend changes permission behavior based on this flag
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:            "kubernetesShortURLs",
 			Description:     "Enables k8s short url api and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageExperimental,

@@ -33,28 +33,11 @@ describe('DashboardImportPage', () => {
   });
 
   describe('kubernetesDashboards enabled', () => {
-    beforeEach(() => {
-      config.featureToggles.kubernetesDashboards = true;
-    });
-
     it('renders k8s import page', () => {
       renderPage();
 
       expect(screen.getByTestId('import-k8s')).toBeInTheDocument();
       expect(screen.queryByTestId('import-legacy')).not.toBeInTheDocument();
-    });
-  });
-
-  describe('kubernetesDashboards disabled', () => {
-    beforeEach(() => {
-      config.featureToggles.kubernetesDashboards = false;
-    });
-
-    it('renders legacy import page', () => {
-      renderPage();
-
-      expect(screen.getByTestId('import-legacy')).toBeInTheDocument();
-      expect(screen.queryByTestId('import-k8s')).not.toBeInTheDocument();
     });
   });
 });

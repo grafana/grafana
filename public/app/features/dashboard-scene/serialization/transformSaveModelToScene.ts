@@ -125,7 +125,7 @@ export function transformSaveModelToScene(
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
 
   const v1Config = getK8sV1DashboardApiConfig();
-  const apiVersion = config.featureToggles.kubernetesDashboards ? `${v1Config.group}/${v1Config.version}` : undefined;
+  const apiVersion = `${v1Config.group}/${v1Config.version}`;
 
   scene.setInitialSaveModel(rsp.dashboard, rsp.meta, apiVersion);
 

@@ -239,11 +239,6 @@ export interface FeatureToggles {
   */
   kubernetesLibraryPanels?: boolean;
   /**
-  * Use the kubernetes API in the frontend for dashboards
-  * @default true
-  */
-  kubernetesDashboards?: boolean;
-  /**
   * Enables k8s short url api and uses it under the hood when handling legacy /api
   * @default false
   */

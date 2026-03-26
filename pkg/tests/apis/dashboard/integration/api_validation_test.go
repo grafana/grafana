@@ -76,9 +76,7 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous:      true,
 				DisableFeatureToggles: disableFlags,
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesDashboards, // Enable FE-only dashboard feature flag
-				},
+				EnableFeatureToggles:  []string{},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,
@@ -106,39 +104,6 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 
 			t.Run("Dashboard quota tests", func(t *testing.T) {
 				runQuotaTests(t, org1Ctx)
-			})
-		})
-	}
-
-	for _, dualWriterMode := range dualWriterModes {
-		t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
-			disableFlags := []string{featuremgmt.FlagKubernetesDashboards}
-			if dualWriterMode < rest.Mode5 {
-				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
-			}
-
-			// Create a K8sTestHelper which will set up a real API server
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous:      true,
-				DisableFeatureToggles: disableFlags,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-					"folders.folder.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-				},
-			})
-
-			t.Cleanup(func() {
-				helper.Shutdown()
-			})
-
-			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
-
-			t.Run("Dashboard permission tests", func(t *testing.T) {
-				runDashboardPermissionTests(t, org1Ctx, false)
 			})
 		})
 	}
@@ -244,9 +209,7 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous:      true,
 				DisableFeatureToggles: disableFlags,
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesDashboards,
-				},
+				EnableFeatureToggles:  []string{},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,

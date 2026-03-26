@@ -9,7 +9,7 @@ import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
+import { Button, ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
 import { ObjectMeta } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { ExportFormat } from 'app/features/dashboard/api/types';
@@ -109,18 +109,6 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
     const initialSaveModel = scene.getInitialSaveModel();
     const initialSaveModelVersion = initialSaveModel && isDashboardV2Spec(initialSaveModel) ? 'v2' : 'v1';
-
-    // When kubernetesDashboards is off, use the legacy scene-based export
-    if (!config.featureToggles.kubernetesDashboards) {
-      const origDashboard = scene.serializer.getSaveModel(scene);
-      const exportable = isSharingExternally ? await scene.serializer.makeExportableExternally(scene) : origDashboard;
-      return {
-        json: exportable,
-        hasLibraryPanels:
-          'error' in exportable || !('panels' in origDashboard) ? false : hasLibraryPanelsInV1Dashboard(origDashboard),
-        initialSaveModelVersion,
-      };
-    }
 
     if (exportFormat === ExportFormat.V2Resource) {
       return this.fetchV2Resource(uid, isSharingExternally, initialSaveModelVersion);
@@ -312,8 +300,6 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
   });
   const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYAML : stringifiedDashboardJson;
 
-  const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
-
   return (
     <>
       {!isViewingJSON && (
@@ -321,30 +307,18 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
           <p>
             <Trans i18nKey="share-modal.export.info-text">Export this dashboard.</Trans>
           </p>
-          {config.featureToggles.kubernetesDashboards ? (
-            <ResourceExport
-              dashboardJson={dashboardJson}
-              isSharingExternally={isSharingExternally ?? false}
-              exportFormat={
-                exportFormat ??
-                (config.featureToggles.dashboardNewLayouts ? ExportFormat.V2Resource : ExportFormat.Classic)
-              }
-              isViewingYAML={isViewingYAML ?? false}
-              onExportFormatChange={model.onExportFormatChange}
-              onShareExternallyChange={model.onShareExternallyChange}
-              onViewYAML={model.onViewYAML}
-            />
-          ) : (
-            <Stack gap={2} direction="column">
-              <Field label={exportExternallyTranslation} noMargin>
-                <Switch
-                  id="share-externally-toggle"
-                  value={isSharingExternally}
-                  onChange={model.onShareExternallyChange}
-                />
-              </Field>
-            </Stack>
-          )}
+          <ResourceExport
+            dashboardJson={dashboardJson}
+            isSharingExternally={isSharingExternally ?? false}
+            exportFormat={
+              exportFormat ??
+              (config.featureToggles.dashboardNewLayouts ? ExportFormat.V2Resource : ExportFormat.Classic)
+            }
+            isViewingYAML={isViewingYAML ?? false}
+            onExportFormatChange={model.onExportFormatChange}
+            onShareExternallyChange={model.onShareExternallyChange}
+            onViewYAML={model.onViewYAML}
+          />
 
           <Modal.ButtonRow>
             <Button

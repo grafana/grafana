@@ -614,7 +614,7 @@ func TestListDashboardVersions(t *testing.T) {
 func TestRestoreVersion(t *testing.T) {
 	t.Run("should use k8s restoration when feature toggles are enabled", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagDashboardNewLayouts)
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,
@@ -746,7 +746,7 @@ func TestRestoreVersion(t *testing.T) {
 
 	t.Run("should return error when dashboard not found", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagDashboardNewLayouts)
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,
@@ -777,7 +777,7 @@ func TestRestoreVersion(t *testing.T) {
 
 	t.Run("should return error when version not found", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagDashboardNewLayouts)
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,
@@ -822,7 +822,7 @@ func TestRestoreVersion(t *testing.T) {
 
 	t.Run("should skip restoration when dashboard data is identical", func(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		features := featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards, featuremgmt.FlagDashboardNewLayouts)
+		features := featuremgmt.WithFeatures(featuremgmt.FlagDashboardNewLayouts)
 		dashboardVersionService := Service{
 			dashSvc:  dashboardService,
 			features: features,

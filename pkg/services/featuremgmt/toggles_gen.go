@@ -135,10 +135,6 @@ const (
 	// Routes library panel requests from /api to the /apis endpoint
 	FlagKubernetesLibraryPanels = "kubernetesLibraryPanels"
 
-	// FlagKubernetesDashboards
-	// Use the kubernetes API in the frontend for dashboards
-	FlagKubernetesDashboards = "kubernetesDashboards"
-
 	// FlagKubernetesShortURLs
 	// Enables k8s short url api and uses it under the hood when handling legacy /api
 	FlagKubernetesShortURLs = "kubernetesShortURLs"
