@@ -2973,7 +2973,7 @@ func TestKvStorageBackend_ListHistory_Behaviour(t *testing.T) {
 			}
 
 			// Page through with limit=2
-			var allItems []historyItem
+			var allNames []string
 			nextToken := ""
 			for range numResources {
 				req := &resourcepb.ListRequest{
@@ -3008,30 +3008,21 @@ func TestKvStorageBackend_ListHistory_Behaviour(t *testing.T) {
 				})
 				require.NoError(t, err)
 
-				allItems = append(allItems, items...)
+				for _, it := range items {
+					allNames = append(allNames, it.name)
+				}
 
 				if nextToken == "" {
 					break
 				}
 			}
 
-			require.Len(t, allItems, numResources)
+			require.Len(t, allNames, numResources)
 
-			// Verify all expected names are present.
-			allNames := make([]string, 0, len(allItems))
-			for _, it := range allItems {
-				allNames = append(allNames, it.name)
-			}
-			slices.Sort(allNames)
-			slices.Sort(expectedNames)
+			// The names collected should be the reverse of `expectedNames`
+			// (i.e., in RV desc order)
+			slices.Reverse(expectedNames)
 			require.Equal(t, expectedNames, allNames)
-
-			// Verify results are in RV descending order across all pages.
-			for i := 1; i < len(allItems); i++ {
-				require.Greater(t, allItems[i-1].rv, allItems[i].rv,
-					"expected RV descending order, but item %d (rv=%d) <= item %d (rv=%d)",
-					i-1, allItems[i-1].rv, i, allItems[i].rv)
-			}
 		})
 	}
 }
