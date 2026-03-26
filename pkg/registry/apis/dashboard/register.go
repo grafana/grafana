@@ -347,6 +347,10 @@ func (b *DashboardsAPIBuilder) validateDelete(ctx context.Context, a admission.A
 	if deleteOptions.GracePeriodSeconds != nil && *deleteOptions.GracePeriodSeconds == 0 {
 		return nil
 	}
+	// Skip validation for DeleteCollection requests (DELETE .../dashboards)
+	if a.GetName() == "" {
+		return nil
+	}
 
 	// HACK: deletion validation currently doesn't work for the standalone case. So we currently skip it.
 	if b.isStandalone && util.IsInterfaceNil(b.dashboardK8sClient) {
