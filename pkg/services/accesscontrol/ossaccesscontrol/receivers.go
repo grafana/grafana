@@ -22,7 +22,7 @@ import (
 )
 
 var ReceiversViewActions = []string{accesscontrol.ActionAlertingReceiversRead}
-var ReceiversEditActions = append(ReceiversViewActions, []string{accesscontrol.ActionAlertingReceiversUpdate, accesscontrol.ActionAlertingReceiversDelete}...)
+var ReceiversEditActions = append(ReceiversViewActions, []string{accesscontrol.ActionAlertingReceiversUpdate, accesscontrol.ActionAlertingReceiversDelete, accesscontrol.ActionAlertingReceiversTestCreate}...)
 var ReceiversAdminActions = append(ReceiversEditActions, []string{accesscontrol.ActionAlertingReceiversReadSecrets, accesscontrol.ActionAlertingReceiversPermissionsRead, accesscontrol.ActionAlertingReceiversPermissionsWrite, accesscontrol.ActionAlertingReceiversUpdateProtected}...)
 
 // defaultPermissions returns the default permissions for a newly created receiver.

@@ -29,7 +29,10 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	appsdk_k8s "github.com/grafana/grafana-app-sdk/k8s"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	githubConnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
+	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
+	githubRepository "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -111,28 +114,65 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 
 func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelper {
 	t.Helper()
+	opts = prepareK8sOpts(t, opts)
+	listenerAddress, env, testDB := testinfra.StartGrafanaEnvWithDB(t, opts.Dir, opts.DirPath)
+	if !opts.DisableDBCleanup {
+		t.Cleanup(testDB.Cleanup)
+	}
+	return buildK8sTestHelper(t, opts, listenerAddress, env)
+}
 
+// NewK8sTestHelperShared is like NewK8sTestHelperWithOpts but uses
+// StartGrafanaEnvWithManualCleanup so the server is not tied to t.Cleanup.
+// The caller is responsible for invoking the returned shutdown function
+// (typically in TestMain after m.Run).
+func NewK8sTestHelperShared(t *testing.T, opts K8sTestHelperOpts) (*K8sTestHelper, func()) {
+	t.Helper()
+	ownsGrafDir := opts.Dir == "" && opts.DirPath == ""
+	opts = prepareK8sOptsShared(t, opts)
+	grafDir := opts.Dir
+	listenerAddress, env, testDB, serverShutdown := testinfra.StartGrafanaEnvWithManualCleanup(t, opts.Dir, opts.DirPath)
+	shutdownFunc := func() {
+		serverShutdown()
+		if !opts.DisableDBCleanup {
+			testDB.Cleanup()
+		}
+		if ownsGrafDir {
+			_ = os.RemoveAll(grafDir)
+		}
+	}
+	return buildK8sTestHelper(t, opts, listenerAddress, env), shutdownFunc
+}
+
+func prepareK8sOpts(t *testing.T, opts K8sTestHelperOpts) K8sTestHelperOpts {
+	t.Helper()
+	return fillK8sOpts(t, opts, testinfra.CreateGrafDir)
+}
+
+func prepareK8sOptsShared(t *testing.T, opts K8sTestHelperOpts) K8sTestHelperOpts {
+	t.Helper()
+	return fillK8sOpts(t, opts, testinfra.CreateGrafDirShared)
+}
+
+func fillK8sOpts(t *testing.T, opts K8sTestHelperOpts, createDir func(*testing.T, testinfra.GrafanaOpts) (string, string)) K8sTestHelperOpts {
+	t.Helper()
 	// Use GRPC server when not configured
 	if opts.APIServerStorageType == "" && opts.GRPCServerAddress == "" {
 		// TODO, this really should be gRPC, but sometimes fails in drone
 		// the two *should* be identical, but we have seen issues when using real gRPC vs channel
 		opts.APIServerStorageType = options.StorageTypeUnified // TODO, should be GRPC
 	}
-
 	// Always enable `FlagAppPlatformGrpcClientAuth` for k8s integration tests, as this is the desired behavior.
 	// The flag only exists to support the transition from the old to the new behavior in dev/ops/prod.
 	opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagAppPlatformGrpcClientAuth)
-	var (
-		dir  = opts.Dir
-		path = opts.DirPath
-	)
 	if opts.Dir == "" && opts.DirPath == "" {
-		dir, path = testinfra.CreateGrafDir(t, opts.GrafanaOpts)
+		opts.Dir, opts.DirPath = createDir(t, opts.GrafanaOpts)
 	}
-	listenerAddress, env, testDB := testinfra.StartGrafanaEnvWithDB(t, dir, path)
-	if !opts.DisableDBCleanup {
-		t.Cleanup(testDB.Cleanup)
-	}
+	return opts
+}
+
+func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress string, env *server.TestEnv) *K8sTestHelper {
+	t.Helper()
 
 	c := &K8sTestHelper{
 		env:             *env,
@@ -148,11 +188,11 @@ func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelp
 	require.NoError(c.t, err)
 	c.orgSvc = orgSvc
 
-	teamSvc, err := teamimpl.ProvideService(c.env.SQLStore, c.env.Cfg, tracing.NewNoopTracerService())
+	teamSvc, err := teamimpl.NewLegacyService(c.env.SQLStore, c.env.Cfg, tracing.NewNoopTracerService())
 	require.NoError(c.t, err)
 	c.teamSvc = teamSvc
 
-	userSvc, err := userimpl.ProvideService(
+	userSvc, err := userimpl.NewLegacyService(
 		c.env.SQLStore, orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
 		supportbundlestest.NewFakeBundleService())
@@ -185,7 +225,7 @@ func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelp
 
 	// ensure unified storage is alive and running
 	ctx := identity.WithRequester(context.Background(), c.Org1.Admin.Identity)
-	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{})
+	rsp, err := c.env.ResourceClient.IsHealthy(ctx, &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 	require.NoError(t, err, "unable to read resource client health check")
 	require.Equal(t, resourcepb.HealthCheckResponse_SERVING, rsp.Status)
 
@@ -214,6 +254,14 @@ func (c *K8sTestHelper) GetEnv() server.TestEnv {
 
 func (c *K8sTestHelper) SetGithubConnectionFactory(f githubConnection.GithubFactory) {
 	c.env.GithubConnectionFactory = f
+}
+
+func (c *K8sTestHelper) SetGithubRepositoryFactory(f *githubRepository.Factory) {
+	c.env.GithubRepoFactory = f
+}
+
+func (c *K8sTestHelper) SetQuotaStatus(status provisioning.QuotaStatus) {
+	c.env.QuotaGetter.(*quotas.FixedQuotaGetter).SetQuotaStatus(status)
 }
 
 func (c *K8sTestHelper) GetListenerAddress() string {
@@ -345,7 +393,7 @@ func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, r
 func (c *K8sResourceClient) SpecJSON(v *unstructured.UnstructuredList) string {
 	c.t.Helper()
 
-	clean := []any{}
+	clean := make([]any, 0, len(v.Items))
 	for _, item := range v.Items {
 		clean = append(clean, item.Object["spec"])
 	}
@@ -461,6 +509,7 @@ type RequestParams struct {
 	Body        []byte
 	ContentType string
 	Accept      string
+	Headers     map[string]string
 }
 
 type K8sResponse[T any] struct {
@@ -565,6 +614,9 @@ func DoRequest[T any](c *K8sTestHelper, params RequestParams, result *T) K8sResp
 	}
 	if params.Accept != "" {
 		req.Header.Set("Accept", params.Accept)
+	}
+	for k, v := range params.Headers {
+		req.Header.Set(k, v)
 	}
 
 	rsp, err := sharedHTTPClient.Do(req)
@@ -702,6 +754,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		IsAdmin:        isGrafanaAdmin,
 		Name:           name,
 	})
+	require.NoError(c.t, err)
 
 	// for tests to work we need to add grafana admins to every org
 	if isGrafanaAdmin {

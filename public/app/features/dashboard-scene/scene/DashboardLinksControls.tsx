@@ -15,22 +15,34 @@ export interface Props {
 
 export function DashboardLinksControls({ links, dashboard }: Props) {
   sceneGraph.getTimeRange(dashboard).useState();
-  const uid = dashboard.state.uid;
+  const { uid } = dashboard.useState();
   const styles = useStyles2(getStyles);
+  const linksToDisplay = excludeControlMenuLinks(links);
 
-  if (!links || !uid || links.length === 0) {
+  if (!uid || linksToDisplay.length === 0) {
     return null;
   }
 
   return (
     <div className={styles.linksContainer}>
-      {links
-        .filter((link) => link.placement === undefined)
-        .map((link: DashboardLink, index: number) => (
-          <DashboardLinkRenderer link={link} dashboardUID={uid} key={`${link.title}-$${index}`} />
-        ))}
+      {linksToDisplay.map((link: DashboardLink, index: number) => (
+        <DashboardLinkRenderer
+          link={link}
+          dashboardUID={uid}
+          key={`${link.title}-$${index}`}
+          linkIndex={links.indexOf(link)}
+        />
+      ))}
     </div>
   );
+}
+
+function excludeControlMenuLinks(links: DashboardLink[]): DashboardLink[] {
+  if (!links || links.length === 0) {
+    return [];
+  }
+
+  return links.filter((link) => link.placement === undefined);
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -38,10 +50,13 @@ function getStyles(theme: GrafanaTheme2) {
     linksContainer: css({
       label: 'dashboard-links-controls',
       display: 'inline-flex',
+      alignItems: 'center',
       gap: theme.spacing(1),
       marginRight: theme.spacing(1),
       marginBottom: theme.spacing(1),
       flexWrap: 'wrap',
+      // Match variable/annotation alignment in the controls row
+      alignSelf: 'flex-start',
     }),
   };
 }

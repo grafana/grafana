@@ -1,7 +1,6 @@
-import { locationUtil } from '@grafana/data';
+import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2';
-import { Status } from '@grafana/schema/src/schema/dashboard/v2';
+import { Status, Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
@@ -15,6 +14,7 @@ import {
   Resource,
   ResourceClient,
   ResourceForCreate,
+  ResourceList,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -22,15 +22,25 @@ import { buildSourceLink, removeExistingSourceLinks } from 'app/features/provisi
 import { DashboardDTO, SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
+import { VERSIONS_FETCH_LIMIT } from '../types/revisionModels';
 
-import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo, ListDeletedDashboardsOptions } from './types';
+import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
+import {
+  DashboardAPI,
+  DashboardVersionError,
+  DashboardWithAccessInfo,
+  ListDashboardHistoryOptions,
+  ListDeletedDashboardsOptions,
+} from './types';
 import { isV0V1StoredVersion } from './utils';
 
-export const K8S_V2_DASHBOARD_API_CONFIG = {
-  group: 'dashboard.grafana.app',
-  version: 'v2beta1',
-  resource: 'dashboards',
-};
+export function getK8sV2DashboardApiConfig() {
+  return {
+    group: 'dashboard.grafana.app',
+    version: dashboardAPIVersionResolver.getV2(),
+    resource: 'dashboards',
+  };
+}
 
 export class K8sDashboardV2API
   implements DashboardAPI<DashboardWithAccessInfo<DashboardV2Spec> | DashboardDTO, DashboardV2Spec>
@@ -38,12 +48,12 @@ export class K8sDashboardV2API
   private client: ResourceClient<DashboardV2Spec, Status>;
 
   constructor() {
-    this.client = new ScopedResourceClient<DashboardV2Spec>(K8S_V2_DASHBOARD_API_CONFIG);
+    this.client = new ScopedResourceClient<DashboardV2Spec>(getK8sV2DashboardApiConfig());
   }
 
-  async getDashboardDTO(uid: string) {
+  async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     try {
-      const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto');
+      const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto', params);
       // FOR /dto calls returning v2 spec we are ignoring the conversion status to avoid runtime errors caused by the status
       // being saved for v2 resources that's been client-side converted to v2 and then PUT to the API server.
       // This could come as conversion error from v0 or v2 to V1.
@@ -139,12 +149,15 @@ export class K8sDashboardV2API
     if (obj.metadata.name) {
       // remove resource version when updating
       delete obj.metadata.resourceVersion;
+      delete obj.metadata.labels?.[DeprecatedInternalId];
       return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
     }
     obj.metadata.annotations = {
       ...obj.metadata.annotations,
       [AnnoKeyGrantPermissions]: 'default',
     };
+    // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
+    delete obj.metadata.labels?.[DeprecatedInternalId];
     return await this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
@@ -160,19 +173,74 @@ export class K8sDashboardV2API
       })
     );
 
-    let dashId = 0;
-    if (v.metadata.labels?.[DeprecatedInternalId]) {
-      dashId = parseInt(v.metadata.labels[DeprecatedInternalId], 10);
-    }
-
     return {
       uid: v.metadata.name,
       version: v.metadata.generation ?? 0,
-      id: dashId,
       status: 'success',
       url,
       slug,
     };
+  }
+
+  async listDashboardHistory(
+    uid: string,
+    options?: ListDashboardHistoryOptions
+  ): Promise<ResourceList<DashboardV2Spec>> {
+    const limit = options?.limit ?? VERSIONS_FETCH_LIMIT;
+    let continueToken = options?.continueToken;
+    const items: Array<Resource<DashboardV2Spec>> = [];
+
+    let lastPage: ResourceList<DashboardV2Spec> | undefined;
+
+    do {
+      lastPage = await this.client.list({
+        labelSelector: 'grafana.app/get-history=true',
+        fieldSelector: `metadata.name=${uid}`,
+        limit: limit - items.length,
+        continue: continueToken,
+      });
+      items.push(...lastPage.items);
+      continueToken = lastPage.metadata.continue;
+    } while (items.length < limit && continueToken);
+
+    return { ...lastPage!, metadata: { ...lastPage!.metadata, continue: continueToken }, items };
+  }
+
+  async getDashboardHistoryVersions(uid: string, versions: number[]) {
+    const results: Array<Resource<DashboardV2Spec>> = [];
+    const versionsToFind = new Set(versions);
+    let continueToken: string | undefined;
+
+    do {
+      // using high limit to attempt finding the versions in one request
+      // if not found, pagination will kick in
+      const history = await this.listDashboardHistory(uid, { limit: 1000, continueToken });
+      for (const item of history.items) {
+        if (versionsToFind.has(item.metadata.generation ?? 0)) {
+          results.push(item);
+          versionsToFind.delete(item.metadata.generation ?? 0);
+        }
+      }
+      continueToken = versionsToFind.size > 0 ? history.metadata.continue : undefined;
+    } while (continueToken);
+
+    if (versionsToFind.size > 0) {
+      throw new Error(`Dashboard version not found: ${[...versionsToFind].join(', ')}`);
+    }
+    return results;
+  }
+
+  async restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO> {
+    // get version to restore to, and save as new one
+    const [historicalVersion] = await this.getDashboardHistoryVersions(uid, [version]);
+    return await this.saveDashboard({
+      dashboard: historicalVersion.spec,
+      k8s: {
+        name: uid,
+      },
+      message: `Restored from version ${version}`,
+      folderUid: historicalVersion.metadata?.annotations?.[AnnoKeyFolder],
+    });
   }
 
   listDeletedDashboards(options: ListDeletedDashboardsOptions) {

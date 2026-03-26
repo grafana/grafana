@@ -227,8 +227,15 @@ export function getJavaScriptContent(): string {
   return completeTemplate;
 }
 
-// Build the path to the Markdown file.
-const indexPath = resolve(__dirname, '../../' + WRITE_PATH);
+export function generateMarkdown(): void {
+  // Build the path to the Markdown file.
+  const indexPath = resolve(__dirname, '../../' + WRITE_PATH);
+  // Write content to the Markdown file.
+  writeFileSync(indexPath, completeTemplate, 'utf-8');
+}
 
-// Write content to the Markdown file.
-writeFileSync(indexPath, completeTemplate, 'utf-8');
+// Only run the generation if this file is executed directly (not imported)
+// This is a Node.js specific way to ensure the file is executed directly.
+if (require.main === module) {
+  generateMarkdown();
+}

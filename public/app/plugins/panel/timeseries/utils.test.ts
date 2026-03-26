@@ -19,6 +19,21 @@ describe('prepare timeseries graph', () => {
     expect(frames).toBeNull();
   });
 
+  it('does not needlessly copy clean arrays', () => {
+    const values = [1, 2];
+
+    const df = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'a', values },
+      ],
+    });
+    const frames = prepareGraphableFields([df], createTheme());
+
+    const field = frames![0].fields.find((f) => f.name === 'a');
+    expect(field!.values).toBe(values);
+  });
+
   it('requires a number or boolean value', () => {
     const input = [
       toDataFrame({
@@ -82,7 +97,7 @@ describe('prepare timeseries graph', () => {
     const df = createDataFrame({
       fields: [
         { name: 'time', type: FieldType.time, values: [995, 9996, 9997, 9998, 9999] },
-        { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity] },
+        { name: 'a', values: [-10, NaN, 10, -Infinity, +Infinity, null] },
       ],
     });
     const frames = prepareGraphableFields([df], createTheme());
@@ -93,6 +108,7 @@ describe('prepare timeseries graph', () => {
         -10,
         null,
         10,
+        null,
         null,
         null,
       ]

@@ -21,19 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-type contextKey string
-
-const txKey contextKey = "rvmanager_db_tx"
-
-func ContextWithTx(ctx context.Context, tx db.Tx) context.Context {
-	return context.WithValue(ctx, txKey, tx)
-}
-
-func TxFromCtx(ctx context.Context) (db.Tx, bool) {
-	tx, ok := ctx.Value(txKey).(db.Tx)
-	return tx, ok
-}
-
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager")
 
 var (
@@ -136,6 +123,12 @@ func NewResourceVersionManager(opts ResourceManagerOptions) (*ResourceVersionMan
 		maxBatchSize:     opts.MaxBatchSize,
 		maxBatchWaitTime: opts.MaxBatchWaitTime,
 	}, nil
+}
+
+// DB returns the underlying db.DB for backwards compatibility queries.
+// TODO: remove when backwards compatibility is no longer needed.
+func (m *ResourceVersionManager) DB() db.DB {
+	return m.db
 }
 
 // ExecWithRV executes the given function with an incremented resource version
@@ -376,6 +369,18 @@ func SnowflakeFromRV(rv int64) int64 {
 func RVFromSnowflake(snowflakeID int64) int64 {
 	microSecFraction := snowflakeID & ((1 << snowflake.StepBits) - 1)
 	return ((snowflakeID>>(snowflake.NodeBits+snowflake.StepBits))+snowflake.Epoch)*1000 + microSecFraction
+}
+
+// RVFromBulkSnowflake is like RVFromSnowflake but preserves the full low-order
+// (NodeBits + StepBits) bits as the sub-millisecond fraction. Bulk-import
+// snowflake IDs are produced by snowflakeFromTime (which zeroes the low 22
+// bits) plus a monotonic counter, so the counter can spill past StepBits into
+// NodeBits. Using only StepBits (12) would wrap at 4096 entries per
+// millisecond; using all 22 low bits pushes that limit to ~4 million.
+func RVFromBulkSnowflake(snowflakeID int64) int64 {
+	totalLowBits := snowflake.NodeBits + snowflake.StepBits
+	subMilliFraction := snowflakeID & ((1 << totalLowBits) - 1)
+	return ((snowflakeID>>totalLowBits)+snowflake.Epoch)*1000 + subMilliFraction
 }
 
 // helper utility to compare two RVs. The first RV must be in snowflake format. Will convert rv2 to snowflake and retry

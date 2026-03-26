@@ -27,13 +27,14 @@ import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
 import { getTargetFolderPathInRepo } from '../BulkActions/utils';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { joinPath } from '../utils/path';
 
 export interface Props {
   dashboard: DashboardScene;
   defaultValues: ProvisionedDashboardFormData;
   readOnly: boolean;
   isNew?: boolean;
-  workflowOptions: Array<{ label: string; value: string }>;
+  canPushToConfiguredBranch: boolean;
   loadedFromRef?: string;
   targetFolderUID?: string;
   targetFolderTitle?: string;
@@ -48,7 +49,7 @@ export function MoveProvisionedDashboardForm({
   loadedFromRef,
   readOnly,
   isNew,
-  workflowOptions,
+  canPushToConfiguredBranch,
   targetFolderUID,
   targetFolderTitle,
   repository,
@@ -92,7 +93,7 @@ export function MoveProvisionedDashboardForm({
       repoName: repository?.name,
       hidePrependSlash: true,
     });
-    const newPath = `${targetFolderPath}${filename}`;
+    const newPath = joinPath(targetFolderPath ?? '', filename ?? '');
     setTargetPath(newPath);
   }, [currentFileData, targetFolder, targetFolderUID, targetFolderTitle, repository]);
 
@@ -306,8 +307,7 @@ export function MoveProvisionedDashboardForm({
                 resourceType="dashboard"
                 isNew={isNew}
                 readOnly={readOnly}
-                workflow={workflow}
-                workflowOptions={workflowOptions}
+                canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
               />
 

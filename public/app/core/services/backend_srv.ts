@@ -33,7 +33,6 @@ import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasSessionExpiry } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO } from 'app/types/dashboard';
@@ -432,8 +431,9 @@ export class BackendSrv implements BackendService {
     err.data = err.data ?? { message: 'Unexpected error' };
 
     if (typeof err.data === 'string') {
+      const message = isHtmlResponse(err.data) ? `${err.status} ${err.statusText ?? 'Error'}` : err.data;
       err.data = {
-        message: err.data,
+        message,
         error: err.statusText,
         response: err.data,
       };
@@ -633,17 +633,7 @@ export class BackendSrv implements BackendService {
     // NOTE: When this is removed, we can also remove most instances of:
     // jest.mock('app/features/live/dashboard/dashboardWatcher
     deprecationWarning('backend_srv', 'getDashboardByUid(uid)', 'getDashboardAPI().getDashboardDTO(uid)');
-    return getDashboardAPI('v1').getDashboardDTO(uid);
-  }
-
-  validateDashboard(dashboard: DashboardModel): Promise<ValidateDashboardResponse> {
-    // support for this function will be implemented in the k8s flavored api-server
-    // hidden by experimental feature flag:
-    //  config.featureToggles.showDashboardValidationWarnings
-    return Promise.resolve({
-      isValid: false,
-      message: 'dashboard validation is not supported',
-    });
+    return getDashboardAPI('v1').then((api) => api.getDashboardDTO(uid));
   }
 
   getPublicDashboardByUid(uid: string) {
@@ -667,11 +657,11 @@ export class BackendSrv implements BackendService {
   }
 }
 
+function isHtmlResponse(value: string): boolean {
+  const trimmed = value.trimStart().toLowerCase();
+  return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html');
+}
+
 // Used for testing and things that really need BackendSrv
 export const backendSrv = new BackendSrv();
 export const getBackendSrv = (): BackendSrv => backendSrv;
-
-interface ValidateDashboardResponse {
-  isValid: boolean;
-  message?: string;
-}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -515,6 +517,19 @@ func TestRunInQueue(t *testing.T) {
 		<-executed
 	})
 
+	t.Run("should use cluster-scoped tenant for empty tenantID", func(t *testing.T) {
+		s, _ := newTestServerWithQueue(t, 1, 1)
+		executed := make(chan bool, 1)
+
+		runnable := func(ctx context.Context) {
+			executed <- true
+		}
+
+		err := s.runInQueue(context.Background(), "", runnable)
+		require.NoError(t, err)
+		assert.True(t, <-executed, "runnable should have been executed with cluster-scoped tenantID")
+	})
+
 	t.Run("should return an error if queue is consistently full after retrying", func(t *testing.T) {
 		s, q := newTestServerWithQueue(t, 1, 1)
 		// Task 1: This will be picked up by the worker and block it.
@@ -683,5 +698,341 @@ func TestGetQuotaUsage(t *testing.T) {
 		require.Nil(t, resp.Error)
 		assert.Equal(t, int64(42), resp.Usage)
 		assert.Equal(t, int64(500), resp.Limit)
+	})
+}
+
+func TestCheckQuotas(t *testing.T) {
+	tests := []struct {
+		name              string
+		limit             int
+		enforcedResources map[string]bool
+		expectError       bool
+	}{
+		{
+			name:              "enforced resource returns error if quota exceeded",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectError:       true,
+		},
+		{
+			name:              "enforced resource returns nil if within quota",
+			limit:             2,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectError:       false,
+		},
+		{
+			name:              "unlisted resource is not enforced even if over quota",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.folder.app/folders": true},
+			expectError:       false,
+		},
+		{
+			name:              "empty enforced resources means no enforcement",
+			limit:             1,
+			enforcedResources: nil,
+			expectError:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
+			overrides := fmt.Sprintf(`overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: %d
+`, tt.limit)
+			require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
+
+			tcr := tracing.NewNoopTracerService()
+			overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
+				FilePath: overridesFile,
+			})
+			require.NoError(t, err)
+
+			nsr := NamespacedResource{
+				Namespace: "stacks-123",
+				Group:     "grafana.dashboard.app",
+				Resource:  "dashboards",
+			}
+
+			server, err := NewResourceServer(ResourceServerOptions{
+				Backend: &mockStorageBackend{
+					resourceStats: []ResourceStats{{
+						NamespacedResource: nsr,
+						Count:              1,
+					}},
+				},
+				OverridesService: overridesService,
+				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources},
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = server.Stop(ctx)
+			})
+
+			err = server.checkQuota(ctx, nsr)
+			if tt.expectError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestShouldEnforce(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   QuotasConfig
+		group    string
+		resource string
+		expected bool
+	}{
+		{
+			name:     "returns true for listed resource",
+			config:   QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			expected: true,
+		},
+		{
+			name:     "returns false for unlisted resource",
+			config:   QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+			group:    "folder.grafana.app",
+			resource: "folders",
+			expected: false,
+		},
+		{
+			name:     "returns false when map is nil",
+			config:   QuotasConfig{},
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			expected: false,
+		},
+		{
+			name:     "returns false when map is empty",
+			config:   QuotasConfig{EnforcedResources: map[string]bool{}},
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.config.ShouldEnforce(tt.group, tt.resource))
+		})
+	}
+}
+
+func Test_resourceVersionTime(t *testing.T) {
+	// Reference time: 2026-01-15 12:00:00 UTC
+	refTime := time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC)
+
+	// Build a snowflake ID for refTime (node=0, sequence=0).
+	snowflakeRV := (refTime.UnixMilli() - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)
+
+	// Build a microsecond Unix timestamp for refTime (SQL backend format).
+	microRV := refTime.UnixMicro()
+
+	tests := []struct {
+		name      string
+		rv        int64
+		wantClose time.Time
+	}{
+		{
+			name:      "snowflake ID",
+			rv:        snowflakeRV,
+			wantClose: refTime,
+		},
+		{
+			name:      "microsecond timestamp",
+			rv:        microRV,
+			wantClose: refTime,
+		},
+		{
+			name:      "zero",
+			rv:        0,
+			wantClose: time.UnixMicro(0),
+		},
+		{
+			name:      "negative",
+			rv:        -1,
+			wantClose: time.UnixMicro(-1),
+		},
+		{
+			name:      "small positive",
+			rv:        12345,
+			wantClose: time.UnixMicro(12345),
+		},
+		{
+			name:      "sequential counter",
+			rv:        1000000,
+			wantClose: time.UnixMicro(1000000),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := resourceVersionTime(tt.rv)
+			diff := got.Sub(tt.wantClose).Abs()
+			require.Less(t, diff, time.Second,
+				"expected time close to %v, got %v (diff %v)", tt.wantClose, got, diff)
+		})
+	}
+}
+
+func TestGracefulShutdown(t *testing.T) {
+	testUser := &identity.StaticRequester{
+		Type:           authlib.TypeUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
+	ctx := authlib.WithAuthInfo(context.Background(), testUser)
+
+	raw := []byte(`{
+		"apiVersion": "playlist.grafana.app/v0alpha1",
+		"kind": "Playlist",
+		"metadata": {
+			"name": "test-shutdown",
+			"uid": "shutdown-uid",
+			"namespace": "default"
+		},
+		"spec": { "title": "hello", "interval": "5m" }
+	}`)
+
+	key := &resourcepb.ResourceKey{
+		Group:     "playlist.grafana.app",
+		Resource:  "playlists",
+		Namespace: "default",
+		Name:      "test-shutdown",
+	}
+
+	newServer := func(t *testing.T) *server {
+		t.Helper()
+		db, err := badger.Open(badger.DefaultOptions("").
+			WithInMemory(true).
+			WithLogger(nil))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = db.Close() })
+
+		kvStore := NewBadgerKV(db)
+		store, err := NewKVStorageBackend(KVBackendOptions{
+			KvStore: kvStore,
+		})
+		require.NoError(t, err)
+
+		srv, err := NewResourceServer(ResourceServerOptions{
+			Backend: store,
+		})
+		require.NoError(t, err)
+		return srv
+	}
+
+	t.Run("rejects new writes after Stop is called", func(t *testing.T) {
+		srv := newServer(t)
+
+		// Stop the server
+		err := srv.Stop(context.Background())
+		require.NoError(t, err)
+
+		// Create should be rejected
+		_, err = srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: raw})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "server is stopping")
+
+		// Update should be rejected
+		_, err = srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: raw})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "server is stopping")
+
+		// Delete should be rejected
+		_, err = srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "server is stopping")
+	})
+
+	t.Run("Stop waits for in-flight write to complete", func(t *testing.T) {
+		srv := newServer(t)
+
+		// Start a Create in a goroutine — it will be in-flight when Stop is called
+		writeStarted := make(chan struct{})
+		writeDone := make(chan struct{})
+
+		// Use artificialSuccessfulWriteDelay to keep the write in-flight long enough
+		// for us to call Stop while it's still running
+		srv.artificialSuccessfulWriteDelay = 500 * time.Millisecond
+
+		go func() {
+			close(writeStarted)
+			_, _ = srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: raw})
+			close(writeDone)
+		}()
+
+		<-writeStarted
+		// Give the goroutine time to enter Create and call inflight.Add(1)
+		time.Sleep(50 * time.Millisecond)
+
+		// Stop should block until the in-flight write completes
+		stopDone := make(chan struct{})
+		go func() {
+			_ = srv.Stop(context.Background())
+			close(stopDone)
+		}()
+
+		// The write should finish before Stop returns
+		select {
+		case <-writeDone:
+			// expected: write finished
+		case <-time.After(5 * time.Second):
+			t.Fatal("timed out waiting for in-flight write to complete")
+		}
+
+		select {
+		case <-stopDone:
+			// expected: Stop returned after write completed
+		case <-time.After(5 * time.Second):
+			t.Fatal("timed out waiting for Stop to return")
+		}
+	})
+
+	t.Run("Stop respects context deadline when writes are stuck", func(t *testing.T) {
+		srv := newServer(t)
+
+		// Simulate a very slow write by using a large delay
+		srv.artificialSuccessfulWriteDelay = 10 * time.Second
+
+		writeStarted := make(chan struct{})
+		go func() {
+			close(writeStarted)
+			_, _ = srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: raw})
+		}()
+
+		<-writeStarted
+		time.Sleep(50 * time.Millisecond)
+
+		// Stop with a short deadline — should not wait forever
+		stopCtx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+		defer cancel()
+
+		stopDone := make(chan struct{})
+		go func() {
+			_ = srv.Stop(stopCtx)
+			close(stopDone)
+		}()
+
+		select {
+		case <-stopDone:
+			// expected: Stop returned after timeout, not after the 10s write
+		case <-time.After(5 * time.Second):
+			t.Fatal("Stop did not respect context deadline")
+		}
 	})
 }

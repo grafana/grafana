@@ -289,3 +289,13 @@ export interface GeneratedResourceList<Spec, Status, K = string> {
   metadata?: Partial<ListMeta>;
   items?: Array<GeneratedResource<Spec, Status, K>>;
 }
+
+/**
+ * Base Kubernetes StatusCause interface.
+ * Client-specific StatusCause types (from generated API clients) extend this shape.
+ */
+export interface K8sStatusCause {
+  field?: string;
+  message?: string;
+  reason?: string;
+}

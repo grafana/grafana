@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	alertingmodels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
 
@@ -35,6 +36,8 @@ const (
 type receiversAuthz interface {
 	FilterRead(ctx context.Context, user identity.Requester, receivers ...ReceiverStatus) ([]ReceiverStatus, error)
 	AuthorizeUpdateProtected(context.Context, identity.Requester, ReceiverStatus) error
+	AuthorizeTest(context.Context, identity.Requester, ReceiverStatus) error
+	AuthorizeTestNew(ctx context.Context, user identity.Requester) error
 }
 
 type AlertmanagerSrv struct {
@@ -74,16 +77,6 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response
 	return response.JSON(http.StatusOK, status)
 }
 
-func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext) response.Response {
-	err := srv.mam.SaveAndApplyDefaultConfig(c.Req.Context(), c.GetOrgID())
-	if err != nil {
-		srv.log.Error("Unable to save and apply default alertmanager configuration", "error", err)
-		return response.ErrOrFallback(http.StatusInternalServerError, "failed to save and apply default Alertmanager configuration", err)
-	}
-
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration deleted; the default is applied"})
-}
-
 func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) response.Response {
 	canSeeAutogen := c.HasRole(org.RoleAdmin)
 	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.GetOrgID(), canSeeAutogen, false)
@@ -93,7 +86,8 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) re
 		}
 		return ErrResp(http.StatusInternalServerError, err, err.Error())
 	}
-	return response.JSON(http.StatusOK, config)
+	return response.JSON(http.StatusOK, config).
+		SetHeader("Warning", `299 - "This endpoint is deprecated and will be removed in Grafana v14. Use the individual resource APIs instead."`)
 }
 
 func (srv AlertmanagerSrv) RouteGetAlertingConfigHistory(c *contextmodel.ReqContext) response.Response {
@@ -103,7 +97,8 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfigHistory(c *contextmodel.ReqCont
 		return ErrResp(http.StatusInternalServerError, err, err.Error())
 	}
 
-	return response.JSON(http.StatusOK, configs)
+	return response.JSON(http.StatusOK, configs).
+		SetHeader("Warning", `299 - "This endpoint is deprecated and will be removed in Grafana v14. Use the individual resource APIs instead."`)
 }
 
 func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) response.Response {
@@ -213,6 +208,24 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) respons
 }
 
 func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
+	// It's ok performance wise, because the 99% use-case is just a single integration.
+	for _, receiver := range body.Receivers {
+		if len(receiver.GrafanaManagedReceivers) == 0 {
+			continue
+		}
+		var err error
+		if receiver.Name == "" {
+			err = srv.receiverAuthz.AuthorizeTestNew(c.Req.Context(), c.SignedInUser)
+		} else {
+			err = srv.receiverAuthz.AuthorizeTest(c.Req.Context(), c.SignedInUser, ReceiverStatus{Name: receiver.Name})
+		}
+		if err != nil {
+			if errors.As(err, &errutil.Error{}) {
+				return response.Err(err)
+			}
+			return ErrResp(http.StatusInternalServerError, err, "failed to authorize request")
+		}
+	}
 	if err := srv.crypto.ProcessSecureSettings(c.Req.Context(), c.GetOrgID(), body.Receivers, func(receiverName string, paths []schema.IntegrationFieldPath) error {
 		return srv.receiverAuthz.AuthorizeUpdateProtected(c.Req.Context(), c.SignedInUser, ReceiverStatus{Name: receiverName})
 	}); err != nil {
@@ -347,7 +360,7 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (notifier.Alertmanager, 
 	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
 }
 
-type ReceiverStatus apimodels.Receiver
+type ReceiverStatus alertingmodels.ReceiverStatus
 
 func (rs ReceiverStatus) GetUID() string {
 	return legacy_storage.NameToUid(rs.Name)

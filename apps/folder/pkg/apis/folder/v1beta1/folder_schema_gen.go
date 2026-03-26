@@ -5,13 +5,26 @@
 package v1beta1
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
 // schema is unexported to prevent accidental overwrites
 var (
 	schemaFolder = resource.NewSimpleSchema("folder.grafana.app", "v1beta1", NewFolder(), &FolderList{}, resource.WithKind("Folder"),
-		resource.WithPlural("folders"), resource.WithScope(resource.NamespacedScope))
+		resource.WithPlural("folders"), resource.WithScope(resource.NamespacedScope), resource.WithSelectableFields([]resource.SelectableField{{
+			FieldSelector: "spec.title",
+			FieldValueFunc: func(o resource.Object) (string, error) {
+				cast, ok := o.(*Folder)
+				if !ok {
+					return "", errors.New("provided object must be of type *Folder")
+				}
+
+				return cast.Spec.Title, nil
+			},
+		},
+		}))
 	kindFolder = resource.Kind{
 		Schema: schemaFolder,
 		Codecs: map[resource.KindEncoding]resource.Codec{

@@ -232,10 +232,6 @@ func (f *AlertmanagerApiHandler) handleRouteDeleteGrafanaSilence(ctx *contextmod
 	return f.GrafanaSvc.RouteDeleteSilence(ctx, id)
 }
 
-func (f *AlertmanagerApiHandler) handleRouteDeleteGrafanaAlertingConfig(ctx *contextmodel.ReqContext) response.Response {
-	return f.GrafanaSvc.RouteDeleteAlertingConfig(ctx)
-}
-
 func (f *AlertmanagerApiHandler) handleRouteCreateGrafanaSilence(ctx *contextmodel.ReqContext, body apimodels.PostableSilence) response.Response {
 	return f.GrafanaSvc.RouteCreateSilence(ctx, body)
 }

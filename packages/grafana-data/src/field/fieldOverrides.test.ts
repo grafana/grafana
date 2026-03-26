@@ -4,6 +4,7 @@ import { createTheme } from '../themes/createTheme';
 import { FieldMatcherID } from '../transformations/matchers/ids';
 import { ScopedVars } from '../types/ScopedVars';
 import { GrafanaConfig } from '../types/config';
+import { NullValueMode } from '../types/data';
 import { FieldType, DataFrame, Field, FieldConfig } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
 import { FieldConfigPropertyItem, FieldConfigSource } from '../types/fieldOverrides';
@@ -117,6 +118,34 @@ describe('Global MinMax', () => {
 
       expect(min).toBe(null);
       expect(max).toBe(null);
+    });
+
+    it('should treat null as zero when field.config.nullValueMode: NullValueMode.AsZero', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1] },
+          { name: 'Value', type: FieldType.number, values: [null], config: { nullValueMode: NullValueMode.AsZero } },
+        ],
+      });
+      const { min, max } = findNumericFieldMinMax([frame]);
+
+      expect(min).toBe(0);
+      expect(max).toBe(0);
+    });
+  });
+
+  describe('when value is NaN', () => {
+    it('should ignore', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1] },
+          { name: 'Value', type: FieldType.number, values: [1, NaN, 5] },
+        ],
+      });
+      const { min, max } = findNumericFieldMinMax([frame]);
+
+      expect(min).toBe(1);
+      expect(max).toBe(5);
     });
   });
 
@@ -1035,9 +1064,9 @@ describe('setDynamicConfigValue', () => {
     );
 
     expect(config.mappings).toHaveLength(3);
-    expect(config.mappings![0]).toEqual({ type: MappingType.ValueToText, options: { existing: { text: 'existing' } } });
+    expect(config.mappings![0]).toEqual({ type: MappingType.ValueToText, options: { second: { text: 'second' } } });
     expect(config.mappings![1]).toEqual({ type: MappingType.ValueToText, options: { first: { text: 'first' } } });
-    expect(config.mappings![2]).toEqual({ type: MappingType.ValueToText, options: { second: { text: 'second' } } });
+    expect(config.mappings![2]).toEqual({ type: MappingType.ValueToText, options: { existing: { text: 'existing' } } });
   });
 });
 

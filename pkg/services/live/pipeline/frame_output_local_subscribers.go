@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/centrifugal/centrifuge"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
@@ -28,7 +29,7 @@ func (out *LocalSubscribersFrameOutput) Type() string {
 
 func (out *LocalSubscribersFrameOutput) OutputFrame(_ context.Context, vars Vars, frame *data.Frame) ([]*ChannelFrame, error) {
 	channelID := vars.Channel
-	channel := orgchannel.PrependOrgID(vars.OrgID, channelID)
+	channel := orgchannel.PrependK8sNamespace(vars.NS, channelID)
 	frameJSON, err := json.Marshal(frame)
 	if err != nil {
 		return nil, err

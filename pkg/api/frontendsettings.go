@@ -9,6 +9,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // GetBootdataAPI returns the same data we currently have rendered into index.html
@@ -40,6 +42,13 @@ func (hs *HTTPServer) GetBootdata(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to get settings", err)
 		return
 	}
+
+	ofClient := openfeature.NewDefaultClient()
+	autoLoginFlagEnabled := ofClient.Boolean(c.Req.Context(), featuremgmt.FlagFrontendServiceSSOAutoLogin, false, openfeature.TransactionContext(c.Req.Context()))
+	if autoLoginFlagEnabled && !c.IsSignedIn {
+		data.AutoLoginRedirectURL = hs.getAutoLoginRedirectURL(c)
+	}
+
 	c.JSON(http.StatusOK, data)
 }
 
@@ -59,8 +68,9 @@ func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {
 	keys["version"] = fmt.Sprintf("%x", hash.Sum(nil))
 
 	// Plugin configs
-	plugins := []string{}
-	for _, p := range hs.pluginStore.Plugins(c.Req.Context()) {
+	allPlugins := hs.pluginStore.Plugins(c.Req.Context())
+	plugins := make([]string, 0, len(allPlugins))
+	for _, p := range allPlugins {
 		plugins = append(plugins, fmt.Sprintf("%s@%s", p.Name, p.Info.Version))
 	}
 	keys["plugins"] = sortedHash(plugins, hash)
@@ -150,11 +160,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			continue
 		}
 
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if panel.ID == "datagrid" && !hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagEnableDatagridEditing) {
-			continue
-		}
-
 		panels[panel.ID] = plugins.PanelDTO{
 			ID:              panel.ID,
 			Name:            panel.Name,
@@ -213,6 +218,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		JwtUrlLogin:                          hs.Cfg.JWTAuth.URLLogin,
 		LiveEnabled:                          hs.Cfg.LiveMaxConnections != 0,
 		LiveMessageSizeLimit:                 hs.Cfg.LiveMessageSizeLimit,
+		LiveNamespaced:                       true, // frontend will select a namespaced channel vs orgId channel
 		AutoAssignOrg:                        hs.Cfg.AutoAssignOrg,
 		VerifyEmailEnabled:                   hs.Cfg.VerifyEmailEnabled,
 		SigV4AuthEnabled:                     hs.Cfg.SigV4AuthEnabled,
@@ -248,6 +254,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExternalUserMngLinkName:              hs.Cfg.ExternalUserMngLinkName,
 		ExternalUserMngAnalytics:             hs.Cfg.ExternalUserMngAnalytics,
 		ExternalUserMngAnalyticsParams:       hs.Cfg.ExternalUserMngAnalyticsParams,
+		ExternalUserUpgradeLinkUrl:           hs.Cfg.ExternalUserUpgradeLinkUrl,
 		//nolint:staticcheck // ViewersCanEdit is deprecated but still used for backward compatibility
 		ViewersCanEdit:                   hs.Cfg.ViewersCanEdit,
 		DisableSanitizeHtml:              hs.Cfg.DisableSanitizeHtml,
@@ -303,7 +310,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RendererDefaultImageWidth:           hs.Cfg.RendererDefaultImageWidth,
 		RendererDefaultImageHeight:          hs.Cfg.RendererDefaultImageHeight,
 		RendererDefaultImageScale:           hs.Cfg.RendererDefaultImageScale,
-		Http2Enabled:                        hs.Cfg.Protocol == setting.HTTP2Scheme,
+		Http2Enabled:                        hs.Cfg.Protocol == setting.HTTP2Scheme || hs.Cfg.Protocol == setting.SocketHTTP2Scheme,
 		GrafanaJavascriptAgent:              hs.Cfg.GrafanaJavascriptAgent,
 		PluginCatalogURL:                    hs.Cfg.PluginCatalogURL,
 		PluginAdminEnabled:                  hs.Cfg.PluginAdminEnabled,
@@ -315,6 +322,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ExpressionsEnabled:                  hs.Cfg.ExpressionsEnabled,
 		AwsAllowedAuthProviders:             hs.Cfg.AWSAllowedAuthProviders,
 		AwsAssumeRoleEnabled:                hs.Cfg.AWSAssumeRoleEnabled,
+		AwsPerDatasourceHTTPProxyEnabled:    hs.Cfg.AWSPerDatasourceHTTPProxyEnabled,
 		SupportBundlesEnabled:               isSupportBundlesEnabled(hs),
 
 		Azure: dtos.FrontendSettingsAzureDTO{
@@ -330,6 +338,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		Caching: dtos.FrontendSettingsCachingDTO{
 			Enabled:           hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 			CleanCacheEnabled: hs.Cfg.SectionWithEnvOverrides("caching").Key("clean_cache_enabled").MustBool(true),
+			DefaultTTLMs:      hs.Cfg.SectionWithEnvOverrides("caching").Key("ttl").MustDuration(time.Minute * 5).Milliseconds(),
 		},
 		RecordedQueries: dtos.FrontendSettingsRecordedQueriesDTO{
 			Enabled: hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),

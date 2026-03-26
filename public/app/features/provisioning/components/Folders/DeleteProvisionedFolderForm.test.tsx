@@ -16,13 +16,6 @@ import {
 import { DeleteProvisionedFolderForm } from './DeleteProvisionedFolderForm';
 
 // Mock dependencies
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getAppEvents: jest.fn(() => ({
-    publish: jest.fn(),
-  })),
-}));
-
 const mockNavigate = jest.fn();
 jest.mock('react-router-dom-v5-compat', () => ({
   useNavigate: () => mockNavigate,
@@ -147,14 +140,11 @@ const mockFormData = {
 };
 
 const defaultHookData: ProvisionedFolderFormDataResult = {
-  workflowOptions: [
-    { label: 'Write directly', value: 'write' },
-    { label: 'Create branch', value: 'branch' },
-  ],
   repository: mockRepository,
   folder: mockFolder,
   initialValues: mockFormData,
   isReadOnlyRepo: false,
+  canPushToConfiguredBranch: true,
 };
 
 function setup(
@@ -344,6 +334,7 @@ describe('DeleteProvisionedFolderForm', () => {
         const expectedParams = new URLSearchParams();
         expectedParams.set('new_pull_request_url', 'https://github.com/test/repo/pull/new');
         expectedParams.set('repo_type', 'git');
+        expectedParams.set('action', 'delete');
         const expectedUrl = `/dashboards?${expectedParams.toString()}`;
 
         expect(mockNavigate).toHaveBeenCalledWith(expectedUrl);

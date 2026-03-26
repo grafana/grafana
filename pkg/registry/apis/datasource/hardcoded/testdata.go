@@ -7,6 +7,8 @@ import (
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 )
 
+const TESTDATA_APIVERSION = "grafana-testdata-datasource.datasource.grafana.app/v0alpha1"
+
 func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error) {
 	oas := &datasourceV0.DataSourceOpenAPIExtension{
 		SecureValues: []datasourceV0.SecureValueInfo{ // empty
@@ -25,7 +27,7 @@ func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error
 				ExampleProps: spec3.ExampleProps{
 					Summary: "Empty testdata",
 					Value: map[string]any{
-						"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+						"apiVersion": TESTDATA_APIVERSION,
 						"kind":       "DataSource",
 						"metadata": map[string]any{
 							"name": "my-testdata-datasource",
@@ -40,7 +42,7 @@ func TestdataOpenAPIExtension() (*datasourceV0.DataSourceOpenAPIExtension, error
 				ExampleProps: spec3.ExampleProps{
 					Summary: "Testdata with URL (not used)",
 					Value: map[string]any{
-						"apiVersion": "testdata.datasource.grafana.app/v0alpha1",
+						"apiVersion": TESTDATA_APIVERSION,
 						"kind":       "DataSource",
 						"metadata": map[string]any{
 							"name": "testdata-with-url",

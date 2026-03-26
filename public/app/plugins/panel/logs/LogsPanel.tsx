@@ -25,20 +25,23 @@ import {
   TimeRange,
   TimeZone,
   toUtc,
-  urlUtil,
   LogSortOrderChangeEvent,
   LoadingState,
   rangeUtil,
+  transformDataFrame,
+  store,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { ControlledLogRows } from 'app/features/logs/components/ControlledLogRows';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
+import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import { combineResponses } from 'app/plugins/datasource/loki/mergeResponses';
 
@@ -51,6 +54,7 @@ import type { Options } from './panelcfg.gen';
 import {
   GetFieldLinksFn,
   isCoreApp,
+  isGrammar,
   isIsFilterLabelActive,
   isLogLineMenuCustomItems,
   isOnClickFilterLabel,
@@ -133,25 +137,20 @@ interface LogsPanelProps extends PanelProps<Options> {
    * Requires the `otelLogsFormatting`.
    * @alpha
    * showLogAttributes?: boolean
+   *
+   * Custom Prism grammar definition for highlighting. When used, the .prism-syntax-highlight CSS class name is applied to the component, to allow standard token colors to be applied.
+   * grammar?: Grammar
    */
 }
-interface LogsPermalinkUrlState {
-  logs?: {
-    id?: string;
-  };
-}
-
 const noCommonLabels: Labels = {};
 
-export const LogsPanel = ({
-  data,
-  timeZone,
-  fieldConfig,
-  options: {
+export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChange, height, id }: LogsPanelProps) => {
+  const {
     showControls,
     showFieldSelector,
     controlsStorageKey,
     showLabels,
+    showLevel,
     showTime,
     wrapLogMessage,
     showCommonLabels,
@@ -177,11 +176,9 @@ export const LogsPanel = ({
     noInteractions,
     timestampResolution,
     showLogAttributes,
-    ...options
-  },
-  height,
-  id,
-}: LogsPanelProps) => {
+    unwrappedColumns,
+    grammar,
+  } = options;
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles);
   const logsContainerRef = useRef<HTMLDivElement>(null);
@@ -196,7 +193,7 @@ export const LogsPanel = ({
   const dataSourcesMap = useDatasourcesFromTargets(panelData.request?.targets);
   // Prevents the scroll position to change when new data from infinite scrolling is received
   const keepScrollPositionRef = useRef<null | 'infinite-scroll' | 'user'>(null);
-  let closeCallback = useRef<() => void>();
+  const closeCallback = useRef<(() => void) | undefined>(undefined);
   const { app, eventBus, onAddAdHocFilter } = usePanelContext();
 
   useEffect(() => {
@@ -416,20 +413,30 @@ export const LogsPanel = ({
     (key: string) => {
       const index = displayedFields?.indexOf(key);
       if (index === -1) {
-        setDisplayedFields(displayedFields?.concat(key));
+        const newDisplayedFields = displayedFields?.concat(key);
+        setDisplayedFields(newDisplayedFields);
+        onOptionsChange({
+          ...options,
+          displayedFields: newDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [displayedFields, onOptionsChange, options]
   );
 
   const hideField = useCallback(
     (key: string) => {
       const index = displayedFields?.indexOf(key);
       if (index !== undefined && index > -1) {
-        setDisplayedFields(displayedFields?.filter((k) => key !== k));
+        const newDisplayedFields = displayedFields?.filter((k) => key !== k);
+        setDisplayedFields(newDisplayedFields);
+        onOptionsChange({
+          ...options,
+          displayedFields: newDisplayedFields,
+        });
       }
     },
-    [displayedFields]
+    [displayedFields, onOptionsChange, options]
   );
 
   useEffect(() => {
@@ -476,6 +483,10 @@ export const LogsPanel = ({
       let newSeries: DataFrame[] = [];
       try {
         newSeries = await requestMoreLogs(dataSourcesMap, panelData, scrollRange, timeZone, onNewLogsReceivedCallback);
+        const panel = getDashboardSrv().getCurrent()?.getPanelById(id);
+        if (panel?.transformations) {
+          newSeries = await lastValueFrom(transformDataFrame(panel?.transformations, newSeries));
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -489,7 +500,7 @@ export const LogsPanel = ({
         series: newSeries,
       });
     },
-    [data.request, dataSourcesMap, onNewLogsReceived, panelData, timeZone]
+    [data.request, dataSourcesMap, id, onNewLogsReceived, panelData, timeZone]
   );
 
   const renderCommonLabels = () => (
@@ -566,8 +577,6 @@ export const LogsPanel = ({
           logLineMenuCustomItems={isLogLineMenuCustomItems(logLineMenuCustomItems) ? logLineMenuCustomItems : undefined}
           timeZone={timeZone}
           displayedFields={displayedFields}
-          onClickShowField={showField}
-          onClickHideField={hideField}
         />
       )}
       {config.featureToggles.newLogsPanel && (
@@ -590,6 +599,7 @@ export const LogsPanel = ({
               enableLogDetails={enableLogDetails}
               fontSize={fontSize}
               getFieldLinks={getFieldLinks}
+              grammar={isGrammar(grammar) ? grammar : undefined}
               isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
               initialScrollPosition={initialScrollPosition}
               loading={infiniteScrolling}
@@ -622,6 +632,7 @@ export const LogsPanel = ({
               showControls={Boolean(showControls)}
               showFieldSelector={showFieldSelector}
               showLogAttributes={showLogAttributes}
+              showLevel={storageKey ? store.getBool(`${storageKey}.showLevel`, showLevel ?? true) : showLevel}
               showTime={showTime}
               showUniqueLabels={showLabels}
               sortOrder={sortOrder}
@@ -630,6 +641,7 @@ export const LogsPanel = ({
               timeRange={data.timeRange}
               timestampResolution={timestampResolution}
               timeZone={timeZone}
+              unwrappedColumns={unwrappedColumns}
               wrapLogMessage={wrapLogMessage}
             />
           )}
@@ -785,25 +797,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
   }),
 });
-
-function getLogsPanelState(): LogsPermalinkUrlState | undefined {
-  const urlParams = urlUtil.getUrlSearchParams();
-  const panelStateEncoded = urlParams?.panelState;
-  if (
-    panelStateEncoded &&
-    Array.isArray(panelStateEncoded) &&
-    panelStateEncoded?.length > 0 &&
-    typeof panelStateEncoded[0] === 'string'
-  ) {
-    try {
-      return JSON.parse(panelStateEncoded[0]);
-    } catch (e) {
-      console.error('error parsing logsPanelState', e);
-    }
-  }
-
-  return undefined;
-}
 
 async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange: TimeRange) {
   // this is an extra check, to be sure that we are not

@@ -6,11 +6,13 @@ import (
 	"sync"
 	"time"
 
+	alertingModels "github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -70,17 +72,18 @@ func NewRemoteSecondaryFactory(
 	cfgStore configStore,
 	syncInterval time.Duration,
 	crypto Crypto,
-	autogenFn AutogenFn,
+	autogenRuleStore autogenRuleStore,
 	m *metrics.RemoteAlertmanager,
 	t tracing.Tracer,
 	withRemoteState bool,
+	features featuremgmt.FeatureToggles,
 ) func(notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 	return func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 		return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 			// Create the remote Alertmanager first so we don't need to unregister internal AM metrics if this fails.
 			cfg.OrgID = orgID
 			l := log.New("ngalert.forked-alertmanager.remote-secondary")
-			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenFn, m, t)
+			remoteAM, err := NewAlertmanager(ctx, cfg, notifier.NewFileStore(cfg.OrgID, store), crypto, autogenRuleStore, m, t, features)
 			if err != nil && withRemoteState {
 				// We can't start the internal Alertmanager without the remote state.
 				return nil, fmt.Errorf("failed to create remote Alertmanager, can't start the internal Alertmanager without the remote state: %w", err)
@@ -226,12 +229,16 @@ func (fam *RemoteSecondaryForkedAlertmanager) PutAlerts(ctx context.Context, ale
 	return fam.internal.PutAlerts(ctx, alerts)
 }
 
-func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {
+func (fam *RemoteSecondaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]alertingModels.ReceiverStatus, error) {
 	return fam.internal.GetReceivers(ctx)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*alertingNotify.TestReceiversResult, int, error) {
 	return fam.internal.TestReceivers(ctx, c)
+}
+
+func (fam *RemoteSecondaryForkedAlertmanager) TestIntegration(ctx context.Context, receiverName string, integrationConfig models.Integration, alert alertingModels.TestReceiversConfigAlertParams) (alertingModels.IntegrationStatus, error) {
+	return fam.internal.TestIntegration(ctx, receiverName, integrationConfig, alert)
 }
 
 func (fam *RemoteSecondaryForkedAlertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
@@ -253,15 +260,6 @@ func (fam *RemoteSecondaryForkedAlertmanager) StopAndWait() {
 	ctx := context.TODO()
 	if err := fam.remote.SendState(ctx); err != nil {
 		fam.log.Error("Error sending state to the remote Alertmanager while stopping", "err", err)
-	}
-
-	config, err := fam.store.GetLatestAlertmanagerConfiguration(ctx, fam.orgID)
-	if err != nil {
-		fam.log.Error("Error getting latest Alertmanager configuration while stopping", "err", err)
-		return
-	}
-	if err := fam.remote.CompareAndSendConfiguration(ctx, config); err != nil {
-		fam.log.Error("Error sending configuration to the remote Alertmanager while stopping", "err", err)
 	}
 }
 

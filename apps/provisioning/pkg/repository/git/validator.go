@@ -57,17 +57,21 @@ func ValidateGitConfigFields(repo *provisioning.Repository, url, branch, path st
 		}
 	}
 
-	if branch == "" {
-		list = append(list, field.Required(field.NewPath("spec", t, "branch"), "a git branch is required"))
-	} else if !IsValidGitBranchName(branch) {
+	// Validate branch name format if a branch is provided (applies to all repository types)
+	if branch != "" && !IsValidGitBranchName(branch) {
 		list = append(list, field.Invalid(field.NewPath("spec", t, "branch"), branch, "invalid branch name"))
 	}
 
 	// Readonly repositories may not need a token (if public)
+	// HACK - we're checking if the object is new by looking at the generation instead of the action
+	// We should fix this in https://github.com/grafana/git-ui-sync-project/issues/746
+	isNewObject := repo.Generation == 0
 	if len(repo.Spec.Workflows) > 0 {
-		// If a token is provided, then the connection should not be there
+		// For new objects, if a token is provided, then the connection should not be there
 		if !repo.Secure.Token.IsZero() {
-			if repo.Spec.Connection != nil && repo.Spec.Connection.Name != "" {
+			if isNewObject &&
+				repo.Spec.Connection != nil &&
+				repo.Spec.Connection.Name != "" {
 				list = append(
 					list,
 					field.Invalid(

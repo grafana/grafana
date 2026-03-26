@@ -21,6 +21,7 @@ import {
 
 import { reportInteraction } from '../analytics/utils';
 import { config } from '../config';
+import { getFeatureFlagClient } from '../internal/openFeature';
 import {
   BackendSrvRequest,
   FetchResponse,
@@ -32,6 +33,7 @@ import {
 } from '../services';
 
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
+import { isQueryServiceCompatible } from './qscheck';
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
 
@@ -114,6 +116,33 @@ export interface HealthCheckResult {
 }
 
 /**
+ * Response shape from the /apis/{group}/v0alpha1/.../datasources/{uid}/health endpoint.
+ * Used when datasourcesApiServerEnableHealthEndpointFrontend is enabled.
+ *
+ * @internal
+ */
+export interface DatasourcesV0HealthCheckResult {
+  kind?: string;
+  apiVersion?: string;
+  status: string;
+  code?: number;
+  message: string;
+  details?: HealthCheckResultDetails;
+}
+
+function toHealthCheckResult(v: DatasourcesV0HealthCheckResult): HealthCheckResult {
+  const status: HealthStatus =
+    v.status === HealthStatus.OK || v.status === HealthStatus.Error || v.status === HealthStatus.Unknown
+      ? v.status
+      : HealthStatus.Unknown;
+  return {
+    status,
+    message: v.message,
+    details: v.details,
+  };
+}
+
+/**
  * Extend this class to implement a data source plugin that is depending on the Grafana
  * backend API.
  *
@@ -144,6 +173,7 @@ class DataSourceWithBackend<
     let hasExpr = false;
     const pluginIDs = new Set<string>();
     const dsUIDs = new Set<string>();
+    const datasources: DataSourceInstanceSettings[] = [];
     const queries: DataQuery[] = targets.map((q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
@@ -163,6 +193,8 @@ class DataSourceWithBackend<
         if (!ds) {
           throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
+
+        datasources.push(ds);
 
         const dsRef = ds.rawRef ?? getDataSourceRef(ds);
         const dsId = ds.id;
@@ -210,7 +242,12 @@ class DataSourceWithBackend<
 
     // Use the new query service
     if (config.featureToggles.queryServiceFromUI) {
-      url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+      const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.querier.fe-allowed-types', {
+        types: [],
+      });
+      if (isQueryServiceCompatible(datasources, allowedTypes)) {
+        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+      }
     }
 
     if (hasExpr) {
@@ -316,7 +353,7 @@ class DataSourceWithBackend<
         method: 'GET',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         params: params ?? options?.params,
-        url: `/api/datasources/uid/${this.uid}/resources/${path}`,
+        url: this.buildResourcesDatasourceUrl(path),
       })
     );
     return result.data;
@@ -337,34 +374,78 @@ class DataSourceWithBackend<
         method: 'POST',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         data: data ?? { ...data },
-        url: `/api/datasources/uid/${this.uid}/resources/${path}`,
+        url: this.buildResourcesDatasourceUrl(path),
       })
     );
     return result.data;
   }
 
   /**
+   * Internal function to build the datasource URL based on the feature toggle
+   */
+  buildResourcesDatasourceUrl(path: string): string {
+    const enabledRedirect = getFeatureFlagClient().getBooleanValue(
+      'datasources.apiserver.useNewAPIsForDatasourceResources',
+      false
+    );
+    if (enabledRedirect) {
+      // example:
+      // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
+      const apiVersion = 'v0alpha1';
+      return `/apis/${this.type}.datasource.grafana.app/${apiVersion}/namespaces/${config.namespace}/datasources/${this.uid}/resources/${path}`;
+    }
+    return `/api/datasources/uid/${this.uid}/resources/${path}`;
+  }
+
+  /**
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
+    const useNewApi = config.featureToggles.datasourcesApiServerEnableHealthEndpointFrontend;
+    const healthCheckURL = useNewApi
+      ? `/apis/${this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
+      : `/api/datasources/uid/${this.uid}/health`;
+
+    if (useNewApi) {
+      return lastValueFrom(
+        getBackendSrv().fetch<DatasourcesV0HealthCheckResult>({
+          method: 'GET',
+          url: healthCheckURL,
+          showErrorAlert: false,
+          headers: this.getRequestHeaders(),
+        })
+      )
+        .then((v: FetchResponse<DatasourcesV0HealthCheckResult>) => toHealthCheckResult(v.data))
+        .catch((err) => {
+          const properties: Record<string, string> = {
+            plugin_id: this.meta?.id || '',
+            plugin_version: this.meta?.info?.version || '',
+            datasource_healthcheck_status: err?.data?.status || 'error',
+            datasource_healthcheck_message: err?.data?.message || '',
+          };
+          reportInteraction('datasource_health_check_completed', properties);
+          return err?.data;
+        });
+    }
+
     return lastValueFrom(
       getBackendSrv().fetch<HealthCheckResult>({
         method: 'GET',
-        url: `/api/datasources/uid/${this.uid}/health`,
+        url: healthCheckURL,
         showErrorAlert: false,
         headers: this.getRequestHeaders(),
       })
     )
       .then((v: FetchResponse<HealthCheckResult>) => v.data)
       .catch((err) => {
-        let properties: Record<string, string> = {
+        const properties: Record<string, string> = {
           plugin_id: this.meta?.id || '',
           plugin_version: this.meta?.info?.version || '',
           datasource_healthcheck_status: err?.data?.status || 'error',
           datasource_healthcheck_message: err?.data?.message || '',
         };
         reportInteraction('datasource_health_check_completed', properties);
-        return err.data;
+        return err?.data;
       });
   }
 

@@ -1,6 +1,6 @@
 import { testWithFeatureToggles } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { PromAlertingRuleState, PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { mockGrafanaPromAlertingRule, mockPromRecordingRule } from '../../mocks';
@@ -431,7 +431,7 @@ describe('grafana-managed rules', () => {
 
       it('should include plugins in backend filter and skip frontend filtering', () => {
         // Set up test plugin as installed
-        config.apps[SupportedPlugin.Slo] = pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]);
+        setAppPluginMetas({ [SupportedPlugin.Slo]: pluginMetaToPluginConfig(pluginMeta[SupportedPlugin.Slo]) });
 
         const regularRule = mockGrafanaPromAlertingRule({
           name: 'High CPU Usage',

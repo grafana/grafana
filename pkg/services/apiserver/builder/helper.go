@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"context"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -10,7 +9,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
-	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
@@ -32,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -54,6 +50,19 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + matches[2] + "/name" // connector requires a name
 		},
 	},
+	{ // Migrate datasource.grafana.app to query.grafana.app
+		Pattern: regexp.MustCompile(`/apis/datasource.grafana.app/v0alpha1(.*$)`),
+		ReplaceFunc: func(matches []string) string {
+			result := "/apis/query.grafana.app/v0alpha1" + matches[1]
+			if strings.HasSuffix(matches[1], "/query") {
+				result += "/name" // same as the rewrite pattern below
+			}
+			if strings.HasSuffix(matches[1], "/sqlschemas") && !strings.Contains(matches[1], "/query/") {
+				result = strings.Replace(result, "/sqlschemas", "/query/sqlschemas", 1)
+			}
+			return result
+		},
+	},
 	{
 		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/query$)`),
 		ReplaceFunc: func(matches []string) string {
@@ -61,9 +70,12 @@ var PathRewriters = []filters.PathRewriter{
 		},
 	},
 	{
-		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/sqlschemas$)`),
+		Pattern: regexp.MustCompile(`(/apis/query.grafana.app/v0alpha1/namespaces/.*/)sqlschemas$`),
 		ReplaceFunc: func(matches []string) string {
-			return matches[1] + "/name" // connector requires a name
+			if strings.HasSuffix(matches[0], "query/sqlschemas") {
+				return matches[0] // already rewritten
+			}
+			return matches[1] + "query/sqlschemas"
 		},
 	},
 	{
@@ -253,19 +265,6 @@ func SetupConfig(
 	return nil
 }
 
-type ServerLockService interface {
-	LockExecuteAndRelease(ctx context.Context, actionName string, maxInterval time.Duration, fn func(ctx context.Context)) error
-}
-
-func getRequestInfo(gr schema.GroupResource, namespaceMapper request.NamespaceMapper) *k8srequest.RequestInfo {
-	return &k8srequest.RequestInfo{
-		APIGroup:  gr.Group,
-		Resource:  gr.Resource,
-		Name:      "",
-		Namespace: namespaceMapper(int64(1)),
-	}
-}
-
 func InstallAPIs(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
@@ -274,13 +273,9 @@ func InstallAPIs(
 	builders []APIGroupBuilder,
 	storageOpts *options.StorageOptions,
 	reg prometheus.Registerer,
-	namespaceMapper request.NamespaceMapper,
-	kvStore grafanarest.NamespacedKVStore,
-	serverLock ServerLockService,
 	dualWriteService dualwrite.Service,
 	optsregister apistore.StorageOptionsRegister,
 	features featuremgmt.FeatureToggles,
-	dualWriterMetrics *grafanarest.DualWriterMetrics,
 	builderMetrics *BuilderMetrics,
 	apiResourceConfig *serverstorage.ResourceConfig,
 ) error {
@@ -292,91 +287,11 @@ func InstallAPIs(
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
 		dualWrite = func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
-			// Dashboards + Folders may be managed (depends on feature toggles and database state)
-			if dualWriteService != nil && dualWriteService.ShouldManage(gr) {
-				return dualWriteService.NewStorage(gr, legacy, storage) // eventually this can replace this whole function
+			key := gr.String()
+			if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
+				builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
 			}
-
-			key := gr.String() // ${resource}.{group} eg playlists.playlist.grafana.app
-
-			// Get the option from custom.ini/command line
-			// when missing this will default to mode zero (legacy only)
-			var mode = grafanarest.DualWriterMode(0)
-
-			var (
-				err                                  error
-				dualWriterPeriodicDataSyncJobEnabled bool
-				dualWriterMigrationDataSyncDisabled  bool
-				dataSyncerInterval                   = time.Hour
-				dataSyncerRecordsLimit               = 1000
-			)
-
-			resourceConfig, resourceExists := storageOpts.UnifiedStorageConfig[key]
-			if resourceExists {
-				mode = resourceConfig.DualWriterMode
-				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
-				dualWriterMigrationDataSyncDisabled = resourceConfig.DualWriterMigrationDataSyncDisabled
-				dataSyncerInterval = resourceConfig.DataSyncerInterval
-				dataSyncerRecordsLimit = resourceConfig.DataSyncerRecordsLimit
-			}
-
-			// Force using storage only -- regardless of internal synchronization state
-			if mode == grafanarest.Mode5 {
-				builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, grafanarest.Mode5)
-				return storage, nil
-			}
-
-			currentMode := mode
-			if !dualWriterMigrationDataSyncDisabled || dualWriterPeriodicDataSyncJobEnabled {
-				// TODO: inherited context from main Grafana process
-				ctx := context.Background()
-
-				// Moving from one version to the next can only happen after the previous step has
-				// successfully synchronized.
-				requestInfo := getRequestInfo(gr, namespaceMapper)
-
-				syncerCfg := &grafanarest.SyncerConfig{
-					Kind:                   key,
-					RequestInfo:            requestInfo,
-					Mode:                   mode,
-					SkipDataSync:           dualWriterMigrationDataSyncDisabled,
-					LegacyStorage:          legacy,
-					Storage:                storage,
-					ServerLockService:      serverLock,
-					DataSyncerInterval:     dataSyncerInterval,
-					DataSyncerRecordsLimit: dataSyncerRecordsLimit,
-				}
-
-				// This also sets the currentMode on the syncer config.
-				currentMode, err = grafanarest.SetDualWritingMode(ctx, kvStore, syncerCfg, dualWriterMetrics)
-				if err != nil {
-					return nil, err
-				}
-
-				// when unable to use
-				if currentMode != mode {
-					klog.Warningf("Requested DualWrite mode: %d, but using %d for %+v", mode, currentMode, gr)
-				}
-
-				if dualWriterPeriodicDataSyncJobEnabled && (currentMode >= grafanarest.Mode1 && currentMode <= grafanarest.Mode3) {
-					// The mode might have changed in SetDualWritingMode, so apply current mode first.
-					syncerCfg.Mode = currentMode
-					if err := grafanarest.StartPeriodicDataSyncer(ctx, syncerCfg, dualWriterMetrics); err != nil {
-						return nil, err
-					}
-				}
-			}
-
-			builderMetrics.RecordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
-
-			switch currentMode {
-			case grafanarest.Mode0:
-				return legacy, nil
-			case grafanarest.Mode4, grafanarest.Mode5:
-				return storage, nil
-			default:
-				return dualwrite.NewStaticStorage(gr, currentMode, legacy, storage)
-			}
+			return dualWriteService.NewStorage(gr, legacy, storage)
 		}
 	}
 

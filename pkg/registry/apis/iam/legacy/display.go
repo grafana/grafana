@@ -44,7 +44,7 @@ func (s *legacySQLStore) ListDisplay(ctx context.Context, ns claims.NamespaceInf
 		return nil, fmt.Errorf("expected non zero org id")
 	}
 
-	sql, err := s.sql(ctx)
+	sql, err := s.getDB(ctx)
 	if err != nil {
 		return nil, err
 	}

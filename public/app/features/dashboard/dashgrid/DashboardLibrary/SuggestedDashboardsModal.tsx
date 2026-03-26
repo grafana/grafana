@@ -6,13 +6,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Modal, TabsBar, Tab, TabContent, useStyles2, Text } from '@grafana/ui';
-import { DashboardInput, DataSourceInput } from 'app/features/manage-dashboards/state/reducers';
-import { DashboardJson } from 'app/features/manage-dashboards/types';
+import { DashboardInput, DataSourceInput, DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { CommunityDashboardMappingForm } from './CommunityDashboardMappingForm';
 import { CommunityDashboardSection } from './CommunityDashboardSection';
 import { DashboardLibrarySection } from './DashboardLibrarySection';
-import { ContentKind, EventLocation } from './interactions';
+import { ContentKind, EventLocation } from './constants';
 import { InputMapping } from './utils/autoMapDatasources';
 
 interface SuggestedDashboardsModalProps {

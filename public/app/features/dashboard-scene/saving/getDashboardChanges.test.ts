@@ -1,6 +1,8 @@
-import { Dashboard, Panel } from '@grafana/schema';
+import { AdHocVariableFilter, AdHocVariableModel } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Dashboard, VariableModel } from '@grafana/schema';
 
-import { adHocVariableFiltersEqual, getRawDashboardChanges, getPanelChanges } from './getDashboardChanges';
+import { adHocVariableFiltersEqual, getRawDashboardChanges } from './getDashboardChanges';
 
 describe('adHocVariableFiltersEqual', () => {
   it('should compare empty filters', () => {
@@ -436,113 +438,90 @@ describe('getDashboardChanges', () => {
   });
 });
 
-describe('getPanelChanges', () => {
-  const initial: Panel = {
-    id: 1,
-    type: 'graph',
-    title: 'Panel 1',
-    gridPos: {
-      x: 0,
-      y: 0,
-      w: 12,
-      h: 8,
-    },
-    targets: [
-      {
-        refId: 'A',
-        query: 'query1',
+describe('getDashboardChanges with adHocFilterDefaultValues', () => {
+  const makeDashboardWithAdhoc = (filters: AdHocVariableFilter[]): Dashboard => {
+    return {
+      id: 1,
+      title: 'Dashboard',
+      time: { from: 'now-7d', to: 'now' },
+      refresh: '1h',
+      version: 1,
+      schemaVersion: 1,
+      templating: {
+        list: [{ name: 'adhoc0', type: 'adhoc', filters } as unknown as VariableModel],
       },
-    ],
+    };
   };
 
-  it('should return the correct result when no changes', () => {
-    const changed = { ...initial };
-
-    const expectedChanges = {
-      initialSaveModel: {
-        ...initial,
-      },
-      changedSaveModel: {
-        ...changed,
-      },
-      diffs: {},
-      diffCount: 0,
-      hasChanges: false,
-    };
-
-    expect(getPanelChanges(initial, changed)).toEqual(expectedChanges);
+  afterEach(() => {
+    config.featureToggles.adHocFilterDefaultValues = false;
   });
 
-  it('should return the correct result when there is some changes', () => {
-    const changed = {
-      ...initial,
-      title: 'Panel 2',
-      type: 'table',
-      gridPos: {
-        ...initial.gridPos,
-        x: 1,
-      },
-      targets: [
-        {
-          refId: 'A',
-          query: 'query2',
-        },
-      ],
-    } as Panel;
+  describe('when feature flag is enabled', () => {
+    beforeEach(() => {
+      config.featureToggles.adHocFilterDefaultValues = true;
+    });
 
-    const expectedChanges = {
-      initialSaveModel: {
-        ...initial,
-      },
-      changedSaveModel: {
-        ...changed,
-      },
-      diffs: {
-        title: [
-          {
-            endLineNumber: 3,
-            op: 'replace',
-            originalValue: 'Panel 1',
-            path: ['title'],
-            startLineNumber: 3,
-            value: 'Panel 2',
-          },
-        ],
-        type: [
-          {
-            endLineNumber: 2,
-            op: 'replace',
-            originalValue: 'graph',
-            path: ['type'],
-            startLineNumber: 2,
-            value: 'table',
-          },
-        ],
-        gridPos: [
-          {
-            endLineNumber: 5,
-            op: 'replace',
-            originalValue: 0,
-            path: ['gridPos', 'x'],
-            startLineNumber: 5,
-            value: 1,
-          },
-        ],
-        targets: [
-          {
-            endLineNumber: 13,
-            op: 'replace',
-            originalValue: 'query1',
-            path: ['targets', '0', 'query'],
-            startLineNumber: 13,
-            value: 'query2',
-          },
-        ],
-      },
-      diffCount: 4,
-      hasChanges: true,
-    };
+    it('should not report variable value changes when only origin filters differ', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
 
-    expect(getPanelChanges(changed, initial)).toEqual(expectedChanges);
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+    });
+
+    it('should report variable value changes when runtime filters differ', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(true);
+    });
+
+    it('should keep both origin and runtime filters when saveVariables is true', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+
+      getRawDashboardChanges(initial, changed, false, true, false);
+
+      const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
+      expect(savedFilters).toEqual([
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+    });
+  });
+
+  describe('when feature flag is disabled', () => {
+    beforeEach(() => {
+      config.featureToggles.adHocFilterDefaultValues = false;
+    });
+
+    it('should not report variable value changes when only origin filters differ', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([{ key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' }]);
+
+      const result = getRawDashboardChanges(initial, changed, false, false, false);
+
+      expect(result.hasVariableValueChanges).toBe(false);
+    });
+
+    it('should reset all filters when saveVariables is false', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'a', operator: '=', value: '1' }]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'a', operator: '=', value: '1' },
+        { key: 'host', operator: '=', value: 'localhost', origin: 'dashboard' },
+      ]);
+
+      getRawDashboardChanges(initial, changed, false, false, false);
+
+      const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
+      expect(savedFilters).toEqual([{ key: 'a', operator: '=', value: '1' }]);
+    });
   });
 });

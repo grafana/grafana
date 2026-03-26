@@ -1,38 +1,47 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useSceneObjectState } from '@grafana/scenes';
+import { sceneGraph, SceneObject, SceneObjectState, sceneUtils, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
+import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
 import { ToolbarActionProps } from '../scene/new-toolbar/types';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
+import { DashboardCodePane } from './DashboardCodePane';
 import { DashboardEditPane } from './DashboardEditPane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
+import { AddNewEditPane } from './add-new/AddNewEditPane';
+import { applyJsonToDashboard, getDashboardJsonText } from './codePaneUtils';
 
 export interface Props {
   editPane: DashboardEditPane;
   dashboard: DashboardScene;
-  isDocked?: boolean;
 }
 
 /**
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
-export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Props) {
+export function DashboardEditPaneRenderer({ editPane, dashboard }: Props) {
   const { selection, openPane } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const { isEditing, meta, uid } = dashboard.useState();
   const hasUid = Boolean(uid);
+  const isEmbedded = meta.isEmbedded;
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
+  // the layout element that was selected when opening the 'add' pane
+  // used when adding new panel from the sidebar
+  const [lastSelectedElement, setLastSelectedElement] = useState<DashboardScene | SceneObject<SceneObjectState>>(
+    dashboard
+  );
 
   const editableElement = useMemo(() => {
     if (selection) {
@@ -42,9 +51,13 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
     return undefined;
   }, [selection]);
 
+  const { variables } = sceneGraph.getVariables(dashboard)?.useState() ?? { variables: [] };
+  const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));
+  const groupByVar = variables.find((v) => sceneUtils.isGroupByVariable(v));
+
   return (
     <>
-      {editableElement && (
+      {editableElement && isEditing && (
         <Sidebar.OpenPane>
           <ElementEditPane
             key={selectedObject?.state.key}
@@ -54,20 +67,55 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
           />
         </Sidebar.OpenPane>
       )}
+      {openPane === 'add' && (
+        <Sidebar.OpenPane>
+          <AddNewEditPane
+            selectedElement={lastSelectedElement}
+            onAddPanel={() => editPane.addNewPanel(lastSelectedElement)}
+            onPastePanel={() => editPane.pastePanel(lastSelectedElement, 'sidebar')}
+            dashboard={dashboard}
+          />
+        </Sidebar.OpenPane>
+      )}
       {openPane === 'outline' && (
         <Sidebar.OpenPane>
           <DashboardOutline editPane={editPane} isEditing={isEditing} />
         </Sidebar.OpenPane>
       )}
+      {openPane === 'filters' && (
+        <Sidebar.OpenPane>
+          <DashboardFiltersOverviewPane
+            adhocFilters={adHocVar}
+            groupByVariable={groupByVar}
+            onClose={() => editPane.closePane()}
+          />
+        </Sidebar.OpenPane>
+      )}
+      {openPane === 'code' && (
+        <Sidebar.OpenPane>
+          <DashboardCodePane
+            key={dashboard.state.key}
+            initialValue={getDashboardJsonText(dashboard)}
+            onApply={(jsonText) => applyJsonToDashboard(dashboard, jsonText)}
+          />
+        </Sidebar.OpenPane>
+      )}
       <Sidebar.Toolbar>
         {isEditing && (
           <>
-            {config.featureToggles.dashboardUndoRedo && (
-              <>
-                <UndoButton dashboard={dashboard} />
-                <RedoButton dashboard={dashboard} />
-              </>
-            )}
+            <Sidebar.Button
+              icon="plus"
+              variant="primary"
+              onClick={() => {
+                setLastSelectedElement(selectedObject ?? dashboard);
+                editPane.openPane('add');
+              }}
+              title={t('dashboard.sidebar.add.title', 'Add')}
+              tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
+              data-testid={selectors.pages.Dashboard.Sidebar.addButton}
+              active={selectedObject === null || openPane === 'add'}
+            />
+
             <Sidebar.Button
               icon="cog"
               onClick={() => editPane.selectObject(dashboard, dashboard.state.key!)}
@@ -76,13 +124,6 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
               active={selectedObject === dashboard ? true : false}
             />
-            {/* <Sidebar.Button
-              tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
-              title={t('dashboard.sidebar.edit-schema.title', 'Code')}
-              icon="brackets-curly"
-              onClick={() => dashboard.openV2SchemaEditor()}
-            /> */}
-            <Sidebar.Divider />
             <Sidebar.Button
               style={{ color: '#ff671d' }}
               icon="comment-alt-message"
@@ -101,9 +142,24 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
                 'Give feedback on the new dashboard editing experience'
               )}
             />
+            <Sidebar.Button
+              tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
+              title={t('dashboard.sidebar.edit-schema.title', 'Code')}
+              icon="brackets-curly"
+              onClick={() => editPane.openPane('code')}
+              active={openPane === 'code'}
+            />
+            {config.featureToggles.dashboardUndoRedo && (
+              <>
+                <Sidebar.Divider />
+                <UndoButton dashboard={dashboard} />
+                <RedoButton dashboard={dashboard} />
+                <Sidebar.Divider />
+              </>
+            )}
           </>
         )}
-        {hasUid && <ShareExportDashboardButton dashboard={dashboard} />}
+        {hasUid && !isEmbedded && <ShareExportDashboardButton dashboard={dashboard} />}
         <Sidebar.Button
           icon="list-ui-alt"
           onClick={() => editPane.openPane('outline')}
@@ -112,6 +168,15 @@ export function DashboardEditPaneRenderer({ editPane, dashboard, isDocked }: Pro
           data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
           active={openPane === 'outline'}
         ></Sidebar.Button>
+        {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardFiltersOverview && adHocVar && (
+          <Sidebar.Button
+            icon="filter"
+            onClick={() => editPane.openPane('filters')}
+            title={t('dashboards.filters-overview.filters', 'Filters')}
+            tooltip={t('dashboards.filters-overview.open', 'Open filters overview pane')}
+            active={openPane === 'filters'}
+          />
+        )}
         {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
         {renderEnterpriseItems()}
         {Boolean(meta.isSnapshot) && (

@@ -17,7 +17,7 @@ import (
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
+	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	secret "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -52,18 +52,6 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder, additionalGetters ...open
 				maps.Copy(defs, getter(ref))
 			}
 		}
-
-		// TODO: add timerange to upstream SDK setup
-		maps.Copy(defs, map[string]openapi.OpenAPIDefinition{
-			"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1.TimeRange": {
-				Schema: spec.Schema{
-					SchemaProps: spec.SchemaProps{
-						Type:                 []string{"object"},
-						AdditionalProperties: &spec.SchemaOrBool{Allows: true},
-					},
-				},
-			},
-		})
 		for _, b := range builders {
 			g := b.GetOpenAPIDefinitions()
 			if g != nil {
@@ -126,6 +114,24 @@ func addBuilderRoutes(
 	return openAPISpec, nil
 }
 
+// Checks if the path is a "for all namespaces" endpoint
+// If the path is a cluster-scoped resource, return false
+func isAllRoute(prefix, path string, paths map[string]*spec3.Path) bool {
+	if strings.HasPrefix(path, prefix+"namespaces/") {
+		return false
+	}
+
+	// Extract the resource path after the group/version prefix
+	resourcePath := strings.TrimPrefix(path, prefix)
+	// Build the potential namespaced path to check
+	namespacedPath := prefix + "namespaces/{namespace}/" + resourcePath
+	// Check if the namespaced path exists
+	_, hasNamespacedPath := paths[namespacedPath]
+	// If the namespaced path exists, this is a "for all namespaces" endpoint - remove it
+	// Otherwise, it's a cluster-scoped resource - keep it
+	return hasNamespacedPath
+}
+
 // Modify the OpenAPI spec to include the additional routes.
 // nolint:gocyclo
 func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []schema.GroupVersion, apiResourceConfig *serverstorage.ResourceConfig) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -163,7 +169,8 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 					}
 
 					// Remove the "for all namespaces" global routes from OpenAPI (v3)
-					if !strings.HasPrefix(k, prefix+"namespaces/") {
+					// Except for cluster-scoped resources
+					if isAllRoute(prefix, k, copy.Paths.Paths) {
 						delete(copy.Paths.Paths, k)
 						continue
 					}
@@ -231,7 +238,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 					if idx > 0 {
 						parent := copy.Paths.Paths[path[:idx+6]]
 						if parent != nil && parent.Get != nil {
-							for _, op := range GetPathOperations(spec) {
+							for _, op := range GetPathOperations(&spec.PathProps) {
 								action, ok := op.Extensions.GetString("x-kubernetes-action")
 								if ok && action == "connect" {
 									op.Tags = parent.Get.Tags
@@ -246,7 +253,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 				}
 				// Remove protobuf from all paths (including routes added by addBuilderRoutes)
 				for _, path := range result.Paths.Paths {
-					allOps := GetPathOperations(path)
+					allOps := GetPathOperations(&path.PathProps)
 					for _, op := range allOps {
 						if op == nil {
 							continue
@@ -281,7 +288,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 }
 
 // GetPathOperations returns the set of non-nil operations defined on a path
-func GetPathOperations(path *spec3.Path) map[string]*spec3.Operation {
+func GetPathOperations(path *spec3.PathProps) map[string]*spec3.Operation {
 	ops := make(map[string]*spec3.Operation)
 	if path.Get != nil {
 		ops[http.MethodGet] = path.Get

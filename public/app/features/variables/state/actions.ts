@@ -20,7 +20,7 @@ import {
   VariableRefresh,
   VariableWithOptions,
 } from '@grafana/data';
-import { config, locationService, logWarning } from '@grafana/runtime';
+import { config, locationService, logWarning, reportInteraction } from '@grafana/runtime';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -38,10 +38,12 @@ import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { variableAdapters } from '../adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from '../constants';
 import { cleanEditorState } from '../editor/reducer';
+import { ensureStringValues } from '../ensureStringValues';
 import { hasCurrent, hasLegacyVariableSupport, hasOptions, hasStandardVariableSupport, isMulti } from '../guard';
 import { getAllAffectedPanelIdsForVariableChange, getPanelVars } from '../inspect/utils';
 import { cleanPickerState } from '../pickers/OptionsPicker/reducer';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
+import { toStateKey } from '../toStateKey';
 import {
   initialVariableModelState,
   TransactionStatus,
@@ -51,14 +53,12 @@ import {
   VariablesTimeRangeProcessDone,
 } from '../types';
 import {
-  ensureStringValues,
   ExtendedUrlQueryMap,
   getCurrentText,
   getCurrentValue,
   getVariableRefresh,
   hasOngoingTransaction,
   toKeyedVariableIdentifier,
-  toStateKey,
   toVariablePayload,
 } from '../utils';
 
@@ -644,6 +644,7 @@ export const variableUpdated = (
 
     return Promise.all(promises).then(() => {
       if (emitChangeEvents) {
+        reportInteraction('grafana_dashboards_variable_changed');
         events.publish(new VariablesChanged(event));
         locationService.partial(getQueryWithVariables(rootStateKey, getState));
       }

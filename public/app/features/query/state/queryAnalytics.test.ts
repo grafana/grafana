@@ -21,7 +21,6 @@ beforeEach(() => {
 
 const datasource = {
   name: 'test',
-  id: 1,
   uid: 'test',
 } as DataSourceApi;
 

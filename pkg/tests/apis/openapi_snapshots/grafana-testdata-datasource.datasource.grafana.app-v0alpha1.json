@@ -57,7 +57,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryDataResponse"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse"
                 }
               }
             }
@@ -262,69 +262,11 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
-              },
-              "examples": {
-                "": {
-                  "summary": "Empty testdata",
-                  "value": {
-                    "apiVersion": "testdata.datasource.grafana.app/v0alpha1",
-                    "kind": "DataSource",
-                    "metadata": {
-                      "name": "my-testdata-datasource"
-                    },
-                    "spec": {
-                      "title": "My TestData Datasource"
-                    }
-                  }
-                },
-                "with-url": {
-                  "summary": "Testdata with URL (not used)",
-                  "value": {
-                    "apiVersion": "testdata.datasource.grafana.app/v0alpha1",
-                    "kind": "DataSource",
-                    "metadata": {
-                      "name": "testdata-with-url"
-                    },
-                    "spec": {
-                      "title": "TestData with URL",
-                      "url": "http://example.com"
-                    }
-                  }
-                }
               }
             },
             "application/yaml": {
               "schema": {
                 "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"
-              },
-              "examples": {
-                "": {
-                  "summary": "Empty testdata",
-                  "value": {
-                    "apiVersion": "testdata.datasource.grafana.app/v0alpha1",
-                    "kind": "DataSource",
-                    "metadata": {
-                      "name": "my-testdata-datasource"
-                    },
-                    "spec": {
-                      "title": "My TestData Datasource"
-                    }
-                  }
-                },
-                "with-url": {
-                  "summary": "Testdata with URL (not used)",
-                  "value": {
-                    "apiVersion": "testdata.datasource.grafana.app/v0alpha1",
-                    "kind": "DataSource",
-                    "metadata": {
-                      "name": "testdata-with-url"
-                    },
-                    "spec": {
-                      "title": "TestData with URL",
-                      "url": "http://example.com"
-                    }
-                  }
-                }
               }
             }
           },
@@ -907,6 +849,55 @@
         }
       ]
     },
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/access": {
+      "get": {
+        "tags": [
+          "DataSource"
+        ],
+        "description": "connect GET requests to access of DataSource",
+        "operationId": "getDataSourceAccess",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "DatasourceAccessInfo",
+          "version": "v0alpha1"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the DatasourceAccessInfo",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/health": {
       "get": {
         "tags": [
@@ -962,7 +953,7 @@
           "DataSource"
         ],
         "description": "Query the TestData datasources",
-        "operationId": "queryDataSource",
+        "operationId": "createDataSourceQuery",
         "requestBody": {
           "content": {
             "application/json": {
@@ -976,9 +967,9 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryDataResponse"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse"
                 }
               }
             }
@@ -995,7 +986,7 @@
         {
           "name": "name",
           "in": "path",
-          "description": "DataSource identifier",
+          "description": "name of the QueryDataResponse",
           "required": true,
           "schema": {
             "type": "string",
@@ -1014,91 +1005,187 @@
         }
       ]
     },
-    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource": {
-      "summary": "hello world",
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resources": {
       "get": {
         "tags": [
-          "Route"
+          "DataSource"
         ],
-        "operationId": "get_route",
+        "description": "connect GET requests to resources of DataSource",
+        "operationId": "getDataSourceResources",
         "responses": {
-          "default": {
+          "200": {
+            "description": "OK",
             "content": {
-              "text/plain": {
+              "*/*": {
                 "schema": {
                   "type": "string"
                 }
               }
             }
           }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
         }
       },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the DataSource",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/boom": {
-      "summary": "force a panic",
-      "get": {
+      "put": {
         "tags": [
-          "Route"
+          "DataSource"
         ],
-        "operationId": "get_route_boom",
+        "description": "connect PUT requests to resources of DataSource",
+        "operationId": "replaceDataSourceResources",
         "responses": {
-          "default": {
+          "200": {
+            "description": "OK",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "type": "string"
                 }
               }
             }
           }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
         }
       },
       "post": {
         "tags": [
-          "Route"
+          "DataSource"
         ],
-        "operationId": "post_route_boom",
+        "description": "connect POST requests to resources of DataSource",
+        "operationId": "createDataSourceResources",
         "responses": {
-          "default": {
+          "200": {
+            "description": "OK",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "type": "string"
                 }
               }
             }
           }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "delete": {
+        "tags": [
+          "DataSource"
+        ],
+        "description": "connect DELETE requests to resources of DataSource",
+        "operationId": "deleteDataSourceResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "options": {
+        "tags": [
+          "DataSource"
+        ],
+        "description": "connect OPTIONS requests to resources of DataSource",
+        "operationId": "optionsDataSourceResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "head": {
+        "tags": [
+          "DataSource"
+        ],
+        "description": "connect HEAD requests to resources of DataSource",
+        "operationId": "headDataSourceResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
+        }
+      },
+      "patch": {
+        "tags": [
+          "DataSource"
+        ],
+        "description": "connect PATCH requests to resources of DataSource",
+        "operationId": "updateDataSourceResources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the DataSource",
+          "description": "name of the Status",
           "required": true,
           "schema": {
             "type": "string",
@@ -1117,360 +1204,187 @@
         }
       ]
     },
-    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/scenarios": {
-      "summary": "hello world",
+    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resources/{path}": {
       "get": {
         "tags": [
-          "Route"
+          "DataSource"
         ],
-        "operationId": "get_route_scenarios",
+        "description": "connect GET requests to resources of DataSource",
+        "operationId": "getDataSourceResourcesWithPath",
         "responses": {
-          "default": {
+          "200": {
+            "description": "OK",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "type": "string"
                 }
               }
             }
-          }
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the DataSource",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
           }
         },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
         }
-      ]
-    },
-    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/sim/{key}": {
-      "description": "Get list of simulations",
-      "get": {
+      },
+      "put": {
         "tags": [
-          "Route"
+          "DataSource"
         ],
-        "operationId": "get_route_sim_key",
-        "parameters": [
-          {
-            "name": "key",
-            "in": "path",
-            "description": "simulation key (should include hz)"
-          }
-        ],
+        "description": "connect PUT requests to resources of DataSource",
+        "operationId": "replaceDataSourceResourcesWithPath",
         "responses": {
-          "default": {
+          "200": {
+            "description": "OK",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "type": "string"
                 }
               }
             }
           }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
         }
       },
       "post": {
         "tags": [
-          "Route"
+          "DataSource"
         ],
-        "operationId": "post_route_sim_key",
-        "parameters": [
-          {
-            "name": "key",
-            "in": "path",
-            "description": "simulation key (should include hz)"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        },
+        "description": "connect POST requests to resources of DataSource",
+        "operationId": "createDataSourceResourcesWithPath",
         "responses": {
-          "default": {
+          "200": {
+            "description": "OK",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "type": "string"
                 }
               }
             }
           }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
         }
       },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the DataSource",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/sims": {
-      "description": "Get list of simulations",
-      "get": {
+      "delete": {
         "tags": [
-          "Route"
+          "DataSource"
         ],
-        "operationId": "get_route_sims",
+        "description": "connect DELETE requests to resources of DataSource",
+        "operationId": "deleteDataSourceResourcesWithPath",
         "responses": {
-          "default": {
+          "200": {
+            "description": "OK",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "type": "string"
                 }
               }
             }
           }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
         }
       },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the DataSource",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/stream": {
-      "summary": "Get streaming response",
-      "get": {
+      "options": {
         "tags": [
-          "Route"
+          "DataSource"
         ],
-        "operationId": "get_route_stream",
-        "parameters": [
-          {
-            "name": "count",
-            "in": "query",
-            "description": "number of points that will be returned",
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 10
-          },
-          {
-            "name": "start",
-            "in": "query",
-            "description": "the start value",
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "flush",
-            "in": "query",
-            "description": "How often the result is flushed (1-100%)",
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "example": 100
-          },
-          {
-            "name": "speed",
-            "in": "query",
-            "description": "the clock cycle",
-            "schema": {
-              "type": "string"
-            },
-            "example": "100ms"
-          },
-          {
-            "name": "format",
-            "in": "query",
-            "description": "the response format",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "json",
-                "influx"
-              ]
-            }
-          }
-        ],
+        "description": "connect OPTIONS requests to resources of DataSource",
+        "operationId": "optionsDataSourceResourcesWithPath",
         "responses": {
-          "default": {
+          "200": {
+            "description": "OK",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "type": "string"
                 }
               }
             }
           }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
         }
       },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the DataSource",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/test": {
-      "summary": "Echo any request",
-      "post": {
+      "head": {
         "tags": [
-          "Route"
+          "DataSource"
         ],
-        "operationId": "post_route_test",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        },
+        "description": "connect HEAD requests to resources of DataSource",
+        "operationId": "headDataSourceResourcesWithPath",
         "responses": {
-          "default": {
+          "200": {
+            "description": "OK",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "type": "string"
                 }
               }
             }
           }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
         }
       },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the DataSource",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources/{name}/resource/test/json": {
-      "summary": "Echo json request",
-      "post": {
+      "patch": {
         "tags": [
-          "Route"
+          "DataSource"
         ],
-        "operationId": "post_route_test_json",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        },
+        "description": "connect PATCH requests to resources of DataSource",
+        "operationId": "updateDataSourceResourcesWithPath",
         "responses": {
-          "default": {
+          "200": {
+            "description": "OK",
             "content": {
-              "application/json": {
+              "*/*": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "type": "string"
                 }
               }
             }
           }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "grafana-testdata-datasource.datasource.grafana.app",
+          "kind": "Status",
+          "version": "v0alpha1"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the DataSource",
+          "description": "name of the Status",
           "required": true,
           "schema": {
             "type": "string",
@@ -1481,6 +1395,16 @@
           "name": "namespace",
           "in": "path",
           "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "path",
+          "in": "path",
+          "description": "path to the resource",
           "required": true,
           "schema": {
             "type": "string",
@@ -1541,26 +1465,6 @@
   },
   "components": {
     "schemas": {
-      "DataSourceSpec": {
-        "description": "Test data does not require any explicit configuration",
-        "required": [
-          "title"
-        ],
-        "properties": {
-          "title": {
-            "description": "display name",
-            "type": "string"
-          },
-          "url": {
-            "description": "not used",
-            "type": "string"
-          }
-        },
-        "additionalProperties": false,
-        "example": {
-          "url": "http://xxxx"
-        }
-      },
       "QueryRequestSchema": {
         "description": "Schema for a set of queries sent to the query method",
         "type": "object",
@@ -1623,6 +1527,10 @@
             "maxLength": 24576,
             "minLength": 1
           },
+          "description": {
+            "description": "Optionally when creating a secure value, you can pass a custom description.",
+            "type": "string"
+          },
           "name": {
             "description": "Name in the secret service (reference)",
             "type": "string",
@@ -1681,7 +1589,12 @@
             }
           },
           "spec": {
-            "$ref": "#/components/schemas/DataSourceSpec"
+            "description": "DataSource configuration -- these properties are all visible to anyone able to query the data source from their browser",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.UnstructuredSpec"
+              }
+            ]
           }
         },
         "x-kubernetes-group-version-kind": [
@@ -1776,6 +1689,42 @@
           }
         ]
       },
+      "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse": {
+        "description": "Wraps backend.QueryDataResponse, however it includes TypeMeta and implements runtime.Object",
+        "type": "object",
+        "required": [
+          "results"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "results": {
+            "description": "Responses is a map of RefIDs (Unique Query ID) to *DataResponse.",
+            "type": "object",
+            "additionalProperties": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse"
+                }
+              ]
+            }
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "grafana-testdata-datasource.datasource.grafana.app",
+            "kind": "QueryDataResponse",
+            "version": "v0alpha1"
+          }
+        ]
+      },
       "com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.UnstructuredSpec": {
         "type": "object",
         "required": [
@@ -1828,42 +1777,6 @@
           }
         },
         "additionalProperties": true
-      },
-      "com.github.grafana.grafana.pkg.apis.query.v0alpha1.QueryDataResponse": {
-        "description": "Wraps backend.QueryDataResponse, however it includes TypeMeta and implements runtime.Object",
-        "type": "object",
-        "required": [
-          "results"
-        ],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "results": {
-            "description": "Responses is a map of RefIDs (Unique Query ID) to *DataResponse.",
-            "type": "object",
-            "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana-plugin-sdk-go.backend.DataResponse"
-                }
-              ]
-            }
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "grafana-testdata-datasource.datasource.grafana.app",
-            "kind": "QueryDataResponse",
-            "version": "v0alpha1"
-          }
-        ]
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
@@ -2280,8 +2193,7 @@
               {
                 "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
               }
-            ],
-            "x-kubernetes-list-type": "atomic"
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",

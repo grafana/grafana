@@ -11,6 +11,7 @@ import { Button, Field, Input, Stack, Text, TextArea, useStyles2 } from '@grafan
 import { AIImproveAnnotationsButtonComponent } from '../../enterprise-components/AI/AIGenImproveAnnotationsButton/addAIImproveAnnotationsButton';
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationLabels } from '../../utils/constants';
+import { DOCS_URL_ANNOTATIONS } from '../../utils/docs';
 import { isGrafanaManagedRuleByType } from '../../utils/rules';
 
 import AnnotationHeaderField from './AnnotationHeaderField';
@@ -98,9 +99,7 @@ const AnnotationsStep = () => {
           <Trans i18nKey="alerting.annotations.description">Add more context to your alert notifications.</Trans>
         </Text>
         <NeedHelpInfo
-          externalLink={
-            'https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/annotation-label/#annotations'
-          }
+          externalLink={DOCS_URL_ANNOTATIONS}
           linkText={`Read about annotations`}
           contentText={
             <>

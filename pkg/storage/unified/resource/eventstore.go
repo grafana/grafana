@@ -12,10 +12,11 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
 const (
-	eventsSection        = "unified/events"
+	eventsSection        = kv.EventsSection
 	deleteEventBatchSize = 50
 )
 
@@ -30,7 +31,7 @@ type EventKey struct {
 	Resource        string
 	Name            string
 	ResourceVersion int64
-	Action          DataAction
+	Action          kv.DataAction
 	Folder          string
 	GUID            string
 }
@@ -40,9 +41,6 @@ func (k EventKey) String() string {
 }
 
 func (k EventKey) Validate() error {
-	if k.Namespace == "" {
-		return NewValidationError("namespace", k.Namespace, ErrNamespaceRequired)
-	}
 	if k.ResourceVersion < 0 {
 		return errors.New(ErrResourceVersionInvalid)
 	}
@@ -50,9 +48,8 @@ func (k EventKey) Validate() error {
 		return NewValidationError("action", string(k.Action), ErrActionRequired)
 	}
 
-	// Validate each field against the naming rules
 	// Validate naming conventions for all required fields
-	if k.Namespace != clusterScopeNamespace {
+	if k.Namespace != "" {
 		if err := validation.IsValidNamespace(k.Namespace); err != nil {
 			return NewValidationError("namespace", k.Namespace, err[0])
 		}
@@ -81,14 +78,14 @@ func (k EventKey) Validate() error {
 }
 
 type Event struct {
-	Namespace       string     `json:"namespace"`
-	Group           string     `json:"group"`
-	Resource        string     `json:"resource"`
-	Name            string     `json:"name"`
-	ResourceVersion int64      `json:"resource_version"`
-	Action          DataAction `json:"action"`
-	Folder          string     `json:"folder"`
-	PreviousRV      int64      `json:"previous_rv"`
+	Namespace       string        `json:"namespace"`
+	Group           string        `json:"group"`
+	Resource        string        `json:"resource"`
+	Name            string        `json:"name"`
+	ResourceVersion int64         `json:"resource_version"`
+	Action          kv.DataAction `json:"action"`
+	Folder          string        `json:"folder"`
+	PreviousRV      int64         `json:"previous_rv"`
 }
 
 func newEventStore(kv KV) *eventStore {
@@ -115,7 +112,7 @@ func ParseEventKey(key string) (EventKey, error) {
 		Group:           parts[2],
 		Resource:        parts[3],
 		Name:            parts[4],
-		Action:          DataAction(parts[5]),
+		Action:          kv.DataAction(parts[5]),
 		Folder:          parts[6],
 	}, nil
 }

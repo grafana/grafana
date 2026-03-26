@@ -461,6 +461,12 @@ describe('when creating variables objects', () => {
       applyMode: 'auto',
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
+      collapsible: undefined,
+      $behaviors: undefined,
+      defaultKeys: undefined,
+      drilldownRecommendationsEnabled: undefined,
+      enableGroupBy: false,
+      layout: 'combobox',
     });
   });
 
@@ -546,6 +552,11 @@ describe('when creating variables objects', () => {
       ],
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
+      collapsible: undefined,
+      $behaviors: undefined,
+      drilldownRecommendationsEnabled: undefined,
+      enableGroupBy: false,
+      layout: 'combobox',
     });
   });
 

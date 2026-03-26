@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -220,10 +219,10 @@ func TestMoveWorker_ProcessMoveFilesSuccess(t *testing.T) {
 	mockRepo.On("Move", mock.Anything, "test/path2", "new/location/path2", "main", "Move test/path2 to new/location/path2").Return(nil)
 
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "test/path1" && result.Action == repository.FileActionRenamed && result.Error == nil
+		return result.Path() == "test/path1" && result.Action() == repository.FileActionRenamed && result.Error() == nil
 	})).Return()
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "test/path2" && result.Action == repository.FileActionRenamed && result.Error == nil
+		return result.Path() == "test/path2" && result.Action() == repository.FileActionRenamed && result.Error() == nil
 	})).Return()
 
 	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
@@ -261,7 +260,7 @@ func TestMoveWorker_ProcessMoveFilesWithError(t *testing.T) {
 	mockRepo.On("Move", mock.Anything, "test/path1", "new/location/path1", "main", "Move test/path1 to new/location/path1").Return(moveError)
 
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "test/path1" && result.Action == repository.FileActionRenamed && errors.Is(result.Error, moveError)
+		return result.Path() == "test/path1" && result.Action() == repository.FileActionRenamed && errors.Is(result.Error(), moveError)
 	})).Return()
 	mockProgress.On("TooManyErrors").Return(errors.New("too many errors"))
 
@@ -300,10 +299,10 @@ func TestMoveWorker_ProcessWithSyncWorker(t *testing.T) {
 	mockRepo.On("Move", mock.Anything, "test/path", "new/location/path", "", "Move test/path to new/location/path").Return(nil)
 
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "test/path" && result.Action == repository.FileActionRenamed && result.Error == nil
+		return result.Path() == "test/path" && result.Action() == repository.FileActionRenamed && result.Error() == nil
 	})).Return()
 
-	mockProgress.On("ResetResults").Return()
+	mockProgress.On("ResetResults", false).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 
@@ -346,7 +345,7 @@ func TestMoveWorker_ProcessSyncWorkerError(t *testing.T) {
 	mockRepo.On("Move", mock.Anything, "test/path", "new/location/path", "", "Move test/path to new/location/path").Return(nil)
 
 	mockProgress.On("Record", mock.Anything, mock.Anything).Return()
-	mockProgress.On("ResetResults").Return()
+	mockProgress.On("ResetResults", false).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 
 	syncError := errors.New("sync failed")
@@ -414,15 +413,14 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 
 			for i, path := range tt.paths {
 				if i < len(tt.moveResults) {
-					// Use the same logic as constructTargetPath to build expected target
-					expectedTarget := "new/location/" + filepath.Base(path)
+					expectedTarget := safepath.Join("new/location", safepath.Base(path))
 					if safepath.IsDir(path) {
 						expectedTarget += "/"
 					}
 					mockRepo.On("Move", mock.Anything, path, expectedTarget, "main", "Move "+path+" to "+expectedTarget).Return(tt.moveResults[i]).Once()
 					mockProgress.On("SetMessage", mock.Anything, "Moving "+path+" to "+expectedTarget).Return().Once()
 					mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-						return result.Path == path && result.Action == repository.FileActionRenamed
+						return result.Path() == path && result.Action() == repository.FileActionRenamed
 					})).Return().Once()
 
 					if tt.tooManyErrors != nil && i == 0 {
@@ -446,6 +444,32 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 			mockProgress.AssertExpectations(t)
 		})
 	}
+}
+
+func TestMoveWorker_moveFilesToRoot(t *testing.T) {
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+
+	opts := provisioning.MoveJobOptions{
+		TargetPath: "/",
+		Ref:        "main",
+	}
+
+	mockRepo.On("Move", mock.Anything, "nested/dashboard.json", "dashboard.json", "main", "Move nested/dashboard.json to dashboard.json").Return(nil)
+	mockProgress.On("SetMessage", mock.Anything, "Moving nested/dashboard.json to dashboard.json").Return()
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path() == "nested/dashboard.json" && result.Action() == repository.FileActionRenamed && result.Error() == nil
+	})).Return()
+	mockProgress.On("TooManyErrors").Return(nil)
+
+	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.moveFiles(context.Background(), mockRepo, mockProgress, opts, "nested/dashboard.json")
+	require.NoError(t, err)
+
+	mockRepo.AssertExpectations(t)
+	mockProgress.AssertExpectations(t)
 }
 
 func TestMoveWorker_constructTargetPath(t *testing.T) {
@@ -484,6 +508,24 @@ func TestMoveWorker_constructTargetPath(t *testing.T) {
 			jobTargetPath:  "archive/",
 			sourcePath:     "deep/nested/folder/",
 			expectedTarget: "archive/folder/",
+		},
+		{
+			name:           "file to root path",
+			jobTargetPath:  "/",
+			sourcePath:     "nested/dashboard.json",
+			expectedTarget: "dashboard.json",
+		},
+		{
+			name:           "folder to root path",
+			jobTargetPath:  "/",
+			sourcePath:     "nested/folder/",
+			expectedTarget: "folder/",
+		},
+		{
+			name:           "root-level file to root path is no-op path",
+			jobTargetPath:  "/",
+			sourcePath:     "dashboard.json",
+			expectedTarget: "dashboard.json",
 		},
 	}
 
@@ -545,14 +587,14 @@ func TestMoveWorker_ProcessWithResourceReferences(t *testing.T) {
 	mockRepo.On("Move", mock.Anything, "dashboard/file.yaml", "new/location/file.yaml", "", "Move dashboard/file.yaml to new/location/file.yaml").Return(nil)
 
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "test/path1" && result.Action == repository.FileActionRenamed && result.Error == nil
+		return result.Path() == "test/path1" && result.Action() == repository.FileActionRenamed && result.Error() == nil
 	})).Return()
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Path == "dashboard/file.yaml" && result.Action == repository.FileActionRenamed && result.Error == nil
+		return result.Path() == "dashboard/file.yaml" && result.Action() == repository.FileActionRenamed && result.Error() == nil
 	})).Return()
 
 	// Add expectations for sync worker (called when ref is empty)
-	mockProgress.On("ResetResults").Return()
+	mockProgress.On("ResetResults", false).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob provisioning.Job) bool {
 		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
@@ -607,14 +649,14 @@ func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
 	}).Return("", resourceError)
 
 	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-		return result.Name == "non-existent-uid" && result.Group == "dashboard.grafana.app" &&
-			result.Action == repository.FileActionRenamed &&
-			result.Error != nil && result.Error.Error() == "find path for resource dashboard.grafana.app/Dashboard/non-existent-uid: resource not found"
+		return result.Name() == "non-existent-uid" && result.Group() == "dashboard.grafana.app" &&
+			result.Action() == repository.FileActionRenamed &&
+			result.Error() != nil && result.Error().Error() == "find path for resource dashboard.grafana.app/Dashboard/non-existent-uid: resource not found"
 	})).Return()
 
 	// Add expectations for sync worker (called when ref is empty)
 	mockSyncWorker := jobs.NewMockWorker(t)
-	mockProgress.On("ResetResults").Return()
+	mockProgress.On("ResetResults", false).Return()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
 	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob provisioning.Job) bool {
 		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
@@ -766,8 +808,8 @@ func TestMoveWorker_resolveResourcesToPaths(t *testing.T) {
 					} else if err, ok := tt.resourceErrors[resource.Name]; ok {
 						mockRepoResources.On("FindResourcePath", mock.Anything, resource.Name, gvk).Return("", err)
 						mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-							return result.Name == resource.Name && result.Group == resource.Group &&
-								result.Action == repository.FileActionRenamed && result.Error != nil
+							return result.Name() == resource.Name && result.Group() == resource.Group &&
+								result.Action() == repository.FileActionRenamed && result.Error() != nil
 						})).Return()
 						if tt.tooManyErrors != nil {
 							mockProgress.On("TooManyErrors").Return(tt.tooManyErrors)
@@ -918,7 +960,7 @@ func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	mockProgress.On("SetMessage", mock.Anything, "Moving test.json to target/test.json").Once()
 	mockProgress.On("Record", mock.Anything, mock.Anything).Once()
 	mockProgress.On("TooManyErrors").Return(nil).Once()
-	mockProgress.On("ResetResults").Once()
+	mockProgress.On("ResetResults", false).Once()
 	mockProgress.On("SetMessage", mock.Anything, "pull resources").Once()
 	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
 	// SetRefURLs should NOT be called since no ref is specified

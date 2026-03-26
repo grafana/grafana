@@ -212,6 +212,23 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 			}
 
 			if authorizeProtected != nil {
+				var receiverName string
+				if currentConfig != nil {
+				NAME:
+					for _, rcv := range currentConfig.AlertmanagerConfig.Receivers {
+						for _, intg := range rcv.GrafanaManagedReceivers {
+							if intg.UID == cgmr.UID {
+								receiverName = rcv.Name
+								break NAME
+							}
+						}
+					}
+				}
+				// this is checked only if authorizeProtected is not nil to cover only the path from receiver testing API.
+				if receiverName != r.Name {
+					return UnknownReceiverError{UID: gr.UID} // return error because integration does not belong to the receiver under the requested name
+				}
+
 				incoming, errIn := legacy_storage.PostableGrafanaReceiverToIntegration(gr)
 				existing, errEx := legacy_storage.PostableGrafanaReceiverToIntegration(cgmr)
 				var secure []schema.IntegrationFieldPath
@@ -222,16 +239,6 @@ func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64
 				}
 				// if conversion failed, consider there are changes and authorize
 				if authz && currentConfig != nil {
-					var receiverName string
-				NAME:
-					for _, rcv := range currentConfig.AlertmanagerConfig.Receivers {
-						for _, intg := range rcv.GrafanaManagedReceivers {
-							if intg.UID == cgmr.UID {
-								receiverName = rcv.Name
-								break NAME
-							}
-						}
-					}
 					if err := authorizeProtected(receiverName, secure); err != nil {
 						return err
 					}
@@ -331,52 +338,6 @@ func (c *ExtraConfigsCrypto) DecryptExtraConfigs(ctx context.Context, config *de
 	}
 
 	return nil
-}
-
-func DecryptedReceivers(receivers []*definitions.PostableApiReceiver, decryptFn models.DecryptFn) ([]*definitions.PostableApiReceiver, error) {
-	decrypted := make([]*definitions.PostableApiReceiver, len(receivers))
-	for i, r := range receivers {
-		// We don't care about the provenance here, so we pass ProvenanceNone.
-		rcv, err := legacy_storage.PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
-		if err != nil {
-			return nil, err
-		}
-
-		err = rcv.Decrypt(decryptFn)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
-		}
-
-		postable, err := legacy_storage.ReceiverToPostableApiReceiver(rcv)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
-		}
-		decrypted[i] = postable
-	}
-	return decrypted, nil
-}
-
-func EncryptedReceivers(receivers []*definitions.PostableApiReceiver, encryptFn models.EncryptFn) ([]*definitions.PostableApiReceiver, error) {
-	encrypted := make([]*definitions.PostableApiReceiver, len(receivers))
-	for i, r := range receivers {
-		// We don't care about the provenance here, so we pass ProvenanceNone.
-		rcv, err := legacy_storage.PostableApiReceiverToReceiver(r, models.ProvenanceNone, models.ResourceOriginGrafana)
-		if err != nil {
-			return nil, err
-		}
-
-		err = rcv.Encrypt(encryptFn)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decrypt receiver %q: %w", rcv.Name, err)
-		}
-
-		postable, err := legacy_storage.ReceiverToPostableApiReceiver(rcv)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert Receiver %q to APIReceiver: %w", rcv.Name, err)
-		}
-		encrypted[i] = postable
-	}
-	return encrypted, nil
 }
 
 // DecryptIntegrationSettings returns a function to decrypt integration settings.

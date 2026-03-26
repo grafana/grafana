@@ -194,7 +194,7 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
         const rawToShifted = `${newTimeData.timeRange.raw.to}${shift}`;
 
         const from = dateMath.toDateTime(rawFromShifted, { timezone });
-        const to = dateMath.toDateTime(rawToShifted, { timezone });
+        const to = dateMath.toDateTime(rawToShifted, { timezone, roundUp: true });
 
         if (!from || !to) {
           newTimeData.timeInfo = 'invalid timeshift';

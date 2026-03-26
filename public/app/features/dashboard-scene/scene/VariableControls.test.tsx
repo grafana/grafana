@@ -21,13 +21,24 @@ jest.mock('@grafana/runtime', () => {
 });
 
 describe('VariableControls', () => {
-  it('should not render scopes variable', () => {
-    const variables = [new ScopesVariable({ hide: VariableHide.hideVariable, name: '__scopes' })];
+  it('should not show scopes variable label but should mount its component', () => {
+    const scopesVariable = new ScopesVariable({ hide: VariableHide.hideVariable, name: '__scopes' });
+    const variables = [scopesVariable];
     const dashboard = buildScene(variables);
     dashboard.activate();
 
     render(<VariableControls dashboard={dashboard} />);
+    expect(screen.queryByText('__scopes')).not.toBeInTheDocument();
+  });
 
+  it('should not show scopes variable in edit mode but should mount its component', () => {
+    const scopesVariable = new ScopesVariable({ hide: VariableHide.hideVariable, name: '__scopes' });
+    const variables = [scopesVariable];
+    const dashboard = buildScene(variables);
+    dashboard.activate();
+    dashboard.setState({ isEditing: true });
+
+    render(<VariableControls dashboard={dashboard} />);
     expect(screen.queryByText('__scopes')).not.toBeInTheDocument();
   });
 
@@ -45,19 +56,18 @@ describe('VariableControls', () => {
     expect(screen.queryByText('HiddenVar')).not.toBeInTheDocument();
   });
 
-  it('should render regular hidden variables in edit mode', async () => {
-    const hiddenVariable = new TextBoxVariable({
-      name: 'HiddenVar',
-      hide: VariableHide.hideVariable,
-    });
-    const variables = [hiddenVariable];
+  it('should not render hidden variables in edit mode', async () => {
+    const scopesVariable = new ScopesVariable({ hide: VariableHide.hideVariable, name: '__scopes' });
+    const hiddenVariable = new TextBoxVariable({ name: 'HiddenVar', hide: VariableHide.hideVariable });
+    const variables = [scopesVariable, hiddenVariable];
     const dashboard = buildScene(variables);
     dashboard.activate();
 
     dashboard.setState({ isEditing: true });
     render(<VariableControls dashboard={dashboard} />);
 
-    expect(await screen.findByText('HiddenVar')).toBeInTheDocument();
+    expect(screen.queryByText('HiddenVar')).not.toBeInTheDocument();
+    expect(screen.queryByText('__scopes')).not.toBeInTheDocument();
   });
 
   it('should not render variables hidden in controls menu in edit mode', async () => {

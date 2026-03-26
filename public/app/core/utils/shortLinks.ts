@@ -75,6 +75,7 @@ export const createShortLink = memoizeOne(async (path: string): Promise<string> 
   } catch (err) {
     console.error('Error when creating shortened link: ', err);
     dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
+    createShortLink.clear();
     throw err; // Re-throw so callers know it failed
   }
 });
@@ -85,7 +86,7 @@ export const createShortLink = memoizeOne(async (path: string): Promise<string> 
  * @param path - The long path to share.
  * @returns A ClipboardItem for the shortened link.
  */
-const createShortLinkClipboardItem = (path: string) => {
+export const createShortLinkClipboardItem = (path: string) => {
   return new ClipboardItem({
     'text/plain': createShortLink(path),
   });
@@ -127,12 +128,15 @@ export const createDashboardShareUrl = (dashboard: DashboardScene, opts: ShareLi
 
   const urlParamsUpdate = getShareUrlParams(opts, timeRange, panel);
 
+  const isSnapshot = dashboard.state.meta.isSnapshot;
+
   return getDashboardUrl({
-    uid: dashboard.state.uid,
-    slug: dashboard.state.meta.slug,
+    uid: isSnapshot ? (dashboard.state.meta.snapshotKey ?? dashboard.state.uid) : dashboard.state.uid,
+    slug: isSnapshot ? undefined : dashboard.state.meta.slug,
     currentQueryParams: location.search,
     updateQuery: urlParamsUpdate,
     absolute: !opts.useShortUrl,
+    isSnapshot,
   });
 };
 

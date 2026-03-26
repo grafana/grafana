@@ -31,7 +31,6 @@ export interface ImportDashboardResponseDTO {
 }
 
 export interface SaveDashboardResponseDTO {
-  id: number;
   slug: string;
   status: string;
   uid: string;
@@ -58,6 +57,7 @@ export interface DashboardMeta {
   expires?: string;
   isFolder?: boolean;
   isSnapshot?: boolean;
+  snapshotKey?: string;
   folderTitle?: string;
   folderUrl?: string;
   folderId?: number;
@@ -102,7 +102,6 @@ export interface AnnotationActions {
 
 export interface AnnotationsPermissions {
   dashboard: AnnotationActions;
-  organization: AnnotationActions;
 }
 
 export interface SnapshotSpec {
@@ -126,6 +125,7 @@ export enum DashboardRoutes {
   Public = 'public-dashboard',
   Embedded = 'embedded-dashboard',
   Report = 'report-dashboard',
+  AssistantPreview = 'assistant-preview',
 }
 
 export enum DashboardInitPhase {

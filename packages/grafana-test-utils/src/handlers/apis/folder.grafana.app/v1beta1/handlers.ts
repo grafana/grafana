@@ -1,10 +1,18 @@
 import { Chance } from 'chance';
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, http, type HttpResponseResolver } from 'msw';
+
+import type {
+  DescendantCounts,
+  Folder,
+  FolderInfoList,
+  FolderList,
+  OwnerReference,
+} from '@grafana/api-clients/rtkq/folder/v1beta1';
 
 import { wellFormedTree } from '../../../../fixtures/folders';
+import { MOCK_TEAMS } from '../../../../fixtures/teams';
 import { getErrorResponse } from '../../../helpers';
-
-const [mockTree, { folderB }] = wellFormedTree();
+const [mockTree, { folderA, folderB }] = wellFormedTree();
 // folderD is included in mockTree and will be returned by the handlers with managedBy: 'repo'
 
 const baseResponse = {
@@ -12,7 +20,18 @@ const baseResponse = {
   apiVersion: 'folder.grafana.app/v1beta1',
 };
 
-const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string) => {
+const specialCaseOwnerRef: OwnerReference[] = [
+  {
+    apiVersion: 'iam.grafana.app/v0alpha1',
+    kind: 'Team',
+    name: MOCK_TEAMS[0].metadata.name,
+    uid: MOCK_TEAMS[0].metadata.name,
+    controller: true,
+    blockOwnerDeletion: false,
+  },
+];
+
+const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string): Folder => {
   return {
     ...baseResponse,
 
@@ -25,16 +44,16 @@ const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: num
         // TODO: Generalise annotations in fixture data
         'grafana.app/createdBy': 'user:1',
         'grafana.app/updatedBy': 'user:2',
-        'grafana.app/managedBy': 'managedBy' in folder ? folder.managedBy : 'user',
+        'grafana.app/managedBy': ('managedBy' in folder ? folder.managedBy : 'user') ?? 'user',
         'grafana.app/updatedTimestamp': '2024-01-01T00:00:00Z',
-        'grafana.app/folder': folder.kind === 'folder' ? folder.parentUID : undefined,
+        ...(folder.kind === 'folder' && folder.parentUID ? { 'grafana.app/folder': folder.parentUID } : {}),
       },
       labels: {
-        'grafana.app/deprecatedInternalID': id ?? '123',
+        'grafana.app/deprecatedInternalID': String(id ?? '123'),
       },
+      ...(folder.uid === folderA.item.uid ? { ownerReferences: specialCaseOwnerRef } : {}),
     },
-    spec: { title: folder.title, description: '' },
-    status: {},
+    spec: { title: folder.title!, description: '' },
   };
 };
 
@@ -92,29 +111,30 @@ const getFolderParentsHandler = () =>
 
       const mapped = parents.map((parent) => ({
         name: parent.item.uid,
-        title: parent.item.title,
-        parentUid: parent.item.kind === 'folder' ? parent.item.parentUID : undefined,
+        title: parent.item.title!,
+        parent: parent.item.kind === 'folder' ? parent.item.parentUID : undefined,
       }));
 
       if (folder) {
         mapped.push({
           name: folder.item.uid,
-          title: folder.item.title,
-          parentUid: folder.item.parentUID,
+          title: folder.item.title!,
+          parent: folder.item.parentUID,
         });
       }
 
-      return HttpResponse.json({
+      const response: FolderInfoList = {
         ...baseResponse,
         kind: 'FolderInfoList',
         metadata: {},
         items: mapped,
-      });
+      };
+
+      return HttpResponse.json(response);
     }
   );
 
-// TODO: Pull this from common API types rather than partially redefining here
-type PartialFolderPayload = { spec: { title: string }; metadata: { annotations: Record<string, string> } };
+type PartialFolderPayload = Pick<Folder, 'spec' | 'metadata'>;
 
 const createFolderHandler = () =>
   http.post<{ namespace: string }, PartialFolderPayload>(
@@ -166,7 +186,62 @@ const replaceFolderHandler = () =>
     }
   );
 
-const getMockFolderCounts = (folders: number, dashboards: number, library_elements: number, alertrules: number) => {
+type JsonPatchPayload = Array<{
+  op: 'replace' | 'add' | 'remove';
+  path: string;
+  value?: unknown;
+}>;
+
+const updateFolderHandler = () =>
+  http.patch<{ folderUid: string; namespace: string }, PartialFolderPayload | JsonPatchPayload>(
+    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid',
+    async ({ params, request }) => {
+      const body = await request.json();
+      const { folderUid } = params;
+      const existingFolder = mockTree.find(({ item }) => {
+        return item.uid === folderUid;
+      });
+
+      if (!existingFolder) {
+        return HttpResponse.json(folderNotFoundError, { status: 404 });
+      }
+
+      // Handle JSON Patch payload
+      if (Array.isArray(body)) {
+        const appPlatformFolder = folderToAppPlatform(existingFolder.item);
+
+        // For now, only support /metadata path operations in the mock API,
+        body.forEach((patch) => {
+          const path = patch.path.replace('/metadata/', '');
+          if (patch.op === 'replace' && path === 'ownerReferences') {
+            (appPlatformFolder.metadata as Record<string, unknown>)[path] = patch.value;
+          }
+
+          if (patch.op === 'remove' && path === 'ownerReferences') {
+            delete (appPlatformFolder.metadata as Record<string, unknown>)[path];
+          }
+        });
+
+        return HttpResponse.json(appPlatformFolder);
+      }
+
+      const modifiedFolder = {
+        ...existingFolder.item,
+        title: body.spec.title,
+      };
+
+      const appPlatformFolder = folderToAppPlatform(modifiedFolder);
+
+      return HttpResponse.json(appPlatformFolder);
+    }
+  );
+
+const getMockFolderCounts = (
+  folders: number,
+  dashboards: number,
+  library_elements: number,
+  alertrules: number
+): DescendantCounts => {
   return {
     kind: 'DescendantCounts',
     apiVersion: 'folder.grafana.app/v1beta1',
@@ -222,10 +297,30 @@ const folderCountsHandler = () =>
     }
   );
 
+const getFolderListHandler = () =>
+  http.get<{ namespace: string }>('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders', ({ params }) => {
+    const { namespace } = params;
+    const folders = mockTree.map(({ item }, index) => folderToAppPlatform(item, index + 1, namespace));
+
+    const response: FolderList = {
+      kind: 'FolderList',
+      apiVersion: 'folder.grafana.app/v1beta1',
+      metadata: {},
+      items: folders,
+    };
+
+    return HttpResponse.json(response);
+  });
+
+export const customCreateFolderHandler = (resolver: HttpResponseResolver) =>
+  http.post('/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders', resolver);
+
 export default [
+  getFolderListHandler(),
   getFolderHandler(),
   getFolderParentsHandler(),
   createFolderHandler(),
   replaceFolderHandler(),
+  updateFolderHandler(),
   folderCountsHandler(),
 ];

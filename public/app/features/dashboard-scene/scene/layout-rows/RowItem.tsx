@@ -12,7 +12,7 @@ import {
   SceneGridItemLike,
   SceneGridLayout,
 } from '@grafana/scenes';
-import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
+import { RowsLayoutRowKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { appEvents } from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import kbn from 'app/core/utils/kbn';
@@ -22,6 +22,8 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
+import { PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
@@ -167,8 +169,10 @@ export class RowItem
     this.getParentLayout().duplicateRow(this);
   }
 
-  public duplicate(): RowItem {
-    return this.clone({ key: undefined, layout: this.getLayout().duplicate() });
+  // panelIdGenerator is a shared sequential counter created by the parent layout
+  // we forward id to ensure sibling tabs never produce duplicate panel IDs
+  public duplicate(panelIdGenerator?: PanelIdGenerator): RowItem {
+    return this.clone({ key: undefined, layout: this.getLayout().duplicate(panelIdGenerator) });
   }
 
   public serialize(): RowsLayoutRowKind {
@@ -223,6 +227,7 @@ export class RowItem
   }
 
   public draggedGridItemInside(gridItem: SceneGridItemLike): void {
+    trackDropItemCrossLayout(gridItem);
     const layout = this.getLayout();
 
     if (isDashboardLayoutGrid(layout)) {

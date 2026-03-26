@@ -43,7 +43,7 @@ func TestDynamicAngularDetectorsProvider(t *testing.T) {
 
 		t.Run("unknown pattern type is ignored silently", func(t *testing.T) {
 			// Tests that we can introduce new pattern types in the future without breaking old Grafana versions.
-			newPatterns := make(GCOMPatterns, len(mockGCOMPatterns))
+			newPatterns := make(GCOMPatterns, len(mockGCOMPatterns)) //nolint:prealloc
 			copy(newPatterns, mockGCOMPatterns)
 
 			// Add an unknown pattern at the end

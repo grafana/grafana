@@ -1,9 +1,14 @@
 //DOCS: https://prometheus.io/docs/alerting/latest/configuration/
+import { ObjectMeta } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { DataSourceJsonData, WithAccessControlMetadata } from '@grafana/data';
-import { IoK8SApimachineryPkgApisMetaV1ObjectMeta } from 'app/features/alerting/unified/openapi/receiversApi.gen';
-import { ExtraConfiguration } from 'app/features/alerting/unified/utils/alertmanager/extraConfigs';
 
 export const ROUTES_META_SYMBOL = Symbol('routes_metadata');
+
+export interface ExtraConfiguration {
+  identifier: string;
+  source?: string;
+  createdAt?: string;
+}
 
 export type AlertManagerCortexConfig = {
   template_files: Record<string, string>;
@@ -107,7 +112,7 @@ export interface GrafanaManagedContactPoint {
   name: string;
   /** If parsed from k8s API, we'll have an ID property */
   id?: string;
-  metadata?: IoK8SApimachineryPkgApisMetaV1ObjectMeta;
+  metadata?: ObjectMeta;
   provenance?: string;
   grafana_managed_receiver_configs?: GrafanaManagedReceiverConfig[];
 }
@@ -127,6 +132,7 @@ export type Receiver = GrafanaManagedContactPoint | AlertmanagerReceiver;
 export type ObjectMatcher = [name: string, operator: MatcherOperator, value: string];
 
 export type Route = {
+  name?: string;
   receiver?: string | null;
   group_by?: string[];
   continue?: boolean;
@@ -151,6 +157,7 @@ export type Route = {
     provenance?: string;
     resourceVersion?: string;
     name?: string;
+    metadata?: ObjectMeta;
   };
 };
 

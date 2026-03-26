@@ -1,10 +1,11 @@
-import { DataFrameView, IconName, fuzzySearch } from '@grafana/data';
+import { ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { DataFrame, DataFrameView, IconName, fuzzySearch } from '@grafana/data';
 import { DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
-import { isSharedWithMe } from 'app/features/browse-dashboards/utils/dashboards';
+import { isSharedWithMe, isVirtualTeamFolder } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardDataDTO } from 'app/types/dashboard';
 
-import { AnnoKeyFolder, ResourceList } from '../../apiserver/types';
+import { AnnoKeyFolder, ManagerKind, ResourceList } from '../../apiserver/types';
 import { DashboardSearchHit, DashboardSearchItemType, DashboardViewItem, DashboardViewItemKind } from '../types';
 
 import { DashboardQueryResult, SearchQuery, SearchResultMeta } from './types';
@@ -61,10 +62,14 @@ export function getIconForKind(kind: string, isOpen?: boolean): IconName {
 
 export function getIconForItem(item: DashboardViewItemWithUIItems, isOpen?: boolean): IconName {
   if (item && isSharedWithMe(item.uid)) {
-    return 'users-alt';
-  } else {
-    return getIconForKind(item.kind, isOpen);
+    return 'user-arrows';
   }
+
+  if (item && isVirtualTeamFolder(item.uid)) {
+    return 'users-alt';
+  }
+
+  return getIconForKind(item.kind, isOpen);
 }
 
 function parseKindString(kind: string): DashboardViewItemKind {
@@ -82,12 +87,18 @@ function isSearchResultMeta(obj: unknown): obj is SearchResultMeta {
   return obj !== null && typeof obj === 'object' && 'locationInfo' in obj;
 }
 
+export function extractManagerKind(managedBy?: ManagedBy | ManagerKind): ManagerKind | undefined {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return typeof managedBy === 'string' ? managedBy : (managedBy?.kind as ManagerKind);
+}
+
 export function queryResultToViewItem(
   item: DashboardQueryResult,
   view?: DataFrameView<DashboardQueryResult>
 ): DashboardViewItem {
   const customMeta = view?.dataFrame.meta?.custom;
   const meta: SearchResultMeta | undefined = isSearchResultMeta(customMeta) ? customMeta : undefined;
+  const managedByStr = extractManagerKind(item.managedBy);
 
   const viewItem: DashboardViewItem = {
     kind: parseKindString(item.kind),
@@ -95,7 +106,7 @@ export function queryResultToViewItem(
     title: item.name,
     url: item.url,
     tags: item.tags ?? [],
-    managedBy: item.managedBy,
+    managedBy: managedByStr,
   };
 
   // Set enterprise sort value property
@@ -220,4 +231,40 @@ export function filterSearchResults(
   }
 
   return filtered;
+}
+
+/**
+ * Appends rows from `frame` into `target`, aligning fields that may differ between frames.
+ * New fields are backfilled with null for existing rows; missing fields are padded with null for new rows.
+ */
+export function appendFrame(target: DataFrame, frame: DataFrame): void {
+  const existingLength = target.length;
+  const newLength = existingLength + frame.length;
+
+  // Add new fields from the incoming frame that don't exist in the target yet
+  for (const f of frame.fields) {
+    if (!target.fields.find((vf) => vf.name === f.name)) {
+      target.fields.push({
+        ...f,
+        values: new Array(existingLength).fill(null).concat(f.values),
+      });
+    }
+  }
+
+  // Append values from matching fields
+  for (const f of frame.fields) {
+    const field = target.fields.find((vf) => vf.name === f.name);
+    if (field && field.values.length === existingLength) {
+      field.values.push(...f.values);
+    }
+  }
+
+  // Pad fields that don't exist in the incoming frame with null
+  for (const field of target.fields) {
+    while (field.values.length < newLength) {
+      field.values.push(null);
+    }
+  }
+
+  target.length = newLength;
 }

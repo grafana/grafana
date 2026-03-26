@@ -1,10 +1,12 @@
 import {
   generatedAPI,
+  type ConnectionSpec,
+  type ConnectionStatus,
+  type ErrorDetails,
   type JobSpec,
   type JobStatus,
   type RepositorySpec,
   type RepositoryStatus,
-  type ErrorDetails,
   type Status,
 } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
@@ -13,7 +15,11 @@ import { clearFolders } from 'app/features/browse-dashboards/state/slice';
 import { getState } from 'app/store/store';
 import { ThunkDispatch } from 'app/types/store';
 
-import { createSuccessNotification, createErrorNotification } from '../../../../core/copy/appNotification';
+import {
+  createErrorNotification,
+  createSuccessNotification,
+  createWarningNotification,
+} from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/services';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
@@ -49,16 +55,66 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         url: `/jobs`,
         params: queryArg,
       }),
-      onCacheEntryAdded: createOnCacheEntryAdded<JobSpec, JobStatus>('jobs'),
+      onCacheEntryAdded: createOnCacheEntryAdded<JobSpec, JobStatus>('jobs', {
+        // The listJob query is always scoped to a single job via fieldSelector,
+        // so items will contain at most one entry. If items is empty, there's no
+        // cached job to update — activeJob is already undefined, so the existing
+        // FinishedJobStatus fallback handles it. We only need to set the error
+        // status when there IS a cached job that would otherwise appear stuck.
+        onError: (error, updateCachedData) => {
+          updateCachedData((draft) => {
+            if (draft.items?.[0]) {
+              draft.items[0].status = {
+                ...draft.items[0].status,
+                state: 'error',
+                message: String(error),
+              };
+            }
+          });
+        },
+      }),
     },
     listRepository: {
       query: ({ watch, ...queryArg }) => ({
         url: `/repositories`,
         params: queryArg,
       }),
-      onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories'),
+      onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories', {
+        onError: (_error, _updateCachedData, dispatch) => {
+          dispatch(
+            notifyApp(
+              createWarningNotification(
+                t('provisioning.watch-stream.error-title', 'Live updates unavailable'),
+                t(
+                  'provisioning.watch-stream.error-description',
+                  'Real-time updates could not be started. Refresh the page to see the latest data.'
+                )
+              )
+            )
+          );
+        },
+      }),
     },
     listConnection: {
+      query: ({ watch, ...queryArg }) => ({
+        url: `/connections`,
+        params: queryArg,
+      }),
+      onCacheEntryAdded: createOnCacheEntryAdded<ConnectionSpec, ConnectionStatus>('connections', {
+        onError: (_error, _updateCachedData, dispatch) => {
+          dispatch(
+            notifyApp(
+              createWarningNotification(
+                t('provisioning.watch-stream.error-title', 'Live updates unavailable'),
+                t(
+                  'provisioning.watch-stream.error-description',
+                  'Real-time updates could not be started. Refresh the page to see the latest data.'
+                )
+              )
+            )
+          );
+        },
+      }),
       providesTags: (result) =>
         result
           ? [
@@ -84,16 +140,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             )
           );
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(
-                createErrorNotification(
-                  t('provisioning.delete-repository-button.error-repository-delete', 'Failed to delete repository'),
-                  e
-                )
-              )
-            );
-          }
+          handleError(
+            e,
+            dispatch,
+            t('provisioning.delete-repository-button.error-repository-delete', 'Failed to delete repository')
+          );
         }
         // Refetch dashboards and folders after deleting a provisioned repository.
         // We need to add timeout to ensure that the deletion is processed before refetching since the deletion is done
@@ -115,16 +166,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             )
           );
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(
-                createErrorNotification(
-                  t('provisioning.home-page.error-delete-all-repositories', 'Failed to delete all repositories'),
-                  e
-                )
-              )
-            );
-          }
+          handleError(
+            e,
+            dispatch,
+            t('provisioning.home-page.error-delete-all-repositories', 'Failed to delete all repositories')
+          );
         }
         setTimeout(() => {
           dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
@@ -143,9 +189,8 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
     createRepositoryJobs: {
       onQueryStarted: async ({ jobSpec }, { queryFulfilled, dispatch }) => {
         try {
-          const showMsg = jobSpec.action === 'pull' || jobSpec.action === 'migrate';
           await queryFulfilled;
-          if (showMsg) {
+          if (jobSpec.action === 'pull' || jobSpec.action === 'migrate') {
             dispatch(
               notifyApp(
                 createSuccessNotification(t('provisioning.sync-repository.success-pull-started', 'Pull started'))
@@ -153,16 +198,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             );
           }
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(
-                createErrorNotification(
-                  t('provisioning.sync-repository.error-pulling-resources', 'Error pulling resources'),
-                  e
-                )
-              )
-            );
-          }
+          handleError(
+            e,
+            dispatch,
+            t('provisioning.sync-repository.error-pulling-resources', 'Error pulling resources')
+          );
         }
       },
     },
@@ -178,16 +218,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             )
           );
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(
-                createErrorNotification(
-                  t('provisioning.config-form.error-save-repository', 'Failed to save repository settings'),
-                  e
-                )
-              )
-            );
-          }
+          handleError(
+            e,
+            dispatch,
+            t('provisioning.config-form.error-save-repository', 'Failed to save repository settings')
+          );
         }
       },
     },
@@ -203,16 +238,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             )
           );
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(
-                createErrorNotification(
-                  t('provisioning.config-form.error-save-repository', 'Failed to save repository settings'),
-                  e
-                )
-              )
-            );
-          }
+          handleError(
+            e,
+            dispatch,
+            t('provisioning.config-form.error-save-repository', 'Failed to save repository settings')
+          );
         }
         // Refetch dashboards and folders after creating/updating a provisioned repository
         dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
@@ -246,14 +276,17 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       },
     },
     createConnection: {
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async (arg, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
-          dispatch(
-            notifyApp(
-              createSuccessNotification(t('provisioning.connection-form.alert-connection-saved', 'Connection saved'))
-            )
-          );
+          // Only show success notification for actual saves, not dryRun validation
+          if (!arg.dryRun) {
+            dispatch(
+              notifyApp(
+                createSuccessNotification(t('provisioning.connection-form.alert-connection-saved', 'Connection saved'))
+              )
+            );
+          }
         } catch (e) {
           handleProvisioningFormError(
             e,
@@ -264,16 +297,19 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       },
     },
     replaceConnection: {
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async (arg, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
-          dispatch(
-            notifyApp(
-              createSuccessNotification(
-                t('provisioning.connection-form.alert-connection-updated', 'Connection updated')
+          // Only show success notification for actual saves, not dryRun validation
+          if (!arg.dryRun) {
+            dispatch(
+              notifyApp(
+                createSuccessNotification(
+                  t('provisioning.connection-form.alert-connection-updated', 'Connection updated')
+                )
               )
-            )
-          );
+            );
+          }
         } catch (e) {
           handleProvisioningFormError(
             e,
@@ -296,16 +332,11 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
             )
           );
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(
-              notifyApp(
-                createErrorNotification(
-                  t('provisioning.connection-form.error-delete-connection', 'Failed to delete connection'),
-                  e
-                )
-              )
-            );
-          }
+          handleError(
+            e,
+            dispatch,
+            t('provisioning.connection-form.error-delete-connection', 'Failed to delete connection')
+          );
         }
       },
     },

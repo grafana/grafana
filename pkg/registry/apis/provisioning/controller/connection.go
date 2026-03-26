@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -15,6 +17,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
+	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
@@ -24,10 +27,6 @@ const connectionLoggerName = "provisioning-connection-controller"
 
 const (
 	connectionMaxAttempts = 3
-	// connectionHealthyDuration defines how recent a health check must be to be considered "recent" when healthy
-	connectionHealthyDuration = 5 * time.Minute
-	// connectionUnhealthyDuration defines how recent a health check must be to be considered "recent" when unhealthy
-	connectionUnhealthyDuration = 1 * time.Minute
 )
 
 type connectionQueueItem struct {
@@ -37,7 +36,7 @@ type connectionQueueItem struct {
 
 // ConnectionStatusPatcher defines the interface for updating connection status.
 //
-//go:generate mockery --name=ConnectionStatusPatcher
+//go:generate mockery --name=ConnectionStatusPatcher --structname=MockConnectionStatusPatcher --inpackage --filename=connection_status_patcher_mock.go --with-expecter
 type ConnectionStatusPatcher interface {
 	Patch(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) error
 }
@@ -49,10 +48,17 @@ type ConnectionController struct {
 	connSynced cache.InformerSynced
 	logger     logging.Logger
 
-	statusPatcher ConnectionStatusPatcher
-	tester        connection.SimpleConnectionTester
+	statusPatcher     ConnectionStatusPatcher
+	healthChecker     ConnectionHealthCheckerInterface
+	connectionFactory connection.Factory
+	tokenMetrics      *connectionTokenMetrics
 
-	queue workqueue.TypedRateLimitingInterface[*connectionQueueItem]
+	// To allow injection for testing.
+	processFn func(ctx context.Context, item *connectionQueueItem) error
+
+	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
+	resyncInterval time.Duration
+	drainTimeout   time.Duration
 }
 
 // NewConnectionController creates a new ConnectionController.
@@ -60,7 +66,11 @@ func NewConnectionController(
 	provisioningClient client.ProvisioningV0alpha1Interface,
 	connInformer informer.ConnectionInformer,
 	statusPatcher ConnectionStatusPatcher,
-	tester connection.SimpleConnectionTester,
+	healthChecker *ConnectionHealthChecker,
+	connectionFactory connection.Factory,
+	resyncInterval time.Duration,
+	drainTimeout time.Duration,
+	registry prometheus.Registerer,
 ) (*ConnectionController, error) {
 	cc := &ConnectionController{
 		client:     provisioningClient,
@@ -72,9 +82,13 @@ func NewConnectionController(
 				Name: "provisioningConnectionController",
 			},
 		),
-		statusPatcher: statusPatcher,
-		tester:        tester,
-		logger:        logging.DefaultLogger.With("logger", connectionLoggerName),
+		statusPatcher:     statusPatcher,
+		healthChecker:     healthChecker,
+		connectionFactory: connectionFactory,
+		tokenMetrics:      registerConnectionTokenMetrics(registry),
+		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
+		resyncInterval:    resyncInterval,
+		drainTimeout:      drainTimeout,
 	}
 
 	_, err := connInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -86,6 +100,8 @@ func NewConnectionController(
 	if err != nil {
 		return nil, err
 	}
+
+	cc.processFn = cc.process
 
 	return cc, nil
 }
@@ -99,19 +115,42 @@ func (cc *ConnectionController) enqueue(obj interface{}) {
 	cc.queue.Add(&connectionQueueItem{key: key})
 }
 
-// Run starts the ConnectionController.
-func (cc *ConnectionController) Run(ctx context.Context, workerCount int) {
+// Run starts the ConnectionController. The onStarted callback is invoked once
+// all workers have been launched, before blocking on ctx.Done().
+func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStarted func(), onShutdown func()) {
 	defer utilruntime.HandleCrash()
 	defer cc.queue.ShutDown()
 
-	cc.logger.Info("starting connection controller", "workers", workerCount)
+	logger := cc.logger
+	ctx = logging.Context(ctx, logger)
+	logger.Info("Starting ConnectionController")
+	defer logger.Info("Shutting down ConnectionController")
 
+	logger.Info("Starting workers", "count", workerCount)
 	for i := 0; i < workerCount; i++ {
 		go wait.UntilWithContext(ctx, cc.runWorker, time.Second)
 	}
 
+	logger.Info("Started workers")
+	onStarted()
+
 	<-ctx.Done()
-	cc.logger.Info("shutting down connection controller")
+	onShutdown()
+	logger.Info("Shutting down workers, draining queue")
+
+	drainDone := make(chan struct{})
+	go func() {
+		cc.queue.ShutDownWithDrain()
+		close(drainDone)
+	}()
+
+	select {
+	case <-drainDone:
+		logger.Info("Queue drained successfully")
+	case <-time.After(cc.drainTimeout):
+		logger.Warn("Drain timeout exceeded, forcing shutdown")
+		cc.queue.ShutDown()
+	}
 }
 
 func (cc *ConnectionController) runWorker(ctx context.Context) {
@@ -126,10 +165,11 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	}
 	defer cc.queue.Done(item)
 
-	logger := logging.FromContext(ctx).With("work_key", item.key)
+	namespace, name, _ := cache.SplitMetaNamespaceKey(item.key)
+	logger := logging.FromContext(ctx).With("work_key", item.key, "namespace", namespace, "connection", name)
 	logger.Info("ConnectionController processing key")
 
-	err := cc.process(ctx, item)
+	err := cc.processFn(ctx, item)
 	if err == nil {
 		cc.queue.Forget(item)
 		return true
@@ -164,6 +204,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
 	if err != nil {
+		logger.Error("retrieving namespace and name from key", "error", err)
 		return err
 	}
 
@@ -172,8 +213,12 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	case apierrors.IsNotFound(err):
 		return errors.New("connection not found in cache")
 	case err != nil:
+		logger.Error("getting connection", "error", err)
 		return err
 	}
+
+	logger = logger.With("namespace", namespace, "connection", name)
+	ctx = logging.Context(ctx, logger)
 
 	// Skip if being deleted
 	if conn.DeletionTimestamp != nil {
@@ -181,8 +226,30 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		return nil
 	}
 
+	// Skip reconciliation for resources whose namespace is being soft-deleted.
+	if appcontroller.IsPendingDelete(conn.Labels) {
+		logger.Info("skipping reconciliation: namespace is pending deletion")
+		return nil
+	}
+
 	hasSpecChanged := conn.Generation != conn.Status.ObservedGeneration
-	shouldCheckHealth := cc.shouldCheckHealth(conn)
+	shouldCheckHealth := cc.healthChecker.ShouldCheckHealth(conn)
+
+	c, err := cc.connectionFactory.Build(ctx, conn)
+	if err != nil {
+		logger.Error("failed to build connection", "error", err)
+		return err
+	}
+
+	tokenConn, isTokenConnection := c.(connection.TokenConnection)
+	var shouldRefreshToken bool
+	if isTokenConnection {
+		shouldRefreshToken, err = cc.shouldGenerateToken(ctx, conn, tokenConn)
+		if err != nil {
+			logger.Error("failed to check if token needs to be generated", "error", err)
+			return err
+		}
+	}
 
 	// Determine the main triggering condition
 	switch {
@@ -190,14 +257,15 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		logger.Info("spec changed, reconciling", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
 	case shouldCheckHealth:
 		logger.Info("health is stale, refreshing", "lastChecked", conn.Status.Health.Checked, "healthy", conn.Status.Health.Healthy)
+	case shouldRefreshToken:
+		logger.Info("token must be refreshed or generated")
 	default:
 		logger.Debug("skipping as conditions are not met", "generation", conn.Generation, "observedGeneration", conn.Status.ObservedGeneration)
 		return nil
 	}
 
-	patchOperations := []map[string]interface{}{}
+	var patchOperations []map[string]interface{}
 
-	// Only update observedGeneration when spec changes
 	if hasSpecChanged {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
@@ -206,83 +274,137 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 		})
 	}
 
-	// Test the connection to determine health status
-	testResults, err := cc.tester.TestConnection(ctx, conn)
+	if isTokenConnection && shouldRefreshToken {
+		logger.Info("generating connection token")
+
+		token, tokenOps, err := cc.generateConnectionToken(ctx, tokenConn)
+		if err != nil {
+			logger.Error("failed to generate connection token", "error", err)
+			return err
+		}
+
+		if len(tokenOps) > 0 {
+			patchOperations = append(patchOperations, tokenOps...)
+		}
+		conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
+	}
+
+	// Handle health checks using the health checker
+	healthResult, err := cc.healthChecker.RefreshHealthWithPatchOps(ctx, conn)
 	if err != nil {
-		logger.Error("failed to test connection", "error", err)
-		return fmt.Errorf("failed to test connection: %w", err)
+		logger.Error("failed to get updated health status", "error", err)
+		return fmt.Errorf("update health status: %w", err)
+	}
+	testResults := healthResult.TestResults
+	healthStatus := healthResult.HealthStatus
+
+	if len(healthResult.PatchOps) > 0 {
+		patchOperations = append(patchOperations, healthResult.PatchOps...)
+	}
+	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+		conn.Status.Conditions, conn.GetGeneration(), healthResult.ReadyCondition,
+	); conditionPatchOps != nil {
+		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
 
-	// Determine health status from test results
-	var healthStatus provisioning.HealthStatus
-	if testResults.Success {
-		healthStatus = provisioning.HealthStatus{
-			Healthy: true,
-			Checked: time.Now().UnixMilli(),
-		}
-		// Update state to connected if healthy
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/state",
-			"value": provisioning.ConnectionStateConnected,
-		})
-	} else {
-		// Build error messages from test results
-		var errorMsgs []string
-		for _, testErr := range testResults.Errors {
-			if testErr.Detail != "" {
-				errorMsgs = append(errorMsgs, testErr.Detail)
-			}
-		}
-		healthStatus = provisioning.HealthStatus{
-			Healthy: false,
-			Error:   provisioning.HealthFailureHealth,
-			Checked: time.Now().UnixMilli(),
-			Message: errorMsgs,
-		}
-		// Update state to disconnected if unhealthy
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/state",
-			"value": provisioning.ConnectionStateDisconnected,
-		})
+	// Update fieldErrors from test results - ensure fieldErrors are cleared when there are no errors
+	fieldErrors := testResults.Errors
+	if fieldErrors == nil {
+		fieldErrors = []provisioning.ErrorDetails{}
 	}
-
-	// Update health status
 	patchOperations = append(patchOperations, map[string]interface{}{
 		"op":    "replace",
-		"path":  "/status/health",
-		"value": healthStatus,
+		"path":  "/status/fieldErrors",
+		"value": fieldErrors,
 	})
 
-	if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
-		return fmt.Errorf("failed to update connection status: %w", err)
+	if len(patchOperations) > 0 {
+		// Update fieldErrors from test results
+		if err := cc.statusPatcher.Patch(ctx, conn, patchOperations...); err != nil {
+			return fmt.Errorf("failed to update connection status: %w", err)
+		}
 	}
 
 	logger.Info("connection reconciled successfully", "healthy", healthStatus.Healthy)
 	return nil
 }
 
-// shouldCheckHealth determines if a connection health check should be performed.
-func (cc *ConnectionController) shouldCheckHealth(conn *provisioning.Connection) bool {
-	// If the connection has been updated, always check health
-	if conn.Generation != conn.Status.ObservedGeneration {
-		return true
+func (cc *ConnectionController) shouldGenerateToken(
+	ctx context.Context,
+	obj *provisioning.Connection,
+	c connection.TokenConnection,
+) (bool, error) {
+	if obj.Secure.Token.IsZero() {
+		cc.tokenMetrics.recordRefreshReason(refreshReasonMissing)
+		return true, nil
 	}
 
-	// Check if health check is stale
-	return !cc.hasRecentHealthCheck(conn.Status.Health)
+	if !c.TokenValid(ctx) {
+		cc.tokenMetrics.recordRefreshReason(refreshReasonInvalid)
+		return true, nil
+	}
+
+	issuingTime, err := c.TokenCreationTime(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	if tokenRecentlyCreated(issuingTime) {
+		return false, nil
+	}
+
+	expiration, err := c.TokenExpiration(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	cc.tokenMetrics.recordTimeToExpiry(time.Until(expiration).Seconds())
+
+	if shouldRefreshBeforeExpiration(expiration, cc.resyncInterval) {
+		cc.tokenMetrics.recordRefreshReason(refreshReasonExpiring)
+		return true, nil
+	}
+
+	return false, nil
 }
 
-// hasRecentHealthCheck checks if a health check was performed recently.
-func (cc *ConnectionController) hasRecentHealthCheck(healthStatus provisioning.HealthStatus) bool {
-	if healthStatus.Checked == 0 {
-		return false // Never checked
+// generateConnectionToken regenerates the connection token if the connection supports it.
+// Uses the TokenGenerator interface to generate tokens in a connection-type-agnostic way.
+// Returns patch operations to update the /secure/token field.
+func (cc *ConnectionController) generateConnectionToken(
+	ctx context.Context,
+	conn connection.TokenConnection,
+) (string, []map[string]interface{}, error) {
+	logger := logging.FromContext(ctx)
+
+	start := time.Now()
+	var failed bool
+	defer func() {
+		if failed {
+			cc.tokenMetrics.recordGenerationError()
+		} else {
+			cc.tokenMetrics.recordGeneration(time.Since(start).Seconds())
+		}
+	}()
+
+	token, err := conn.GenerateConnectionToken(ctx)
+	if err != nil {
+		failed = true
+		logger.Error("failed to generate connection token", "error", err)
+		return "", nil, nil // Non-blocking: return empty patches
 	}
 
-	age := time.Since(time.UnixMilli(healthStatus.Checked))
-	if healthStatus.Healthy {
-		return age <= connectionHealthyDuration
+	logger.Info("successfully generated new connection token")
+
+	patchOperations := []map[string]interface{}{
+		{
+			"op":   "replace",
+			"path": "/secure/token",
+			"value": map[string]string{
+				"create": string(token),
+			},
+		},
 	}
-	return age <= connectionUnhealthyDuration
+
+	return string(token), patchOperations, nil
 }

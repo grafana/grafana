@@ -25,10 +25,6 @@ target = all
 ; https is required for kubectl
 protocol = https
 
-[feature_toggles]
-; store playlists in k8s
-kubernetesPlaylists = true
-
 [grafana-apiserver]
 ; use unified storage for k8s apiserver
 storage_type = unified
@@ -1356,15 +1352,6 @@ Built-in validators ensure data integrity after migration:
 
 - **CountValidator**: Verifies resource counts match between legacy and unified storage
 - **FolderTreeValidator**: Validates folder parent-child relationships are preserved
-
-### Configuration
-
-Enable migrations in `grafana.ini`:
-
-```ini
-[unified_storage]
-disable_data_migrations = false
-```
 
 ### Documentation
 

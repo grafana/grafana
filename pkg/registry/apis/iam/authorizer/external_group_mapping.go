@@ -73,7 +73,7 @@ func (r *ExternalGroupMappingAuthorizer) BeforeDelete(ctx context.Context, obj r
 }
 
 // BeforeUpdate implements ResourceStorageAuthorizer.
-func (r *ExternalGroupMappingAuthorizer) BeforeUpdate(ctx context.Context, obj runtime.Object) error {
+func (r *ExternalGroupMappingAuthorizer) BeforeUpdate(ctx context.Context, oldObj, obj runtime.Object) error {
 	// Update is not supported for ExternalGroupMapping resources and update attempts are blocked at a lower level,
 	// so this is just a safeguard.
 	return apierrors.NewMethodNotSupported(iamv0.ExternalGroupMappingResourceInfo.GroupResource(), "PUT/PATCH")
@@ -134,6 +134,7 @@ func (r *ExternalGroupMappingAuthorizer) FilterList(ctx context.Context, list ru
 		Resource:  iamv0.TeamResourceInfo.GetName(),
 		Verb:      utils.VerbGetPermissions,
 	}
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	canView, _, err := r.accessClient.Compile(ctx, authInfo, listReq)
 	if err != nil {
 		return nil, apierrors.NewInternalError(err)

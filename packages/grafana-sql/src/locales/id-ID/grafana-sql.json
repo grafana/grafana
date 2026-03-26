@@ -12,7 +12,7 @@
       "connection-limits": {
         "auto-max-idle": "Nonaktif maksimum otomatis",
         "content-auto-max-idle": "",
-        "content-max-idle": "",
+        "content-max-idle": "Jumlah maksimum koneksi dalam pool koneksi nonaktif. Jika <i>Koneksi terbuka maksimum</i> lebih besar dari 0 tetapi kurang dari <i>Koneksi nonaktif maksimum</i>, maka <i>Koneksi nonaktif maksimum</i> akan dikurangi agar sesuai dengan batas <i>Koneksi terbuka maksimum</i>. Jika diatur ke 0, tidak ada koneksi nonaktif yang dipertahankan.",
         "content-max-lifetime": "Jumlah waktu maksimum dalam detik untuk menggunakan koneksi lagi. Jika diatur ke 0, koneksi digunakan kembali terus-menerus tanpa batas waktu.",
         "content-max-open": "",
         "max-idle": "Nonaktif maks",
@@ -69,6 +69,12 @@
         "placeholder-select-format": "Pilih format",
         "run-query": "Jalankan kueri"
       },
+      "query-meta": {
+        "variables": {
+          "textField": "Bidang Teks",
+          "valueField": "Bidang Nilai"
+        }
+      },
       "query-toolbox": {
         "content-hit-ctrlcmdreturn-to-run-query": "Tekan CTRL/CMD+Return untuk menjalankan kueri",
         "tooltip-collapse": "Ciutkan editor",
@@ -76,7 +82,7 @@
         "tooltip-format-query": "Format kueri"
       },
       "query-validator": {
-        "query-will-process": "",
+        "query-will-process": "<0></0> Kueri ini akan memproses <strong>{{bytes}}</strong> saat dijalankan.",
         "validating-query": "Memvalidasi kueri..."
       },
       "raw-editor": {

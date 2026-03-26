@@ -1,5 +1,6 @@
 import { first } from 'lodash';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Dropdown, ToolbarButton } from '@grafana/ui';
 
@@ -19,7 +20,12 @@ export function QuerylessAppsExtensions(props: ExtensionDropdownProps) {
   if (links.length === 1) {
     const link = first(links)!;
     return (
-      <ToolbarButton variant="canvas" icon={link.icon} onClick={() => setSelectedExtension(link)}>
+      <ToolbarButton
+        variant="canvas"
+        icon={link.icon}
+        onClick={() => setSelectedExtension(link)}
+        data-testid={selectors.pages.Explore.toolbar.goQueryless}
+      >
         <Trans i18nKey="explore.toolbar.add-to-queryless-extensions">Go queryless</Trans>
       </ToolbarButton>
     );

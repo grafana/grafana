@@ -1,5 +1,6 @@
 import { getNextRefId } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getPanelPluginMetasMapSync, PanelPluginMetas } from '@grafana/runtime/internal';
 import {
   SceneDataProvider,
   SceneDataQuery,
@@ -10,7 +11,7 @@ import {
   VizPanelMenu,
   VizPanelState,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
+import { DataSourceRef } from '@grafana/schema';
 import {
   Spec as DashboardV2Spec,
   AutoGridLayoutItemKind,
@@ -22,7 +23,7 @@ import {
   TabsLayoutTabKind,
   DataQueryKind,
   defaultPanelQueryKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2';
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -165,7 +166,10 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   return new VizPanel(vizPanelState);
 }
 
-export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
+export function createPanelDataProvider(
+  panelKind: PanelKind,
+  panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
+): SceneDataProvider | undefined {
   const panel = panelKind.spec;
 
   const targets =
@@ -179,7 +183,7 @@ export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider
   }
 
   // Skip setting query runner for panel plugins with skipDataQuery
-  if (config.panels[panel.vizConfig.kind]?.skipDataQuery) {
+  if (panelMetas[panel.vizConfig?.group]?.skipDataQuery) {
     return undefined;
   }
 
@@ -394,7 +398,7 @@ export function ensureUniqueRefIds(queries: PanelQueryKind[]): PanelQueryKind[] 
   return queries;
 }
 
-function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
+export function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
   // Add datasource to match Go backend V2→V1 conversion:
   // - If explicit UID (datasource.name) exists → add { uid, type }
   // - If only type (group) exists → add { type } only

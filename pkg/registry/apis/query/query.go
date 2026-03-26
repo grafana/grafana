@@ -10,16 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/authn"
-	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/data/v0alpha1"
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/dsquerierclient"
-	"github.com/grafana/grafana/pkg/setting"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
@@ -28,11 +18,21 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	ds_service "github.com/grafana/grafana/pkg/services/datasources/service"
+	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	service "github.com/grafana/grafana/pkg/services/query"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -130,7 +130,12 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		defer span.End()
 		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
 		traceId := span.SpanContext().TraceID()
-		connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", httpreq.Header.Get("X-Rule-Uid"))
+		connectLogger := b.log.New(
+			"traceId", traceId.String(),
+			"rule_uid", httpreq.Header.Get("X-Rule-Uid"),
+			"caller", getCaller(ctx),
+		)
+		connectLogger.Debug("received query-service request")
 		responder := newResponderWrapper(incomingResponder,
 			func(statusCode *int, obj runtime.Object) {
 				if *statusCode/100 == 4 {
@@ -157,6 +162,7 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 					}
 				}
 				connectLogger.Debug("responder sending status code", "statusCode", statusCode, "caller", getCaller(ctx))
+				b.reportStatus(ctx, *statusCode)
 			},
 
 			func(err error) {
@@ -168,6 +174,18 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 				}
 
 				span.RecordError(err)
+
+				statusCode := 0
+				var k8sErr *errorsK8s.StatusError
+				if errors.As(err, &k8sErr) {
+					statusCode = int(k8sErr.Status().Code)
+				} else {
+					// we do not know what kind of error it is,
+					// we do not know what status code will get assigned to it,
+					// so we use the zero to indicate the unknown.
+					connectLogger.Debug("Connect: unknown error returned", "error", err)
+				}
+				b.reportStatus(ctx, statusCode)
 			})
 
 		raw := &query.QueryDataRequest{}
@@ -187,6 +205,19 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder, connectLogger)
 
 		if err != nil {
+			if errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				connectLogger.Warn(
+					"query-service request deadline exceeded",
+					"ctx_err", ctx.Err(),
+					"cause", context.Cause(ctx),
+				)
+			} else if errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled) {
+				connectLogger.Warn(
+					"query-service request cancelled",
+					"ctx_err", ctx.Err(),
+					"cause", context.Cause(ctx),
+				)
+			}
 			connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
 			logEmptyRefids(raw.Queries, connectLogger)
 			if qdr != nil { // if we have a response, we assume the err is set in the response

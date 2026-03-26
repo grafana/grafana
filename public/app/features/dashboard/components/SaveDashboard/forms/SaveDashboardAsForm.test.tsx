@@ -22,7 +22,7 @@ const prepareDashboardMock = (panel: object) => {
   };
 
   return {
-    id: 5,
+    uid: 'abc',
     meta: {},
     ...json,
     getSaveModelClone: () => json,

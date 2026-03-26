@@ -115,8 +115,9 @@ export function TransformationPickerNg(props: TransformationPickerNgProps) {
           data={data}
           onClick={(id) => {
             reportInteraction('grafana_panel_transformations_clicked', {
-              type: id,
               context: 'transformations_drawer',
+              type: id,
+              action: 'add',
             });
             onTransformationAdd({ value: id });
           }}

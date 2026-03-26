@@ -65,7 +65,7 @@ func initResourceTables(mg *migrator.Migrator) string {
 		},
 	}
 
-	tables := []migrator.Table{resource_table, resource_history_table}
+	tables := []migrator.Table{resource_table, resource_history_table} //nolint:prealloc
 
 	// tables = append(tables, migrator.Table{
 	// 	Name: "resource_label_set",
@@ -224,6 +224,24 @@ func initResourceTables(mg *migrator.Migrator) string {
 	mg.AddMigration("Change key_path collation of resource_events in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_events ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
 
 	mg.AddMigration("resource_history key_path backfill", &ResourceHistoryKeyPathBackfillMigration{})
+
+	mg.AddMigration("Add index to resource_history for garbage collection", migrator.NewAddIndexMigration(resource_history_table, &migrator.Index{
+		Cols: []string{"group", "resource", "action", "resource_version", "name"},
+		Type: migrator.IndexType,
+		Name: "IDX_resource_history_resource_action_version_name",
+	}))
+
+	mg.AddMigration("Fix small resource versions", &SmallRVFixMigration{})
+
+	pending_tenant_deletions_table := migrator.Table{
+		Name: "pending_tenant_deletions",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_MediumText, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+pending_tenant_deletions_table.Name, migrator.NewAddTableMigration(pending_tenant_deletions_table))
+	mg.AddMigration("Change key_path collation of pending_tenant_deletions in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE pending_tenant_deletions ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
 
 	return marker
 }

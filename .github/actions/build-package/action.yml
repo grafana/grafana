@@ -36,7 +36,7 @@ inputs:
     type: string
     description: Repository to load for patches repo. If empty, patches won't be applied. Must be an HTTPS git URL.
     required: false
-    default: ""
+    default: ''
   patches-ref:
     type: string
     description: git ref in the patches repo to check out.
@@ -64,12 +64,12 @@ inputs:
     required: false
   docker-tag-format:
     type: string
-    default: "{{ .version }}-{{ .arch }}"
+    default: '{{ .version }}-{{ .arch }}'
     description: Go template of Docker image tag
     required: false
   docker-tag-format-ubuntu:
     type: string
-    default: "{{ .version }}-ubuntu-{{ .arch }}"
+    default: '{{ .version }}-ubuntu-{{ .arch }}'
     description: Go template of Docker image tag
     required: false
   docker-org:
@@ -81,6 +81,18 @@ inputs:
     type: string
     description: Docker registry of produced images
     default: docker.io
+    required: false
+  ubuntu-base:
+    type: string
+    default: 'ubuntu-base'
+    required: false
+  alpine-base:
+    type: string
+    default: 'alpine-base'
+    required: false
+  cache-builders:
+    type: boolean
+    default: true
     required: false
 outputs:
   dist-dir:
@@ -99,7 +111,7 @@ outputs:
     description: The `grafana` version that was embedded in the binary
     value: ${{ steps.output.outputs.version }}
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - shell: bash
       run: | # zizmor: ignore[github-env]
@@ -126,11 +138,31 @@ runs:
         UBUNTU_TAG_FORMAT: ${{ inputs.docker-tag-format-ubuntu }}
         CHECKSUM: ${{ inputs.checksum }}
         VERIFY: ${{ inputs.verify }}
+        CACHE_BUILDERS: ${{ inputs.cache-builders }}
+        ALPINE_BASE: ${{ inputs.alpine-base }}
+        UBUNTU_BASE: ${{ inputs.ubuntu-base }}
       with:
         verb: run
         dagger-flags: --verbose=0
         version: 0.18.8
-        args: go run -C ${GRAFANA_PATH} ./pkg/build/cmd artifacts --artifacts ${ARTIFACTS} --grafana-dir=${GRAFANA_PATH} --enterprise-dir=${ENTERPRISE_PATH} --version=${VERSION} --patches-repo=${PATCHES_REPO} --patches-ref=${PATCHES_REF} --patches-path=${PATCHES_PATH} --build-id=${BUILD_ID} --tag-format="${TAG_FORMAT}" --ubuntu-tag-format="${UBUNTU_TAG_FORMAT}" --org=${DOCKER_ORG} --registry=${DOCKER_REGISTRY} --checksum=${CHECKSUM} --verify=${VERIFY} > $OUTFILE
+        args: go run -C ${GRAFANA_PATH} ./pkg/build/cmd artifacts
+          --artifacts ${ARTIFACTS}
+          --grafana-dir=${GRAFANA_PATH}
+          --alpine-base=${ALPINE_BASE}
+          --ubuntu-base=${UBUNTU_BASE}
+          --enterprise-dir=${ENTERPRISE_PATH}
+          --version=${VERSION}
+          --patches-repo=${PATCHES_REPO}
+          --patches-ref=${PATCHES_REF}
+          --patches-path=${PATCHES_PATH}
+          --build-id=${BUILD_ID}
+          --tag-format="${TAG_FORMAT}"
+          --ubuntu-tag-format="${UBUNTU_TAG_FORMAT}"
+          --org=${DOCKER_ORG}
+          --registry=${DOCKER_REGISTRY}
+          --checksum=${CHECKSUM}
+          --cache-builders=${CACHE_BUILDERS}
+          --verify=${VERIFY} > $OUTFILE
     - id: output
       shell: bash
       env:

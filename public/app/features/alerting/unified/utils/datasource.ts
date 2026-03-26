@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceSettings } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PERMISSIONS_TIME_INTERVALS } from 'app/features/alerting/unified/components/mute-timings/permissions';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/components/notification-policies/permissions';
@@ -27,7 +27,6 @@ import { useAlertManagersByPermission } from '../hooks/useAlertManagerSources';
 import { isAlertManagerWithConfigAPI } from '../state/AlertmanagerContext';
 
 import { instancesPermissions, notificationsPermissions, silencesPermissions } from './access-control';
-import { isExtraConfig } from './alertmanager/extraConfigs';
 import { getAllDataSources } from './config';
 import { isGrafanaRuleIdentifier } from './rules';
 
@@ -74,7 +73,7 @@ export function getRulesDataSources() {
 }
 
 export function getRulesSourceUniqueKey(rulesSource: RulesSource): string {
-  return isGrafanaRulesSource(rulesSource) ? 'grafana' : (rulesSource.uid ?? rulesSource.id);
+  return isGrafanaRulesSource(rulesSource) ? 'grafana' : rulesSource.uid;
 }
 
 export function getRulesDataSource(rulesSourceName: string) {
@@ -287,24 +286,9 @@ export function getRulesSourceByName(name: string): RulesSource | undefined {
   return getDataSourceByName(name);
 }
 
-export function getDatasourceAPIId(dataSourceName: string) {
-  if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
-    return GRAFANA_RULES_SOURCE_NAME;
-  }
-  const ds = getDataSourceByName(dataSourceName);
-  if (!ds) {
-    throw new Error(`Datasource "${dataSourceName}" not found`);
-  }
-  return String(ds.id);
-}
-
 export function getDatasourceAPIUid(dataSourceName: string) {
   if (dataSourceName === GRAFANA_RULES_SOURCE_NAME) {
     return GRAFANA_RULES_SOURCE_NAME;
-  }
-
-  if (isExtraConfig(dataSourceName)) {
-    return dataSourceName;
   }
 
   const ds = getDataSourceByName(dataSourceName);
@@ -342,7 +326,7 @@ export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSetti
 }
 
 export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
-  return ds.jsonData.manageAlerts !== false; //if this prop is undefined it defaults to true
+  return ds.jsonData.manageAlerts ?? config.defaultDatasourceManageAlertsUiToggle;
 }
 
 export function isDataSourceAllowedAsRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>) {

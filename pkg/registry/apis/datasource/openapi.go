@@ -31,7 +31,9 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	}
 	oas.Info.AddExtension("x-grafana-plugin", info)
 
+	// The root api URL
 	root := "/apis/" + b.datasourceResourceInfo.GroupVersion().String() + "/"
+
 	// Add queries to the request properties
 	if err := queryschema.AddQueriesToOpenAPI(queryschema.OASQueryOptions{
 		Swagger:          oas,
@@ -70,7 +72,7 @@ func (b *DataSourceAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 	delete(oas.Paths.Paths, prefix+"/{path}")
 
 	// Set explicit apiVersion and kind on the datasource
-	ds, ok := oas.Components.Schemas["com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.DataSource"]
+	ds, ok := oas.Components.Schemas[datasourceV0.DataSource{}.OpenAPIModelName()]
 	if !ok {
 		return nil, fmt.Errorf("missing DS type")
 	}
@@ -190,7 +192,7 @@ func applyCustomSchemas(root string, ds *spec.Schema, oas *spec3.OpenAPI, custom
 				return nil, fmt.Errorf("path must have slash prefix")
 			}
 			v.Parameters = append(v.Parameters, ds.Parameters[0:2]...)
-			for m, op := range builder.GetPathOperations(v) {
+			for m, op := range builder.GetPathOperations(&v.PathProps) {
 				if op.Extensions == nil {
 					op.Extensions = make(spec.Extensions)
 				}

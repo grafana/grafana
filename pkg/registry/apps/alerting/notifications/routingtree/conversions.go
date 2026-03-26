@@ -6,23 +6,37 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	promModel "github.com/prometheus/common/model"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func ConvertToK8sResource(orgID int64, r definitions.Route, version string, namespacer request.NamespaceMapper) (*model.RoutingTree, error) {
+func ConvertToK8sResources(orgID int64, routes legacy_storage.ManagedRoutes, namespacer request.NamespaceMapper) (*model.RoutingTreeList, error) {
+	result := &model.RoutingTreeList{
+		Items: make([]model.RoutingTree, 0, len(routes)),
+	}
+	for _, r := range routes {
+		k8sResource, err := ConvertToK8sResource(orgID, r, namespacer)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert route %q to k8s resource: %w", r.Name, err)
+		}
+		result.Items = append(result.Items, *k8sResource)
+	}
+	return result, nil
+}
+
+func ConvertToK8sResource(orgID int64, r *legacy_storage.ManagedRoute, namespacer request.NamespaceMapper) (*model.RoutingTree, error) {
 	spec := model.RoutingTreeSpec{
 		Defaults: model.RoutingTreeRouteDefaults{
-			GroupBy:        r.GroupByStr,
+			GroupBy:        r.GroupBy,
 			GroupWait:      optionalPrometheusDurationToString(r.GroupWait),
 			GroupInterval:  optionalPrometheusDurationToString(r.GroupInterval),
 			RepeatInterval: optionalPrometheusDurationToString(r.RepeatInterval),
@@ -38,10 +52,14 @@ func ConvertToK8sResource(orgID int64, r definitions.Route, version string, name
 	}
 
 	var result = &model.RoutingTree{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
+			Kind:       kind.Kind(),
+		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            model.UserDefinedRoutingTreeName,
+			Name:            r.Name,
 			Namespace:       namespacer(orgID),
-			ResourceVersion: version,
+			ResourceVersion: r.Version,
 		},
 		Spec: spec,
 	}
@@ -158,7 +176,7 @@ func convertK8sSubRouteToRoute(r model.RoutingTreeRoute, path string) (definitio
 		MuteTimeIntervals:   r.MuteTimeIntervals,
 		ActiveTimeIntervals: r.ActiveTimeIntervals,
 		Routes:              make([]*definitions.Route, 0, len(r.Routes)),
-		Matchers:            make(config.Matchers, 0, len(r.Matchers)),
+		ObjectMatchers:      make(definitions.ObjectMatchers, 0, len(r.Matchers)),
 		Continue:            r.Continue,
 	}
 	if r.Receiver != nil {

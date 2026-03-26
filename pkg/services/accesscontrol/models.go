@@ -235,6 +235,12 @@ type GetUserPermissionsQuery struct {
 	Roles        []string
 	TeamIDs      []int64
 	RolePrefixes []string
+	// ExcludeRedundantManagedPermissions filters out individual dashboard/folder action permissions
+	// from managed roles when action sets are enabled. These permissions are redundant because
+	// ExpandActionSets expands action set permissions (e.g. dashboards:view) into the individual
+	// actions (e.g. dashboards:read) in memory. Excluding them from the SQL query significantly
+	// reduces the number of rows loaded for large installations.
+	ExcludeRedundantManagedPermissions bool
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -443,6 +449,16 @@ const (
 	// Alerting Notification actions (legacy)
 	ActionAlertingNotificationsRead  = "alert.notifications:read"
 	ActionAlertingNotificationsWrite = "alert.notifications:write"
+	// ActionAlertingNotificationsConfigHistoryRead gates read access to the raw Alertmanager config blob
+	// (GET /config/api/v1/alerts) and config history (GET /config/history).
+	// Restricted to admin-only in v13; endpoints will be removed in v14.
+	ActionAlertingNotificationsConfigHistoryRead = "alert.notifications.config-history:read"
+	// ActionAlertingNotificationsConfigHistoryWrite gates write access to config history
+	// (POST /config/history/{id}/_activate).
+	// Restricted to admin-only in v13; endpoint will be removed in v14.
+	ActionAlertingNotificationsConfigHistoryWrite = "alert.notifications.config-history:write"
+	// ActionAlertingNotificationSystemStatus gates access to alertmanager status API
+	ActionAlertingNotificationSystemStatus = "alert.notifications.system-status:read"
 
 	// Alerting notifications template actions
 	ActionAlertingNotificationsTemplatesRead   = "alert.notifications.templates:read"
@@ -455,6 +471,11 @@ const (
 	ActionAlertingNotificationsTimeIntervalsWrite  = "alert.notifications.time-intervals:write"
 	ActionAlertingNotificationsTimeIntervalsDelete = "alert.notifications.time-intervals:delete"
 
+	// Alerting notifications inhibition rules actions
+	ActionAlertingNotificationsInhibitionRulesRead   = "alert.notifications.inhibition-rules:read"
+	ActionAlertingNotificationsInhibitionRulesWrite  = "alert.notifications.inhibition-rules:write"
+	ActionAlertingNotificationsInhibitionRulesDelete = "alert.notifications.inhibition-rules:delete"
+
 	// Alerting receiver actions
 	ActionAlertingReceiversList             = "alert.notifications.receivers:list"
 	ActionAlertingReceiversRead             = "alert.notifications.receivers:read"
@@ -463,13 +484,24 @@ const (
 	ActionAlertingReceiversUpdate           = "alert.notifications.receivers:write"
 	ActionAlertingReceiversUpdateProtected  = "alert.notifications.receivers.protected:write"
 	ActionAlertingReceiversDelete           = "alert.notifications.receivers:delete"
-	ActionAlertingReceiversTest             = "alert.notifications.receivers:test"
+	ActionAlertingReceiversTest             = "alert.notifications.receivers:test" // This is a deprecated action, use ActionAlertingReceiversTestCreate instead
+	ActionAlertingReceiversTestCreate       = "alert.notifications.receivers.test:create"
 	ActionAlertingReceiversPermissionsRead  = "receivers.permissions:read"
 	ActionAlertingReceiversPermissionsWrite = "receivers.permissions:write"
 
-	// Alerting routes policies actions
+	// Alerting routes policies actions (legacy, unscoped - kept for backward compatibility)
 	ActionAlertingRoutesRead  = "alert.notifications.routes:read"
 	ActionAlertingRoutesWrite = "alert.notifications.routes:write"
+
+	// Alerting managed routes actions (new, scoped per-resource)
+	ActionAlertingManagedRoutesRead   = "alert.notifications.routes.managed:read"
+	ActionAlertingManagedRoutesWrite  = "alert.notifications.routes.managed:write"
+	ActionAlertingManagedRoutesCreate = "alert.notifications.routes.managed:create"
+	ActionAlertingManagedRoutesDelete = "alert.notifications.routes.managed:delete"
+
+	// Alerting routes permissions actions
+	ActionAlertingRoutesPermissionsRead  = "routes.permissions:read"
+	ActionAlertingRoutesPermissionsWrite = "routes.permissions:write"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"
@@ -507,6 +539,9 @@ const (
 
 	// Usage stats actions
 	ActionUsageStatsRead = "server.usagestats.report:read"
+
+	// Live (Grafana Live) actions
+	ActionLivePush = "live:push"
 )
 
 var (

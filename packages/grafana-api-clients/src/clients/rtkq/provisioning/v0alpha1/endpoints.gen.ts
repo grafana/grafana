@@ -1425,6 +1425,8 @@ export type InlineSecureValue =
   | {
       /** Create a secure value -- this is only used for POST/PUT */
       create?: string;
+      /** Optionally when creating a secure value, you can pass a custom description. */
+      description?: string;
       /** Name in the secret service (reference) */
       name: string;
       /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
@@ -1433,6 +1435,8 @@ export type InlineSecureValue =
   | {
       /** Create a secure value -- this is only used for POST/PUT */
       create: string;
+      /** Optionally when creating a secure value, you can pass a custom description. */
+      description?: string;
       /** Name in the secret service (reference) */
       name?: string;
       /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
@@ -1441,6 +1445,8 @@ export type InlineSecureValue =
   | {
       /** Create a secure value -- this is only used for POST/PUT */
       create?: string;
+      /** Optionally when creating a secure value, you can pass a custom description. */
+      description?: string;
       /** Name in the secret service (reference) */
       name?: string;
       /** Remove this value from the secure value map Values owned by this resource will be deleted if necessary */
@@ -1471,10 +1477,14 @@ export type GitlabConnectionConfig = {
 export type ConnectionSpec = {
   /** Bitbucket connection configuration Only applicable when provider is "bitbucket" */
   bitbucket?: BitbucketConnectionConfig;
+  /** The connection description */
+  description?: string;
   /** GitHub connection configuration Only applicable when provider is "github" */
   github?: GitHubConnectionConfig;
   /** Gitlab connection configuration Only applicable when provider is "gitlab" */
   gitlab?: GitlabConnectionConfig;
+  /** The connection display name (shown in the UI) */
+  title: string;
   /** The connection provider type
     
     Possible enum values:
@@ -1484,6 +1494,32 @@ export type ConnectionSpec = {
   type: 'bitbucket' | 'github' | 'gitlab';
   /** The connection URL */
   url?: string;
+};
+export type Condition = {
+  /** lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable. */
+  lastTransitionTime: Time;
+  /** message is a human readable message indicating details about the transition. This may be an empty string. */
+  message: string;
+  /** observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance. */
+  observedGeneration?: number;
+  /** reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty. */
+  reason: string;
+  /** status of the condition, one of True, False, Unknown. */
+  status: string;
+  /** type of condition in CamelCase or in foo.example.com/CamelCase. */
+  type: string;
+};
+export type ErrorDetails = {
+  /** BadValue is the value of the field that was determined to be invalid, if applicable. This can be any type. This field is optional and may be omitted if not relevant. */
+  badValue?: any;
+  /** Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable. */
+  detail?: string;
+  /** Field is the path to the field or JSON pointer that caused the error. This helps users and tools identify exactly where to correct the problem. This field is optional and may be empty if not applicable. */
+  field?: string;
+  /** Origin indicates where the error originated in validation, or the name of the external service that reported the error. This can be useful for tooling or debugging, and may reference a specific rule, function, or service. This field is optional and may be empty. */
+  origin?: string;
+  /** Type is a machine-readable description of the cause of the error. This is intended for programmatic handling and matches Kubernetes' CauseType values. */
+  type: string;
 };
 export type HealthStatus = {
   /** When the health was checked last time */
@@ -1500,16 +1536,14 @@ export type HealthStatus = {
   message?: string[];
 };
 export type ConnectionStatus = {
+  /** Conditions represent the latest available observations of the connection's state. */
+  conditions?: Condition[];
+  /** FieldErrors are errors that occurred during validation of the connection spec. These errors are intended to help users identify and fix issues in the spec. */
+  fieldErrors?: ErrorDetails[];
   /** The connection health status */
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
-  /** Connection state
-    
-    Possible enum values:
-     - `"connected"`
-     - `"disconnected"` */
-  state: 'connected' | 'disconnected';
 };
 export type Connection = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1600,6 +1634,10 @@ export type DeleteJobOptions = {
   /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
   resources?: ResourceRef[];
 };
+export type FixFolderMetadataJobOptions = {
+  /** Ref to the branch to create the commit on (uses repository's default branch if not specified) */
+  ref?: string;
+};
 export type MigrateJobOptions = {
   /** Message to use when committing the changes in a single commit */
   message?: string;
@@ -1641,14 +1679,28 @@ export type ExportJobOptions = {
 export type JobSpec = {
   /** Possible enum values:
      - `"delete"` deletes files in the remote repository
+     - `"deleteResources"` deletes all resources managed by a repository that no longer exists or is stuck in Terminating state. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.
+     - `"fixFolderMetadata"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.
      - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
      - `"move"` moves files in the remote repository
      - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
      - `"pull"` replicates the remote branch in the local copy of the repository.
-     - `"push"` replicates the local copy of the repository in the remote branch. */
-  action?: 'delete' | 'migrate' | 'move' | 'pr' | 'pull' | 'push';
+     - `"push"` replicates the local copy of the repository in the remote branch.
+     - `"releaseResources"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set. */
+  action:
+    | 'delete'
+    | 'deleteResources'
+    | 'fixFolderMetadata'
+    | 'migrate'
+    | 'move'
+    | 'pr'
+    | 'pull'
+    | 'push'
+    | 'releaseResources';
   /** Delete when the action is `delete` */
   delete?: DeleteJobOptions;
+  /** Options when the action is `fix-folder-metadata` */
+  fixFolderMetadata?: FixFolderMetadataJobOptions;
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
   /** Move when the action is `move` */
@@ -1757,7 +1809,7 @@ export type GitRepositoryConfig = {
   path?: string;
   /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
   tokenUser?: string;
-  /** The repository URL (e.g. `https://github.com/example/test.git`). */
+  /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
 };
 export type GitHubRepositoryConfig = {
@@ -1788,7 +1840,7 @@ export type LocalRepositoryConfig = {
 export type SyncOptions = {
   /** Enabled must be saved as true before any sync job will run */
   enabled: boolean;
-  /** When non-zero, the sync will run periodically */
+  /** The interval between sync runs. The system defines a default value for this field, which will overwrite the user-defined one in case the latter is zero or lower than the system-defined one. */
   intervalSeconds?: number;
   /** Where values should be saved
     
@@ -1796,6 +1848,10 @@ export type SyncOptions = {
      - `"folder"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name
      - `"instance"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible) */
   target: 'folder' | 'instance';
+};
+export type WebhookConfig = {
+  /** Base URL of the Grafana instance used to construct the webhook endpoint registered with the external Git provider. Only the base URL should be provided (e.g. `https://grafana.example.com`); the API path, namespace, and resource name are appended automatically. Trailing slashes are stripped. Must be a valid HTTP or HTTPS URL. */
+  baseUrl?: string;
 };
 export type RepositorySpec = {
   /** The repository on Bitbucket. Mutually exclusive with local | github | git. */
@@ -1825,8 +1881,16 @@ export type RepositorySpec = {
      - `"gitlab"`
      - `"local"` */
   type: 'bitbucket' | 'git' | 'github' | 'gitlab' | 'local';
+  /** Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider. */
+  webhook?: WebhookConfig;
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
+};
+export type QuotaStatus = {
+  /** MaxRepositories is the maximum number of repositories allowed. 0 means unlimited. */
+  maxRepositories?: number;
+  /** MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited. */
+  maxResourcesPerRepository?: number;
 };
 export type ResourceCount = {
   count: number;
@@ -1858,6 +1922,10 @@ export type SyncStatus = {
      - `"working"` The job is running */
   state: 'error' | 'pending' | 'success' | 'warning' | 'working';
 };
+export type TokenStatus = {
+  expiration?: number;
+  lastUpdated?: number;
+};
 export type WebhookStatus = {
   id?: number;
   lastEvent?: number;
@@ -1865,16 +1933,24 @@ export type WebhookStatus = {
   url?: string;
 };
 export type RepositoryStatus = {
+  /** Conditions represent the latest available observations of the repository's state. */
+  conditions?: Condition[];
   /** Error information during repository deletion (if any) */
   deleteError?: string;
+  /** FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec. */
+  fieldErrors?: ErrorDetails[];
   /** This will get updated with the current health status (and updated periodically) */
   health: HealthStatus;
   /** The generation of the spec last time reconciliation ran */
   observedGeneration: number;
+  /** Quota contains the configured quota limits for this repository */
+  quota?: QuotaStatus;
   /** The object count when sync last ran */
   stats?: ResourceCount[];
   /** Sync information with the last sync information */
   sync: SyncStatus;
+  /** Token will get updated with current token information */
+  token?: TokenStatus;
   /** Webhook Information (if applicable) */
   webhook: WebhookStatus;
 };
@@ -1991,11 +2067,6 @@ export type ResourceList = {
   kind?: string;
   metadata?: ListMeta;
 };
-export type ErrorDetails = {
-  detail?: string;
-  field?: string;
-  type: string;
-};
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -2061,6 +2132,8 @@ export type RepositoryViewList = {
   items: RepositoryView[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
+  /** MaxRepositories is the maximum number of repositories allowed per namespace (0 = unlimited) */
+  maxRepositories: number;
 };
 export type ManagerStats = {
   /** Manager identity */

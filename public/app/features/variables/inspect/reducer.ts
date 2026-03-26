@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { UsagesToNetwork, VariableUsageTree } from './utils';
+import { UsagesToNetwork, VariableUsageTree } from './types';
 
 export interface VariableInspectState {
   usages: VariableUsageTree[];

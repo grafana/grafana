@@ -2,12 +2,16 @@ package test
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -21,6 +25,8 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		})
 		kvOpts := resource.KVBackendOptions{
 			KvStore: resource.NewBadgerKV(db),
+			// keep it low in tests as most of them don't exercise concurrent writes
+			WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
 		}
 		backend, err := resource.NewKVStorageBackend(kvOpts)
 		require.NoError(t, err)
@@ -30,18 +36,63 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 		SkipTests: map[string]bool{
 			// TODO: fix these tests and remove this skip
 			TestBlobSupport: true,
-			// Badger does not support bulk import yet.
-			TestGetResourceLastImportTime: true,
 		},
 	})
+}
+
+func TestIntegrationBenchmarkSQLKVStorageBackend(t *testing.T) {
+	for _, withRvManager := range []bool{true, false} {
+		t.Run(fmt.Sprintf("rvmanager=%t", withRvManager), func(t *testing.T) {
+			testutil.SkipIntegrationTestInShortMode(t)
+
+			opts := DefaultBenchmarkOptions(t)
+			if db.IsTestDbSQLite() {
+				opts.Concurrency = 1 // to avoid SQLite database is locked error
+			}
+			backend, dbConn := NewTestSqlKvBackend(t, t.Context(), withRvManager)
+			dbConn.SqlDB().SetMaxOpenConns(min(max(10, opts.Concurrency), 100))
+			RunStorageBackendBenchmark(t, backend, opts)
+		})
+	}
+}
+
+func TestIntegrationBenchmarkSQLKVStorageAndSearch(t *testing.T) {
+	for _, withRvManager := range []bool{true, false} {
+		t.Run(fmt.Sprintf("rvmanager=%t", withRvManager), func(t *testing.T) {
+			testutil.SkipIntegrationTestInShortMode(t)
+			opts := DefaultBenchmarkOptions(t)
+			if db.IsTestDbSQLite() {
+				t.Skip("concurrency benchmark skipped with sqlite")
+			}
+			backend, _ := NewTestSqlKvBackend(t, t.Context(), withRvManager)
+			searchBackend, err := search.NewBleveBackend(search.BleveOptions{
+				Root:                   t.TempDir(),
+				FileThreshold:          0,
+				IndexMinUpdateInterval: opts.IndexMinUpdateInterval,
+			}, nil)
+			require.NoError(t, err)
+			t.Cleanup(searchBackend.Stop)
+			groupsResources := make(map[string]string, opts.NumResourceTypes)
+			for i := 0; i < opts.NumResourceTypes; i++ {
+				groupsResources[fmt.Sprintf("group-%d", i)] = fmt.Sprintf("resource-%d", i)
+			}
+			searchOpts := resource.SearchOptions{
+				Backend: searchBackend,
+				Resources: &resource.TestDocumentBuilderSupplier{
+					GroupsResources: groupsResources,
+				},
+				IndexModificationCacheTTL: 5 * time.Minute,
+			}
+			RunStorageAndSearchBenchmark(t, backend, searchOpts, opts)
+		})
+	}
 }
 
 func TestIntegrationSQLKVStorageBackend(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	skipTests := map[string]bool{
-		TestBlobSupport:               true,
-		TestGetResourceLastImportTime: true,
+		TestBlobSupport: true,
 	}
 
 	t.Run("Without RvManager", func(t *testing.T) {

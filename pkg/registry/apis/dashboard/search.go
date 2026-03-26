@@ -55,8 +55,8 @@ func NewSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyDashboa
 }
 
 func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	searchResults := defs["github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SearchResults"].Schema
-	sortableFields := defs["github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SortableFields"].Schema
+	searchResults := defs[dashboardv0alpha1.SearchResults{}.OpenAPIModelName()].Schema
+	sortableFields := defs[dashboardv0alpha1.SortableFields{}.OpenAPIModelName()].Schema
 
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -206,6 +206,41 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "number of results to return",
 										Required:    false,
 										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "ownerReference", // singular
+										In:          "query",
+										Description: "filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them.",
+										Required:    false,
+										Schema:      spec.ArrayProperty(spec.StringProperty()),
+										Examples: map[string]*spec3.Example{
+											"": {
+												ExampleProps: spec3.ExampleProps{},
+											},
+											"team": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "Owner references of team xyz or abc",
+													Value:   []string{"iam.grafana.app/Team/xyz", "iam.grafana.app/Team/abc"},
+												},
+											},
+											"user": {
+												ExampleProps: spec3.ExampleProps{
+													Summary: "User owner reference",
+													Value:   []string{"iam.grafana.app/User/abc"},
+												},
+											},
+										},
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "createdBy",
+										In:          "query",
+										Description: "filter by the user who created the resource (format: user:<uid>)",
+										Required:    false,
+										Schema:      spec.StringProperty(),
 									},
 								},
 								{
@@ -426,7 +461,7 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		Page:    int64(page), // for modes 0-2 (legacy)
 		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
 	}
-	fields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id"}
+	fields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
 	if queryParams.Has("field") {
 		// add fields to search and exclude duplicates
 		for _, f := range queryParams["field"] {
@@ -523,6 +558,27 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 			Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
 			Operator: "=",
 			Values:   v,
+		})
+	}
+
+	// Multiple values for the same param = OR logic (use "in" operator)
+	if vals, ok := queryParams["ownerReference"]; ok {
+		operator := "="
+		if len(vals) > 1 {
+			operator = "in"
+		}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+			Operator: operator,
+			Values:   vals,
+		})
+	}
+
+	if v := queryParams.Get("createdBy"); v != "" {
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      resource.SEARCH_FIELD_CREATED_BY,
+			Operator: "=",
+			Values:   []string{v},
 		})
 	}
 
