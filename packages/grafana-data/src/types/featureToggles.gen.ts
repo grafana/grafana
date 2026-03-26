@@ -1755,4 +1755,9 @@ export interface FeatureToggles {
   * @default false
   */
   lokiAlignedQuerySplitting?: boolean;
+  /**
+  * Enables the query service to fetch the configuration from the settings service
+  * @default false
+  */
+  queryFetchConfigFromSettingsService?: boolean;
 }
