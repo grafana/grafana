@@ -164,7 +164,7 @@ export async function buildNewDashboardSaveModelV2(
   if (config.featureToggles.dashboardDefaultLayoutSelector) {
     data.spec.preferences = {
       ...data.spec.preferences,
-      defaultLayoutTemplate: defaultGridLayoutKind(),
+      layout: defaultGridLayoutKind(),
     };
   }
 
