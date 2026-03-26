@@ -45,7 +45,7 @@ export {
 export { EmptySearchResult } from './components/EmptySearchResult/EmptySearchResult';
 export { EmptyState } from './components/EmptyState/EmptyState';
 export { UnitPicker } from './components/UnitPicker/UnitPicker';
-export { StatsPicker } from './components/StatsPicker/StatsPicker';
+export { StatsPicker, type StatsPickerProps } from './components/StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './components/RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './components/DateTimePickers/TimeRangePicker';
 export { TimeRangeProvider } from './components/DateTimePickers/TimeRangeContext';
@@ -138,7 +138,6 @@ export {
 } from './components/BigValue/BigValue';
 export { Sparkline } from './components/Sparkline/Sparkline';
 
-export { Gauge } from './components/Gauge/Gauge';
 export { BarGauge } from './components/BarGauge/BarGauge';
 export {
   VizTooltip,

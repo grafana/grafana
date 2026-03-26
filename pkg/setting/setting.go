@@ -607,8 +607,6 @@ type Cfg struct {
 
 	// Unified Storage
 	UnifiedStorage map[string]UnifiedStorageConfig
-	// DisableDataMigrations will disable resources data migration to unified storage at startup
-	DisableDataMigrations bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -657,7 +655,7 @@ type Cfg struct {
 	EnableSearchClient                         bool
 	OverridesFilePath                          string
 	OverridesReloadInterval                    time.Duration
-	EnforceQuotas                              bool
+	EnforcedQuotaResources                     []string
 	QuotasErrorMessageSupportInfo              string
 	EnableSQLKVBackend                         bool
 	EnableSQLKVCompatibilityMode               bool
@@ -2168,7 +2166,7 @@ func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
 	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
 
-	cfg.EnableGzip = server.Key("enable_gzip").MustBool(false)
+	cfg.EnableGzip = server.Key("enable_gzip").MustBool(true)
 	cfg.EnforceDomain = server.Key("enforce_domain").MustBool(false)
 	staticRoot := valueAsString(server, "static_root_path", "")
 	cfg.StaticRootPath = makeAbsolute(staticRoot, cfg.HomePath)

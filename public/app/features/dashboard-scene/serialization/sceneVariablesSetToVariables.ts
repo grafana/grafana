@@ -578,6 +578,9 @@ export function sceneVariablesSetToSchemaV2Variables(
           ],
           defaultKeys: variable.state.defaultKeys || [],
           allowCustomValue: variable.state.allowCustomValue ?? true,
+          enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
+            ? (variable.state.enableGroupBy ?? false)
+            : false,
         },
       };
       variables.push(adhocVariable);
