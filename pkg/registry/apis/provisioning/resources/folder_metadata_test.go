@@ -636,6 +636,106 @@ func TestParseFolderResource(t *testing.T) {
 	}
 }
 
+func TestUpdateFolderMetadataTitle(t *testing.T) {
+	ctx := context.Background()
+
+	const existingUID = "existing-uid-123"
+	existingManifest := NewFolderManifest(existingUID, "Original Title")
+	existingData, err := json.Marshal(existingManifest)
+	require.NoError(t, err)
+
+	t.Run("updates title when ID matches", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			if err := json.Unmarshal(b, &f); err != nil {
+				return false
+			}
+			return f.Name == existingUID && f.Spec.Title == "New Title"
+		}), "").Return(nil)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-hash"}, nil).Once()
+
+		submitted := NewFolderManifest(existingUID, "New Title")
+		hash, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.NoError(t, err)
+		assert.Equal(t, "new-hash", hash)
+	})
+
+	t.Run("updates title when submitted ID is empty", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "", mock.MatchedBy(func(b []byte) bool {
+			var f folders.Folder
+			if err := json.Unmarshal(b, &f); err != nil {
+				return false
+			}
+			return f.Name == existingUID && f.Spec.Title == "Title With No ID"
+		}), "").Return(nil)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: []byte("{}"), Hash: "new-hash"}, nil).Once()
+
+		submitted := &folders.Folder{}
+		submitted.Spec.Title = "Title With No ID"
+		hash, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.NoError(t, err)
+		assert.Equal(t, "new-hash", hash)
+	})
+
+	t.Run("rejects ID change", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil)
+
+		submitted := NewFolderManifest("different-uid", "Some Title")
+		_, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "folder ID change is not allowed")
+	})
+
+	t.Run("rejects empty title", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil)
+
+		submitted := NewFolderManifest(existingUID, "")
+		_, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "title must not be empty")
+	})
+
+	t.Run("returns error when existing _folder.json not found", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(nil, repository.ErrFileNotFound)
+
+		submitted := NewFolderManifest("any-uid", "Title")
+		_, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.Error(t, err)
+	})
+
+	t.Run("returns error when repo Update fails", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Read", mock.Anything, "myfolder/_folder.json", "").
+			Return(&repository.FileInfo{Data: existingData, Hash: "old-hash"}, nil).Once()
+		rw.On("Update", mock.Anything, "myfolder/_folder.json", "", mock.Anything, "").
+			Return(assert.AnError)
+
+		submitted := NewFolderManifest(existingUID, "New Title")
+		_, err := UpdateFolderMetadataTitle(ctx, rw, "myfolder/", "", "", submitted)
+
+		require.Error(t, err)
+	})
+}
+
 func TestGetFolderID(t *testing.T) {
 	ctx := context.Background()
 	testPath := "team-a/project-x/"
