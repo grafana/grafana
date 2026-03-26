@@ -98,7 +98,10 @@ export const SuggestedDashboardsLoader = ({
           }),
         ])
           .then(([provisioned, communityResponse]) => {
-            const result: DashboardFetchResult = { provisioned, community: communityResponse.items.slice(0, COMMUNITY_RESULT_SIZE) };
+            const result: DashboardFetchResult = {
+              provisioned,
+              community: communityResponse.items.slice(0, COMMUNITY_RESULT_SIZE),
+            };
             dashboardCache.set(ds.type, result);
             return result;
           })
