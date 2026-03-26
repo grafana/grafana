@@ -308,7 +308,7 @@ update-workspace: gen-go
 	bash scripts/go-workspace/update-workspace.sh
 
 .PHONY: build-go
-build-go: gen-themes ## Build all Go binaries (grafana, grafana-server, grafana-cli).
+build-go: pkg/services/preference/themes_generated.go
 	@echo "build go binaries ($(OS)/$(ARCH))"
 	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) GOOS=$(OS) GOARCH=$(ARCH) $(GO) build -buildvcs=false -trimpath $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS),-gcflags "$(GO_BUILD_GCFLAGS)") -ldflags "$(GO_LDFLAGS)" -o ./bin/$(OS)/$(ARCH)/grafana ./pkg/cmd/grafana
 	cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana
