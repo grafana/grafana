@@ -2,6 +2,10 @@
 
 # 12.3.6+security-01 (2026-03-25)
 
+### Bug fixes
+
+- **Security:** Fix CVE-2026-33375
+
 <!-- 12.3.6+security-01 END -->
 <!-- 12.3.6 START -->
 
