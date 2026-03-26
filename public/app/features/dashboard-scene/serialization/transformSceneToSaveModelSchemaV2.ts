@@ -29,7 +29,7 @@ import {
   PanelQueryKind,
   TransformationKind,
   FieldConfigSource,
-  DataTransformerConfig,
+  TransformationSpec,
   PanelQuerySpec,
   DataQueryKind,
   QueryOptionsSpec,
@@ -67,7 +67,6 @@ import { DSReferencesMapping } from './DashboardSceneSerializer';
 import { transformV1ToV2AnnotationQuery } from './annotations';
 import { sceneVariablesSetToSchemaV2Variables } from './sceneVariablesSetToVariables';
 import { colorIdEnumToColorIdV2, transformCursorSynctoEnum } from './transformToV2TypesUtils';
-
 // FIXME: This is temporary to avoid creating partial types for all the new schema, it has some performance implications, but it's fine for now
 type DeepPartial<T> = T extends object
   ? {
@@ -511,9 +510,7 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
       const transformation = transformationItem;
 
       if ('id' in transformation) {
-        // Transformation is a DataTransformerConfig
-        const transformationSpec: DataTransformerConfig = {
-          id: transformation.id,
+        const transformationSpec: TransformationSpec = {
           disabled: transformation.disabled,
           filter: transformation.filter,
           ...(transformation.topic && { topic: transformation.topic }),
@@ -521,7 +518,8 @@ function getVizPanelTransformations(vizPanel: VizPanel): TransformationKind[] {
         };
 
         transformations.push({
-          kind: transformation.id,
+          kind: 'Transformation',
+          group: transformation.id,
           spec: transformationSpec,
         });
       } else {
