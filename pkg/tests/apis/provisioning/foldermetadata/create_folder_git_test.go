@@ -1,4 +1,4 @@
-package foldermetadatafiles
+package foldermetadata
 
 import (
 	"context"

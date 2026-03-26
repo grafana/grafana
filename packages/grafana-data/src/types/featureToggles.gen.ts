@@ -99,11 +99,6 @@ export interface FeatureToggles {
   */
   starsFromAPIServer?: boolean;
   /**
-  * Routes stars requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesStars?: boolean;
-  /**
   * Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
   * @default false
   */
@@ -1750,4 +1745,14 @@ export interface FeatureToggles {
   * @default false
   */
   frontendServiceSSOAutoLogin?: boolean;
+  /**
+  * Aligns query splitting chunks with UTC midnight
+  * @default false
+  */
+  lokiAlignedQuerySplitting?: boolean;
+  /**
+  * Enables the query service to fetch the configuration from the settings service
+  * @default false
+  */
+  queryFetchConfigFromSettingsService?: boolean;
 }

@@ -47,10 +47,6 @@ const (
 	// Registers a live apiserver
 	FlagLiveAPIServer = "liveAPIServer"
 
-	// FlagKubernetesStars
-	// Routes stars requests from /api to the /apis endpoint
-	FlagKubernetesStars = "kubernetesStars"
-
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
@@ -929,4 +925,12 @@ const (
 	// FlagFrontendServiceSSOAutoLogin
 	// Returns SSO auto-login information in /bootdata to automatically log in users with SSO when they access Grafana
 	FlagFrontendServiceSSOAutoLogin = "frontendServiceSSOAutoLogin"
+
+	// FlagLokiAlignedQuerySplitting
+	// Aligns query splitting chunks with UTC midnight
+	FlagLokiAlignedQuerySplitting = "lokiAlignedQuerySplitting"
+
+	// FlagQueryFetchConfigFromSettingsService
+	// Enables the query service to fetch the configuration from the settings service
+	FlagQueryFetchConfigFromSettingsService = "queryFetchConfigFromSettingsService"
 )

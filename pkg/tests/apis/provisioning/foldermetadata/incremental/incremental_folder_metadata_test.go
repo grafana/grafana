@@ -1,4 +1,4 @@
-package foldermetadataincremental
+package incremental
 
 import (
 	"context"

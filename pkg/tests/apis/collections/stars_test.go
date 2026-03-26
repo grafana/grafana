@@ -36,9 +36,6 @@ func TestIntegrationStars(t *testing.T) {
 		grafanarest.Mode5,
 	} {
 		flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
-		if mode >= grafanarest.Mode5 {
-			flags = append(flags, featuremgmt.FlagKubernetesStars)
-		}
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false, // required for experimental APIs
