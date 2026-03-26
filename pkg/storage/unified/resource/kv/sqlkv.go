@@ -97,6 +97,23 @@ func (k *SqlKV) conn(ctx context.Context) dbtx {
 	return k.db
 }
 
+// borrowOrBeginTx returns a *sql.Tx for batch operations. When a migration tx
+// exists in the context (SQLite bulk import), it is returned directly with
+// owned=false so the caller does NOT commit/rollback. Otherwise a new tx is
+// started with owned=true and the caller must manage its lifecycle.
+func (k *SqlKV) borrowOrBeginTx(ctx context.Context) (tx *sql.Tx, owned bool, err error) {
+	if extTx, ok := dbtxFromCtx(ctx); ok {
+		if sqlTx, ok := extTx.(*sql.Tx); ok {
+			return sqlTx, false, nil
+		}
+	}
+	sqlTx, err := k.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	return sqlTx, true, nil
+}
+
 func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
 		if section == LastImportTimeSection {
@@ -462,11 +479,13 @@ func (k *SqlKV) batchUniform(ctx context.Context, qb *queryBuilder, section stri
 // in normal operation (ProcessBulk). Keys cannot collide with existing storage rows
 // because the collection is deleted before import and each key embeds a fresh RV.
 func (k *SqlKV) batchPut(ctx context.Context, qb *queryBuilder, section string, ops []BatchOp) error {
-	tx, err := k.db.BeginTx(ctx, nil)
+	tx, owned, err := k.borrowOrBeginTx(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return err
 	}
-	defer tx.Rollback() //nolint:errcheck
+	if owned {
+		defer tx.Rollback() //nolint:errcheck
+	}
 
 	if section == DataSection && !hasDuplicateKeys(ops) {
 		// Fast path: multi-row INSERT. Safe because DataSection keys embed the
@@ -504,16 +523,21 @@ func (k *SqlKV) batchPut(ctx context.Context, qb *queryBuilder, section string, 
 		}
 	}
 
-	return tx.Commit()
+	if owned {
+		return tx.Commit()
+	}
+	return nil
 }
 
 // batchCreate handles all-Create batches with existence checks.
 func (k *SqlKV) batchCreate(ctx context.Context, qb *queryBuilder, section string, ops []BatchOp) error {
-	tx, err := k.db.BeginTx(ctx, nil)
+	tx, owned, err := k.borrowOrBeginTx(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return err
 	}
-	defer tx.Rollback() //nolint:errcheck
+	if owned {
+		defer tx.Rollback() //nolint:errcheck
+	}
 
 	for i, op := range ops {
 		keyPath := getKeyPath(section, op.Key)
@@ -537,16 +561,21 @@ func (k *SqlKV) batchCreate(ctx context.Context, qb *queryBuilder, section strin
 		}
 	}
 
-	return tx.Commit()
+	if owned {
+		return tx.Commit()
+	}
+	return nil
 }
 
 // batchUpdate handles all-Update batches with existence checks.
 func (k *SqlKV) batchUpdate(ctx context.Context, qb *queryBuilder, section string, ops []BatchOp) error {
-	tx, err := k.db.BeginTx(ctx, nil)
+	tx, owned, err := k.borrowOrBeginTx(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return err
 	}
-	defer tx.Rollback() //nolint:errcheck
+	if owned {
+		defer tx.Rollback() //nolint:errcheck
+	}
 
 	for i, op := range ops {
 		keyPath := getKeyPath(section, op.Key)
@@ -563,16 +592,21 @@ func (k *SqlKV) batchUpdate(ctx context.Context, qb *queryBuilder, section strin
 		}
 	}
 
-	return tx.Commit()
+	if owned {
+		return tx.Commit()
+	}
+	return nil
 }
 
 // batchMixed handles batches with different op modes via sequential per-op processing.
 func (k *SqlKV) batchMixed(ctx context.Context, qb *queryBuilder, section string, ops []BatchOp) error {
-	tx, err := k.db.BeginTx(ctx, nil)
+	tx, owned, err := k.borrowOrBeginTx(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return err
 	}
-	defer tx.Rollback() //nolint:errcheck
+	if owned {
+		defer tx.Rollback() //nolint:errcheck
+	}
 
 	for i, op := range ops {
 		keyPath := getKeyPath(section, op.Key)
@@ -639,7 +673,10 @@ func (k *SqlKV) batchMixed(ctx context.Context, qb *queryBuilder, section string
 		}
 	}
 
-	return tx.Commit()
+	if owned {
+		return tx.Commit()
+	}
+	return nil
 }
 
 func keyExistsTx(ctx context.Context, tx *sql.Tx, qb *queryBuilder, keyPath string) (bool, error) {
@@ -671,11 +708,13 @@ func hasDuplicateKeys(ops []BatchOp) bool {
 // batchDelete handles all-Delete batches in a single transaction, chunking to
 // stay within dialect parameter limits (e.g. SQLite's 999).
 func (k *SqlKV) batchDelete(ctx context.Context, qb *queryBuilder, section string, ops []BatchOp) error {
-	tx, err := k.db.BeginTx(ctx, nil)
+	tx, owned, err := k.borrowOrBeginTx(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return err
 	}
-	defer tx.Rollback() //nolint:errcheck
+	if owned {
+		defer tx.Rollback() //nolint:errcheck
+	}
 
 	maxKeys := batchDeleteMaxKeys(k.dialect)
 	for start := 0; start < len(ops); start += maxKeys {
@@ -693,7 +732,10 @@ func (k *SqlKV) batchDelete(ctx context.Context, qb *queryBuilder, section strin
 		}
 	}
 
-	return tx.Commit()
+	if owned {
+		return tx.Commit()
+	}
+	return nil
 }
 
 // batchDeleteMaxKeys returns the max keys per DELETE WHERE IN chunk for the dialect.

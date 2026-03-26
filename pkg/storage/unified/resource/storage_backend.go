@@ -1931,7 +1931,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		// Fill in legacy columns on the resource_history rows that were just inserted.
-		if b.rvManager != nil {
+		if rvManagerDB != nil {
 			for _, p := range pending {
 				microRV := rvmanager.RVFromBulkSnowflake(p.dataKey.ResourceVersion)
 				generation := p.obj.GetGeneration()
@@ -1945,7 +1945,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 					previousRV = lastMicroRV[nameKey]
 				}
 
-				if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, b.rvManager.DB(), p.dataKey, microRV, previousRV, generation); err != nil {
+				if err := b.dataStore.updateLegacyResourceHistoryBulk(ctx, rvManagerDB, p.dataKey, microRV, previousRV, generation); err != nil {
 					return fmt.Errorf("failed to update legacy resource_history for bulk: %w", err)
 				}
 				lastMicroRV[nameKey] = microRV
@@ -2054,9 +2054,10 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		// Update seenCreates only after all validation passes, so a rejected
 		// item doesn't corrupt the duplicate-detection state.
 		createID := req.Key.Group + "/" + req.Key.Resource + "/" + req.Key.Namespace + "/" + req.Key.Name
-		if action == DataActionCreated {
+		switch action {
+		case DataActionCreated:
 			seenCreates[createID] = true
-		} else if action == DataActionDeleted {
+		case DataActionDeleted:
 			delete(seenCreates, createID)
 		}
 
