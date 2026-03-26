@@ -288,8 +288,13 @@ func (r JobResourceResult) Warning() error {
 	return r.warning
 }
 
-// WarningReason returns the reason for this result. An explicit reason (set via
-// WithReason) takes precedence over the reason derived from classifyWarning.
+// Reason returns the explicit reason set via WithReason, or "" if none.
+func (r JobResourceResult) Reason() string {
+	return r.reason
+}
+
+// WarningReason returns the warning reason derived from classifyWarning,
+// or the explicit reason if set via WithReason.
 func (r JobResourceResult) WarningReason() string {
 	if r.reason != "" {
 		return r.reason
