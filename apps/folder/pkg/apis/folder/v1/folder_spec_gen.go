@@ -1,6 +1,6 @@
 // Code generated - EDITING IS FUTILE. DO NOT EDIT.
 
-package v1beta1
+package v1
 
 // +k8s:openapi-gen=true
 type FolderSpec struct {
@@ -15,5 +15,5 @@ func NewFolderSpec() *FolderSpec {
 
 // OpenAPIModelName returns the OpenAPI model name for FolderSpec.
 func (FolderSpec) OpenAPIModelName() string {
-	return "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1beta1.FolderSpec"
+	return "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderSpec"
 }

@@ -25,7 +25,7 @@ import (
 	k8srest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -76,7 +76,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			EnableFeatureToggles: []string{},
 		})
 		disco := helper.NewDiscoveryClient()
-		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1beta1")
+		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1")
 		require.NoError(t, err)
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
@@ -85,7 +85,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
 			"apiVersion": "v1",
-			"groupVersion": "folder.grafana.app/v1beta1",
+			"groupVersion": "folder.grafana.app/v1",
 			"resources": [
 				{
 					"name": "folders",
@@ -351,7 +351,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		idStr := fmt.Sprintf("%d", id)
 
 		expectedResult := `{
-			"apiVersion": "folder.grafana.app/v1beta1",
+			"apiVersion": "folder.grafana.app/v1",
 			"kind": "Folder",
 			"metadata": {
 			  "creationTimestamp": "${creationTimestamp}",
@@ -2154,7 +2154,7 @@ func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T
 		resp := apis.DoRequest(helper, apis.RequestParams{
 			User:   client.Args.User,
 			Method: http.MethodGet,
-			Path:   fmt.Sprintf("/apis/folder.grafana.app/v1beta1/namespaces/%s/folders", client.Args.Namespace),
+			Path:   fmt.Sprintf("/apis/folder.grafana.app/v1/namespaces/%s/folders", client.Args.Namespace),
 		}, &map[string]interface{}{})
 		require.NotNil(t, resp.Response)
 		require.Equal(t, http.StatusOK, resp.Response.StatusCode)

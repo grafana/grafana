@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
@@ -20,7 +20,7 @@ func createUnmanagedFolder(t *testing.T, helper *common.ProvisioningTestHelper, 
 	t.Helper()
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
+			"apiVersion": "folder.grafana.app/v1",
 			"kind":       "Folder",
 			"metadata": map[string]interface{}{
 				"name":      name,
@@ -39,7 +39,7 @@ func createUnmanagedFolderWithParent(t *testing.T, helper *common.ProvisioningTe
 	t.Helper()
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": "folder.grafana.app/v1beta1",
+			"apiVersion": "folder.grafana.app/v1",
 			"kind":       "Folder",
 			"metadata": map[string]interface{}{
 				"name":      name,

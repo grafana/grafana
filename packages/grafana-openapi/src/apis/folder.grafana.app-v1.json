@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "description": "Grafana folders",
-    "title": "folder.grafana.app/v1beta1"
+    "title": "folder.grafana.app/v1"
   },
   "paths": {
     "/": {
@@ -151,7 +151,7 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
@@ -253,7 +253,7 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
@@ -400,7 +400,7 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
@@ -441,7 +441,7 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
@@ -528,7 +528,7 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
@@ -618,7 +618,7 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
@@ -724,7 +724,7 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
@@ -770,7 +770,7 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "FolderAccessInfo"
         }
       },
@@ -807,7 +807,7 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "FolderList"
         }
       },
@@ -844,7 +844,7 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "DescendantCounts"
         }
       },
@@ -881,7 +881,7 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "FolderInfoList"
         }
       },

@@ -2,12 +2,14 @@
   "openapi": "3.0.0",
   "info": {
     "description": "Grafana folders",
-    "title": "folder.grafana.app/v1beta1"
+    "title": "folder.grafana.app/v1"
   },
   "paths": {
-    "/": {
+    "/apis/folder.grafana.app/v1/": {
       "get": {
-        "tags": ["API Discovery"],
+        "tags": [
+          "API Discovery"
+        ],
         "description": "Describe the available kubernetes resources",
         "operationId": "getAPIResources",
         "responses": {
@@ -16,12 +18,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/APIResourceList"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/APIResourceList"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
                 }
               }
             }
@@ -29,9 +31,11 @@
         }
       }
     },
-    "/folders": {
+    "/apis/folder.grafana.app/v1/namespaces/{namespace}/folders": {
       "get": {
-        "tags": ["Folder"],
+        "tags": [
+          "Folder"
+        ],
         "description": "list objects of kind Folder",
         "operationId": "listFolder",
         "parameters": [
@@ -132,17 +136,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList"
                 }
               }
             }
@@ -151,12 +155,14 @@
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
       "post": {
-        "tags": ["Folder"],
+        "tags": [
+          "Folder"
+        ],
         "description": "create a Folder",
         "operationId": "createFolder",
         "parameters": [
@@ -192,12 +198,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Folder"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/Folder"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
               }
             }
           },
@@ -209,12 +215,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -224,12 +230,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -239,12 +245,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -253,12 +259,14 @@
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
       "delete": {
-        "tags": ["Folder"],
+        "tags": [
+          "Folder"
+        ],
         "description": "delete collection of Folder",
         "operationId": "deletecollectionFolder",
         "parameters": [
@@ -386,12 +394,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Status"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Status"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               }
             }
@@ -400,11 +408,21 @@
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
       "parameters": [
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
         {
           "name": "pretty",
           "in": "query",
@@ -416,9 +434,11 @@
         }
       ]
     },
-    "/folders/{name}": {
+    "/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{name}": {
       "get": {
-        "tags": ["Folder"],
+        "tags": [
+          "Folder"
+        ],
         "description": "read the specified Folder",
         "operationId": "getFolder",
         "responses": {
@@ -427,12 +447,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -441,12 +461,14 @@
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
       "put": {
-        "tags": ["Folder"],
+        "tags": [
+          "Folder"
+        ],
         "description": "replace the specified Folder",
         "operationId": "replaceFolder",
         "parameters": [
@@ -482,12 +504,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Folder"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/Folder"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
               }
             }
           },
@@ -499,12 +521,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -514,12 +536,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -528,12 +550,14 @@
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
       "delete": {
-        "tags": ["Folder"],
+        "tags": [
+          "Folder"
+        ],
         "description": "delete a Folder",
         "operationId": "deleteFolder",
         "parameters": [
@@ -589,12 +613,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Status"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Status"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               }
             }
@@ -604,12 +628,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Status"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Status"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
                 }
               }
             }
@@ -618,12 +642,14 @@
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
       "patch": {
-        "tags": ["Folder"],
+        "tags": [
+          "Folder"
+        ],
         "description": "partially update the specified Folder",
         "operationId": "updateFolder",
         "parameters": [
@@ -668,22 +694,22 @@
           "content": {
             "application/apply-patch+yaml": {
               "schema": {
-                "$ref": "#/components/schemas/Patch"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
               }
             },
             "application/json-patch+json": {
               "schema": {
-                "$ref": "#/components/schemas/Patch"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
               }
             },
             "application/merge-patch+json": {
               "schema": {
-                "$ref": "#/components/schemas/Patch"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
               }
             },
             "application/strategic-merge-patch+json": {
               "schema": {
-                "$ref": "#/components/schemas/Patch"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
               }
             }
           },
@@ -695,12 +721,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -710,12 +736,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               }
             }
@@ -724,7 +750,7 @@
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "Folder"
         }
       },
@@ -733,6 +759,16 @@
           "name": "name",
           "in": "path",
           "description": "name of the Folder",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
           "required": true,
           "schema": {
             "type": "string",
@@ -750,9 +786,11 @@
         }
       ]
     },
-    "/folders/{name}/access": {
+    "/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{name}/access": {
       "get": {
-        "tags": ["Folder"],
+        "tags": [
+          "Folder"
+        ],
         "description": "connect GET requests to access of Folder",
         "operationId": "getFolderAccess",
         "responses": {
@@ -761,7 +799,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderAccessInfo"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderAccessInfo"
                 }
               }
             }
@@ -770,7 +808,7 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "FolderAccessInfo"
         }
       },
@@ -784,12 +822,24 @@
             "type": "string",
             "uniqueItems": true
           }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
         }
       ]
     },
-    "/folders/{name}/children": {
+    "/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{name}/children": {
       "get": {
-        "tags": ["Folder"],
+        "tags": [
+          "Folder"
+        ],
         "description": "connect GET requests to children of Folder",
         "operationId": "getFolderChildren",
         "responses": {
@@ -798,7 +848,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList"
                 }
               }
             }
@@ -807,7 +857,7 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "FolderList"
         }
       },
@@ -821,12 +871,24 @@
             "type": "string",
             "uniqueItems": true
           }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
         }
       ]
     },
-    "/folders/{name}/counts": {
+    "/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{name}/counts": {
       "get": {
-        "tags": ["Folder"],
+        "tags": [
+          "Folder"
+        ],
         "description": "connect GET requests to counts of Folder",
         "operationId": "getFolderCounts",
         "responses": {
@@ -835,7 +897,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/DescendantCounts"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.DescendantCounts"
                 }
               }
             }
@@ -844,7 +906,7 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "DescendantCounts"
         }
       },
@@ -858,12 +920,24 @@
             "type": "string",
             "uniqueItems": true
           }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
         }
       ]
     },
-    "/folders/{name}/parents": {
+    "/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{name}/parents": {
       "get": {
-        "tags": ["Folder"],
+        "tags": [
+          "Folder"
+        ],
         "description": "connect GET requests to parents of Folder",
         "operationId": "getFolderParents",
         "responses": {
@@ -872,7 +946,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/FolderInfoList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfoList"
                 }
               }
             }
@@ -881,7 +955,7 @@
         "x-kubernetes-action": "connect",
         "x-kubernetes-group-version-kind": {
           "group": "folder.grafana.app",
-          "version": "v1beta1",
+          "version": "v1",
           "kind": "FolderInfoList"
         }
       },
@@ -895,15 +969,27 @@
             "type": "string",
             "uniqueItems": true
           }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
         }
       ]
     }
   },
   "components": {
     "schemas": {
-      "DescendantCounts": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.DescendantCounts": {
         "type": "object",
-        "required": ["counts"],
+        "required": [
+          "counts"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -915,7 +1001,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/ResourceStats"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.ResourceStats"
                 }
               ]
             }
@@ -938,9 +1024,12 @@
           }
         ]
       },
-      "Folder": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder": {
         "type": "object",
-        "required": ["metadata", "spec"],
+        "required": [
+          "metadata",
+          "spec"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -954,7 +1043,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/ObjectMeta"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
               }
             ]
           },
@@ -963,7 +1052,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/FolderSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderSpec"
               }
             ]
           }
@@ -981,10 +1070,15 @@
           }
         ]
       },
-      "FolderAccessInfo": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderAccessInfo": {
         "description": "Access control information for the current user",
         "type": "object",
-        "required": ["canSave", "canEdit", "canAdmin", "canDelete"],
+        "required": [
+          "canSave",
+          "canEdit",
+          "canAdmin",
+          "canDelete"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -1024,10 +1118,13 @@
           }
         ]
       },
-      "FolderInfo": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfo": {
         "description": "FolderInfo briefly describes a folder -- unlike a folder resource, this is a partial record of the folder metadata used for navigating parents and children",
         "type": "object",
-        "required": ["name", "title"],
+        "required": [
+          "name",
+          "title"
+        ],
         "properties": {
           "description": {
             "description": "The folder description",
@@ -1053,10 +1150,12 @@
           }
         }
       },
-      "FolderInfoList": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfoList": {
         "description": "FolderInfoList returns a list of folder references (parents or children) Unlike FolderList, each item is not a full k8s object",
         "type": "object",
-        "required": ["items"],
+        "required": [
+          "items"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -1068,11 +1167,13 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/FolderInfo"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderInfo"
                 }
               ]
             },
-            "x-kubernetes-list-map-keys": ["uid"],
+            "x-kubernetes-list-map-keys": [
+              "uid"
+            ],
             "x-kubernetes-list-type": "map"
           },
           "kind": {
@@ -1083,7 +1184,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/ListMeta"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
               }
             ]
           }
@@ -1101,9 +1202,12 @@
           }
         ]
       },
-      "FolderList": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderList": {
         "type": "object",
-        "required": ["metadata", "items"],
+        "required": [
+          "metadata",
+          "items"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -1115,7 +1219,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/Folder"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.Folder"
                 }
               ]
             }
@@ -1128,7 +1232,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/ListMeta"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
               }
             ]
           }
@@ -1146,9 +1250,11 @@
           }
         ]
       },
-      "FolderSpec": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.FolderSpec": {
         "type": "object",
-        "required": ["title"],
+        "required": [
+          "title"
+        ],
         "properties": {
           "description": {
             "type": "string"
@@ -1159,9 +1265,13 @@
           }
         }
       },
-      "ResourceStats": {
+      "com.github.grafana.grafana.apps.folder.pkg.apis.folder.v1.ResourceStats": {
         "type": "object",
-        "required": ["group", "resource", "count"],
+        "required": [
+          "group",
+          "resource",
+          "count"
+        ],
         "properties": {
           "count": {
             "type": "integer",
@@ -1178,10 +1288,16 @@
           }
         }
       },
-      "APIResource": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
         "type": "object",
-        "required": ["name", "singularName", "namespaced", "kind", "verbs"],
+        "required": [
+          "name",
+          "singularName",
+          "namespaced",
+          "kind",
+          "verbs"
+        ],
         "properties": {
           "categories": {
             "description": "categories is a list of the grouped resources this resource belongs to (e.g. 'all')",
@@ -1243,10 +1359,13 @@
           }
         }
       },
-      "APIResourceList": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList": {
         "description": "APIResourceList is a list of APIResource, it is used to expose the name of the resources supported in a specific group and version, and if the resource is namespaced.",
         "type": "object",
-        "required": ["groupVersion", "resources"],
+        "required": [
+          "groupVersion",
+          "resources"
+        ],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -1268,7 +1387,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/APIResource"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.APIResource"
                 }
               ]
             },
@@ -1276,7 +1395,7 @@
           }
         }
       },
-      "DeleteOptions": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions": {
         "description": "DeleteOptions may be provided when deleting an API object.",
         "type": "object",
         "properties": {
@@ -1314,7 +1433,7 @@
             "description": "Must be fulfilled before a deletion is carried out. If not possible, a 409 Conflict status will be returned.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/Preconditions"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Preconditions"
               }
             ]
           },
@@ -1324,11 +1443,11 @@
           }
         }
       },
-      "FieldsV1": {
-        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:<name>', where <name> is the name of a field in a struct, or key in a map 'v:<value>', where <value> is the exact json formatted value of a list item 'i:<index>', where <index> is position of a item in a list 'k:<keys>', where <keys> is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
+      "io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1": {
+        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map 'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item 'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list 'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
         "type": "object"
       },
-      "ListMeta": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta": {
         "description": "ListMeta describes metadata that synthetic resources must have, including lists and various status objects. A resource may have only one of {ObjectMeta, ListMeta}.",
         "type": "object",
         "properties": {
@@ -1351,7 +1470,7 @@
           }
         }
       },
-      "ManagedFieldsEntry": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsEntry": {
         "description": "ManagedFieldsEntry is a workflow-id, a FieldSet and the group version of the resource that the fieldset applies to.",
         "type": "object",
         "properties": {
@@ -1367,7 +1486,7 @@
             "description": "FieldsV1 holds the first JSON version format as described in the \"FieldsV1\" type.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/FieldsV1"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1"
               }
             ]
           },
@@ -1387,13 +1506,13 @@
             "description": "Time is the timestamp of when the ManagedFields entry was added. The timestamp will also be updated if a field is added, the manager changes any of the owned fields value or removes a field. The timestamp does not update when a field is removed from the entry because another manager took it over.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/Time"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
               }
             ]
           }
         }
       },
-      "ObjectMeta": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta": {
         "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects users must create.",
         "type": "object",
         "properties": {
@@ -1409,7 +1528,7 @@
             "description": "CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
             "allOf": [
               {
-                "$ref": "#/components/schemas/Time"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
               }
             ]
           },
@@ -1422,7 +1541,7 @@
             "description": "DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This field is set by the server when a graceful deletion is requested by the user, and is not directly settable by a client. The resource is expected to be deleted (no longer visible from resource lists, and not reachable by name) after the time in this field, once the finalizers list is empty. As long as the finalizers list contains items, deletion is blocked. Once the deletionTimestamp is set, this value may not be unset or be set further into the future, although it may be shortened or the resource may be deleted prior to this time. For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react by sending a graceful termination signal to the containers in the pod. After that 30 seconds, the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup, remove the pod from the API. In the presence of network partitions, this object may still exist after this timestamp, until an administrator or automated process can determine the resource is fully terminated. If not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
             "allOf": [
               {
-                "$ref": "#/components/schemas/Time"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Time"
               }
             ]
           },
@@ -1460,7 +1579,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/ManagedFieldsEntry"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ManagedFieldsEntry"
                 }
               ]
             },
@@ -1481,11 +1600,13 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/OwnerReference"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference"
                 }
               ]
             },
-            "x-kubernetes-list-map-keys": ["uid"],
+            "x-kubernetes-list-map-keys": [
+              "uid"
+            ],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "uid",
             "x-kubernetes-patch-strategy": "merge"
@@ -1504,10 +1625,15 @@
           }
         }
       },
-      "OwnerReference": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.OwnerReference": {
         "description": "OwnerReference contains enough information to let you identify an owning object. An owning object must be in the same namespace as the dependent, or be cluster-scoped, so there is no namespace field.",
         "type": "object",
-        "required": ["apiVersion", "kind", "name", "uid"],
+        "required": [
+          "apiVersion",
+          "kind",
+          "name",
+          "uid"
+        ],
         "properties": {
           "apiVersion": {
             "description": "API version of the referent.",
@@ -1540,11 +1666,11 @@
         },
         "x-kubernetes-map-type": "atomic"
       },
-      "Patch": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Patch": {
         "description": "Patch is provided to give a concrete name and type to the Kubernetes PATCH request body.",
         "type": "object"
       },
-      "Preconditions": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Preconditions": {
         "description": "Preconditions must be fulfilled before an operation (update, delete, etc.) is carried out.",
         "type": "object",
         "properties": {
@@ -1558,7 +1684,7 @@
           }
         }
       },
-      "Status": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Status": {
         "description": "Status is a return value for calls that don't return other objects.",
         "type": "object",
         "properties": {
@@ -1575,7 +1701,7 @@
             "description": "Extended data associated with the reason.  Each reason may define its own extended details. This field is optional and the data returned is not guaranteed to conform to any schema except that defined by the reason type.",
             "allOf": [
               {
-                "$ref": "#/components/schemas/StatusDetails"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails"
               }
             ]
           },
@@ -1592,7 +1718,7 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/ListMeta"
+                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
               }
             ]
           },
@@ -1606,7 +1732,7 @@
           }
         }
       },
-      "StatusCause": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause": {
         "description": "StatusCause provides more information about an api.Status failure, including cases when multiple errors are encountered.",
         "type": "object",
         "properties": {
@@ -1624,7 +1750,7 @@
           }
         }
       },
-      "StatusDetails": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.StatusDetails": {
         "description": "StatusDetails is a set of additional properties that MAY be set by the server to provide additional information about a response. The Reason field of a Status object defines what attributes will be set. Clients must ignore fields that do not match the defined type of each attribute, and should assume that any attribute may be empty, invalid, or under defined.",
         "type": "object",
         "properties": {
@@ -1635,7 +1761,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/StatusCause"
+                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.StatusCause"
                 }
               ]
             },
@@ -1664,7 +1790,7 @@
           }
         }
       },
-      "Time": {
+      "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
         "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
         "type": "string",
         "format": "date-time"
