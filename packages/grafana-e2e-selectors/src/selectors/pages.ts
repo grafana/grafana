@@ -205,8 +205,8 @@ export const versionedPages = {
         timeRange: {
           select: {
             '12.4.0': 'data-testid Dashboard Conditional Rendering Time range select',
-          }
-        }
+          },
+        },
       },
     },
     DashNav: {
