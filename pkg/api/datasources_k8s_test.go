@@ -35,8 +35,12 @@ var _ datasource.ConnectionClient = (*mockConnectionClient)(nil)
 
 // implements grafanaapiserver.DirectRestConfigProvider
 type mockDirectRestConfigProvider struct {
-	transport http.RoundTripper
-	host      string
+	transport         http.RoundTripper
+	host              string
+	lastServedPath    string
+	lastServedMethod  string
+	lastServedQuery   string
+	lastServedHeaders http.Header
 }
 
 func (m *mockDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
@@ -46,7 +50,14 @@ func (m *mockDirectRestConfigProvider) GetDirectRestConfig(c *contextmodel.ReqCo
 	}
 }
 
-func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {}
+func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
+	m.lastServedPath = r.URL.Path
+	m.lastServedMethod = r.Method
+	m.lastServedQuery = r.URL.RawQuery
+	m.lastServedHeaders = r.Header.Clone()
+	w.WriteHeader(http.StatusOK)
+}
+
 func (m *mockDirectRestConfigProvider) IsReady() bool                                            { return true }
 
 type mockRoundTripper struct {
@@ -146,7 +157,7 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 				namespacer:           func(int64) string { return "default" },
 				DataSourcesService:   &dataSourcesServiceMock{},
 			}
-			hs.promRegister, hs.dsConfigHandlerRequestsDuration = setupDsConfigHandlerMetrics()
+			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
 			sc := setupScenarioContext(t, "/api/datasources/uid/test-uid")
 			handler := hs.getK8sDataSourceByUIDHandler()
@@ -162,6 +173,98 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 				var body map[string]any
 				require.NoError(t, json.Unmarshal(sc.resp.Body.Bytes(), &body))
 				assert.Contains(t, body["message"], tt.expectedMessage)
+			}
+		})
+	}
+}
+
+func TestPluginTypeFromConnection(t *testing.T) {
+	assert.Equal(t, "prometheus", pluginTypeFromConnection(queryV0.DataSourceConnection{Plugin: "prometheus"}))
+	assert.Equal(t, "loki", pluginTypeFromConnection(queryV0.DataSourceConnection{APIGroup: "loki.datasource.grafana.app"}))
+	assert.Equal(t, "grafana-testdata-datasource", pluginTypeFromConnection(queryV0.DataSourceConnection{APIGroup: "grafana-testdata-datasource.datasource.grafana.app"}))
+}
+
+func TestCallK8sDataSourceHealthHandler(t *testing.T) {
+	tests := []struct {
+		name                string
+		dsUID               string
+		connectionResult    *queryV0.DataSourceConnectionList
+		connectionErr       error
+		expectedCode        int
+		expectedMessage     string
+		expectedForwardPath string
+	}{
+		{
+			name:            "invalid UID returns 400",
+			dsUID:           "not a valid uid!!",
+			expectedCode:    http.StatusBadRequest,
+			expectedMessage: "UID is invalid",
+		},
+		{
+			name:            "GetConnectionByUID not found returns 404",
+			dsUID:           "test-uid",
+			connectionErr:   errors.New("datasource connection not found"),
+			expectedCode:    http.StatusNotFound,
+			expectedMessage: "Data source not found",
+		},
+		{
+			name:            "GetConnectionByUID generic error returns 500",
+			dsUID:           "test-uid",
+			connectionErr:   errors.New("some internal error"),
+			expectedCode:    http.StatusInternalServerError,
+			expectedMessage: "Failed to lookup datasource connection",
+		},
+		{
+			name:  "duplicate connections returns 409",
+			dsUID: "test-uid",
+			connectionResult: &queryV0.DataSourceConnectionList{
+				Items: []queryV0.DataSourceConnection{{Name: "a"}, {Name: "b"}},
+			},
+			expectedCode:    http.StatusConflict,
+			expectedMessage: "duplicate datasource connections found with this name",
+		},
+		{
+			name:  "valid connection forwards to k8s health path",
+			dsUID: "test-uid",
+			connectionResult: &queryV0.DataSourceConnectionList{
+				Items: []queryV0.DataSourceConnection{
+					{Name: "test-uid", APIGroup: "prometheus.datasource.grafana.app", APIVersion: "v0alpha1", Plugin: "prometheus"},
+				},
+			},
+			expectedCode:        http.StatusOK,
+			expectedForwardPath: "/apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-uid/health",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockProvider := &mockDirectRestConfigProvider{host: "http://localhost"}
+			hs := &HTTPServer{
+				Cfg:                  setting.NewCfg(),
+				Features:             featuremgmt.WithFeatures(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect),
+				dsConnectionClient:   &mockConnectionClient{result: tt.connectionResult, err: tt.connectionErr},
+				clientConfigProvider: mockProvider,
+				namespacer:           func(int64) string { return "default" },
+			}
+			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
+
+			sc := setupScenarioContext(t, "/api/datasources/uid/"+tt.dsUID+"/health")
+			handler := hs.callK8sDataSourceHealthHandler()
+			sc.m.Get("/api/datasources/uid/:uid/health", func(c *contextmodel.ReqContext) {
+				c.Req = web.SetURLParams(c.Req, map[string]string{":uid": tt.dsUID})
+				c.SignedInUser = &user.SignedInUser{OrgID: 1}
+				handler.(func(*contextmodel.ReqContext))(c)
+			})
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			assert.Equal(t, tt.expectedCode, sc.resp.Code)
+			if tt.expectedMessage != "" {
+				var body map[string]any
+				require.NoError(t, json.Unmarshal(sc.resp.Body.Bytes(), &body))
+				assert.Contains(t, body["message"], tt.expectedMessage)
+			}
+			if tt.expectedForwardPath != "" {
+				assert.Equal(t, tt.expectedForwardPath, mockProvider.lastServedPath)
 			}
 		})
 	}

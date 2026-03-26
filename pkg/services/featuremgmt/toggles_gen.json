@@ -1689,6 +1689,19 @@
     },
     {
       "metadata": {
+        "name": "datasourcesApiServerEnableHealthEndpointRedirect",
+        "resourceVersion": "1774458258048",
+        "creationTimestamp": "2026-03-25T17:04:18Z"
+      },
+      "spec": {
+        "description": "Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasourcesApiServerEnableResourceEndpoint",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2026-02-18T17:05:38Z"
@@ -1708,6 +1721,20 @@
       },
       "spec": {
         "description": "Send Datsource resource requests to K8s /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/resources/{path} routes.",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasourcesApiserverEnableHealthEndpointRedirect",
+        "resourceVersion": "1774439650893",
+        "creationTimestamp": "2026-03-25T11:54:10Z",
+        "deletionTimestamp": "2026-03-25T17:04:18Z"
+      },
+      "spec": {
+        "description": "Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-datasources-core-services",
         "expression": "false"

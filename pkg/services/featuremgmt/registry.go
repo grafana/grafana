@@ -2708,6 +2708,14 @@ var (
 			FrontendOnly:    true,
 		},
 		{
+			Name:            "datasourcesApiServerEnableHealthEndpointRedirect",
+			Description:     "Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
+			RequiresRestart: false,
+			Expression:      "false",
+		},
+		{
 			Name:         "flameGraphWithCallTree",
 			Description:  "Enables the new Flame Graph UI containing the Call Tree view",
 			Stage:        FeatureStageExperimental,

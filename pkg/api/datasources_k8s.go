@@ -21,8 +21,60 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func (hs *HTTPServer) callK8sDataSourceHealthHandler() web.Handler {
+	return func(c *contextmodel.ReqContext) {
+		if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect) {
+			hs.dsEndpointRedirects.WithLabelValues("health", "", "legacy").Inc()
+			if res := hs.CheckDatasourceHealthWithUID(c); res != nil {
+				res.WriteTo(c)
+			}
+			return
+		}
+
+		dsUID := web.Params(c.Req)[":uid"]
+		if !util.IsValidShortUID(dsUID) {
+			response.Error(http.StatusBadRequest, "UID is invalid", nil).WriteTo(c)
+			return
+		}
+
+		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, dsUID)
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				response.Error(http.StatusNotFound, "Data source not found", nil).WriteTo(c)
+				return
+			}
+			response.Error(http.StatusInternalServerError, "Failed to lookup datasource connection", err).WriteTo(c)
+			return
+		}
+
+		if len(conns.Items) > 1 {
+			response.Error(http.StatusConflict, "duplicate datasource connections found with this name", nil).WriteTo(c)
+			return
+		}
+
+		conn := conns.Items[0]
+		namespace := hs.namespacer(c.GetOrgID())
+		c.Req.URL.Path = fmt.Sprintf("/apis/%s/%s/namespaces/%s/datasources/%s/health", conn.APIGroup, conn.APIVersion, namespace, conn.Name)
+		hs.dsEndpointRedirects.WithLabelValues("health", pluginTypeFromConnection(conn), "remote").Inc()
+		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
+	}
+}
+
+// pluginTypeFromConnection extracts the plugin type string from a DataSourceConnection.
+// Falls back to parsing the APIGroup (e.g. "prometheus.datasource.grafana.app" → "prometheus")
+// if the Plugin field is not set.
+func pluginTypeFromConnection(conn datasourceV0.DataSourceConnection) string {
+	if conn.Plugin != "" {
+		return conn.Plugin
+	}
+	// APIGroup format: "<plugin-type>.datasource.grafana.app"
+	parts := strings.SplitN(conn.APIGroup, ".", 2)
+	return parts[0]
+}
 
 // getK8sDataSourceByUIDHandler returns a handler that redirects GET /api/datasources/uid/:uid
 // to /apis/<plugin-type>.datasource.grafana.app/v0alpha1/namespaces/<org>/datasources/{uid} when the feature toggle is enabled.
