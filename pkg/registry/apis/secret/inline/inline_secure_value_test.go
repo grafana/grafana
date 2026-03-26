@@ -563,4 +563,52 @@ func TestIntegration_InlineSecureValue_DeleteWhenOwnedByResource(t *testing.T) {
 		require.ErrorIs(t, err, contracts.ErrSecureValueNotFound)
 		require.Nil(t, sv)
 	})
+
+	t.Run("delete all values from an owner", func(t *testing.T) {
+		t.Parallel()
+
+		tu := testutils.Setup(t)
+		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{
+			"securevalues:read": {"securevalues:uid:*"},
+		})
+
+		createdSv1, err := tu.CreateSv(ctx, func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "sv1"
+			cfg.Sv.Namespace = defaultNs
+			cfg.Sv.OwnerReferences = []metav1.OwnerReference{owner.ToOwnerReference()}
+		})
+		require.NoError(t, err)
+		require.NotNil(t, createdSv1)
+
+		createdSv1, err = tu.CreateSv(ctx, func(cfg *testutils.CreateSvConfig) {
+			cfg.Sv.Name = "sv2"
+			cfg.Sv.Namespace = defaultNs
+			cfg.Sv.OwnerReferences = nil // no owner
+		})
+		require.NoError(t, err)
+		require.NotNil(t, createdSv1)
+
+		names, err := tu.ListSv(ctx, xkube.Namespace(defaultNs))
+		require.NoError(t, err)
+		require.Equal(t, []string{"sv1", "sv2"}, names)
+
+		// Use the helper function
+		svc := inline.NewLocalInlineSecureValueService(tracer, tu.SecureValueService, nil)
+
+		// Called once before migrating a datasource
+		// This will ensure we cleanup the previous values
+		err = svc.DeleteWhenOwnedByResource(ctx, common.ObjectReference{
+			APIGroup:   owner.APIGroup,
+			APIVersion: owner.APIVersion,
+			Namespace:  defaultNs,
+			Kind:       owner.Kind,
+			Name:       "*",
+			UID:        "*",
+		}, "*") // remove everything from this owner
+		require.NoError(t, err)
+
+		names, err = tu.ListSv(ctx, xkube.Namespace(defaultNs))
+		require.NoError(t, err)
+		require.Equal(t, []string{"sv2"}, names) // sv1 was removed
+	})
 }
