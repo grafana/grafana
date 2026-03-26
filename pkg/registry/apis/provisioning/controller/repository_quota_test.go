@@ -11,8 +11,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v1beta1"
 )
 
 // MockRepositoryNamespaceLister is a mock implementation of listers.RepositoryNamespaceLister

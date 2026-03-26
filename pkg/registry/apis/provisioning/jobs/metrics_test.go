@@ -4,13 +4,14 @@ import (
 	"errors"
 	"testing"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // Shared registry for all tests to work with sync.Once singleton pattern

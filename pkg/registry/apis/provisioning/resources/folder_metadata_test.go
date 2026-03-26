@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"testing"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 func TestIsFolderMetadataFile(t *testing.T) {

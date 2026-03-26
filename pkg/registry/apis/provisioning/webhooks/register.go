@@ -9,7 +9,9 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/prometheus/client_golang/prometheus"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -18,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // WebhookExtraBuilder is a function that returns an ExtraBuilder.

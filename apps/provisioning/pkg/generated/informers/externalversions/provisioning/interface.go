@@ -6,13 +6,13 @@ package provisioning
 
 import (
 	internalinterfaces "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/internalinterfaces"
-	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
+	v1beta1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v1beta1"
 )
 
 // Interface provides access to each of this group's versions.
 type Interface interface {
-	// V0alpha1 provides access to shared informers for resources in V0alpha1.
-	V0alpha1() v0alpha1.Interface
+	// V1beta1 provides access to shared informers for resources in V1beta1.
+	V1beta1() v1beta1.Interface
 }
 
 type group struct {
@@ -26,7 +26,7 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &group{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// V0alpha1 returns a new v0alpha1.Interface.
-func (g *group) V0alpha1() v0alpha1.Interface {
-	return v0alpha1.New(g.factory, g.namespace, g.tweakListOptions)
+// V1beta1 returns a new v1beta1.Interface.
+func (g *group) V1beta1() v1beta1.Interface {
+	return v1beta1.New(g.factory, g.namespace, g.tweakListOptions)
 }

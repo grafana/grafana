@@ -3,9 +3,10 @@ package sync
 import (
 	"testing"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/require"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 func TestManagedResourceIndex(t *testing.T) {

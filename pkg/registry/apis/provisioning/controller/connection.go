@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -14,13 +13,15 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
+	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v1beta1"
+	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v1beta1"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"
@@ -43,7 +44,7 @@ type ConnectionStatusPatcher interface {
 
 // ConnectionController controls Connection resources.
 type ConnectionController struct {
-	client     client.ProvisioningV0alpha1Interface
+	client     client.ProvisioningV1beta1Interface
 	connLister listers.ConnectionLister
 	connSynced cache.InformerSynced
 	logger     logging.Logger
@@ -63,7 +64,7 @@ type ConnectionController struct {
 
 // NewConnectionController creates a new ConnectionController.
 func NewConnectionController(
-	provisioningClient client.ProvisioningV0alpha1Interface,
+	provisioningClient client.ProvisioningV1beta1Interface,
 	connInformer informer.ConnectionInformer,
 	statusPatcher ConnectionStatusPatcher,
 	healthChecker *ConnectionHealthChecker,

@@ -6,13 +6,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	provisioningapi "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	provisioningapi "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 func TestCheckQuota(t *testing.T) {

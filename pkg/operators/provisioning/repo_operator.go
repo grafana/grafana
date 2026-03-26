@@ -9,10 +9,11 @@ import (
 	"syscall"
 	"time"
 
+	"k8s.io/client-go/tools/cache"
+
 	"github.com/grafana/grafana-app-sdk/logging"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -60,7 +61,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 	}
 
 	resourceLister := resources.NewResourceLister(unified)
-	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), 30*time.Second, deps.Registerer)
+	jobs, err := jobs.NewJobStore(provisioningClient.ProvisioningV1beta1(), 30*time.Second, deps.Registerer)
 	if err != nil {
 		return fmt.Errorf("create API client job store: %w", err)
 	}
@@ -72,7 +73,7 @@ func RunRepoController(deps server.OperatorDependencies) error {
 
 	allowImageRendering := controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("allow_image_rendering").MustBool(false)
 	validator := repository.NewValidator(allowImageRendering, repoFactory)
-	statusPatcher := appcontroller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
+	statusPatcher := appcontroller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV1beta1())
 	// Health checker uses basic validation only - no need to validate against existing repositories
 	// since the repository already passed admission validation when it was created/updated.
 	// TODO: Consider adding ExistingRepositoriesValidator for reconciliation to detect conflicts
@@ -99,14 +100,14 @@ func RunRepoController(deps server.OperatorDependencies) error {
 		return fmt.Errorf("failed to get quota getter: %w", err)
 	}
 
-	repoInformer := informerFactory.Provisioning().V0alpha1().Repositories()
+	repoInformer := informerFactory.Provisioning().V1beta1().Repositories()
 	clients, err := controllerCfg.Clients()
 	if err != nil {
 		return fmt.Errorf("failed to get clients: %w", err)
 	}
 
 	controller, err := controller.NewRepositoryController(
-		provisioningClient.ProvisioningV0alpha1(),
+		provisioningClient.ProvisioningV1beta1(),
 		repoInformer,
 		repoFactory,
 		connectionFactory,

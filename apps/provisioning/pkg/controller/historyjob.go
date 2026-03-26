@@ -10,9 +10,9 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
+	informer "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions/provisioning/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -22,14 +22,14 @@ const (
 
 // HistoryJobController manages the cleanup of old HistoryJob entries.
 type HistoryJobController struct {
-	client         client.ProvisioningV0alpha1Interface
+	client         client.ProvisioningV1beta1Interface
 	logger         logging.Logger
 	expirationTime time.Duration
 }
 
 // NewHistoryJobController creates a new HistoryJobController.
 func NewHistoryJobController(
-	provisioningClient client.ProvisioningV0alpha1Interface,
+	provisioningClient client.ProvisioningV1beta1Interface,
 	historyJobInformer informer.HistoricJobInformer,
 	expirationTime time.Duration,
 ) (*HistoryJobController, error) {

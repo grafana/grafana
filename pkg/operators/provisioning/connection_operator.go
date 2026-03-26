@@ -8,8 +8,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/grafana/grafana-app-sdk/logging"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
@@ -51,8 +52,8 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 		controllerCfg.ResyncInterval(),
 	)
 
-	statusPatcher := appcontroller.NewConnectionStatusPatcher(provisioningClient.ProvisioningV0alpha1())
-	connInformer := informerFactory.Provisioning().V0alpha1().Connections()
+	statusPatcher := appcontroller.NewConnectionStatusPatcher(provisioningClient.ProvisioningV1beta1())
+	connInformer := informerFactory.Provisioning().V1beta1().Connections()
 
 	// Setup connection factory and tester
 	connectionFactory, err := controllerCfg.ConnectionFactory()
@@ -66,7 +67,7 @@ func RunConnectionController(deps server.OperatorDependencies) error {
 	}
 
 	connController, err := controller.NewConnectionController(
-		provisioningClient.ProvisioningV0alpha1(),
+		provisioningClient.ProvisioningV1beta1(),
 		connInformer,
 		statusPatcher,
 		controller.NewConnectionHealthChecker(

@@ -6,8 +6,8 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
 )
 
 // HistoryWriter stores completed jobs
@@ -19,11 +19,11 @@ type HistoryWriter interface {
 }
 
 type apiClientHistoryWriter struct {
-	client client.ProvisioningV0alpha1Interface
+	client client.ProvisioningV1beta1Interface
 }
 
 // NewAPIClientHistoryWriter creates a HistoryWriter backed by the provisioning API client.
-func NewAPIClientHistoryWriter(provisioningClient client.ProvisioningV0alpha1Interface) HistoryWriter {
+func NewAPIClientHistoryWriter(provisioningClient client.ProvisioningV1beta1Interface) HistoryWriter {
 	return &apiClientHistoryWriter{
 		client: provisioningClient,
 	}

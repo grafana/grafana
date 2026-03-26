@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -15,48 +14,51 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller/mocks"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
-	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration/provisioning/v0alpha1"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
-	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/applyconfiguration/provisioning/v1beta1"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
+	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-type mockProvisioningV0alpha1Interface struct {
+type mockProvisioningV1beta1Interface struct {
 	repositoriesFunc func(namespace string) client.RepositoryInterface
 	connectionsFunc  func(namespace string) client.ConnectionInterface
 }
 
-func (m mockProvisioningV0alpha1Interface) RESTClient() rest.Interface {
+func (m mockProvisioningV1beta1Interface) RESTClient() rest.Interface {
 	panic("not needed for testing")
 }
 
-func (m mockProvisioningV0alpha1Interface) HistoricJobs(namespace string) client.HistoricJobInterface {
+func (m mockProvisioningV1beta1Interface) HistoricJobs(namespace string) client.HistoricJobInterface {
 	panic("not needed for testing")
 }
 
-func (m mockProvisioningV0alpha1Interface) Jobs(namespace string) client.JobInterface {
+func (m mockProvisioningV1beta1Interface) Jobs(namespace string) client.JobInterface {
 	panic("not needed for testing")
 }
 
-func (m mockProvisioningV0alpha1Interface) Connections(namespace string) client.ConnectionInterface {
+func (m mockProvisioningV1beta1Interface) Connections(namespace string) client.ConnectionInterface {
 	if m.connectionsFunc != nil {
 		return m.connectionsFunc(namespace)
 	}
 	panic("not needed for testing")
 }
 
-func (m mockProvisioningV0alpha1Interface) Repositories(namespace string) client.RepositoryInterface {
+func (m mockProvisioningV1beta1Interface) Repositories(namespace string) client.RepositoryInterface {
 	if m.repositoriesFunc != nil {
 		return m.repositoriesFunc(namespace)
 	}
@@ -166,9 +168,9 @@ func (m mockConnectionInterface) ApplyStatus(_ context.Context, _ *provisioningv
 }
 
 var (
-	_ client.ProvisioningV0alpha1Interface = (*mockProvisioningV0alpha1Interface)(nil)
-	_ client.RepositoryInterface           = (*mockRepoInterface)(nil)
-	_ client.ConnectionInterface           = (*mockConnectionInterface)(nil)
+	_ client.ProvisioningV1beta1Interface = (*mockProvisioningV1beta1Interface)(nil)
+	_ client.RepositoryInterface          = (*mockRepoInterface)(nil)
+	_ client.ConnectionInterface          = (*mockConnectionInterface)(nil)
 )
 
 func TestRepositoryController_handleDelete(t *testing.T) {
@@ -176,7 +178,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 		name          string
 		repoFactory   repository.Factory
 		finalizer     finalizerProcessor
-		client        client.ProvisioningV0alpha1Interface
+		client        client.ProvisioningV1beta1Interface
 		statusPatcher StatusPatcher
 		repo          *provisioning.Repository
 		expectedErr   string
@@ -217,13 +219,13 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return f
 			}(),
-			client: func() client.ProvisioningV0alpha1Interface {
+			client: func() client.ProvisioningV1beta1Interface {
 				repo := &mockRepoInterface{
 					patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *provisioning.Repository, err error) {
 						return &provisioning.Repository{}, nil
 					},
 				}
-				c := &mockProvisioningV0alpha1Interface{
+				c := &mockProvisioningV1beta1Interface{
 					repositoriesFunc: func(namespace string) client.RepositoryInterface {
 						return repo
 					},
@@ -332,13 +334,13 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 
 				return f
 			}(),
-			client: func() client.ProvisioningV0alpha1Interface {
+			client: func() client.ProvisioningV1beta1Interface {
 				repo := &mockRepoInterface{
 					patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (result *provisioning.Repository, err error) {
 						return &provisioning.Repository{}, assert.AnError
 					},
 				}
-				c := &mockProvisioningV0alpha1Interface{
+				c := &mockProvisioningV1beta1Interface{
 					repositoriesFunc: func(namespace string) client.RepositoryInterface {
 						return repo
 					},
@@ -1103,7 +1105,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	connObj := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace},
 	}
-	provClient := &mockProvisioningV0alpha1Interface{
+	provClient := &mockProvisioningV1beta1Interface{
 		connectionsFunc: func(_ string) client.ConnectionInterface {
 			return mockConnectionInterface{
 				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions) (*provisioning.Connection, error) {

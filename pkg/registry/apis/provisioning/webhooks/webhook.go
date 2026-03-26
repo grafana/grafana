@@ -14,14 +14,15 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks/pullrequest"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type WebhookRepository interface {

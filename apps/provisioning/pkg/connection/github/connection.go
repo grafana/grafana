@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"

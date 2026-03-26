@@ -3,7 +3,7 @@ package extras
 import (
 	"github.com/prometheus/client_golang/prometheus"
 
-	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"

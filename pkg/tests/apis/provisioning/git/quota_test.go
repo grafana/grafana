@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
 func TestIntegrationProvisioning_IncrementalGitQuota(t *testing.T) {

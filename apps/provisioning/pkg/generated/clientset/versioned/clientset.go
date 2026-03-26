@@ -8,7 +8,7 @@ import (
 	fmt "fmt"
 	http "net/http"
 
-	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	provisioningv1beta1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -16,18 +16,18 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	ProvisioningV0alpha1() provisioningv0alpha1.ProvisioningV0alpha1Interface
+	ProvisioningV1beta1() provisioningv1beta1.ProvisioningV1beta1Interface
 }
 
 // Clientset contains the clients for groups.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	provisioningV0alpha1 *provisioningv0alpha1.ProvisioningV0alpha1Client
+	provisioningV1beta1 *provisioningv1beta1.ProvisioningV1beta1Client
 }
 
-// ProvisioningV0alpha1 retrieves the ProvisioningV0alpha1Client
-func (c *Clientset) ProvisioningV0alpha1() provisioningv0alpha1.ProvisioningV0alpha1Interface {
-	return c.provisioningV0alpha1
+// ProvisioningV1beta1 retrieves the ProvisioningV1beta1Client
+func (c *Clientset) ProvisioningV1beta1() provisioningv1beta1.ProvisioningV1beta1Interface {
+	return c.provisioningV1beta1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -74,7 +74,7 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 
 	var cs Clientset
 	var err error
-	cs.provisioningV0alpha1, err = provisioningv0alpha1.NewForConfigAndClient(&configShallowCopy, httpClient)
+	cs.provisioningV1beta1, err = provisioningv1beta1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.provisioningV0alpha1 = provisioningv0alpha1.New(c)
+	cs.provisioningV1beta1 = provisioningv1beta1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

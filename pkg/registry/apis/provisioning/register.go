@@ -28,11 +28,11 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	appadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	clientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
-	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v1beta1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
@@ -122,7 +122,7 @@ type APIBuilder struct {
 	unified           resource.ResourceClient
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
-	client            client.ProvisioningV0alpha1Interface
+	client            client.ProvisioningV1beta1Interface
 	access            auth.AccessChecker
 	accessWithAdmin   auth.AccessChecker
 	accessWithEditor  auth.AccessChecker
@@ -315,7 +315,7 @@ func RegisterAPIService(
 	builder, err := NewAPIBuilder(
 		schema.GroupVersion{
 			Group:   provisioning.GROUP,
-			Version: provisioning.VERSION, // v0alpha1
+			Version: "v0alpha1",
 		},
 		true,                   // isPreferredVersion
 		cfg.DisableControllers, // onlyApiServer
@@ -350,7 +350,7 @@ func RegisterAPIService(
 	v1beta1Builder, err := NewAPIBuilder(
 		schema.GroupVersion{
 			Group:   provisioning.GROUP,
-			Version: "v1beta1",
+			Version: provisioning.VERSION,
 		},
 		false, // isPreferredVersion
 		true,  // onlyApiServer
@@ -630,7 +630,7 @@ func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
 }
 
-func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
+func (b *APIBuilder) GetClient() client.ProvisioningV1beta1Interface {
 	return b.client
 }
 
@@ -828,7 +828,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
-			b.client = c.ProvisioningV0alpha1()
+			b.client = c.ProvisioningV1beta1()
 
 			// Initialize the API client-based job store
 			b.jobs, err = jobs.NewJobStore(b.client, 30*time.Second, b.registry)
@@ -851,9 +851,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Informer with resync interval used for health check and reconciliation
 			informerFactoryResyncInterval := 60 * time.Second
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, informerFactoryResyncInterval)
-			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			jobInformer := sharedInformerFactory.Provisioning().V0alpha1().Jobs()
-			connInformer := sharedInformerFactory.Provisioning().V0alpha1().Connections()
+			repoInformer := sharedInformerFactory.Provisioning().V1beta1().Repositories()
+			jobInformer := sharedInformerFactory.Provisioning().V1beta1().Jobs()
+			connInformer := sharedInformerFactory.Provisioning().V1beta1().Connections()
 			go repoInformer.Informer().Run(postStartHookCtx.Done())
 			go jobInformer.Informer().Run(postStartHookCtx.Done())
 			go connInformer.Informer().Run(postStartHookCtx.Done())
@@ -1038,7 +1038,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				// Separate informer factory for HistoryJob cleanup with resync interval
 				historyJobExpiration := 10 * time.Minute
 				historyJobInformerFactory := informers.NewSharedInformerFactory(c, historyJobExpiration)
-				historyJobInformer := historyJobInformerFactory.Provisioning().V0alpha1().HistoricJobs()
+				historyJobInformer := historyJobInformerFactory.Provisioning().V1beta1().HistoricJobs()
 				go historyJobInformer.Informer().Run(postStartHookCtx.Done())
 				_, err = appcontroller.NewHistoryJobController(
 					b.GetClient(),
@@ -1058,10 +1058,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 }
 
 func (b *APIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	if b.gv.Version == "v1beta1" {
+	if b.gv.Version == "v1alpha1" {
 		return func(rc common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 			defs := provisioning.GetOpenAPIDefinitions(rc)
-			return ReplaceOpenAPIVersion(defs, "provisioning", "v0alpha1", "v1beta1")
+			return ReplaceOpenAPIVersion(defs, "provisioning", "v1beta1", "v0alpha1")
 		}
 	}
 	return provisioning.GetOpenAPIDefinitions
@@ -1087,8 +1087,8 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	compBase := refsBase
 
 	// For v1beta1, update the component base to use the correct version
-	if b.gv.Version == "v1beta1" {
-		compBase = strings.Replace(compBase, ".v0alpha1.", ".v1beta1.", 1)
+	if b.gv.Version == "v0alpha1" {
+		compBase = strings.Replace(compBase, ".v1beta1.", ".v0alpha1.", 1)
 	}
 
 	// TODO: Remove this endpoint when we deprecate the test endpoint

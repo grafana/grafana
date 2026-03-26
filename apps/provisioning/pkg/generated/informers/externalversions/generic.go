@@ -7,7 +7,7 @@ package externalversions
 import (
 	fmt "fmt"
 
-	v0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	v1beta1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -38,15 +38,15 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=provisioning.grafana.app, Version=v0alpha1
-	case v0alpha1.SchemeGroupVersion.WithResource("connections"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Provisioning().V0alpha1().Connections().Informer()}, nil
-	case v0alpha1.SchemeGroupVersion.WithResource("historicjobs"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Provisioning().V0alpha1().HistoricJobs().Informer()}, nil
-	case v0alpha1.SchemeGroupVersion.WithResource("jobs"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Provisioning().V0alpha1().Jobs().Informer()}, nil
-	case v0alpha1.SchemeGroupVersion.WithResource("repositories"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Provisioning().V0alpha1().Repositories().Informer()}, nil
+	// Group=provisioning.grafana.app, Version=v1beta1
+	case v1beta1.SchemeGroupVersion.WithResource("connections"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Provisioning().V1beta1().Connections().Informer()}, nil
+	case v1beta1.SchemeGroupVersion.WithResource("historicjobs"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Provisioning().V1beta1().HistoricJobs().Informer()}, nil
+	case v1beta1.SchemeGroupVersion.WithResource("jobs"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Provisioning().V1beta1().Jobs().Informer()}, nil
+	case v1beta1.SchemeGroupVersion.WithResource("repositories"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Provisioning().V1beta1().Repositories().Informer()}, nil
 
 	}
 

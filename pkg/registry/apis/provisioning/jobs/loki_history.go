@@ -7,11 +7,12 @@ import (
 	"sort"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/provisioning/pkg/loki"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 )
 
 const (

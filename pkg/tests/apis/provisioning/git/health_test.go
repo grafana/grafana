@@ -9,10 +9,11 @@ import (
 	"net/http"
 	"testing"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/stretchr/testify/require"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/nanogit/gittest"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationGitTestEndpoint_EmptyRepository(t *testing.T) {

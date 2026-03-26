@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioningV1 "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -16,7 +16,7 @@ import (
 )
 
 // ExportFolders will load the full folder tree into memory and update the repositoryResources tree
-func ExportFolders(ctx context.Context, repoName string, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+func ExportFolders(ctx context.Context, repoName string, options provisioningV1.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	// Load and write all folders
 	// FIXME: we load the entire tree in memory
 	progress.SetMessage(ctx, "read folder tree from API server")

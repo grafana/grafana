@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"testing"
 
-	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // TestAuthorizeResource_SecurityFix tests the critical security fix where authorization

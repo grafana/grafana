@@ -8,11 +8,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/grafana/authlib/authn"
-	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
+
+	"github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -22,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
