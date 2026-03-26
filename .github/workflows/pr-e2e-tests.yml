@@ -130,9 +130,9 @@ jobs:
       id-token: write
 
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+      - uses: grafana/shared-workflows/actions/dockerhub-login@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
+      - uses: grafana/shared-workflows/actions/login-to-gar@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         if: github.event.pull_request.head.repo.fork == false
 
       - name: Checkout code
@@ -322,7 +322,7 @@ jobs:
 
       - name: Check test suites
         id: check-jobs
-        uses: grafana/grafana/.github/actions/check-jobs@main
+        uses: grafana/grafana/.github/actions/check-jobs@d293db7a1e30541085fe18808ce3cf05825a3d0d # main
         continue-on-error: true # Failure will be reported on Check test results step
         with:
           needs: ${{ toJson(needs) }}
@@ -403,7 +403,7 @@ jobs:
     runs-on: ubuntu-x64-small
     steps:
       - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         with:
           repo_secrets: |
             GRAFANA_MISC_STATS_API_KEY=grafana-misc-stats:api_key

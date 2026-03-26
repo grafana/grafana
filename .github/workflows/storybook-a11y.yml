@@ -79,7 +79,7 @@ jobs:
         run: echo "No frontend changes detected, skipping storybook a11y tests"
       - name: Check test suites
         if: needs.detect-changes.outputs.changed == 'true'
-        uses: grafana/grafana/.github/actions/check-jobs@main
+        uses: grafana/grafana/.github/actions/check-jobs@d293db7a1e30541085fe18808ce3cf05825a3d0d # main
         with:
           needs: ${{ toJson(needs) }}
           failure-message: "One or more storybook a11y test suites have failed"

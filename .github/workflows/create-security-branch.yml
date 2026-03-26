@@ -47,7 +47,7 @@ jobs:
     steps:
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         with:
           # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
           repo_secrets: |

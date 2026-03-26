@@ -107,7 +107,7 @@ jobs:
           go test -v -count=1 -timeout 5m -run TestIntegrationTypeSchemaList ./pkg/tests/apis/alerting/notifications/integrationtypeschema/... || true
 
       - id: get-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f02682926bde2aa45a1a8b74409c94508d8952ec # main # zizmor: ignore[unpinned-uses]
         with:
           repo_secrets: |
             GITHUB_APP_ID=alerting-team:app-id
@@ -153,7 +153,7 @@ jobs:
             echo "🔗 [View Pull Request]($PR_URL)"
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Send Slack Message
-        uses: grafana/shared-workflows/actions/send-slack-message@send-slack-message/v2.0.4
+        uses: grafana/shared-workflows/actions/send-slack-message@2d985e9ff08e467946216a16a3a59fab5bb9e6cf # send-slack-message/v2.0.4
         with:
           method: 'chat.postMessage'
           # send to alerting-reviews channel
