@@ -35,6 +35,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		QueryTypeDefinitionList{}.OpenAPIModelName():   schema_pkg_apis_datasource_v0alpha1_QueryTypeDefinitionList(ref),
 		SampleRows{}.OpenAPIModelName():                SampleRows{}.OpenAPIDefinition(),
 		SchemaInfo{}.OpenAPIModelName():                schema_pkg_apis_datasource_v0alpha1_SchemaInfo(ref),
+		SecureValueInfo{}.OpenAPIModelName():           schema_pkg_apis_datasource_v0alpha1_SecureValueInfo(ref),
 		UnstructuredSpec{}.OpenAPIModelName():          UnstructuredSpec{}.OpenAPIDefinition(),
 	}
 }
@@ -928,5 +929,40 @@ func schema_pkg_apis_datasource_v0alpha1_SchemaInfo(ref common.ReferenceCallback
 		},
 		Dependencies: []string{
 			BasicColumn{}.OpenAPIModelName(), SampleRows{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_datasource_v0alpha1_SecureValueInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"string": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The key",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Description",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"required": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Required secure values",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"string"},
+			},
+		},
 	}
 }

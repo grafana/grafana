@@ -7,6 +7,8 @@ import (
 
 // Optional extensions for an explicit datasource type
 // NOTE: the properties from this structure will be populated by reading an app-sdk manifest.json
+// +k8s:deepcopy-gen=false
+// +k8s:openapi-gen=false
 type DataSourceOpenAPIExtension struct {
 	// When specified, this will replace the default spec
 	DataSourceSpec *spec.Schema `json:"spec,omitempty"`
@@ -41,4 +43,8 @@ type SecureValueInfo struct {
 
 	// Required secure values
 	Required bool `json:"required,omitempty"`
+}
+
+func (SecureValueInfo) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SecureValueInfo"
 }
