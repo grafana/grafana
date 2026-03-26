@@ -3,8 +3,6 @@ import { EsbuildPlugin } from 'esbuild-loader';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import webpack, { type Configuration } from 'webpack';
-// webpack does not correctly export named ESM bindings — destructure from the default import
-const { EnvironmentPlugin } = webpack;
 import WebpackAssetsManifest from 'webpack-assets-manifest';
 import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
 import { merge } from 'webpack-merge';
@@ -18,6 +16,9 @@ import common, { type Env } from './webpack.common.ts';
 // https://github.com/waysact/webpack-subresource-integrity/issues/236
 const require = createRequire(import.meta.url);
 const { SubresourceIntegrityPlugin } = require('webpack-subresource-integrity');
+
+// webpack does not correctly export named ESM bindings — destructure from the default import
+const { EnvironmentPlugin } = webpack;
 
 interface EntrypointAssets {
   assets: { js?: string[]; css?: string[] };

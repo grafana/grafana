@@ -4,8 +4,6 @@ import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import fs from 'node:fs';
 import path from 'node:path';
 import webpack, { type Configuration } from 'webpack';
-// webpack does not correctly export named ESM bindings — destructure from the default import
-const { DefinePlugin, EnvironmentPlugin } = webpack;
 import WebpackAssetsManifest from 'webpack-assets-manifest';
 import LiveReloadPlugin from 'webpack-livereload-plugin';
 import { merge } from 'webpack-merge';
@@ -13,6 +11,9 @@ import WebpackBar from 'webpackbar';
 
 import getEnvConfig from './env-util.ts';
 import common, { type Env } from './webpack.common.ts';
+
+// webpack does not correctly export named ESM bindings — destructure from the default import
+const { DefinePlugin, EnvironmentPlugin } = webpack;
 
 // To speed up webpack and prevent unnecessary rebuilds we ignore decoupled packages
 function getDecoupledPlugins(): string[] {
