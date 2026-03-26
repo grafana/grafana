@@ -10,6 +10,7 @@ import {
   locationUtil,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { ModalRoot, ModalsProvider } from '@grafana/ui';
 
 import { DataSourcePicker, DataSourcePickerProps } from './DataSourcePicker';
@@ -85,18 +86,7 @@ jest.mock('../../hooks', () => {
 
 beforeAll(() => {
   window.HTMLElement.prototype.scrollIntoView = jest.fn();
-
-  // Required for @tanstack/react-virtual to calculate visible items in JSDOM
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: jest.fn(() => ({
-      width: 400,
-      height: 400,
-      top: 0,
-      left: 0,
-      bottom: 400,
-      right: 400,
-    })),
-  });
+  mockBoundingClientRect();
 });
 
 const getListMock = jest.fn();

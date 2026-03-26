@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { Props } from 'react-virtualized-auto-sizer';
 
 import { EventBusSrv } from '@grafana/data';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 
 import { changeDatasource } from './helper/interactions';
 import { makeLogsQueryResponse } from './helper/query';
@@ -37,17 +38,7 @@ jest.mock('../hooks/useExplorePageTitle', () => ({
 }));
 
 beforeAll(() => {
-  // Required for @tanstack/react-virtual in DataSourcePicker to calculate visible items in JSDOM
-  Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
-    value: jest.fn(() => ({
-      width: 400,
-      height: 400,
-      top: 0,
-      left: 0,
-      bottom: 400,
-      right: 400,
-    })),
-  });
+  mockBoundingClientRect();
 });
 
 describe('Explore: handle datasource states', () => {
