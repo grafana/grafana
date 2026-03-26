@@ -10,6 +10,7 @@
     "Repeating-a-row-with-a-repeating-horizon": (import '../dev-dashboards/e2e-repeats/Repeating-a-row-with-a-repeating-horizontal-panel.json'),
     "Repeating-a-row-with-a-repeating-vertica": (import '../dev-dashboards/e2e-repeats/Repeating-a-row-with-a-repeating-vertical-panel.json'),
     "Repeating-an-empty-row": (import '../dev-dashboards/e2e-repeats/Repeating-an-empty-row.json'),
+    "all-colapsed-rows-public": (import '../dev-dashboards/scenarios/all-colapsed-rows-public.json'),
     "all-panels": (import '../dev-dashboards/all-panels.json'),
     "annotation-filtering": (import '../dev-dashboards/annotations/annotation-filtering.json'),
     "auto_decimals": (import '../dev-dashboards/panel-common/auto_decimals.json'),
