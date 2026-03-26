@@ -192,10 +192,10 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 	require.NoError(c.t, err)
 	c.teamSvc = teamSvc
 
-	userSvc, err := userimpl.ProvideService(
+	userSvc, err := userimpl.NewLegacyService(
 		c.env.SQLStore, orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
-		supportbundlestest.NewFakeBundleService(), nil)
+		supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
 	c.userSvc = userSvc
 
@@ -754,6 +754,7 @@ func (c *K8sTestHelper) CreateUser(name string, orgName string, basicRole org.Ro
 		IsAdmin:        isGrafanaAdmin,
 		Name:           name,
 	})
+	require.NoError(c.t, err)
 
 	// for tests to work we need to add grafana admins to every org
 	if isGrafanaAdmin {

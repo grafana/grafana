@@ -15,13 +15,10 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-metadata"
 
 	writeToProvisioningPath(t, helper, "teamA/_folder.json", folderMetadataJSON("team-a-uid", "Team A Display"))
@@ -110,9 +107,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-nested"
 
 	writeToProvisioningPath(t, helper, "root/_folder.json", folderMetadataJSON("root-uid", "Root"))
@@ -165,9 +160,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedSubtree(t
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-mixed-legacy"
 
 	writeToProvisioningPath(t, helper, "metaA/_folder.json", folderMetadataJSON("meta-a-uid", "Meta A"))
@@ -211,9 +204,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MixedLegacy(t *
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainParent(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-meta-to-plain"
 
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
@@ -250,9 +241,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_MetaToPlainPare
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-root-to-nested"
 
 	// Root-level folder with metadata + a target nested parent.
@@ -295,9 +284,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_RootToNested(t 
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-nested-to-root"
 
 	// Nested folder with metadata.
@@ -340,9 +327,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_NestedToRoot(t 
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-preserves-gen"
 
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
@@ -431,9 +416,7 @@ func TestIntegrationProvisioning_FullSync_FolderMovePreservesGeneration(t *testi
 // moving a metadata-backed folder from one nested location to another nested location preserves its
 // UID and increments the generation by exactly 1 (in-place update, not delete+recreate).
 func TestIntegrationProvisioning_FullSync_FolderMove_NestedToNested_PreservesGeneration(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-nested-to-nested-gen"
 
 	writeToProvisioningPath(t, helper, "parentA/_folder.json", folderMetadataJSON("parent-a-uid", "Parent A"))
@@ -493,9 +476,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToNested_PreservesGen
 // moving a metadata-backed folder from the root to a nested location preserves its UID and
 // increments the generation by exactly 1 (in-place update, not delete+recreate).
 func TestIntegrationProvisioning_FullSync_FolderMove_RootToNested_PreservesGeneration(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-root-to-nested-gen"
 
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("my-uid", "My Folder"))
@@ -553,9 +534,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_RootToNested_PreservesGener
 // moving a metadata-backed folder from a nested location to the root preserves its UID and
 // increments the generation by exactly 1 (in-place update, not delete+recreate).
 func TestIntegrationProvisioning_FullSync_FolderMove_NestedToRoot_PreservesGeneration(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-nested-to-root-gen"
 
 	writeToProvisioningPath(t, helper, "parent/_folder.json", folderMetadataJSON("parent-uid", "Parent"))
@@ -614,9 +593,7 @@ func TestIntegrationProvisioning_FullSync_FolderMove_NestedToRoot_PreservesGener
 // intermediate metadata-backed folder is moved to a different parent, all of its children have
 // their sourcePath and parent annotations updated correctly.
 func TestIntegrationProvisioning_FullSync_FolderMoveUpdatesChildrenFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-children-update"
 
 	// Three-level hierarchy: folderA → folderB → folderC, all metadata-backed.
@@ -668,9 +645,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveUpdatesChildrenFolders(t *te
 // is changed simultaneously, the DELETE (old UID at old path) and the CREATE (new UID at new path)
 // have different UIDs, so augmentChangesForFolderMoves cannot merge them into a single UPDATE.
 func TestIntegrationProvisioning_FullSync_FolderMoveWithUIDChange_NoGenerationPreservation(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-move-uid-change"
 
 	writeToProvisioningPath(t, helper, "myfolder/_folder.json", folderMetadataJSON("original-uid", "My Folder"))
@@ -894,9 +869,7 @@ func assertNoFolderByUID(t *testing.T, helper *common.ProvisioningTestHelper, fo
 // in place (preserving K8s UID and creationTimestamp) rather than deleting
 // and recreating it.
 func TestIntegrationProvisioning_FullSync_DashboardMoveInPlace(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "dashboard-move-uid"
 
 	writeToProvisioningPath(t, helper, "folderA/_folder.json", folderMetadataJSON("folder-a-uid", "Folder A"))
