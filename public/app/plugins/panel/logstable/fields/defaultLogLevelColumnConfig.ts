@@ -1,15 +1,19 @@
 import { Field, FieldConfig, FieldType, LogLevel, MappingType, ValueMap } from '@grafana/data';
-import { TableCellOptions } from '@grafana/schema';
+import { TableCellOptions, ValueMappingResult } from '@grafana/schema';
 import { TableCellDisplayMode } from '@grafana/ui';
 import { LogLevelColor } from 'app/features/logs/logsModel';
 
 /** Colors match LogLevelColor in logsModel.ts. */
 export function buildDefaultLogLevelValueMap(): ValueMap {
-  const options: Record<string, { color: string }> = {};
+  const options: Record<string, ValueMappingResult> = {};
   for (const level in LogLevel) {
-    options[level] = { color: LogLevelColor[level] };
-    if (level !== LogLevel[level]) {
-      options[level].text = LogLevel[level];
+    const canonicLevel: LogLevel | undefined = levelIsLogLevel(level) ? LogLevel[level] : undefined;
+    if (!canonicLevel) {
+      continue;
+    }
+    options[level] = { color: LogLevelColor[canonicLevel] };
+    if (level !== canonicLevel) {
+      options[level].text = canonicLevel;
     }
   }
 
@@ -19,11 +23,7 @@ export function buildDefaultLogLevelValueMap(): ValueMap {
   };
 }
 
-export function getLogLevelColumnEnhancements(
-  field: Field,
-  levelFieldName: string,
-  baseFieldConfig: FieldConfig
-) {
+export function getLogLevelColumnEnhancements(field: Field, levelFieldName: string, baseFieldConfig: FieldConfig) {
   if (field.name !== levelFieldName || field.type !== FieldType.string) {
     return undefined;
   }
@@ -45,3 +45,26 @@ export function getLogLevelColumnEnhancements(
   return Object.keys(out).length ? out : undefined;
 }
 
+function levelIsLogLevel(level: unknown): level is LogLevel {
+  return (
+    typeof level === 'string' &&
+    (level === LogLevel.emerg ||
+      level === LogLevel.fatal ||
+      level === LogLevel.alert ||
+      level === LogLevel.crit ||
+      level === LogLevel.critical ||
+      level === LogLevel.warn ||
+      level === LogLevel.warning ||
+      level === LogLevel.err ||
+      level === LogLevel.eror ||
+      level === LogLevel.error ||
+      level === LogLevel.info ||
+      level === LogLevel.information ||
+      level === LogLevel.informational ||
+      level === LogLevel.notice ||
+      level === LogLevel.dbug ||
+      level === LogLevel.debug ||
+      level === LogLevel.trace ||
+      level === LogLevel.unknown)
+  );
+}
