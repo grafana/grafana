@@ -150,25 +150,22 @@ describe('RulesFilterSidebar — mutual exclusivity of contact point and policy 
     const { user } = render(<RulesFilterSidebar />);
 
     const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
-    const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
-
-    expect(contactPointSelect).toBeEnabled();
-    expect(policySelect).toBeEnabled();
+    expect(await screen.findByRole('combobox', { name: 'Notification policy' })).toBeEnabled();
 
     await user.selectOptions(contactPointSelect, 'slack-cp');
 
-    expect(policySelect).toBeDisabled();
+    // Re-query: the DOM node is replaced when the Tooltip wrapper is added
+    expect(await screen.findByRole('combobox', { name: 'Notification policy' })).toBeDisabled();
   });
 
   it('disables the contact point selector when a policy is selected', async () => {
     const { user } = render(<RulesFilterSidebar />);
 
-    const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
     const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
 
     await user.selectOptions(policySelect, 'team-a-policy');
 
-    expect(contactPointSelect).toBeDisabled();
+    expect(await screen.findByRole('combobox', { name: 'Contact point' })).toBeDisabled();
   });
 
   it('does not include policy in the filter update when a contact point is selected', async () => {
@@ -197,26 +194,24 @@ describe('RulesFilterSidebar — mutual exclusivity of contact point and policy 
     const { user } = render(<RulesFilterSidebar />);
 
     const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
-    const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
 
     await user.selectOptions(contactPointSelect, 'slack-cp');
-    expect(policySelect).toBeDisabled();
+    expect(await screen.findByRole('combobox', { name: 'Notification policy' })).toBeDisabled();
 
     await user.selectOptions(contactPointSelect, '');
-    expect(policySelect).toBeEnabled();
+    expect(await screen.findByRole('combobox', { name: 'Notification policy' })).toBeEnabled();
   });
 
   it('re-enables the contact point selector when the policy is cleared', async () => {
     const { user } = render(<RulesFilterSidebar />);
 
-    const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
     const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
 
     await user.selectOptions(policySelect, 'team-a-policy');
-    expect(contactPointSelect).toBeDisabled();
+    expect(await screen.findByRole('combobox', { name: 'Contact point' })).toBeDisabled();
 
     await user.selectOptions(policySelect, '');
-    expect(contactPointSelect).toBeEnabled();
+    expect(await screen.findByRole('combobox', { name: 'Contact point' })).toBeEnabled();
   });
 
   it('initializes with the policy selector disabled when the URL has contactPoint set', async () => {

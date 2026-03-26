@@ -360,16 +360,10 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                     </span>
                     <Tooltip
                       content={
-                        isContactPointDisabled ? (
-                          <Trans i18nKey="alerting.rules-filter.contact-point-disabled-tooltip">
-                            Clear the notification policy filter to filter by contact point.
-                          </Trans>
-                        ) : (
-                          <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
-                            Filters alert rules which route directly to the selected contact point. Alert rules routed
-                            to notification policies will not be displayed.
-                          </Trans>
-                        )
+                        <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
+                          Filters alert rules which route directly to the selected contact point. Alert rules routed to
+                          notification policies will not be displayed.
+                        </Trans>
                       }
                     >
                       <Icon
@@ -384,25 +378,43 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                 <Controller
                   name="contactPoint"
                   control={control}
-                  render={({ field }) => (
-                    <ContactPointSelector
-                      placeholder={t('alerting.rules-filter.placeholder-contact-point', 'Select contact point')}
-                      value={field.value}
-                      isClearable
-                      disabled={isContactPointDisabled}
-                      onChange={(cp) => {
-                        const contactPoint = cp?.spec.title ?? null;
-                        field.onChange(contactPoint);
-                        if (contactPoint) {
-                          setValue('policy', null);
-                          applyFormValues({ contactPoint, policy: null });
-                        } else {
-                          applyFormValues({ contactPoint });
-                        }
-                      }}
-                      portalContainer={portalContainer}
-                    />
-                  )}
+                  render={({ field }) => {
+                    const selector = (
+                      <ContactPointSelector
+                        placeholder={t('alerting.rules-filter.placeholder-contact-point', 'Select contact point')}
+                        value={field.value}
+                        isClearable
+                        disabled={isContactPointDisabled}
+                        onChange={(cp) => {
+                          const contactPoint = cp?.spec.title ?? null;
+                          field.onChange(contactPoint);
+                          if (contactPoint) {
+                            setValue('policy', null);
+                            applyFormValues({ contactPoint, policy: null });
+                          } else {
+                            applyFormValues({ contactPoint });
+                          }
+                        }}
+                        portalContainer={portalContainer}
+                      />
+                    );
+
+                    if (isContactPointDisabled) {
+                      return (
+                        <Tooltip
+                          content={t(
+                            'alerting.rules-filter.contact-point-disabled-tooltip',
+                            'Clear the notification policy filter to select a contact point.'
+                          )}
+                          placement="top"
+                        >
+                          <div>{selector}</div>
+                        </Tooltip>
+                      );
+                    }
+
+                    return selector;
+                  }}
                 />
               </SidebarField>
             </SidebarSection>
@@ -421,16 +433,10 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                     </span>
                     <Tooltip
                       content={
-                        isPolicyDisabled ? (
-                          <Trans i18nKey="alerting.rules-filter.policy-disabled-tooltip">
-                            Clear the contact point filter to filter by notification policy.
-                          </Trans>
-                        ) : (
-                          <Trans i18nKey="alerting.rules-filter.policy-tooltip">
-                            Filters alert rules which route to the selected notification policy tree. Alert rules using
-                            direct contact point routing will not be displayed.
-                          </Trans>
-                        )
+                        <Trans i18nKey="alerting.rules-filter.policy-tooltip">
+                          Filters alert rules which route to the selected notification policy tree. Alert rules using
+                          direct contact point routing will not be displayed.
+                        </Trans>
                       }
                     >
                       <Icon
@@ -445,25 +451,43 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                 <Controller
                   name="policy"
                   control={control}
-                  render={({ field }) => (
-                    <RoutingTreeSelector
-                      placeholder={t('alerting.rules-filter.placeholder-policy', 'Select policy')}
-                      value={field.value ?? undefined}
-                      isClearable
-                      disabled={isPolicyDisabled}
-                      onChange={(tree) => {
-                        const policy = tree?.metadata.name ?? null;
-                        field.onChange(policy);
-                        if (policy) {
-                          setValue('contactPoint', null);
-                          applyFormValues({ policy, contactPoint: null });
-                        } else {
-                          applyFormValues({ policy });
-                        }
-                      }}
-                      portalContainer={portalContainer}
-                    />
-                  )}
+                  render={({ field }) => {
+                    const selector = (
+                      <RoutingTreeSelector
+                        placeholder={t('alerting.rules-filter.placeholder-policy', 'Select policy')}
+                        value={field.value ?? undefined}
+                        isClearable
+                        disabled={isPolicyDisabled}
+                        onChange={(tree) => {
+                          const policy = tree?.metadata.name ?? null;
+                          field.onChange(policy);
+                          if (policy) {
+                            setValue('contactPoint', null);
+                            applyFormValues({ policy, contactPoint: null });
+                          } else {
+                            applyFormValues({ policy });
+                          }
+                        }}
+                        portalContainer={portalContainer}
+                      />
+                    );
+
+                    if (isPolicyDisabled) {
+                      return (
+                        <Tooltip
+                          content={t(
+                            'alerting.rules-filter.policy-disabled-tooltip',
+                            'Clear the contact point filter to select a notification policy.'
+                          )}
+                          placement="top"
+                        >
+                          <div>{selector}</div>
+                        </Tooltip>
+                      );
+                    }
+
+                    return selector;
+                  }}
                 />
               </SidebarField>
             </SidebarSection>
