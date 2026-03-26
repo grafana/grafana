@@ -65,7 +65,7 @@ var authorizerScenarios = []authorizerScenario{
 		resourceName:     "user-xyz",
 		subResources:     []string{"teams", "status"},
 		deniedReason:     "requires user get",
-		checkRequestVerb: "get",
+		checkRequestVerb: "get", // shared tests use verb "get"; update verb tested separately
 	},
 	{
 		name:             "serviceaccount",
@@ -236,6 +236,53 @@ func TestAuthorizerDecisionMatrix(t *testing.T) {
 					assert.Equal(t, tt.wantCheckCalled, checkCalled, "Check call mismatch")
 				})
 			}
+		})
+	}
+}
+
+// TestUserAuthorizerStatusVerbMapping verifies that the user/status subresource
+// maps request verbs to the correct RBAC check verbs (GET→get, UPDATE→update, PATCH→update).
+func TestUserAuthorizerStatusVerbMapping(t *testing.T) {
+	tests := []struct {
+		name             string
+		requestVerb      string
+		wantCheckVerb    string
+		wantDeniedReason string
+	}{
+		{name: "get maps to get", requestVerb: "get", wantCheckVerb: "get", wantDeniedReason: "requires user get"},
+		{name: "update maps to update", requestVerb: "update", wantCheckVerb: "update", wantDeniedReason: "requires user update"},
+		{name: "patch maps to update", requestVerb: "patch", wantCheckVerb: "update", wantDeniedReason: "requires user update"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedReq *types.CheckRequest
+			fakeClient := &fakeAccessClient{
+				checkFunc: func(_ context.Context, _ types.AuthInfo, req types.CheckRequest, _ string) (types.CheckResponse, error) {
+					capturedReq = &req
+					return types.CheckResponse{Allowed: false}, nil
+				},
+			}
+
+			auth := newUserAuthorizer(fakeClient)
+			ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+
+			attr := authorizer.AttributesRecord{
+				ResourceRequest: true,
+				APIGroup:        iamv0.UserResourceInfo.GroupResource().Group,
+				Resource:        iamv0.UserResourceInfo.GroupResource().Resource,
+				Subresource:     "status",
+				Name:            "user-xyz",
+				Verb:            tt.requestVerb,
+				Namespace:       "org-1",
+			}
+
+			decision, reason, _ := auth.Authorize(ctx, attr)
+
+			require.NotNil(t, capturedReq)
+			assert.Equal(t, tt.wantCheckVerb, capturedReq.Verb)
+			assert.Equal(t, authorizer.DecisionDeny, decision)
+			assert.Equal(t, tt.wantDeniedReason, reason)
 		})
 	}
 }

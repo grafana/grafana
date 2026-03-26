@@ -160,10 +160,11 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 	})
 }
 
-// newUserAuthorizer creates an authorizer for users that handles the "teams" and "status" subresources
-// with a get check on the parent user resource.
+// newUserAuthorizer creates an authorizer for users that handles the "teams" and "status" subresources.
+// "teams" is read-only (Connecter/GET), so it checks user get.
+// "status" supports both GET and PUT, so the check verb mirrors the request verb.
 func newUserAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
-	check := func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+	readCheck := func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 		res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
 			Verb:      utils.VerbGet,
 			Group:     attr.GetAPIGroup(),
@@ -179,9 +180,31 @@ func newUserAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 		}
 		return authorizer.DecisionAllow, "", nil
 	}
+
+	statusCheck := func(ctx context.Context, ident authlib.AuthInfo, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		verb := utils.VerbGet
+		if attr.GetVerb() == utils.VerbUpdate || attr.GetVerb() == utils.VerbPatch {
+			verb = utils.VerbUpdate
+		}
+		res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
+			Verb:      verb,
+			Group:     attr.GetAPIGroup(),
+			Resource:  attr.GetResource(),
+			Namespace: attr.GetNamespace(),
+			Name:      attr.GetName(),
+		}, "")
+		if err != nil {
+			return authorizer.DecisionDeny, "", err
+		}
+		if !res.Allowed {
+			return authorizer.DecisionDeny, fmt.Sprintf("requires user %s", verb), nil
+		}
+		return authorizer.DecisionAllow, "", nil
+	}
+
 	return newAuthorizerWithCustomSubCheck(accessClient, map[string]subresourceCheck{
-		"teams":  check,
-		"status": check,
+		"teams":  readCheck,
+		"status": statusCheck,
 	})
 }
 
