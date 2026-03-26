@@ -837,7 +837,7 @@ func (h *ProvisioningTestHelper) WaitForHealthyRepository(t *testing.T, name str
 		assert.Empty(collect, errType, "repository %s has health error: %s", name, errType)
 		msgs := MustNestedStringSlice(repoStatus.Object, "status", "health", "message")
 		assert.Empty(collect, msgs, "repository %s has health messages: %v", name, msgs)
-		status, found := MustNestedBool(repoStatus.Object, "status", "health", "healthy")
+		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
 		assert.True(collect, found, "repository %s does not have health status", name)
 		assert.True(collect, status, "repository %s is not healthy yet", name)
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become healthy", name)
@@ -849,10 +849,10 @@ func (h *ProvisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name s
 		if !assert.NoError(collect, err, "failed to get repository status") {
 			return
 		}
-		checked, found := MustNestedInt64(repoStatus.Object, "status", "health", "checked")
+		checked, found := mustNestedInt64(repoStatus.Object, "status", "health", "checked")
 		assert.True(collect, found, "repository %s does not have checked field", name)
 		assert.Greater(collect, checked, int64(0), "repository %s health check has not run yet", name)
-		status, found := MustNestedBool(repoStatus.Object, "status", "health", "healthy")
+		status, found := mustNestedBool(repoStatus.Object, "status", "health", "healthy")
 		assert.True(collect, found, "repository %s does not have health status", name)
 		assert.False(collect, status, "repository %s should be unhealthy", name)
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become unhealthy", name)
@@ -1000,7 +1000,7 @@ func RunGrafana(t *testing.T, options ...GrafanaOption) *ProvisioningTestHelper 
 // t.Cleanup. The caller is responsible for invoking the returned shutdown
 // function (typically in TestMain after m.Run). The provisioning path uses
 // os.MkdirTemp so it survives beyond the initializing test's lifetime.
-func RunGrafanaShared(t *testing.T, options ...GrafanaOption) (*ProvisioningTestHelper, func()) {
+func runGrafanaShared(t *testing.T, options ...GrafanaOption) (*ProvisioningTestHelper, func()) {
 	provisioningPath, err := os.MkdirTemp("", "grafana-provisioning-*")
 	require.NoError(t, err, "failed to create shared provisioning temp dir")
 
@@ -1132,7 +1132,7 @@ func (e *SharedEnv) GetHelper(t *testing.T) *ProvisioningTestHelper {
 				e.initErr = "shared server init failed (FailNow/Goexit called; see first test output)"
 			}
 		}()
-		e.Helper, e.shutdownFunc = RunGrafanaShared(t, e.options...)
+		e.Helper, e.shutdownFunc = runGrafanaShared(t, e.options...)
 	})
 
 	if e.initErr != "" {
@@ -1172,7 +1172,7 @@ func MustNestedString(obj map[string]interface{}, fields ...string) string {
 	return v
 }
 
-func MustNestedBool(obj map[string]interface{}, fields ...string) (bool, bool) {
+func mustNestedBool(obj map[string]interface{}, fields ...string) (bool, bool) {
 	v, found, err := unstructured.NestedBool(obj, fields...)
 	if err != nil {
 		panic(err)
@@ -1189,7 +1189,7 @@ func MustNestedStringSlice(obj map[string]interface{}, fields ...string) []strin
 	return v
 }
 
-func MustNestedInt64(obj map[string]interface{}, fields ...string) (int64, bool) {
+func mustNestedInt64(obj map[string]interface{}, fields ...string) (int64, bool) {
 	v, found, err := unstructured.NestedInt64(obj, fields...)
 	if err != nil {
 		panic(err)
@@ -1755,7 +1755,7 @@ func RequireRepoFolders(t *testing.T, folderClient *apis.K8sResourceClient, ctx 
 // WaitForRepoLastRef waits until the repository's status.sync.lastRef is
 // non-empty. This must be satisfied before triggering an incremental sync,
 // otherwise the syncer falls back to a full sync.
-func WaitForRepoLastRef(t *testing.T, repositories *apis.K8sResourceClient, repoName string) {
+func waitForRepoLastRef(t *testing.T, repositories *apis.K8sResourceClient, repoName string) {
 	t.Helper()
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -1792,8 +1792,8 @@ func SyncAndWaitWithSuccess(t *testing.T, h SyncHelper, repoName string) {
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},
 	})
-	RequireJobSuccess(t, job)
-	WaitForRepoLastRef(t, h.GetRepositories(), repoName)
+	requireJobSuccess(t, job)
+	waitForRepoLastRef(t, h.GetRepositories(), repoName)
 }
 
 // SyncAndWaitSuccessfulIncremental triggers an incremental pull sync, waits for
@@ -1805,11 +1805,11 @@ func SyncAndWaitSuccessfulIncremental(t *testing.T, h SyncHelper, repoName strin
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{Incremental: true},
 	})
-	RequireJobSuccess(t, job)
+	requireJobSuccess(t, job)
 }
 
 // RequireJobSuccess asserts that a completed job has state "success" and no errors.
-func RequireJobSuccess(t *testing.T, job *unstructured.Unstructured) {
+func requireJobSuccess(t *testing.T, job *unstructured.Unstructured) {
 	t.Helper()
 	lastState := MustNestedString(job.Object, "status", "state")
 	lastErrors := MustNestedStringSlice(job.Object, "status", "errors")
@@ -1839,7 +1839,7 @@ func SyncAndWaitWithWarning(t *testing.T, h SyncHelper, repoName string) {
 		Pull:   &provisioning.SyncJobOptions{},
 	})
 	RequireJobWarning(t, job)
-	WaitForRepoLastRef(t, h.GetRepositories(), repoName)
+	waitForRepoLastRef(t, h.GetRepositories(), repoName)
 }
 
 // SyncAndWaitIncrementalWithWarning triggers an incremental pull sync, waits
