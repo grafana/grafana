@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -99,6 +100,9 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 	if !ok {
 		return nil, fmt.Errorf("missing namespace")
 	}
+
+	logger := logging.FromContext(ctx).With("logger", "test-connector", "repository_name", name, "namespace", ns)
+	ctx = logging.Context(ctx, logger)
 
 	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := readBody(r, defaultMaxBodySize)

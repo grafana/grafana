@@ -49,7 +49,7 @@ export const DashboardFiltersOverview = ({
   });
 
   if (!hasAdhocFilters) {
-    return <div>{t('dashboard.filters-overview.missing-adhoc', 'No ad hoc filters available')}</div>;
+    return <div>{t('dashboard.filters-overview.missing-adhoc', 'No filters available')}</div>;
   }
 
   if (loading) {
@@ -124,12 +124,17 @@ export const DashboardFiltersOverview = ({
                   multiValues={state.multiValuesByKey[keyValue] ?? []}
                   isGroupBy={state.isGrouped[keyValue] ?? false}
                   isOrigin={state.isOriginByKey[keyValue] ?? false}
+                  isRestorable={
+                    (state.isOriginByKey[keyValue] ?? false) &&
+                    (state.singleValuesByKey[keyValue] ?? '') !== (state.defaultValuesByKey[keyValue] ?? '')
+                  }
                   hasGroupByVariable={Boolean(groupByVariable)}
                   operatorOptions={operatorConfig.options}
                   onOperatorChange={actions.setOperator}
                   onSingleValueChange={actions.setSingleValue}
                   onMultiValuesChange={actions.setMultiValues}
                   onGroupByToggle={actions.toggleGroupBy}
+                  onRestore={actions.restoreDefault}
                   getValueOptions={actions.getValueOptionsForKey}
                 />
               </div>
@@ -183,6 +188,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     minHeight: 0,
+    overflow: 'hidden',
   }),
   skeletonContainer: css({
     display: 'flex',
@@ -201,6 +207,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflowY: 'auto',
   }),
   footer: css({
+    flexShrink: 0,
     marginTop: theme.spacing(2),
     paddingTop: theme.spacing(1.5),
     borderTop: `1px solid ${theme.colors.border.weak}`,

@@ -2,28 +2,25 @@ import { css, cx } from '@emotion/css';
 import { useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Button, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { PanelEditor } from '../PanelEditor';
+import { QueryEditorBanner } from '../QueryEditorBanner';
 
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { QueryEditorContextWrapper } from './QueryEditor/QueryEditorContextWrapper';
-import { QueryEditorSidebar } from './QueryEditor/Sidebar/QueryEditorSidebar';
+import { Sidebar } from './QueryEditor/Sidebar/Sidebar';
 import { SidebarSize } from './constants';
-import { useVizAndDataPaneLayout } from './hooks';
+import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
 
 export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { scene, layout, actions } = useVizAndDataPaneLayout(model, containerRef);
+  const { showBanner, dismissBanner } = useQueryEditorBanner();
+  const { scene, layout } = useVizAndDataPaneLayout(model, containerRef, showBanner);
   const styles = useStyles2(getStyles, layout.sidebarSize);
 
-  if (!scene.dataPane || !(scene.dataPane instanceof PanelDataPaneNext)) {
-    return null;
-  }
-
-  const nextDataPane = scene.dataPane;
+  const nextDataPane = scene.dataPane instanceof PanelDataPaneNext ? scene.dataPane : null;
 
   return (
     <div ref={containerRef} className={styles.pageContainer} style={layout.gridStyles}>
@@ -34,45 +31,47 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
       )}
       <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
         <scene.panelToShow.Component model={scene.panelToShow} />
-        <div className={styles.vizResizeHandle}>
-          <div
-            ref={layout.vizResizeHandle.ref}
-            className={layout.vizResizeHandle.className}
-            data-testid="viz-resizer"
-          />
-        </div>
-      </div>
-      <QueryEditorContextWrapper dataPane={nextDataPane}>
-        <div className={styles.sidebar}>
-          <div className={styles.sidebarContent}>
-            <QueryEditorSidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
-          </div>
-          <div className={styles.sidebarResizeHandle}>
+        {nextDataPane && (
+          <div className={styles.vizResizeHandle}>
             <div
-              ref={layout.sidebarResizeHandle.ref}
-              className={cx(layout.sidebarResizeHandle.className, styles.resizeHandlePill)}
-              data-testid="sidebar-resizer"
+              ref={layout.vizResizeHandle.ref}
+              className={layout.vizResizeHandle.className}
+              data-testid="viz-resizer"
             />
           </div>
-        </div>
-        <div className={styles.dataPane}>
-          {layout.isDataPaneCollapsed ? (
-            <div className={styles.expandDataPane}>
-              <Button
-                tooltip={t('dashboard-scene.viz-and-data-pane.tooltip-open-query-pane', 'Open query pane')}
-                icon={'arrow-to-right'}
-                onClick={actions.onToggleCollapse}
-                variant="secondary"
-                size="sm"
-                className={styles.openDataPaneButton}
-                aria-label={t('dashboard-scene.viz-and-data-pane.aria-label-open-query-pane', 'Open query pane')}
+        )}
+      </div>
+      {nextDataPane && (
+        <QueryEditorContextWrapper
+          dataPane={nextDataPane}
+          onSwitchToClassic={model.onToggleQueryEditorVersion}
+          showVersionBanner={showBanner}
+        >
+          {showBanner && (
+            <QueryEditorBanner
+              useQueryExperienceNext={model.state.useQueryExperienceNext ?? false}
+              onToggle={model.onToggleQueryEditorVersion}
+              onDismiss={dismissBanner}
+              className={styles.versionToggle}
+            />
+          )}
+          <div className={styles.sidebar}>
+            <div className={styles.sidebarContent}>
+              <Sidebar sidebarSize={layout.sidebarSize} setSidebarSize={layout.setSidebarSize} />
+            </div>
+            <div className={styles.sidebarResizeHandle}>
+              <div
+                ref={layout.sidebarResizeHandle.ref}
+                className={cx(layout.sidebarResizeHandle.className, styles.resizeHandlePill)}
+                data-testid="sidebar-resizer"
               />
             </div>
-          ) : (
+          </div>
+          <div className={styles.dataPane}>
             <nextDataPane.Component model={nextDataPane} />
-          )}
-        </div>
-      </QueryEditorContextWrapper>
+          </div>
+        </QueryEditorContextWrapper>
+      )}
     </div>
   );
 }
@@ -84,6 +83,14 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       gap: theme.spacing(2),
       overflow: 'hidden',
       paddingBottom: theme.spacing(2),
+    }),
+    versionToggle: css({
+      gridArea: 'version-toggle',
+      minWidth: 0,
+      overflow: 'hidden',
+      ...(sidebarSize === SidebarSize.Mini && {
+        marginLeft: theme.spacing(2),
+      }),
     }),
     sidebar: css({
       gridArea: 'sidebar',
@@ -118,23 +125,8 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
         paddingLeft: theme.spacing(2),
       }),
     }),
-    openDataPaneButton: css({
-      width: theme.spacing(8),
-      justifyContent: 'center',
-      svg: {
-        rotate: '-90deg',
-      },
-    }),
     fixedSizeViz: css({
       height: '100vh',
-    }),
-    expandDataPane: css({
-      display: 'flex',
-      padding: theme.spacing(1),
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.primary,
-      justifyContent: 'space-around',
     }),
     vizResizeHandle: css({
       position: 'absolute',

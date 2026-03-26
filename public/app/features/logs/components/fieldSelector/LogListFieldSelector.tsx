@@ -26,8 +26,15 @@ interface LogListFieldSelectorProps {
 }
 
 export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: LogListFieldSelectorProps) => {
-  const { displayedFields, onClickShowField, onClickHideField, setDisplayedFields, logOptionsStorageKey } =
-    useLogListContext();
+  const {
+    displayedFields,
+    onClickShowField,
+    onClickHideField,
+    setDisplayedFields,
+    setShowLevel,
+    showLevel,
+    logOptionsStorageKey,
+  } = useLogListContext();
   const [sidebarHeight, setSidebarHeight] = useState(220);
   const [sidebarWidth, setSidebarWidth] = useState(getFieldSelectorWidth(logOptionsStorageKey));
   const dragStyles = useStyles2(getDragStyles);
@@ -96,6 +103,10 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
     [displayedFields, onClickHideField, onClickShowField]
   );
 
+  const toggleLevel = useCallback(() => {
+    setShowLevel(!showLevel);
+  }, [setShowLevel, showLevel]);
+
   const suggestedFields = useMemo(() => getSuggestedFieldsFromLogList(logs, displayedFields), [displayedFields, logs]);
   const fields = useMemo(() => getFieldsWithStats(dataFrames), [dataFrames]);
 
@@ -127,9 +138,11 @@ export const LogListFieldSelector = ({ containerElement, dataFrames, logs }: Log
           clear={clearFields}
           collapse={collapse}
           fields={fields}
+          logLevelActive={showLevel}
           reorder={setDisplayedFields}
           suggestedFields={suggestedFields}
           toggle={toggleField}
+          toggleLevel={toggleLevel}
         />
       ) : (
         <div className={logsFieldSelectorWrapperStyles.collapsedButtonContainer}>

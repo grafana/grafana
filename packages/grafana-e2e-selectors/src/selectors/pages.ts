@@ -180,6 +180,21 @@ export const versionedPages = {
       addButton: {
         '12.4.0': 'data-testid Dashboard Sidebar new button',
       },
+      conditionalRendering: {
+        variable: {
+          valueInput: {
+            '12.4.0': 'data-testid Dashboard Conditional Rendering Variable value input',
+          },
+          variableSelection: {
+            '12.4.0': 'data-testid Dashboard Conditional Rendering Variable variable selection',
+          },
+        },
+        timeRange: {
+          select: {
+            '12.4.0': 'data-testid Dashboard Conditional Rendering Time range select',
+          },
+        },
+      },
     },
     DashNav: {
       nav: {
@@ -594,6 +609,9 @@ export const versionedPages = {
             modeToggle: {
               '10.4.0': 'data-testid group by variable mode toggle',
             },
+            defaultValueSection: {
+              '13.0.0': 'data-testid group by variable default value',
+            },
           },
           AdHocFiltersVariable: {
             datasourceSelect: {
@@ -604,6 +622,9 @@ export const versionedPages = {
             },
             modeToggle: {
               '11.0.0': 'data-testid ad-hoc filters variable mode toggle',
+            },
+            enableGroupByToggle: {
+              '13.0.0': 'data-testid ad-hoc filters variable enable group by toggle',
             },
           },
           SwitchVariable: {
@@ -641,8 +662,14 @@ export const versionedPages = {
       },
     },
     Annotations: {
+      tooltip: {
+        '10.0.0': 'annotation-marker',
+      },
       marker: {
         '10.0.0': 'data-testid annotation-marker',
+      },
+      clusterTooltip: {
+        '13.0.0': 'data-testid annotation-cluster-tooltip',
       },
     },
     Rows: {

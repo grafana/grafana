@@ -33,6 +33,10 @@ export class DashboardModelCompatibilityWrapper {
     );
   }
 
+  public get id(): number | null {
+    return this._scene.state.id ?? null;
+  }
+
   public get uid() {
     return this._scene.state.uid ?? null;
   }
@@ -154,7 +158,7 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   /**
-   * Mainly implemented to support Getting started panel's dissmis button.
+   * Mainly implemented to support Getting started panel's dismiss button.
    */
   public removePanel(panel: PanelModelCompatibilityWrapper) {
     const vizPanel = findVizPanelByKey(this._scene, getVizPanelKeyForPanelId(panel.id));
@@ -167,15 +171,7 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   public canEditAnnotations(dashboardUID?: string) {
-    if (!this._scene.canEditDashboard()) {
-      return false;
-    }
-
-    if (dashboardUID) {
-      return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
-    }
-
-    return Boolean(this._scene.state.meta.annotationsPermissions?.organization.canEdit);
+    return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
   }
 
   public panelInitialized() {}

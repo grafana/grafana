@@ -25,10 +25,33 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
     return steps;
   });
   const latestThresholdInputRef = useRef<HTMLInputElement>(null);
+  const isMounted = useRef(false);
+  const userAddedThreshold = useRef(false);
   const styles = useStyles2(getStyles);
 
+  const stepsRef = useRef(steps);
+  stepsRef.current = steps;
+
+  // sync local steps when thresholds change
   useEffect(() => {
-    latestThresholdInputRef.current?.focus();
+    const nextSteps = thresholds.steps ?? [];
+    const currentSteps = stepsRef.current;
+    const changed =
+      currentSteps.length !== nextSteps.length ||
+      currentSteps.some((s, i) => s.color !== nextSteps[i].color || s.value !== (nextSteps[i].value ?? -Infinity));
+    if (changed) {
+      const newSteps = toThresholdsWithKey(thresholds.steps);
+      newSteps[0].value = -Infinity;
+      setSteps(newSteps);
+    }
+  }, [thresholds]);
+
+  useEffect(() => {
+    if (isMounted.current && userAddedThreshold.current) {
+      latestThresholdInputRef.current?.focus();
+      userAddedThreshold.current = false;
+    }
+    isMounted.current = true;
   }, [steps.length]);
 
   function fireOnChange(newSteps: ThresholdWithKey[]) {
@@ -57,6 +80,7 @@ export const ThresholdsEditor = memo(function ThresholdsEditor({ thresholds, onC
     const newThresholds = [...steps, add];
     sortThresholds(newThresholds);
 
+    userAddedThreshold.current = true;
     setSteps(newThresholds);
     fireOnChange(newThresholds);
   }

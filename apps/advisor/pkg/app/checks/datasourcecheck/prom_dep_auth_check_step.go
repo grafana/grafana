@@ -19,7 +19,7 @@ func (s *promDepAuthStep) Title() string {
 }
 
 func (s *promDepAuthStep) Description() string {
-	return "Check if Prometheus data sources are using deprecated authentication methods (Azure auth and SigV4)"
+	return "Checks if Prometheus data sources are using deprecated authentication methods (Azure auth and SigV4)"
 }
 
 func (s *promDepAuthStep) Resolution() string {

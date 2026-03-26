@@ -21,8 +21,7 @@ on:
   schedule:
     - cron: '0 4 * * 6'
 
-permissions:
-  security-events: write
+permissions: {}
 
 jobs:
   detect-changes:
@@ -51,6 +50,10 @@ jobs:
     runs-on: ubuntu-x64-large-io
     continue-on-error: true # doesn't block PRs from being merged if this fails
     if: github.repository == 'grafana/grafana'
+    permissions:
+      contents: read
+      # Upload SARIF to code scanning results
+      security-events: write
 
     strategy:
       fail-fast: false
@@ -73,11 +76,10 @@ jobs:
         persist-credentials: false
 
     - if: matrix.language == 'go' && needs.detect-changes.outputs.go == 'true'
-      name: Set go version
-      uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
+      name: Setup Go
+      uses: ./.github/actions/setup-go
       with:
-        cache: false
-        go-version-file: go.mod
+        cache-build: 'false'
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL

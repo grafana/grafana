@@ -11,7 +11,7 @@ import {
   routingTreeWithErrorScenario,
   simpleRoutingTreesListScenario,
   singleDefaultTreeScenario,
-} from './RoutingTreeSelector.test.scenario';
+} from './RoutingTreeSelector.scenario';
 
 const meta: Meta<typeof RoutingTreeSelector> = {
   component: RoutingTreeSelector,
@@ -52,6 +52,24 @@ export const SingleDefaultTree: Story = {
     },
   },
   render: StoryRenderFn,
+};
+
+const MultiSelectRenderFn: StoryFn<RoutingTreeSelectorProps> = (args) => {
+  const id = useId();
+  return (
+    <Field noMargin label="Select notification policies">
+      <RoutingTreeSelector {...args} multi value={[]} onChange={() => {}} id={id} />
+    </Field>
+  );
+};
+
+export const MultiSelect: Story = {
+  parameters: {
+    msw: {
+      handlers: simpleRoutingTreesListScenario,
+    },
+  },
+  render: MultiSelectRenderFn,
 };
 
 export const WithError: Story = {

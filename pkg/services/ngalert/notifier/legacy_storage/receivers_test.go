@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/alerting/receivers/webhook"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -547,7 +546,7 @@ func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
 				},
 				Receivers: []*definition.PostableApiReceiver{
 					{
-						Receiver: config.Receiver{
+						Receiver: definitions.Receiver{
 							Name: "receiver1",
 						},
 						PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
@@ -561,7 +560,7 @@ func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
 						},
 					},
 					{
-						Receiver: config.Receiver{Name: "dupe-receiver"},
+						Receiver: definitions.Receiver{Name: "dupe-receiver"},
 						PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
 							GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
 								{
@@ -573,7 +572,7 @@ func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
 						},
 					},
 					{
-						Receiver: config.Receiver{Name: "dupe-receiver"},
+						Receiver: definitions.Receiver{Name: "dupe-receiver"},
 						PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
 							GrafanaManagedReceivers: []*definition.PostableGrafanaReceiver{
 								{

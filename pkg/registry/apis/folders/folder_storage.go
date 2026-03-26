@@ -12,7 +12,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -36,6 +36,8 @@ var (
 )
 
 type folderStorage struct {
+	resourceInfo utils.ResourceInfo
+
 	// Wrapped storage
 	store          grafanarest.Storage
 	tableConverter rest.TableConvertor
@@ -47,7 +49,7 @@ type folderStorage struct {
 }
 
 func (s *folderStorage) New() runtime.Object {
-	return resourceInfo.NewFunc()
+	return s.resourceInfo.NewFunc()
 }
 
 func (s *folderStorage) Destroy() {}
@@ -57,11 +59,11 @@ func (s *folderStorage) NamespaceScoped() bool {
 }
 
 func (s *folderStorage) GetSingularName() string {
-	return resourceInfo.GetSingularName()
+	return s.resourceInfo.GetSingularName()
 }
 
 func (s *folderStorage) NewList() runtime.Object {
-	return resourceInfo.NewListFunc()
+	return s.resourceInfo.NewListFunc()
 }
 
 func (s *folderStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
