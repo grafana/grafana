@@ -5,6 +5,7 @@ import {
   fetchCommunityDashboards,
   fetchProvisionedDashboards,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/api/dashboardLibraryApi';
+import { SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import {
   createMockGnetDashboard,
   createMockPluginDashboard,
@@ -39,7 +40,11 @@ const mockFetchCommunity = jest.mocked(fetchCommunityDashboards);
 const renderLoader = (props?: Partial<Parameters<typeof SuggestedDashboardsLoader>[0]>) => {
   let childProps!: SuggestedDashboardsLoaderChildProps;
   render(
-    <SuggestedDashboardsLoader datasourceUid="test-uid" {...props}>
+    <SuggestedDashboardsLoader
+      datasourceUid="test-uid"
+      sourceEntryPoint={SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON}
+      {...props}
+    >
       {(p) => {
         childProps = p;
         return <button onClick={p.openModal}>Open</button>;

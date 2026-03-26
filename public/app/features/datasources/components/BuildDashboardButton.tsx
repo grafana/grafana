@@ -9,7 +9,7 @@ import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/Da
 import { useDispatch } from 'app/types/store';
 
 import { ButtonFill } from '../../../../../packages/grafana-ui/src/components/Button/Button';
-import { trackCreateDashboardClicked, trackDsConfigClicked } from '../tracking';
+import { trackBuildDashboardDropdownClicked, trackCreateDashboardClicked, trackDsConfigClicked } from '../tracking';
 
 import { SuggestedDashboardsLoader } from './SuggestedDashboardsLoader';
 
@@ -48,6 +48,11 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
   return (
     <SuggestedDashboardsLoader
       datasourceUid={dataSource.uid}
+      sourceEntryPoint={
+        context === 'datasource_page'
+          ? SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON
+          : SOURCE_ENTRY_POINTS.DATASOURCE_LIST_BUILD_BUTTON
+      }
       onFetchComplete={(hasDashboards) => {
         if (!hasDashboards) {
           dispatch(notifyApp(createWarningNotification('No dashboards found for this data source')));
@@ -96,7 +101,19 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
             }
           }}
         >
-          <Button size={size} variant="secondary" fill={fill}>
+          <Button
+            size={size}
+            variant="secondary"
+            fill={fill}
+            onClick={() => {
+              trackBuildDashboardDropdownClicked({
+                grafana_version: config.buildInfo.version,
+                datasource_uid: dataSource.uid,
+                plugin_name: dataSource.typeName,
+                path: window.location.pathname,
+              });
+            }}
+          >
             <Trans i18nKey="datasources.build-a-dashboard-button.build-a-dashboard">Build a dashboard</Trans>
             <Icon name="angle-down" />
           </Button>

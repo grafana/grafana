@@ -5,7 +5,7 @@ import { setDataSourceSrv } from '@grafana/runtime';
 import { DashboardJson, InputType } from 'app/features/manage-dashboards/types';
 
 import { MappingContext, SuggestedDashboardsModal } from './SuggestedDashboardsModal';
-import { CONTENT_KINDS, EVENT_LOCATIONS } from './constants';
+import { CONTENT_KINDS } from './constants';
 import { createMockGnetDashboard, createMockPluginDashboard } from './utils/test-utils';
 
 let capturedOnShowMapping: ((context: MappingContext) => void) | null = null;
@@ -64,6 +64,26 @@ describe('SuggestedDashboardsModal', () => {
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
+  it('should render CommunityDashboardMappingForm when activeView is mapping', () => {
+    render(
+      <SuggestedDashboardsModal
+        {...defaultProps}
+        initialMappingContext={{
+          dashboardName: 'Test Dashboard',
+          dashboardJson: { title: 'Test Dashboard', panels: [], schemaVersion: 41 } as DashboardJson,
+          unmappedDsInputs: [],
+          constantInputs: [],
+          existingMappings: [],
+          onInterpolateAndNavigate: jest.fn(),
+          contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
+        }}
+      />
+    );
+
+    expect(screen.getByTestId('community-dashboard-mapping-form')).toBeInTheDocument();
+    expect(screen.queryByTestId('suggested-dashboards-list')).not.toBeInTheDocument();
+  });
+
   it('should render SuggestedDashboardsList with both provisioned and community dashboards', () => {
     render(
       <SuggestedDashboardsModal
@@ -105,7 +125,6 @@ describe('SuggestedDashboardsModal', () => {
       constantInputs: [],
       existingMappings: [],
       onInterpolateAndNavigate: jest.fn(),
-      eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
       contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
     };
 
@@ -146,7 +165,6 @@ describe('SuggestedDashboardsModal', () => {
             constantInputs: [],
             existingMappings: [],
             onInterpolateAndNavigate: jest.fn(),
-            eventLocation: EVENT_LOCATIONS.MODAL_MERGED_VIEW,
             contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
           }}
         />
@@ -185,7 +203,6 @@ describe('SuggestedDashboardsModal', () => {
           constantInputs: [],
           existingMappings: [],
           onInterpolateAndNavigate: jest.fn(),
-          eventLocation: EVENT_LOCATIONS.MODAL_COMMUNITY_TAB,
           contentKind: CONTENT_KINDS.COMMUNITY_DASHBOARD,
         });
       });

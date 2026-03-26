@@ -3,11 +3,14 @@ import { render } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 
-import { SuggestedDashboardsList } from '../SuggestedDashboardsList/SuggestedDashboardsList';
+import { TrackingProvider } from '../TrackingContext';
 import { fetchCommunityDashboards } from '../api/dashboardLibraryApi';
+import { EVENT_LOCATIONS, SOURCE_ENTRY_POINTS } from '../constants';
 import { GnetDashboard } from '../types';
 import { onUseCommunityDashboard } from '../utils/communityDashboardHelpers';
 import { createMockGnetDashboard, createMockPluginDashboard } from '../utils/test-utils';
+
+import { SuggestedDashboardsList } from './SuggestedDashboardsList';
 
 jest.mock('../api/dashboardLibraryApi', () => ({
   fetchCommunityDashboards: jest.fn(),
@@ -31,10 +34,6 @@ jest.mock('../interactions', () => ({
     itemClicked: jest.fn(),
     compatibilityCheckTriggered: jest.fn(),
     compatibilityCheckCompleted: jest.fn(),
-  },
-  SuggestedDashboardInteractions: {
-    loaded: jest.fn(),
-    itemClicked: jest.fn(),
   },
 }));
 
@@ -75,10 +74,19 @@ const defaultProps = {
 /**
  * Render and wait for all async effects to settle (initial page resolution, community fetches).
  */
+const trackingValue = {
+  sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON,
+  eventLocation: EVENT_LOCATIONS.MODAL_VIEW,
+} as const;
+
 async function setup(overrides: Partial<typeof defaultProps> = {}) {
   let result: ReturnType<typeof render>;
   await act(async () => {
-    result = render(<SuggestedDashboardsList {...defaultProps} {...overrides} />);
+    result = render(
+      <TrackingProvider value={trackingValue}>
+        <SuggestedDashboardsList {...defaultProps} {...overrides} />
+      </TrackingProvider>
+    );
   });
   return result!;
 }

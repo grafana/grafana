@@ -1,12 +1,17 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
-import { PAGE_SIZE } from 'app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsList/SuggestedDashboardsList';
 import { SuggestedDashboardsModal } from 'app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsModal';
+import { TrackingProvider } from 'app/features/dashboard/dashgrid/DashboardLibrary/TrackingContext';
 import {
   fetchCommunityDashboards,
   fetchProvisionedDashboards,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/api/dashboardLibraryApi';
+import {
+  EVENT_LOCATIONS,
+  PAGE_SIZE,
+  SourceEntryPoint,
+} from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { GnetDashboard } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 import { PluginDashboard } from 'app/types/plugins';
 
@@ -21,6 +26,7 @@ export interface SuggestedDashboardsLoaderChildProps {
 
 interface SuggestedDashboardsLoaderProps {
   datasourceUid: string;
+  sourceEntryPoint: SourceEntryPoint;
   fetchOnMount?: boolean;
   onFetchComplete?: (hasDashboards: boolean) => void;
   children: (props: SuggestedDashboardsLoaderChildProps) => ReactNode;
@@ -28,6 +34,7 @@ interface SuggestedDashboardsLoaderProps {
 
 export const SuggestedDashboardsLoader = ({
   datasourceUid,
+  sourceEntryPoint,
   fetchOnMount,
   onFetchComplete,
   children,
@@ -90,18 +97,25 @@ export const SuggestedDashboardsLoader = ({
     setIsOpen(true);
   }, [triggerFetch]);
 
+  const trackingValue = useMemo(
+    () => ({ sourceEntryPoint, eventLocation: EVENT_LOCATIONS.MODAL_VIEW }),
+    [sourceEntryPoint]
+  );
+
   return (
     <>
       {children({ fetchStatus, hasDashboards, triggerFetch, openModal })}
-      <SuggestedDashboardsModal
-        isOpen={isOpen}
-        onDismiss={() => setIsOpen(false)}
-        datasourceUid={datasourceUid}
-        provisionedDashboards={provisionedDashboards}
-        communityDashboards={communityDashboards}
-        communityTotalPages={communityTotalPages}
-        isDashboardsLoading={fetchStatus === 'loading'}
-      />
+      <TrackingProvider value={trackingValue}>
+        <SuggestedDashboardsModal
+          isOpen={isOpen}
+          onDismiss={() => setIsOpen(false)}
+          datasourceUid={datasourceUid}
+          provisionedDashboards={provisionedDashboards}
+          communityDashboards={communityDashboards}
+          communityTotalPages={communityTotalPages}
+          isDashboardsLoading={fetchStatus === 'loading'}
+        />
+      </TrackingProvider>
     </>
   );
 };
