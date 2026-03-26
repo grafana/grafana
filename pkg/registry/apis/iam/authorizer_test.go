@@ -204,3 +204,174 @@ func TestNewTeamAuthorizer_DecisionMatrix(t *testing.T) {
 		})
 	}
 }
+
+// TestNewUserAuthorizer_TeamsSubresource_CheckRequest verifies that the authorizer
+// builds the correct CheckRequest for the teams subresource.
+func TestNewUserAuthorizer_TeamsSubresource_CheckRequest(t *testing.T) {
+	var capturedReq *types.CheckRequest
+	fakeClient := &fakeAccessClient{
+		checkFunc: func(ctx context.Context, id types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
+			capturedReq = &req
+			return types.CheckResponse{Allowed: true}, nil
+		},
+	}
+
+	userAuth := newUserAuthorizer(fakeClient)
+
+	authInfo := authn.NewIDTokenAuthInfo(
+		authn.Claims[authn.AccessTokenClaims]{},
+		&authn.Claims[authn.IDTokenClaims]{},
+	)
+	ctx := types.WithAuthInfo(context.Background(), authInfo)
+
+	attr := authorizer.AttributesRecord{
+		ResourceRequest: true,
+		APIGroup:        iamv0.UserResourceInfo.GroupResource().Group,
+		Resource:        iamv0.UserResourceInfo.GroupResource().Resource,
+		Subresource:     "teams",
+		Name:            "user-xyz",
+		Verb:            "get",
+		Namespace:       "org-1",
+	}
+
+	_, _, err := userAuth.Authorize(ctx, attr)
+	require.NoError(t, err)
+	require.NotNil(t, capturedReq)
+
+	assert.Equal(t, "get", capturedReq.Verb)
+	assert.Equal(t, iamv0.UserResourceInfo.GroupResource().Group, capturedReq.Group)
+	assert.Equal(t, iamv0.UserResourceInfo.GroupResource().Resource, capturedReq.Resource)
+	assert.Equal(t, "user-xyz", capturedReq.Name)
+	assert.Equal(t, "org-1", capturedReq.Namespace)
+}
+
+// TestNewUserAuthorizer_DecisionMatrix covers all decision paths with table-driven tests.
+func TestNewUserAuthorizer_DecisionMatrix(t *testing.T) {
+	tests := []struct {
+		name            string
+		subresource     string
+		resourceRequest bool
+		checkFunc       func(ctx context.Context, id types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error)
+		wantDecision    authorizer.Decision
+		wantReason      string
+		wantErr         bool
+		wantCheckCalled bool
+	}{
+		{
+			name:            "teams subresource - allowed",
+			subresource:     "teams",
+			resourceRequest: true,
+			checkFunc: func(ctx context.Context, id types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
+				return types.CheckResponse{Allowed: true}, nil
+			},
+			wantDecision:    authorizer.DecisionAllow,
+			wantReason:      "",
+			wantErr:         false,
+			wantCheckCalled: true,
+		},
+		{
+			name:            "teams subresource - denied",
+			subresource:     "teams",
+			resourceRequest: true,
+			checkFunc: func(ctx context.Context, id types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
+				return types.CheckResponse{Allowed: false}, nil
+			},
+			wantDecision:    authorizer.DecisionDeny,
+			wantReason:      "requires user get",
+			wantErr:         false,
+			wantCheckCalled: true,
+		},
+		{
+			name:            "teams subresource - error",
+			subresource:     "teams",
+			resourceRequest: true,
+			checkFunc: func(ctx context.Context, id types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
+				return types.CheckResponse{}, errors.New("database error")
+			},
+			wantDecision:    authorizer.DecisionDeny,
+			wantReason:      "",
+			wantErr:         true,
+			wantCheckCalled: true,
+		},
+		{
+			name:            "no subresource - delegates to ResourceAuthorizer",
+			subresource:     "",
+			resourceRequest: true,
+			checkFunc: func(ctx context.Context, id types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
+				// Verify the subresource is NOT passed through to the delegate
+				assert.Empty(t, req.Subresource)
+				return types.CheckResponse{Allowed: true}, nil
+			},
+			wantDecision:    authorizer.DecisionAllow,
+			wantReason:      "",
+			wantErr:         false,
+			wantCheckCalled: true,
+		},
+		{
+			name:            "other subresource (status) - delegates to ResourceAuthorizer",
+			subresource:     "status",
+			resourceRequest: true,
+			checkFunc: func(ctx context.Context, id types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
+				// The subresource should be passed through to the delegate
+				assert.Equal(t, "status", req.Subresource)
+				return types.CheckResponse{Allowed: true}, nil
+			},
+			wantDecision:    authorizer.DecisionAllow,
+			wantReason:      "",
+			wantErr:         false,
+			wantCheckCalled: true,
+		},
+		{
+			name:            "non-resource request - no opinion",
+			subresource:     "",
+			resourceRequest: false,
+			checkFunc:       nil, // Should not be called
+			wantDecision:    authorizer.DecisionNoOpinion,
+			wantReason:      "",
+			wantErr:         false,
+			wantCheckCalled: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			checkCalled := false
+			wrappedCheckFunc := func(ctx context.Context, id types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
+				checkCalled = true
+				if tt.checkFunc != nil {
+					return tt.checkFunc(ctx, id, req, folder)
+				}
+				return types.CheckResponse{Allowed: false}, nil
+			}
+
+			fakeClient := &fakeAccessClient{checkFunc: wrappedCheckFunc}
+			userAuth := newUserAuthorizer(fakeClient)
+
+			authInfo := authn.NewIDTokenAuthInfo(
+				authn.Claims[authn.AccessTokenClaims]{},
+				&authn.Claims[authn.IDTokenClaims]{},
+			)
+			ctx := types.WithAuthInfo(context.Background(), authInfo)
+
+			attr := authorizer.AttributesRecord{
+				ResourceRequest: tt.resourceRequest,
+				APIGroup:        iamv0.UserResourceInfo.GroupResource().Group,
+				Resource:        iamv0.UserResourceInfo.GroupResource().Resource,
+				Subresource:     tt.subresource,
+				Name:            "user-xyz",
+				Verb:            "get",
+			}
+
+			decision, reason, err := userAuth.Authorize(ctx, attr)
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, tt.wantDecision, decision)
+			assert.Equal(t, tt.wantReason, reason)
+			assert.Equal(t, tt.wantCheckCalled, checkCalled, "Check call mismatch")
+		})
+	}
+}

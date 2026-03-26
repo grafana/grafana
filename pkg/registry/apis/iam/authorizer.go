@@ -71,7 +71,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = allowAuthorizer // Handled by the backend wrapper
 	resourceAuthorizer[iamv0.RoleBindingInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = authorizer
-	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = newUserAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = externalGroupMappingApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = newTeamAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = allowAuthorizer
@@ -131,6 +131,43 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 		}
 
 		// Delegate to the standard ResourceAuthorizer for non-members subresources
+		return delegate.Authorize(ctx, attr)
+	})
+}
+
+// newUserAuthorizer creates an authorizer for users that handles the "teams" subresource
+// with a get check on the parent user resource.
+func newUserAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
+	delegate := gfauthorizer.NewResourceAuthorizer(accessClient)
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		if !attr.IsResourceRequest() {
+			return authorizer.DecisionNoOpinion, "", nil
+		}
+
+		subresource := attr.GetSubresource()
+		if subresource == "teams" {
+			ident, ok := authlib.AuthInfoFrom(ctx)
+			if !ok {
+				return authorizer.DecisionDeny, "", errors.New("no identity found")
+			}
+
+			res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
+				Verb:      utils.VerbGet,
+				Group:     attr.GetAPIGroup(),
+				Resource:  attr.GetResource(),
+				Namespace: attr.GetNamespace(),
+				Name:      attr.GetName(),
+			}, "")
+			if err != nil {
+				return authorizer.DecisionDeny, "", err
+			}
+			if !res.Allowed {
+				return authorizer.DecisionDeny, "requires user get", nil
+			}
+			return authorizer.DecisionAllow, "", nil
+		}
+
+		// Delegate to the standard ResourceAuthorizer for non-teams subresources
 		return delegate.Authorize(ctx, attr)
 	})
 }
