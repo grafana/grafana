@@ -18056,7 +18056,7 @@
         ]
       },
       "get": {
-        "description": "Will return the dashboard given the dashboard unique identifier (uid).",
+        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).",
         "operationId": "getDashboardByUID",
         "parameters": [
           {
