@@ -306,6 +306,42 @@ func doTeamSearchMemberCountTests(t *testing.T, helper *apis.K8sTestHelper) {
 			}
 		}
 	})
+
+	t.Run("should not return member counts when membercount param is absent", func(t *testing.T) {
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?query=MemberCount", namespace)
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+		require.Len(t, result.Hits, 2)
+
+		for _, hit := range result.Hits {
+			require.Nil(t, hit.MemberCount, "member count should be nil when membercount param is absent for team %s", hit.Name)
+		}
+	})
+
+	t.Run("should not return member counts when membercount=false", func(t *testing.T) {
+		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?query=MemberCount&membercount=false", namespace)
+		var result iamv0alpha1.GetSearchTeamsResponse
+
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   path,
+		}, &result)
+
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+		require.Len(t, result.Hits, 2)
+
+		for _, hit := range result.Hits {
+			require.Nil(t, hit.MemberCount, "member count should be nil when membercount=false for team %s", hit.Name)
+		}
+	})
 }
 
 func TestIntegrationTeamSearch_AccessControl(t *testing.T) {

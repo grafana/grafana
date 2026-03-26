@@ -526,6 +526,31 @@ func TestTeamSearchMemberCount(t *testing.T) {
 			assert.Equal(t, int64(3), *hit.MemberCount, "member count should be populated when membercount=true")
 		}
 	})
+
+	t.Run("membercount=true - lister error returns 500", func(t *testing.T) {
+		errorLister := &mockTeamBindingLister{
+			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+				return nil, fmt.Errorf("store unavailable")
+			},
+		}
+
+		searchHandler := &TeamSearchHandler{
+			log:              log.New("grafana-apiserver.teams.search"),
+			client:           mockTeamClientWithHits(),
+			tracer:           tracing.NewNoopTracerService(),
+			features:         featuremgmt.WithFeatures(),
+			teamBindingStore: errorLister,
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search?membercount=true", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "default"}))
+
+		searchHandler.DoTeamSearch(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
 }
 
 func TestEnrichWithMemberCounts(t *testing.T) {
@@ -555,14 +580,15 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 			{Name: "team-2"},
 		}
 
-		handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		require.NoError(t, err)
 		require.NotNil(t, hits[0].MemberCount)
 		assert.Equal(t, int64(3), *hits[0].MemberCount)
 		require.NotNil(t, hits[1].MemberCount)
 		assert.Equal(t, int64(0), *hits[1].MemberCount)
 	})
 
-	t.Run("one fails - other goroutines still complete", func(t *testing.T) {
+	t.Run("one fails - returns error", func(t *testing.T) {
 		mockLister := &mockTeamBindingLister{
 			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 				teamName, _ := options.FieldSelector.RequiresExactMatch("spec.teamRef.name")
@@ -585,14 +611,31 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 			{Name: "team-ok-2"},
 		}
 
-		handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "team-bad")
+	})
 
-		// Errors are logged and skipped; successful goroutines still complete
-		require.NotNil(t, hits[0].MemberCount, "team-ok-1 should still have its count")
-		assert.Equal(t, int64(2), *hits[0].MemberCount, "team-ok-1 should still have its count")
-		assert.Nil(t, hits[1].MemberCount, "team-bad should remain nil")
-		require.NotNil(t, hits[2].MemberCount, "team-ok-2 should still have its count")
-		assert.Equal(t, int64(2), *hits[2].MemberCount, "team-ok-2 should still have its count")
+	t.Run("unexpected type - returns error", func(t *testing.T) {
+		mockLister := &mockTeamBindingLister{
+			listFunc: func(_ context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+				return &iamv0alpha1.TeamList{}, nil
+			},
+		}
+
+		handler := &TeamSearchHandler{
+			log:              log.New("test"),
+			tracer:           tracing.NewNoopTracerService(),
+			teamBindingStore: mockLister,
+		}
+
+		hits := []iamv0alpha1.GetSearchTeamsTeamHit{
+			{Name: "team-1"},
+		}
+
+		err := handler.enrichWithMemberCounts(context.Background(), "default", hits)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "unexpected type")
 	})
 }
 

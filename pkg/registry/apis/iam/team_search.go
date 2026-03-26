@@ -315,7 +315,10 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 	}
 
 	if queryParams.Get("membercount") == "true" && s.teamBindingStore != nil {
-		s.enrichWithMemberCounts(ctx, requester.GetNamespace(), searchResults.Hits)
+		if err := s.enrichWithMemberCounts(ctx, requester.GetNamespace(), searchResults.Hits); err != nil {
+			errhttp.Write(ctx, err, w)
+			return
+		}
 	}
 
 	if queryParams.Get("accesscontrol") == "true" && s.accessClient != nil {
@@ -375,11 +378,11 @@ func (s *TeamSearchHandler) stampAccessControl(ctx context.Context, requester id
 }
 
 // enrichWithMemberCounts fetches member counts for each team hit concurrently.
-// errgroup is used as a bounded concurrency pool (SetLimit); errors are handled
-// per-item (logged and skipped) so they are not propagated.
-func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) {
+// errgroup is used as a bounded concurrency pool (SetLimit); the first error
+// from any goroutine is propagated to the caller.
+func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
 	if len(hits) == 0 {
-		return
+		return nil
 	}
 
 	var g errgroup.Group
@@ -392,13 +395,11 @@ func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespac
 				FieldSelector: fields.OneTermEqualSelector("spec.teamRef.name", hits[i].Name),
 			})
 			if err != nil {
-				s.log.Warn("failed to list team bindings for team", "team", hits[i].Name, "error", err)
-				return nil
+				return fmt.Errorf("failed to list team bindings for team %s: %w", hits[i].Name, err)
 			}
 			list, ok := obj.(*iamv0alpha1.TeamBindingList)
 			if !ok {
-				s.log.Warn("unexpected type from team binding list", "team", hits[i].Name, "type", fmt.Sprintf("%T", obj))
-				return nil
+				return fmt.Errorf("unexpected type from team binding list for team %s: %T", hits[i].Name, obj)
 			}
 			count := int64(len(list.Items))
 			hits[i].MemberCount = &count
@@ -406,7 +407,7 @@ func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespac
 		})
 	}
 
-	_ = g.Wait()
+	return g.Wait()
 }
 
 func (s *TeamSearchHandler) write(w http.ResponseWriter, obj any) error {
