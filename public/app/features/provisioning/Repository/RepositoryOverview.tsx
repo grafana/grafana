@@ -10,7 +10,7 @@ import { Repository, ResourceCount } from 'app/api/clients/provisioning/v0alpha1
 import { RecentJobs } from '../Job/RecentJobs';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
-import { useRepoMetadataStatus } from '../hooks/useRepoMetadataStatus';
+import { hasMissingFolderMetadata } from '../utils/folderMetadata';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
 import { formatTimestamp } from '../utils/time';
 
@@ -30,7 +30,6 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
   const repoName = repo.metadata?.name ?? '';
   const showFolderMetadataCheck = config.featureToggles.provisioningFolderMetadata;
-  const { status: folderMetadataStatus } = useRepoMetadataStatus(showFolderMetadataCheck ? repoName : '');
 
   const status = repo.status;
   const { conditions, quota } = status ?? {};
@@ -61,7 +60,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        {showFolderMetadataCheck && folderMetadataStatus === 'missing' && (
+        {showFolderMetadataCheck && hasMissingFolderMetadata(conditions) && (
           <MissingFolderMetadataBanner repositoryName={repoName} variant="repo" />
         )}
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
