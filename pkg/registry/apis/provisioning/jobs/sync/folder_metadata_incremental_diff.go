@@ -20,7 +20,7 @@ type FolderMetadataIncrementalDiffBuilder interface {
 		currentRef string,
 		repoDiff []repository.VersionedFileChange,
 		resourcesList *provisioning.ResourceList,
-	) ([]repository.VersionedFileChange, []replacedFolder, []replacedFolder, []*resources.InvalidFolderMetadata, error)
+	) ([]repository.VersionedFileChange, map[string][]string, []replacedFolder, []*resources.InvalidFolderMetadata, error)
 }
 
 type folderMetadataIncrementalDiffBuilder struct {
@@ -55,7 +55,7 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 	currentRef string,
 	repoDiff []repository.VersionedFileChange,
 	resourcesList *provisioning.ResourceList,
-) ([]repository.VersionedFileChange, []replacedFolder, []replacedFolder, []*resources.InvalidFolderMetadata, error) {
+) ([]repository.VersionedFileChange, map[string][]string, []replacedFolder, []*resources.InvalidFolderMetadata, error) {
 	input := splitMetadataChanges(repoDiff)
 	if !input.HasMetadataChanges() {
 		return repoDiff, nil, nil, nil, nil
@@ -73,7 +73,7 @@ func (d *folderMetadataIncrementalDiffBuilder) BuildIncrementalDiff(
 		invalid = append(invalid, warnings...)
 	}
 
-	return diffTracker.IncrementalDiff(), diffTracker.DisplacedFolders(), diffTracker.ReplacedFolders(), invalid, nil
+	return diffTracker.IncrementalDiff(), diffTracker.Relocations(), diffTracker.ReplacedFolders(), invalid, nil
 }
 
 // rewriteMetadataChange dispatches each handled metadata action to the
@@ -132,7 +132,7 @@ func (d *folderMetadataIncrementalDiffBuilder) rewriteCreatedOrUpdatedMetadataCh
 		return nil, err
 	}
 	if newUID != "" {
-		diffTracker.TrackActiveUID(newUID)
+		diffTracker.TrackRelocation(folderPath, newUID)
 	}
 	for _, r := range replaced {
 		diffTracker.AppendReplaced(r)

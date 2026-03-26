@@ -783,15 +783,15 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		expectFolderMetadataRead(repo, "new/", "new-ref", "stable-uid")
 
 		diffBuilder := NewFolderMetadataIncrementalDiffBuilder(repo)
-		filteredDiff, displacedFolders, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
+		filteredDiff, relocations, replacedFolders, invalidFolderMetadata, err := diffBuilder.BuildIncrementalDiff(context.Background(), "new-ref", diff, resourcesList)
 
 		require.NoError(t, err)
 		require.Empty(t, invalidFolderMetadata)
 		require.Contains(t, filteredDiff, repository.VersionedFileChange{
 			Action: repository.FileActionUpdated, Path: "new/", Ref: "new-ref",
 		})
-		require.Equal(t, []replacedFolder{{Path: "old/", OldUID: "stable-uid"}}, displacedFolders,
-			"displaced includes the moved UID so it can be evicted from the old tree position")
+		require.Equal(t, map[string][]string{"new/": {"stable-uid"}}, relocations,
+			"relocations maps the target path to the UID moving there for call-scoped conflict bypass")
 		require.Empty(t, replacedFolders, "same UID at old and new path means folder is moved, not replaced")
 	})
 

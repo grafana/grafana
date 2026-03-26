@@ -54,6 +54,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	}
 
 	var replaced []replacedFolder
+	var relocations map[string][]string
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	if folderMetadataEnabled {
 		readerRepo, ok := repo.(repository.Reader)
@@ -67,8 +68,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		}
 
 		folderMetadataIncrementalDiffBuilder := NewFolderMetadataIncrementalDiffBuilder(readerRepo)
-		var displaced []replacedFolder
-		diff, displaced, replaced, invalidFolderMetadata, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff, target)
+		diff, relocations, replaced, invalidFolderMetadata, err = folderMetadataIncrementalDiffBuilder.BuildIncrementalDiff(ctx, currentRef, diff, target)
 		if err != nil {
 			return tracing.Error(span, fmt.Errorf("build folder metadata incremental diff: %w", err))
 		}
@@ -76,21 +76,17 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		// Incremental sync normally starts with an empty folder tree, but folder
 		// metadata handling needs the current managed path->UID state before apply:
 		// - invalid `_folder.json` falls back to the existing folder at that path
-		// - valid metadata replacements remove old UIDs from that same tree before replay
-		// displaced includes all UIDs evicted from their old position (both moved
-		// and truly replaced), so moved UIDs can be re-registered at their new path
-		// without triggering CheckIDConflict.
+		// The tree is kept intact; relocated UIDs are passed as per-call allowlists
+		// to EnsureFolderPathExist so they bypass CheckIDConflict only at their
+		// intended target path.
 		tree := resources.NewFolderTreeFromResourceList(target)
-		for _, d := range displaced {
-			tree.Remove(d.OldUID)
-		}
 		repositoryResources.SetTree(tree)
 	}
 
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
-	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled)
+	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled, relocations)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
 		return err
@@ -130,7 +126,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 }
 
 //nolint:gocyclo
-func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool) (affectedFolders map[string]string, err error) {
+func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFileChange, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, tracer tracing.Tracer, span trace.Span, quotaTracker quotas.QuotaTracker, folderMetadataEnabled bool, relocations map[string][]string) (affectedFolders map[string]string, err error) {
 	// this will keep track of any folders that had resources deleted from it
 	// with key-value as path:grafana uid.
 	// after cleaning up all resources, we will look to see if the foldrs are
@@ -206,7 +202,11 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 			if change.Action == repository.FileActionUpdated {
 				folderResultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
 				folderCtx, folderSpan := tracer.Start(ctx, "provisioning.sync.incremental.reparent_child_folder")
-				folder, fErr := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path, change.Ref)
+				ensureOpts := []resources.EnsurePathOption{resources.WithForceWalk()}
+				if uids, ok := relocations[change.Path]; ok {
+					ensureOpts = append(ensureOpts, resources.WithRelocatingUIDs(uids...))
+				}
+				folder, fErr := repositoryResources.EnsureFolderPathExist(folderCtx, change.Path, change.Ref, ensureOpts...)
 				if fErr != nil {
 					folderSpan.RecordError(fErr)
 					folderResultBuilder.WithError(fmt.Errorf("re-parenting child folder at %s: %w", change.Path, fErr))

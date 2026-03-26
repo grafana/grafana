@@ -20,6 +20,47 @@ import (
 
 const MaxNumberOfFolders = 10000
 
+// EnsurePathOption configures the behaviour of EnsureFolderPathExist.
+type EnsurePathOption func(*ensurePathConfig)
+
+type ensurePathConfig struct {
+	relocatingUIDs map[string]struct{}
+	forceWalk      bool
+}
+
+func newEnsurePathConfig(opts []EnsurePathOption) ensurePathConfig {
+	cfg := ensurePathConfig{relocatingUIDs: make(map[string]struct{})}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+	return cfg
+}
+
+func (c *ensurePathConfig) isRelocating(uid string) bool {
+	_, ok := c.relocatingUIDs[uid]
+	return ok
+}
+
+// WithRelocatingUIDs marks UIDs as legitimately relocating to a new path so
+// that CheckIDConflict is bypassed for them during folder path resolution.
+// This avoids mutating the tree before the operation is confirmed to succeed.
+func WithRelocatingUIDs(uids ...string) EnsurePathOption {
+	return func(cfg *ensurePathConfig) {
+		for _, uid := range uids {
+			cfg.relocatingUIDs[uid] = struct{}{}
+		}
+	}
+}
+
+// WithForceWalk skips the early-return optimisation so that the full ancestor
+// walk always runs. Use this when the caller knows that the tree entry may be
+// stale (e.g. parent-only changes during full sync).
+func WithForceWalk() EnsurePathOption {
+	return func(cfg *ensurePathConfig) {
+		cfg.forceWalk = true
+	}
+}
+
 // PathCreationError represents an error that occurred while creating a folder path.
 // It contains the path that failed and the underlying error.
 type PathCreationError struct {
@@ -89,7 +130,8 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 }
 
 // EnsureFolderPathExist creates the folder structure in the cluster.
-func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, ref string) (parent string, err error) {
+func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, ref string, opts ...EnsurePathOption) (parent string, err error) {
+	epCfg := newEnsurePathConfig(opts)
 	cfg := fm.repo.Config()
 	parent = RootFolder(cfg)
 
@@ -109,11 +151,15 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 
 	// ParentID is only resolved during the walk below, so we skip it here
 	// to avoid a false mismatch against the already-resolved tree entry.
-	if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing, IgnoreParent()) {
-		if err := fm.tree.CheckIDConflict(f.ID, f.Path); err != nil {
-			return "", err
+	if !epCfg.forceWalk {
+		if existing, ok := fm.tree.Get(f.ID); ok && f.Equal(existing, IgnoreParent()) {
+			if !epCfg.isRelocating(f.ID) {
+				if err := fm.tree.CheckIDConflict(f.ID, f.Path); err != nil {
+					return "", err
+				}
+			}
+			return f.ID, nil
 		}
-		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
@@ -128,8 +174,10 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 			return nil
 		}
 
-		if err := fm.tree.CheckIDConflict(f.ID, f.Path); err != nil {
-			return err
+		if !epCfg.isRelocating(f.ID) {
+			if err := fm.tree.CheckIDConflict(f.ID, f.Path); err != nil {
+				return err
+			}
 		}
 		if err := fm.EnsureFolderExists(ctx, f, parent); err != nil {
 			return &PathCreationError{
@@ -364,14 +412,14 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 		}
 	}
 
-	// Remove the old folder from the tree before ensuring the new path so that
-	// CheckIDConflict does not reject the same stable UID appearing at a new path.
-	// This is safe because the rename makes the old registration stale.
-	fm.tree.Remove(oldFolder.ID)
-
-	if _, err := fm.EnsureFolderPathExist(ctx, newPath, newRef); err != nil {
+	// Pass the old UID as relocating so CheckIDConflict does not reject the
+	// same stable UID appearing at a new path. The tree is only mutated after
+	// EnsureFolderPathExist succeeds, avoiding tree corruption on failure.
+	if _, err := fm.EnsureFolderPathExist(ctx, newPath, newRef, WithRelocatingUIDs(oldFolder.ID)); err != nil {
 		return "", fmt.Errorf("ensure new folder path: %w", err)
 	}
+
+	fm.tree.Remove(oldFolder.ID)
 
 	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef, fm.folderMetadataEnabled)
 	if err != nil {

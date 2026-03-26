@@ -1371,12 +1371,8 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
-	// Folder phase: updated folder triggers RemoveFolderFromTree then EnsureFolderPathExist
-	repoResources.On("RemoveFolderFromTree", "old-uid-123").Run(func(args mock.Arguments) {
-		recordCall("RemoveFolderFromTree")
-	}).Return()
-
-	repoResources.On("EnsureFolderPathExist", mock.Anything, "myfolder/", "test-ref").Run(func(args mock.Arguments) {
+	// Folder phase: updated folder passes ForceWalk + relocating UID via variadic opts
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "myfolder/", "test-ref", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		recordCall("EnsureFolderPathExist")
 	}).Return("new-uid-456", nil)
 
@@ -1414,8 +1410,7 @@ func TestApplyChanges_DefersOldFolderDeletion(t *testing.T) {
 
 	// Verify ordering: folder phase -> file phase -> old folder deletion
 	require.Equal(t, []string{
-		"RemoveFolderFromTree",  // folder phase: clear old entry from tree
-		"EnsureFolderPathExist", // folder phase: create/update folder
+		"EnsureFolderPathExist", // folder phase: create/update folder (with relocating UID)
 		"WriteResourceFromFile", // file phase: create dashboard
 		"RemoveFolder",          // deferred: delete old folder after re-parenting
 	}, callOrder)
@@ -1454,17 +1449,11 @@ func TestApplyChanges_SortsFolderUpdatesShallowestFirst(t *testing.T) {
 			(r.Path() == "parent/" || r.Path() == "parent/child/")
 	})).Return()
 
-	repoResources.On("RemoveFolderFromTree", "parent-uid").Run(func(args mock.Arguments) {
-		recordCall("remove parent")
-	}).Return()
-	repoResources.On("EnsureFolderPathExist", mock.Anything, "parent/", "test-ref").Run(func(args mock.Arguments) {
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "parent/", "test-ref", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		recordCall("ensure parent")
 	}).Return("parent-uid", nil)
 
-	repoResources.On("RemoveFolderFromTree", "child-uid").Run(func(args mock.Arguments) {
-		recordCall("remove child")
-	}).Return()
-	repoResources.On("EnsureFolderPathExist", mock.Anything, "parent/child/", "test-ref").Run(func(args mock.Arguments) {
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "parent/child/", "test-ref", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		recordCall("ensure child")
 	}).Return("child-uid", nil)
 
@@ -1474,9 +1463,7 @@ func TestApplyChanges_SortsFolderUpdatesShallowestFirst(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Equal(t, []string{
-		"remove parent",
 		"ensure parent",
-		"remove child",
 		"ensure child",
 	}, callOrder)
 }
@@ -1512,9 +1499,8 @@ func TestApplyChanges_OldFolderDeletion_DeepestFirst(t *testing.T) {
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
-	// Folder phase mocks
-	repoResources.On("RemoveFolderFromTree", mock.Anything).Return()
-	repoResources.On("EnsureFolderPathExist", mock.Anything, mock.Anything, "test-ref").Return("new-uid", nil)
+	// Folder phase mocks (ForceWalk + relocating UID passed via variadic opts)
+	repoResources.On("EnsureFolderPathExist", mock.Anything, mock.Anything, "test-ref", mock.Anything, mock.Anything).Return("new-uid", nil)
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Action() == repository.FileActionUpdated
 	})).Return()
@@ -1563,9 +1549,8 @@ func TestApplyChanges_OldFolderDeletion_ErrorContinues(t *testing.T) {
 	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
 	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false)
 
-	// Folder phase
-	repoResources.On("RemoveFolderFromTree", "old-broken-uid").Return()
-	repoResources.On("EnsureFolderPathExist", mock.Anything, "broken/", "test-ref").Return("new-broken-uid", nil)
+	// Folder phase (ForceWalk + relocating UID passed via variadic opts)
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "broken/", "test-ref", mock.Anything, mock.Anything).Return("new-broken-uid", nil)
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "broken/" && r.Action() == repository.FileActionUpdated && r.Error() == nil
 	})).Return()

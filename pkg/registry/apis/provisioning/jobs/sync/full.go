@@ -235,13 +235,18 @@ func applyChange(
 		ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.ensure_folder_exists")
 		resultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
 
-		// For updated folders, remove the old UID from the tree so EnsureFolderPathExist
-		// doesn't skip it. This handles both title changes (hash mismatch) and UID changes.
+		var ensureOpts []resources.EnsurePathOption
 		if change.Action == repository.FileActionUpdated && change.Existing != nil {
-			repositoryResources.RemoveFolderFromTree(change.Existing.Name)
+			// Force the full ancestor walk so parent-only changes are not skipped
+			// by the early-return optimisation, and mark the old UID as relocating
+			// so CheckIDConflict is bypassed for it at the new path.
+			ensureOpts = append(ensureOpts,
+				resources.WithForceWalk(),
+				resources.WithRelocatingUIDs(change.Existing.Name),
+			)
 		}
 
-		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path, currentRef)
+		folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, change.Path, currentRef, ensureOpts...)
 		if err != nil {
 			resultBuilder.WithError(fmt.Errorf("ensuring folder exists at path %s: %w", change.Path, err))
 			ensureFolderSpan.RecordError(err)

@@ -9,6 +9,7 @@ type rebuiltIncrementalDiffTracker struct {
 	generatedPaths map[string]struct{}
 	replaced       []replacedFolder
 	activeUIDs     map[string]struct{}
+	relocations    map[string][]string // targetPath → UIDs relocating there
 }
 
 // newRebuiltIncrementalDiff seeds the rewritten diff with changes
@@ -19,6 +20,7 @@ func newRebuiltIncrementalDiffTracker(changes []repository.VersionedFileChange) 
 		generatedPaths: make(map[string]struct{}),
 		replaced:       make([]replacedFolder, 0),
 		activeUIDs:     make(map[string]struct{}),
+		relocations:    make(map[string][]string),
 	}
 }
 
@@ -42,24 +44,26 @@ func (result *rebuiltIncrementalDiffTracker) AppendReplaced(replaced replacedFol
 	result.replaced = append(result.replaced, replaced)
 }
 
-// TrackActiveUID records a UID that is being actively assigned to a folder
+// TrackRelocation records a UID that is being actively assigned to targetPath
 // by a metadata change in this diff. UIDs in this set must not be deleted
 // even if they appear in the replaced list (the UID moved between paths
-// rather than being removed).
-func (result *rebuiltIncrementalDiffTracker) TrackActiveUID(uid string) {
+// rather than being removed). The per-path mapping allows callers to pass
+// scoped allowlists to EnsureFolderPathExist so that only the intended target
+// path bypasses CheckIDConflict.
+func (result *rebuiltIncrementalDiffTracker) TrackRelocation(targetPath, uid string) {
 	result.activeUIDs[uid] = struct{}{}
+	result.relocations[targetPath] = append(result.relocations[targetPath], uid)
+}
+
+// Relocations returns a mapping from target folder path to the UIDs that are
+// relocating there. Callers thread these per-path allowlists into
+// EnsureFolderPathExist via WithRelocatingUIDs.
+func (result *rebuiltIncrementalDiffTracker) Relocations() map[string][]string {
+	return result.relocations
 }
 
 func (result *rebuiltIncrementalDiffTracker) IncrementalDiff() []repository.VersionedFileChange {
 	return result.filteredDiff
-}
-
-// DisplacedFolders returns all folder identities that must be evicted from
-// their old tree position, regardless of whether the UID is still active
-// elsewhere. Callers use this to clean the in-memory folder tree before
-// applying changes, so that moved UIDs can be re-registered at their new path.
-func (result *rebuiltIncrementalDiffTracker) DisplacedFolders() []replacedFolder {
-	return result.replaced
 }
 
 // ReplacedFolders returns folder identities scheduled for deletion, excluding

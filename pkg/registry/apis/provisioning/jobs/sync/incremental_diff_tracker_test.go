@@ -73,27 +73,23 @@ func TestIncrementalDiffTrackerActiveUIDFiltersReplaced(t *testing.T) {
 
 	tracker.AppendReplaced(replacedFolder{Path: "src/", OldUID: "uid-moved"})
 	tracker.AppendReplaced(replacedFolder{Path: "dst/", OldUID: "uid-gone"})
-	tracker.TrackActiveUID("uid-moved")
+	tracker.TrackRelocation("new-dst/", "uid-moved")
 
 	replaced := tracker.ReplacedFolders()
 	require.Equal(t, []replacedFolder{{Path: "dst/", OldUID: "uid-gone"}}, replaced,
 		"UID actively written to another path must not be scheduled for deletion")
 }
 
-func TestIncrementalDiffTrackerDisplacedFoldersReturnsAll(t *testing.T) {
+func TestIncrementalDiffTrackerRelocations(t *testing.T) {
 	tracker := newRebuiltIncrementalDiffTracker(nil)
 
-	tracker.AppendReplaced(replacedFolder{Path: "src/", OldUID: "uid-moved"})
-	tracker.AppendReplaced(replacedFolder{Path: "dst/", OldUID: "uid-gone"})
-	tracker.TrackActiveUID("uid-moved")
+	tracker.TrackRelocation("dst-a/", "uid-a")
+	tracker.TrackRelocation("dst-b/", "uid-b")
+	tracker.TrackRelocation("dst-a/", "uid-c")
 
-	displaced := tracker.DisplacedFolders()
-	require.Equal(t, []replacedFolder{
-		{Path: "src/", OldUID: "uid-moved"},
-		{Path: "dst/", OldUID: "uid-gone"},
-	}, displaced, "displaced includes all entries regardless of active UIDs, for tree cleanup")
-
-	replaced := tracker.ReplacedFolders()
-	require.Equal(t, []replacedFolder{{Path: "dst/", OldUID: "uid-gone"}}, replaced,
-		"replaced excludes active UIDs, for K8s deletion only")
+	relocations := tracker.Relocations()
+	require.Equal(t, map[string][]string{
+		"dst-a/": {"uid-a", "uid-c"},
+		"dst-b/": {"uid-b"},
+	}, relocations, "relocations maps target paths to UIDs moving there")
 }
