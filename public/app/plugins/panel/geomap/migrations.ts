@@ -13,7 +13,6 @@ import {
 } from '@grafana/data';
 import { ResourceDimensionMode } from '@grafana/schema';
 
-
 import { defaultMarkersConfig, MarkersConfig } from './layers/data/markersLayer';
 import { type Options, TooltipMode } from './panelcfg.gen';
 import { getMarkerAsPath } from './style/markers';
