@@ -16,7 +16,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"

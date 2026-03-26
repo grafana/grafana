@@ -14,12 +14,11 @@ export const addTagTypes = [
   'dashboards',
   'snapshots',
   'dashboard_public',
-  'permissions',
-  'versions',
   'datasources',
   'correlations',
   'health',
   'folders',
+  'permissions',
   'group_attribute_sync',
   'library_elements',
   'licensing',
@@ -667,10 +666,6 @@ const injectedRtkApi = api
         }),
         providesTags: ['dashboards', 'snapshots'],
       }),
-      postDashboard: build.mutation<PostDashboardApiResponse, PostDashboardApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/db`, method: 'POST', body: queryArg.saveDashboardCommand }),
-        invalidatesTags: ['dashboards'],
-      }),
       importDashboard: build.mutation<ImportDashboardApiResponse, ImportDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/import`, method: 'POST', body: queryArg.importDashboardRequest }),
         invalidatesTags: ['dashboards'],
@@ -682,10 +677,6 @@ const injectedRtkApi = api
       listPublicDashboards: build.query<ListPublicDashboardsApiResponse, ListPublicDashboardsApiArg>({
         query: () => ({ url: `/dashboards/public-dashboards` }),
         providesTags: ['dashboards', 'dashboard_public'],
-      }),
-      getDashboardTags: build.query<GetDashboardTagsApiResponse, GetDashboardTagsApiArg>({
-        query: () => ({ url: `/dashboards/tags` }),
-        providesTags: ['dashboards'],
       }),
       getPublicDashboard: build.query<GetPublicDashboardApiResponse, GetPublicDashboardApiArg>({
         query: (queryArg) => ({ url: `/dashboards/uid/${queryArg.dashboardUid}/public-dashboards` }),
@@ -713,46 +704,6 @@ const injectedRtkApi = api
           body: queryArg.publicDashboardDto,
         }),
         invalidatesTags: ['dashboards', 'dashboard_public'],
-      }),
-      deleteDashboardByUid: build.mutation<DeleteDashboardByUidApiResponse, DeleteDashboardByUidApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/uid/${queryArg.uid}`, method: 'DELETE' }),
-        invalidatesTags: ['dashboards'],
-      }),
-      getDashboardByUid: build.query<GetDashboardByUidApiResponse, GetDashboardByUidApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/uid/${queryArg.uid}` }),
-        providesTags: ['dashboards'],
-      }),
-      getDashboardPermissionsListByUid: build.query<
-        GetDashboardPermissionsListByUidApiResponse,
-        GetDashboardPermissionsListByUidApiArg
-      >({
-        query: (queryArg) => ({ url: `/dashboards/uid/${queryArg.uid}/permissions` }),
-        providesTags: ['dashboards', 'permissions'],
-      }),
-      updateDashboardPermissionsByUid: build.mutation<
-        UpdateDashboardPermissionsByUidApiResponse,
-        UpdateDashboardPermissionsByUidApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/dashboards/uid/${queryArg.uid}/permissions`,
-          method: 'POST',
-          body: queryArg.updateDashboardAclCommand,
-        }),
-        invalidatesTags: ['dashboards', 'permissions'],
-      }),
-      getDashboardVersionsByUid: build.query<GetDashboardVersionsByUidApiResponse, GetDashboardVersionsByUidApiArg>({
-        query: (queryArg) => ({
-          url: `/dashboards/uid/${queryArg.uid}/versions`,
-          params: {
-            limit: queryArg.limit,
-            start: queryArg.start,
-          },
-        }),
-        providesTags: ['dashboards', 'versions'],
-      }),
-      getDashboardVersionByUid: build.query<GetDashboardVersionByUidApiResponse, GetDashboardVersionByUidApiArg>({
-        query: (queryArg) => ({ url: `/dashboards/uid/${queryArg.uid}/versions/${queryArg.dashboardVersionId}` }),
-        providesTags: ['dashboards', 'versions'],
       }),
       getDataSources: build.query<GetDataSourcesApiResponse, GetDataSourcesApiArg>({
         query: () => ({ url: `/datasources` }),
@@ -926,60 +877,6 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({ url: `/ds/query`, method: 'POST', body: queryArg.metricRequest }),
         invalidatesTags: ['datasources'],
-      }),
-      getFolders: build.query<GetFoldersApiResponse, GetFoldersApiArg>({
-        query: (queryArg) => ({
-          url: `/folders`,
-          params: {
-            limit: queryArg.limit,
-            page: queryArg.page,
-            parentUid: queryArg.parentUid,
-            permission: queryArg.permission,
-          },
-        }),
-        providesTags: ['folders'],
-      }),
-      createFolder: build.mutation<CreateFolderApiResponse, CreateFolderApiArg>({
-        query: (queryArg) => ({ url: `/folders`, method: 'POST', body: queryArg.createFolderCommand }),
-        invalidatesTags: ['folders'],
-      }),
-      deleteFolder: build.mutation<DeleteFolderApiResponse, DeleteFolderApiArg>({
-        query: (queryArg) => ({
-          url: `/folders/${queryArg.folderUid}`,
-          method: 'DELETE',
-          params: {
-            forceDeleteRules: queryArg.forceDeleteRules,
-          },
-        }),
-        invalidatesTags: ['folders'],
-      }),
-      getFolderByUid: build.query<GetFolderByUidApiResponse, GetFolderByUidApiArg>({
-        query: (queryArg) => ({ url: `/folders/${queryArg.folderUid}` }),
-        providesTags: ['folders'],
-      }),
-      updateFolder: build.mutation<UpdateFolderApiResponse, UpdateFolderApiArg>({
-        query: (queryArg) => ({
-          url: `/folders/${queryArg.folderUid}`,
-          method: 'PUT',
-          body: queryArg.updateFolderCommand,
-        }),
-        invalidatesTags: ['folders'],
-      }),
-      getFolderDescendantCounts: build.query<GetFolderDescendantCountsApiResponse, GetFolderDescendantCountsApiArg>({
-        query: (queryArg) => ({ url: `/folders/${queryArg.folderUid}/counts` }),
-        providesTags: ['folders'],
-      }),
-      moveFolder: build.mutation<MoveFolderApiResponse, MoveFolderApiArg>({
-        query: (queryArg) => ({
-          url: `/folders/${queryArg.folderUid}/move`,
-          method: 'POST',
-          body: queryArg.moveFolderCommand,
-        }),
-        invalidatesTags: ['folders'],
-      }),
-      getFolderPermissionList: build.query<GetFolderPermissionListApiResponse, GetFolderPermissionListApiArg>({
-        query: (queryArg) => ({ url: `/folders/${queryArg.folderUid}/permissions` }),
-        providesTags: ['folders', 'permissions'],
       }),
       updateFolderPermissions: build.mutation<UpdateFolderPermissionsApiResponse, UpdateFolderPermissionsApiArg>({
         query: (queryArg) => ({
@@ -2473,25 +2370,6 @@ export type SearchDashboardSnapshotsApiArg = {
   /** Limit the number of returned results */
   limit?: number;
 };
-export type PostDashboardApiResponse = /** status 200 (empty) */ {
-  /** FolderUID The unique identifier (uid) of the folder the dashboard belongs to. */
-  folderUid?: string;
-  /** ID The unique identifier (id) of the created/updated dashboard. */
-  id: number;
-  /** Status status of the response. */
-  status: string;
-  /** Slug The slug of the dashboard. */
-  title: string;
-  /** UID The unique identifier (uid) of the created/updated dashboard. */
-  uid: string;
-  /** URL The relative URL for accessing the created/updated dashboard. */
-  url: string;
-  /** Version The version of the dashboard. */
-  version: number;
-};
-export type PostDashboardApiArg = {
-  saveDashboardCommand: SaveDashboardCommand;
-};
 export type ImportDashboardApiResponse =
   /** status 200 (empty) */ ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard;
 export type ImportDashboardApiArg = {
@@ -2501,8 +2379,6 @@ export type InterpolateDashboardApiResponse = /** status 200 (empty) */ any;
 export type InterpolateDashboardApiArg = void;
 export type ListPublicDashboardsApiResponse = /** status 200 (empty) */ PublicDashboardListResponseWithPagination;
 export type ListPublicDashboardsApiArg = void;
-export type GetDashboardTagsApiResponse = /** status 200 (empty) */ DashboardTagCloudItem[];
-export type GetDashboardTagsApiArg = void;
 export type GetPublicDashboardApiResponse = /** status 200 (empty) */ PublicDashboard;
 export type GetPublicDashboardApiArg = {
   dashboardUid: string;
@@ -2523,44 +2399,6 @@ export type UpdatePublicDashboardApiArg = {
   dashboardUid: string;
   uid: string;
   publicDashboardDto: PublicDashboardDto;
-};
-export type DeleteDashboardByUidApiResponse = /** status 200 (empty) */ {
-  /** Message Message of the deleted dashboard. */
-  message: string;
-  /** Title Title of the deleted dashboard. */
-  title: string;
-  /** UID Identifier of the deleted dashboard. */
-  uid: string;
-};
-export type DeleteDashboardByUidApiArg = {
-  uid: string;
-};
-export type GetDashboardByUidApiResponse = /** status 200 (empty) */ DashboardFullWithMeta;
-export type GetDashboardByUidApiArg = {
-  uid: string;
-};
-export type GetDashboardPermissionsListByUidApiResponse = /** status 200 (empty) */ DashboardAclInfoDto[];
-export type GetDashboardPermissionsListByUidApiArg = {
-  uid: string;
-};
-export type UpdateDashboardPermissionsByUidApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type UpdateDashboardPermissionsByUidApiArg = {
-  uid: string;
-  updateDashboardAclCommand: UpdateDashboardAclCommand;
-};
-export type GetDashboardVersionsByUidApiResponse = /** status 200 (empty) */ DashboardVersionResponseMeta;
-export type GetDashboardVersionsByUidApiArg = {
-  uid: string;
-  /** Maximum number of results to return */
-  limit?: number;
-  /** Version to start from when returning queries */
-  start?: number;
-};
-export type GetDashboardVersionByUidApiResponse = /** status 200 (empty) */ DashboardVersionMeta;
-export type GetDashboardVersionByUidApiArg = {
-  dashboardVersionId: number;
-  uid: string;
 };
 export type GetDataSourcesApiResponse = /** status 200 (empty) */ DataSourceList;
 export type GetDataSourcesApiArg = void;
@@ -2704,60 +2542,6 @@ export type QueryMetricsWithExpressionsApiResponse = /** status 200 (empty) */
   | /** status 207 (empty) */ QueryDataResponseContainsTheResultsFromAQueryDataRequest;
 export type QueryMetricsWithExpressionsApiArg = {
   metricRequest: MetricRequest;
-};
-export type GetFoldersApiResponse = /** status 200 (empty) */ FolderSearchHit[];
-export type GetFoldersApiArg = {
-  /** Limit the maximum number of folders to return */
-  limit?: number;
-  /** Page index for starting fetching folders */
-  page?: number;
-  /** The parent folder UID */
-  parentUid?: string;
-  /** Set to `Edit` to return folders that the user can edit */
-  permission?: 'Edit' | 'View';
-};
-export type CreateFolderApiResponse = /** status 200 (empty) */ Folder;
-export type CreateFolderApiArg = {
-  createFolderCommand: CreateFolderCommand;
-};
-export type DeleteFolderApiResponse = /** status 200 (empty) */ {
-  /** ID Identifier of the deleted folder. */
-  id: number;
-  /** Message Message of the deleted folder. */
-  message: string;
-  /** Title of the deleted folder. */
-  title: string;
-};
-export type DeleteFolderApiArg = {
-  folderUid: string;
-  /** If `true` any Grafana 8 Alerts under this folder will be deleted.
-    Set to `false` so that the request will fail if the folder contains any Grafana 8 Alerts. */
-  forceDeleteRules?: boolean;
-};
-export type GetFolderByUidApiResponse = /** status 200 (empty) */ Folder;
-export type GetFolderByUidApiArg = {
-  folderUid: string;
-};
-export type UpdateFolderApiResponse = /** status 200 (empty) */ Folder;
-export type UpdateFolderApiArg = {
-  folderUid: string;
-  /** To change the unique identifier (uid), provide another one.
-    To overwrite an existing folder with newer version, set `overwrite` to `true`.
-    Provide the current version to safelly update the folder: if the provided version differs from the stored one the request will fail, unless `overwrite` is `true`. */
-  updateFolderCommand: UpdateFolderCommand;
-};
-export type GetFolderDescendantCountsApiResponse = /** status 200 (empty) */ DescendantCounts;
-export type GetFolderDescendantCountsApiArg = {
-  folderUid: string;
-};
-export type MoveFolderApiResponse = /** status 200 (empty) */ Folder;
-export type MoveFolderApiArg = {
-  folderUid: string;
-  moveFolderCommand: MoveFolderCommand;
-};
-export type GetFolderPermissionListApiResponse = /** status 200 (empty) */ DashboardAclInfoDto[];
-export type GetFolderPermissionListApiArg = {
-  folderUid: string;
 };
 export type UpdateFolderPermissionsApiResponse =
   /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
@@ -4199,17 +3983,6 @@ export type DashboardSnapshotDto = {
   name?: string;
   updated?: string;
 };
-export type SaveDashboardCommand = {
-  UpdatedAt?: string;
-  dashboard?: Json;
-  /** Deprecated: use FolderUID instead */
-  folderId?: number;
-  folderUid?: string;
-  isFolder?: boolean;
-  message?: string;
-  overwrite?: boolean;
-  userId?: number;
-};
 export type ImportDashboardResponseResponseObjectReturnedWhenImportingADashboard = {
   dashboardId?: number;
   description?: string;
@@ -4270,10 +4043,6 @@ export type PublicError2 = {
   /** StatusCode The HTTP status code returned */
   statusCode: number;
 };
-export type DashboardTagCloudItem = {
-  count?: number;
-  term?: string;
-};
 export type EmailDto = {
   recipient?: string;
   uid?: string;
@@ -4300,102 +4069,6 @@ export type PublicDashboardDto = {
   share?: ShareType;
   timeSelectionEnabled?: boolean;
   uid?: string;
-};
-export type AnnotationActions = {
-  canAdd?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-};
-export type AnnotationPermission = {
-  dashboard?: AnnotationActions;
-  organization?: AnnotationActions;
-};
-export type DashboardMeta = {
-  annotationsPermissions?: AnnotationPermission;
-  apiVersion?: string;
-  canAdmin?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-  canSave?: boolean;
-  canStar?: boolean;
-  created?: string;
-  createdBy?: string;
-  expires?: string;
-  /** Deprecated: use FolderUID instead */
-  folderId?: number;
-  folderTitle?: string;
-  folderUid?: string;
-  folderUrl?: string;
-  hasAcl?: boolean;
-  isFolder?: boolean;
-  isSnapshot?: boolean;
-  isStarred?: boolean;
-  provisioned?: boolean;
-  provisionedExternalId?: string;
-  publicDashboardEnabled?: boolean;
-  slug?: string;
-  type?: string;
-  updated?: string;
-  updatedBy?: string;
-  url?: string;
-  version?: number;
-};
-export type DashboardFullWithMeta = {
-  dashboard?: Json;
-  meta?: DashboardMeta;
-};
-export type PermissionType = number;
-export type DashboardAclInfoDto = {
-  created?: string;
-  dashboardId?: number;
-  /** Deprecated: use FolderUID instead */
-  folderId?: number;
-  folderUid?: string;
-  inherited?: boolean;
-  isFolder?: boolean;
-  permission?: PermissionType;
-  permissionName?: string;
-  role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
-  slug?: string;
-  team?: string;
-  teamAvatarUrl?: string;
-  teamEmail?: string;
-  teamId?: number;
-  teamUid?: string;
-  title?: string;
-  uid?: string;
-  updated?: string;
-  url?: string;
-  userAvatarUrl?: string;
-  userEmail?: string;
-  userId?: number;
-  userLogin?: string;
-  userUid?: string;
-};
-export type DashboardAclUpdateItem = {
-  permission?: PermissionType;
-  role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
-  teamId?: number;
-  userId?: number;
-};
-export type UpdateDashboardAclCommand = {
-  items?: DashboardAclUpdateItem[];
-};
-export type DashboardVersionMeta = {
-  created?: string;
-  createdBy?: string;
-  dashboardId?: number;
-  data?: Json;
-  id?: number;
-  message?: string;
-  parentVersion?: number;
-  restoredFrom?: number;
-  uid?: string;
-  version?: number;
-};
-export type DashboardVersionResponseMeta = {
-  continueToken?: string;
-  versions?: DashboardVersionMeta[];
 };
 export type DsAccess = string;
 export type DataSourceListItemDto = {
@@ -4828,59 +4501,15 @@ export type MetricRequest = {
   /** To End time in epoch timestamps in milliseconds or relative using Grafana time units. */
   to: string;
 };
-export type ManagerKindIsTheTypeOfManagerWhichIsResponsibleForManagingTheResource = string;
-export type FolderSearchHit = {
-  id?: number;
-  managedBy?: ManagerKindIsTheTypeOfManagerWhichIsResponsibleForManagingTheResource;
-  parentUid?: string;
-  title?: string;
-  uid?: string;
+export type PermissionType = number;
+export type DashboardAclUpdateItem = {
+  permission?: PermissionType;
+  role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
+  teamId?: number;
+  userId?: number;
 };
-export type Folder = {
-  accessControl?: Metadata;
-  canAdmin?: boolean;
-  canDelete?: boolean;
-  canEdit?: boolean;
-  canSave?: boolean;
-  created?: string;
-  createdBy?: string;
-  hasAcl?: boolean;
-  /** Deprecated: use UID instead */
-  id?: number;
-  managedBy?: ManagerKindIsTheTypeOfManagerWhichIsResponsibleForManagingTheResource;
-  orgId?: number;
-  /** only used if nested folders are enabled */
-  parentUid?: string;
-  /** the parent folders starting from the root going down */
-  parents?: Folder[];
-  title?: string;
-  uid?: string;
-  updated?: string;
-  updatedBy?: string;
-  url?: string;
-  version?: number;
-};
-export type CreateFolderCommand = {
-  description?: string;
-  parentUid?: string;
-  title?: string;
-  uid?: string;
-};
-export type UpdateFolderCommand = {
-  /** NewDescription it's an optional parameter used for overriding the existing folder description */
-  description?: string;
-  /** Overwrite only used by the legacy folder implementation */
-  overwrite?: boolean;
-  /** NewTitle it's an optional parameter used for overriding the existing folder title */
-  title?: string;
-  /** Version only used by the legacy folder implementation */
-  version?: number;
-};
-export type DescendantCounts = {
-  [key: string]: number;
-};
-export type MoveFolderCommand = {
-  parentUid?: string;
+export type UpdateDashboardAclCommand = {
+  items?: DashboardAclUpdateItem[];
 };
 export type Group = {
   groupID?: string;
@@ -5181,6 +4810,49 @@ export type SearchOrgUsersQueryResult = {
   page?: number;
   perPage?: number;
   totalCount?: number;
+};
+export type AnnotationActions = {
+  canAdd?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+};
+export type AnnotationPermission = {
+  dashboard?: AnnotationActions;
+  organization?: AnnotationActions;
+};
+export type DashboardMeta = {
+  annotationsPermissions?: AnnotationPermission;
+  apiVersion?: string;
+  canAdmin?: boolean;
+  canDelete?: boolean;
+  canEdit?: boolean;
+  canSave?: boolean;
+  canStar?: boolean;
+  created?: string;
+  createdBy?: string;
+  expires?: string;
+  /** Deprecated: use FolderUID instead */
+  folderId?: number;
+  folderTitle?: string;
+  folderUid?: string;
+  folderUrl?: string;
+  hasAcl?: boolean;
+  isFolder?: boolean;
+  isSnapshot?: boolean;
+  isStarred?: boolean;
+  provisioned?: boolean;
+  provisionedExternalId?: string;
+  publicDashboardEnabled?: boolean;
+  slug?: string;
+  type?: string;
+  updated?: string;
+  updatedBy?: string;
+  url?: string;
+  version?: number;
+};
+export type DashboardFullWithMeta = {
+  dashboard?: Json;
+  meta?: DashboardMeta;
 };
 export type DataSourceRef = {
   /** The plugin type-id */
@@ -6235,28 +5907,15 @@ export const {
   useLazyRouteConvertPrometheusGetRuleGroupQuery,
   useSearchDashboardSnapshotsQuery,
   useLazySearchDashboardSnapshotsQuery,
-  usePostDashboardMutation,
   useImportDashboardMutation,
   useInterpolateDashboardMutation,
   useListPublicDashboardsQuery,
   useLazyListPublicDashboardsQuery,
-  useGetDashboardTagsQuery,
-  useLazyGetDashboardTagsQuery,
   useGetPublicDashboardQuery,
   useLazyGetPublicDashboardQuery,
   useCreatePublicDashboardMutation,
   useDeletePublicDashboardMutation,
   useUpdatePublicDashboardMutation,
-  useDeleteDashboardByUidMutation,
-  useGetDashboardByUidQuery,
-  useLazyGetDashboardByUidQuery,
-  useGetDashboardPermissionsListByUidQuery,
-  useLazyGetDashboardPermissionsListByUidQuery,
-  useUpdateDashboardPermissionsByUidMutation,
-  useGetDashboardVersionsByUidQuery,
-  useLazyGetDashboardVersionsByUidQuery,
-  useGetDashboardVersionByUidQuery,
-  useLazyGetDashboardVersionByUidQuery,
   useGetDataSourcesQuery,
   useLazyGetDataSourcesQuery,
   useAddDataSourceMutation,
@@ -6291,18 +5950,6 @@ export const {
   useDisableDataSourceCacheMutation,
   useEnableDataSourceCacheMutation,
   useQueryMetricsWithExpressionsMutation,
-  useGetFoldersQuery,
-  useLazyGetFoldersQuery,
-  useCreateFolderMutation,
-  useDeleteFolderMutation,
-  useGetFolderByUidQuery,
-  useLazyGetFolderByUidQuery,
-  useUpdateFolderMutation,
-  useGetFolderDescendantCountsQuery,
-  useLazyGetFolderDescendantCountsQuery,
-  useMoveFolderMutation,
-  useGetFolderPermissionListQuery,
-  useLazyGetFolderPermissionListQuery,
   useUpdateFolderPermissionsMutation,
   useGetMappedGroupsQuery,
   useLazyGetMappedGroupsQuery,

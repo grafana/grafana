@@ -11,16 +11,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag verifies that permission updates
 // succeed for provisioned folders when the provisioningFolderMetadata feature flag is enabled.
 func TestIntegrationFolderPermissions_ProvisionedFolders_WithFlag(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
 	repoName := "nested-folder-repo-flag"
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	helper.CreateRepo(t, common.TestRepo{
 		Name:            repoName,
 		Target:          "folder",
