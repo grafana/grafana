@@ -869,18 +869,25 @@ func (st DBstore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.Lis
 }
 
 func buildGroupCursorCondition(sess *xorm.Session, c ngmodels.GroupCursor) *xorm.Session {
+	// We need to handle this here otherwise we end up checking rule_group > "no_group_for_rule..."
+	// and skipping everything
+	ruleGroup := c.RuleGroup
+	if ngmodels.IsNoGroupRuleGroup(ruleGroup) {
+		ruleGroup = ""
+	}
+
 	if c.FolderFullpath != "" {
 		return sess.And(
 			"((folder_fullpath > ?) OR (folder_fullpath = ? AND namespace_uid > ?) OR (folder_fullpath = ? AND namespace_uid = ? AND rule_group > ?))",
 			c.FolderFullpath,
 			c.FolderFullpath, c.NamespaceUID,
-			c.FolderFullpath, c.NamespaceUID, c.RuleGroup,
+			c.FolderFullpath, c.NamespaceUID, ruleGroup,
 		)
 	}
 	// fallback to previous cursor condition if folder fullpath is not available, this means that pagination will be less efficient as it cannot take advantage of folder fullpath ordering, but at least it will work and not return duplicate or missing groups.
 	return sess.And(
 		"((namespace_uid > ?) OR (namespace_uid = ? AND rule_group > ?))",
-		c.NamespaceUID, c.NamespaceUID, c.RuleGroup,
+		c.NamespaceUID, c.NamespaceUID, ruleGroup,
 	)
 }
 
@@ -1259,6 +1266,13 @@ func decodeCursor(token string) (continueCursor, error) {
 }
 
 func buildCursorCondition(sess *xorm.Session, c continueCursor) *xorm.Session {
+	// We need to handle this here otherwise we end up checking rule_group > "no_group_for_rule..."
+	// and skipping everything
+	ruleGroup := c.RuleGroup
+	if ngmodels.IsNoGroupRuleGroup(ruleGroup) {
+		ruleGroup = ""
+	}
+
 	return sess.And(`(
 		(namespace_uid > ?)
 		OR (namespace_uid = ? AND rule_group > ?)
@@ -1266,9 +1280,9 @@ func buildCursorCondition(sess *xorm.Session, c continueCursor) *xorm.Session {
 		OR (namespace_uid = ? AND rule_group = ? AND rule_group_idx = ? AND id > ?)
 	)`,
 		c.NamespaceUID,
-		c.NamespaceUID, c.RuleGroup,
-		c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx,
-		c.NamespaceUID, c.RuleGroup, c.RuleGroupIdx, c.ID,
+		c.NamespaceUID, ruleGroup,
+		c.NamespaceUID, ruleGroup, c.RuleGroupIdx,
+		c.NamespaceUID, ruleGroup, c.RuleGroupIdx, c.ID,
 	)
 }
 
