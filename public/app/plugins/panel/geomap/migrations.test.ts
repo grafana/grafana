@@ -2,14 +2,8 @@ import { PanelModel, FieldConfigSource } from '@grafana/data';
 
 import { mapMigrationHandler, mapPanelChangedHandler } from './migrations';
 
-const publicPath = 'https://grafana.fake/public/';
-
 describe('Worldmap Migrations', () => {
   let prevFieldConfig: FieldConfigSource;
-
-  beforeAll(() => {
-    window.__grafana_public_path__ = publicPath;
-  });
 
   beforeEach(() => {
     prevFieldConfig = {
@@ -100,7 +94,7 @@ describe('Worldmap Migrations', () => {
                 },
               },
               "location": {
-                "gazetteer": "https://grafana.fake/public/build/gazetteer/countries.json",
+                "gazetteer": "public/gazetteer/countries.json",
                 "lookup": undefined,
                 "mode": "lookup",
               },
