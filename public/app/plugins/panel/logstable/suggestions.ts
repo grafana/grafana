@@ -25,21 +25,28 @@ function getTableSuggestionScore(dataSummary: PanelDataSummary): VisualizationSu
 
 export const logstableSuggestionsSupplier: VisualizationSuggestionsSupplier<Options, TableFieldConfig> = (
   dataSummary
-) => [
-  {
-    score: getTableSuggestionScore(dataSummary),
-    cardOptions: {
-      previewModifier: (s) => {
-        if (s.options) {
-          s.options.showHeader = false;
-          s.options.disableKeyboardEvents = true;
-        }
-        if (s.fieldConfig && s.fieldConfig.defaults.custom) {
-          s.fieldConfig.defaults.custom.minWidth = 50;
-        }
+) => {
+  const score = getTableSuggestionScore(dataSummary);
+  if (score === undefined) {
+    return;
+  }
+
+  return [
+    {
+      score,
+      cardOptions: {
+        previewModifier: (s) => {
+          if (s.options) {
+            s.options.showHeader = false;
+            s.options.disableKeyboardEvents = true;
+          }
+          if (s.fieldConfig && s.fieldConfig.defaults.custom) {
+            s.fieldConfig.defaults.custom.minWidth = 50;
+          }
+        },
+        // TODO: delete this in once "new" suggestions are fully rolled out
+        imgSrc: dataSummary.fieldCount === 0 && !config.featureToggles.newVizSuggestions ? icnTablePanelSvg : undefined,
       },
-      // TODO: delete this in once "new" suggestions are fully rolled out
-      imgSrc: dataSummary.fieldCount === 0 && !config.featureToggles.newVizSuggestions ? icnTablePanelSvg : undefined,
     },
-  },
-];
+  ];
+};
