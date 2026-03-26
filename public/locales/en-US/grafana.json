@@ -370,6 +370,7 @@
       "annotations": "Annotations",
       "description-missing-series-evaluations": "The number of consecutive evaluation intervals a dimension must be missing before the alert instance becomes stale, and is then automatically resolved and evicted. Defaults to 2 if empty.",
       "evaluation": "Evaluation",
+      "evaluation-interval": "Evaluation interval",
       "evaluation-paused": "Alert evaluation currently paused",
       "evaluation-paused-description": "Notifications for this rule will not fire and no alert instances will be created until the rule is un-paused.",
       "keep-firing-for": "Keep firing for",
@@ -390,6 +391,7 @@
       },
       "pending-period": "Pending period",
       "rule-identifier": "Rule identifier",
+      "rule-metadata": "Rule metadata",
       "rule-type": "Rule type",
       "state-error-timeout": "Alert state if execution error or timeout",
       "state-no-data": "Alert state if no data or all values are null",
@@ -1007,16 +1009,8 @@
     },
     "create-metadata": {
       "label": {
-        "contact-point": "Notifications are delivered to",
-        "dashboard": "Dashboard",
-        "dashboard-and-panel": "Dashboard and panel",
-        "evaluation-interval": "Evaluation interval",
-        "labels": "Labels",
-        "metric-name": "Metric name",
-        "runbook-url": "Runbook URL"
-      },
-      "view-dashboard": "View dashboard",
-      "view-panel": "View panel"
+        "labels": "Labels"
+      }
     },
     "create-new-folder": {
       "folder": {
@@ -3064,7 +3058,6 @@
     "rule-viewer": {
       "aria-label-return-to": "Return to previous view",
       "error-loading": "Something went wrong loading the rule",
-      "evaluation-interval": "Every {{interval}}",
       "prometheus-consistency-check": {
         "alert-message": "Alert rule has been added or updated. Changes may take up to a minute to appear on the Alert rules list view.",
         "alert-title": "Update in progress"

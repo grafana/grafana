@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { chain, truncate } from 'lodash';
+import { chain } from 'lodash';
 import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -12,9 +12,10 @@ import {
   LinkButton,
   LoadingBar,
   Stack,
+  Tab,
   TabContent,
+  TabsBar,
   Text,
-  TextLink,
   useStyles2,
   withErrorBoundary,
 } from '@grafana/ui';
@@ -47,7 +48,7 @@ import { normalizeHealth, normalizeState } from '../../rule-list/components/util
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceUid, ruleIdentifierToRuleSourceIdentifier } from '../../utils/datasource';
 import { labelsSize } from '../../utils/labels';
-import { makeDashboardLink, makePanelLink, stringifyErrorLike } from '../../utils/misc';
+import { stringifyErrorLike } from '../../utils/misc';
 import { createListFilterLink, groups } from '../../utils/navigation';
 import {
   type RulePluginOrigin,
@@ -60,11 +61,9 @@ import {
 } from '../../utils/rules';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { ProvisioningBadge } from '../Provisioning';
-import { WithReturnButton } from '../WithReturnButton';
 import { decodeGrafanaNamespace } from '../expressions/util';
 import { RedirectToCloneRule } from '../rules/CloneRule';
 
-import { ContactPointLink } from './ContactPointLink';
 import { Details } from './Details';
 import { FederatedRuleWarning } from './FederatedRuleWarning';
 import { useAlertRule } from './RuleContext';
@@ -91,7 +90,7 @@ const alertingListViewV2 = shouldUseAlertingListViewV2();
 
 const RuleViewer = () => {
   const { rule, identifier } = useAlertRule();
-  const { pageNav, activeTab } = usePageNav(rule);
+  const { pageNav, tabs, activeTab } = usePageNav(rule);
   const styles = useStyles2(getStyles);
 
   // GMA /api/v1/rules endpoint is strongly consistent, so we don't need to check for consistency
@@ -136,7 +135,7 @@ const RuleViewer = () => {
         />
       )}
       actions={<RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />}
-      info={createMetadata(rule, styles)}
+      info={createMetadata(rule)}
       subTitle={
         <Stack direction="column">
           {summary}
@@ -163,8 +162,24 @@ const RuleViewer = () => {
     >
       {shouldUseConsistencyCheck && <PrometheusConsistencyCheck ruleIdentifier={identifier} />}
       <div className={styles.layout}>
-        <Stack direction="column" gap={2}>
-          {/* tabs and tab content */}
+        <Stack direction="column" gap={0}>
+          {/* local tab bar — rendered inside the grid so sidebar sits alongside it */}
+          <div className={styles.tabsWrapper}>
+            <TabsBar>
+              {tabs.map((tab, index) =>
+                !tab.hideFromTabs ? (
+                  <Tab
+                    key={`${tab.text}-${index}`}
+                    label={tab.text}
+                    active={tab.active}
+                    counter={tab.tabCounter}
+                    suffix={tab.tabSuffix}
+                    onChangeTab={tab.onClick}
+                  />
+                ) : null
+              )}
+            </TabsBar>
+          </div>
           <TabContent>
             {activeTab === ActiveTab.Query && <QueryResults rule={rule} />}
             {activeTab === ActiveTab.Instances && <InstancesList rule={rule} />}
@@ -199,100 +214,15 @@ const RuleViewer = () => {
   );
 };
 
-const createMetadata = (rule: CombinedRule, styles: ReturnType<typeof getStyles>): PageInfoItem[] => {
-  const { labels, annotations, group, rulerRule } = rule;
+const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
+  const { labels } = rule;
   const metadata: PageInfoItem[] = [];
 
-  const runbookUrl = annotations[Annotation.runbookURL];
-  const dashboardUID = annotations[Annotation.dashboardUID];
-  const panelID = annotations[Annotation.panelID];
-
-  const hasDashboardAndPanel = dashboardUID && panelID;
-  const hasDashboard = dashboardUID;
   const hasLabels = labelsSize(labels) > 0;
-
-  const interval = group.interval;
-
-  // if the alert rule uses simplified routing, we'll show a link to the contact point
-  if (rulerRuleType.grafana.alertingRule(rulerRule)) {
-    const contactPointName = rulerRule.grafana_alert.notification_settings?.receiver;
-
-    if (contactPointName) {
-      metadata.push({
-        label: t('alerting.create-metadata.label.contact-point', 'Notifications are delivered to'),
-        value: <ContactPointLink name={contactPointName} variant="bodySmall" />,
-      });
-    }
-  }
-
-  if (runbookUrl) {
-    /* TODO instead of truncating the string, we should use flex and text overflow properly to allow it to take up all of the horizontal space available */
-    const truncatedUrl = truncate(runbookUrl, { length: 42 });
-    const valueToAdd = isValidRunbookURL(runbookUrl) ? (
-      <TextLink variant="bodySmall" className={styles.url} href={runbookUrl} external>
-        {truncatedUrl}
-      </TextLink>
-    ) : (
-      <Text variant="bodySmall">{truncatedUrl}</Text>
-    );
-    metadata.push({
-      label: t('alerting.create-metadata.label.runbook-url', 'Runbook URL'),
-      value: valueToAdd,
-    });
-  }
-
-  if (hasDashboardAndPanel) {
-    metadata.push({
-      label: t('alerting.create-metadata.label.dashboard-and-panel', 'Dashboard and panel'),
-      value: (
-        <WithReturnButton
-          title={rule.name}
-          component={
-            <TextLink variant="bodySmall" href={makePanelLink(dashboardUID, panelID)}>
-              <Trans i18nKey="alerting.create-metadata.view-panel">View panel</Trans>
-            </TextLink>
-          }
-        />
-      ),
-    });
-  } else if (hasDashboard) {
-    metadata.push({
-      label: t('alerting.create-metadata.label.dashboard', 'Dashboard'),
-      value: (
-        <WithReturnButton
-          title={rule.name}
-          component={
-            <TextLink title={rule.name} variant="bodySmall" href={makeDashboardLink(dashboardUID)}>
-              <Trans i18nKey="alerting.create-metadata.view-dashboard">View dashboard</Trans>
-            </TextLink>
-          }
-        />
-      ),
-    });
-  }
-  if (rulerRuleType.grafana.recordingRule(rule.rulerRule)) {
-    const metric = rule.rulerRule?.grafana_alert.record?.metric ?? '';
-    metadata.push({
-      label: t('alerting.create-metadata.label.metric-name', 'Metric name'),
-      value: <Text color="primary">{metric}</Text>,
-    });
-  }
-
-  if (interval) {
-    metadata.push({
-      label: t('alerting.create-metadata.label.evaluation-interval', 'Evaluation interval'),
-      value: (
-        <Text color="primary">
-          <Trans i18nKey="alerting.rule-viewer.evaluation-interval">Every {{ interval }}</Trans>
-        </Text>
-      ),
-    });
-  }
 
   if (hasLabels) {
     metadata.push({
       label: t('alerting.create-metadata.label.labels', 'Labels'),
-      /* TODO truncate number of labels, maybe build in to component? */
       value: <AlertLabels labels={labels} size="sm" />,
     });
   }
@@ -467,56 +397,57 @@ function usePageNav(rule: CombinedRule) {
     }
   };
 
+  const tabs: NavModelItem[] = [
+    {
+      text: t('alerting.use-page-nav.page-nav.text.query-and-conditions', 'Query and conditions'),
+      active: activeTab === ActiveTab.Query,
+      onClick: () => {
+        setActiveTab(ActiveTab.Query);
+      },
+    },
+    {
+      text: t('alerting.use-page-nav.page-nav.text.instances', 'Instances'),
+      active: activeTab === ActiveTab.Instances,
+      onClick: () => {
+        setActiveTab(ActiveTab.Instances);
+      },
+      tabCounter: numberOfInstance,
+      hideFromTabs: isRecordingRuleType,
+    },
+    {
+      text: t('alerting.use-page-nav.page-nav.text.history', 'History'),
+      active: activeTab === ActiveTab.History,
+      onClick: () => {
+        setActiveTab(ActiveTab.History);
+      },
+      // alert state history is only available for Grafana managed alert rules
+      hideFromTabs: !isGrafanaAlertRule,
+    },
+    {
+      text: t('alerting.use-page-nav.page-nav.text.notifications', 'Notifications'),
+      active: activeTab === ActiveTab.Notifications,
+      onClick: () => {
+        setActiveTab(ActiveTab.Notifications);
+      },
+      // notification history is only available for Grafana managed alert rules and requires feature toggles
+      hideFromTabs: !isGrafanaAlertRule || !config.featureToggles.alertingNotificationHistoryRuleViewer,
+    },
+    // Enterprise extensions (e.g. Alert enrichment) should appear after routing
+    ...useRuleViewExtensionsNav(activeTab, setActiveTabFromString),
+    {
+      text: t('alerting.use-page-nav.page-nav.text.versions', 'Versions'),
+      active: activeTab === ActiveTab.VersionHistory,
+      onClick: () => {
+        setActiveTab(ActiveTab.VersionHistory);
+      },
+      hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
+    },
+  ];
+
   const pageNav: NavModelItem = {
     ...defaultPageNav,
     text: rule.name,
     subTitle: summary,
-    children: [
-      {
-        text: t('alerting.use-page-nav.page-nav.text.query-and-conditions', 'Query and conditions'),
-        active: activeTab === ActiveTab.Query,
-        onClick: () => {
-          setActiveTab(ActiveTab.Query);
-        },
-      },
-      {
-        text: t('alerting.use-page-nav.page-nav.text.instances', 'Instances'),
-        active: activeTab === ActiveTab.Instances,
-        onClick: () => {
-          setActiveTab(ActiveTab.Instances);
-        },
-        tabCounter: numberOfInstance,
-        hideFromTabs: isRecordingRuleType,
-      },
-      {
-        text: t('alerting.use-page-nav.page-nav.text.history', 'History'),
-        active: activeTab === ActiveTab.History,
-        onClick: () => {
-          setActiveTab(ActiveTab.History);
-        },
-        // alert state history is only available for Grafana managed alert rules
-        hideFromTabs: !isGrafanaAlertRule,
-      },
-      {
-        text: t('alerting.use-page-nav.page-nav.text.notifications', 'Notifications'),
-        active: activeTab === ActiveTab.Notifications,
-        onClick: () => {
-          setActiveTab(ActiveTab.Notifications);
-        },
-        // notification history is only available for Grafana managed alert rules and requires feature toggles
-        hideFromTabs: !isGrafanaAlertRule || !config.featureToggles.alertingNotificationHistoryRuleViewer,
-      },
-      // Enterprise extensions (e.g. Alert enrichment) should appear after routing
-      ...useRuleViewExtensionsNav(activeTab, setActiveTabFromString),
-      {
-        text: t('alerting.use-page-nav.page-nav.text.versions', 'Versions'),
-        active: activeTab === ActiveTab.VersionHistory,
-        onClick: () => {
-          setActiveTab(ActiveTab.VersionHistory);
-        },
-        hideFromTabs: !isGrafanaAlertRule && !isGrafanaRecordingRule,
-      },
-    ],
     parentItem: {
       text: groupName,
       url: groupDetailsUrl,
@@ -530,6 +461,7 @@ function usePageNav(rule: CombinedRule) {
 
   return {
     pageNav,
+    tabs,
     activeTab,
   };
 }
@@ -550,8 +482,8 @@ export const calculateTotalInstances = (stats: AlertInstanceTotals) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  url: css({
-    wordBreak: 'break-all',
+  tabsWrapper: css({
+    paddingBottom: theme.spacing(3),
   }),
   layout: css({
     display: 'grid',
@@ -575,20 +507,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
 });
-
-function isValidRunbookURL(url: string) {
-  const isRelative = url.startsWith('/');
-  let isAbsolute = false;
-
-  try {
-    new URL(url);
-    isAbsolute = true;
-  } catch (_) {
-    return false;
-  }
-
-  return isRelative || isAbsolute;
-}
 
 function getNamespaceString(rule: CombinedRule): string {
   // try rule.namespace.uid
