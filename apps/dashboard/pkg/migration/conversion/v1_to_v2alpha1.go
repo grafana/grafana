@@ -1688,9 +1688,10 @@ func buildAdhocVariable(ctx context.Context, varMap map[string]interface{}, comm
 		},
 	}
 
-	if _, exists := varMap["enableGroupBy"]; exists {
-		enableGroupBy := getBoolField(varMap, "enableGroupBy", false)
-		adhocVar.Spec.EnableGroupBy = &enableGroupBy
+	if val, exists := varMap["enableGroupBy"]; exists {
+		if b, ok := val.(bool); ok {
+			adhocVar.Spec.EnableGroupBy = &b
+		}
 	}
 
 	// Transform baseFilters if they exist, otherwise default to empty array
