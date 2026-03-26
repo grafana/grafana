@@ -681,9 +681,7 @@ func TestIntegrationProvisioning_FullSync_FolderMoveWithUIDChange_NoGenerationPr
 }
 
 func TestIntegrationProvisioning_FullSync_FolderMoveWithMetadata_DuplicateUID(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t, common.WithProvisioningFolderMetadata)
+	helper := sharedHelper(t)
 	const repo = "folder-duplicate-uid"
 
 	// Set up two separate folders each with their own unique UIDs.
