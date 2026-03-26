@@ -19,6 +19,7 @@ export const migrateVariableQuery = (rawQuery: string | ElasticsearchDataQuery):
   return {
     refId,
     query: rawQuery,
+    queryType: 'legacy_variable',
     metrics: [{ type: 'raw_document', id: '1' }],
   };
 };

@@ -9890,8 +9890,17 @@
             "format": "int64",
             "type": "integer"
           },
+          "pdfDashboardTitleEnabled": {
+            "type": "boolean"
+          },
+          "pdfHeaderEnabled": {
+            "type": "boolean"
+          },
           "pdfTheme": {
             "type": "string"
+          },
+          "pdfTimeRangeEnabled": {
+            "type": "boolean"
           },
           "userId": {
             "format": "int64",
@@ -17378,7 +17387,7 @@
         "tags": ["dashboards"]
       },
       "get": {
-        "description": "Will return the dashboard given the dashboard unique identifier (uid).",
+        "description": "Optional query parameter `apiVersion` selects the Kubernetes API version used to load the dashboard first\n(for example `v1beta1`). If that request fails, the default version is used instead. When omitted, only the default is used.\n\nWill return the dashboard given the dashboard unique identifier (uid).",
         "operationId": "getDashboardByUID",
         "parameters": [
           {
@@ -24504,6 +24513,7 @@
     },
     "/v1/provisioning/alert-rules": {
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetAlertRules",
         "responses": {
           "200": {
@@ -24531,6 +24541,7 @@
         "tags": ["provisioning"]
       },
       "post": {
+        "deprecated": true,
         "operationId": "RoutePostAlertRule",
         "parameters": [
           {
@@ -24709,6 +24720,7 @@
     },
     "/v1/provisioning/alert-rules/{UID}": {
       "delete": {
+        "deprecated": true,
         "operationId": "RouteDeleteAlertRule",
         "parameters": [
           {
@@ -24747,6 +24759,7 @@
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetAlertRule",
         "parameters": [
           {
@@ -24788,6 +24801,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutAlertRule",
         "parameters": [
           {
@@ -25257,6 +25271,7 @@
     },
     "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
       "delete": {
+        "deprecated": true,
         "description": "Delete rule group",
         "operationId": "RouteDeleteAlertRuleGroup",
         "parameters": [
@@ -25305,6 +25320,7 @@
         "tags": ["provisioning"]
       },
       "get": {
+        "deprecated": true,
         "operationId": "RouteGetAlertRuleGroup",
         "parameters": [
           {
@@ -25353,6 +25369,7 @@
         "tags": ["provisioning"]
       },
       "put": {
+        "deprecated": true,
         "operationId": "RoutePutAlertRuleGroup",
         "parameters": [
           {

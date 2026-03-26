@@ -84,7 +84,7 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 }
 
 // setupDsConfigMetrics creates and registers the prometheus metrics needed for HTTPServer tests
-// that call methods using dsConfigHandlerRequestsDuration.
+// that call methods using dsConfigHandlerRequestsDuration and dsEndpointRedirects.
 func setupDsConfigHandlerMetrics() (prometheus.Registerer, *prometheus.HistogramVec, *prometheus.CounterVec) {
 	promRegister := prometheus.NewRegistry()
 	dsConfigHandlerRequestsDuration := metricutil.NewHistogramVec(prometheus.HistogramOpts{
@@ -95,7 +95,7 @@ func setupDsConfigHandlerMetrics() (prometheus.Registerer, *prometheus.Histogram
 	dsEndpointRedirects := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana",
 		Name:      "ds_endpoint_redirects_total",
-		Help:      "Total number of datasource endpoint redirect decisions, labeled by route, plugin type, and target (legacy or remote).",
+		Help:      "Total number of datasource endpoint redirects by route (local/remote) and plugin type",
 	}, []string{"route", "plugin_type", "target"})
 	promRegister.MustRegister(dsConfigHandlerRequestsDuration)
 	promRegister.MustRegister(dsEndpointRedirects)

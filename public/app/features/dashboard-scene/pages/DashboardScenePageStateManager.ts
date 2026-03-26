@@ -567,6 +567,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         throw new DashboardVersionError('v2beta1', 'Using legacy snapshot API to get a V2 dashboard');
       }
 
+      rsp.meta.snapshotKey = slug;
+
       // Snapshots should use default v1 layout
       const scene = transformSaveModelToScene(rsp, undefined, getSceneCreationOptions(undefined, { isSnapshot: true }));
       return scene;
@@ -908,6 +910,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     if (v2Response.spec) {
       const scene = transformSaveModelSchemaV2ToScene(v2Response);
+      scene.setState({ meta: { ...scene.state.meta, snapshotKey: slug } });
       return scene;
     }
 

@@ -78,6 +78,10 @@ export interface AdHocVariableModel extends BaseVariableModel {
    */
   defaultKeys?: MetricFindValue[];
   allowCustomValue?: boolean;
+  /**
+   * Whether the group-by operator is enabled in the ad hoc filter combobox.
+   */
+  enableGroupBy?: boolean;
 }
 
 export interface GroupByVariableModel extends VariableWithOptions {

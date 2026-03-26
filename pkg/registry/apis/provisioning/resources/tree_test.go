@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -122,6 +122,34 @@ func TestFolderTree(t *testing.T) {
 		id, ok := tree.DirPath("x", "")
 		assert.True(t, ok)
 		assert.Equal(t, "New Title", id.Title)
+	})
+
+	t.Run("get by path returns folder with normalized path", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "a", Title: "A", Path: "a/"}, "")
+
+		ft := tree.(*folderTree)
+		byPath, ok := ft.GetByPath("a")
+		require.True(t, ok)
+		assert.Equal(t, "a", byPath.ID)
+
+		byPath, ok = ft.GetByPath("a/")
+		require.True(t, ok)
+		assert.Equal(t, "a", byPath.ID)
+	})
+
+	t.Run("updating folder path removes the previous path lookup", func(t *testing.T) {
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "a", Title: "A", Path: "old/"}, "")
+		tree.Add(Folder{ID: "a", Title: "A", Path: "new/"}, "")
+
+		ft := tree.(*folderTree)
+		_, ok := ft.GetByPath("old")
+		require.False(t, ok)
+
+		byPath, ok := ft.GetByPath("new")
+		require.True(t, ok)
+		assert.Equal(t, "a", byPath.ID)
 	})
 
 	t.Run("remove existing folder decrements count and removes from tree", func(t *testing.T) {

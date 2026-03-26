@@ -391,7 +391,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dsEndpointRedirects: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",
 			Name:      "ds_endpoint_redirects_total",
-			Help:      "Total number of datasource endpoint redirect decisions, labeled by route, plugin type, and target (legacy or remote).",
+			Help:      "Total number of datasource endpoint redirects by route (local/remote) and plugin type",
 		}, []string{"route", "plugin_type", "target"}),
 		dsConnectionClient: datasource.NewLegacyConnectionClient(dataSourcesService),
 	}
