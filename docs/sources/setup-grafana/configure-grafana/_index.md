@@ -100,7 +100,7 @@ client_secret = 0ldS3cretKey
 rendering_ignore_https_errors = true
 
 [feature_toggles]
-enable = newNavigation
+newNavigation = true
 ```
 
 You can override variables on Linux machines with:
@@ -294,8 +294,7 @@ executed with working directory set to the installation path.
 
 Set this option to `true` to enable HTTP compression, this can improve
 transfer speed and bandwidth utilization. It is recommended that most
-users set it to `true`. By default it is set to `false` for compatibility
-reasons.
+users leave it set at the default of `true`, however compression might increase CPU usage on constrained environments or cause issues with poorly-configured reverse proxies.
 
 #### `cert_file`
 
@@ -2776,6 +2775,14 @@ List of enabled repository types, separated by `|`. When empty, defaults are app
 
 Supported types: `local`, `git`, `github`. Grafana Enterprise additionally supports `bitbucket` and `gitlab`.
 
+#### `max_repositories`
+
+Maximum number of repositories allowed. Default is `10`. Set to `0` for unlimited repositories.
+
+#### `max_resources_per_repository`
+
+Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `0`, which means unlimited.
+
 <hr>
 
 ### `[plugin.plugin_id]`
@@ -2913,15 +2920,19 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise](../
 
 ### `[feature_toggles]`
 
-#### `enable`
-
-Keys of features to enable, separated by space.
-
 #### `FEATURE_NAME = <value>`
 
 Use a key-value pair to set feature flag values explicitly, overriding any default values. A few different types are supported, following the OpenFeature specification. See the defaults.ini file for more details.
 
 For example, to disable an on-by-default feature toggle named `exploreMixedDatasource`, specify `exploreMixedDatasource = false`.
+
+#### `enable`
+
+{{< admonition type="note" >}}
+This option is deprecated and will be removed in a future major release. Use individual toggle entries instead.
+{{< /admonition >}}
+
+Keys of features to enable, separated by spaces.
 
 <hr>
 

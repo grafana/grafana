@@ -60,6 +60,7 @@ func newTestBackend(t *testing.T, isHA bool, simulatedNetworkLatency time.Durati
 	cfg.MaxFileIndexAge = 24 * time.Hour
 	cfg.SimulatedNetworkLatency = simulatedNetworkLatency
 	cfg.DisablePruner = db.IsTestDbSQLite()
+	cfg.NotifierSettleDelay = time.Millisecond // keep it low in tests as most of them don't exercise concurrent writes
 	dbstore := db.InitTestDB(t)
 	dbSection := cfg.SectionWithEnvOverrides("database")
 	if isHA {

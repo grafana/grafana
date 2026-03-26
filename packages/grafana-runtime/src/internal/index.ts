@@ -48,6 +48,7 @@ export {
   getPanelPluginMeta,
   getPanelPluginMetas,
   getPanelPluginMetasMap,
+  getPanelPluginMetasMapSync,
   setPanelPluginMetas,
   refetchPanelPluginMetas,
 } from '../services/pluginMeta/panels';
