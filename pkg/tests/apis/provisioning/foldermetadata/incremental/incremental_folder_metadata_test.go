@@ -1658,4 +1658,59 @@ func TestIntegrationProvisioning_IncrementalSync_FileRenameIntoRelocatedFolder(t
 			"dash-migrate": {Title: "Migrate Dashboard", SourcePath: "teamC/migrate.json", Folder: srcUID},
 		})
 	})
+
+	t.Run("dashboard renamed into nested path under relocated metadata folder", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+		ctx := context.Background()
+
+		const repoName = "incr-nested-path-rename-reloc"
+		const srcUID = "nested-reloc-src-uid"
+
+		// Seed: teamA with _folder.json (stable UID) and a staying
+		// dashboard, plus teamB/nested/ with a dashboard that will
+		// migrate into teamC/nested/ alongside teamA's metadata.
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"teamA/_folder.json":        folderMetadataJSON(srcUID, "Team A"),
+			"teamA/own.json":            common.DashboardJSON("dash-own", "Own Dashboard", 1),
+			"teamB/nested/migrate.json": common.DashboardJSON("dash-migrate", "Migrate Dashboard", 1),
+		})
+
+		common.SyncAndWaitWithWarning(t, helper, repoName)
+		common.RequireFolderState(t, helper.Folders, srcUID, "Team A", "teamA", "")
+
+		// Move teamA's _folder.json to teamC/ and move the nested
+		// dashboard from teamB/nested/ into teamC/nested/ in the same
+		// commit. teamA/ keeps own.json so git produces file-level
+		// renames instead of a directory rename.
+		require.NoError(t, local.CreateDirPath("teamC/nested"))
+		_, err := local.Git("mv", "teamA/_folder.json", "teamC/_folder.json")
+		require.NoError(t, err)
+		_, err = local.Git("mv", "teamB/nested/migrate.json", "teamC/nested/migrate.json")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "move metadata to teamC and migrate nested dashboard")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		// The file rename into teamC/nested/ triggers EnsureFolderPathExist
+		// which walks all ancestors including teamC/. The relocation
+		// allowlist for srcUID is registered at teamC/ but the immediate
+		// directory lookup in applyIncrementalChanges only checks
+		// teamC/nested/. Without propagating the ancestor relocation,
+		// CheckIDConflict rejects the valid move.
+		common.SyncAndWaitIncrementalWithWarning(t, helper, repoName)
+
+		// teamC/ should carry the stable UID.
+		common.RequireFolderState(t, helper.Folders, srcUID, "Team A", "teamC", "")
+
+		// teamA/ still has own.json, so it should exist with a
+		// hash-derived UID.
+		teamAAutoUID := common.RequireRepoFolderTitle(t, helper.Folders, ctx, repoName, "teamA")
+		require.NotEqual(t, srcUID, teamAAutoUID)
+
+		common.RequireDashboards(t, helper.DashboardsV1, ctx, map[string]common.ExpectedDashboard{
+			"dash-own":     {Title: "Own Dashboard", SourcePath: "teamA/own.json", Folder: teamAAutoUID},
+			"dash-migrate": {Title: "Migrate Dashboard", SourcePath: "teamC/nested/migrate.json"},
+		})
+	})
 }
