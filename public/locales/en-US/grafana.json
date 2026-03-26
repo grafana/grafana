@@ -6473,6 +6473,7 @@
       "description": {
         "action": "Change variable description"
       },
+      "description-tooltip": "Variable description",
       "hide": {
         "action": "Change variable hide option"
       },
@@ -8007,6 +8008,10 @@
       }
     },
     "list": {
+      "failed-high": "failed",
+      "failed-high-tooltip": "This data source has critical failures reported by Grafana Advisor.",
+      "failed-low": "warning",
+      "failed-low-tooltip": "This data source has non-critical issues reported by Grafana Advisor.",
       "starred": "Starred"
     },
     "new-data-source-view": {

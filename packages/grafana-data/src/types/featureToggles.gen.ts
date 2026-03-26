@@ -1745,4 +1745,14 @@ export interface FeatureToggles {
   * @default false
   */
   frontendServiceSSOAutoLogin?: boolean;
+  /**
+  * Aligns query splitting chunks with UTC midnight
+  * @default false
+  */
+  lokiAlignedQuerySplitting?: boolean;
+  /**
+  * Enables the query service to fetch the configuration from the settings service
+  * @default false
+  */
+  queryFetchConfigFromSettingsService?: boolean;
 }
