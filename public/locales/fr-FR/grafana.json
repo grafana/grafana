@@ -11004,24 +11004,14 @@
     },
     "forgot-password": "Vous avez oublié votre mot de passe ?",
     "form": {
-      "confirmation-code": "Le code de confirmation est requis",
-      "confirmation-code-label": "Code de confirmation",
-      "confirmation-code-placeholder": "code de confirmation",
-      "email-label": "Adresse e-mail",
-      "email-placeholder": "adresse e-mail",
-      "email-required": "Une adresse e-mail est obligatoire",
-      "name-label": "Nom",
       "password-label": "Mot de passe",
       "password-placeholder": "mot de passe",
       "password-required": "Vous devez renseigner le mot de passe",
-      "passwordless-username-label": "Nom d'utilisateur",
       "submit-label": "Connexion",
       "submit-loading-label": "Connexion…",
       "username-label": "E-mail ou nom d'utilisateur",
       "username-placeholder": "e-mail ou nom d'utilisateur",
-      "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur",
-      "verify-email-label": "Envoyer l'e-mail de validation",
-      "verify-email-loading-label": "Envoi de l'e-mail…"
+      "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur"
     },
     "layout": {
       "update-password": "Mettre à jour votre mot de passe"

@@ -11124,24 +11124,14 @@
     },
     "forgot-password": "Nie pamiętasz hasła?",
     "form": {
-      "confirmation-code": "Wymagany jest kod potwierdzenia",
-      "confirmation-code-label": "Kod potwierdzenia",
-      "confirmation-code-placeholder": "kod potwierdzenia",
-      "email-label": "E-mail",
-      "email-placeholder": "e-mail",
-      "email-required": "E-mail jest wymagany",
-      "name-label": "Nazwa",
       "password-label": "Hasło",
       "password-placeholder": "hasło",
       "password-required": "Wymagane hasło",
-      "passwordless-username-label": "Nazwa użytkownika",
       "submit-label": "Zaloguj się",
       "submit-loading-label": "Logowanie…",
       "username-label": "E-mail lub nazwa użytkownika",
       "username-placeholder": "e-mail lub nazwa użytkownika",
-      "username-required": "Wymagane są e-mail lub nazwa użytkownika",
-      "verify-email-label": "Wyślij weryfikacyjną wiadomość e-mail",
-      "verify-email-loading-label": "Wysyłanie wiadomości e-mail…"
+      "username-required": "Wymagane są e-mail lub nazwa użytkownika"
     },
     "layout": {
       "update-password": "Zaktualizuj hasło"

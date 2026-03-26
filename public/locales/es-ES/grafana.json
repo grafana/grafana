@@ -11004,24 +11004,14 @@
     },
     "forgot-password": "¿Has olvidado tu contraseña?",
     "form": {
-      "confirmation-code": "Código de confirmación obligatorio",
-      "confirmation-code-label": "Código de confirmación",
-      "confirmation-code-placeholder": "código de confirmación",
-      "email-label": "Correo electrónico",
-      "email-placeholder": "correo electrónico",
-      "email-required": "El correo electrónico es obligatorio",
-      "name-label": "Nombre",
       "password-label": "Contraseña",
       "password-placeholder": "contraseña",
       "password-required": "La contraseña es obligatoria",
-      "passwordless-username-label": "Nombre de usuario",
       "submit-label": "Iniciar sesión",
       "submit-loading-label": "Iniciando sesión...",
       "username-label": "Correo o nombre de usuario",
       "username-placeholder": "dirección de correo electrónico o nombre de usuario",
-      "username-required": "El correo o el nombre de usuario es obligatorio",
-      "verify-email-label": "Enviar un correo electrónico de verificación",
-      "verify-email-loading-label": "Enviando correo electrónico…"
+      "username-required": "El correo o el nombre de usuario es obligatorio"
     },
     "layout": {
       "update-password": "Actualiza tu contraseña"
