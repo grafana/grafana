@@ -7,9 +7,7 @@
   "paths": {
     "/": {
       "get": {
-        "tags": [
-          "API Discovery"
-        ],
+        "tags": ["API Discovery"],
         "description": "Describe the available kubernetes resources",
         "operationId": "getAPIResources",
         "responses": {
@@ -33,9 +31,7 @@
     },
     "/connections": {
       "get": {
-        "tags": [
-          "Connection"
-        ],
+        "tags": ["Connection"],
         "description": "list or watch objects of kind Connection",
         "operationId": "listConnection",
         "parameters": [
@@ -160,9 +156,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Connection"
-        ],
+        "tags": ["Connection"],
         "description": "create a Connection",
         "operationId": "createConnection",
         "parameters": [
@@ -264,9 +258,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Connection"
-        ],
+        "tags": ["Connection"],
         "description": "delete collection of Connection",
         "operationId": "deletecollectionConnection",
         "parameters": [
@@ -426,9 +418,7 @@
     },
     "/connections/{name}": {
       "get": {
-        "tags": [
-          "Connection"
-        ],
+        "tags": ["Connection"],
         "description": "read the specified Connection",
         "operationId": "getConnection",
         "responses": {
@@ -456,9 +446,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Connection"
-        ],
+        "tags": ["Connection"],
         "description": "replace the specified Connection",
         "operationId": "replaceConnection",
         "parameters": [
@@ -545,9 +533,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Connection"
-        ],
+        "tags": ["Connection"],
         "description": "delete a Connection",
         "operationId": "deleteConnection",
         "parameters": [
@@ -637,9 +623,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Connection"
-        ],
+        "tags": ["Connection"],
         "description": "partially update the specified Connection",
         "operationId": "updateConnection",
         "parameters": [
@@ -768,9 +752,7 @@
     },
     "/connections/{name}/repositories": {
       "get": {
-        "tags": [
-          "Connection"
-        ],
+        "tags": ["Connection"],
         "summary": "List external repositories",
         "description": "List repositories available from the external git provider through this connection",
         "operationId": "getConnectionRepositories",
@@ -782,9 +764,7 @@
                 "schema": {
                   "description": "ExternalRepositoryList lists repositories from an external git provider",
                   "type": "object",
-                  "required": [
-                    "items"
-                  ],
+                  "required": ["items"],
                   "properties": {
                     "apiVersion": {
                       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -832,9 +812,7 @@
     },
     "/connections/{name}/status": {
       "get": {
-        "tags": [
-          "Connection"
-        ],
+        "tags": ["Connection"],
         "description": "read status of the specified Connection",
         "operationId": "getConnectionStatus",
         "responses": {
@@ -862,9 +840,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Connection"
-        ],
+        "tags": ["Connection"],
         "description": "replace status of the specified Connection",
         "operationId": "replaceConnectionStatus",
         "parameters": [
@@ -951,9 +927,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Connection"
-        ],
+        "tags": ["Connection"],
         "description": "partially update status of the specified Connection",
         "operationId": "updateConnectionStatus",
         "parameters": [
@@ -1082,9 +1056,7 @@
     },
     "/jobs": {
       "get": {
-        "tags": [
-          "Job"
-        ],
+        "tags": ["Job"],
         "description": "list or watch objects of kind Job",
         "operationId": "listJob",
         "parameters": [
@@ -1209,9 +1181,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Job"
-        ],
+        "tags": ["Job"],
         "description": "create a Job",
         "operationId": "createJob",
         "parameters": [
@@ -1313,9 +1283,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Job"
-        ],
+        "tags": ["Job"],
         "description": "delete collection of Job",
         "operationId": "deletecollectionJob",
         "parameters": [
@@ -1475,9 +1443,7 @@
     },
     "/jobs/{name}": {
       "get": {
-        "tags": [
-          "Job"
-        ],
+        "tags": ["Job"],
         "description": "read the specified Job",
         "operationId": "getJob",
         "responses": {
@@ -1505,9 +1471,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Job"
-        ],
+        "tags": ["Job"],
         "description": "replace the specified Job",
         "operationId": "replaceJob",
         "parameters": [
@@ -1594,9 +1558,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Job"
-        ],
+        "tags": ["Job"],
         "description": "delete a Job",
         "operationId": "deleteJob",
         "parameters": [
@@ -1686,9 +1648,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Job"
-        ],
+        "tags": ["Job"],
         "description": "partially update the specified Job",
         "operationId": "updateJob",
         "parameters": [
@@ -1817,9 +1777,7 @@
     },
     "/repositories": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "list or watch objects of kind Repository",
         "operationId": "listRepository",
         "parameters": [
@@ -1944,9 +1902,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "create a Repository",
         "operationId": "createRepository",
         "parameters": [
@@ -2048,9 +2004,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "delete collection of Repository",
         "operationId": "deletecollectionRepository",
         "parameters": [
@@ -2210,9 +2164,7 @@
     },
     "/repositories/{name}": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "read the specified Repository",
         "operationId": "getRepository",
         "responses": {
@@ -2240,9 +2192,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "replace the specified Repository",
         "operationId": "replaceRepository",
         "parameters": [
@@ -2329,9 +2279,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "delete a Repository",
         "operationId": "deleteRepository",
         "parameters": [
@@ -2421,9 +2369,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "partially update the specified Repository",
         "operationId": "updateRepository",
         "parameters": [
@@ -2552,9 +2498,7 @@
     },
     "/repositories/{name}/files/": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "summary": "File listing",
         "description": "Get the files and content hash",
         "operationId": "getRepositoryFiles",
@@ -2589,9 +2533,7 @@
                 "schema": {
                   "description": "Information we can get just from the file listing",
                   "type": "object",
-                  "required": [
-                    "items"
-                  ],
+                  "required": ["items"],
                   "properties": {
                     "apiVersion": {
                       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -2639,9 +2581,7 @@
     },
     "/repositories/{name}/files/{path}": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "Read value from upstream repository",
         "operationId": "getRepositoryFilesWithPath",
         "parameters": [
@@ -2687,9 +2627,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "connect PUT requests to files of Repository",
         "operationId": "replaceRepositoryFilesWithPath",
         "parameters": [
@@ -2799,9 +2737,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "connect POST requests to files of Repository",
         "operationId": "createRepositoryFilesWithPath",
         "parameters": [
@@ -2911,9 +2847,7 @@
         }
       },
       "delete": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "connect DELETE requests to files of Repository",
         "operationId": "deleteRepositoryFilesWithPath",
         "parameters": [
@@ -3007,9 +2941,7 @@
     },
     "/repositories/{name}/history": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "Get the history of the repository",
         "operationId": "getRepositoryHistory",
         "parameters": [
@@ -3069,9 +3001,7 @@
     },
     "/repositories/{name}/history/{path}": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "Get the history of a path",
         "operationId": "getRepositoryHistoryWithPath",
         "parameters": [
@@ -3141,9 +3071,7 @@
     },
     "/repositories/{name}/jobs": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "List recent jobs",
         "operationId": "getRepositoryJobs",
         "responses": {
@@ -3166,9 +3094,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "Register a job for this repository",
         "operationId": "createRepositoryJobs",
         "requestBody": {
@@ -3236,9 +3162,7 @@
     },
     "/repositories/{name}/jobs/{uid}": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "Get job by UID",
         "operationId": "getRepositoryJobsWithPath",
         "responses": {
@@ -3285,9 +3209,7 @@
     },
     "/repositories/{name}/refs": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "summary": "Repository refs listing",
         "description": "Get the repository references",
         "operationId": "getRepositoryRefs",
@@ -3298,9 +3220,7 @@
               "*/*": {
                 "schema": {
                   "type": "object",
-                  "required": [
-                    "items"
-                  ],
+                  "required": ["items"],
                   "properties": {
                     "apiVersion": {
                       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -3348,9 +3268,7 @@
     },
     "/repositories/{name}/render/{guid}": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "get a rendered preview image",
         "operationId": "getRepositoryRenderWithPath",
         "responses": {
@@ -3393,9 +3311,7 @@
     },
     "/repositories/{name}/resources": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "connect GET requests to resources of Repository",
         "operationId": "getRepositoryResources",
         "responses": {
@@ -3432,9 +3348,7 @@
     },
     "/repositories/{name}/status": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "read status of the specified Repository",
         "operationId": "getRepositoryStatus",
         "responses": {
@@ -3462,9 +3376,7 @@
         }
       },
       "put": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "replace status of the specified Repository",
         "operationId": "replaceRepositoryStatus",
         "parameters": [
@@ -3551,9 +3463,7 @@
         }
       },
       "patch": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "partially update status of the specified Repository",
         "operationId": "updateRepositoryStatus",
         "parameters": [
@@ -3682,9 +3592,7 @@
     },
     "/repositories/{name}/test": {
       "post": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "Check if the configuration is valid. Deprecated: this will go away in favour of fieldErrors from status",
         "operationId": "createRepositoryTest",
         "requestBody": {
@@ -3754,9 +3662,7 @@
     },
     "/repositories/{name}/webhook": {
       "get": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "connect GET requests to webhook of Repository",
         "operationId": "getRepositoryWebhook",
         "responses": {
@@ -3779,9 +3685,7 @@
         }
       },
       "post": {
-        "tags": [
-          "Repository"
-        ],
+        "tags": ["Repository"],
         "description": "Currently only supports github webhooks",
         "operationId": "createRepositoryWebhook",
         "responses": {
@@ -3818,10 +3722,7 @@
     },
     "/settings": {
       "get": {
-        "tags": [
-          "Provisioning",
-          "Repository"
-        ],
+        "tags": ["Provisioning", "Repository"],
         "description": "Get the frontend settings for this namespace",
         "operationId": "getFrontendSettings",
         "parameters": [],
@@ -3840,10 +3741,7 @@
     },
     "/stats": {
       "get": {
-        "tags": [
-          "Provisioning",
-          "Repository"
-        ],
+        "tags": ["Provisioning", "Repository"],
         "description": "Get resource stats for this namespace",
         "operationId": "getResourceStats",
         "parameters": [],
@@ -3865,10 +3763,7 @@
     "schemas": {
       "Author": {
         "type": "object",
-        "required": [
-          "name",
-          "username"
-        ],
+        "required": ["name", "username"],
         "properties": {
           "avatarURL": {
             "type": "string"
@@ -3885,9 +3780,7 @@
       },
       "BitbucketConnectionConfig": {
         "type": "object",
-        "required": [
-          "clientID"
-        ],
+        "required": ["clientID"],
         "properties": {
           "clientID": {
             "description": "App client ID",
@@ -3898,9 +3791,7 @@
       },
       "BitbucketRepositoryConfig": {
         "type": "object",
-        "required": [
-          "branch"
-        ],
+        "required": ["branch"],
         "properties": {
           "branch": {
             "description": "The branch to use in the repository.",
@@ -3956,9 +3847,7 @@
       },
       "ConnectionInfo": {
         "type": "object",
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "properties": {
           "name": {
             "type": "string",
@@ -3968,9 +3857,7 @@
       },
       "ConnectionList": {
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4011,10 +3898,7 @@
       },
       "ConnectionSpec": {
         "type": "object",
-        "required": [
-          "title",
-          "type"
-        ],
+        "required": ["title", "type"],
         "properties": {
           "bitbucket": {
             "description": "Bitbucket connection configuration Only applicable when provider is \"bitbucket\""
@@ -4038,11 +3922,7 @@
             "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"github\"`\n - `\"gitlab\"`",
             "type": "string",
             "default": "",
-            "enum": [
-              "bitbucket",
-              "github",
-              "gitlab"
-            ]
+            "enum": ["bitbucket", "github", "gitlab"]
           },
           "url": {
             "description": "The connection URL",
@@ -4053,10 +3933,7 @@
       "ConnectionStatus": {
         "description": "The status of a Connection. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.",
         "type": "object",
-        "required": [
-          "observedGeneration",
-          "health"
-        ],
+        "required": ["observedGeneration", "health"],
         "properties": {
           "conditions": {
             "description": "Conditions represent the latest available observations of the connection's state.",
@@ -4064,9 +3941,7 @@
             "items": {
               "default": {}
             },
-            "x-kubernetes-list-map-keys": [
-              "type"
-            ],
+            "x-kubernetes-list-map-keys": ["type"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "type",
             "x-kubernetes-patch-strategy": "merge"
@@ -4118,9 +3993,7 @@
       "ErrorDetails": {
         "description": "ErrorDetails describes an individual field error intended to help users identify and fix issues in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same purpose: to deliver actionable feedback about fields in the spec that require attention. Errors may relate to invalid formats, missing or invalid values, or cases where a referenced value does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to communicate validation or external reference errors that users can resolve by editing spec fields.",
         "type": "object",
-        "required": [
-          "type"
-        ],
+        "required": ["type"],
         "properties": {
           "badValue": {
             "description": "BadValue is the value of the field that was determined to be invalid, if applicable. This can be any type. This field is optional and may be omitted if not relevant."
@@ -4167,10 +4040,7 @@
       },
       "ExternalRepository": {
         "type": "object",
-        "required": [
-          "name",
-          "url"
-        ],
+        "required": ["name", "url"],
         "properties": {
           "name": {
             "description": "Name of the repository",
@@ -4191,9 +4061,7 @@
       "ExternalRepositoryList": {
         "description": "ExternalRepositoryList lists repositories from an external git provider",
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4217,9 +4085,7 @@
       },
       "FileItem": {
         "type": "object",
-        "required": [
-          "path"
-        ],
+        "required": ["path"],
         "properties": {
           "author": {
             "type": "string"
@@ -4244,9 +4110,7 @@
       "FileList": {
         "description": "Information we can get just from the file listing",
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4279,10 +4143,7 @@
       },
       "GitHubConnectionConfig": {
         "type": "object",
-        "required": [
-          "appID",
-          "installationID"
-        ],
+        "required": ["appID", "installationID"],
         "properties": {
           "appID": {
             "description": "GitHub App ID",
@@ -4298,9 +4159,7 @@
       },
       "GitHubRepositoryConfig": {
         "type": "object",
-        "required": [
-          "branch"
-        ],
+        "required": ["branch"],
         "properties": {
           "branch": {
             "description": "The branch to use in the repository.",
@@ -4323,9 +4182,7 @@
       },
       "GitLabRepositoryConfig": {
         "type": "object",
-        "required": [
-          "branch"
-        ],
+        "required": ["branch"],
         "properties": {
           "branch": {
             "description": "The branch to use in the repository.",
@@ -4344,9 +4201,7 @@
       },
       "GitRepositoryConfig": {
         "type": "object",
-        "required": [
-          "branch"
-        ],
+        "required": ["branch"],
         "properties": {
           "branch": {
             "description": "The branch to use in the repository.",
@@ -4369,9 +4224,7 @@
       },
       "GitlabConnectionConfig": {
         "type": "object",
-        "required": [
-          "clientID"
-        ],
+        "required": ["clientID"],
         "properties": {
           "clientID": {
             "description": "App client ID",
@@ -4382,9 +4235,7 @@
       },
       "HealthStatus": {
         "type": "object",
-        "required": [
-          "healthy"
-        ],
+        "required": ["healthy"],
         "properties": {
           "checked": {
             "description": "When the health was checked last time",
@@ -4394,10 +4245,7 @@
           "error": {
             "description": "The type of the error\n\nPossible enum values:\n - `\"health\"`\n - `\"hook\"`",
             "type": "string",
-            "enum": [
-              "health",
-              "hook"
-            ]
+            "enum": ["health", "hook"]
           },
           "healthy": {
             "description": "When not healthy, requests will not be executed",
@@ -4469,12 +4317,7 @@
       },
       "HistoryItem": {
         "type": "object",
-        "required": [
-          "ref",
-          "message",
-          "authors",
-          "createdAt"
-        ],
+        "required": ["ref", "message", "authors", "createdAt"],
         "properties": {
           "authors": {
             "type": "array",
@@ -4501,9 +4344,7 @@
       "HistoryList": {
         "description": "HistoryList is a list of versions of a resource",
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4557,9 +4398,7 @@
       },
       "JobList": {
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4643,9 +4482,7 @@
       },
       "JobSpec": {
         "type": "object",
-        "required": [
-          "action"
-        ],
+        "required": ["action"],
         "properties": {
           "action": {
             "description": "Possible enum values:\n - `\"delete\"` deletes files in the remote repository\n - `\"deleteResources\"` deletes all resources managed by a repository that no longer exists or is stuck in Terminating state. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.\n - `\"fixFolderMetadata\"` is a placeholder job that will eventually regenerate folder metadata files. Currently a no-op to unblock frontend development.\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"move\"` moves files in the remote repository\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.\n - `\"releaseResources\"` removes ownership annotations from all resources managed by a repository that no longer exists or is stuck in Terminating state. Resources remain in Grafana but become unmanaged. This action has inverted validation: it is only allowed when the repository does not exist or has a DeletionTimestamp set.",
@@ -4720,13 +4557,7 @@
           "state": {
             "description": "Possible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"warning\"` Finished with some non-critical errors\n - `\"working\"` The job is running",
             "type": "string",
-            "enum": [
-              "error",
-              "pending",
-              "success",
-              "warning",
-              "working"
-            ]
+            "enum": ["error", "pending", "success", "warning", "working"]
           },
           "summary": {
             "description": "Summary of processed actions",
@@ -4755,9 +4586,7 @@
       },
       "ManagerStats": {
         "type": "object",
-        "required": [
-          "stats"
-        ],
+        "required": ["stats"],
         "properties": {
           "id": {
             "description": "Manager identity",
@@ -4857,9 +4686,7 @@
       },
       "RefItem": {
         "type": "object",
-        "required": [
-          "name"
-        ],
+        "required": ["name"],
         "properties": {
           "hash": {
             "description": "The SHA hash of the commit this ref points to",
@@ -4882,9 +4709,7 @@
       },
       "RefList": {
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4941,9 +4766,7 @@
       },
       "RepositoryList": {
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -4967,12 +4790,7 @@
       },
       "RepositorySpec": {
         "type": "object",
-        "required": [
-          "title",
-          "workflows",
-          "sync",
-          "type"
-        ],
+        "required": ["title", "workflows", "sync", "type"],
         "properties": {
           "bitbucket": {
             "description": "The repository on Bitbucket. Mutually exclusive with local | github | git."
@@ -5009,13 +4827,7 @@
             "description": "The repository type.  When selected oneOf the values below should be non-nil\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
-            "enum": [
-              "bitbucket",
-              "git",
-              "github",
-              "gitlab",
-              "local"
-            ]
+            "enum": ["bitbucket", "git", "github", "gitlab", "local"]
           },
           "webhook": {
             "description": "Webhook settings for the repository. When specified, the base URL overrides the auto-detected Grafana public URL used to register webhooks with the external Git provider."
@@ -5026,10 +4838,7 @@
             "items": {
               "type": "string",
               "default": "",
-              "enum": [
-                "branch",
-                "write"
-              ]
+              "enum": ["branch", "write"]
             }
           }
         }
@@ -5037,12 +4846,7 @@
       "RepositoryStatus": {
         "description": "The status of a Repository. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually. As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.",
         "type": "object",
-        "required": [
-          "observedGeneration",
-          "health",
-          "sync",
-          "webhook"
-        ],
+        "required": ["observedGeneration", "health", "sync", "webhook"],
         "properties": {
           "conditions": {
             "description": "Conditions represent the latest available observations of the repository's state.",
@@ -5050,9 +4854,7 @@
             "items": {
               "default": {}
             },
-            "x-kubernetes-list-map-keys": [
-              "type"
-            ],
+            "x-kubernetes-list-map-keys": ["type"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "type",
             "x-kubernetes-patch-strategy": "merge"
@@ -5127,13 +4929,7 @@
       },
       "RepositoryView": {
         "type": "object",
-        "required": [
-          "name",
-          "title",
-          "type",
-          "target",
-          "workflows"
-        ],
+        "required": ["name", "title", "type", "target", "workflows"],
         "properties": {
           "branch": {
             "description": "For git, this is the target branch",
@@ -5152,10 +4948,7 @@
             "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
             "type": "string",
             "default": "",
-            "enum": [
-              "folder",
-              "instance"
-            ]
+            "enum": ["folder", "instance"]
           },
           "title": {
             "description": "Repository display",
@@ -5166,13 +4959,7 @@
             "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
-            "enum": [
-              "bitbucket",
-              "git",
-              "github",
-              "gitlab",
-              "local"
-            ]
+            "enum": ["bitbucket", "git", "github", "gitlab", "local"]
           },
           "url": {
             "description": "For git, this is the target URL",
@@ -5184,10 +4971,7 @@
             "items": {
               "type": "string",
               "default": "",
-              "enum": [
-                "branch",
-                "write"
-              ]
+              "enum": ["branch", "write"]
             }
           }
         }
@@ -5195,11 +4979,7 @@
       "RepositoryViewList": {
         "description": "Summary shows a view of the configuration that is sanitized and is OK for logged in users to see",
         "type": "object",
-        "required": [
-          "allowImageRendering",
-          "maxRepositories",
-          "items"
-        ],
+        "required": ["allowImageRendering", "maxRepositories", "items"],
         "properties": {
           "allowImageRendering": {
             "description": "Whether image rendering is allowed for dashboard previews",
@@ -5212,10 +4992,7 @@
             "items": {
               "type": "string",
               "default": "",
-              "enum": [
-                "folder",
-                "instance"
-              ]
+              "enum": ["folder", "instance"]
             }
           },
           "apiVersion": {
@@ -5228,13 +5005,7 @@
             "items": {
               "type": "string",
               "default": "",
-              "enum": [
-                "bitbucket",
-                "git",
-                "github",
-                "gitlab",
-                "local"
-              ]
+              "enum": ["bitbucket", "git", "github", "gitlab", "local"]
             }
           },
           "items": {
@@ -5262,11 +5033,7 @@
       },
       "ResourceCount": {
         "type": "object",
-        "required": [
-          "group",
-          "resource",
-          "count"
-        ],
+        "required": ["group", "resource", "count"],
         "properties": {
           "count": {
             "type": "integer",
@@ -5286,9 +5053,7 @@
       "ResourceList": {
         "description": "Information we can get just from the file listing",
         "type": "object",
-        "required": [
-          "items"
-        ],
+        "required": ["items"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -5312,13 +5077,7 @@
       },
       "ResourceListItem": {
         "type": "object",
-        "required": [
-          "path",
-          "group",
-          "resource",
-          "name",
-          "hash"
-        ],
+        "required": ["path", "group", "resource", "name", "hash"],
         "properties": {
           "folder": {
             "type": "string"
@@ -5355,19 +5114,12 @@
       },
       "ResourceObjects": {
         "type": "object",
-        "required": [
-          "type"
-        ],
+        "required": ["type"],
         "properties": {
           "action": {
             "description": "The action required/used for dryRun\n\nPossible enum values:\n - `\"create\"`\n - `\"delete\"`\n - `\"move\"`\n - `\"update\"`",
             "type": "string",
-            "enum": [
-              "create",
-              "delete",
-              "move",
-              "update"
-            ]
+            "enum": ["create", "delete", "move", "update"]
           },
           "dryRun": {
             "description": "The value returned from a dryRun request"
@@ -5406,12 +5158,7 @@
       },
       "ResourceRepositoryInfo": {
         "type": "object",
-        "required": [
-          "type",
-          "title",
-          "namespace",
-          "name"
-        ],
+        "required": ["type", "title", "namespace", "name"],
         "properties": {
           "name": {
             "description": "The name (identifier)",
@@ -5432,13 +5179,7 @@
             "description": "The repository type\n\nPossible enum values:\n - `\"bitbucket\"`\n - `\"git\"`\n - `\"github\"`\n - `\"gitlab\"`\n - `\"local\"`",
             "type": "string",
             "default": "",
-            "enum": [
-              "bitbucket",
-              "git",
-              "github",
-              "gitlab",
-              "local"
-            ]
+            "enum": ["bitbucket", "git", "github", "gitlab", "local"]
           }
         }
       },
@@ -5508,12 +5249,7 @@
           "classic": {
             "description": "For non-k8s native formats, what did this start as\n\nPossible enum values:\n - `\"access-control\"` Access control https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/access-control/sample.yaml\n - `\"alerting\"` Alert configuration https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/alerting/sample.yaml\n - `\"dashboard\"` Dashboard JSON\n - `\"datasources\"` Datasource definitions eg: https://github.com/grafana/grafana/blob/v11.3.1/conf/provisioning/datasources/sample.yaml",
             "type": "string",
-            "enum": [
-              "access-control",
-              "alerting",
-              "dashboard",
-              "datasources"
-            ]
+            "enum": ["access-control", "alerting", "dashboard", "datasources"]
           },
           "group": {
             "type": "string"
@@ -5532,10 +5268,7 @@
       "ResourceWrapper": {
         "description": "This is a container type for any resource type",
         "type": "object",
-        "required": [
-          "repository",
-          "resource"
-        ],
+        "required": ["repository", "resource"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -5604,9 +5337,7 @@
       },
       "SyncJobOptions": {
         "type": "object",
-        "required": [
-          "incremental"
-        ],
+        "required": ["incremental"],
         "properties": {
           "incremental": {
             "description": "Incremental synchronization for versioned repositories",
@@ -5617,10 +5348,7 @@
       },
       "SyncOptions": {
         "type": "object",
-        "required": [
-          "enabled",
-          "target"
-        ],
+        "required": ["enabled", "target"],
         "properties": {
           "enabled": {
             "description": "Enabled must be saved as true before any sync job will run",
@@ -5636,19 +5364,13 @@
             "description": "Where values should be saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
             "type": "string",
             "default": "",
-            "enum": [
-              "folder",
-              "instance"
-            ]
+            "enum": ["folder", "instance"]
           }
         }
       },
       "SyncStatus": {
         "type": "object",
-        "required": [
-          "state",
-          "message"
-        ],
+        "required": ["state", "message"],
         "properties": {
           "finished": {
             "description": "When the sync job finished",
@@ -5690,23 +5412,14 @@
             "description": "pending, running, success, error\n\nPossible enum values:\n - `\"error\"` Finished with errors\n - `\"pending\"` Job has been submitted, but not processed yet\n - `\"success\"` Finished with success\n - `\"warning\"` Finished with some non-critical errors\n - `\"working\"` The job is running",
             "type": "string",
             "default": "",
-            "enum": [
-              "error",
-              "pending",
-              "success",
-              "warning",
-              "working"
-            ]
+            "enum": ["error", "pending", "success", "warning", "working"]
           }
         }
       },
       "TestResults": {
         "description": "TestResults is the result of a test connection operation Deprecated: this will go way when we deprecate the test endpoint We should use fieldErrors from status instead.",
         "type": "object",
-        "required": [
-          "code",
-          "success"
-        ],
+        "required": ["code", "success"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -5824,19 +5537,13 @@
         "description": "Allow access to a secure value inside",
         "oneOf": [
           {
-            "required": [
-              "name"
-            ]
+            "required": ["name"]
           },
           {
-            "required": [
-              "create"
-            ]
+            "required": ["create"]
           },
           {
-            "required": [
-              "remove"
-            ]
+            "required": ["remove"]
           }
         ],
         "properties": {
@@ -5871,13 +5578,7 @@
       "APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",
         "type": "object",
-        "required": [
-          "name",
-          "singularName",
-          "namespaced",
-          "kind",
-          "verbs"
-        ],
+        "required": ["name", "singularName", "namespaced", "kind", "verbs"],
         "properties": {
           "categories": {
             "description": "categories is a list of the grouped resources this resource belongs to (e.g. 'all')",
@@ -5942,10 +5643,7 @@
       "APIResourceList": {
         "description": "APIResourceList is a list of APIResource, it is used to expose the name of the resources supported in a specific group and version, and if the resource is namespaced.",
         "type": "object",
-        "required": [
-          "groupVersion",
-          "resources"
-        ],
+        "required": ["groupVersion", "resources"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -5978,13 +5676,7 @@
       "Condition": {
         "description": "Condition contains details for one aspect of the current state of this API Resource.",
         "type": "object",
-        "required": [
-          "type",
-          "status",
-          "lastTransitionTime",
-          "reason",
-          "message"
-        ],
+        "required": ["type", "status", "lastTransitionTime", "reason", "message"],
         "properties": {
           "lastTransitionTime": {
             "description": "lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.",
@@ -6230,9 +5922,7 @@
                 }
               ]
             },
-            "x-kubernetes-list-map-keys": [
-              "uid"
-            ],
+            "x-kubernetes-list-map-keys": ["uid"],
             "x-kubernetes-list-type": "map",
             "x-kubernetes-patch-merge-key": "uid",
             "x-kubernetes-patch-strategy": "merge"
@@ -6254,12 +5944,7 @@
       "OwnerReference": {
         "description": "OwnerReference contains enough information to let you identify an owning object. An owning object must be in the same namespace as the dependent, or be cluster-scoped, so there is no namespace field.",
         "type": "object",
-        "required": [
-          "apiVersion",
-          "kind",
-          "name",
-          "uid"
-        ],
+        "required": ["apiVersion", "kind", "name", "uid"],
         "properties": {
           "apiVersion": {
             "description": "API version of the referent.",
@@ -6424,10 +6109,7 @@
       "WatchEvent": {
         "description": "Event represents a single event to a watched resource.",
         "type": "object",
-        "required": [
-          "type",
-          "object"
-        ],
+        "required": ["type", "object"],
         "properties": {
           "object": {
             "description": "Object is:\n * If Type is Added or Modified: the new state of the object.\n * If Type is Deleted: the state of the object immediately before deletion.\n * If Type is Error: *Status is recommended; other types may make sense\n   depending on context.",
