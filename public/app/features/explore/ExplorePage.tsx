@@ -70,7 +70,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
       })}
     >
       <h1 className="sr-only">
-        <Trans i18nKey="nav.explore.title" />
+        <Trans i18nKey="nav.explore.title">Explore</Trans>
       </h1>
       <ExploreActions />
       {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
