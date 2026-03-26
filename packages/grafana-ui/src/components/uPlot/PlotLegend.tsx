@@ -123,13 +123,14 @@ export const PlotLegend = memo(function PlotLegend({
       return false;
     }
 
+    const expectedSet = new Set(expectedVisible);
     const actuallyVisible = new Set(legendItems.filter((item) => !item.disabled).map((item) => item.label));
 
-    if (expectedVisible.length !== actuallyVisible.size) {
+    if (expectedSet.size !== actuallyVisible.size) {
       return true;
     }
 
-    return !expectedVisible.every((name) => actuallyVisible.has(name));
+    return !Array.from(expectedSet).every((name) => actuallyVisible.has(name));
   }, [hasActiveFilters, data, selectedLabels, legendItems]);
 
   const handleLabelsChange = useCallback(

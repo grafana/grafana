@@ -4,7 +4,6 @@ import { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelRenderer } from '../PanelRenderer';
@@ -20,7 +19,6 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
-  const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
@@ -64,11 +62,7 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
     );
   }
 
-  if (!isNewVizSuggestionsEnabled) {
-    return <Tooltip content={suggestion.description ?? suggestion.name}>{content}</Tooltip>;
-  }
-
-  return content;
+  return <Tooltip content={suggestion.description ?? suggestion.name}>{content}</Tooltip>;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

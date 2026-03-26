@@ -19,6 +19,7 @@ export enum RepoViewStatus {
   Loading = 'loading',
   Ready = 'ready',
   Error = 'error',
+  Orphaned = 'orphaned',
 }
 
 interface RepositoryViewData {
@@ -27,6 +28,7 @@ interface RepositoryViewData {
   folder?: Folder;
   status: RepoViewStatus;
   error?: unknown;
+  orphanedRepoName?: string; // Only present when status is RepoViewStatus.Orphaned
   isLoading?: boolean; // TODO: status now contains loading state, this can be removed
   isInstanceManaged: boolean;
   isReadOnlyRepo: boolean;
@@ -85,25 +87,36 @@ export const useGetResourceRepositoryView = ({
 
   const items = settingsData?.items ?? [];
 
+  // Check for orphaned resource first: name specified but no matching repo
+  if (name) {
+    const repository = items.find((repo) => repo.name === name);
+    const instanceRepo = items.find((repo) => repo.target === 'instance');
+    if (repository) {
+      return {
+        repository,
+        folder,
+        isInstanceManaged: Boolean(instanceRepo),
+        isReadOnlyRepo: getIsReadOnlyRepo(repository),
+        status: RepoViewStatus.Ready,
+      };
+    }
+
+    // When name specified but no matching repository found = orphaned resource
+    return {
+      folder,
+      isInstanceManaged: Boolean(instanceRepo),
+      isReadOnlyRepo: false,
+      status: RepoViewStatus.Orphaned,
+      orphanedRepoName: name,
+    };
+  }
+
   if (!items.length) {
     return { folder, isInstanceManaged: false, isReadOnlyRepo: false, status: RepoViewStatus.Ready };
   }
 
   const instanceRepo = items.find((repo) => repo.target === 'instance');
   const isInstanceManaged = Boolean(instanceRepo);
-
-  if (name) {
-    const repository = items.find((repo) => repo.name === name);
-    if (repository) {
-      return {
-        repository,
-        folder,
-        isInstanceManaged,
-        isReadOnlyRepo: getIsReadOnlyRepo(repository),
-        status: RepoViewStatus.Ready,
-      };
-    }
-  }
 
   // Find the matching folder repository
   if (folderName) {
@@ -132,6 +145,15 @@ export const useGetResourceRepositoryView = ({
           status: RepoViewStatus.Ready,
         };
       }
+
+      // Folder has a manager identity annotation but the repo no longer exists = orphaned
+      return {
+        folder,
+        isInstanceManaged,
+        isReadOnlyRepo: false,
+        status: RepoViewStatus.Orphaned,
+        orphanedRepoName: annotatedFolderName,
+      };
     }
   }
 

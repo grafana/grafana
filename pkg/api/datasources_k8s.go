@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,6 +22,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -118,6 +120,92 @@ func (hs *HTTPServer) getK8sDataSource(c *contextmodel.ReqContext, group, versio
 	}
 
 	return &ds, nil
+}
+
+// callK8sDataSourceResourceHandler returns a handler that proxies
+// /api/datasources/uid/:uid/resources/* to
+// /apis/<plugin-type>.datasource.grafana.app/v0alpha1/namespaces/<org>/datasources/{uid}/resources/*
+// when the feature toggle is enabled.
+//
+// The feature flag is evaluated per-request via OpenFeature, allowing dynamic rollout.
+func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
+	return func(c *contextmodel.ReqContext) {
+		start := time.Now()
+		ctx := c.Req.Context()
+		defer func() {
+			metricutil.ObserveWithExemplar(ctx, hs.dsConfigHandlerRequestsDuration.WithLabelValues("callK8sDataSourceResourceHandler"), time.Since(start).Seconds())
+		}()
+
+		shouldRedirect := openfeature.NewDefaultClient().Boolean(
+			ctx,
+			featuremgmt.FlagDatasourcesApiserverEnableResourceEndpointRedirect,
+			false,
+			openfeature.TransactionContext(ctx),
+		)
+
+		if !shouldRedirect {
+			hs.dsEndpointRedirects.WithLabelValues("resources", "unknown", "legacy").Inc()
+			hs.CallDatasourceResourceWithUID(c)
+			return
+		}
+
+		dsUID := web.Params(c.Req)[":uid"]
+		if !util.IsValidShortUID(dsUID) {
+			c.JsonApiErr(http.StatusBadRequest, "UID is invalid", nil)
+			return
+		}
+
+		// This uses the deprecated api on purpose because we need to get the connection details for the redirect.
+		// /api/ we only have the UID so we cannot use the new api until the client updates to /apis/ which will not use this
+		// redirect.
+		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, dsUID) //nolint:staticcheck
+		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				c.JsonApiErr(http.StatusNotFound, "Data source not found", nil)
+				return
+			}
+			c.JsonApiErr(http.StatusInternalServerError, "Failed to lookup datasource connection", err)
+			return
+		}
+
+		if len(conns.Items) > 1 {
+			c.JsonApiErr(http.StatusConflict, "duplicate datasource connections found with this name", nil)
+			return
+		}
+
+		if len(conns.Items) == 0 {
+			c.JsonApiErr(http.StatusNotFound, "Data source not found", nil)
+			return
+		}
+
+		conn := conns.Items[0]
+		pluginType := pluginTypeFromConnection(conn)
+		hs.dsEndpointRedirects.WithLabelValues("resources", pluginType, "remote").Inc()
+
+		namespace := hs.namespacer(c.GetOrgID())
+		subPath := web.Params(c.Req)["*"]
+
+		k8sPath := fmt.Sprintf("/apis/%s/%s/namespaces/%s/datasources/%s/resources",
+			conn.APIGroup, conn.APIVersion, namespace, conn.Name)
+		if subPath != "" {
+			k8sPath += "/" + subPath
+		}
+
+		c.Req.URL.Path = k8sPath
+		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
+	}
+}
+
+// pluginTypeFromConnection extracts the plugin type identifier from a DataSourceConnection.
+// Falls back to extracting from the APIGroup (e.g. "prometheus.datasource.grafana.app" -> "prometheus").
+func pluginTypeFromConnection(conn datasourceV0.DataSourceConnection) string {
+	if conn.Plugin != "" {
+		return conn.Plugin
+	}
+	if parts := strings.SplitN(conn.APIGroup, ".", 2); len(parts) > 0 {
+		return parts[0]
+	}
+	return "unknown"
 }
 
 // handleK8sError converts K8s API errors to HTTP responses

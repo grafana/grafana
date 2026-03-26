@@ -14,7 +14,6 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
@@ -66,9 +65,14 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 
 	ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 	defer span.End()
-	traceId := span.SpanContext().TraceID()
-	connectLogger := b.log.New("traceId", traceId.String(), "rule_uid", httpreq.Header.Get("X-Rule-Uid"))
 
+	traceId := span.SpanContext().TraceID()
+	connectLogger := b.log.New(
+		"traceId", traceId.String(),
+		"rule_uid", httpreq.Header.Get("X-Rule-Uid"),
+		"caller", getCaller(ctx),
+	)
+	connectLogger.Debug("received query-service request")
 	responder := newResponderWrapper(ctx, w,
 		func(statusCode *int, obj runtime.Object) {
 			if *statusCode/100 == 4 {
@@ -138,6 +142,19 @@ func (b *QueryAPIBuilder) QueryDatasources(w http.ResponseWriter, httpreq *http.
 	qdr, err := handleQuery(ctx, *raw, *b, httpreq, *responder, connectLogger)
 
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) || errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			connectLogger.Warn(
+				"query-service request deadline exceeded",
+				"ctx_err", ctx.Err(),
+				"cause", context.Cause(ctx),
+			)
+		} else if errors.Is(err, context.Canceled) || errors.Is(ctx.Err(), context.Canceled) {
+			connectLogger.Warn(
+				"query-service request cancelled",
+				"ctx_err", ctx.Err(),
+				"cause", context.Cause(ctx),
+			)
+		}
 		connectLogger.Error("execute error", "http code", query.GetResponseCode(qdr), "err", err)
 		logEmptyRefids(raw.Queries, connectLogger)
 		if qdr != nil { // if we have a response, we assume the err is set in the response
@@ -301,7 +318,7 @@ func handleQuery(
 	raw query.QueryDataRequest,
 	b QueryAPIBuilder,
 	httpreq *http.Request,
-	responder rest.Responder,
+	responder responderWrapper,
 	connectLogger log.Logger,
 ) (*backend.QueryDataResponse, error) {
 	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
@@ -321,8 +338,8 @@ type responderWrapper struct {
 
 func newResponderWrapper(ctx context.Context, w http.ResponseWriter, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) *responderWrapper {
 	return &responderWrapper{
-		w:          w,
 		ctx:        ctx,
+		w:          w,
 		onObjectFn: onObjectFn,
 		onErrorFn:  onErrorFn,
 	}

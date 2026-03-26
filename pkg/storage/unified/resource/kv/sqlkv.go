@@ -88,6 +88,15 @@ func (k *SqlKV) Ping(ctx context.Context) error {
 	return k.db.PingContext(ctx)
 }
 
+// conn returns the dbtx from the context (set during bulk import on SQLite)
+// or falls back to the default *sql.DB connection pool.
+func (k *SqlKV) conn(ctx context.Context) dbtx {
+	if db, ok := dbtxFromCtx(ctx); ok {
+		return db
+	}
+	return k.db
+}
+
 func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
 		if section == LastImportTimeSection {
@@ -112,7 +121,7 @@ func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 		sortAsc := opt.Sort != SortOrderDesc
 
 		query, args := qb.buildKeysQuery(startKey, endKey, sortAsc, opt.Limit)
-		rows, err := k.db.QueryContext(ctx, query, args...)
+		rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
 		if err != nil {
 			yield("", err)
 			return
@@ -150,7 +159,7 @@ func (k *SqlKV) Get(ctx context.Context, section string, key string) (io.ReadClo
 
 	keyPath := getKeyPath(section, key)
 	query, args := qb.buildGetQuery(keyPath)
-	row := k.db.QueryRowContext(ctx, query, args...)
+	row := k.conn(ctx).QueryRowContext(ctx, query, args...)
 
 	var value []byte
 	if err := row.Scan(&value); err != nil {
@@ -177,7 +186,7 @@ func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 
 		keyPaths := getKeyPaths(section, keys)
 		query, args := qb.buildBatchGetQuery(keyPaths)
-		rows, err := k.db.QueryContext(ctx, query, args...)
+		rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
 		if err != nil {
 			yield(KeyValue{}, err)
 			return
@@ -272,7 +281,7 @@ func (w *sqlWriteCloser) Close() error {
 	// can only do this on resource_events and pending_tenant_deletions for now, until we drop the columns in resource_history
 	if w.section == EventsSection || w.section == PendingDeleteSection {
 		query, args := qb.buildUpsertQuery(keyPath, value)
-		_, err := w.kv.db.ExecContext(w.ctx, query, args...)
+		_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 		if err != nil {
 			return fmt.Errorf("failed to save: %w", err)
 		}
@@ -287,7 +296,7 @@ func (w *sqlWriteCloser) Close() error {
 		_, err := w.kv.Get(w.ctx, w.section, w.key)
 		if errors.Is(err, ErrNotFound) {
 			query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.New().String())
-			_, err := w.kv.db.ExecContext(w.ctx, query, args...)
+			_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 			if err != nil {
 				return fmt.Errorf("failed to insert to datastore: %w", err)
 			}
@@ -299,7 +308,7 @@ func (w *sqlWriteCloser) Close() error {
 		}
 
 		query, args := qb.buildUpdateDatastoreQuery(keyPath, value)
-		_, err = w.kv.db.ExecContext(w.ctx, query, args...)
+		_, err = w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 		if err != nil {
 			return fmt.Errorf("failed to update to datastore: %w", err)
 		}
@@ -354,7 +363,7 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 
 	keyPath := getKeyPath(section, key)
 	query, args := qb.buildDeleteQuery(keyPath)
-	_, err = k.db.ExecContext(ctx, query, args...)
+	_, err = k.conn(ctx).ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("failed to delete key: %w", err)
 	}
@@ -374,7 +383,7 @@ func (k *SqlKV) BatchDelete(ctx context.Context, section string, keys []string) 
 
 	keyPaths := getKeyPaths(section, keys)
 	query, args := qb.buildBatchDeleteQuery(keyPaths)
-	if _, err := k.db.ExecContext(ctx, query, args...); err != nil {
+	if _, err := k.conn(ctx).ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("failed to batch delete keys: %w", err)
 	}
 
