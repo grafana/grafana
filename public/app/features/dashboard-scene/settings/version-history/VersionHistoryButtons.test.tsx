@@ -1,30 +1,29 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 
-import { DashboardInteractions } from '../../utils/interactions';
-
 import { VersionsHistoryButtons } from './VersionHistoryButtons';
 
-jest.mock('../../utils/interactions', () => ({
-  DashboardInteractions: {
-    showMoreVersionsClicked: jest.fn(),
-  },
-}));
-
 describe('VersionHistoryButtons', () => {
-  it('triggers a user event when the show more versions is clicked', async () => {
-    render(
-      <VersionsHistoryButtons
-        getVersions={jest.fn()}
-        canCompare={true}
-        hasMore={true}
-        getDiff={jest.fn()}
-        isLastPage={false}
-      />
-    );
+  it('renders compare button enabled when canCompare is true', () => {
+    const getDiff = jest.fn();
+    render(<VersionsHistoryButtons canCompare={true} getDiff={getDiff} />);
 
-    const showMoreButton = screen.getByText('Show more versions');
-    fireEvent.click(showMoreButton);
+    const compareButton = screen.getByRole('button', { name: /compare versions/i });
+    expect(compareButton).toBeEnabled();
 
-    expect(DashboardInteractions.showMoreVersionsClicked).toHaveBeenCalledWith();
+    fireEvent.click(compareButton);
+    expect(getDiff).toHaveBeenCalled();
+  });
+
+  it('renders compare button disabled when canCompare is false', () => {
+    render(<VersionsHistoryButtons canCompare={false} getDiff={jest.fn()} />);
+
+    const compareButton = screen.getByRole('button', { name: /compare versions/i });
+    expect(compareButton).toBeDisabled();
+  });
+
+  it('does not render a show more versions button', () => {
+    render(<VersionsHistoryButtons canCompare={false} getDiff={jest.fn()} />);
+
+    expect(screen.queryByRole('button', { name: /show more versions/i })).not.toBeInTheDocument();
   });
 });

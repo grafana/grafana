@@ -35,7 +35,6 @@ import { VersionHistoryTable } from './version-history/VersionHistoryTable';
 export interface VersionsEditViewState extends DashboardEditViewState {
   versions?: DecoratedRevisionModel[];
   isLoading?: boolean;
-  isAppending?: boolean;
   viewMode?: 'list' | 'compare';
   diffData?: { lhs: object; rhs: object };
   newInfo?: DecoratedRevisionModel;
@@ -46,14 +45,12 @@ export interface VersionsEditViewState extends DashboardEditViewState {
 export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> implements DashboardEditView {
   public static Component = VersionsEditorSettingsListView;
   private _limit: number = VERSIONS_FETCH_LIMIT;
-  private _continueToken = '';
 
   constructor(state: VersionsEditViewState) {
     super({
       ...state,
       versions: [],
       isLoading: true,
-      isAppending: true,
       viewMode: 'list',
       isNewLatest: false,
       diffData: { lhs: {}, rhs: {} },
@@ -80,10 +77,6 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     return this._limit;
   }
 
-  public get continueToken(): string {
-    return this._continueToken;
-  }
-
   public getUrlKey(): string {
     return 'versions';
   }
@@ -96,30 +89,24 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
     return sceneGraph.getTimeRange(this._dashboard);
   }
 
-  public fetchVersions = (append = false): void => {
+  public fetchVersions = (): void => {
     const uid = this._dashboard.state.uid;
 
     if (!uid) {
       return;
     }
 
-    this.setState({ isAppending: append });
-
-    const options = append ? { limit: this._limit, continueToken: this._continueToken } : { limit: this._limit };
-
     getDashboardAPI()
       .then(async (api) => {
-        const result = await api.listDashboardHistory(uid, options);
+        const result = await api.listDashboardHistory(uid, { limit: this._limit });
         const versions = this.transformToRevisionModels(result.items);
+        versions.sort((a, b) => b.version - a.version);
         this.setState({
           isLoading: false,
-          versions: [...(append ? (this.state.versions ?? []) : []), ...this.decorateVersions(versions)],
+          versions: this.decorateVersions(versions),
         });
-        // Update the continueToken for the next request, if available
-        this._continueToken = result.metadata.continue ?? '';
       })
-      .catch((err) => console.log(err))
-      .finally(() => this.setState({ isAppending: false }));
+      .catch((err) => console.log(err));
   };
 
   private transformToRevisionModels(items: Array<Resource<unknown>>): RevisionModel[] {
@@ -158,7 +145,6 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
   };
 
   public reset = () => {
-    this._continueToken = '';
     this.setState({
       baseInfo: undefined,
       diffData: { lhs: {}, rhs: {} },
@@ -193,7 +179,7 @@ export class VersionsEditView extends SceneObjectBase<VersionsEditViewState> imp
 
 function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsEditView>) {
   const dashboard = model.getDashboard();
-  const { isLoading, isAppending, viewMode, baseInfo, newInfo, isNewLatest } = model.useState();
+  const { isLoading, viewMode, baseInfo, newInfo, isNewLatest } = model.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
 
   const userKeys = useMemo(
@@ -222,12 +208,6 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
 
   const canCompare = model.versions.filter((version) => version.checked).length === 2;
   const showButtons = model.versions.length > 1;
-  const hasMore = model.versions.length >= model.limit;
-  // older versions may have been cleaned up in the db, so also check if the last page is less than the limit, if so, we are at the end
-  let isLastPage =
-    model.versions.find((rev) => rev.version === 1) ||
-    model.versions.length % model.limit !== 0 ||
-    model.continueToken === '';
 
   const viewModeCompare = (
     <>
@@ -264,14 +244,10 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
           isLoadingUserDisplayNames={isLoadingUserDisplayNames}
         />
       )}
-      {isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
       {showButtons && (
         <VersionsHistoryButtons
-          hasMore={hasMore}
           canCompare={canCompare}
-          getVersions={model.fetchVersions}
           getDiff={model.getDiff}
-          isLastPage={!!isLastPage}
         />
       )}
     </>
