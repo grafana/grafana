@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"

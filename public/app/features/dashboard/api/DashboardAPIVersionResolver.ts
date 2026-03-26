@@ -75,7 +75,7 @@ class DashboardAPIVersionResolver {
     const availableVersions = new Set(group.versions.map((v) => v.version));
 
     const v1: DashboardV1Version = availableVersions.has('v1') ? 'v1' : BETA_V1;
-    const v2: DashboardV2Version = availableVersions.has('v2') ? 'v2' : BETA_V2;
+    const v2: DashboardV2Version = BETA_V2;
 
     debugLog(`Version negotiation: v1=${v1}, v2=${v2} (available: ${Array.from(availableVersions).join(', ')})`);
 

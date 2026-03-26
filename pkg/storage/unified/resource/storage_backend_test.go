@@ -2288,7 +2288,11 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	})
 
 	t.Run("sqlkv", func(t *testing.T) {
-		backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)))
+		opts := []func(*KVBackendOptions){withKV(setupSqlKV(t))}
+		if db.IsTestDbSQLite() {
+			opts = append(opts, withChannelNotifier)
+		}
+		backend := setupTestStorageBackend(t, opts...)
 		testClusterScopedResources(t, backend)
 	})
 }

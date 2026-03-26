@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -330,7 +330,7 @@ func TestCreateFolder(t *testing.T) {
 						return false
 					}
 					capturedUID = res.Name
-					return res.APIVersion == "folder.grafana.app/v1beta1" &&
+					return res.APIVersion == "folder.grafana.app/v1" &&
 						res.Kind == "Folder" &&
 						res.Name != "" &&
 						res.Spec.Title == "newfolder"
@@ -472,7 +472,7 @@ func TestCreateFolder(t *testing.T) {
 					if err := json.Unmarshal(b, &res); err != nil {
 						return false
 					}
-					return res.APIVersion == "folder.grafana.app/v1beta1" &&
+					return res.APIVersion == "folder.grafana.app/v1" &&
 						res.Kind == "Folder" &&
 						res.Name != "" &&
 						res.Spec.Title == "newfolder"

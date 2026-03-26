@@ -11,7 +11,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
