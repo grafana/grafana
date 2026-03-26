@@ -240,7 +240,7 @@ export const AnnotationsPlugin2Cluster = ({
     }
   }, [xAnnos]);
 
-  if (xAxisRef.current) {
+  if (plotRef.current && xAxisRef.current) {
     const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
     const wipVals = wipFrame ? getVals<AnnotationVals>(wipFrame) : null;
     const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time?.[0] && wipVals?.time?.[0] > 0;
