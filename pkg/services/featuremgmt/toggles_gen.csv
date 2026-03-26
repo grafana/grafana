@@ -145,6 +145,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-06-13,authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 2024-06-19,zanzana,experimental,@grafana/identity-access-team,false,false,false
 2025-10-21,zanzanaNoLegacyClient,experimental,@grafana/identity-access-team,false,false,false
+2026-03-25,zanzanaSearchUsersPermissions,experimental,@grafana/identity-access-team,false,false,false
 2024-10-25,reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false
 2024-11-06,enableScopesInMetricsExplore,experimental,@grafana/dashboards-squad,false,false,false
 2024-06-27,cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
