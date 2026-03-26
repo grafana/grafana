@@ -1,4 +1,6 @@
-package provisioning
+// SPDX-License-Identifier: AGPL-3.0-only
+
+package v1beta1
 
 import (
 	"testing"
