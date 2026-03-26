@@ -2222,14 +2222,6 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "externalVizSuggestions",
-			Description:  "Enable all plugins to supply visualization suggestions (including 3rd party plugins)",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaDatavizSquad,
-			Expression:   "false",
-		},
-		{
 			Name:         "vizLegendSeriesLimit",
 			Description:  "Limit the number of legend items by default, with an option to show all",
 			Stage:        FeatureStageExperimental,

@@ -1406,11 +1406,6 @@ export interface FeatureToggles {
   */
   vizPresets?: boolean;
   /**
-  * Enable all plugins to supply visualization suggestions (including 3rd party plugins)
-  * @default false
-  */
-  externalVizSuggestions?: boolean;
-  /**
   * Limit the number of legend items by default, with an option to show all
   * @default false
   */
