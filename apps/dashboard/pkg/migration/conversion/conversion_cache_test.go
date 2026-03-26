@@ -7,7 +7,7 @@ import (
 	"time"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
@@ -324,7 +324,7 @@ func TestConversionCaching_V1beta1_to_V2alpha1(t *testing.T) {
 		source := createTestV1Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2alpha1.Dashboard{}
 
-		err := Convert_V1beta1_to_V2alpha1(source, target, nil, cachedDS, cachedLE)
+		err := Convert_V1_to_V2alpha1(source, target, nil, cachedDS, cachedLE)
 		require.NoError(t, err, "conversion %d should succeed", i)
 		require.NotNil(t, target.Spec)
 	}
@@ -361,7 +361,7 @@ func TestConversionCaching_V1beta1_to_V2beta1(t *testing.T) {
 		source := createTestV1Dashboard(namespace, "Dashboard "+string(rune('A'+i)))
 		target := &dashv2beta1.Dashboard{}
 
-		err := Convert_V1beta1_to_V2beta1(source, target, nil, cachedDS, cachedLE)
+		err := Convert_V1_to_V2beta1(source, target, nil, cachedDS, cachedLE)
 		require.NoError(t, err, "conversion %d should succeed", i)
 		require.NotNil(t, target.Spec)
 	}

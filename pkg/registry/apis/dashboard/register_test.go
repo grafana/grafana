@@ -12,7 +12,9 @@ import (
 	"k8s.io/apiserver/pkg/admission"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	dashv2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
@@ -172,37 +174,43 @@ func TestDashboardAPIBuilder_GetGroupVersions(t *testing.T) {
 		expected        []schema.GroupVersion
 	}{
 		{
-			name:            "should return v1alpha1 by default",
+			name:            "should return v1 by default",
 			enabledFeatures: []string{},
 			expected: []schema.GroupVersion{
 				dashv1.DashboardResourceInfo.GroupVersion(),
+				dashv1beta1.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
+				dashv2.DashboardResourceInfo.GroupVersion(),
 				dashv2beta1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 		{
-			name: "should return v1alpha1 as the default if some other feature is enabled",
+			name: "should return v1 as the default if some other feature is enabled",
 			enabledFeatures: []string{
 				featuremgmt.FlagKubernetesDashboards,
 			},
 			expected: []schema.GroupVersion{
 				dashv1.DashboardResourceInfo.GroupVersion(),
+				dashv1beta1.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
+				dashv2.DashboardResourceInfo.GroupVersion(),
 				dashv2beta1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 		{
-			name: "should return v2alpha1 as the default if dashboards v2 is enabled",
+			name: "should return v2 as the default if dashboards v2 is enabled",
 			enabledFeatures: []string{
 				featuremgmt.FlagDashboardNewLayouts,
 			},
 			expected: []schema.GroupVersion{
+				dashv2.DashboardResourceInfo.GroupVersion(),
 				dashv2beta1.DashboardResourceInfo.GroupVersion(),
 				dashv2alpha1.DashboardResourceInfo.GroupVersion(),
 				dashv0.DashboardResourceInfo.GroupVersion(),
 				dashv1.DashboardResourceInfo.GroupVersion(),
+				dashv1beta1.DashboardResourceInfo.GroupVersion(),
 			},
 		},
 	}

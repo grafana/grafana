@@ -4,6 +4,7 @@ import {
   encodeMatcher,
   getMatcherQueryParams,
   isPromQLStyleMatcher,
+  labelsToMatchersParam,
   matcherToObjectMatcher,
   normalizeMatchers,
   parseMatcher,
@@ -295,5 +296,27 @@ describe('parsePromQLStyleMatcherLoose', () => {
       { isEqual: true, isRegex: false, name: 'foo', value: 'bar' },
       { isEqual: true, isRegex: false, name: 'bar', value: 'baz' },
     ]);
+  });
+});
+
+describe('labelsToMatchersParam', () => {
+  it('should return undefined for empty labels', () => {
+    expect(labelsToMatchersParam({})).toBeUndefined();
+  });
+
+  it('should convert single label to matcher param', () => {
+    expect(labelsToMatchersParam({ alertname: 'cpu' })).toBe('{alertname="cpu"}');
+  });
+
+  it('should convert multiple labels to matcher param', () => {
+    expect(labelsToMatchersParam({ alertname: 'cpu', env: 'prod' })).toBe('{alertname="cpu",env="prod"}');
+  });
+
+  it('should escape special characters in values', () => {
+    expect(labelsToMatchersParam({ alertname: 'cpu"alert' })).toBe('{alertname="cpu\\"alert"}');
+  });
+
+  it('should handle labels with special characters', () => {
+    expect(labelsToMatchersParam({ 'job-name': 'my\\job' })).toBe('{job-name="my\\\\job"}');
   });
 });
