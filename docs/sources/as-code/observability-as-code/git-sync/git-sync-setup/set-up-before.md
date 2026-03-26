@@ -125,5 +125,7 @@ By default, folders provisioned with Git Sync have these roles:
 - Admin = Admin
 - Editor = Editor
 - Viewer = Viewer.
-  Refer to [Roles and permissions](ref:roles-and-permissions) for more information about roles.
-  To modify them, refer to [Manage folder permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/use-git-sync#manage-folder-permissions).
+  
+To modify them, refer to [Manage folder permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/use-git-sync#manage-folder-permissions).
+
+Refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions) for more information about Grafana roles.
