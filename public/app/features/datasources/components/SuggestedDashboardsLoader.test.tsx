@@ -10,7 +10,11 @@ import {
   createMockPluginDashboard,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/test-utils';
 
-import { SuggestedDashboardsLoader, SuggestedDashboardsLoaderChildProps } from './SuggestedDashboardsLoader';
+import {
+  SuggestedDashboardsLoader,
+  SuggestedDashboardsLoaderChildProps,
+  clearDashboardCache,
+} from './SuggestedDashboardsLoader';
 
 jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/api/dashboardLibraryApi', () => ({
   fetchProvisionedDashboards: jest.fn(),
@@ -51,6 +55,7 @@ const renderLoader = (props?: Partial<Parameters<typeof SuggestedDashboardsLoade
 
 beforeEach(() => {
   jest.clearAllMocks();
+  clearDashboardCache();
   mockFetchProvisioned.mockResolvedValue([]);
   mockFetchCommunity.mockResolvedValue({ page: 1, pages: 1, items: [] });
 });
