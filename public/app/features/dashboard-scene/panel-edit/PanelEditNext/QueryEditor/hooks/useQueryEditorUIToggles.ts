@@ -1,14 +1,19 @@
 import { useCallback, useState } from 'react';
 
+import { TransformationToggleState } from '../QueryEditorContext';
 import { QueryOptionField } from '../types';
 
 export interface UseQueryEditorUITogglesResult {
   isQueryOptionsOpen: boolean;
   focusedField: QueryOptionField | null;
   showingDatasourceHelp: boolean;
-  transformTogglesState: { showHelp: boolean; showDebug: boolean };
+  transformTogglesState: TransformationToggleState;
   openSidebar: (focusField?: QueryOptionField) => void;
   closeSidebar: () => void;
+  /**
+   * Resets datasource help and transformation toggles.
+   * Does NOT close the query options sidebar — call closeSidebar() separately if needed.
+   */
   resetUIToggles: () => void;
   toggleDatasourceHelp: () => void;
   toggleHelp: () => void;

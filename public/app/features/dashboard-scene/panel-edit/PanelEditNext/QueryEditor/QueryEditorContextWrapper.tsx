@@ -3,6 +3,7 @@ import { ReactNode, useCallback, useMemo, useRef, useState } from 'react';
 import { DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { SceneDataTransformer } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
+import { ExpressionQuery } from 'app/features/expressions/types';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
@@ -139,10 +140,22 @@ export function QueryEditorContextWrapper({
     [clearSelectionRaw]
   );
 
+  // Wraps onCardSelectionChange with a UI reset for use in finalizePendingExpression /
+  // finalizePendingTransformation — those paths bypass clearSideEffects entirely, so
+  // resetUIToggles would otherwise never be called and the datasource help panel would
+  // remain visible after the picker resolves.
+  const onFinalizeCardSelection = useCallback(
+    (queryRefId: string | null, transformationId: string | null) => {
+      onCardSelectionChange(queryRefId, transformationId);
+      resetUIToggles();
+    },
+    [onCardSelectionChange, resetUIToggles]
+  );
+
   const { pendingExpression, setPendingExpression, finalizePendingExpression, clearPendingExpression } =
     usePendingExpression({
       addQuery: dataPane.addQuery,
-      onCardSelectionChange,
+      onCardSelectionChange: onFinalizeCardSelection,
     });
 
   const findTransformationIndex = useCallback(
@@ -167,7 +180,7 @@ export function QueryEditorContextWrapper({
   const { pendingTransformation, setPendingTransformation, finalizePendingTransformation, clearPendingTransformation } =
     usePendingTransformation({
       addTransformation: addTransformationAction,
-      onCardSelectionChange,
+      onCardSelectionChange: onFinalizeCardSelection,
     });
 
   const clearSideEffects = useCallback(() => {
@@ -346,7 +359,10 @@ export function QueryEditorContextWrapper({
         trackQueryRename(originalRefId, updatedQuery.refId);
       },
       addQuery: dataPane.addQuery,
-      deleteQuery: dataPane.deleteQuery,
+      deleteQuery: (refId: string) => {
+        dataPane.deleteQuery(refId);
+        setSelectedQueryRefIds((current) => current.filter((id) => id !== refId));
+      },
       duplicateQuery: dataPane.duplicateQuery,
       toggleQueryHide: dataPane.toggleQueryHide,
       runQueries: dataPane.runQueries,
