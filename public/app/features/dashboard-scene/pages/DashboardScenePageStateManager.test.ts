@@ -466,6 +466,15 @@ describe('DashboardScenePageStateManager v1', () => {
       expect(loader.state.isLoading).toBe(false);
     });
 
+    it('should store the snapshot key in meta.snapshotKey', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadSnapshot('fake-slug');
+
+      expect(loader.state.dashboard?.state.meta.snapshotKey).toBe('fake-slug');
+    });
+
     describe('AssistantPreview', () => {
       const previewUid = btoa('preview-key');
       const v1StoredDashboard = { title: 'Preview', panels: [], schemaVersion: 40 };
@@ -951,6 +960,22 @@ describe('DashboardScenePageStateManager v2', () => {
 
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
       expect(loader.state.isLoading).toBe(false);
+    });
+
+    it('should store the snapshot key in meta.snapshotKey', async () => {
+      jest.spyOn(getDashboardSnapshotSrv(), 'getSnapshot').mockResolvedValue({
+        dashboard: {
+          uid: 'fake-dash',
+          title: 'Fake dashboard',
+          schemaVersion: 40,
+        },
+        meta: { isSnapshot: true },
+      });
+
+      const loader = new DashboardScenePageStateManagerV2({});
+      await loader.loadSnapshot('fake-slug');
+
+      expect(loader.state.dashboard?.state.meta.snapshotKey).toBe('fake-slug');
     });
 
     describe('AssistantPreview', () => {

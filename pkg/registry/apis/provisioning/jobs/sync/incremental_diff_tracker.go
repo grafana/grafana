@@ -8,6 +8,7 @@ type rebuiltIncrementalDiffTracker struct {
 	filteredDiff   []repository.VersionedFileChange
 	generatedPaths map[string]struct{}
 	replaced       []replacedFolder
+	activeUIDs     map[string]struct{}
 }
 
 // newRebuiltIncrementalDiff seeds the rewritten diff with changes
@@ -17,6 +18,7 @@ func newRebuiltIncrementalDiffTracker(changes []repository.VersionedFileChange) 
 		filteredDiff:   changes,
 		generatedPaths: make(map[string]struct{}),
 		replaced:       make([]replacedFolder, 0),
+		activeUIDs:     make(map[string]struct{}),
 	}
 }
 
@@ -40,10 +42,29 @@ func (result *rebuiltIncrementalDiffTracker) AppendReplaced(replaced replacedFol
 	result.replaced = append(result.replaced, replaced)
 }
 
+// TrackActiveUID records a UID that is being actively assigned to a folder
+// by a metadata change in this diff. UIDs in this set must not be deleted
+// even if they appear in the replaced list (the UID moved between paths
+// rather than being removed).
+func (result *rebuiltIncrementalDiffTracker) TrackActiveUID(uid string) {
+	result.activeUIDs[uid] = struct{}{}
+}
+
 func (result *rebuiltIncrementalDiffTracker) IncrementalDiff() []repository.VersionedFileChange {
 	return result.filteredDiff
 }
 
+// ReplacedFolders returns folder identities scheduled for deletion, excluding
+// any whose UID is being actively written to another path in the same diff.
 func (result *rebuiltIncrementalDiffTracker) ReplacedFolders() []replacedFolder {
-	return result.replaced
+	if len(result.activeUIDs) == 0 {
+		return result.replaced
+	}
+	filtered := make([]replacedFolder, 0, len(result.replaced))
+	for _, r := range result.replaced {
+		if _, active := result.activeUIDs[r.OldUID]; !active {
+			filtered = append(filtered, r)
+		}
+	}
+	return filtered
 }

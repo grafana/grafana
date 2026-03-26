@@ -18,15 +18,12 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationGitHubBranchProtection tests that branch protection rules are properly validated
 // when configuring a GitHub repository with the write workflow.
 func TestIntegrationGitHubBranchProtection(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Start test git server that responds to nanogit's smart HTTP protocol
@@ -662,9 +659,7 @@ func startTestGitServer(t *testing.T) *httptest.Server {
 // TestIntegrationGitHubBranchProtection_HealthStatus tests that repositories with branch protection
 // are created successfully, but their health status reflects the branch protection issue.
 func TestIntegrationGitHubBranchProtection_HealthStatus(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := common.RunGrafana(t)
+	helper := sharedHelper(t)
 	ctx := context.Background()
 
 	// Start test git server

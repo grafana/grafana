@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -32,8 +33,7 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				DisableAnonymous:      true,
+				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
 					"kubernetesLibraryPanels",
 				},
@@ -96,8 +96,7 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				DisableAnonymous:      true,
+				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
 					"kubernetesLibraryPanels",
 					"grafanaAPIServerWithExperimentalAPIs", // needed until we move it to v0beta1 at least (currently v0alpha1)
@@ -299,8 +298,7 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableDataMigrations: true,
-				DisableAnonymous:      true,
+				DisableAnonymous: true,
 				EnableFeatureToggles: []string{
 					"kubernetesLibraryPanels",
 				},
@@ -517,9 +515,14 @@ func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
+		var disableFlags []string
+		if dualWriterMode < rest.Mode5 {
+			disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
+		}
+
 		opts := testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
 			DisableAnonymous:      true,
+			DisableFeatureToggles: disableFlags,
 			EnableFeatureToggles: []string{
 				"kubernetesLibraryPanels",
 			},
