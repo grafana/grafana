@@ -29,7 +29,7 @@ type TeamAPI struct {
 	logger                   log.Logger
 	features                 featuremgmt.FeatureToggles
 	teamBindingClientFactory teamBindingClientFactory
-	clientConfigProvider apiserver.DirectRestConfigProvider
+	clientConfigProvider     apiserver.DirectRestConfigProvider
 }
 
 func ProvideTeamAPI(
@@ -58,7 +58,7 @@ func ProvideTeamAPI(
 		logger:                   log.New("team-api"),
 		features:                 features,
 		teamBindingClientFactory: &directRestConfigClientFactory{clientConfigProvider: clientConfigProvider},
-		clientConfigProvider: clientConfigProvider,
+		clientConfigProvider:     clientConfigProvider,
 	}
 
 	tapi.registerRoutes(routeRegister, acEvaluator)
