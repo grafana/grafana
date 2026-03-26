@@ -347,7 +347,7 @@ func RegisterAPIService(
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
-	builder, err = NewAPIBuilder(
+	v1beta1Builder, err := NewAPIBuilder(
 		schema.GroupVersion{
 			Group:   provisioning.GROUP,
 			Version: "v1beta1",
@@ -380,7 +380,8 @@ func RegisterAPIService(
 		return nil, err
 	}
 
-	apiregistration.RegisterAPI(builder)
+	apiregistration.RegisterAPI(v1beta1Builder)
+	// Return the preferred (v0alpha1) builder since it runs controllers/workers
 	return builder, nil
 }
 

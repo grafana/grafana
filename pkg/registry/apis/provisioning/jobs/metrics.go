@@ -96,6 +96,7 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			},
 			[]string{"action", "resources_changed_bucket"},
 		)
+		registry.MustRegister(durationHist)
 
 		incrementalSyncPhaseDurationHist := prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
