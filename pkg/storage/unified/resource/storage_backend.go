@@ -84,6 +84,9 @@ type kvStorageBackend struct {
 	tenantDeleter *TenantDeleter
 
 	searchLookback time.Duration
+
+	// stopCleanups cancels the context used by the runCleanups goroutine.
+	stopCleanups context.CancelFunc
 }
 
 var _ KVBackend = &kvStorageBackend{}
@@ -224,7 +227,9 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	}
 
 	// Start the cleanup background job.
-	go backend.runCleanups(ctx)
+	cleanupCtx, cleanupCancel := context.WithCancel(ctx)
+	backend.stopCleanups = cleanupCancel
+	go backend.runCleanups(cleanupCtx)
 
 	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
 
@@ -245,6 +250,9 @@ func (k *kvStorageBackend) IsHealthy(ctx context.Context, _ *resourcepb.HealthCh
 
 // Stop shuts down services owned by the backend.
 func (k *kvStorageBackend) Stop() {
+	if k.stopCleanups != nil {
+		k.stopCleanups()
+	}
 	if k.tenantWatcher != nil {
 		k.tenantWatcher.Stop()
 	}
