@@ -1,5 +1,6 @@
 import { testWithFeatureToggles } from 'test/test-utils';
 
+import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { PromAlertingRuleState, type PromRuleGroupDTO, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -174,9 +175,14 @@ describe('grafana-managed rules', () => {
         name: 'Rule with Explicit Policy',
         notificationSettings: { policy: 'team-a-policy' },
       });
+      const ruleWithExplicitUserDefinedPolicy = mockGrafanaPromAlertingRule({
+        name: 'Rule explicitly set to user-defined policy',
+        notificationSettings: { policy: USER_DEFINED_TREE_NAME },
+      });
 
-      const { frontendFilter } = getGrafanaFilter(getFilter({ policy: 'user-defined' }));
+      const { frontendFilter } = getGrafanaFilter(getFilter({ policy: USER_DEFINED_TREE_NAME }));
       expect(frontendFilter.ruleMatches(ruleWithNoSettings)).toBe(true);
+      expect(frontendFilter.ruleMatches(ruleWithExplicitUserDefinedPolicy)).toBe(true);
       expect(frontendFilter.ruleMatches(ruleWithContactPoint)).toBe(false);
       expect(frontendFilter.ruleMatches(ruleWithExplicitPolicy)).toBe(false);
     });

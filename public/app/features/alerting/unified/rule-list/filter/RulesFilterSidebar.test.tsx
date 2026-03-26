@@ -75,15 +75,7 @@ const mockClearAll = jest.fn();
 const baseFilterState: RulesFilter = { freeFormWords: [], dataSourceNames: [], labels: [] };
 
 jest.mock('../../hooks/useFilteredRules', () => ({
-  useRulesFilter: jest.fn(() => ({
-    filterState: baseFilterState,
-    updateFilters: mockUpdateFilters,
-    hasActiveFilters: false,
-    clearAll: mockClearAll,
-    searchQuery: '',
-    setSearchQuery: jest.fn(),
-    activeFilters: [],
-  })),
+  useRulesFilter: jest.fn(),
 }));
 
 const useRulesFilterMock = jest.mocked(useRulesFilter);
