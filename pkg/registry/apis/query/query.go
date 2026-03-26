@@ -15,7 +15,6 @@ import (
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/authlib/authn"
@@ -33,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	service "github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -128,15 +128,13 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 
 		ctx, span := b.tracer.Start(httpreq.Context(), "QueryService.Query")
 		defer span.End()
-		ctx = request.WithNamespace(ctx, request.NamespaceValue(connectCtx))
-		traceId := span.SpanContext().TraceID()
 		connectLogger := b.log.New(
-			"traceId", traceId.String(),
+			"traceId", span.SpanContext().TraceID().String(),
 			"rule_uid", httpreq.Header.Get("X-Rule-Uid"),
 			"caller", getCaller(ctx),
 		)
 		connectLogger.Debug("received query-service request")
-		responder := newResponderWrapper(incomingResponder,
+		responder := newResponderWrapper(ctx, w,
 			func(statusCode *int, obj runtime.Object) {
 				if *statusCode/100 == 4 {
 					span.SetStatus(codes.Error, strconv.Itoa(*statusCode))
@@ -394,25 +392,32 @@ func handleQuery(
 }
 
 type responderWrapper struct {
-	wrapped    rest.Responder
+	w          http.ResponseWriter
+	ctx        context.Context
 	onObjectFn func(statusCode *int, obj runtime.Object)
 	onErrorFn  func(err error)
 }
 
-func newResponderWrapper(responder rest.Responder, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) *responderWrapper {
+func newResponderWrapper(ctx context.Context, w http.ResponseWriter, onObjectFn func(statusCode *int, obj runtime.Object), onErrorFn func(err error)) *responderWrapper {
 	return &responderWrapper{
-		wrapped:    responder,
+		ctx:        ctx,
+		w:          w,
 		onObjectFn: onObjectFn,
 		onErrorFn:  onErrorFn,
 	}
 }
 
-func (r responderWrapper) Object(statusCode int, obj runtime.Object) {
+func (r responderWrapper) Object(statusCode int, obj *query.QueryDataResponse) {
 	if r.onObjectFn != nil {
 		r.onObjectFn(&statusCode, obj)
 	}
 
-	r.wrapped.Object(statusCode, obj)
+	// Write the value as JSON
+	r.w.Header().Set("Content-Type", "application/json")
+	r.w.WriteHeader(statusCode)
+	if err := json.NewEncoder(r.w).Encode(obj); err != nil {
+		http.Error(r.w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func (r responderWrapper) Error(err error) {
@@ -420,7 +425,7 @@ func (r responderWrapper) Error(err error) {
 		r.onErrorFn(err)
 	}
 
-	r.wrapped.Error(err)
+	errhttp.Write(r.ctx, err, r.w)
 }
 
 func logEmptyRefids(queries []v0alpha1.DataQuery, logger log.Logger) {
