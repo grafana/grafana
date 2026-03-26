@@ -140,33 +140,6 @@ type APIBuilder struct {
 	folderMetadataEnabled bool
 }
 
-type Options struct {
-	GroupVersion                        schema.GroupVersion
-	OnlyApiServer                       bool
-	IsPreferredVersion                  bool
-	RepoFactory                         repository.Factory
-	ConnectionFactory                   connection.Factory
-	Features                            featuremgmt.FeatureToggles
-	Unified                             resource.ResourceClient
-	ConfigProvider                      apiserver.RestConfigProvider
-	StorageStatus                       dualwrite.Service
-	UsageStats                          usagestats.Service
-	Access                              authlib.AccessChecker
-	Tracer                              tracing.Tracer
-	ExtraBuilders                       []ExtraBuilder
-	ExtraWorkers                        []jobs.Worker
-	JobHistoryConfig                    *JobHistoryConfig
-	AllowedTargets                      []provisioning.SyncTargetType
-	RestConfigGetter                    func(context.Context) (*clientrest.Config, error)
-	AllowImageRendering                 bool
-	MinSyncInterval                     time.Duration
-	Registry                            prometheus.Registerer
-	NewStandaloneClientFactoryFunc      func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory // optional, only used for standalone apiserver
-	UseExclusivelyAccessCheckerForAuthz bool
-	QuotaGetter                         quotas.QuotaGetter
-	FolderMetadataEnabled               bool
-}
-
 // NewAPIBuilder creates an API builder for the provisioning API.
 //
 // This function supports registering multiple API versions (e.g., v0alpha1, v1beta1) by creating
