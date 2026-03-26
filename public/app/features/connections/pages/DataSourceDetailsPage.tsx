@@ -13,7 +13,7 @@ export function DataSourceDetailsPage() {
   const { id = '' } = useParams<{ id: string }>();
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const isConnectDataPageOverriden = Boolean(navIndex[overrideNavId]);
-  const navId = isConnectDataPageOverriden ? overrideNavId : 'connections-add-new-connection'; // The nav id changes (gets a prefix) if it is overriden by a plugin
+  const navId = isConnectDataPageOverriden ? overrideNavId : 'connections-add-new-connection'; // The nav id changes (gets a prefix) if it is overridden by a plugin
 
   return (
     <PluginDetailsPage

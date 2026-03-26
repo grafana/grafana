@@ -147,7 +147,7 @@ function adaptFieldColorMode(
     return fieldConfig;
   }
 
-  // adjust to prefered field color setting if needed
+  // adjust to preferred field color setting if needed
   const color = plugin.fieldConfigRegistry.getIfExists(FieldConfigProperty.Color);
 
   if (color && color.settings) {
@@ -162,7 +162,7 @@ function adaptFieldColorMode(
       }
     }
 
-    // When supporting value colors and prefering thresholds, use Thresholds mode.
+    // When supporting value colors and preferring thresholds, use Thresholds mode.
     // Otherwise keep current mode
     if (colorSettings.byValueSupport && colorSettings.preferThresholdsMode && mode?.id !== FieldColorModeId.Fixed) {
       if (!mode || !mode.isByValue) {
@@ -174,7 +174,7 @@ function adaptFieldColorMode(
     // If panel support bySeries then we should default to that when switching to this panel as that is most likely
     // what users will expect. Example scenario a user who has a graph panel (time series) and switches to Gauge and
     // then back to time series we want the graph panel color mode to reset to classic palette and not preserve the
-    // Gauge prefered thresholds mode.
+    // Gauge preferred thresholds mode.
     if (colorSettings.bySeriesSupport && mode?.isByValue) {
       fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
       return fieldConfig;

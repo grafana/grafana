@@ -154,7 +154,7 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
 
   // Ensure we use unique IDs for the marker tip elements, since IDs are global
   // in the entire HTML document. This prevents hidden tips when an earlier
-  // occurence is hidden (editor is open in front of an existing node graph
+  // occurrence is hidden (editor is open in front of an existing node graph
   // panel) or when the earlier tips have different properties (color, size, or
   // shape for example).
   const svgIdNamespace = panelId || 'nodegraphpanel';
