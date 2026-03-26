@@ -7,7 +7,7 @@ set -euo pipefail
 #   BUILD_NUMBER        – CI build number / ID
 #   OS                  – target OS (e.g. linux, darwin)
 #   ARCH                – target architecture (e.g. amd64, arm64)
-#   GO                  – go binary
+#   GO                  – path to 'go'. default: 'go' (determined by $PATH by default).
 
 : "${TARGZ_PACKAGE_NAME:=grafana}"
 : "${BUILD_VERSION:?BUILD_VERSION is required}"
