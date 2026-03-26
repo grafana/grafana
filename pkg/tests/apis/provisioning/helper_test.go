@@ -13,6 +13,7 @@ var env = common.NewSharedEnv(
 	func(opts *testinfra.GrafanaOpts) {
 		opts.SecretsManagerEnableDBMigrations = true
 	},
+	common.WithoutExportFeatureFlag,
 )
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {

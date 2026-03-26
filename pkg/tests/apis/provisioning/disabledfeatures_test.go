@@ -1,4 +1,4 @@
-package disabledfeatures
+package provisioning
 
 import (
 	"testing"

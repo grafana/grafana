@@ -150,13 +150,12 @@ All shared test infrastructure lives in `common/testing.go`:
 
 | Package | Env Options |
 | ------- | ----------- |
-| `provisioning/` (root) | `SecretsManagerEnableDBMigrations` |
+| `provisioning/` (root) | `SecretsManagerEnableDBMigrations`, `WithoutExportFeatureFlag` |
 | `connection/` | none |
 | `foldermetadata/` | `WithProvisioningFolderMetadata` (SharedGitEnv — also hosts git-backed tests) |
 | `repository/` | `WithProvisioningFolderMetadata` |
 | `quota/` | none |
 | `jobs/` | none (GitHub mock in helper) |
-| `jobs/disabledfeatures` | `WithoutExportFeatureFlag` |
 | `enterprise/` | enterprise repo types (skipped in OSS) |
 
 ### SharedGitEnv packages (git server required)
@@ -165,7 +164,7 @@ All shared test infrastructure lives in `common/testing.go`:
 | ------- | ----------- |
 | `git/` | none |
 | `git/sourcepath_guard/` | none |
-| `git/foldermetadata_incremental/` | `WithProvisioningFolderMetadata` |
+| `foldermetadata/incremental/` | `WithProvisioningFolderMetadata` |
 | `foldermetadata/full/` | none |
 
 ### Mixed-env package
