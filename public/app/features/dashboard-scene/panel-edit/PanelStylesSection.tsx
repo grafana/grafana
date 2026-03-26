@@ -43,26 +43,23 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
     [onApplyPreset, panel]
   );
 
-  const getThresholdBadge = useCallback(
-    (preset: PanelPluginVisualizationSuggestion) => {
-      if (!presetModifiesThresholds(preset)) {
-        return null;
-      }
-      return (
-        <Tooltip
-          content={t('dashboard-scene.panel-styles.threshold-badge-tooltip', 'This preset will modify thresholds')}
+  const getThresholdBadge = (preset: PanelPluginVisualizationSuggestion) => {
+    if (!presetModifiesThresholds(preset)) {
+      return null;
+    }
+    return (
+      <Tooltip
+        content={t('dashboard-scene.panel-styles.threshold-badge-tooltip', 'This preset will modify thresholds')}
+      >
+        <div
+          className={styles.thresholdBadge}
+          aria-label={t('dashboard-scene.panel-styles.threshold-badge-tooltip', 'This preset will modify thresholds')}
         >
-          <div
-            className={styles.thresholdBadge}
-            aria-label={t('dashboard-scene.panel-styles.threshold-badge-label', 'Modifies thresholds')}
-          >
-            <Icon name="sliders-v-alt" size="xs" />
-          </div>
-        </Tooltip>
-      );
-    },
-    [styles.thresholdBadge]
-  );
+          <Icon name="sliders-v-alt" size="xs" />
+        </div>
+      </Tooltip>
+    );
+  };
 
   if (!presets || presets.length === 0 || !data || data.series.length === 0) {
     return null;
@@ -97,7 +94,7 @@ export function PanelStylesSection({ panel, onApplyPreset }: PanelStylesSectionP
 const getStyles = (theme: GrafanaTheme2) => ({
   thresholdBadge: css({
     position: 'absolute',
-    top: theme.spacing(0.5),
+    top: theme.spacing(1),
     right: theme.spacing(0.5),
     display: 'flex',
     alignItems: 'center',
@@ -108,11 +105,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.canvas,
     border: `1px solid ${theme.colors.border.medium}`,
     color: theme.colors.text.secondary,
-    pointerEvents: 'auto',
+    cursor: 'default',
     zIndex: 1,
-    '&:hover': {
-      color: theme.colors.text.primary,
-      borderColor: theme.colors.border.strong,
-    },
   }),
 });

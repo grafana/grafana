@@ -285,14 +285,14 @@ describe('PanelStylesSection', () => {
       mockGetPluginPresets.mockReturnValue([...mockPresets, thresholdPreset]);
       render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
 
-      expect(screen.getByLabelText('Modifies thresholds')).toBeInTheDocument();
+      expect(screen.getByLabelText('This preset will modify thresholds')).toBeInTheDocument();
     });
 
     it('does not render a badge for presets that do not modify thresholds', () => {
       mockGetPluginPresets.mockReturnValue(mockPresets);
       render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
 
-      expect(screen.queryByLabelText('Modifies thresholds')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('This preset will modify thresholds')).not.toBeInTheDocument();
     });
 
     it('renders one badge per threshold-modifying preset', () => {
@@ -304,7 +304,7 @@ describe('PanelStylesSection', () => {
       mockGetPluginPresets.mockReturnValue([...mockPresets, thresholdPreset, anotherThresholdPreset]);
       render(<PanelStylesSection panel={buildPanel()} onApplyPreset={onApplyPreset} />);
 
-      expect(screen.getAllByLabelText('Modifies thresholds')).toHaveLength(2);
+      expect(screen.getAllByLabelText('This preset will modify thresholds')).toHaveLength(2);
     });
   });
 });
