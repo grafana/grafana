@@ -4,8 +4,7 @@ import { cloneElement, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { SceneDataLayerProvider, SceneVariable } from '@grafana/scenes';
-import { IconButton, Portal, useElementSelection, useStyles2 } from '@grafana/ui';
+import { IconButton, Portal, useStyles2 } from '@grafana/ui';
 
 export function ControlActionsPopover({
   content,
