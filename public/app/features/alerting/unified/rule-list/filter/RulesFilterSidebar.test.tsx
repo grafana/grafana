@@ -1,21 +1,48 @@
 import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
+import { contextSrv } from 'app/core/services/context_srv';
+
+import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RulesFilter } from '../../search/rulesSearchParser';
 
 import { RulesFilterSidebar } from './RulesFilterSidebar';
 
 jest.mock('@grafana/alerting/unstable', () => ({
-  ContactPointSelector: () => null,
+  ContactPointSelector: ({
+    onChange,
+    value,
+    disabled,
+  }: {
+    onChange: (cp: { spec: { title: string } } | null) => void;
+    value?: string | null;
+    disabled?: boolean;
+  }) => (
+    <select
+      aria-label="Contact point"
+      value={value ?? ''}
+      disabled={disabled}
+      onChange={(e) => {
+        const v = e.target.value;
+        onChange(v ? { spec: { title: v } } : null);
+      }}
+    >
+      <option value="">Select contact point</option>
+      <option value="slack-cp">slack-cp</option>
+    </select>
+  ),
   RoutingTreeSelector: ({
     onChange,
     value,
+    disabled,
   }: {
     onChange: (tree: { metadata: { name: string } } | null) => void;
     value?: string;
+    disabled?: boolean;
   }) => (
     <select
       aria-label="Notification policy"
       value={value ?? ''}
+      disabled={disabled}
       onChange={(e) => {
         const v = e.target.value;
         onChange(v ? { metadata: { name: v } } : null);
@@ -59,9 +86,7 @@ jest.mock('../../hooks/useFilteredRules', () => ({
   })),
 }));
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { useRulesFilter } = require('../../hooks/useFilteredRules');
-const useRulesFilterMock = useRulesFilter as jest.MockedFunction<typeof useRulesFilter>;
+const useRulesFilterMock = jest.mocked(useRulesFilter);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -109,5 +134,150 @@ describe('RulesFilterSidebar — policy filter', () => {
       render(<RulesFilterSidebar />);
       expect(screen.queryByRole('combobox', { name: 'Notification policy' })).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('RulesFilterSidebar — mutual exclusivity of contact point and policy filters', () => {
+  testWithFeatureToggles({ enable: ['alertingMultiplePolicies'] });
+
+  beforeEach(() => {
+    // canRenderContactPointSelector is evaluated per-render (not at module load),
+    // so spyOn intercepts it correctly to grant the receivers permission.
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+  });
+
+  it('disables the policy selector when a contact point is selected', async () => {
+    const { user } = render(<RulesFilterSidebar />);
+
+    const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
+    const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
+
+    expect(contactPointSelect).toBeEnabled();
+    expect(policySelect).toBeEnabled();
+
+    await user.selectOptions(contactPointSelect, 'slack-cp');
+
+    expect(policySelect).toBeDisabled();
+  });
+
+  it('disables the contact point selector when a policy is selected', async () => {
+    const { user } = render(<RulesFilterSidebar />);
+
+    const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
+    const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
+
+    await user.selectOptions(policySelect, 'team-a-policy');
+
+    expect(contactPointSelect).toBeDisabled();
+  });
+
+  it('does not include policy in the filter update when a contact point is selected', async () => {
+    const { user } = render(<RulesFilterSidebar />);
+
+    const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
+    await user.selectOptions(contactPointSelect, 'slack-cp');
+
+    expect(mockUpdateFilters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ contactPoint: 'slack-cp', policy: undefined })
+    );
+  });
+
+  it('does not include contactPoint in the filter update when a policy is selected', async () => {
+    const { user } = render(<RulesFilterSidebar />);
+
+    const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
+    await user.selectOptions(policySelect, 'team-a-policy');
+
+    expect(mockUpdateFilters).toHaveBeenLastCalledWith(
+      expect.objectContaining({ policy: 'team-a-policy', contactPoint: undefined })
+    );
+  });
+
+  it('re-enables the policy selector when the contact point is cleared', async () => {
+    const { user } = render(<RulesFilterSidebar />);
+
+    const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
+    const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
+
+    await user.selectOptions(contactPointSelect, 'slack-cp');
+    expect(policySelect).toBeDisabled();
+
+    await user.selectOptions(contactPointSelect, '');
+    expect(policySelect).toBeEnabled();
+  });
+
+  it('re-enables the contact point selector when the policy is cleared', async () => {
+    const { user } = render(<RulesFilterSidebar />);
+
+    const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
+    const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
+
+    await user.selectOptions(policySelect, 'team-a-policy');
+    expect(contactPointSelect).toBeDisabled();
+
+    await user.selectOptions(policySelect, '');
+    expect(contactPointSelect).toBeEnabled();
+  });
+
+  it('initializes with the policy selector disabled when the URL has contactPoint set', async () => {
+    useRulesFilterMock.mockReturnValue({
+      filterState: { ...baseFilterState, contactPoint: 'slack-cp' },
+      updateFilters: mockUpdateFilters,
+      hasActiveFilters: true,
+      clearAll: mockClearAll,
+      searchQuery: 'contactPoint:slack-cp',
+      setSearchQuery: jest.fn(),
+      activeFilters: ['contactPoint'],
+    });
+
+    render(<RulesFilterSidebar />);
+
+    const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
+    expect(policySelect).toBeDisabled();
+  });
+
+  it('initializes with the contact point selector disabled when the URL has policy set', async () => {
+    useRulesFilterMock.mockReturnValue({
+      filterState: { ...baseFilterState, policy: 'team-a-policy' },
+      updateFilters: mockUpdateFilters,
+      hasActiveFilters: true,
+      clearAll: mockClearAll,
+      searchQuery: 'policy:team-a-policy',
+      setSearchQuery: jest.fn(),
+      activeFilters: ['policy'],
+    });
+
+    render(<RulesFilterSidebar />);
+
+    const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
+    expect(contactPointSelect).toBeDisabled();
+  });
+
+  it('resolves a URL conflict by keeping policy and clearing contact point, then syncs the URL', async () => {
+    useRulesFilterMock.mockReturnValue({
+      filterState: { ...baseFilterState, contactPoint: 'slack-cp', policy: 'team-a-policy' },
+      updateFilters: mockUpdateFilters,
+      hasActiveFilters: true,
+      clearAll: mockClearAll,
+      searchQuery: 'contactPoint:slack-cp policy:team-a-policy',
+      setSearchQuery: jest.fn(),
+      activeFilters: ['contactPoint', 'policy'],
+    });
+
+    render(<RulesFilterSidebar />);
+
+    // Policy selector should be enabled and retain its value; contact point should be cleared and disabled
+    const contactPointSelect = await screen.findByRole('combobox', { name: 'Contact point' });
+    const policySelect = await screen.findByRole('combobox', { name: 'Notification policy' });
+
+    expect(contactPointSelect).toHaveValue('');
+    expect(contactPointSelect).toBeDisabled();
+    expect(policySelect).toHaveValue('team-a-policy');
+    expect(policySelect).toBeEnabled();
+
+    // The stale contactPoint token should be removed from the URL
+    expect(mockUpdateFilters).toHaveBeenCalledWith(
+      expect.objectContaining({ policy: 'team-a-policy', contactPoint: undefined })
+    );
   });
 });

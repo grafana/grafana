@@ -3110,6 +3110,7 @@
     "rules-filter": {
       "clear-filters": "Clear filters",
       "configured-alert-rules": "Data sources containing configured alert rules are Mimir or Loki data sources where alert rules are stored and evaluated in the data source itself.",
+      "contact-point-disabled-tooltip": "Clear the notification policy filter to filter by contact point.",
       "contact-point-tooltip": "Filters alert rules which route directly to the selected contact point. Alert rules routed to notification policies will not be displayed.",
       "contact-point-tooltip-title": "Contact point filter help",
       "dashboard": "Dashboard",
@@ -3136,6 +3137,7 @@
       "placeholder-labels": "Select labels",
       "placeholder-policy": "Select policy",
       "plugin-rules": "Plugin rules",
+      "policy-disabled-tooltip": "Clear the contact point filter to filter by notification policy.",
       "policy-tooltip": "Filters alert rules which route to the selected notification policy tree. Alert rules using direct contact point routing will not be displayed.",
       "policy-tooltip-title": "Notification policy filter help",
       "rule-source": {

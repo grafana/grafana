@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { type PropsOf } from '@emotion/react';
+import { useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/unstable';
@@ -42,8 +43,6 @@ import {
 
 const SIDEBAR_WIDTH = 250;
 
-const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
-
 /**
  * Persistent filter sidebar for the alert rule list v2.
  * All filters apply immediately on change; rule name applies on blur or Enter.
@@ -78,13 +77,28 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
 
   const { updateFilters } = useRulesFilter();
   const { pluginsFilterEnabled } = usePluginsFilterStatus();
+  const canRenderContactPointSelector = contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead);
 
   // Create portal container for combobox dropdowns
   const portalContainer = usePortalContainer(theme.zIndex.portal + 100);
 
-  const { control, watch, register } = useForm<AdvancedFilters>({
-    defaultValues: searchQueryToDefaultValues(filterState),
+  // Contact point and notification policy are mutually exclusive routing modes.
+  // If the URL contains both (e.g. manually typed in search bar), keep policy and discard
+  // contact point to avoid a deadlock where both selectors are disabled simultaneously.
+  const defaults = searchQueryToDefaultValues(filterState);
+  const hadConflict = Boolean(defaults.contactPoint && defaults.policy);
+  if (hadConflict) {
+    defaults.contactPoint = null;
+  }
+
+  const { control, watch, register, setValue } = useForm<AdvancedFilters>({
+    defaultValues: defaults,
   });
+
+  const contactPointValue = watch('contactPoint');
+  const policyValue = watch('policy');
+  const isContactPointDisabled = Boolean(policyValue);
+  const isPolicyDisabled = Boolean(contactPointValue);
 
   function applyFormValues(overrides: Partial<AdvancedFilters> = {}) {
     const formValues = watch();
@@ -92,6 +106,18 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
     trackAlertRuleFilterEvent({ filterMethod: 'search-input', filter: ruleFilter, filterVariant: 'v2' });
     updateFilters(ruleFilter);
   }
+
+  // When a conflict was detected and resolved, sync the cleaned state back to the URL once on mount.
+  const hadConflictRef = useRef(hadConflict);
+  useEffect(() => {
+    if (hadConflictRef.current) {
+      hadConflictRef.current = false;
+      applyFormValues();
+    }
+    // applyFormValues is intentionally excluded — it reads form state via watch() at call time
+    // and is stable within this mount. Re-running on its identity change is not desired.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { namespaceOptions, groupOptions, namespacePlaceholder, groupPlaceholder } = useNamespaceAndGroupOptions();
   const { labelOptions } = useLabelOptions();
@@ -334,10 +360,16 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                     </span>
                     <Tooltip
                       content={
-                        <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
-                          Filters alert rules which route directly to the selected contact point. Alert rules routed to
-                          notification policies will not be displayed.
-                        </Trans>
+                        isContactPointDisabled ? (
+                          <Trans i18nKey="alerting.rules-filter.contact-point-disabled-tooltip">
+                            Clear the notification policy filter to filter by contact point.
+                          </Trans>
+                        ) : (
+                          <Trans i18nKey="alerting.rules-filter.contact-point-tooltip">
+                            Filters alert rules which route directly to the selected contact point. Alert rules routed
+                            to notification policies will not be displayed.
+                          </Trans>
+                        )
                       }
                     >
                       <Icon
@@ -357,10 +389,16 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                       placeholder={t('alerting.rules-filter.placeholder-contact-point', 'Select contact point')}
                       value={field.value}
                       isClearable
+                      disabled={isContactPointDisabled}
                       onChange={(cp) => {
                         const contactPoint = cp?.spec.title ?? null;
                         field.onChange(contactPoint);
-                        applyFormValues({ contactPoint });
+                        if (contactPoint) {
+                          setValue('policy', null);
+                          applyFormValues({ contactPoint, policy: null });
+                        } else {
+                          applyFormValues({ contactPoint });
+                        }
                       }}
                       portalContainer={portalContainer}
                     />
@@ -383,10 +421,16 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                     </span>
                     <Tooltip
                       content={
-                        <Trans i18nKey="alerting.rules-filter.policy-tooltip">
-                          Filters alert rules which route to the selected notification policy tree. Alert rules using
-                          direct contact point routing will not be displayed.
-                        </Trans>
+                        isPolicyDisabled ? (
+                          <Trans i18nKey="alerting.rules-filter.policy-disabled-tooltip">
+                            Clear the contact point filter to filter by notification policy.
+                          </Trans>
+                        ) : (
+                          <Trans i18nKey="alerting.rules-filter.policy-tooltip">
+                            Filters alert rules which route to the selected notification policy tree. Alert rules using
+                            direct contact point routing will not be displayed.
+                          </Trans>
+                        )
                       }
                     >
                       <Icon
@@ -406,10 +450,16 @@ function FilterSidebarForm({ filterState }: FilterSidebarFormProps) {
                       placeholder={t('alerting.rules-filter.placeholder-policy', 'Select policy')}
                       value={field.value ?? undefined}
                       isClearable
+                      disabled={isPolicyDisabled}
                       onChange={(tree) => {
                         const policy = tree?.metadata.name ?? null;
                         field.onChange(policy);
-                        applyFormValues({ policy });
+                        if (policy) {
+                          setValue('contactPoint', null);
+                          applyFormValues({ policy, contactPoint: null });
+                        } else {
+                          applyFormValues({ policy });
+                        }
                       }}
                       portalContainer={portalContainer}
                     />
