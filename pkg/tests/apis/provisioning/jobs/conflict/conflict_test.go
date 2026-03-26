@@ -1,4 +1,4 @@
-package jobs
+package conflict
 
 import (
 	"context"
@@ -40,7 +40,8 @@ func TestIntegrationProvisioning_JobConflict(t *testing.T) {
 
 	job, err := helper.Jobs.Resource.Get(ctx, createdJob.GetName(), metav1.GetOptions{})
 	require.NoError(t, err)
-	job2 := job.DeepCopy()
+	job2, err := helper.Jobs.Resource.Get(ctx, createdJob.GetName(), metav1.GetOptions{})
+	require.NoError(t, err)
 
 	client1Update := job.DeepCopy()
 	if client1Update.GetLabels() == nil {
