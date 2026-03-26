@@ -76,7 +76,6 @@ export const AnnotationsPlugin2Cluster = ({
   canvasRegionRendering = true,
   options,
 }: AnnotationsPlugin2ClusterProps) => {
-  // useRef instead
   const plotRef = useRef<uPlot | null>(null);
   const [portalRoot] = useState(() => getPortalContainer());
   const [pinnedAnnotationId, setPinnedAnnotationId] = useState<string | undefined>();
@@ -117,6 +116,10 @@ export const AnnotationsPlugin2Cluster = ({
     config.addHook('ready', (u) => {
       xAxisRef.current = u.root.querySelector<HTMLDivElement>('.u-axis')!;
       plotRef.current = u;
+      // If annos were defined before uPlot ready is called, we need to force the component to re-render annos now that uplot is available
+      if (annotations?.length) {
+        forceUpdate();
+      }
     });
 
     config.addHook('draw', (u) => {
@@ -220,6 +223,7 @@ export const AnnotationsPlugin2Cluster = ({
     options?.clustering,
     options?.lines?.width,
     options?.regions?.opacity,
+    annotations?.length,
   ]);
 
   // ensure xAnnos are re-drawn whenever they change
@@ -236,7 +240,7 @@ export const AnnotationsPlugin2Cluster = ({
     }
   }, [xAnnos]);
 
-  if (plotRef.current && xAxisRef.current) {
+  if (xAxisRef.current) {
     const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
     const wipVals = wipFrame ? getVals<AnnotationVals>(wipFrame) : null;
     const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time?.[0] && wipVals?.time?.[0] > 0;
