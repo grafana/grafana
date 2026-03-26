@@ -3,6 +3,7 @@ import { TableCellDisplayMode } from '@grafana/ui';
 import { LogLevelColor } from 'app/features/logs/logsModel';
 
 import { DEFAULT_LOG_LEVEL_FIELD_WIDTH } from '../constants';
+
 import { buildDefaultLogLevelValueMap, getLogLevelColumnEnhancements } from './defaultLogLevelColumnConfig';
 
 describe('defaultLogLevelColumnConfig', () => {
