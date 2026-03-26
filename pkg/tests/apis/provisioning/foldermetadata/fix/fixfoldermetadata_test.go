@@ -11,7 +11,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
-	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
 )
 
 // TestIntegrationGit_FixFolderMetadata_Branch verifies that the fix-folder-metadata
@@ -28,7 +27,7 @@ func TestIntegrationGit_FixFolderMetadata_Branch(t *testing.T) {
 	// sees two directories without _folder.json files. The "branch" workflow is
 	// included so the repository accepts commits to new branches.
 	helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"parent/child/dashboard.json": gitcommon.DashboardJSON("git-meta-dash", "Git Meta Dashboard", 1),
+		"parent/child/dashboard.json": common.DashboardJSON("git-meta-dash", "Git Meta Dashboard", 1),
 	}, "write", "branch")
 
 	// Run the fix-folder-metadata job targeting a new feature branch.
@@ -72,7 +71,7 @@ func TestIntegrationGit_FixFolderMetadata_ExistingBranch(t *testing.T) {
 	// Seed the repo and capture the local git clone so we can push the branch
 	// to the remote before triggering the job.
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"parent/child/dashboard.json": gitcommon.DashboardJSON("git-meta-existing", "Git Meta Existing", 1),
+		"parent/child/dashboard.json": common.DashboardJSON("git-meta-existing", "Git Meta Existing", 1),
 	}, "write", "branch")
 
 	// Pre-create the branch on the remote so that ensureBranchExists takes the
@@ -119,7 +118,7 @@ func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch(t *testing.T) {
 	// Create a repo with only the "branch" workflow — no "write" means the
 	// default branch (main) is read-only and the worker must not push there.
 	helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"parent/child/dashboard.json": gitcommon.DashboardJSON("git-ro-dash", "Git ReadOnly Dashboard", 1),
+		"parent/child/dashboard.json": common.DashboardJSON("git-ro-dash", "Git ReadOnly Dashboard", 1),
 	}, "branch")
 
 	// Submitting a fix-folder-metadata job WITHOUT a Ref should be rejected
@@ -158,7 +157,7 @@ func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch_WithRef(t *testi
 	const featureBranch = "fix-folders"
 
 	helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"parent/child/dashboard.json": gitcommon.DashboardJSON("git-ro-branch-dash", "Git ReadOnly Branch Dashboard", 1),
+		"parent/child/dashboard.json": common.DashboardJSON("git-ro-branch-dash", "Git ReadOnly Branch Dashboard", 1),
 	}, "branch")
 
 	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
@@ -184,7 +183,7 @@ func TestIntegrationGit_FixFolderMetadata_ReadOnlyDefaultBranch_WithRef(t *testi
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
-func requireFolderMetadataOnRef(t *testing.T, h *gitcommon.GitTestHelper, ctx context.Context, repoName, filePath, ref string) string {
+func requireFolderMetadataOnRef(t *testing.T, h *common.GitTestHelper, ctx context.Context, repoName, filePath, ref string) string {
 	t.Helper()
 
 	subresourceParts := append([]string{"files"}, strings.Split(filePath, "/")...)
@@ -218,7 +217,7 @@ func requireFolderMetadataOnRef(t *testing.T, h *gitcommon.GitTestHelper, ctx co
 	return uid
 }
 
-func requireFileAbsentOnDefaultBranch(t *testing.T, h *gitcommon.GitTestHelper, ctx context.Context, repoName, filePath string) {
+func requireFileAbsentOnDefaultBranch(t *testing.T, h *common.GitTestHelper, ctx context.Context, repoName, filePath string) {
 	t.Helper()
 
 	subresourceParts := append([]string{"files"}, strings.Split(filePath, "/")...)
