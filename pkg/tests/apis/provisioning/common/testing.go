@@ -1334,9 +1334,18 @@ func (c *FilesClient) URL(filePath string) string {
 		c.user, addr, c.repo, filePath)
 }
 
-// Do executes an HTTP request to the files endpoint. Body may be nil.
-// The response body is automatically closed via t.Cleanup.
-func (c *FilesClient) Do(t *testing.T, method, filePath string, body []byte) *http.Response {
+// FilesResponse holds the status code and body from a files endpoint request.
+type FilesResponse struct {
+	StatusCode int
+	Body       []byte
+}
+
+// BodyString returns the response body as a string.
+func (r *FilesResponse) BodyString() string { return string(r.Body) }
+
+// Do executes an HTTP request to the files endpoint and returns the response.
+// The response body is read and closed before returning.
+func (c *FilesClient) Do(t *testing.T, method, filePath string, body []byte) *FilesResponse {
 	t.Helper()
 	var bodyReader io.Reader
 	if body != nil {
@@ -1349,26 +1358,28 @@ func (c *FilesClient) Do(t *testing.T, method, filePath string, body []byte) *ht
 	}
 	resp, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
-	t.Cleanup(func() {
+	defer func() {
 		require.NoError(t, resp.Body.Close())
-	})
-	return resp
+	}()
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	return &FilesResponse{StatusCode: resp.StatusCode, Body: respBody}
 }
 
 // Post sends a POST request to the given path with no body.
-func (c *FilesClient) Post(t *testing.T, filePath string) *http.Response {
+func (c *FilesClient) Post(t *testing.T, filePath string) *FilesResponse {
 	t.Helper()
 	return c.Do(t, http.MethodPost, filePath, nil)
 }
 
 // Put sends a PUT request to the given path with a JSON body.
-func (c *FilesClient) Put(t *testing.T, filePath string, body []byte) *http.Response {
+func (c *FilesClient) Put(t *testing.T, filePath string, body []byte) *FilesResponse {
 	t.Helper()
 	return c.Do(t, http.MethodPut, filePath, body)
 }
 
 // Delete sends a DELETE request to the given path.
-func (c *FilesClient) Delete(t *testing.T, filePath string) *http.Response {
+func (c *FilesClient) Delete(t *testing.T, filePath string) *FilesResponse {
 	t.Helper()
 	return c.Do(t, http.MethodDelete, filePath, nil)
 }
