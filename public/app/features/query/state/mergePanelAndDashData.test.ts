@@ -4,8 +4,8 @@ import { AlertState, DataTopic, getDefaultTimeRange, LoadingState, PanelData, to
 
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 
-function toAnnotationFrame(data: Array<Record<string, any>>) {
-  let frame = toDataFrame(data as any);
+function toAnnotationFrame(data: Array<Record<string, unknown>>) {
+  let frame = toDataFrame(data);
   frame.meta = { dataTopic: DataTopic.Annotations };
   return frame;
 }

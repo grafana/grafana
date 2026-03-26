@@ -49,7 +49,7 @@ export interface AnnotationEvent {
 }
 
 export interface AnnotationEventUIModel {
-  // @todo this is actually a number, and sending a string will break the API response! https://github.com/grafana/grafana/issues/120097
+  // Numeric identifier; optional because new events do not have an id until they are persisted.
   id?: number;
   from: number;
   to: number;
