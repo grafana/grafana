@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
@@ -183,8 +183,6 @@ func (tapi *TeamAPI) searchTeams(c *contextmodel.ReqContext) response.Response {
 		openfeature.TransactionContext(ctx),
 	)
 
-	// The IAM searchTeams endpoint doesn't support name or teamId filters.
-	// Fall through to legacy when those are set.
 	hasUnsupportedFilters := c.Query("name") != "" || len(c.QueryStrings("teamId")) > 0
 	if shouldRedirect && !hasUnsupportedFilters {
 		return tapi.searchTeamsViaK8s(c, page, perPage)
