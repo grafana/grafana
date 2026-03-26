@@ -23,7 +23,7 @@ var appManifestData = app.ManifestData{
 	AppName:          "folder",
 	AppDisplayName:   "folder",
 	Group:            "folder.grafana.app",
-	PreferredVersion: "v1beta1",
+	PreferredVersion: "v1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v1",
