@@ -1,4 +1,4 @@
-package flagdisabled
+package jobs
 
 import (
 	"context"

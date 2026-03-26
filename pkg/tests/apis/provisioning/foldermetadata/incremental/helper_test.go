@@ -1,4 +1,4 @@
-package foldermetadatafiles
+package incremental
 
 import (
 	"testing"

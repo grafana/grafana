@@ -4,9 +4,15 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-var env = common.NewDefaultSharedEnv()
+var env = common.NewSharedEnv(
+	func(opts *testinfra.GrafanaOpts) {
+		opts.SecretsManagerEnableDBMigrations = true
+	},
+	common.WithoutExportFeatureFlag,
+)
 
 func sharedHelper(t *testing.T) *common.ProvisioningTestHelper {
 	return common.SharedHelper(t, env)
