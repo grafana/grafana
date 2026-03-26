@@ -37,9 +37,8 @@ type legacyStorage struct {
 
 // checkProvisioningStatusPermission verifies the caller holds
 // alert.provisioning.provenance:write. This is required whenever a write
-// involves a non-None provenance — either because the resource is already
-// provisioned (old provenance != None) or because the caller is explicitly
-// claiming provenance ownership (new provenance != None).
+// changes the provenance value (new != old), including claiming ownership
+// (None → api) and transferring or releasing it (api → other).
 func (s *legacyStorage) checkProvisioningStatusPermission(ctx context.Context, user identity.Requester) error {
 	ok, err := s.ac.Evaluate(ctx, user, accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningSetStatus))
 	if err != nil {
@@ -197,11 +196,11 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}
-	// Gate on either side being non-None:
-	//   old != None — resource is already provisioned; protect it from unintentional overwrites.
-	//   new != None — caller is (re-)claiming provenance ownership; requires explicit permission.
-	// If both are None the resource is unprovisioned and freely editable by all callers.
-	if interval.Provenance != definitions.Provenance(ngmodels.ProvenanceNone) || oldProv != definitions.Provenance(ngmodels.ProvenanceNone) {
+	// Only gate on permission when provenance is changing. Callers that are not
+	// touching provenance (new == old) do not need SetProvisioningStatus — the
+	// service-level validator (ValidateProvenanceRelaxed) still enforces which
+	// transitions are valid for the resource itself.
+	if interval.Provenance != oldProv {
 		user, err := identity.GetRequester(ctx)
 		if err != nil {
 			return nil, false, err
