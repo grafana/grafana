@@ -53,7 +53,7 @@ import {
   defaultTimeSettingsSpec,
   defaultDashboardLinkType,
   defaultDashboardLink,
-  DashboardPreferences,
+  Preferences,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -91,7 +91,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
   const timeSettingsDefaults = defaultTimeSettingsSpec();
 
-  let preferences: DashboardPreferences | undefined = undefined;
+  let preferences: Preferences | undefined = undefined;
 
   if (config.featureToggles.dashboardDefaultLayoutSelector && sceneDash.preferences?.defaultLayoutTemplate) {
     const template = sceneDash.preferences.defaultLayoutTemplate;
