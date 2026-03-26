@@ -183,5 +183,19 @@ func (s *Server) ListAllStores(ctx context.Context) ([]zanzana.StoreInfo, error)
 		continuationToken = res.GetContinuationToken()
 	}
 
+	// Populate the cache so DeleteStore can resolve names without a separate lookup.
+	s.populateStoreCache(stores)
+
 	return stores, nil
+}
+
+func (s *Server) populateStoreCache(stores []zanzana.StoreInfo) {
+	s.storesMU.Lock()
+	defer s.storesMU.Unlock()
+
+	for _, info := range stores {
+		if _, ok := s.stores[info.Name]; !ok {
+			s.stores[info.Name] = info
+		}
+	}
 }
