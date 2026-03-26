@@ -76,6 +76,7 @@ func TestReadDashboard(t *testing.T) {
 		"k8s-wrapper-editable-string",
 		"k8s-wrapper-tags-string",
 		"k8s-wrapper-with-parsing-errors",
+		"scenarios/all-colapsed-rows-public",
 	}
 
 	devdash := "../../../../../devenv/dev-dashboards/"
