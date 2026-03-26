@@ -2,8 +2,6 @@ package timeinterval
 
 import (
 	"encoding/json"
-	"fmt"
-	"slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -16,29 +14,6 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 )
-
-// provenanceFromAnnotation maps the grafana.com/provenance annotation value
-// from a k8s API request to a Provenance for use in the service layer.
-//
-// Provenance is opt-in for the k8s API: callers must explicitly set
-// grafana.com/provenance: api to mark a resource as externally managed.
-// If the annotation is absent or "none", ProvenanceNone is returned and the
-// resource remains freely editable by all callers (including the Grafana UI).
-//
-// Contrast with the HTTP provisioning API (/api/v1/provisioning/...) which is
-// opt-out: it sets ProvenanceAPI on every write unless the caller sends the
-// X-Disable-Provenance header.
-func provenanceFromAnnotation(annotationVal string) (definitions.Provenance, error) {
-	// ngmodels.ProvenanceNone is an empty string so explicitly check for "none" as well
-	if annotationVal != model.ProvenanceStatusNone && !slices.Contains(ngmodels.KnownProvenances, ngmodels.Provenance(annotationVal)) {
-		return definitions.Provenance(""), fmt.Errorf("invalid provenance status: %s", annotationVal)
-	}
-
-	if annotationVal == "" || annotationVal == model.ProvenanceStatusNone {
-		return definitions.Provenance(ngmodels.ProvenanceNone), nil
-	}
-	return definitions.Provenance(annotationVal), nil
-}
 
 func ConvertToK8sResources(orgID int64, intervals []definitions.MuteTimeInterval, namespacer request.NamespaceMapper, selector fields.Selector) (*model.TimeIntervalList, error) {
 	data, err := json.Marshal(intervals)
@@ -113,10 +88,13 @@ func convertToDomainModel(interval *model.TimeInterval) (definitions.MuteTimeInt
 	}
 	result.Version = interval.ResourceVersion
 	result.UID = interval.Name
-	result.Provenance, err = provenanceFromAnnotation(interval.GetProvenanceStatus())
+
+	prov, err := ngmodels.ProvenanceFromString(interval.GetProvenanceStatus())
 	if err != nil {
 		return definitions.MuteTimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)
 	}
+	result.Provenance = definitions.Provenance(prov)
+
 	err = result.Validate()
 	if err != nil {
 		return definitions.MuteTimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)

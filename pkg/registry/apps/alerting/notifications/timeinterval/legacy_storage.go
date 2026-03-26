@@ -14,6 +14,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 var (
@@ -192,8 +193,12 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 		return nil, false, fmt.Errorf("expected time-interval but got %s", old.GetObjectKind().GroupVersionKind())
 	}
 
-	err = s.service.DeleteMuteTiming(ctx, p.Name, info.OrgID, definitions.Provenance(p.GetProvenanceStatus()), version) // TODO add support for dry-run option
-	return old, false, err                                                                                              // false - will be deleted async
+	prov, err := ngmodels.ProvenanceFromString(p.GetProvenanceStatus())
+	if err != nil {
+		return nil, false, errors.NewBadRequest(err.Error())
+	}
+	err = s.service.DeleteMuteTiming(ctx, p.Name, info.OrgID, definitions.Provenance(prov), version) // TODO add support for dry-run option
+	return old, false, err                                                                           // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error) {
