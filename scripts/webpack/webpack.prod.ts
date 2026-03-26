@@ -1,18 +1,23 @@
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import { EsbuildPlugin } from 'esbuild-loader';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import { EnvironmentPlugin } from 'webpack';
+import webpack, { type Configuration } from 'webpack';
+const { EnvironmentPlugin } = webpack;
 import WebpackAssetsManifest from 'webpack-assets-manifest';
 import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
 import { merge } from 'webpack-merge';
-import { SubresourceIntegrityPlugin } from 'webpack-subresource-integrity';
 
 import getEnvConfig from './env-util.ts';
-import esbuildOptions from './esbuild.ts';
 import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
-import sassRule from './sass.rule.ts';
+import { esbuildOptions } from './rules.ts';
 import common, { type Env } from './webpack.common.ts';
+
+// SRI plugin has broken esm builds so we use require.
+// https://github.com/waysact/webpack-subresource-integrity/issues/236
+const require = createRequire(import.meta.url);
+const { SubresourceIntegrityPlugin } = require('webpack-subresource-integrity');
 
 interface EntrypointAssets {
   assets: { js?: string[]; css?: string[] };
@@ -28,31 +33,51 @@ function isAssetEntry(value: unknown): value is { src: string } {
 
 const envConfig = getEnvConfig();
 
-export default (env: Env = {}) =>
-  merge(common(env), {
+export default (env: Env = {}) => {
+  const prodConfig: Configuration = {
     mode: 'production',
     devtool: process.env.NO_SOURCEMAP === '1' ? false : 'source-map',
 
-    module: {
-      // Note: order is bottom-to-top and/or right-to-left
-      rules: [
-        {
-          test: /\.tsx?$/,
-          use: {
-            loader: 'esbuild-loader',
-            options: esbuildOptions,
-          },
-        },
-        sassRule({ sourceMap: false, preserveUrl: true }),
-      ],
-    },
     output: {
       crossOriginLoading: 'anonymous',
     },
+
     optimization: {
       nodeEnv: 'production',
       minimize: Number(env.noMinify) !== 1,
       minimizer: [new EsbuildPlugin(esbuildOptions), new CssMinimizerPlugin()],
+      runtimeChunk: 'single',
+      splitChunks: {
+        chunks: 'all',
+        minChunks: 1,
+        cacheGroups: {
+          moment: {
+            test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
+            chunks: 'initial',
+            priority: 20,
+            enforce: true,
+          },
+          angular: {
+            test: /[\\/]node_modules[\\/]angular[\\/].*[jt]sx?$/,
+            chunks: 'initial',
+            priority: 50,
+            enforce: true,
+          },
+          defaultVendors: {
+            test: /[\\/]node_modules[\\/].*[jt]sx?$/,
+            chunks: 'initial',
+            priority: -10,
+            reuseExistingChunk: true,
+            enforce: true,
+          },
+          default: {
+            priority: -20,
+            chunks: 'all',
+            test: /.*[jt]sx?$/,
+            reuseExistingChunk: true,
+          },
+        },
+      },
     },
 
     // enable persistent cache for faster builds
@@ -68,9 +93,6 @@ export default (env: Env = {}) =>
           },
 
     plugins: [
-      new MiniCssExtractPlugin({
-        filename: env.react19 ? 'grafana.[name]-react19.[contenthash].css' : 'grafana.[name].[contenthash].css',
-      }),
       new SubresourceIntegrityPlugin(),
       new FeatureFlaggedSRIPlugin(),
       /**
@@ -123,4 +145,7 @@ export default (env: Env = {}) =>
       },
       new EnvironmentPlugin(envConfig),
     ],
-  });
+  };
+
+  return merge(common(env), prodConfig);
+};

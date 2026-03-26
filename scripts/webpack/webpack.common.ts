@@ -1,9 +1,11 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import webpack, { type Configuration } from 'webpack';
 
 import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
+import { esbuildRule, sassRule } from './rules.ts';
 
 const require = createRequire(import.meta.url);
 
@@ -106,9 +108,14 @@ export default (env: Env = {}): Configuration => ({
         { from: 'public/gazetteer', to: 'gazetteer' },
       ],
     }),
+    new MiniCssExtractPlugin({
+      filename: env.react19 ? 'grafana.[name]-react19.[contenthash].css' : 'grafana.[name].[contenthash].css',
+    }),
   ],
   module: {
     rules: [
+      esbuildRule,
+      sassRule,
       {
         test: require.resolve('jquery'),
         loader: 'expose-loader',
@@ -129,40 +136,5 @@ export default (env: Env = {}): Configuration => ({
         },
       },
     ],
-  },
-  // https://webpack.js.org/plugins/split-chunks-plugin/#split-chunks-example-3
-  optimization: {
-    runtimeChunk: 'single',
-    splitChunks: {
-      chunks: 'all',
-      minChunks: 1,
-      cacheGroups: {
-        moment: {
-          test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: 20,
-          enforce: true,
-        },
-        angular: {
-          test: /[\\/]node_modules[\\/]angular[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: 50,
-          enforce: true,
-        },
-        defaultVendors: {
-          test: /[\\/]node_modules[\\/].*[jt]sx?$/,
-          chunks: 'initial',
-          priority: -10,
-          reuseExistingChunk: true,
-          enforce: true,
-        },
-        default: {
-          priority: -20,
-          chunks: 'all',
-          test: /.*[jt]sx?$/,
-          reuseExistingChunk: true,
-        },
-      },
-    },
   },
 });
