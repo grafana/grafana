@@ -2,7 +2,9 @@ package git
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 
@@ -338,6 +340,42 @@ func TestIntegrationGitFiles_MoveFile(t *testing.T) {
 
 		_, err = helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{}, "files", "dashboard.json")
 		require.Error(t, err, "file should not exist at old location")
+	})
+}
+
+func TestIntegrationGitFiles_MoveDirectoryOnBranch(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	repoName := "test-move-dir"
+	initialContent := map[string][]byte{
+		"mydir/dashboard.json": common.DashboardJSON("dir-dash", "Dir Dashboard", 1),
+	}
+
+	_, _ = helper.CreateGitRepo(t, repoName, initialContent, "write", "branch")
+	helper.SyncAndWait(t, repoName)
+
+	t.Run("move directory on branch returns URLs in response", func(t *testing.T) {
+		branchName := "move-dir-branch"
+
+		resp := helper.PostFilesRequest(t, repoName, common.FilesPostOptions{
+			TargetPath:   "renamed/",
+			OriginalPath: "mydir/",
+			Message:      "rename directory",
+			Ref:          branchName,
+		})
+		defer func() { _ = resp.Body.Close() }()
+
+		require.Equal(t, http.StatusOK, resp.StatusCode, "directory move on branch should succeed")
+
+		body, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+
+		var wrapper map[string]interface{}
+		require.NoError(t, json.Unmarshal(body, &wrapper))
+
+		urls, ok := wrapper["urls"].(map[string]interface{})
+		require.True(t, ok, "response should contain urls object, got: %s", string(body))
+		assert.NotEmpty(t, urls["newPullRequestURL"], "newPullRequestURL should be populated")
 	})
 }
 
