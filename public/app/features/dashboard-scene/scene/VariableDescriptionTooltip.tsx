@@ -24,7 +24,12 @@ export function VariableDescriptionTooltip({ description, placement }: VariableD
       placement={placement}
       interactive
     >
-      <Icon name="info-circle" size="sm" className={styles.icon} aria-label={t('dashboard.variable.description-tooltip', 'Variable description')} />
+      <Icon
+        name="info-circle"
+        size="sm"
+        className={styles.icon}
+        aria-label={t('dashboard.variable.description-tooltip', 'Variable description')}
+      />
     </Tooltip>
   );
 }
