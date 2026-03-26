@@ -570,7 +570,7 @@ describe('getRawDashboardV2Changes - custom variable query persistence', () => {
     },
   });
 
-  it('updates CustomVariable query from current when saving variable defaults', () => {
+  it('appends current value to CustomVariable query when saving variable defaults', () => {
     const initial = makeV2Dashboard('custom0', 'foo');
     const changed = makeV2Dashboard('custom0', 'bar');
 
@@ -580,7 +580,7 @@ describe('getRawDashboardV2Changes - custom variable query persistence', () => {
     expect(variable?.kind).toBe('CustomVariable');
     if (variable?.kind === 'CustomVariable') {
       expect(variable.spec.current?.value).toBe('bar');
-      expect(variable.spec.query).toBe('bar');
+      expect(variable.spec.query).toBe('custom0,bar');
     }
   });
 });
