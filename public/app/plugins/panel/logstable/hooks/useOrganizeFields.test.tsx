@@ -8,6 +8,7 @@ import { LOGS_DATAPLANE_BODY_NAME, LOGS_DATAPLANE_TIMESTAMP_NAME, parseLogsFrame
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { DEFAULT_LOG_LEVEL_FIELD_WIDTH } from '../constants';
+
 import { useExtractFields } from './useExtractFields';
 import { useOrganizeFields } from './useOrganizeFields';
 
@@ -224,6 +225,8 @@ describe('useOrganizeFields', () => {
         })
       );
 
+      expect.assertions(7);
+
       await waitFor(() => {
         const levelField = organizedFields.current.organizedFrame?.fields.find((f) => f.name === 'level');
         expect(levelField).toBeDefined();
@@ -232,7 +235,6 @@ describe('useOrganizeFields', () => {
         if (levelField?.config.mappings?.[0]?.options && 'critical' in levelField?.config.mappings?.[0]?.options) {
           expect(levelField?.config.mappings?.[0]?.options?.['critical']).toBeDefined();
         }
-        expect.assertions(7);
       });
     });
   });
