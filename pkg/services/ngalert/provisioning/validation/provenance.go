@@ -1,6 +1,10 @@
 package validation
 
 import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
@@ -28,6 +32,33 @@ func CanUpdateProvenanceInRuleGroup(storedProvenance, provenance models.Provenan
 
 type ProvenanceStatusTransitionValidator = func(from, to models.Provenance) error
 
+// ContextualProvenanceValidator is like ProvenanceStatusTransitionValidator but
+// receives ctx so it can check caller permissions.
+type ContextualProvenanceValidator = func(ctx context.Context, from, to models.Provenance) error
+
+// NewPermissionAwareValidator returns a ContextualProvenanceValidator that allows any
+// provenance transition when the caller holds ActionAlertingProvisioningSetStatus,
+// and blocks any transition where from != to otherwise.
+func NewPermissionAwareValidator(ac accesscontrol.AccessControl) ContextualProvenanceValidator {
+	return func(ctx context.Context, from, to models.Provenance) error {
+		if from == to {
+			return nil
+		}
+		user, err := identity.GetRequester(ctx)
+		if err != nil {
+			return err
+		}
+		ok, err := ac.Evaluate(ctx, user, accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningSetStatus))
+		if err != nil {
+			return err
+		}
+		if !ok {
+			return MakeErrProvenanceChangeNotAllowed(from, to)
+		}
+		return nil
+	}
+}
+
 // ValidateProvenanceRelaxed checks if the transition of provenance status from `from` to `to` is allowed.
 // Applies relaxed checks that prevents only transition from any status to `none`.
 // Returns ErrProvenanceChangeNotAllowed if transition is not allowed
@@ -38,13 +69,6 @@ func ValidateProvenanceRelaxed(from, to models.Provenance) error {
 	if to == models.ProvenanceNone { // allow any transition to none unless it's from "none" either
 		return MakeErrProvenanceChangeNotAllowed(from, to)
 	}
-	return nil
-}
-
-// ValidateProvenancePermissive allows any provenance transition. Use this when the caller has already
-// verified that the user holds the SetProvisioningStatus permission and should be free to set or
-// reset provenance (e.g. via the k8s API which enforces its own permission check).
-func ValidateProvenancePermissive(_, _ models.Provenance) error {
 	return nil
 }
 

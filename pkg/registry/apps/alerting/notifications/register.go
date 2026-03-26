@@ -116,16 +116,12 @@ func (a AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanar
 	case receiver.ResourceInfo.GroupResource().Resource:
 		return receiver.NewStorage(api.ReceiverService, namespacer, api.ReceiverService)
 	case timeinterval.ResourceInfo.GroupResource().Resource:
-		// The k8s API enforces its own SetProvisioningStatus permission check before
-		// any provenance change reaches the service, so the service-level transition
-		// validator can be permissive — ValidateProvenanceRelaxed would otherwise
-		// block valid transitions like api→none for callers with explicit permission.
-		srv := api.MuteTimings.WithProvenanceValidator(validation.ValidateProvenancePermissive)
+		srv := api.MuteTimings.WithProvenanceValidator(validation.NewPermissionAwareValidator(api.AccessControl))
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if a.ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 			srv = srv.WithIncludeImported()
 		}
-		return timeinterval.NewStorage(srv, namespacer, api.AccessControl)
+		return timeinterval.NewStorage(srv, namespacer)
 	case templategroup.ResourceInfo.GroupResource().Resource:
 		srv := api.Templates
 		//nolint:staticcheck // not yet migrated to OpenFeature

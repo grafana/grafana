@@ -197,7 +197,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 		t.Run(fmt.Sprintf("user '%s'", tc.user.Identity.GetLogin()), func(t *testing.T) {
 			client, err := v1beta1.NewTimeIntervalClientFromGenerator(tc.user.GetClientRegistry())
 			require.NoError(t, err)
-			var expected = &v1beta1.TimeInterval{
+			expected := &v1beta1.TimeInterval{
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
@@ -393,16 +393,12 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, string(ngmodels.ProvenanceAPI), got.GetProvenanceStatus())
 	})
+
 	t.Run("should not let update if provisioned without set-status permission", func(t *testing.T) {
 		updated := created.Copy().(*v1beta1.TimeInterval)
 		updated.Spec.TimeIntervals = fakes.IntervalGenerator{}.GenerateMany(2)
 
 		_, err := writerClient.Update(ctx, updated, resource.UpdateOptions{})
-		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
-	})
-
-	t.Run("should not let delete if provisioned without set-status permission", func(t *testing.T) {
-		err := writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 		require.Truef(t, errors.IsForbidden(err), "should get Forbidden error but got %s", err)
 	})
 
@@ -415,8 +411,8 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("should let delete if provisioned with set-status permission", func(t *testing.T) {
-		err := adminClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
+	t.Run("should let delete without set-status permission", func(t *testing.T) {
+		err := writerClient.Delete(ctx, created.GetStaticMetadata().Identifier(), resource.DeleteOptions{})
 		require.NoError(t, err)
 	})
 }

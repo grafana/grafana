@@ -25,7 +25,7 @@ type MuteTimingService struct {
 	provenanceStore        ProvisioningStore
 	xact                   TransactionManager
 	log                    log.Logger
-	validator              validation.ProvenanceStatusTransitionValidator
+	validator              validation.ContextualProvenanceValidator
 	ruleNotificationsStore AlertRuleNotificationSettingsStore
 	routeService           timeIntervalRouteRefService
 	includeImported        bool
@@ -44,11 +44,13 @@ func NewMuteTimingService(
 	routeService timeIntervalRouteRefService,
 ) *MuteTimingService {
 	return &MuteTimingService{
-		configStore:            config,
-		provenanceStore:        prov,
-		xact:                   xact,
-		log:                    log,
-		validator:              validation.ValidateProvenanceRelaxed,
+		configStore:     config,
+		provenanceStore: prov,
+		xact:            xact,
+		log:             log,
+		validator: func(_ context.Context, from, to models.Provenance) error {
+			return validation.ValidateProvenanceRelaxed(from, to)
+		},
 		ruleNotificationsStore: ns,
 		routeService:           routeService,
 		includeImported:        false,
@@ -68,7 +70,7 @@ func (svc *MuteTimingService) WithIncludeImported() *MuteTimingService {
 	}
 }
 
-func (svc *MuteTimingService) WithProvenanceValidator(v validation.ProvenanceStatusTransitionValidator) *MuteTimingService {
+func (svc *MuteTimingService) WithProvenanceValidator(v validation.ContextualProvenanceValidator) *MuteTimingService {
 	return &MuteTimingService{
 		configStore:            svc.configStore,
 		provenanceStore:        svc.provenanceStore,
@@ -242,7 +244,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 	}
 
 	// check that provenance is not changed in an invalid way
-	if err := svc.validator(models.Provenance(existing.Provenance), models.Provenance(mt.Provenance)); err != nil {
+	if err := svc.validator(ctx, models.Provenance(existing.Provenance), models.Provenance(mt.Provenance)); err != nil {
 		return definitions.MuteTimeInterval{}, err
 	}
 
@@ -306,7 +308,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	existingInterval := existing.MuteTimeInterval
 	target := definitions.MuteTimeInterval{MuteTimeInterval: existingInterval, Provenance: provenance}
 
-	if err := svc.validator(models.Provenance(existing.Provenance), models.Provenance(provenance)); err != nil {
+	if err := svc.validator(ctx, models.Provenance(existing.Provenance), models.Provenance(provenance)); err != nil {
 		return err
 	}
 
