@@ -20,12 +20,7 @@ export interface Props {
   failure?: DatasourceFailureDetails;
 }
 
-export function DataSourcesListCard({
-  dataSource,
-  hasWriteRights,
-  hasExploreRights,
-  failure,
-}: Props) {
+export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights, failure }: Props) {
   const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
 
