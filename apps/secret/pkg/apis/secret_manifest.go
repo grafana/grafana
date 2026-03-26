@@ -15,6 +15,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	v1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1"
 	v1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 )
 
@@ -26,6 +27,31 @@ var appManifestData = app.ManifestData{
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v1beta1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
+				{
+					Kind:       "SecureValue",
+					Plural:     "SecureValues",
+					Scope:      "Namespaced",
+					Conversion: false,
+				},
+
+				{
+					Kind:       "Keeper",
+					Plural:     "Keepers",
+					Scope:      "Namespaced",
+					Conversion: false,
+				},
+			},
+			Routes: app.ManifestVersionRoutes{
+				Namespaced: map[string]spec3.PathProps{},
+				Cluster:    map[string]spec3.PathProps{},
+				Schemas:    map[string]spec.Schema{},
+			},
+		},
+
+		{
+			Name:   "v1",
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
@@ -62,6 +88,8 @@ func RemoteManifest() app.Manifest {
 var kindVersionToGoType = map[string]resource.Kind{
 	"SecureValue/v1beta1": v1beta1.SecureValueKind(),
 	"Keeper/v1beta1":      v1beta1.KeeperKind(),
+	"SecureValue/v1":      v1.SecureValueKind(),
+	"Keeper/v1":           v1.KeeperKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
