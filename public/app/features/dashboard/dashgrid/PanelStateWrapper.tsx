@@ -429,7 +429,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.state.context.eventBus.publish(new AnnotationChangeEvent(anno));
   };
 
-  onAnnotationDelete = async (id: string) => {
+  onAnnotationDelete = async (id: number) => {
     await annotationServer().delete({ id });
     getDashboardQueryRunner().run({ dashboard: this.props.dashboard, range: this.timeSrv.timeRange() });
     this.state.context.eventBus.publish(new AnnotationChangeEvent({ id }));

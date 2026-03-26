@@ -411,7 +411,7 @@ describe('AnnotationsPlugin2', () => {
         });
 
         it.each([userEvent.hover, userEvent.click])('delete', async (event) => {
-          const onAnnotationDelete = jest.fn().mockImplementation((id: string) => {}) as (id: string) => void;
+          const onAnnotationDelete = jest.fn().mockImplementation((id: number) => {}) as (id: number) => void;
           mockUsePanelContext.mockReturnValue({
             canExecuteActions: () => true,
             canEditAnnotations: () => true,

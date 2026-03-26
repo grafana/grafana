@@ -4,8 +4,8 @@ import { AlertState, DataTopic, getDefaultTimeRange, LoadingState, PanelData, to
 
 import { mergePanelAndDashData } from './mergePanelAndDashData';
 
-function toAnnotationFrame(data: Array<Record<string, string>>) {
-  let frame = toDataFrame(data);
+function toAnnotationFrame(data: Array<Record<string, any>>) {
+  let frame = toDataFrame(data as any);
   frame.meta = { dataTopic: DataTopic.Annotations };
   return frame;
 }
@@ -15,7 +15,7 @@ function getTestContext() {
   const panelData: PanelData = {
     state: LoadingState.Done,
     series: [],
-    annotations: [toDataFrame([{ id: 'panelData' }])],
+    annotations: [toDataFrame([{ id: 1 }])],
     timeRange,
   };
   const scheduler: TestScheduler = new TestScheduler((actual, expected) => {
@@ -32,7 +32,7 @@ describe('mergePanelAndDashboardData', () => {
 
       scheduler.run(({ cold, expectObservable }) => {
         const panelObservable = cold('a', { a: panelData });
-        const dashObservable = cold('a', { a: { annotations: [{ id: 'dashData' }] } });
+        const dashObservable = cold('a', { a: { annotations: [{ id: 2 }] } });
 
         const result = mergePanelAndDashData(panelObservable, dashObservable);
 
@@ -40,7 +40,7 @@ describe('mergePanelAndDashboardData', () => {
           a: {
             state: LoadingState.Done,
             series: [],
-            annotations: [toAnnotationFrame([{ id: 'panelData' }]), toAnnotationFrame([{ id: 'dashData' }])],
+            annotations: [toAnnotationFrame([{ id: 1 }]), toAnnotationFrame([{ id: 2 }])],
             timeRange,
           },
         });
@@ -69,7 +69,7 @@ describe('mergePanelAndDashboardData', () => {
           a: {
             state: LoadingState.Done,
             series: [],
-            annotations: [toAnnotationFrame([{ id: 'panelData' }]), toAnnotationFrame([])],
+            annotations: [toAnnotationFrame([{ id: 1 }]), toAnnotationFrame([])],
             alertState: { id: 1, state: AlertState.OK, dashboardUID: 'aaa', panelId: 1, newStateDate: '' },
             timeRange,
           },
@@ -98,7 +98,7 @@ describe('mergePanelAndDashboardData', () => {
           a: {
             state: LoadingState.Done,
             series: [],
-            annotations: [toAnnotationFrame([{ id: 'panelData' }])],
+            annotations: [toAnnotationFrame([{ id: 1 }])],
             timeRange,
           },
         });
