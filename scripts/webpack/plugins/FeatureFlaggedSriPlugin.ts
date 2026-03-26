@@ -1,4 +1,6 @@
-import { type Compiler, Template } from 'webpack';
+import webpack, { type Compiler } from 'webpack';
+
+const { Template } = webpack;
 
 const PLUGIN_NAME = 'FeatureFlaggedSRIPlugin';
 const FEATURE_TOGGLE_WRAP = ['if (window.__grafanaAssetSriChecksEnabled) {', '}'];

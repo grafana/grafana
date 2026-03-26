@@ -1,4 +1,6 @@
-import { type Chunk, type Compilation, type Compiler, RuntimeGlobals, RuntimeModule } from 'webpack';
+import webpack, { type Chunk, type Compilation, type Compiler } from 'webpack';
+
+const { RuntimeGlobals, RuntimeModule } = webpack;
 
 class CorsWorkerPublicPathRuntimeModule extends RuntimeModule {
   publicPath: string;
