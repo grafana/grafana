@@ -13,6 +13,7 @@ import { type GrafanaAlertingRuleDefinition, type RulerGrafanaRuleDTO } from 'ap
 
 import { Time } from '../../../../explore/Time';
 import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
+import { getEffectiveRuleLabels } from '../../utils/labels';
 import { makeEditTimeIntervalLink } from '../../utils/misc';
 import { notificationPolicies } from '../../utils/navigation';
 import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../../utils/rules';
@@ -23,6 +24,7 @@ import { TimingOptionsMeta } from '../notification-policies/Policy';
 import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
 
 import { ContactPointLink } from './ContactPointLink';
+import { InhibitionDetails } from './InhibitionDetails';
 import { UpdatedByUser } from './tabs/version-history/UpdatedBy';
 
 enum RuleType {
@@ -101,6 +103,9 @@ export const Details = ({ rule }: DetailsProps) => {
   );
   return (
     <div className={styles.metadata}>
+      {rulerRuleType.grafana.alertingRule(rule.rulerRule) && (
+        <InhibitionDetails labels={getEffectiveRuleLabels(rule)} />
+      )}
       <DetailGroup>
         <DetailText id="rule-type" label={t('alerting.alert.rule-type', 'Rule type')} value={determinedRuleType} />
         {rulerRuleType.grafana.rule(rule.rulerRule) && (
