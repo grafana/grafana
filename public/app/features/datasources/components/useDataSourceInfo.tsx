@@ -2,17 +2,20 @@ import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 
-import { FailureSeverity } from '../../connections/hooks/useDatasourceAdvisorChecks';
+import { DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
+
+import { DataSourceFailureBadge } from './DataSourceFailureBadge';
 
 type DataSourceInfo = {
   dataSourcePluginName: string;
   alertingSupported: boolean;
-  advisorFailureSeverity?: FailureSeverity;
+  failure?: DatasourceFailureDetails;
 };
 
 export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[] => {
   const info: PageInfoItem[] = [];
   const alertingEnabled = dataSourceInfo.alertingSupported;
+  const failureSeverity = dataSourceInfo.failure?.severity;
 
   if (!dataSourceInfo.dataSourcePluginName) {
     return info;
@@ -40,22 +43,11 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
   info.push({
     label: t('datasources.use-data-source-info.label.advisor', 'Advisor'),
     value: (
-      <Badge
-        color={
-          dataSourceInfo.advisorFailureSeverity === 'high'
-            ? 'red'
-            : dataSourceInfo.advisorFailureSeverity === 'low'
-              ? 'orange'
-              : 'green'
-        }
-        text={
-          dataSourceInfo.advisorFailureSeverity === 'high'
-            ? t('datasources.use-data-source-info.badge-text-failed', 'Failed')
-            : dataSourceInfo.advisorFailureSeverity === 'low'
-              ? t('datasources.use-data-source-info.badge-text-warn', 'Warn')
-              : t('datasources.use-data-source-info.badge-text-success', 'Success')
-        }
-      />
+      failureSeverity ? (
+        <DataSourceFailureBadge severity={failureSeverity} message={dataSourceInfo.failure?.message} />
+      ) : (
+        <Badge color="green" text={t('datasources.use-data-source-info.badge-text-success', 'Success')} />
+      )
     ),
   });
 

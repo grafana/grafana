@@ -36,7 +36,7 @@ export function DataSourceFailureTag({ severity }: Props) {
         className={styles.link}
       >
         <Tag
-          name={isHigh ? t('datasources.list.failed-high', 'failed') : t('datasources.list.failed-low', 'warn')}
+          name={isHigh ? t('datasources.list.failed-high', 'failed') : t('datasources.list.failed-low', 'warning')}
           colorIndex={isHigh ? 25 : 7}
         />
       </a>

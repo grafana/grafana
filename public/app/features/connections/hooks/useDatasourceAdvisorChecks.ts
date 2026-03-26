@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import {
   Check,
@@ -12,6 +12,8 @@ import { config } from '@grafana/runtime';
 export type FailureSeverity = 'high' | 'low';
 
 const CHECK_TYPE_LABEL = 'advisor.grafana.app/type';
+const RETRY_ANNOTATION = 'advisor.grafana.app/retry';
+const REFRESH_PENDING_RETRY_INTERVAL_MS = 2000;
 
 export type DatasourceFailureDetails = {
   severity: FailureSeverity;
@@ -25,30 +27,48 @@ function isAdvisorEnabled(): boolean {
 }
 
 /**
- * Fetches all datasource-type advisor checks and returns the most recent one
- * (by creationTimestamp). Skips the query when the Advisor feature is disabled.
+ * Fetches datasource-type advisor checks and returns the latest one.
+ * Skips the query when the Advisor feature is disabled.
  */
-export function useLatestDatasourceCheck(): { check: Check | undefined; isLoading: boolean } {
+export function useLatestDatasourceCheck(): {
+  check: Check | undefined;
+  isLoading: boolean;
+} {
   const enabled = isAdvisorEnabled();
 
-  const { data, isLoading } = useListCheckQuery(
+  const { data, isLoading, refetch } = useListCheckQuery(
     { labelSelector: 'advisor.grafana.app/type=datasource', limit: 1000 },
     { skip: !enabled }
   );
+  const check = useMemo(() => selectLatestCheck(data?.items), [data?.items]);
 
-  const check = useMemo(() => {
-    const items = data?.items;
-    if (!items?.length) {
-      return undefined;
+  useEffect(() => {
+    if (!enabled || !isPending(check)) {
+      return;
     }
-    return items.reduce((latest, current) => {
-      const latestTime = latest.metadata.creationTimestamp ?? '';
-      const currentTime = current.metadata.creationTimestamp ?? '';
-      return currentTime > latestTime ? current : latest;
-    });
-  }, [data?.items]);
+
+    const interval = setInterval(refetch, REFRESH_PENDING_RETRY_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [enabled, check, refetch]);
 
   return { check, isLoading: enabled && isLoading };
+}
+
+function selectLatestCheck(checks?: Check[]): Check | undefined {
+  if (!checks?.length) {
+    return undefined;
+  }
+
+  return checks.reduce((latest, current) => {
+    const currentTimestamp = Date.parse(current.metadata.creationTimestamp ?? '');
+    const latestTimestamp = Date.parse(latest.metadata.creationTimestamp ?? '');
+    return currentTimestamp > latestTimestamp ? current : latest;
+  });
+}
+
+function isPending(check?: Check): boolean {
+  // The retry annotation is set when the check is still being processed.
+  return Boolean(check?.metadata.annotations?.[RETRY_ANNOTATION]);
 }
 
 export type DatasourceFailuresResult = {
