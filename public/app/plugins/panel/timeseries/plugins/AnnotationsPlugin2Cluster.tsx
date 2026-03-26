@@ -267,7 +267,7 @@ export const AnnotationsPlugin2Cluster = ({
           let isVisible = true;
           const plotWidth = plotRef.current.rect.width;
 
-          if (isRegion && timeEnd != null && plotWidth !== undefined) {
+          if (isRegion && timeEnd != null) {
             const valPos = plotRef.current.valToPos(timeEnd, 'x');
             const right = Math.round(valPos ?? 0) || 0; // handles -0
             isVisible = left < plotWidth && right > 0;

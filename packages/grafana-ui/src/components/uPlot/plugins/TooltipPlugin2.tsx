@@ -64,7 +64,6 @@ interface TooltipPlugin2Props {
 }
 
 interface TooltipContainerState {
-  plot?: uPlot | null;
   style: Partial<CSSProperties>;
   isHovering: boolean;
   isPinned: boolean;
@@ -100,7 +99,6 @@ function initState(): TooltipContainerState {
     isHovering: false,
     isPinned: false,
     contents: null,
-    plot: null,
     dismiss: () => {},
   };
 }
