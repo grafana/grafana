@@ -470,7 +470,7 @@ func TestTeamSearchMemberCount(t *testing.T) {
 		require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
 		require.Len(t, resp.Hits, 2)
 		for _, hit := range resp.Hits {
-			assert.Equal(t, int64(0), hit.MemberCount, "member count should be zero when membercount param is absent")
+			assert.Nil(t, hit.MemberCount, "member count should be nil when membercount param is absent")
 		}
 	})
 
@@ -496,7 +496,7 @@ func TestTeamSearchMemberCount(t *testing.T) {
 		require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
 		require.Len(t, resp.Hits, 2)
 		for _, hit := range resp.Hits {
-			assert.Equal(t, int64(0), hit.MemberCount, "member count should be zero when membercount=false")
+			assert.Nil(t, hit.MemberCount, "member count should be nil when membercount=false")
 		}
 	})
 
@@ -522,7 +522,8 @@ func TestTeamSearchMemberCount(t *testing.T) {
 		require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
 		require.Len(t, resp.Hits, 2)
 		for _, hit := range resp.Hits {
-			assert.Equal(t, int64(3), hit.MemberCount, "member count should be populated when membercount=true")
+			require.NotNil(t, hit.MemberCount, "member count should be populated when membercount=true")
+			assert.Equal(t, int64(3), *hit.MemberCount, "member count should be populated when membercount=true")
 		}
 	})
 }
@@ -555,8 +556,10 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 		}
 
 		handler.enrichWithMemberCounts(context.Background(), "default", hits)
-		assert.Equal(t, int64(3), hits[0].MemberCount)
-		assert.Equal(t, int64(0), hits[1].MemberCount)
+		require.NotNil(t, hits[0].MemberCount)
+		assert.Equal(t, int64(3), *hits[0].MemberCount)
+		require.NotNil(t, hits[1].MemberCount)
+		assert.Equal(t, int64(0), *hits[1].MemberCount)
 	})
 
 	t.Run("one fails - other goroutines still complete", func(t *testing.T) {
@@ -585,9 +588,11 @@ func TestEnrichWithMemberCounts(t *testing.T) {
 		handler.enrichWithMemberCounts(context.Background(), "default", hits)
 
 		// Errors are logged and skipped; successful goroutines still complete
-		assert.Equal(t, int64(2), hits[0].MemberCount, "team-ok-1 should still have its count")
-		assert.Equal(t, int64(0), hits[1].MemberCount, "team-bad should remain at zero")
-		assert.Equal(t, int64(2), hits[2].MemberCount, "team-ok-2 should still have its count")
+		require.NotNil(t, hits[0].MemberCount, "team-ok-1 should still have its count")
+		assert.Equal(t, int64(2), *hits[0].MemberCount, "team-ok-1 should still have its count")
+		assert.Nil(t, hits[1].MemberCount, "team-bad should remain nil")
+		require.NotNil(t, hits[2].MemberCount, "team-ok-2 should still have its count")
+		assert.Equal(t, int64(2), *hits[2].MemberCount, "team-ok-2 should still have its count")
 	})
 }
 

@@ -1011,6 +1011,9 @@
               "type": "string"
             },
             "examples": {
+              "": {
+                "summary": "default sorting"
+              },
               "-email": {
                 "summary": "email descending",
                 "value": "-email"
@@ -1018,9 +1021,6 @@
               "-title": {
                 "summary": "title descending",
                 "value": "-title"
-              },
-              "default": {
-                "summary": "default sorting"
               },
               "email": {
                 "summary": "email ascending",
@@ -4949,8 +4949,7 @@
           "title",
           "email",
           "provisioned",
-          "externalUID",
-          "memberCount"
+          "externalUID"
         ],
         "properties": {
           "accessControl": {
@@ -4970,8 +4969,7 @@
           },
           "memberCount": {
             "type": "integer",
-            "format": "int64",
-            "default": 0
+            "format": "int64"
           },
           "name": {
             "type": "string",

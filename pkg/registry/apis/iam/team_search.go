@@ -160,7 +160,7 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 										In:          "query",
 										Description: "sortable field",
 										Examples: map[string]*spec3.Example{
-											"default": {
+											"": {
 												ExampleProps: spec3.ExampleProps{
 													Summary: "default sorting",
 													Value:   "",
@@ -400,7 +400,8 @@ func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespac
 				s.log.Warn("unexpected type from team binding list", "team", hits[i].Name, "type", fmt.Sprintf("%T", obj))
 				return nil
 			}
-			hits[i].MemberCount = int64(len(list.Items))
+			count := int64(len(list.Items))
+			hits[i].MemberCount = &count
 			return nil
 		})
 	}

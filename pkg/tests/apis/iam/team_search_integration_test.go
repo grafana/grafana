@@ -296,9 +296,11 @@ func doTeamSearchMemberCountTests(t *testing.T, helper *apis.K8sTestHelper) {
 		for _, hit := range result.Hits {
 			switch hit.Name {
 			case teamA.GetName():
-				require.Equal(t, int64(3), hit.MemberCount, "teamA should have 3 members")
+				require.NotNil(t, hit.MemberCount, "teamA should have member count set")
+				require.Equal(t, int64(3), *hit.MemberCount, "teamA should have 3 members")
 			case teamB.GetName():
-				require.Equal(t, int64(0), hit.MemberCount, "teamB should have 0 members")
+				require.NotNil(t, hit.MemberCount, "teamB should have member count set")
+				require.Equal(t, int64(0), *hit.MemberCount, "teamB should have 0 members")
 			default:
 				t.Errorf("unexpected team in results: %s", hit.Name)
 			}

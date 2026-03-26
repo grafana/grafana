@@ -589,7 +589,6 @@ var appManifestData = app.ManifestData{
 								"email",
 								"provisioned",
 								"externalUID",
-								"memberCount",
 							},
 						},
 					},
