@@ -5,14 +5,18 @@ import (
 	"fmt"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -264,7 +268,7 @@ func TestValidateCreate(t *testing.T) {
 
 			getter := newParentsGetter(mockStorage, maxDepth)
 
-			err := validateOnCreate(context.Background(), tt.folder, getter, maxDepth)
+			err := validateOnCreate(context.Background(), tt.folder, getter, maxDepth, nil)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
@@ -272,6 +276,81 @@ func TestValidateCreate(t *testing.T) {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.expectedErr)
 			}
+		})
+	}
+}
+
+func TestValidateCreateTeamOwnerReferences(t *testing.T) {
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		Type:      claims.TypeUser,
+		OrgID:     1,
+		Namespace: "stacks-1",
+	})
+
+	tests := []struct {
+		name        string
+		ownerRef    metav1.OwnerReference
+		teamSvc     team.Service
+		expectedErr string
+	}{
+		{
+			name: "accepts existing team owner reference",
+			ownerRef: metav1.OwnerReference{
+				APIVersion: "iam.grafana.app/v0alpha1",
+				Kind:       "Team",
+				Name:       "engineering",
+				UID:        "team-1",
+			},
+			teamSvc: teamtest.NewFakeServiceWithTeamDTO(&team.TeamDTO{
+				UID:  "team-1",
+				Name: "engineering",
+			}),
+		},
+		{
+			name: "rejects missing team owner reference",
+			ownerRef: metav1.OwnerReference{
+				APIVersion: "iam.grafana.app/v0alpha1",
+				Kind:       "Team",
+				Name:       "ghost-team",
+				UID:        "missing-team",
+			},
+			teamSvc:     &teamtest.FakeService{ExpectedError: team.ErrTeamNotFound},
+			expectedErr: "metadata.ownerReferences[0].name",
+		},
+		{
+			name: "rejects non-team owner reference",
+			ownerRef: metav1.OwnerReference{
+				APIVersion: "iam.grafana.app/v0alpha1",
+				Kind:       "User",
+				Name:       "alice",
+				UID:        "user-1",
+			},
+			teamSvc:     teamtest.NewFakeService(),
+			expectedErr: "Unsupported value: \"User\"",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "folder-1",
+				},
+				Spec: folders.FolderSpec{
+					Title: "Folder 1",
+				},
+			}
+			f.SetOwnerReferences([]metav1.OwnerReference{tt.ownerRef})
+
+			err := validateOnCreate(ctx, f, nil, 5, tt.teamSvc)
+
+			if tt.expectedErr == "" {
+				require.NoError(t, err)
+				return
+			}
+
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.expectedErr)
 		})
 	}
 }

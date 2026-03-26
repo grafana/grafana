@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	teamservice "github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -64,6 +65,7 @@ type FolderAPIBuilder struct {
 	folderPermissionsSvc   accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
 	acService              accesscontrol.Service
 	ac                     accesscontrol.AccessControl
+	teamSvc                teamservice.Service
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -77,6 +79,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
 	zanzanaClient zanzana.Client,
+	teamSvc teamservice.Service,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
 		features:             features,
@@ -90,6 +93,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		searcher:             unified,
 		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
+		teamSvc:              teamSvc,
 	}
 	apiregistration.RegisterAPI(builder)
 	return builder
@@ -361,7 +365,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if err := validateOwnerReferencesOnManagedFolder(f, nil); err != nil {
 			return err
 		}
-		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
+		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth, b.teamSvc)
 	case admission.Delete:
 		return validateOnDelete(ctx, f, b.searcher)
 	case admission.Update:
