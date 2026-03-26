@@ -7267,6 +7267,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "This preset will modify thresholds",
       "title": "Panel styles"
     },
     "panel-viz-type-picker": {
