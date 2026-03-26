@@ -556,7 +556,7 @@ describe('Logs', () => {
       setBooleanFlags({
         newLogsPanel: false,
         logsPanelControls: false,
-        logsTablePanelNG: true,
+        logsTablePanelNG: false,
       });
     });
 
