@@ -4,31 +4,11 @@ import { useMemo, useState, useEffect } from 'react';
 import { StandardEditorProps, SelectableValue, GrafanaTheme2 } from '@grafana/data';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
 
-import {
-  AIRPORTS_GAZETTEER_PATH,
-  COUNTRIES_GAZETTEER_PATH,
-  Gazetteer,
-  getGazetteer,
-  USA_STATES_GAZETTEER_PATH,
-} from '../gazetteer/gazetteer';
+import { GAZETTEER_OPTIONS, Gazetteer, getGazetteer } from '../gazetteer/gazetteer';
 
-const defaultPaths: Array<SelectableValue<string>> = [
-  {
-    label: 'Countries',
-    description: 'Lookup countries by name, two letter code, or three letter code',
-    value: COUNTRIES_GAZETTEER_PATH,
-  },
-  {
-    label: 'USA States',
-    description: 'Lookup states by name or 2-letter code',
-    value: USA_STATES_GAZETTEER_PATH,
-  },
-  {
-    label: 'Airports',
-    description: 'Lookup airports by id or code',
-    value: AIRPORTS_GAZETTEER_PATH,
-  },
-];
+const defaultPaths: Array<SelectableValue<string>> = Object.values(GAZETTEER_OPTIONS).map(
+  ({ label, description, path }) => ({ label, description, value: path })
+);
 
 export interface GazetteerPathEditorConfigSettings {
   options?: Array<SelectableValue<string>>;
