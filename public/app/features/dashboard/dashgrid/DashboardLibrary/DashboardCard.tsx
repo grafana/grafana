@@ -182,7 +182,7 @@ function DashboardCardComponent({
             data-testid="dashboard-card-description"
             className={cx(styles.description, { [styles.noDescription]: !dashboard.description })}
           >
-            {dashboard.description || 'No description available'}
+            {dashboard.description || t('dashboard-library.dashboard-card.no-description', 'No description available')}
           </Card.Description>
         </div>
         {hasCompatActions && (

@@ -6602,7 +6602,8 @@
         "last-update": "Last Update",
         "published-by": "Published By",
         "view-on-grafana-com": "View on Grafana.com"
-      }
+      },
+      "no-description": "No description available"
     },
     "merged-description": "Browse and select from data-source provided or community dashboards",
     "merged-empty-no-dashboards": "No dashboards are available for this datasource.",
