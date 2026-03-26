@@ -12989,6 +12989,10 @@
       "update-configuration-action": "View configuration docs",
       "upgrade-action": "Upgrade account"
     },
+    "cloud-info-box": {
+      "body": "Skip the setup and get Git Sync fully managed and hosted on Grafana Cloud with the <2>free-forever Grafana Cloud plan</2>.",
+      "title": "You can also use Git Sync on Grafana Cloud"
+    },
     "code-block": {
       "aria-label-copy": "Copy code to clipboard"
     },
