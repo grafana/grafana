@@ -19,4 +19,4 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       
-      - uses: grafana/plugin-actions/bundle-schema-types@main
+      - uses: grafana/plugin-actions/bundle-schema-types@4698961fa64137fcac207108397ebe8a738a33d1 # main

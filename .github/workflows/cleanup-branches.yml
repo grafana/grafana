@@ -12,7 +12,7 @@ jobs:
       pull-requests: read
     steps:
       - uses: actions/checkout@v5
-      - uses: grafana/shared-workflows/actions/cleanup-branches@cleanup-branches/v0.2.1
+      - uses: grafana/shared-workflows/actions/cleanup-branches@c906affb19f070fde9dce56e0db8053c490946cc # cleanup-branches/v0.2.1
         with:
           dry-run: false
           max-date: "1 month ago"
