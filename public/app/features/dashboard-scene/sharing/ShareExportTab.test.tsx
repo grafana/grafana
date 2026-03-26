@@ -148,6 +148,7 @@ describe('ShareExportTab', () => {
   let makeExportableV2Spy: jest.SpyInstance;
 
   beforeEach(() => {
+    config.featureToggles.kubernetesDashboards = true;
     config.featureToggles.dashboardNewLayouts = false;
 
     makeExportableV1Spy = jest.spyOn(exporters, 'makeExportableV1').mockImplementation(async (dashboard) => dashboard);
@@ -343,6 +344,23 @@ describe('ShareExportTab', () => {
 
       tab.onExportFormatChange(ExportFormat.V2Resource);
       expect(tab.state.isViewingYAML).toBe(true);
+    });
+  });
+
+  describe('Legacy mode (kubernetesDashboards off)', () => {
+    beforeEach(() => {
+      config.featureToggles.kubernetesDashboards = false;
+      (dashboardApiModule.getDashboardAPI as jest.Mock).mockClear();
+    });
+
+    it('should use scene serialization instead of API', async () => {
+      const tab = buildV1DashboardScenario();
+
+      const result = await tab.getExportableDashboardJson();
+
+      expect(dashboardApiModule.getDashboardAPI).not.toHaveBeenCalled();
+      expect(result.json).toMatchObject({ title: 'Test Dashboard V1', uid: 'test-uid-v1' });
+      expect(result.initialSaveModelVersion).toBe('v1');
     });
   });
 

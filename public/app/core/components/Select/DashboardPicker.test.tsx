@@ -13,7 +13,7 @@ setupMockServer();
 const [_, { folderA, folderA_dashbdD }] = getFolderFixtures();
 
 describe('DashboardPicker', () => {
-  xdescribe('using default feature toggles', () => {
+  describe('using app platform', () => {
     const onChange = jest.fn();
 
     testWithFeatureToggles({ enable: [] });

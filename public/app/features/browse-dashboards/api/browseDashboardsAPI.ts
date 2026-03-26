@@ -421,7 +421,7 @@ export const browseDashboardsAPI = createApi({
                 href: config.appSubUrl + '/dashboard/recently-deleted',
               });
               dispatch(notifyApp(createSuccessNotification('', '', undefined, component)));
-            } else {
+            } else if (config.featureToggles.kubernetesDashboards) {
               // Legacy notification for kubernetes dashboards
               appEvents.publish({
                 type: AppEvents.alertSuccess.name,
