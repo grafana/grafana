@@ -11,15 +11,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	gitcommon "github.com/grafana/grafana/pkg/tests/apis/provisioning/git/common"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // TestIntegrationProvisioning_IncrementalGitSync_Add verifies that incremental
 // sync imports a newly committed file without re-processing the full tree.
 func TestIntegrationProvisioning_IncrementalGitSync_Add(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-add"
@@ -46,9 +43,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Add(t *testing.T) {
 // TestIntegrationProvisioning_IncrementalGitSync_Update verifies that
 // incremental sync applies an in-place file modification.
 func TestIntegrationProvisioning_IncrementalGitSync_Update(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-update"
@@ -76,9 +71,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Update(t *testing.T) {
 // TestIntegrationProvisioning_IncrementalGitSync_Delete verifies that
 // incremental sync removes a dashboard whose file was deleted from the repo.
 func TestIntegrationProvisioning_IncrementalGitSync_Delete(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-delete"
@@ -110,9 +103,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Delete(t *testing.T) {
 // TestIntegrationProvisioning_IncrementalGitSync_Noop verifies that incremental
 // sync is a no-op when there are no new commits since the last sync.
 func TestIntegrationProvisioning_IncrementalGitSync_Noop(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-noop"
@@ -131,9 +122,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Noop(t *testing.T) {
 // TestIntegrationProvisioning_IncrementalGitSync_Rename verifies that
 // incremental sync handles a file rename (git mv) without losing the dashboard.
 func TestIntegrationProvisioning_IncrementalGitSync_Rename(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-rename"
@@ -171,9 +160,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_Rename(t *testing.T) {
 // TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder verifies that
 // incremental sync handles moving a dashboard from root into a subfolder.
 func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-move-into-folder"
@@ -214,9 +201,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T)
 // TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders verifies
 // that incremental sync handles moving a dashboard from one folder to another.
 func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-move-between"
@@ -257,9 +242,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 // TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot verifies that
 // incremental sync handles moving a dashboard from a subfolder back to root.
 func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-move-to-root"
@@ -300,9 +283,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 // renaming an entire folder (git mv folderA folderB) preserves all dashboards
 // inside it. Git reports individual file renames for each file in the folder.
 func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-rename-folder"
@@ -353,9 +334,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 // TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard verifies
 // that incremental sync handles moving a dashboard between nested folder levels.
 func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-move-nested"
@@ -396,9 +375,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 // TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder verifies
 // that renaming a nested folder preserves all dashboards inside it.
 func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := gitcommon.RunGrafanaWithGitServer(t)
+	helper := sharedGitHelper(t)
 	ctx := context.Background()
 
 	const repoName = "git-incremental-rename-nested"
