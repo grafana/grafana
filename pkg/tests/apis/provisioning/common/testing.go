@@ -1,9 +1,11 @@
 package common
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -1304,6 +1306,112 @@ func (h *ProvisioningTestHelper) PostFilesRequest(t *testing.T, repo string, opt
 	require.NoError(t, err)
 
 	return resp
+}
+
+// FilesClient provides convenience methods for interacting with the provisioning
+// files subresource (/repositories/{repo}/files/{path}) via direct HTTP.
+// It avoids the Kubernetes REST client limitation with '/' in subresource names.
+type FilesClient struct {
+	helper *ProvisioningTestHelper
+	repo   string
+	user   string // basic-auth credentials, e.g. "admin:admin"
+}
+
+// NewFilesClient returns a FilesClient for the given repo using admin credentials.
+func (h *ProvisioningTestHelper) NewFilesClient(repo string) *FilesClient {
+	return &FilesClient{helper: h, repo: repo, user: "admin:admin"}
+}
+
+// WithUser returns a copy of the client that authenticates as user (e.g. "editor:editor").
+func (c *FilesClient) WithUser(user string) *FilesClient {
+	return &FilesClient{helper: c.helper, repo: c.repo, user: user}
+}
+
+// URL returns the full HTTP URL for the given file or directory path.
+func (c *FilesClient) URL(filePath string) string {
+	addr := c.helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
+	return fmt.Sprintf("http://%s@%s/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/%s/files/%s",
+		c.user, addr, c.repo, filePath)
+}
+
+// Do executes an HTTP request to the files endpoint. Body may be nil.
+// The response body is automatically closed via t.Cleanup.
+func (c *FilesClient) Do(t *testing.T, method, filePath string, body []byte) *http.Response {
+	t.Helper()
+	var bodyReader io.Reader
+	if body != nil {
+		bodyReader = bytes.NewReader(body)
+	}
+	req, err := http.NewRequest(method, c.URL(filePath), bodyReader)
+	require.NoError(t, err)
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, resp.Body.Close())
+	})
+	return resp
+}
+
+// Post sends a POST request to the given path with no body.
+func (c *FilesClient) Post(t *testing.T, filePath string) *http.Response {
+	t.Helper()
+	return c.Do(t, http.MethodPost, filePath, nil)
+}
+
+// Put sends a PUT request to the given path with a JSON body.
+func (c *FilesClient) Put(t *testing.T, filePath string, body []byte) *http.Response {
+	t.Helper()
+	return c.Do(t, http.MethodPut, filePath, body)
+}
+
+// Delete sends a DELETE request to the given path.
+func (c *FilesClient) Delete(t *testing.T, filePath string) *http.Response {
+	t.Helper()
+	return c.Do(t, http.MethodDelete, filePath, nil)
+}
+
+// ReadFolderUID reads the folder UID (metadata.name) from the _folder.json at the given path.
+func (c *FilesClient) ReadFolderUID(t *testing.T, ctx context.Context, metadataPath string) string {
+	t.Helper()
+	return c.readFolderField(t, ctx, metadataPath, "metadata", "name")
+}
+
+// ReadFolderTitle reads the folder title (spec.title) from the _folder.json at the given path.
+func (c *FilesClient) ReadFolderTitle(t *testing.T, ctx context.Context, metadataPath string) string {
+	t.Helper()
+	return c.readFolderField(t, ctx, metadataPath, "spec", "title")
+}
+
+func (c *FilesClient) readFolderField(t *testing.T, ctx context.Context, metadataPath string, fields ...string) string {
+	t.Helper()
+	wrapObj, err := c.helper.Repositories.Resource.Get(ctx, c.repo, metav1.GetOptions{}, "files", metadataPath)
+	require.NoError(t, err, "%s: should be readable via the files endpoint", metadataPath)
+	keyPath := append([]string{"resource", "file"}, fields...)
+	val, _, _ := unstructured.NestedString(wrapObj.Object, keyPath...)
+	return val
+}
+
+// RequireValidFolderMetadata reads the _folder.json at folderPath/_folder.json,
+// asserts it has a valid apiVersion, kind, non-empty UID and title, and returns (uid, title).
+func (c *FilesClient) RequireValidFolderMetadata(t *testing.T, ctx context.Context, folderMetadataPath string) (uid, title string) {
+	t.Helper()
+	wrapObj, err := c.helper.Repositories.Resource.Get(ctx, c.repo, metav1.GetOptions{}, "files", folderMetadataPath)
+	require.NoError(t, err, "%s: _folder.json should be readable via the files endpoint", folderMetadataPath)
+
+	apiVersion, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "apiVersion")
+	require.Equal(t, "folder.grafana.app/v1beta1", apiVersion, "%s: unexpected apiVersion", folderMetadataPath)
+	kind, _, _ := unstructured.NestedString(wrapObj.Object, "resource", "file", "kind")
+	require.Equal(t, "Folder", kind, "%s: unexpected kind", folderMetadataPath)
+
+	uid, _, _ = unstructured.NestedString(wrapObj.Object, "resource", "file", "metadata", "name")
+	require.NotEmpty(t, uid, "%s: should have a non-empty UID", folderMetadataPath)
+	title, _, _ = unstructured.NestedString(wrapObj.Object, "resource", "file", "spec", "title")
+	require.NotEmpty(t, title, "%s: should have a non-empty title", folderMetadataPath)
+
+	return uid, title
 }
 
 // PrintFileTree prints the directory structure as a tree for debugging purposes
