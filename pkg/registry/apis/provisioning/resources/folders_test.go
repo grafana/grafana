@@ -1953,6 +1953,79 @@ func TestRenameFolderPath(t *testing.T) {
 		require.Empty(t, oldID, "same UID means in-place update, no cleanup needed")
 	})
 
+	t.Run("same stable UID preserves folder and descendants in tree", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		metaJSON := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"My Folder"}}`)
+		rw.On("Read", mock.Anything, "old-team/_folder.json", "ref-old").
+			Return(&repository.FileInfo{Data: metaJSON}, nil)
+		rw.On("Read", mock.Anything, "new-team/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: metaJSON}, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "stable-uid", Title: "My Folder", Path: "old-team/"}, "")
+		tree.Add(Folder{ID: "child-folder", Title: "Child", Path: "old-team/sub/"}, "stable-uid")
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "My Folder", config.Name), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
+		require.NoError(t, err)
+		require.Empty(t, oldID)
+
+		_, parentExists := tree.Get("stable-uid")
+		require.True(t, parentExists, "renamed folder must remain in tree for same-UID move")
+
+		_, childExists := tree.Get("child-folder")
+		require.True(t, childExists, "descendant folder must remain in tree for same-UID move")
+	})
+
+	t.Run("different UIDs removes old folder and descendants from tree", func(t *testing.T) {
+		config := newTestRepoConfig("test-repo")
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(config)
+
+		oldMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"old-uid"},"spec":{"title":"Old"}}`)
+		newMeta := []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"new-uid"},"spec":{"title":"New"}}`)
+		rw.On("Read", mock.Anything, "old-team/_folder.json", "ref-old").
+			Return(&repository.FileInfo{Data: oldMeta}, nil)
+		rw.On("Read", mock.Anything, "new-team/_folder.json", "ref-new").
+			Return(&repository.FileInfo{Data: newMeta}, nil)
+
+		tree := NewEmptyFolderTree()
+		tree.Add(Folder{ID: "old-uid", Title: "Old", Path: "old-team/"}, "")
+		tree.Add(Folder{ID: "old-child", Title: "Child", Path: "old-team/sub/"}, "old-uid")
+
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return nil, apierrors.NewNotFound(schema.GroupResource{}, name)
+			},
+			createFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(rw, client, tree, WithFolderMetadataEnabled(true))
+		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")
+		require.NoError(t, err)
+		require.Equal(t, "old-uid", oldID)
+
+		_, oldExists := tree.Get("old-uid")
+		require.False(t, oldExists, "old folder must be removed from tree for different-UID rename")
+
+		_, childExists := tree.Get("old-child")
+		require.False(t, childExists, "descendant of old folder must be removed from tree")
+	})
+
 	t.Run("different UIDs returns old folder ID for cleanup", func(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)

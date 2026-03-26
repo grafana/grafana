@@ -419,8 +419,6 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 		return "", fmt.Errorf("ensure new folder path: %w", err)
 	}
 
-	fm.tree.Remove(oldFolder.ID)
-
 	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef, fm.folderMetadataEnabled)
 	if err != nil {
 		var invalidErr *InvalidFolderMetadata
@@ -435,8 +433,12 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 	}
 
 	if oldFolder.ID == newFolder.ID {
+		// Same UID — metadata-preserving move. EnsureFolderPathExist already
+		// updated the tree entry to the new path; nothing to clean up.
 		return "", nil
 	}
+
+	fm.tree.Remove(oldFolder.ID)
 
 	return oldFolder.ID, nil
 }

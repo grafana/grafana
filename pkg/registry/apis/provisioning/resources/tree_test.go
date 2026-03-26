@@ -396,7 +396,7 @@ func TestFolderTree_CheckIDConflict(t *testing.T) {
 	t.Run("returns nil when path only differs by leading and trailing slash normalisation", func(t *testing.T) {
 		tree := NewEmptyFolderTree()
 		addFolder(tree, "uid-x", "a/b/c")
-		// Trailing slash on both sides should still be treated as equal.
+		// Trailing slash on the checked path should still be treated as equal.
 		require.NoError(t, tree.CheckIDConflict("uid-x", "a/b/c/"))
 	})
 

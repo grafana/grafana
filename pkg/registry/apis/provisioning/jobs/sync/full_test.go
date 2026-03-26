@@ -1200,7 +1200,7 @@ func TestFullSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(changes, []string{"myfolder/"}, nil, nil)
 
-	// Expect a warning record for the missing folder metadata iht action derived from changes
+	// Expect a warning record for the missing folder metadata with action derived from changes
 	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
 		return r.Path() == "myfolder/" &&
 			r.Action() == repository.FileActionCreated &&
