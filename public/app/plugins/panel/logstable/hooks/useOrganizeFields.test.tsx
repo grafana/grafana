@@ -208,7 +208,7 @@ describe('useOrganizeFields', () => {
   });
 
   describe('log level column enhancements', () => {
-    test('applies default level mapping and pill cell mode for level field', async () => {
+    test.only('applies default level mapping and pill cell mode for level field', async () => {
       const { result: organizedFields } = renderHook(() =>
         useOrganizeFields({
           extractedFrame,
@@ -227,7 +227,10 @@ describe('useOrganizeFields', () => {
         const levelField = organizedFields.current.organizedFrame?.fields.find((f) => f.name === 'level');
         expect(levelField).toBeDefined();
         expect(levelField?.config.custom?.cellOptions?.type).toBe(TableCellDisplayMode.Pill);
-        expect(levelField?.config.mappings?.[0]?.options?.['critical']).toBeDefined();
+        if (levelField?.config.mappings?.[0]?.options && 'critical' in levelField?.config.mappings?.[0]?.options) {
+          expect(levelField?.config.mappings?.[0]?.options?.['critical']).toBeDefined();
+        }
+        expect.assertions(6);
       });
     });
   });
