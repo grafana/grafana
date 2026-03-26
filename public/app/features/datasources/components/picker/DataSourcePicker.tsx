@@ -383,6 +383,19 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.shadows.z3,
       overflow: 'hidden',
+      minWidth: '97vw',
+      [theme.breakpoints.up('md')]: {
+        minWidth: '80vw',
+      },
+      [theme.breakpoints.up('lg')]: {
+        minWidth: '60vw',
+      },
+      [theme.breakpoints.up('xl')]: {
+        minWidth: '50vw',
+      },
+      [theme.breakpoints.up('xxl')]: {
+        minWidth: '40vw',
+      },
     }),
     picker: css({
       background: theme.colors.background.secondary,

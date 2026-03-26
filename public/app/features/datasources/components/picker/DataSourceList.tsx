@@ -1,24 +1,21 @@
 import { css, cx } from '@emotion/css';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { useCallback, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import * as React from 'react';
 import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
-import { FavoriteDatasources, getTemplateSrv, reportInteraction } from '@grafana/runtime';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { FavoriteDatasources, getTemplateSrv } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 
-import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
+import { useDatasources, useRecentlyUsedDataSources } from '../../hooks';
 
 import { AddNewDataSourceButton } from './AddNewDataSourceButton';
-import { DataSourceCard } from './DataSourceCard';
-import { INTERACTION_EVENT_NAME, INTERACTION_ITEM } from './DataSourcePicker';
-import { getDataSourceCompareFn, isDataSourceMatch } from './utils';
+import { StaticList } from './StaticList';
+import { VirtualizedList } from './VirtualizedList';
+import { getDataSourceCompareFn } from './utils';
 
-const VIRTUAL_OVERSCAN_ITEMS = 4;
-const ESTIMATED_ITEM_HEIGHT = 48;
 // Only virtualize when the list is large enough to benefit from it.
 // Small lists render all items directly, which avoids issues with scroll
 // container measurement in test environments and ensures all items are
@@ -60,8 +57,7 @@ export interface DataSourceListProps {
 }
 
 export function DataSourceList(props: DataSourceListProps) {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   const {
     className,
@@ -72,6 +68,37 @@ export function DataSourceList(props: DataSourceListProps) {
     favoriteDataSources,
     scrollRef,
   } = props;
+
+  const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
+  const sortedDataSources = useSortedDataSources(props, current, recentlyUsedDataSources, favoriteDataSources);
+  const shouldVirtualize = sortedDataSources.length >= VIRTUALIZATION_THRESHOLD;
+
+  const sharedProps = {
+    sortedDataSources,
+    enableKeyboardNavigation,
+    keyboardEvents: props.keyboardEvents,
+    current,
+    favoriteDataSources,
+    onChange,
+    pushRecentlyUsedDataSource,
+    scrollRef,
+  };
+
+  return (
+    <div className={cx(className, styles.container)} data-testid={selectors.components.DataSourcePicker.dataSourceList}>
+      {sortedDataSources.length === 0 && <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />}
+      {sortedDataSources.length > 0 && shouldVirtualize && <VirtualizedList {...sharedProps} />}
+      {sortedDataSources.length > 0 && !shouldVirtualize && <StaticList {...sharedProps} />}
+    </div>
+  );
+}
+
+function useSortedDataSources(
+  props: DataSourceListProps,
+  current: DataSourceRef | DataSourceInstanceSettings | string | null | undefined,
+  recentlyUsedDataSources: string[],
+  favoriteDataSources: FavoriteDatasources
+) {
   const dataSources = useDatasources(
     {
       alerting: props.alerting,
@@ -88,11 +115,9 @@ export function DataSourceList(props: DataSourceListProps) {
     props.dataSources
   );
 
-  const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
-
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
-  const sortedDataSources = useMemo(
+  return useMemo(
     () =>
       [...filteredDataSources].sort(
         getDataSourceCompareFn(
@@ -103,124 +128,6 @@ export function DataSourceList(props: DataSourceListProps) {
         )
       ),
     [filteredDataSources, current, recentlyUsedDataSources, favoriteDataSources]
-  );
-
-  const shouldVirtualize = sortedDataSources.length >= VIRTUALIZATION_THRESHOLD;
-  const shouldVirtualizeRef = useRef(shouldVirtualize);
-  shouldVirtualizeRef.current = shouldVirtualize;
-
-  const rowVirtualizer = useVirtualizer({
-    count: shouldVirtualize ? sortedDataSources.length : 0,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: () => ESTIMATED_ITEM_HEIGHT,
-    overscan: VIRTUAL_OVERSCAN_ITEMS,
-  });
-
-  const virtualizerRef = useRef(rowVirtualizer);
-  virtualizerRef.current = rowVirtualizer;
-
-  const stableScrollToIndex = useCallback(
-    (index: number) => {
-      if (shouldVirtualizeRef.current) {
-        virtualizerRef.current?.scrollToIndex(index, { align: 'auto' });
-      } else {
-        const container = scrollRef.current;
-        if (container) {
-          const items = container.querySelectorAll('[data-testid="data-source-card"]');
-          items[index]?.scrollIntoView({ block: 'nearest' });
-        }
-      }
-    },
-    [scrollRef]
-  );
-
-  const handleSelect = useCallback(
-    (index: number) => {
-      const ds = sortedDataSources[index];
-      if (ds) {
-        pushRecentlyUsedDataSource(ds);
-        onChange(ds);
-      }
-    },
-    [sortedDataSources, onChange, pushRecentlyUsedDataSource]
-  );
-
-  const selectedIndex = useKeyboardNavigatableList({
-    keyboardEvents: enableKeyboardNavigation ? props.keyboardEvents : undefined,
-    itemCount: sortedDataSources.length,
-    scrollToIndex: stableScrollToIndex,
-    onSelect: handleSelect,
-  });
-
-  const renderDataSourceCard = (ds: DataSourceInstanceSettings, isSelected: boolean) => (
-    <DataSourceCard
-      data-testid="data-source-card"
-      {...(enableKeyboardNavigation && {
-        'data-selecteditem': isSelected ? 'true' : 'false',
-      })}
-      ds={ds}
-      onClick={() => {
-        pushRecentlyUsedDataSource(ds);
-        onChange(ds);
-      }}
-      selected={isDataSourceMatch(ds, current)}
-      isFavorite={favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined}
-      onToggleFavorite={
-        favoriteDataSources.enabled
-          ? () => {
-              reportInteraction(INTERACTION_EVENT_NAME, {
-                item: INTERACTION_ITEM.TOGGLE_FAVORITE,
-                ds_type: ds.type,
-                is_favorite: !favoriteDataSources.isFavoriteDatasource(ds.uid),
-              });
-              favoriteDataSources.isFavoriteDatasource(ds.uid)
-                ? favoriteDataSources.removeFavoriteDatasource(ds)
-                : favoriteDataSources.addFavoriteDatasource(ds);
-            }
-          : undefined
-      }
-    />
-  );
-
-  return (
-    <div className={cx(className, styles.container)} data-testid={selectors.components.DataSourcePicker.dataSourceList}>
-      {sortedDataSources.length === 0 && <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />}
-      {sortedDataSources.length > 0 &&
-        (shouldVirtualize ? (
-          <div
-            style={{
-              height: rowVirtualizer.getTotalSize(),
-              width: '100%',
-              position: 'relative',
-            }}
-          >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const ds = sortedDataSources[virtualRow.index];
-              const isSelected = !!enableKeyboardNavigation && virtualRow.index === selectedIndex;
-              return (
-                <div
-                  key={ds.uid}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: virtualRow.size,
-                    transform: `translateY(${virtualRow.start}px)`,
-                  }}
-                >
-                  {renderDataSourceCard(ds, isSelected)}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          sortedDataSources.map((ds, index) => {
-            const isSelected = !!enableKeyboardNavigation && index === selectedIndex;
-            return <React.Fragment key={ds.uid}>{renderDataSourceCard(ds, isSelected)}</React.Fragment>;
-          })
-        ))}
-    </div>
   );
 }
 
