@@ -4195,17 +4195,17 @@
     "name-value-display": "Value display",
     "presets": {
       "basic": "Basic",
-      "basic_desc": "Basic, color from thresholds",
+      "basic_desc": "Horizontal bars, value color from thresholds",
       "basic-vertical": "Basic vertical",
-      "basic-vertical_desc": "Basic, color from thresholds, vertical",
+      "basic-vertical_desc": "Vertical bars, threshold color, text value",
       "gradient": "Gradient",
-      "gradient_desc": "Gradient, color from thresholds, text color",
+      "gradient_desc": "Horizontal bars, gradient fill from thresholds",
       "gradient-BlYlRd": "Gradient blue-red",
-      "gradient-BlYlRd_desc": "Color scale, value color",
+      "gradient-BlYlRd_desc": "Horizontal, gradient fill, blue-yellow-red scale",
       "gradient-vertical": "Gradient vertical",
-      "gradient-vertical_desc": "color scale, unchecked show unfilled",
+      "gradient-vertical_desc": "Vertical, gradient fill, no unfilled track",
       "retro-lcd": "Retro LCD",
-      "retro-lcd_desc": "Color scale, text color"
+      "retro-lcd_desc": "Horizontal, LCD style, green-yellow-red scale"
     },
     "suggestions": {
       "basic": "Bar gauge",
@@ -6473,6 +6473,7 @@
       "description": {
         "action": "Change variable description"
       },
+      "description-tooltip": "Variable description",
       "hide": {
         "action": "Change variable hide option"
       },
@@ -9030,17 +9031,17 @@
     "neutral": "Neutral {{value}}",
     "presets": {
       "circle": "Circle",
-      "circle_desc": "plain round, from thresholds",
+      "circle_desc": "Full circle, threshold color, with sparkline",
       "gradient": "Gradient",
-      "gradient_desc": "gradient color scale",
+      "gradient_desc": "Arc gauge, green-yellow-red gradient fill",
       "neon": "Neon",
-      "neon_desc": "round, single color endpoint glow",
+      "neon_desc": "Circle, rounded bar, glow effects, fixed red",
       "neonSegmented": "Neon segmented",
-      "neonSegmented_desc": "round, few segments",
+      "neonSegmented_desc": "Circle, 10 rounded segments, glow effects, fixed blue",
       "segmented": "Segmented",
-      "segmented_desc": "segmented thresholds",
+      "segmented_desc": "Dashed arc, threshold color, with sparkline",
       "standard": "Standard",
-      "standard_desc": "plain, from thresholds"
+      "standard_desc": "Arc gauge, threshold color, with sparkline"
     },
     "suggestions": {
       "arc": "Gauge",
@@ -13384,21 +13385,21 @@
       }
     },
     "quota-limit": {
-      "message-both-repositories_one": "Your account is limited to {{count}} connected repository",
+      "message-both-repositories_one": "Your account is limited to {{count}} connected repositories",
       "message-both-repositories_other": "Your account is limited to {{count}} connected repositories",
-      "message-both-repositories-onprem_one": "Your instance is limited to {{count}} connected repository",
+      "message-both-repositories-onprem_one": "Your instance is limited to {{count}} connected repositories",
       "message-both-repositories-onprem_other": "Your instance is limited to {{count}} connected repositories",
-      "message-both-resources_one": "and {{count}} synced resource per repository.",
+      "message-both-resources_one": "and {{count}} synced resources per repository.",
       "message-both-resources_other": "and {{count}} synced resources per repository.",
-      "message-both-resources-onprem_one": "and {{count}} synced resource per repository.",
+      "message-both-resources-onprem_one": "and {{count}} synced resources per repository.",
       "message-both-resources-onprem_other": "and {{count}} synced resources per repository.",
-      "message-repository_one": "Your account is limited to {{count}} connected repository.",
+      "message-repository_one": "Your account is limited to {{count}} connected repositories.",
       "message-repository_other": "Your account is limited to {{count}} connected repositories.",
-      "message-repository-onprem_one": "Your instance is limited to {{count}} connected repository.",
+      "message-repository-onprem_one": "Your instance is limited to {{count}} connected repositories.",
       "message-repository-onprem_other": "Your instance is limited to {{count}} connected repositories.",
-      "message-resource_one": "Your account is limited to {{count}} synced resource per repository.",
+      "message-resource_one": "Your account is limited to {{count}} synced resources per repository.",
       "message-resource_other": "Your account is limited to {{count}} synced resources per repository.",
-      "message-resource-onprem_one": "Your instance is limited to {{count}} synced resource per repository.",
+      "message-resource-onprem_one": "Your instance is limited to {{count}} synced resources per repository.",
       "message-resource-onprem_other": "Your instance is limited to {{count}} synced resources per repository.",
       "note": "Note:",
       "to-increase-limits": "To add more {{type}},",
@@ -14754,15 +14755,21 @@
     },
     "presets": {
       "horizontal-threshold-value": "Horizontal threshold value",
+      "horizontal-threshold-value-desc": "Horizontal, value color from thresholds, no sparkline",
       "horizontal-threshold-value-sparkline": "Horizontal threshold value with sparkline",
+      "horizontal-threshold-value-sparkline-desc": "Horizontal, value color from thresholds, area sparkline",
       "list": "List",
-      "list_desc": "Color mode none, text mode value and name, text align center, single color",
+      "list_desc": "Compact horizontal list, centered, name and value, sparkline",
       "threshold-background": "Threshold background",
+      "threshold-background-desc": "Background color from thresholds, no sparkline",
       "threshold-background-sparkline": "Threshold background with sparkline",
+      "threshold-background-sparkline-desc": "Background color from thresholds, area sparkline",
       "threshold-value": "Threshold value",
+      "threshold-value-desc": "Value color from thresholds, no sparkline",
       "threshold-value-sparkline": "Threshold value with sparkline",
+      "threshold-value-sparkline-desc": "Value color from thresholds, area sparkline",
       "wide-list": "Wide list",
-      "wide-list-desc": "Color mode none, text mode value and name, text align center, single color"
+      "wide-list-desc": "Horizontal, name and value, area sparkline, single color"
     },
     "suggestions": {
       "stat": "Stat",
@@ -15261,12 +15268,12 @@
       "zoom-to-data": "Zoom to data"
     },
     "presets": {
-      "multi-many-points": "Points",
-      "multi-many-points-stacked": "Stacked points",
+      "multi-many-points": "Lines with points",
+      "multi-many-points-stacked": "Stacked lines",
       "multi-many-points-stacked-pct": "Stacked 100%",
-      "multi-points": "Points",
+      "multi-points": "Lines with points",
       "multi-stacked-bars": "Stacked bars",
-      "multi-stacked-points": "Stacked points",
+      "multi-stacked-points": "Stacked lines",
       "single-bars": "Bars",
       "single-bars-scheme": "Bars scheme",
       "single-dashed-threshold": "Dashed threshold",
