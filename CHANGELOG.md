@@ -2,6 +2,10 @@
 
 # 11.6.14+security-01 (2026-03-25)
 
+### Bug fixes
+
+- **Security:** CVE-2026-33375
+
 <!-- 11.6.14+security-01 END -->
 <!-- 11.6.14 START -->
 
