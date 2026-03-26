@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "",
       "aria-label-client-id": "ID Klien",
       "aria-label-client-secret": "Rahasia Klien",
+      "aria-label-private-key": "",
+      "aria-label-private-key-password": "",
       "aria-label-symbol-client-secret": "Rahasia Klien",
       "aria-label-tenant-id": "ID Tenant",
+      "description-certificate-format": "",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "",
+      "label-client-certificate": "",
       "label-client-id": "ID Aplikasi (klien)",
       "label-client-secret": "Rahasia Klien",
+      "label-private-key": "",
       "label-symbol-client-secret": "Rahasia Klien",
+      "label-symbol-private-key-password": "",
       "label-tenant-id": "ID Direktori (tenant)",
       "placeholder-symbol-client-secret": "dikonfigurasi",
       "reset-symbol-client-secret": "Atur ulang"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Pilih jenis autentikasi ke layanan Azure",
-      "label-authentication": "Autentikasi",
+      "label-authentication": "",
       "title-authentication": "Autentikasi"
     },
     "basic-logs-toggle": {

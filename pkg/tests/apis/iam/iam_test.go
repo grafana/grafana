@@ -46,6 +46,7 @@ func TestIntegrationIdentity(t *testing.T) {
 		RBACSingleOrganization: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
+			featuremgmt.FlagKubernetesTeamsApi,
 			featuremgmt.FlagKubernetesUsersApi,
 			featuremgmt.FlagKubernetesServiceAccountsApi,
 			featuremgmt.FlagKubernetesServiceAccountTokensApi,

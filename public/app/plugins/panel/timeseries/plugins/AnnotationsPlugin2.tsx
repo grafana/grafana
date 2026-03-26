@@ -25,7 +25,7 @@ interface TimeRange2 {
 
 interface AnnotationsPluginProps {
   config: UPlotConfigBuilder;
-  annotations: DataFrame[];
+  annotations?: DataFrame[];
   timeZone: TimeZone;
   newRange: TimeRange2 | null;
   setNewRange: (newRange: TimeRange2 | null) => void;
@@ -64,6 +64,18 @@ function getVals(frame: DataFrame) {
   return vals;
 }
 
+/**
+ * @deprecated - remove and replace with AnnotationsPlugin2Cluster
+ * @param annotations
+ * @param timeZone
+ * @param config
+ * @param newRange
+ * @param setNewRange
+ * @param replaceVariables
+ * @param canvasRegionRendering
+ * @param multiLane
+ * @constructor
+ */
 export const AnnotationsPlugin2 = ({
   annotations,
   timeZone,

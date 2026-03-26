@@ -703,19 +703,34 @@ func TestGetQuotaUsage(t *testing.T) {
 
 func TestCheckQuotas(t *testing.T) {
 	tests := []struct {
-		name        string
-		limit       int
-		expectError bool
+		name              string
+		limit             int
+		enforcedResources map[string]bool
+		expectError       bool
 	}{
 		{
-			name:        "will return error if quota exceeded",
-			limit:       1,
-			expectError: true,
+			name:              "enforced resource returns error if quota exceeded",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectError:       true,
 		},
 		{
-			name:        "will return nil if within quota",
-			limit:       2,
-			expectError: false,
+			name:              "enforced resource returns nil if within quota",
+			limit:             2,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectError:       false,
+		},
+		{
+			name:              "unlisted resource is not enforced even if over quota",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.folder.app/folders": true},
+			expectError:       false,
+		},
+		{
+			name:              "empty enforced resources means no enforcement",
+			limit:             1,
+			enforcedResources: nil,
+			expectError:       false,
 		},
 	}
 
@@ -752,7 +767,7 @@ func TestCheckQuotas(t *testing.T) {
 					}},
 				},
 				OverridesService: overridesService,
-				QuotasConfig:     QuotasConfig{EnforceQuotas: true},
+				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources},
 			})
 			require.NoError(t, err)
 			t.Cleanup(func() {
@@ -765,6 +780,51 @@ func TestCheckQuotas(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+		})
+	}
+}
+
+func TestShouldEnforce(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   QuotasConfig
+		group    string
+		resource string
+		expected bool
+	}{
+		{
+			name:     "returns true for listed resource",
+			config:   QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			expected: true,
+		},
+		{
+			name:     "returns false for unlisted resource",
+			config:   QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+			group:    "folder.grafana.app",
+			resource: "folders",
+			expected: false,
+		},
+		{
+			name:     "returns false when map is nil",
+			config:   QuotasConfig{},
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			expected: false,
+		},
+		{
+			name:     "returns false when map is empty",
+			config:   QuotasConfig{EnforcedResources: map[string]bool{}},
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.config.ShouldEnforce(tt.group, tt.resource))
 		})
 	}
 }

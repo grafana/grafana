@@ -11,6 +11,7 @@
     "build:react19": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.js --env react19=1",
     "build:nominify": "yarn run build -- --env noMinify=1",
     "build:stats": "NODE_ENV=production webpack --progress --config scripts/webpack/webpack.stats.js",
+    "build:smolstats": "NODE_ENV=production webpack --progress --config scripts/webpack/webpack.stats.js --env filtered=1 && http-server public/build -o bundle-stats-filtered.html",
     "codeowners-manifest": "node ./scripts/codeowners-manifest/index.js",
     "codeowners-manifest:clean": "rm -rf codeowners-manifest && mkdir -p codeowners-manifest",
     "codeowners-manifest:generate": "node ./scripts/codeowners-manifest/generate.js",
@@ -99,7 +100,7 @@
     "@emotion/eslint-plugin": "11.12.0",
     "@grafana/eslint-config": "8.2.0",
     "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
-    "@grafana/plugin-e2e": "3.4.0",
+    "@grafana/plugin-e2e": "3.4.7",
     "@grafana/test-utils": "workspace:*",
     "@manypkg/get-packages": "^3.0.0",
     "@npmcli/package-json": "^6.0.0",
@@ -285,9 +286,9 @@
     "@formatjs/intl-durationformat": "^0.7.0",
     "@grafana/alerting": "workspace:*",
     "@grafana/api-clients": "workspace:*",
-    "@grafana/assistant": "0.1.13",
+    "@grafana/assistant": "0.1.24",
     "@grafana/aws-sdk": "^0.10.1",
-    "@grafana/azure-sdk": "0.0.8",
+    "@grafana/azure-sdk": "0.1.0",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/faro-core": "^2.2.4",
@@ -304,8 +305,8 @@
     "@grafana/plugin-ui": "^0.13.1",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "7.1.1",
-    "@grafana/scenes-react": "7.1.1",
+    "@grafana/scenes": "7.1.8",
+    "@grafana/scenes-react": "7.1.8",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -474,7 +475,7 @@
     "js-yaml@npm:4.1.0": "^4.1.0",
     "js-yaml@npm:=4.1.0": "^4.1.0",
     "nodemailer": "7.0.12",
-    "@storybook/core@npm:8.6.15": "patch:@storybook/core@npm%3A8.6.15#~/.yarn/patches/@storybook-core-npm-8.6.15-a468a35170.patch"
+    "@storybook/core@npm:8.6.18": "patch:@storybook/core@npm%3A8.6.18#~/.yarn/patches/@storybook-core-npm-8.6.18-cff02a3017.patch"
   },
   "workspaces": {
     "packages": [

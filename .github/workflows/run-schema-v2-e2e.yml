@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-x64-large
     continue-on-error: true
     if: github.event.pull_request.draft == false
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v5
