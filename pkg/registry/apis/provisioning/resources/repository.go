@@ -39,7 +39,7 @@ type RepositoryResources interface {
 	ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string) (string, schema.GroupVersionKind, error)
 	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, string, schema.GroupVersionKind, error)
 	FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error)
-	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string) (string, string, schema.GroupVersionKind, error)
+	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, error)
 	// Stats
 	Stats(ctx context.Context) (*provisioning.ResourceStats, error)
 	List(ctx context.Context) (*provisioning.ResourceList, error)

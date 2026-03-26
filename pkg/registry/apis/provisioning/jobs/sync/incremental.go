@@ -289,7 +289,12 @@ func applyIncrementalChanges(ctx context.Context, diff []repository.VersionedFil
 				renameFolderSpan.End()
 			} else {
 				renameCtx, renameSpan := tracer.Start(ctx, "provisioning.sync.incremental.rename_resource_file")
-				name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref)
+				var renameOpts []resources.EnsurePathOption
+				dir := safepath.EnsureTrailingSlash(safepath.Dir(change.Path))
+				if uids, ok := relocations[dir]; ok {
+					renameOpts = append(renameOpts, resources.WithRelocatingUIDs(uids...))
+				}
+				name, oldFolderName, gvk, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)
 				if err != nil {
 					renameSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))
