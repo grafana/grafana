@@ -2288,7 +2288,7 @@ func TestKvStorageBackend_ClusterScopedResources(t *testing.T) {
 	})
 
 	t.Run("sqlkv", func(t *testing.T) {
-		backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)))
+		backend := setupTestStorageBackend(t, withKV(setupSqlKV(t)), withChannelNotifier)
 		testClusterScopedResources(t, backend)
 	})
 }
