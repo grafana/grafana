@@ -208,7 +208,7 @@ describe('useOrganizeFields', () => {
   });
 
   describe('log level column enhancements', () => {
-    test.only('applies default level mapping and pill cell mode for level field', async () => {
+    test('applies default level mapping and pill cell mode for level field', async () => {
       const { result: organizedFields } = renderHook(() =>
         useOrganizeFields({
           extractedFrame,
