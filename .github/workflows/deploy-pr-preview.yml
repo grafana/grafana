@@ -36,3 +36,4 @@ jobs:
           }
         ]
       title: ${{ github.event.pull_request.title }}
+      toolkit_ref: robbymilo/deploy-preview
