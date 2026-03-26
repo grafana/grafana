@@ -7,19 +7,13 @@ import {
   fetchCommunityDashboards,
   fetchProvisionedDashboards,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/api/dashboardLibraryApi';
-import {
-  EVENT_LOCATIONS,
-  PAGE_SIZE,
-  SourceEntryPoint,
-} from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import { EVENT_LOCATIONS, PAGE_SIZE, SourceEntryPoint } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { GnetDashboard } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 import {
   DEFAULT_SORT_ORDER,
   DEFAULT_SORT_DIRECTION,
-  COMMUNITY_PAGE_SIZE_QUERY,
   INCLUDE_LOGO,
   INCLUDE_SCREENSHOTS,
-  COMMUNITY_RESULT_SIZE,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/communityDashboardHelpers';
 import { PluginDashboard } from 'app/types/plugins';
 
@@ -106,7 +100,7 @@ export const SuggestedDashboardsLoader = ({
             orderBy: DEFAULT_SORT_ORDER,
             direction: DEFAULT_SORT_DIRECTION,
             page: 1,
-            pageSize: COMMUNITY_PAGE_SIZE_QUERY,
+            pageSize: PAGE_SIZE,
             includeLogo: INCLUDE_LOGO,
             includeScreenshots: INCLUDE_SCREENSHOTS,
             dataSourceSlugIn: ds.type,
@@ -115,7 +109,7 @@ export const SuggestedDashboardsLoader = ({
           .then(([provisioned, communityResponse]) => {
             const result: DashboardFetchResult = {
               provisioned,
-              community: communityResponse.items.slice(0, COMMUNITY_RESULT_SIZE),
+              community: communityResponse.items,
             };
             dashboardCache.set(ds.type, result);
             setCommunityTotalPages(communityResponse.pages);

@@ -14,12 +14,6 @@ import { GnetDashboard, Link } from '../types';
 
 import { InputMapping, tryAutoMapDatasources, parseConstantInputs, isDataSourceInput } from './autoMapDatasources';
 
-// Constants for community dashboard pagination and API params
-// We want to get the most 6 downloaded dashboards, but we first query 12
-// to be sure the next filters we apply to that list doesn not reduce it below 6
-export const COMMUNITY_PAGE_SIZE_QUERY = 12;
-export const COMMUNITY_RESULT_SIZE = 6;
-
 export const SEARCH_DEBOUNCE_MS = 500;
 export const DEFAULT_SORT_ORDER = 'downloads';
 export const DEFAULT_SORT_DIRECTION = 'desc';
