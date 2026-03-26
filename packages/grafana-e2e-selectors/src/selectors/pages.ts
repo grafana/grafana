@@ -621,6 +621,9 @@ export const versionedPages = {
             modeToggle: {
               '11.0.0': 'data-testid ad-hoc filters variable mode toggle',
             },
+            enableGroupByToggle: {
+              '13.0.0': 'data-testid ad-hoc filters variable enable group by toggle',
+            },
           },
           SwitchVariable: {
             valuePairTypeSelect: {
@@ -662,6 +665,9 @@ export const versionedPages = {
       },
       marker: {
         '10.0.0': 'data-testid annotation-marker',
+      },
+      clusterTooltip: {
+        '13.0.0': 'data-testid annotation-cluster-tooltip',
       },
     },
     Rows: {

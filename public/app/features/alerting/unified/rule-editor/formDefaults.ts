@@ -251,10 +251,12 @@ export function formValuesFromPrefill(rule: Partial<RuleFormValues>): RuleFormVa
     parsedRule = alertingAlertRuleFormSchema.parse(rule);
   }
 
-  return revealHiddenQueries({
-    ...getDefaultFormValues(rule.type),
-    ...parsedRule,
-  });
+  return setQueryEditorSettings(
+    revealHiddenQueries({
+      ...getDefaultFormValues(rule.type),
+      ...parsedRule,
+    })
+  );
 }
 
 export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>) {

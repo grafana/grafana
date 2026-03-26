@@ -1,9 +1,8 @@
-import { chain, cloneDeep, defaults, find } from 'lodash';
+import { cloneDeep, defaults, find } from 'lodash';
 
 import { PanelPluginMeta, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import config from 'app/core/config';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -90,12 +89,7 @@ export function onPasteCopiedPanel(dashboard: DashboardModel, panelPluginInfo?: 
   dashboard.addPanel(newPanel);
 }
 
-export function getCopiedPanelPlugin(): (PanelPluginMeta & PanelPluginInfo) | undefined {
-  const panels = chain(config.panels)
-    .filter({ hideFromList: false })
-    .map((item) => item)
-    .value();
-
+export function getCopiedPanelPlugin(panels: PanelPluginMeta[]): (PanelPluginMeta & PanelPluginInfo) | undefined {
   const copiedPanelJson = store.get(LS_PANEL_COPY_KEY);
   if (copiedPanelJson) {
     const copiedPanel = JSON.parse(copiedPanelJson);

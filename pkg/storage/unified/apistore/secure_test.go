@@ -35,9 +35,9 @@ func TestSecureLifecycle(t *testing.T) {
 
 	t.Run("create secure values", func(t *testing.T) {
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
-		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA")).
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA"), (*string)(nil)).
 			Return("NameForA", nil).Once()
-		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB")).
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB"), (*string)(nil)).
 			Return("NameForB", nil).Once()
 
 		info := &objectForStorage{}
@@ -69,9 +69,9 @@ func TestSecureLifecycle(t *testing.T) {
 		info := &objectForStorage{}
 		expectError := fmt.Errorf("expected error")
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
-		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA")).
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA"), (*string)(nil)).
 			Return("", expectError).Maybe()
-		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB")).
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretBBB"), (*string)(nil)).
 			Return("", expectError).Maybe()
 
 		err := prepareSecureValues(context.Background(), secureStore, obj, nil, info)
@@ -185,6 +185,32 @@ func TestSecureLifecycle(t *testing.T) {
 		info := &objectForStorage{}
 		err := prepareSecureValues(context.Background(), secureStore, obj, resourceWithSecureValues(nil), info)
 		require.Nil(t, err, "should noop when previous value does not exist")
+		require.False(t, info.hasChanged, "noop remove should not mark the object as changed")
+		secure, err := obj.GetSecureValues()
+		require.NoError(t, err)
+		require.Empty(t, secure, "noop remove should be stripped before the object is written")
+		secureStore.AssertExpectations(t)
+	})
+
+	t.Run("remove invalid secure values while creating others", func(t *testing.T) {
+		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore.On("CreateInline", mock.Anything, mock.Anything, common.RawSecureValue("SecretAAA"), (*string)(nil)).
+			Return("NameForA", nil).Once()
+
+		obj := resourceWithSecureValues(common.InlineSecureValues{
+			"a": common.InlineSecureValue{Create: "SecretAAA"},
+			"b": common.InlineSecureValue{Remove: true}, // b does not exist in previous value
+		})
+
+		info := &objectForStorage{}
+		err := prepareSecureValues(context.Background(), secureStore, obj, resourceWithSecureValues(nil), info)
+		require.NoError(t, err)
+		require.True(t, info.hasChanged, "creating a secure value should still mark the object as changed")
+		secure, err := obj.GetSecureValues()
+		require.NoError(t, err)
+		require.JSONEq(t, `{
+			"a": {"name": "NameForA"}
+		}`, asJSON(secure, true))
 		secureStore.AssertExpectations(t)
 	})
 

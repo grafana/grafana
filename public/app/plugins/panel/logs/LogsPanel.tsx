@@ -29,6 +29,7 @@ import {
   LoadingState,
   rangeUtil,
   transformDataFrame,
+  store,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config, getAppEvents } from '@grafana/runtime';
@@ -53,6 +54,7 @@ import type { Options } from './panelcfg.gen';
 import {
   GetFieldLinksFn,
   isCoreApp,
+  isGrammar,
   isIsFilterLabelActive,
   isLogLineMenuCustomItems,
   isOnClickFilterLabel,
@@ -135,6 +137,9 @@ interface LogsPanelProps extends PanelProps<Options> {
    * Requires the `otelLogsFormatting`.
    * @alpha
    * showLogAttributes?: boolean
+   *
+   * Custom Prism grammar definition for highlighting. When used, the .prism-syntax-highlight CSS class name is applied to the component, to allow standard token colors to be applied.
+   * grammar?: Grammar
    */
 }
 const noCommonLabels: Labels = {};
@@ -172,6 +177,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
     timestampResolution,
     showLogAttributes,
     unwrappedColumns,
+    grammar,
   } = options;
   const isAscending = sortOrder === LogsSortOrder.Ascending;
   const style = useStyles2(getStyles);
@@ -593,6 +599,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
               enableLogDetails={enableLogDetails}
               fontSize={fontSize}
               getFieldLinks={getFieldLinks}
+              grammar={isGrammar(grammar) ? grammar : undefined}
               isLabelFilterActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
               initialScrollPosition={initialScrollPosition}
               loading={infiniteScrolling}
@@ -625,7 +632,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
               showControls={Boolean(showControls)}
               showFieldSelector={showFieldSelector}
               showLogAttributes={showLogAttributes}
-              showLevel={showLevel}
+              showLevel={storageKey ? store.getBool(`${storageKey}.showLevel`, showLevel ?? true) : showLevel}
               showTime={showTime}
               showUniqueLabels={showLabels}
               sortOrder={sortOrder}

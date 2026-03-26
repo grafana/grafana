@@ -138,12 +138,10 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
         }
       }
 
-      promise = getDashboardAPI('v1')
-        .getDashboardDTO(uid, params)
-        .then((result) => {
-          return result;
-        })
-        .catch((e) => {
+      promise = getDashboardAPI('v1').then(async (api) => {
+        try {
+          return await api.getDashboardDTO(uid, params);
+        } catch (e) {
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             console.error('Failed to load dashboard', e);
             e.isHandled = true;
@@ -153,7 +151,8 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
           }
 
           throw e;
-        });
+        }
+      });
     } else {
       throw new Error('Dashboard uid or slug required');
     }
@@ -204,12 +203,10 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
         }
       }
 
-      promise = getDashboardAPI('v2')
-        .getDashboardDTO(uid, params)
-        .then((result) => {
-          return result;
-        })
-        .catch((e) => {
+      promise = getDashboardAPI('v2').then(async (api) => {
+        try {
+          return await api.getDashboardDTO(uid, params);
+        } catch (e) {
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             console.error('Failed to load dashboard', e);
             e.isHandled = true;
@@ -219,7 +216,8 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
           }
 
           throw e;
-        });
+        }
+      });
     } else {
       throw new Error('Dashboard uid or slug required');
     }

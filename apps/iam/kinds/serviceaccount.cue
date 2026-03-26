@@ -8,8 +8,8 @@ serviceaccountKind: {
 	kind:       "ServiceAccount"
 	pluralName: "ServiceAccounts"
 	codegen: {
-		ts: { enabled: false }
-		go: { enabled: true }
+		ts: {enabled: false}
+		go: {enabled: true}
 	}
 }
 

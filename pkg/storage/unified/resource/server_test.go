@@ -703,19 +703,34 @@ func TestGetQuotaUsage(t *testing.T) {
 
 func TestCheckQuotas(t *testing.T) {
 	tests := []struct {
-		name        string
-		limit       int
-		expectError bool
+		name              string
+		limit             int
+		enforcedResources map[string]bool
+		expectError       bool
 	}{
 		{
-			name:        "will return error if quota exceeded",
-			limit:       1,
-			expectError: true,
+			name:              "enforced resource returns error if quota exceeded",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectError:       true,
 		},
 		{
-			name:        "will return nil if within quota",
-			limit:       2,
-			expectError: false,
+			name:              "enforced resource returns nil if within quota",
+			limit:             2,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectError:       false,
+		},
+		{
+			name:              "unlisted resource is not enforced even if over quota",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.folder.app/folders": true},
+			expectError:       false,
+		},
+		{
+			name:              "empty enforced resources means no enforcement",
+			limit:             1,
+			enforcedResources: nil,
+			expectError:       false,
 		},
 	}
 
@@ -752,7 +767,7 @@ func TestCheckQuotas(t *testing.T) {
 					}},
 				},
 				OverridesService: overridesService,
-				QuotasConfig:     QuotasConfig{EnforceQuotas: true},
+				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources},
 			})
 			require.NoError(t, err)
 			t.Cleanup(func() {
@@ -765,6 +780,51 @@ func TestCheckQuotas(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+		})
+	}
+}
+
+func TestShouldEnforce(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   QuotasConfig
+		group    string
+		resource string
+		expected bool
+	}{
+		{
+			name:     "returns true for listed resource",
+			config:   QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			expected: true,
+		},
+		{
+			name:     "returns false for unlisted resource",
+			config:   QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+			group:    "folder.grafana.app",
+			resource: "folders",
+			expected: false,
+		},
+		{
+			name:     "returns false when map is nil",
+			config:   QuotasConfig{},
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			expected: false,
+		},
+		{
+			name:     "returns false when map is empty",
+			config:   QuotasConfig{EnforcedResources: map[string]bool{}},
+			group:    "dashboard.grafana.app",
+			resource: "dashboards",
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.config.ShouldEnforce(tt.group, tt.resource))
 		})
 	}
 }
@@ -824,4 +884,155 @@ func Test_resourceVersionTime(t *testing.T) {
 				"expected time close to %v, got %v (diff %v)", tt.wantClose, got, diff)
 		})
 	}
+}
+
+func TestGracefulShutdown(t *testing.T) {
+	testUser := &identity.StaticRequester{
+		Type:           authlib.TypeUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
+	ctx := authlib.WithAuthInfo(context.Background(), testUser)
+
+	raw := []byte(`{
+		"apiVersion": "playlist.grafana.app/v0alpha1",
+		"kind": "Playlist",
+		"metadata": {
+			"name": "test-shutdown",
+			"uid": "shutdown-uid",
+			"namespace": "default"
+		},
+		"spec": { "title": "hello", "interval": "5m" }
+	}`)
+
+	key := &resourcepb.ResourceKey{
+		Group:     "playlist.grafana.app",
+		Resource:  "playlists",
+		Namespace: "default",
+		Name:      "test-shutdown",
+	}
+
+	newServer := func(t *testing.T) *server {
+		t.Helper()
+		db, err := badger.Open(badger.DefaultOptions("").
+			WithInMemory(true).
+			WithLogger(nil))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = db.Close() })
+
+		kvStore := NewBadgerKV(db)
+		store, err := NewKVStorageBackend(KVBackendOptions{
+			KvStore: kvStore,
+		})
+		require.NoError(t, err)
+
+		srv, err := NewResourceServer(ResourceServerOptions{
+			Backend: store,
+		})
+		require.NoError(t, err)
+		return srv
+	}
+
+	t.Run("rejects new writes after Stop is called", func(t *testing.T) {
+		srv := newServer(t)
+
+		// Stop the server
+		err := srv.Stop(context.Background())
+		require.NoError(t, err)
+
+		// Create should be rejected
+		_, err = srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: raw})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "server is stopping")
+
+		// Update should be rejected
+		_, err = srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: raw})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "server is stopping")
+
+		// Delete should be rejected
+		_, err = srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key})
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "server is stopping")
+	})
+
+	t.Run("Stop waits for in-flight write to complete", func(t *testing.T) {
+		srv := newServer(t)
+
+		// Start a Create in a goroutine — it will be in-flight when Stop is called
+		writeStarted := make(chan struct{})
+		writeDone := make(chan struct{})
+
+		// Use artificialSuccessfulWriteDelay to keep the write in-flight long enough
+		// for us to call Stop while it's still running
+		srv.artificialSuccessfulWriteDelay = 500 * time.Millisecond
+
+		go func() {
+			close(writeStarted)
+			_, _ = srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: raw})
+			close(writeDone)
+		}()
+
+		<-writeStarted
+		// Give the goroutine time to enter Create and call inflight.Add(1)
+		time.Sleep(50 * time.Millisecond)
+
+		// Stop should block until the in-flight write completes
+		stopDone := make(chan struct{})
+		go func() {
+			_ = srv.Stop(context.Background())
+			close(stopDone)
+		}()
+
+		// The write should finish before Stop returns
+		select {
+		case <-writeDone:
+			// expected: write finished
+		case <-time.After(5 * time.Second):
+			t.Fatal("timed out waiting for in-flight write to complete")
+		}
+
+		select {
+		case <-stopDone:
+			// expected: Stop returned after write completed
+		case <-time.After(5 * time.Second):
+			t.Fatal("timed out waiting for Stop to return")
+		}
+	})
+
+	t.Run("Stop respects context deadline when writes are stuck", func(t *testing.T) {
+		srv := newServer(t)
+
+		// Simulate a very slow write by using a large delay
+		srv.artificialSuccessfulWriteDelay = 10 * time.Second
+
+		writeStarted := make(chan struct{})
+		go func() {
+			close(writeStarted)
+			_, _ = srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: raw})
+		}()
+
+		<-writeStarted
+		time.Sleep(50 * time.Millisecond)
+
+		// Stop with a short deadline — should not wait forever
+		stopCtx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+		defer cancel()
+
+		stopDone := make(chan struct{})
+		go func() {
+			_ = srv.Stop(stopCtx)
+			close(stopDone)
+		}()
+
+		select {
+		case <-stopDone:
+			// expected: Stop returned after timeout, not after the 10s write
+		case <-time.After(5 * time.Second):
+			t.Fatal("Stop did not respect context deadline")
+		}
+	})
 }

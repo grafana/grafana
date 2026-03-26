@@ -55,7 +55,8 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
       (async () => {
         // value was manually changed from outside or we are rendering for the first time.
         // We need to fetch dashboard information.
-        const dto = await getDashboardAPI().getDashboardDTO(value, undefined);
+        const api = await getDashboardAPI();
+        const dto = await api.getDashboardDTO(value, undefined);
 
         if (isDashboardV2Resource(dto)) {
           setCurrent({
