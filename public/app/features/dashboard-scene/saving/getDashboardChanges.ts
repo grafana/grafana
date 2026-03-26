@@ -154,7 +154,7 @@ export function adHocVariableFiltersEqual(filtersA?: AdHocFilterWithLabels[], fi
 }
 
 function escapeCsvValue(value: string) {
-  return value.replace(/,/g, '\\,');
+  return value.replace(/\\/g, '\\\\').replace(/,/g, '\\,');
 }
 function customVariableQueryFromCurrent(
   variable: Extract<VariableKind, { kind: 'CustomVariable' }>
