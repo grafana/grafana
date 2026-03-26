@@ -39,9 +39,9 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@main
+      - uses: grafana/shared-workflows/actions/dockerhub-login@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         if: github.event.pull_request.head.repo.fork == false
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
+      - uses: grafana/shared-workflows/actions/login-to-gar@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         if: github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v5
         with:
@@ -90,7 +90,7 @@ jobs:
         uses: grafana/shared-workflows/actions/create-github-app-token@eb02241ed0a92aff205feab8ac3afcdf51c757c8 # create-github-app-token-v0.2.0
         with:
           github_app: "delivery-bot-app"
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
+      - uses: grafana/shared-workflows/actions/login-to-gar@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         id: login-to-gar
         with:
           registry: 'us-docker.pkg.dev'

@@ -8,7 +8,7 @@ on:
 jobs:
   download-sources-from-crowdin:
     if: github.repository == 'grafana/grafana'
-    uses: grafana/grafana-github-actions/.github/workflows/crowdin-download.yml@main
+    uses: grafana/grafana-github-actions/.github/workflows/crowdin-download.yml@ea6ae56f0c8cee10e6538c6e395f5dc1072bf3a2 # main
     with:
       crowdin_project_id: 5
       pr_labels: 'area/frontend, area/internationalization, no-changelog, no-backport'

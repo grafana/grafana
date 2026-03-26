@@ -144,7 +144,7 @@ jobs:
       - name: Get Vault secrets
         if: steps.check-e2e-changes.outputs.changes > 0
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         with:
           repo_secrets: |
             GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY

@@ -66,21 +66,21 @@ jobs:
   create_next_release_branch_grafana:
     name: Create next release branch (Grafana)
     needs: setup
-    uses: grafana/grafana/.github/workflows/create-next-release-branch.yml@main
+    uses: grafana/grafana/.github/workflows/create-next-release-branch.yml@d293db7a1e30541085fe18808ce3cf05825a3d0d # main
     with:
       ownerRepo: 'grafana/grafana'
       source: ${{ needs.setup.outputs.release_branch }}
   create_next_release_branch_enterprise:
     name: Create next release branch (Grafana Enterprise)
     needs: setup
-    uses: grafana/grafana/.github/workflows/create-next-release-branch.yml@main
+    uses: grafana/grafana/.github/workflows/create-next-release-branch.yml@d293db7a1e30541085fe18808ce3cf05825a3d0d # main
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       source: ${{ needs.setup.outputs.release_branch }}
   create_security_branch_grafana:
     name: Create security branch (Grafana Security Mirror)
     needs: setup
-    uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
+    uses: grafana/grafana/.github/workflows/create-security-branch.yml@d293db7a1e30541085fe18808ce3cf05825a3d0d # main
     with:
       release_branch: ${{ needs.setup.outputs.release_branch }}
       security_branch_number: "01"
@@ -88,7 +88,7 @@ jobs:
   create_security_branch_enterprise:
     name: Create security branch (Enterprise)
     needs: setup
-    uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
+    uses: grafana/grafana/.github/workflows/create-security-branch.yml@d293db7a1e30541085fe18808ce3cf05825a3d0d # main
     with:
       release_branch: ${{ needs.setup.outputs.release_branch }}
       security_branch_number: "01"
@@ -97,7 +97,7 @@ jobs:
     needs:
       - setup
       - create_next_release_branch_grafana
-    uses: grafana/grafana/.github/workflows/migrate-prs.yml@main
+    uses: grafana/grafana/.github/workflows/migrate-prs.yml@d293db7a1e30541085fe18808ce3cf05825a3d0d # main
     with:
       ownerRepo: 'grafana/grafana'
       from: ${{ needs.setup.outputs.release_branch }}
@@ -106,7 +106,7 @@ jobs:
     needs:
       - setup
       - create_next_release_branch_enterprise
-    uses: grafana/grafana/.github/workflows/migrate-prs.yml@main
+    uses: grafana/grafana/.github/workflows/migrate-prs.yml@d293db7a1e30541085fe18808ce3cf05825a3d0d # main
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       from: ${{ needs.setup.outputs.release_branch }}
@@ -123,7 +123,7 @@ jobs:
     # The github-release action retrieves the changelog using the /repos/grafana/grafana/contents/CHANGELOG.md API
     # endpoint.
     needs: setup
-    uses: grafana/grafana/.github/workflows/github-release.yml@main
+    uses: grafana/grafana/.github/workflows/github-release.yml@d293db7a1e30541085fe18808ce3cf05825a3d0d # main
     with:
       version: ${{ needs.setup.outputs.version }}
       dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}

@@ -84,7 +84,7 @@ jobs:
     name: Dispatch grafana-enterprise build
     steps:
       - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         with:
           repo_secrets: |
             GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
@@ -177,8 +177,8 @@ jobs:
             artifacts: targz:grafana:darwin/arm64:nocgo
             verify: true
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
+      - uses: grafana/shared-workflows/actions/dockerhub-login@c6d954f7cd9c0022018982e01268de6cb75b913c # dockerhub-login/v1.0.2
+      - uses: grafana/shared-workflows/actions/login-to-gar@f02682926bde2aa45a1a8b74409c94508d8952ec # main
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -211,7 +211,7 @@ jobs:
 
   publish-artifacts:
     name: Upload artifacts
-    uses: grafana/grafana/.github/workflows/publish-artifact.yml@main
+    uses: grafana/grafana/.github/workflows/publish-artifact.yml@d293db7a1e30541085fe18808ce3cf05825a3d0d # main
     permissions:
       id-token: write
     needs:
@@ -235,7 +235,7 @@ jobs:
       - setup
       - build
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: grafana/shared-workflows/actions/dockerhub-login@c6d954f7cd9c0022018982e01268de6cb75b913c # dockerhub-login/v1.0.2
       - uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: artifacts-list-linux-amd64
@@ -319,7 +319,7 @@ jobs:
       - setup
     steps:
       - id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         with:
           repo_secrets: |
             GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY

@@ -65,7 +65,7 @@ jobs:
           echo "deploy-name=pr_${PR_NUMBER}_${SANITIZED_BRANCH:0:30}" >> "$GITHUB_OUTPUT"
 
       - name: Upload Storybook
-        uses: grafana/shared-workflows/actions/push-to-gcs@main
+        uses: grafana/shared-workflows/actions/push-to-gcs@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         with:
           environment: prod
           bucket: ${{ env.BUCKET_NAME }}

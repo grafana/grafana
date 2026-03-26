@@ -31,7 +31,7 @@ jobs:
             FSPERF_PASSWORD=frontend_perf_tests:fsperf_password
 
       - name: Authenticate Docker
-        uses: grafana/shared-workflows/actions/login-to-gar@main
+        uses: grafana/shared-workflows/actions/login-to-gar@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         id: login-to-gar
         with:
           registry: 'us-docker.pkg.dev'

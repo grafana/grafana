@@ -40,7 +40,7 @@ jobs:
     steps:
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@f02682926bde2aa45a1a8b74409c94508d8952ec # main
         with:
           # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
           repo_secrets: |
@@ -52,7 +52,7 @@ jobs:
           app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Migrate PRs
-        uses: grafana/grafana-github-actions-go/migrate-open-prs@main
+        uses: grafana/grafana-github-actions-go/migrate-open-prs@8f6bbbb778adfec42f3a336bcfd8aa72d3ae4db4 # main
         with:
           token: ${{ steps.generate_token.outputs.token }}
           ownerRepo: ${{ inputs.ownerRepo }}
