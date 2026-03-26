@@ -6473,6 +6473,7 @@
       "description": {
         "action": "Change variable description"
       },
+      "description-tooltip": "Variable description",
       "hide": {
         "action": "Change variable hide option"
       },
