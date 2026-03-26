@@ -27,7 +27,7 @@ import (
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"

@@ -63,8 +63,8 @@ function isLibraryElementExport(value: unknown): value is LibraryElementExport {
   );
 }
 
-function hasUid(query: Record<string, unknown> | {}): query is { uid: string } {
-  return 'uid' in query && typeof query['uid'] === 'string';
+function hasUid(query: unknown): query is { uid: string } {
+  return isRecord(query) && typeof query['uid'] === 'string';
 }
 
 function getExportLabel(labels?: { [ExportLabel]?: string }): string | undefined {
@@ -582,16 +582,28 @@ function processAnnotation(
   return annotation;
 }
 
+function getDSUid(datasource: unknown): string | null {
+  if (typeof datasource === 'string' && datasource.startsWith('$')) {
+    return datasource;
+  }
+  if (hasUid(datasource) && datasource.uid.startsWith('$')) {
+    return datasource.uid;
+  }
+  return null;
+}
+
 function resolveInputDatasource(
   datasource: Panel['datasource'],
   inputs: { dataSources: DataSourceInput[] },
   form: ImportDashboardDTO
 ): Panel['datasource'] {
-  if (datasource && hasUid(datasource) && datasource.uid.startsWith('$')) {
-    const userInput = checkUserInputMatch(datasource.uid, inputs.dataSources, form.dataSources);
+  const dsUid = getDSUid(datasource);
+
+  if (dsUid) {
+    const userInput = checkUserInputMatch(dsUid, inputs.dataSources, form.dataSources);
     if (userInput) {
       return {
-        ...datasource,
+        ...(isRecord(datasource) ? datasource : {}),
         uid: userInput.uid,
       };
     }
@@ -599,47 +611,26 @@ function resolveInputDatasource(
   return datasource;
 }
 
-function resolveInputTargets(
-  targets: Panel['targets'],
-  inputs: { dataSources: DataSourceInput[] },
-  form: ImportDashboardDTO
-): Panel['targets'] {
-  return targets?.map((target) => {
-    if (target.datasource && hasUid(target.datasource) && target.datasource.uid.startsWith('$')) {
-      const userInput = checkUserInputMatch(target.datasource.uid, inputs.dataSources, form.dataSources);
-      if (userInput) {
-        return {
-          ...target,
-          datasource: {
-            ...target.datasource,
-            uid: userInput.uid,
-          },
-        };
-      }
-    }
-    return target;
-  });
-}
-
 function processPanel(
   panel: Panel | RowPanel,
   inputs: { dataSources: DataSourceInput[] },
   form: ImportDashboardDTO
 ): Panel | RowPanel {
-  if ('panels' in panel) {
-    return {
-      ...panel,
-      ...(panel.datasource && { datasource: resolveInputDatasource(panel.datasource, inputs, form) }),
-      panels: panel.panels.map((nestedPanel) => {
-        return processPanel(nestedPanel, inputs, form);
-      }),
-    };
-  }
-
   return {
     ...panel,
     ...(panel.datasource && { datasource: resolveInputDatasource(panel.datasource, inputs, form) }),
-    ...(panel.targets && { targets: resolveInputTargets(panel.targets, inputs, form) }),
+    // nested panels of collapsed rows
+    ...('panels' in panel && {
+      panels: panel.panels.map((nestedPanel) => processPanel(nestedPanel, inputs, form)),
+    }),
+    ...('targets' in panel &&
+      panel.targets && {
+        targets: panel.targets.map((target) =>
+          target.datasource
+            ? { ...target, datasource: resolveInputDatasource(target.datasource, inputs, form) }
+            : target
+        ),
+      }),
   };
 }
 

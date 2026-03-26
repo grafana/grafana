@@ -715,7 +715,7 @@ func getLayoutHeightFromTab(layout *dashv2alpha1.DashboardGridLayoutKindOrRowsLa
 // extractExpandedPanels extracts panels for an expanded row, adding them to the top level.
 // Y position handling:
 //   - Hidden header: Keep original relative Y (no adjustment)
-//   - Explicit row: Add (currentY - 1) to relative Y for absolute positioning
+//   - Explicit row: Add currentY to relative Y for absolute positioning
 //
 // Returns the panels and the new Y position for the next row.
 func extractExpandedPanels(elements map[string]dashv2alpha1.DashboardElement, layout *dashv2alpha1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind, currentY int64, isHiddenHeader bool, startY int64) ([]interface{}, int64, error) {
@@ -733,9 +733,9 @@ func extractExpandedPanels(elements map[string]dashv2alpha1.DashboardElement, la
 
 			adjustedItem := item
 			if !isHiddenHeader {
-				// For explicit rows: Y = item.Spec.Y + currentY - 1
-				// currentY has been incremented after row panel, so currentY - 1 gives offset
-				adjustedItem.Spec.Y = item.Spec.Y + currentY - 1
+				// For explicit rows: Y = item.Spec.Y + currentY
+				// currentY has been incremented after row panel and points to the first available position for content below the row.
+				adjustedItem.Spec.Y = item.Spec.Y + currentY
 			}
 			// For hidden headers: don't adjust Y, keep item.Spec.Y as-is
 
@@ -761,7 +761,7 @@ func extractExpandedPanels(elements map[string]dashv2alpha1.DashboardElement, la
 		// Calculate Y offset for panels
 		yOffset := startY
 		if !isHiddenHeader {
-			yOffset = currentY - 1
+			yOffset = currentY
 		}
 
 		autoGridPanels, err := convertAutoGridLayoutToPanelsWithOffset(elements, layout.AutoGridLayoutKind, yOffset)

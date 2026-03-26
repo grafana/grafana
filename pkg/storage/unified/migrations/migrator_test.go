@@ -21,6 +21,7 @@ import (
 	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	shorturl "github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,15 +40,8 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-// TestIntegrationMigrations verifies that legacy storage data is correctly migrated to unified storage.
-// The test follows a three-step process:
-// Step 1: inserts legacy data (migration disabled at startup)
-// Step 2: verifies that the data is not in unified storage
-// Step 3: migration runs at startup, and the test verifies that the data is in unified storage
-func TestIntegrationMigrations(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	migrationTestCases := []testcases.ResourceMigratorTestCase{
+func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
+	cases := []testcases.ResourceMigratorTestCase{
 		testcases.NewFoldersAndDashboardsTestCase(),
 		testcases.NewPlaylistsTestCase(),
 		testcases.NewShortURLsTestCase(),
@@ -55,14 +49,34 @@ func TestIntegrationMigrations(t *testing.T) {
 	// TODO: fix datasource migration tests on sqlite, see:
 	// https://github.com/grafana/grafana-enterprise/issues/11313
 	if !db.IsTestDbSQLite() {
-		migrationTestCases = append(migrationTestCases, testcases.NewDataSourceTestCase())
+		cases = append(cases, testcases.NewDataSourceTestCase())
 	}
+	return cases
+}
 
-	runMigrationTestSuite(t, migrationTestCases)
+// TestIntegrationMigrations verifies that legacy storage data is correctly migrated to unified storage.
+// The test follows a multi-step process:
+// Step 1: inserts legacy data (migration disabled at startup)
+// Step 2: verifies that the data is not in unified storage
+// Step 3: migration runs at startup, and the test verifies that the data is in unified storage
+func TestIntegrationMigrations(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	runMigrationTestSuite(t, defaultMigrationTestCases(), migrationTestOptions{})
+}
+
+// TestIntegrationKVMigrations runs the same migration test suite as TestIntegrationMigrations
+// but with the KV storage backend enabled instead of the SQL backend.
+func TestIntegrationKVMigrations(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	runMigrationTestSuite(t, defaultMigrationTestCases(), migrationTestOptions{enableSQLKVBackend: true})
+}
+
+type migrationTestOptions struct {
+	enableSQLKVBackend bool
 }
 
 // runMigrationTestSuite executes the migration test suite for the given test cases
-func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorTestCase) {
+func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorTestCase, opts migrationTestOptions) {
 	if db.IsTestDbSQLite() {
 		// Share the same SQLite DB file between steps
 		tmpDir := t.TempDir()
@@ -78,6 +92,13 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			}
 		})
 		t.Logf("Using shared database path: %s", dbPath)
+
+		// Reset the global testSQLStore singleton after this test suite finishes.
+		// testinfra sets testSQLStore to an engine pointing at the temp DB file above;
+		// when t.TempDir() cleanup deletes that file, the engine becomes stale.
+		// Without this, subsequent tests calling db.InitTestDB will try to truncate
+		// tables on the stale engine and fail with "attempt to write a readonly database".
+		t.Cleanup(db.CleanupTestDB)
 	}
 
 	// Clean up leftover state from previous test runs (e.g., renamed _legacy tables).
@@ -100,6 +121,11 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			}
 		}
 	}
+
+	// Provisioning requires dashboards/folders to be read from unified storage.
+	// Steps that use Mode0 (legacy-only) would fail the provisioning startup
+	// check, so we disable it throughout the migration test suite.
+	disableProvisioning := []string{featuremgmt.FlagProvisioning}
 
 	// Store UIDs created by each test case
 	type testCaseState struct {
@@ -131,12 +157,14 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 
 		// Set up test environment with Mode0 (writes only to legacy)
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			DisableDBCleanup:     true,
-			APIServerStorageType: "unified",
-			UnifiedStorageConfig: unifiedConfig,
-			EnableFeatureToggles: featureToggles,
+			AppModeProduction:     true,
+			DisableAnonymous:      true,
+			DisableDBCleanup:      true,
+			APIServerStorageType:  "unified",
+			UnifiedStorageConfig:  unifiedConfig,
+			EnableFeatureToggles:  featureToggles,
+			DisableFeatureToggles: disableProvisioning,
+			EnableSQLKVBackend:    opts.enableSQLKVBackend,
 		})
 		t.Cleanup(helper.Shutdown)
 		org1 = &helper.Org1
@@ -189,12 +217,14 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				DisableDBCleanup:     true,
-				APIServerStorageType: "unified",
-				UnifiedStorageConfig: unifiedConfig,
-				EnableFeatureToggles: featureToggles,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				DisableDBCleanup:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig:  unifiedConfig,
+				EnableFeatureToggles:  featureToggles,
+				DisableFeatureToggles: disableProvisioning,
+				EnableSQLKVBackend:    opts.enableSQLKVBackend,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -224,12 +254,14 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				DisableDBCleanup:     true,
-				APIServerStorageType: "unified",
-				UnifiedStorageConfig: unifiedConfig,
-				EnableFeatureToggles: featureToggles,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				DisableDBCleanup:      true,
+				APIServerStorageType:  "unified",
+				UnifiedStorageConfig:  unifiedConfig,
+				EnableFeatureToggles:  featureToggles,
+				DisableFeatureToggles: disableProvisioning,
+				EnableSQLKVBackend:    opts.enableSQLKVBackend,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -249,11 +281,13 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		// Migrations enabled by default will run automatically at startup and mode 5 is enforced by the config
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
 			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				DisableDBCleanup:     true,
-				APIServerStorageType: "unified",
-				EnableFeatureToggles: featureToggles,
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				DisableDBCleanup:      true,
+				APIServerStorageType:  "unified",
+				EnableFeatureToggles:  featureToggles,
+				DisableFeatureToggles: disableProvisioning,
+				EnableSQLKVBackend:    opts.enableSQLKVBackend,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,
@@ -299,6 +333,8 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 				UnifiedStorageConfig:   unifiedConfig,
 				MigrationParquetBuffer: true,
 				EnableFeatureToggles:   featureToggles,
+				DisableFeatureToggles:  disableProvisioning,
+				EnableSQLKVBackend:     opts.enableSQLKVBackend,
 			},
 			Org1Users: org1,
 			OrgBUsers: orgB,

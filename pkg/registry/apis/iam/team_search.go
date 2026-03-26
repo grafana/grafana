@@ -13,6 +13,11 @@ import (
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apiserver/pkg/endpoints/request"
+	k8srest "k8s.io/apiserver/pkg/registry/rest"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -52,11 +57,12 @@ var teamAccessControlChecks = []teamAccessControlCheck{
 }
 
 type TeamSearchHandler struct {
-	log          log.Logger
-	client       resourcepb.ResourceIndexClient
-	tracer       trace.Tracer
-	features     featuremgmt.FeatureToggles
-	accessClient authlib.AccessClient
+	log              log.Logger
+	client           resourcepb.ResourceIndexClient
+	tracer           trace.Tracer
+	features         featuremgmt.FeatureToggles
+	accessClient     authlib.AccessClient
+	teamBindingStore k8srest.Lister
 }
 
 func NewTeamSearchHandler(tracer trace.Tracer, dual dualwrite.Service, legacyTeamSearcher resourcepb.ResourceIndexClient, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles, accessClient authlib.AccessClient) *TeamSearchHandler {
@@ -132,6 +138,15 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 								},
 								{
 									ParameterProps: spec3.ParameterProps{
+										Name:        "membercount",
+										In:          "query",
+										Description: "when true, includes member count for each team in the response",
+										Required:    false,
+										Schema:      spec.BoolProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
 										Name:        "accesscontrol",
 										In:          "query",
 										Description: "when true, includes access control metadata in the response",
@@ -145,7 +160,7 @@ func (s *TeamSearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinitio
 										In:          "query",
 										Description: "sortable field",
 										Examples: map[string]*spec3.Example{
-											"default": {
+											"": {
 												ExampleProps: spec3.ExampleProps{
 													Summary: "default sorting",
 													Value:   "",
@@ -299,6 +314,13 @@ func (s *TeamSearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	if queryParams.Get("membercount") == "true" && s.teamBindingStore != nil {
+		if err := s.enrichWithMemberCounts(ctx, requester.GetNamespace(), searchResults.Hits); err != nil {
+			errhttp.Write(ctx, err, w)
+			return
+		}
+	}
+
 	if queryParams.Get("accesscontrol") == "true" && s.accessClient != nil {
 		if err := s.stampAccessControl(ctx, requester, searchResults.Hits); err != nil {
 			span.RecordError(err)
@@ -353,6 +375,39 @@ func (s *TeamSearchHandler) stampAccessControl(ctx context.Context, requester id
 	}
 
 	return nil
+}
+
+// enrichWithMemberCounts fetches member counts for each team hit concurrently.
+// errgroup is used as a bounded concurrency pool (SetLimit); the first error
+// from any goroutine is propagated to the caller.
+func (s *TeamSearchHandler) enrichWithMemberCounts(ctx context.Context, namespace string, hits []iamv0alpha1.GetSearchTeamsTeamHit) error {
+	if len(hits) == 0 {
+		return nil
+	}
+
+	var g errgroup.Group
+	g.SetLimit(10)
+
+	for i := range hits {
+		g.Go(func() error {
+			outgoingCtx := request.WithNamespace(ctx, namespace)
+			obj, err := s.teamBindingStore.List(outgoingCtx, &internalversion.ListOptions{
+				FieldSelector: fields.OneTermEqualSelector("spec.teamRef.name", hits[i].Name),
+			})
+			if err != nil {
+				return fmt.Errorf("failed to list team bindings for team %s: %w", hits[i].Name, err)
+			}
+			list, ok := obj.(*iamv0alpha1.TeamBindingList)
+			if !ok {
+				return fmt.Errorf("unexpected type from team binding list for team %s: %T", hits[i].Name, obj)
+			}
+			count := int64(len(list.Items))
+			hits[i].MemberCount = &count
+			return nil
+		})
+	}
+
+	return g.Wait()
 }
 
 func (s *TeamSearchHandler) write(w http.ResponseWriter, obj any) error {
