@@ -152,10 +152,11 @@ All shared test infrastructure lives in `common/testing.go`:
 | ------- | ----------- |
 | `provisioning/` (root) | `SecretsManagerEnableDBMigrations`, `WithoutExportFeatureFlag` |
 | `connection/` | none |
-| `foldermetadata/` | `WithProvisioningFolderMetadata` (SharedGitEnv — also hosts git-backed tests) |
 | `repository/` | `WithProvisioningFolderMetadata` |
 | `quota/` | none |
 | `jobs/` | none (GitHub mock in helper) |
+| `jobs/conflict/` | `DisableControllers` — controllers race with manual job updates |
+| `jobs/instanceauth/` | none — requires isolated server for instance-scoped RBAC checks |
 | `enterprise/` | enterprise repo types (skipped in OSS) |
 
 ### SharedGitEnv packages (git server required)
@@ -164,15 +165,17 @@ All shared test infrastructure lives in `common/testing.go`:
 | ------- | ----------- |
 | `git/` | none |
 | `git/sourcepath_guard/` | none |
+| `foldermetadata/` | `WithProvisioningFolderMetadata`, `WithRepositoryTypes(["git","local"])` — mixed-env (see below) |
 | `foldermetadata/incremental/` | `WithProvisioningFolderMetadata` |
 | `foldermetadata/full/` | none |
 
 ### Mixed-env package
 
-`foldermetadata/` uses `SharedGitEnv` with `WithProvisioningFolderMetadata` to support both
-local-filesystem tests and git-backed tests in a single package. The existing non-git tests
-use `sharedHelper(t)` (returns `*ProvisioningTestHelper`), while git-backed tests use
-`sharedGitHelper(t)` (returns `*GitTestHelper`).
+`foldermetadata/` uses `SharedGitEnv` with `WithProvisioningFolderMetadata` and
+`WithRepositoryTypes(["git","local"])` to support both local-filesystem tests and
+git-backed tests in a single package. The non-git tests use `sharedHelper(t)`
+(returns `*ProvisioningTestHelper`), while git-backed tests use `sharedGitHelper(t)`
+(returns `*GitTestHelper`).
 
 ## Migration Checklist for Other Packages
 
