@@ -11,8 +11,8 @@ import { ClipboardButton, DataLinkButton, IconButton, IconSize, useStyles2 } fro
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
 import { LogLabelStats } from '../LogLabelStats';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { FieldDef } from '../logParser';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../otel/formats';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { LogListFontSize } from './LogList';
@@ -107,12 +107,12 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
 const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   fieldsTable: css({
     display: 'grid',
-    gap: theme.spacing(1),
+    gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
     gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(10) : theme.spacing(11.5)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
-    gap: theme.spacing(1),
+    gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
     gridTemplateColumns: `auto 1fr`,
   }),
 });

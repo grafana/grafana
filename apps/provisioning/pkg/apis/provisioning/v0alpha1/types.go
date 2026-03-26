@@ -87,7 +87,7 @@ func (GitHubRepositoryConfig) OpenAPIModelName() string {
 }
 
 type GitRepositoryConfig struct {
-	// The repository URL (e.g. `https://github.com/example/test.git`).
+	// The repository URL (e.g. `https://github.com/example/test`).
 	URL string `json:"url,omitempty"`
 	// The branch to use in the repository.
 	Branch string `json:"branch"`
@@ -289,6 +289,11 @@ type RepositorySpec struct {
 	// The repository type.  When selected oneOf the values below should be non-nil
 	Type RepositoryType `json:"type"`
 
+	// Webhook settings for the repository.
+	// When specified, the base URL overrides the auto-detected Grafana public URL
+	// used to register webhooks with the external Git provider.
+	Webhook *WebhookConfig `json:"webhook,omitempty"`
+
 	// The repository on the local file system.
 	// Mutually exclusive with local | github.
 	Local *LocalRepositoryConfig `json:"local,omitempty"`
@@ -355,6 +360,19 @@ type SyncOptions struct {
 
 func (SyncOptions) OpenAPIModelName() string {
 	return OpenAPIPrefix + "SyncOptions"
+}
+
+type WebhookConfig struct {
+	// Base URL of the Grafana instance used to construct the webhook endpoint
+	// registered with the external Git provider. Only the base URL should be
+	// provided (e.g. `https://grafana.example.com`); the API path, namespace,
+	// and resource name are appended automatically. Trailing slashes are stripped.
+	// Must be a valid HTTP or HTTPS URL.
+	BaseURL string `json:"baseUrl,omitempty"`
+}
+
+func (WebhookConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "WebhookConfig"
 }
 
 // The status of a Repository.

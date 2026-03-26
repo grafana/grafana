@@ -222,6 +222,47 @@ func TestNewJobResourceResult_WithOwnershipConflictAsWarning(t *testing.T) {
 	assert.NotNil(t, result2.Warning(), "Error wrapping ResourceOwnershipConflictError should be stored as warning")
 }
 
+func TestNewJobResourceResult_WithUnmanagedConflictAsWarning(t *testing.T) {
+	name := "test-resource"
+	group := "test-group"
+	kind := "test-kind"
+	path := "/test/path"
+	action := repository.FileActionCreated
+
+	requestingManager := utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: "repo-1",
+	}
+	unmanagedErr := resources.NewResourceUnmanagedConflictError("test-resource", requestingManager)
+
+	result := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(unmanagedErr).
+		Build()
+
+	assert.Nil(t, result.Error(), "ResourceUnmanagedConflictError should be stored as warning, not error")
+	assert.NotNil(t, result.Warning(), "ResourceUnmanagedConflictError should be stored as warning")
+	assert.Equal(t, unmanagedErr, result.Warning())
+
+	wrappedErr := fmt.Errorf("writing resource from file: %w", unmanagedErr)
+
+	result2 := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(wrappedErr).
+		Build()
+
+	assert.Nil(t, result2.Error(), "Error wrapping ResourceUnmanagedConflictError should be stored as warning, not error")
+	assert.NotNil(t, result2.Warning(), "Error wrapping ResourceUnmanagedConflictError should be stored as warning")
+}
+
 func TestNewJobResourceResult_WithErrorAsRegularError(t *testing.T) {
 	name := "test-resource"
 	group := "test-group"
@@ -293,10 +334,77 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		assert.Empty(t, result.WarningReason())
 	})
 
+	t.Run("ResourceUnmanagedConflictError returns ReasonResourceInvalid", func(t *testing.T) {
+		unmanagedErr := resources.NewResourceUnmanagedConflictError("res",
+			utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "a"},
+		)
+		result := NewResourceResult().WithError(unmanagedErr).Build()
+
+		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
+	})
+
+	t.Run("wrapped ResourceUnmanagedConflictError returns ReasonResourceInvalid", func(t *testing.T) {
+		unmanagedErr := resources.NewResourceUnmanagedConflictError("res",
+			utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "a"},
+		)
+		wrapped := fmt.Errorf("writing resource: %w", unmanagedErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
+	})
+
 	t.Run("explicit WithWarning with QuotaExceededError returns reason", func(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		result := NewResourceResult().WithWarning(quotaErr).Build()
 
 		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+	})
+
+	t.Run("MissingFolderMetadata classifies as ReasonMissingFolderMetadata", func(t *testing.T) {
+		missingErr := &resources.MissingFolderMetadata{Path: "somefolder/"}
+		result := NewResourceResult().WithWarning(missingErr).Build()
+
+		assert.Equal(t, provisioning.ReasonMissingFolderMetadata, result.WarningReason())
+	})
+
+	t.Run("FolderMetadataConflict classifies as ReasonFolderMetadataConflict", func(t *testing.T) {
+		conflictErr := &resources.FolderMetadataConflict{Path: "somefolder/", Reason: "UID mismatch"}
+		result := NewResourceResult().WithWarning(conflictErr).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderMetadataConflict, result.WarningReason())
+	})
+
+	t.Run("wrapped FolderMetadataConflict classifies as ReasonFolderMetadataConflict", func(t *testing.T) {
+		conflictErr := &resources.FolderMetadataConflict{Path: "somefolder/", Reason: "UID mismatch"}
+		wrapped := fmt.Errorf("processing folder: %w", conflictErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonFolderMetadataConflict, result.WarningReason())
+	})
+}
+
+func TestIsNonFailingWarning(t *testing.T) {
+	t.Run("nil is not a non-failing warning", func(t *testing.T) {
+		assert.False(t, isNonFailingWarning(nil))
+	})
+
+	t.Run("MissingFolderMetadata is a non-failing warning", func(t *testing.T) {
+		assert.True(t, isNonFailingWarning(resources.NewMissingFolderMetadata("folder/")))
+	})
+
+	t.Run("InvalidFolderMetadata is a non-failing warning", func(t *testing.T) {
+		assert.True(t, isNonFailingWarning(resources.NewInvalidFolderMetadata("folder/", errors.New("bad json"))))
+	})
+
+	t.Run("FolderMetadataConflict is not a non-failing warning", func(t *testing.T) {
+		assert.False(t, isNonFailingWarning(&resources.FolderMetadataConflict{Path: "folder/", Reason: "UID mismatch"}))
+	})
+
+	t.Run("ResourceValidationError is not a non-failing warning", func(t *testing.T) {
+		assert.False(t, isNonFailingWarning(resources.NewResourceValidationError(errors.New("invalid"))))
+	})
+
+	t.Run("generic error is not a non-failing warning", func(t *testing.T) {
+		assert.False(t, isNonFailingWarning(errors.New("something went wrong")))
 	})
 }

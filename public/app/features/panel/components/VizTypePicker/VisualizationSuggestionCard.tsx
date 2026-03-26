@@ -4,7 +4,6 @@ import { CSSProperties, HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2, PanelData, PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { Tooltip, useStyles2 } from '@grafana/ui';
 
 import { PanelRenderer } from '../PanelRenderer';
@@ -13,17 +12,17 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   data: PanelData;
   width: number;
   suggestion: PanelPluginVisualizationSuggestion;
+  isSelected?: boolean;
 }
 
-export function VisualizationSuggestionCard({ data, suggestion, width, className, ...restProps }: Props) {
+export function VisualizationSuggestionCard({ data, suggestion, width, className, isSelected, ...restProps }: Props) {
   const styles = useStyles2(getStyles);
   const { innerStyles, outerStyles, renderWidth, renderHeight } = getPreviewDimensionsAndStyles(width);
   const cardOptions = suggestion.cardOptions ?? {};
-  const isNewVizSuggestionsEnabled = config.featureToggles.newVizSuggestions;
 
   const commonButtonProps = {
     'aria-label': suggestion.name,
-    className: cx(className, styles.vizBox),
+    className: cx(className, styles.vizBox, isSelected && styles.selected),
     'data-testid': selectors.components.VisualizationPreview.card(suggestion.name),
     style: outerStyles,
     ...restProps,
@@ -63,11 +62,7 @@ export function VisualizationSuggestionCard({ data, suggestion, width, className
     );
   }
 
-  if (!isNewVizSuggestionsEnabled) {
-    return <Tooltip content={suggestion.description ?? suggestion.name}>{content}</Tooltip>;
-  }
-
-  return content;
+  return <Tooltip content={suggestion.description ?? suggestion.name}>{content}</Tooltip>;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -92,6 +87,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         background: theme.colors.background.secondary,
         borderColor: theme.colors.primary.border,
       },
+    }),
+    selected: css({
+      borderColor: theme.colors.primary.border,
+      background: theme.colors.background.secondary,
     }),
     imgBox: css({
       display: 'flex',
@@ -125,6 +124,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       transformOrigin: 'left top',
       top: '6px',
       left: '6px',
+      '&& *': { scrollbarWidth: 'none' },
     }),
   };
 };
@@ -138,11 +138,21 @@ interface PreviewDimensionsAndStyles {
 
 function getPreviewDimensionsAndStyles(width: number): PreviewDimensionsAndStyles {
   const aspectRatio = 16 / 10;
-  const showWidth = width;
-  const showHeight = width * (1 / aspectRatio);
   const renderWidth = 350;
   const renderHeight = renderWidth * (1 / aspectRatio);
 
+  // width is 0 on the first render (before useMeasure)
+  if (width === 0) {
+    return {
+      renderWidth,
+      renderHeight,
+      outerStyles: { width: '100%', aspectRatio: `${aspectRatio}` },
+      innerStyles: { display: 'none' },
+    };
+  }
+
+  const showWidth = width;
+  const showHeight = width * (1 / aspectRatio);
   const padding = 6;
   const widthFactor = (showWidth - padding * 2) / renderWidth;
   const heightFactor = (showHeight - padding * 2) / renderHeight;

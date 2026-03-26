@@ -7,7 +7,8 @@ import (
 const OpenAPIPrefix = "com.github.grafana.grafana.apps.scope.pkg.apis.scope.v0alpha1."
 
 /*
-Please keep pkg/promlib/models/query.go and pkg/promlib/models/scope.go in sync
+Please keep https://github.com/grafana/grafana-prometheus-datasource/pkg/promlib/models/query.go and
+https://github.com/grafana/grafana-prometheus-datasource/pkg/promlib/models/scope.go in sync
 with this file until this package is out of the grafana/grafana module.
 */
 
@@ -101,6 +102,30 @@ type ScopeDashboardBindingList struct {
 
 func (ScopeDashboardBindingList) OpenAPIModelName() string {
 	return OpenAPIPrefix + "ScopeDashboardBindingList"
+}
+
+// ScopeNavigationOptions documents the optional query parameters accepted by
+// the /find/scope_dashboard_bindings and /find/scope_navigations connect
+// endpoints. This type is not a runtime.Object — it defines the API contract
+// for backends (including external implementations) to support as query params.
+// The Grafana connect handlers do not currently consume these via
+// NewConnectOptions; they parse query params from the request URL directly.
+type ScopeNavigationOptions struct {
+	// Depth represents the current nesting level in the rendered navigation
+	// tree. 0 or omitted means the request is for a top-level (non-nested)
+	// navigation. 1 means the first level of sub-scope expansion,
+	// 2 means a sub-scope within a sub-scope, and so on.
+	Depth int32 `json:"depth,omitempty"`
+	// RootScope identifies the top-level navigation scope the user started
+	// from. When navigating into sub-scopes, this stays constant and tells
+	// the backend which scope initiated the navigation session. This allows
+	// the backend to tailor its response based on the navigation origin.
+	// Omitted for top-level navigation requests.
+	RootScope string `json:"rootScope,omitempty"`
+}
+
+func (ScopeNavigationOptions) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ScopeNavigationOptions"
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

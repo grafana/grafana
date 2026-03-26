@@ -16,7 +16,7 @@ import (
 	k8srest "k8s.io/client-go/rest"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -36,10 +36,12 @@ func TestMain(m *testing.M) {
 func runDashboardTest(t *testing.T, mode rest.DualWriterMode, gvr schema.GroupVersionResource) {
 	t.Run("simple crud+list", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableAnonymous:      true,
-			DisableDataMigrations: true,
+			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
+					DualWriterMode: mode,
+				},
+				"folders.folder.grafana.app": {
 					DualWriterMode: mode,
 				},
 			},
@@ -134,7 +136,7 @@ func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
 	}
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v0alpha1 with dual writer mode %d", mode), func(t *testing.T) {
 			runDashboardTest(t, mode, gvr)
@@ -150,7 +152,7 @@ func TestIntegrationDashboardsAppV1(t *testing.T) {
 	}
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v1beta1 with dual writer mode %d", mode), func(t *testing.T) {
 			runDashboardTest(t, mode, gvr)
@@ -166,7 +168,7 @@ func TestIntegrationDashboardsAppV2beta1(t *testing.T) {
 	}
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("v1alpha2 with dual writer mode %d", mode), func(t *testing.T) {
 			runDashboardTest(t, mode, gvr)
@@ -179,7 +181,10 @@ func TestIntegrationLegacySupport(t *testing.T) {
 
 	ctx := context.Background()
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableDataMigrations: true,
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"dashboards.dashboard.grafana.app": {EnableMigration: false},
+			"folders.folder.grafana.app":       {EnableMigration: false},
+		},
 	})
 
 	clientV0 := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -508,16 +513,14 @@ func TestIntegrationListPagination(t *testing.T) {
 	}
 
 	// Test on modes with legacy
-	modes := []rest.DualWriterMode{rest.Mode1, rest.Mode2, rest.Mode3}
+	modes := []rest.DualWriterMode{rest.Mode1}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("pagination with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous:      true,
-				DisableDataMigrations: true,
+				DisableAnonymous: true,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: mode,
-					},
+					"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
+					"folders.folder.grafana.app":       {DualWriterMode: mode},
 				},
 			})
 			t.Cleanup(helper.Shutdown)
@@ -601,12 +604,10 @@ func TestIntegrationListPagination(t *testing.T) {
 
 		t.Run(fmt.Sprintf("history pagination with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous:      true,
-				DisableDataMigrations: true,
+				DisableAnonymous: true,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: mode,
-					},
+					"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
+					"folders.folder.grafana.app":       {DualWriterMode: mode},
 				},
 			})
 			t.Cleanup(helper.Shutdown)
@@ -694,7 +695,7 @@ func TestIntegrationListPagination(t *testing.T) {
 func TestIntegrationSearchTypeFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		runDashboardSearchTest(t, mode)
 	}
@@ -705,15 +706,14 @@ func runDashboardSearchTest(t *testing.T, mode rest.DualWriterMode) {
 		ctx := context.Background()
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     true,
-			DisableDataMigrations: true,
-			DisableAnonymous:      true,
-			APIServerStorageType:  "unified",
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			APIServerStorageType: "unified",
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {DualWriterMode: mode},
 				"folders.folder.grafana.app":       {DualWriterMode: mode},
 			},
-			UnifiedStorageDisableSearch: mode < rest.Mode3,
+			UnifiedStorageDisableSearch: mode < rest.Mode4,
 		})
 		defer helper.Shutdown()
 

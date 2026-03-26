@@ -113,6 +113,7 @@ type CreateNotificationqueryNotificationCount struct {
 	Status           *CreateNotificationqueryNotificationStatus  `json:"status,omitempty"`
 	Outcome          *CreateNotificationqueryNotificationOutcome `json:"outcome,omitempty"`
 	Error            *string                                     `json:"error,omitempty"`
+	RuleUID          *string                                     `json:"ruleUID,omitempty"`
 	// Count is the number of notification attempts in the time period. Set for counts queries.
 	Count int64 `json:"count"`
 	// Values is the list of (timestamp, count) pairs in the time series. Set for range_counts queries.

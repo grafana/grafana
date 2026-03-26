@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render } from 'test/test-utils';
 
 import { NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
 
 import { QuickAdd } from './QuickAdd';
 
@@ -39,12 +40,8 @@ const setup = () => {
       children: [{ text: 'New child 3', id: 'child3', url: 'section2/child3', isCreateAction: true }],
     },
   ];
-
-  return render(
-    <TestProvider storeState={{ navBarTree }}>
-      <QuickAdd />
-    </TestProvider>
-  );
+  const store = configureStore({ navBarTree });
+  return render(<QuickAdd />, { store });
 };
 
 describe('QuickAdd', () => {

@@ -57,6 +57,7 @@ export interface DashboardMeta {
   expires?: string;
   isFolder?: boolean;
   isSnapshot?: boolean;
+  snapshotKey?: string;
   folderTitle?: string;
   folderUrl?: string;
   folderId?: number;
@@ -101,7 +102,6 @@ export interface AnnotationActions {
 
 export interface AnnotationsPermissions {
   dashboard: AnnotationActions;
-  organization: AnnotationActions;
 }
 
 export interface SnapshotSpec {

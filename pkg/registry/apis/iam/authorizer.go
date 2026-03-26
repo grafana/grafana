@@ -2,6 +2,7 @@ package iam
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	authlib "github.com/grafana/authlib/types"
@@ -10,7 +11,6 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -66,7 +66,6 @@ func newIAMAuthorizer(
 
 	// Access specific resources
 	authorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
-	resourceAuthorizer[iamv0.CoreRoleInfo.GetName()] = iamauthorizer.NewCoreRoleAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.RoleInfo.GetName()] = roleApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.TeamLBACRuleInfo.GetName()] = teamLbacApiInstaller.GetAuthorizer()
 	resourceAuthorizer[iamv0.ResourcePermissionInfo.GetName()] = allowAuthorizer // Handled by the backend wrapper
@@ -74,7 +73,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.ServiceAccountResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = authorizer
 	resourceAuthorizer[iamv0.ExternalGroupMappingResourceInfo.GetName()] = externalGroupMappingApiInstaller.GetAuthorizer()
-	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = authorizer
+	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = newTeamAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.TeamBindingResourceInfo.GetName()] = allowAuthorizer
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
@@ -97,6 +96,43 @@ func (s *iamAuthorizer) Authorize(ctx context.Context, attr authorizer.Attribute
 	}
 
 	return authz.Authorize(ctx, attr)
+}
+
+// newTeamAuthorizer creates an authorizer for teams that handles the "members" subresource
+// with a get_permissions check on the parent team resource.
+func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
+	delegate := gfauthorizer.NewResourceAuthorizer(accessClient)
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		if !attr.IsResourceRequest() {
+			return authorizer.DecisionNoOpinion, "", nil
+		}
+
+		subresource := attr.GetSubresource()
+		if subresource == "members" {
+			ident, ok := authlib.AuthInfoFrom(ctx)
+			if !ok {
+				return authorizer.DecisionDeny, "", errors.New("no identity found")
+			}
+
+			res, err := accessClient.Check(ctx, ident, authlib.CheckRequest{
+				Verb:      utils.VerbGetPermissions,
+				Group:     attr.GetAPIGroup(),
+				Resource:  attr.GetResource(),
+				Namespace: attr.GetNamespace(),
+				Name:      attr.GetName(),
+			}, "")
+			if err != nil {
+				return authorizer.DecisionDeny, "", err
+			}
+			if !res.Allowed {
+				return authorizer.DecisionDeny, "requires team getpermissions", nil
+			}
+			return authorizer.DecisionAllow, "", nil
+		}
+
+		// Delegate to the standard ResourceAuthorizer for non-members subresources
+		return delegate.Authorize(ctx, attr)
+	})
 }
 
 func newLegacyAccessClient(ac accesscontrol.AccessControl, store legacy.LegacyIdentityStore) authlib.AccessClient {

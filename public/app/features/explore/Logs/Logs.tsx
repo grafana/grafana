@@ -1,41 +1,45 @@
 import { css, cx } from '@emotion/css';
 import { capitalize, groupBy } from 'lodash';
-import { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import * as React from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious, useUnmount } from 'react-use';
 
 import {
-  SplitOpen,
-  LogRowModel,
-  LogsMetaItem,
-  DataFrame,
   AbsoluteTimeRange,
-  GrafanaTheme2,
-  LoadingState,
-  TimeZone,
-  RawTimeRange,
-  DataQueryResponse,
-  LogRowContextOptions,
-  EventBus,
-  ExplorePanelsState,
-  TimeRange,
-  LogsDedupStrategy,
-  LogsSortOrder,
+  compareArrayValues,
   CoreApp,
-  LogsDedupDescription,
-  rangeUtil,
-  ExploreLogsPanelState,
+  DataFrame,
   DataHoverClearEvent,
   DataHoverEvent,
-  serializeStateToUrlParam,
-  urlUtil,
+  DataQueryResponse,
+  EventBus,
+  ExploreLogsPanelState,
+  ExplorePanelsState,
+  FieldConfigSource,
+  GrafanaTheme2,
+  LoadingState,
   LogLevel,
+  LogRowContextOptions,
+  LogRowModel,
+  LogsDedupDescription,
+  LogsDedupStrategy,
+  LogsMetaItem,
+  LogsSortOrder,
+  PanelData,
+  rangeUtil,
+  RawTimeRange,
+  serializeStateToUrlParam,
   shallowCompare,
+  SplitOpen,
   store,
+  TimeRange,
+  TimeZone,
+  toUtc,
+  urlUtil,
 } from '@grafana/data';
-import { Trans, t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, DataTopic } from '@grafana/schema';
+import { DataQuery, DataTopic, TableSortByFieldState } from '@grafana/schema';
 import {
   Button,
   InlineField,
@@ -56,15 +60,18 @@ import { LogRowContextModal } from 'app/features/logs/components/log-context/Log
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList, LogListOptions } from 'app/features/logs/components/panel/LogList';
 import { isDedupStrategy, isLogsSortOrder } from 'app/features/logs/components/panel/LogListContext';
-import { LogLevelColor, dedupLogRows } from 'app/features/logs/logsModel';
+import { dedupLogRows, LogLevelColor } from 'app/features/logs/logsModel';
 import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
+import { Options } from 'app/plugins/panel/logstable/options/types';
+import { BuildLinkToLogLine } from 'app/plugins/panel/logstable/types';
 import { getState } from 'app/store/store';
 import { ExploreItemState } from 'app/types/explore';
 import { useDispatch } from 'app/types/store';
 
+import { getDefaultFieldSelectorWidth } from '../../logs/components/fieldSelector/FieldSelector';
 import {
   contentOutlineTrackPinAdded,
   contentOutlineTrackPinClicked,
@@ -77,12 +84,16 @@ import { getUrlStateFromPaneState } from '../hooks/useStateSync/external.utils';
 import { changePanelState } from '../state/explorePane';
 import { changeQueries, runQueries } from '../state/query';
 
+import { ExploreLogsTable } from './ExploreLogsTable';
 import { LogsFeedback } from './LogsFeedback';
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsTableWrap, getLogsTableHeight } from './LogsTableWrap';
+import { getLogsTableHeight, LogsTableWrap } from './LogsTableWrap';
 import { LogsVolumePanelList } from './LogsVolumePanelList';
-import { SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { LogsVisualisationType } from './constants';
+import { LOGS_TABLE_SETTING_KEYS, SETTING_KEY_ROOT, SETTINGS_KEYS, visualisationTypeKey } from './utils/logs';
+import { getDefaultDisplayedFieldsFromExploreState } from './utils/table/columnsMigration';
+import { getDefaultTableSortBy } from './utils/table/logsTable';
 import { getExploreBaseUrl } from './utils/url';
 
 interface Props extends Themeable2 {
@@ -123,15 +134,13 @@ interface Props extends Themeable2 {
   eventBus: EventBus;
   panelState?: ExplorePanelsState;
   isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
-  logsFrames?: DataFrame[];
+  logsFrames: DataFrame[] | undefined;
   range: TimeRange;
   onClickFilterString?: (value: string, refId?: string) => void;
   onClickFilterOutString?: (value: string, refId?: string) => void;
   loadMoreLogs?(range: AbsoluteTimeRange): void;
   onPinLineCallback?: () => void;
 }
-
-export type LogsVisualisationType = 'table' | 'logs';
 
 // we need to define the order of these explicitly
 const DEDUP_OPTIONS = [
@@ -197,8 +206,24 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const [logsSortOrder, setLogsSortOrder] = useState<LogsSortOrder>(
     panelState?.logs?.sortOrder ?? store.get(SETTINGS_KEYS.logsSortOrder) ?? LogsSortOrder.Descending
   );
+  const tableFrameIndex: number = useMemo(() => {
+    const frameIndex = props.logsFrames?.findIndex((f) => f.refId === props.panelState?.logs?.refId);
+    if (frameIndex !== undefined && frameIndex !== -1) {
+      return frameIndex;
+    }
+    return 0;
+  }, [props.logsFrames, props.panelState?.logs?.refId]);
+
+  const tableSortByDefaultStringFromStorage: string = store.get(LOGS_TABLE_SETTING_KEYS.sortBy);
+  const [tableSortBy, setTableSortBy] = useState<TableSortByFieldState[]>(
+    getDefaultTableSortBy(tableSortByDefaultStringFromStorage, props?.logsFrames?.[tableFrameIndex], logsSortOrder)
+  );
+
+  const fieldSelectorWidthFromStorage = store.get(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth);
+  const [fieldSelectorWidth, setFieldSelectorWidth] = useState(
+    fieldSelectorWidthFromStorage ? parseInt(fieldSelectorWidthFromStorage, 10) : getDefaultFieldSelectorWidth()
+  );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
-  const [displayedFields, setDisplayedFields] = useState<string[]>(panelState?.logs?.displayedFields ?? []);
   const [defaultDisplayedFields, setDefaultDisplayedFields] = useState<string[]>([]);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
@@ -224,6 +249,44 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const hasData = logRows && logRows.length > 0;
   const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
 
+  const updatePanelState = useCallback(
+    (logsPanelState: Partial<ExploreLogsPanelState>) => {
+      const state: ExploreItemState | undefined = getState().explore.panes[exploreId];
+      if (state?.panelsState) {
+        dispatch(
+          changePanelState(exploreId, 'logs', {
+            ...state.panelsState.logs,
+            columns: logsPanelState.columns ?? panelState?.logs?.columns,
+            visualisationType: logsPanelState.visualisationType ?? visualisationType,
+            labelFieldName: logsPanelState.labelFieldName,
+            refId: logsPanelState.refId ?? panelState?.logs?.refId,
+            displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
+            tableSortBy: logsPanelState.tableSortBy ?? panelState?.logs?.tableSortBy,
+            tableSortDir: logsPanelState.tableSortDir ?? panelState?.logs?.tableSortDir,
+          })
+        );
+      }
+    },
+    [
+      dispatch,
+      exploreId,
+      panelState?.logs?.columns,
+      panelState?.logs?.displayedFields,
+      panelState?.logs?.refId,
+      panelState?.logs?.tableSortBy,
+      panelState?.logs?.tableSortDir,
+      visualisationType,
+    ]
+  );
+
+  const [displayedFields, setDisplayedFields] = useState<string[]>(
+    getDefaultDisplayedFieldsFromExploreState(
+      panelState?.logs,
+      updatePanelState,
+      config.featureToggles.logsTablePanelNG ?? false
+    )
+  );
+
   // Get pinned log lines
   const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
   const pinnedLogs = useMemo(
@@ -238,6 +301,11 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     const logsParent = outlineItems?.find((item) => item.panelId === PINNED_LOGS_PANELID && item.level === 'root');
     return logsParent?.children?.filter((child) => child.title === PINNED_LOGS_TITLE).length ?? 0;
   }, [outlineItems]);
+
+  const handleSetTableSortBy = useCallback((sortBy: TableSortByFieldState[]) => {
+    store.set(LOGS_TABLE_SETTING_KEYS.sortBy, JSON.stringify(sortBy));
+    setTableSortBy(sortBy);
+  }, []);
 
   useEffect(() => {
     if (getPinnedLogsCount() === PINNED_LOGS_LIMIT) {
@@ -311,36 +379,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
       })
     );
   });
-
-  const updatePanelState = useCallback(
-    (logsPanelState: Partial<ExploreLogsPanelState>) => {
-      const state: ExploreItemState | undefined = getState().explore.panes[exploreId];
-      if (state?.panelsState) {
-        dispatch(
-          changePanelState(exploreId, 'logs', {
-            ...state.panelsState.logs,
-            columns: logsPanelState.columns ?? panelState?.logs?.columns,
-            visualisationType: logsPanelState.visualisationType ?? visualisationType,
-            labelFieldName: logsPanelState.labelFieldName,
-            refId: logsPanelState.refId ?? panelState?.logs?.refId,
-            displayedFields: logsPanelState.displayedFields ?? panelState?.logs?.displayedFields,
-            tableSortBy: logsPanelState.tableSortBy ?? panelState?.logs?.tableSortBy,
-            tableSortDir: logsPanelState.tableSortDir ?? panelState?.logs?.tableSortDir,
-          })
-        );
-      }
-    },
-    [
-      dispatch,
-      exploreId,
-      panelState?.logs?.columns,
-      panelState?.logs?.displayedFields,
-      panelState?.logs?.refId,
-      panelState?.logs?.tableSortBy,
-      panelState?.logs?.tableSortDir,
-      visualisationType,
-    ]
-  );
 
   useEffect(() => {
     if (!shallowCompare(displayedFields, panelState?.logs?.displayedFields ?? [])) {
@@ -627,6 +665,49 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     [absoluteRange, displayedFields, exploreId, logRows, logsSortOrder, panelState, visualisationType]
   );
 
+  const onTablePermalinkClick: BuildLinkToLogLine = useCallback(
+    (logId: string) => {
+      // this is an extra check, to be sure that we are not
+      // creating permalinks for logs without an id-field.
+      // normally it should never happen, because we do not
+      // display the permalink button in such cases.
+      if (logId === undefined) {
+        return null;
+      }
+
+      // get explore state, add log-row-id and make timerange absolute
+      const urlState = getUrlStateFromPaneState(getState().explore.panes[exploreId]!);
+      urlState.panelsState = {
+        ...panelState,
+        logs: {
+          id: logId,
+          visualisationType: visualisationType ?? getDefaultVisualisationType(),
+          displayedFields,
+          sortOrder: logsSortOrder,
+        },
+      };
+
+      urlState.range = {
+        from: toUtc(props.range.from).valueOf().toString(),
+        to: toUtc(props.range.to).valueOf().toString(),
+      };
+
+      // append changed urlState to baseUrl
+      const serializedState = serializeStateToUrlParam(urlState);
+      const baseUrl = getExploreBaseUrl();
+      const url = urlUtil.renderUrl(`${baseUrl}/explore`, { left: serializedState });
+
+      createAndCopyShortLink(url);
+
+      reportInteraction('grafana_explore_logs_table_permalink_clicked', {
+        logRowUid: logId,
+      });
+
+      return url;
+    },
+    [displayedFields, exploreId, logsSortOrder, panelState, props.range.from, props.range.to, visualisationType]
+  );
+
   const scrollToTopLogs = useCallback(() => {
     if (logsContainerRef.current) {
       logsContainerRef.current.scroll({
@@ -759,6 +840,13 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     }
     setFilterLevels(levels.map((level) => getLogLevelFromKey(level)));
   }, []);
+
+  const enableNewLogsTable = config.featureToggles.logsTablePanelNG;
+  const panelData: PanelData = {
+    state: loading ? LoadingState.Loading : LoadingState.Done,
+    series: props.logsFrames ?? [],
+    timeRange: props.range,
+  };
 
   return (
     <>
@@ -981,30 +1069,90 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
           />
         </div>
         <div className={cx(styles.logsSection, visualisationType === 'table' ? styles.logsTable : undefined)}>
-          {!config.featureToggles.logsPanelControls && visualisationType === 'table' && hasData && (
-            <div className={styles.logRows} data-testid="logRowsTable">
-              {/* Width should be full width minus logs navigation and padding */}
-              <LogsTableWrap
-                logsSortOrder={logsSortOrder}
-                range={props.range}
-                splitOpen={splitOpen}
-                timeZone={timeZone}
-                width={width - 80}
-                logsFrames={props.logsFrames ?? []}
-                onClickFilterLabel={onClickFilterLabel}
-                onClickFilterOutLabel={onClickFilterOutLabel}
-                panelState={panelState?.logs}
-                updatePanelState={updatePanelState}
-                datasourceType={props.datasourceType}
-                displayedFields={displayedFields}
-                exploreId={props.exploreId}
-                absoluteRange={props.absoluteRange}
-                logRows={props.logRows}
-              />
-            </div>
+          {!enableNewLogsTable &&
+            !config.featureToggles.logsPanelControls &&
+            visualisationType === 'table' &&
+            hasData && (
+              <div className={styles.logRows} data-testid="logRowsTable">
+                <LogsTableWrap
+                  logsSortOrder={logsSortOrder}
+                  range={props.range}
+                  splitOpen={splitOpen}
+                  timeZone={timeZone}
+                  // Width should be full width minus logs navigation and padding
+                  width={width - 80}
+                  logsFrames={props.logsFrames ?? []}
+                  onClickFilterLabel={onClickFilterLabel}
+                  onClickFilterOutLabel={onClickFilterOutLabel}
+                  panelState={panelState?.logs}
+                  updatePanelState={updatePanelState}
+                  datasourceType={props.datasourceType}
+                  displayedFields={displayedFields}
+                  exploreId={props.exploreId}
+                  absoluteRange={props.absoluteRange}
+                  logRows={props.logRows}
+                />
+              </div>
+            )}
+
+          {enableNewLogsTable && visualisationType === 'table' && (
+            <ExploreLogsTable
+              eventBus={eventBus}
+              data={panelData}
+              timeZone={timeZone}
+              buildLinkToLogLine={onTablePermalinkClick}
+              externalOptions={{
+                sortOrder: logsSortOrder,
+                sortBy: tableSortBy,
+                displayedFields: displayedFields,
+                permalinkedLogId: props.panelState?.logs?.id,
+                frameIndex: tableFrameIndex,
+                fieldSelectorWidth: fieldSelectorWidth,
+              }}
+              width={width}
+              height={tableHeight}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              onOptionsChange={(options: Options) => {
+                if (options.displayedFields && !shallowCompare(options.displayedFields, displayedFields)) {
+                  setDisplayedFields(options.displayedFields);
+                }
+                if (options.sortOrder && options.sortOrder !== logsSortOrder) {
+                  onChangeLogsSortOrder(options.sortOrder);
+                  onLogOptionsChange('sortOrder', options.sortOrder);
+                }
+                if (options.fieldSelectorWidth !== undefined && options.fieldSelectorWidth !== fieldSelectorWidth) {
+                  store.set(LOGS_TABLE_SETTING_KEYS.fieldSelectorWidth, options.fieldSelectorWidth);
+                  setFieldSelectorWidth(options.fieldSelectorWidth);
+                }
+                if (
+                  options.sortBy &&
+                  !compareArrayValues(
+                    options?.sortBy ?? [],
+                    tableSortBy ?? [],
+                    (a, b) => a.displayName === b.displayName && a.desc === b.desc
+                  )
+                ) {
+                  handleSetTableSortBy(options.sortBy);
+                }
+
+                if (options.frameIndex !== tableFrameIndex) {
+                  const refId = props?.logsFrames?.[options.frameIndex]?.refId;
+                  if (refId) {
+                    updatePanelState({ refId });
+                  }
+                }
+              }}
+              onFieldConfigChange={function (config: FieldConfigSource): void {
+                // @todo save field overrides somewhere (e.g. column widths)
+              }}
+              onChangeTimeRange={onChangeTime}
+            />
           )}
-          {(!config.featureToggles.newLogsPanel || visualisationType === 'table') &&
+
+          {(!config.featureToggles.newLogsPanel || (visualisationType === 'table' && !enableNewLogsTable)) &&
             config.featureToggles.logsPanelControls &&
+            !enableNewLogsTable &&
             hasData && (
               <div className={styles.controlledLogRowsWrapper} data-testid="logRows">
                 <ControlledLogRows

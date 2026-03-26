@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,20 +32,18 @@ func TestIntegrationStars(t *testing.T) {
 
 	for _, mode := range []grafanarest.DualWriterMode{
 		grafanarest.Mode0,
-		grafanarest.Mode2,
-		grafanarest.Mode3,
+		grafanarest.Mode1,
 		grafanarest.Mode5,
 	} {
 		flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
-		if mode > grafanarest.Mode2 {
+		if mode >= grafanarest.Mode5 {
 			flags = append(flags, featuremgmt.FlagKubernetesStars)
 		}
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			DisableDataMigrations: true,
-			AppModeProduction:     false, // required for experimental APIs
-			DisableAnonymous:      true,
-			EnableFeatureToggles:  flags,
+			AppModeProduction:    false, // required for experimental APIs
+			DisableAnonymous:     true,
+			EnableFeatureToggles: flags,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: mode,
