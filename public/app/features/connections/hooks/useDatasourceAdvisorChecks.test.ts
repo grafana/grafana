@@ -1,11 +1,17 @@
 import { renderHook, act } from '@testing-library/react';
 
-import { Check, useListCheckQuery, useUpdateCheckMutation } from '@grafana/api-clients/rtkq/advisor/v0alpha1';
+import {
+  Check,
+  CheckType,
+  useGetCheckTypeQuery,
+  useListCheckQuery,
+  useUpdateCheckMutation,
+} from '@grafana/api-clients/rtkq/advisor/v0alpha1';
 import { config } from '@grafana/runtime';
 
 import {
+  useDatasourceFailureByUID,
   useLatestDatasourceCheck,
-  useFailedDatasourcesUIDs,
   useRetryDatasourceAdvisorCheck,
 } from './useDatasourceAdvisorChecks';
 
@@ -13,10 +19,12 @@ jest.mock('@grafana/api-clients/rtkq/advisor/v0alpha1', () => ({
   ...jest.requireActual('@grafana/api-clients/rtkq/advisor/v0alpha1'),
   useListCheckQuery: jest.fn(),
   useUpdateCheckMutation: jest.fn(),
+  useGetCheckTypeQuery: jest.fn(),
 }));
 
 const useListCheckMock = useListCheckQuery as jest.Mock;
 const useUpdateCheckMutationMock = useUpdateCheckMutation as jest.Mock;
+const useGetCheckTypeMock = useGetCheckTypeQuery as jest.Mock;
 
 function makeCheck(overrides: { name?: string; creationTimestamp?: string; failures?: Check['status'] }): Check {
   return {
@@ -32,6 +40,32 @@ function makeCheck(overrides: { name?: string; creationTimestamp?: string; failu
   };
 }
 
+function makeCheckType(
+  overrides: {
+    name?: string;
+    steps?: CheckType['spec']['steps'];
+  } = {}
+): CheckType {
+  return {
+    apiVersion: 'advisor.grafana.app/v0alpha1',
+    kind: 'CheckType',
+    metadata: {
+      name: overrides.name ?? 'datasource',
+    },
+    spec: {
+      name: overrides.name ?? 'datasource',
+      steps: overrides.steps ?? [
+        {
+          title: 'Health check',
+          description: 'Checks if datasource is healthy',
+          stepID: 'health-check',
+          resolution: 'Open datasource settings and address reported issues.',
+        },
+      ],
+    },
+  };
+}
+
 describe('useLatestDatasourceCheck', () => {
   const originalFeatureToggles = config.featureToggles;
 
@@ -43,6 +77,7 @@ describe('useLatestDatasourceCheck', () => {
       advisorDatasourceIntegration: true,
     };
     useUpdateCheckMutationMock.mockReturnValue([jest.fn(), {}]);
+    useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
   });
 
   afterEach(() => {
@@ -91,7 +126,7 @@ describe('useLatestDatasourceCheck', () => {
   });
 });
 
-describe('useFailedDatasourcesUIDs', () => {
+describe('useDatasourceFailureByUID', () => {
   const originalFeatureToggles = config.featureToggles;
 
   beforeEach(() => {
@@ -102,6 +137,7 @@ describe('useFailedDatasourcesUIDs', () => {
       advisorDatasourceIntegration: true,
     };
     useUpdateCheckMutationMock.mockReturnValue([jest.fn(), {}]);
+    useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
   });
 
   afterEach(() => {
@@ -111,7 +147,7 @@ describe('useFailedDatasourcesUIDs', () => {
   it('returns empty map when there are no checks', () => {
     useListCheckMock.mockReturnValue({ data: { items: [] }, isLoading: false });
 
-    const { result } = renderHook(() => useFailedDatasourcesUIDs());
+    const { result } = renderHook(() => useDatasourceFailureByUID());
 
     expect(result.current.datasourceFailureByUID.size).toBe(0);
   });
@@ -133,12 +169,12 @@ describe('useFailedDatasourcesUIDs', () => {
 
     useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
 
-    const { result } = renderHook(() => useFailedDatasourcesUIDs());
+    const { result } = renderHook(() => useDatasourceFailureByUID());
 
-    expect(result.current.datasourceFailureByUID.get('uid-1')).toBe('high');
-    expect(result.current.datasourceFailureByUID.get('uid-2')).toBe('high');
-    expect(result.current.datasourceFailureByUID.get('uid-3')).toBe('low');
-    expect(result.current.datasourceFailureByUID.get('uid-4')).toBe('high');
+    expect(result.current.datasourceFailureByUID.get('uid-1')?.severity).toBe('high');
+    expect(result.current.datasourceFailureByUID.get('uid-2')?.severity).toBe('high');
+    expect(result.current.datasourceFailureByUID.get('uid-3')?.severity).toBe('low');
+    expect(result.current.datasourceFailureByUID.get('uid-4')?.severity).toBe('high');
     expect(result.current.datasourceFailureByUID.size).toBe(4);
   });
 
@@ -157,9 +193,9 @@ describe('useFailedDatasourcesUIDs', () => {
 
     useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
 
-    const { result } = renderHook(() => useFailedDatasourcesUIDs());
+    const { result } = renderHook(() => useDatasourceFailureByUID());
 
-    expect(result.current.datasourceFailureByUID.get('uid-1')).toBe('high');
+    expect(result.current.datasourceFailureByUID.get('uid-1')?.severity).toBe('high');
     expect(result.current.datasourceFailureByUID.size).toBe(1);
   });
 
@@ -175,7 +211,7 @@ describe('useFailedDatasourcesUIDs', () => {
 
     useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
 
-    const { result } = renderHook(() => useFailedDatasourcesUIDs());
+    const { result } = renderHook(() => useDatasourceFailureByUID());
 
     expect(result.current.datasourceFailureByUID.size).toBe(0);
   });
@@ -184,10 +220,42 @@ describe('useFailedDatasourcesUIDs', () => {
     config.featureToggles = { ...originalFeatureToggles, grafanaAdvisor: false };
     useListCheckMock.mockReturnValue({ data: undefined, isLoading: false });
 
-    const { result } = renderHook(() => useFailedDatasourcesUIDs());
+    const { result } = renderHook(() => useDatasourceFailureByUID());
 
     expect(result.current.datasourceFailureByUID.size).toBe(0);
     expect(result.current.isLoading).toBe(false);
+  });
+
+  it('includes tooltip message from checktype step title and resolution', () => {
+    const check = makeCheck({
+      failures: {
+        report: {
+          count: 1,
+          failures: [{ item: 'prometheus', itemID: 'uid-1', stepID: 'health-check', severity: 'high', links: [] }],
+        },
+      },
+    });
+
+    useListCheckMock.mockReturnValue({ data: { items: [check] }, isLoading: false });
+    useGetCheckTypeMock.mockReturnValue({
+      data: makeCheckType({
+        steps: [
+          {
+            title: 'Health check',
+            description: 'Checks if datasource is healthy',
+            stepID: 'health-check',
+            resolution: 'Go to datasource settings and fix the reported issue.',
+          },
+        ],
+      }),
+      isLoading: false,
+    });
+
+    const { result } = renderHook(() => useDatasourceFailureByUID());
+
+    expect(result.current.datasourceFailureByUID.get('uid-1')?.message).toBe(
+      'Health check failed: Go to datasource settings and fix the reported issue.'
+    );
   });
 });
 
@@ -201,6 +269,7 @@ describe('useRetryDatasourceAdvisorCheck', () => {
       grafanaAdvisor: true,
       advisorDatasourceIntegration: true,
     };
+    useGetCheckTypeMock.mockReturnValue({ data: undefined, isLoading: false });
   });
 
   afterEach(() => {

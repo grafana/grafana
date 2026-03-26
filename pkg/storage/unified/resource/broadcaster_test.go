@@ -133,27 +133,28 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	defer cancel()
 
 	ch := make(chan int)
-	b := NewBroadcaster(ctx, ch)
 
-	// Create 101 subscribers that never read — more than the
-	// unsubscribe channel buffer (100) in the original code.
-	const numSubs = chanBufferLen + 1
+	// Use small overflow cap so slow consumers get disconnected quickly.
+	const subBuf = 10
+	const ovfCap = 20
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap)
+
+	// Create 101 subscribers that never read — enough to exceed the
+	// internal unsubscribe channel buffer and exercise bulk disconnect.
+	const numSubs = internalChanSize + 1
 	for i := 0; i < numSubs; i++ {
 		_, err := b.Subscribe(ctx, "test")
 		require.NoError(t, err)
 	}
 
-	// Fill all subscriber buffers (each buffered at 100), and keep sending more elements.
-	//
-	// Since all subscribers are slow, they should get unsubscribed
-	// eventually. In the original code, unsubscribing buf size + 1 subscribers would deadlock.
-	// Use a timeout to detect the deadlock.
+	// Fill all subscriber buffers + overflow until cap is exceeded.
+	// All subscribers are slow, so they all get disconnected on the same
+	// event. Use a timeout to detect deadlock.
 	done := make(chan struct{})
 	go func() {
-		for i := 0; i < 10*chanBufferLen; i++ {
+		for i := 0; i < subBuf+ovfCap+1; i++ {
 			ch <- i
 		}
-
 		close(done)
 	}()
 
@@ -163,4 +164,183 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("deadlock: stream() blocked trying to unsubscribe slow consumers")
 	}
+}
+
+func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan int)
+	t.Cleanup(func() { close(ch) })
+
+	const subBuf = 10
+	const ovfCap = 100
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap)
+
+	sub, err := b.Subscribe(ctx, "test")
+	require.NoError(t, err)
+
+	// Send more items than the subscriber buffer can hold.
+	// With overflow, the subscriber should NOT be disconnected.
+	const totalItems = subBuf + 20
+	go func() {
+		for i := 0; i < totalItems; i++ {
+			ch <- i
+		}
+	}()
+
+	// Read all items — they should arrive in order.
+	for i := 0; i < totalItems; i++ {
+		select {
+		case v, ok := <-sub:
+			require.True(t, ok, "subscriber channel closed prematurely at item %d", i)
+			require.Equal(t, i, v)
+		case <-time.After(2 * time.Second):
+			t.Fatalf("timed out waiting for item %d", i)
+		}
+	}
+}
+
+func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan int)
+	t.Cleanup(func() { close(ch) })
+
+	const subBuf = 10
+	const ovfCap = 20
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap)
+
+	sub, err := b.Subscribe(ctx, "test")
+	require.NoError(t, err)
+
+	// Send enough items to fill buffer + exceed overflow cap.
+	// The subscriber never reads, so it should be disconnected.
+	done := make(chan struct{})
+	go func() {
+		for i := 0; i < subBuf+ovfCap+10; i++ {
+			ch <- i
+		}
+		close(done)
+	}()
+
+	// Wait for all sends to complete — stream() processes them, subscriber
+	// gets disconnected after overflow cap exceeded.
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out: sender blocked")
+	}
+
+	// Drain any buffered items; channel should be closed.
+	for {
+		select {
+		case _, ok := <-sub:
+			if !ok {
+				return
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatal("timed out: subscriber was not disconnected after overflow cap exceeded")
+		}
+	}
+}
+
+func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan int)
+	t.Cleanup(func() { close(ch) })
+
+	// Subscriber buffer (defaultCacheSize + 100) > defaultCacheSize,
+	// so readInto should leave headroom.
+	const subBuf = defaultCacheSize + 100
+	const ovfCap = 1000
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap)
+
+	// Fill the cache to capacity by sending items through the input channel
+	// (no subscribers yet, so items only go to cache).
+	for i := 0; i < defaultCacheSize; i++ {
+		ch <- i
+	}
+
+	// Subscribe — readInto sends all cached items into the subscriber channel.
+	sub, err := b.Subscribe(ctx, "test")
+	require.NoError(t, err)
+
+	// Read one cached item to confirm the subscription is active.
+	select {
+	case _, ok := <-sub:
+		require.True(t, ok)
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for first cached item")
+	}
+
+	// Send additional events. The channel has headroom (buffer > cache)
+	// so these arrive without overflowing.
+	const extra = 10
+	for i := 0; i < extra; i++ {
+		ch <- 1000 + i
+	}
+
+	// Read all remaining items — subscriber should still be alive.
+	for i := 0; i < extra; i++ {
+		select {
+		case _, ok := <-sub:
+			require.True(t, ok, "subscriber disconnected at item %d", i)
+		case <-time.After(2 * time.Second):
+			t.Fatalf("timed out at item %d of %d", i, extra)
+		}
+	}
+}
+
+func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ch := make(chan int)
+	t.Cleanup(func() { close(ch) })
+
+	const subBuf = 10
+	const ovfCap = 100
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap)
+
+	sub, err := b.Subscribe(ctx, "test")
+	require.NoError(t, err)
+
+	// Send more items than the channel buffer can hold, causing overflow.
+	const totalItems = subBuf + 15
+	go func() {
+		for i := 0; i < totalItems; i++ {
+			ch <- i
+		}
+	}()
+
+	// Read all items to catch up.
+	for i := 0; i < totalItems; i++ {
+		select {
+		case _, ok := <-sub:
+			require.True(t, ok)
+		case <-time.After(2 * time.Second):
+			t.Fatalf("timed out waiting for item %d", i)
+		}
+	}
+
+	// Send one more event to confirm the subscriber is still alive
+	// and the overflow path is not active.
+	ch <- 999
+	select {
+	case v, ok := <-sub:
+		require.True(t, ok)
+		require.Equal(t, 999, v)
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out: subscriber not responsive after overflow recovery")
+	}
+
+	// Verify overflow is nil by checking internal state.
+	// The subscriber should have no overflow since it caught up.
+	s := b.subs[sub]
+	require.NotNil(t, s, "subscriber should still exist")
+	require.Nil(t, s.overflow, "overflow should be nil after subscriber caught up")
 }

@@ -78,9 +78,3 @@ type SearchAdapter struct {
 func NewSearchAdapter(s Service) *SearchAdapter {
 	return &SearchAdapter{Service: s}
 }
-
-func (d *SearchAdapter) IsEnabled(gr schema.GroupResource) bool {
-	//nolint:errcheck
-	status, _ := d.Status(context.Background(), gr)
-	return status.Runtime && d.ShouldManage(gr)
-}

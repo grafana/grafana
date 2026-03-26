@@ -148,14 +148,27 @@ export function prepareGraphableFields(
           break;
         case FieldType.number:
           hasValueField = useNumericX ? fieldIdx > 0 : true;
+
+          // we need to make sure all values in the array are numbers or null
+          // so, check all values and if we encounter a bad one, copy the array and
+          // replace all further-occuring non-numbers with null to make safe values array
+          let values = field.values;
+          let safeValues: unknown[] | undefined = undefined;
+
+          for (let i = 0; i < values.length; i++) {
+            let v = values[i];
+
+            if (!(Number.isFinite(v) || v == null)) {
+              safeValues ??= values.slice();
+              safeValues[i] = null;
+            }
+          }
+
+          safeValues ??= values;
+
           copy = {
             ...field,
-            values: field.values.map((v) => {
-              if (!(Number.isFinite(v) || v == null)) {
-                return null;
-              }
-              return v;
-            }),
+            values: safeValues,
           };
 
           fields.push(copy);

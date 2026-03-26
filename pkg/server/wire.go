@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/pkg/api"
@@ -45,6 +46,7 @@ import (
 	dashboardmigration "github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	dashboardlegacy "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
+	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -174,6 +176,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamapi"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
@@ -249,6 +252,7 @@ var wireBasicSet = wire.NewSet(
 	dashboardmigrator.ProvideFoldersDashboardsMigrator,
 	playlistmigrator.ProvidePlaylistMigrator,
 	shorturlmigrator.ProvideShortURLMigrator,
+	dsmigrator.ProvideDataSourceMigrator,
 	provideMigrationRegistry,
 	unifiedmigrations.ProvideUnifiedMigrator,
 	pluginsintegration.WireSet,
@@ -383,6 +387,8 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.DashboardPermissionsService), new(*ossaccesscontrol.DashboardPermissionsService)),
 	ossaccesscontrol.ProvideReceiverPermissionsService,
 	wire.Bind(new(accesscontrol.ReceiverPermissionsService), new(*ossaccesscontrol.ReceiverPermissionsService)),
+	ossaccesscontrol.ProvideRoutePermissionsService,
+	wire.Bind(new(accesscontrol.RoutePermissionsService), new(*ossaccesscontrol.RoutePermissionsService)),
 	starimpl.ProvideService,
 	apikeyimpl.ProvideService,
 	dashverimpl.ProvideService,
@@ -394,6 +400,7 @@ var wireBasicSet = wire.NewSet(
 	publicdashboardsApi.ProvideApi,
 	starApi.ProvideApi,
 	userimpl.ProvideService,
+	wire.Bind(new(user.Service), new(*userimpl.Service)),
 	orgimpl.ProvideService,
 	orgimpl.ProvideDeletionService,
 	statsimpl.ProvideService,
@@ -402,6 +409,7 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideReflectionService,
 	resolver.ProvideEntityReferenceResolver,
 	teamimpl.ProvideService,
+	wire.Bind(new(team.Service), new(*teamimpl.Service)),
 	teamapi.ProvideTeamAPI,
 	tempuserimpl.ProvideService,
 	loginattemptimpl.ProvideService,
@@ -419,6 +427,7 @@ var wireBasicSet = wire.NewSet(
 	permreg.ProvidePermissionRegistry,
 	acimpl.ProvideAccessControl,
 	accesscontrol.ProvideFixedRolesLoader,
+	accesscontrol.ProvideNoopIAMRolesSyncer,
 	dualwrite.ProvideZanzanaReconciler,
 	navtreeimpl.ProvideService,
 	wire.Bind(new(accesscontrol.AccessControl), new(*acimpl.AccessControl)),
@@ -590,10 +599,12 @@ func provideMigrationRegistry(
 	dashMigrator dashboardmigrator.FoldersDashboardsMigrator,
 	playlistMigrator playlistmigrator.PlaylistMigrator,
 	shortURLMigrator shorturlmigrator.ShortURLMigrator,
+	dataSourceMigrator dsmigrator.DataSourceMigrator,
 ) *unifiedmigrations.MigrationRegistry {
 	r := unifiedmigrations.NewMigrationRegistry()
 	r.Register(dashboardmigration.FoldersDashboardsMigration(dashMigrator))
 	r.Register(playlistmigration.PlaylistMigration(playlistMigrator))
 	r.Register(shorturlmigration.ShortURLMigration(shortURLMigrator))
+	r.Register(dsmigrator.DataSourceMigration(dataSourceMigrator))
 	return r
 }

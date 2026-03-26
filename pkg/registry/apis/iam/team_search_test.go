@@ -214,6 +214,53 @@ func TestTeamSearchHandler(t *testing.T) {
 			require.Equal(t, tt.expectedPage, int(mockClient.LastSearchRequest.Page), fmt.Sprintf("mismatch page in test %d", i))
 		}
 	})
+
+	t.Run("returns 400 for invalid sort field", func(t *testing.T) {
+		mockClient := &MockClient{}
+
+		searchHandler := &TeamSearchHandler{
+			log:      log.New("grafana-apiserver.teams.search"),
+			client:   mockClient,
+			tracer:   tracing.NewNoopTracerService(),
+			features: featuremgmt.WithFeatures(),
+		}
+
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/teams/search?sort=invalid", nil)
+		req.Header.Add("content-type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+		searchHandler.DoTeamSearch(rr, req)
+
+		assert.Equal(t, http.StatusBadRequest, rr.Code)
+		assert.Nil(t, mockClient.LastSearchRequest, "Search should not be called for invalid sort field")
+	})
+
+	t.Run("accepts valid sort fields", func(t *testing.T) {
+		for _, sortParam := range []string{"title", "-title", "email", "-email"} {
+			t.Run(sortParam, func(t *testing.T) {
+				mockClient := &MockClient{}
+
+				searchHandler := &TeamSearchHandler{
+					log:      log.New("grafana-apiserver.teams.search"),
+					client:   mockClient,
+					tracer:   tracing.NewNoopTracerService(),
+					features: featuremgmt.WithFeatures(),
+				}
+
+				rr := httptest.NewRecorder()
+				req := httptest.NewRequest("GET", "/teams/search?sort="+sortParam, nil)
+				req.Header.Add("content-type", "application/json")
+				req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+
+				searchHandler.DoTeamSearch(rr, req)
+
+				assert.NotEqual(t, http.StatusBadRequest, rr.Code)
+				require.NotNil(t, mockClient.LastSearchRequest)
+				require.Len(t, mockClient.LastSearchRequest.SortBy, 1)
+			})
+		}
+	})
 }
 
 type MockClient struct {

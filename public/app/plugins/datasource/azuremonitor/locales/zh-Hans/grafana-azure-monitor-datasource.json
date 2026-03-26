@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "",
       "aria-label-client-id": "客户端 ID",
       "aria-label-client-secret": "客户端密码",
+      "aria-label-private-key": "",
+      "aria-label-private-key-password": "",
       "aria-label-symbol-client-secret": "客户端密码",
       "aria-label-tenant-id": "租户 ID",
+      "description-certificate-format": "",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "",
+      "label-client-certificate": "",
       "label-client-id": "应用程序（客户端）ID",
       "label-client-secret": "客户端密码",
+      "label-private-key": "",
       "label-symbol-client-secret": "客户端密码",
+      "label-symbol-private-key-password": "",
       "label-tenant-id": "目录（租户）ID",
       "placeholder-symbol-client-secret": "已配置",
       "reset-symbol-client-secret": "重置"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "选择 Azure 服务的身份验证类型",
-      "label-authentication": "身份验证",
+      "label-authentication": "",
       "title-authentication": "身份验证"
     },
     "basic-logs-toggle": {

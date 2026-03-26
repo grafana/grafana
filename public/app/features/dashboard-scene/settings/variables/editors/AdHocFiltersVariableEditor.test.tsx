@@ -12,7 +12,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setRunRequest } from '@grafana/runtime';
+import { config, setRunRequest } from '@grafana/runtime';
 import { AdHocFiltersVariable } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -33,6 +33,7 @@ const promDatasource = mockDataSource({
 });
 
 let getTagKeysMock: Function | undefined = () => [];
+let getGroupByKeysMock: Function | undefined;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -45,6 +46,7 @@ jest.mock('@grafana/runtime', () => ({
         editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
       },
       getTagKeys: getTagKeysMock,
+      getGroupByKeys: getGroupByKeysMock,
     }),
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: () => ({ ...defaultDatasource }),
@@ -68,6 +70,7 @@ setRunRequest(runRequestMock);
 describe('AdHocFiltersVariableEditor', () => {
   beforeEach(() => {
     getTagKeysMock = () => [];
+    getGroupByKeysMock = undefined;
   });
 
   it('renders AdHocVariableForm with correct props', async () => {
@@ -113,7 +116,7 @@ describe('AdHocFiltersVariableEditor', () => {
 
   it('should update the variable default keys when the default keys option is disabled', async () => {
     getTagKeysMock = () => Promise.resolve(['key1', 'key2']);
-    const { renderer, variable, user } = await setup(undefined, true);
+    const { renderer, variable, user } = await setup(undefined, { withDefaultKeys: true });
 
     // Simulate toggling default options off
     await user.click(
@@ -121,6 +124,72 @@ describe('AdHocFiltersVariableEditor', () => {
     );
 
     expect(variable.state.defaultKeys).toEqual(undefined);
+  });
+
+  describe('enableGroupBy', () => {
+    afterEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+    });
+
+    it('should preserve enableGroupBy from deserialization', async () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      getGroupByKeysMock = () => Promise.resolve([]);
+
+      const { variable } = await setup(undefined, { enableGroupBy: true });
+
+      expect(variable.state.enableGroupBy).toBe(true);
+    });
+
+    it('should show Enable group by toggle when datasource supports getGroupByKeys and feature flag is on', async () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      getGroupByKeysMock = () => Promise.resolve([]);
+
+      const { renderer } = await setup();
+
+      await waitFor(() => {
+        expect(renderer.getByText('Enable group by')).toBeInTheDocument();
+      });
+    });
+
+    it('should not show Enable group by toggle when datasource does not support getGroupByKeys', async () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      getGroupByKeysMock = undefined;
+
+      const { renderer } = await setup();
+
+      await waitFor(() => {
+        expect(renderer.queryByText('Enable group by')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should not show Enable group by toggle when feature flag is off', async () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      getGroupByKeysMock = () => Promise.resolve([]);
+
+      const { renderer } = await setup();
+
+      await waitFor(() => {
+        expect(renderer.queryByText('Enable group by')).not.toBeInTheDocument();
+      });
+    });
+
+    it('should toggle enableGroupBy when Enable group by switch is clicked', async () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+      getGroupByKeysMock = () => Promise.resolve([]);
+
+      const { renderer, variable, user } = await setup(undefined, { enableGroupBy: true });
+
+      await waitFor(() => {
+        expect(renderer.getByText('Enable group by')).toBeInTheDocument();
+      });
+
+      const toggle = renderer.getByTestId(
+        selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle
+      );
+      await user.click(toggle);
+
+      expect(variable.state.enableGroupBy).toBe(false);
+    });
   });
 
   it('should return an OptionsPaneItemDescriptor that renders Editor', async () => {
@@ -149,7 +218,13 @@ describe('AdHocFiltersVariableEditor', () => {
   });
 });
 
-async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEditor>, withDefaultKeys = false) {
+interface SetupOptions {
+  withDefaultKeys?: boolean;
+  enableGroupBy?: boolean;
+}
+
+async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEditor>, options: SetupOptions = {}) {
+  const { withDefaultKeys = false, enableGroupBy } = options;
   const onRunQuery = jest.fn();
   const variable = new AdHocFiltersVariable({
     name: 'adhocVariable',
@@ -173,6 +248,7 @@ async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEdi
     ],
     allowCustomValue: true,
     defaultKeys: withDefaultKeys ? [{ text: 'A', value: 'A' }] : undefined,
+    enableGroupBy,
   });
   return {
     renderer: await act(() =>

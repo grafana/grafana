@@ -381,7 +381,10 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       trackDashboardSceneLoaded(dashboard, measure?.duration);
 
-      const isRenderTarget = options.route === DashboardRoutes.Report || options.route === DashboardRoutes.Embedded;
+      const isRenderTarget =
+        options.route === DashboardRoutes.Report ||
+        options.route === DashboardRoutes.Embedded ||
+        (options.route === DashboardRoutes.Normal && contextSrv.user?.authenticatedBy === 'render');
       const enableProfiling =
         config.dashboardPerformanceMetrics.findIndex((uid) => uid === '*' || uid === options.uid) !== -1 ||
         isRenderTarget;
@@ -563,6 +566,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       if (isDashboardV2Spec(rsp.dashboard)) {
         throw new DashboardVersionError('v2beta1', 'Using legacy snapshot API to get a V2 dashboard');
       }
+
+      rsp.meta.snapshotKey = slug;
 
       // Snapshots should use default v1 layout
       const scene = transformSaveModelToScene(rsp, undefined, getSceneCreationOptions(undefined, { isSnapshot: true }));
@@ -905,6 +910,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     if (v2Response.spec) {
       const scene = transformSaveModelSchemaV2ToScene(v2Response);
+      scene.setState({ meta: { ...scene.state.meta, snapshotKey: slug } });
       return scene;
     }
 
