@@ -7,7 +7,6 @@ import WebpackAssetsManifest from 'webpack-assets-manifest';
 import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
 import { merge } from 'webpack-merge';
 
-import getEnvConfig from './env-util.ts';
 import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
 import { esbuildOptions } from './rules.ts';
 import common, { type Env } from './webpack.common.ts';
@@ -16,23 +15,6 @@ import common, { type Env } from './webpack.common.ts';
 // https://github.com/waysact/webpack-subresource-integrity/issues/236
 const require = createRequire(import.meta.url);
 const { SubresourceIntegrityPlugin } = require('webpack-subresource-integrity');
-
-// webpack does not correctly export named ESM bindings — destructure from the default import
-const { EnvironmentPlugin } = webpack;
-
-interface EntrypointAssets {
-  assets: { js?: string[]; css?: string[] };
-}
-
-function isEntrypointsMap(value: unknown): value is Record<string, EntrypointAssets> {
-  return typeof value === 'object' && value !== null;
-}
-
-function isAssetEntry(value: unknown): value is { src: string } {
-  return typeof value === 'object' && value !== null && 'src' in value;
-}
-
-const envConfig = getEnvConfig();
 
 export default (env: Env = {}) => {
   const prodConfig: Configuration = {
@@ -144,9 +126,20 @@ export default (env: Env = {}) => {
           }
         });
       },
-      new EnvironmentPlugin(envConfig),
     ],
   };
 
   return merge(common(env), prodConfig);
 };
+
+interface EntrypointAssets {
+  assets: { js?: string[]; css?: string[] };
+}
+
+function isEntrypointsMap(value: unknown): value is Record<string, EntrypointAssets> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isAssetEntry(value: unknown): value is { src: string } {
+  return typeof value === 'object' && value !== null && 'src' in value;
+}

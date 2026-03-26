@@ -9,7 +9,7 @@ import { initReactI18next } from 'react-i18next';
 
 import { matchers } from '@grafana/test-utils';
 
-import getEnvConfig from '../../scripts/webpack/env-util';
+import getEnvConfig from '../../scripts/cli/env-util';
 
 const config = getEnvConfig() as Record<string, string | boolean>;
 

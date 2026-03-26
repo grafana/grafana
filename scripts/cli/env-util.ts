@@ -3,7 +3,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const getEnvConfig = (): Record<string, unknown> => {
-  const grafanaRoot = path.join(import.meta.dirname, '../..');
+  // TODO: this file should be ESM but we need __dirname because Jest uses it.
+  const grafanaRoot = path.join(__dirname, '../..');
   const defaultSettings = readFileSync(`${grafanaRoot}/conf/defaults.ini`, { encoding: 'utf-8' });
 
   const customSettings = existsSync(`${grafanaRoot}/conf/custom.ini`)

@@ -9,7 +9,6 @@ import LiveReloadPlugin from 'webpack-livereload-plugin';
 import { merge } from 'webpack-merge';
 import WebpackBar from 'webpackbar';
 
-import getEnvConfig from './env-util.ts';
 import common, { type Env } from './webpack.common.ts';
 
 // webpack does not correctly export named ESM bindings — destructure from the default import
@@ -35,8 +34,6 @@ function scenesModule(): string {
   }
   return scenesPath;
 }
-
-const envConfig = getEnvConfig();
 const decoupledPlugins = getDecoupledPlugins();
 
 export default (env: Env = {}) => {
@@ -101,7 +98,6 @@ export default (env: Env = {}) => {
         color: '#eb7b18',
         name: 'Grafana',
       }),
-      new EnvironmentPlugin(envConfig),
     ],
 
     stats: 'minimal',

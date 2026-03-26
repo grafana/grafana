@@ -2,12 +2,19 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import webpack, { type Configuration } from 'webpack';
 
 import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 import { esbuildRule, sassRule } from './rules.ts';
 
 const require = createRequire(import.meta.url);
+
+// Horrible temporary fix for env-util which is used by Jest so cannot be ESM.
+global.__dirname = path.dirname(fileURLToPath(import.meta.url));
+const getEnvConfig = require('../cli/env-util.ts').default;
+
+const envConfig = getEnvConfig();
 
 export type Env = Record<string, string | true | undefined>;
 
@@ -111,6 +118,7 @@ export default (env: Env = {}): Configuration => ({
     new MiniCssExtractPlugin({
       filename: env.react19 ? 'grafana.[name]-react19.[contenthash].css' : 'grafana.[name].[contenthash].css',
     }),
+    new webpack.EnvironmentPlugin(envConfig),
   ],
   module: {
     rules: [
