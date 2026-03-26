@@ -2,7 +2,7 @@ import { DataQuery, LogsSortOrder } from '@grafana/schema';
 
 import { PreferredVisualisationType } from './data';
 import { SelectableValue } from './select';
-import { TimeRange } from './time';
+import { RelativeTimeRange, TimeRange } from './time';
 
 type AnyQuery = DataQuery & Record<string, any>;
 

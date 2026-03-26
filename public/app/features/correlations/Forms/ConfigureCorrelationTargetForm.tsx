@@ -13,8 +13,6 @@ import {
   InlineFieldRow,
   Input,
   Label,
-  Portal,
-  PortalledRelativeTimeRangePicker,
   RelativeTimeRangePicker,
   Select,
   useStyles2,

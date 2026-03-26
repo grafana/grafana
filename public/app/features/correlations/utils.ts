@@ -80,6 +80,7 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
             origin: DataLinkConfigOrigin.Correlations,
             meta: {
               transformations: correlation.config.transformations,
+              timeRange: correlation.config.timeRange,
             },
           });
         } else if (correlation.type === 'external') {

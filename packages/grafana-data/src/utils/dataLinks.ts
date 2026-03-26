@@ -1,3 +1,6 @@
+import { dateTime, rangeUtil } from '@grafana/data';
+import { isCustomVariableValue } from '@grafana/scenes';
+
 import { ScopedVars } from '../types/ScopedVars';
 import { Field } from '../types/dataFrame';
 import { DataLink, InternalDataLink, LinkModel } from '../types/dataLink';
@@ -56,11 +59,35 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
   const interpolatedCorrelationData = interpolateObject(link.meta?.correlationData, scopedVars, replaceVariables);
   const title = link.title ? link.title : internalLink.datasourceName;
+  let exploreRange = range ? { ...range } : undefined;
+  // the time range passed in is the default (from the source pane). if the correlation defined a custom one, override it
+  if (link.meta?.timeRange !== undefined) {
+    let timeRangeField = link.meta.timeRange.field;
+    if (timeRangeField !== undefined && !isCustomVariableValue(timeRangeField)) {
+      timeRangeField = `\$\{${timeRangeField}\}`;
+    }
+
+    const interpolatedBaseTimeStr =
+      link.meta.timeRange.field !== undefined ? interpolateObject(timeRangeField, scopedVars, replaceVariables) : 'now';
+
+    try {
+      const interpolatedBaseTime = dateTime(interpolatedBaseTimeStr);
+      //const fromRange = link.meta.timeRange.range.from ?? '-24h';
+      //const toRange = link.meta.timeRange.range.to ?? '+24h';
+
+      exploreRange = rangeUtil.relativeToTimeRange(
+        link.meta.timeRange.range ?? { from: '-24h', to: '24h' },
+        interpolatedBaseTime
+      );
+    } catch (e) {
+      // silently fail if any part of this interpolation does not succeed
+    }
+  }
 
   const interpolatedParams = interpolatedQuery
     ? {
         query: interpolatedQuery,
-        ...(range && { timeRange: range }),
+        ...(exploreRange && { timeRange: exploreRange }),
       }
     : undefined;
 

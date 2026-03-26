@@ -97,7 +97,7 @@ type CorrelationConfig struct {
 	// Target time range
 	// required:false
 	// example: {"field":"time","range":{"from":"5m","to":"5m"}}
-	TimeRange TimeRange
+	TimeRange TimeRange `json:"timeRange,omitempty"`
 }
 
 func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
@@ -115,6 +115,7 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 		Field:           c.Field,
 		Target:          target,
 		Transformations: transformations,
+		TimeRange:       c.TimeRange,
 	})
 }
 

@@ -296,6 +296,8 @@ export class TemplateSrv implements BaseTemplateSrv {
 
     this.regex.lastIndex = 0;
 
+    console.log('wat', target, scopedVars);
+
     return this._replaceWithVariableRegex(target, format, (match, variableName, fieldPath, fmt) => {
       const value = this._evaluateVariableExpression(match, variableName, fieldPath, fmt, scopedVars);
 
@@ -379,7 +381,8 @@ export class TemplateSrv implements BaseTemplateSrv {
     return text.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
       const fmt = fmt2 || fmt3 || format;
-      return replace(match, variableName, fieldPath, fmt);
+      const wat = replace(match, variableName, fieldPath, fmt);
+      return wat;
     });
   }
 
