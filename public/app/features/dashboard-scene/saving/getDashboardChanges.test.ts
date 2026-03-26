@@ -1,7 +1,7 @@
 import { type AdHocVariableFilter, type AdHocVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { type Dashboard, type VariableModel } from '@grafana/schema';
-import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { adHocVariableFiltersEqual, getRawDashboardChanges, getRawDashboardV2Changes } from './getDashboardChanges';
 
