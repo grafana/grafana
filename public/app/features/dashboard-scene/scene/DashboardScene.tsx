@@ -358,7 +358,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
             'dashboard-scene.dashboard-scene.modal.text.save-changes-question',
             'Do you want to save your changes?'
           ),
-          icon: 'trash-alt',
           altActionText: t('dashboard-scene.dashboard-scene.modal.save', 'Save'),
           noText: t('dashboard-scene.dashboard-scene.modal.cancel', 'Cancel'),
           yesText: t('dashboard-scene.dashboard-scene.modal.discard', 'Discard'),
@@ -382,7 +381,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
             'dashboard-scene.dashboard-scene.title.discard-changes-to-dashboard',
             'Discard changes to dashboard?'
           ),
-          icon: 'trash-alt',
           text: t(
             'dashboard-scene.dashboard-scene.title.unsaved-changes-question',
             'You have unsaved changes to this dashboard. Are you sure you want to discard them?'
@@ -894,26 +892,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public closeModal() {
     this.setState({ overlay: undefined });
-  }
-
-  public async onStarDashboard(isStarred?: boolean) {
-    const { meta, uid } = this.state;
-    isStarred = isStarred ?? Boolean(meta.isStarred);
-    if (!uid) {
-      return;
-    }
-    try {
-      const result = await getDashboardSrv().starDashboard(uid, isStarred);
-
-      this.setState({
-        meta: {
-          ...meta,
-          isStarred: result,
-        },
-      });
-    } catch (err) {
-      console.error('Failed to star dashboard', err);
-    }
   }
 
   public onOpenSettings = () => {

@@ -19,290 +19,173 @@ import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
 
-// Create a basic data frame for testing
-const createBasicDataFrame = (): DataFrame => {
-  const frame = toDataFrame({
-    name: 'TestData',
-    length: 3,
-    fields: [
-      {
-        name: 'Column A',
-        type: FieldType.string,
-        values: ['A1', 'A2', 'A3'],
-        config: {
-          custom: {
-            width: 150,
-            cellOptions: {
-              type: TableCellDisplayMode.Auto,
-              wrapText: false,
-            },
-          },
-        },
-        // Add display function
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: 0,
-          color: undefined,
-          prefix: undefined,
-          suffix: undefined,
-        }),
-        // Add state and getLinks
-        state: {},
-        getLinks: () => [],
-      },
-      {
-        name: 'Column B',
-        type: FieldType.number,
-        values: [1, 2, 3],
-        config: {
-          custom: {
-            width: 150,
-            cellOptions: {
-              type: TableCellDisplayMode.Auto,
-              wrapText: false,
-            },
-          },
-        },
-        // Add display function
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: Number(value),
-          color: undefined,
-          prefix: undefined,
-          suffix: undefined,
-        }),
-        // Add state and getLinks
-        state: {},
-        getLinks: () => [],
-      },
-    ],
-  });
-
-  // The applyFieldOverrides should add display processors, but we'll keep our explicit ones too
-  return applyFieldOverrides({
+// Shared helpers for test data frame construction
+const withFieldOverrides = (frame: ReturnType<typeof toDataFrame>): DataFrame =>
+  applyFieldOverrides({
     data: [frame],
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
+    fieldConfig: { defaults: {}, overrides: [] },
     replaceVariables: (value) => value,
     timeZone: 'utc',
     theme: createTheme(),
   })[0];
-};
 
-// Create a nested data frame for testing expandable rows
+const stdCellConfig = { custom: { width: 150, cellOptions: { type: TableCellDisplayMode.Auto, wrapText: false } } };
+
+const makeDisplay = (toNumeric: (v: unknown) => number) => (value: unknown) => ({
+  text: String(value),
+  numeric: toNumeric(value),
+  color: undefined,
+  prefix: undefined,
+  suffix: undefined,
+});
+
+const displayString = makeDisplay(() => 0);
+const displayNumber = makeDisplay((v) => Number(v));
+const stdField = { state: {}, getLinks: () => [] };
+
+const createBasicDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 3,
+      fields: [
+        {
+          name: 'Column A',
+          type: FieldType.string,
+          values: ['A1', 'A2', 'A3'],
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: 'Column B',
+          type: FieldType.number,
+          values: [1, 2, 3],
+          config: stdCellConfig,
+          display: displayNumber,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
+const createEmptyDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'EmptyData',
+      length: 0,
+      fields: [
+        {
+          name: 'Column A',
+          type: FieldType.string,
+          values: [],
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: 'Column B',
+          type: FieldType.number,
+          values: [],
+          config: stdCellConfig,
+          display: displayNumber,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
 const createNestedDataFrame = (): DataFrame => {
-  const nestedFrame = toDataFrame({
-    name: 'NestedData',
-    fields: [
-      {
-        name: 'Nested hidden',
-        type: FieldType.string,
-        values: ['secret1', 'secret2'],
-        config: { custom: { hideFrom: { viz: true } } },
-      },
-      {
-        name: 'Nested A',
-        type: FieldType.string,
-        values: ['N1', 'N2'],
-        config: { custom: {} },
-      },
-      {
-        name: 'Nested B',
-        type: FieldType.number,
-        values: [10, 20],
-        config: { custom: {} },
-      },
-    ],
-  });
+  const processedNestedFrame = withFieldOverrides(
+    toDataFrame({
+      name: 'NestedData',
+      fields: [
+        {
+          name: 'Nested hidden',
+          type: FieldType.string,
+          values: ['secret1', 'secret2'],
+          config: { custom: { hideFrom: { viz: true } } },
+        },
+        { name: 'Nested A', type: FieldType.string, values: ['N1', 'N2'], config: { custom: {} } },
+        { name: 'Nested B', type: FieldType.number, values: [10, 20], config: { custom: {} } },
+      ],
+    })
+  );
 
-  const processedNestedFrame = applyFieldOverrides({
-    data: [nestedFrame],
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-    replaceVariables: (value) => value,
-    timeZone: 'utc',
-    theme: createTheme(),
-  })[0];
-
-  const frame = toDataFrame({
-    name: 'TestData',
-    length: 2,
-    fields: [
-      {
-        name: 'Column A',
-        type: FieldType.string,
-        values: ['A1', 'A2'],
-        config: { custom: {} },
-      },
-      {
-        name: 'Column B',
-        type: FieldType.number,
-        values: [1, 2],
-        config: { custom: {} },
-      },
-      // Add special fields for nested table functionality
-      {
-        name: '__depth',
-        type: FieldType.number,
-        values: [0, 0],
-        config: { custom: { hideFrom: { viz: true } } },
-      },
-      {
-        name: '__index',
-        type: FieldType.number,
-        values: [0, 1],
-        config: { custom: { hideFrom: { viz: true } } },
-      },
-      {
-        name: '__nestedFrames',
-        type: FieldType.nestedFrames,
-        values: [[processedNestedFrame], [processedNestedFrame]],
-        config: { custom: {} },
-      },
-    ],
-  });
-
-  return applyFieldOverrides({
-    data: [frame],
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-    replaceVariables: (value) => value,
-    timeZone: 'utc',
-    theme: createTheme(),
-  })[0];
+  return withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 2,
+      fields: [
+        { name: 'Column A', type: FieldType.string, values: ['A1', 'A2'], config: { custom: {} } },
+        { name: 'Column B', type: FieldType.number, values: [1, 2], config: { custom: {} } },
+        { name: '__depth', type: FieldType.number, values: [0, 0], config: { custom: { hideFrom: { viz: true } } } },
+        { name: '__index', type: FieldType.number, values: [0, 1], config: { custom: { hideFrom: { viz: true } } } },
+        {
+          name: '__nestedFrames',
+          type: FieldType.nestedFrames,
+          values: [[processedNestedFrame], [processedNestedFrame]],
+          config: { custom: {} },
+        },
+      ],
+    })
+  );
 };
 
-// Create a data frame specifically for testing multi-column sorting
-const createSortingTestDataFrame = (length = 5): DataFrame => {
-  const frame = toDataFrame({
-    name: 'SortingTestData',
-    length: length,
-    fields: [
-      {
-        name: 'Category',
-        type: FieldType.string,
-        values: ['A', 'B', 'A', 'B', 'A', 'C'].splice(0, length),
-        config: {
-          custom: {
-            width: 150,
-            cellOptions: {
-              type: TableCellDisplayMode.Auto,
-              wrapText: false,
-            },
-          },
+const createSortingTestDataFrame = (length = 5): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'SortingTestData',
+      length,
+      fields: [
+        {
+          name: 'Category',
+          type: FieldType.string,
+          values: ['A', 'B', 'A', 'B', 'A', 'C'].slice(0, length),
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
         },
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: 0,
-          color: undefined,
-          prefix: undefined,
-          suffix: undefined,
-        }),
-        state: {},
-        getLinks: () => [],
-      },
-      {
-        name: 'Value',
-        type: FieldType.number,
-        values: [5, 3, 1, 4, 2, 3].splice(0, length),
-        config: {
-          custom: {
-            width: 150,
-            cellOptions: {
-              type: TableCellDisplayMode.Auto,
-              wrapText: false,
-            },
-          },
+        {
+          name: 'Value',
+          type: FieldType.number,
+          values: [5, 3, 1, 4, 2, 3].slice(0, length),
+          config: stdCellConfig,
+          display: displayNumber,
+          ...stdField,
         },
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: Number(value),
-          color: undefined,
-          prefix: undefined,
-          suffix: undefined,
-        }),
-        state: {},
-        getLinks: () => [],
-      },
-      {
-        name: 'Name',
-        type: FieldType.string,
-        values: ['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'Emily'].splice(0, length),
-        config: {
-          custom: {
-            width: 150,
-            cellOptions: {
-              type: TableCellDisplayMode.Auto,
-              wrapText: false,
-            },
-          },
+        {
+          name: 'Name',
+          type: FieldType.string,
+          values: ['John', 'Jane', 'Bob', 'Alice', 'Charlie', 'Emily'].slice(0, length),
+          config: stdCellConfig,
+          display: displayString,
+          ...stdField,
         },
-        display: (value: unknown) => ({
-          text: String(value),
-          numeric: 0,
-          color: undefined,
-          prefix: undefined,
-          suffix: undefined,
-        }),
-        state: {},
-        getLinks: () => [],
-      },
-    ],
-  });
+      ],
+    })
+  );
 
-  return applyFieldOverrides({
-    data: [frame],
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-    replaceVariables: (value) => value,
-    timeZone: 'utc',
-    theme: createTheme(),
-  })[0];
-};
-
-const createTimeDataFrame = (): DataFrame => {
-  const frame = toDataFrame({
-    name: 'TimeTestData',
-    length: 3,
-    fields: [
-      {
-        name: 'Time',
-        type: FieldType.time,
-        values: [
-          new Date('2024-03-20T10:00:00Z').getTime(),
-          new Date('2024-03-20T10:01:00Z').getTime(),
-          new Date('2024-03-20T10:02:00Z').getTime(),
-        ],
-        config: { custom: {} },
-      },
-      {
-        name: 'Value',
-        type: FieldType.number,
-        values: [1, 2, 3],
-        config: { custom: {} },
-      },
-    ],
-  });
-
-  return applyFieldOverrides({
-    data: [frame],
-    fieldConfig: {
-      defaults: {},
-      overrides: [],
-    },
-    replaceVariables: (value) => value,
-    timeZone: 'utc',
-    theme: createTheme(),
-  })[0];
-};
+const createTimeDataFrame = (): DataFrame =>
+  withFieldOverrides(
+    toDataFrame({
+      name: 'TimeTestData',
+      length: 3,
+      fields: [
+        {
+          name: 'Time',
+          type: FieldType.time,
+          values: [
+            new Date('2024-03-20T10:00:00Z').getTime(),
+            new Date('2024-03-20T10:01:00Z').getTime(),
+            new Date('2024-03-20T10:02:00Z').getTime(),
+          ],
+          config: { custom: {} },
+        },
+        { name: 'Value', type: FieldType.number, values: [1, 2, 3], config: { custom: {} } },
+      ],
+    })
+  );
 
 describe('TableNG', () => {
   let user: ReturnType<typeof userEvent.setup>;
@@ -828,6 +711,59 @@ describe('TableNG', () => {
           expect(container).toHaveTextContent(/of 100 rows/);
         }
       }
+    });
+
+    it('does not show pagination when there are no rows even if pagination is enabled', () => {
+      const { container } = render(
+        <TableNG
+          enableVirtualization={false}
+          data={createEmptyDataFrame()}
+          width={800}
+          height={300}
+          enablePagination={true}
+        />
+      );
+
+      expect(container.querySelector('.table-ng-pagination')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Empty state', () => {
+    it('displays the default no rows message when there are no rows', () => {
+      render(<TableNG enableVirtualization={false} data={createEmptyDataFrame()} width={800} height={600} />);
+
+      expect(screen.getByText('No rows')).toBeInTheDocument();
+    });
+
+    it('displays the custom noValue message when provided', () => {
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createEmptyDataFrame()}
+          width={800}
+          height={600}
+          noValue="Custom empty table message"
+        />
+      );
+
+      expect(screen.getByText('Custom empty table message')).toBeInTheDocument();
+      expect(screen.queryByText('No rows')).not.toBeInTheDocument();
+    });
+
+    it('does not display the noValue message when there is at least one row', () => {
+      render(
+        <TableNG
+          enableVirtualization={false}
+          data={createBasicDataFrame()}
+          width={800}
+          height={600}
+          noValue="Custom empty table message"
+        />
+      );
+
+      expect(screen.queryByText('Custom empty table message')).not.toBeInTheDocument();
+      expect(screen.queryByText('No rows')).not.toBeInTheDocument();
+      expect(screen.getByText('A1')).toBeInTheDocument();
     });
   });
 
@@ -1826,6 +1762,86 @@ describe('TableNG', () => {
       await userEvent.click(cell.parentElement!);
 
       expect(screen.queryByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper)).not.toBeInTheDocument();
+    });
+
+    it('uses the correct row nested frame fields for data links', async () => {
+      // Each outer row has a different nested frame with a different State value and different link titles.
+      // The bug caused all nested sub-tables to use the first outer row's field (and its getLinks), so
+      // clicking any nested cell always showed links from row 0 regardless of which row was expanded.
+      const nestedFrameRow0 = withFieldOverrides(
+        toDataFrame({
+          name: 'NestedRow0',
+          fields: [
+            {
+              name: 'State',
+              type: FieldType.string,
+              values: ['Down'],
+              config: {
+                custom: {},
+                links: [
+                  { url: 'http://example.com/?state=Down&link=1', title: 'Down Link 1' },
+                  { url: 'http://example.com/?state=Down&link=2', title: 'Down Link 2' },
+                ],
+              },
+            },
+          ],
+        })
+      );
+
+      const nestedFrameRow1 = withFieldOverrides(
+        toDataFrame({
+          name: 'NestedRow1',
+          fields: [
+            {
+              name: 'State',
+              type: FieldType.string,
+              values: ['Up'],
+              config: {
+                custom: {},
+                links: [
+                  { url: 'http://example.com/?state=Up&link=1', title: 'Up Link 1' },
+                  { url: 'http://example.com/?state=Up&link=2', title: 'Up Link 2' },
+                ],
+              },
+            },
+          ],
+        })
+      );
+
+      const outerFrame = withFieldOverrides(
+        toDataFrame({
+          name: 'TestData',
+          fields: [
+            { name: 'Name', type: FieldType.string, values: ['A', 'B'], config: { custom: {} } },
+            {
+              name: '__nestedFrames',
+              type: FieldType.nestedFrames,
+              values: [[nestedFrameRow0], [nestedFrameRow1]],
+              config: { custom: {} },
+            },
+          ],
+        })
+      );
+
+      const { container } = render(<TableNG enableVirtualization={false} data={outerFrame} width={800} height={600} />);
+
+      // Expand the second outer row (index 1), which has State='Up'
+      const expandButtons = container.querySelectorAll('[aria-label="Expand row"]');
+      expect(expandButtons).toHaveLength(2);
+      await user.click(expandButtons[1]);
+
+      // Click the 'Up' state cell in the expanded nested sub-table
+      const upCell = screen.getByText('Up');
+      await user.click(upCell);
+
+      // Should show links from row 1's nested frame ('Up Link *')
+      // Before the fix this showed row 0's links ('Down Link *') because nestedColumnsMatrix
+      // used nestedVisibleFields (from the first row) for all rows' columns.
+      const tooltip = screen.getByTestId(selectors.components.DataLinksActionsTooltip.tooltipWrapper);
+      expect(tooltip).toBeInTheDocument();
+      expect(screen.getByText('Up Link 1')).toBeInTheDocument();
+      expect(screen.getByText('Up Link 2')).toBeInTheDocument();
+      expect(screen.queryByText('Down Link 1')).not.toBeInTheDocument();
     });
   });
 });

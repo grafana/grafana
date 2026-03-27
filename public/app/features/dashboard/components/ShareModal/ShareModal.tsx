@@ -119,9 +119,7 @@ export function ShareModal({ dashboard, panel, activeTab: initialActiveTab, onDi
   const ActiveTab = activeTabModel.component;
   const modalTitle = panel ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
 
-  const title = (
-    <ModalTabsHeader title={modalTitle} icon="share-alt" tabs={tabs} activeTab={activeTab} onChangeTab={onSelectTab} />
-  );
+  const title = <ModalTabsHeader title={modalTitle} tabs={tabs} activeTab={activeTab} onChangeTab={onSelectTab} />;
 
   return (
     <Modal ariaLabel={modalTitle} isOpen={true} title={title} onDismiss={onDismiss}>

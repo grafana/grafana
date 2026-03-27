@@ -1,6 +1,7 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { t } from '@grafana/i18n';
-import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { handleError } from 'app/api/utils';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 
 export const correlationsAPIv0alpha1 = generatedAPI.enhanceEndpoints({
@@ -30,9 +31,7 @@ export const correlationsAPIv0alpha1 = generatedAPI.enhanceEndpoints({
 
           dispatch(notifyApp(createSuccessNotification(t('correlation.edit-success', 'Correlation updated'))));
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(notifyApp(createErrorNotification(t('correlation.edit-error', 'Error updating correlation'), e)));
-          }
+          handleError(e, dispatch, t('correlation.edit-error', 'Error updating correlation'));
         }
       },
     },

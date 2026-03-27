@@ -8,6 +8,7 @@ import {
   sceneGraph,
   useSceneObjectState,
   SceneVariable,
+  SceneVariables,
   SceneVariableState,
   ControlsLabel,
   ControlsLayout,
@@ -16,8 +17,11 @@ import {
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { filterSectionRepeatLocalVariables } from '../variables/utils';
+
 import { DashboardScene } from './DashboardScene';
 import { AddVariableButton } from './VariableControlsAddButton';
+import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 
 export function VariableControls({ dashboard }: { dashboard: DashboardScene }) {
   const { variables } = sceneGraph.getVariables(dashboard)!.useState();
@@ -186,6 +190,14 @@ function VariableLabel({
   }
 
   const labelOrName = state.label || state.name;
+  const controlsLayout = layout ?? 'horizontal';
+  const descriptionSuffix =
+    state.description != null && state.description !== '' ? (
+      <VariableDescriptionTooltip
+        description={state.description}
+        placement={controlsLayout === 'vertical' ? 'top' : 'bottom'}
+      />
+    ) : undefined;
 
   return (
     <ControlsLabel
@@ -194,12 +206,44 @@ function VariableLabel({
       onCancel={() => variable.onCancel?.()}
       label={labelOrName}
       error={state.error}
-      layout={layout ?? 'horizontal'}
-      description={state.description ?? undefined}
+      layout={controlsLayout}
+      description={undefined}
+      suffix={descriptionSuffix}
       className={className}
     />
   );
 }
+
+export function SectionVariableControls({ variableSet }: { variableSet: SceneVariables }) {
+  const { variables } = variableSet.useState();
+  const styles = useStyles2(getSectionVariableStyles);
+
+  const visibleVariables = filterSectionRepeatLocalVariables(variables, variableSet).filter(
+    (v) => v.state.hide !== VariableHide.hideVariable
+  );
+
+  if (visibleVariables.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={styles.sectionVariables}>
+      {visibleVariables.map((variable) => (
+        <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
+      ))}
+    </div>
+  );
+}
+
+const getSectionVariableStyles = (theme: GrafanaTheme2) => ({
+  sectionVariables: css({
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+  }),
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({

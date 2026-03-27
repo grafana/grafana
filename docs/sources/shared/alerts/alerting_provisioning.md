@@ -32,6 +32,7 @@ The following endpoints can be used to manage both alert rules and recording rul
 | POST   | /api/v1/provisioning/alert-rules                                 | [route post alert rule](#route-post-alert-rule)                         | Create a new alert rule.                                |
 | PUT    | /api/v1/provisioning/alert-rules/:uid                            | [route put alert rule](#route-put-alert-rule)                           | Update an existing alert rule.                          |
 | GET    | /api/v1/provisioning/alert-rules/:uid/export                     | [route get alert rule export](#route-get-alert-rule-export)             | Export an alert rule in provisioning file format.       |
+| DELETE | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route delete alert rule group](#route-delete-alert-rule-group)         | Delete a rule group.                                    |
 | GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route get alert rule group](#route-get-alert-rule-group)               | Get a rule group.                                       |
 | PUT    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group        | [route put alert rule group](#route-put-alert-rule-group)               | Create or update a rule group.                          |
 | GET    | /api/v1/provisioning/folder/:folderUid/rule-groups/:group/export | [route get alert rule group export](#route-get-alert-rule-group-export) | Export an alert rule group in provisioning file format. |
@@ -616,6 +617,10 @@ For Prometheus, `amtool` can also be used to interact with the [AlertManager API
 DELETE /api/v1/provisioning/alert-rules/:uid
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/{name}` for recording rules.
+{{< /admonition >}}
+
 #### Parameters
 
 {{% responsive-table %}}
@@ -640,6 +645,60 @@ DELETE /api/v1/provisioning/alert-rules/:uid
 Status: No Content
 
 ###### <span id="route-delete-alert-rule-204-schema"></span> Schema
+
+### <span id="route-delete-alert-rule-group"></span> Delete a rule group. (_RouteDeleteAlertRuleGroup_)
+
+```
+DELETE /api/v1/provisioning/folder/:folderUid/rule-groups/:group
+```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+{{< /admonition >}}
+
+#### Parameters
+
+{{% responsive-table %}}
+
+| Name                         | Source | Type   | Go type | Required | Default | Description                                               |
+| ---------------------------- | ------ | ------ | ------- | :------: | ------- | --------------------------------------------------------- |
+| `FolderUID`                  | path   | string | string  |    ✓     |         |                                                           |
+| `Group`                      | path   | string | string  |    ✓     |         |                                                           |
+| `X-Disable-Provenance: true` | header | string | string  |          |         | Allows editing of provisioned resources in the Grafana UI |
+
+{{% /responsive-table %}}
+
+#### All responses
+
+| Code                                      | Status     | Description                                    | Has headers | Schema                                              |
+| ----------------------------------------- | ---------- | ---------------------------------------------- | :---------: | --------------------------------------------------- |
+| [204](#route-delete-alert-rule-group-204) | No Content | The alert rule group was deleted successfully. |             | [schema](#route-delete-alert-rule-group-204-schema) |
+| [403](#route-delete-alert-rule-group-403) | Forbidden  | ForbiddenError                                 |             | [schema](#route-delete-alert-rule-group-403-schema) |
+| [404](#route-delete-alert-rule-group-404) | Not Found  | NotFound                                       |             | [schema](#route-delete-alert-rule-group-404-schema) |
+
+#### Responses
+
+##### <span id="route-delete-alert-rule-group-204"></span> 204 - The alert rule group was deleted successfully.
+
+Status: No Content
+
+###### <span id="route-delete-alert-rule-group-204-schema"></span> Schema
+
+##### <span id="route-delete-alert-rule-group-403"></span> 403 - ForbiddenError
+
+Status: Forbidden
+
+###### <span id="route-delete-alert-rule-group-403-schema"></span> Schema
+
+[ForbiddenError](#forbidden-error)
+
+##### <span id="route-delete-alert-rule-group-404"></span> 404 - NotFound
+
+Status: Not Found
+
+###### <span id="route-delete-alert-rule-group-404-schema"></span> Schema
+
+[NotFound](#not-found)
 
 ### <span id="route-delete-contactpoints"></span> Delete a contact point. (_RouteDeleteContactpoints_)
 
@@ -745,6 +804,10 @@ Status: Conflict
 GET /api/v1/provisioning/alert-rules/:uid
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/{name}` for recording rules.
+{{< /admonition >}}
+
 #### Parameters
 
 | Name  | Source | Type   | Go type | Required | Default | Description    |
@@ -818,6 +881,10 @@ Status: Not Found
 ```
 GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+{{< /admonition >}}
 
 #### Parameters
 
@@ -894,6 +961,10 @@ Status: Not Found
 ```
 GET /api/v1/provisioning/alert-rules
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+{{< /admonition >}}
 
 #### All responses
 
@@ -1450,6 +1521,10 @@ Status: OK
 POST /api/v1/provisioning/alert-rules
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+{{< /admonition >}}
+
 This action creates a new alert rule.
 
 The provenance (`X-Disable-Provenance`) of the new rule must match the provenance configured for its rule group. Mixing provisioned and unprovisioned alert rules within the same rule group is not allowed.
@@ -1582,6 +1657,10 @@ Status: Bad Request
 PUT /api/v1/provisioning/alert-rules/:uid
 ```
 
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/{name}` for recording rules.
+{{< /admonition >}}
+
 #### Parameters
 
 {{% responsive-table %}}
@@ -1624,6 +1703,10 @@ Status: Bad Request
 ```
 PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
+
+{{< admonition type="warning" >}}
+This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+{{< /admonition >}}
 
 This action also changes the provenance setting (`X-Disable-Provenance`) for all alert rules in the alert group.
 

@@ -8,9 +8,6 @@ on:
     branches:
       - '**'
 
-env:
-  ARCH: linux-amd64
-
 jobs:
   dashboard-schema-v2-e2e:
     runs-on: ubuntu-x64-large
