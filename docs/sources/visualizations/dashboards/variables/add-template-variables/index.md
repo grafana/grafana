@@ -113,11 +113,17 @@ The following table lists the types of variables shipped with Grafana.
 You must enter general options for any type of variable that you create.
 To create a variable, follow these steps:
 
+{{< docs/list >}}
+
 1. Click **Edit** in the top-right corner of the dashboard.
-1. Click **Settings**.
+1. In the toolbar, click the **Dashboard options** icon to open the sidebar.
+1. In the sidebar, click **Settings**.
 1. Go to the **Variables** tab.
 1. Click **Add variable**, or if there are already existing variables, **+ New variable**.
 1. Choose an option in the **Select variable type** drop-down list.
+
+{{< shared id="add-variable" >}}
+
 1. Enter a **Name** for the variable.
 1. (Optional) In the **Label** field, enter the display name for the variable drop-down list.
 
@@ -129,6 +135,8 @@ To create a variable, follow these steps:
    - **Controls menu** - The variable is displayed in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.
    - **Hidden** - No variable drop-down list is displayed on the dashboard.
 
+{{< /shared >}}
+
 1. Click one of the following links to complete the steps for adding your selected variable type:
    - [Query](#add-a-query-variable)
    - [Custom](#add-a-custom-variable)
@@ -139,7 +147,13 @@ To create a variable, follow these steps:
    - [Ad hoc filters](#add-ad-hoc-filters)
    - [Switch](#add-a-switch-variable)
 
+{{< /docs/list >}}
+
 <!-- vale Grafana.Spelling = YES -->
+
+{{< admonition type="tip" >}}
+To add variables without leaving the dashboard, click the **Add new element** icon in the dashboard toolbar, and select **Variable**.
+{{< /admonition >}}
 
 ### Variable best practices
 
