@@ -471,10 +471,6 @@ const (
 	// Enables experimental reconciler for playlists
 	FlagPlaylistsReconciler = "playlistsReconciler"
 
-	// FlagPasswordlessMagicLinkAuthentication
-	// Enable passwordless login via magic link authentication
-	FlagPasswordlessMagicLinkAuthentication = "passwordlessMagicLinkAuthentication"
-
 	// FlagEnableExtensionsAdminPage
 	// Enables the extension admin page regardless of development mode
 	FlagEnableExtensionsAdminPage = "enableExtensionsAdminPage"

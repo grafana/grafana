@@ -3815,20 +3815,6 @@
     },
     {
       "metadata": {
-        "name": "passwordlessMagicLinkAuthentication",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-11-14T13:50:55Z"
-      },
-      "spec": {
-        "description": "Enable passwordless login via magic link authentication",
-        "stage": "experimental",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "pdfTables",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-11-06T13:39:22Z"
