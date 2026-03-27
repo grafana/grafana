@@ -12,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -77,7 +76,7 @@ func FullSync(
 	}
 
 	if folderMetadataEnabled && len(missingFolderMetadata) > 0 {
-		logging.FromContext(ctx).Debug("missing folder metadata detected", "count", len(missingFolderMetadata))
+		logging.FromContext(ctx).Info("missing folder metadata detected", "count", len(missingFolderMetadata))
 		changeActions := make(map[string]repository.FileAction, len(changes))
 		for _, c := range changes {
 			changeActions[c.Path] = c.Action
@@ -95,10 +94,8 @@ func FullSync(
 	}
 
 	if folderMetadataEnabled && len(invalidFolderMetadata) > 0 {
-		fmLogger := logging.FromContext(ctx)
-		fmLogger.Debug("invalid folder metadata detected", "count", len(invalidFolderMetadata))
+		logging.FromContext(ctx).Info("invalid folder metadata detected", "count", len(invalidFolderMetadata))
 		for _, invalid := range invalidFolderMetadata {
-			fmLogger.Debug("invalid folder metadata", "path", invalid.Path, "error", invalid.Err)
 			action := invalid.Action
 			if action == "" {
 				action = repository.FileActionIgnored
@@ -413,18 +410,19 @@ func applyChanges(
 
 	// Collect and delete old folders after all children have been re-parented.
 	type oldFolder struct {
-		Path string
-		UID  string
+		Path   string
+		UID    string
+		Reason string
 	}
 	var oldFolders []oldFolder
 	for _, change := range folderCreations {
 		if change.FolderRenamed {
-			oldFolders = append(oldFolders, oldFolder{Path: change.Path, UID: change.Existing.Name})
+			oldFolders = append(oldFolders, oldFolder{Path: change.Path, UID: change.Existing.Name, Reason: change.Reason})
 		}
 	}
 
 	if len(oldFolders) > 0 {
-		logging.FromContext(ctx).Debug("folder rename cleanup", "count", len(oldFolders))
+		logging.FromContext(ctx).Info("folder rename cleanup", "count", len(oldFolders))
 		if err := instrumentedFullSyncPhase(jobs.FullSyncPhaseOldFolderCleanup, func() error {
 			safepath.SortByDepth(oldFolders, func(f oldFolder) string { return f.Path }, false)
 			for _, old := range oldFolders {
@@ -447,11 +445,10 @@ func applyChanges(
 					continue
 				}
 
-				logging.FromContext(ctx).Debug("deleting old folder after UID change", "path", old.Path, "uid", old.UID)
 				resultBuilder := jobs.NewFolderResult(old.Path).
 					WithAction(repository.FileActionDeleted).
 					WithName(old.UID).
-					WithReason(provisioning.ReasonFolderIDUpdate)
+					WithReason(old.Reason)
 				if err := repositoryResources.RemoveFolder(ctx, old.UID); err != nil {
 					resultBuilder.WithError(fmt.Errorf("delete old folder %s after UID change: %w", old.UID, err))
 				}

@@ -78,6 +78,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Contains(t, replacedFolders, replacedFolder{
 			Path:   "myfolder/",
 			OldUID: "hash-uid",
+			Reason: provisioning.ReasonFolderMetadataCreated,
 		})
 	})
 
@@ -183,6 +184,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Equal(t, []replacedFolder{{
 			Path:   "myfolder/",
 			OldUID: "old-stable-uid",
+			Reason: provisioning.ReasonFolderMetadataUpdated,
 		}}, replacedFolders)
 	})
 
@@ -283,6 +285,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Equal(t, []replacedFolder{{
 			Path:   "myfolder/",
 			OldUID: "hash-uid",
+			Reason: provisioning.ReasonFolderMetadataCreated,
 		}}, replacedFolders)
 	})
 
@@ -334,6 +337,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Contains(t, replacedFolders, replacedFolder{
 			Path:   "myfolder/",
 			OldUID: "hash-uid",
+			Reason: provisioning.ReasonFolderMetadataCreated,
 		})
 	})
 
@@ -399,6 +403,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Contains(t, replacedFolders, replacedFolder{
 			Path:   "parent/",
 			OldUID: "hash-uid",
+			Reason: provisioning.ReasonFolderMetadataCreated,
 		})
 	})
 
@@ -471,6 +476,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Equal(t, []replacedFolder{{
 			Path:   "myfolder/",
 			OldUID: "stable-uid",
+			Reason: provisioning.ReasonFolderMetadataDeleted,
 		}}, replacedFolders)
 	})
 
@@ -500,6 +506,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Equal(t, []replacedFolder{{
 			Path:   "myfolder/",
 			OldUID: "stable-uid",
+			Reason: provisioning.ReasonFolderMetadataDeleted,
 		}}, replacedFolders)
 	})
 
@@ -589,6 +596,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Equal(t, []replacedFolder{{
 			Path:   "old/",
 			OldUID: "old-uid",
+			Reason: provisioning.ReasonFolderMetadataDeleted,
 		}}, replacedFolders)
 	})
 
@@ -641,6 +649,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Equal(t, []replacedFolder{{
 			Path:   "old/",
 			OldUID: "old-uid",
+			Reason: provisioning.ReasonFolderMetadataDeleted,
 		}}, replacedFolders)
 	})
 
@@ -729,8 +738,8 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.NotContains(t, filteredDiff, repository.VersionedFileChange{
 			Action: repository.FileActionUpdated, Path: "old/child/", Ref: "new-ref",
 		})
-		require.Contains(t, replacedFolders, replacedFolder{Path: "old/", OldUID: "parent-uid"})
-		require.Contains(t, replacedFolders, replacedFolder{Path: "old/child/", OldUID: "child-uid"})
+		require.Contains(t, replacedFolders, replacedFolder{Path: "old/", OldUID: "parent-uid", Reason: provisioning.ReasonFolderMetadataDeleted})
+		require.Contains(t, replacedFolders, replacedFolder{Path: "old/child/", OldUID: "child-uid", Reason: provisioning.ReasonFolderMetadataDeleted})
 	})
 
 	t.Run("rename from non-metadata file to _folder.json only emits create at new path", func(t *testing.T) {
@@ -895,8 +904,8 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		}
 		require.Equal(t, 1, childFolderReplayCount)
 		require.Equal(t, []replacedFolder{
-			{Path: "parent/child/", OldUID: "child-hash-uid"},
-			{Path: "parent/", OldUID: "parent-hash-uid"},
+			{Path: "parent/child/", OldUID: "child-hash-uid", Reason: provisioning.ReasonFolderMetadataCreated},
+			{Path: "parent/", OldUID: "parent-hash-uid", Reason: provisioning.ReasonFolderMetadataCreated},
 		}, replacedFolders)
 	})
 
@@ -946,8 +955,8 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 			Ref:    "new-ref",
 		})
 		require.Len(t, replacedFolders, 2)
-		require.Contains(t, replacedFolders, replacedFolder{Path: "myfolder/", OldUID: "orphan-uid-1"})
-		require.Contains(t, replacedFolders, replacedFolder{Path: "myfolder/", OldUID: "orphan-uid-2"})
+		require.Contains(t, replacedFolders, replacedFolder{Path: "myfolder/", OldUID: "orphan-uid-1", Reason: provisioning.ReasonFolderMetadataCreated})
+		require.Contains(t, replacedFolders, replacedFolder{Path: "myfolder/", OldUID: "orphan-uid-2", Reason: provisioning.ReasonFolderMetadataCreated})
 	})
 
 	t.Run("metadata update with multiple orphans keeps the matching UID and replaces others", func(t *testing.T) {
@@ -984,7 +993,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 			Path:   "myfolder/",
 			Ref:    "new-ref",
 		})
-		require.Equal(t, []replacedFolder{{Path: "myfolder/", OldUID: "orphan-uid"}}, replacedFolders)
+		require.Equal(t, []replacedFolder{{Path: "myfolder/", OldUID: "orphan-uid", Reason: provisioning.ReasonFolderMetadataUpdated}}, replacedFolders)
 	})
 
 	t.Run("metadata deletion with multiple orphans when directory still exists replaces non-fallback UIDs", func(t *testing.T) {
@@ -1034,8 +1043,8 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 			Ref:    "new-ref",
 		})
 		require.Len(t, replacedFolders, 2)
-		require.Contains(t, replacedFolders, replacedFolder{Path: "myfolder/", OldUID: "orphan-uid-1"})
-		require.Contains(t, replacedFolders, replacedFolder{Path: "myfolder/", OldUID: "orphan-uid-2"})
+		require.Contains(t, replacedFolders, replacedFolder{Path: "myfolder/", OldUID: "orphan-uid-1", Reason: provisioning.ReasonFolderMetadataDeleted})
+		require.Contains(t, replacedFolders, replacedFolder{Path: "myfolder/", OldUID: "orphan-uid-2", Reason: provisioning.ReasonFolderMetadataDeleted})
 	})
 
 	t.Run("metadata deletion with multiple orphans when directory is gone replaces all", func(t *testing.T) {
@@ -1070,8 +1079,8 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Empty(t, invalidFolderMetadata)
 		require.Empty(t, filteredDiff)
 		require.Len(t, replacedFolders, 2)
-		require.Contains(t, replacedFolders, replacedFolder{Path: "myfolder/", OldUID: "orphan-uid-1"})
-		require.Contains(t, replacedFolders, replacedFolder{Path: "myfolder/", OldUID: "orphan-uid-2"})
+		require.Contains(t, replacedFolders, replacedFolder{Path: "myfolder/", OldUID: "orphan-uid-1", Reason: provisioning.ReasonFolderMetadataDeleted})
+		require.Contains(t, replacedFolders, replacedFolder{Path: "myfolder/", OldUID: "orphan-uid-2", Reason: provisioning.ReasonFolderMetadataDeleted})
 	})
 
 	t.Run("metadata deletion with mix of fallback-matching and orphaned UIDs only replaces orphans", func(t *testing.T) {
@@ -1121,7 +1130,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 			Path:   "myfolder/dashboard.json",
 			Ref:    "new-ref",
 		})
-		require.Equal(t, []replacedFolder{{Path: "myfolder/", OldUID: "orphan-uid"}}, replacedFolders)
+		require.Equal(t, []replacedFolder{{Path: "myfolder/", OldUID: "orphan-uid", Reason: provisioning.ReasonFolderMetadataDeleted}}, replacedFolders)
 	})
 
 	t.Run("file-only invalid renamed metadata emits warning and old-path cleanup", func(t *testing.T) {
@@ -1152,7 +1161,7 @@ func TestFolderMetadataIncrementalDiffBuilder_BuildIncrementalDiff(t *testing.T)
 		require.Equal(t, []repository.VersionedFileChange{
 			{Action: repository.FileActionUpdated, Path: "new/", Ref: "new-ref"},
 		}, filteredDiff)
-		require.Equal(t, []replacedFolder{{Path: "old/", OldUID: "old-uid"}}, replacedFolders)
+		require.Equal(t, []replacedFolder{{Path: "old/", OldUID: "old-uid", Reason: provisioning.ReasonFolderMetadataDeleted}}, replacedFolders)
 		require.Len(t, invalidFolderMetadata, 1)
 		require.ErrorIs(t, invalidFolderMetadata[0], resources.ErrInvalidFolderMetadata)
 		require.Equal(t, repository.FileActionRenamed, invalidFolderMetadata[0].Action)

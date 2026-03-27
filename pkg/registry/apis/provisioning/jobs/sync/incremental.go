@@ -75,7 +75,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		}
 
 		logger := logging.FromContext(ctx)
-		logger.Debug("folder metadata diff built",
+		logger.Info("folder metadata diff built",
 			"replacedFolders", len(replaced),
 			"invalidMetadata", len(invalidFolderMetadata),
 			"diffSize", len(diff),
@@ -115,7 +115,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 				Build())
 			continue
 		}
-		foldersToDelete = append(foldersToDelete, folderDeletion{Path: r.Path, UID: r.OldUID, Replacement: true})
+		foldersToDelete = append(foldersToDelete, folderDeletion{Path: r.Path, UID: r.OldUID, Reason: r.Reason})
 	}
 
 	foldersToDelete = deduplicateFolderDeletions(foldersToDelete)
@@ -344,9 +344,9 @@ func actionPriority(action repository.FileAction) int {
 // duplicate UIDs that share the same path (e.g. orphans from prior name
 // changes).
 type folderDeletion struct {
-	Path        string
-	UID         string
-	Replacement bool // true when this deletion is part of a folder UID replacement
+	Path   string
+	UID    string
+	Reason string // explicit reason for the deletion (e.g. ReasonFolderMetadataUpdated)
 }
 
 // deduplicateFolderDeletions removes duplicate (Path, UID) pairs from the
@@ -392,9 +392,9 @@ func findOrphanedFolders(
 
 		_, err := readerRepo.Read(ctx, path, currentRef)
 		if err != nil && (errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
-			logger.Debug("orphaned folder detected", "path", path, "uid", folderName)
+			logger.Info("orphaned folder detected", "path", path, "uid", folderName)
 			span.AddEvent("folder not found in git, marking for deletion")
-			orphaned = append(orphaned, folderDeletion{Path: path, UID: folderName})
+			orphaned = append(orphaned, folderDeletion{Path: path, UID: folderName, Reason: provisioning.ReasonFolderOrphaned})
 			continue
 		}
 		if err != nil {
@@ -439,8 +439,8 @@ func deleteFolders(
 		resultBuilder := jobs.NewFolderResult(entry.Path).
 			WithAction(repository.FileActionDeleted).
 			WithName(entry.UID)
-		if entry.Replacement {
-			resultBuilder.WithReason(provisioning.ReasonFolderIDUpdate)
+		if entry.Reason != "" {
+			resultBuilder.WithReason(entry.Reason)
 		}
 		if err := repositoryResources.RemoveFolder(ctx, entry.UID); err != nil {
 			span.RecordError(err)
@@ -453,9 +453,7 @@ func deleteFolders(
 // recordInvalidFolderMetadataWarnings writes collected invalid `_folder.json`
 // warnings to job progress after folder cleanup has completed.
 func recordInvalidFolderMetadataWarnings(ctx context.Context, invalid []*resources.InvalidFolderMetadata, progress jobs.JobProgressRecorder) {
-	logger := logging.FromContext(ctx)
 	for _, warning := range invalid {
-		logger.Debug("invalid folder metadata", "path", warning.Path, "error", warning.Err)
 		action := warning.Action
 		if action == "" {
 			action = repository.FileActionIgnored
@@ -493,7 +491,7 @@ func detectMissingFolderMetadata(ctx context.Context, repo repository.Versioned,
 	missing := resources.FindFoldersMissingMetadata(tree)
 	if len(missing) > 0 {
 		logger := logging.FromContext(ctx)
-		logger.Debug("missing folder metadata detected", "count", len(missing))
+		logger.Info("missing folder metadata detected", "count", len(missing))
 	}
 	for _, p := range missing {
 		builder := jobs.NewFolderResult(p).

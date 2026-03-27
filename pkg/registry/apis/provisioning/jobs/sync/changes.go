@@ -33,6 +33,10 @@ type ResourceFileChange struct {
 	// have been re-parented.
 	FolderRenamed bool
 
+	// Reason provides an explicit reason for folder replacement changes
+	// (e.g. ReasonFolderMetadataUpdated, ReasonFolderMetadataDeleted).
+	Reason string
+
 	// OrphanCleanup marks deletions emitted to clean up duplicate-path orphans.
 	// DetectRenames must skip these so orphan removal is not consumed as a rename.
 	OrphanCleanup bool
@@ -401,7 +405,7 @@ func processInvalidFolderMetadataChanges(
 
 		var invalidErr *resources.InvalidFolderMetadata
 		if errors.As(err, &invalidErr) {
-			logging.FromContext(ctx).Debug("invalid folder metadata", "path", change.Path, "action", change.Action, "error", err)
+			logging.FromContext(ctx).Info("invalid folder metadata", "path", change.Path, "action", change.Action, "error", err)
 			invalidErr = invalidErr.WithAction(change.Action)
 			invalidFolderMetadata = append(invalidFolderMetadata, invalidErr)
 			invalidPaths[change.Path] = true
@@ -427,7 +431,7 @@ func processInvalidFolderMetadataChanges(
 		kept := make([]ResourceFileChange, 0, len(filtered))
 		for _, c := range filtered {
 			if c.OrphanCleanup && safepath.IsDir(c.Path) && invalidPaths[c.Path] {
-				logger.Debug("suppressing orphan cleanup for folder with invalid metadata", "path", c.Path)
+				logger.Info("suppressing orphan cleanup for folder with invalid metadata", "path", c.Path)
 				continue
 			}
 			kept = append(kept, c)
@@ -507,6 +511,7 @@ func detectDeletedFolderMetadata(
 			Path:          path,
 			Existing:      item,
 			FolderRenamed: true,
+			Reason:        provisioning.ReasonFolderMetadataDeleted,
 		})
 		affectedFolders[path] = true
 	}
@@ -542,7 +547,7 @@ func detectFolderUIDChanges(
 
 		// If the metadata file exists, check if the UID has changed.
 		if meta.Name != change.Existing.Name {
-			logging.FromContext(ctx).Debug("folder UID change detected",
+			logging.FromContext(ctx).Info("folder UID change detected",
 				"path", change.Path,
 				"oldUID", change.Existing.Name,
 				"newUID", meta.Name,
@@ -550,6 +555,11 @@ func detectFolderUIDChanges(
 			path := safepath.EnsureTrailingSlash(change.Path)
 			affectedFolders[path] = true
 			change.FolderRenamed = true
+			if change.Existing.Hash == "" {
+				change.Reason = provisioning.ReasonFolderMetadataCreated
+			} else {
+				change.Reason = provisioning.ReasonFolderMetadataUpdated
+			}
 		}
 	}
 	return affectedFolders, nil
@@ -775,7 +785,7 @@ func augmentChangesForFolderMoves(
 		}
 
 		// Same UID at a different path: convert CREATE to UPDATE.
-		logging.FromContext(ctx).Debug("folder move detected",
+		logging.FromContext(ctx).Info("folder move detected",
 			"uid", meta.Name,
 			"oldPath", changes[idx].Path,
 			"newPath", create.Path,
