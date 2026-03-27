@@ -17,7 +17,7 @@ weight: 200
 
 # Dashboard controls
 
-In the **Dashboard controls** section of the edit pane, you can add variables, annotation queries, and dashboard links without leaving the dashboard.
+In the **Dashboard controls** section of the sidebar, you can add variables, annotation queries, and dashboard links without leaving the dashboard.
 
 <!-- screenshot here? -->
 
