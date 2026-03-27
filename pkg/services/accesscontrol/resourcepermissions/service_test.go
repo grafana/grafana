@@ -471,6 +471,142 @@ func TestStore_RegisterActionSet(t *testing.T) {
 	}
 }
 
+func TestService_RouteActionSets(t *testing.T) {
+	t.Run("should register and resolve route action sets", func(t *testing.T) {
+		actionSets := NewActionSetService()
+
+		viewActions := []string{"alert.notifications.routes.managed:read"}
+		editActions := []string{
+			"alert.notifications.routes.managed:read",
+			"alert.notifications.routes.managed:write",
+			"alert.notifications.routes.managed:delete",
+		}
+		adminActions := append(editActions,
+			"alert.notifications.routes.permissions:read",
+			"alert.notifications.routes.permissions:write",
+		)
+
+		actionSets.StoreActionSet("alert.notifications.routes:view", viewActions)
+		actionSets.StoreActionSet("alert.notifications.routes:edit", editActions)
+		actionSets.StoreActionSet("alert.notifications.routes:admin", adminActions)
+
+		resolved := actionSets.ResolveActionSet("alert.notifications.routes:view")
+		assert.ElementsMatch(t, viewActions, resolved)
+
+		resolved = actionSets.ResolveActionSet("alert.notifications.routes:edit")
+		assert.ElementsMatch(t, editActions, resolved)
+
+		resolved = actionSets.ResolveActionSet("alert.notifications.routes:admin")
+		assert.ElementsMatch(t, adminActions, resolved)
+	})
+
+	t.Run("ResolveAction should return route action sets", func(t *testing.T) {
+		actionSets := NewActionSetService()
+		actionSets.StoreActionSet("alert.notifications.routes:view", []string{"alert.notifications.routes.managed:read"})
+		actionSets.StoreActionSet("alert.notifications.routes:edit", []string{
+			"alert.notifications.routes.managed:read",
+			"alert.notifications.routes.managed:write",
+			"alert.notifications.routes.managed:delete",
+		})
+
+		sets := actionSets.ResolveAction("alert.notifications.routes.managed:read")
+		assert.Contains(t, sets, "alert.notifications.routes:view")
+		assert.Contains(t, sets, "alert.notifications.routes:edit")
+
+		sets = actionSets.ResolveAction("alert.notifications.routes.managed:write")
+		assert.Contains(t, sets, "alert.notifications.routes:edit")
+		assert.NotContains(t, sets, "alert.notifications.routes:view")
+	})
+}
+
+func TestIntegrationService_RouteActionSetRegistration(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	routeOptions := Options{
+		Resource:          "alert.notifications.routes",
+		ResourceAttribute: "uid",
+		PermissionsToActions: map[string][]string{
+			"View": {"alert.notifications.routes.managed:read"},
+			"Edit": {
+				"alert.notifications.routes.managed:read",
+				"alert.notifications.routes.managed:write",
+				"alert.notifications.routes.managed:delete",
+			},
+			"Admin": {
+				"alert.notifications.routes.managed:read",
+				"alert.notifications.routes.managed:write",
+				"alert.notifications.routes.managed:delete",
+				"alert.notifications.routes.permissions:read",
+				"alert.notifications.routes.permissions:write",
+			},
+		},
+		Assignments:    Assignments{Users: true, Teams: true, BuiltInRoles: true},
+		ReaderRoleName: "Alerting route permission reader",
+		WriterRoleName: "Alerting route permission writer",
+		RoleGroup:      "Alerting",
+	}
+
+	features := featuremgmt.WithFeatures()
+	ac := acimpl.ProvideAccessControl(features)
+	actionSets := NewActionSetService()
+	_, err := New(
+		setting.NewCfg(), routeOptions, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
+		ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, actionSets,
+	)
+	require.NoError(t, err)
+
+	t.Run("action sets are registered on creation", func(t *testing.T) {
+		resolved := actionSets.ResolveActionSet("alert.notifications.routes:view")
+		assert.ElementsMatch(t, []string{"alert.notifications.routes.managed:read"}, resolved)
+
+		resolved = actionSets.ResolveActionSet("alert.notifications.routes:edit")
+		assert.ElementsMatch(t, []string{
+			"alert.notifications.routes.managed:read",
+			"alert.notifications.routes.managed:write",
+			"alert.notifications.routes.managed:delete",
+		}, resolved)
+
+		resolved = actionSets.ResolveActionSet("alert.notifications.routes:admin")
+		assert.ElementsMatch(t, []string{
+			"alert.notifications.routes.managed:read",
+			"alert.notifications.routes.managed:write",
+			"alert.notifications.routes.managed:delete",
+			"alert.notifications.routes.permissions:read",
+			"alert.notifications.routes.permissions:write",
+		}, resolved)
+	})
+
+	t.Run("mapPermission returns only the action set token for routes", func(t *testing.T) {
+		svc := &Service{
+			options:  routeOptions,
+			features: features,
+		}
+
+		actions, err := svc.mapPermission("View")
+		require.NoError(t, err)
+		assert.Equal(t, []string{"alert.notifications.routes:view"}, actions)
+
+		actions, err = svc.mapPermission("Edit")
+		require.NoError(t, err)
+		assert.Equal(t, []string{"alert.notifications.routes:edit"}, actions)
+
+		actions, err = svc.mapPermission("Admin")
+		require.NoError(t, err)
+		assert.Equal(t, []string{"alert.notifications.routes:admin"}, actions)
+	})
+
+	t.Run("mapPermission returns empty slice for empty permission", func(t *testing.T) {
+		svc := &Service{
+			options:  routeOptions,
+			features: features,
+		}
+
+		actions, err := svc.mapPermission("")
+		require.NoError(t, err)
+		assert.Empty(t, actions)
+	})
+}
+
 func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
 	t.Helper()
 

@@ -44,7 +44,7 @@ func ProvideRoutePermissionsService(
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 ) (*RoutePermissionsService, error) {
 	options := resourcepermissions.Options{
-		Resource:          "routes",
+		Resource:          "alert.notifications.routes",
 		ResourceAttribute: "uid",
 		ResourceTranslator: func(ctx context.Context, orgID int64, resourceID string) (string, error) {
 			return resourceID, nil

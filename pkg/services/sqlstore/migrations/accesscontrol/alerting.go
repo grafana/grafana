@@ -224,20 +224,19 @@ func (m *managedRoutesPermissions) SQL(migrator.Dialect) string {
 }
 
 func (m *managedRoutesPermissions) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
-	// Grant default route permissions to basic roles (Editor=Edit, Viewer=View).
+	// Grant default route permissions to basic roles using action set tokens:
+	//   Viewer → alert.notifications.routes:view   (expands to managed routes read)
+	//   Editor → alert.notifications.routes:edit   (expands to managed routes read + write + delete)
 	// This mirrors routeDefaultPermissions() in ossaccesscontrol/routes.go.
 	// Only adds permissions to existing managed roles — does not create new ones.
 
 	scope := models.ScopeRoutesProvider.GetResourceScopeUID(models.DefaultRoutingTreeName)
-	viewerActions := []string{
-		accesscontrol.ActionAlertingManagedRoutesRead,
-	}
-	editorActions := []string{
-		accesscontrol.ActionAlertingManagedRoutesRead,
-		accesscontrol.ActionAlertingManagedRoutesWrite,
-		accesscontrol.ActionAlertingManagedRoutesDelete,
-	}
-	allActions := editorActions
+
+	const actionSetView = "alert.notifications.routes:view"
+	const actionSetEdit = "alert.notifications.routes:edit"
+
+	allActionSets := []string{actionSetView, actionSetEdit}
+
 	editorRoleName := accesscontrol.ManagedBuiltInRoleName(string(org.RoleEditor))
 	viewerRoleName := accesscontrol.ManagedBuiltInRoleName(string(org.RoleViewer))
 
@@ -256,9 +255,9 @@ func (m *managedRoutesPermissions) Exec(sess *xorm.Session, mg *migrator.Migrato
 		roleIDs = append(roleIDs, r.ID)
 	}
 
-	// fetch all existing route permissions for these roles.
+	// Fetch existing route action set permissions for these roles to avoid duplicates.
 	var existing []accesscontrol.Permission
-	if err := sess.Table("permission").In("role_id", roleIDs).In("action", allActions).Where("scope = ?", scope).Find(&existing); err != nil {
+	if err := sess.Table("permission").In("role_id", roleIDs).In("action", allActionSets).Where("scope = ?", scope).Find(&existing); err != nil {
 		return fmt.Errorf("failed to check existing permissions: %w", err)
 	}
 
@@ -271,28 +270,25 @@ func (m *managedRoutesPermissions) Exec(sess *xorm.Session, mg *migrator.Migrato
 		existingSet[roleAction{roleID: p.RoleID, action: p.Action}] = true
 	}
 
-	// Build the list of permissions to insert.
 	now := time.Now()
 	var toInsert []accesscontrol.Permission
 	for _, role := range roles {
-		actions := editorActions
+		action := actionSetEdit
 		if role.Name == viewerRoleName {
-			actions = viewerActions
+			action = actionSetView
 		}
-		for _, action := range actions {
-			if existingSet[roleAction{roleID: role.ID, action: action}] {
-				continue
-			}
-			p := accesscontrol.Permission{
-				RoleID:  role.ID,
-				Action:  action,
-				Scope:   scope,
-				Updated: now,
-				Created: now,
-			}
-			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
-			toInsert = append(toInsert, p)
+		if existingSet[roleAction{roleID: role.ID, action: action}] {
+			continue
 		}
+		p := accesscontrol.Permission{
+			RoleID:  role.ID,
+			Action:  action,
+			Scope:   scope,
+			Updated: now,
+			Created: now,
+		}
+		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		toInsert = append(toInsert, p)
 	}
 
 	if len(toInsert) > 0 {

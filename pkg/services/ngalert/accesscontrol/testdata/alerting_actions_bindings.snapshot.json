@@ -463,13 +463,13 @@
     ]
   },
   {
-    "action": "routes.permissions:read",
+    "action": "alert.notifications.routes.permissions:read",
     "roles": [
       "fixed:alerting:admin"
     ]
   },
   {
-    "action": "routes.permissions:write",
+    "action": "alert.notifications.routes.permissions:write",
     "roles": [
       "fixed:alerting:admin"
     ]

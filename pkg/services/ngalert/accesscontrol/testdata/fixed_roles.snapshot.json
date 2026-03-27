@@ -147,7 +147,7 @@
       },
       {
         "action": "alert.notifications.routes.managed:read",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.templates:read"
@@ -229,19 +229,19 @@
       },
       {
         "action": "alert.notifications.routes.managed:delete",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.routes.managed:read",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.routes.managed:read",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.routes.managed:write",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.templates.test:write"
@@ -308,7 +308,7 @@
       },
       {
         "action": "alert.notifications.routes.managed:read",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.templates:read"
@@ -425,19 +425,19 @@
       },
       {
         "action": "alert.notifications.routes.managed:delete",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.routes.managed:read",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.routes.managed:read",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.routes.managed:write",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.templates.test:write"
@@ -610,19 +610,19 @@
       },
       {
         "action": "alert.notifications.routes.managed:delete",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.routes.managed:read",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.routes.managed:read",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.routes.managed:write",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.system-status:read"
@@ -708,12 +708,12 @@
         "scope": "receivers:*"
       },
       {
-        "action": "routes.permissions:read",
-        "scope": "routes:*"
+        "action": "alert.notifications.routes.permissions:read",
+        "scope": "alert.notifications.routes:*"
       },
       {
-        "action": "routes.permissions:write",
-        "scope": "routes:*"
+        "action": "alert.notifications.routes.permissions:write",
+        "scope": "alert.notifications.routes:*"
       }
     ],
     "grants": [
@@ -1063,7 +1063,7 @@
     "permissions": [
       {
         "action": "alert.notifications.routes.managed:read",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       }
     ],
     "grants": [
@@ -1081,15 +1081,15 @@
       },
       {
         "action": "alert.notifications.routes.managed:delete",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.routes.managed:read",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       },
       {
         "action": "alert.notifications.routes.managed:write",
-        "scope": "routes:*"
+        "scope": "alert.notifications.routes:*"
       }
     ],
     "grants": [

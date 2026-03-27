@@ -500,8 +500,8 @@ const (
 	ActionAlertingManagedRoutesDelete = "alert.notifications.routes.managed:delete"
 
 	// Alerting routes permissions actions
-	ActionAlertingRoutesPermissionsRead  = "routes.permissions:read"
-	ActionAlertingRoutesPermissionsWrite = "routes.permissions:write"
+	ActionAlertingRoutesPermissionsRead  = "alert.notifications.routes.permissions:read"
+	ActionAlertingRoutesPermissionsWrite = "alert.notifications.routes.permissions:write"
 
 	// External alerting rule actions. We can only narrow it down to writes or reads, as we don't control the atomicity in the external system.
 	ActionAlertingRuleExternalWrite = "alert.rules.external:write"

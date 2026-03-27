@@ -11,7 +11,7 @@ import (
 
 const (
 	ScopeReceiversRoot       = "receivers"
-	ScopeRoutesRoot          = "routes"
+	ScopeRoutesRoot          = "alert.notifications.routes"
 	ScopeInhibitionRulesRoot = "inhibition-rules"
 	AlertRolesGroup          = "Alerting"
 
