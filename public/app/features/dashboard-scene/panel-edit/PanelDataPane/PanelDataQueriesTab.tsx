@@ -5,6 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
+  SafeSerializableSceneObject,
   SceneComponentProps,
   SceneDataQuery,
   sceneGraph,
@@ -75,6 +76,16 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     this.loadDataSource();
   }
 
+  /**
+   * Returns scoped vars with the panel's scene object so that datasource resolution
+   * via templateSrv.replace() can find section-level variables (row/tab scoped)
+   * in addition to dashboard-level variables.
+   */
+  public getPanelContext() {
+    const panel = this.state.panelRef.resolve();
+    return { __sceneObject: new SafeSerializableSceneObject(panel) };
+  }
+
   private async loadDataSource() {
     const panel = this.state.panelRef.resolve();
     const dataObj = panel.state.$data;
@@ -84,6 +95,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     }
 
     let datasourceToLoad = this.queryRunner.state.datasource;
+    const panelContext = this.getPanelContext();
 
     try {
       let datasource: DataSourceApi | undefined;
@@ -108,12 +120,15 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
         // do we have a last used datasource for this dashboard
         if (lastUsedDatasource?.datasourceUid !== null) {
           // get datasource from dashbopard uid
-          dsSettings = getDataSourceSrv().getInstanceSettings({ uid: lastUsedDatasource?.datasourceUid });
+          dsSettings = getDataSourceSrv().getInstanceSettings({ uid: lastUsedDatasource?.datasourceUid }, panelContext);
           if (dsSettings) {
-            datasource = await getDataSourceSrv().get({
-              uid: lastUsedDatasource?.datasourceUid,
-              type: dsSettings.type,
-            });
+            datasource = await getDataSourceSrv().get(
+              {
+                uid: lastUsedDatasource?.datasourceUid,
+                type: dsSettings.type,
+              },
+              panelContext
+            );
 
             this.queryRunner.setState({
               datasource: {
@@ -124,8 +139,8 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
           }
         }
       } else {
-        datasource = await getDataSourceSrv().get(datasourceToLoad);
-        dsSettings = getDataSourceSrv().getInstanceSettings(datasourceToLoad);
+        datasource = await getDataSourceSrv().get(datasourceToLoad, panelContext);
+        dsSettings = getDataSourceSrv().getInstanceSettings(datasourceToLoad, panelContext);
       }
 
       if (datasource && dsSettings) {
@@ -196,9 +211,10 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   public onChangeDataSource = async (newSettings: DataSourceInstanceSettings, defaultQueries?: SceneDataQuery[]) => {
     const { dsSettings } = this.state;
     const queryRunner = this.queryRunner;
+    const panelContext = this.getPanelContext();
 
-    const currentDS = dsSettings ? await getDataSourceSrv().get({ uid: dsSettings.uid }) : undefined;
-    const nextDS = await getDataSourceSrv().get({ uid: newSettings.uid });
+    const currentDS = dsSettings ? await getDataSourceSrv().get({ uid: dsSettings.uid }, panelContext) : undefined;
+    const nextDS = await getDataSourceSrv().get({ uid: newSettings.uid }, panelContext);
 
     const currentQueries = queryRunner.state.queries;
 
@@ -418,6 +434,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         dsSettings={dsSettings}
         dataSource={datasource}
         options={model.buildQueryOptions()}
+        scopedVars={model.getPanelContext()}
         onDataSourceChange={model.onChangeDataSource}
         onOptionsChange={model.onQueryOptionsChange}
         onOpenQueryInspector={model.onOpenInspector}
