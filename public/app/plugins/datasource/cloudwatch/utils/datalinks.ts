@@ -46,6 +46,7 @@ export async function addDataLinksToLogsResponse(
     }
 
     // add a link to the cloudwatch console as a separate field that will be displayed as a link
+    // @ts-ignore ignore feature toggle type error
     if (config.featureToggles.cloudWatchLogsInsightsDataLinks && dataFrame.fields.length) {
       dataFrame.fields.push({
         name: '',

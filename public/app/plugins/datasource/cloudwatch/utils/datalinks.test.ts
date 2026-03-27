@@ -9,11 +9,6 @@ describe('addDataLinksToLogsResponse', () => {
   // @ts-ignore ignore feature toggle type error
   const originalFeatureToggleValue = config.featureToggles.cloudWatchLogsInsightsDataLinks;
 
-  beforeEach(() => {
-    // @ts-ignore ignore feature toggle type error
-    config.featureToggles.cloudWatchLogsInsightsDataLinks = true;
-  });
-
   afterEach(() => {
     // @ts-ignore ignore feature toggle type error
     config.featureToggles.cloudWatchLogsInsightsDataLinks = originalFeatureToggleValue;
@@ -24,6 +19,9 @@ describe('addDataLinksToLogsResponse', () => {
     to: dateMath.toDateTime('2016-12-31 16:00:00Z', { roundUp: false })!,
   };
   it('should add data links to response from log group names', async () => {
+    // @ts-ignore ignore feature toggle type error
+    config.featureToggles.cloudWatchLogsInsightsDataLinks = true;
+
     const mockResponse: DataQueryResponse = {
       data: [
         {
@@ -117,6 +115,9 @@ describe('addDataLinksToLogsResponse', () => {
   });
 
   it('should add a data link field to response from log groups, trimming :*', async () => {
+    // @ts-ignore ignore feature toggle type error
+    config.featureToggles.cloudWatchLogsInsightsDataLinks = true;
+
     const mockResponse: DataQueryResponse = {
       data: [
         {
@@ -182,6 +183,9 @@ describe('addDataLinksToLogsResponse', () => {
   });
 
   it('should add data links to response from log groups, even without trimming :*', async () => {
+    // @ts-ignore ignore feature toggle type error
+    config.featureToggles.cloudWatchLogsInsightsDataLinks = true;
+
     const mockResponse: DataQueryResponse = {
       data: [
         {
