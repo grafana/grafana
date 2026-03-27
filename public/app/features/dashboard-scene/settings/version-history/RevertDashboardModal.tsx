@@ -30,7 +30,6 @@ export const RevertDashboardModal = ({ hideModal, onRestore, version }: RevertDa
     <ConfirmModal
       isOpen={true}
       title={t('dashboard-scene.revert-dashboard-modal.title-restore-version', 'Restore version')}
-      icon="history"
       onDismiss={hideModal}
       onConfirm={onRestoreDashboard}
       body={

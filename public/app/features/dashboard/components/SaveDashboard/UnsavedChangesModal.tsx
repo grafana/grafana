@@ -20,7 +20,6 @@ export const UnsavedChangesModal = ({ dashboard, onSaveSuccess, onDiscard, onDis
       isOpen={true}
       title={t('dashboard.unsaved-changes-modal.title-unsaved-changes', 'Unsaved changes')}
       onDismiss={onDismiss}
-      icon="exclamation-triangle"
       className={css({
         width: '500px',
       })}

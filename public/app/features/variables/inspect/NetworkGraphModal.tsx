@@ -30,14 +30,7 @@ export function NetworkGraphModal({ edges, nodes, show: propsShow, title, childr
 
   return (
     <>
-      <Modal
-        isOpen={show}
-        title={title}
-        icon="info-circle"
-        iconTooltip="The graph can be moved, zoomed in, and zoomed out."
-        onClickBackdrop={onClose}
-        onDismiss={onClose}
-      >
+      <Modal isOpen={show} title={title} onClickBackdrop={onClose} onDismiss={onClose}>
         <NetworkGraph nodes={nodes} edges={edges} />
       </Modal>
       {children({ showModal })}

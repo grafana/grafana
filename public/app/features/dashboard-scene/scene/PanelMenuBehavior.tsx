@@ -530,7 +530,6 @@ export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
     new ShowConfirmModalEvent({
       title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
       text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
-      icon: 'trash-alt',
       yesText: 'Remove',
       onConfirm: () => dashboard.removePanel(panel),
     })

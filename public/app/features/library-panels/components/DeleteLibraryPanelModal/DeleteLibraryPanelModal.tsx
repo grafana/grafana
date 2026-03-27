@@ -35,7 +35,6 @@ export const DeleteLibraryPanelModal: FC<Props> = ({ libraryPanel, onDismiss, on
     <Modal
       className={styles.modal}
       title={t('library-panels.delete-library-panel-modal.title-delete-library-panel', 'Delete library panel')}
-      icon="trash-alt"
       onDismiss={onDismiss}
       isOpen={true}
     >

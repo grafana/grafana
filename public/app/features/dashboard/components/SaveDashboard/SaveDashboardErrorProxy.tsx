@@ -125,7 +125,6 @@ const ConfirmPluginDashboardSaveModal = ({ onDismiss, dashboard }: SaveDashboard
     <Modal
       className={styles.modal}
       title={t('dashboard.confirm-plugin-dashboard-save-modal.title-plugin-dashboard', 'Plugin dashboard')}
-      icon="copy"
       isOpen={true}
       onDismiss={onDismiss}
     >

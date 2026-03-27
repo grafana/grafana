@@ -49,7 +49,6 @@ async function publishDashboardSnapshot(
 test.use({
   featureToggles: {
     scenes: true,
-    kubernetesDashboards: true,
     dashboardNewLayouts: true,
     groupByVariable: true,
   },

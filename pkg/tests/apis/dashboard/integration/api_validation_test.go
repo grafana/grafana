@@ -20,21 +20,20 @@ import (
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/dashboards" // TODO: Check if we can remove this import
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/dashboards" // TODO: Check if we can remove this import
-	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -76,9 +75,7 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous:      true,
 				DisableFeatureToggles: disableFlags,
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesDashboards, // Enable FE-only dashboard feature flag
-				},
+				EnableFeatureToggles:  []string{},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,
@@ -106,39 +103,6 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 
 			t.Run("Dashboard quota tests", func(t *testing.T) {
 				runQuotaTests(t, org1Ctx)
-			})
-		})
-	}
-
-	for _, dualWriterMode := range dualWriterModes {
-		t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
-			disableFlags := []string{featuremgmt.FlagKubernetesDashboards}
-			if dualWriterMode < rest.Mode5 {
-				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
-			}
-
-			// Create a K8sTestHelper which will set up a real API server
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous:      true,
-				DisableFeatureToggles: disableFlags,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"dashboards.dashboard.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-					"folders.folder.grafana.app": {
-						DualWriterMode: dualWriterMode,
-					},
-				},
-			})
-
-			t.Cleanup(func() {
-				helper.Shutdown()
-			})
-
-			org1Ctx := createTestContext(t, helper, helper.Org1, dualWriterMode)
-
-			t.Run("Dashboard permission tests", func(t *testing.T) {
-				runDashboardPermissionTests(t, org1Ctx, false)
 			})
 		})
 	}
@@ -179,7 +143,7 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 	org2Ctx := createTestContext(t, helper, helper.OrgB, rest.Mode5)
 
 	t.Run("Dashboard permission tests", func(t *testing.T) {
-		runDashboardPermissionTests(t, org1Ctx, true)
+		runDashboardPermissionTests(t, org1Ctx)
 	})
 
 	t.Run("Authorization tests for all identity types", func(t *testing.T) {
@@ -244,9 +208,7 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				DisableAnonymous:      true,
 				DisableFeatureToggles: disableFlags,
-				EnableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesDashboards,
-				},
+				EnableFeatureToggles:  []string{},
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,
@@ -273,7 +235,7 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 			})
 
 			t.Run("Dashboard permission tests", func(t *testing.T) {
-				runDashboardPermissionTests(t, org1Ctx, true)
+				runDashboardPermissionTests(t, org1Ctx)
 			})
 
 			t.Run("Dashboard HTTP API test", func(t *testing.T) {
@@ -1517,7 +1479,7 @@ func runAuthorizationTests(t *testing.T, ctx TestContext) {
 }
 
 // Run tests for dashboard permissions
-func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashboardsEnabled bool) {
+func runDashboardPermissionTests(t *testing.T, ctx TestContext) {
 	t.Helper()
 
 	// Get clients for each user
@@ -1641,21 +1603,13 @@ func runDashboardPermissionTests(t *testing.T, ctx TestContext, kubernetesDashbo
 		err = adminClient.Resource.Delete(context.Background(), dash.GetName(), v1.DeleteOptions{})
 		require.NoError(t, err)
 
-		if kubernetesDashboardsEnabled {
-			// In case kubernetesDashboards feature flag is set to true,
-			// we don't grant admin permission to dashboard creator on nested folders.
-			// This means that the viewer will not be able to delete the dashboard.
-			err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
-			require.Error(t, err)
-			err = adminClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
-			require.NoError(t, err)
-		} else {
-			// In case kubernetesDashboards feature flag is set to false,
-			// we grant admin permission to dashboard creator on nested folders.
-			// This means that the viewer will be able to delete the dashboard.
-			err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
-			require.NoError(t, err)
-		}
+		// In case kubernetesDashboards feature flag is set to true,
+		// we don't grant admin permission to dashboard creator on nested folders.
+		// This means that the viewer will not be able to delete the dashboard.
+		err = viewerClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
+		require.Error(t, err)
+		err = adminClient.Resource.Delete(context.Background(), dashViewer.GetName(), v1.DeleteOptions{})
+		require.NoError(t, err)
 
 		// Clean up the folder
 		err = adminFolderClient.Resource.Delete(context.Background(), folderUID, v1.DeleteOptions{})

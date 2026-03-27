@@ -673,7 +673,6 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
           </div>
         }
         confirmText={t('alerting.query-and-expressions-step.confirmText-deactivate', 'Deactivate')}
-        icon="exclamation-triangle"
         onConfirm={() => {
           setValue('editorSettings.simplifiedQueryEditor', true);
           setShowResetModal(false);
