@@ -2401,6 +2401,20 @@
     },
     {
       "metadata": {
+        "name": "groupToNestedTableV2",
+        "resourceVersion": "1774642688193",
+        "creationTimestamp": "2026-03-27T20:18:08Z"
+      },
+      "spec": {
+        "description": "Enable the new matcher-based UI and config shape for the Group to Nested Tables transformation",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grpcServer",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2022-09-26T20:25:34Z"
