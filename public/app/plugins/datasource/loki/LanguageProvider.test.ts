@@ -28,34 +28,69 @@ const mockTimeRange = {
 
 describe('Language completion provider', () => {
   describe('start', () => {
-    const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
+    describe('when detectedEndpointsSupported is false (detected_labels returns non-array)', () => {
+      let datasource: LokiDatasource;
 
-    it('should fetch labels on initial start', async () => {
-      const languageProvider = new LanguageProvider(datasource);
-      const fetchSpy = jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue([]);
-      await languageProvider.start();
-      expect(fetchSpy).toHaveBeenCalled();
+      beforeEach(() => {
+        datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
+      });
+
+      it('should complete start after probe without calling fetchLabels', async () => {
+        const languageProvider = new LanguageProvider(datasource);
+        const metadataSpy = jest.spyOn(datasource, 'metadataRequest');
+        const fetchSpy = jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue([]);
+        await languageProvider.start();
+        expect(languageProvider.started).toBe(true);
+        expect(
+          metadataSpy.mock.calls.filter(
+            (call) =>
+              call[0] === 'detected_labels' && call[1]?.start === 1560153109000 && call[1]?.end === 1560163909000
+          )
+        ).toHaveLength(1);
+        expect(fetchSpy).not.toHaveBeenCalled();
+      });
+
+      it('should not re-run detected_labels probe on second start with same time range', async () => {
+        const languageProvider = new LanguageProvider(datasource);
+        const metadataSpy = jest.spyOn(datasource, 'metadataRequest');
+        await languageProvider.start();
+        await languageProvider.start();
+        expect(metadataSpy.mock.calls.filter((call) => call[0] === 'detected_labels')).toHaveLength(1);
+      });
+
+      it('should not re-run detected_labels probe when time range changes (probe result already cached)', async () => {
+        const languageProvider = new LanguageProvider(datasource);
+        const metadataSpy = jest.spyOn(datasource, 'metadataRequest');
+        await languageProvider.start();
+        jest.mocked(datasource.getTimeRangeParams).mockRestore();
+        jest.spyOn(datasource, 'getTimeRangeParams').mockImplementation((range: TimeRange) => ({
+          start: range.from.valueOf(),
+          end: range.to.valueOf(),
+        }));
+        await languageProvider.start(mockTimeRange);
+        await languageProvider.start(mockTimeRange);
+        expect(metadataSpy.mock.calls.filter((call) => call[0] === 'detected_labels')).toHaveLength(1);
+      });
     });
 
-    it('should not again fetch labels on second start', async () => {
-      const languageProvider = new LanguageProvider(datasource);
-      const fetchSpy = jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue([]);
-      await languageProvider.start();
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-      await languageProvider.start();
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-    });
+    describe('when detectedEndpointsSupported is true', () => {
+      let datasource: LokiDatasource;
 
-    it('should again fetch labels on second start with different timerange', async () => {
-      const languageProvider = new LanguageProvider(datasource);
-      jest.mocked(datasource.getTimeRangeParams).mockRestore();
-      const fetchSpy = jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue([]);
-      await languageProvider.start();
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
-      await languageProvider.start(mockTimeRange);
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
-      await languageProvider.start(mockTimeRange);
-      expect(fetchSpy).toHaveBeenCalledTimes(2);
+      beforeEach(() => {
+        datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] }, undefined, {
+          detectedEndpointsSupported: true,
+        });
+      });
+
+      it('should not call fetchLabels on start when detected_labels probe succeeds', async () => {
+        const languageProvider = new LanguageProvider(datasource);
+        const fetchSpy = jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue([]);
+        const metadataSpy = jest.spyOn(datasource, 'metadataRequest');
+        await languageProvider.start();
+        expect(languageProvider.started).toBe(true);
+        expect(fetchSpy).not.toHaveBeenCalled();
+        expect(metadataSpy.mock.calls.some((call) => call[0] === 'detected_labels')).toBe(true);
+      });
     });
   });
 
@@ -146,6 +181,7 @@ describe('Language completion provider', () => {
   });
 
   describe('fetchLabelValues', () => {
+    // getLanguageProvider runs start(); setup() makes detected_labels return non-array so detectedEndpointsSupported is false.
     it('should fetch label values if not cached', async () => {
       const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
       const provider = await getLanguageProvider(datasource);
@@ -437,7 +473,7 @@ describe('Language completion provider', () => {
       const requestSpy = jest.spyOn(provider, 'request');
       const labelValues = await provider.fetchDetectedFields(options);
 
-      expect(requestSpy).toHaveBeenCalledWith(`detected_fields`, expectedOptions, true, undefined);
+      expect(requestSpy).toHaveBeenCalledWith(`detected_fields`, expectedOptions, false, undefined);
       expect(labelValues).toEqual(expectedResponse);
     });
     it('should return values', async () => {
@@ -450,7 +486,7 @@ describe('Language completion provider', () => {
 
       const nextLabelValues = await provider.fetchDetectedFields(options);
       expect(requestSpy).toHaveBeenCalledTimes(2);
-      expect(requestSpy).toHaveBeenCalledWith(`detected_fields`, expectedOptions, true, undefined);
+      expect(requestSpy).toHaveBeenCalledWith(`detected_fields`, expectedOptions, false, undefined);
       expect(nextLabelValues).toEqual(expectedResponse);
     });
     it('should encode special characters', async () => {
@@ -458,139 +494,190 @@ describe('Language completion provider', () => {
       const requestSpy = jest.spyOn(provider, 'request');
       await provider.fetchDetectedFields(options);
 
-      expect(requestSpy).toHaveBeenCalledWith('detected_fields', expectedOptions, true, undefined);
+      expect(requestSpy).toHaveBeenCalledWith('detected_fields', expectedOptions, false, undefined);
     });
   });
 
   describe('fetchLabels', () => {
-    it('should return labels', async () => {
-      const datasourceWithLabels = setup({ other: [] });
+    describe('when detectedEndpointsSupported is false (default / no start)', () => {
+      it('should return labels', async () => {
+        const datasourceWithLabels = setup({ other: [] });
 
-      const instance = new LanguageProvider(datasourceWithLabels);
-      const labels = await instance.fetchLabels();
-      expect(labels).toEqual(['other']);
-    });
-
-    it('should set labels', async () => {
-      const datasourceWithLabels = setup({ other: [] });
-
-      const instance = new LanguageProvider(datasourceWithLabels);
-      await instance.fetchLabels();
-      expect(instance.labelKeys).toEqual(['other']);
-    });
-
-    it('should return empty array', async () => {
-      const datasourceWithLabels = setup({});
-
-      const instance = new LanguageProvider(datasourceWithLabels);
-      const labels = await instance.fetchLabels();
-      expect(labels).toEqual([]);
-    });
-
-    it('should set empty array', async () => {
-      const datasourceWithLabels = setup({});
-
-      const instance = new LanguageProvider(datasourceWithLabels);
-      await instance.fetchLabels();
-      expect(instance.labelKeys).toEqual([]);
-    });
-
-    it('should use time range param', async () => {
-      const datasourceWithLabels = setup({});
-      datasourceWithLabels.languageProvider.request = jest.fn();
-
-      const instance = new LanguageProvider(datasourceWithLabels);
-      instance.request = jest.fn();
-      await instance.fetchLabels({ timeRange: mockTimeRange });
-      expect(instance.request).toHaveBeenCalledWith('labels', datasourceWithLabels.getTimeRangeParams(mockTimeRange));
-    });
-
-    describe('without labelNames feature toggle', () => {
-      const lokiLabelNamesQueryApi = config.featureToggles.lokiLabelNamesQueryApi;
-      beforeAll(() => {
-        config.featureToggles.lokiLabelNamesQueryApi = false;
-      });
-      afterAll(() => {
-        config.featureToggles.lokiLabelNamesQueryApi = lokiLabelNamesQueryApi;
+        const instance = new LanguageProvider(datasourceWithLabels);
+        const labels = await instance.fetchLabels();
+        expect(labels).toEqual(['other']);
       });
 
-      it('should use series endpoint for request with stream selector', async () => {
+      it('should set labels', async () => {
+        const datasourceWithLabels = setup({ other: [] });
+
+        const instance = new LanguageProvider(datasourceWithLabels);
+        await instance.fetchLabels();
+        expect(instance.labelKeys).toEqual(['other']);
+      });
+
+      it('should return empty array', async () => {
+        const datasourceWithLabels = setup({});
+
+        const instance = new LanguageProvider(datasourceWithLabels);
+        const labels = await instance.fetchLabels();
+        expect(labels).toEqual([]);
+      });
+
+      it('should set empty array', async () => {
+        const datasourceWithLabels = setup({});
+
+        const instance = new LanguageProvider(datasourceWithLabels);
+        await instance.fetchLabels();
+        expect(instance.labelKeys).toEqual([]);
+      });
+
+      it('should use time range param', async () => {
         const datasourceWithLabels = setup({});
         datasourceWithLabels.languageProvider.request = jest.fn();
 
         const instance = new LanguageProvider(datasourceWithLabels);
         instance.request = jest.fn();
-        await instance.fetchLabels({ streamSelector: '{foo="bar"}' });
-        expect(instance.request).toHaveBeenCalledWith('series', {
-          end: 1560163909000,
-          'match[]': '{foo="bar"}',
-          start: 1560153109000,
+        await instance.fetchLabels({ timeRange: mockTimeRange });
+        expect(instance.request).toHaveBeenCalledWith('labels', datasourceWithLabels.getTimeRangeParams(mockTimeRange));
+      });
+
+      describe('without labelNames feature toggle', () => {
+        const lokiLabelNamesQueryApi = config.featureToggles.lokiLabelNamesQueryApi;
+        beforeAll(() => {
+          config.featureToggles.lokiLabelNamesQueryApi = false;
         });
+        afterAll(() => {
+          config.featureToggles.lokiLabelNamesQueryApi = lokiLabelNamesQueryApi;
+        });
+
+        it('should use series endpoint for request with stream selector', async () => {
+          const datasourceWithLabels = setup({});
+          datasourceWithLabels.languageProvider.request = jest.fn();
+
+          const instance = new LanguageProvider(datasourceWithLabels);
+          instance.request = jest.fn();
+          await instance.fetchLabels({ streamSelector: '{foo="bar"}' });
+          expect(instance.request).toHaveBeenCalledWith('series', {
+            end: 1560163909000,
+            'match[]': '{foo="bar"}',
+            start: 1560153109000,
+          });
+        });
+      });
+
+      describe('with labelNames feature toggle', () => {
+        const lokiLabelNamesQueryApi = config.featureToggles.lokiLabelNamesQueryApi;
+        beforeAll(() => {
+          config.featureToggles.lokiLabelNamesQueryApi = true;
+        });
+        afterAll(() => {
+          config.featureToggles.lokiLabelNamesQueryApi = lokiLabelNamesQueryApi;
+        });
+
+        it('should exclude empty vector selector', async () => {
+          const datasourceWithLabels = setup({ foo: [], bar: [], __name__: [], __stream_shard__: [] });
+
+          const instance = new LanguageProvider(datasourceWithLabels);
+          instance.request = jest.fn();
+          await instance.fetchLabels({ streamSelector: '{}' });
+          expect(instance.request).toBeCalledWith('labels', { end: 1560163909000, start: 1560153109000 });
+        });
+
+        it('should use series endpoint for request with stream selector', async () => {
+          const datasourceWithLabels = setup({});
+          datasourceWithLabels.languageProvider.request = jest.fn();
+
+          const instance = new LanguageProvider(datasourceWithLabels);
+          instance.request = jest.fn();
+          await instance.fetchLabels({ streamSelector: '{foo="bar"}' });
+          expect(instance.request).toHaveBeenCalledWith('labels', {
+            end: 1560163909000,
+            query: '{foo="bar"}',
+            start: 1560153109000,
+          });
+        });
+
+        it('should interpolate variables in stream selector', async () => {
+          const datasource = setup({});
+          jest.spyOn(datasource, 'getTimeRangeParams').mockReturnValue({ start: 0, end: 1 });
+          jest
+            .spyOn(datasource, 'interpolateString')
+            .mockImplementation((string: string) => string.replace(/\$test_var/g, 'age'));
+
+          const languageProvider = new LanguageProvider(datasource);
+          languageProvider.request = jest.fn().mockResolvedValue([]);
+          await languageProvider.fetchLabels({ streamSelector: '{age="new", $test_var="new"}' });
+          expect(languageProvider.request).toHaveBeenCalledWith('labels', {
+            end: 1,
+            query: '{age="new", age="new"}',
+            start: 0,
+          });
+        });
+      });
+
+      it('should filter internal labels', async () => {
+        const datasourceWithLabels = setup({
+          foo: [],
+          bar: [],
+          __name__: [],
+          __stream_shard__: [],
+          __aggregated_metric__: [],
+        });
+
+        const instance = new LanguageProvider(datasourceWithLabels);
+        const labels = await instance.fetchLabels();
+        expect(labels).toEqual(['__name__', 'bar', 'foo']);
       });
     });
 
-    describe('with labelNames feature toggle', () => {
-      const lokiLabelNamesQueryApi = config.featureToggles.lokiLabelNamesQueryApi;
-      beforeAll(() => {
-        config.featureToggles.lokiLabelNamesQueryApi = true;
-      });
-      afterAll(() => {
-        config.featureToggles.lokiLabelNamesQueryApi = lokiLabelNamesQueryApi;
-      });
-
-      it('should exclude empty vector selector', async () => {
-        const datasourceWithLabels = setup({ foo: [], bar: [], __name__: [], __stream_shard__: [] });
-
+    describe('when detectedEndpointsSupported is true', () => {
+      it('should fetch label names via detected_labels', async () => {
+        const datasourceWithLabels = setup({ alpha: [], zed: [] }, undefined, { detectedEndpointsSupported: true });
         const instance = new LanguageProvider(datasourceWithLabels);
-        instance.request = jest.fn();
-        await instance.fetchLabels({ streamSelector: '{}' });
-        expect(instance.request).toBeCalledWith('labels', { end: 1560163909000, start: 1560153109000 });
+        await instance.start();
+        const requestSpy = jest.spyOn(instance, 'request');
+        const labels = await instance.fetchLabels();
+        expect(requestSpy).toHaveBeenCalledWith(
+          'detected_labels',
+          { start: 1560153109000, end: 1560163909000 },
+          true,
+          undefined
+        );
+        expect(labels).toEqual(['alpha', 'zed']);
       });
 
-      it('should use series endpoint for request with stream selector', async () => {
-        const datasourceWithLabels = setup({});
-        datasourceWithLabels.languageProvider.request = jest.fn();
-
+      it('should pass stream selector as query to detected_labels', async () => {
+        const datasourceWithLabels = setup({ job: [] }, undefined, { detectedEndpointsSupported: true });
         const instance = new LanguageProvider(datasourceWithLabels);
-        instance.request = jest.fn();
+        await instance.start();
+        const requestSpy = jest.spyOn(instance, 'request');
         await instance.fetchLabels({ streamSelector: '{foo="bar"}' });
-        expect(instance.request).toHaveBeenCalledWith('labels', {
-          end: 1560163909000,
-          query: '{foo="bar"}',
-          start: 1560153109000,
-        });
+        expect(requestSpy).toHaveBeenCalledWith(
+          'detected_labels',
+          { start: 1560153109000, end: 1560163909000, query: '{foo="bar"}' },
+          true,
+          undefined
+        );
       });
 
-      it('should interpolate variables in stream selector', async () => {
-        const datasource = setup({});
-        jest.spyOn(datasource, 'getTimeRangeParams').mockReturnValue({ start: 0, end: 1 });
-        jest
-          .spyOn(datasource, 'interpolateString')
-          .mockImplementation((string: string) => string.replace(/\$test_var/g, 'age'));
-
-        const languageProvider = new LanguageProvider(datasource);
-        languageProvider.request = jest.fn().mockResolvedValue([]);
-        await languageProvider.fetchLabels({ streamSelector: '{age="new", $test_var="new"}' });
-        expect(languageProvider.request).toHaveBeenCalledWith('labels', {
-          end: 1,
-          query: '{age="new", age="new"}',
-          start: 0,
-        });
+      it('should use time range when calling detected_labels', async () => {
+        const datasourceWithLabels = setup({ other: [] }, undefined, { detectedEndpointsSupported: true });
+        datasourceWithLabels.getTimeRangeParams = jest
+          .fn()
+          .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
+        const instance = new LanguageProvider(datasourceWithLabels);
+        await instance.start();
+        const requestSpy = jest.spyOn(instance, 'request');
+        await instance.fetchLabels({ timeRange: mockTimeRange });
+        expect(datasourceWithLabels.getTimeRangeParams).toHaveBeenCalledWith(mockTimeRange);
+        expect(requestSpy).toHaveBeenCalledWith(
+          'detected_labels',
+          { start: mockTimeRange.from.valueOf(), end: mockTimeRange.to.valueOf() },
+          true,
+          undefined
+        );
       });
-    });
-
-    it('should filter internal labels', async () => {
-      const datasourceWithLabels = setup({
-        foo: [],
-        bar: [],
-        __name__: [],
-        __stream_shard__: [],
-        __aggregated_metric__: [],
-      });
-
-      const instance = new LanguageProvider(datasourceWithLabels);
-      const labels = await instance.fetchLabels();
-      expect(labels).toEqual(['__name__', 'bar', 'foo']);
     });
   });
 });
@@ -695,128 +782,184 @@ describe('Query imports', () => {
   });
 
   describe('getParserAndLabelKeys()', () => {
-    let datasource: LokiDatasource, languageProvider: LanguageProvider;
-    const extractLogParserFromDataFrameMock = jest.mocked(extractLogParserFromDataFrame);
-    const extractedLabelKeys = ['extracted', 'label'];
-    const structuredMetadataKeys = ['structured', 'metadata'];
-    const parsedKeys = ['parsed', 'label'];
-    const unwrapLabelKeys = ['unwrap', 'labels'];
+    describe('when detectedEndpointsSupported is false', () => {
+      let datasource: LokiDatasource, languageProvider: LanguageProvider;
+      const extractLogParserFromDataFrameMock = jest.mocked(extractLogParserFromDataFrame);
+      const extractedLabelKeys = ['extracted', 'label'];
+      const structuredMetadataKeys = ['structured', 'metadata'];
+      const parsedKeys = ['parsed', 'label'];
+      const unwrapLabelKeys = ['unwrap', 'labels'];
 
-    beforeEach(() => {
-      datasource = createLokiDatasource();
-      languageProvider = new LanguageProvider(datasource);
-      jest.mocked(extractLabelKeysFromDataFrame).mockImplementation((_, type) => {
-        if (type === LabelType.Indexed || !type) {
-          return extractedLabelKeys;
-        } else if (type === LabelType.StructuredMetadata) {
-          return structuredMetadataKeys;
-        } else if (type === LabelType.Parsed) {
-          return parsedKeys;
-        } else {
-          return [];
-        }
+      beforeEach(() => {
+        datasource = createLokiDatasource();
+        languageProvider = new LanguageProvider(datasource);
+        jest.mocked(extractLabelKeysFromDataFrame).mockImplementation((_, type) => {
+          if (type === LabelType.Indexed || !type) {
+            return extractedLabelKeys;
+          } else if (type === LabelType.StructuredMetadata) {
+            return structuredMetadataKeys;
+          } else if (type === LabelType.Parsed) {
+            return parsedKeys;
+          } else {
+            return [];
+          }
+        });
+        jest.mocked(extractUnwrapLabelKeysFromDataFrame).mockReturnValue(unwrapLabelKeys);
       });
-      jest.mocked(extractUnwrapLabelKeysFromDataFrame).mockReturnValue(unwrapLabelKeys);
+
+      it('identifies selectors with JSON parser data', async () => {
+        jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([{}] as DataFrame[]);
+        extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: false, hasJSON: true, hasPack: false });
+
+        expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
+          extractedLabelKeys: [...extractedLabelKeys, ...parsedKeys],
+          unwrapLabelKeys,
+          structuredMetadataKeys,
+          hasJSON: true,
+          hasLogfmt: false,
+          hasPack: false,
+        });
+      });
+
+      it('identifies selectors with Logfmt parser data', async () => {
+        jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([{}] as DataFrame[]);
+        extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: true, hasJSON: false, hasPack: false });
+
+        expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
+          extractedLabelKeys: [...extractedLabelKeys, ...parsedKeys],
+          unwrapLabelKeys,
+          structuredMetadataKeys,
+          hasJSON: false,
+          hasLogfmt: true,
+          hasPack: false,
+        });
+      });
+
+      it('correctly processes empty data', async () => {
+        jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
+        extractLogParserFromDataFrameMock.mockClear();
+
+        expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
+          extractedLabelKeys: [],
+          unwrapLabelKeys: [],
+          structuredMetadataKeys: [],
+          hasJSON: false,
+          hasLogfmt: false,
+          hasPack: false,
+        });
+        expect(extractLogParserFromDataFrameMock).not.toHaveBeenCalled();
+      });
+
+      it('calls dataSample with correct default maxLines', async () => {
+        jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
+
+        expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
+          extractedLabelKeys: [],
+          unwrapLabelKeys: [],
+          structuredMetadataKeys: [],
+          hasJSON: false,
+          hasLogfmt: false,
+          hasPack: false,
+        });
+        expect(datasource.getDataSamples).toHaveBeenCalledWith(
+          {
+            expr: '{place="luna"}',
+            maxLines: DEFAULT_MAX_LINES_SAMPLE,
+            refId: 'data-samples',
+          },
+          // We are not interested in the time range here
+          expect.any(Object)
+        );
+      });
+
+      it('calls dataSample with correctly set sampleSize', async () => {
+        jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
+
+        expect(await languageProvider.getParserAndLabelKeys('{place="luna"}', { maxLines: 5 })).toEqual({
+          extractedLabelKeys: [],
+          unwrapLabelKeys: [],
+          structuredMetadataKeys: [],
+          hasJSON: false,
+          hasLogfmt: false,
+          hasPack: false,
+        });
+        expect(datasource.getDataSamples).toHaveBeenCalledWith(
+          {
+            expr: '{place="luna"}',
+            maxLines: 5,
+            refId: 'data-samples',
+          },
+          // We are not interested in the time range here
+          expect.any(Object)
+        );
+      });
+
+      it('calls dataSample with correctly set time range', async () => {
+        jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
+        languageProvider.getParserAndLabelKeys('{place="luna"}', { timeRange: mockTimeRange });
+        expect(datasource.getDataSamples).toHaveBeenCalledWith(
+          {
+            expr: '{place="luna"}',
+            maxLines: 10,
+            refId: 'data-samples',
+          },
+          mockTimeRange
+        );
+      });
     });
 
-    it('identifies selectors with JSON parser data', async () => {
-      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([{}] as DataFrame[]);
-      extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: false, hasJSON: true, hasPack: false });
+    describe('when detectedEndpointsSupported is true', () => {
+      const detectedFieldsSample: DetectedFieldsResult = [
+        { label: 'msg', type: 'string', cardinality: 1, parsers: ['json'] },
+        { label: 'cnt', type: 'int', cardinality: 2, parsers: ['logfmt'] },
+        { label: 'trace', type: 'string', cardinality: 3, parsers: null },
+        { label: '_entry', type: 'string', cardinality: 4, parsers: null },
+      ];
 
-      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
-        extractedLabelKeys: [...extractedLabelKeys, ...parsedKeys],
-        unwrapLabelKeys,
-        structuredMetadataKeys,
-        hasJSON: true,
-        hasLogfmt: false,
-        hasPack: false,
+      it('derives parser and label keys from detected_fields instead of getDataSamples', async () => {
+        const ds = setup({}, undefined, {
+          detectedEndpointsSupported: true,
+          detectedFieldsResponse: detectedFieldsSample,
+        });
+        jest.spyOn(ds, 'getDataSamples');
+        const lp = new LanguageProvider(ds);
+        await lp.start();
+
+        expect(await lp.getParserAndLabelKeys('{job="grafana"}')).toEqual({
+          extractedLabelKeys: ['msg', 'cnt', 'trace', '_entry'],
+          structuredMetadataKeys: ['trace', '_entry'],
+          unwrapLabelKeys: ['cnt'],
+          hasJSON: true,
+          hasLogfmt: true,
+          hasPack: true,
+        });
+        expect(ds.getDataSamples).not.toHaveBeenCalled();
       });
-    });
 
-    it('identifies selectors with Logfmt parser data', async () => {
-      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([{}] as DataFrame[]);
-      extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: true, hasJSON: false, hasPack: false });
-
-      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
-        extractedLabelKeys: [...extractedLabelKeys, ...parsedKeys],
-        unwrapLabelKeys,
-        structuredMetadataKeys,
-        hasJSON: false,
-        hasLogfmt: true,
-        hasPack: false,
+      it('passes maxLines as limit to detected_fields', async () => {
+        const ds = setup({}, undefined, {
+          detectedEndpointsSupported: true,
+          detectedFieldsResponse: detectedFieldsSample,
+        });
+        ds.getTimeRangeParams = jest
+          .fn()
+          .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
+        const lp = new LanguageProvider(ds);
+        await lp.start();
+        const requestSpy = jest.spyOn(lp, 'request');
+        await lp.getParserAndLabelKeys('{job="grafana"}', { maxLines: 5, timeRange: mockTimeRange });
+        expect(requestSpy).toHaveBeenCalledWith(
+          'detected_fields',
+          {
+            start: mockTimeRange.from.valueOf(),
+            end: mockTimeRange.to.valueOf(),
+            limit: 5,
+            query: '{job="grafana"}',
+          },
+          false,
+          undefined
+        );
       });
-    });
-
-    it('correctly processes empty data', async () => {
-      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
-      extractLogParserFromDataFrameMock.mockClear();
-
-      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
-        extractedLabelKeys: [],
-        unwrapLabelKeys: [],
-        structuredMetadataKeys: [],
-        hasJSON: false,
-        hasLogfmt: false,
-        hasPack: false,
-      });
-      expect(extractLogParserFromDataFrameMock).not.toHaveBeenCalled();
-    });
-
-    it('calls dataSample with correct default maxLines', async () => {
-      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
-
-      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
-        extractedLabelKeys: [],
-        unwrapLabelKeys: [],
-        structuredMetadataKeys: [],
-        hasJSON: false,
-        hasLogfmt: false,
-        hasPack: false,
-      });
-      expect(datasource.getDataSamples).toHaveBeenCalledWith(
-        {
-          expr: '{place="luna"}',
-          maxLines: DEFAULT_MAX_LINES_SAMPLE,
-          refId: 'data-samples',
-        },
-        // We are not interested in the time range here
-        expect.any(Object)
-      );
-    });
-
-    it('calls dataSample with correctly set sampleSize', async () => {
-      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
-
-      expect(await languageProvider.getParserAndLabelKeys('{place="luna"}', { maxLines: 5 })).toEqual({
-        extractedLabelKeys: [],
-        unwrapLabelKeys: [],
-        structuredMetadataKeys: [],
-        hasJSON: false,
-        hasLogfmt: false,
-        hasPack: false,
-      });
-      expect(datasource.getDataSamples).toHaveBeenCalledWith(
-        {
-          expr: '{place="luna"}',
-          maxLines: 5,
-          refId: 'data-samples',
-        },
-        // We are not interested in the time range here
-        expect.any(Object)
-      );
-    });
-
-    it('calls dataSample with correctly set time range', async () => {
-      jest.spyOn(datasource, 'getDataSamples').mockResolvedValue([]);
-      languageProvider.getParserAndLabelKeys('{place="luna"}', { timeRange: mockTimeRange });
-      expect(datasource.getDataSamples).toHaveBeenCalledWith(
-        {
-          expr: '{place="luna"}',
-          maxLines: 10,
-          refId: 'data-samples',
-        },
-        mockTimeRange
-      );
     });
   });
 });
@@ -829,9 +972,17 @@ async function getLanguageProvider(datasource: LokiDatasource, start = true) {
   return instance;
 }
 
+type SetupOptions = {
+  /** When true, the `detected_labels` probe succeeds and label/parser flows use detected_* APIs. */
+  detectedEndpointsSupported?: boolean;
+  /** Optional body for `detected_fields` when composing metadata mocks (e.g. parser/label key tests). */
+  detectedFieldsResponse?: DetectedFieldsResult;
+};
+
 function setup(
   labelsAndValues: Record<string, string[]>,
-  series?: Record<string, Array<Record<string, string>>>
+  series?: Record<string, Array<Record<string, string>>>,
+  options?: SetupOptions
 ): LokiDatasource {
   const datasource = createLokiDatasource();
 
@@ -841,7 +992,21 @@ function setup(
   };
 
   jest.spyOn(datasource, 'getTimeRangeParams').mockReturnValue(rangeMock);
-  jest.spyOn(datasource, 'metadataRequest').mockImplementation(createMetadataRequest(labelsAndValues, series));
+  const baseRequest = createMetadataRequest(labelsAndValues, series);
+  jest
+    .spyOn(datasource, 'metadataRequest')
+    .mockImplementation(async (url: string, params?: Record<string, string | number>) => {
+      if (url === 'detected_labels') {
+        if (options?.detectedEndpointsSupported) {
+          return Object.keys(labelsAndValues).map((label) => ({ label }));
+        }
+        return null;
+      }
+      if (url === 'detected_fields' && options?.detectedFieldsResponse !== undefined) {
+        return options.detectedFieldsResponse;
+      }
+      return baseRequest(url, params);
+    });
   jest.spyOn(datasource, 'interpolateString').mockImplementation((string: string) => string);
 
   return datasource;
