@@ -13,7 +13,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useListedPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
-import { Alert, Button, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, EmptySearchResult, Icon, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from 'app/features/dashboard-scene/scene/UnconfiguredPanel';
 
 import { useStructureRev } from '../../../explore/Graph/useStructureRev';
@@ -189,6 +189,16 @@ export function VisualizationSuggestions({ onChange, data, panel, searchQuery, i
 
   if (isNewVizSuggestionsEnabled && !hasData(data)) {
     return <NoDataPanelList searchQuery={searchQuery} panel={panel} onChange={onChange} />;
+  }
+
+  if (suggestions && suggestions.length === 0 && searchQuery) {
+    return (
+      <EmptySearchResult>
+        <Trans i18nKey="panel.viz-type-picker.could-anything-matching-query">
+          Could not find anything matching your query
+        </Trans>
+      </EmptySearchResult>
+    );
   }
 
   return (
