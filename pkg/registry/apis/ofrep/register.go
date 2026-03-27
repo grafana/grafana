@@ -39,6 +39,7 @@ const ofrepPath = "/ofrep/v1/evaluate/flags"
 
 const namespaceMismatchMsg = "rejecting request with namespace mismatch"
 const bodyReadFailureMsg = "rejecting request with body read failure"
+const mib = 1024 * 1024
 
 type evalContext struct {
 	namespace string
@@ -260,12 +261,12 @@ func (b *APIBuilder) oneFlagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-		evalCtx, err := b.readEvalContext(r)
+		evalCtx, err := b.readEvalContext(w, r)
 		if err != nil {
 			_ = tracing.Errorf(span, bodyReadFailureMsg)
-			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
 			b.logger.Error(bodyReadFailureMsg, "error", err, "flag", flagKey)
-			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
+			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
 			return
 		}
 
@@ -296,12 +297,12 @@ func (b *APIBuilder) allFlagsHandler(w http.ResponseWriter, r *http.Request) {
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-		evalCtx, err := b.readEvalContext(r)
+		evalCtx, err := b.readEvalContext(w, r)
 		if err != nil {
 			_ = tracing.Errorf(span, bodyReadFailureMsg)
-			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
 			b.logger.Error(bodyReadFailureMsg, "error", err)
-			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
+			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
 			return
 		}
 
@@ -348,14 +349,18 @@ func parseEvalContextBody(body []byte) (evalContext, error) {
 
 // readEvalContext reads the request body, re-buffers it for downstream use,
 // and parses the evaluation context fields needed for validation and logging.
-func (b *APIBuilder) readEvalContext(r *http.Request) (evalContext, error) {
-	body, err := io.ReadAll(r.Body)
+func (b *APIBuilder) readEvalContext(w http.ResponseWriter, r *http.Request) (evalContext, error) {
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, mib))
 	if err != nil {
 		return evalContext{}, err
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	b.logger.Debug("evaluation context from request", "ctx", string(body))
+
+	if len(bytes.TrimSpace(body)) == 0 {
+		return evalContext{}, nil
+	}
 
 	evalCtx, err := parseEvalContextBody(body)
 	if err != nil {

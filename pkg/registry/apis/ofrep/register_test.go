@@ -37,6 +37,11 @@ func TestReadEvalContext(t *testing.T) {
 			expectedCtx: evalContext{},
 		},
 		{
+			name:        "empty body",
+			body:        ``,
+			expectedCtx: evalContext{},
+		},
+		{
 			name:      "malformed JSON",
 			body:      `not-json`,
 			expectErr: true,
@@ -47,7 +52,7 @@ func TestReadEvalContext(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBufferString(tt.body))
 
-			evalCtx, err := b.readEvalContext(req)
+			evalCtx, err := b.readEvalContext(httptest.NewRecorder(), req)
 			if tt.expectErr {
 				require.Error(t, err)
 				return
@@ -170,7 +175,7 @@ func TestAPIBuilder_ValidateNamespace(t *testing.T) {
 				req = req.WithContext(context.Background())
 			}
 
-			evalCtx, err := builder.readEvalContext(req)
+			evalCtx, err := builder.readEvalContext(httptest.NewRecorder(), req)
 			require.NoError(t, err)
 
 			authNamespace, valid := builder.validateNamespace(req, evalCtx.namespace)

@@ -94,12 +94,12 @@ func (b *APIBuilder) rootOneFlagHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-		evalCtx, err := b.readEvalContext(r)
+		evalCtx, err := b.readEvalContext(w, r)
 		if err != nil {
 			_ = tracing.Errorf(span, bodyReadFailureMsg)
-			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
 			b.logger.Error(bodyReadFailureMsg, "error", err, "flag", flagKey)
-			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
+			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
 			return
 		}
 
@@ -128,12 +128,12 @@ func (b *APIBuilder) rootAllFlagsHandler(w http.ResponseWriter, r *http.Request)
 	span.SetAttributes(attribute.Bool("authenticated", isAuthedReq))
 
 	if b.providerType == setting.FeaturesServiceProviderType || b.providerType == setting.OFREPProviderType {
-		evalCtx, err := b.readEvalContext(r)
+		evalCtx, err := b.readEvalContext(w, r)
 		if err != nil {
 			_ = tracing.Errorf(span, bodyReadFailureMsg)
-			span.SetAttributes(semconv.HTTPStatusCode(http.StatusUnauthorized))
+			span.SetAttributes(semconv.HTTPStatusCode(http.StatusBadRequest))
 			b.logger.Error(bodyReadFailureMsg, "error", err)
-			http.Error(w, namespaceMismatchMsg, http.StatusUnauthorized)
+			http.Error(w, bodyReadFailureMsg, http.StatusBadRequest)
 			return
 		}
 
