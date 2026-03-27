@@ -662,15 +662,17 @@ func (a *api) listTeamBindingPermissions(c *contextmodel.ReqContext, dynamicClie
 		}
 
 		userDetails, err := a.service.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: binding.Spec.Subject.Name})
-		if err == nil {
-			permDTO.UserID = userDetails.ID
-			permDTO.UserUID = userDetails.UID
-			permDTO.UserLogin = userDetails.Login
-			permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
-			permDTO.IsServiceAccount = userDetails.IsServiceAccount
-			permDTO.RoleName = fmt.Sprintf("managed:users:%d:permissions", userDetails.ID)
-			permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, c.GetOrgID())
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user details for UID %s: %w", binding.Spec.Subject.Name, err)
 		}
+
+		permDTO.UserID = userDetails.ID
+		permDTO.UserUID = userDetails.UID
+		permDTO.UserLogin = userDetails.Login
+		permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
+		permDTO.IsServiceAccount = userDetails.IsServiceAccount
+		permDTO.RoleName = fmt.Sprintf("managed:users:%d:permissions", userDetails.ID)
+		permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, c.GetOrgID())
 
 		dto = append(dto, permDTO)
 	}
@@ -719,10 +721,6 @@ func (a *api) createOrDeleteTeamBinding(c *contextmodel.ReqContext, dynamicClien
 		return nil
 	}
 
-	// Check for existing binding
-	existing, err := teamBindingResource.Get(ctx, bindingName, metav1.GetOptions{})
-	isUpdate := err == nil && existing != nil
-
 	binding := &iamv0.TeamBinding{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: iamv0.TeamBindingResourceInfo.GroupVersion().String(),
@@ -751,14 +749,19 @@ func (a *api) createOrDeleteTeamBinding(c *contextmodel.ReqContext, dynamicClien
 	}
 	unstructuredBinding := &unstructured.Unstructured{Object: unstructuredObj}
 
-	if isUpdate {
+	// Optimistic create: try Create first, fall back to Get+Update on AlreadyExists.
+	_, err = teamBindingResource.Create(ctx, unstructuredBinding, metav1.CreateOptions{})
+	if err != nil {
+		if !k8serrors.IsAlreadyExists(err) {
+			return fmt.Errorf("failed to create team binding: %w", err)
+		}
+		existing, err := teamBindingResource.Get(ctx, bindingName, metav1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to get existing team binding: %w", err)
+		}
 		unstructuredBinding.SetResourceVersion(existing.GetResourceVersion())
 		if _, err := teamBindingResource.Update(ctx, unstructuredBinding, metav1.UpdateOptions{}); err != nil {
 			return fmt.Errorf("failed to update team binding: %w", err)
-		}
-	} else {
-		if _, err := teamBindingResource.Create(ctx, unstructuredBinding, metav1.CreateOptions{}); err != nil {
-			return fmt.Errorf("failed to create team binding: %w", err)
 		}
 	}
 

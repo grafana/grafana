@@ -212,20 +212,22 @@ func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if a.service.options.Resource == "teams" && a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamsRedirect) {
 		teamPermissions, err := a.getTeamPermissionsFromTeamBindings(c, c.Namespace, resourceID)
-		if err == nil {
+		if err != nil {
+			span.RecordError(err)
+			if errors.Is(err, ErrRestConfigNotAvailable) {
+				a.logger.Debug("k8s API not available for team permissions via teambindings, falling back to legacy", "error", err, "resourceID", resourceID)
+			} else {
+				a.logger.Warn("Failed to get team permissions from teambindings k8s API, falling back to legacy", "error", err, "resourceID", resourceID)
+			}
+		} else {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "get", a.service.options.Resource, "success").Inc()
 			return response.JSON(http.StatusOK, teamPermissions)
-		}
-		span.RecordError(err)
-		if errors.Is(err, ErrRestConfigNotAvailable) {
-			a.logger.Debug("k8s API not available for team permissions via teambindings, falling back to legacy", "error", err, "resourceID", resourceID)
-		} else {
-			a.logger.Warn("Failed to get team permissions from teambindings k8s API, falling back to legacy", "error", err, "resourceID", resourceID)
 		}
 	}
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect) &&
+	if a.service.options.Resource != "teams" &&
+		a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect) &&
 		a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) {
 		k8sPermissions, err := a.getResourcePermissionsFromK8s(c, c.Namespace, resourceID)
 		if err == nil {
@@ -348,25 +350,27 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	// Teams-specific dual-write: write to TeamBinding K8s API first, then fall through
+	// Teams-specific dual-write: write to TeamBinding K8s API, then always fall through
 	// to the legacy path so both systems stay in sync during migration.
-	// If the K8s write fails, skip the legacy write and return the error.
+	// On failure — including ErrRestConfigNotAvailable — the K8s error is logged but the
+	// legacy write still proceeds, matching the read path's fallback behavior and keeping
+	// the system available during transient K8s outages.
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if a.service.options.Resource == "teams" && a.features.IsEnabledGlobally(featuremgmt.FlagKubernetesTeamsRedirect) {
 		err := a.setUserPermissionViaTeamBinding(c, c.Namespace, resourceID, userID, cmd.Permission)
 		if err != nil {
 			span.RecordError(err)
 			if errors.Is(err, ErrRestConfigNotAvailable) {
-				a.logger.Debug("k8s API not available for team permissions via teambindings", "error", err, "resourceID", resourceID)
+				a.logger.Debug("k8s API not available for team permissions via teambindings, continuing with legacy", "error", err, "resourceID", resourceID)
 			} else {
-				a.logger.Warn("Failed to set user permission via teambinding k8s API", "error", err, "resourceID", resourceID)
+				a.logger.Warn("Failed to set user permission via teambinding k8s API, continuing with legacy", "error", err, "resourceID", resourceID)
 			}
-			return response.Err(err)
+		} else {
+			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
 		}
-		metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
 	}
 
-	if a.shouldUseK8sAPIs() {
+	if a.service.options.Resource != "teams" && a.shouldUseK8sAPIs() {
 		err := a.setUserPermissionToK8s(c, c.Namespace, resourceID, userID, cmd.Permission)
 		if err == nil {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()

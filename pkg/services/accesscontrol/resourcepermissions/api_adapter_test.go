@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/web"
@@ -973,7 +974,7 @@ func (m *mockResourcePermissionStore) GetPermissionIDByRoleName(ctx context.Cont
 
 func makeReqCtx() *contextmodel.ReqContext {
 	return &contextmodel.ReqContext{
-		Context: &web.Context{Req: &http.Request{}},
+		Context: &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)},
 		Logger:  log.New("test"),
 		SignedInUser: &user.SignedInUser{
 			OrgID: 1,
@@ -1105,6 +1106,30 @@ func TestListTeamBindingPermissions(t *testing.T) {
 			},
 			expectedErrMsg: "failed to list team bindings from k8s",
 		},
+		{
+			name:       "returns error when user lookup fails",
+			resourceID: "10",
+			teamSvc:    teamtest.NewFakeServiceWithTeamDTO(teamDTO),
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByUID", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("user not found"))
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				binding := makeBinding("user-uid-1", iamv0.TeamBindingTeamPermissionAdmin)
+				obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&binding)
+				require.NoError(t, err)
+				return &fakeResourceInterface{
+					listFunc: func(_ context.Context, _ metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+						return &unstructured.UnstructuredList{Items: []unstructured.Unstructured{{Object: obj}}}, nil
+					},
+				}
+			},
+			permToActions: map[string][]string{
+				"Admin": {"teams:read"},
+			},
+			expectedErrMsg: "failed to get user details for UID user-uid-1",
+		},
 	}
 
 	for _, tt := range tests {
@@ -1189,18 +1214,15 @@ func TestCreateOrDeleteTeamBinding(t *testing.T) {
 				return svc
 			},
 			fakeResource: func() *fakeResourceInterface {
-				fr := &fakeResourceInterface{}
-				fr.getFunc = func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
-					return nil, k8serrors.NewNotFound(schema.GroupResource{}, "not-found")
+				return &fakeResourceInterface{
+					createFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.CreateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return obj, nil
+					},
 				}
-				fr.createFunc = func(_ context.Context, obj *unstructured.Unstructured, _ metav1.CreateOptions, _ ...string) (*unstructured.Unstructured, error) {
-					return obj, nil
-				}
-				return fr
 			},
 		},
 		{
-			name:       "updates existing team binding",
+			name:       "updates existing team binding via optimistic create",
 			permission: "Admin",
 			userID:     1,
 			userSvc: func() *usertest.MockService {
@@ -1209,17 +1231,20 @@ func TestCreateOrDeleteTeamBinding(t *testing.T) {
 				return svc
 			},
 			fakeResource: func() *fakeResourceInterface {
-				fr := &fakeResourceInterface{}
-				fr.getFunc = func(_ context.Context, name string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
-					if name == "u.user-uid-1.team-uid-1" {
-						return existingBinding, nil
-					}
-					return nil, k8serrors.NewNotFound(schema.GroupResource{}, name)
+				return &fakeResourceInterface{
+					createFunc: func(_ context.Context, _ *unstructured.Unstructured, _ metav1.CreateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return nil, k8serrors.NewAlreadyExists(schema.GroupResource{}, "u.user-uid-1.team-uid-1")
+					},
+					getFunc: func(_ context.Context, name string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						if name == "u.user-uid-1.team-uid-1" {
+							return existingBinding, nil
+						}
+						return nil, k8serrors.NewNotFound(schema.GroupResource{}, name)
+					},
+					updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return obj, nil
+					},
 				}
-				fr.updateFunc = func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
-					return obj, nil
-				}
-				return fr
 			},
 		},
 		{
@@ -1281,9 +1306,6 @@ func TestCreateOrDeleteTeamBinding(t *testing.T) {
 			},
 			fakeResource: func() *fakeResourceInterface {
 				return &fakeResourceInterface{
-					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
-						return nil, k8serrors.NewNotFound(schema.GroupResource{}, "not-found")
-					},
 					createFunc: func(_ context.Context, _ *unstructured.Unstructured, _ metav1.CreateOptions, _ ...string) (*unstructured.Unstructured, error) {
 						return nil, fmt.Errorf("k8s API unavailable")
 					},
