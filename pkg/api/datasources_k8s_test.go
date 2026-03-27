@@ -210,7 +210,7 @@ func TestGetK8sDataSourceByUIDHandler(t *testing.T) {
 	}
 }
 
-func newResourceTestContext(t *testing.T, method, urlPath string, params map[string]string) (*contextmodel.ReqContext, *httptest.ResponseRecorder) {
+func newTestContext(t *testing.T, method, urlPath string, params map[string]string) (*contextmodel.ReqContext, *httptest.ResponseRecorder) {
 	t.Helper()
 	req, err := http.NewRequest(method, urlPath, nil)
 	require.NoError(t, err)
@@ -245,7 +245,7 @@ func TestCallK8sDataSourceResourceHandler_FlagDisabled(t *testing.T) {
 	}
 	hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
-	ctx, recorder := newResourceTestContext(t, http.MethodGet, "/api/datasources/uid/test-uid/resources", map[string]string{":uid": "test-uid", "*": ""})
+	ctx, recorder := newTestContext(t, http.MethodGet, "/api/datasources/uid/test-uid/resources", map[string]string{":uid": "test-uid", "*": ""})
 	handler := hs.callK8sDataSourceResourceHandler()
 	handler.(func(*contextmodel.ReqContext))(ctx)
 
@@ -402,7 +402,7 @@ func TestCallK8sDataSourceResourceHandler(t *testing.T) {
 			}
 			params := map[string]string{":uid": tt.uid, "*": tt.subPath}
 
-			ctx, recorder := newResourceTestContext(t, http.MethodGet, urlPath, params)
+			ctx, recorder := newTestContext(t, http.MethodGet, urlPath, params)
 
 			handler := hs.callK8sDataSourceResourceHandler()
 			handler.(func(*contextmodel.ReqContext))(ctx)
@@ -452,7 +452,7 @@ func TestCallK8sDataSourceResourceHandler_PreservesHTTPMethod(t *testing.T) {
 			}
 			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
-			ctx, recorder := newResourceTestContext(t, method,
+			ctx, recorder := newTestContext(t, method,
 				"/api/datasources/uid/test-uid/resources/api/v1/query",
 				map[string]string{":uid": "test-uid", "*": "api/v1/query"})
 
@@ -562,7 +562,7 @@ func TestCallK8sDataSourceResourceHandler_Headers(t *testing.T) {
 			}
 			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
 
-			ctx, recorder := newResourceTestContext(t, http.MethodPost,
+			ctx, recorder := newTestContext(t, http.MethodPost,
 				"/api/datasources/uid/test-uid/resources/api/v1/query",
 				map[string]string{":uid": "test-uid", "*": "api/v1/query"})
 
@@ -648,33 +648,31 @@ func TestCallK8sDataSourceHealthHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockProvider := &mockDirectRestConfigProvider{host: "http://localhost"}
+			setupOpenFeatureFlag(t, featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect, true)
+
+			configProvider := &mockDirectRestConfigProvider{host: "http://localhost"}
 			hs := &HTTPServer{
 				Cfg:                  setting.NewCfg(),
-				Features:             featuremgmt.WithFeatures(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect),
+				Features:             featuremgmt.WithFeatures(),
 				dsConnectionClient:   &mockConnectionClient{result: tt.connectionResult, err: tt.connectionErr},
-				clientConfigProvider: mockProvider,
+				clientConfigProvider: configProvider,
 				namespacer:           func(int64) string { return "default" },
 			}
 			hs.promRegister, hs.dsConfigHandlerRequestsDuration, hs.dsEndpointRedirects = setupDsConfigHandlerMetrics()
-
-			sc := setupScenarioContext(t, "/api/datasources/uid/"+tt.dsUID+"/health")
+			ctx, recorder := newTestContext(t, http.MethodGet, "/api/datasources/uid/"+tt.dsUID+"/health", map[string]string{":uid": tt.dsUID})
 			handler := hs.callK8sDataSourceHealthHandler()
-			sc.m.Get("/api/datasources/uid/:uid/health", func(c *contextmodel.ReqContext) {
-				c.Req = web.SetURLParams(c.Req, map[string]string{":uid": tt.dsUID})
-				c.SignedInUser = &user.SignedInUser{OrgID: 1}
-				handler.(func(*contextmodel.ReqContext))(c)
-			})
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+			handler.(func(*contextmodel.ReqContext))(ctx)
 
-			assert.Equal(t, tt.expectedCode, sc.resp.Code)
+			assert.Equal(t, tt.expectedCode, recorder.Code)
+
 			if tt.expectedMessage != "" {
 				var body map[string]any
-				require.NoError(t, json.Unmarshal(sc.resp.Body.Bytes(), &body))
-				assert.Contains(t, body["message"], tt.expectedMessage)
+				require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+				assert.Equal(t, tt.expectedMessage, body["message"])
 			}
+			
 			if tt.expectedForwardPath != "" {
-				assert.Equal(t, tt.expectedForwardPath, mockProvider.lastServedPath)
+				assert.Equal(t, tt.expectedForwardPath, configProvider.lastServedPath)
 			}
 		})
 	}

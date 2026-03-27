@@ -198,11 +198,11 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 
 func (hs *HTTPServer) callK8sDataSourceHealthHandler() web.Handler {
 	return func(c *contextmodel.ReqContext) {
-		if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect) {
+		flagEnabled, _ := openfeature.NewDefaultClient().BooleanValue(c.Req.Context(), featuremgmt.FlagDatasourcesApiServerEnableHealthEndpointRedirect, false, openfeature.TransactionContext(c.Req.Context()))
+		
+		if !flagEnabled {
 			hs.dsEndpointRedirects.WithLabelValues("health", "", "legacy").Inc()
-			if res := hs.CheckDatasourceHealthWithUID(c); res != nil {
-				res.WriteTo(c)
-			}
+			hs.CheckDatasourceHealthWithUID(c).WriteTo(c)
 			return
 		}
 
@@ -212,7 +212,7 @@ func (hs *HTTPServer) callK8sDataSourceHealthHandler() web.Handler {
 			return
 		}
 
-		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, dsUID)
+		conns, err := hs.dsConnectionClient.GetConnectionByUID(c, dsUID) //nolint:staticcheck
 		if err != nil {
 			if strings.Contains(err.Error(), "not found") {
 				response.Error(http.StatusNotFound, "Data source not found", nil).WriteTo(c)
