@@ -17,7 +17,9 @@ weight: 200
 
 # Dashboard controls
 
-Using the **Dashboard controls** section of the edit pane, you can add variables, annotation queries, and dashboard links without leaving the dashboard.
+Using the **Dashboard controls** section of the sidebar, you can add variables, annotation queries, and dashboard links without leaving the dashboard.
+
+<!-- screenshot here? -->
 
 ## Add variables
 
@@ -150,7 +152,7 @@ To add a URL link to your dashboard, follow these steps:
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Dashboard link**.
 
-{{< shared-snippet path="/docs/grafana/next/visualizations/dashboards/build-dashboards/manage-dashboard-links/index.md" id="url-dashboard-link" >}}
+{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/index.md" id="url-dashboard-link" >}}
 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -158,6 +160,33 @@ To add a URL link to your dashboard, follow these steps:
 1. Click **Exit edit**.
 
 {{< /docs/list >}}
+
+## Manage dashboard controls
+
+After you add dashboard controls, you can manage them from the dashboard options.
+The sidebar includes collapsible sections for variables, annotations, and links, including hidden controls that aren't otherwise visible on the dashboard:
+
+<!-- screenshot here -->
+
+To manage dashboard controls, follow these steps:
+
+1. Click the **Dashboard options** icon in the sidebar.
+1. In the sidebar, expand the appropriate collapsible section.
+1. Do one or more of the following:
+
+   - **Edit**: Click **Select** on the control to open the sidebar so you can make updates.
+   - **Reorder**: Drag and drop controls to reorder them.
+   - **Change display**: Drag and drop controls between sub-sections **Above dashboard**, **Controls menu**, and **Hidden** to update the control display option.
+
+   {{< admonition type="tip" >}}
+   To get back to controls management from configuration, click the **Dashboard options** icon.
+   {{< /admonition >}} 
+
+1. Make any other changes as needed.
+1. Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Click **Exit edit**.
 
 ## Add filters
 
