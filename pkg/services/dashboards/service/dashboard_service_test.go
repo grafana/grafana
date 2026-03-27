@@ -2158,16 +2158,14 @@ func TestLegacySaveCommandToUnstructured(t *testing.T) {
 func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 	t.Run("Should set correct default permissions", func(t *testing.T) {
 		testCases := []struct {
-			name                        string
-			rootFolder                  bool
-			featureKubernetesDashboards bool
-			User                        *user.SignedInUser
-			expectedPermission          []accesscontrol.SetResourcePermissionCommand
+			name               string
+			rootFolder         bool
+			User               *user.SignedInUser
+			expectedPermission []accesscontrol.SetResourcePermissionCommand
 		}{
 			{
-				name:                        "without kubernetesDashboards feature in root folder",
-				rootFolder:                  true,
-				featureKubernetesDashboards: false,
+				name:       "in root folder",
+				rootFolder: true,
 				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
 					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
 					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
@@ -2175,19 +2173,8 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				},
 			},
 			{
-				name:                        "with kubernetesDashboards feature in root folder",
-				rootFolder:                  true,
-				featureKubernetesDashboards: true,
-				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
-					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
-					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
-					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
-				},
-			},
-			{
-				name:                        "with kubernetesDashboards feature in root folder and user is anonymous",
-				rootFolder:                  true,
-				featureKubernetesDashboards: true,
+				name:       "in root folder and user is anonymous",
+				rootFolder: true,
 				User: &user.SignedInUser{
 					IsAnonymous: true,
 					UserID:      0,
@@ -2198,18 +2185,9 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				},
 			},
 			{
-				name:                        "without kubernetesDashboards feature in subfolder",
-				rootFolder:                  false,
-				featureKubernetesDashboards: false,
-				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
-					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
-				},
-			},
-			{
-				name:                        "with kubernetesDashboards feature in subfolder",
-				rootFolder:                  false,
-				featureKubernetesDashboards: true,
-				expectedPermission:          nil,
+				name:               "in subfolder",
+				rootFolder:         false,
+				expectedPermission: nil,
 			},
 		}
 
@@ -2229,9 +2207,6 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				// Setup mocks and service
 				dashboardStore := &dashboards.FakeDashboardStore{}
 				features := featuremgmt.WithFeatures()
-				if tc.featureKubernetesDashboards {
-					features = featuremgmt.WithFeatures(featuremgmt.FlagKubernetesDashboards)
-				}
 
 				permService := acmock.NewMockedPermissionsService()
 				permService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)

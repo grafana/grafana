@@ -18,7 +18,7 @@ import (
 
 func TestSecureLifecycle(t *testing.T) {
 	resourceWithSecureValues := func(sv common.InlineSecureValues) utils.GrafanaMetaAccessor {
-		obj, err := utils.MetaAccessor(&unstructured.Unstructured{
+		tmp := &unstructured.Unstructured{
 			Object: map[string]any{
 				"apiVersion": "something.grafana.app/v1beta1",
 				"kind":       "CustomKind",
@@ -28,7 +28,14 @@ func TestSecureLifecycle(t *testing.T) {
 				},
 				"secure": sv,
 			},
+		}
+		raw, err := tmp.MarshalJSON() // NOTE, any secret gets replaced with: [REDACTED]
+		require.NoError(t, err)
+		tmp.SetAnnotations(map[string]string{
+			utils.AnnoKeyKubectlLastAppliedConfig: string(raw),
 		})
+
+		obj, err := utils.MetaAccessor(tmp)
 		require.NoError(t, err)
 		return obj
 	}
@@ -57,6 +64,10 @@ func TestSecureLifecycle(t *testing.T) {
 			"a": {"name": "NameForA"},
 			"b": {"name": "NameForB"}
 		}`, asJSON(secure, true))
+
+		v := obj.GetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig)
+		require.Empty(t, v, "should exclude the last config with raw secrets")
+
 		secureStore.AssertExpectations(t)
 	})
 
@@ -159,6 +170,9 @@ func TestSecureLifecycle(t *testing.T) {
 			"a": {"name": "NameForA"},
 			"c": {"name": "NameForC"}
 		}`, asJSON(secure, true))
+
+		v := obj.GetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig)
+		require.NotEmpty(t, v, "should keep the annotations when a raw secret is not exposed")
 
 		// When there is not an error, the finish command will do a real delete
 		owner := utils.ToObjectReference(obj)
