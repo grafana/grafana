@@ -2414,3 +2414,71 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 		})
 	}
 }
+
+func TestIntegrationFolderListAndDeleteGracefulDegradation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	ctx := context.Background()
+
+	// Step 1: Start Grafana normally so migrations complete
+	env := apis.NewSearchDownTestEnv(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+
+	// Step 2: Restart with search down
+	helper := env.RestartWithSearchDown(t)
+	client := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+
+	t.Run("list folders should succeed when search is down", func(t *testing.T) {
+		// Create a folder (goes to storage, doesn't need search)
+		folder := &unstructured.Unstructured{Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"title": "gd-test-list-folder",
+			},
+		}}
+		folder.SetGenerateName("gd-list-")
+		created, err := client.Resource.Create(ctx, folder, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		// List folders — should succeed even with search down
+		list, err := client.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, len(list.Items), 1, "should return at least one folder")
+
+		// Verify our folder is in the list
+		found := false
+		for _, item := range list.Items {
+			if item.GetName() == created.GetName() {
+				found = true
+				break
+			}
+		}
+		require.True(t, found, "created folder should appear in list response")
+
+		// Clean up
+		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
+
+	t.Run("delete folder should succeed when search is down", func(t *testing.T) {
+		// Create a folder
+		folder := &unstructured.Unstructured{Object: map[string]interface{}{
+			"spec": map[string]interface{}{
+				"title": "gd-test-delete-folder",
+			},
+		}}
+		folder.SetGenerateName("gd-del-")
+		created, err := client.Resource.Create(ctx, folder, metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		// Delete the folder — should succeed even with search down
+		err = client.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err, "folder delete should succeed when search is down")
+
+		// Verify folder is gone
+		_, err = client.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		require.Error(t, err, "folder should not exist after deletion")
+	})
+}
