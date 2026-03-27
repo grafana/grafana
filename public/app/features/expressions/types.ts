@@ -149,6 +149,11 @@ export interface ExpressionQuery extends DataQuery {
   upsampler?: string;
   conditions?: ClassicCondition[];
   settings?: ExpressionQuerySettings;
+  /**
+   * If disabled is true, the expression query is excluded from the request entirely.
+   * Unlike hide (which only hides the response), disable prevents execution.
+   */
+  disabled?: boolean;
 }
 
 export interface SqlExpressionQuery extends ExpressionQuery {
