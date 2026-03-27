@@ -498,7 +498,7 @@ export function useRowHeight({
           return TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2;
         }
 
-        const nestedHeaderHeight = nestedData?.[row.__index]?.meta?.custom?.noHeader ? 0 : defaultHeight;
+        const nestedHeaderHeight = nestedData?.[row.__index]?.meta?.custom?.noHeader ? 0 : defaultNestedHeight;
         const nestedRowsHeight = nestedRows[row.__index].final.reduce(
           (acc, row) => acc + getNestedRowHeightWithCache(row),
           0
