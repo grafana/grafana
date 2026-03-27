@@ -33,6 +33,7 @@ const propsToDiff = [
   'tooltip',
   'paginationRev',
   'annotationLanes',
+  'theme',
 ];
 
 export const TimelineChart = (props: TimelineProps) => {

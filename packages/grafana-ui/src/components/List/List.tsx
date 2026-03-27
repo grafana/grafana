@@ -1,5 +1,3 @@
-import { PureComponent } from 'react';
-
 import { ListProps, AbstractList } from './AbstractList';
 
 /**
@@ -9,8 +7,6 @@ import { ListProps, AbstractList } from './AbstractList';
  */
 // no point converting, this is deprecated
 // eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
-export class List<T> extends PureComponent<ListProps<T>> {
-  render() {
-    return <AbstractList {...this.props} />;
-  }
-}
+export const List = <T,>(props: ListProps<T>) => {
+  return <AbstractList {...props} />;
+};

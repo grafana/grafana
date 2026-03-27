@@ -6,11 +6,10 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -31,13 +30,15 @@ var (
 )
 
 type legacyStorage struct {
+	resourceInfo utils.ResourceInfo
+
 	service        folder.LegacyService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return resourceInfo.NewFunc()
+	return s.resourceInfo.NewFunc()
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -47,11 +48,11 @@ func (s *legacyStorage) NamespaceScoped() bool {
 }
 
 func (s *legacyStorage) GetSingularName() string {
-	return resourceInfo.GetSingularName()
+	return s.resourceInfo.GetSingularName()
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return resourceInfo.NewListFunc()
+	return s.resourceInfo.NewListFunc()
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -93,11 +94,6 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	// paging is always retrieved from the continue token
 	query.Limit = paging.limit
 	query.Page = paging.page
-
-	if options.LabelSelector != nil && options.LabelSelector.Matches(labels.Set{utils.LabelGetFullpath: "true"}) {
-		query.WithFullpath = true
-		query.WithFullpathUIDs = true
-	}
 
 	hits, err := s.service.GetFoldersLegacy(ctx, query)
 	if err != nil {

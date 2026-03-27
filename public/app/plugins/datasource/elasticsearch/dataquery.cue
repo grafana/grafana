@@ -41,8 +41,13 @@ composableKinds: DataQuery: {
 				bucketAggs?: [...#BucketAggregation]
 				// List of metric aggregations
 				metrics?: [...#MetricAggregation]
+				// Metadata for variable queries
+				meta?: {
+					textField?:  string
+					valueField?: string
+				}
 
-				#QueryType: "lucene" | "dsl" @cuetsy(kind="type")
+				#QueryType: "lucene" | "dsl" | "esql" @cuetsy(kind="type")
 
 				#BucketAggregation: #DateHistogram | #Histogram | #Terms | #Filters | #GeoHashGrid | #Nested @cuetsy(kind="type")
 				#MetricAggregation: #Count | #PipelineMetricAggregation | #MetricAggregationWithSettings     @cuetsy(kind="type")
@@ -132,7 +137,7 @@ composableKinds: DataQuery: {
 					precision?: string
 				} @cuetsy(kind="interface")
 
-				#PipelineMetricAggregationType: "moving_avg" | "moving_fn" | "derivative" | "serial_diff" | "cumulative_sum" | "bucket_script"                                                                                                             @cuetsy(kind="type")
+				#PipelineMetricAggregationType: "moving_avg" | "moving_fn" | "derivative" | "serial_diff" | "cumulative_sum" | "bucket_script"                                                                                              @cuetsy(kind="type")
 				#MetricAggregationType:         "count" | "avg" | "sum" | "min" | "max" | "extended_stats" | "percentiles" | "cardinality" | "raw_document" | "raw_data" | "logs" | "rate" | "top_metrics" | #PipelineMetricAggregationType @cuetsy(kind="type")
 
 				#BaseMetricAggregation: {
@@ -402,7 +407,7 @@ composableKinds: DataQuery: {
 					}
 				} @cuetsy(kind="interface")
 
-				#PipelineMetricAggregation:     #MovingAverage | #Derivative | #CumulativeSum | #BucketScript                                                                                                                                                                                          @cuetsy(kind="type")
+				#PipelineMetricAggregation:     #MovingAverage | #Derivative | #CumulativeSum | #BucketScript                                                                                                                                                                        @cuetsy(kind="type")
 				#MetricAggregationWithSettings: #BucketScript | #CumulativeSum | #Derivative | #SerialDiff | #RawData | #RawDocument | #UniqueCount | #Percentiles | #ExtendedStats | #Min | #Max | #Sum | #Average | #MovingAverage | #MovingFunction | #Logs | #Rate | #TopMetrics @cuetsy(kind="type")
 			}
 		}]

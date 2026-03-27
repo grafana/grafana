@@ -227,7 +227,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 7
+      "count": 2
     }
   },
   "packages/grafana-data/src/types/options.ts": {
@@ -612,11 +612,6 @@
       "count": 3
     }
   },
-  "packages/grafana-ui/src/components/Gauge/Gauge.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Icon/Icon.story.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -630,11 +625,6 @@
   "packages/grafana-ui/src/components/JSONFormatter/json_explorer/json_explorer.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    }
-  },
-  "packages/grafana-ui/src/components/MatchersUI/FieldValueMatcher.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/MatchersUI/fieldMatchersUI.ts": {
@@ -994,16 +984,6 @@
       "count": 2
     }
   },
-  "public/app/core/components/Login/PasswordlessConfirmationForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 4
-    }
-  },
-  "public/app/core/components/Login/PasswordlessLoginForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/core/components/OptionsUI/NumberInput.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1044,9 +1024,9 @@
       "count": 1
     }
   },
-  "public/app/core/components/SharedPreferences/SharedPreferences.tsx": {
+  "public/app/core/components/SharedPreferences/SharedPreferencesOld.tsx": {
     "no-restricted-syntax": {
-      "count": 8
+      "count": 6
     },
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -1062,11 +1042,6 @@
   },
   "public/app/core/components/Signup/VerifyEmail.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/SplitPaneWrapper/SplitPaneWrapper.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -1329,11 +1304,6 @@
       "count": 13
     }
   },
-  "public/app/features/alerting/unified/components/notification-policies/Filters.tsx": {
-    "no-restricted-syntax": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/components/receivers/TemplatePreview.tsx": {
     "react-hooks/rules-of-hooks": {
       "count": 1
@@ -1395,11 +1365,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/GrafanaEvaluationBehavior.tsx": {
-    "no-restricted-syntax": {
-      "count": 10
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/GroupAndNamespaceFields.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -1458,11 +1423,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rules/state-history/LokiStateHistory.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/state-history/StateHistory.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -1484,14 +1444,6 @@
     },
     "no-restricted-syntax": {
       "count": 3
-    }
-  },
-  "public/app/features/alerting/unified/components/silences/SilencesFilter.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/group-details/GroupEditPage.tsx": {
@@ -1665,6 +1617,11 @@
       "count": 2
     }
   },
+  "public/app/features/dashboard-scene/edit-pane/shared.ts": {
+    "no-barrel-files/no-barrel-files": {
+      "count": 3
+    }
+  },
   "public/app/features/dashboard-scene/inspect/HelpWizard/HelpWizard.tsx": {
     "no-restricted-syntax": {
       "count": 3
@@ -1672,11 +1629,6 @@
   },
   "public/app/features/dashboard-scene/inspect/HelpWizard/utils.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/pages/DashboardScenePage.test.tsx": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -1688,36 +1640,8 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/pages/PublicDashboardScenePage.test.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataPane.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelOptionsPane.test.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/saving/getDashboardChanges.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 8
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }
   },
@@ -1729,9 +1653,6 @@
   "public/app/features/dashboard-scene/scene/export/exporters.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 6
-    },
-    "no-restricted-syntax": {
-      "count": 3
     }
   },
   "public/app/features/dashboard-scene/scene/export/exporters.ts": {
@@ -1739,10 +1660,7 @@
       "count": 3
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 8
-    },
-    "no-restricted-syntax": {
-      "count": 1
+      "count": 7
     }
   },
   "public/app/features/dashboard-scene/scene/layout-auto-grid/AutoGridItemEditor.tsx": {
@@ -1783,16 +1701,6 @@
   },
   "public/app/features/dashboard-scene/serialization/buildNewDashboardSaveModel.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/serialization/layoutSerializers/utils.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.test.ts": {
-    "no-restricted-syntax": {
       "count": 1
     }
   },
@@ -1872,11 +1780,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/utils/createPanelDataProvider.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -1898,11 +1801,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 7
-    }
-  },
-  "public/app/features/dashboard/components/DashNav/DashNavTimeControls.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/components/DashboardPrompt/DashboardPrompt.test.tsx": {
@@ -2160,9 +2058,6 @@
   "public/app/features/dashboard/state/DashboardMigrator.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 10
-    },
-    "no-restricted-syntax": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/state/DashboardMigrator.ts": {
@@ -2180,7 +2075,7 @@
   },
   "public/app/features/dashboard/state/DashboardModel.test.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
+      "count": 2
     }
   },
   "public/app/features/dashboard/state/DashboardModel.ts": {
@@ -2188,7 +2083,7 @@
       "count": 1
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 22
+      "count": 24
     }
   },
   "public/app/features/dashboard/state/PanelModel.test.ts": {
@@ -2220,24 +2115,6 @@
     }
   },
   "public/app/features/dashboard/state/initDashboard.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/utils/dashboard.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/utils/getPanelMenu.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/utils/getPanelMenu.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
@@ -2388,11 +2265,6 @@
     }
   },
   "public/app/features/explore/Table/TableContainer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/CanvasSpanGraph.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
@@ -2608,11 +2480,6 @@
       "count": 1
     }
   },
-  "public/app/features/org/OrgDetailsPage.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/org/OrgProfile.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -2633,11 +2500,6 @@
       "count": 1
     }
   },
-  "public/app/features/panel/state/util.ts": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/playlist/PlaylistForm.tsx": {
     "@grafana/no-aria-label-selectors": {
       "count": 2
@@ -2647,11 +2509,6 @@
     }
   },
   "public/app/features/playlist/ShareModal.tsx": {
-    "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "public/app/features/playlist/StartModal.tsx": {
     "no-restricted-syntax": {
       "count": 3
     }
@@ -2926,11 +2783,6 @@
       "count": 1
     }
   },
-  "public/app/features/transformers/editors/GroupToNestedTableTransformerEditor.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/features/transformers/editors/ReduceTransformerEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -2990,16 +2842,8 @@
       "count": 3
     }
   },
-  "public/app/features/variables/adhoc/AdHocVariableEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/adhoc/picker/AdHocFilter.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -3018,11 +2862,6 @@
       "count": 1
     }
   },
-  "public/app/features/variables/adhoc/picker/AdHocPicker.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/adhoc/picker/ConditionSegment.tsx": {
     "no-restricted-syntax": {
       "count": 2
@@ -3033,18 +2872,8 @@
       "count": 1
     }
   },
-  "public/app/features/variables/custom/CustomVariableEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/custom/reducer.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/variables/datasource/DataSourceVariableEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
@@ -3230,16 +3059,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/AppRegistrationCredentials.tsx": {
-    "no-restricted-syntax": {
-      "count": 5
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/AzureCredentialsForm.tsx": {
-    "no-restricted-syntax": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/BasicLogsToggle.tsx": {
     "no-restricted-syntax": {
       "count": 1
@@ -3381,7 +3200,7 @@
   },
   "public/app/plugins/datasource/dashboard/DashboardQueryEditor.tsx": {
     "no-restricted-syntax": {
-      "count": 6
+      "count": 4
     }
   },
   "public/app/plugins/datasource/dashboard/runSharedRequest.ts": {
@@ -3929,16 +3748,6 @@
   },
   "public/app/plugins/panel/debug/StateView.tsx": {
     "no-restricted-syntax": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/gauge/v1/GaugeMigrations.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/gauge/v1/GaugePanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },

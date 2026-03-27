@@ -97,7 +97,7 @@ func TestExportWorker_ProcessWriteNotAllowed(t *testing.T) {
 
 	r := NewExportWorker(nil, nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true)
 	err := r.Process(context.Background(), mockRepo, job, nil)
-	require.EqualError(t, err, "this repository is read only")
+	require.EqualError(t, err, "repositories.provisioning.grafana.app is forbidden: write operations are not allowed for this repository")
 }
 
 func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
@@ -121,7 +121,7 @@ func TestExportWorker_ProcessBranchNotAllowedForLocal(t *testing.T) {
 
 	r := NewExportWorker(nil, nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true)
 	err := r.Process(context.Background(), mockRepo, job, nil)
-	require.EqualError(t, err, "this repository does not support the branch workflow")
+	require.EqualError(t, err, "repositories.provisioning.grafana.app is forbidden: branch workflow is not allowed for this repository")
 }
 
 func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
@@ -145,9 +145,9 @@ func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
 
 	mockClients := resources.NewMockClientFactory(t)
 
-	mockClients.On("Clients", context.Background(), "test-namespace").Return(nil, errors.New("failed to create clients"))
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(nil, errors.New("failed to create clients"))
 	mockStageFn := NewMockWrapWithStageFn(t)
-	mockStageFn.On("Execute", context.Background(), mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
+	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
 
@@ -179,11 +179,11 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 
 	resourceClients := resources.NewMockResourceClients(t)
 	mockClients := resources.NewMockClientFactory(t)
-	mockClients.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(resourceClients, nil)
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 	mockStageFn := NewMockWrapWithStageFn(t)
-	mockStageFn.On("Execute", context.Background(), mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
+	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
 
@@ -213,14 +213,14 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 
 	resourceClients := resources.NewMockResourceClients(t)
 	mockClients := resources.NewMockClientFactory(t)
-	mockClients.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
+	mockClients.On("Clients", mock.Anything, "test-namespace").Return(resourceClients, nil)
 
 	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
-	mockRepoResources.On("Client", context.Background(), mockRepo).Return(nil, fmt.Errorf("failed to create repository resources client"))
+	mockRepoResources.On("Client", mock.Anything, mockRepo).Return(nil, fmt.Errorf("failed to create repository resources client"))
 
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 	mockStageFn := NewMockWrapWithStageFn(t)
-	mockStageFn.On("Execute", context.Background(), mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
+	mockStageFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOpts repository.StageOptions, fn func(repository.Repository, bool) error) error {
 		return fn(repo, true)
 	})
 	r := NewExportWorker(mockClients, mockRepoResources, nil, nil, mockStageFn.Execute, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true)
@@ -456,7 +456,7 @@ func TestExportWorker_ProcessBranchNotAllowedForStageableRepositories(t *testing
 
 	r := NewExportWorker(nil, nil, nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), true)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
-	require.EqualError(t, err, "this repository does not support the branch workflow")
+	require.EqualError(t, err, "repositories.provisioning.grafana.app is forbidden: branch workflow is not allowed for this repository")
 }
 
 func TestExportWorker_ProcessGitRepository(t *testing.T) {

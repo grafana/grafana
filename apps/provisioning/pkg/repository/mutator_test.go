@@ -18,6 +18,8 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
+func strPtr(s string) *string { return &s }
+
 func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,
@@ -51,6 +53,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 		wantFinalizers  []string
 		wantInterval    int64
 		wantWorkflows   []provisioning.Workflow
+		wantWebhookURL  *string
 		wantErr         bool
 		wantErrContains string
 	}{
@@ -215,6 +218,55 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			wantWorkflows:   []provisioning.Workflow{},
 			wantErr:         false,
 		},
+		{
+			name: "trims trailing slash from webhook base URL",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
+				Spec: provisioning.RepositorySpec{
+					Webhook: &provisioning.WebhookConfig{BaseURL: "https://grafana.example.com/"},
+				},
+			},
+			operation:      admission.Create,
+			wantWebhookURL: strPtr("https://grafana.example.com"),
+			wantWorkflows:  []provisioning.Workflow{},
+			wantErr:        false,
+		},
+		{
+			name: "trims multiple trailing slashes from webhook base URL",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
+				Spec: provisioning.RepositorySpec{
+					Webhook: &provisioning.WebhookConfig{BaseURL: "https://grafana.example.com///"},
+				},
+			},
+			operation:      admission.Create,
+			wantWebhookURL: strPtr("https://grafana.example.com"),
+			wantWorkflows:  []provisioning.Workflow{},
+			wantErr:        false,
+		},
+		{
+			name: "preserves webhook base URL without trailing slash",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
+				Spec: provisioning.RepositorySpec{
+					Webhook: &provisioning.WebhookConfig{BaseURL: "https://grafana.example.com"},
+				},
+			},
+			operation:      admission.Create,
+			wantWebhookURL: strPtr("https://grafana.example.com"),
+			wantWorkflows:  []provisioning.Workflow{},
+			wantErr:        false,
+		},
+		{
+			name: "leaves nil webhook untouched",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test", Finalizers: []string{"existing"}},
+				Spec:       provisioning.RepositorySpec{},
+			},
+			operation:     admission.Create,
+			wantWorkflows: []provisioning.Workflow{},
+			wantErr:       false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -260,6 +312,10 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 			}
 			if tt.wantWorkflows != nil {
 				assert.Equal(t, tt.wantWorkflows, repo.Spec.Workflows)
+			}
+			if tt.wantWebhookURL != nil {
+				require.NotNil(t, repo.Spec.Webhook)
+				assert.Equal(t, *tt.wantWebhookURL, repo.Spec.Webhook.BaseURL)
 			}
 		})
 	}

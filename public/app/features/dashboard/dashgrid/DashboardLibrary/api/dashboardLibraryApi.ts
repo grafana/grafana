@@ -1,4 +1,4 @@
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, logInfo, logWarning } from '@grafana/runtime';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 import { PluginDashboard } from 'app/types/plugins';
 
@@ -99,7 +99,15 @@ export async function fetchCommunityDashboards(
   });
 
   if (result && Array.isArray(result.items)) {
-    const dashboards = filterNonSafeDashboards(result.items);
+    logInfo('Fetched community dashboards', {
+      searchParams: searchParams.toString(),
+      dataSourceType: params.dataSourceSlugIn ?? '',
+      total: result.items.length,
+      page: result.page,
+      pages: result.pages,
+    });
+
+    const dashboards = filterNonSafeDashboards(result.items, params.dataSourceSlugIn);
 
     return {
       page: result.page || params.page,
@@ -140,18 +148,49 @@ export async function fetchProvisionedDashboards(datasourceType: string): Promis
 }
 
 // We only show dashboards with at least MIN_DOWNLOADS_FILTER downloads
-// They are already ordered by downloads amount
-const filterNonSafeDashboards = (dashboards: GnetDashboard[]): GnetDashboard[] => {
-  return dashboards.filter((item: GnetDashboard) => {
-    const hasUnsafePanelTypes = item.panelTypeSlugs?.some((slug: string) => UNSAFE_PANEL_TYPE_SLUGS.includes(slug));
+// and no unsafe panel types
+// They are previously ordered by downloads amount
+const filterNonSafeDashboards = (dashboards: GnetDashboard[], dataSourceType?: string): GnetDashboard[] => {
+  let unsafeDashboardsCount = 0;
+  let lowDownloadsCount = 0;
+
+  const filteredDashboards = dashboards.filter((item: GnetDashboard) => {
+    const unsafePanelTypes =
+      item.panelTypeSlugs?.filter((slug: string) => UNSAFE_PANEL_TYPE_SLUGS.includes(slug)) ?? [];
     const hasLowDownloads = typeof item.downloads === 'number' && item.downloads < MIN_DOWNLOADS_FILTER;
 
-    if (hasUnsafePanelTypes || hasLowDownloads) {
+    if (unsafePanelTypes.length > 0 || hasLowDownloads) {
+      if (unsafePanelTypes.length > 0) {
+        unsafeDashboardsCount++;
+      }
+      if (hasLowDownloads) {
+        lowDownloadsCount++;
+      }
+
       console.warn(
         `Community dashboard ${item.id} ${item.name} filtered out due to low downloads ${item.downloads} or panel types ${item.panelTypeSlugs?.join(', ')} that can embed JavaScript`
       );
+
+      logWarning('Community dashboard filtered out due to low downloads or unsafe panel types', {
+        dashboardId: item.id.toString(),
+        dashboardName: item.name,
+        minAllowedDownloads: MIN_DOWNLOADS_FILTER.toString(),
+        downloads: item.downloads.toString(),
+        panelTypes: item.panelTypeSlugs?.join(', ') ?? '',
+        unsafePanelTypes: unsafePanelTypes.join(', '),
+      });
       return false;
     }
     return true;
   });
+
+  if (filteredDashboards.length === 0) {
+    logWarning('No community dashboards found after safe filtering', {
+      dataSourceType: dataSourceType ?? '',
+      unsafeDashboardsCount: unsafeDashboardsCount.toString(),
+      lowDownloadsCount: lowDownloadsCount.toString(),
+    });
+  }
+
+  return filteredDashboards;
 };

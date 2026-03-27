@@ -34,14 +34,22 @@
     },
     "app-registration-credentials": {
       "aria-label-azure-cloud": "Azure Cloud",
+      "aria-label-client-certificate": "",
       "aria-label-client-id": "Kliensazonosító",
       "aria-label-client-secret": "Klienstitok",
+      "aria-label-private-key": "",
+      "aria-label-private-key-password": "",
       "aria-label-symbol-client-secret": "Klienstitok",
       "aria-label-tenant-id": "Bérlőazonosító",
+      "description-certificate-format": "",
       "label-azure-cloud": "Azure Cloud",
+      "label-certificate-format": "",
+      "label-client-certificate": "",
       "label-client-id": "Alkalmazás (kliens) azonosítója",
       "label-client-secret": "Klienstitok",
+      "label-private-key": "",
       "label-symbol-client-secret": "Klienstitok",
+      "label-symbol-private-key-password": "",
       "label-tenant-id": "Címtár (bérlő) azonosítója",
       "placeholder-symbol-client-secret": "konfigurált",
       "reset-symbol-client-secret": "Visszaállítás"
@@ -63,7 +71,7 @@
     },
     "azure-credentials-form": {
       "description-authentication": "Válassza ki az Azure-szolgáltatások hitelesítési típusát",
-      "label-authentication": "Hitelesítés",
+      "label-authentication": "",
       "title-authentication": "Hitelesítés"
     },
     "basic-logs-toggle": {

@@ -26,9 +26,9 @@ composableKinds: PanelCfg: {
 			version: [0, 0]
 			schema: {
 				GaugePanelEffects: {
-					barGlow?: bool | *false
+					barGlow?:    bool | *false
 					centerGlow?: bool | *false
-					gradient?: bool | *true
+					gradient?:   bool | *true
 				} @cuetsy(kind="interface")
 
 				Options: {
@@ -47,7 +47,7 @@ composableKinds: PanelCfg: {
 					endpointMarker?:      "point" | "glow" | "none" | *"point"
 					textMode?:            "auto" | "value_and_name" | "value" | "name" | "none" | *"auto"
 					neutral?:             number
-					effects:              GaugePanelEffects | *{}
+					effects: GaugePanelEffects | *{}
 				} @cuetsy(kind="interface")
 			}
 		}]

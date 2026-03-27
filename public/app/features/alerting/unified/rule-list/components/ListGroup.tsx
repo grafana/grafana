@@ -109,6 +109,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     '&:hover': {
       background: theme.colors.action.hover,
+      borderRadius: theme.shape.radius.default,
     },
   }),
   childrenWrapper: css({
