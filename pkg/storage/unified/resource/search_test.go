@@ -429,6 +429,12 @@ func TestCombineBuildRequests(t *testing.T) {
 			expOK: true,
 			exp:   rebuildRequest{minBuildTime: now.Add(2 * time.Hour), minBuildVersion: semver.MustParse("12.10.99")},
 		},
+		"merge selectable fields": {
+			a:     rebuildRequest{selectableFields: []string{"team", "title"}},
+			b:     rebuildRequest{selectableFields: []string{"folder", "team"}},
+			expOK: true,
+			exp:   rebuildRequest{selectableFields: []string{"folder", "team", "title"}},
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			res1, ok := combineRebuildRequests(tc.a, tc.b)

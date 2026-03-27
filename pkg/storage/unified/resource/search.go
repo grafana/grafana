@@ -261,10 +261,22 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 		ret.lastImportTime = b.lastImportTime
 	}
 
+	ret.selectableFields = mergeSelectableFields(a.selectableFields, b.selectableFields)
+
 	// Combine complete channels
 	ret.completeChannels = append(a.completeChannels, b.completeChannels...)
 
 	return ret, true
+}
+
+func mergeSelectableFields(a, b []string) []string {
+	if len(a) == 0 && len(b) == 0 {
+		return nil
+	}
+
+	merged := append(slices.Clone(a), b...)
+	slices.Sort(merged)
+	return slices.Compact(merged)
 }
 
 func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
