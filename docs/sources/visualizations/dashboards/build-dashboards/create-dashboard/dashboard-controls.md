@@ -17,7 +17,7 @@ weight: 200
 
 # Dashboard controls
 
-Using the **Dashboard controls** section of the sidebar, you can add variables, annotation queries, and dashboard links without leaving the dashboard.
+In the **Dashboard controls** section of the sidebar, you can add variables, annotation queries, and dashboard links without leaving the dashboard.
 
 <!-- screenshot here? -->
 
@@ -180,7 +180,7 @@ To manage dashboard controls, follow these steps:
 
    {{< admonition type="tip" >}}
    To get back to controls management from configuration, click the **Dashboard options** icon.
-   {{< /admonition >}} 
+   {{< /admonition >}}
 
 1. Make any other changes as needed.
 1. Click **Save**.
