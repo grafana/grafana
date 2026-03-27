@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -39,7 +38,7 @@ func GetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[
 // x-prom-label-policy is exposed as X-Prom-Label-Policy.
 func getTeamHeaders(ctx context.Context, logger log.Logger, plugin backend.PluginContext) map[string]string {
 	cfg := backend.GrafanaConfigFromContext(ctx)
-	if cfg == nil || !cfg.FeatureToggles().IsEnabled(featuremgmt.FlagStreamingForwardTeamHeadersTempo) {
+	if cfg == nil || !cfg.FeatureToggles().IsEnabled("streamingForwardTeamHeadersTempo") {
 		return nil
 	}
 
