@@ -311,7 +311,7 @@ update-workspace: gen-go
 build-go: pkg/services/preference/themes_generated.go
 	@echo "build go binaries ($(OS)/$(ARCH))"
 	$(if $(CGO_ENABLED),CGO_ENABLED=$(CGO_ENABLED)) GOOS=$(OS) GOARCH=$(ARCH) $(GO) build -buildvcs=false -trimpath $(GO_RACE_FLAG) $(if $(GO_BUILD_TAGS),-tags $(GO_BUILD_TAGS)) $(if $(GO_BUILD_GCFLAGS),-gcflags "$(GO_BUILD_GCFLAGS)") -ldflags "$(GO_LDFLAGS)" -o ./bin/$(OS)/$(ARCH)/grafana ./pkg/cmd/grafana
-	cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana
+	if [ "$(OS)" = "$(GO_HOST_OS)" ] && [ "$(ARCH)" = "$(GO_HOST_ARCH)" ]; then cp ./bin/$(OS)/$(ARCH)/grafana ./bin/grafana; fi
 
 bin/$(OS)/$(ARCH)/grafana:
 	$(MAKE) build-go
