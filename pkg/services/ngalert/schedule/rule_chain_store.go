@@ -5,24 +5,14 @@ import (
 	"encoding/binary"
 	"hash/fnv"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-const ruleChainGroupPrefix = "__chain__"
-
-// SchedulableRuleChain describes a chain of rules that the scheduler should
-// evaluate sequentially. Recording rules run first, followed by alert rules,
-// all at the chain's interval.
-type SchedulableRuleChain struct {
-	UID               string
-	IntervalSeconds   int64
-	RecordingRuleRefs []string
-	AlertRuleRefs     []string
-}
-
-// fingerprint returns a hash that covers every field that affects scheduling
-// behavior: UID, interval, and the ordered membership lists. Two chains that
-// differ in any of these fields will produce different fingerprints.
-func (c SchedulableRuleChain) fingerprint() uint64 {
+// ruleChainFingerprint returns a hash that covers every field that affects
+// scheduling behavior: UID, interval, and the ordered membership lists. Two
+// chains that differ in any of these fields will produce different fingerprints.
+func ruleChainFingerprint(c models.SchedulableRuleChain) uint64 {
 	h := fnv.New64()
 	buf := make([]byte, 8)
 
@@ -43,13 +33,13 @@ func (c SchedulableRuleChain) fingerprint() uint64 {
 
 // RuleChainStore provides rule chain definitions for scheduling.
 type RuleChainStore interface {
-	GetRuleChainForScheduling(ctx context.Context) ([]SchedulableRuleChain, error)
+	GetRuleChainForScheduling(ctx context.Context) ([]models.SchedulableRuleChain, error)
 }
 
 // NoopRuleChainStore is a RuleChainStore that always returns an empty slice.
 // Used as the default when rule chains are not enabled.
 type NoopRuleChainStore struct{}
 
-func (n *NoopRuleChainStore) GetRuleChainForScheduling(ctx context.Context) ([]SchedulableRuleChain, error) {
-	return []SchedulableRuleChain{}, nil
+func (n *NoopRuleChainStore) GetRuleChainForScheduling(ctx context.Context) ([]models.SchedulableRuleChain, error) {
+	return []models.SchedulableRuleChain{}, nil
 }

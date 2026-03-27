@@ -126,10 +126,10 @@ func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
 // enriched with synthetic group names, sequential indices, and the chain's
 // interval (no-op when chains is empty). Returns the difference between the
 // previous and the new version of the registry.
-func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[models.FolderKey]string, ruleChains []SchedulableRuleChain) diff {
+func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[models.FolderKey]string, ruleChains []models.SchedulableRuleChain) diff {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	enrichRulesWithChainMembership(rules, ruleChains)
+	models.EnrichRulesWithChainMembership(rules, ruleChains)
 	rulesMap := make(map[models.AlertRuleKey]*models.AlertRule)
 	for _, rule := range rules {
 		rulesMap[rule.GetKey()] = rule
@@ -140,7 +140,7 @@ func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[models.F
 	r.folderTitles = folders
 	fingerprints := make(map[string]uint64, len(ruleChains))
 	for _, chain := range ruleChains {
-		fingerprints[chain.UID] = chain.fingerprint()
+		fingerprints[chain.UID] = ruleChainFingerprint(chain)
 	}
 	r.ruleChainFingerprints = fingerprints
 	return d
@@ -172,14 +172,14 @@ func (r *alertRulesRegistry) isEmpty() bool {
 	return len(r.rules) == 0
 }
 
-func (r *alertRulesRegistry) ruleChainsNeedUpdate(ruleChains []SchedulableRuleChain) bool {
+func (r *alertRulesRegistry) ruleChainsNeedUpdate(ruleChains []models.SchedulableRuleChain) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	if len(r.ruleChainFingerprints) != len(ruleChains) {
 		return true
 	}
 	for _, chain := range ruleChains {
-		if fp, ok := r.ruleChainFingerprints[chain.UID]; !ok || fp != chain.fingerprint() {
+		if fp, ok := r.ruleChainFingerprints[chain.UID]; !ok || fp != ruleChainFingerprint(chain) {
 			return true
 		}
 	}

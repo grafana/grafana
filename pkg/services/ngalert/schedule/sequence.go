@@ -113,7 +113,7 @@ func (sch *schedule) shouldEvaluateSequentially(groupItems []readyToRunItem) boo
 		return false
 	}
 
-	if len(groupItems) > 0 && strings.HasPrefix(groupItems[0].rule.RuleGroup, ruleChainGroupPrefix) {
+	if len(groupItems) > 0 && models.IsRuleChainGroup(groupItems[0].rule.RuleGroup) {
 		return true
 	}
 

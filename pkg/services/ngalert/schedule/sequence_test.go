@@ -156,7 +156,7 @@ func TestSequence(t *testing.T) {
 	})
 
 	t.Run("chain group with multiple rules evaluates sequentially", func(t *testing.T) {
-		chainGroup := ruleChainGroupPrefix + "chain-123"
+		chainGroup := models.RuleChainGroupPrefix + "chain-123"
 		nextByGroup := map[string][]string{}
 		prevByGroup := map[string][]string{}
 		callback := func(next readyToRunItem, prev ...readyToRunItem) func() {
@@ -251,7 +251,7 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 
 	t.Run("chain group with two rules returns true", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
-		chainGroup := ruleChainGroupPrefix + "my-chain"
+		chainGroup := models.RuleChainGroupPrefix + "my-chain"
 		items := []readyToRunItem{
 			makeItem("a", chainGroup),
 			makeItem("b", chainGroup),
@@ -261,7 +261,7 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 
 	t.Run("chain group with one rule returns false", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
-		chainGroup := ruleChainGroupPrefix + "solo"
+		chainGroup := models.RuleChainGroupPrefix + "solo"
 		items := []readyToRunItem{
 			makeItem("a", chainGroup),
 		}
@@ -271,7 +271,7 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 	t.Run("chain group is independent of jitter setting", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
 		sch.jitterEvaluations = JitterByGroup
-		chainGroup := ruleChainGroupPrefix + "jitter-test"
+		chainGroup := models.RuleChainGroupPrefix + "jitter-test"
 		items := []readyToRunItem{
 			makeItem("a", chainGroup),
 			makeItem("b", chainGroup),
@@ -282,7 +282,7 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 	t.Run("chain group returns false when jitter by rule is enabled", func(t *testing.T) {
 		sch := setupScheduler(t, newFakeRulesStore(), nil, nil, nil, nil, nil)
 		sch.jitterEvaluations = JitterByRule
-		chainGroup := ruleChainGroupPrefix + "jitter-rule"
+		chainGroup := models.RuleChainGroupPrefix + "jitter-rule"
 		items := []readyToRunItem{
 			makeItem("a", chainGroup),
 			makeItem("b", chainGroup),

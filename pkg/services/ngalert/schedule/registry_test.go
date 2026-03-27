@@ -136,15 +136,15 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 
 	t.Run("empty registry and empty chains returns false", func(t *testing.T) {
 		r := newRegistry()
-		r.set(nil, nil, []SchedulableRuleChain{})
+		r.set(nil, nil, []models.SchedulableRuleChain{})
 		assert.False(t, r.ruleChainsNeedUpdate(nil))
-		assert.False(t, r.ruleChainsNeedUpdate([]SchedulableRuleChain{}))
+		assert.False(t, r.ruleChainsNeedUpdate([]models.SchedulableRuleChain{}))
 	})
 
 	t.Run("empty registry with new chains returns true", func(t *testing.T) {
 		r := newRegistry()
-		r.set(nil, nil, []SchedulableRuleChain{})
-		chains := []SchedulableRuleChain{
+		r.set(nil, nil, []models.SchedulableRuleChain{})
+		chains := []models.SchedulableRuleChain{
 			{UID: "chain-1", IntervalSeconds: 30},
 		}
 		assert.True(t, r.ruleChainsNeedUpdate(chains))
@@ -152,7 +152,7 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 
 	t.Run("matching chains returns false", func(t *testing.T) {
 		r := newRegistry()
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{UID: "chain-1", IntervalSeconds: 30},
 			{UID: "chain-2", IntervalSeconds: 60},
 		}
@@ -162,10 +162,10 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 
 	t.Run("interval change returns true", func(t *testing.T) {
 		r := newRegistry()
-		r.set(nil, nil, []SchedulableRuleChain{
+		r.set(nil, nil, []models.SchedulableRuleChain{
 			{UID: "chain-1", IntervalSeconds: 30},
 		})
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{UID: "chain-1", IntervalSeconds: 60},
 		}
 		assert.True(t, r.ruleChainsNeedUpdate(chains))
@@ -173,10 +173,10 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 
 	t.Run("chain added returns true", func(t *testing.T) {
 		r := newRegistry()
-		r.set(nil, nil, []SchedulableRuleChain{
+		r.set(nil, nil, []models.SchedulableRuleChain{
 			{UID: "chain-1", IntervalSeconds: 30},
 		})
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{UID: "chain-1", IntervalSeconds: 30},
 			{UID: "chain-2", IntervalSeconds: 60},
 		}
@@ -185,11 +185,11 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 
 	t.Run("chain removed returns true", func(t *testing.T) {
 		r := newRegistry()
-		r.set(nil, nil, []SchedulableRuleChain{
+		r.set(nil, nil, []models.SchedulableRuleChain{
 			{UID: "chain-1", IntervalSeconds: 30},
 			{UID: "chain-2", IntervalSeconds: 60},
 		})
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{UID: "chain-1", IntervalSeconds: 30},
 		}
 		assert.True(t, r.ruleChainsNeedUpdate(chains))
@@ -197,10 +197,10 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 
 	t.Run("chain replaced with different UID returns true", func(t *testing.T) {
 		r := newRegistry()
-		r.set(nil, nil, []SchedulableRuleChain{
+		r.set(nil, nil, []models.SchedulableRuleChain{
 			{UID: "chain-1", IntervalSeconds: 30},
 		})
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{UID: "chain-new", IntervalSeconds: 30},
 		}
 		assert.True(t, r.ruleChainsNeedUpdate(chains))
@@ -208,14 +208,14 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 
 	t.Run("nil registry map with empty chains returns false", func(t *testing.T) {
 		// A fresh registry has a nil fingerprints map. With no chains,
-		// len(nil) == len([]SchedulableRuleChain{}) == 0, so no update needed.
+		// len(nil) == len([]models.SchedulableRuleChain{}) == 0, so no update needed.
 		r := newRegistry()
 		assert.False(t, r.ruleChainsNeedUpdate(nil))
 	})
 
 	t.Run("membership change without interval change returns true", func(t *testing.T) {
 		r := newRegistry()
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{
 				UID:               "chain-1",
 				IntervalSeconds:   30,
@@ -228,7 +228,7 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 		assert.False(t, r.ruleChainsNeedUpdate(chains))
 
 		// Change membership: add a new rule ref without changing the interval.
-		changed := []SchedulableRuleChain{
+		changed := []models.SchedulableRuleChain{
 			{
 				UID:               "chain-1",
 				IntervalSeconds:   30,
@@ -241,7 +241,7 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 
 	t.Run("membership reorder without interval change returns true", func(t *testing.T) {
 		r := newRegistry()
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{
 				UID:               "chain-1",
 				IntervalSeconds:   30,
@@ -253,7 +253,7 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 		assert.False(t, r.ruleChainsNeedUpdate(chains))
 
 		// Reorder the refs: this changes evaluation order, so should be detected.
-		reordered := []SchedulableRuleChain{
+		reordered := []models.SchedulableRuleChain{
 			{
 				UID:               "chain-1",
 				IntervalSeconds:   30,
@@ -265,7 +265,7 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 
 	t.Run("rule moved between recording and alerting refs returns true", func(t *testing.T) {
 		r := newRegistry()
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{
 				UID:               "chain-1",
 				IntervalSeconds:   30,
@@ -278,7 +278,7 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 		assert.False(t, r.ruleChainsNeedUpdate(chains))
 
 		// Move rule-a from recording to alerting refs.
-		moved := []SchedulableRuleChain{
+		moved := []models.SchedulableRuleChain{
 			{
 				UID:             "chain-1",
 				IntervalSeconds: 30,
@@ -290,7 +290,7 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 
 	t.Run("after set with chains, matching chains return false", func(t *testing.T) {
 		r := newRegistry()
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{UID: "chain-1", IntervalSeconds: 30},
 			{UID: "chain-2", IntervalSeconds: 60},
 		}
@@ -305,7 +305,7 @@ func TestRuleChainsNeedUpdate(t *testing.T) {
 		assert.False(t, r.ruleChainsNeedUpdate(chains))
 
 		// A changed interval should still be detected.
-		changed := []SchedulableRuleChain{
+		changed := []models.SchedulableRuleChain{
 			{UID: "chain-1", IntervalSeconds: 30},
 			{UID: "chain-2", IntervalSeconds: 120},
 		}

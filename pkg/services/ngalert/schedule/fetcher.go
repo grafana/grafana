@@ -48,33 +48,3 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) (diff, err
 	sch.log.Debug("Alert rules fetched", "rulesCount", len(q.ResultRules), "foldersCount", len(q.ResultFoldersTitles), "updatedRules", len(d.updated))
 	return d, nil
 }
-
-func enrichRulesWithChainMembership(rules []*models.AlertRule, chains []SchedulableRuleChain) {
-	type membership struct {
-		chainUID        string
-		intervalSeconds int64
-		index           int
-	}
-	lookup := make(map[string]membership)
-	for _, chain := range chains {
-		idx := 1
-		for _, uid := range chain.RecordingRuleRefs {
-			lookup[uid] = membership{chain.UID, chain.IntervalSeconds, idx}
-			idx++
-		}
-		for _, uid := range chain.AlertRuleRefs {
-			lookup[uid] = membership{chain.UID, chain.IntervalSeconds, idx}
-			idx++
-		}
-	}
-
-	for _, rule := range rules {
-		m, ok := lookup[rule.UID]
-		if !ok {
-			continue
-		}
-		rule.RuleGroup = ruleChainGroupPrefix + m.chainUID
-		rule.RuleGroupIndex = m.index
-		rule.IntervalSeconds = m.intervalSeconds
-	}
-}

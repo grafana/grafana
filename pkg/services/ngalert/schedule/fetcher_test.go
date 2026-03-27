@@ -22,7 +22,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		rec2 := gen.With(models.RuleGen.WithUID("rec-2")).GenerateRef()
 		alert1 := gen.With(models.RuleGen.WithUID("alert-1")).GenerateRef()
 
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{
 				UID:               "chain-abc",
 				IntervalSeconds:   30,
@@ -32,17 +32,17 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		}
 
 		rules := []*models.AlertRule{rec1, rec2, alert1}
-		enrichRulesWithChainMembership(rules, chains)
+		models.EnrichRulesWithChainMembership(rules, chains)
 
-		assert.Equal(t, ruleChainGroupPrefix+"chain-abc", rec1.RuleGroup)
+		assert.Equal(t, models.RuleChainGroupPrefix+"chain-abc", rec1.RuleGroup)
 		assert.Equal(t, 1, rec1.RuleGroupIndex)
 		assert.Equal(t, int64(30), rec1.IntervalSeconds)
 
-		assert.Equal(t, ruleChainGroupPrefix+"chain-abc", rec2.RuleGroup)
+		assert.Equal(t, models.RuleChainGroupPrefix+"chain-abc", rec2.RuleGroup)
 		assert.Equal(t, 2, rec2.RuleGroupIndex)
 		assert.Equal(t, int64(30), rec2.IntervalSeconds)
 
-		assert.Equal(t, ruleChainGroupPrefix+"chain-abc", alert1.RuleGroup)
+		assert.Equal(t, models.RuleChainGroupPrefix+"chain-abc", alert1.RuleGroup)
 		assert.Equal(t, 3, alert1.RuleGroupIndex)
 		assert.Equal(t, int64(30), alert1.IntervalSeconds)
 	})
@@ -51,7 +51,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		alert1 := gen.With(models.RuleGen.WithUID("alert-1")).GenerateRef()
 		rec1 := gen.With(models.RuleGen.WithUID("rec-1")).GenerateRef()
 
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{
 				UID:               "chain-order",
 				IntervalSeconds:   10,
@@ -61,7 +61,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		}
 
 		rules := []*models.AlertRule{alert1, rec1}
-		enrichRulesWithChainMembership(rules, chains)
+		models.EnrichRulesWithChainMembership(rules, chains)
 
 		// Recording rule should have a lower index than alerting rule,
 		// regardless of the order they appear in the rules slice.
@@ -78,7 +78,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		originalIndex := standalone.RuleGroupIndex
 		originalInterval := standalone.IntervalSeconds
 
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{
 				UID:               "chain-xyz",
 				IntervalSeconds:   15,
@@ -87,20 +87,20 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		}
 
 		rules := []*models.AlertRule{standalone, chainRule}
-		enrichRulesWithChainMembership(rules, chains)
+		models.EnrichRulesWithChainMembership(rules, chains)
 
 		assert.Equal(t, originalGroup, standalone.RuleGroup)
 		assert.Equal(t, originalIndex, standalone.RuleGroupIndex)
 		assert.Equal(t, originalInterval, standalone.IntervalSeconds)
 
 		// chain-rule should be enriched
-		assert.Equal(t, ruleChainGroupPrefix+"chain-xyz", chainRule.RuleGroup)
+		assert.Equal(t, models.RuleChainGroupPrefix+"chain-xyz", chainRule.RuleGroup)
 	})
 
 	t.Run("rule in chain but not in fetched rules is a no-op", func(t *testing.T) {
 		rule := gen.With(models.RuleGen.WithUID("existing")).GenerateRef()
 
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{
 				UID:               "chain-ghost",
 				IntervalSeconds:   10,
@@ -111,7 +111,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 
 		rules := []*models.AlertRule{rule}
 		originalGroup := rule.RuleGroup
-		enrichRulesWithChainMembership(rules, chains)
+		models.EnrichRulesWithChainMembership(rules, chains)
 
 		assert.Equal(t, originalGroup, rule.RuleGroup, "rule not in any chain should be unchanged")
 	})
@@ -123,7 +123,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		originalInterval := rule.IntervalSeconds
 
 		rules := []*models.AlertRule{rule}
-		enrichRulesWithChainMembership(rules, nil)
+		models.EnrichRulesWithChainMembership(rules, nil)
 
 		assert.Equal(t, originalGroup, rule.RuleGroup)
 		assert.Equal(t, originalIndex, rule.RuleGroupIndex)
@@ -131,7 +131,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 	})
 
 	t.Run("empty rules with chains is a no-op", func(t *testing.T) {
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{
 				UID:               "chain-no-rules",
 				IntervalSeconds:   10,
@@ -140,7 +140,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		}
 
 		// Should not panic.
-		enrichRulesWithChainMembership(nil, chains)
+		models.EnrichRulesWithChainMembership(nil, chains)
 	})
 
 	t.Run("multiple chains enrich independently", func(t *testing.T) {
@@ -148,7 +148,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		rule2 := gen.With(models.RuleGen.WithUID("r2")).GenerateRef()
 		rule3 := gen.With(models.RuleGen.WithUID("r3")).GenerateRef()
 
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{
 				UID:               "chain-A",
 				IntervalSeconds:   10,
@@ -163,17 +163,17 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		}
 
 		rules := []*models.AlertRule{rule1, rule2, rule3}
-		enrichRulesWithChainMembership(rules, chains)
+		models.EnrichRulesWithChainMembership(rules, chains)
 
-		assert.Equal(t, ruleChainGroupPrefix+"chain-A", rule1.RuleGroup)
+		assert.Equal(t, models.RuleChainGroupPrefix+"chain-A", rule1.RuleGroup)
 		assert.Equal(t, int64(10), rule1.IntervalSeconds)
 		assert.Equal(t, 1, rule1.RuleGroupIndex)
 
-		assert.Equal(t, ruleChainGroupPrefix+"chain-A", rule2.RuleGroup)
+		assert.Equal(t, models.RuleChainGroupPrefix+"chain-A", rule2.RuleGroup)
 		assert.Equal(t, int64(10), rule2.IntervalSeconds)
 		assert.Equal(t, 2, rule2.RuleGroupIndex)
 
-		assert.Equal(t, ruleChainGroupPrefix+"chain-B", rule3.RuleGroup)
+		assert.Equal(t, models.RuleChainGroupPrefix+"chain-B", rule3.RuleGroup)
 		assert.Equal(t, int64(20), rule3.IntervalSeconds)
 		assert.Equal(t, 1, rule3.RuleGroupIndex)
 	})
@@ -183,7 +183,7 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		// but test the defensive behavior: last-write-wins from map insertion.
 		rule := gen.With(models.RuleGen.WithUID("shared")).GenerateRef()
 
-		chains := []SchedulableRuleChain{
+		chains := []models.SchedulableRuleChain{
 			{
 				UID:               "chain-first",
 				IntervalSeconds:   10,
@@ -197,10 +197,10 @@ func TestEnrichRulesWithChainMembership(t *testing.T) {
 		}
 
 		rules := []*models.AlertRule{rule}
-		enrichRulesWithChainMembership(rules, chains)
+		models.EnrichRulesWithChainMembership(rules, chains)
 
 		// The second chain overwrites the first in the lookup map.
-		assert.Equal(t, ruleChainGroupPrefix+"chain-second", rule.RuleGroup)
+		assert.Equal(t, models.RuleChainGroupPrefix+"chain-second", rule.RuleGroup)
 		assert.Equal(t, int64(20), rule.IntervalSeconds)
 	})
 }
