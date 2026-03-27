@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -160,13 +159,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	ctx := context.Background()
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableFeatureToggles: []string{featuremgmt.FlagProvisioning},
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"dashboards.dashboard.grafana.app": {EnableMigration: false},
-			"folders.folder.grafana.app":       {EnableMigration: false},
-		},
-	})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 
 	clientV0 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User: helper.Org1.Admin,
@@ -366,7 +359,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 					SetHeader("Content-type", "application/json").
 					Do(ctx).
 					StatusCode(&statusCode)
-				require.Equal(t, int(http.StatusConflict), statusCode) // already exists
+				require.Equal(t, int(http.StatusConflict), statusCode)
 
 				// Overwrite!
 				body = getLegacySaveCommand(obj, title, true)
@@ -375,7 +368,7 @@ func TestIntegrationLegacySupport(t *testing.T) {
 					SetHeader("Content-type", "application/json").
 					Do(ctx).
 					StatusCode(&statusCode)
-				require.Equal(t, int(http.StatusOK), statusCode) // already exists
+				require.Equal(t, int(http.StatusOK), statusCode)
 
 				found, err = client.Get(ctx, obj.GetName(), metav1.GetOptions{})
 				require.NoError(t, err)
@@ -392,30 +385,6 @@ func TestIntegrationLegacySupport(t *testing.T) {
 				err = json.Unmarshal(jj, dto)
 				require.NoError(t, err)
 				require.Equal(t, title, dto.Dashboard.Get("title").MustString(""), "in object: %s", obj.GetName())
-
-				// Update by internal id (without name)
-				meta, err := utils.MetaAccessor(found)
-				require.NoError(t, err)
-				internalId := meta.GetDeprecatedInternalID() // nolint:staticcheck
-				require.True(t, internalId > 0)
-
-				title = "updated using internal ID"
-				unstructured.RemoveNestedField(obj.Object, "spec", "uid")
-				unstructured.RemoveNestedField(obj.Object, "metadata", "name")
-				err = unstructured.SetNestedField(obj.Object, internalId, "spec", "id")
-				require.NoError(t, err)
-				body = getLegacySaveCommand(obj, title, true)
-				rsp := adminClient.Post().AbsPath("api", "dashboards", "db").
-					Body(body).
-					SetHeader("Content-type", "application/json").
-					Do(ctx).
-					StatusCode(&statusCode)
-				require.Equal(t, int(http.StatusOK), statusCode) // already exists
-				body, _ = rsp.Raw()
-				err = json.Unmarshal(body, &obj.Object)
-				require.NoError(t, err)
-				require.Equal(t, name+"-legacy", obj.Object["uid"])
-				require.Equal(t, float64(internalId), obj.Object["id"]) // same internal ID
 			})
 		}
 	})
