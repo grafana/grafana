@@ -1,10 +1,20 @@
 name: Compare Linux ARM64 tar.gz builds
 
 on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   setup:
@@ -47,8 +57,10 @@ jobs:
           checksum: false
           verify: false
       - name: Locate tar.gz output
+        env:
+          ARTIFACTS_LIST: ${{ steps.build.outputs.file }}
         run: |
-          TARGZ="$(grep -E '\.tar\.gz$' "${{ steps.build.outputs.file }}" | head -n 1)"
+          TARGZ="$(grep -E '\.tar\.gz$' "${ARTIFACTS_LIST}" | head -n 1)"
           mkdir -p _out
           cp "${TARGZ}" _out/release-action.tar.gz
       - uses: actions/upload-artifact@v7
@@ -80,6 +92,8 @@ jobs:
     name: Build backend binary
     runs-on: ubuntu-latest
     needs: setup
+    env:
+      BUILD_NUMBER: ${{ needs.setup.outputs.build_number }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -87,7 +101,7 @@ jobs:
       - name: Setup Go
         uses: ./.github/actions/setup-go
       - name: Build backend
-        run: make build-go OS=linux ARCH=arm64 BUILD_NUMBER=${{ needs.setup.outputs.build_number }}
+        run: make build-go OS=linux ARCH=arm64 BUILD_NUMBER="${BUILD_NUMBER}"
       - uses: actions/upload-artifact@v7
         with:
           name: backend-linux-arm64
@@ -98,6 +112,9 @@ jobs:
     name: Build tar.gz from split artifacts
     runs-on: ubuntu-latest
     needs: [setup, build_frontend, build_backend]
+    env:
+      BUILD_VERSION: ${{ needs.setup.outputs.version }}
+      BUILD_NUMBER: ${{ needs.setup.outputs.build_number }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -124,11 +141,11 @@ jobs:
           make build-targz \
             OS=linux \
             ARCH=arm64 \
-            BUILD_VERSION="${{ needs.setup.outputs.version }}" \
-            BUILD_NUMBER="${{ needs.setup.outputs.build_number }}"
+            BUILD_VERSION="${BUILD_VERSION}" \
+            BUILD_NUMBER="${BUILD_NUMBER}"
       - name: Locate split tar.gz output
         run: |
-          TARGZ="$(ls dist/*.tar.gz | head -n 1)"
+          TARGZ="$(find dist -maxdepth 1 -type f -name '*.tar.gz' -print | sort | head -n 1)"
           mkdir -p _out
           cp "${TARGZ}" _out/split-build.tar.gz
       - uses: actions/upload-artifact@v7
@@ -153,13 +170,13 @@ jobs:
       - name: Extract and compare
         run: |
           mkdir -p _extract/release _extract/split
-          RELEASE_TAR="$(ls _release/*.tar.gz | head -n 1)"
-          SPLIT_TAR="$(ls _split/*.tar.gz | head -n 1)"
+          RELEASE_TAR="$(find _release -maxdepth 1 -type f -name '*.tar.gz' -print | sort | head -n 1)"
+          SPLIT_TAR="$(find _split -maxdepth 1 -type f -name '*.tar.gz' -print | sort | head -n 1)"
 
           tar -xzf "${RELEASE_TAR}" -C _extract/release
           tar -xzf "${SPLIT_TAR}" -C _extract/split
 
-          RELEASE_ROOT="$(ls -1 _extract/release | head -n 1)"
-          SPLIT_ROOT="$(ls -1 _extract/split | head -n 1)"
+          RELEASE_TOP="$(find _extract/release -mindepth 1 -maxdepth 1 -type d -print | sort | head -n 1)"
+          SPLIT_TOP="$(find _extract/split -mindepth 1 -maxdepth 1 -type d -print | sort | head -n 1)"
 
-          diff -r "_extract/release/${RELEASE_ROOT}" "_extract/split/${SPLIT_ROOT}"
+          diff -r "${RELEASE_TOP}" "${SPLIT_TOP}"
