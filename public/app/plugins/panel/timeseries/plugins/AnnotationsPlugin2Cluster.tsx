@@ -76,7 +76,7 @@ export const AnnotationsPlugin2Cluster = ({
   canvasRegionRendering = true,
   options,
 }: AnnotationsPlugin2ClusterProps) => {
-  const [plot, setPlot] = useState<uPlot>();
+  const plotRef = useRef<uPlot | null>(null);
   const [portalRoot] = useState(() => getPortalContainer());
   const [pinnedAnnotationId, setPinnedAnnotationId] = useState<string | undefined>();
   const getColorByName = useTheme2().visualization.getColorByName;
@@ -93,9 +93,9 @@ export const AnnotationsPlugin2Cluster = ({
   const clusteredAnnos = useAnnotationClustering({
     annotations: xAnnos,
     clusteringMode,
-    plotWidth: plot?.bbox.width,
+    plotWidth: plotRef.current?.bbox.width,
     // if the plot hasn't defined the time range yet, we don't want to cluster until it does
-    timeRange: { from: plot?.scales?.x?.min ?? -1, to: plot?.scales?.x?.max ?? -1 },
+    timeRange: { from: plotRef.current?.scales?.x?.min ?? -1, to: plotRef.current?.scales?.x?.max ?? -1 },
   });
   const exitWipEdit = useCallback(() => {
     setNewRange(null);
@@ -115,7 +115,11 @@ export const AnnotationsPlugin2Cluster = ({
   useLayoutEffect(() => {
     config.addHook('ready', (u) => {
       xAxisRef.current = u.root.querySelector<HTMLDivElement>('.u-axis')!;
-      setPlot(u);
+      plotRef.current = u;
+      // If annos were defined before uPlot ready is called, we need to force the component to re-render annos now that uplot is available
+      if (annotations?.length) {
+        forceUpdate();
+      }
     });
 
     config.addHook('draw', (u) => {
@@ -219,12 +223,13 @@ export const AnnotationsPlugin2Cluster = ({
     options?.clustering,
     options?.lines?.width,
     options?.regions?.opacity,
+    annotations?.length,
   ]);
 
   // ensure xAnnos are re-drawn whenever they change
   useEffect(() => {
-    if (plot) {
-      plot.redraw();
+    if (plotRef.current) {
+      plotRef.current.redraw();
 
       // this forces a second redraw after uPlot is updated (in the Plot.tsx didUpdate) with new data/scales
       // and ensures the anno marker positions in the dom are re-rendered in correct places
@@ -233,9 +238,10 @@ export const AnnotationsPlugin2Cluster = ({
         forceUpdate();
       }, 0);
     }
-  }, [xAnnos, plot]);
+  }, [xAnnos]);
 
-  if (plot && xAxisRef.current) {
+  if (plotRef.current && xAxisRef.current) {
+    const plot = plotRef.current;
     const wipFrame = xAnnos.filter((fr) => fr.meta?.custom?.isWip)?.[0];
     const wipVals = wipFrame ? getVals<AnnotationVals>(wipFrame) : null;
     const isWipVisible = wipFrame?.meta?.custom?.isWip && wipVals?.time?.[0] && wipVals?.time?.[0] > 0;
@@ -262,7 +268,8 @@ export const AnnotationsPlugin2Cluster = ({
         const plotWidth = plot.rect.width;
 
         if (isRegion && timeEnd != null) {
-          const right = Math.round(plot.valToPos(timeEnd, 'x')) || 0; // handles -0
+          const valPos = plot.valToPos(timeEnd, 'x');
+          const right = Math.round(valPos ?? 0) || 0; // handles -0
           isVisible = left < plotWidth && right > 0;
 
           if (isVisible) {
