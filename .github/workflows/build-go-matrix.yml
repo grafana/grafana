@@ -82,9 +82,9 @@ jobs:
       - name: Build Go (${{ matrix.name }})
         env:
           CGO_ENABLED: "0"
-          OS: ${{ matrix.goos }}
-          ARCH: ${{ matrix.goarch }}
-          ARM: ${{ matrix.goarm }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
         run: make build-go
 
   build-go-enterprise:

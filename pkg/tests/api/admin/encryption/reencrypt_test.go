@@ -92,7 +92,6 @@ func RunAdminApiReencryptTest(
 	setup func(t *testing.T, env *server.TestEnv, grafanaListenAddr string),
 	secretsFns map[string]func(t *testing.T, env *server.TestEnv) map[int]secret,
 ) {
-	t.Skip("Flaky test, see https://github.com/grafana/grafana/actions/runs/23609921066/job/68762683844?pr=120224")
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		APIServerStorageType: options.StorageTypeUnified,
 	})
