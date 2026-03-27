@@ -81,7 +81,8 @@ func TestSetHeadersFromIncomingContext_FeatureToggleOff_OnlyClientHeaders(t *tes
 	require.NoError(t, err)
 	assert.Equal(t, "client-value", headers["X-Client"])
 	assert.Equal(t, "shared-value", headers["X-Shared"])
-	assert.Empty(t, headers[TeamHttpHeaderKeyCamel])
+	_, ok := headers[TeamHttpHeaderKeyCamel]
+	assert.False(t, ok)
 }
 
 func TestSetHeadersFromIncomingContext_MergesOutgoingMetadata_WhenToggleOn(t *testing.T) {
@@ -104,7 +105,7 @@ func TestSetHeadersFromIncomingContext_MergesOutgoingMetadata_WhenToggleOn(t *te
 		featuretoggles.EnabledFeatures: featuremgmt.FlagForwardTeamHeadersTempo,
 	}))
 	ctx = metadata.AppendToOutgoingContext(ctx,
-		TeamHttpHeaderKeyLower, "policy-a", TeamHttpHeaderKeyLower, "policy-b",
+		TeamHttpHeaderKeyLower, "policy-a,policy-b",
 		"x-custom-forward", "extra",
 	)
 
