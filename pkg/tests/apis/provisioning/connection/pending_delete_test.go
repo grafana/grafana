@@ -134,9 +134,8 @@ func TestIntegrationProvisioning_ConnectionPendingDeleteLabel_SkipsReconciliatio
 // TestIntegrationProvisioning_ConnectionPendingDeleteAdmission verifies that the
 // admission webhook enforces pending-delete semantics on Connection resources.
 func TestIntegrationProvisioning_ConnectionPendingDeleteAdmission(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
+	helper := sharedHelper(t)
 
-	helper := common.RunGrafana(t)
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	makeConnObj := func(name string) *unstructured.Unstructured {
