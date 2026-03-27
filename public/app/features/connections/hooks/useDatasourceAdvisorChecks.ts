@@ -69,9 +69,11 @@ function selectLatestCheck(checks?: Check[]): Check | undefined {
 }
 
 function isPending(check?: Check): boolean {
+  const retryAnnotation = check?.metadata.annotations?.[RETRY_ANNOTATION]?.trim();
   return (
     !check?.metadata.annotations?.[STATUS_ANNOTATION] ||
-    (check.metadata.annotations?.[RETRY_ANNOTATION] !== undefined &&
+    (retryAnnotation !== undefined &&
+      retryAnnotation !== '' &&
       check.metadata.annotations?.[STATUS_ANNOTATION] !== 'error')
   );
 }

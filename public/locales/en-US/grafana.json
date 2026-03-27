@@ -4936,6 +4936,11 @@
         "by-updated-date": "By updated date"
       }
     },
+    "advisor-generate-report-button": {
+      "label": "Run Advisor checks",
+      "loading-label": "Running checks...",
+      "tooltip": "Advisor helps you keep your Grafana instances running smoothly and securely by running checks and suggest actions to fix identified issues"
+    },
     "advisor-redirect-notice": {
       "aria-label-link-to-advisor": "Link to Advisor",
       "body": "Try the new Advisor to uncover potential issues with your data sources and plugins.",

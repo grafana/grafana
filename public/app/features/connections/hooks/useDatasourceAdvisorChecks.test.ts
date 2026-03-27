@@ -97,6 +97,7 @@ describe('useLatestDatasourceCheck', () => {
 
   afterEach(() => {
     config.featureToggles = originalFeatureToggles;
+    jest.useRealTimers();
   });
 
   it('skips the query when grafanaAdvisor feature toggle is off', () => {
@@ -241,7 +242,6 @@ describe('useLatestDatasourceCheck', () => {
       expect.objectContaining({ skip: false })
     );
   });
-
 });
 
 describe('useDatasourceFailureByUID', () => {
