@@ -65,7 +65,8 @@ const defineFeatureEventsRule = createRule({
         }
       },
 
-      // 2. Track factory variables + enforce literal args
+      // 2. Track factory variables + enforce literal args + require @owner on factory declaration.
+      // @owner lives on the factory when events are exported individually (not grouped in an object).
       VariableDeclarator(node) {
         if (!isDefineFeatureEventsImported) {
           return;
@@ -87,47 +88,70 @@ const defineFeatureEventsRule = createRule({
           if (featureArg && featureArg.type !== AST_NODE_TYPES.Literal) {
             context.report({ node: featureArg, messageId: 'literalArgsRequired' });
           }
+
+          // For individually exported events the factory declaration is the
+          // natural owner anchor. Check it here so the @owner tag doesn't have
+          // to be repeated on every export.
+          const comments = context.sourceCode.getCommentsBefore(node.parent);
+          const hasOwner = comments.some((c) => c.type === 'Block' && c.value.includes('@owner'));
+          if (!hasOwner) {
+            context.report({ node, messageId: 'missingOwnerTag' });
+          }
         }
       },
 
-      // 3. Exported events object: require @owner JSDoc + per-event comments
+      // 3. Exported events: require a JSDoc comment on each event.
+      // Handles two patterns:
+      //   a) Object group:  export const Events = { event: factory<P>('name'), ... }
+      //   b) Individual:    export const event = factory<P>('name')
       ExportNamedDeclaration(node) {
         if (!isDefineFeatureEventsImported) {
           return;
         }
 
         const decl = node.declaration;
-        if (
-          decl?.type !== AST_NODE_TYPES.VariableDeclaration ||
-          decl.declarations[0]?.init?.type !== AST_NODE_TYPES.ObjectExpression
-        ) {
+        if (decl?.type !== AST_NODE_TYPES.VariableDeclaration) {
           return;
         }
 
-        const objExpr = decl.declarations[0].init;
-        const isEventsObject = objExpr.properties.some(
-          (prop) => prop.type === AST_NODE_TYPES.Property && propertyValueCallsFactory(prop.value)
-        );
-        if (!isEventsObject) {
+        const init = decl.declarations[0]?.init;
+        if (!init) {
           return;
         }
 
-        const comments = context.sourceCode.getCommentsBefore(node);
-        const hasOwner = comments.some((c) => c.type === 'Block' && c.value.includes('@owner'));
-        if (!hasOwner) {
-          context.report({ node: decl.declarations[0].id, messageId: 'missingOwnerTag' });
+        // Pattern (a) — grouped object
+        if (init.type === AST_NODE_TYPES.ObjectExpression) {
+          const isEventsObject = init.properties.some(
+            (prop) => prop.type === AST_NODE_TYPES.Property && propertyValueCallsFactory(prop.value)
+          );
+          if (!isEventsObject) {
+            return;
+          }
+
+          const comments = context.sourceCode.getCommentsBefore(node);
+          const hasOwner = comments.some((c) => c.type === 'Block' && c.value.includes('@owner'));
+          if (!hasOwner) {
+            context.report({ node: decl.declarations[0].id, messageId: 'missingOwnerTag' });
+          }
+
+          for (const prop of init.properties) {
+            if (prop.type !== AST_NODE_TYPES.Property) {
+              continue;
+            }
+            if (!propertyValueCallsFactory(prop.value)) {
+              continue;
+            }
+            if (context.sourceCode.getCommentsBefore(prop).length === 0) {
+              context.report({ node: prop, messageId: 'missingEventComment' });
+            }
+          }
+          return;
         }
 
-        for (const prop of objExpr.properties) {
-          if (prop.type !== AST_NODE_TYPES.Property) {
-            continue;
-          }
-          if (!propertyValueCallsFactory(prop.value)) {
-            continue;
-          }
-
-          if (context.sourceCode.getCommentsBefore(prop).length === 0) {
-            context.report({ node: prop, messageId: 'missingEventComment' });
+        // Pattern (b) — individual export
+        if (callsFactoryVariable(init)) {
+          if (context.sourceCode.getCommentsBefore(node).length === 0) {
+            context.report({ node: decl.declarations[0].id, messageId: 'missingEventComment' });
           }
         }
       },
