@@ -47,3 +47,5 @@ export const shouldUseTriageSavedSearches = () => config.featureToggles.alerting
  */
 export const shouldShowAlertsActivityBanner = () =>
   (config.featureToggles.alertingAlertsActivityBanner && config.featureToggles.alertingTriage) ?? false;
+
+export const shouldUseAlertingRuleViewerV2 = () => config.featureToggles.alertingRuleViewerV2 ?? false;

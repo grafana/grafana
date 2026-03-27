@@ -1151,6 +1151,11 @@ export interface FeatureToggles {
   */
   alertingListViewV2PreviewToggle?: boolean;
   /**
+  * Enables the redesigned alert rule details view with reordered sidebar sections
+  * @default false
+  */
+  alertingRuleViewerV2?: boolean;
+  /**
   * Use FiredAt for StartsAt when sending alerts to Alertmaanger
   * @default false
   */

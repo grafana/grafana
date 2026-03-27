@@ -360,7 +360,7 @@ interface PrometheusConsistencyCheckProps {
  * It will show loading indicator until the Prometheus and Ruler rule is consistent
  * It will not show the warning if the rule is Grafana managed
  */
-const PrometheusConsistencyCheck = withErrorBoundary(
+export const PrometheusConsistencyCheck = withErrorBoundary(
   ({ ruleIdentifier }: PrometheusConsistencyCheckProps) => {
     const [ref, { width }] = useMeasure<HTMLDivElement>();
 

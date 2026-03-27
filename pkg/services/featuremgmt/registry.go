@@ -1810,6 +1810,14 @@ var (
 			Expression:   "false",
 		},
 		{
+			Name:         "alertingRuleViewerV2",
+			Description:  "Enables the redesigned alert rule details view with reordered sidebar sections",
+			FrontendOnly: true,
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			Expression:   "false",
+		},
+		{
 			Name:        "alertRuleUseFiredAtForStartsAt",
 			Description: "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
 			Stage:       FeatureStageExperimental,

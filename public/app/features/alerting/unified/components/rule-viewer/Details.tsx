@@ -25,7 +25,7 @@ import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationP
 import { ContactPointLink } from './ContactPointLink';
 import { UpdatedByUser } from './tabs/version-history/UpdatedBy';
 
-enum RuleType {
+export enum RuleType {
   GrafanaManagedAlertRule = 'Grafana-managed alert rule',
   GrafanaManagedRecordingRule = 'Grafana-managed recording rule',
   CloudAlertRule = 'Cloud alert rule',
@@ -33,7 +33,7 @@ enum RuleType {
   Unknown = 'Unknown',
 }
 
-const DetailGroup = ({ title, children }: { title?: string; children: React.ReactNode }) => {
+export const DetailGroup = ({ title, children }: { title?: string; children: React.ReactNode }) => {
   return (
     <Stack direction="column" gap={1}>
       {title && <Text variant="h4">{title}</Text>}
@@ -268,7 +268,7 @@ interface NotificationSettingsProps {
   rulerRule: RulerGrafanaRuleDTO<GrafanaAlertingRuleDefinition>;
 }
 
-const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
+export const NotificationSettings = ({ rulerRule }: NotificationSettingsProps) => {
   const usePolicyRoutingSettings = config.featureToggles.alertingPolicyRoutingSettings;
   const notificationSettings = rulerRule.grafana_alert.notification_settings;
 
