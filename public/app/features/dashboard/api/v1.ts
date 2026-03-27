@@ -303,6 +303,10 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   restoreDashboard(dashboard: Resource<DashboardDataDTO>) {
     // reset the resource version to create a new resource
     dashboard.metadata.resourceVersion = '';
+    dashboard.metadata.annotations = {
+      ...dashboard.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
     return this.client.create(dashboard);
   }
 }

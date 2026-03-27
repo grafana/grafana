@@ -534,7 +534,12 @@ func (s *ResourcePermSqlBackend) ListDirectPermissionsForSubject(ctx context.Con
 	}
 	dbHelper, err := s.dbProvider(ctx)
 	if err != nil {
-		s.logger.FromContext(ctx).Error("Failed to get database helper", "error", err)
+		logger := s.logger.FromContext(ctx)
+		if errors.Is(err, legacysql.ErrNamespaceNotFound) {
+			logger.Warn("Namespace not found", "error", err)
+			return nil, apierrors.NewNotFound(v0alpha1.ResourcePermissionInfo.GroupResource(), namespace)
+		}
+		logger.Error("Failed to get database helper", "error", err)
 		return nil, errDatabaseHelper
 	}
 	actionSets := s.mappers.EnabledActionSets()

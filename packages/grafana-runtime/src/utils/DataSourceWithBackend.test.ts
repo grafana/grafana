@@ -720,6 +720,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test("check public dashboard handler is executed when it's public dashboard scope", () => {
+      const oldValue = config.publicDashboardAccessToken;
       config.publicDashboardAccessToken = 'abc123';
       const { ds } = createMockDatasource();
 
@@ -735,6 +736,7 @@ describe('DataSourceWithBackend', () => {
 
       ds.query(request);
 
+      config.publicDashboardAccessToken = oldValue;
       expect(publicDashboardQueryHandler).toHaveBeenCalledWith(request);
     });
   });
@@ -757,7 +759,9 @@ describe('DataSourceWithBackend', () => {
       mockGetBooleanValue.mockReturnValue(true);
       const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(mockGetBooleanValue).toHaveBeenCalledWith('datasources.apiserver.useNewAPIsForDatasourceResources', false);
-      expect(url).toBe('/apis/dummy.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels');
+      expect(url).toBe(
+        '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
+      );
     });
 
     test('check that buildResourcesDatasourceUrl uses the legacy URL when feature flag is disabled', () => {

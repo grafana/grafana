@@ -177,7 +177,9 @@ const injectedRtkApi = api
             limit: queryArg.limit,
             offset: queryArg.offset,
             page: queryArg.page,
+            membercount: queryArg.membercount,
             accesscontrol: queryArg.accesscontrol,
+            sort: queryArg.sort,
           },
         }),
         providesTags: ['Search'],
@@ -917,8 +919,12 @@ export type GetSearchTeamsApiArg = {
   offset?: number;
   /** page number to start from */
   page?: number;
+  /** when true, includes member count for each team in the response */
+  membercount?: boolean;
   /** when true, includes access control metadata in the response */
   accesscontrol?: boolean;
+  /** sortable field */
+  sort?: string;
 };
 export type GetSearchUsersApiResponse = unknown;
 export type GetSearchUsersApiArg = {

@@ -3,7 +3,7 @@ kind: AppManifest
 metadata:
   name: alerting
 spec:
-  appDisplayName: ""
+  appDisplayName: alerting
   appName: alerting
   group: rules.alerting.grafana.app
   preferredVersion: v0alpha1
