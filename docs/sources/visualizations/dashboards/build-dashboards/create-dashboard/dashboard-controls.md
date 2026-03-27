@@ -34,7 +34,7 @@ To add a variable, follow these steps:
 1. Click **+ Add variable** at the top of the dashboard or click the **Add new element** icon (blue plus sign) and select **Variable**.
 1. Choose a variable type from the list.
 
-{{< shared-snippet path="/docs/grafana/latest/visualizations/dashboards/variables/add-template-variables/index.md" id="add-variable" >}}
+{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/index.md" id="add-variable" >}}
 
 1. Complete the variable configuration. For more detailed configuration information, click the one of the following links to complete the steps for adding your selected variable type:
 
@@ -72,7 +72,7 @@ To add an annotation query, follow these steps:
 
    This name is given to the toggle that allows you to enable/disable showing annotation events from this query.
 
-{{< shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/annotate-visualizations/index.md" id="add-annotation-query" >}}
+{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/annotate-visualizations/index.md" id="add-annotation-query" >}}
 
 1. To add a query, do one of the following:
    - Click **Open query editor** to open **Annotation Query** dialog box and write or construct a query. The annotation query options are different for each data source. For information about annotations in a specific data source, refer to the specific [data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) topic.
@@ -108,7 +108,7 @@ To add a link to another dashboard at the top of your current dashboard, follow 
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Link**.
 
-{{< shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/manage-dashboard-links/index.md" id="add-dashboard-link" >}}
+{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/index.md" id="add-dashboard-link" >}}
 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -132,7 +132,7 @@ To add a URL link to your dashboard, follow these steps:
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Link**.
 
-{{< shared-snippet path="/docs/grafana/latest/visualizations/dashboards/build-dashboards/manage-dashboard-links/index.md" id="url-dashboard-link" >}}
+{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/manage-dashboard-links/index.md" id="url-dashboard-link" >}}
 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -181,7 +181,7 @@ To add a filter, follow these steps:
 1. Click the **Add new element** icon (blue plus sign) and select **Filter**.
 1. Choose a filter type from the list.
 
-{{< shared-snippet path="/docs/grafana/latest/visualizations/..." id="add-filter" >}}
+{{< shared-snippet path="/docs/grafana/<GRAFANA_VERSION>/visualizations/..." id="add-filter" >}}
 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
