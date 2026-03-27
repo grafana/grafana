@@ -43,13 +43,13 @@ func TestMain(m *testing.M) {
 func defaultMigrationTestCases() []testcases.ResourceMigratorTestCase {
 	cases := []testcases.ResourceMigratorTestCase{
 		testcases.NewFoldersAndDashboardsTestCase(),
-		// 	testcases.NewPlaylistsTestCase(),
-		// 	testcases.NewShortURLsTestCase(),
-		// }
-		// // TODO: fix datasource migration tests on sqlite, see:
-		// // https://github.com/grafana/grafana-enterprise/issues/11313
-		// if !db.IsTestDbSQLite() {
-		// 	cases = append(cases, testcases.NewDataSourceTestCase())
+		testcases.NewPlaylistsTestCase(),
+		testcases.NewShortURLsTestCase(),
+	}
+	// TODO: fix datasource migration tests on sqlite, see:
+	// https://github.com/grafana/grafana-enterprise/issues/11313
+	if !db.IsTestDbSQLite() {
+		cases = append(cases, testcases.NewDataSourceTestCase())
 	}
 	return cases
 }
