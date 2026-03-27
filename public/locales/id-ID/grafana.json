@@ -6442,6 +6442,7 @@
       "description": {
         "action": "Ubah deskripsi variabel"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "Ubah opsi sembunyikan variabel"
       },
@@ -6614,9 +6615,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Opsi ad-hoc",
-      "alert-not-supported": "Sumber data ini tidak mendukung filter ad hoc",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "Memungkinkan pengguna untuk menambahkan nilai kustom ke daftar",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Berikan dimensi sebagai CSV: {{name}}, {{value}}",
@@ -6978,7 +6983,7 @@
         "values-timespans": "Nilai berupa rentang waktu, misalnya 1 mnt, 1 jam, 1 hari"
       },
       "name": {
-        "ad-hoc-filters": "Filter ad hoc",
+        "ad-hoc-filters": "",
         "constant": "Konstan",
         "custom": "Kustom",
         "data-source": "Sumber data",
@@ -7228,6 +7233,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -7964,6 +7970,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "Diberi bintang"
     },
     "new-data-source-view": {
@@ -10292,6 +10302,7 @@
         "expander-column-name": "",
         "no-data": "Tidak ada data"
       },
+      "no-rows": "",
       "no-values-label": "Tidak ada nilai",
       "pagination-summary": "{{itemsRangeStart}}—{{displayedEnd}} dari {{numRows}} baris",
       "sort-by-column": "",
@@ -10944,24 +10955,14 @@
     },
     "forgot-password": "Lupa kata sandi Anda?",
     "form": {
-      "confirmation-code": "Kode konfirmasi wajib diisi",
-      "confirmation-code-label": "Kode konfirmasi",
-      "confirmation-code-placeholder": "kode konfirmasi",
-      "email-label": "Email",
-      "email-placeholder": "email",
-      "email-required": "Email wajib diisi",
-      "name-label": "Nama",
       "password-label": "Kata sandi",
       "password-placeholder": "kata sandi",
       "password-required": "Kata sandi wajib diisi",
-      "passwordless-username-label": "Nama pengguna",
       "submit-label": "Login",
       "submit-loading-label": "Login...",
       "username-label": "Email atau nama pengguna",
       "username-placeholder": "rmail atau nama pengguna",
-      "username-required": "Email atau nama pengguna wajib diisi",
-      "verify-email-label": "Kirim email verifikasi",
-      "verify-email-loading-label": "Mengirim email..."
+      "username-required": "Email atau nama pengguna wajib diisi"
     },
     "layout": {
       "update-password": "Perbarui kata sandi Anda"
@@ -14852,6 +14853,7 @@
     "name-tooltip-placement": "Penempatan tooltip",
     "name-wrap-header-text": "Bungkus teks header",
     "name-wrap-text": "Pecah baris teks",
+    "no-value-placeholder": "",
     "placeholder-column-width": "otomatis",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "tidak ada",
