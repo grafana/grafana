@@ -148,6 +148,8 @@ export interface BaseTableProps {
   maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
+  /* message to show when no rows are present */
+  noValue?: string;
   /** used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;

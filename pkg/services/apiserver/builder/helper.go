@@ -84,6 +84,14 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + "/name" // connector requires a name
 		},
 	},
+	{
+		// Rewrite the deprecated query path
+		// NOTE, this should be removed after the enterprise changes are running in hosted grafana
+		Pattern: regexp.MustCompile(`(/apis/.*.datasource.grafana.app/v0alpha1/namespaces/.*/connections/.*/query$)`),
+		ReplaceFunc: func(matches []string) string {
+			return strings.Replace(matches[0], "connections", "datasources", 1)
+		},
+	},
 }
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {

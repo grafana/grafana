@@ -2850,7 +2850,8 @@
       "metadata": {
         "name": "kubernetesDashboards",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-06-05T14:34:23Z"
+        "creationTimestamp": "2024-06-05T14:34:23Z",
+        "deletionTimestamp": "2026-03-26T19:44:47Z"
       },
       "spec": {
         "description": "Use the kubernetes API in the frontend for dashboards",
@@ -3297,45 +3298,28 @@
     },
     {
       "metadata": {
-        "name": "logsTablePaneNG",
-        "resourceVersion": "1771507050607",
-        "creationTimestamp": "2026-02-19T13:17:30Z",
-        "deletionTimestamp": "2026-02-19T13:17:42Z"
-      },
-      "spec": {
-        "description": "Enables the logs tableNG panel to replace existing tableRT",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-logs",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
-        "name": "logsTablePaneNGl",
-        "resourceVersion": "1771507017867",
-        "creationTimestamp": "2026-02-19T13:16:57Z",
-        "deletionTimestamp": "2026-02-19T13:17:30Z"
-      },
-      "spec": {
-        "description": "Enables the logs tableNG panel to replace existing tableRT",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-logs",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "logsTablePanelNG",
-        "resourceVersion": "1771507062600",
-        "creationTimestamp": "2026-02-19T13:17:42Z"
+        "resourceVersion": "1774430797444",
+        "creationTimestamp": "2026-03-25T09:26:37Z"
       },
       "spec": {
         "description": "Enables the logs tableNG panel to replace existing tableRT",
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "lokiAlignedQuerySplitting",
+        "resourceVersion": "1773915389906",
+        "creationTimestamp": "2026-03-19T10:16:29Z"
+      },
+      "spec": {
+        "description": "Aligns query splitting chunks with UTC midnight",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
         "expression": "false"
       }
     },
@@ -3831,20 +3815,6 @@
     },
     {
       "metadata": {
-        "name": "passwordlessMagicLinkAuthentication",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-11-14T13:50:55Z"
-      },
-      "spec": {
-        "description": "Enable passwordless login via magic link authentication",
-        "stage": "experimental",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "pdfTables",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-11-06T13:39:22Z"
@@ -4106,15 +4076,18 @@
     {
       "metadata": {
         "name": "provisioning",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-11-22T09:03:50Z"
+        "resourceVersion": "1773217396085",
+        "creationTimestamp": "2024-11-22T09:03:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-11 08:23:16.085006 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Next generation provisioning... and git",
-        "stage": "experimental",
+        "description": "Enables Git Sync and as-code provisioning for Grafana resources",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4201,6 +4174,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/datapro",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "queryFetchConfigFromSettingsService",
+        "resourceVersion": "1773659793759",
+        "creationTimestamp": "2026-03-16T11:16:33Z"
+      },
+      "spec": {
+        "description": "Enables the query service to fetch the configuration from the settings service",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "expression": "false"
       }
     },
@@ -4685,15 +4671,32 @@
     },
     {
       "metadata": {
+        "name": "splashScreen",
+        "resourceVersion": "1774461556169",
+        "creationTimestamp": "2026-03-25T17:59:16Z"
+      },
+      "spec": {
+        "description": "Enables the splash screen modal for introducing new Grafana features on first session",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sqlExpressions",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-02-27T21:16:00Z"
+        "resourceVersion": "1774365185266",
+        "creationTimestamp": "2024-02-27T21:16:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-03-24 15:13:05.266575305 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables SQL Expressions, which can execute SQL queries against data source results.",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-datasources-core-services",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

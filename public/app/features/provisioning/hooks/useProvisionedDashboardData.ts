@@ -9,8 +9,7 @@ import {
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { DashboardMeta } from 'app/types/dashboard';
 
-import { getCanPushToConfiguredBranch, getDefaultWorkflow } from '../components/defaults';
-import { generateNewBranchName } from '../components/utils/newBranchName';
+import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../components/defaults';
 import { generatePath } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
 import { ProvisionedDashboardFormData } from '../types/form';
@@ -79,11 +78,9 @@ export function useDefaultValues({
     folderPath,
   });
 
-  const defaultWorkflow = getDefaultWorkflow(repository, loadedFromRef);
-
   return {
     values: {
-      ref: defaultWorkflow === 'branch' ? generateNewBranchName('dashboard') : (repository?.branch ?? ''),
+      ref: getDefaultRef(repository, 'dashboard', loadedFromRef),
       path: dashboardPath,
       repo: managerIdentity || repository?.name || '',
       comment: '',

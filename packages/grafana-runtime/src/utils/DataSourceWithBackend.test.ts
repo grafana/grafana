@@ -720,6 +720,7 @@ describe('DataSourceWithBackend', () => {
     });
 
     test("check public dashboard handler is executed when it's public dashboard scope", () => {
+      const oldValue = config.publicDashboardAccessToken;
       config.publicDashboardAccessToken = 'abc123';
       const { ds } = createMockDatasource();
 
@@ -735,6 +736,7 @@ describe('DataSourceWithBackend', () => {
 
       ds.query(request);
 
+      config.publicDashboardAccessToken = oldValue;
       expect(publicDashboardQueryHandler).toHaveBeenCalledWith(request);
     });
   });
