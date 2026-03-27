@@ -186,7 +186,6 @@ describe('RuleViewer', () => {
 
       // alert rule metadata
       const ruleSummary = mockRule.annotations[Annotation.summary];
-      const runBookURL = mockRule.annotations[Annotation.runbookURL];
       const groupInterval = mockRule.group.interval;
       const labels = mockRule.labels;
 
