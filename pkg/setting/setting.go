@@ -638,6 +638,16 @@ type Cfg struct {
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
+	// Index snapshot settings — instance-level config for remote index snapshots
+	IndexSnapshotEnabled            bool          // Enable remote index snapshots
+	IndexSnapshotBucketURL          string        // CDK bucket URL for snapshot storage (s3://, gs://, azblob://, mem://, file:///)
+	IndexSnapshotRemoteThreshold    int           // Min doc count to use remote snapshots (default: 5000)
+	IndexSnapshotUploadInterval     time.Duration // Min time between uploads (default: 1h)
+	IndexSnapshotUploadDocThreshold int           // Min doc changes before upload (default: 1000)
+	IndexSnapshotCleanupInterval    time.Duration // Cleanup frequency (default: 6h)
+	IndexSnapshotMaxAge             time.Duration // Max snapshot age before deletion (default: 7d)
+	IndexSnapshotLockTTL            time.Duration // Distributed lock TTL (default: 3m)
+	IndexSnapshotMinKeep            int           // Min snapshots to retain (default: 3)
 	EnableSharding                             bool
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int

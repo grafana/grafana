@@ -249,6 +249,27 @@ type SearchOptions struct {
 
 	// Map "group/kind" -> list of selectable fields. Keys must be lower-case.
 	SelectableFieldsForKinds map[string][]string
+
+	// Index snapshot settings — enable downloading pre-built search indexes from object storage on startup.
+	// IndexSnapshotEnabled gates the entire snapshot feature.
+	IndexSnapshotEnabled bool
+	// IndexSnapshotBucketURL is the Go CDK bucket URL (s3://, gs://, azblob://, mem://, file:///).
+	IndexSnapshotBucketURL string
+	// IndexSnapshotThreshold is the minimum document count to use remote snapshots (must be >= IndexFileThreshold).
+	IndexSnapshotThreshold int
+	// IndexSnapshotMaxAge is the maximum age of a snapshot before it is deleted during cleanup.
+	IndexSnapshotMaxAge time.Duration
+	// IndexSnapshotMinDocChanges is the minimum number of document changes since the last
+	// snapshot before a new upload is triggered.
+	IndexSnapshotMinDocChanges int
+	// IndexSnapshotUploadInterval is the minimum time between consecutive snapshot uploads.
+	IndexSnapshotUploadInterval time.Duration
+	// IndexSnapshotLockTTL is the TTL for the distributed lock used to coordinate uploads/cleanup.
+	IndexSnapshotLockTTL time.Duration
+	// IndexSnapshotMinKeep is the minimum number of snapshots to retain regardless of age.
+	IndexSnapshotMinKeep int
+	// IndexSnapshotCleanupInterval is how often snapshot cleanup runs.
+	IndexSnapshotCleanupInterval time.Duration
 }
 
 type ResourceServerOptions struct {
