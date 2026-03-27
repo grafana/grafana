@@ -333,7 +333,7 @@ describe('DashboardControls', () => {
 
     afterEach(() => {
       config.featureToggles = originalFeatureToggles;
-      jest.clearAllMocks();
+      jest.resetAllMocks();
     });
 
     it('should show EditDashboardSwitch when editable is true', async () => {
@@ -381,7 +381,7 @@ describe('DashboardControls', () => {
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
 
       const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
-      render(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
@@ -393,7 +393,7 @@ describe('DashboardControls', () => {
 
       const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
       controls.setState({ hidePlaylistNav: true });
-      render(<controls.Component model={controls} />);
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
       expect(screen.queryByTestId(selectors.pages.Dashboard.DashNav.playlistControls.prev)).not.toBeInTheDocument();
       expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.playlistControls.stop)).toBeInTheDocument();
@@ -405,12 +405,13 @@ describe('DashboardControls', () => {
     const originalFeatureToggles = { ...config.featureToggles };
 
     beforeEach(() => {
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
       config.featureToggles.dashboardNewLayouts = true;
     });
 
     afterEach(() => {
       config.featureToggles = originalFeatureToggles;
-      jest.clearAllMocks();
+      jest.resetAllMocks();
     });
 
     it('should hide Edit and Share buttons in kiosk mode', async () => {
