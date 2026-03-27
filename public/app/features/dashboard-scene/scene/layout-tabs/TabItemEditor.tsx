@@ -1,3 +1,4 @@
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,6 +11,7 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../edit-pane/SectionVariablesList';
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
@@ -55,7 +57,32 @@ export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPan
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const editOptions = [tabCategory, ...layoutCategory, repeatCategory];
+  const sectionVariablesEnabled = useBooleanFlagValue('dashboardSectionVariables', false);
+  const sectionVariablesCategory = useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: t('dashboard.tabs-layout.tab-options.section-variables.title', 'Variables'),
+      id: 'tab-section-variables',
+      isOpenDefault: true,
+      renderTitle: (isExpanded: boolean) => (
+        <SectionVariablesCategoryTitle sectionOwner={model} isExpanded={isExpanded} />
+      ),
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: 'tab-section-variables-list',
+        skipField: true,
+        render: () => <SectionVariablesList sectionOwner={model} />,
+      })
+    );
+
+    return category;
+  }, [model]);
+
+  const editOptions = sectionVariablesEnabled
+    ? [tabCategory, sectionVariablesCategory, ...layoutCategory, repeatCategory]
+    : [tabCategory, ...layoutCategory, repeatCategory];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),

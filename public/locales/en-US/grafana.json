@@ -5577,6 +5577,7 @@
         "panels": "Panels",
         "row": "Row",
         "rows": "Rows",
+        "section-variable": "Section Variables",
         "tab": "Tab",
         "tabs": "Tabs",
         "variable": "{{type}} variable",
@@ -5593,6 +5594,10 @@
           "hide": "Hide",
           "title": "Row header"
         }
+      },
+      "section-variables": {
+        "add-tooltip": "Add variable",
+        "title": "Variables"
       },
       "variable": {
         "custom-options": {
@@ -5652,11 +5657,7 @@
       "import-a-dashboard-body": "Import dashboards from files or <2>grafana.com</2>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard",
-      "show-less-dashboards": "Show less",
-      "show-more-dashboards": "Show more",
-      "start-with-suggested-dashboards": "Start with a pre-made dashboard from your data source",
-      "title": "New dashboard",
-      "use-template-button": "Use this dashboard"
+      "title": "New dashboard"
     },
     "errors": {
       "failed-to-load": "Failed to load dashboard"
@@ -6130,6 +6131,9 @@
           "hide-header": "Hide row header",
           "title": "Title"
         },
+        "section-variables": {
+          "title": "Variables"
+        },
         "title-not-unique": "Title should be unique",
         "title-option": "Title"
       },
@@ -6283,6 +6287,9 @@
             "description": "Repeat this tab for each value in the selected variable.",
             "title": "Repeat by variable"
           }
+        },
+        "section-variables": {
+          "title": "Variables"
         },
         "title-not-unique": "Title should be unique",
         "title-option": "Title"
@@ -6560,9 +6567,8 @@
     }
   },
   "dashboard-library": {
-    "browse-grafana-com": "Browse Grafana.com",
-    "browse-plugins": "Browse plugins",
     "card": {
+      "community-badge": "Community",
       "customize-with-assistant-button": "Customize with assistant",
       "customize-with-assistant-button-label": "Customize with assistant: {{title}}",
       "datasource-provided-badge": "Data source provided",
@@ -6573,9 +6579,6 @@
       "view-template-button": "View template",
       "view-template-button-label": "View template: {{title}}"
     },
-    "community-empty-title": "No community dashboards found",
-    "community-empty-title-with-datasource": "No {{datasourceType}} community dashboards found",
-    "community-error-description": "Failed to load community dashboard.",
     "community-error-title": "Error loading community dashboard",
     "community-mapping-form": {
       "auto-mapped_one": "{{count}} datasources were automatically configured:",
@@ -6587,8 +6590,6 @@
       "preview": "Preview dashboard"
     },
     "community-mapping-select-datasource": "Select a datasource",
-    "community-search-placeholder": "Search community dashboards...",
-    "community-search-placeholder-with-datasource": "Search {{datasourceType}} community dashboards...",
     "compatibility-auto-map-failed": "Unable to automatically map all datasource inputs for this dashboard. Compatibility check requires all datasource variables to be resolved.",
     "compatibility-badge": {
       "check": "Check compatibility",
@@ -6602,6 +6603,7 @@
       "tooltip-orange": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard may contain panels that require heavy customization.",
       "tooltip-red": "{{score}}% ({{found}}/{{total}}) of metrics match. This dashboard will require heavy query customization."
     },
+    "create-from-scratch": "Create a dashboard from scratch instead",
     "dashboard-card": {
       "details": {
         "datasource": "Datasource",
@@ -6610,34 +6612,27 @@
         "last-update": "Last Update",
         "published-by": "Published By",
         "view-on-grafana-com": "View on Grafana.com"
-      }
+      },
+      "no-description": "No description available"
     },
+    "merged-description": "Browse and select from data-source provided or community dashboards",
+    "merged-empty-no-dashboards": "No dashboards are available for this datasource.",
+    "merged-empty-search": "Try a different search term or browse more dashboards on Grafana.com.",
+    "merged-empty-title": "No dashboards found",
+    "merged-empty-title-with-datasource": "No {{datasourceType}} dashboards found",
+    "merged-search-placeholder": "Search dashboards...",
+    "merged-search-placeholder-with-datasource": "Search {{datasourceType}} dashboards...",
     "modal": {
-      "description": "Browse and select from data-source provided or community dashboards",
-      "tab-community": "Community",
-      "tab-datasource": "Data-source provided",
       "title": "Suggested dashboards",
       "title-mapping-with-name": "Configure datasources for {{dashboardName}}",
       "title-with-datasource": "Suggested dashboards for your {{datasourceType}} datasource"
     },
-    "multi-community-error": "Failed to load community dashboards. Please try again.",
-    "multi-community-error-title": "Error loading community dashboards",
-    "no-community-dashboards-datasource": "Try a different search term or browse dashboards for different datasource types on Grafana.com.",
-    "no-community-dashboards-search": "Try a different search term or browse more dashboards on Grafana.com.",
-    "no-provisioned-dashboards": "Provisioned dashboards are provided by data source plugins. You can find more plugins on Grafana.com.",
-    "provisioned-empty-title": "No provisioned dashboards found",
-    "provisioned-empty-title-with-datasource": "No {{datasourceType}} provisioned dashboards found",
-    "retry": "Retry",
-    "suggested-dashboards-community-error-description": "Failed to load community dashboard.",
-    "suggested-dashboards-community-error-title": "Error loading community dashboard",
-    "suggested-dashboards-subtitle": "Browse and select from data-source provided or community dashboards",
-    "suggested-dashboards-title": "Build a dashboard using suggested options for your selected data source",
-    "suggested-dashboards-title-with-datasource": "Build a dashboard using suggested options for your {{datasourceType}} data source",
+    "suggested-error-description": "Failed to load suggested dashboard.",
+    "suggested-error-title": "Error loading suggested dashboard",
     "template-dashboard-modal": {
       "description": "Get started with Grafana templates using sample data. Connect your data to power them with real metrics.",
       "title": "Start a dashboard from a template"
-    },
-    "view-all": "View all"
+    }
   },
   "dashboard-links": {
     "empty-state": {
@@ -7460,6 +7455,10 @@
         "title": "Unsaved changes"
       }
     },
+    "suggested-dashboard-banner": {
+      "body": "Not what you're looking for? View <2>other suggested dashboards</2> or <6>create one from scratch</6>.",
+      "title": "You are viewing {{title}}"
+    },
     "support-snapshot-service": {
       "description": {
         "dashboard-troubleshoot-visualization-issues": "Dashboard JSON used to help troubleshoot visualization issues"
@@ -7842,7 +7841,8 @@
   },
   "data-source-testing-status-page": {
     "error-more-details-link": "Click <2>here</2> to learn more about this error.",
-    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard</2>, or by querying data in the <5>Explore view</5>."
+    "success-more-details-links": "Next, you can start to visualize data by <2>building a dashboard from scratch</2>, viewing <5>suggested dashboards</5> or by querying data in the <9>Explore view</9>.",
+    "success-more-details-links-no-suggestions": "Next, you can start to visualize data by <2>building a dashboard from scratch</2> or by querying data in the <6>Explore view</6>."
   },
   "data-sources": {
     "datasource-add-button": {
@@ -7858,7 +7858,8 @@
     },
     "alert-success-message": {
       "aria-label-create-a-dashboard": "Create a dashboard",
-      "aria-label-explore-data": "Explore data"
+      "aria-label-explore-data": "Explore data",
+      "aria-label-suggested-dashboards": "Suggested dashboards"
     },
     "alerting-enabled": {
       "text-alerting-not-supported": "Alerting not supported",
@@ -7872,6 +7873,11 @@
       "basic-settings-name-placeholder-name": "Name",
       "label-default": "Default",
       "label-name": "Name"
+    },
+    "build-a-dashboard-button": {
+      "blank": "Blank",
+      "build-a-dashboard": "Build a dashboard",
+      "from-suggestions": "From suggestions"
     },
     "build-categories": {
       "categories": {
@@ -7958,12 +7964,10 @@
       "aria-label-learn-more": "{{dataSourcePluginName}}, learn more."
     },
     "data-sources-list-card": {
-      "build-a-dashboard": "Build a dashboard",
       "explore": "Explore"
     },
     "edit-data-source-actions": {
       "add-favorite": "Add to favorites",
-      "build-a-dashboard": "Build a dashboard",
       "explore-data": "Explore data",
       "open-in-explore": "Open in Explore View",
       "remove-favorite": "Remove from favorites"
@@ -14037,25 +14041,13 @@
   },
   "query-operation": {
     "header": {
-      "app-dashboard": "Dashboard",
-      "app-explore": "Explore",
-      "app-label": "App:",
-      "assistant-actionable-create": "Please describe what you want to query and what insights you're looking for.",
-      "assistant-actionable-update": "Please describe what you want to change or improve in this query.",
-      "assistant-prompt-create": "Help me create a new query to answer my questions and provide the insights I need.",
-      "assistant-prompt-update": "Help me update the current query to answer my questions and provide the insights I need.",
       "collapse-row": "Collapse query row",
-      "current-query": "Current query",
-      "current-query-label": "Current query:",
       "datasource-help": "Show data source help",
       "drag-and-drop": "Drag and drop to reorder",
       "duplicate-query": "Duplicate query",
       "expand-row": "Expand query row",
       "hide-response": "Hide response",
-      "other-queries": "Other queries",
-      "query-with-assistant": "Query with Assistant",
       "remove-query": "Remove query",
-      "selected-datasource-label": "Selected data source:",
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
@@ -14673,6 +14665,11 @@
   },
   "sort-picker": {
     "select-aria-label": "Sort"
+  },
+  "splash-screen": {
+    "body": "Splash screen content will go here.",
+    "get-started": "Get started",
+    "title": "Welcome to Grafana"
   },
   "sql-expressions": {
     "add-query-tooltip": "Add at least one data query to generate SQL suggestions",

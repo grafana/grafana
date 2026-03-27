@@ -360,14 +360,6 @@ var (
 			Expression:      "false",
 		},
 		{
-			Name:         "kubernetesDashboards",
-			Description:  "Use the kubernetes API in the frontend for dashboards",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaDashboardsSquad,
-			FrontendOnly: false,  // The backend changes permission behavior based on this flag
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:            "kubernetesShortURLs",
 			Description:     "Enables k8s short url api and uses it under the hood when handling legacy /api",
 			Stage:           FeatureStageExperimental,
@@ -1361,14 +1353,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
 			Expression:      "false",
-		},
-		{
-			Name:         "passwordlessMagicLinkAuthentication",
-			Description:  "Enable passwordless login via magic link authentication",
-			Stage:        FeatureStageExperimental,
-			Owner:        identityAccessTeam,
-			HideFromDocs: true,
-			Expression:   "false",
 		},
 		{
 			Name:         "prometheusSpecialCharsInLabelValues",
@@ -2754,6 +2738,22 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "false",
+		},
+		{
+			Name:         "splashScreen",
+			Description:  "Enables the splash screen modal for introducing new Grafana features on first session",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Expression:   "false",
+		},
+		{
+			Name:         "streamingForwardTeamHeadersTempo",
+			Description:  "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
+			Stage:        FeatureStagePrivatePreview,
+			Owner:        grafanaOSSBigTent,
+			Expression:   "false",
+			HideFromDocs: true,
 		},
 		{
 			Name:        "lokiAlignedQuerySplitting",

@@ -17,6 +17,7 @@ import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/field
 import { LOG_LINE_BODY_FIELD_NAME } from 'app/features/logs/components/fieldSelector/logFields';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import {
+  DATAPLANE_SEVERITY_NAME,
   LOGS_DATAPLANE_BODY_NAME,
   LOGS_DATAPLANE_TIMESTAMP_NAME,
   LogsFrame,
@@ -26,6 +27,7 @@ import { PanelDataErrorView } from 'app/features/panel/components/PanelDataError
 
 import { TableNGWrap } from './TableNGWrap';
 import { LogsTableFields } from './fieldSelector/LogsTableFields';
+import { detectLevelField } from './fields/logs';
 import { useExtractFields } from './hooks/useExtractFields';
 import { useOrganizeFields } from './hooks/useOrganizeFields';
 import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
@@ -69,6 +71,7 @@ export const LogsTable = ({
     [rawTableFrame]
   );
   const timeFieldName = logsFrame?.timeField.name ?? LOGS_DATAPLANE_TIMESTAMP_NAME;
+  const levelFieldName = logsFrame?.severityField?.name ?? detectLevelField(logsFrame) ?? DATAPLANE_SEVERITY_NAME;
   const bodyFieldName = logsFrame?.bodyField.name ?? LOGS_DATAPLANE_BODY_NAME;
   const permalinkedLogId = options.permalinkedLogId ?? getLogsPanelState()?.logs?.id ?? undefined;
   const initialRowIndex = getInitialRowIndex(permalinkedLogId, logsFrame);
@@ -163,6 +166,7 @@ export const LogsTable = ({
   const { organizedFrame } = useOrganizeFields({
     extractedFrame,
     timeFieldName,
+    levelFieldName,
     bodyFieldName,
     logsFrame,
     supportsPermalink: supportsPermalink(),
@@ -203,10 +207,13 @@ export const LogsTable = ({
           <LogsTableFields
             tableWidth={width}
             fieldSelectorWidth={options.fieldSelectorWidth}
-            displayedFields={untransformDisplayedFields(getDisplayedFields(options, timeFieldName, bodyFieldName))}
+            displayedFields={untransformDisplayedFields(
+              getDisplayedFields(options, timeFieldName, levelFieldName, bodyFieldName)
+            )}
             height={height}
             logsFrame={logsFrame}
             timeFieldName={timeFieldName}
+            levelFieldName={levelFieldName}
             bodyFieldName={bodyFieldName}
             dataFrame={extractedFrame}
             onDisplayedFieldsChange={(displayedFields: string[]) =>

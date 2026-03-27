@@ -2166,6 +2166,21 @@
     },
     {
       "metadata": {
+        "name": "forwardTeamHeadersTempo",
+        "resourceVersion": "1771611370728",
+        "creationTimestamp": "2026-02-20T18:16:10Z",
+        "deletionTimestamp": "2026-03-27T01:08:07Z"
+      },
+      "spec": {
+        "description": "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/oss-big-tent",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "frontendServiceSSOAutoLogin",
         "resourceVersion": "1774373752487",
         "creationTimestamp": "2026-03-24T17:35:52Z"
@@ -2850,7 +2865,8 @@
       "metadata": {
         "name": "kubernetesDashboards",
         "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-06-05T14:34:23Z"
+        "creationTimestamp": "2024-06-05T14:34:23Z",
+        "deletionTimestamp": "2026-03-26T19:44:47Z"
       },
       "spec": {
         "description": "Use the kubernetes API in the frontend for dashboards",
@@ -3814,20 +3830,6 @@
     },
     {
       "metadata": {
-        "name": "passwordlessMagicLinkAuthentication",
-        "resourceVersion": "1771434338561",
-        "creationTimestamp": "2024-11-14T13:50:55Z"
-      },
-      "spec": {
-        "description": "Enable passwordless login via magic link authentication",
-        "stage": "experimental",
-        "codeowner": "@grafana/identity-access-team",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "pdfTables",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2023-11-06T13:39:22Z"
@@ -4684,6 +4686,20 @@
     },
     {
       "metadata": {
+        "name": "splashScreen",
+        "resourceVersion": "1774461556169",
+        "creationTimestamp": "2026-03-25T17:59:16Z"
+      },
+      "spec": {
+        "description": "Enables the splash screen modal for introducing new Grafana features on first session",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sqlExpressions",
         "resourceVersion": "1774365185266",
         "creationTimestamp": "2024-02-27T21:16:00Z",
@@ -4751,6 +4767,20 @@
         "description": "Configurable storage for dashboards, datasources, and resources",
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "streamingForwardTeamHeadersTempo",
+        "resourceVersion": "1774573687389",
+        "creationTimestamp": "2026-03-27T01:08:07Z"
+      },
+      "spec": {
+        "description": "Enables forwarding team headers from tempo for streaming requests with LBAC rules",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/oss-big-tent",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
