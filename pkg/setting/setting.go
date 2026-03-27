@@ -478,6 +478,12 @@ type Cfg struct {
 	// SQLExpressionTimeoutSeconds is the duration a SQL expression will run before timing out
 	SQLExpressionTimeout time.Duration
 
+	// MathExpressionMemoryLimit is the maximum estimated memory (in bytes) that a
+	// single math expression binary operation is allowed to allocate for its output.
+	// When the estimated cost exceeds this limit, evaluation fails with a descriptive
+	// error. A value of 0 disables the limit. Default: 1 GiB.
+	MathExpressionMemoryLimit int64
+
 	ImageUploadProvider string
 
 	// LiveMaxConnections is a maximum number of WebSocket connections to
@@ -992,6 +998,7 @@ func (cfg *Cfg) readExpressionsSettings() {
 	cfg.SQLExpressionOutputCellLimit = expressions.Key("sql_expression_output_cell_limit").MustInt64(100000)
 	cfg.SQLExpressionTimeout = expressions.Key("sql_expression_timeout").MustDuration(time.Second * 10)
 	cfg.SQLExpressionQueryLengthLimit = expressions.Key("sql_expression_query_length_limit").MustInt64(10000)
+	cfg.MathExpressionMemoryLimit = expressions.Key("math_expression_memory_limit").MustInt64(1 << 30) // 1 GiB
 }
 
 type AnnotationCleanupSettings struct {

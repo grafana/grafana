@@ -30,6 +30,11 @@ type State struct {
 	Drops     map[string]map[string][]data.Labels // binary node text -> LH/RH -> Drop Labels
 	DropCount int64
 
+	// MemoryLimit is the maximum estimated output size (in bytes) for a single
+	// binary operation. If the estimated allocation exceeds this, walkBinary
+	// returns an error instead of proceeding. A value of 0 disables the limit.
+	MemoryLimit int64
+
 	tracer tracing.Tracer
 }
 
@@ -49,14 +54,30 @@ func New(expr string, funcs ...map[string]parse.Func) (*Expr, error) {
 	return e, nil
 }
 
+// ExecuteOption is a functional option for configuring expression execution.
+type ExecuteOption func(*State)
+
+// WithMemoryLimit sets the maximum estimated memory (in bytes) that a single
+// binary operation may allocate for its output. When the estimate exceeds
+// this limit, evaluation returns a descriptive error. A value of 0 disables
+// the limit.
+func WithMemoryLimit(limit int64) ExecuteOption {
+	return func(s *State) {
+		s.MemoryLimit = limit
+	}
+}
+
 // Execute applies a parse expression to the context and executes it
-func (e *Expr) Execute(refID string, vars Vars, tracer tracing.Tracer) (r Results, err error) {
+func (e *Expr) Execute(refID string, vars Vars, tracer tracing.Tracer, opts ...ExecuteOption) (r Results, err error) {
 	s := &State{
 		Expr:  e,
 		Vars:  vars,
 		RefID: refID,
 
 		tracer: tracer,
+	}
+	for _, opt := range opts {
+		opt(s)
 	}
 	return e.executeState(s)
 }
@@ -306,6 +327,150 @@ func (e *State) union(aResults, bResults Results, biNode *parse.BinaryNode) []*U
 	return unions
 }
 
+const (
+	// bytesPerDatapoint is the estimated heap cost per datapoint in the output
+	// series: 24 bytes for time.Time (wall, ext, loc) + 16 bytes for *float64
+	// (pointer + value).
+	bytesPerDatapoint = 40
+
+	// bytesPerBPoint is the estimated heap cost per entry in the bPoints map
+	// used by biSeriesSeries: ~30 bytes for the time string key + 8 bytes for
+	// *float64 + ~50 bytes for map bucket overhead.
+	bytesPerBPoint = 88
+
+	// frameOverhead is the estimated fixed cost per output Value for the
+	// data.Frame, data.Field structs, and metadata.
+	frameOverhead = 500
+)
+
+// labelBytes returns the total byte size of all keys and values in a label set.
+func labelBytes(labels data.Labels) int {
+	n := 0
+	for k, v := range labels {
+		n += len(k) + len(v)
+	}
+	return n
+}
+
+// resultStats holds the pre-computed statistics for one side of a binary operation
+// used for memory estimation.
+type resultStats struct {
+	count         int // total number of Values
+	seriesCount   int // number of Values that are Series
+	maxDatapoints int // longest series length
+	maxLabelBytes int // largest label set in bytes
+}
+
+// computeResultStats computes stats for a Results set in O(n) with zero heap allocation.
+func computeResultStats(r Results) resultStats {
+	var s resultStats
+	s.count = len(r.Values)
+	for _, v := range r.Values {
+		if series, ok := v.(Series); ok {
+			s.seriesCount++
+			if l := series.Len(); l > s.maxDatapoints {
+				s.maxDatapoints = l
+			}
+		}
+		if lb := labelBytes(v.GetLabels()); lb > s.maxLabelBytes {
+			s.maxLabelBytes = lb
+		}
+	}
+	return s
+}
+
+// estimateBinaryOutputBytes computes an upper-bound estimate of the memory that
+// walkBinary would allocate for its output, given the stats from both sides.
+//
+// The estimate is deliberately conservative (over-estimates) in several ways:
+//   - It assumes worst-case label matching: every A pairs with every B. In
+//     practice, union() filters by label compatibility, producing far fewer
+//     pairs when labels match. This means the estimate can be orders of
+//     magnitude higher than actual allocation for well-matched label sets.
+//   - It uses the max datapoints from either side for every union, even though
+//     biSeriesSeries only emits points at matching timestamps (an intersection).
+//   - It charges bPoints map cost for all unions whenever any Series exists on
+//     both sides, even if most unions are Number x Number.
+//
+// These over-estimates are acceptable because the limit is a safety mechanism
+// against cartesian explosions (where labels don't match). Operators who hit
+// false rejections on legitimate high-cardinality expressions can raise the
+// configured limit.
+func estimateBinaryOutputBytes(a, b resultStats) int64 {
+	if a.count == 0 || b.count == 0 {
+		return 0
+	}
+
+	worstCaseUnions := int64(a.count) * int64(b.count)
+
+	// Output cost per union depends on the types involved. We use the worst
+	// case: both sides are Series (the most expensive combination).
+	maxDatapoints := a.maxDatapoints
+	if b.maxDatapoints > maxDatapoints {
+		maxDatapoints = b.maxDatapoints
+	}
+
+	maxLabels := a.maxLabelBytes
+	if b.maxLabelBytes > maxLabels {
+		maxLabels = b.maxLabelBytes
+	}
+
+	// For Series x Series, we also pay for the bPoints map.
+	perUnion := int64(maxDatapoints)*bytesPerDatapoint +
+		int64(maxLabels) +
+		frameOverhead
+	if a.seriesCount > 0 && b.seriesCount > 0 {
+		perUnion += int64(maxDatapoints) * bytesPerBPoint
+	}
+
+	return worstCaseUnions * perUnion
+}
+
+// checkBinaryMemoryLimit estimates the output cost of a binary operation and
+// returns a descriptive error if it exceeds the configured memory limit.
+func (e *State) checkBinaryMemoryLimit(ar, br Results, node *parse.BinaryNode) error {
+	aStats := computeResultStats(ar)
+	bStats := computeResultStats(br)
+	estimated := estimateBinaryOutputBytes(aStats, bStats)
+
+	if estimated <= e.MemoryLimit {
+		return nil
+	}
+
+	aVar := node.Args[0].String()
+	bVar := node.Args[1].String()
+
+	return fmt.Errorf(
+		"expression %q attempted to combine %d series from %s with %d series from %s, "+
+			"producing up to %d series pairs (estimated memory: %s, limit: %s). "+
+			"This usually means the label sets returned by your queries are no longer compatible. "+
+			"When labels match, this expression would produce ~%d pairs. "+
+			"Check that the queries for %s and %s return series with the same label names and values",
+		node.String(),
+		aStats.count, aVar,
+		bStats.count, bVar,
+		int64(aStats.count)*int64(bStats.count),
+		formatBytes(estimated),
+		formatBytes(e.MemoryLimit),
+		max(aStats.count, bStats.count),
+		aVar, bVar,
+	)
+}
+
+// formatBytes returns a human-readable byte size string.
+func formatBytes(b int64) string {
+	switch {
+	case b >= 1<<30:
+		return fmt.Sprintf("%.1f GiB", float64(b)/float64(1<<30))
+	case b >= 1<<20:
+		return fmt.Sprintf("%.1f MiB", float64(b)/float64(1<<20))
+	case b >= 1<<10:
+		return fmt.Sprintf("%.1f KiB", float64(b)/float64(1<<10))
+	default:
+		return fmt.Sprintf("%d B", b)
+	}
+}
+
 func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 	res := Results{Values: Values{}}
 	ar, err := e.walk(node.Args[0])
@@ -316,6 +481,13 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 	if err != nil {
 		return res, err
 	}
+
+	if e.MemoryLimit > 0 {
+		if err := e.checkBinaryMemoryLimit(ar, br, node); err != nil {
+			return res, err
+		}
+	}
+
 	unions := e.union(ar, br, node)
 	for _, uni := range unions {
 		var value Value
