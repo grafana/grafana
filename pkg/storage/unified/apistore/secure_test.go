@@ -65,10 +65,8 @@ func TestSecureLifecycle(t *testing.T) {
 			"b": {"name": "NameForB"}
 		}`, asJSON(secure, true))
 
-		rt, _ := obj.GetRuntimeObject()
-		out, err := json.Marshal(rt)
-		require.NoError(t, err)
-		require.NotContains(t, string(out), "[REDACTED]")
+		v := obj.GetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig)
+		require.Empty(t, v, "should exclude the last config with raw secrets")
 
 		secureStore.AssertExpectations(t)
 	})
@@ -172,6 +170,9 @@ func TestSecureLifecycle(t *testing.T) {
 			"a": {"name": "NameForA"},
 			"c": {"name": "NameForC"}
 		}`, asJSON(secure, true))
+
+		v := obj.GetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig)
+		require.NotEmpty(t, v, "should keep the annotations when a raw secret is not exposed")
 
 		// When there is not an error, the finish command will do a real delete
 		owner := utils.ToObjectReference(obj)
