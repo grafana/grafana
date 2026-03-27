@@ -159,13 +159,14 @@ describe('communityDashboardHelpers', () => {
       const gnetId = 123;
       const datasourceUid = 'test-datasource';
       const mappings: InputMapping[] = [];
-      const eventLocation = EVENT_LOCATIONS.EMPTY_DASHBOARD;
+      const sourceEntryPoint = SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON;
+      const eventLocation = EVENT_LOCATIONS.MODAL_VIEW;
       const contentKind = CONTENT_KINDS.COMMUNITY_DASHBOARD;
 
       const mockLocationServicePush = jest.fn();
       locationService.push = mockLocationServicePush;
 
-      navigateToTemplate(dashboardTitle, gnetId, datasourceUid, mappings, eventLocation, contentKind);
+      navigateToTemplate(dashboardTitle, gnetId, datasourceUid, mappings, sourceEntryPoint, eventLocation, contentKind);
 
       expect(mockLocationServicePush).toHaveBeenCalledWith({
         pathname: DASHBOARD_LIBRARY_ROUTES.Template,
@@ -178,10 +179,10 @@ describe('communityDashboardHelpers', () => {
       expect(searchParams.get('title')).toBe('Test Dashboard');
       expect(searchParams.get('gnetId')).toBe('123');
       expect(searchParams.get('datasource')).toBe('test-datasource');
-      expect(searchParams.get('sourceEntryPoint')).toBe(SOURCE_ENTRY_POINTS.DATASOURCE_PAGE);
+      expect(searchParams.get('sourceEntryPoint')).toBe(SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON);
       expect(searchParams.get('creationOrigin')).toBe(CREATION_ORIGINS.DASHBOARD_LIBRARY_COMMUNITY_DASHBOARD);
       expect(searchParams.get('contentKind')).toBe(CONTENT_KINDS.COMMUNITY_DASHBOARD);
-      expect(searchParams.get('eventLocation')).toBe(EVENT_LOCATIONS.EMPTY_DASHBOARD);
+      expect(searchParams.get('eventLocation')).toBe(EVENT_LOCATIONS.MODAL_VIEW);
       expect(searchParams.get('mappings')).toBe('[]');
     });
   });
@@ -220,8 +221,8 @@ describe('communityDashboardHelpers', () => {
       await onUseCommunityDashboard({
         dashboard,
         datasourceUid: 'test-ds-uid',
-        datasourceType: 'prometheus',
-        eventLocation: 'empty_dashboard',
+        sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON,
+        eventLocation: EVENT_LOCATIONS.MODAL_VIEW,
         onShowMapping: options?.onShowMapping,
       });
     }
@@ -328,8 +329,8 @@ describe('communityDashboardHelpers', () => {
         onUseCommunityDashboard({
           dashboard: createMockGnetDashboard(),
           datasourceUid: 'test-ds-uid',
-          datasourceType: 'prometheus',
-          eventLocation: 'empty_dashboard',
+          sourceEntryPoint: SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON,
+          eventLocation: EVENT_LOCATIONS.MODAL_VIEW,
         })
       ).rejects.toThrow('API failed');
 
