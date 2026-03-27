@@ -1213,25 +1213,6 @@
     },
     {
       "metadata": {
-        "name": "cloudWatchLogsInsightsDataLinks",
-        "resourceVersion": "1773435935952",
-        "creationTimestamp": "2026-03-13T20:47:43Z",
-        "deletionTimestamp": "2026-03-27T22:01:59Z",
-        "annotations": {
-          "grafana.app/updatedTimestamp": "2026-03-13 21:05:35.952976 +0000 UTC"
-        }
-      },
-      "spec": {
-        "description": "Enables data links for CloudWatch Logs data: this is a safety toggle in case we need to put it back",
-        "stage": "experimental",
-        "codeowner": "@grafana/aws-datasources",
-        "frontend": true,
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "cloudWatchNewLabelParsing",
         "resourceVersion": "1771434338561",
         "creationTimestamp": "2024-04-05T15:57:56Z"
