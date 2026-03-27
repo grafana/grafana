@@ -10,6 +10,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/sync/singleflight"
@@ -105,12 +106,10 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 		RejectNonProvisionedUsers: scimSection.Key("reject_non_provisioned_users").MustBool(false),
 	}
 
-	userProxy := NewLegacyUserProxy(userService)
-
 	return &UserSync{
 		isUserProvisioningEnabled: staticConfig.IsUserProvisioningEnabled,
 		rejectNonProvisionedUsers: staticConfig.RejectNonProvisionedUsers,
-		userService:               userProxy,
+		userService:               userService,
 		authInfoService:           authInfoService,
 		userProtectionService:     userProtectionService,
 		quotaService:              quotaService,
@@ -126,7 +125,7 @@ func ProvideUserSync(userService user.Service, userProtectionService login.UserP
 type UserSync struct {
 	isUserProvisioningEnabled bool
 	rejectNonProvisionedUsers bool
-	userService               UserProxy
+	userService               user.Service
 	authInfoService           login.AuthInfoService
 	userProtectionService     login.UserProtectionService
 	quotaService              quota.Service
@@ -343,7 +342,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		}
 	}
 
-	syncUserToIdentity(usr, id)
+	syncUserToIdentity(ctx, usr, id)
 	return nil
 }
 
@@ -365,7 +364,10 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 		return nil
 	}
 
-	usr, err := s.userService.GetSignedInUser(ctx, userID, r.OrgID)
+	usr, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
+		UserID: userID,
+		OrgID:  r.OrgID,
+	})
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return errFetchingSignedInUserNotFound.Errorf("%w", err)
@@ -406,7 +408,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 	goCtx := context.WithoutCancel(ctx)
 	// nolint:dogsled
 	_, _, _ = s.lastSeenSF.Do(fmt.Sprintf("%d-%d", id.GetOrgID(), userID), func() (interface{}, error) {
-		err := s.userService.UpdateLastSeenAt(goCtx, userID, id.GetOrgID())
+		err := s.userService.UpdateLastSeenAt(goCtx, &user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: id.GetOrgID()})
 		if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
@@ -652,7 +654,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 		}
 
 		if !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
-			usr, errGetByID := s.userService.GetByUserAuth(ctx, authInfo)
+			usr, errGetByID := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: authInfo.UserId})
 			if errGetByID == nil {
 				return usr, authInfo, nil
 			}
@@ -677,9 +679,9 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	}
 
 	var userAuth *login.UserAuth
-	// Special case for generic oauth: generic oauth does not store authID,
-	// so we need to find the user first then check for the userAuth connection by module and userID
-	if identity.AuthenticatedBy == login.GenericOAuthModule {
+	// For auth modules that may not store an authID in user_auth (Generic OAuth never stores one;
+	// SAML omits it for SCIM-provisioned users), fall back to a UserId+AuthModule lookup.
+	if identity.AuthenticatedBy == login.GenericOAuthModule || (identity.AuthenticatedBy == login.SAMLAuthModule && usr.IsProvisioned) {
 		query := &login.GetAuthInfoQuery{AuthModule: identity.AuthenticatedBy, UserId: usr.ID}
 		userAuth, err = s.authInfoService.GetAuthInfo(ctx, query)
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
@@ -699,7 +701,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 
 	// If not found, try to find the user by email address
 	if params.Email != nil && *params.Email != "" {
-		usr, err = s.userService.GetByEmail(ctx, *params.Email)
+		usr, err = s.userService.GetByEmail(ctx, &user.GetUserByEmailQuery{Email: *params.Email})
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
 		}
@@ -707,7 +709,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 
 	// If not found, try to find the user by login
 	if usr == nil && params.Login != nil && *params.Login != "" {
-		usr, err = s.userService.GetByLogin(ctx, *params.Login)
+		usr, err = s.userService.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: *params.Login})
 		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
 			return nil, err
 		}
@@ -722,7 +724,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
-func syncUserToIdentity(usr *user.User, id *authn.Identity) {
+func syncUserToIdentity(ctx context.Context, usr *user.User, id *authn.Identity) {
 	id.ID = strconv.FormatInt(usr.ID, 10)
 	id.UID = usr.UID
 	id.Type = claims.TypeUser
@@ -731,6 +733,13 @@ func syncUserToIdentity(usr *user.User, id *authn.Identity) {
 	id.Name = usr.Name
 	id.EmailVerified = usr.EmailVerified
 	id.IsGrafanaAdmin = &usr.IsAdmin
+
+	featureClient := openfeature.NewDefaultClient()
+	if featureClient.Boolean(ctx, featuremgmt.FlagRememberUserOrgForSso, true, openfeature.TransactionContext(ctx)) {
+		if id.OrgID == 0 {
+			id.OrgID = usr.OrgID
+		}
+	}
 }
 
 // syncSignedInUserToIdentity syncs a user to an identity.

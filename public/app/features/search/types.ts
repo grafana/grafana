@@ -83,6 +83,13 @@ export interface DashboardViewItem {
   sortMeta?: number | string; // value sorted by
   sortMetaName?: string; // name of the value being sorted e.g. 'Views'
   managedBy?: ManagerKind;
+
+  ownerReference?: {
+    kind: string;
+    uid: string;
+    title: string;
+    avatarUrl?: string;
+  };
 }
 
 export interface SearchAction extends Action {
@@ -98,6 +105,7 @@ export interface SearchState {
   explain?: boolean; // adds debug info
   datasource?: string;
   panel_type?: string;
+  createdBy?: string;
   sort?: string;
   prevSort?: string; // Save sorting data between layouts
   layout: SearchLayout;
@@ -123,6 +131,7 @@ export interface SearchQueryParams {
   tag?: string[] | null;
   layout?: SearchLayout | null;
   folder?: string | null;
+  createdBy?: string | null;
 }
 
 // new Search Types

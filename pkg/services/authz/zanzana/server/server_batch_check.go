@@ -15,6 +15,7 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
@@ -38,23 +39,42 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 		attribute.Int("check_count", len(r.GetChecks())),
 	)
 
-	defer func(t time.Time) {
-		s.metrics.requestDurationSeconds.WithLabelValues("BatchCheck").Observe(time.Since(t).Seconds())
-	}(time.Now())
+	start := time.Now()
+	namespace := r.GetNamespace()
+	checkCount := len(r.GetChecks())
 
-	res, err := s.batchCheck(ctx, r)
+	defer func() {
+		duration := time.Since(start)
+		s.metrics.requestDurationSeconds.WithLabelValues("BatchCheck").Observe(duration.Seconds())
+
+		// Log slow batch checks for debugging (>1s is concerning)
+		if duration > time.Second {
+			s.logger.Debug("slow batch check detected",
+				"namespace", namespace,
+				"subject", r.GetSubject(),
+				"check_count", checkCount,
+				"duration_ms", duration.Milliseconds(),
+			)
+		}
+	}()
+
+	if err := s.mtReconciler.EnsureNamespace(ctx, namespace); err != nil {
+		return nil, fmt.Errorf("failed to reconcile namespace: %w", err)
+	}
+
+	res, err := s.batchCheck(ctx, r, namespace)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		s.logger.Error("failed to perform batch check request", "error", err, "namespace", r.GetNamespace())
+		s.logger.Error("failed to perform batch check request", "error", err, "namespace", namespace)
 		return nil, errors.New("failed to perform batch check request")
 	}
 
 	return res, nil
 }
 
-func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (*authzv1.BatchCheckResponse, error) {
-	if err := authorize(ctx, r.GetNamespace(), s.cfg); err != nil {
+func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest, namespace string) (*authzv1.BatchCheckResponse, error) {
+	if err := authorize(ctx, namespace, s.cfg); err != nil {
 		return nil, err
 	}
 
@@ -67,7 +87,7 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 		return nil, status.Errorf(grpccodes.InvalidArgument, "batch check exceeds maximum of %d items", types.MaxBatchCheckItems)
 	}
 
-	store, err := s.getStoreInfo(ctx, r.GetNamespace())
+	store, err := s.getStoreInfo(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get openfga store: %w", err)
 	}
@@ -93,25 +113,25 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 
 	// Phase 1: Check GroupResource access (broadest permissions)
 	// Example: user has "get" on "dashboards" group_resource → all dashboards allowed
-	if err := s.runGroupResourcePhase(ctx, store, subject, items, contextuals); err != nil {
+	if err := s.runPhase(ctx, "group_resource", namespace, store, subject, items, contextuals, s.runGroupResourcePhase); err != nil {
 		return nil, err
 	}
 
 	// Phase 2: Check folder permission inheritance (can_get, can_create, etc. on parent folder)
 	// Example: user has "can_get" on folder-A → all dashboards in folder-A allowed
-	if err := s.runFolderPermissionPhase(ctx, store, subject, items, contextuals); err != nil {
+	if err := s.runPhase(ctx, "folder_permission", namespace, store, subject, items, contextuals, s.runFolderPermissionPhase); err != nil {
 		return nil, err
 	}
 
 	// Phase 3: Check folder subresource access (folder_get, folder_create, etc.)
 	// Example: user has "folder_get" on folder-A → dashboards in folder-A allowed via subresource
-	if err := s.runFolderSubresourcePhase(ctx, store, subject, items, contextuals); err != nil {
+	if err := s.runPhase(ctx, "folder_subresource", namespace, store, subject, items, contextuals, s.runFolderSubresourcePhase); err != nil {
 		return nil, err
 	}
 
 	// Phase 4: Check direct resource access
 	// Example: user has "get" directly on dashboard-123
-	if err := s.runDirectResourcePhase(ctx, store, subject, items, contextuals); err != nil {
+	if err := s.runPhase(ctx, "direct_resource", namespace, store, subject, items, contextuals, s.runDirectResourcePhase); err != nil {
 		return nil, err
 	}
 
@@ -128,15 +148,55 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 	return &authzv1.BatchCheckResponse{Results: results}, nil
 }
 
+// phaseFunc is a function type for batch check phases
+type phaseFunc func(ctx context.Context, store *zanzana.StoreInfo, subject string, items map[string]*batchCheckItem, contextuals *openfgav1.ContextualTupleKeys) (itemsChecked int, err error)
+
+// runPhase executes a batch check phase with tracing and metrics
+func (s *Server) runPhase(ctx context.Context, phaseName string, namespace string, store *zanzana.StoreInfo, subject string, items map[string]*batchCheckItem, contextuals *openfgav1.ContextualTupleKeys, phase phaseFunc) error {
+	ctx, span := s.tracer.Start(ctx, fmt.Sprintf("server.BatchCheck.%s", phaseName))
+	defer span.End()
+
+	start := time.Now()
+	itemsChecked, err := phase(ctx, store, subject, items, contextuals)
+	duration := time.Since(start)
+
+	span.SetAttributes(
+		attribute.String("phase", phaseName),
+		attribute.String("namespace", namespace),
+		attribute.Int64("duration_ms", duration.Milliseconds()),
+		attribute.Int("items_checked", itemsChecked),
+	)
+
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
+
+	s.metrics.batchCheckPhaseDurationSeconds.WithLabelValues(phaseName).Observe(duration.Seconds())
+
+	// Log slow phases for debugging (>300ms is concerning)
+	if duration > 300*time.Millisecond {
+		s.logger.Debug("slow batch check phase detected",
+			"phase", phaseName,
+			"namespace", namespace,
+			"duration_ms", duration.Milliseconds(),
+			"items_checked", itemsChecked,
+			"store_id", store.ID,
+		)
+	}
+
+	return err
+}
+
 // runGroupResourcePhase checks if the user has access at the group resource level.
 // This is the broadest permission - if granted, access to all resources of that type is allowed.
 func (s *Server) runGroupResourcePhase(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
-) error {
+) (int, error) {
 	checks := make([]*openfgav1.BatchCheckItem, 0, len(items))
 	checkIDToCorrelation := make(map[string]string, len(items))
 
@@ -164,12 +224,12 @@ func (s *Server) runGroupResourcePhase(
 	}
 
 	if len(checks) == 0 {
-		return nil
+		return 0, nil
 	}
 
 	results, err := s.doBatchCheck(ctx, store, checks)
 	if err != nil {
-		return err
+		return len(checks), err
 	}
 
 	// Process results
@@ -186,18 +246,18 @@ func (s *Server) runGroupResourcePhase(
 		}
 	}
 
-	return nil
+	return len(checks), nil
 }
 
 // runFolderPermissionPhase checks folder permission inheritance.
 // This applies to generic resources that support folder-based permissions (like dashboards).
 func (s *Server) runFolderPermissionPhase(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
-) error {
+) (int, error) {
 	checks := make([]*openfgav1.BatchCheckItem, 0, len(items))
 	checkIDToCorrelation := make(map[string]string, len(items))
 
@@ -237,12 +297,12 @@ func (s *Server) runFolderPermissionPhase(
 	}
 
 	if len(checks) == 0 {
-		return nil
+		return 0, nil
 	}
 
 	results, err := s.doBatchCheck(ctx, store, checks)
 	if err != nil {
-		return err
+		return len(checks), err
 	}
 
 	// Process results
@@ -259,18 +319,18 @@ func (s *Server) runFolderPermissionPhase(
 		}
 	}
 
-	return nil
+	return len(checks), nil
 }
 
 // runFolderSubresourcePhase checks folder subresource access.
 // This handles cases where access is granted via folder subresource relations.
 func (s *Server) runFolderSubresourcePhase(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
-) error {
+) (int, error) {
 	checks := make([]*openfgav1.BatchCheckItem, 0, len(items))
 	checkIDToCorrelation := make(map[string]string, len(items))
 
@@ -294,55 +354,121 @@ func (s *Server) runFolderSubresourcePhase(
 			continue
 		}
 
-		checkID := fmt.Sprintf("%s_fs", item.correlationID)
-		checkIDToCorrelation[checkID] = item.correlationID
-		checks = append(checks, &openfgav1.BatchCheckItem{
-			TupleKey: &openfgav1.CheckRequestTupleKey{
-				User:     subject,
-				Relation: folderRelation,
-				Object:   folderIdent,
-			},
-			ContextualTuples: contextuals,
-			Context:          item.resource.Context(),
-			CorrelationId:    checkID,
-		})
+		for idx, relation := range expandedSubresourcePermissionRelations(folderRelation) {
+			checkID := fmt.Sprintf("%s_fs_%d", item.correlationID, idx)
+			checkIDToCorrelation[checkID] = item.correlationID
+			checks = append(checks, &openfgav1.BatchCheckItem{
+				TupleKey: &openfgav1.CheckRequestTupleKey{
+					User:     subject,
+					Relation: relation,
+					Object:   folderIdent,
+				},
+				ContextualTuples: contextuals,
+				Context:          item.resource.Context(),
+				CorrelationId:    checkID,
+			})
+		}
 	}
 
 	if len(checks) == 0 {
-		return nil
+		return 0, nil
 	}
 
 	results, err := s.doBatchCheck(ctx, store, checks)
 	if err != nil {
-		return err
+		return len(checks), err
 	}
 
-	// Process results
+	// Aggregate results per original correlation ID. A single allowed relation
+	// should allow the item; otherwise first OpenFGA error (if any) is surfaced.
+	type relationResult struct {
+		allowed bool
+		err     string
+	}
+	agg := make(map[string]relationResult, len(items))
+
 	for checkID, result := range results {
 		correlationID := checkIDToCorrelation[checkID]
-		item := items[correlationID]
-
+		cur := agg[correlationID]
+		if cur.allowed {
+			continue
+		}
 		if err := result.GetError(); err != nil {
-			item.err = err.GetMessage()
-			item.resolved = true
+			if cur.err == "" {
+				cur.err = err.GetMessage()
+			}
 		} else if result.GetAllowed() {
+			cur.allowed = true
+			cur.err = ""
+		}
+		agg[correlationID] = cur
+	}
+
+	for correlationID, res := range agg {
+		item := items[correlationID]
+		if res.allowed {
 			item.allowed = true
+			item.resolved = true
+		} else if res.err != "" {
+			item.err = res.err
 			item.resolved = true
 		}
 	}
 
-	return nil
+	return len(checks), nil
+}
+
+func expandedSubresourcePermissionRelations(relation string) []string {
+	switch relation {
+	case common.RelationSubresourceGet:
+		return []string{
+			common.RelationSubresourceGet,
+			common.RelationSubresourceSetView,
+			common.RelationSubresourceSetEdit,
+			common.RelationSubresourceSetAdmin,
+		}
+	case common.RelationSubresourceCreate:
+		return []string{
+			common.RelationSubresourceCreate,
+			common.RelationSubresourceSetEdit,
+			common.RelationSubresourceSetAdmin,
+		}
+	case common.RelationSubresourceUpdate:
+		return []string{
+			common.RelationSubresourceUpdate,
+			common.RelationSubresourceSetEdit,
+			common.RelationSubresourceSetAdmin,
+		}
+	case common.RelationSubresourceDelete:
+		return []string{
+			common.RelationSubresourceDelete,
+			common.RelationSubresourceSetEdit,
+			common.RelationSubresourceSetAdmin,
+		}
+	case common.RelationSubresourceGetPermissions:
+		return []string{
+			common.RelationSubresourceGetPermissions,
+			common.RelationSubresourceSetAdmin,
+		}
+	case common.RelationSubresourceSetPermissions:
+		return []string{
+			common.RelationSubresourceSetPermissions,
+			common.RelationSubresourceSetAdmin,
+		}
+	default:
+		return []string{relation}
+	}
 }
 
 // runDirectResourcePhase checks direct access to specific resources.
 // This is the most granular check - access granted directly on the resource itself.
 func (s *Server) runDirectResourcePhase(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	subject string,
 	items map[string]*batchCheckItem,
 	contextuals *openfgav1.ContextualTupleKeys,
-) error {
+) (int, error) {
 	var checks []*openfgav1.BatchCheckItem
 	checkIDToCorrelation := make(map[string]string)
 
@@ -377,12 +503,12 @@ func (s *Server) runDirectResourcePhase(
 	}
 
 	if len(checks) == 0 {
-		return nil
+		return 0, nil
 	}
 
 	results, err := s.doBatchCheck(ctx, store, checks)
 	if err != nil {
-		return err
+		return len(checks), err
 	}
 
 	// Process results - for typed resources, we need to check both subresource and direct
@@ -411,7 +537,7 @@ func (s *Server) runDirectResourcePhase(
 		}
 	}
 
-	return nil
+	return len(checks), nil
 }
 
 // addTypedResourceDirectChecks adds OpenFGA checks for typed resources (folder, team, user, etc.)
@@ -433,7 +559,7 @@ func (s *Server) addTypedResourceDirectChecks(
 		checks = append(checks, &openfgav1.BatchCheckItem{
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     subject,
-				Relation: subresourceRelation,
+				Relation: common.SubresourcePermissionRelation(subresourceRelation),
 				Object:   resourceIdent,
 			},
 			ContextualTuples: contextuals,
@@ -469,7 +595,7 @@ func (s *Server) addTypedResourceDirectChecks(
 // sub-batches if the number of checks exceeds the configured MaxChecksPerBatchCheck limit.
 func (s *Server) doBatchCheck(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	checks []*openfgav1.BatchCheckItem,
 ) (map[string]*openfgav1.BatchCheckSingleResult, error) {
 	if len(checks) == 0 {
@@ -505,7 +631,7 @@ func (s *Server) doBatchCheck(
 // executeBatchCheck sends a single OpenFGA BatchCheck request.
 func (s *Server) executeBatchCheck(
 	ctx context.Context,
-	store *storeInfo,
+	store *zanzana.StoreInfo,
 	checks []*openfgav1.BatchCheckItem,
 ) (map[string]*openfgav1.BatchCheckSingleResult, error) {
 	openfgaReq := &openfgav1.BatchCheckRequest{

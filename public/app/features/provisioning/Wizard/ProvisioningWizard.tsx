@@ -4,9 +4,9 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { AppEvents, GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
-import { Box, ConfirmModal, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Box, ConfirmModal, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { RepositoryViewList } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
@@ -97,6 +97,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
     visibleStepIndex,
     goToNextStep,
     goToPreviousStep,
+    goToStep,
   } = useWizardNavigation({
     steps,
     canSkipSync,
@@ -208,7 +209,12 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
           />
           <Stack direction="column">
             <Box marginBottom={2}>
-              <Text element="h2">{`${visibleStepIndex + 1}. ${currentStepConfig?.title ?? ''}`}</Text>
+              <Stack justifyContent="space-between">
+                <Text element="h2">{`${visibleStepIndex + 1}. ${currentStepConfig?.title ?? ''}`}</Text>
+                <TextLink href={'https://forms.gle/fnT7HGvpa8ar2sKq6'} external>
+                  <Trans i18nKey="provisioning.wizard.give-feedback-link">Give feedback</Trans>
+                </TextLink>
+              </Stack>
             </Box>
 
             {hasStepError && 'error' in stepStatusInfo && (
@@ -227,6 +233,7 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
                 onGitHubAppSubmit={handleGitHubAppCreation}
                 onRepositoryDeletion={handleRepositoryDeletion}
                 isCancelling={isCancelling}
+                goToStep={goToStep}
               />
             </div>
 

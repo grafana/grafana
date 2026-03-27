@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -20,10 +20,8 @@ import (
 
 // We currently block the creation of library panels in provisioned folders.
 func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	helper := runGrafana(t)
-	helper.CreateRepo(t, TestRepo{
+	helper := sharedHelper(t)
+	helper.CreateRepo(t, common.TestRepo{
 		Name:            "test-repo",
 		Target:          "folder",
 		ExpectedFolders: 1,
@@ -45,7 +43,7 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 			},
 		}
 		libraryElementURL := "/api/library-elements"
-		libraryElementData, code, err := postHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
+		libraryElementData, code, err := common.PostHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
 		require.Error(t, err)
 		require.Equal(t, http.StatusConflict, code)
 		require.NotNil(t, libraryElementData)
@@ -85,12 +83,16 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 			},
 		}
 		libraryElementURL := "/api/library-elements"
-		libraryElementData, code, err := postHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
+		libraryElementData, code, err := common.PostHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, code)
 		require.NotNil(t, libraryElementData)
 
 		res := libraryElementData["result"].(map[string]interface{})
+		t.Cleanup(func() {
+			deleteURL := fmt.Sprintf("/api/library-elements/%s", res["uid"].(string))
+			common.DeleteHelper(t, *helper.K8sTestHelper, deleteURL, helper.Org1.Admin)
+		})
 		helper.SetPermissions(helper.Org1.Admin, []resourcepermissions.SetResourcePermissionCommand{
 			{
 				Actions:           []string{"library.panels:write"},
@@ -107,7 +109,7 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 			"folderUid": managedFolderName,
 		}
 		patchLibraryElementURL := fmt.Sprintf("/api/library-elements/%f", +res["id"].(float64))
-		newLibraryElement, code, err := patchHelper(t, *helper.K8sTestHelper, patchLibraryElementURL, updatedLibraryElement, helper.Org1.Admin)
+		newLibraryElement, code, err := common.PatchHelper(t, *helper.K8sTestHelper, patchLibraryElementURL, updatedLibraryElement, helper.Org1.Admin)
 		require.Error(t, err)
 		require.Equal(t, http.StatusConflict, code)
 		require.NotNil(t, newLibraryElement)
@@ -117,8 +119,8 @@ func TestIntegrationLibraryPanels_ProvisionedFolders(t *testing.T) {
 
 func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 	const repo = "test-repo"
-	helper := runGrafana(t)
-	helper.CreateRepo(t, TestRepo{
+	helper := sharedHelper(t)
+	helper.CreateRepo(t, common.TestRepo{
 		Name:            repo,
 		Target:          "folder",
 		ExpectedFolders: 1,
@@ -167,9 +169,15 @@ func TestIntegrationLibraryPanels_UnprovisionedFolders(t *testing.T) {
 			},
 		}
 		libraryElementURL := "/api/library-elements"
-		libraryElementData, code, err := postHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
+		libraryElementData, code, err := common.PostHelper(t, *helper.K8sTestHelper, libraryElementURL, libraryElement, helper.Org1.Admin)
 		require.NoError(t, err)
 		require.Equal(t, http.StatusOK, code)
 		require.NotNil(t, libraryElementData)
+
+		res := libraryElementData["result"].(map[string]interface{})
+		t.Cleanup(func() {
+			deleteURL := fmt.Sprintf("/api/library-elements/%s", res["uid"].(string))
+			common.DeleteHelper(t, *helper.K8sTestHelper, deleteURL, helper.Org1.Admin)
+		})
 	})
 }

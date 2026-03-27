@@ -13,15 +13,16 @@ export const initQuery = createAction<QueryType | undefined>('init');
 
 export const changeQuery = createAction<ElasticsearchDataQuery['query']>('change_query');
 
-export const changeRawDSLQuery = createAction<ElasticsearchDataQuery['rawDSLQuery']>('change_raw_dsl_query');
+export const changeQueryType = createAction<ElasticsearchDataQuery['queryType']>('change_query_type');
 
 export const changeAliasPattern = createAction<ElasticsearchDataQuery['alias']>('change_alias_pattern');
 
 export const changeEditorType = createAction<ElasticsearchDataQuery['editorType']>('change_editor_type');
 
-export const changeEditorTypeAndResetQuery = createAction<ElasticsearchDataQuery['editorType']>(
-  'change_editor_type_and_reset_query'
-);
+export const changeEditorTypeAndResetQuery = createAction<{
+  editorType: ElasticsearchDataQuery['editorType'];
+  queryType: ElasticsearchDataQuery['queryType'];
+}>('change_editor_type_and_reset_query');
 
 export const queryReducer = (prevQuery: ElasticsearchDataQuery['query'], action: Action) => {
   if (changeQuery.match(action)) {
@@ -32,6 +33,16 @@ export const queryReducer = (prevQuery: ElasticsearchDataQuery['query'], action:
     return '';
   }
 
+  // Clear query when switching query types (e.g., from Lucene to DSL or vice versa)
+  if (changeQueryType.match(action)) {
+    return '';
+  }
+
+  // Clear query when switching metric types (e.g., from logs to metrics, or to raw_data)
+  if (changeMetricType.match(action)) {
+    return '';
+  }
+
   if (initQuery.match(action)) {
     return prevQuery || '';
   }
@@ -39,26 +50,27 @@ export const queryReducer = (prevQuery: ElasticsearchDataQuery['query'], action:
   return prevQuery;
 };
 
-export const rawDSLQueryReducer = (prevRawDSLQuery: ElasticsearchDataQuery['rawDSLQuery'], action: Action) => {
-  if (changeRawDSLQuery.match(action)) {
+export const queryTypeReducer = (prevQueryType: ElasticsearchDataQuery['queryType'], action: Action) => {
+  if (changeQueryType.match(action)) {
     return action.payload;
   }
 
   if (changeEditorTypeAndResetQuery.match(action)) {
-    return '';
+    // When switching editor types, set queryType accordingly:
+    // - 'code' editor uses DSL queries
+    // - 'builder' editor uses Lucene queries
+    return action.payload.editorType === 'code' ? action.payload.queryType : 'lucene';
   }
 
-  // Clear raw DSL query when switching query types while using the code editor.
-  // Metric queries and log queries are not the same, so the code editor should be cleared.
-  if (changeMetricType.match(action)) {
-    return '';
+  if (changeEditorType.match(action)) {
+    return action.payload === 'builder' ? 'lucene' : 'dsl';
   }
 
   if (initQuery.match(action)) {
-    return prevRawDSLQuery || '';
+    return prevQueryType || 'lucene';
   }
 
-  return prevRawDSLQuery;
+  return prevQueryType;
 };
 
 export const aliasPatternReducer = (prevAliasPattern: ElasticsearchDataQuery['alias'], action: Action) => {
@@ -83,7 +95,7 @@ export const editorTypeReducer = (prevEditorType: ElasticsearchDataQuery['editor
   }
 
   if (changeEditorTypeAndResetQuery.match(action)) {
-    return action.payload;
+    return action.payload.editorType;
   }
 
   if (initQuery.match(action)) {

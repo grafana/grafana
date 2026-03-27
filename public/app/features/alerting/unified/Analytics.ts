@@ -193,6 +193,22 @@ export const trackNewGrafanaAlertRuleFormError = () => {
   reportInteraction('grafana_alerting_grafana_rule_creation_new_error');
 };
 
+export const trackCreateRuleFromPanelDrawerOpened = () => {
+  reportInteraction('grafana_alerting_create_rule_from_panel_drawer_opened');
+};
+
+export const trackCreateRuleFromPanelDrawerRuleCreated = () => {
+  reportInteraction('grafana_alerting_create_rule_from_panel_drawer_rule_created');
+};
+
+export const trackCreateRuleFromPanelDrawerContinueInAlertingClicked = () => {
+  reportInteraction('grafana_alerting_create_rule_from_panel_drawer_continue_in_alerting_clicked');
+};
+
+export const trackCreateRuleFromPanelDrawerClosedWithoutSaving = () => {
+  reportInteraction('grafana_alerting_create_rule_from_panel_drawer_closed_without_saving');
+};
+
 export const trackInsightsFeedback = async (props: { useful: boolean; panel: string }) => {
   const defaults = {
     grafana_version: config.buildInfo.version,
@@ -231,7 +247,8 @@ export const trackDeletedRuleRestoreFail = async () => {
 };
 
 export const trackImportToGMASuccess = async (payload: {
-  importSource: 'yaml' | 'datasource';
+  notificationsSource?: 'yaml' | 'datasource';
+  rulesSource?: 'yaml' | 'datasource';
   isRootFolder: boolean;
   namespace?: string;
   ruleGroup?: string;
@@ -241,9 +258,39 @@ export const trackImportToGMASuccess = async (payload: {
   reportInteraction('grafana_alerting_import_to_gma_success', { ...payload });
 };
 
-export const trackImportToGMAError = async (payload: { importSource: 'yaml' | 'datasource' }) => {
+export const trackImportToGMAError = async (payload: {
+  notificationsSource?: 'yaml' | 'datasource';
+  rulesSource?: 'yaml' | 'datasource';
+}) => {
   reportInteraction('grafana_alerting_import_to_gma_error', { ...payload });
 };
+
+export function trackImportToGMAWizardStarted() {
+  reportInteraction('grafana_alerting_import_to_gma_wizard_started');
+}
+
+export function trackImportToGMAWizardCancelled(payload: { cancelledAtStep: string; formDirty: boolean }) {
+  reportInteraction('grafana_alerting_import_to_gma_wizard_cancelled', payload);
+}
+
+export function trackImportToGMAWizardStepSkipped(payload: { step: 'notifications' | 'rules' }) {
+  reportInteraction('grafana_alerting_import_to_gma_wizard_step_skipped', payload);
+}
+
+export function trackImportToGMADryrunSuccess() {
+  reportInteraction('grafana_alerting_import_to_gma_dryrun_success');
+}
+
+export function trackImportToGMADryrunWarning(payload: {
+  renamedReceiversCount: number;
+  renamedTimeIntervalsCount: number;
+}) {
+  reportInteraction('grafana_alerting_import_to_gma_dryrun_warning', payload);
+}
+
+export function trackImportToGMADryrunError() {
+  reportInteraction('grafana_alerting_import_to_gma_dryrun_error');
+}
 
 export function trackRulesListViewChange(payload: { view: string }) {
   reportInteraction('grafana_alerting_rules_list_mode', { ...payload });
@@ -431,4 +478,12 @@ export function trackViewExperienceToggleConfirmed(
   payload: ViewExperienceToggleEventPayload & { preferenceSaved: boolean }
 ) {
   reportInteraction('grafana_alerting_view_experience_confirmed', { ...payload });
+}
+
+/**
+ * Track which rule list version (V1 or V2) is displayed on page load.
+ * Fired once per mount in the RuleList router component.
+ */
+export function trackRuleListPageView(payload: { view: 'v1' | 'v2' }) {
+  reportInteraction('grafana_alerting_rule_list_page_view', payload);
 }

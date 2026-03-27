@@ -58,7 +58,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
         .getStream<ResourceEvent<T, S, K>>({
           scope: LiveChannelScope.Watch,
           stream: this.gvr.group,
-          path: `${this.gvr.version}/${this.gvr.resource}${query}/${contextSrv.user.uid}`,
+          path: `${this.gvr.version}/${this.gvr.resource}${query}/${contextSrv.user.uid || 'anonymous'}`,
           data: params?.resourceVersion ? { resourceVersion: params.resourceVersion } : undefined,
         })
         .pipe(

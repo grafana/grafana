@@ -123,6 +123,10 @@ To create a variable, follow these steps:
 
    If you don't enter a display name, then the drop-down list label is the variable name.
 
+1. (Optional) In the **Description** field, enter a description of the variable. The description appears as an info icon tooltip next to the variable name on the dashboard.
+
+   Descriptions support links. You can use Markdown-style links (`[link text](https://example.com)`) or paste bare URLs (`https://example.com`). Only `http` and `https` URLs are rendered as clickable links — other protocols are displayed as plain text.
+
 1. Choose a **Display** option:
    - **Above dashboard** - The variable drop-down list displays above the dashboard with the variable **Name** or **Label** value. This is the default.
    - **Above dashboard, label hidden** - The variable drop-down list displays above the dashboard, but without showing the name of the variable.
@@ -320,7 +324,7 @@ The following data sources support ad hoc filters:
 To create an ad hoc filter, follow these steps:
 
 1. [Enter general options](#enter-general-options).
-1. Under the **Ad-hoc options** section of the page, select a target data source in the **Data source** drop-down list.
+1. Under the **Filter options** section of the page, select a target data source in the **Data source** drop-down list.
 
    You can also click **Open advanced data source picker** to see more options, including adding a data source (Admins only).
    For more information about data sources, refer to [Add a data source](ref:add-a-data-source).
@@ -558,7 +562,8 @@ You can even deeply nest properties and still access them using familiar variabl
 ### Multi-property query variables
 
 Because query configuration is different for each data source, there's no one way to set up a JSON array to create a multi-property query variable.
-For information on configuring a multi-property query variable, refer to the relevant [Data sources documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) for preinstalled data source plugins.
+For PostgreSQL, refer to [PostgreSQL template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/template-variables/).
+For other data sources, refer to the relevant [Data sources documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/) for preinstalled data source plugins.
 For configuration information on all other data source plugins, refer to the [Plugins documentation](https://grafana.com/docs/plugins/).
 
 ## Global variables

@@ -11,6 +11,7 @@ import { IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
+import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -24,6 +25,8 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
   topSpacing?: number;
+  /** Custom action element rendered in the alert's button area, independently from the dismiss button. */
+  action?: ReactNode;
 }
 
 /**
@@ -43,6 +46,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       topSpacing,
       className,
       severity = 'error',
+      action,
       ...restProps
     },
     ref
@@ -81,12 +85,22 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
             </div>
           </Box>
 
-          <Box paddingY={1} grow={1}>
-            <Text color="primary" weight="medium">
-              {title}
-            </Text>
-            {children && <div className={styles.content}>{children}</div>}
-          </Box>
+          <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
+            <Box paddingY={1} flex={1} minWidth="50%">
+              <Text color="primary" weight="medium">
+                {title}
+              </Text>
+              {children && <div className={styles.content}>{children}</div>}
+            </Box>
+            <Stack alignItems="center" wrap="wrap">
+              {action}
+              {onRemove && buttonContent && (
+                <Button aria-label={closeLabel} variant="secondary" onClick={onRemove} type="button">
+                  {buttonContent}
+                </Button>
+              )}
+            </Stack>
+          </Stack>
           {/* If onRemove is specified, giving preference to onRemove */}
           {onRemove && !buttonContent && (
             <div className={styles.close}>
@@ -99,14 +113,6 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
                 variant="secondary"
               />
             </div>
-          )}
-
-          {onRemove && buttonContent && (
-            <Box marginLeft={1} display="flex" alignItems="center">
-              <Button aria-label={closeLabel} variant="secondary" onClick={onRemove} type="button">
-                {buttonContent}
-              </Button>
-            </Box>
           )}
         </Box>
       </div>

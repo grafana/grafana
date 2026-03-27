@@ -3,7 +3,11 @@ import { useMemo } from 'react';
 import { Folder } from 'app/api/clients/folder/v1beta1';
 import { RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { getCanPushToConfiguredBranch, getDefaultWorkflow } from 'app/features/provisioning/components/defaults';
+import {
+  getCanPushToConfiguredBranch,
+  getDefaultRef,
+  getDefaultWorkflow,
+} from 'app/features/provisioning/components/defaults';
 import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { BaseProvisionedFormData } from '../types/form';
@@ -37,13 +41,10 @@ export function useProvisionedFolderFormData({
     if (!repository || isLoading) {
       return undefined;
     }
-    const defaultWorkflow = getDefaultWorkflow(repository);
-
     return {
       title: title || '',
       comment: '',
-      // When workflow is branch, we don't set a default ref, user will select from branches dropdown
-      ref: defaultWorkflow === 'branch' ? '' : (repository?.branch ?? ''),
+      ref: getDefaultRef(repository, 'folder'),
       repo: repository.name || '',
       path: folder?.metadata?.annotations?.[AnnoKeySourcePath] || '',
       workflow: getDefaultWorkflow(repository),

@@ -33,7 +33,7 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(2),
     }),
     sectionHeader: css({
-      margin: theme.spacing(0, 0, 3, 0),
+      margin: theme.spacing(0, 0, 2, 0),
     }),
   };
 }

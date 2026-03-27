@@ -3,6 +3,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { GraphFieldConfig } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
+import { addAnnotationOptions } from 'app/features/panel/options/builder/annotations';
 
 import { defaultGraphConfig, getGraphFieldConfig } from '../timeseries/config';
 
@@ -145,7 +146,8 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPane
     });
 
     commonOptionsBuilder.addTooltipOptions(builder, false, true);
-    commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
+    addAnnotationOptions(builder);
   })
   .setDataSupport({ annotations: true, alertStates: true })
   .setSuggestionsSupplier(candlestickSuggestionSupplier);

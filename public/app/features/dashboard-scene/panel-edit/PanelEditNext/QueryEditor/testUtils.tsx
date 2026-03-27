@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactElement } from 'react';
 
-import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
+import { DataSourceInstanceSettings, getDefaultTimeRange, LoadingState, PluginType } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { QueryGroupOptions } from 'app/types/query';
@@ -10,14 +10,14 @@ import { QueryGroupOptions } from 'app/types/query';
 import { QueryEditorType } from '../constants';
 
 import {
+  AlertingState,
   DatasourceState,
   PanelState,
   QueryEditorActions,
+  QueryEditorProvider,
   QueryEditorUIState,
   QueryOptionsState,
   QueryRunnerState,
-  QueryEditorProvider,
-  AlertingState,
 } from './QueryEditorContext';
 import { Transformation } from './types';
 
@@ -42,6 +42,32 @@ export const ds1SettingsMock: DataSourceInstanceSettings = {
       description: '',
       links: [],
       logos: { small: 'test-logo.png', large: '' },
+      screenshots: [],
+      updated: '',
+      version: '',
+    },
+    module: '',
+    baseUrl: '',
+  },
+  access: 'proxy',
+  readOnly: false,
+  jsonData: {},
+};
+
+export const dashboardDsSettingsMock: DataSourceInstanceSettings = {
+  id: 99,
+  uid: '-- Dashboard --',
+  name: '-- Dashboard --',
+  type: 'datasource',
+  meta: {
+    id: 'dashboard',
+    name: '-- Dashboard --',
+    type: PluginType.datasource,
+    info: {
+      author: { name: '' },
+      description: '',
+      links: [],
+      logos: { small: '', large: '' },
       screenshots: [],
       updated: '',
       version: '',
@@ -159,8 +185,11 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
 
   const defaultQrState: QueryRunnerState = {
     queries,
-    data: undefined,
-    isLoading: false,
+    data: {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: getDefaultTimeRange(),
+    },
     queryError: undefined,
     ...qrState,
   };
@@ -191,6 +220,9 @@ export function renderWithQueryEditorProvider(children: ReactElement, options: C
     finalizePendingTransformation: jest.fn(),
     selectedAlert: null,
     setSelectedAlert: jest.fn(),
+    pendingSavedQuery: null,
+    setPendingSavedQuery: jest.fn(),
+    showVersionBanner: false,
     ...uiStateOverrides,
   };
 

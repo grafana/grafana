@@ -16,10 +16,10 @@ export const AsyncError = () => (
   </MessageRow>
 );
 
-export const NotFoundError = () => (
-  <MessageRow>
-    <Trans i18nKey="combobox.options.no-found">No options found.</Trans>
-  </MessageRow>
+export const NO_OPTIONS_I18N_KEY = 'combobox.options.no-found';
+
+export const NotFoundError = ({ message }: { message?: string }) => (
+  <MessageRow>{message ?? <Trans i18nKey={NO_OPTIONS_I18N_KEY}>No options found.</Trans>}</MessageRow>
 );
 
 export const LoadingOptions = () => (

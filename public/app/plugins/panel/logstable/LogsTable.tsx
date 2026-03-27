@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   CoreApp,
@@ -77,7 +77,10 @@ export const LogsTable = ({
     ? onOptionsChange
     : undefined;
 
-  const containerElement = useRef<HTMLDivElement | null>(null);
+  const [containerElement, setContainerElement] = useState<HTMLDivElement | null>(null);
+  const containerRef = useCallback((node: HTMLDivElement | null) => {
+    setContainerElement(node);
+  }, []);
 
   // Callbacks
   const handleTableOptionsChange = useCallback(
@@ -194,8 +197,8 @@ export const LogsTable = ({
   const renderTable = timeFieldName && bodyFieldName && logsFrame && organizedFrame && extractedFrame;
 
   return (
-    <div className={styles.wrapper} ref={containerElement}>
-      {renderTable && containerElement.current && (
+    <div className={styles.wrapper} ref={containerRef}>
+      {renderTable && containerElement && (
         <>
           <LogsTableFields
             tableWidth={width}
@@ -213,7 +216,7 @@ export const LogsTable = ({
           />
 
           <TableNGWrap
-            containerElement={containerElement.current}
+            containerElement={containerElement}
             initialRowIndex={initialRowIndex}
             data={panelData}
             width={width}

@@ -76,6 +76,31 @@ export function ExploreLogsTable(props: {
     }
   }, []);
 
+  const fieldConfig = useMemo(
+    () => ({
+      defaults: {
+        custom: {
+          filterable: true,
+        },
+      },
+      overrides: [],
+    }),
+    []
+  );
+
+  const options = useMemo(
+    () => ({
+      ...logsTablePanelDefaultOptions,
+      buildLinkToLogLine: props.buildLinkToLogLine,
+      showHeader: true,
+      showControls: true,
+      showCopyLogLink: true,
+      ...props.externalOptions,
+      permalinkedLogId: props.externalOptions.permalinkedLogId ?? selectedLogInfo?.id,
+    }),
+    [props.buildLinkToLogLine, props.externalOptions, selectedLogInfo?.id]
+  );
+
   return (
     <PanelContextProvider
       value={{
@@ -88,26 +113,11 @@ export function ExploreLogsTable(props: {
         data={props.data}
         id={0}
         timeZone={props.timeZone}
-        options={{
-          ...logsTablePanelDefaultOptions,
-          buildLinkToLogLine: props.buildLinkToLogLine,
-          showHeader: true,
-          showControls: true,
-          showCopyLogLink: true,
-          ...props.externalOptions,
-          permalinkedLogId: props.externalOptions.permalinkedLogId ?? selectedLogInfo?.id,
-        }}
+        options={options}
         transparent={false}
         width={props.width}
         height={props.height}
-        fieldConfig={{
-          defaults: {
-            custom: {
-              filterable: true,
-            },
-          },
-          overrides: [],
-        }}
+        fieldConfig={fieldConfig}
         renderCounter={0}
         title={''}
         eventBus={props.eventBus}

@@ -53,6 +53,8 @@ export interface MenuItemProps<T = unknown> {
   shortcut?: string;
   /** Test id for e2e tests and fullstory*/
   testId?: string;
+  /** CSS color for the icon. Ignored when `destructive` or `disabled` is true. */
+  iconColor?: string;
   /* Optional component that will be shown together with other options. Does not get passed any props. */
   component?: React.ComponentType;
 }
@@ -79,8 +81,11 @@ export const MenuItem = React.memo(
       customSubMenuContainerStyles,
       shortcut,
       testId,
+      iconColor,
     } = props;
     const styles = useStyles2(getStyles);
+    // Ignore iconColor when destructive or disabled — those states own the colors.
+    const resolvedIconColor = iconColor && !destructive && !disabled ? iconColor : undefined;
     const [isActive, setIsActive] = useState(active);
     const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
     const onMouseEnter = useCallback(() => {
@@ -126,6 +131,12 @@ export const MenuItem = React.memo(
 
     const handleKeys = (event: React.KeyboardEvent) => {
       switch (event.key) {
+        case ' ':
+          if (ItemElement === 'a' && url) {
+            event.preventDefault();
+            localRef.current?.click();
+          }
+          break;
         case 'ArrowRight':
           event.preventDefault();
           event.stopPropagation();
@@ -163,10 +174,10 @@ export const MenuItem = React.memo(
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
         onKeyDown={handleKeys}
-        // If there's no URL, then set either the role from the props, or fallback to menuitem
-        // If there IS a URL, then use the role from props - which will result in this either being a
-        // link (default role of an anchor), or whatever the user of this component specified
-        role={!url ? role || 'menuitem' : role}
+        // Default to menuitem for all items (links and buttons) so screen readers announce
+        // position correctly (e.g. "X of Y") and the menu has proper ARIA semantics.
+        // Callers can override via the role prop.
+        role={role ?? 'menuitem'}
         data-role="menuitem" // used to identify menuitem in Menu.tsx
         ref={localRef}
         data-testid={testId}
@@ -176,7 +187,13 @@ export const MenuItem = React.memo(
         {...disabledProps}
       >
         <Stack direction="row" justifyContent="flex-start" alignItems="center">
-          {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
+          {icon && (
+            <Icon
+              name={icon}
+              className={cx(styles.icon, resolvedIconColor && css({ color: resolvedIconColor }))}
+              aria-hidden
+            />
+          )}
           <span className={cx(styles.ellipsis, styles.label)}>{label}</span>
           <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
             {hasShortcut && (

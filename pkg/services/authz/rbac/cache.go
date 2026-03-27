@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sync"
 	"time"
 
 	"github.com/grafana/authlib/cache"
@@ -53,24 +54,55 @@ type cacheWrap[T any] interface {
 	Get(ctx context.Context, key string) (T, bool)
 	Set(ctx context.Context, key string, value T)
 }
+type localEntry[T any] struct {
+	value     T
+	expiresAt time.Time
+}
+
 type cacheWrapImpl[T any] struct {
 	cache  cache.Cache
 	logger log.Logger
 	tracer tracing.Tracer
 	ttl    time.Duration
+
+	// When localTTL > 0 an in-memory L1 layer sits in front of the remote
+	// cache to avoid round-trips and JSON deserialization on hot paths.
+	localTTL time.Duration
+	mu       sync.RWMutex
+	local    map[string]localEntry[T]
 }
 
-// cacheWrap is a wrapper around the authlib Cache that provides typed Get and Set methods
-// it handles encoding/decoding for a specific type.
-func newCacheWrap[T any](cache cache.Cache, logger log.Logger, tracer tracing.Tracer, ttl time.Duration) cacheWrap[T] {
+// newCacheWrap creates a typed cache around the authlib Cache.
+// An optional localTTL enables an in-memory L1 layer when the backing cache
+// is remote (e.g. memcached); set to 0 (or omit) to disable.
+func newCacheWrap[T any](cache cache.Cache, logger log.Logger, tracer tracing.Tracer, ttl time.Duration, localTTL ...time.Duration) cacheWrap[T] {
 	if ttl == 0 {
 		logger.Info("cache ttl is 0, using noop cache")
 		return &noopCache[T]{}
 	}
-	return &cacheWrapImpl[T]{cache: cache, logger: logger, tracer: tracer, ttl: ttl}
+	w := &cacheWrapImpl[T]{cache: cache, logger: logger, tracer: tracer, ttl: ttl}
+	if len(localTTL) > 0 && localTTL[0] > 0 {
+		w.localTTL = localTTL[0]
+		w.local = make(map[string]localEntry[T])
+	}
+	return w
 }
 
 func (c *cacheWrapImpl[T]) Get(ctx context.Context, key string) (T, bool) {
+	if c.localTTL > 0 {
+		c.mu.RLock()
+		entry, ok := c.local[key]
+		c.mu.RUnlock()
+		if ok {
+			if time.Now().Before(entry.expiresAt) {
+				return entry.value, true
+			}
+			c.mu.Lock()
+			delete(c.local, key)
+			c.mu.Unlock()
+		}
+	}
+
 	ctx, span := c.tracer.Start(ctx, "cacheWrap.Get")
 	defer span.End()
 	span.SetAttributes(attribute.Bool("hit", false))
@@ -92,10 +124,23 @@ func (c *cacheWrapImpl[T]) Get(ctx context.Context, key string) (T, bool) {
 	}
 
 	span.SetAttributes(attribute.Bool("hit", true))
+
+	if c.localTTL > 0 {
+		c.mu.Lock()
+		c.local[key] = localEntry[T]{value: value, expiresAt: time.Now().Add(c.localTTL)}
+		c.mu.Unlock()
+	}
+
 	return value, true
 }
 
 func (c *cacheWrapImpl[T]) Set(ctx context.Context, key string, value T) {
+	if c.localTTL > 0 {
+		c.mu.Lock()
+		c.local[key] = localEntry[T]{value: value, expiresAt: time.Now().Add(c.localTTL)}
+		c.mu.Unlock()
+	}
+
 	ctx, span := c.tracer.Start(ctx, "cacheWrap.Set")
 	defer span.End()
 	logger := c.logger.FromContext(ctx)

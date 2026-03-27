@@ -38,6 +38,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
       });
 
     commonOptionsBuilder.addTooltipOptions(builder, true);
-    commonOptionsBuilder.addLegendOptions(builder);
+    commonOptionsBuilder.addLegendOptions(builder, true, true);
   })
   .setSuggestionsSupplier(xychartSuggestionsSupplier);
