@@ -4684,6 +4684,20 @@
     },
     {
       "metadata": {
+        "name": "splashScreen",
+        "resourceVersion": "1774461556169",
+        "creationTimestamp": "2026-03-25T17:59:16Z"
+      },
+      "spec": {
+        "description": "Enables the splash screen modal for introducing new Grafana features on first session",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "sqlExpressions",
         "resourceVersion": "1774365185266",
         "creationTimestamp": "2024-02-27T21:16:00Z",

@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/configprovider"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
@@ -1134,4 +1135,82 @@ func (c *K8sTestHelper) RequireApiErrorStatus(err error, reason metav1.StatusRea
 	}
 
 	return status
+}
+
+// SearchDownTestEnv provides a two-step test environment for graceful degradation testing.
+// Step 1 (Setup) starts Grafana normally so migrations complete and test data can be created.
+// Step 2 (RestartWithSearchDown) shuts down step 1 and restarts with search_inject_failures_percent=100,
+// so operations can be tested against a broken search indexer.
+type SearchDownTestEnv struct {
+	helper   *K8sTestHelper
+	baseOpts testinfra.GrafanaOpts
+}
+
+// Setup returns the step 1 helper where search is working normally.
+func (e *SearchDownTestEnv) Setup() *K8sTestHelper {
+	return e.helper
+}
+
+// RestartWithSearchDown shuts down helper from step 1 and starts a new Grafana instance
+// with search_inject_failures_percent=100. Returns the step 2 helper.
+func (e *SearchDownTestEnv) RestartWithSearchDown(t *testing.T) *K8sTestHelper {
+	t.Helper()
+
+	helper := e.helper
+	e.helper = nil // prevent use-after-shutdown
+
+	// Shut down step 1
+	helper.Shutdown()
+
+	// Preserve DB data across restart
+	oldSkipTruncate := os.Getenv("SKIP_DB_TRUNCATE")
+	require.NoError(t, os.Setenv("SKIP_DB_TRUNCATE", "true"))
+	t.Cleanup(func() {
+		if oldSkipTruncate == "" {
+			_ = os.Unsetenv("SKIP_DB_TRUNCATE")
+		} else {
+			_ = os.Setenv("SKIP_DB_TRUNCATE", oldSkipTruncate)
+		}
+	})
+
+	// Step 2: Start with search failures, reusing orgs/users from step 1
+	step2Opts := e.baseOpts
+	step2Opts.SearchInjectFailuresPercent = 100
+
+	return NewK8sTestHelperWithOpts(t, K8sTestHelperOpts{
+		GrafanaOpts: step2Opts,
+		Org1Users:   &helper.Org1,
+		OrgBUsers:   &helper.OrgB,
+	})
+}
+
+// NewSearchDownTestEnv creates a test environment for search graceful degradation tests.
+// Step 1 starts Grafana normally (search works). Call RestartWithSearchDown to get step 2
+// where search_inject_failures_percent=100.
+func NewSearchDownTestEnv(t *testing.T, baseOpts testinfra.GrafanaOpts) *SearchDownTestEnv {
+	t.Helper()
+
+	// Share the same SQLite DB file between steps
+	if db.IsTestDbSQLite() {
+		tmpDir := t.TempDir()
+		dbPath := tmpDir + "/no-search-graceful-degradation-test.db"
+		oldVal := os.Getenv("SQLITE_TEST_DB")
+		require.NoError(t, os.Setenv("SQLITE_TEST_DB", dbPath))
+		t.Cleanup(func() {
+			if oldVal == "" {
+				_ = os.Unsetenv("SQLITE_TEST_DB")
+			} else {
+				_ = os.Setenv("SQLITE_TEST_DB", oldVal)
+			}
+		})
+	}
+
+	// Step 1: Start normally (search working) with DB cleanup disabled
+	baseOpts.DisableDBCleanup = true
+	helper := NewK8sTestHelper(t, baseOpts)
+
+	return &SearchDownTestEnv{
+		helper:   helper,
+		baseOpts: baseOpts,
+	}
 }

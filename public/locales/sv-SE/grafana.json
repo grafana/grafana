@@ -6473,6 +6473,7 @@
       "description": {
         "action": "Ändra variabelbeskrivning"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "Ändra alternativ för att dölja variabel"
       },
@@ -6646,9 +6647,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Ad hoc-alternativ",
-      "alert-not-supported": "Denna datakälla stöder inte ad hoc-filter",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "Gör det möjligt för användare att lägga till anpassade värden i listan",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Tillhandahåll dimensioner som CSV: {{name}}, {{value}}",
@@ -7013,7 +7018,7 @@
         "values-timespans": "Värdena är tidsintervall, t.ex. 1 m, 1 h, 1 d"
       },
       "name": {
-        "ad-hoc-filters": "Ad hoc-filter",
+        "ad-hoc-filters": "",
         "constant": "Konstant",
         "custom": "Anpassad",
         "data-source": "Datakälla",
@@ -7266,6 +7271,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -8007,6 +8013,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "Stjärnmärkt"
     },
     "new-data-source-view": {
@@ -10347,6 +10357,7 @@
         "expander-column-name": "",
         "no-data": "Inga data"
       },
+      "no-rows": "",
       "no-values-label": "Inga värden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} av {{numRows}} rader",
       "sort-by-column": "",
@@ -11004,24 +11015,14 @@
     },
     "forgot-password": "Glömt ditt lösenord?",
     "form": {
-      "confirmation-code": "Bekräftelsekod krävs",
-      "confirmation-code-label": "Bekräftelsekod",
-      "confirmation-code-placeholder": "bekräftelsekod",
-      "email-label": "E-post",
-      "email-placeholder": "e-post",
-      "email-required": "E-post är obligatoriskt",
-      "name-label": "Namn",
       "password-label": "Lösenord",
       "password-placeholder": "lösenord",
       "password-required": "Lösenord är obligatoriskt",
-      "passwordless-username-label": "Användarnamn",
       "submit-label": "Logga in",
       "submit-loading-label": "Loggar in ...",
       "username-label": "E-post eller användarnamn",
       "username-placeholder": "e-post eller användarnamn",
-      "username-required": "E-post eller användarnamn krävs",
-      "verify-email-label": "Skicka ett verifieringsmeddelande",
-      "verify-email-loading-label": "E-post skickas …"
+      "username-required": "E-post eller användarnamn krävs"
     },
     "layout": {
       "update-password": "Uppdatera ditt lösenord"
@@ -14940,6 +14941,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Radbryt rubriktext",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
