@@ -66,18 +66,12 @@ func TestIntegrationFolderTree(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	modes := []grafanarest.DualWriterMode{
-		grafanarest.Mode0, // legacy only
-		grafanarest.Mode1, // write both (best-effort), read legacy
-		grafanarest.Mode5, // write/read unified, no fallback
-	}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("mode %d", mode), func(t *testing.T) {
 			runIntegrationFolderTree(t, testinfra.GrafanaOpts{
-				AppModeProduction:     true,
-				DisableAnonymous:      true,
-				APIServerStorageType:  "unified",
-				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(mode),
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: mode,
