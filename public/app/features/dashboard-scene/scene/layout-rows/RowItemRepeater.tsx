@@ -118,6 +118,8 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
     const localSet = getLocalVariableValueSet(variable, variableValues[rowIndex], variableTexts[rowIndex]);
     const localVariables = localSet.state.variables.map((v) => v.clone());
     let repeatedVariableSet: SceneVariableSet;
+    // First iteration reuses the original row and updates its variable set in place.
+    // Cloned rows must get an isolated variable set so each repeat keeps its own selected value/text.
     if (isSourceRow && sourceVariables instanceof SceneVariableSet) {
       sourceVariables.setState({
         variables: [
