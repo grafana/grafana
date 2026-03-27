@@ -82,6 +82,7 @@ describe('tagKeysProviders', () => {
           { text: 'alertname', value: 'alertname' },
           { text: 'grafana_folder', value: 'grafana_folder' },
           { text: 'severity', value: 'severity' },
+          { text: 'environment', value: 'environment' },
           { text: '__name__', value: '__name__' },
           { text: 'team', value: 'team' },
         ] satisfies MetricFindValue[]),
@@ -93,13 +94,21 @@ describe('tagKeysProviders', () => {
       const result = await getAdHocTagKeysProvider(variable, null);
 
       expect(result.replace).toBe(true);
-      expect(result.values).toEqual([
-        { value: 'alertstate', text: 'State', group: 'Common' },
-        { value: 'alertname', text: 'Rule name', group: 'Common' },
-        { value: 'grafana_folder', text: 'Folder', group: 'Common' },
-        { text: 'severity', value: 'severity', group: 'All' },
-        { text: 'team', value: 'team', group: 'All' },
-      ]);
+      expect(result.values).toEqual(
+        expect.arrayContaining([
+          { value: 'alertstate', text: 'State', group: 'Common' },
+          { value: 'alertname', text: 'Rule name', group: 'Common' },
+          { value: 'grafana_folder', text: 'Folder', group: 'Common' },
+          { value: 'service', text: 'Service', group: 'Common' },
+          { text: 'Severity', value: 'severity', group: 'Common' },
+          { text: 'Team', value: 'team', group: 'Common' },
+          { text: 'environment', value: 'environment', group: 'All' },
+        ])
+      );
+      expect(result.values).not.toEqual(expect.arrayContaining([{ text: 'service', value: 'service', group: 'All' }]));
+      expect(result.values).not.toEqual(
+        expect.arrayContaining([{ text: 'service_name', value: 'service_name', group: 'All' }])
+      );
     });
   });
 
@@ -117,6 +126,42 @@ describe('tagKeysProviders', () => {
 
       expect(result.replace).toBe(true);
       expect(result.values).toEqual(tagValues);
+    });
+
+    it('merges and deduplicates values for combined service key', async () => {
+      const getTagValues = jest.fn().mockImplementation(({ key }: { key: string }) => {
+        if (key === 'service') {
+          return [
+            { text: 'payments', value: 'payments' },
+            { text: 'checkout', value: 'checkout' },
+          ];
+        }
+        if (key === 'service_name') {
+          return [
+            { text: 'payments', value: 'payments' },
+            { text: 'api', value: 'api' },
+          ];
+        }
+        return [];
+      });
+
+      mockGetDataSourceSrv({ getTagValues });
+
+      const variable = new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'test' } });
+      activateWithScene(variable);
+
+      const result = await getAdHocTagValuesProvider(variable, {
+        key: 'service',
+        operator: '=',
+        value: '',
+      });
+
+      expect(result.replace).toBe(true);
+      expect(result.values).toEqual([
+        { text: 'api', value: 'api' },
+        { text: 'checkout', value: 'checkout' },
+        { text: 'payments', value: 'payments' },
+      ]);
     });
   });
 

@@ -3,7 +3,7 @@ import { PromQuery } from '@grafana/prometheus';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFilterWithLabels, AdHocFiltersVariable, GroupByVariable, sceneGraph } from '@grafana/scenes';
 
-import { DATASOURCE_UID, METRIC_NAME } from '../constants';
+import { DATASOURCE_UID, METRIC_NAME, SERVICE_FILTER_LABEL_KEYS } from '../constants';
 
 const COMMON_GROUP = 'Common';
 const ALL_GROUP = 'All';
@@ -17,10 +17,14 @@ const FILTER_PROMOTED: MetricFindValue[] = [
   { value: 'alertstate', text: 'State', group: COMMON_GROUP },
   { value: 'alertname', text: 'Rule name', group: COMMON_GROUP },
   { value: 'grafana_folder', text: 'Folder', group: COMMON_GROUP },
+  { value: 'severity', text: 'Severity', group: COMMON_GROUP },
+  { value: 'service', text: 'Service', group: COMMON_GROUP },
+  { value: 'team', text: 'Team', group: COMMON_GROUP },
+  { value: 'namespace', text: 'Namespace', group: COMMON_GROUP },
 ];
 
 /** Labels that should never appear in dropdowns */
-const EXCLUDED = new Set(['__name__']);
+const EXCLUDED = new Set<string>(['__name__', 'service_name']);
 
 /** Query used to scope label lookups to the alerting metric */
 const metricQuery: PromQuery = { refId: 'keys', expr: METRIC_NAME };
@@ -107,6 +111,17 @@ export async function getAdHocTagValuesProvider(
   filter: AdHocFilterWithLabels
 ): Promise<{ replace: boolean; values: MetricFindValue[] }> {
   const timeRange = sceneGraph.getTimeRange(variable).state.value;
+  if (filter.key === 'service') {
+    const [serviceValues, serviceNameValues] = await Promise.all(
+      SERVICE_FILTER_LABEL_KEYS.map((key) => fetchTagValues(timeRange, key))
+    );
+    const allValues = [...serviceValues, ...serviceNameValues];
+    const dedupedValues = Array.from(new Map(allValues.map((v) => [String(v.value ?? v.text ?? ''), v])).values()).sort(
+      (a, b) => collator.compare(String(a.text ?? a.value ?? ''), String(b.text ?? b.value ?? ''))
+    );
+    return { replace: true, values: dedupedValues };
+  }
+
   const values = await fetchTagValues(timeRange, filter.key);
   return { replace: true, values };
 }

@@ -30,6 +30,8 @@ export const TRIAGE_STATE_URL_PARAMS = [
 export const DATASOURCE_UID = config.unifiedAlerting.stateHistory?.prometheusTargetDatasourceUID;
 export const METRIC_NAME = config.unifiedAlerting.stateHistory?.prometheusMetricName ?? 'GRAFANA_ALERTS';
 
+export const SERVICE_FILTER_LABEL_KEYS = ['service', 'service_name'] as const;
+
 /**
  * Internal/structural labels to exclude from frequency counting.
  *

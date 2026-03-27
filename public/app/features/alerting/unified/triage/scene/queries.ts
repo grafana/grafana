@@ -1,12 +1,78 @@
 import { SceneDataQuery } from '@grafana/scenes';
 
-import { METRIC_NAME } from '../constants';
+import { parsePromQLStyleMatcherLooseSafe, quoteWithEscape } from '../../utils/matchers';
+import { METRIC_NAME, SERVICE_FILTER_LABEL_KEYS } from '../constants';
 
 import { getDataQuery } from './utils';
 
+type MatcherOperator = '=' | '!=' | '=~' | '!~';
+
+interface MatcherExpr {
+  name: string;
+  operator: MatcherOperator;
+  value: string;
+}
+
+function toMatcherOperator({ isRegex, isEqual }: { isRegex: boolean; isEqual: boolean }): MatcherOperator {
+  if (isRegex) {
+    return isEqual ? '=~' : '!~';
+  }
+  return isEqual ? '=' : '!=';
+}
+
+function parseFilterMatchers(filter: string): MatcherExpr[] {
+  if (!filter.trim()) {
+    return [];
+  }
+
+  return parsePromQLStyleMatcherLooseSafe(filter).map((matcher) => ({
+    name: matcher.name,
+    operator: toMatcherOperator(matcher),
+    value: matcher.value,
+  }));
+}
+
+function serializeMatchers(matchers: MatcherExpr[]): string {
+  return matchers.map((m) => `${m.name}${m.operator}${quoteWithEscape(m.value)}`).join(',');
+}
+
+/**
+ * Builds one or more metric selectors from the current ad-hoc filter string.
+ 
+ * For Service filter: user-facing key is `service`, but data can be
+ * labeled as either `service` or `service_name
+ */
+function buildMetricSelectors(filter: string, extraMatchers: MatcherExpr[] = []): string[] {
+  const allMatchers = [...parseFilterMatchers(filter), ...extraMatchers];
+  const serviceCombinedMatchers = allMatchers.filter((m) => m.name === 'service');
+  const baseMatchers = allMatchers.filter((m) => m.name !== 'service');
+
+  if (serviceCombinedMatchers.length === 0) {
+    return [`${METRIC_NAME}{${serializeMatchers(baseMatchers)}}`];
+  }
+
+  return SERVICE_FILTER_LABEL_KEYS.map((serviceKey) => {
+    const branchMatchers = [
+      ...baseMatchers,
+      ...serviceCombinedMatchers.map((matcher) => ({
+        ...matcher,
+        name: serviceKey,
+      })),
+    ];
+    return `${METRIC_NAME}{${serializeMatchers(branchMatchers)}}`;
+  });
+}
+
+function orSelectors(selectors: string[]): string {
+  if (selectors.length === 1) {
+    return selectors[0];
+  }
+  return `(${selectors.join(' or ')})`;
+}
+
 /** Time series for the summary bar chart: count by alertstate */
 export function summaryChartQuery(filter: string): SceneDataQuery {
-  return getDataQuery(`count by (alertstate) (${METRIC_NAME}{${filter}})`, {
+  return getDataQuery(`count by (alertstate) (${orSelectors(buildMetricSelectors(filter))})`, {
     legendFormat: '{{alertstate}}',
   });
 }
@@ -14,7 +80,7 @@ export function summaryChartQuery(filter: string): SceneDataQuery {
 /** Range table query (A) for tree rows + deduplicated instant query (B) for badge counts */
 export function getWorkbenchQueries(countBy: string, filter: string): [SceneDataQuery, SceneDataQuery] {
   return [
-    getDataQuery(`count by (${countBy}) (${METRIC_NAME}{${filter}})`, {
+    getDataQuery(`count by (${countBy}) (${orSelectors(buildMetricSelectors(filter))})`, {
       refId: 'A',
       format: 'table',
     }),
@@ -42,9 +108,9 @@ export function summaryRuleCountQuery(filter: string): SceneDataQuery {
 
 /** Instance timeseries for a specific alert rule */
 export function alertRuleInstancesQuery(ruleUID: string, filter: string): SceneDataQuery {
-  const filters = filter ? `grafana_rule_uid="${ruleUID}",${filter}` : `grafana_rule_uid="${ruleUID}"`;
+  const selectors = buildMetricSelectors(filter, [{ name: 'grafana_rule_uid', operator: '=', value: ruleUID }]);
   return getDataQuery(
-    `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${METRIC_NAME}{${filters}})`,
+    `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${orSelectors(selectors)})`,
     { format: 'timeseries', legendFormat: '{{alertstate}}' }
   );
 }
@@ -59,13 +125,13 @@ export function alertRuleInstancesQuery(ruleUID: string, filter: string): SceneD
  * counted only once in their firing state.
  */
 function uniqueAlertInstancesExpr(filter: string): string {
-  const firingFilter = filter ? `alertstate="firing",${filter}` : 'alertstate="firing"';
-  const pendingFilter = filter ? `alertstate="pending",${filter}` : 'alertstate="pending"';
+  const firingSelectors = buildMetricSelectors(filter, [{ name: 'alertstate', operator: '=', value: 'firing' }]);
+  const pendingSelectors = buildMetricSelectors(filter, [{ name: 'alertstate', operator: '=', value: 'pending' }]);
+  const firingExpr = orSelectors(firingSelectors.map((selector) => `last_over_time(${selector}[$__range])`));
+  const pendingExpr = orSelectors(pendingSelectors.map((selector) => `last_over_time(${selector}[$__range])`));
+
   return (
-    `last_over_time(${METRIC_NAME}{${firingFilter}}[$__range]) or ` +
-    `(last_over_time(${METRIC_NAME}{${pendingFilter}}[$__range]) ` +
-    `unless ignoring(alertstate, grafana_alertstate) ` +
-    `last_over_time(${METRIC_NAME}{${firingFilter}}[$__range]))`
+    `${firingExpr} or ` + `(${pendingExpr} ` + `unless ignoring(alertstate, grafana_alertstate) ` + `${firingExpr})`
   );
 }
 
