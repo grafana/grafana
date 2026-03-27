@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	stream_utils "github.com/grafana/grafana/pkg/tsdb/tempo/utils"
+	"google.golang.org/grpc/metadata"
 )
 
 func (s *Service) SubscribeStream(_ context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
@@ -48,6 +49,11 @@ func (s *Service) RunStream(ctx context.Context, request *backend.RunStreamReque
 		return err
 	}
 	request.Headers = headers
+
+	// add them to the outgoing context.
+	for key, value := range headers {
+		ctx = metadata.AppendToOutgoingContext(ctx, key, value)
+	}
 
 	if strings.HasPrefix(request.Path, SearchPathPrefix) {
 		if dsInfoErr != nil {

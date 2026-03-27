@@ -46,10 +46,14 @@ func SetHeadersFromIncomingContext(ctx context.Context, logger log.Logger) (map[
 func getTeamHeaders(ctx context.Context, logger log.Logger, plugin backend.PluginContext) map[string]string {
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if !ok {
-		if plugin.DataSourceInstanceSettings != nil {
-			logger.Debug("No outgoing gRPC metadata for team header forwarding", "datasource_uid", plugin.DataSourceInstanceSettings.UID)
+		// if no metadata was found in the outgoing context, try to get it from incoming context
+		md, ok = metadata.FromIncomingContext(ctx)
+		if !ok {
+			if plugin.DataSourceInstanceSettings != nil {
+				logger.Debug("No outgoing gRPC metadata for team header forwarding", "datasource_uid", plugin.DataSourceInstanceSettings.UID)
+			}
+			return nil
 		}
-		return nil
 	}
 
 	headers := map[string]string{}
