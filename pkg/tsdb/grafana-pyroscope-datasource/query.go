@@ -257,10 +257,10 @@ func (d *PyroscopeDatasource) queryHeatmap(ctx context.Context, span trace.Span,
 		for _, label := range series.Labels {
 			labels[label.Name] = label.Value
 		}
-		points := make([]*heatmap.Point, len(series.Points))
+		slots := make([]*heatmap.Slot, len(series.Points))
 		exemplars := []*exemplar.Exemplar{}
 		for i, p := range series.Points {
-			points[i] = &heatmap.Point{
+			slots[i] = &heatmap.Slot{
 				Timestamp: p.Timestamp,
 				YMin:      p.YMin,
 				Counts:    p.Counts,
@@ -279,7 +279,7 @@ func (d *PyroscopeDatasource) queryHeatmap(ctx context.Context, span trace.Span,
 				})
 			}
 		}
-		heatmapFrame := heatmap.CreateHeatmapFrame(labels, points, heatmapResp.Units, stepDuration)
+		heatmapFrame := heatmap.CreateHeatmapFrame(labels, slots, heatmapResp.Units, stepDuration)
 		frames = append(frames, heatmapFrame)
 
 		if len(exemplars) > 0 {
