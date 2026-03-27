@@ -783,7 +783,9 @@
         "unknown-rule": "Onbekend",
         "value-in-transition": "Waarde in transitie"
       },
-      "error": "Er ging iets mis bij het laden van de waarschuwingsstatusgeschiedenis",
+      "error": {
+        "server-error": ""
+      },
       "filter": {
         "clear": "Filters wissen",
         "info": {
@@ -794,6 +796,10 @@
         }
       },
       "filterBy": "Filteren op:",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "tab": {
         "alert-events": "",
         "notifications": ""
@@ -2021,6 +2027,10 @@
       "error-unable-to-fetch": "Kan waarschuwingsstatusgeschiedenis niet ophalen",
       "loading": "Bezig met laden ...",
       "no-transitions-match-filters": "",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "start-state": "",
       "timeline-hidden": "",
       "title-error-fetching-the-state-history": "Er is een fout opgetreden bij het ophalen van de statusgeschiedenis",
@@ -4325,6 +4335,7 @@
       "button-deleting": "Bezig met verwijderen...",
       "commit": "Map verwijderen",
       "delete-warning": "Hiermee worden deze map en alle onderliggende mappen verwijderd. In totaal heeft dit invloed op:",
+      "missing-info": "",
       "success-message": "Map is verwijderd"
     },
     "descendant-count": {
@@ -4377,12 +4388,13 @@
       "name-label": "Mapnaam"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "Er is een fout opgetreden bij het aanmaken van de map",
       "button-create": "Aanmaken",
       "button-creating": "Aanmaken...",
       "cancel": "Annuleren",
       "error-invalid-characters": "De mapnaam bevat ongeldige tekens. Alleen letters, cijfers, spaties, underscores en koppeltekens zijn toegestaan.",
+      "error-missing-title-or-repo": "",
       "error-required": "Mapnaam is vereist",
+      "error-saving": "",
       "folder-name-input-placeholder-enter-folder-name": "Mapnaam invoeren",
       "label-folder-name": "Mapnaam",
       "text-pull-request-created": "Er is een pull request gemaakt met wijzigingen in deze map:",
@@ -5995,6 +6007,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": ""
+      },
       "prompt-card": {
         "placeholder": "",
         "placeholder-multi": ""
@@ -6308,7 +6323,6 @@
         "label": "Bewerken afsluiten",
         "tooltip": "Verlaat bewerkingsmodus en verwijdert niet opgeslagen wijzigingen"
       },
-      "mark-favorite": "Markeren als favoriet",
       "more-save-options": "Meer opties voor opslaan",
       "new": {
         "back-to-dashboard": "Terug naar dashboard",
@@ -6378,8 +6392,7 @@
       "star-added": "Toegevoegd aan favorieten",
       "star-remove-error": "Kan niet verwijderen uit favorieten",
       "star-removed": "Verwijderd uit favorieten",
-      "unlink-library-panel": "Bibliotheekpaneel ontkoppelen",
-      "unmark-favorite": "Markering als favoriet ongedaan maken"
+      "unlink-library-panel": "Bibliotheekpaneel ontkoppelen"
     },
     "transformation-editor": {
       "input-data": "Data invoer",
@@ -6460,6 +6473,7 @@
       "description": {
         "action": "Variabelebeschrijving wijzigen"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "Optie variabele verbergen wijzigen"
       },
@@ -6633,9 +6647,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Ad hoc-opties",
-      "alert-not-supported": "Deze gegevensbron ondersteunt geen ad-hocfilters",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "Stelt gebruikers in staat om aangepaste waarden aan de lijst toe te voegen",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Geef afmetingen op als csv: {{name}}, {{value}}",
@@ -6926,11 +6944,12 @@
       "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Kan dashboard niet verwijderen",
       "cancel-action": "Annuleren",
       "delete-action": "Dashboard verwijderen",
+      "delete-error": "",
       "deleting": "Bezig met verwijderen ...",
       "drawer-title": "Kan provisioned dashboard niet verwijderen",
+      "no-repository-selected": "",
       "success-message": "Dashboard is verwijderd"
     },
     "description-label": {
@@ -6999,7 +7018,7 @@
         "values-timespans": "Waarden zijn tijdsperioden, bijv. 1 min, 1 u, 1 d"
       },
       "name": {
-        "ad-hoc-filters": "Ad-hocfilters",
+        "ad-hoc-filters": "",
         "constant": "Constant",
         "custom": "Aangepast",
         "data-source": "Gegevensbron",
@@ -7252,6 +7271,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -7397,16 +7417,17 @@
       "affected-dashboards_other": "Deze update is van invloed op <1>{{count}} dashboards.</1> Dit heeft invloed op de volgende dashboards die het paneel gebruiken:"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "Fout bij opslaan van dashboard",
       "cancel": "Annuleren",
       "cannot-be-saved": "Dit dashboard kan niet worden opgeslagen vanuit de Grafana-gebruikersinterface omdat het is geprovisioneerd vanuit een andere bron. Kopieer de JSON of sla deze op in een onderstaand bestand. Vervolgens kun je je dashboard bijwerken in de provisioningbron.",
       "copy-json-to-clipboard": "JSON kopiëren naar klembord",
+      "error-saving": "",
       "file-path": "<strong>Bestandspad:</strong> {{filePath}}",
       "form-loading-error": "",
       "form-loading-error-unknown": "",
       "label-description": "Beschrijving",
       "label-target-folder": "Doelmap",
       "label-title": "Titel",
+      "repo-path-required": "",
       "save": "Opslaan",
       "save-json-to-file": "JSON opslaan naar bestand",
       "saving": "Aan het opslaan ...",
@@ -7992,6 +8013,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "Favorieten"
     },
     "new-data-source-view": {
@@ -8920,7 +8945,8 @@
     "select-placeholder": "Filteren op map"
   },
   "folder-repo": {
-    "read-only-badge": "Alleen lezen"
+    "read-only-badge": "Alleen lezen",
+    "repository-not-found-tooltip": ""
   },
   "folders": {
     "api": {
@@ -10331,6 +10357,7 @@
         "expander-column-name": "",
         "no-data": "Geen gegevens"
       },
+      "no-rows": "",
       "no-values-label": "Geen waarden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen",
       "sort-by-column": "",
@@ -10988,24 +11015,14 @@
     },
     "forgot-password": "Je wachtwoord vergeten?",
     "form": {
-      "confirmation-code": "Bevestigingscode is vereist",
-      "confirmation-code-label": "Bevestigingscode",
-      "confirmation-code-placeholder": "bevestigingscode",
-      "email-label": "E-mailadres",
-      "email-placeholder": "emailadres",
-      "email-required": "E-mailadres is vereist",
-      "name-label": "Naam",
       "password-label": "Wachtwoord",
       "password-placeholder": "wachtwoord",
       "password-required": "Wachtwoord is vereist",
-      "passwordless-username-label": "Gebruikersnaam",
       "submit-label": "Inloggen",
       "submit-loading-label": "Aan het inloggen ...",
       "username-label": "E-mailadres of gebruikersnaam",
       "username-placeholder": "E-mailadres of gebruikersnaam",
-      "username-required": "E-mailadres of gebruikersnaam is vereist",
-      "verify-email-label": "Stuur verificatie-e-mail",
-      "verify-email-loading-label": "E-mail wordt verstuurd ..."
+      "username-required": "E-mailadres of gebruikersnaam is vereist"
     },
     "layout": {
       "update-password": "Je wachtwoord bijwerken"
@@ -12196,12 +12213,10 @@
       "description": "Meldingen die je hebt ontvangen, worden hier weergegeven",
       "title": "Je bent helemaal up-to-date!"
     },
-    "starred-dashboard": "Dashboard gemarkeerd als favoriet",
     "stored-notifications": {
       "dismiss-notifications": "Meldingen negeren",
       "title-alert": "Deze pagina toont eerdere fouten en waarschuwingen. Eenmaal afgewezen, kunnen ze niet opnieuw worden opgehaald."
-    },
-    "unstarred-dashboard": "Markering van dashboard als favoriet ongedaan gemaakt"
+    }
   },
   "oauth": {
     "form": {
@@ -12488,11 +12503,13 @@
       "description-customize-dashboard-elements-visibility": "Zichtbaarheid van dashboardelementen aanpassen",
       "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "Paneelhoogtes worden aangepast aan schermgrootte",
+      "description-playlist-nav": "",
       "label-autofit": "Automatisch aanpassen",
       "label-dashboard-links": "Dashboardlinks",
       "label-display-dashboard-controls": "Besturingselementen van dashboard weergeven",
       "label-hide-logo": "",
       "label-mode": "Modus",
+      "label-playlist-nav": "",
       "label-time-and-refresh": "Tijd en vernieuwen",
       "label-variables": "Variabelen",
       "modes": {
@@ -13120,6 +13137,10 @@
       "title-instant-updates-requests-webhooks": "Directe updates en pull requests met webhooks.",
       "title-visual-previews-in-pull-requests": "Visuele voorbeelden in pull requests met beeldweergave"
     },
+    "error": {
+      "branch-not-found-dashboard": "",
+      "branch-not-found-folder": ""
+    },
     "error-title-default": "Fout",
     "expanded-row": {
       "job-specification": "Taakbeschrijving",
@@ -13329,6 +13350,28 @@
         "label": "Bronnen synchroniseren met externe opslag",
         "subtitle": "Gebruik deze optie als je je hele Grafana-instantie via externe opslag wilt synchroniseren en beheren."
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "",
+      "title": ""
+    },
+    "orphaned-repository-tooltip": "",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "",
+      "confirm-delete-button": "",
+      "confirm-delete-title": "",
+      "confirm-release-body": "",
+      "confirm-release-button": "",
+      "confirm-release-title": "",
+      "contact-admin": "",
+      "convert-to-local-button": "",
+      "delete-button": "",
+      "job-error": "",
+      "job-success": "",
+      "job-warning": "",
+      "message": "",
+      "submit-error": "",
+      "title": ""
     },
     "provisioning-wizard": {
       "on-submit": {
@@ -14712,13 +14755,19 @@
     },
     "presets": {
       "horizontal-threshold-value": "",
+      "horizontal-threshold-value-desc": "",
       "horizontal-threshold-value-sparkline": "",
+      "horizontal-threshold-value-sparkline-desc": "",
       "list": "",
       "list_desc": "",
       "threshold-background": "",
+      "threshold-background-desc": "",
       "threshold-background-sparkline": "",
+      "threshold-background-sparkline-desc": "",
       "threshold-value": "",
+      "threshold-value-desc": "",
       "threshold-value-sparkline": "",
+      "threshold-value-sparkline-desc": "",
       "wide-list": "",
       "wide-list-desc": ""
     },
@@ -14892,6 +14941,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Koptekst laten teruglopen",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "automatisch",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
@@ -14941,12 +14991,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "",
       "create": "Aanmaken",
+      "description-create-team-folder": "",
       "description-email": "Dit is optioneel en wordt voornamelijk gebruikt voor het toestaan van aangepaste teamavatars",
-      "failed-to-create": "Kan geen team maken",
+      "failed-to-create": "",
+      "folder-create-failed": "",
+      "folder-create-failed-help": "",
+      "folder-creation-link": "",
+      "folder-creation-loading": "",
+      "folder-creation-success": "",
+      "label-create-team-folder": "",
       "label-email": "E-mailadres",
       "label-name": "Naam",
-      "label-role": "Rol"
+      "label-role": "Rol",
+      "role-creation-success": "",
+      "roles-create-failed": "",
+      "roles-create-permission-issue": "",
+      "roles-creation-loading": "",
+      "team-creation-link": "",
+      "team-creation-loading": "",
+      "team-creation-success": ""
     },
     "empty-state": {
       "button-title": "Nieuw team",

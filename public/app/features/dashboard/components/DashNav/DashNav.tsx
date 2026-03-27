@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { textUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   ButtonGroup,
   ModalsController,
@@ -20,19 +20,16 @@ import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/Na
 import config from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
-import { ID_PREFIX, setStarred } from 'app/core/reducers/navBarTree';
-import { removeNavIndex, updateNavIndex } from 'app/core/reducers/navModel';
 import AddPanelButton from 'app/features/dashboard/components/AddPanelButton/AddPanelButton';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PublicDashboardBadgeLegacy } from 'app/features/dashboard-scene/scene/new-toolbar/actions/PublicDashboardBadge';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
+import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { KioskMode } from 'app/types/dashboard';
 import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
-import { StoreState } from 'app/types/store';
 
 import {
   DynamicDashNavButtonModel,
@@ -45,17 +42,10 @@ import { DashNavTimeControls } from './DashNavTimeControls';
 import { ShareButton } from './ShareButton';
 
 const mapDispatchToProps = {
-  removeNavIndex,
-  setStarred,
   updateTimeZoneForSession,
-  updateNavIndex,
 };
 
-const mapStateToProps = (state: StoreState) => ({
-  navIndex: state.navIndex,
-});
-
-const connector = connect(mapStateToProps, mapDispatchToProps);
+const connector = connect(null, mapDispatchToProps);
 
 export interface OwnProps {
   dashboard: DashboardModel;
@@ -127,38 +117,6 @@ export const DashNav = memo<Props>((props) => {
     }
   };
 
-  const onStarDashboard = () => {
-    DashboardInteractions.toolbarFavoritesClick();
-    const dashboardSrv = getDashboardSrv();
-    const { dashboard, navIndex, removeNavIndex, setStarred, updateNavIndex } = props;
-
-    dashboardSrv.starDashboard(dashboard.uid, Boolean(dashboard.meta.isStarred)).then((newState) => {
-      setStarred({ id: dashboard.uid, title: dashboard.title, url: dashboard.meta.url ?? '', isStarred: newState });
-      const starredNavItem = navIndex['starred'];
-      if (newState) {
-        starredNavItem.children?.push({
-          id: ID_PREFIX + dashboard.uid,
-          text: dashboard.title,
-          url: dashboard.meta.url ?? '',
-          parentItem: starredNavItem,
-        });
-        reportInteraction('grafana_dashboards_star_dashboard', {
-          origin: 'dashnav',
-          status: newState ? 'starred' : 'unstarred',
-        });
-      } else {
-        removeNavIndex(ID_PREFIX + dashboard.uid);
-        const indexToRemove = starredNavItem.children?.findIndex((element) => element.id === ID_PREFIX + dashboard.uid);
-        if (indexToRemove) {
-          starredNavItem.children?.splice(indexToRemove, 1);
-        }
-      }
-      updateNavIndex(starredNavItem);
-      dashboard.meta.isStarred = newState;
-      forceUpdate();
-    });
-  };
-
   const onOpenSettings = () => {
     DashboardInteractions.toolbarSettingsClick();
     locationService.partial({ editview: 'settings' });
@@ -193,25 +151,22 @@ export const DashNav = memo<Props>((props) => {
     const isDevEnv = config.buildInfo.env === 'development';
 
     const { dashboard, kioskMode } = props;
-    const { canStar, isStarred } = dashboard.meta;
+    const { canStar } = dashboard.meta;
     const buttons: ReactNode[] = [];
 
     if (kioskMode || isPlaylistRunning()) {
       return [];
     }
 
-    if (canStar) {
-      let desc = isStarred
-        ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
-        : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
+    // uid check narrows the type for StarToolbarButton's required `id` prop
+    if (canStar && dashboard.uid) {
       buttons.push(
-        <DashNavButton
-          tooltip={desc}
-          icon={isStarred ? 'favorite' : 'star'}
-          iconType={isStarred ? 'mono' : 'default'}
-          iconSize="lg"
-          onClick={onStarDashboard}
+        <StarToolbarButton
           key="button-star"
+          group="dashboard.grafana.app"
+          kind="Dashboard"
+          title={dashboard.title}
+          id={dashboard.uid}
         />
       );
     }

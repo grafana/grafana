@@ -783,7 +783,9 @@
         "unknown-rule": "Desconocido",
         "value-in-transition": "Valor en transición"
       },
-      "error": "Se ha producido un error al cargar el historial de estado de alerta",
+      "error": {
+        "server-error": ""
+      },
       "filter": {
         "clear": "Borrar filtros",
         "info": {
@@ -794,6 +796,10 @@
         }
       },
       "filterBy": "Filtrar por:",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "tab": {
         "alert-events": "",
         "notifications": ""
@@ -2021,6 +2027,10 @@
       "error-unable-to-fetch": "No se puede obtener el historial de estado de alerta",
       "loading": "Cargando...",
       "no-transitions-match-filters": "",
+      "slow-query": {
+        "text": "",
+        "title": ""
+      },
       "start-state": "",
       "timeline-hidden": "",
       "title-error-fetching-the-state-history": "Error al obtener el historial de estado",
@@ -4325,6 +4335,7 @@
       "button-deleting": "Eliminando...",
       "commit": "Eliminar carpeta",
       "delete-warning": "Esto eliminará esta carpeta y todas sus derivadas. En total, esto afectará a:",
+      "missing-info": "",
       "success-message": "Carpeta eliminada correctamente"
     },
     "descendant-count": {
@@ -4377,12 +4388,13 @@
       "name-label": "Nombre de la carpeta"
     },
     "new-provisioned-folder-form": {
-      "alert-error-creating-folder": "Error al crear la carpeta",
       "button-create": "Crear",
       "button-creating": "Creando...",
       "cancel": "Cancelar",
       "error-invalid-characters": "El nombre de la carpeta contiene caracteres no válidos. Solo se pueden usar letras, números, espacios, guiones y guiones bajos.",
+      "error-missing-title-or-repo": "",
       "error-required": "Nombre de la carpeta obligatorio",
+      "error-saving": "",
       "folder-name-input-placeholder-enter-folder-name": "Introducir el nombre de la carpeta",
       "label-folder-name": "Nombre de la carpeta",
       "text-pull-request-created": "Se ha creado una solicitud de extracción con cambios en esta carpeta:",
@@ -5995,6 +6007,9 @@
       }
     },
     "panel-assistant": {
+      "hint": {
+        "aria-label": ""
+      },
       "prompt-card": {
         "placeholder": "",
         "placeholder-multi": ""
@@ -6308,7 +6323,6 @@
         "label": "Salir de la edición",
         "tooltip": "Salir del modo de edición y descartar cambios no guardados"
       },
-      "mark-favorite": "Marcar como favorito",
       "more-save-options": "Más opciones de guardado",
       "new": {
         "back-to-dashboard": "Volver al dashboard",
@@ -6378,8 +6392,7 @@
       "star-added": "Añadido a destacados",
       "star-remove-error": "Error al eliminar de destacados",
       "star-removed": "Eliminado de destacados",
-      "unlink-library-panel": "Desvincular panel de librería",
-      "unmark-favorite": "Deshacer marca como favorito"
+      "unlink-library-panel": "Desvincular panel de librería"
     },
     "transformation-editor": {
       "input-data": "Datos de entrada",
@@ -6460,6 +6473,7 @@
       "description": {
         "action": "Cambiar descripción de la variable"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "Cambiar opción de ocultar variable"
       },
@@ -6633,9 +6647,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Opciones específicas",
-      "alert-not-supported": "Esta fuente de datos no admite filtros específicos",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "Permite a los usuarios añadir valores personalizados a la lista",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Proporcionar dimensiones como CSV: {{name}}, {{value}}",
@@ -6926,11 +6944,12 @@
       "placeholder": ""
     },
     "delete-provisioned-dashboard-form": {
-      "api-error": "Error al eliminar el panel de control",
       "cancel-action": "Cancelar",
       "delete-action": "Eliminar panel de control",
+      "delete-error": "",
       "deleting": "Eliminando...",
       "drawer-title": "Eliminar dashboard aprovisionado",
+      "no-repository-selected": "",
       "success-message": "Dashboard eliminado correctamente"
     },
     "description-label": {
@@ -6999,7 +7018,7 @@
         "values-timespans": "Los valores son intervalos de tiempo, por ejemplo: 1m, 1h, 1d"
       },
       "name": {
-        "ad-hoc-filters": "Filtros «ad hoc»",
+        "ad-hoc-filters": "",
         "constant": "Constante",
         "custom": "Personalizado",
         "data-source": "Fuente de datos",
@@ -7252,6 +7271,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -7397,16 +7417,17 @@
       "affected-dashboards_other": "Esta actualización afectará a <1>{{count}} dashboards.</1> Los siguientes dashboards que utilizan el panel se verán afectados:"
     },
     "save-provisioned-dashboard-form": {
-      "api-error": "Error al guardar el panel de control",
       "cancel": "Cancelar",
       "cannot-be-saved": "Este dashboard no se puede guardar desde la interfaz de usuario de Grafana porque se ha aprovisionado desde otra fuente. Copia el JSON o guárdalo en un archivo a continuación; luego puedes actualizar el dashboard en la fuente de aprovisionamiento.",
       "copy-json-to-clipboard": "Copiar JSON al portapapeles",
+      "error-saving": "",
       "file-path": "<strong>Ruta del archivo:</strong> {{filePath}}",
       "form-loading-error": "",
       "form-loading-error-unknown": "",
       "label-description": "Descripción",
       "label-target-folder": "Carpeta de destino",
       "label-title": "Título",
+      "repo-path-required": "",
       "save": "Guardar",
       "save-json-to-file": "Guardar JSON en un archivo",
       "saving": "Guardando…",
@@ -7992,6 +8013,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "Destacado"
     },
     "new-data-source-view": {
@@ -8920,7 +8945,8 @@
     "select-placeholder": "Filtrar por carpeta"
   },
   "folder-repo": {
-    "read-only-badge": "Solo lectura"
+    "read-only-badge": "Solo lectura",
+    "repository-not-found-tooltip": ""
   },
   "folders": {
     "api": {
@@ -10331,6 +10357,7 @@
         "expander-column-name": "",
         "no-data": "Sin datos"
       },
+      "no-rows": "",
       "no-values-label": "Sin valores",
       "pagination-summary": "{{itemsRangeStart}}-{{displayedEnd}} de {{numRows}} filas",
       "sort-by-column": "",
@@ -10988,24 +11015,14 @@
     },
     "forgot-password": "¿Has olvidado tu contraseña?",
     "form": {
-      "confirmation-code": "Código de confirmación obligatorio",
-      "confirmation-code-label": "Código de confirmación",
-      "confirmation-code-placeholder": "código de confirmación",
-      "email-label": "Correo electrónico",
-      "email-placeholder": "correo electrónico",
-      "email-required": "El correo electrónico es obligatorio",
-      "name-label": "Nombre",
       "password-label": "Contraseña",
       "password-placeholder": "contraseña",
       "password-required": "La contraseña es obligatoria",
-      "passwordless-username-label": "Nombre de usuario",
       "submit-label": "Iniciar sesión",
       "submit-loading-label": "Iniciando sesión...",
       "username-label": "Correo o nombre de usuario",
       "username-placeholder": "dirección de correo electrónico o nombre de usuario",
-      "username-required": "El correo o el nombre de usuario es obligatorio",
-      "verify-email-label": "Enviar un correo electrónico de verificación",
-      "verify-email-loading-label": "Enviando correo electrónico…"
+      "username-required": "El correo o el nombre de usuario es obligatorio"
     },
     "layout": {
       "update-password": "Actualiza tu contraseña"
@@ -12196,12 +12213,10 @@
       "description": "Las notificaciones que has recibido aparecerán aquí",
       "title": "¡Ya estás al día!"
     },
-    "starred-dashboard": "Panel de control destacado",
     "stored-notifications": {
       "dismiss-notifications": "Descartar notificaciones",
       "title-alert": "Esta página muestra errores y advertencias anteriores. Una vez descartados, no se pueden recuperar."
-    },
-    "unstarred-dashboard": "Panel de control no destacado"
+    }
   },
   "oauth": {
     "form": {
@@ -12488,11 +12503,13 @@
       "description-customize-dashboard-elements-visibility": "Personalizar la visibilidad de los elementos del dashboard",
       "description-hide-logo": "",
       "description-panel-heights-adjusted-screen": "La altura del panel se ajustará para adecuarse al tamaño de la pantalla",
+      "description-playlist-nav": "",
       "label-autofit": "Ajuste automático",
       "label-dashboard-links": "Enlaces del dashboard",
       "label-display-dashboard-controls": "Mostrar controles del dashboard",
       "label-hide-logo": "",
       "label-mode": "Modo",
+      "label-playlist-nav": "",
       "label-time-and-refresh": "Tiempo y actualización",
       "label-variables": "Variables",
       "modes": {
@@ -13120,6 +13137,10 @@
       "title-instant-updates-requests-webhooks": "Actualizaciones instantáneas y solicitudes de extracción con webhooks.",
       "title-visual-previews-in-pull-requests": "Vistas previas visuales en solicitudes de extracción con renderizado de imágenes"
     },
+    "error": {
+      "branch-not-found-dashboard": "",
+      "branch-not-found-folder": ""
+    },
     "error-title-default": "Error",
     "expanded-row": {
       "job-specification": "Especificación del trabajo",
@@ -13329,6 +13350,28 @@
         "label": "Sincronizar todos los recursos con un almacenamiento externo",
         "subtitle": "Utiliza esta opción si quieres sincronizar y administrar toda tu instancia de Grafana a través de un almacenamiento externo."
       }
+    },
+    "orphaned-drawer-notice": {
+      "body": "",
+      "title": ""
+    },
+    "orphaned-repository-tooltip": "",
+    "orphaned-resource-banner": {
+      "confirm-delete-body": "",
+      "confirm-delete-button": "",
+      "confirm-delete-title": "",
+      "confirm-release-body": "",
+      "confirm-release-button": "",
+      "confirm-release-title": "",
+      "contact-admin": "",
+      "convert-to-local-button": "",
+      "delete-button": "",
+      "job-error": "",
+      "job-success": "",
+      "job-warning": "",
+      "message": "",
+      "submit-error": "",
+      "title": ""
     },
     "provisioning-wizard": {
       "on-submit": {
@@ -14712,13 +14755,19 @@
     },
     "presets": {
       "horizontal-threshold-value": "",
+      "horizontal-threshold-value-desc": "",
       "horizontal-threshold-value-sparkline": "",
+      "horizontal-threshold-value-sparkline-desc": "",
       "list": "",
       "list_desc": "",
       "threshold-background": "",
+      "threshold-background-desc": "",
       "threshold-background-sparkline": "",
+      "threshold-background-sparkline-desc": "",
       "threshold-value": "",
+      "threshold-value-desc": "",
       "threshold-value-sparkline": "",
+      "threshold-value-sparkline-desc": "",
       "wide-list": "",
       "wide-list-desc": ""
     },
@@ -14892,6 +14941,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Ajustar texto del encabezado",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
@@ -14941,12 +14991,27 @@
       }
     },
     "create-team": {
+      "checkbox-text-create-team-folder-team-folder": "",
       "create": "Crear",
+      "description-create-team-folder": "",
       "description-email": "Esto es opcional y se utiliza principalmente para permitir avatares de equipo personalizados",
-      "failed-to-create": "Error al crear el equipo",
+      "failed-to-create": "",
+      "folder-create-failed": "",
+      "folder-create-failed-help": "",
+      "folder-creation-link": "",
+      "folder-creation-loading": "",
+      "folder-creation-success": "",
+      "label-create-team-folder": "",
       "label-email": "Correo electrónico",
       "label-name": "Nombre",
-      "label-role": "Rol"
+      "label-role": "Rol",
+      "role-creation-success": "",
+      "roles-create-failed": "",
+      "roles-create-permission-issue": "",
+      "roles-creation-loading": "",
+      "team-creation-link": "",
+      "team-creation-loading": "",
+      "team-creation-success": ""
     },
     "empty-state": {
       "button-title": "Nuevo equipo",

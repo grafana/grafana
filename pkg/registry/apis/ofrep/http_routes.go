@@ -21,10 +21,11 @@ import (
 
 var _ builder.HTTPRouteRegistrar = (*APIBuilder)(nil)
 
-// RegisterHTTPRoutes registers the cluster-global /ofrep/v1/... routes directly
-// on Grafana's HTTP router, bypassing the k8s apiserver. Authentication is
-// handled by Grafana's ContextHandler middleware which populates c.SignedInUser
-// before this handler runs.
+// RegisterHTTPRoutes registers the /ofrep/v1/... routes on Grafana's HTTP router.
+// Used when the features-apiserver runs embedded in Grafana.
+// Identity is populated by Grafana's ContextHandler middleware (c.SignedInUser),
+// which grafanaHTTPHandler injects into the request context before the handler runs.
+// In standalone mode, RootHTTPHandler is used instead.
 func (b *APIBuilder) RegisterHTTPRoutes(rr routing.RouteRegister) {
 	rr.Group("/ofrep", func(r routing.RouteRegister) {
 		r.Post("/v1/evaluate/flags", b.grafanaHTTPHandler(func(c *contextmodel.ReqContext) {
@@ -37,6 +38,18 @@ func (b *APIBuilder) RegisterHTTPRoutes(rr routing.RouteRegister) {
 			b.rootOneFlagHandler(c.Resp, req)
 		}))
 	})
+}
+
+// RootHTTPHandler registers the /ofrep/v1/... routes directly on the k8s NonGoRestfulMux.
+// Used when the features-apiserver runs in standalone mode, where Grafana's HTTP router is
+// unavailable. Identity is expected to be populated upstream by the k8s request handler chain
+// before the request reaches the handler.
+// In embedded mode, RegisterHTTPRoutes is used instead.
+func (b *APIBuilder) RootHTTPHandler() (string, http.Handler) {
+	r := mux.NewRouter()
+	r.Methods(http.MethodPost).Path("/ofrep/v1/evaluate/flags").HandlerFunc(b.rootAllFlagsHandler)
+	r.Methods(http.MethodPost).Path("/ofrep/v1/evaluate/flags/{flagKey}").HandlerFunc(b.rootOneFlagHandler)
+	return "/ofrep/", r
 }
 
 // grafanaHTTPHandler wraps a ReqContext handler to set up the identity context

@@ -19,7 +19,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashboardV2alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
-	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -67,9 +67,15 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
+			var disableFlags []string
+			if dualWriterMode < rest.Mode5 {
+				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
+			}
+
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
+				DisableAnonymous:      true,
+				DisableFeatureToggles: disableFlags,
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesDashboards, // Enable FE-only dashboard feature flag
 				},
@@ -106,12 +112,15 @@ func TestIntegrationDashboardAPIValidation(t *testing.T) {
 
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d - kubernetesDashboards disabled", dualWriterMode), func(t *testing.T) {
+			disableFlags := []string{featuremgmt.FlagKubernetesDashboards}
+			if dualWriterMode < rest.Mode5 {
+				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
+			}
+
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
-				DisableFeatureToggles: []string{
-					featuremgmt.FlagKubernetesDashboards,
-				},
+				DisableAnonymous:      true,
+				DisableFeatureToggles: disableFlags,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"dashboards.dashboard.grafana.app": {
 						DualWriterMode: dualWriterMode,
@@ -226,9 +235,15 @@ func TestIntegrationDashboardAPI(t *testing.T) {
 	dualWriterModes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, dualWriterMode := range dualWriterModes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", dualWriterMode), func(t *testing.T) {
+			var disableFlags []string
+			if dualWriterMode < rest.Mode5 {
+				disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
+			}
+
 			// Create a K8sTestHelper which will set up a real API server
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				DisableAnonymous: true,
+				DisableAnonymous:      true,
+				DisableFeatureToggles: disableFlags,
 				EnableFeatureToggles: []string{
 					featuremgmt.FlagKubernetesDashboards,
 				},

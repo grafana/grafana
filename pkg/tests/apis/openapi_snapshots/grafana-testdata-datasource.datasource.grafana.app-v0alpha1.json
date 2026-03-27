@@ -34,66 +34,6 @@
         }
       }
     },
-    "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/connections/{name}/query": {
-      "post": {
-        "tags": [
-          "Connections (deprecated)"
-        ],
-        "description": "connect POST requests to query of QueryDataResponse",
-        "operationId": "createQueryDataResponseQuery",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "additionalProperties": true
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse"
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true,
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "grafana-testdata-datasource.datasource.grafana.app",
-          "kind": "QueryDataResponse",
-          "version": "v0alpha1"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the QueryDataResponse",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
     "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/{namespace}/datasources": {
       "get": {
         "tags": [
@@ -953,7 +893,7 @@
           "DataSource"
         ],
         "description": "Query the TestData datasources",
-        "operationId": "createDataSourceQuery",
+        "operationId": "queryDataSource",
         "requestBody": {
           "content": {
             "application/json": {
@@ -986,7 +926,7 @@
         {
           "name": "name",
           "in": "path",
-          "description": "name of the QueryDataResponse",
+          "description": "DataSource identifier",
           "required": true,
           "schema": {
             "type": "string",
