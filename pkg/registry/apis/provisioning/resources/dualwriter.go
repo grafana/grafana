@@ -415,6 +415,11 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 
 	// Create a basic parsed resource response for directories
 	cfg := r.repo.Config()
+	urls, err := getFolderURLs(ctx, opts.Path, opts.Ref, r.repo)
+	if err != nil {
+		return nil, err
+	}
+
 	parsed := &ParsedResource{
 		Action: provisioning.ResourceActionMove,
 		Info: &repository.FileInfo{
@@ -426,7 +431,8 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 			Version: FolderResource.Version,
 			Kind:    "Folder",
 		},
-		GVR: FolderResource,
+		GVR:  FolderResource,
+		URLs: urls,
 		Repo: provisioning.ResourceRepositoryInfo{
 			Type:      cfg.Spec.Type,
 			Namespace: cfg.Namespace,

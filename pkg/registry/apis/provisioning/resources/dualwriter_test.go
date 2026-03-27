@@ -671,12 +671,28 @@ func TestCreateFolder(t *testing.T) {
 	}
 }
 
+// mockReaderWriterWithURLs combines ReaderWriter and RepositoryWithURLs for
+// testing code paths that check for URL support via type assertion.
+type mockReaderWriterWithURLs struct {
+	*repository.MockReaderWriter
+	resourceURLsFn func(ctx context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error)
+}
+
+func (m *mockReaderWriterWithURLs) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
+	return m.resourceURLsFn(ctx, file)
+}
+
+func (m *mockReaderWriterWithURLs) RefURLs(_ context.Context, _ string) (*provisioning.RepositoryURLs, error) {
+	return nil, nil
+}
+
 func TestMoveDirectory_FolderMetadata(t *testing.T) {
 	tests := []struct {
 		name        string
 		setup       func(t *testing.T) (*DualReadWriter, DualWriteOptions)
 		wantErr     bool
 		errContains string
+		check       func(t *testing.T, result *ParsedResource)
 	}{
 		{
 			name: "flag disabled: moves directory, no _folder.json written",
@@ -728,6 +744,75 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "repo without URL support: URLs field is nil",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Spec: provisioning.RepositorySpec{
+						Type:      provisioning.LocalRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
+					},
+				}
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Move", mock.Anything, "old/", "new/", "feature-branch", "move").Return(nil)
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, false)}
+				return dw, DualWriteOptions{
+					OriginalPath: "old/",
+					Path:         "new/",
+					Ref:          "feature-branch",
+					Message:      "move",
+				}
+			},
+			check: func(t *testing.T, result *ParsedResource) {
+				assert.Nil(t, result.URLs, "URLs should be nil for repos without URL support")
+			},
+		},
+		{
+			name: "repo with URL support: URLs field is populated",
+			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
+				config := &provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Spec: provisioning.RepositorySpec{
+						Type:      provisioning.GitRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
+						Git:       &provisioning.GitRepositoryConfig{Branch: "main"},
+					},
+				}
+				rw := repository.NewMockReaderWriter(t)
+				rw.On("Config").Return(config)
+				rw.On("Move", mock.Anything, "old/", "new/", "feature-branch", "move").Return(nil)
+
+				urlRepo := &mockReaderWriterWithURLs{
+					MockReaderWriter: rw,
+					resourceURLsFn: func(_ context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
+						return &provisioning.RepositoryURLs{
+							SourceURL:         "https://github.com/org/repo/tree/feature-branch/new",
+							NewPullRequestURL: "https://github.com/org/repo/compare/main...feature-branch",
+						}, nil
+					},
+				}
+
+				accessMock := auth.NewMockAccessChecker(t)
+				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				dw := &DualReadWriter{repo: urlRepo, authorizer: NewAuthorizer(config, urlRepo, accessMock, false)}
+				return dw, DualWriteOptions{
+					OriginalPath: "old/",
+					Path:         "new/",
+					Ref:          "feature-branch",
+					Message:      "move",
+				}
+			},
+			check: func(t *testing.T, result *ParsedResource) {
+				require.NotNil(t, result.URLs, "URLs should be populated for repos with URL support")
+				assert.Equal(t, "https://github.com/org/repo/tree/feature-branch/new", result.URLs.SourceURL)
+				assert.Equal(t, "https://github.com/org/repo/compare/main...feature-branch", result.URLs.NewPullRequestURL)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -743,6 +828,9 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.NotNil(t, result)
+			if tt.check != nil {
+				tt.check(t, result)
+			}
 		})
 	}
 }
