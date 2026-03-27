@@ -112,11 +112,17 @@ export default class LokiLanguageProvider extends LanguageProvider {
   private async checkDetectedLabelsExists(timeRange: TimeRange): Promise<void> {
     try {
       const { start, end } = this.datasource.getTimeRangeParams(timeRange);
-      const res = await this.request('detected_labels', { start, end }, false, {
+      const data = await this.request('detected_labels', { start, end }, true, {
         showErrorAlert: false,
         showSuccessAlert: false,
       });
-      this.detectedEndpointsSupported = Array.isArray(res);
+      // Endpoint does not throw and return labels
+      if (Array.isArray(data)) {
+        this.labelKeys = data.map((label) => label.label);
+        this.detectedEndpointsSupported = true;
+      } else {
+        this.detectedEndpointsSupported = false;
+      }
     } catch (e) {
       this.detectedEndpointsSupported = false;
     }
