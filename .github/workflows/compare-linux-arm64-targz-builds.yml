@@ -175,6 +175,7 @@ jobs:
           path: _split
       - name: Extract and compare
         run: |
+          set -euo pipefail
           mkdir -p _extract/release _extract/split
           RELEASE_TAR="$(find _release -maxdepth 1 -type f -name '*.tar.gz' -print | sort | head -n 1)"
           SPLIT_TAR="$(find _split -maxdepth 1 -type f -name '*.tar.gz' -print | sort | head -n 1)"
@@ -185,4 +186,19 @@ jobs:
           RELEASE_TOP="$(find _extract/release -mindepth 1 -maxdepth 1 -type d -print | sort | head -n 1)"
           SPLIT_TOP="$(find _extract/split -mindepth 1 -maxdepth 1 -type d -print | sort | head -n 1)"
 
-          diff -r "${RELEASE_TOP}" "${SPLIT_TOP}"
+          set +e
+          DIFF_OUT=$(diff -rq "${RELEASE_TOP}" "${SPLIT_TOP}")
+          set -e
+
+          # Print only paths present on one side (no file bodies). Suppress "Files a and b differ" lines.
+          echo "${DIFF_OUT}" | grep '^Only in' || true
+
+          FAILED=0
+          if echo "${DIFF_OUT}" | grep -q '^Only in'; then
+            FAILED=1
+          fi
+          if echo "${DIFF_OUT}" | grep -q ' differ$'; then
+            echo >&2 "Compare failed: at least one path exists in both trees with different content (skipping diff body)."
+            FAILED=1
+          fi
+          exit "${FAILED}"
