@@ -16,7 +16,7 @@ GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_RACE  := $(shell [ -n "$(GO_RACE)" -o -e ".go-race-enabled-locally" ] && echo 1 )
 GO_RACE_FLAG := $(if $(GO_RACE),-race)
-# Backend build version and ldflags (aligned with pkg/build/daggerbuild/backend).
+# Backend build version and ldflags (release / packaging conventions).
 BUILD_NUMBER ?= local
 BUILD_VERSION := $(shell sed -n 's/.*"version": *"\(.*\)".*/\1/p' package.json | sed 's/-pre/-$(BUILD_NUMBER)/')
 BUILD_COMMIT := $(if $(COMMIT_SHA),$(COMMIT_SHA),$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown"))
@@ -375,11 +375,33 @@ build-plugin-go: ## Build decoupled plugins
 .PHONY: build
 build: build-go build-js ## Build backend and frontend.
 
-# Tar.gz packaging variables (aligned with pkg/build/daggerbuild/packages)
+# Tar.gz packaging variables (artifact / file naming).
 TARGZ_PACKAGE_NAME ?= grafana
 
+# Default catalog plugins under data/plugins-bundled. Stamp encodes OS/ARCH so cross-builds refresh.
+DATA_PLUGINS_BUNDLED_STAMP := data/plugins-bundled/.platform-$(OS)-$(ARCH).stamp
+
+$(DATA_PLUGINS_BUNDLED_STAMP): package.json \
+		$(wildcard pkg/build/catalogbundle/*.go) \
+		pkg/build/cmd/download-catalog-plugins/main.go \
+		pkg/build/daggerbuild/arguments/catalog_plugins.go
+	@rm -rf data/plugins-bundled
+	@mkdir -p data/plugins-bundled
+	@$(GO) run ./pkg/build/cmd/download-catalog-plugins \
+		-out data/plugins-bundled \
+		-grafana-version "$(BUILD_VERSION)" \
+		-os "$(OS)" \
+		-arch "$(ARCH)"
+	@touch $(DATA_PLUGINS_BUNDLED_STAMP)
+
+data/plugins-bundled: $(DATA_PLUGINS_BUNDLED_STAMP)
+	@:
+
+.PHONY: build-catalog-plugins-data
+build-catalog-plugins-data: data/plugins-bundled ## Download default catalog plugins into data/plugins-bundled (network; alias).
+
 .PHONY: build-targz
-build-targz: | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (bin, public, conf, data)
+build-targz: data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana public/build ## Build a tar.gz package (bin, public, conf, data/plugins-bundled from catalog)
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
 	BUILD_NUMBER="$(BUILD_NUMBER)" \

@@ -37,7 +37,14 @@ cp LICENSE NOTICE.md README.md Dockerfile "${DIR}/"
 cp "$("${GO}" env GOROOT)/lib/time/zoneinfo.zip" "${DIR}/tools/"
 
 cp -r conf "${DIR}/conf"
-mkdir -p "${DIR}/data/plugins-bundled"
+
+mkdir -p "${DIR}/data"
+if [[ -d "${REPO_ROOT}/data/plugins-bundled" ]]; then
+  cp -a "${REPO_ROOT}/data/plugins-bundled" "${DIR}/data/"
+  find "${DIR}/data/plugins-bundled" -type d -name node_modules -print0 2>/dev/null | xargs -0 rm -rf || true
+else
+  mkdir -p "${DIR}/data/plugins-bundled"
+fi
 
 cp -r docs/sources "${DIR}/docs/sources"
 cp -r packaging/deb "${DIR}/packaging/deb"
