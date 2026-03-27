@@ -182,16 +182,16 @@ func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, r
 		actions := resourcePermissions[i].Actions
 		var expandedActions []string
 		for _, action := range actions {
-			if isFolderOrDashboardAction(action) {
+			if isActionSetEnabledResource(action) {
 				actionSetActions := s.actionSetSvc.ResolveActionSet(action)
 				if len(actionSetActions) > 0 {
-					// Add all actions for folder
-					if s.options.Resource == dashboards.ScopeFoldersRoot {
+					// Folders and routes: expand all actions unconditionally (no inherited scope filtering needed).
+					if s.options.Resource == dashboards.ScopeFoldersRoot || s.options.Resource == accesscontrol.AlertingManagedRoutesResource {
 						expandedActions = append(expandedActions, actionSetActions...)
 						continue
 					}
-					// This check is needed for resolving inherited permissions - we don't want to include
-					// actions that are not related to dashboards when expanding dashboard action sets
+					// Dashboards: filter to only include actions relevant to the resource
+					// to avoid leaking inherited folder actions.
 					for _, actionSetAction := range actionSetActions {
 						if slices.Contains(s.actions, actionSetAction) {
 							expandedActions = append(expandedActions, actionSetAction)
@@ -374,6 +374,11 @@ func (s *Service) mapPermission(permission string) ([]string, error) {
 		}
 	}
 
+	// New resources with no legacy granular data go straight to action-set-only.
+	if s.options.Resource == accesscontrol.AlertingManagedRoutesResource {
+		return []string{GetActionSetName(s.options.Resource, permission)}, nil
+	}
+
 	for k, v := range s.options.PermissionsToActions {
 		if permission == k {
 			actions = append(actions, v...)
@@ -524,9 +529,7 @@ func (a *ActionSetSvc) ResolveAction(action string) []string {
 	sets := a.store.ResolveAction(action)
 	filteredSets := make([]string, 0, len(sets))
 	for _, set := range sets {
-		// Only use action sets for folders and dashboards for now
-		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
-		if !isFolderOrDashboardAction(set) {
+		if !isActionSetEnabledResource(set) {
 			continue
 		}
 		filteredSets = append(filteredSets, set)
@@ -540,9 +543,7 @@ func (a *ActionSetSvc) ResolveActionPrefix(actionPrefix string) []string {
 	sets := a.store.ResolveActionPrefix(actionPrefix)
 	filteredSets := make([]string, 0, len(sets))
 	for _, set := range sets {
-		// Only use action sets for folders and dashboards for now
-		// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
-		if !isFolderOrDashboardAction(set) {
+		if !isActionSetEnabledResource(set) {
 			continue
 		}
 		filteredSets = append(filteredSets, set)
@@ -553,9 +554,7 @@ func (a *ActionSetSvc) ResolveActionPrefix(actionPrefix string) []string {
 
 // ResolveActionSet resolves an action set to a list of corresponding actions.
 func (a *ActionSetSvc) ResolveActionSet(actionSet string) []string {
-	// Only use action sets for folders and dashboards for now
-	// We need to verify that action sets for other resources do not share names with actions (eg, `datasources:read`)
-	if !isFolderOrDashboardAction(actionSet) {
+	if !isActionSetEnabledResource(actionSet) {
 		return nil
 	}
 	return a.store.ResolveActionSet(actionSet)
@@ -604,8 +603,10 @@ func (a *ActionSetSvc) RegisterActionSets(ctx context.Context, pluginID string, 
 	return nil
 }
 
-func isFolderOrDashboardAction(action string) bool {
-	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) || strings.HasPrefix(action, dashboards.ScopeFoldersRoot)
+func isActionSetEnabledResource(action string) bool {
+	return strings.HasPrefix(action, dashboards.ScopeDashboardsRoot) ||
+		strings.HasPrefix(action, dashboards.ScopeFoldersRoot) ||
+		strings.HasPrefix(action, accesscontrol.AlertingManagedRoutesResource)
 }
 
 // scopeResource returns the resource prefix used for Resource fields in commands/queries.
