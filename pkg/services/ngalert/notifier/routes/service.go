@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -35,15 +36,13 @@ type alertmanagerConfigStore interface {
 	Save(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64) error
 }
 
-type provenanceValidator func(from, to models.Provenance) error
-
 type Service struct {
 	configStore     alertmanagerConfigStore
 	provenanceStore routeProvenanceStore
 	xact            transactionManager
 	log             log.Logger
 	settings        setting.UnifiedAlertingSettings
-	validator       provenanceValidator
+	validator       validation.ProvenanceStatusTransitionValidator
 	FeatureToggles  featuremgmt.FeatureToggles
 	tracer          tracing.Tracer
 }
@@ -55,7 +54,7 @@ func NewService(
 	settings setting.UnifiedAlertingSettings,
 	features featuremgmt.FeatureToggles,
 	log log.Logger,
-	validator provenanceValidator,
+	validator validation.ProvenanceStatusTransitionValidator,
 	tracer tracing.Tracer,
 ) *Service {
 	return &Service{
@@ -221,7 +220,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
-	if err := nps.validator(storedProvenance, p); err != nil {
+	if err := nps.validator(ctx, storedProvenance, p); err != nil {
 		return nil, err
 	}
 
@@ -301,7 +300,7 @@ func (nps *Service) DeleteManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return err
 	}
-	if err := nps.validator(storedProvenance, p); err != nil {
+	if err := nps.validator(ctx, storedProvenance, p); err != nil {
 		return err
 	}
 

@@ -52,7 +52,7 @@ func createServiceSut(
 		xact:            &nopTransactionManager{},
 		log:             log.NewNopLogger(),
 		settings:        setting.UnifiedAlertingSettings{},
-		validator: func(from, to models.Provenance) error {
+		validator: func(_ context.Context, from, to models.Provenance) error {
 			return nil
 		},
 		FeatureToggles: features,

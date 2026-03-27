@@ -1800,6 +1800,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...cr
 		log.NewNopLogger(),
 		fakes.NewFakeReceiverPermissionsService(),
 		tracing.InitializeTracerForTest(),
+		validation.ValidateProvenanceRelaxed,
 		false,
 	)
 	for _, opt := range opts {

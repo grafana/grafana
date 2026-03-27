@@ -29,12 +29,12 @@ type TemplateService struct {
 	includeImported bool
 }
 
-func NewTemplateService(config alertmanagerConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger) *TemplateService {
+func NewTemplateService(config alertmanagerConfigStore, prov ProvisioningStore, xact TransactionManager, log log.Logger, validator validation.ProvenanceStatusTransitionValidator) *TemplateService {
 	return &TemplateService{
 		configStore:     config,
 		provenanceStore: prov,
 		xact:            xact,
-		validator:       validation.ValidateProvenanceRelaxed,
+		validator:       validator,
 		log:             log,
 		includeImported: false,
 	}
@@ -253,7 +253,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	if existing.Provenance == definitions.Provenance(models.ProvenanceConvertedPrometheus) {
 		return definitions.NotificationTemplate{}, makeErrTemplateOrigin(existing, "update")
 	}
-	if err := t.validator(models.Provenance(existing.Provenance), models.Provenance(tmpl.Provenance)); err != nil {
+	if err := t.validator(ctx, models.Provenance(existing.Provenance), models.Provenance(tmpl.Provenance)); err != nil {
 		return definitions.NotificationTemplate{}, err
 	}
 
@@ -318,7 +318,7 @@ func (t *TemplateService) DeleteTemplate(ctx context.Context, orgID int64, nameO
 		return err
 	}
 
-	if err = t.validator(models.Provenance(existing.Provenance), models.Provenance(provenance)); err != nil {
+	if err = t.validator(ctx, models.Provenance(existing.Provenance), models.Provenance(provenance)); err != nil {
 		return err
 	}
 
