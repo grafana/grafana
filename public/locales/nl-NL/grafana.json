@@ -6473,6 +6473,7 @@
       "description": {
         "action": "Variabelebeschrijving wijzigen"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "Optie variabele verbergen wijzigen"
       },
@@ -6646,9 +6647,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Ad hoc-opties",
-      "alert-not-supported": "Deze gegevensbron ondersteunt geen ad-hocfilters",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "Stelt gebruikers in staat om aangepaste waarden aan de lijst toe te voegen",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Geef afmetingen op als csv: {{name}}, {{value}}",
@@ -7013,7 +7018,7 @@
         "values-timespans": "Waarden zijn tijdsperioden, bijv. 1 min, 1 u, 1 d"
       },
       "name": {
-        "ad-hoc-filters": "Ad-hocfilters",
+        "ad-hoc-filters": "",
         "constant": "Constant",
         "custom": "Aangepast",
         "data-source": "Gegevensbron",
@@ -7266,6 +7271,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -8007,6 +8013,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "Favorieten"
     },
     "new-data-source-view": {
@@ -10347,6 +10357,7 @@
         "expander-column-name": "",
         "no-data": "Geen gegevens"
       },
+      "no-rows": "",
       "no-values-label": "Geen waarden",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} van {{numRows}} rijen",
       "sort-by-column": "",
@@ -14930,6 +14941,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Koptekst laten teruglopen",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "automatisch",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",

@@ -6442,6 +6442,7 @@
       "description": {
         "action": "변수 설명 변경"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "변수 숨기기 옵션 변경"
       },
@@ -6614,9 +6615,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "임시 옵션",
-      "alert-not-supported": "이 데이터 소스는 임시 필터를 지원하지 않습니다",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "사용자가 목록에 사용자 지정 값을 추가할 수 있습니다",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "차원에 대한 다음 정보를 CSV로 제공: {{name}}, {{value}}",
@@ -6978,7 +6983,7 @@
         "values-timespans": "값은 시간 범위입니다(예: 1분, 1시간, 1일)"
       },
       "name": {
-        "ad-hoc-filters": "임시 필터",
+        "ad-hoc-filters": "",
         "constant": "상수",
         "custom": "사용자 지정",
         "data-source": "데이터 소스",
@@ -7228,6 +7233,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -7964,6 +7970,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "별표 표시됨"
     },
     "new-data-source-view": {
@@ -10292,6 +10302,7 @@
         "expander-column-name": "",
         "no-data": "데이터 없음"
       },
+      "no-rows": "",
       "no-values-label": "값 없음",
       "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}",
       "sort-by-column": "",
@@ -14842,6 +14853,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "머리말 텍스트 줄 바꿈",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "자동",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",
