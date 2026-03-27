@@ -1,4 +1,4 @@
-import { isNumber, set, unset, get, cloneDeep } from 'lodash';
+import { isNumber, set, unset, get, cloneDeep, defaultsDeep } from 'lodash';
 import { createContext, useContext, useMemo, useRef } from 'react';
 import { usePrevious } from 'react-use';
 
@@ -232,10 +232,18 @@ export function applyFieldOverrides(
       if (field.type === FieldType.nestedFrames) {
         field.values = field.values.map((v) => applyFieldOverrides(options, v, 'nested'));
       } else if (field.type === FieldType.frame) {
-        field.values = applyFieldOverrides(
-          options,
-          field.values.map((v) => v ?? createDataFrame({ fields: [] }))
-        );
+        const newValues: DataFrame[] = Array(field.values.length);
+        for (let idx = 0; idx < field.values.length; idx++) {
+          // ensure no null frames lead to thrown errors
+          const nestedFrame: DataFrame = field.values[idx] ?? createDataFrame({ fields: [] });
+          // merge default config into the frame field config before applying overrides
+          for (const valueField of nestedFrame.fields) {
+            valueField.config ??= {};
+            valueField.config = defaultsDeep(valueField.config, config);
+          }
+          newValues[idx] = nestedFrame;
+        }
+        field.values = applyFieldOverrides(options, newValues);
       }
     }
   }
