@@ -90,8 +90,11 @@ func (d *PyroscopeDatasource) query(ctx context.Context, pCtx backend.PluginCont
 
 			// Heatmap handling
 			if qm.IncludeHeatmap && backend.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled(heatmapFeatureToggle) {
-				stepDuration := math.Max(query.Interval.Seconds(), parsedInterval.Seconds())
-				frames, err := d.queryHeatmap(gCtx, span, profileTypeId, labelSelector, query, qm, stepDuration)
+				const maxHeatmapPoints = 64
+				timeRangeSec := query.TimeRange.To.Sub(query.TimeRange.From).Seconds()
+				minStepFromRange := timeRangeSec / maxHeatmapPoints
+				stepDuration := math.Max(math.Max(query.Interval.Seconds(), parsedInterval.Seconds()), minStepFromRange)
+				frames, err := d.queryHeatmap(gCtx, span, profileTypeId, labelSelector, query, qm, stepDuration, pCtx.DataSourceInstanceSettings.UID)
 				if err != nil {
 					return err
 				}
