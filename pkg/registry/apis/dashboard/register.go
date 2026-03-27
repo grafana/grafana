@@ -105,7 +105,7 @@ type DashboardsAPIBuilder struct {
 
 	accessControl                accesscontrol.AccessControl
 	accessClient                 authlib.AccessClient
-	legacy                       *DashboardStorage
+	legacy                       legacy.DashboardAccessor
 	unified                      resource.ResourceClient
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	dashboardPermissions         dashboards.PermissionsRegistrationService
@@ -197,10 +197,7 @@ func RegisterAPIService(
 		snapshotOptions:              snapshotOptions,
 		namespacer:                   namespacer,
 		dashboardActivityChannel:     dashboardActivityChannel,
-		legacy: &DashboardStorage{
-			Access:           legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
-			DashboardService: dashboardService,
-		},
+		legacy:                       legacy.NewDashboardSQLAccess(dbp, namespacer, dashStore, provisioning, libraryPanelSvc, sorter, dashboardPermissionsSvc, accessControl, features),
 	}
 
 	migration.RegisterMetrics(reg)
@@ -758,14 +755,14 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
 
-	if b.isStandalone {
-		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-		unified.AfterDelete = b.afterDelete
-		storage[dashboards.StoragePath()] = unified
+	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
+	if err != nil {
+		return err
+	}
+	unified.AfterDelete = b.afterDelete
 
+	if b.isStandalone {
+		storage[dashboards.StoragePath()] = unified
 		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 			unified,
 			largeObjects,
@@ -781,24 +778,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return nil
 	}
 
-	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, opts.MetricsRegister, b.dashboardPermissions, b.accessClient)
-	if err != nil {
-		return err
-	}
-
-	unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashboards, opts.OptsGetter)
-	if err != nil {
-		return err
-	}
-	unified.AfterDelete = b.afterDelete
-
-	gr := dashboards.GroupResource()
-	dw, err := opts.DualWriteBuilder(gr, legacyStore, unified)
-	if err != nil {
-		return err
-	}
 	storage[dashboards.StoragePath()] = dashboardStorageWrapper{
-		Storage:                 dw,
+		Storage:                 unified,
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
 		live:                    b.dashboardActivityChannel,
 	}
@@ -820,7 +801,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if libraryPanels != nil && b.features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		legacyLibraryStore := &LibraryPanelStore{
-			Access:       b.legacy.Access,
+			Access:       b.legacy,
 			ResourceInfo: *libraryPanels,
 			service:      b.libraryPanels,
 		}
