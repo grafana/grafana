@@ -719,8 +719,8 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 			if committed {
 				return 0, ErrResourceAlreadyExists
 			}
-			// Not confirmed — the found data is likely transient. Proceed with
-			// the write and let the post-write OCC check determine the winner.
+			// Not confirmed: the data is likely transient. Proceed with the
+			// write and let the optimistic lock checks determine the winner.
 		} else if !errors.Is(err, ErrNotFound) {
 			return 0, fmt.Errorf("failed to check if resource exists: %w", err)
 		}
