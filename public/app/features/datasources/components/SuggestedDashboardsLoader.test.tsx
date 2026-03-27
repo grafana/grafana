@@ -23,10 +23,19 @@ jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/api/dashboardLibrary
 }));
 
 jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsModal', () => ({
-  SuggestedDashboardsModal: ({ isOpen, onDismiss }: { isOpen: boolean; onDismiss: () => void }) =>
+  SuggestedDashboardsModal: ({
+    isOpen,
+    onDismiss,
+    communityTotalPages,
+  }: {
+    isOpen: boolean;
+    onDismiss: () => void;
+    communityTotalPages: number;
+  }) =>
     isOpen ? (
       <div data-testid="modal" onClick={onDismiss}>
         Modal
+        <span data-testid="community-total-pages">{communityTotalPages}</span>
       </div>
     ) : null,
 }));
@@ -43,7 +52,7 @@ const mockFetchCommunity = jest.mocked(fetchCommunityDashboards);
 
 const renderLoader = (props?: Partial<Parameters<typeof SuggestedDashboardsLoader>[0]>) => {
   let childProps!: SuggestedDashboardsLoaderChildProps;
-  render(
+  const { unmount } = render(
     <SuggestedDashboardsLoader
       datasourceUid="test-uid"
       sourceEntryPoint={SOURCE_ENTRY_POINTS.DATASOURCE_PAGE_BUILD_BUTTON}
@@ -55,7 +64,7 @@ const renderLoader = (props?: Partial<Parameters<typeof SuggestedDashboardsLoade
       }}
     </SuggestedDashboardsLoader>
   );
-  return { getChildProps: () => childProps };
+  return { getChildProps: () => childProps, unmount };
 };
 
 beforeEach(() => {
@@ -311,6 +320,44 @@ describe('SuggestedDashboardsLoader', () => {
       await waitFor(() => {
         expect(getChildProps().hasDashboards).toBe(true);
       });
+    });
+  });
+
+  describe('module-level cache', () => {
+    it('restores communityTotalPages from cache on second mount', async () => {
+      const user = userEvent.setup();
+      mockFetchCommunity.mockResolvedValue({
+        page: 1,
+        pages: 5,
+        items: [createMockGnetDashboard()],
+      });
+
+      // First mount — fetches from API and populates the cache
+      const { getChildProps, unmount } = renderLoader();
+      await act(async () => {
+        getChildProps().triggerFetch();
+      });
+      await waitFor(() => {
+        expect(getChildProps().fetchStatus).toBe('done');
+      });
+
+      unmount();
+
+      // Second mount — should restore communityTotalPages from cache without re-fetching
+      // Do NOT call clearDashboardCache() so the cache is still populated
+      const { getChildProps: getChildProps2 } = renderLoader();
+      await act(async () => {
+        getChildProps2().openModal();
+      });
+      await waitFor(() => {
+        expect(getChildProps2().fetchStatus).toBe('done');
+      });
+
+      // API should only have been called once (during the first mount)
+      expect(mockFetchCommunity).toHaveBeenCalledTimes(1);
+
+      // The modal should receive the cached communityTotalPages value
+      expect(screen.getByTestId('community-total-pages')).toHaveTextContent('5');
     });
   });
 });

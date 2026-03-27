@@ -35,6 +35,8 @@ interface SuggestedDashboardsListProps {
   provisionedDashboards: PluginDashboard[];
   communityDashboards: GnetDashboard[];
   communityTotalPages: number;
+  lastPageItemCount?: number;
+  onLastPageItemCount?: (count: number) => void;
   datasourceUid?: string;
   datasourceType: string;
   isDashboardsLoading: boolean;
@@ -47,12 +49,16 @@ interface CommunityCache {
   items: Array<GnetDashboard | undefined>;
   cachedPages: Set<number>;
   totalApiPages: number;
+  /** Exact count of community items on the last API page (once fetched). */
+  lastPageItemCount?: number;
 }
 
 export const SuggestedDashboardsList = ({
   provisionedDashboards,
   communityDashboards,
   communityTotalPages,
+  lastPageItemCount: initialLastPageItemCount,
+  onLastPageItemCount,
   datasourceUid,
   datasourceType,
   isDashboardsLoading,
@@ -77,6 +83,9 @@ export const SuggestedDashboardsList = ({
     items: communityDashboards,
     cachedPages: new Set<number>(communityDashboards.length > 0 ? [1] : []),
     totalApiPages: communityTotalPages,
+    // Use persisted value from the module cache, or infer when there's only one page
+    lastPageItemCount:
+      initialLastPageItemCount ?? (communityTotalPages <= 1 ? communityDashboards.length : undefined),
   }));
 
   // Filter provisioned dashboards client-side
@@ -103,6 +112,7 @@ export const SuggestedDashboardsList = ({
           items: [],
           cachedPages: new Set<number>(),
           totalApiPages: 0,
+          lastPageItemCount: undefined,
         });
       } else {
         // Revert to pre-fetched data — page 1 is already cached from the loader
@@ -111,6 +121,8 @@ export const SuggestedDashboardsList = ({
           items: communityDashboards,
           cachedPages: new Set<number>(communityDashboards.length > 0 ? [1] : []),
           totalApiPages: communityTotalPages,
+          lastPageItemCount:
+            initialLastPageItemCount ?? (communityTotalPages <= 1 ? communityDashboards.length : undefined),
         });
       }
     },
@@ -123,6 +135,14 @@ export const SuggestedDashboardsList = ({
     () => getPageSlice({ currentPage, pageSize: PAGE_SIZE, filteredProvisioned, communityCache }),
     [currentPage, filteredProvisioned, communityCache]
   );
+
+  // Auto-correct currentPage if it exceeds totalPages (e.g. after fetching the
+  // last API page reveals fewer items than estimated)
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   // Fetch community pages as needed
   useEffect(() => {
@@ -140,6 +160,8 @@ export const SuggestedDashboardsList = ({
         items: communityDashboards,
         cachedPages: new Set<number>([1]),
         totalApiPages: communityTotalPages,
+        lastPageItemCount:
+          initialLastPageItemCount ?? (communityTotalPages <= 1 ? communityDashboards.length : undefined),
       });
       return;
     }
@@ -189,6 +211,7 @@ export const SuggestedDashboardsList = ({
           const newItems = [...prev.items];
           const newCachedPages = new Set(prev.cachedPages);
           let totalApiPages = prev.totalApiPages;
+          let lastPageItemCount = prev.lastPageItemCount;
 
           // Place each page's items at their correct offset in the sparse items array
           responses.forEach((response, idx) => {
@@ -200,6 +223,13 @@ export const SuggestedDashboardsList = ({
             newCachedPages.add(page);
             totalFetched += response.items.length;
             totalApiPages = response.pages;
+
+            // When we fetch the last API page, record its exact item count
+            // so we can compute an accurate total instead of overestimating
+            if (page === response.pages) {
+              lastPageItemCount = response.items.length;
+              onLastPageItemCount?.(response.items.length);
+            }
           });
 
           return {
@@ -207,6 +237,7 @@ export const SuggestedDashboardsList = ({
             items: newItems,
             cachedPages: newCachedPages,
             totalApiPages,
+            lastPageItemCount,
           };
         });
 
@@ -237,6 +268,8 @@ export const SuggestedDashboardsList = ({
     communityCache.cachedPages,
     communityDashboards,
     communityTotalPages,
+    initialLastPageItemCount,
+    onLastPageItemCount,
     sourceEntryPoint,
     eventLocation,
   ]);
@@ -473,7 +506,7 @@ export const SuggestedDashboardsList = ({
           />
         )}
       </div>
-      {!hasNoResults && totalPages > 1 && (
+      {totalPages > 1 && (
         <Pagination
           currentPage={currentPage}
           numberOfPages={totalPages}

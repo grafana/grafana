@@ -22,6 +22,8 @@ interface SuggestedDashboardsModalProps {
   provisionedDashboards: PluginDashboard[];
   communityDashboards: GnetDashboard[];
   communityTotalPages: number;
+  lastPageItemCount?: number;
+  onLastPageItemCount?: (count: number) => void;
   isDashboardsLoading: boolean;
 }
 
@@ -46,6 +48,8 @@ export const SuggestedDashboardsModal = ({
   provisionedDashboards,
   communityDashboards,
   communityTotalPages,
+  lastPageItemCount,
+  onLastPageItemCount,
   isDashboardsLoading,
 }: SuggestedDashboardsModalProps) => {
   const [activeView, setActiveView] = useState<ModalView>('list');
@@ -116,6 +120,8 @@ export const SuggestedDashboardsModal = ({
             provisionedDashboards={provisionedDashboards}
             communityDashboards={communityDashboards}
             communityTotalPages={communityTotalPages}
+            lastPageItemCount={lastPageItemCount}
+            onLastPageItemCount={onLastPageItemCount}
             datasourceUid={datasourceUid}
             datasourceType={datasourceInfo.type}
             isDashboardsLoading={isDashboardsLoading}

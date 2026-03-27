@@ -7,7 +7,11 @@ import {
   fetchCommunityDashboards,
   fetchProvisionedDashboards,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/api/dashboardLibraryApi';
-import { EVENT_LOCATIONS, PAGE_SIZE, SourceEntryPoint } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
+import {
+  EVENT_LOCATIONS,
+  PAGE_SIZE,
+  SourceEntryPoint,
+} from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { GnetDashboard } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 import {
   DEFAULT_SORT_ORDER,
@@ -22,6 +26,8 @@ type FetchStatus = 'idle' | 'loading' | 'done' | 'error';
 interface DashboardFetchResult {
   provisioned: PluginDashboard[];
   community: GnetDashboard[];
+  communityTotalPages: number;
+  lastPageItemCount?: number;
 }
 
 // Module-level cache keyed by datasource type — shared across all instances
@@ -60,6 +66,7 @@ export const SuggestedDashboardsLoader = ({
   const [provisionedDashboards, setProvisionedDashboards] = useState<PluginDashboard[]>([]);
   const [communityDashboards, setCommunityDashboards] = useState<GnetDashboard[]>([]);
   const [communityTotalPages, setCommunityTotalPages] = useState(0);
+  const [lastPageItemCount, setLastPageItemCount] = useState<number | undefined>(undefined);
   const [isOpen, setIsOpen] = useState(false);
   const hasFetchedRef = useRef(false);
 
@@ -87,6 +94,8 @@ export const SuggestedDashboardsLoader = ({
       if (cached) {
         setProvisionedDashboards(cached.provisioned);
         setCommunityDashboards(cached.community);
+        setCommunityTotalPages(cached.communityTotalPages);
+        setLastPageItemCount(cached.lastPageItemCount);
         setFetchStatus('done');
         onFetchCompletedRef.current?.(cached.provisioned.length > 0 || cached.community.length > 0);
         return;
@@ -110,6 +119,7 @@ export const SuggestedDashboardsLoader = ({
             const result: DashboardFetchResult = {
               provisioned,
               community: communityResponse.items,
+              communityTotalPages: communityResponse.pages,
             };
             dashboardCache.set(ds.type, result);
             setCommunityTotalPages(communityResponse.pages);
@@ -121,9 +131,10 @@ export const SuggestedDashboardsLoader = ({
         pendingFetches.set(ds.type, pending);
       }
 
-      const { provisioned, community } = await pending;
+      const { provisioned, community, communityTotalPages: totalPages } = await pending;
       setProvisionedDashboards(provisioned);
       setCommunityDashboards(community);
+      setCommunityTotalPages(totalPages);
       setFetchStatus('done');
       onFetchCompletedRef.current?.(provisioned.length > 0 || community.length > 0);
     } catch {
@@ -142,6 +153,21 @@ export const SuggestedDashboardsLoader = ({
     setIsOpen(true);
   }, [triggerFetch]);
 
+  const handleLastPageItemCount = useCallback(
+    (count: number) => {
+      setLastPageItemCount(count);
+      // Persist in the module-level cache so it survives modal close/reopen
+      const ds = getDataSourceSrv().getInstanceSettings(datasourceUid);
+      if (ds) {
+        const cached = dashboardCache.get(ds.type);
+        if (cached) {
+          cached.lastPageItemCount = count;
+        }
+      }
+    },
+    [datasourceUid]
+  );
+
   const trackingValue = useMemo(
     () => ({ sourceEntryPoint, eventLocation: EVENT_LOCATIONS.MODAL_VIEW }),
     [sourceEntryPoint]
@@ -158,6 +184,8 @@ export const SuggestedDashboardsLoader = ({
           provisionedDashboards={provisionedDashboards}
           communityDashboards={communityDashboards}
           communityTotalPages={communityTotalPages}
+          lastPageItemCount={lastPageItemCount}
+          onLastPageItemCount={handleLastPageItemCount}
           isDashboardsLoading={fetchStatus === 'loading'}
         />
       </TrackingProvider>

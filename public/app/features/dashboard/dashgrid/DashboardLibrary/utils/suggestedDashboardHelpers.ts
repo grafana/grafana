@@ -9,6 +9,7 @@ interface PageSliceParams {
   communityCache: {
     items: Array<GnetDashboard | undefined>;
     totalApiPages: number;
+    lastPageItemCount?: number;
   };
 }
 
@@ -38,7 +39,11 @@ export function getPageSlice({
   communityCache,
 }: PageSliceParams): PageSliceResult {
   const totalProvisionedCount = filteredProvisioned.length;
-  const totalCommunityCount = communityCache.totalApiPages * pageSize;
+  // Use exact count when the last API page has been fetched, otherwise estimate
+  const totalCommunityCount =
+    communityCache.lastPageItemCount !== undefined && communityCache.totalApiPages > 0
+      ? (communityCache.totalApiPages - 1) * pageSize + communityCache.lastPageItemCount
+      : communityCache.totalApiPages * pageSize;
   const totalMergedCount = totalProvisionedCount + totalCommunityCount;
   const totalPages = Math.max(1, Math.ceil(totalMergedCount / pageSize));
 
