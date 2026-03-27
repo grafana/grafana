@@ -710,13 +710,13 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 		})
 		if err == nil {
 			// A resource was found, but it might be a transient write from a
-			// concurrent create that hasn't survived OCC yet. Confirm via
-			// the event store before returning AlreadyExists.
-			confirmed, confirmErr := k.confirmExistence(ctx, latestKey)
-			if confirmErr != nil {
-				return 0, fmt.Errorf("failed to confirm resource existence: %w", confirmErr)
+			// concurrent create that hasn't gone through the optimistic lock
+			// checks. Confirm via the event store before returning AlreadyExists.
+			committed, err := k.confirmExistence(ctx, latestKey)
+			if err != nil {
+				return 0, fmt.Errorf("checking concurrent creation in event store: %w", err)
 			}
-			if confirmed {
+			if committed {
 				return 0, ErrResourceAlreadyExists
 			}
 			// Not confirmed — the found data is likely transient. Proceed with
@@ -862,28 +862,30 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (in
 	return rv, nil
 }
 
-// confirmExistence checks whether a resource found by GetLatestResourceKey is
-// genuinely committed. During concurrent creates, the data store can contain
-// transient writes that haven't survived the post-write OCC check yet. The
-// event store is used as a commit signal: an event is written only after OCC
-// passes, so its presence proves the write is committed.
-func (k *kvStorageBackend) confirmExistence(ctx context.Context, latestKey DataKey) (bool, error) {
+// confirmExistence checks whether a resource with the given `key` is genuinely
+// committed. During concurrent creates, the datastore can contain transient
+// writes that haven't survived the post-write optimistic lock checks. The
+// eventstore is used as a commit signal: an event is written only after the
+// optimistic locking checks, so its presence proves the write is committed.
+func (k *kvStorageBackend) confirmExistence(ctx context.Context, key DataKey) (bool, error) {
+	const eventThreshold = 30 * time.Second
+
 	// Extract the timestamp from the snowflake-formatted RV.
-	rvTime := time.Unix(0, snowflake.ID(latestKey.ResourceVersion).Time()*int64(time.Millisecond))
-	if time.Since(rvTime) > 30*time.Second {
-		// Old RV — well past any OCC window, definitely committed.
+	rvTime := time.Unix(0, snowflake.ID(key.ResourceVersion).Time()*int64(time.Millisecond))
+	if time.Since(rvTime) > eventThreshold {
+		// Old RV: by this point, it can be assumed to be committed.
 		return true, nil
 	}
 
-	// Recent RV — look up the corresponding event to confirm it was committed.
+	// Recent RV: look up the corresponding event to confirm it was committed.
 	_, err := k.eventStore.Get(ctx, EventKey{
-		Namespace:       latestKey.Namespace,
-		Group:           latestKey.Group,
-		Resource:        latestKey.Resource,
-		Name:            latestKey.Name,
-		ResourceVersion: latestKey.ResourceVersion,
-		Action:          latestKey.Action,
-		Folder:          latestKey.Folder,
+		Namespace:       key.Namespace,
+		Group:           key.Group,
+		Resource:        key.Resource,
+		Name:            key.Name,
+		ResourceVersion: key.ResourceVersion,
+		Action:          key.Action,
+		Folder:          key.Folder,
 	})
 	if err == nil {
 		return true, nil
