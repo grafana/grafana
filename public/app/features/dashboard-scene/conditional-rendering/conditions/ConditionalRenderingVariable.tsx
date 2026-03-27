@@ -1,5 +1,6 @@
 import { ReactElement, useEffect, useMemo, useState } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   MultiValueVariable,
@@ -278,6 +279,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
         <Stack direction="row" gap={0.5} grow={1}>
           <Box flex={1}>
             <Combobox
+              data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.variableSelection}
               placeholder={t('dashboard.conditional-rendering.conditions.variable.name', 'Name')}
               options={variableNames}
               value={variable}
@@ -318,6 +320,7 @@ function ConditionalRenderingVariableRenderer({ model }: SceneComponentProps<Con
 
         <Field error={valueError} invalid={!!valueError} noMargin>
           <Input
+            data-testid={selectors.pages.Dashboard.Sidebar.conditionalRendering.variable.valueInput}
             placeholder={t('dashboard.conditional-rendering.conditions.variable.value', 'Value')}
             value={newValue}
             onChange={(evt) => {

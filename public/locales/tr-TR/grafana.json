@@ -6473,6 +6473,7 @@
       "description": {
         "action": "Değişken açıklamasını değiştir"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "Değişken gizleme seçeneğini değiştir"
       },
@@ -6646,9 +6647,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Geçici seçenekler",
-      "alert-not-supported": "Bu veri kaynağı geçici filtreleri desteklemiyor",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "Kullanıcıların listeye özel değerler eklemesine olanak tanır",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Boyutları CSV biçiminde girin: {{name}}, {{value}}",
@@ -7013,7 +7018,7 @@
         "values-timespans": "Değerler zaman aralıklarıdır, örneğin 1 dk, 1 sa, 1 gün"
       },
       "name": {
-        "ad-hoc-filters": "Geçici filtreler",
+        "ad-hoc-filters": "",
         "constant": "Sabit",
         "custom": "Özel",
         "data-source": "Veri kaynağı",
@@ -7266,6 +7271,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -8007,6 +8013,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "Yıldızlı"
     },
     "new-data-source-view": {
@@ -10347,6 +10357,7 @@
         "expander-column-name": "",
         "no-data": "Veri yok"
       },
+      "no-rows": "",
       "no-values-label": "Değer yok",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}}/{{numRows}} satır",
       "sort-by-column": "",
@@ -11004,24 +11015,14 @@
     },
     "forgot-password": "Parolanızı mı unuttunuz?",
     "form": {
-      "confirmation-code": "Onay kodu gereklidir",
-      "confirmation-code-label": "Onay kodu",
-      "confirmation-code-placeholder": "onay kodu",
-      "email-label": "E-posta",
-      "email-placeholder": "e-posta",
-      "email-required": "E-posta gereklidir",
-      "name-label": "Ad",
       "password-label": "Parola",
       "password-placeholder": "parola",
       "password-required": "Parola gereklidir",
-      "passwordless-username-label": "Kullanıcı adı",
       "submit-label": "Giriş yap",
       "submit-loading-label": "Giriş yapılıyor...",
       "username-label": "E-posta veya kullanıcı adı",
       "username-placeholder": "e-posta veya kullanıcı adı",
-      "username-required": "E-posta veya kullanıcı adı gereklidir",
-      "verify-email-label": "Doğrulama e-postası gönder",
-      "verify-email-loading-label": "E-posta gönderiliyor..."
+      "username-required": "E-posta veya kullanıcı adı gereklidir"
     },
     "layout": {
       "update-password": "Parolanızı güncelleyin"
@@ -14940,6 +14941,7 @@
     "name-tooltip-placement": "Araç ipucu yerleşimi",
     "name-wrap-header-text": "Başlık metnini kaydır",
     "name-wrap-text": "Metni sığdır",
+    "no-value-placeholder": "",
     "placeholder-column-width": "otomatik",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "yok",

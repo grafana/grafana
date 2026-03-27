@@ -25,7 +25,7 @@ import (
 	k8srest "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -56,6 +56,13 @@ var gvr = schema.GroupVersionResource{
 	Resource: "folders",
 }
 
+func disableProvisioningForNonUnifiedModes(mode grafanarest.DualWriterMode) []string {
+	if mode < grafanarest.Mode5 {
+		return []string{featuremgmt.FlagProvisioning}
+	}
+	return nil
+}
+
 func TestIntegrationFoldersApp(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -69,7 +76,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			EnableFeatureToggles: []string{},
 		})
 		disco := helper.NewDiscoveryClient()
-		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1beta1")
+		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1")
 		require.NoError(t, err)
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
@@ -78,7 +85,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
 			"apiVersion": "v1",
-			"groupVersion": "folder.grafana.app/v1beta1",
+			"groupVersion": "folder.grafana.app/v1",
 			"resources": [
 				{
 					"name": "folders",
@@ -141,9 +148,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v)", modeDw), func(t *testing.T) {
 			doFolderTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -154,9 +162,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, create nested folders)", modeDw), func(t *testing.T) {
 			doNestedCreateTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -166,9 +175,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, create existing folder)", modeDw), func(t *testing.T) {
 			doCreateDuplicateFolderTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -178,9 +188,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 		t.Run(fmt.Sprintf("when creating a folder, mode %v, it should trim leading and trailing spaces", modeDw), func(t *testing.T) {
 			doCreateEnsureTitleIsTrimmedTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -190,9 +201,10 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 		t.Run(fmt.Sprintf("with dual write (unified storage, mode %v, create circular reference folder)", modeDw), func(t *testing.T) {
 			doCreateCircularReferenceFolderTest(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -339,7 +351,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		idStr := fmt.Sprintf("%d", id)
 
 		expectedResult := `{
-			"apiVersion": "folder.grafana.app/v1beta1",
+			"apiVersion": "folder.grafana.app/v1",
 			"kind": "Folder",
 			"metadata": {
 			  "creationTimestamp": "${creationTimestamp}",
@@ -730,9 +742,10 @@ func TestIntegrationFolderCreatePermissions(t *testing.T) {
 		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -856,9 +869,10 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 		t.Run(fmt.Sprintf("Mode_%d", mode), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -1072,9 +1086,10 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 	for mode := 0; mode <= 4; mode++ {
 		modeDw := grafanarest.DualWriterMode(mode)
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true,
-			DisableAnonymous:     true,
-			APIServerStorageType: "unified",
+			AppModeProduction:     true,
+			DisableAnonymous:      true,
+			APIServerStorageType:  "unified",
+			DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 				setting.DashboardResource: {DualWriterMode: modeDw},
@@ -1246,9 +1261,10 @@ func TestIntegrationFoldersGetAPIEndpointK8S(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -1356,9 +1372,10 @@ func TestIntegrationFolderDeletionBlockedByLibraryElements(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -1434,9 +1451,10 @@ func TestIntegrationRootFolderDeletionBlockedByLibraryElementsInSubfolder(t *tes
 			modeDw := grafanarest.DualWriterMode(mode)
 
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -1528,9 +1546,10 @@ func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) 
 			modeDw := grafanarest.DualWriterMode(mode)
 
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -1601,9 +1620,10 @@ func TestIntegrationFolderDeletionWithDanglingLibraryPanels(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -1882,9 +1902,10 @@ func TestIntegrationDeleteNestedFoldersPostorder(t *testing.T) {
 		t.Run(fmt.Sprintf("Mode %d: Delete nested folder hierarchy in postorder", mode), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -2006,9 +2027,10 @@ func TestIntegrationDeleteFolderWithProvisionedDashboards(t *testing.T) {
 		t.Run(fmt.Sprintf("Mode %d: Delete provisioned folders and dashboards", mode), func(t *testing.T) {
 			modeDw := grafanarest.DualWriterMode(mode)
 			ops := testinfra.GrafanaOpts{
-				DisableAnonymous:     true,
-				AppModeProduction:    true,
-				APIServerStorageType: "unified",
+				DisableAnonymous:      true,
+				AppModeProduction:     true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},
@@ -2132,7 +2154,7 @@ func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T
 		resp := apis.DoRequest(helper, apis.RequestParams{
 			User:   client.Args.User,
 			Method: http.MethodGet,
-			Path:   fmt.Sprintf("/apis/folder.grafana.app/v1beta1/namespaces/%s/folders", client.Args.Namespace),
+			Path:   fmt.Sprintf("/apis/folder.grafana.app/v1/namespaces/%s/folders", client.Args.Namespace),
 		}, &map[string]interface{}{})
 		require.NotNil(t, resp.Response)
 		require.Equal(t, http.StatusOK, resp.Response.StatusCode)
@@ -2296,9 +2318,10 @@ func TestIntegrationFolderDryRun(t *testing.T) {
 		modeDw := grafanarest.DualWriterMode(mode)
 		t.Run(fmt.Sprintf("dry-run mode %v", modeDw), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				APIServerStorageType: "unified",
+				AppModeProduction:     true,
+				DisableAnonymous:      true,
+				APIServerStorageType:  "unified",
+				DisableFeatureToggles: disableProvisioningForNonUnifiedModes(modeDw),
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					folders.RESOURCEGROUP:     {DualWriterMode: modeDw},
 					setting.DashboardResource: {DualWriterMode: modeDw},

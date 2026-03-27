@@ -6473,6 +6473,7 @@
       "description": {
         "action": "Modifier la description de la variable"
       },
+      "description-tooltip": "",
       "hide": {
         "action": "Modifier l’option de masquage de la variable"
       },
@@ -6646,9 +6647,13 @@
     }
   },
   "dashboard-scene": {
+    "ad-hoc-filters-variable-editor": {
+      "message-not-supported": "",
+      "message-supported": ""
+    },
     "ad-hoc-variable-form": {
-      "adhoc-options": "Options ad hoc",
-      "alert-not-supported": "Cette source de données ne prend pas en charge les filtres ad hoc",
+      "adhoc-options": "",
+      "alert-not-supported": "",
       "description-enable-group-by": "",
       "description-enables-users-custom-values": "Permet aux utilisateurs d’ajouter des valeurs personnalisées à la liste",
       "description-provide-dimensions-as-csv-dimension-name-dimension-id": "Fournir les dimensions en tant que CSV : {{name}}, {{value}}",
@@ -7013,7 +7018,7 @@
         "values-timespans": "Les valeurs correspondent à des intervalles temporels, par exemple 1 m, 1 h, 1 j"
       },
       "name": {
-        "ad-hoc-filters": "Filtres ad hoc",
+        "ad-hoc-filters": "",
         "constant": "Constante",
         "custom": "Personnalisée",
         "data-source": "Source de données",
@@ -7266,6 +7271,7 @@
       }
     },
     "panel-styles": {
+      "threshold-badge-tooltip": "",
       "title": ""
     },
     "panel-viz-type-picker": {
@@ -8007,6 +8013,10 @@
       }
     },
     "list": {
+      "failed-high": "",
+      "failed-high-tooltip": "",
+      "failed-low": "",
+      "failed-low-tooltip": "",
       "starred": "Favoris"
     },
     "new-data-source-view": {
@@ -10347,6 +10357,7 @@
         "expander-column-name": "",
         "no-data": "Aucune donnée disponible"
       },
+      "no-rows": "",
       "no-values-label": "Aucune valeur",
       "pagination-summary": "{{itemsRangeStart}} – {{displayedEnd}} sur {{numRows}} lignes",
       "sort-by-column": "",
@@ -11004,24 +11015,14 @@
     },
     "forgot-password": "Vous avez oublié votre mot de passe ?",
     "form": {
-      "confirmation-code": "Le code de confirmation est requis",
-      "confirmation-code-label": "Code de confirmation",
-      "confirmation-code-placeholder": "code de confirmation",
-      "email-label": "Adresse e-mail",
-      "email-placeholder": "adresse e-mail",
-      "email-required": "Une adresse e-mail est obligatoire",
-      "name-label": "Nom",
       "password-label": "Mot de passe",
       "password-placeholder": "mot de passe",
       "password-required": "Vous devez renseigner le mot de passe",
-      "passwordless-username-label": "Nom d'utilisateur",
       "submit-label": "Connexion",
       "submit-loading-label": "Connexion…",
       "username-label": "E-mail ou nom d'utilisateur",
       "username-placeholder": "e-mail ou nom d'utilisateur",
-      "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur",
-      "verify-email-label": "Envoyer l'e-mail de validation",
-      "verify-email-loading-label": "Envoi de l'e-mail…"
+      "username-required": "Vous devez renseigner l'e-mail ou le nom d'utilisateur"
     },
     "layout": {
       "update-password": "Mettre à jour votre mot de passe"
@@ -14940,6 +14941,7 @@
     "name-tooltip-placement": "",
     "name-wrap-header-text": "Retour à la ligne dans l’en-tête",
     "name-wrap-text": "",
+    "no-value-placeholder": "",
     "placeholder-column-width": "auto",
     "placeholder-frozen-columns": "",
     "placeholder-max-height": "",

@@ -241,11 +241,11 @@ var (
 		},
 		{
 			Name:            "provisioning",
-			Description:     "Next generation provisioning... and git",
-			Stage:           FeatureStageExperimental,
+			Description:     "Enables Git Sync and as-code provisioning for Grafana resources",
+			Stage:           FeatureStageGeneralAvailability,
 			RequiresRestart: true,
 			Owner:           grafanaAppPlatformSquad,
-			Expression:      "false",
+			Expression:      "true",
 		},
 		{
 			Name:            "provisioningFolderMetadata",
