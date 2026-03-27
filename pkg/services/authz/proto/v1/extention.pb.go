@@ -765,7 +765,7 @@ func (x *DeleteUserOrgRoleOperation) GetRole() string {
 
 type CreateRoleBindingOperation struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// kind of the identity getting the permission (User/Team/ServiceAccount/BasicRole)
+	// kind of the identity getting the permission (User/Team/ServiceAccount)
 	SubjectKind string `protobuf:"bytes,1,opt,name=subject_kind,json=subjectKind,proto3" json:"subject_kind,omitempty"`
 	// uid of the identity
 	SubjectName string `protobuf:"bytes,2,opt,name=subject_name,json=subjectName,proto3" json:"subject_name,omitempty"`
@@ -837,7 +837,7 @@ func (x *CreateRoleBindingOperation) GetRoleName() string {
 
 type DeleteRoleBindingOperation struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// kind of the identity getting the permission (User/Team/ServiceAccount/BasicRole)
+	// kind of the identity getting the permission (User/Team/ServiceAccount)
 	SubjectKind string `protobuf:"bytes,1,opt,name=subject_kind,json=subjectKind,proto3" json:"subject_kind,omitempty"`
 	// uid of the identity
 	SubjectName string `protobuf:"bytes,2,opt,name=subject_name,json=subjectName,proto3" json:"subject_name,omitempty"`
