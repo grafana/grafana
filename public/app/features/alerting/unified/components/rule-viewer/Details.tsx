@@ -13,10 +13,15 @@ import { type GrafanaAlertingRuleDefinition, type RulerGrafanaRuleDTO } from 'ap
 
 import { Time } from '../../../../explore/Time';
 import { usePendingPeriod } from '../../hooks/rules/usePendingPeriod';
-import { getEffectiveRuleLabels } from '../../utils/labels';
 import { makeEditTimeIntervalLink } from '../../utils/misc';
 import { notificationPolicies } from '../../utils/navigation';
-import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../../utils/rules';
+import {
+  getAnnotations,
+  getEffectiveRuleLabels,
+  isPausedRule,
+  prometheusRuleType,
+  rulerRuleType,
+} from '../../utils/rules';
 import { isNullDate } from '../../utils/time';
 import { Tokenize } from '../Tokenize';
 import { DetailText } from '../common/DetailText';

@@ -1,7 +1,7 @@
 import { mockCombinedCloudRuleNamespace, mockCombinedRule } from '../mocks';
 
 import { GRAFANA_FOLDER_LABEL, MATCHER_ALERT_RULE_UID } from './constants';
-import { getEffectiveRuleLabels } from './labels';
+import { getEffectiveRuleLabels } from './rules';
 
 describe('getEffectiveRuleLabels', () => {
   describe('Grafana-managed rules', () => {
