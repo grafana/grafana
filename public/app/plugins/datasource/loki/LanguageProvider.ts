@@ -33,6 +33,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
   startedTimeRange?: TimeRange;
   datasource: LokiDatasource;
 
+  /** True when the Loki `detected_labels` and `detected_fields` endpoints are available (probed once in {@link LokiLanguageProvider.start}). */
+  private detectedEndpointsSupported?: boolean;
+
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
    *  not account for different size of a response. If that is needed a `length` function can be added in the options.
@@ -85,7 +88,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
       newRangeParams.end !== prevRangeParams.end
     ) {
       this.startedTimeRange = range;
-      this.startTask = this.fetchLabels({ timeRange: range }).then(() => {
+      this.startTask = this.attemptDetectedEndpointsStart(range).then(() => {
         this.started = true;
         return [];
       });
@@ -93,6 +96,27 @@ export default class LokiLanguageProvider extends LanguageProvider {
 
     return this.startTask;
   };
+
+  /**
+   * Probes whether the `detected_labels` metadata API exists. Runs at most once per language provider instance.
+   */
+  private attemptDetectedEndpointsStart(timeRange: TimeRange) {
+    if (this.detectedEndpointsSupported === undefined) {
+      return this.checkDetectedLabelsExists(timeRange);
+    }
+    return Promise.resolve(this.detectedEndpointsSupported);
+  }
+
+  private async checkDetectedLabelsExists(timeRange: TimeRange): Promise<void> {
+    try {
+      const { start, end } = this.datasource.getTimeRangeParams(timeRange);
+      const res = await this.request('detected_labels', { start, end });
+      this.detectedEndpointsSupported = Array.isArray(res);
+    } catch (e) {
+      this.detectedEndpointsSupported = false;
+      await this.fetchLabels({ timeRange });
+    }
+  }
 
   /**
    * Returns the label keys that have been fetched.
@@ -153,9 +177,15 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * @returns A promise containing an array of label keys.
    * @throws An error if the fetch operation fails.
    */
-  async fetchLabels(options?: { streamSelector?: string; timeRange?: TimeRange }): Promise<string[]> {
+  async fetchLabels(options: { streamSelector?: string; timeRange?: TimeRange } = {}): Promise<string[]> {
+    if (this.detectedEndpointsSupported) {
+      return this.fetchDetectedLabels({
+        expr: options.streamSelector,
+        timeRange: options.timeRange,
+      });
+    }
     // We'll default to use `/labels`. If the flag is disabled, and there's a streamSelector, we'll use the series endpoint.
-    if (config.featureToggles.lokiLabelNamesQueryApi || !options?.streamSelector) {
+    else if (config.featureToggles.lokiLabelNamesQueryApi || !options?.streamSelector) {
       return this.fetchLabelsByLabelsEndpoint(options);
     } else {
       const data = await this.fetchSeriesLabels(options.streamSelector, { timeRange: options.timeRange });
@@ -249,6 +279,39 @@ export default class LokiLanguageProvider extends LanguageProvider {
     const params = { 'match[]': match, start, end };
     return await this.request(url, params);
   };
+
+  async fetchDetectedLabels(
+    queryOptions: {
+      expr?: string;
+      timeRange?: TimeRange;
+      scopedVars?: ScopedVars;
+    },
+    requestOptions?: Partial<BackendSrvRequest>
+  ): Promise<string[]> {
+    const interpolatedExpr =
+      queryOptions.expr && queryOptions.expr !== EMPTY_SELECTOR
+        ? this.datasource.interpolateString(queryOptions.expr, queryOptions.scopedVars)
+        : undefined;
+
+    const range = queryOptions?.timeRange ?? this.getDefaultTimeRange();
+    const rangeParams = this.datasource.getTimeRangeParams(range);
+    const { start, end } = rangeParams;
+    const params: KeyValue<string | number> = { start, end };
+    if (interpolatedExpr) {
+      params.query = interpolatedExpr;
+    }
+
+    try {
+        const data = await this.request('detected_labels', params, true, requestOptions);
+        console.log(data);
+        if (Array.isArray(data)) {
+          return data;
+        }
+      } catch (error) {
+        console.error('error', error);
+      }
+      return [];
+  }
 
   // Cache key is a bit different here. We round up to a minute the intervals.
   // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
