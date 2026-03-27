@@ -90,8 +90,7 @@ func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBa
 	require.LessOrEqual(t, successes.Load(), int64(1), "at most one create should succeed")
 
 	// When no resource was actually created, the errors should not claim it
-	// already exists — that would be a false positive from optimistic
-	// concurrency control.
+	// already exists.
 	if successes.Load() == 0 {
 		for _, e := range errors {
 			require.NotErrorIs(t, e, resource.ErrResourceAlreadyExists,
